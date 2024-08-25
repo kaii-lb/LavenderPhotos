@@ -12,11 +12,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 
-class GalleryViewModel(private val context: Context) : ViewModel() {
+class GalleryViewModel(context: Context) : ViewModel() {
     private val mediaStoreDataSource = MediaStoreDataSource(context)
 
-    private val _uiState: MutableStateFlow<List<List<MediaStoreData>>> = MutableStateFlow(emptyList())
-    val mediaStoreData: StateFlow<List<List<MediaStoreData>>> = _uiState.asStateFlow()
+    private val _uiState: MutableStateFlow<List<MediaStoreData>> = MutableStateFlow(emptyList())
+    val mediaStoreData: StateFlow<List<MediaStoreData>> = _uiState.asStateFlow()
 
     init {
         viewModelScope.launch {

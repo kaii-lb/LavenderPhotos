@@ -61,7 +61,6 @@ class MainActivity : ComponentActivity() {
                     it
                 ) != PackageManager.PERMISSION_GRANTED
             }) {
-
             requestStoragePermission()
         } else {
             setContentForActivity()

@@ -39,7 +39,7 @@ internal constructor(
             )
     }
 
-    fun loadMediaStoreData(): Flow<List<List<MediaStoreData>>> = callbackFlow {
+    fun loadMediaStoreData(): Flow<List<MediaStoreData>> = callbackFlow {
         val contentObserver =
             object : ContentObserver(Handler(Looper.getMainLooper())) {
                 override fun onChange(selfChange: Boolean) {
@@ -59,7 +59,7 @@ internal constructor(
         awaitClose { context.contentResolver.unregisterContentObserver(contentObserver) }
     }
 
-    private fun query(): List<List<MediaStoreData>> {
+    private fun query(): List<MediaStoreData> {
         Preconditions.checkArgument(
             Util.isOnBackgroundThread(),
             "Can only query from a background thread"
@@ -83,9 +83,9 @@ internal constructor(
                         " AND " + 
                         FileColumns.RELATIVE_PATH +
                         " LIKE ? ",
-                arrayOf("%DCIM%", "%DCIM%"),
+                arrayOf("%$neededPath%", "%$neededPath%"),
                 "${MediaColumns.DATE_MODIFIED} DESC"
-            ) ?: return listOf(data)
+            ) ?: return data
 
         mediaCursor.use { cursor ->
             val idColNum = cursor.getColumnIndexOrThrow(MediaColumns._ID)
@@ -121,7 +121,7 @@ internal constructor(
             }
         }
         mediaCursor.close()
-        return data.chunked(3)
+        return data
     }
 }
 
