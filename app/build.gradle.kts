@@ -67,9 +67,10 @@ dependencies {
 	implementation("com.github.bumptech.glide:glide:4.14.0")
 	implementation("com.github.bumptech.glide:compose:1.0.0-beta01")
     implementation("com.github.bumptech.glide:ktx:1.0.0-beta01")
-    implementation("androidx.activity:activity-ktx")
-    implementation("androidx.fragment:fragment-ktx")
-    
+    implementation("androidx.activity:activity-ktx:1.9.1")
+    implementation("androidx.fragment:fragment-ktx:1.8.2")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")
+
 	testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
