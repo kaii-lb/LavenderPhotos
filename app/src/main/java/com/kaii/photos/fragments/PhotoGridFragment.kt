@@ -2,29 +2,30 @@ package com.kaii.photos.fragments
 
 import android.graphics.drawable.Drawable
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ShapeDefaults
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bumptech.glide.RequestBuilder
@@ -35,9 +36,9 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.signature.MediaStoreSignature
 import com.kaii.photos.gallery_model.GalleryViewModel
 import com.kaii.photos.gallery_model.GalleryViewModelFactory
+import com.kaii.photos.gallery_model.groupPhotosBy
 import com.kaii.photos.mediastore.MediaStoreData
-import java.time.ZoneId
-import java.util.Date
+import com.kaii.photos.mediastore.Type
 
 private const val THUMBNAIL_DIMENSION = 50
 private val THUMBNAIL_SIZE = Size(THUMBNAIL_DIMENSION.toFloat(), THUMBNAIL_DIMENSION.toFloat())
@@ -54,9 +55,10 @@ fun PhotoGrid() {
 	DeviceMedia(mediaStoreData.value)
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun DeviceMedia(mediaStoreData: List<MediaStoreData>) {
+    val groupedMedia = groupPhotosBy(mediaStoreData, true)
+
     val requestBuilderTransform =
         { item: MediaStoreData, requestBuilder: RequestBuilder<Drawable> ->
             requestBuilder.load(item.uri).signature(item.signature()).centerCrop()
@@ -64,7 +66,7 @@ fun DeviceMedia(mediaStoreData: List<MediaStoreData>) {
 
     val preloadingData =
         rememberGlidePreloadingData(
-            mediaStoreData,
+            groupedMedia,
             THUMBNAIL_SIZE,
             requestBuilderTransform = requestBuilderTransform,
         )
@@ -74,16 +76,26 @@ fun DeviceMedia(mediaStoreData: List<MediaStoreData>) {
         modifier = Modifier.fillMaxSize(1f)
     ) {
         items(
-        	count = preloadingData.size,
-        	key = {
-        		println("URI STRING ${mediaStoreData[it].uri.toString()}_$it")
-        		mediaStoreData[it].uri.toString() + "_$it"
-        	}
-       	) { i ->
+            count = preloadingData.size,
+            key = {
+                // println("URI STRING ${mediaStoreData[it].uri}")
+                groupedMedia[it].uri.toString()
+            },
+            span = { index ->
+                val item = groupedMedia[index]
+                println("item ${item.displayName} and its type is ${item.type}")
+                if (item.type == Type.SECTION) {
+                    GridItemSpan(maxLineSpan)
+                } else {
+                    GridItemSpan(1)
+                }
+            }
+        ) { i ->
             val (mediaStoreItem, preloadRequestBuilder) = preloadingData[i]
-            MediaStoreView(mediaStoreItem,
+            println("item is ${mediaStoreItem.displayName} and type is ${mediaStoreItem.type}")
+
+            MediaStoreItem(mediaStoreItem,
                 preloadRequestBuilder,
-                Modifier.aspectRatio(1f)
             )
         }
     }
@@ -91,29 +103,49 @@ fun DeviceMedia(mediaStoreData: List<MediaStoreData>) {
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun MediaStoreView(
+fun MediaStoreItem(
     item: MediaStoreData,
     preloadRequestBuilder: RequestBuilder<Drawable>,
-    modifier: Modifier,
 ) {
-    Column(
-        modifier = Modifier
-			.then (modifier)
-            .padding(4.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .background(MaterialTheme.colorScheme.primary),
-        verticalArrangement = Arrangement.SpaceEvenly,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        GlideImage(
-            model = item.uri,
-            contentDescription = item.displayName,
-            contentScale = ContentScale.Crop,
+    if (item.mimeType == null && item.type == Type.SECTION) {
+        Column(
             modifier = Modifier
-       			.fillMaxSize(1f)            
-       			.clip(RoundedCornerShape(8.dp)),
+                .fillMaxWidth(1f)
+                .wrapContentHeight()
+                .padding(4.dp)
+                .background(MaterialTheme.colorScheme.background),
+            verticalArrangement = Arrangement.SpaceEvenly,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            it.thumbnail(preloadRequestBuilder).signature(item.signature()).diskCacheStrategy(DiskCacheStrategy.ALL)
+            Text (
+                text = item.displayName ?: "This was meant to be a dated section",
+                fontSize = TextUnit(22f, TextUnitType.Sp),
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier
+                    .fillMaxSize(1f)
+            )
+        }
+    } else {
+        Column(
+            modifier = Modifier
+                .aspectRatio(1f)
+                .padding(4.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(MaterialTheme.colorScheme.primary),
+            verticalArrangement = Arrangement.SpaceEvenly,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            GlideImage(
+                model = item.uri,
+                contentDescription = item.displayName,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxSize(1f)
+                    .clip(RoundedCornerShape(8.dp)),
+            ) {
+                it.thumbnail(preloadRequestBuilder).signature(item.signature()).diskCacheStrategy(DiskCacheStrategy.ALL)
+            }
         }
     }
 
