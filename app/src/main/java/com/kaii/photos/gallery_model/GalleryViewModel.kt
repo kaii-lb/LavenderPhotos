@@ -33,12 +33,12 @@ class GalleryViewModel(context: Context) : ViewModel() {
 }
 
 /** Groups photos by date */
-fun groupPhotosBy(media: List<MediaStoreData>, sortDescending: Boolean = true) : List<MediaStoreData> {
+fun groupPhotosBy(media: List<MediaStoreData>, sortDescending: Boolean = true, byDay: Boolean = true) : List<MediaStoreData> {
     val mediaItems = emptyList<MediaStoreData>().toMutableList()
 
     val mediaDataGroups = LinkedHashMap<Long, MutableList<MediaStoreData>>()
     media.forEach { data ->
-        val key = data.getLastModifiedMonth()
+        val key = if (!byDay) data.getLastModifiedMonth() else data.getLastModifiedDay()
         if (!mediaDataGroups.containsKey(key)) {
             mediaDataGroups[key] = emptyList<MediaStoreData>().toMutableList()
         }
@@ -58,9 +58,17 @@ fun groupPhotosBy(media: List<MediaStoreData>, sortDescending: Boolean = true) :
         mediaDataGroups[key] = value
     }
 
-    val today = System.currentTimeMillis()
-    val dayMillis = 8640000
-    val yesterday = System.currentTimeMillis() - dayMillis
+    val calendar = Calendar.getInstance(Locale.ENGLISH).apply {
+         timeInMillis = System.currentTimeMillis()
+         set(Calendar.HOUR_OF_DAY, 0)
+         set(Calendar.MINUTE, 0)
+         set(Calendar.SECOND, 0)
+         set(Calendar.MILLISECOND, 0)
+     }
+
+	val today = calendar.timeInMillis
+    val dayMillis = 86400000
+    val yesterday = today - dayMillis
     for ((key, value) in mediaDataGroups) {
         var currentGridPosition = 0
         val sectionKey = when (key) {
@@ -71,7 +79,7 @@ fun groupPhotosBy(media: List<MediaStoreData>, sortDescending: Boolean = true) :
                 "Yesterday"
             }
             else -> {
-                formatDate(key, false)
+                formatDate(key, true)
             }
         }
         mediaItems.add(listSection(sectionKey, key))
@@ -90,7 +98,7 @@ private fun formatDate(timestamp: Long, showDay: Boolean): String {
     return if (timestamp != 0L) {
         val cal = Calendar.getInstance(Locale.ENGLISH)
         cal.timeInMillis = timestamp
-        val format = if (showDay) "d MMMM yyyy" else "MMMM yyyy"
+        val format = if (showDay) "EEE d - MMMM yyyy" else "MMMM yyyy"
         format(format, cal).toString()
     } else {
         ""
@@ -106,7 +114,8 @@ private fun listSection(title: String, key: Long): MediaStoreData {
         displayName = title,
         orientation = 0,
         rowId = 0L,
-        mimeType = null
+        mimeType = null,
+        dateAdded = key,
     )
     return mediaSection
 }

@@ -4,6 +4,7 @@ import android.graphics.drawable.Drawable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -108,41 +109,47 @@ fun MediaStoreItem(
     preloadRequestBuilder: RequestBuilder<Drawable>,
 ) {
     if (item.mimeType == null && item.type == Type.SECTION) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth(1f)
-                .wrapContentHeight()
-                .padding(4.dp)
+                .aspectRatio(5.5f)
+                .padding(16.dp, 8.dp)
                 .background(MaterialTheme.colorScheme.background),
-            verticalArrangement = Arrangement.SpaceEvenly,
-            horizontalAlignment = Alignment.CenterHorizontally
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
         ) {
             Text (
                 text = item.displayName ?: "This was meant to be a dated section",
-                fontSize = TextUnit(22f, TextUnitType.Sp),
+                fontSize = TextUnit(16f, TextUnitType.Sp),
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier
-                    .fillMaxSize(1f)
             )
         }
     } else {
         Column(
             modifier = Modifier
                 .aspectRatio(1f)
-                .padding(4.dp)
-                .clip(RoundedCornerShape(8.dp))
+                .padding(2.dp)
+                .clip(RoundedCornerShape(0.dp))
                 .background(MaterialTheme.colorScheme.primary),
             verticalArrangement = Arrangement.SpaceEvenly,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+        	if (item.type == Type.VIDEO) {
+        		Text (
+        			text = "this is a video",
+        			maxLines = 1,
+        			fontSize = TextUnit(12f, TextUnitType.Sp),
+        			color = MaterialTheme.colorScheme.onPrimary
+       			)
+        	}
+
             GlideImage(
                 model = item.uri,
                 contentDescription = item.displayName,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .fillMaxSize(1f)
-                    .clip(RoundedCornerShape(8.dp)),
+                    .fillMaxSize(1f),
             ) {
                 it.thumbnail(preloadRequestBuilder).signature(item.signature()).diskCacheStrategy(DiskCacheStrategy.ALL)
             }

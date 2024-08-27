@@ -50,6 +50,7 @@ fun PhotosTheme(
         else -> LightColorScheme
     }
 
+
     MaterialTheme(
         colorScheme = colorScheme,
         typography = Typography,

@@ -35,6 +35,7 @@ internal constructor(
                 MediaColumns._ID,
                 MediaColumns.DATE_TAKEN,
                 MediaColumns.DATE_MODIFIED,
+                MediaColumns.DATE_ADDED,
                 MediaColumns.MIME_TYPE,
                 MediaColumns.ORIENTATION,
                 MediaColumns.DISPLAY_NAME,
@@ -87,7 +88,7 @@ internal constructor(
                         FileColumns.RELATIVE_PATH +
                         " LIKE ? ",
                 arrayOf("%$neededPath%", "%$neededPath%"),
-                "${MediaColumns.DATE_MODIFIED} DESC"
+                "${MediaColumns.DATE_TAKEN} DESC"
             ) ?: return data
 
         mediaCursor.use { cursor ->
@@ -98,16 +99,17 @@ internal constructor(
             val orientationColNum = cursor.getColumnIndexOrThrow(MediaColumns.ORIENTATION)
             val mediaTypeColumnIndex = cursor.getColumnIndexOrThrow(FileColumns.MEDIA_TYPE)
             val displayNameIndex = cursor.getColumnIndexOrThrow(FileColumns.DISPLAY_NAME)
+            val dateAddedColumnNum = cursor.getColumnIndexOrThrow(MediaColumns.DATE_ADDED)
 
             while (cursor.moveToNext()) {
                 val id = cursor.getLong(idColNum)
-                val dateTaken = cursor.getLong(dateTakenColNum)
+                val dateTaken = if(cursor.getLong(dateTakenColNum) == 0L) cursor.getLong(dateAddedColumnNum) else cursor.getLong(dateTakenColNum)
                 val mimeType = cursor.getString(mimeTypeColNum)
                 val dateModified = cursor.getLong(dateModifiedColNum)
                 val orientation = cursor.getInt(orientationColNum)
                 val displayName = cursor.getString(displayNameIndex)
-                val type =
-                    if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) Type.IMAGE
+                val dateAdded = cursor.getLong(dateAddedColumnNum)
+                val type = if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) Type.IMAGE
                     else Type.VIDEO
                 data.add(
                     MediaStoreData(
@@ -119,6 +121,7 @@ internal constructor(
                         orientation = orientation,
                         dateTaken = dateTaken,
                         displayName = displayName,
+                        dateAdded = dateAdded,
                     )
                 )
             }
@@ -139,9 +142,23 @@ data class MediaStoreData(
     val orientation: Int,
     val dateTaken: Long,
     val displayName: String?,
+    val dateAdded: Long,
 
     var gridPosition: Int = 0
 ) : Parcelable {
+	/** gets the last modified date in dat (no hours/minutes/seconds/milliseconds) */
+    /** its returned in unix epoch millis*/
+    fun getLastModifiedDay() : Long {
+        val calendar = Calendar.getInstance(Locale.ENGLISH).apply {
+            timeInMillis = dateTaken
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+
+        return calendar.timeInMillis
+    }
     /** gets the last modified date in months (no days/hours/minutes/seconds/milliseconds) */
     /** its returned in unix epoch millis*/
     fun getLastModifiedMonth() : Long {

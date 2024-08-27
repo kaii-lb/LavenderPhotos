@@ -6,8 +6,11 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.activity.SystemBarStyle
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -32,9 +35,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
@@ -54,6 +59,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
         Glide.get(this).setMemoryCategory(MemoryCategory.HIGH)
         if (PERMISSIONS_REQUEST.any {
                 ContextCompat.checkSelfPermission(
@@ -76,6 +82,9 @@ class MainActivity : ComponentActivity() {
     private fun setContentForActivity() {
         setContent {
             PhotosTheme {
+				enableEdgeToEdge(
+					navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb())
+				)        
                 Content()
             }
         }
@@ -93,11 +102,11 @@ class MainActivity : ComponentActivity() {
         ) { padding ->
             Column(
                 modifier = Modifier
-                    .padding(padding)
+                    .padding(0.dp, padding.calculateTopPadding(), 0.dp, padding.calculateBottomPadding())
             ) {
                 Column(
                     modifier = Modifier
-                        .padding(8.dp)
+                        .padding(0.dp)
                 ) {
                     PhotoGrid()
                 }
@@ -113,11 +122,13 @@ class MainActivity : ComponentActivity() {
                 Row {
                     Text(
                         text = "Lavender ",
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        fontSize = TextUnit(22f, TextUnitType.Sp)
                     )
                     Text(
                         text = "Photos",
-                        fontWeight = FontWeight.Normal
+                        fontWeight = FontWeight.Normal,
+                        fontSize = TextUnit(22f, TextUnitType.Sp)
                     )
                 }
             },
@@ -129,7 +140,7 @@ class MainActivity : ComponentActivity() {
                         painter = painterResource(R.drawable.settings),
                         contentDescription = "Settings Button",
                         tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(24.dp)
                     )
                 }
             },
@@ -147,7 +158,7 @@ class MainActivity : ComponentActivity() {
         ) {
             val buttonHeight = 56.dp
             val buttonWidth = 64.dp
-            val iconSize = 28.dp
+            val iconSize = 24.dp
             val textSize = 14f
 
             Row(
@@ -156,18 +167,17 @@ class MainActivity : ComponentActivity() {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                Column(
+                Box(
                     modifier = Modifier
                         .width(buttonWidth)
                         .height(buttonHeight),
-                    verticalArrangement = Arrangement.SpaceBetween,
-                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Row(
                         modifier = Modifier
-                            .height(iconSize + 4.dp)
-                            .width(iconSize * 2f)
+                            .height(iconSize + 8.dp)
+                            .width(iconSize * 2.25f)
                             .clip(RoundedCornerShape(1000.dp))
+                            .align(Alignment.TopCenter)
                             .background(MaterialTheme.colorScheme.secondaryContainer),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
@@ -185,74 +195,100 @@ class MainActivity : ComponentActivity() {
                         fontSize = TextUnit(textSize, TextUnitType.Sp),
                         modifier = Modifier
                             .wrapContentSize()
+                            .align(Alignment.BottomCenter)
                     )
                 }
 
-                Column(
+                Box(
                     modifier = Modifier
                         .width(buttonWidth)
                         .height(buttonHeight),
-                    verticalArrangement = Arrangement.SpaceBetween,
-                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.locked_folder),
-                        contentDescription = "button",
+                    Row(
                         modifier = Modifier
-                            .size(iconSize)
-                    )
+                            .height(iconSize + 8.dp)
+                            .width(iconSize * 2.25f)
+                            .clip(RoundedCornerShape(1000.dp))
+                            .align(Alignment.TopCenter),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+	                    Icon(
+	                        painter = painterResource(id = R.drawable.locked_folder),
+	                        contentDescription = "button",
+	                        modifier = Modifier
+	                            .size(iconSize)
+	                    )
+                    }                
 
                     Text(
                         text = "Secure",
                         fontSize = TextUnit(textSize, TextUnitType.Sp),
                         modifier = Modifier
                             .wrapContentSize()
+                            .align(Alignment.BottomCenter)
                     )
                 }
 
-                Column(
+                Box(
                     modifier = Modifier
                         .width(buttonWidth)
                         .height(buttonHeight),
-                    verticalArrangement = Arrangement.SpaceBetween,
-                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.albums),
-                        contentDescription = "button",
+                    Row(
                         modifier = Modifier
-                            .size(iconSize)
-                    )
-
-                    Spacer(modifier = Modifier.weight(1f))
+                            .height(iconSize + 8.dp)
+                            .width(iconSize * 2.25f)
+                            .clip(RoundedCornerShape(1000.dp))
+                            .align(Alignment.TopCenter),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+	                    Icon(
+	                        painter = painterResource(id = R.drawable.albums),
+	                        contentDescription = "button",
+	                        modifier = Modifier
+	                            .size(iconSize)
+	                    )
+                    }                
 
                     Text(
                         text = "Albums",
                         fontSize = TextUnit(textSize, TextUnitType.Sp),
                         modifier = Modifier
                             .wrapContentSize()
+                            .align(Alignment.BottomCenter)
                     )
                 }
 
-                Column(
+                Box(
                     modifier = Modifier
                         .width(buttonWidth)
                         .height(buttonHeight),
-                    verticalArrangement = Arrangement.SpaceBetween,
-                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.search),
-                        contentDescription = "button",
+                    Row(
                         modifier = Modifier
-                            .size(iconSize)
-                    )
+                            .height(iconSize + 8.dp)
+                            .width(iconSize * 2.25f)
+                            .clip(RoundedCornerShape(1000.dp))
+                            .align(Alignment.TopCenter),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+	                    Icon(
+	                        painter = painterResource(id = R.drawable.search),
+	                        contentDescription = "button",
+	                        modifier = Modifier
+	                            .size(iconSize)
+	                    )
+                    }                
 
                     Text(
                         text = "Search",
                         fontSize = TextUnit(textSize, TextUnitType.Sp),
                         modifier = Modifier
                             .wrapContentSize()
+                            .align(Alignment.BottomCenter)
                     )
                 }
             }
