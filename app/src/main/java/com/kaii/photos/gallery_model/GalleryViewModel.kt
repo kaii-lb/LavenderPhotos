@@ -16,6 +16,11 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.Locale
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 
 class GalleryViewModel(context: Context) : ViewModel() {
     private val mediaStoreDataSource = MediaStoreDataSource(context)
@@ -79,6 +84,7 @@ fun groupPhotosBy(media: List<MediaStoreData>, sortDescending: Boolean = true, b
                 "Yesterday"
             }
             else -> {
+            	println("TRYING TO FORMAT DATE WITH KEY $key")
                 formatDate(key, true)
             }
         }
@@ -96,10 +102,10 @@ fun groupPhotosBy(media: List<MediaStoreData>, sortDescending: Boolean = true, b
 
 private fun formatDate(timestamp: Long, showDay: Boolean): String {
     return if (timestamp != 0L) {
-        val cal = Calendar.getInstance(Locale.ENGLISH)
-        cal.timeInMillis = timestamp
-        val format = if (showDay) "EEE d - MMMM yyyy" else "MMMM yyyy"
-        format(format, cal).toString()
+	    val dateTimeFormat = DateTimeFormatter.ofPattern("EEE d - MMMM yyyy")
+	    val localDateTime = Instant.ofEpochSecond(timestamp).atZone(ZoneId.systemDefault()).toLocalDateTime()
+    	val dateTimeString = localDateTime.format(dateTimeFormat)
+    	dateTimeString.toString()
     } else {
         ""
     }

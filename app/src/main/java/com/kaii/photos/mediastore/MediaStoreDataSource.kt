@@ -12,6 +12,7 @@ import android.provider.MediaStore.MediaColumns
 import android.text.format.DateFormat.format
 import com.bumptech.glide.util.Preconditions
 import com.bumptech.glide.util.Util
+import com.kaii.photos.helpers.GetDateTakenForMedia
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -33,7 +34,7 @@ internal constructor(
         private val PROJECTION =
             arrayOf(
                 MediaColumns._ID,
-                MediaColumns.DATE_TAKEN,
+                MediaStore.Images.Media.DATA,
                 MediaColumns.DATE_MODIFIED,
                 MediaColumns.DATE_ADDED,
                 MediaColumns.MIME_TYPE,
@@ -93,7 +94,7 @@ internal constructor(
 
         mediaCursor.use { cursor ->
             val idColNum = cursor.getColumnIndexOrThrow(MediaColumns._ID)
-            val dateTakenColNum = cursor.getColumnIndexOrThrow(MediaColumns.DATE_TAKEN)
+            val absolutePathColNum = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA)
             val dateModifiedColNum = cursor.getColumnIndexOrThrow(MediaColumns.DATE_MODIFIED)
             val mimeTypeColNum = cursor.getColumnIndexOrThrow(MediaColumns.MIME_TYPE)
             val orientationColNum = cursor.getColumnIndexOrThrow(MediaColumns.ORIENTATION)
@@ -103,7 +104,9 @@ internal constructor(
 
             while (cursor.moveToNext()) {
                 val id = cursor.getLong(idColNum)
-                val dateTaken = if(cursor.getLong(dateTakenColNum) == 0L) cursor.getLong(dateAddedColumnNum) else cursor.getLong(dateTakenColNum)
+                val dateTaken = GetDateTakenForMedia(
+               		cursor.getString(absolutePathColNum) //"/storage/emulated/0/DCIM/IMG-20240724-WA0040.jpg"
+               	)
                 val mimeType = cursor.getString(mimeTypeColNum)
                 val dateModified = cursor.getLong(dateModifiedColNum)
                 val orientation = cursor.getInt(orientationColNum)
@@ -150,20 +153,20 @@ data class MediaStoreData(
     /** its returned in unix epoch millis*/
     fun getLastModifiedDay() : Long {
         val calendar = Calendar.getInstance(Locale.ENGLISH).apply {
-            timeInMillis = dateTaken
+            timeInMillis = dateTaken * 1000
             set(Calendar.HOUR_OF_DAY, 0)
             set(Calendar.MINUTE, 0)
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
         }
 
-        return calendar.timeInMillis
+        return calendar.timeInMillis / 1000
     }
     /** gets the last modified date in months (no days/hours/minutes/seconds/milliseconds) */
     /** its returned in unix epoch millis*/
     fun getLastModifiedMonth() : Long {
         val calendar = Calendar.getInstance(Locale.ENGLISH).apply {
-            timeInMillis = dateTaken
+            timeInMillis = dateTaken * 1000
             set(Calendar.DAY_OF_MONTH, 0)
             set(Calendar.HOUR_OF_DAY, 0)
             set(Calendar.MINUTE, 0)
@@ -171,7 +174,7 @@ data class MediaStoreData(
             set(Calendar.MILLISECOND, 0)
         }
 
-        return calendar.timeInMillis
+        return calendar.timeInMillis / 1000
     }
 }
 

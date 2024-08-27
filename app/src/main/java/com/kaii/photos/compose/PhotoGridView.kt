@@ -1,4 +1,4 @@
-package com.kaii.photos.fragments
+package com.kaii.photos.compose
 
 import android.graphics.drawable.Drawable
 import androidx.compose.foundation.background
@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -84,7 +83,6 @@ fun DeviceMedia(mediaStoreData: List<MediaStoreData>) {
             },
             span = { index ->
                 val item = groupedMedia[index]
-                println("item ${item.displayName} and its type is ${item.type}")
                 if (item.type == Type.SECTION) {
                     GridItemSpan(maxLineSpan)
                 } else {
@@ -93,7 +91,6 @@ fun DeviceMedia(mediaStoreData: List<MediaStoreData>) {
             }
         ) { i ->
             val (mediaStoreItem, preloadRequestBuilder) = preloadingData[i]
-            println("item is ${mediaStoreItem.displayName} and type is ${mediaStoreItem.type}")
 
             MediaStoreItem(mediaStoreItem,
                 preloadRequestBuilder,
