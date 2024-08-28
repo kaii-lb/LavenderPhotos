@@ -24,6 +24,7 @@ import java.util.Locale
 class MediaStoreDataSource
 internal constructor(
     private val context: Context,
+    private val filter: Type
 ) {
     companion object {
         val neededPath = "DCIM"
@@ -73,26 +74,26 @@ internal constructor(
             context.contentResolver.query(
                 MEDIA_STORE_FILE_URI,
                 PROJECTION,
-                FileColumns.MEDIA_TYPE +
-                        " = " +
-                        FileColumns.MEDIA_TYPE_IMAGE +
-                        " AND " + 
-                        FileColumns.RELATIVE_PATH +
-                        " LIKE ? " +
-                        " OR " +
-                        FileColumns.MEDIA_TYPE +
-                        " = " +
-                        FileColumns.MEDIA_TYPE_VIDEO + 
-                        " AND " + 
-                        FileColumns.RELATIVE_PATH +
-                        " LIKE ? ",
+       			FileColumns.MEDIA_TYPE +
+					" = " +
+					FileColumns.MEDIA_TYPE_IMAGE +
+					" AND " + 
+					FileColumns.RELATIVE_PATH +
+					" LIKE ? " +
+					" OR " +
+					FileColumns.MEDIA_TYPE +
+					" = " +
+					FileColumns.MEDIA_TYPE_VIDEO + 
+					" AND " + 
+					FileColumns.RELATIVE_PATH +
+					" LIKE ? ",
                 arrayOf("%$neededPath%", "%$neededPath%"),
                 "${MediaColumns.DATE_TAKEN} DESC"
             ) ?: return data
 
         mediaCursor.use { cursor ->
             val idColNum = cursor.getColumnIndexOrThrow(MediaColumns._ID)
-            val absolutePathColNum = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA)
+            val absolutePathColNum = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA) // look into using the uri + id if this is deprecated
             val dateModifiedColNum = cursor.getColumnIndexOrThrow(MediaColumns.DATE_MODIFIED)
             val mimeTypeColNum = cursor.getColumnIndexOrThrow(MediaColumns.MIME_TYPE)
             val orientationColNum = cursor.getColumnIndexOrThrow(MediaColumns.ORIENTATION)
@@ -103,7 +104,7 @@ internal constructor(
             while (cursor.moveToNext()) {
                 val id = cursor.getLong(idColNum)
                 val dateTaken = GetDateTakenForMedia(
-               		cursor.getString(absolutePathColNum) //"/storage/emulated/0/DCIM/IMG-20240724-WA0040.jpg"
+               		cursor.getString(absolutePathColNum)
                	)
                 val mimeType = cursor.getString(mimeTypeColNum)
                 val dateModified = cursor.getLong(dateModifiedColNum)
@@ -130,55 +131,4 @@ internal constructor(
         mediaCursor.close()
         return data
     }
-}
-
-/** A data model containing data for a single media item. */
-@Parcelize
-data class MediaStoreData(
-    val type: Type,
-    var rowId: Long,
-    val uri: Uri,
-    val mimeType: String?,
-    val dateModified: Long,
-    val orientation: Int,
-    val dateTaken: Long,
-    val displayName: String?,
-    val dateAdded: Long,
-
-    var gridPosition: Int = 0
-) : Parcelable {
-	/** gets the last modified date in dat (no hours/minutes/seconds/milliseconds) */
-    /** its returned in unix epoch millis*/
-    fun getLastModifiedDay() : Long {
-        val calendar = Calendar.getInstance(Locale.ENGLISH).apply {
-            timeInMillis = dateTaken * 1000
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }
-
-        return calendar.timeInMillis / 1000
-    }
-    /** gets the last modified date in months (no days/hours/minutes/seconds/milliseconds) */
-    /** its returned in unix epoch millis*/
-    fun getLastModifiedMonth() : Long {
-        val calendar = Calendar.getInstance(Locale.ENGLISH).apply {
-            timeInMillis = dateTaken * 1000
-            set(Calendar.DAY_OF_MONTH, 0)
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }
-
-        return calendar.timeInMillis / 1000
-    }
-}
-
-/** The type of data. */
-enum class Type {
-    VIDEO,
-    IMAGE,
-    SECTION
 }

@@ -42,7 +42,7 @@ fun AlbumGridView() {
             .background(MaterialTheme.colorScheme.background),
         verticalArrangement = Arrangement.SpaceEvenly,
         horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+    ) {	
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
             modifier = Modifier
