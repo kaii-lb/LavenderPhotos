@@ -9,6 +9,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.SystemBarStyle
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -45,11 +46,16 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.bumptech.glide.Glide
 import com.bumptech.glide.MemoryCategory
+import com.kaii.photos.compose.AlbumGridItem
+import com.kaii.photos.compose.AlbumGridView
 import com.kaii.photos.compose.PhotoGrid
+import com.kaii.photos.helpers.ComposeViewType
 import com.kaii.photos.ui.theme.PhotosTheme
 
 class MainActivity : ComponentActivity() {
+
     companion object {
+    	private var currentView = ComposeViewType.PhotoGridView
         private const val REQUEST_READ_STORAGE = 0
         private val PERMISSIONS_REQUEST =
             arrayOf(Manifest.permission.READ_MEDIA_IMAGES, Manifest.permission.READ_MEDIA_VIDEO)
@@ -67,7 +73,7 @@ class MainActivity : ComponentActivity() {
             }) {
             requestStoragePermission()
         } else {
-            setContentForActivity()
+            setContentForActivity(ComposeViewType.PhotoGridView)
         }
     }
 
@@ -77,19 +83,20 @@ class MainActivity : ComponentActivity() {
         )
     }
 
-    private fun setContentForActivity() {
+    private fun setContentForActivity(view: ComposeViewType) {
         setContent {
             PhotosTheme {
 				enableEdgeToEdge(
 					navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb())
 				)        
-                Content()
+                Content(view)
+                currentView = view
             }
         }
     }
 
     @Composable
-    private fun Content() {
+    private fun Content(view: ComposeViewType) {
         Scaffold(
             modifier = Modifier
                 .fillMaxSize(1f),
@@ -106,7 +113,10 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier
                         .padding(0.dp)
                 ) {
-                    PhotoGrid()
+                    when (view) {
+                        ComposeViewType.PhotoGridView -> PhotoGrid()
+                        ComposeViewType.AlbumGridView -> AlbumGridView()
+                    }
                 }
             }
         }
@@ -165,10 +175,16 @@ class MainActivity : ComponentActivity() {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
+                // photo grid button
                 Box(
                     modifier = Modifier
                         .width(buttonWidth)
-                        .height(buttonHeight),
+                        .height(buttonHeight)
+                        .clickable {
+                            if (currentView != ComposeViewType.PhotoGridView) setContent {
+                                setContentForActivity(ComposeViewType.PhotoGridView)
+                            }
+                        },
                 ) {
                     Row(
                         modifier = Modifier
@@ -197,6 +213,7 @@ class MainActivity : ComponentActivity() {
                     )
                 }
 
+                // locked folder button
                 Box(
                     modifier = Modifier
                         .width(buttonWidth)
@@ -228,10 +245,16 @@ class MainActivity : ComponentActivity() {
                     )
                 }
 
+                // album grid button
                 Box(
                     modifier = Modifier
                         .width(buttonWidth)
-                        .height(buttonHeight),
+                        .height(buttonHeight)
+                        .clickable {
+                            if (currentView != ComposeViewType.AlbumGridView) setContent {
+                                setContentForActivity(ComposeViewType.AlbumGridView)
+                            }
+                        },
                 ) {
                     Row(
                         modifier = Modifier
@@ -259,6 +282,7 @@ class MainActivity : ComponentActivity() {
                     )
                 }
 
+                // search view button
                 Box(
                     modifier = Modifier
                         .width(buttonWidth)
@@ -302,7 +326,7 @@ class MainActivity : ComponentActivity() {
             REQUEST_READ_STORAGE -> {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    setContentForActivity()
+                    setContentForActivity(ComposeViewType.PhotoGridView)
                 } else {
                     Toast.makeText(this, "Storage permission is required", Toast.LENGTH_LONG).show()
                     requestStoragePermission()

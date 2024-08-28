@@ -72,6 +72,11 @@ dependencies {
     implementation("androidx.fragment:fragment-ktx:1.8.2")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")
 
+	val room_version = "2.6.1"
+	
+    implementation("androidx.room:room-runtime:$room_version")
+    annotationProcessor("androidx.room:room-compiler:$room_version")
+
 	testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
@@ -81,4 +86,9 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-test-manifest:1.6.8")
 
     annotationProcessor("com.github.bumptech.glide:compiler:4.14.0")
+    // To use Kotlin annotation processing tool (kapt)
+    // kapt("androidx.room:room-compiler:$room_version")
+    // To use Kotlin Symbol Processing (KSP)
+    // ksp("androidx.room:room-compiler:$room_version")
 }
+

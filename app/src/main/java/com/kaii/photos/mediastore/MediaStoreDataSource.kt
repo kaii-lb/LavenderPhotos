@@ -9,7 +9,6 @@ import android.os.Parcelable
 import android.provider.MediaStore
 import android.provider.MediaStore.Files.FileColumns
 import android.provider.MediaStore.MediaColumns
-import android.text.format.DateFormat.format
 import com.bumptech.glide.util.Preconditions
 import com.bumptech.glide.util.Util
 import com.kaii.photos.helpers.GetDateTakenForMedia
@@ -18,7 +17,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
-import java.io.File
 import java.util.Calendar
 import java.util.Locale
 
