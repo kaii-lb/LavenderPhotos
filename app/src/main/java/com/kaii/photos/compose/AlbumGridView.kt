@@ -1,17 +1,17 @@
 package com.kaii.photos.compose
 
-import androidx.compose.foundation.Image
+import android.graphics.drawable.Drawable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -21,17 +21,27 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.bumptech.glide.RequestBuilder
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideImage
+import com.bumptech.glide.integration.compose.rememberGlidePreloadingData
+import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.kaii.photos.mediastore.MediaStoreData
+import com.kaii.photos.models.album_grid.AlbumsViewModel
+import com.kaii.photos.models.album_grid.AlbumsViewModelFactory
+import java.io.File
 
 @Composable
 fun AlbumGridView() {
@@ -42,7 +52,26 @@ fun AlbumGridView() {
             .background(MaterialTheme.colorScheme.background),
         verticalArrangement = Arrangement.SpaceEvenly,
         horizontalAlignment = Alignment.CenterHorizontally
-    ) {	
+    ) {		
+        val listOfDirs = emptyList<String>().toMutableList()
+		listOfDirs.add("DCIM/Camera")
+		listOfDirs.add("Pictures/Screenshot")
+		listOfDirs.add("Pictures/Whatsapp")
+		listOfDirs.add("Pictures/100PINT/Pins")
+		listOfDirs.add("Movies")
+		listOfDirs.add("Download")
+		listOfDirs.add("Pictures/Instagram")
+        
+        listOfDirs.sortByDescending {
+            File(it).lastModified()
+        }
+
+		val albumsViewModel: AlbumsViewModel = viewModel(
+			factory = AlbumsViewModelFactory(LocalContext.current, listOfDirs.toList())
+		)
+		val mediaStoreData = albumsViewModel.mediaStoreData.collectAsState()			
+		val actualData = mediaStoreData.value
+
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
             modifier = Modifier
@@ -57,19 +86,41 @@ fun AlbumGridView() {
         	}
         	
             items(
-                count = 5
+                count = listOfDirs.size
             ) { index ->
-                AlbumGridItem(
-                	if (index == 0) "Camera" else if (index == 1) "Downloads" else if (index == 2) "Whatsapp Images"
-                		else if (index == 3) "Pins" else "Pictures"
-                )
+                val folder = File("/storage/emulated/0/" + listOfDirs[index])
+				val neededDir = listOfDirs[index]
+
+				if (actualData.isNotEmpty()) {
+					val mediaItem = actualData[neededDir] ?: MediaStoreData()
+
+				    val requestBuilderTransform =
+				        { item: MediaStoreData, requestBuilder: RequestBuilder<Drawable> ->
+				            requestBuilder.load(item.uri).centerCrop()
+				        }
+
+				    val preloadingData =
+				        rememberGlidePreloadingData(
+				            listOf(mediaItem),
+				            Size(50f, 50f),
+				            requestBuilderTransform = requestBuilderTransform,
+				        )
+		           	val (mediaStoreItem, preloadRequestBuilder) = preloadingData[0]
+	                            	
+	                AlbumGridItem(
+	                	folder.name,
+	                	mediaStoreItem,
+	                	preloadRequestBuilder
+	                )
+				}
             }
         }
     }
 }
 
+@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun AlbumGridItem(title: String) {
+fun AlbumGridItem(title: String, item: MediaStoreData, preloadRequestBuilder: RequestBuilder<Drawable>) {
 	Column (
         modifier = Modifier
             .wrapContentHeight()
@@ -88,14 +139,16 @@ fun AlbumGridItem(title: String) {
 	        verticalArrangement = Arrangement.SpaceEvenly,
 	        horizontalAlignment = Alignment.CenterHorizontally
 	    ) {
-	        Image(
-	            painter = painterResource(id = com.kaii.photos.R.drawable.cat_picture),
-	            contentDescription = "Album Cover Image",
-	            contentScale = ContentScale.Crop,
-	            modifier = Modifier
+            GlideImage(
+                model = item.uri,
+                contentDescription = item.displayName,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
 	                .aspectRatio(1f)
 	                .clip(RoundedCornerShape(16.dp))
-	        )
+            ) {
+                it.thumbnail(preloadRequestBuilder).diskCacheStrategy(DiskCacheStrategy.ALL)
+            }	        
 
 	        Text(
 	            text = " $title",

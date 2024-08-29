@@ -5,7 +5,6 @@ import android.database.ContentObserver
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
-import android.os.Parcelable
 import android.provider.MediaStore
 import android.provider.MediaStore.Files.FileColumns
 import android.provider.MediaStore.MediaColumns
@@ -16,18 +15,15 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
-import kotlinx.parcelize.Parcelize
-import java.util.Calendar
-import java.util.Locale
 
 /** Loads metadata from the media store for images and videos. */
-class MediaStoreDataSource
+class AlbumStoreDataSource
 internal constructor(
     private val context: Context,
-    private val neededPath: String,
+    private val multiplePaths: List<String>,
 ) {
     companion object {
-    
+
         private val MEDIA_STORE_FILE_URI = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL)
         private val PROJECTION =
             arrayOf(
@@ -42,12 +38,18 @@ internal constructor(
             )
     }
 
-    fun loadMediaStoreData(): Flow<List<MediaStoreData>> = callbackFlow {
+    fun loadMediaStoreData(): Flow<LinkedHashMap<String, MediaStoreData>> = callbackFlow {
         val contentObserver =
             object : ContentObserver(Handler(Looper.getMainLooper())) {
                 override fun onChange(selfChange: Boolean) {
                     super.onChange(selfChange)
-                    launch { trySend(query()) }
+                    launch {
+                        val returnVal = LinkedHashMap<String, MediaStoreData>()
+                        for (directory in multiplePaths) {
+                            returnVal[directory] = if (query(directory).isNotEmpty()) query(directory)[0] else MediaStoreData()
+                        }
+                        trySend(returnVal)
+                    }
                 }
             }
 
@@ -57,12 +59,16 @@ internal constructor(
             contentObserver
         )
 
-        trySend(query())
+        val returnVal = LinkedHashMap<String, MediaStoreData>()
+        for (directory in multiplePaths) {
+            returnVal[directory] = if (query(directory).isNotEmpty()) query(directory)[0] else MediaStoreData()
+        }
+        trySend(returnVal)
 
         awaitClose { context.contentResolver.unregisterContentObserver(contentObserver) }
     }
 
-    private fun query(): List<MediaStoreData> {
+    private fun query(neededPath: String): List<MediaStoreData> {
         Preconditions.checkArgument(
             Util.isOnBackgroundThread(),
             "Can only query from a background thread"
@@ -72,21 +78,21 @@ internal constructor(
             context.contentResolver.query(
                 MEDIA_STORE_FILE_URI,
                 PROJECTION,
-       			FileColumns.MEDIA_TYPE +
-					" = " +
-					FileColumns.MEDIA_TYPE_IMAGE +
-					" AND " + 
-					FileColumns.RELATIVE_PATH +
-					" LIKE ? " +
-					" OR " +
-					FileColumns.MEDIA_TYPE +
-					" = " +
-					FileColumns.MEDIA_TYPE_VIDEO + 
-					" AND " + 
-					FileColumns.RELATIVE_PATH +
-					" LIKE ? ",
+                FileColumns.MEDIA_TYPE +
+                        " = " +
+                        FileColumns.MEDIA_TYPE_IMAGE +
+                        " AND " +
+                        FileColumns.RELATIVE_PATH +
+                        " LIKE ? " +
+                        " OR " +
+                        FileColumns.MEDIA_TYPE +
+                        " = " +
+                        FileColumns.MEDIA_TYPE_VIDEO +
+                        " AND " +
+                        FileColumns.RELATIVE_PATH +
+                        " LIKE ? ",
                 arrayOf("%$neededPath%", "%$neededPath%"),
-                "${MediaColumns.DATE_TAKEN} DESC"
+                "${MediaColumns.DATE_MODIFIED} DESC"
             ) ?: return data
 
         mediaCursor.use { cursor ->
@@ -99,7 +105,7 @@ internal constructor(
             val displayNameIndex = cursor.getColumnIndexOrThrow(FileColumns.DISPLAY_NAME)
             val dateAddedColumnNum = cursor.getColumnIndexOrThrow(MediaColumns.DATE_ADDED)
 
-            while (cursor.moveToNext()) {
+            if (cursor.moveToFirst()) {
                 val id = cursor.getLong(idColNum)
                 val dateTaken = GetDateTakenForMedia(
                     cursor.getString(absolutePathColNum)
@@ -110,7 +116,7 @@ internal constructor(
                 val displayName = cursor.getString(displayNameIndex)
                 val dateAdded = cursor.getLong(dateAddedColumnNum)
                 val type = if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) Type.IMAGE
-                    else Type.VIDEO
+                else Type.VIDEO
                 data.add(
                     MediaStoreData(
                         type = type,
@@ -127,7 +133,10 @@ internal constructor(
             }
         }
         mediaCursor.close()
-        
+
+		data.sortByDescending {
+			it.dateTaken
+		}
         return data
     }
 }

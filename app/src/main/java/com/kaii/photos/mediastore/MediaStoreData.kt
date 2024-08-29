@@ -9,15 +9,15 @@ import java.util.Locale
 /** A data model containing data for a single media item. */
 @Parcelize
 data class MediaStoreData(
-    val type: Type,
-    var rowId: Long,
-    val uri: Uri,
-    val mimeType: String?,
-    val dateModified: Long,
-    val orientation: Int,
-    val dateTaken: Long,
-    val displayName: String?,
-    val dateAdded: Long,
+    val type: Type = Type.IMAGE,
+    var rowId: Long = 0L,
+    val uri: Uri = Uri.parse(""),
+    val mimeType: String? = "image",
+    val dateModified: Long = 0L,
+    val orientation: Int = 0,
+    val dateTaken: Long = 0L,
+    val displayName: String? = "",
+    val dateAdded: Long = 0L,
 
     var gridPosition: Int = 0
 ) : Parcelable {
@@ -55,5 +55,6 @@ enum class Type {
     VIDEO,
     IMAGE,
     SECTION,
-    FOLDER
+    FOLDER,
+    ImageOrVideo
 }

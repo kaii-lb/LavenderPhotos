@@ -22,8 +22,8 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
-class GalleryViewModel(context: Context) : ViewModel() {
-    private val mediaStoreDataSource = MediaStoreDataSource(context)
+class GalleryViewModel(context: Context, path: String) : ViewModel() {
+    private val mediaStoreDataSource = MediaStoreDataSource(context, path)
 
     private val _uiState: MutableStateFlow<List<MediaStoreData>> = MutableStateFlow(emptyList())
     val mediaStoreData: StateFlow<List<MediaStoreData>> = _uiState.asStateFlow()

@@ -14,9 +14,9 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.SizeTransform
-import androidx.compose.animation.with
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.graphics.ExperimentalAnimationGraphicsApi
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -47,21 +47,19 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.bumptech.glide.Glide
 import com.bumptech.glide.MemoryCategory
-import com.kaii.photos.compose.AlbumGridItem
 import com.kaii.photos.compose.AlbumGridView
 import com.kaii.photos.compose.PhotoGrid
 import com.kaii.photos.helpers.ComposeViewType
@@ -111,7 +109,7 @@ class MainActivity : ComponentActivity() {
 	@OptIn(ExperimentalAnimationApi::class)
     @Composable
     private fun Content() {
-    	var currentView = remember { mutableStateOf(ComposeViewType.PhotoGridView) }
+    	val currentView = remember { mutableStateOf(ComposeViewType.PhotoGridView) }
 
         Scaffold(
             modifier = Modifier
@@ -133,17 +131,18 @@ class MainActivity : ComponentActivity() {
                 		targetState = currentView.value,
                 		transitionSpec = {
                 			if (targetState.index > initialState.index ) {
-	                			slideInVertically { height -> height } + fadeIn() with 
-	                				slideOutVertically { height -> -height } + fadeOut()
+                                (slideInVertically { height -> height } + fadeIn()).togetherWith(
+                                    slideOutVertically { height -> -height } + fadeOut())
                 			} else {
-	                			slideInVertically { height -> -height } + fadeIn() with 
-	                				slideOutVertically { height -> height } + fadeOut()
+                                (slideInVertically { height -> -height } + fadeIn()).togetherWith(
+                                    slideOutVertically { height -> height } + fadeOut())
                 			}.using(
                 				SizeTransform(clip = false)
                 			)
-                		}	
-                	) {
-	                    when (currentView.value) {
+                		},
+                        label = "MainAnimatedContentView"
+                    ) { stateValue ->
+	                    when (stateValue) {
 	                        ComposeViewType.PhotoGridView -> PhotoGrid()
 	                        ComposeViewType.LockedFolder -> PhotoGrid()
 	                        ComposeViewType.AlbumGridView -> AlbumGridView()
@@ -189,7 +188,6 @@ class MainActivity : ComponentActivity() {
         )
     }
 
-    @Preview
     @Composable
     private fun BottomBar(currentView: MutableState<ComposeViewType>) {
         BottomAppBar(
@@ -216,9 +214,9 @@ class MainActivity : ComponentActivity() {
             	var albumGridColor by remember { mutableStateOf(unselectedColor) }
             	var searchPageColor by remember { mutableStateOf(unselectedColor) }
 				// for the love of god find a better way
-            	var photoGridIcon by remember { mutableStateOf(R.drawable.photogrid_filled) }
-            	var lockedFolderIcon by remember { mutableStateOf(R.drawable.locked_folder) }
-            	var albumGridIcon by remember { mutableStateOf(R.drawable.albums) }
+            	var photoGridIcon by remember { mutableIntStateOf(R.drawable.photogrid_filled) }
+            	var lockedFolderIcon by remember { mutableIntStateOf(R.drawable.locked_folder) }
+            	var albumGridIcon by remember { mutableIntStateOf(R.drawable.albums) }
 
                 // photo grid button
                 Box(
@@ -334,7 +332,7 @@ class MainActivity : ComponentActivity() {
                           		photoGridIcon = R.drawable.photogrid
                             	lockedFolderIcon = R.drawable.locked_folder
                             	albumGridIcon = R.drawable.albums_filled
-                            }                        	
+                            }
                         },
                 ) {
                     Row(

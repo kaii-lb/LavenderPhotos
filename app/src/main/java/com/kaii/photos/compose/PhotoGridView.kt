@@ -48,7 +48,7 @@ private fun MediaStoreData.signature() = MediaStoreSignature(mimeType, dateModif
 @Composable
 fun PhotoGrid() {
 	val galleryViewModel: GalleryViewModel = viewModel(
-		factory = GalleryViewModelFactory(LocalContext.current.applicationContext)
+		factory = GalleryViewModelFactory(LocalContext.current.applicationContext, "DCIM")
 	)
 	val mediaStoreData = galleryViewModel.mediaStoreData.collectAsState()
 
