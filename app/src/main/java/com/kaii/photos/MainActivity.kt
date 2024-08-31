@@ -138,7 +138,7 @@ class MainActivity : ComponentActivity() {
                     	enableEdgeToEdge(
                    			navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.2f).toArgb())
                    		)
-                    	SinglePhotoView(navController)
+                    	SinglePhotoView(navController, window)
                     }
                 }
             }
