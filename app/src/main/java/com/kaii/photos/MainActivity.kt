@@ -9,13 +9,12 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.SystemBarStyle
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.graphics.ExperimentalAnimationGraphicsApi
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -56,26 +55,46 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.room.Room
 import com.bumptech.glide.Glide
 import com.bumptech.glide.MemoryCategory
 import com.kaii.photos.compose.AlbumGridView
 import com.kaii.photos.compose.PhotoGrid
-import com.kaii.photos.helpers.ComposeViewType
+import com.kaii.photos.compose.SinglePhotoView
+import com.kaii.photos.database.MediaDatabase
+import com.kaii.photos.helpers.MainScreenViewType
+import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.models.main_activity.MainDataSharingModel
+import com.kaii.photos.models.main_activity.MainDataSharingModelFactory
 import com.kaii.photos.ui.theme.PhotosTheme
 
 class MainActivity : ComponentActivity() {
-
     companion object {
         private const val REQUEST_READ_STORAGE = 0
         private val PERMISSIONS_REQUEST =
             arrayOf(Manifest.permission.READ_MEDIA_IMAGES, Manifest.permission.READ_MEDIA_VIDEO)
+
+        lateinit var applicationDatabase: MediaDatabase
+        lateinit var mainViewModel: MainDataSharingModel
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
+        val mediaDatabase = Room.databaseBuilder(
+            applicationContext,
+            MediaDatabase::class.java,
+            "media-database"
+        ).build()
+        applicationDatabase = mediaDatabase
+
         Glide.get(this).setMemoryCategory(MemoryCategory.HIGH)
         if (PERMISSIONS_REQUEST.any {
                 ContextCompat.checkSelfPermission(
@@ -98,18 +117,37 @@ class MainActivity : ComponentActivity() {
     private fun setContentForActivity() {
         setContent {
             PhotosTheme {
-				enableEdgeToEdge(
-					navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb())
-				)        
-                Content()
+                mainViewModel = viewModel(
+                    factory = MainDataSharingModelFactory()
+                )
+
+                val navController = rememberNavController()
+                NavHost (
+                    navController = navController,
+                    startDestination = MultiScreenViewType.MainScreen.name,
+                    modifier = Modifier.fillMaxSize(1f)
+                ) {
+                    composable(MultiScreenViewType.MainScreen.name) {
+						enableEdgeToEdge(
+							navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb())
+						)
+                        Content(navController)
+                    }
+
+                    composable(MultiScreenViewType.SinglePhotoView.name) {
+                    	enableEdgeToEdge(
+                   			navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.2f).toArgb())
+                   		)
+                    	SinglePhotoView(navController)
+                    }
+                }
             }
         }
     }
 
-	@OptIn(ExperimentalAnimationApi::class)
     @Composable
-    private fun Content() {
-    	val currentView = remember { mutableStateOf(ComposeViewType.PhotoGridView) }
+    private fun Content(navController: NavHostController) {
+    	val currentView = remember { mutableStateOf(MainScreenViewType.PhotoGridView) }
 
         Scaffold(
             modifier = Modifier
@@ -131,11 +169,11 @@ class MainActivity : ComponentActivity() {
                 		targetState = currentView.value,
                 		transitionSpec = {
                 			if (targetState.index > initialState.index ) {
-                                (slideInVertically { height -> height } + fadeIn()).togetherWith(
-                                    slideOutVertically { height -> -height } + fadeOut())
+                                (slideInHorizontally { height -> height } + fadeIn()).togetherWith(
+                                    slideOutHorizontally { height -> -height } + fadeOut())
                 			} else {
-                                (slideInVertically { height -> -height } + fadeIn()).togetherWith(
-                                    slideOutVertically { height -> height } + fadeOut())
+                                (slideInHorizontally { height -> -height } + fadeIn()).togetherWith(
+                                    slideOutHorizontally { height -> height } + fadeOut())
                 			}.using(
                 				SizeTransform(clip = false)
                 			)
@@ -143,10 +181,10 @@ class MainActivity : ComponentActivity() {
                         label = "MainAnimatedContentView"
                     ) { stateValue ->
 	                    when (stateValue) {
-	                        ComposeViewType.PhotoGridView -> PhotoGrid()
-	                        ComposeViewType.LockedFolder -> PhotoGrid()
-	                        ComposeViewType.AlbumGridView -> AlbumGridView()
-   	                        ComposeViewType.SearchPage -> AlbumGridView()
+	                        MainScreenViewType.PhotoGridView -> PhotoGrid(navController)
+	                        MainScreenViewType.LockedFolder -> PhotoGrid(navController)
+	                        MainScreenViewType.AlbumGridView -> AlbumGridView()
+   	                        MainScreenViewType.SearchPage -> AlbumGridView()
 	                    }
                 	}
                 }
@@ -189,7 +227,7 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun BottomBar(currentView: MutableState<ComposeViewType>) {
+    private fun BottomBar(currentView: MutableState<MainScreenViewType>) {
         BottomAppBar(
             containerColor = MaterialTheme.colorScheme.surfaceContainer,
             contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -225,18 +263,18 @@ class MainActivity : ComponentActivity() {
                         .height(buttonHeight)
                         .clip(RoundedCornerShape(16.dp))
                         .clickable {
-                            if (currentView.value != ComposeViewType.PhotoGridView){
-                            	currentView.value = ComposeViewType.PhotoGridView
+                            if (currentView.value != MainScreenViewType.PhotoGridView) {
+                                currentView.value = MainScreenViewType.PhotoGridView
 
-                            	photoGridColor = selectedColor
-                            	lockedFolderColor = unselectedColor
-                            	albumGridColor = unselectedColor
-                            	searchPageColor = unselectedColor	
+                                photoGridColor = selectedColor
+                                lockedFolderColor = unselectedColor
+                                albumGridColor = unselectedColor
+                                searchPageColor = unselectedColor
 
-                            	photoGridIcon = R.drawable.photogrid_filled
-                            	lockedFolderIcon = R.drawable.locked_folder
-                            	albumGridIcon = R.drawable.albums
-                            } 
+                                photoGridIcon = R.drawable.photogrid_filled
+                                lockedFolderIcon = R.drawable.locked_folder
+                                albumGridIcon = R.drawable.albums
+                            }
                         },
                 ) {
                     Row(
@@ -245,7 +283,7 @@ class MainActivity : ComponentActivity() {
                             .width(iconSize * 2.25f)
                             .align(Alignment.TopCenter)
                             .clip(RoundedCornerShape(1000.dp))
-							.background(photoGridColor),
+                            .background(photoGridColor),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
                     ) {
@@ -273,18 +311,18 @@ class MainActivity : ComponentActivity() {
                         .height(buttonHeight)
                         .clip(RoundedCornerShape(16.dp))
                         .clickable {
-                            if (currentView.value != ComposeViewType.LockedFolder){
-                            	currentView.value = ComposeViewType.LockedFolder
+                            if (currentView.value != MainScreenViewType.LockedFolder) {
+                                currentView.value = MainScreenViewType.LockedFolder
 
-                            	photoGridColor = unselectedColor
-                            	lockedFolderColor = selectedColor
-                            	albumGridColor = unselectedColor
-                            	searchPageColor = unselectedColor	
+                                photoGridColor = unselectedColor
+                                lockedFolderColor = selectedColor
+                                albumGridColor = unselectedColor
+                                searchPageColor = unselectedColor
 
-                            	photoGridIcon = R.drawable.photogrid
-                            	lockedFolderIcon = R.drawable.locked_folder_filled
-                            	albumGridIcon = R.drawable.albums
-                            }                        	
+                                photoGridIcon = R.drawable.photogrid
+                                lockedFolderIcon = R.drawable.locked_folder_filled
+                                albumGridIcon = R.drawable.albums
+                            }
                         },
                 ) {
                     Row(
@@ -321,17 +359,17 @@ class MainActivity : ComponentActivity() {
                         .height(buttonHeight)
                         .clip(RoundedCornerShape(16.dp))
                         .clickable {
-                            if (currentView.value != ComposeViewType.AlbumGridView){
-                            	currentView.value = ComposeViewType.AlbumGridView
+                            if (currentView.value != MainScreenViewType.AlbumGridView) {
+                                currentView.value = MainScreenViewType.AlbumGridView
 
-                            	photoGridColor = unselectedColor
-                            	lockedFolderColor = unselectedColor
-                            	albumGridColor = selectedColor
-                            	searchPageColor = unselectedColor
+                                photoGridColor = unselectedColor
+                                lockedFolderColor = unselectedColor
+                                albumGridColor = selectedColor
+                                searchPageColor = unselectedColor
 
-                          		photoGridIcon = R.drawable.photogrid
-                            	lockedFolderIcon = R.drawable.locked_folder
-                            	albumGridIcon = R.drawable.albums_filled
+                                photoGridIcon = R.drawable.photogrid
+                                lockedFolderIcon = R.drawable.locked_folder
+                                albumGridIcon = R.drawable.albums_filled
                             }
                         },
                 ) {
@@ -369,18 +407,18 @@ class MainActivity : ComponentActivity() {
                         .height(buttonHeight)
                         .clip(RoundedCornerShape(16.dp))
                         .clickable {
-                            if (currentView.value != ComposeViewType.SearchPage){
-                            	currentView.value = ComposeViewType.SearchPage
+                            if (currentView.value != MainScreenViewType.SearchPage) {
+                                currentView.value = MainScreenViewType.SearchPage
 
-                            	photoGridColor = unselectedColor
-                            	lockedFolderColor = unselectedColor
-                            	albumGridColor = unselectedColor
-                            	searchPageColor = selectedColor	
+                                photoGridColor = unselectedColor
+                                lockedFolderColor = unselectedColor
+                                albumGridColor = unselectedColor
+                                searchPageColor = selectedColor
 
-                            	photoGridIcon = R.drawable.photogrid
-                            	lockedFolderIcon = R.drawable.locked_folder
-                            	albumGridIcon = R.drawable.albums                          	
-                            }                        	
+                                photoGridIcon = R.drawable.photogrid
+                                lockedFolderIcon = R.drawable.locked_folder
+                                albumGridIcon = R.drawable.albums
+                            }
                         },
                 ) {
                     Row(

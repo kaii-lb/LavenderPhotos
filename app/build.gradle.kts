@@ -2,6 +2,8 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.parcelize")
+    // id("org.jetbrains.kotlin.kapt")
+    id("com.google.devtools.ksp")
 }
 
 android {
@@ -18,6 +20,10 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
+        }
+
+        ksp {
+       		arg("room.schemaLocation", "$projectDir/schemas")
         }
     }
 
@@ -73,8 +79,9 @@ dependencies {
     implementation("androidx.activity:activity-ktx:1.9.1")
     implementation("androidx.fragment:fragment-ktx:1.8.2")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")
+    implementation(libs.androidx.navigation.compose)
 
-	val room_version = "2.6.1"
+    val room_version = "2.6.1"
 	
     implementation("androidx.room:room-runtime:$room_version")
     annotationProcessor("androidx.room:room-compiler:$room_version")
@@ -87,10 +94,7 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling:1.6.8")
     debugImplementation("androidx.compose.ui:ui-test-manifest:1.6.8")
 
-    annotationProcessor("com.github.bumptech.glide:compiler:4.14.0")
-    // To use Kotlin annotation processing tool (kapt)
-    // kapt("androidx.room:room-compiler:$room_version")
-    // To use Kotlin Symbol Processing (KSP)
-    // ksp("androidx.room:room-compiler:$room_version")
+    ksp("com.github.bumptech.glide:compiler:4.14.0")
+    ksp("androidx.room:room-compiler:$room_version")
 }
 

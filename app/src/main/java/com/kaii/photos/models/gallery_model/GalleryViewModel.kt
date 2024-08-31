@@ -1,13 +1,12 @@
-package com.kaii.photos.gallery_model
+package com.kaii.photos.models.gallery_model
 
 import android.content.Context
 import android.net.Uri
-import android.text.format.DateFormat.format
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaStoreDataSource
-import com.kaii.photos.mediastore.Type
+import com.kaii.photos.mediastore.MediaType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,9 +16,7 @@ import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.Locale
 import java.time.Instant
-import java.time.LocalDateTime
 import java.time.ZoneId
-import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
 class GalleryViewModel(context: Context, path: String) : ViewModel() {
@@ -84,7 +81,7 @@ fun groupPhotosBy(media: List<MediaStoreData>, sortDescending: Boolean = true, b
                 "Yesterday"
             }
             else -> {
-            	println("TRYING TO FORMAT DATE WITH KEY $key")
+            	// println("TRYING TO FORMAT DATE WITH KEY $key")
                 formatDate(key, true)
             }
         }
@@ -113,7 +110,7 @@ private fun formatDate(timestamp: Long, showDay: Boolean): String {
 
 private fun listSection(title: String, key: Long): MediaStoreData {
     val mediaSection = MediaStoreData(
-        type = Type.SECTION,
+        type = MediaType.Section,
         dateModified = key,
         dateTaken = key,
         uri = Uri.parse(key.toString()),

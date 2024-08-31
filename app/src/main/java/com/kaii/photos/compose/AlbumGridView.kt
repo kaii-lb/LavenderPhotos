@@ -3,6 +3,7 @@ package com.kaii.photos.compose
 import android.graphics.drawable.Drawable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,15 +12,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
@@ -28,6 +33,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
@@ -41,6 +47,7 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.models.album_grid.AlbumsViewModel
 import com.kaii.photos.models.album_grid.AlbumsViewModelFactory
+import com.kaii.photos.R
 import java.io.File
 
 @Composable
@@ -175,38 +182,72 @@ fun CategoryList() {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
-        Button(
+        OutlinedButton(
             onClick = { /*TODO*/ },
             modifier = Modifier
                 .weight(1f)
                 .height(48.dp)
         ) {
-            Text(
-            	text = "Favorites",
-         	fontSize = TextUnit(18f, TextUnitType.Sp),
-         	textAlign = TextAlign.Start,
-         	color = MaterialTheme.colorScheme.onPrimary,           	
-         	modifier = Modifier
-         		.fillMaxWidth(1f)
-           	)
+        	Row (
+        		modifier = Modifier.fillMaxWidth(1f),
+        		verticalAlignment = Alignment.CenterVertically,
+   		        horizontalArrangement = Arrangement.SpaceEvenly		
+        	) {
+        		Icon (
+        			painter = painterResource(id = R.drawable.favorite),
+					contentDescription = "Favorites Button",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                    	.size(22.dp)   
+                    	.padding(0.dp, 2.dp, 0.dp, 0.dp)     			
+        		)
+
+				Spacer (
+					modifier = Modifier
+						.width(8.dp)
+				)
+        		
+	            Text(
+	            	text = "Favorites",
+		         	fontSize = TextUnit(16f, TextUnitType.Sp),                
+		          	textAlign = TextAlign.Center,
+		         	color = MaterialTheme.colorScheme.onBackground,
+		         	modifier = Modifier
+		         		.fillMaxWidth(1f)
+	           	)
+        	}
         }
 
         Spacer(modifier = Modifier.width(8.dp))
 
-        Button(
+        OutlinedButton(
             onClick = { /*TODO*/ },
             modifier = Modifier
                 .weight(1f)
                 .height(48.dp)
         ) {
-            Text(
-            	text = "Trash",
-	         	fontSize = TextUnit(18f, TextUnitType.Sp),                
-	          	textAlign = TextAlign.Start,
-	         	color = MaterialTheme.colorScheme.onPrimary,
-	         	modifier = Modifier
-	         		.fillMaxWidth(1f)
-           	)
+        	Row (
+        		modifier = Modifier.fillMaxWidth(1f),
+        		verticalAlignment = Alignment.CenterVertically,
+   		        horizontalArrangement = Arrangement.SpaceEvenly		
+        	) {
+        		Icon (
+        			painter = painterResource(id = R.drawable.trash),
+					contentDescription = "Trash Button",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                    	.size(20.dp)        			
+        		)
+
+	            Text(
+	            	text = "Trash ",
+		         	fontSize = TextUnit(16f, TextUnitType.Sp),                
+		          	textAlign = TextAlign.Center,
+		         	color = MaterialTheme.colorScheme.onBackground,
+		         	modifier = Modifier
+		         		.fillMaxWidth(1f)
+	           	)
+        	}
         }
     }	
 }

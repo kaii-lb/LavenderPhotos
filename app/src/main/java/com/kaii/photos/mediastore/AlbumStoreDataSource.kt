@@ -115,8 +115,8 @@ internal constructor(
                 val orientation = cursor.getInt(orientationColNum)
                 val displayName = cursor.getString(displayNameIndex)
                 val dateAdded = cursor.getLong(dateAddedColumnNum)
-                val type = if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) Type.IMAGE
-                else Type.VIDEO
+                val type = if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) MediaType.Image
+                else MediaType.Video
                 data.add(
                     MediaStoreData(
                         type = type,

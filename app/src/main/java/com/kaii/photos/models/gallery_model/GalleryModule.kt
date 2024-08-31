@@ -1,4 +1,4 @@
-package com.kaii.photos.gallery_model
+package com.kaii.photos.models.gallery_model
 
 import android.content.Context
 import com.bumptech.glide.GlideBuilder

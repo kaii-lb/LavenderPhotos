@@ -5,20 +5,19 @@ import android.database.ContentObserver
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
-import android.os.Parcelable
 import android.provider.MediaStore
 import android.provider.MediaStore.Files.FileColumns
 import android.provider.MediaStore.MediaColumns
+import android.util.Log
 import com.bumptech.glide.util.Preconditions
 import com.bumptech.glide.util.Util
+import com.kaii.photos.MainActivity
+import com.kaii.photos.database.entities.MediaEntity
 import com.kaii.photos.helpers.GetDateTakenForMedia
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
-import kotlinx.parcelize.Parcelize
-import java.util.Calendar
-import java.util.Locale
 
 /** Loads metadata from the media store for images and videos. */
 class MediaStoreDataSource
@@ -27,7 +26,7 @@ internal constructor(
     private val neededPath: String,
 ) {
     companion object {
-    
+        private const val TAG = "MEDIA_STORE_DATA_SOURCE"
         private val MEDIA_STORE_FILE_URI = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL)
         private val PROJECTION =
             arrayOf(
@@ -63,6 +62,9 @@ internal constructor(
     }
 
     private fun query(): List<MediaStoreData> {
+        val database = MainActivity.applicationDatabase
+        val mediaEntityDao = database.mediaEntityDao()
+
         Preconditions.checkArgument(
             Util.isOnBackgroundThread(),
             "Can only query from a background thread"
@@ -101,16 +103,35 @@ internal constructor(
 
             while (cursor.moveToNext()) {
                 val id = cursor.getLong(idColNum)
-                val dateTaken = GetDateTakenForMedia(
-                    cursor.getString(absolutePathColNum)
-                )
                 val mimeType = cursor.getString(mimeTypeColNum)
+
+                val uri = Uri.withAppendedPath(MEDIA_STORE_FILE_URI, id.toString())
+                val possibleDateTaken = mediaEntityDao.getDateTaken(uri.toString())
+                val dateTaken = if (possibleDateTaken != 0L) {
+                    // Log.d(TAG, "date taken from database is $possibleDateTaken")
+                    possibleDateTaken
+                } else {
+                    val taken = GetDateTakenForMedia(
+                        cursor.getString(absolutePathColNum)
+                    )
+                    mediaEntityDao.insertEntity(
+                        MediaEntity(
+                            uri = uri.toString(),
+                            mimeType = mimeType,
+                            dateTaken = taken
+                        )
+                    )
+                    Log.d(TAG, "date taken was not found in database, inserting $taken")
+                    taken
+                }
+
                 val dateModified = cursor.getLong(dateModifiedColNum)
                 val orientation = cursor.getInt(orientationColNum)
                 val displayName = cursor.getString(displayNameIndex)
                 val dateAdded = cursor.getLong(dateAddedColumnNum)
-                val type = if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) Type.IMAGE
-                    else Type.VIDEO
+                val absolutePath = cursor.getString(absolutePathColNum)
+                val type = if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) MediaType.Image
+                    else MediaType.Video
                 data.add(
                     MediaStoreData(
                         type = type,
@@ -122,6 +143,7 @@ internal constructor(
                         dateTaken = dateTaken,
                         displayName = displayName,
                         dateAdded = dateAdded,
+                        absolutePath = absolutePath
                     )
                 )
             }

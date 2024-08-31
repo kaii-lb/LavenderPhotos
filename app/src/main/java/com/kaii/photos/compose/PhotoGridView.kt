@@ -2,43 +2,54 @@ package com.kaii.photos.compose
 
 import android.graphics.drawable.Drawable
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.rememberGlidePreloadingData
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.signature.MediaStoreSignature
-import com.kaii.photos.gallery_model.GalleryViewModel
-import com.kaii.photos.gallery_model.GalleryViewModelFactory
-import com.kaii.photos.gallery_model.groupPhotosBy
+import com.kaii.photos.models.gallery_model.GalleryViewModel
+import com.kaii.photos.models.gallery_model.GalleryViewModelFactory
+import com.kaii.photos.models.gallery_model.groupPhotosBy
 import com.kaii.photos.mediastore.MediaStoreData
-import com.kaii.photos.mediastore.Type
+import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.R
+import com.kaii.photos.models.main_activity.MainDataSharingModel
+import com.kaii.photos.MainActivity
 
 private const val THUMBNAIL_DIMENSION = 50
 private val THUMBNAIL_SIZE = Size(THUMBNAIL_DIMENSION.toFloat(), THUMBNAIL_DIMENSION.toFloat())
@@ -46,17 +57,24 @@ private val THUMBNAIL_SIZE = Size(THUMBNAIL_DIMENSION.toFloat(), THUMBNAIL_DIMEN
 private fun MediaStoreData.signature() = MediaStoreSignature(mimeType, dateModified, orientation)
 
 @Composable
-fun PhotoGrid() {
+fun PhotoGrid(navController: NavHostController) {
 	val galleryViewModel: GalleryViewModel = viewModel(
-		factory = GalleryViewModelFactory(LocalContext.current.applicationContext, "DCIM")
+		factory = GalleryViewModelFactory(LocalContext.current.applicationContext, "Pictures/Screenshot")
 	)
 	val mediaStoreData = galleryViewModel.mediaStoreData.collectAsState()
 
-	DeviceMedia(mediaStoreData.value)
+    val mainViewModel = MainActivity.mainViewModel
+
+	DeviceMedia(mediaStoreData.value, navController, mainViewModel)
 }
 
+@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun DeviceMedia(mediaStoreData: List<MediaStoreData>) {
+fun DeviceMedia(
+    mediaStoreData: List<MediaStoreData>,
+    navController: NavHostController,
+    mainViewModel: MainDataSharingModel
+) {
     val groupedMedia = groupPhotosBy(mediaStoreData, true)
 
     val requestBuilderTransform =
@@ -71,9 +89,12 @@ fun DeviceMedia(mediaStoreData: List<MediaStoreData>) {
             requestBuilderTransform = requestBuilderTransform,
         )
 
+    val gridState = rememberLazyGridState()
+
     LazyVerticalGrid(
         columns = GridCells.Fixed(3),
-        modifier = Modifier.fillMaxSize(1f)
+        modifier = Modifier.fillMaxSize(1f),
+        state = gridState
     ) {
         items(
             count = preloadingData.size,
@@ -83,7 +104,7 @@ fun DeviceMedia(mediaStoreData: List<MediaStoreData>) {
             },
             span = { index ->
                 val item = groupedMedia[index]
-                if (item.type == Type.SECTION) {
+                if (item.type == MediaType.Section) {
                     GridItemSpan(maxLineSpan)
                 } else {
                     GridItemSpan(1)
@@ -92,8 +113,11 @@ fun DeviceMedia(mediaStoreData: List<MediaStoreData>) {
         ) { i ->
             val (mediaStoreItem, preloadRequestBuilder) = preloadingData[i]
 
-            MediaStoreItem(mediaStoreItem,
+            MediaStoreItem(
+            	mediaStoreItem,
                 preloadRequestBuilder,
+                navController,
+                mainViewModel
             )
         }
     }
@@ -104,8 +128,10 @@ fun DeviceMedia(mediaStoreData: List<MediaStoreData>) {
 fun MediaStoreItem(
     item: MediaStoreData,
     preloadRequestBuilder: RequestBuilder<Drawable>,
+    navController: NavHostController,
+    mainViewModel: MainDataSharingModel
 ) {
-    if (item.mimeType == null && item.type == Type.SECTION) {
+    if (item.mimeType == null && item.type == MediaType.Section) {
         Row(
             modifier = Modifier
                 .fillMaxWidth(1f)
@@ -123,33 +149,38 @@ fun MediaStoreItem(
             )
         }
     } else {
-        Column(
+        Box (
             modifier = Modifier
                 .aspectRatio(1f)
                 .padding(2.dp)
                 .clip(RoundedCornerShape(0.dp))
-                .background(MaterialTheme.colorScheme.primary),
-            verticalArrangement = Arrangement.SpaceEvenly,
-            horizontalAlignment = Alignment.CenterHorizontally
+                .background(MaterialTheme.colorScheme.primary)
+                .clickable {
+                    mainViewModel.setSelectedMediaUri(item)
+                    navController.navigate(MultiScreenViewType.SinglePhotoView.name)
+                },
         ) {
-        	if (item.type == Type.VIDEO) {
-        		Text (
-        			text = "this is a video",
-        			maxLines = 1,
-        			fontSize = TextUnit(12f, TextUnitType.Sp),
-        			color = MaterialTheme.colorScheme.onPrimary
-       			)
-        	}
-
             GlideImage(
                 model = item.uri,
                 contentDescription = item.displayName,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .fillMaxSize(1f),
+                    .fillMaxSize(1f)
+                    .align(Alignment.Center),
             ) {
                 it.thumbnail(preloadRequestBuilder).signature(item.signature()).diskCacheStrategy(DiskCacheStrategy.ALL)
             }
+
+			if (item.type == MediaType.Video) {
+        		Icon (
+        			painter = painterResource(id = R.drawable.play_arrow),
+					contentDescription = "file is video indicator",
+                    tint = Color.White,
+                    modifier = Modifier
+                        .size(24.dp)
+                        .align(Alignment.TopEnd)
+        		)
+        	}            
         }
     }
 
