@@ -1,20 +1,29 @@
 package com.kaii.photos.models.main_activity
 
-import android.app.Application
-import android.content.Context
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.asFlow
 import com.kaii.photos.mediastore.MediaStoreData
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.MainScreenViewType
 
 class MainDataSharingModel() : ViewModel() {
-	private val _selectedMediaUri = MutableStateFlow<MediaStoreData?>(null)
-    val selectedMediaUri: Flow<MediaStoreData?> = _selectedMediaUri.asStateFlow()
+    companion object {
+        const val IGNORE_THIS_PATH = "com.kaii.photos.please_ignore_this_path"
+    }
 
-    fun setSelectedMediaUri(newMediaStoreData: MediaStoreData?) {
-        _selectedMediaUri.value = newMediaStoreData
+	private val _selectedMedia = MutableStateFlow<MediaStoreData?>(null)
+    val selectedMediaData: Flow<MediaStoreData?> = _selectedMedia.asStateFlow()
+
+    private val _selectedAlbumDir = MutableStateFlow<String?>(null)
+    val selectedAlbumDir: Flow<String?> = _selectedAlbumDir.asStateFlow()
+
+    fun setSelectedMediaData(newMediaStoreData: MediaStoreData?) {
+        _selectedMedia.value = newMediaStoreData
+    }
+
+    fun setSelectedAlbumDir(newAlbumDir: String?) {
+        _selectedAlbumDir.value = newAlbumDir
     }
 }

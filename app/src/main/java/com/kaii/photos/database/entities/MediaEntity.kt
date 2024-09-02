@@ -6,7 +6,7 @@ import androidx.room.PrimaryKey
 
 @Entity
 data class MediaEntity (
-    @PrimaryKey val uri: String,
+    @PrimaryKey val id: Long,
     @ColumnInfo(name = "date_taken") val dateTaken: Long,
     @ColumnInfo(name = "mime_type") val mimeType: String
 )

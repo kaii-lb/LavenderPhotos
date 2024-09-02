@@ -8,11 +8,11 @@ import com.kaii.photos.database.entities.MediaEntity
 
 @Dao
 interface MediaEntityDao {
-    @Query("SELECT * FROM mediaentity WHERE uri LIKE :uri")
-    fun getFromUri(uri: String) : MediaEntity
+    @Query("SELECT * FROM mediaentity WHERE id LIKE :id")
+    fun getFromUri(id: Long) : MediaEntity
 
-    @Query("SELECT date_taken FROM mediaentity WHERE uri LIKE :uri")
-    fun getDateTaken(uri: String) : Long
+    @Query("SELECT date_taken FROM mediaentity WHERE id = :id")
+    fun getDateTaken(id: Long) : Long
 
     @Insert
     fun insertEntity(vararg entity: MediaEntity)

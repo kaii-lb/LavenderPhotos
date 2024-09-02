@@ -1,8 +1,10 @@
 package com.kaii.photos.compose
 
 import android.graphics.drawable.Drawable
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -11,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.height	
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -19,13 +22,20 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.Icon
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -50,6 +60,7 @@ import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.R
 import com.kaii.photos.models.main_activity.MainDataSharingModel
 import com.kaii.photos.MainActivity
+import java.time.LocalTime
 
 private const val THUMBNAIL_DIMENSION = 50
 private val THUMBNAIL_SIZE = Size(THUMBNAIL_DIMENSION.toFloat(), THUMBNAIL_DIMENSION.toFloat())
@@ -57,18 +68,17 @@ private val THUMBNAIL_SIZE = Size(THUMBNAIL_DIMENSION.toFloat(), THUMBNAIL_DIMEN
 private fun MediaStoreData.signature() = MediaStoreSignature(mimeType, dateModified, orientation)
 
 @Composable
-fun PhotoGrid(navController: NavHostController) {
+fun PhotoGrid(navController: NavHostController, path: String) {
 	val galleryViewModel: GalleryViewModel = viewModel(
-		factory = GalleryViewModelFactory(LocalContext.current.applicationContext, "Pictures/Screenshot")
+		factory = GalleryViewModelFactory(LocalContext.current.applicationContext, path)
 	)
 	val mediaStoreData = galleryViewModel.mediaStoreData.collectAsState()
 
     val mainViewModel = MainActivity.mainViewModel
 
-	DeviceMedia(mediaStoreData.value, navController, mainViewModel)
+    DeviceMedia(mediaStoreData.value, navController, mainViewModel)
 }
 
-@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun DeviceMedia(
     mediaStoreData: List<MediaStoreData>,
@@ -91,11 +101,41 @@ fun DeviceMedia(
 
     val gridState = rememberLazyGridState()
 
+	var showLoadingSpinner by remember { mutableStateOf(true) }
+
+	if (showLoadingSpinner) {
+		println("SPINNING STARTED AT ${LocalTime.now()}")
+		Row (
+			modifier = Modifier
+				.fillMaxWidth(1f)
+				.height(48.dp),
+			verticalAlignment = Alignment.CenterVertically,
+			horizontalArrangement = Arrangement.Center
+		) {
+			Row (
+				modifier = Modifier
+					.size(40.dp)	
+					.clip(RoundedCornerShape(1000.dp))
+					.background(MaterialTheme.colorScheme.surfaceContainer),
+				verticalAlignment = Alignment.CenterVertically,
+				horizontalArrangement = Arrangement.Center
+			) {
+				CircularProgressIndicator(
+					modifier = Modifier
+						.size(28.dp),
+					color = MaterialTheme.colorScheme.primary,
+					strokeWidth = 4.dp,
+					strokeCap = StrokeCap.Round
+				)
+			}
+		}
+	}
+	
     LazyVerticalGrid(
         columns = GridCells.Fixed(3),
         modifier = Modifier.fillMaxSize(1f),
         state = gridState
-    ) {
+    ) {	
         items(
             count = preloadingData.size,
             key = {
@@ -119,11 +159,16 @@ fun DeviceMedia(
                 navController,
                 mainViewModel
             )
+
+            if (i >= 0) {
+            	showLoadingSpinner = false	
+            	println("SPINNING ENDED AT ${LocalTime.now()}")
+            }
         }
     }
 }
 
-@OptIn(ExperimentalGlideComposeApi::class)
+@OptIn(ExperimentalGlideComposeApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun MediaStoreItem(
     item: MediaStoreData,
@@ -155,10 +200,18 @@ fun MediaStoreItem(
                 .padding(2.dp)
                 .clip(RoundedCornerShape(0.dp))
                 .background(MaterialTheme.colorScheme.primary)
-                .clickable {
-                    mainViewModel.setSelectedMediaUri(item)
-                    navController.navigate(MultiScreenViewType.SinglePhotoView.name)
-                },
+                .combinedClickable (
+                    onClick = {
+                        mainViewModel.setSelectedMediaData(item)
+                        navController.navigate(MultiScreenViewType.SinglePhotoView.name)
+                    },
+
+                    onDoubleClick = { /*ignore double clicks*/ },
+
+                    onLongClick = {
+                        // TODO: select item
+                    }
+                ),
         ) {
             GlideImage(
                 model = item.uri,

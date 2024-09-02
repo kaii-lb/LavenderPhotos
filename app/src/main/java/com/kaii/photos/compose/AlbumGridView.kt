@@ -1,9 +1,10 @@
 package com.kaii.photos.compose
 
 import android.graphics.drawable.Drawable
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,12 +16,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -39,24 +38,28 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.rememberGlidePreloadingData
 import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.kaii.photos.MainActivity
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.models.album_grid.AlbumsViewModel
 import com.kaii.photos.models.album_grid.AlbumsViewModelFactory
 import com.kaii.photos.R
+import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.models.main_activity.MainDataSharingModel
 import java.io.File
 
 @Composable
-fun AlbumGridView() {
+fun AlbumGridView(navController: NavHostController) {
     Column (
         modifier = Modifier
-            .fillMaxSize(1f)
-            .padding(8.dp, 0.dp)
-            .background(MaterialTheme.colorScheme.background),
+			.fillMaxSize(1f)
+			.padding(8.dp, 0.dp)
+			.background(MaterialTheme.colorScheme.background),
         verticalArrangement = Arrangement.SpaceEvenly,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {		
@@ -95,7 +98,7 @@ fun AlbumGridView() {
             items(
                 count = listOfDirs.size
             ) { index ->
-                val folder = File("/storage/emulated/0/" + listOfDirs[index])
+				val folder = File("/storage/emulated/0/" + listOfDirs[index])
 				val neededDir = listOfDirs[index]
 
 				if (actualData.isNotEmpty()) {
@@ -116,8 +119,10 @@ fun AlbumGridView() {
 	                            	
 	                AlbumGridItem(
 	                	folder.name,
+	                	neededDir,
 	                	mediaStoreItem,
-	                	preloadRequestBuilder
+	                	preloadRequestBuilder,
+						navController
 	                )
 				}
             }
@@ -125,9 +130,15 @@ fun AlbumGridView() {
     }
 }
 
-@OptIn(ExperimentalGlideComposeApi::class)
+@OptIn(ExperimentalGlideComposeApi::class, ExperimentalFoundationApi::class)
 @Composable
-fun AlbumGridItem(title: String, item: MediaStoreData, preloadRequestBuilder: RequestBuilder<Drawable>) {
+fun AlbumGridItem(
+	title: String,
+	neededDir: String,
+	item: MediaStoreData,
+	preloadRequestBuilder: RequestBuilder<Drawable>,
+	navController: NavHostController
+) {
 	Column (
         modifier = Modifier
             .wrapContentHeight()
@@ -153,6 +164,18 @@ fun AlbumGridItem(title: String, item: MediaStoreData, preloadRequestBuilder: Re
                 modifier = Modifier
 	                .aspectRatio(1f)
 	                .clip(RoundedCornerShape(16.dp))
+					.combinedClickable (
+						onClick = {
+							MainActivity.mainViewModel.setSelectedAlbumDir(neededDir)
+							navController.navigate(MultiScreenViewType.SingleAlbumView.name)
+						},
+
+						onDoubleClick = { /*ignore double clicks*/ },
+
+						onLongClick = {
+							// TODO: select item
+						}
+					),
             ) {
                 it.thumbnail(preloadRequestBuilder).diskCacheStrategy(DiskCacheStrategy.ALL)
             }	        

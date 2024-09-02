@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
@@ -43,6 +44,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
@@ -62,7 +64,9 @@ import com.kaii.photos.mediastore.MediaStoreData
 fun SinglePhotoView(navController: NavHostController, window: Window) {
     val mainViewModel = MainActivity.mainViewModel
     
-    val mediaItem = mainViewModel.selectedMediaUri.collectAsState(initial = null).value
+    val mediaItem = mainViewModel.selectedMediaData.collectAsState(initial = null).value
+
+	if (mediaItem == null) return
 
     var systemBarsShown by remember { mutableStateOf(true) }
     var appBarAlpha by remember { mutableFloatStateOf(1f) }
@@ -92,12 +96,16 @@ fun SinglePhotoView(navController: NavHostController, window: Window) {
                     .fillMaxSize(1f)
                     .clickable {
                     	if (systemBarsShown) {
-                            windowInsetsController.hide(WindowInsetsCompat.Type.systemBars())
-                    		windowInsetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                            windowInsetsController.apply {
+                            	hide(WindowInsetsCompat.Type.systemBars())	
+                            	systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                            } 
+							window.setDecorFitsSystemWindows(false)
                             systemBarsShown = false
                             appBarAlpha = 0f
                         } else {
                             windowInsetsController.show(WindowInsetsCompat.Type.systemBars())                            
+                            window.setDecorFitsSystemWindows(false)
                             systemBarsShown = true
                             appBarAlpha = 1f
                         }
@@ -140,6 +148,7 @@ fun TopBar(mediaItem: MediaStoreData?, navController: NavHostController, alpha: 
             Text(
                 text = mediaTitle,
                 fontSize = TextUnit(18f, TextUnitType.Sp),
+                fontWeight = FontWeight.Bold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier
@@ -156,6 +165,7 @@ fun TopBar(mediaItem: MediaStoreData?, navController: NavHostController, alpha: 
                     tint = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier
                         .size(24.dp)
+                        .padding(0.dp, 1.dp, 0.dp, 0.dp)
                 )
             }
 
@@ -205,14 +215,14 @@ fun BottomBar(alpha: Float) {
             	repeat(4) { index ->
 		    		Button(
 		                onClick = { /* TODO */ },
-		                shape = RoundedCornerShape(1000.dp),
 		                colors = ButtonDefaults.buttonColors(
 		                	containerColor = Color.Transparent,
 		                	contentColor = MaterialTheme.colorScheme.onBackground
 		                ),
+		                contentPadding = PaddingValues(0.dp, 4.dp),
 		                modifier = Modifier
-		                	.weight(1f)
 		                	.wrapContentHeight()
+		                	.weight(1f)
 		            ) {
 		            	Column (
 		            		verticalArrangement = Arrangement.Center,

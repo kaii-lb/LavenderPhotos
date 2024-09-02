@@ -1,7 +1,7 @@
 {
   "formatVersion": 1,
   "database": {
-    "version": 1,
+    "version": 11,
     "identityHash": "098e629257f59e3a41cc252624b3eba4",
     "entities": [
       {

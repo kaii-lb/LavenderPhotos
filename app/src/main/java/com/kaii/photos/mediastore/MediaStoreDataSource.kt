@@ -37,7 +37,9 @@ internal constructor(
                 MediaColumns.MIME_TYPE,
                 MediaColumns.ORIENTATION,
                 MediaColumns.DISPLAY_NAME,
-                FileColumns.MEDIA_TYPE
+                FileColumns.MEDIA_TYPE,
+
+                // MediaColumns.DATE_TAKEN
             )
     }
 
@@ -57,6 +59,8 @@ internal constructor(
         )
 
         trySend(query())
+
+		println("MEDIASTOREDATASOURCE PATH IS $neededPath")
 
         awaitClose { context.contentResolver.unregisterContentObserver(contentObserver) }
     }
@@ -101,12 +105,14 @@ internal constructor(
             val displayNameIndex = cursor.getColumnIndexOrThrow(FileColumns.DISPLAY_NAME)
             val dateAddedColumnNum = cursor.getColumnIndexOrThrow(MediaColumns.DATE_ADDED)
 
+            // val dateTakenColNum = cursor.getColumnIndexOrThrow(MediaColumns.DATE_TAKEN)
+
             while (cursor.moveToNext()) {
                 val id = cursor.getLong(idColNum)
                 val mimeType = cursor.getString(mimeTypeColNum)
 
                 val uri = Uri.withAppendedPath(MEDIA_STORE_FILE_URI, id.toString())
-                val possibleDateTaken = mediaEntityDao.getDateTaken(uri.toString())
+                val possibleDateTaken = mediaEntityDao.getDateTaken(id)
                 val dateTaken = if (possibleDateTaken != 0L) {
                     // Log.d(TAG, "date taken from database is $possibleDateTaken")
                     possibleDateTaken
@@ -116,7 +122,7 @@ internal constructor(
                     )
                     mediaEntityDao.insertEntity(
                         MediaEntity(
-                            uri = uri.toString(),
+                            id = id,
                             mimeType = mimeType,
                             dateTaken = taken
                         )
@@ -124,7 +130,7 @@ internal constructor(
                     Log.d(TAG, "date taken was not found in database, inserting $taken")
                     taken
                 }
-
+				// val dateTaken = cursor.getLong(dateTakenColNum)
                 val dateModified = cursor.getLong(dateModifiedColNum)
                 val orientation = cursor.getInt(orientationColNum)
                 val displayName = cursor.getString(displayNameIndex)
