@@ -1,9 +1,9 @@
 package com.kaii.photos.compose
 
 import android.graphics.drawable.Drawable
+import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,7 +29,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,7 +43,6 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavHostController
 import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
@@ -60,15 +58,16 @@ import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.R
 import com.kaii.photos.models.main_activity.MainDataSharingModel
 import com.kaii.photos.MainActivity
-import java.time.LocalTime
+import com.kaii.photos.helpers.single_image_functions.ImageFunctions
 
 private const val THUMBNAIL_DIMENSION = 50
-private val THUMBNAIL_SIZE = Size(THUMBNAIL_DIMENSION.toFloat(), THUMBNAIL_DIMENSION.toFloat())
+private const val TAG = "PHOTO_GRID_VIEW"
 
+private val THUMBNAIL_SIZE = Size(THUMBNAIL_DIMENSION.toFloat(), THUMBNAIL_DIMENSION.toFloat())
 private fun MediaStoreData.signature() = MediaStoreSignature(mimeType, dateModified, orientation)
 
 @Composable
-fun PhotoGrid(navController: NavHostController, path: String) {
+fun PhotoGrid(operation: ImageFunctions, path: String) {
 	val galleryViewModel: GalleryViewModel = viewModel(
 		factory = GalleryViewModelFactory(LocalContext.current.applicationContext, path)
 	)
@@ -76,14 +75,14 @@ fun PhotoGrid(navController: NavHostController, path: String) {
 
     val mainViewModel = MainActivity.mainViewModel
 
-    DeviceMedia(mediaStoreData.value, navController, mainViewModel)
+    DeviceMedia(mediaStoreData.value, operation, mainViewModel)
 }
 
 @Composable
 fun DeviceMedia(
-    mediaStoreData: List<MediaStoreData>,
-    navController: NavHostController,
-    mainViewModel: MainDataSharingModel
+	mediaStoreData: List<MediaStoreData>,
+	operation: ImageFunctions,
+	mainViewModel: MainDataSharingModel
 ) {
     val groupedMedia = groupPhotosBy(mediaStoreData, true)
 
@@ -103,69 +102,79 @@ fun DeviceMedia(
 
 	var showLoadingSpinner by remember { mutableStateOf(true) }
 
-	if (showLoadingSpinner) {
-		println("SPINNING STARTED AT ${LocalTime.now()}")
-		Row (
-			modifier = Modifier
-				.fillMaxWidth(1f)
-				.height(48.dp),
-			verticalAlignment = Alignment.CenterVertically,
-			horizontalArrangement = Arrangement.Center
-		) {
+	Box (
+		modifier = Modifier
+			.fillMaxSize(1f)	
+	) {	
+		if (showLoadingSpinner) {
+			// println("SPINNING STARTED AT ${LocalTime.now()}")
+			
 			Row (
 				modifier = Modifier
-					.size(40.dp)	
-					.clip(RoundedCornerShape(1000.dp))
-					.background(MaterialTheme.colorScheme.surfaceContainer),
+					.fillMaxWidth(1f)
+					.height(48.dp)
+					.align(Alignment.TopCenter),
 				verticalAlignment = Alignment.CenterVertically,
 				horizontalArrangement = Arrangement.Center
 			) {
-				CircularProgressIndicator(
+				Row (
 					modifier = Modifier
-						.size(28.dp),
-					color = MaterialTheme.colorScheme.primary,
-					strokeWidth = 4.dp,
-					strokeCap = StrokeCap.Round
-				)
+						.size(40.dp)	
+						.clip(RoundedCornerShape(1000.dp))
+						.background(MaterialTheme.colorScheme.surfaceContainer),
+					verticalAlignment = Alignment.CenterVertically,
+					horizontalArrangement = Arrangement.Center
+				) {
+					CircularProgressIndicator(
+						modifier = Modifier
+							.size(28.dp),
+						color = MaterialTheme.colorScheme.primary,
+						strokeWidth = 4.dp,
+						strokeCap = StrokeCap.Round
+					)
+				}
 			}
 		}
+		
+	    LazyVerticalGrid(
+	        columns = GridCells.Fixed(3),
+	        modifier = Modifier
+	        	.fillMaxSize(1f)
+	        	.align(Alignment.TopCenter),
+	        state = gridState
+	    ) {	
+	        items(
+	            count = preloadingData.size,
+	            key = {
+	                // println("URI STRING ${mediaStoreData[it].uri}")
+	                groupedMedia[it].uri.toString()
+	            },
+	            span = { index ->
+	                val item = groupedMedia[index]
+	                if (item.type == MediaType.Section) {
+	                    GridItemSpan(maxLineSpan)
+	                } else {
+	                    GridItemSpan(1)
+	                }
+	            }
+	        ) { i ->
+	            val (mediaStoreItem, preloadRequestBuilder) = preloadingData[i]
+
+	            MediaStoreItem(
+	            	mediaStoreItem,
+	                preloadRequestBuilder,
+	                operation,
+	                mainViewModel
+	            )
+
+	            if (i >= 0) {
+	            	showLoadingSpinner = false	
+	            	// println("SPINNING ENDED AT ${LocalTime.now()}")
+	            }
+	        }
+	    }
 	}
-	
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(3),
-        modifier = Modifier.fillMaxSize(1f),
-        state = gridState
-    ) {	
-        items(
-            count = preloadingData.size,
-            key = {
-                // println("URI STRING ${mediaStoreData[it].uri}")
-                groupedMedia[it].uri.toString()
-            },
-            span = { index ->
-                val item = groupedMedia[index]
-                if (item.type == MediaType.Section) {
-                    GridItemSpan(maxLineSpan)
-                } else {
-                    GridItemSpan(1)
-                }
-            }
-        ) { i ->
-            val (mediaStoreItem, preloadRequestBuilder) = preloadingData[i]
 
-            MediaStoreItem(
-            	mediaStoreItem,
-                preloadRequestBuilder,
-                navController,
-                mainViewModel
-            )
-
-            if (i >= 0) {
-            	showLoadingSpinner = false	
-            	println("SPINNING ENDED AT ${LocalTime.now()}")
-            }
-        }
-    }
 }
 
 @OptIn(ExperimentalGlideComposeApi::class, ExperimentalFoundationApi::class)
@@ -173,7 +182,7 @@ fun DeviceMedia(
 fun MediaStoreItem(
     item: MediaStoreData,
     preloadRequestBuilder: RequestBuilder<Drawable>,
-    navController: NavHostController,
+    operation: ImageFunctions,
     mainViewModel: MainDataSharingModel
 ) {
     if (item.mimeType == null && item.type == MediaType.Section) {
@@ -202,8 +211,19 @@ fun MediaStoreItem(
                 .background(MaterialTheme.colorScheme.primary)
                 .combinedClickable (
                     onClick = {
-                        mainViewModel.setSelectedMediaData(item)
-                        navController.navigate(MultiScreenViewType.SinglePhotoView.name)
+						when (operation) {
+							ImageFunctions.LoadNormalImage -> {
+								mainViewModel.setSelectedMediaData(item)
+								MainActivity.navController.navigate(MultiScreenViewType.SinglePhotoView.name)
+							}
+							ImageFunctions.LoadTrashedImage -> {
+								mainViewModel.setSelectedMediaData(item)
+								MainActivity.navController.navigate(MultiScreenViewType.SingleTrashedPhotoView.name)
+							}
+							else -> {
+								Log.e(TAG, "No acceptable ImageFunction provided, this should not happen.")
+							}
+						}
                     },
 
                     onDoubleClick = { /*ignore double clicks*/ },

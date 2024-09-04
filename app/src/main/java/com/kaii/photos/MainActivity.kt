@@ -75,9 +75,12 @@ import com.kaii.photos.compose.AlbumGridView
 import com.kaii.photos.compose.PhotoGrid
 import com.kaii.photos.compose.SingleAlbumView
 import com.kaii.photos.compose.SinglePhotoView
+import com.kaii.photos.compose.SingleTrashedPhotoView
+import com.kaii.photos.compose.TrashedPhotoGridView
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.single_image_functions.ImageFunctions
 import com.kaii.photos.models.main_activity.MainDataSharingModel
 import com.kaii.photos.models.main_activity.MainDataSharingModelFactory
 import com.kaii.photos.ui.theme.PhotosTheme
@@ -86,10 +89,15 @@ class MainActivity : ComponentActivity() {
     companion object {
         private const val REQUEST_READ_STORAGE = 0
         private val PERMISSIONS_REQUEST =
-            arrayOf(Manifest.permission.READ_MEDIA_IMAGES, Manifest.permission.READ_MEDIA_VIDEO)
+            arrayOf(
+                Manifest.permission.READ_MEDIA_IMAGES,
+                Manifest.permission.READ_MEDIA_VIDEO,
+                Manifest.permission.MANAGE_EXTERNAL_STORAGE
+            )
 
         lateinit var applicationDatabase: MediaDatabase
         lateinit var mainViewModel: MainDataSharingModel
+        lateinit var navController: NavHostController
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -128,7 +136,8 @@ class MainActivity : ComponentActivity() {
                     factory = MainDataSharingModelFactory()
                 )
 
-                val navController = rememberNavController()
+                val navControllerLocal = rememberNavController()
+                navController = navControllerLocal
                 val currentView = remember { mutableStateOf(MainScreenViewType.PhotoGridView) }
                 NavHost (
                     navController = navController,
@@ -169,7 +178,7 @@ class MainActivity : ComponentActivity() {
 							statusBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surface.toArgb()) 
 						)
 
-                        Content(navController, currentView)
+                        Content(currentView)
                     }
 
                     composable(MultiScreenViewType.SinglePhotoView.name) {
@@ -177,7 +186,7 @@ class MainActivity : ComponentActivity() {
 							navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.2f).toArgb()),
 							statusBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.2f).toArgb()) 
 						)
-                    	SinglePhotoView(navController, window)						
+                    	SinglePhotoView(window)						
                     }
 
                     composable(MultiScreenViewType.SingleAlbumView.name) {
@@ -185,7 +194,25 @@ class MainActivity : ComponentActivity() {
                             navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
                             statusBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb())
                         )
-                        SingleAlbumView(navController)
+                        SingleAlbumView()
+                    }
+
+                    composable(MultiScreenViewType.SingleTrashedPhotoView.name) {
+                        enableEdgeToEdge(
+                            navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
+                            statusBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb())
+                        )
+
+                        SingleTrashedPhotoView(window)
+                    }
+
+                    composable(MultiScreenViewType.TrashedPhotoView.name) {
+                        enableEdgeToEdge(
+                            navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
+                            statusBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb())
+                        )
+
+                        TrashedPhotoGridView()
                     }
                 }
             }
@@ -193,7 +220,7 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun Content(navController: NavHostController, currentView: MutableState<MainScreenViewType>) {
+    private fun Content(currentView: MutableState<MainScreenViewType>) {
         Scaffold(
             modifier = Modifier
                 .fillMaxSize(1f),
@@ -226,10 +253,10 @@ class MainActivity : ComponentActivity() {
                         label = "MainAnimatedContentView"
                     ) { stateValue ->
 	                    when (stateValue) {
-	                        MainScreenViewType.PhotoGridView -> PhotoGrid(navController, stringResource(id = R.string.default_homepage_photogrid_dir))
-	                        MainScreenViewType.LockedFolder -> PhotoGrid(navController, stringResource(id = R.string.default_homepage_photogrid_dir))
-	                        MainScreenViewType.AlbumGridView -> AlbumGridView(navController)
-   	                        MainScreenViewType.SearchPage -> AlbumGridView(navController)
+	                        MainScreenViewType.PhotoGridView -> PhotoGrid(ImageFunctions.LoadNormalImage, stringResource(id = R.string.default_homepage_photogrid_dir))
+	                        MainScreenViewType.LockedFolder -> PhotoGrid(ImageFunctions.LoadTrashedImage, stringResource(id = R.string.default_homepage_photogrid_dir))
+	                        MainScreenViewType.AlbumGridView -> AlbumGridView()
+   	                        MainScreenViewType.SearchPage -> AlbumGridView()
 	                    }
                 	}
                 }
@@ -504,6 +531,8 @@ class MainActivity : ComponentActivity() {
     }
 
 
+
+    @Deprecated("This method has been deprecated in favor of using the Activity Result API\n      which brings increased type safety via an {@link ActivityResultContract} and the prebuilt\n      contracts for common intents available in\n      {@link androidx.activity.result.contract.ActivityResultContracts}, provides hooks for\n      testing, and allow receiving results in separate, testable classes independent from your\n      activity. Use\n      {@link #registerForActivityResult(ActivityResultContract, ActivityResultCallback)} passing\n      in a {@link RequestMultiplePermissions} object for the {@link ActivityResultContract} and\n      handling the result in the {@link ActivityResultCallback#onActivityResult(Object) callback}.")
     override fun onRequestPermissionsResult(
         requestCode: Int, permissions: Array<String>, grantResults: IntArray,
     ) {

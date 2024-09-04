@@ -10,7 +10,7 @@ import java.util.Locale
 @Parcelize
 data class MediaStoreData(
     val type: MediaType = MediaType.Image,
-    var rowId: Long = 0L,
+    var id: Long = 0L,
     val uri: Uri = Uri.parse(""),
     val mimeType: String? = "image",
     val dateModified: Long = 0L,
@@ -40,7 +40,6 @@ data class MediaStoreData(
     fun getLastModifiedMonth() : Long {
         val calendar = Calendar.getInstance(Locale.ENGLISH).apply {
             timeInMillis = dateTaken * 1000
-            set(Calendar.DAY_OF_MONTH, 0)
             set(Calendar.HOUR_OF_DAY, 0)
             set(Calendar.MINUTE, 0)
             set(Calendar.SECOND, 0)

@@ -116,7 +116,7 @@ private fun listSection(title: String, key: Long): MediaStoreData {
         uri = Uri.parse(key.toString()),
         displayName = title,
         orientation = 0,
-        rowId = 0L,
+        id = 0L,
         mimeType = null,
         dateAdded = key,
     )

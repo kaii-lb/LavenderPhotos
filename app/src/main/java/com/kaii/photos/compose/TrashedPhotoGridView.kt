@@ -32,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -44,22 +45,15 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.navigation.NavHostController
 import com.bumptech.glide.integration.compose.GlideImage
 import com.kaii.photos.MainActivity
+import com.kaii.photos.helpers.getAppTrashBinDirectory
 import com.kaii.photos.helpers.single_image_functions.ImageFunctions
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.models.main_activity.MainDataSharingModel
 
 @Composable
-fun SingleAlbumView() {
-    val mainViewModel = MainActivity.mainViewModel
-
-    val albumDir = mainViewModel.selectedAlbumDir.collectAsState(initial = null).value
-	println("ALBUM DIR IS $albumDir")
-    if (albumDir == null) return
-
-	val topBarTitle = albumDir.split("/").last()
-	
+fun TrashedPhotoGridView() {
     Scaffold (
-        topBar =  { TopBar(topBarTitle) },
+        topBar =  { TopBar() },
         containerColor = MaterialTheme.colorScheme.background,
         contentColor = MaterialTheme.colorScheme.onBackground
     ) { padding ->
@@ -70,14 +64,15 @@ fun SingleAlbumView() {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            PhotoGrid(ImageFunctions.LoadNormalImage, albumDir)
+            PhotoGrid(ImageFunctions.LoadTrashedImage, getAppTrashBinDirectory(LocalContext.current).replace("/storage/emulated/0/", ""))
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TopBar(title: String?) {
+private fun TopBar() {
+    val title = "Trash Bin"
     TopAppBar(
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
@@ -97,7 +92,7 @@ private fun TopBar(title: String?) {
         },
         title = {
             Text(
-                text = title ?: "Album",
+                text = title,
                 fontSize = TextUnit(18f, TextUnitType.Sp),
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
@@ -111,8 +106,20 @@ private fun TopBar(title: String?) {
                 onClick = { /* TODO */ },
             ) {
                 Icon(
+                    painter = painterResource(id = com.kaii.photos.R.drawable.trash),
+                    contentDescription = "empty out the trash bin",
+                    tint = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier
+                        .size(24.dp)
+                )
+            }
+
+            IconButton(
+                onClick = { /* TODO */ },
+            ) {
+                Icon(
                     painter = painterResource(id = com.kaii.photos.R.drawable.settings),
-                    contentDescription = "show more options for the album view",
+                    contentDescription = "show more options for the trash bin",
                     tint = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier
                         .size(24.dp)

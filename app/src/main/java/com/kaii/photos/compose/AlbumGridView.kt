@@ -20,10 +20,10 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
@@ -38,23 +38,24 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavHostController
 import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.rememberGlidePreloadingData
 import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.bumptech.glide.signature.MediaStoreSignature
 import com.kaii.photos.MainActivity
+import com.kaii.photos.R
+import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.models.album_grid.AlbumsViewModel
 import com.kaii.photos.models.album_grid.AlbumsViewModelFactory
-import com.kaii.photos.R
-import com.kaii.photos.helpers.MultiScreenViewType
-import com.kaii.photos.models.main_activity.MainDataSharingModel
 import java.io.File
 
+private fun MediaStoreData.signature() = MediaStoreSignature(mimeType, dateModified, orientation)
+
 @Composable
-fun AlbumGridView(navController: NavHostController) {
+fun AlbumGridView() {
     Column (
         modifier = Modifier
 			.fillMaxSize(1f)
@@ -62,8 +63,8 @@ fun AlbumGridView(navController: NavHostController) {
 			.background(MaterialTheme.colorScheme.background),
         verticalArrangement = Arrangement.SpaceEvenly,
         horizontalAlignment = Alignment.CenterHorizontally
-    ) {		
-        val listOfDirs = emptyList<String>().toMutableList()
+    ) {
+		val listOfDirs = emptyList<String>().toMutableList()
 		listOfDirs.add("DCIM/Camera")
 		listOfDirs.add("Pictures/Screenshot")
 		listOfDirs.add("Pictures/Whatsapp")
@@ -71,7 +72,7 @@ fun AlbumGridView(navController: NavHostController) {
 		listOfDirs.add("Movies")
 		listOfDirs.add("Download")
 		listOfDirs.add("Pictures/Instagram")
-        
+
         listOfDirs.sortByDescending {
             File(it).lastModified()
         }
@@ -79,7 +80,7 @@ fun AlbumGridView(navController: NavHostController) {
 		val albumsViewModel: AlbumsViewModel = viewModel(
 			factory = AlbumsViewModelFactory(LocalContext.current, listOfDirs.toList())
 		)
-		val mediaStoreData = albumsViewModel.mediaStoreData.collectAsState()			
+		val mediaStoreData = albumsViewModel.mediaStoreData.collectAsState()
 		val actualData = mediaStoreData.value
 
         LazyVerticalGrid(
@@ -94,7 +95,7 @@ fun AlbumGridView(navController: NavHostController) {
         	) {
         		CategoryList()
         	}
-        	
+
             items(
                 count = listOfDirs.size
             ) { index ->
@@ -112,17 +113,16 @@ fun AlbumGridView(navController: NavHostController) {
 				    val preloadingData =
 				        rememberGlidePreloadingData(
 				            listOf(mediaItem),
-				            Size(50f, 50f),
-				            requestBuilderTransform = requestBuilderTransform,
-				        )
-		           	val (mediaStoreItem, preloadRequestBuilder) = preloadingData[0]
-	                            	
+				            Size(100f, 100f),
+				            requestBuilderTransform = requestBuilderTransform
+                        )
+					val (mediaStoreItem, preloadRequestBuilder) = preloadingData[0]
+
 	                AlbumGridItem(
 	                	folder.name,
 	                	neededDir,
 	                	mediaStoreItem,
-	                	preloadRequestBuilder,
-						navController
+	                	preloadRequestBuilder
 	                )
 				}
             }
@@ -132,12 +132,11 @@ fun AlbumGridView(navController: NavHostController) {
 
 @OptIn(ExperimentalGlideComposeApi::class, ExperimentalFoundationApi::class)
 @Composable
-fun AlbumGridItem(
+private fun AlbumGridItem(
 	title: String,
 	neededDir: String,
 	item: MediaStoreData,
-	preloadRequestBuilder: RequestBuilder<Drawable>,
-	navController: NavHostController
+	preloadRequestBuilder: RequestBuilder<Drawable>
 ) {
 	Column (
         modifier = Modifier
@@ -148,7 +147,7 @@ fun AlbumGridItem(
             .background(MaterialTheme.colorScheme.surfaceContainer),
         verticalArrangement = Arrangement.SpaceEvenly,
         horizontalAlignment = Alignment.CenterHorizontally
-    ) {	
+    ) {
 	    Column (
 	        modifier = Modifier
 	            .fillMaxSize(1f)
@@ -167,7 +166,7 @@ fun AlbumGridItem(
 					.combinedClickable (
 						onClick = {
 							MainActivity.mainViewModel.setSelectedAlbumDir(neededDir)
-							navController.navigate(MultiScreenViewType.SingleAlbumView.name)
+							MainActivity.navController.navigate(MultiScreenViewType.SingleAlbumView.name)
 						},
 
 						onDoubleClick = { /*ignore double clicks*/ },
@@ -177,8 +176,8 @@ fun AlbumGridItem(
 						}
 					),
             ) {
-                it.thumbnail(preloadRequestBuilder).diskCacheStrategy(DiskCacheStrategy.ALL)
-            }	        
+                it.thumbnail(preloadRequestBuilder).signature(item.signature()).diskCacheStrategy(DiskCacheStrategy.ALL)
+            }
 
 	        Text(
 	            text = " $title",
@@ -195,7 +194,7 @@ fun AlbumGridItem(
 }
 
 @Composable
-fun CategoryList() {
+private fun CategoryList() {
 	Row (
         modifier = Modifier
             .fillMaxWidth(1f)
@@ -214,25 +213,25 @@ fun CategoryList() {
         	Row (
         		modifier = Modifier.fillMaxWidth(1f),
         		verticalAlignment = Alignment.CenterVertically,
-   		        horizontalArrangement = Arrangement.SpaceEvenly		
+   		        horizontalArrangement = Arrangement.SpaceEvenly
         	) {
         		Icon (
         			painter = painterResource(id = R.drawable.favorite),
 					contentDescription = "Favorites Button",
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier
-                    	.size(22.dp)   
-                    	.padding(0.dp, 2.dp, 0.dp, 0.dp)     			
+                    	.size(22.dp)
+                    	.padding(0.dp, 2.dp, 0.dp, 0.dp)
         		)
 
 				Spacer (
 					modifier = Modifier
 						.width(8.dp)
 				)
-        		
+
 	            Text(
 	            	text = "Favorites",
-		         	fontSize = TextUnit(16f, TextUnitType.Sp),                
+		         	fontSize = TextUnit(16f, TextUnitType.Sp),
 		          	textAlign = TextAlign.Center,
 		         	color = MaterialTheme.colorScheme.onBackground,
 		         	modifier = Modifier
@@ -244,7 +243,9 @@ fun CategoryList() {
         Spacer(modifier = Modifier.width(8.dp))
 
         OutlinedButton(
-            onClick = { /*TODO*/ },
+            onClick = {
+				MainActivity.navController.navigate(MultiScreenViewType.TrashedPhotoView.name)
+			},
             modifier = Modifier
                 .weight(1f)
                 .height(48.dp)
@@ -252,19 +253,19 @@ fun CategoryList() {
         	Row (
         		modifier = Modifier.fillMaxWidth(1f),
         		verticalAlignment = Alignment.CenterVertically,
-   		        horizontalArrangement = Arrangement.SpaceEvenly		
+   		        horizontalArrangement = Arrangement.SpaceEvenly
         	) {
         		Icon (
         			painter = painterResource(id = R.drawable.trash),
 					contentDescription = "Trash Button",
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier
-                    	.size(20.dp)        			
+                    	.size(20.dp)
         		)
 
 	            Text(
 	            	text = "Trash ",
-		         	fontSize = TextUnit(16f, TextUnitType.Sp),                
+		         	fontSize = TextUnit(16f, TextUnitType.Sp),
 		          	textAlign = TextAlign.Center,
 		         	color = MaterialTheme.colorScheme.onBackground,
 		         	modifier = Modifier
@@ -272,5 +273,5 @@ fun CategoryList() {
 	           	)
         	}
         }
-    }	
+    }
 }

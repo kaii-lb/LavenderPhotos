@@ -3,5 +3,7 @@ package com.kaii.photos.helpers
 enum class MultiScreenViewType {
     MainScreen,
     SinglePhotoView,
-    SingleAlbumView
+    SingleAlbumView,
+    SingleTrashedPhotoView,
+    TrashedPhotoView,
 }

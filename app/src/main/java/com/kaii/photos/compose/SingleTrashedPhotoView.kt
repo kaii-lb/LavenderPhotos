@@ -12,21 +12,19 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -46,6 +44,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
@@ -57,16 +56,21 @@ import androidx.navigation.NavHostController
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.kaii.photos.MainActivity
+import com.kaii.photos.R
 import com.kaii.photos.helpers.single_image_functions.ImageFunctions
 import com.kaii.photos.helpers.single_image_functions.operateOnImage
 import com.kaii.photos.mediastore.MediaStoreData
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import kotlin.coroutines.EmptyCoroutineContext
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun SinglePhotoView(window: Window) {
+fun SingleTrashedPhotoView(window: Window) {
     val mainViewModel = MainActivity.mainViewModel
-    
+
     val mediaItem = mainViewModel.selectedMediaData.collectAsState(initial = null).value ?: return
 
     var systemBarsShown by remember { mutableStateOf(true) }
@@ -77,7 +81,7 @@ fun SinglePhotoView(window: Window) {
         bottomBar = { BottomBar(appBarAlpha, mediaItem) },
         containerColor = MaterialTheme.colorScheme.background,
         contentColor = MaterialTheme.colorScheme.onBackground
-    ) {  _ ->
+    ) { _ ->
         Column (
             modifier = Modifier
                 .padding(0.dp)
@@ -96,16 +100,16 @@ fun SinglePhotoView(window: Window) {
                 modifier = Modifier
                     .fillMaxSize(1f)
                     .clickable {
-                    	if (systemBarsShown) {
+                        if (systemBarsShown) {
                             windowInsetsController.apply {
-                            	hide(WindowInsetsCompat.Type.systemBars())	
-                            	systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-                            } 
+                                hide(WindowInsetsCompat.Type.systemBars())
+                                systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                            }
                             window.setDecorFitsSystemWindows(false)
                             systemBarsShown = false
                             appBarAlpha = 0f
                         } else {
-                            windowInsetsController.show(WindowInsetsCompat.Type.systemBars())                            
+                            windowInsetsController.show(WindowInsetsCompat.Type.systemBars())
                             window.setDecorFitsSystemWindows(false)
                             systemBarsShown = true
                             appBarAlpha = 1f
@@ -120,12 +124,12 @@ fun SinglePhotoView(window: Window) {
 @Composable
 private fun TopBar(mediaItem: MediaStoreData?, alpha: Float) {
     TopAppBar(
-    	modifier = Modifier.alpha(alpha),
-    	colors = TopAppBarDefaults.topAppBarColors(
-    		containerColor = MaterialTheme.colorScheme.surfaceContainer
-    	),
-    	navigationIcon = {
-    		IconButton(
+        modifier = Modifier.alpha(alpha),
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ),
+        navigationIcon = {
+            IconButton(
                 onClick = { MainActivity.navController.popBackStack() },
             ) {
                 Icon(
@@ -136,7 +140,7 @@ private fun TopBar(mediaItem: MediaStoreData?, alpha: Float) {
                         .size(24.dp)
                 )
             }
-    	},
+        },
         title = {
             val mediaTitle = if (mediaItem != null) {
                 mediaItem.displayName ?: mediaItem.type.name
@@ -153,24 +157,11 @@ private fun TopBar(mediaItem: MediaStoreData?, alpha: Float) {
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier
-                	.width(160.dp)
+                    .width(160.dp)
             )
         },
         actions = {
-    		IconButton(
-                onClick = { /* TODO */ },
-            ) {
-                Icon(
-                    painter = painterResource(id = com.kaii.photos.R.drawable.favorite),
-                    contentDescription = "favorite this media item",
-                    tint = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier
-                        .size(24.dp)
-                        .padding(0.dp, 1.dp, 0.dp, 0.dp)
-                )
-            }
-
-       		IconButton(
+            IconButton(
                 onClick = { /* TODO */ },
             ) {
                 Icon(
@@ -195,63 +186,91 @@ private fun BottomBar(alpha: Float, item: MediaStoreData) {
         contentPadding = PaddingValues(0.dp),
         actions = {
             Row (
-				modifier = Modifier
-					.fillMaxWidth(1f)
-           			.padding(12.dp, 0.dp),
-				verticalAlignment = Alignment.CenterVertically,
-               	horizontalArrangement = Arrangement.SpaceEvenly	
-            ) {	
-            	val listOfResources = listOf(
-            		com.kaii.photos.R.drawable.share,
-           			com.kaii.photos.R.drawable.paintbrush,
-            		com.kaii.photos.R.drawable.trash,	
-            		com.kaii.photos.R.drawable.locked_folder		
-           		)
+                modifier = Modifier
+                    .fillMaxWidth(1f)
+                    .padding(12.dp, 0.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                OutlinedButton(
+                    onClick = {
+                        operateOnImage(item.absolutePath, item.id, ImageFunctions.UnTrashImage, context)
+                        MainActivity.navController.popBackStack()
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp)
+                ) {
+                    Row (
+                        modifier = Modifier.fillMaxWidth(1f),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        Icon (
+                            painter = painterResource(id = R.drawable.favorite),
+                            contentDescription = "Restore Image Button",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier
+                                .size(22.dp)
+                                .padding(0.dp, 2.dp, 0.dp, 0.dp)
+                        )
 
-                val listOfStrings = listOf(
-           			"Share",
-           			"Edit",
-           			"Delete",
-           			"Hide"
-           		)
-            	
-            	repeat(4) { index ->
-                    val operation = ImageFunctions.entries[index] // WARNING: ORDER IS VERY IMPORTANT!!!
-		    		Button(
-		                onClick = {
-                            operateOnImage(item.absolutePath, item.id, operation, context)
-                            MainActivity.navController.popBackStack()
-                        },
-		                colors = ButtonDefaults.buttonColors(
-		                	containerColor = Color.Transparent,
-		                	contentColor = MaterialTheme.colorScheme.onBackground
-		                ),
-		                contentPadding = PaddingValues(0.dp, 4.dp),
-		                modifier = Modifier
-		                	.wrapContentHeight()
-		                	.weight(1f)
-		            ) {
-		            	Column (
-		            		verticalArrangement = Arrangement.Center,
-		            		horizontalAlignment = Alignment.CenterHorizontally
-		            	) {
-			                Icon(
-			                    painter = painterResource(id = listOfResources[index]),
-			                    contentDescription = listOfStrings[index],
-			                    tint = MaterialTheme.colorScheme.onBackground,
-			                    modifier = Modifier
-			                        .size(26.dp)
-			                )
-				            Text(
-				                text = listOfStrings[index],
-				                fontSize = TextUnit(15f, TextUnitType.Sp),
-				                maxLines = 1,
-				                modifier = Modifier
-				                	.padding(0.dp, 2.dp, 0.dp, 0.dp)
-				            )
-		            	}
-		            }					            
-            	}
+                        Spacer (
+                            modifier = Modifier
+                                .width(8.dp)
+                        )
+
+                        Text(
+                            text = "Restore",
+                            fontSize = TextUnit(16f, TextUnitType.Sp),
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier
+                                .fillMaxWidth(1f)
+                        )
+                    }
+                }
+
+                Spacer (modifier = Modifier.width(8.dp))
+
+                OutlinedButton(
+                    onClick = {
+                        operateOnImage(item.absolutePath, item.id, ImageFunctions.PermaDeleteImage, context)
+                        MainActivity.navController.popBackStack()
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp)
+                ) {
+                    Row (
+                        modifier = Modifier.fillMaxWidth(1f),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        Icon (
+                            painter = painterResource(id = R.drawable.trash),
+                            contentDescription = "Permanently Delete Image Button",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier
+                                .size(22.dp)
+                                .padding(0.dp, 2.dp, 0.dp, 0.dp)
+                        )
+
+                        Spacer (
+                            modifier = Modifier
+                                .width(8.dp)
+                        )
+
+                        Text(
+                            text = "Delete",
+                            fontSize = TextUnit(16f, TextUnitType.Sp),
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier
+                                .fillMaxWidth(1f)
+                        )
+                    }
+                }
             }
         },
         modifier = Modifier.alpha(alpha)

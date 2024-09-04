@@ -127,7 +127,7 @@ internal constructor(
                             dateTaken = taken
                         )
                     )
-                    Log.d(TAG, "date taken was not found in database, inserting $taken")
+                    // Log.d(TAG, "date taken was not found in database, inserting $taken")
                     taken
                 }
 				// val dateTaken = cursor.getLong(dateTakenColNum)
@@ -141,8 +141,8 @@ internal constructor(
                 data.add(
                     MediaStoreData(
                         type = type,
-                        rowId = id,
-                        uri = Uri.withAppendedPath(MEDIA_STORE_FILE_URI, id.toString()),
+                        id = id,
+                        uri = uri,
                         mimeType = mimeType,
                         dateModified = dateModified,
                         orientation = orientation,

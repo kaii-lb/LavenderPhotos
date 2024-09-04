@@ -120,7 +120,7 @@ internal constructor(
                 data.add(
                     MediaStoreData(
                         type = type,
-                        rowId = id,
+                        id = id,
                         uri = Uri.withAppendedPath(MEDIA_STORE_FILE_URI, id.toString()),
                         mimeType = mimeType,
                         dateModified = dateModified,
