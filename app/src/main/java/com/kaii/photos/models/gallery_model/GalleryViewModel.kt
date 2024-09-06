@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaStoreDataSource
 import com.kaii.photos.mediastore.MediaType
@@ -35,12 +36,22 @@ class GalleryViewModel(context: Context, path: String) : ViewModel() {
 }
 
 /** Groups photos by date */
-fun groupPhotosBy(media: List<MediaStoreData>, sortDescending: Boolean = true, byDay: Boolean = true) : List<MediaStoreData> {
+fun groupPhotosBy(media: List<MediaStoreData>, sortBy: MediaItemSortMode = MediaItemSortMode.DateTaken, sortDescending: Boolean = true) : List<MediaStoreData> {
     val mediaItems = emptyList<MediaStoreData>().toMutableList()
 
     val mediaDataGroups = LinkedHashMap<Long, MutableList<MediaStoreData>>()
     media.forEach { data ->
-        val key = if (!byDay) data.getLastModifiedMonth() else data.getLastModifiedDay()
+        val key = when (sortBy) {
+            MediaItemSortMode.DateTaken -> {
+                data.getDateTakenDay()
+            }
+            MediaItemSortMode.LastModifiedTrashed -> {
+                data.getLastModifiedDay()
+            }
+        }
+
+        println("KEY FOR MEDIA IS $key")
+
         if (!mediaDataGroups.containsKey(key)) {
             mediaDataGroups[key] = emptyList<MediaStoreData>().toMutableList()
         }
@@ -66,8 +77,9 @@ fun groupPhotosBy(media: List<MediaStoreData>, sortDescending: Boolean = true, b
          set(Calendar.MINUTE, 0)
          set(Calendar.SECOND, 0)
          set(Calendar.MILLISECOND, 0)
-     }
+    }
 
+    val prefix = if (sortBy == MediaItemSortMode.LastModifiedTrashed) "Deleted On " else ""
 	val today = calendar.timeInMillis
     val dayMillis = 86400000
     val yesterday = today - dayMillis
@@ -75,14 +87,14 @@ fun groupPhotosBy(media: List<MediaStoreData>, sortDescending: Boolean = true, b
         var currentGridPosition = 0
         val sectionKey = when (key) {
             today -> {
-                "Today"
+                prefix + "Today"
             }
             yesterday -> {
-                "Yesterday"
+                prefix + "Yesterday"
             }
             else -> {
             	// println("TRYING TO FORMAT DATE WITH KEY $key")
-                formatDate(key, true)
+                formatDate(key, prefix)
             }
         }
         mediaItems.add(listSection(sectionKey, key))
@@ -97,14 +109,14 @@ fun groupPhotosBy(media: List<MediaStoreData>, sortDescending: Boolean = true, b
     return mediaItems
 }
 
-private fun formatDate(timestamp: Long, showDay: Boolean): String {
+private fun formatDate(timestamp: Long, prefix: String): String {
     return if (timestamp != 0L) {
 	    val dateTimeFormat = DateTimeFormatter.ofPattern("EEE d - MMMM yyyy")
 	    val localDateTime = Instant.ofEpochSecond(timestamp).atZone(ZoneId.systemDefault()).toLocalDateTime()
     	val dateTimeString = localDateTime.format(dateTimeFormat)
-    	dateTimeString.toString()
+        prefix + dateTimeString.toString()
     } else {
-        ""
+        "Pretend there is a date here"
     }
 }
 
@@ -121,8 +133,4 @@ private fun listSection(title: String, key: Long): MediaStoreData {
         dateAdded = key,
     )
     return mediaSection
-}
-
-enum class GroupByType {
-	LAST_MODIFIED
 }

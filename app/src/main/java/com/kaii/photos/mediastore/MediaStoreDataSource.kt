@@ -18,6 +18,9 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
+import java.nio.file.Files
+import java.nio.file.attribute.BasicFileAttributes
+import kotlin.io.path.Path
 
 /** Loads metadata from the media store for images and videos. */
 class MediaStoreDataSource
@@ -110,8 +113,12 @@ internal constructor(
             while (cursor.moveToNext()) {
                 val id = cursor.getLong(idColNum)
                 val mimeType = cursor.getString(mimeTypeColNum)
-
+				// val dateModified = cursor.getLong(dateModifiedColNum)
+				
                 val uri = Uri.withAppendedPath(MEDIA_STORE_FILE_URI, id.toString())
+                val absolutePath = cursor.getString(absolutePathColNum)
+				val dateModified = Files.getLastModifiedTime(Path(absolutePath)).toMillis() / 1000 
+				
                 val possibleDateTaken = mediaEntityDao.getDateTaken(id)
                 val dateTaken = if (possibleDateTaken != 0L) {
                     // Log.d(TAG, "date taken from database is $possibleDateTaken")
@@ -124,18 +131,17 @@ internal constructor(
                         MediaEntity(
                             id = id,
                             mimeType = mimeType,
-                            dateTaken = taken
+                            dateTaken = taken,
+                            lastModified = dateModified
                         )
                     )
                     // Log.d(TAG, "date taken was not found in database, inserting $taken")
                     taken
                 }
 				// val dateTaken = cursor.getLong(dateTakenColNum)
-                val dateModified = cursor.getLong(dateModifiedColNum)
                 val orientation = cursor.getInt(orientationColNum)
                 val displayName = cursor.getString(displayNameIndex)
                 val dateAdded = cursor.getLong(dateAddedColumnNum)
-                val absolutePath = cursor.getString(absolutePathColNum)
                 val type = if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) MediaType.Image
                     else MediaType.Video
                 data.add(

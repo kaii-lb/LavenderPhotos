@@ -1,12 +1,15 @@
 package com.kaii.photos.compose
 
 import android.graphics.drawable.Drawable
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -58,7 +61,9 @@ import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.R
 import com.kaii.photos.models.main_activity.MainDataSharingModel
 import com.kaii.photos.MainActivity
+import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.single_image_functions.ImageFunctions
+import java.io.File
 
 private const val THUMBNAIL_DIMENSION = 50
 private const val TAG = "PHOTO_GRID_VIEW"
@@ -67,7 +72,7 @@ private val THUMBNAIL_SIZE = Size(THUMBNAIL_DIMENSION.toFloat(), THUMBNAIL_DIMEN
 private fun MediaStoreData.signature() = MediaStoreSignature(mimeType, dateModified, orientation)
 
 @Composable
-fun PhotoGrid(operation: ImageFunctions, path: String) {
+fun PhotoGrid(operation: ImageFunctions, path: String, sortBy: MediaItemSortMode) {
 	val galleryViewModel: GalleryViewModel = viewModel(
 		factory = GalleryViewModelFactory(LocalContext.current.applicationContext, path)
 	)
@@ -75,16 +80,30 @@ fun PhotoGrid(operation: ImageFunctions, path: String) {
 
     val mainViewModel = MainActivity.mainViewModel
 
-    DeviceMedia(mediaStoreData.value, operation, mainViewModel)
+	if (File("/storage/emulated/0/" + path).listFiles().size != 0) {
+   		DeviceMedia(mediaStoreData.value, operation, mainViewModel, sortBy)
+   	} else {
+   		Column (
+   			modifier = Modifier
+   				.background(MaterialTheme.colorScheme.background),
+   			verticalArrangement = Arrangement.Center,
+   			horizontalAlignment = Alignment.CenterHorizontally
+   		) {
+   			Text (
+   				text = "Empty Folder"
+   			)
+   		}
+   	}
 }
 
 @Composable
 fun DeviceMedia(
 	mediaStoreData: List<MediaStoreData>,
 	operation: ImageFunctions,
-	mainViewModel: MainDataSharingModel
+	mainViewModel: MainDataSharingModel,
+	sortBy: MediaItemSortMode
 ) {
-    val groupedMedia = groupPhotosBy(mediaStoreData, true)
+    val groupedMedia = groupPhotosBy(mediaStoreData, sortBy)
 
     val requestBuilderTransform =
         { item: MediaStoreData, requestBuilder: RequestBuilder<Drawable> ->
@@ -106,36 +125,6 @@ fun DeviceMedia(
 		modifier = Modifier
 			.fillMaxSize(1f)	
 	) {	
-		if (showLoadingSpinner) {
-			// println("SPINNING STARTED AT ${LocalTime.now()}")
-			
-			Row (
-				modifier = Modifier
-					.fillMaxWidth(1f)
-					.height(48.dp)
-					.align(Alignment.TopCenter),
-				verticalAlignment = Alignment.CenterVertically,
-				horizontalArrangement = Arrangement.Center
-			) {
-				Row (
-					modifier = Modifier
-						.size(40.dp)	
-						.clip(RoundedCornerShape(1000.dp))
-						.background(MaterialTheme.colorScheme.surfaceContainer),
-					verticalAlignment = Alignment.CenterVertically,
-					horizontalArrangement = Arrangement.Center
-				) {
-					CircularProgressIndicator(
-						modifier = Modifier
-							.size(28.dp),
-						color = MaterialTheme.colorScheme.primary,
-						strokeWidth = 4.dp,
-						strokeCap = StrokeCap.Round
-					)
-				}
-			}
-		}
-		
 	    LazyVerticalGrid(
 	        columns = GridCells.Fixed(3),
 	        modifier = Modifier
@@ -168,13 +157,47 @@ fun DeviceMedia(
 	            )
 
 	            if (i >= 0) {
-	            	showLoadingSpinner = false	
+	            	val handler = Handler(Looper.getMainLooper())
+		            val runnable = Runnable {
+		                showLoadingSpinner = false	
+		            }
+		            handler.removeCallbacks(runnable)
+		            handler.postDelayed(runnable, 500)
 	            	// println("SPINNING ENDED AT ${LocalTime.now()}")
 	            }
 	        }
 	    }
+	    
+		if (showLoadingSpinner) {
+			// println("SPINNING STARTED AT ${LocalTime.now()}")
+			
+			Row (
+				modifier = Modifier
+					.fillMaxWidth(1f)
+					.height(48.dp)
+					.align(Alignment.TopCenter),
+				verticalAlignment = Alignment.CenterVertically,
+				horizontalArrangement = Arrangement.Center
+			) {
+				Row (
+					modifier = Modifier
+						.size(40.dp)	
+						.clip(RoundedCornerShape(1000.dp))
+						.background(MaterialTheme.colorScheme.surfaceContainer),
+					verticalAlignment = Alignment.CenterVertically,
+					horizontalArrangement = Arrangement.Center
+				) {
+					CircularProgressIndicator(
+						modifier = Modifier
+							.size(24.dp),
+						color = MaterialTheme.colorScheme.primary,
+						strokeWidth = 4.dp,
+						strokeCap = StrokeCap.Round
+					)
+				}
+			}
+		}	    
 	}
-
 }
 
 @OptIn(ExperimentalGlideComposeApi::class, ExperimentalFoundationApi::class)

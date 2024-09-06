@@ -8,5 +8,6 @@ import androidx.room.PrimaryKey
 data class MediaEntity (
 	@PrimaryKey val id: Long,
     @ColumnInfo(name = "date_taken") val dateTaken: Long,
-    @ColumnInfo(name = "mime_type") val mimeType: String
+    @ColumnInfo(name = "mime_type") val mimeType: String,
+    @ColumnInfo(name = "lastModified") val lastModified: Long,
 )

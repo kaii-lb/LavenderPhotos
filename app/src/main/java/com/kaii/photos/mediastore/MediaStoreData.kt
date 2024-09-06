@@ -22,9 +22,9 @@ data class MediaStoreData(
 
     var gridPosition: Int = 0
 ) : Parcelable {
-	/** gets the last modified date in dat (no hours/minutes/seconds/milliseconds) */
+	/** gets the date taken in days (no hours/minutes/seconds/milliseconds) */
     /** its returned in unix epoch millis*/
-    fun getLastModifiedDay() : Long {
+    fun getDateTakenDay() : Long {
         val calendar = Calendar.getInstance(Locale.ENGLISH).apply {
             timeInMillis = dateTaken * 1000
             set(Calendar.HOUR_OF_DAY, 0)
@@ -35,11 +35,23 @@ data class MediaStoreData(
 
         return calendar.timeInMillis / 1000
     }
-    /** gets the last modified date in months (no days/hours/minutes/seconds/milliseconds) */
+    /** gets the date taken in months (no days/hours/minutes/seconds/milliseconds) */
     /** its returned in unix epoch millis*/
-    fun getLastModifiedMonth() : Long {
+    fun getDateTakenMonth() : Long {
         val calendar = Calendar.getInstance(Locale.ENGLISH).apply {
             timeInMillis = dateTaken * 1000
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+
+        return calendar.timeInMillis / 1000
+    }
+
+    fun getLastModifiedDay() : Long {
+        val calendar = Calendar.getInstance(Locale.ENGLISH).apply {
+            timeInMillis = dateModified * 1000
             set(Calendar.HOUR_OF_DAY, 0)
             set(Calendar.MINUTE, 0)
             set(Calendar.SECOND, 0)

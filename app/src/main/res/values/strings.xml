@@ -1,5 +1,4 @@
 <resources>
     <string name="app_name">Photos</string>
     <string name="default_homepage_photogrid_dir">DCIM</string>
-    <string name="default_app_trashbin_dir">trashbin</string>
 </resources>

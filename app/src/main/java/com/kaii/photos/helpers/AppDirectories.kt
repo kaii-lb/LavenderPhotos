@@ -9,16 +9,23 @@ private enum class AppDirectories(val path: String) {
 }
 
 fun getAppTrashBinDirectory(context: Context) : String {
-//    return context.getDir(AppDirectories.TrashBin.path, Context.MODE_PRIVATE)
+    val dir = "/storage/emulated/0/LavenderPhotos/" + AppDirectories.TrashBin.path + "/" // TODO: switch to Environment.getExternalStoragePublicDir
 
-
-    val folder = File("/storage/emulated/0/Download/RANDOMASSSHIT/")
+    val folder = File(dir)
     if (!folder.exists()) {
         folder.mkdirs()
     }
-    return "/storage/emulated/0/Download/RANDOMASSSHIT/"
+
+    return dir
 }
 
 fun getAppLockedFolderDirectory(context: Context) : String {
-    return context.getDir(AppDirectories.LockedFolder.path, Context.MODE_PRIVATE).absolutePath
+    val dir = context.getDir(AppDirectories.LockedFolder.path, Context.MODE_PRIVATE).absolutePath
+
+    val folder = File(dir)
+    if (!folder.exists()) {
+        folder.mkdirs()
+    }
+
+    return dir
 }

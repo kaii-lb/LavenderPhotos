@@ -45,6 +45,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.navigation.NavHostController
 import com.bumptech.glide.integration.compose.GlideImage
 import com.kaii.photos.MainActivity
+import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.getAppTrashBinDirectory
 import com.kaii.photos.helpers.single_image_functions.ImageFunctions
 import com.kaii.photos.mediastore.MediaStoreData
@@ -64,7 +65,11 @@ fun TrashedPhotoGridView() {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            PhotoGrid(ImageFunctions.LoadTrashedImage, getAppTrashBinDirectory(LocalContext.current).replace("/storage/emulated/0/", ""))
+            PhotoGrid(
+                ImageFunctions.LoadTrashedImage,
+                getAppTrashBinDirectory(LocalContext.current).replace("/storage/emulated/0/", ""),
+                MediaItemSortMode.LastModifiedTrashed
+            )
         }
     }
 }

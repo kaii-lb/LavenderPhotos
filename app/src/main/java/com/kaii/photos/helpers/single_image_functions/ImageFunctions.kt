@@ -15,8 +15,13 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
+import java.nio.file.attribute.BasicFileAttributes
+import java.nio.file.attribute.FileTime
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.io.path.Path
+import kotlin.io.path.setAttribute
 
 const val TAG = "IMAGE_FUNCTIONS"
 
@@ -56,36 +61,29 @@ fun trashPhoto(path: String, id: Long, context: Context) {
     val trashDir = getAppTrashBinDirectory(context)
     val copyToPath = trashDir + "trashed." + fileToBeTrashed.name
 
-// 	val inputStream = FileInputStream(absolutePath)
-// 	val outputStream = FileOutputStream(copyToPath)
-// 	val buffer = ByteArray(1024)
-// 	var read: Int
-// 
-// 	while (inputStream.read(buffer).also {read = it} != -1) {
-// 		outputStream.write(buffer, 0, read)
-// 	}
-// 	inputStream.close()
-// 	outputStream.flush()
-// 	outputStream.close()
-
-	java.nio.file.Files.move(Path(absolutePath), Path(copyToPath), java.nio.file.StandardCopyOption.ATOMIC_MOVE)
-
+	Files.move(Path(absolutePath), Path(copyToPath), StandardCopyOption.ATOMIC_MOVE)
+	
 	val database = MainActivity.applicationDatabase
 
 	CoroutineScope(EmptyCoroutineContext + CoroutineName("delete_file_context")).launch {
 	  	val dateTaken = database.mediaEntityDao().getDateTaken(id)
 	   	val mimeType = database.mediaEntityDao().getMimeType(id)
+		val lastModified = System.currentTimeMillis()
 
+		Path(copyToPath).setAttribute(BasicFileAttributes::lastModifiedTime.name, FileTime.fromMillis(lastModified))
+		println("LAST MODIFIED TIME $lastModified")
+		
 	    database.trashedItemEntityDao().insertEntity(
 	        TrashedItemEntity(
 	            absolutePath,
 	            copyToPath,
 	            dateTaken,
-	            mimeType
+	            mimeType,
+				lastModified
 	        )
 	    )
 
-
+		database.mediaEntityDao().deleteEntityById(id)	
 	}
 	File(copyToPath).lastModified()
 
@@ -100,29 +98,21 @@ private fun untrashPhoto(path: String, id: Long) {
 
 	CoroutineScope(EmptyCoroutineContext + CoroutineName("undelete_file_context")).launch {
 		val item = database.trashedItemEntityDao().getFromTrashedPath(absolutePath)
-	  	val dateTaken = item.dateTaken
-	   	val mimeType = item.mimeType
 
-		database.mediaEntityDao().insertEntity(MediaEntity(id = id, mimeType = mimeType, dateTaken = dateTaken))
+		database.mediaEntityDao().insertEntity(
+			MediaEntity(
+				id = id,
+				mimeType = item.mimeType,
+				dateTaken = item.dateTaken,
+				lastModified = item.lastModified
+			)
+		)
 
 		val reverseCemetery = item.originalPath
 
 		database.trashedItemEntityDao().deleteEntityByPath(absolutePath)
-		println("$dateTaken $mimeType REVERSE CEMETERY $reverseCemetery $absolutePath")
 
-// 		val inputStream = FileInputStream(absolutePath)
-// 		val outputStream = FileOutputStream(reverseCemetery)
-// 		val buffer = ByteArray(1024)
-// 		var read: Int
-// 
-// 		while (inputStream.read(buffer).also {read = it} != -1) {
-// 			outputStream.write(buffer, 0, read)
-// 		}
-// 		inputStream.close()
-// 		outputStream.flush()
-// 		outputStream.close()
-
-		java.nio.file.Files.move(Path(absolutePath), Path(reverseCemetery), java.nio.file.StandardCopyOption.ATOMIC_MOVE)
+		Files.move(Path(absolutePath), Path(reverseCemetery), StandardCopyOption.ATOMIC_MOVE)
 
 		fileToBeRevived.delete()
 	}

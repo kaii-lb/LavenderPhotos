@@ -45,8 +45,10 @@ import androidx.navigation.NavHostController
 import com.bumptech.glide.integration.compose.GlideImage
 import com.kaii.photos.MainActivity
 import com.kaii.photos.helpers.single_image_functions.ImageFunctions
+import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.models.main_activity.MainDataSharingModel
+import java.io.File
 
 @Composable
 fun SingleAlbumView() {
@@ -70,7 +72,7 @@ fun SingleAlbumView() {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            PhotoGrid(ImageFunctions.LoadNormalImage, albumDir)
+       		PhotoGrid(ImageFunctions.LoadNormalImage, albumDir, MediaItemSortMode.DateTaken)	
         }
     }
 }

@@ -144,7 +144,19 @@ private fun AlbumGridItem(
             .fillMaxWidth(1f)
             .padding(6.dp)
             .clip(RoundedCornerShape(24.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainer),
+            .background(MaterialTheme.colorScheme.surfaceContainer)
+			.combinedClickable (
+				onClick = {
+					MainActivity.mainViewModel.setSelectedAlbumDir(neededDir)
+					MainActivity.navController.navigate(MultiScreenViewType.SingleAlbumView.name)
+				},
+
+				onDoubleClick = { /*ignore double clicks*/ },
+
+				onLongClick = {
+					// TODO: select item
+				}
+			),
         verticalArrangement = Arrangement.SpaceEvenly,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -162,19 +174,7 @@ private fun AlbumGridItem(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
 	                .aspectRatio(1f)
-	                .clip(RoundedCornerShape(16.dp))
-					.combinedClickable (
-						onClick = {
-							MainActivity.mainViewModel.setSelectedAlbumDir(neededDir)
-							MainActivity.navController.navigate(MultiScreenViewType.SingleAlbumView.name)
-						},
-
-						onDoubleClick = { /*ignore double clicks*/ },
-
-						onLongClick = {
-							// TODO: select item
-						}
-					),
+	                .clip(RoundedCornerShape(16.dp)),
             ) {
                 it.thumbnail(preloadRequestBuilder).signature(item.signature()).diskCacheStrategy(DiskCacheStrategy.ALL)
             }

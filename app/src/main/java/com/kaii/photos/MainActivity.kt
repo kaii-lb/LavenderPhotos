@@ -79,6 +79,7 @@ import com.kaii.photos.compose.SingleTrashedPhotoView
 import com.kaii.photos.compose.TrashedPhotoGridView
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.helpers.MainScreenViewType
+import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.single_image_functions.ImageFunctions
 import com.kaii.photos.models.main_activity.MainDataSharingModel
@@ -92,7 +93,6 @@ class MainActivity : ComponentActivity() {
             arrayOf(
                 Manifest.permission.READ_MEDIA_IMAGES,
                 Manifest.permission.READ_MEDIA_VIDEO,
-                Manifest.permission.MANAGE_EXTERNAL_STORAGE
             )
 
         lateinit var applicationDatabase: MediaDatabase
@@ -132,6 +132,8 @@ class MainActivity : ComponentActivity() {
     private fun setContentForActivity() {
         setContent {
             PhotosTheme {
+				window.decorView.setBackgroundColor(MaterialTheme.colorScheme.background.toArgb())
+            	
                 mainViewModel = viewModel(
                     factory = MainDataSharingModelFactory()
                 )
@@ -142,7 +144,9 @@ class MainActivity : ComponentActivity() {
                 NavHost (
                     navController = navController,
                     startDestination = MultiScreenViewType.MainScreen.name,
-                    modifier = Modifier.fillMaxSize(1f),
+                    modifier = Modifier
+                    	.fillMaxSize(1f)
+                    	.background(MaterialTheme.colorScheme.background),
                     enterTransition = {
                         slideInHorizontally (
                             animationSpec = tween(
@@ -227,7 +231,9 @@ class MainActivity : ComponentActivity() {
             topBar = {
                 TopBar()
             },
-            bottomBar = { BottomBar(currentView) }
+            bottomBar = { 
+            	BottomBar(currentView) 
+           	}
         ) { padding ->
             Column(
                 modifier = Modifier
@@ -253,8 +259,8 @@ class MainActivity : ComponentActivity() {
                         label = "MainAnimatedContentView"
                     ) { stateValue ->
 	                    when (stateValue) {
-	                        MainScreenViewType.PhotoGridView -> PhotoGrid(ImageFunctions.LoadNormalImage, stringResource(id = R.string.default_homepage_photogrid_dir))
-	                        MainScreenViewType.LockedFolder -> PhotoGrid(ImageFunctions.LoadTrashedImage, stringResource(id = R.string.default_homepage_photogrid_dir))
+	                        MainScreenViewType.PhotoGridView -> PhotoGrid(ImageFunctions.LoadNormalImage, stringResource(id = R.string.default_homepage_photogrid_dir), MediaItemSortMode.DateTaken)
+	                        MainScreenViewType.LockedFolder -> PhotoGrid(ImageFunctions.LoadTrashedImage, stringResource(id = R.string.default_homepage_photogrid_dir), MediaItemSortMode.DateTaken)
 	                        MainScreenViewType.AlbumGridView -> AlbumGridView()
    	                        MainScreenViewType.SearchPage -> AlbumGridView()
 	                    }
