@@ -17,13 +17,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -79,13 +80,13 @@ fun SingleTrashedPhotoView(window: Window) {
     Scaffold (
         topBar =  { TopBar(mediaItem, appBarAlpha) },
         bottomBar = { BottomBar(appBarAlpha, mediaItem) },
-        containerColor = MaterialTheme.colorScheme.background,
-        contentColor = MaterialTheme.colorScheme.onBackground
+        containerColor = CustomMaterialTheme.colorScheme.background,
+        contentColor = CustomMaterialTheme.colorScheme.onBackground
     ) { _ ->
         Column (
             modifier = Modifier
                 .padding(0.dp)
-                .background(MaterialTheme.colorScheme.background)
+                .background(CustomMaterialTheme.colorScheme.background)
                 .fillMaxSize(1f),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
@@ -103,7 +104,8 @@ fun SingleTrashedPhotoView(window: Window) {
                         if (systemBarsShown) {
                             windowInsetsController.apply {
                                 hide(WindowInsetsCompat.Type.systemBars())
-                                systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                                systemBarsBehavior =
+                                    WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
                             }
                             window.setDecorFitsSystemWindows(false)
                             systemBarsShown = false
@@ -126,7 +128,7 @@ private fun TopBar(mediaItem: MediaStoreData?, alpha: Float) {
     TopAppBar(
         modifier = Modifier.alpha(alpha),
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
+            containerColor = CustomMaterialTheme.colorScheme.surfaceContainer
         ),
         navigationIcon = {
             IconButton(
@@ -135,7 +137,7 @@ private fun TopBar(mediaItem: MediaStoreData?, alpha: Float) {
                 Icon(
                     painter = painterResource(id = com.kaii.photos.R.drawable.back_arrow),
                     contentDescription = "Go back to previous page",
-                    tint = MaterialTheme.colorScheme.onBackground,
+                    tint = CustomMaterialTheme.colorScheme.onBackground,
                     modifier = Modifier
                         .size(24.dp)
                 )
@@ -167,7 +169,7 @@ private fun TopBar(mediaItem: MediaStoreData?, alpha: Float) {
                 Icon(
                     painter = painterResource(id = com.kaii.photos.R.drawable.more_options),
                     contentDescription = "show more options",
-                    tint = MaterialTheme.colorScheme.onBackground,
+                    tint = CustomMaterialTheme.colorScheme.onBackground,
                     modifier = Modifier
                         .size(24.dp)
                 )
@@ -181,8 +183,8 @@ private fun BottomBar(alpha: Float, item: MediaStoreData) {
     val context = LocalContext.current
 
     BottomAppBar(
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        contentColor = MaterialTheme.colorScheme.onBackground,
+        containerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
+        contentColor = CustomMaterialTheme.colorScheme.onBackground,
         contentPadding = PaddingValues(0.dp),
         actions = {
             Row (
@@ -209,7 +211,7 @@ private fun BottomBar(alpha: Float, item: MediaStoreData) {
                         Icon (
                             painter = painterResource(id = R.drawable.favorite),
                             contentDescription = "Restore Image Button",
-                            tint = MaterialTheme.colorScheme.primary,
+                            tint = CustomMaterialTheme.colorScheme.primary,
                             modifier = Modifier
                                 .size(22.dp)
                                 .padding(0.dp, 2.dp, 0.dp, 0.dp)
@@ -224,7 +226,7 @@ private fun BottomBar(alpha: Float, item: MediaStoreData) {
                             text = "Restore",
                             fontSize = TextUnit(16f, TextUnitType.Sp),
                             textAlign = TextAlign.Center,
-                            color = MaterialTheme.colorScheme.onBackground,
+                            color = CustomMaterialTheme.colorScheme.onBackground,
                             modifier = Modifier
                                 .fillMaxWidth(1f)
                         )
@@ -233,10 +235,56 @@ private fun BottomBar(alpha: Float, item: MediaStoreData) {
 
                 Spacer (modifier = Modifier.width(8.dp))
 
+                var showDialog by remember { mutableStateOf(false) }
+
+                if (showDialog) {
+                    AlertDialog(
+                        onDismissRequest = {
+                            showDialog = false
+                        },
+                        confirmButton = {
+                            Button(
+                                onClick = {
+                                    showDialog = false
+       	                            operateOnImage(item.absolutePath, item.id, ImageFunctions.PermaDeleteImage, context)
+                            		MainActivity.navController.popBackStack()
+                                }
+                            ) {
+                                Text(
+                                    text = "Delete",
+                                    fontSize = TextUnit(14f, TextUnitType.Sp)
+                                )
+                            }
+                        },
+                        title = {
+                            Text(
+                                text = "Permanently delete this ${item.type.name}?",
+                                fontSize = TextUnit(16f, TextUnitType.Sp)
+                            )
+                        },
+                        dismissButton = {
+                            Button(
+                                onClick = {
+                                    showDialog = false
+                                },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = CustomMaterialTheme.colorScheme.tertiaryContainer,
+                                    contentColor = CustomMaterialTheme.colorScheme.onTertiaryContainer
+                                )
+                            ) {
+                                Text(
+                                    text = "Cancel",
+                                    fontSize = TextUnit(14f, TextUnitType.Sp)
+                                )
+                            }
+                        },
+                        shape = RoundedCornerShape(32.dp)
+                    )
+                }
+
                 OutlinedButton(
                     onClick = {
-                        operateOnImage(item.absolutePath, item.id, ImageFunctions.PermaDeleteImage, context)
-                        MainActivity.navController.popBackStack()
+                        showDialog = true
                     },
                     modifier = Modifier
                         .weight(1f)
@@ -250,7 +298,7 @@ private fun BottomBar(alpha: Float, item: MediaStoreData) {
                         Icon (
                             painter = painterResource(id = R.drawable.trash),
                             contentDescription = "Permanently Delete Image Button",
-                            tint = MaterialTheme.colorScheme.primary,
+                            tint = CustomMaterialTheme.colorScheme.primary,
                             modifier = Modifier
                                 .size(22.dp)
                                 .padding(0.dp, 2.dp, 0.dp, 0.dp)
@@ -265,7 +313,7 @@ private fun BottomBar(alpha: Float, item: MediaStoreData) {
                             text = "Delete",
                             fontSize = TextUnit(16f, TextUnitType.Sp),
                             textAlign = TextAlign.Center,
-                            color = MaterialTheme.colorScheme.onBackground,
+                            color = CustomMaterialTheme.colorScheme.onBackground,
                             modifier = Modifier
                                 .fillMaxWidth(1f)
                         )

@@ -50,8 +50,6 @@ fun groupPhotosBy(media: List<MediaStoreData>, sortBy: MediaItemSortMode = Media
             }
         }
 
-        println("KEY FOR MEDIA IS $key")
-
         if (!mediaDataGroups.containsKey(key)) {
             mediaDataGroups[key] = emptyList<MediaStoreData>().toMutableList()
         }

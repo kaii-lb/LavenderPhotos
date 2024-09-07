@@ -71,15 +71,13 @@ fun trashPhoto(path: String, id: Long, context: Context) {
 		val lastModified = System.currentTimeMillis()
 
 		Path(copyToPath).setAttribute(BasicFileAttributes::lastModifiedTime.name, FileTime.fromMillis(lastModified))
-		println("LAST MODIFIED TIME $lastModified")
 		
 	    database.trashedItemEntityDao().insertEntity(
 	        TrashedItemEntity(
 	            absolutePath,
 	            copyToPath,
 	            dateTaken,
-	            mimeType,
-				lastModified
+	            mimeType
 	        )
 	    )
 
@@ -103,8 +101,7 @@ private fun untrashPhoto(path: String, id: Long) {
 			MediaEntity(
 				id = id,
 				mimeType = item.mimeType,
-				dateTaken = item.dateTaken,
-				lastModified = item.lastModified
+				dateTaken = item.dateTaken
 			)
 		)
 
@@ -114,6 +111,9 @@ private fun untrashPhoto(path: String, id: Long) {
 
 		Files.move(Path(absolutePath), Path(reverseCemetery), StandardCopyOption.ATOMIC_MOVE)
 
+		val lastModified = System.currentTimeMillis()
+		Path(reverseCemetery).setAttribute(BasicFileAttributes::lastModifiedTime.name, FileTime.fromMillis(lastModified))
+		
 		fileToBeRevived.delete()
 	}
 }

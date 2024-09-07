@@ -19,11 +19,17 @@ class MainDataSharingModel() : ViewModel() {
     private val _selectedAlbumDir = MutableStateFlow<String?>(null)
     val selectedAlbumDir: Flow<String?> = _selectedAlbumDir.asStateFlow()
 
+    private val _groupedMedia = MutableStateFlow<List<MediaStoreData>?>(null)
+    val groupedMedia: Flow<List<MediaStoreData>?> = _groupedMedia.asStateFlow()
+
     fun setSelectedMediaData(newMediaStoreData: MediaStoreData?) {
         _selectedMedia.value = newMediaStoreData
     }
 
     fun setSelectedAlbumDir(newAlbumDir: String?) {
         _selectedAlbumDir.value = newAlbumDir
+    }
+    fun setGroupedMedia(media: List<MediaStoreData>?) {
+        _groupedMedia.value = media
     }
 }

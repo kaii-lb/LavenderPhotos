@@ -20,7 +20,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -62,8 +61,8 @@ fun SingleAlbumView() {
 	
     Scaffold (
         topBar =  { TopBar(topBarTitle) },
-        containerColor = MaterialTheme.colorScheme.background,
-        contentColor = MaterialTheme.colorScheme.onBackground
+        containerColor = CustomMaterialTheme.colorScheme.background,
+        contentColor = CustomMaterialTheme.colorScheme.onBackground
     ) { padding ->
         Column (
             modifier = Modifier
@@ -82,7 +81,7 @@ fun SingleAlbumView() {
 private fun TopBar(title: String?) {
     TopAppBar(
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
+            containerColor = CustomMaterialTheme.colorScheme.surfaceContainer
         ),
         navigationIcon = {
             IconButton(
@@ -91,7 +90,7 @@ private fun TopBar(title: String?) {
                 Icon(
                     painter = painterResource(id = com.kaii.photos.R.drawable.back_arrow),
                     contentDescription = "Go back to previous page",
-                    tint = MaterialTheme.colorScheme.onBackground,
+                    tint = CustomMaterialTheme.colorScheme.onBackground,
                     modifier = Modifier
                         .size(24.dp)
                 )
@@ -115,7 +114,7 @@ private fun TopBar(title: String?) {
                 Icon(
                     painter = painterResource(id = com.kaii.photos.R.drawable.settings),
                     contentDescription = "show more options for the album view",
-                    tint = MaterialTheme.colorScheme.onBackground,
+                    tint = CustomMaterialTheme.colorScheme.onBackground,
                     modifier = Modifier
                         .size(24.dp)
                 )

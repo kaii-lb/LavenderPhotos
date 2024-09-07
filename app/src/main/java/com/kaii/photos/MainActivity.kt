@@ -38,11 +38,11 @@ import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import com.kaii.photos.compose.CustomMaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
@@ -132,8 +132,8 @@ class MainActivity : ComponentActivity() {
     private fun setContentForActivity() {
         setContent {
             PhotosTheme {
-				window.decorView.setBackgroundColor(MaterialTheme.colorScheme.background.toArgb())
-            	
+				window.decorView.setBackgroundColor(CustomMaterialTheme.colorScheme.background.toArgb())
+
                 mainViewModel = viewModel(
                     factory = MainDataSharingModelFactory()
                 )
@@ -146,7 +146,7 @@ class MainActivity : ComponentActivity() {
                     startDestination = MultiScreenViewType.MainScreen.name,
                     modifier = Modifier
                     	.fillMaxSize(1f)
-                    	.background(MaterialTheme.colorScheme.background),
+                    	.background(CustomMaterialTheme.colorScheme.background),
                     enterTransition = {
                         slideInHorizontally (
                             animationSpec = tween(
@@ -178,8 +178,8 @@ class MainActivity : ComponentActivity() {
                 ) {
                     composable(MultiScreenViewType.MainScreen.name) {
        					enableEdgeToEdge(
-							navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
-							statusBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surface.toArgb()) 
+							navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
+							statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.surface.toArgb(), CustomMaterialTheme.colorScheme.surface.toArgb()) 
 						)
 
                         Content(currentView)
@@ -187,24 +187,25 @@ class MainActivity : ComponentActivity() {
 
                     composable(MultiScreenViewType.SinglePhotoView.name) {
 						enableEdgeToEdge(
-							navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.2f).toArgb()),
-							statusBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.2f).toArgb()) 
+							navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.2f).toArgb()),
+							statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.surface.copy(alpha = 0.2f).toArgb(),
+								CustomMaterialTheme.colorScheme.surface.copy(alpha = 0.2f).toArgb()) 
 						)
                     	SinglePhotoView(window)						
                     }
 
                     composable(MultiScreenViewType.SingleAlbumView.name) {
                         enableEdgeToEdge(
-                            navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
-                            statusBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb())
+                            navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
+                            statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.surface.toArgb(), CustomMaterialTheme.colorScheme.surface.toArgb()) 
                         )
                         SingleAlbumView()
                     }
 
                     composable(MultiScreenViewType.SingleTrashedPhotoView.name) {
                         enableEdgeToEdge(
-                            navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
-                            statusBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb())
+                            navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
+                            statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.surface.toArgb(), CustomMaterialTheme.colorScheme.surface.toArgb()) 
                         )
 
                         SingleTrashedPhotoView(window)
@@ -212,8 +213,8 @@ class MainActivity : ComponentActivity() {
 
                     composable(MultiScreenViewType.TrashedPhotoView.name) {
                         enableEdgeToEdge(
-                            navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
-                            statusBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb())
+                            navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
+                            statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.surface.toArgb(), CustomMaterialTheme.colorScheme.surface.toArgb()) 
                         )
 
                         TrashedPhotoGridView()
@@ -295,20 +296,23 @@ class MainActivity : ComponentActivity() {
                     Icon(
                         painter = painterResource(R.drawable.settings),
                         contentDescription = "Settings Button",
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        tint = CustomMaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier.size(24.dp)
                     )
                 }
             },
             scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(),
+	    	colors = TopAppBarDefaults.topAppBarColors(
+	    		containerColor = CustomMaterialTheme.colorScheme.background
+	    	),
         )
     }
 
     @Composable
     private fun BottomBar(currentView: MutableState<MainScreenViewType>) {
         BottomAppBar(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            containerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
+            contentColor = CustomMaterialTheme.colorScheme.onPrimaryContainer,
             contentPadding = PaddingValues(0.dp),
         ) {
             val buttonHeight = 56.dp
@@ -323,8 +327,8 @@ class MainActivity : ComponentActivity() {
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
             	// should find a better way
-            	val unselectedColor = MaterialTheme.colorScheme.surfaceContainer
-            	val selectedColor = MaterialTheme.colorScheme.secondaryContainer
+            	val unselectedColor = CustomMaterialTheme.colorScheme.surfaceContainer
+            	val selectedColor = CustomMaterialTheme.colorScheme.secondaryContainer
             	var photoGridColor by remember { mutableStateOf(unselectedColor) }
             	var lockedFolderColor by remember { mutableStateOf(unselectedColor) }
             	var albumGridColor by remember { mutableStateOf(unselectedColor) }

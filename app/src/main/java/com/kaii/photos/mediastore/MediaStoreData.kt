@@ -2,6 +2,7 @@ package com.kaii.photos.mediastore
 
 import android.net.Uri
 import android.os.Parcelable
+import com.bumptech.glide.signature.MediaStoreSignature
 import kotlinx.parcelize.Parcelize
 import java.util.Calendar
 import java.util.Locale
@@ -61,6 +62,8 @@ data class MediaStoreData(
         return calendar.timeInMillis / 1000
     }
 }
+
+fun MediaStoreData.signature() = MediaStoreSignature(mimeType, dateModified, orientation)
 
 /** The type of data. */
 enum class MediaType {

@@ -22,7 +22,6 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.Icon
 import androidx.compose.material3.CircularProgressIndicator
@@ -63,13 +62,14 @@ import com.kaii.photos.models.main_activity.MainDataSharingModel
 import com.kaii.photos.MainActivity
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.single_image_functions.ImageFunctions
+import com.kaii.photos.mediastore.signature
+import com.kaii.photos.compose.CustomMaterialTheme
 import java.io.File
 
 private const val THUMBNAIL_DIMENSION = 50
 private const val TAG = "PHOTO_GRID_VIEW"
 
 private val THUMBNAIL_SIZE = Size(THUMBNAIL_DIMENSION.toFloat(), THUMBNAIL_DIMENSION.toFloat())
-private fun MediaStoreData.signature() = MediaStoreSignature(mimeType, dateModified, orientation)
 
 @Composable
 fun PhotoGrid(operation: ImageFunctions, path: String, sortBy: MediaItemSortMode) {
@@ -80,17 +80,18 @@ fun PhotoGrid(operation: ImageFunctions, path: String, sortBy: MediaItemSortMode
 
     val mainViewModel = MainActivity.mainViewModel
 
-	if (File("/storage/emulated/0/" + path).listFiles().size != 0) {
+	if ((File("/storage/emulated/0/$path").listFiles()?.size ?: 0) != 0) {
    		DeviceMedia(mediaStoreData.value, operation, mainViewModel, sortBy)
    	} else {
    		Column (
    			modifier = Modifier
-   				.background(MaterialTheme.colorScheme.background),
+   				.background(CustomMaterialTheme.colorScheme.background),
    			verticalArrangement = Arrangement.Center,
    			horizontalAlignment = Alignment.CenterHorizontally
    		) {
    			Text (
-   				text = "Empty Folder"
+   				text = "Empty Folder",
+		    	fontSize = TextUnit(18f, TextUnitType.Sp)
    			)
    		}
    	}
@@ -123,7 +124,8 @@ fun DeviceMedia(
 
 	Box (
 		modifier = Modifier
-			.fillMaxSize(1f)	
+			.fillMaxSize(1f)
+			.background(CustomMaterialTheme.colorScheme.background)	
 	) {	
 	    LazyVerticalGrid(
 	        columns = GridCells.Fixed(3),
@@ -153,7 +155,8 @@ fun DeviceMedia(
 	            	mediaStoreItem,
 	                preloadRequestBuilder,
 	                operation,
-	                mainViewModel
+	                mainViewModel,
+	                groupedMedia
 	            )
 
 	            if (i >= 0) {
@@ -163,7 +166,6 @@ fun DeviceMedia(
 		            }
 		            handler.removeCallbacks(runnable)
 		            handler.postDelayed(runnable, 500)
-	            	// println("SPINNING ENDED AT ${LocalTime.now()}")
 	            }
 	        }
 	    }
@@ -183,14 +185,14 @@ fun DeviceMedia(
 					modifier = Modifier
 						.size(40.dp)	
 						.clip(RoundedCornerShape(1000.dp))
-						.background(MaterialTheme.colorScheme.surfaceContainer),
+						.background(CustomMaterialTheme.colorScheme.surfaceContainer),
 					verticalAlignment = Alignment.CenterVertically,
 					horizontalArrangement = Arrangement.Center
 				) {
 					CircularProgressIndicator(
 						modifier = Modifier
-							.size(24.dp),
-						color = MaterialTheme.colorScheme.primary,
+							.size(22.dp),
+						color = CustomMaterialTheme.colorScheme.primary,
 						strokeWidth = 4.dp,
 						strokeCap = StrokeCap.Round
 					)
@@ -206,7 +208,8 @@ fun MediaStoreItem(
     item: MediaStoreData,
     preloadRequestBuilder: RequestBuilder<Drawable>,
     operation: ImageFunctions,
-    mainViewModel: MainDataSharingModel
+    mainViewModel: MainDataSharingModel,
+    groupedMedia: List<MediaStoreData>,
 ) {
     if (item.mimeType == null && item.type == MediaType.Section) {
         Row(
@@ -214,7 +217,7 @@ fun MediaStoreItem(
                 .fillMaxWidth(1f)
                 .aspectRatio(5.5f)
                 .padding(16.dp, 8.dp)
-                .background(MaterialTheme.colorScheme.background),
+                .background(CustomMaterialTheme.colorScheme.background),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Start
         ) {
@@ -222,7 +225,7 @@ fun MediaStoreItem(
                 text = item.displayName ?: "This was meant to be a dated section",
                 fontSize = TextUnit(16f, TextUnitType.Sp),
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground,
+                color = CustomMaterialTheme.colorScheme.onBackground,
             )
         }
     } else {
@@ -231,12 +234,13 @@ fun MediaStoreItem(
                 .aspectRatio(1f)
                 .padding(2.dp)
                 .clip(RoundedCornerShape(0.dp))
-                .background(MaterialTheme.colorScheme.primary)
+                .background(CustomMaterialTheme.colorScheme.primary)
                 .combinedClickable (
                     onClick = {
 						when (operation) {
 							ImageFunctions.LoadNormalImage -> {
 								mainViewModel.setSelectedMediaData(item)
+								mainViewModel.setGroupedMedia(groupedMedia)
 								MainActivity.navController.navigate(MultiScreenViewType.SinglePhotoView.name)
 							}
 							ImageFunctions.LoadTrashedImage -> {

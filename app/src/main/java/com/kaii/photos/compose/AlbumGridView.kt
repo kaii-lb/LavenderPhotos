@@ -21,7 +21,6 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -59,8 +58,8 @@ fun AlbumGridView() {
     Column (
         modifier = Modifier
 			.fillMaxSize(1f)
-			.padding(8.dp, 0.dp)
-			.background(MaterialTheme.colorScheme.background),
+			.background(CustomMaterialTheme.colorScheme.background)
+			.padding(8.dp, 0.dp),
         verticalArrangement = Arrangement.SpaceEvenly,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -144,7 +143,7 @@ private fun AlbumGridItem(
             .fillMaxWidth(1f)
             .padding(6.dp)
             .clip(RoundedCornerShape(24.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .background(CustomMaterialTheme.colorScheme.surfaceContainer)
 			.combinedClickable (
 				onClick = {
 					MainActivity.mainViewModel.setSelectedAlbumDir(neededDir)
@@ -183,7 +182,7 @@ private fun AlbumGridItem(
 	            text = " $title",
 	            fontSize = TextUnit(14f, TextUnitType.Sp),
 	            textAlign = TextAlign.Start,
-	            color = MaterialTheme.colorScheme.onSurface,
+	            color = CustomMaterialTheme.colorScheme.onSurface,
 	            maxLines = 1,
 	            modifier = Modifier
 	            	.fillMaxWidth(1f)
@@ -200,7 +199,7 @@ private fun CategoryList() {
             .fillMaxWidth(1f)
             .wrapContentHeight()
             .padding(8.dp)
-            .background(MaterialTheme.colorScheme.background),
+            .background(CustomMaterialTheme.colorScheme.background),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
@@ -218,7 +217,7 @@ private fun CategoryList() {
         		Icon (
         			painter = painterResource(id = R.drawable.favorite),
 					contentDescription = "Favorites Button",
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = CustomMaterialTheme.colorScheme.primary,
                     modifier = Modifier
                     	.size(22.dp)
                     	.padding(0.dp, 2.dp, 0.dp, 0.dp)
@@ -233,7 +232,7 @@ private fun CategoryList() {
 	            	text = "Favorites",
 		         	fontSize = TextUnit(16f, TextUnitType.Sp),
 		          	textAlign = TextAlign.Center,
-		         	color = MaterialTheme.colorScheme.onBackground,
+		         	color = CustomMaterialTheme.colorScheme.onBackground,
 		         	modifier = Modifier
 		         		.fillMaxWidth(1f)
 	           	)
@@ -258,7 +257,7 @@ private fun CategoryList() {
         		Icon (
         			painter = painterResource(id = R.drawable.trash),
 					contentDescription = "Trash Button",
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = CustomMaterialTheme.colorScheme.primary,
                     modifier = Modifier
                     	.size(20.dp)
         		)
@@ -267,7 +266,7 @@ private fun CategoryList() {
 	            	text = "Trash ",
 		         	fontSize = TextUnit(16f, TextUnitType.Sp),
 		          	textAlign = TextAlign.Center,
-		         	color = MaterialTheme.colorScheme.onBackground,
+		         	color = CustomMaterialTheme.colorScheme.onBackground,
 		         	modifier = Modifier
 		         		.fillMaxWidth(1f)
 	           	)

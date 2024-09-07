@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "999842a6c14935520d9587836715628e",
+    "identityHash": "edbaaeaa0d8e432fb89bbb70ca58cd1c",
     "entities": [
       {
         "tableName": "MediaEntity",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `date_taken` INTEGER NOT NULL, `mime_type` TEXT NOT NULL, `lastModified` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `date_taken` INTEGER NOT NULL, `mime_type` TEXT NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -25,12 +25,6 @@
             "columnName": "mime_type",
             "affinity": "TEXT",
             "notNull": true
-          },
-          {
-            "fieldPath": "lastModified",
-            "columnName": "lastModified",
-            "affinity": "INTEGER",
-            "notNull": true
           }
         ],
         "primaryKey": {
@@ -44,7 +38,7 @@
       },
       {
         "tableName": "TrashedItemEntity",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`originalPath` TEXT NOT NULL, `trashed_path` TEXT NOT NULL, `date_taken` INTEGER NOT NULL, `mime_type` TEXT NOT NULL, `last_modified` INTEGER NOT NULL, PRIMARY KEY(`originalPath`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`originalPath` TEXT NOT NULL, `trashed_path` TEXT NOT NULL, `date_taken` INTEGER NOT NULL, `mime_type` TEXT NOT NULL, PRIMARY KEY(`originalPath`))",
         "fields": [
           {
             "fieldPath": "originalPath",
@@ -69,12 +63,6 @@
             "columnName": "mime_type",
             "affinity": "TEXT",
             "notNull": true
-          },
-          {
-            "fieldPath": "lastModified",
-            "columnName": "last_modified",
-            "affinity": "INTEGER",
-            "notNull": true
           }
         ],
         "primaryKey": {
@@ -90,7 +78,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '999842a6c14935520d9587836715628e')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'edbaaeaa0d8e432fb89bbb70ca58cd1c')"
     ]
   }
 }
