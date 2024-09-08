@@ -23,15 +23,16 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
 import com.kaii.photos.MainActivity
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.getAppTrashBinDirectory
 import com.kaii.photos.helpers.single_image_functions.ImageFunctions
 
 @Composable
-fun TrashedPhotoGridView() {
+fun TrashedPhotoGridView(navController: NavHostController) {
     Scaffold (
-        topBar =  { TopBar() },
+        topBar =  { TopBar(navController) },
         containerColor = CustomMaterialTheme.colorScheme.background,
         contentColor = CustomMaterialTheme.colorScheme.onBackground
     ) { padding ->
@@ -43,6 +44,7 @@ fun TrashedPhotoGridView() {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             PhotoGrid(
+                navController,
                 ImageFunctions.LoadTrashedImage,
                 getAppTrashBinDirectory(LocalContext.current).replace("/storage/emulated/0/", ""),
                 MediaItemSortMode.LastModifiedTrashed
@@ -53,7 +55,7 @@ fun TrashedPhotoGridView() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TopBar() {
+private fun TopBar(navController: NavHostController) {
     val title = "Trash Bin"
     TopAppBar(
         colors = TopAppBarDefaults.topAppBarColors(
@@ -61,7 +63,7 @@ private fun TopBar() {
         ),
         navigationIcon = {
             IconButton(
-                onClick = { MainActivity.navController.popBackStack() },
+                onClick = { navController.popBackStack() },
             ) {
                 Icon(
                     painter = painterResource(id = com.kaii.photos.R.drawable.back_arrow),

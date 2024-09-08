@@ -14,11 +14,7 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.SizeTransform
-import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandIn
-import androidx.compose.animation.shrinkOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -44,7 +40,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import com.kaii.photos.compose.CustomMaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -73,6 +68,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.MemoryCategory
 import com.kaii.photos.compose.AlbumGridView
 import com.kaii.photos.compose.PhotoGrid
+import com.kaii.photos.compose.SearchPage
 import com.kaii.photos.compose.SingleAlbumView
 import com.kaii.photos.compose.SinglePhotoView
 import com.kaii.photos.compose.SingleTrashedPhotoView
@@ -97,7 +93,6 @@ class MainActivity : ComponentActivity() {
 
         lateinit var applicationDatabase: MediaDatabase
         lateinit var mainViewModel: MainDataSharingModel
-        lateinit var navController: NavHostController
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -139,10 +134,9 @@ class MainActivity : ComponentActivity() {
                 )
 
                 val navControllerLocal = rememberNavController()
-                navController = navControllerLocal
                 val currentView = remember { mutableStateOf(MainScreenViewType.PhotoGridView) }
                 NavHost (
-                    navController = navController,
+                    navController = navControllerLocal,
                     startDestination = MultiScreenViewType.MainScreen.name,
                     modifier = Modifier
                     	.fillMaxSize(1f)
@@ -182,7 +176,7 @@ class MainActivity : ComponentActivity() {
 							statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.surface.toArgb(), CustomMaterialTheme.colorScheme.surface.toArgb()) 
 						)
 
-                        Content(currentView)
+                        Content(currentView, navControllerLocal)
                     }
 
                     composable(MultiScreenViewType.SinglePhotoView.name) {
@@ -191,7 +185,7 @@ class MainActivity : ComponentActivity() {
 							statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.surface.copy(alpha = 0.2f).toArgb(),
 								CustomMaterialTheme.colorScheme.surface.copy(alpha = 0.2f).toArgb()) 
 						)
-                    	SinglePhotoView(window)						
+                    	SinglePhotoView(navControllerLocal, window)
                     }
 
                     composable(MultiScreenViewType.SingleAlbumView.name) {
@@ -199,7 +193,7 @@ class MainActivity : ComponentActivity() {
                             navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
                             statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.surface.toArgb(), CustomMaterialTheme.colorScheme.surface.toArgb()) 
                         )
-                        SingleAlbumView()
+                        SingleAlbumView(navControllerLocal)
                     }
 
                     composable(MultiScreenViewType.SingleTrashedPhotoView.name) {
@@ -208,7 +202,7 @@ class MainActivity : ComponentActivity() {
                             statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.surface.toArgb(), CustomMaterialTheme.colorScheme.surface.toArgb()) 
                         )
 
-                        SingleTrashedPhotoView(window)
+                        SingleTrashedPhotoView(navControllerLocal, window)
                     }
 
                     composable(MultiScreenViewType.TrashedPhotoView.name) {
@@ -217,7 +211,7 @@ class MainActivity : ComponentActivity() {
                             statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.surface.toArgb(), CustomMaterialTheme.colorScheme.surface.toArgb()) 
                         )
 
-                        TrashedPhotoGridView()
+                        TrashedPhotoGridView(navControllerLocal)
                     }
                 }
             }
@@ -225,7 +219,10 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun Content(currentView: MutableState<MainScreenViewType>) {
+    private fun Content(
+        currentView: MutableState<MainScreenViewType>,
+        navController: NavHostController
+    ) {
         Scaffold(
             modifier = Modifier
                 .fillMaxSize(1f),
@@ -260,10 +257,10 @@ class MainActivity : ComponentActivity() {
                         label = "MainAnimatedContentView"
                     ) { stateValue ->
 	                    when (stateValue) {
-	                        MainScreenViewType.PhotoGridView -> PhotoGrid(ImageFunctions.LoadNormalImage, stringResource(id = R.string.default_homepage_photogrid_dir), MediaItemSortMode.DateTaken)
-	                        MainScreenViewType.LockedFolder -> PhotoGrid(ImageFunctions.LoadTrashedImage, stringResource(id = R.string.default_homepage_photogrid_dir), MediaItemSortMode.DateTaken)
-	                        MainScreenViewType.AlbumGridView -> AlbumGridView()
-   	                        MainScreenViewType.SearchPage -> AlbumGridView()
+	                        MainScreenViewType.PhotoGridView -> PhotoGrid(navController, ImageFunctions.LoadNormalImage, stringResource(id = R.string.default_homepage_photogrid_dir), MediaItemSortMode.DateTaken)
+	                        MainScreenViewType.LockedFolder -> PhotoGrid(navController, ImageFunctions.LoadTrashedImage, stringResource(id = R.string.default_homepage_photogrid_dir), MediaItemSortMode.DateTaken)
+	                        MainScreenViewType.AlbumGridView -> AlbumGridView(navController)
+   	                        MainScreenViewType.SearchPage -> SearchPage(navController)
 	                    }
                 	}
                 }

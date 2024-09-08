@@ -18,6 +18,15 @@ interface MediaEntityDao {
     @Query("SELECT mime_type FROM mediaentity WHERE id = :id")
     fun getMimeType(id: Long) : String
 
+    @Query("SELECT * FROM mediaentity WHERE mime_type = :mimetype")
+    fun getFromMimeType(mimetype: String) : List<MediaEntity>
+
+    @Query("SELECT * FROM mediaentity WHERE date_taken = :dateTaken")
+    fun getFromDateTaken(dateTaken: Long) : List<MediaEntity>
+
+    @Query("SELECT * FROM mediaentity WHERE display_name = :displayName")
+    fun getFromDisplayName(displayName: String) : List<MediaEntity>
+
 	// maybe try ignore and see performance difference?
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertEntity(vararg entity: MediaEntity)

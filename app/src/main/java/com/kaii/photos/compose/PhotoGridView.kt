@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
@@ -72,7 +73,7 @@ private const val TAG = "PHOTO_GRID_VIEW"
 private val THUMBNAIL_SIZE = Size(THUMBNAIL_DIMENSION.toFloat(), THUMBNAIL_DIMENSION.toFloat())
 
 @Composable
-fun PhotoGrid(operation: ImageFunctions, path: String, sortBy: MediaItemSortMode) {
+fun PhotoGrid(navController: NavHostController, operation: ImageFunctions, path: String, sortBy: MediaItemSortMode) {
 	val galleryViewModel: GalleryViewModel = viewModel(
 		factory = GalleryViewModelFactory(LocalContext.current.applicationContext, path)
 	)
@@ -81,7 +82,7 @@ fun PhotoGrid(operation: ImageFunctions, path: String, sortBy: MediaItemSortMode
     val mainViewModel = MainActivity.mainViewModel
 
 	if ((File("/storage/emulated/0/$path").listFiles()?.size ?: 0) != 0) {
-   		DeviceMedia(mediaStoreData.value, operation, mainViewModel, sortBy)
+   		DeviceMedia(navController, mediaStoreData.value, operation, mainViewModel, sortBy)
    	} else {
    		Column (
    			modifier = Modifier
@@ -99,6 +100,7 @@ fun PhotoGrid(operation: ImageFunctions, path: String, sortBy: MediaItemSortMode
 
 @Composable
 fun DeviceMedia(
+	navController: NavHostController,
 	mediaStoreData: List<MediaStoreData>,
 	operation: ImageFunctions,
 	mainViewModel: MainDataSharingModel,
@@ -152,6 +154,7 @@ fun DeviceMedia(
 	            val (mediaStoreItem, preloadRequestBuilder) = preloadingData[i]
 
 	            MediaStoreItem(
+					navController,
 	            	mediaStoreItem,
 	                preloadRequestBuilder,
 	                operation,
@@ -160,8 +163,8 @@ fun DeviceMedia(
 	            )
 
 	            if (i >= 0) {
-	            	val handler = Handler(Looper.getMainLooper())
-		            val runnable = Runnable {
+					val handler = Handler(Looper.getMainLooper())
+					val runnable = Runnable {
 		                showLoadingSpinner = false	
 		            }
 		            handler.removeCallbacks(runnable)
@@ -205,6 +208,7 @@ fun DeviceMedia(
 @OptIn(ExperimentalGlideComposeApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun MediaStoreItem(
+	navController: NavHostController,
     item: MediaStoreData,
     preloadRequestBuilder: RequestBuilder<Drawable>,
     operation: ImageFunctions,
@@ -241,11 +245,11 @@ fun MediaStoreItem(
 							ImageFunctions.LoadNormalImage -> {
 								mainViewModel.setSelectedMediaData(item)
 								mainViewModel.setGroupedMedia(groupedMedia)
-								MainActivity.navController.navigate(MultiScreenViewType.SinglePhotoView.name)
+								navController.navigate(MultiScreenViewType.SinglePhotoView.name)
 							}
 							ImageFunctions.LoadTrashedImage -> {
 								mainViewModel.setSelectedMediaData(item)
-								MainActivity.navController.navigate(MultiScreenViewType.SingleTrashedPhotoView.name)
+								navController.navigate(MultiScreenViewType.SingleTrashedPhotoView.name)
 							}
 							else -> {
 								Log.e(TAG, "No acceptable ImageFunction provided, this should not happen.")

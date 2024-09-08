@@ -35,6 +35,7 @@ enum class ImageFunctions {
     LoadNormalImage,
     LoadTrashedImage,
     PermaDeleteImage,
+	SearchImage
 }
 
 fun operateOnImage(absolutePath: String, id: Long, operation: ImageFunctions, context: Context) {
@@ -66,8 +67,7 @@ fun trashPhoto(path: String, id: Long, context: Context) {
 	val database = MainActivity.applicationDatabase
 
 	CoroutineScope(EmptyCoroutineContext + CoroutineName("delete_file_context")).launch {
-	  	val dateTaken = database.mediaEntityDao().getDateTaken(id)
-	   	val mimeType = database.mediaEntityDao().getMimeType(id)
+	  	val entity = database.mediaEntityDao().getFromId(id)
 		val lastModified = System.currentTimeMillis()
 
 		Path(copyToPath).setAttribute(BasicFileAttributes::lastModifiedTime.name, FileTime.fromMillis(lastModified))
@@ -76,8 +76,9 @@ fun trashPhoto(path: String, id: Long, context: Context) {
 	        TrashedItemEntity(
 	            absolutePath,
 	            copyToPath,
-	            dateTaken,
-	            mimeType
+	            entity.dateTaken,
+	            entity.mimeType,
+				entity.displayName
 	        )
 	    )
 
@@ -101,7 +102,8 @@ private fun untrashPhoto(path: String, id: Long) {
 			MediaEntity(
 				id = id,
 				mimeType = item.mimeType,
-				dateTaken = item.dateTaken
+				dateTaken = item.dateTaken,
+				displayName = item.displayName
 			)
 		)
 

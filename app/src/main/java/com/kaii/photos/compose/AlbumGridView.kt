@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
@@ -47,14 +48,13 @@ import com.kaii.photos.MainActivity
 import com.kaii.photos.R
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.mediastore.MediaStoreData
+import com.kaii.photos.mediastore.signature
 import com.kaii.photos.models.album_grid.AlbumsViewModel
 import com.kaii.photos.models.album_grid.AlbumsViewModelFactory
 import java.io.File
 
-private fun MediaStoreData.signature() = MediaStoreSignature(mimeType, dateModified, orientation)
-
 @Composable
-fun AlbumGridView() {
+fun AlbumGridView(navController: NavHostController) {
     Column (
         modifier = Modifier
 			.fillMaxSize(1f)
@@ -92,7 +92,7 @@ fun AlbumGridView() {
         	item (
         		span = { GridItemSpan(maxLineSpan) }
         	) {
-        		CategoryList()
+        		CategoryList(navController)
         	}
 
             items(
@@ -118,6 +118,7 @@ fun AlbumGridView() {
 					val (mediaStoreItem, preloadRequestBuilder) = preloadingData[0]
 
 	                AlbumGridItem(
+						navController,
 	                	folder.name,
 	                	neededDir,
 	                	mediaStoreItem,
@@ -132,6 +133,7 @@ fun AlbumGridView() {
 @OptIn(ExperimentalGlideComposeApi::class, ExperimentalFoundationApi::class)
 @Composable
 private fun AlbumGridItem(
+	navController: NavHostController,
 	title: String,
 	neededDir: String,
 	item: MediaStoreData,
@@ -147,7 +149,7 @@ private fun AlbumGridItem(
 			.combinedClickable (
 				onClick = {
 					MainActivity.mainViewModel.setSelectedAlbumDir(neededDir)
-					MainActivity.navController.navigate(MultiScreenViewType.SingleAlbumView.name)
+					navController.navigate(MultiScreenViewType.SingleAlbumView.name)
 				},
 
 				onDoubleClick = { /*ignore double clicks*/ },
@@ -193,7 +195,7 @@ private fun AlbumGridItem(
 }
 
 @Composable
-private fun CategoryList() {
+private fun CategoryList(navController: NavHostController) {
 	Row (
         modifier = Modifier
             .fillMaxWidth(1f)
@@ -243,7 +245,7 @@ private fun CategoryList() {
 
         OutlinedButton(
             onClick = {
-				MainActivity.navController.navigate(MultiScreenViewType.TrashedPhotoView.name)
+				navController.navigate(MultiScreenViewType.TrashedPhotoView.name)
 			},
             modifier = Modifier
                 .weight(1f)

@@ -1,22 +1,11 @@
 package com.kaii.photos.compose
 
-import android.net.Uri
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.material3.BottomAppBar
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -28,29 +17,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import androidx.navigation.NavHostController
-import com.bumptech.glide.integration.compose.GlideImage
 import com.kaii.photos.MainActivity
 import com.kaii.photos.helpers.single_image_functions.ImageFunctions
 import com.kaii.photos.helpers.MediaItemSortMode
-import com.kaii.photos.mediastore.MediaStoreData
-import com.kaii.photos.models.main_activity.MainDataSharingModel
-import java.io.File
 
 @Composable
-fun SingleAlbumView() {
+fun SingleAlbumView(navController: NavHostController) {
     val mainViewModel = MainActivity.mainViewModel
 
     val albumDir = mainViewModel.selectedAlbumDir.collectAsState(initial = null).value
@@ -60,7 +39,7 @@ fun SingleAlbumView() {
 	val topBarTitle = albumDir.split("/").last()
 	
     Scaffold (
-        topBar =  { TopBar(topBarTitle) },
+        topBar =  { TopBar(navController, topBarTitle) },
         containerColor = CustomMaterialTheme.colorScheme.background,
         contentColor = CustomMaterialTheme.colorScheme.onBackground
     ) { padding ->
@@ -71,21 +50,21 @@ fun SingleAlbumView() {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-       		PhotoGrid(ImageFunctions.LoadNormalImage, albumDir, MediaItemSortMode.DateTaken)	
+       		PhotoGrid(navController, ImageFunctions.LoadNormalImage, albumDir, MediaItemSortMode.DateTaken)
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TopBar(title: String?) {
+private fun TopBar(navController: NavHostController, title: String?) {
     TopAppBar(
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = CustomMaterialTheme.colorScheme.surfaceContainer
         ),
         navigationIcon = {
             IconButton(
-                onClick = { MainActivity.navController.popBackStack() },
+                onClick = { navController.popBackStack() },
             ) {
                 Icon(
                     painter = painterResource(id = com.kaii.photos.R.drawable.back_arrow),

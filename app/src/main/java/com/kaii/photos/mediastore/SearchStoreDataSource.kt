@@ -23,13 +23,13 @@ import java.nio.file.attribute.BasicFileAttributes
 import kotlin.io.path.Path
 
 /** Loads metadata from the media store for images and videos. */
-class MediaStoreDataSource
+class SearchStoreDataSource
 internal constructor(
     private val context: Context,
-    private val neededPath: String,
+    private val searchedFor: String,
 ) {
     companion object {
-        private const val TAG = "MEDIA_STORE_DATA_SOURCE"
+        private const val TAG = "SEARCH_STORE_DATA_SOURCE"
         private val MEDIA_STORE_FILE_URI = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL)
         private val PROJECTION =
             arrayOf(
@@ -41,8 +41,6 @@ internal constructor(
                 MediaColumns.ORIENTATION,
                 MediaColumns.DISPLAY_NAME,
                 FileColumns.MEDIA_TYPE,
-
-                // MediaColumns.DATE_TAKEN
             )
     }
 
@@ -63,7 +61,7 @@ internal constructor(
 
         trySend(query())
 
-        println("MEDIASTOREDATASOURCE PATH IS $neededPath")
+        println("SEARCHSTOREDATASOURCE SEARCHED FOR IS $searchedFor")
 
         awaitClose { context.contentResolver.unregisterContentObserver(contentObserver) }
     }
@@ -81,20 +79,20 @@ internal constructor(
             context.contentResolver.query(
                 MEDIA_STORE_FILE_URI,
                 PROJECTION,
-       			FileColumns.MEDIA_TYPE +
-					" = " +
-					FileColumns.MEDIA_TYPE_IMAGE +
-					" AND " + 
-					FileColumns.RELATIVE_PATH +
-					" LIKE ? " +
-					" OR " +
-					FileColumns.MEDIA_TYPE +
-					" = " +
-					FileColumns.MEDIA_TYPE_VIDEO +
-					" AND " + 
-					FileColumns.RELATIVE_PATH +
-					" LIKE ? ",
-                arrayOf("%$neededPath%", "%$neededPath%"),
+                FileColumns.MEDIA_TYPE +
+                        " = " +
+                        FileColumns.MEDIA_TYPE_IMAGE +
+                        " AND " +
+                        FileColumns.DISPLAY_NAME +
+                        " LIKE ? " +
+                        " OR " +
+                        FileColumns.MEDIA_TYPE +
+                        " = " +
+                        FileColumns.MEDIA_TYPE_VIDEO +
+                        " AND " +
+                        FileColumns.DISPLAY_NAME +
+                        " LIKE ? ",
+                arrayOf("%$searchedFor%", "%$searchedFor%"),
                 "${MediaColumns.DATE_TAKEN} DESC"
             ) ?: return data
 
@@ -113,13 +111,15 @@ internal constructor(
             while (cursor.moveToNext()) {
                 val id = cursor.getLong(idColNum)
                 val mimeType = cursor.getString(mimeTypeColNum)
-				// val dateModified = cursor.getLong(dateModifiedColNum)
-				
+                // val dateModified = cursor.getLong(dateModifiedColNum)
+
                 val uri = Uri.withAppendedPath(MEDIA_STORE_FILE_URI, id.toString())
                 val absolutePath = cursor.getString(absolutePathColNum)
-				val dateModified = Files.getLastModifiedTime(Path(absolutePath)).toMillis() / 1000
+                val dateModified = Files.getLastModifiedTime(Path(absolutePath)).toMillis() / 1000
                 val displayName = cursor.getString(displayNameIndex)
 
+				Log.d(TAG, "$displayName")
+				
                 val possibleDateTaken = mediaEntityDao.getDateTaken(id)
                 val dateTaken = if (possibleDateTaken != 0L) {
                     // Log.d(TAG, "date taken from database is $possibleDateTaken")
@@ -139,11 +139,11 @@ internal constructor(
                     // Log.d(TAG, "date taken was not found in database, inserting $taken")
                     taken
                 }
-				// val dateTaken = cursor.getLong(dateTakenColNum)
+                // val dateTaken = cursor.getLong(dateTakenColNum)
                 val orientation = cursor.getInt(orientationColNum)
                 val dateAdded = cursor.getLong(dateAddedColumnNum)
                 val type = if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) MediaType.Image
-                    else MediaType.Video
+                else MediaType.Video
                 data.add(
                     MediaStoreData(
                         type = type,
@@ -161,7 +161,7 @@ internal constructor(
             }
         }
         mediaCursor.close()
-        
+
         return data
     }
 }

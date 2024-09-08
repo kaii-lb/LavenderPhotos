@@ -1,7 +1,6 @@
 package com.kaii.photos.compose
 
 import android.annotation.SuppressLint
-import android.net.Uri
 import android.view.Window
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -16,7 +15,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomAppBar
@@ -40,7 +38,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -61,15 +58,11 @@ import com.kaii.photos.R
 import com.kaii.photos.helpers.single_image_functions.ImageFunctions
 import com.kaii.photos.helpers.single_image_functions.operateOnImage
 import com.kaii.photos.mediastore.MediaStoreData
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
-import kotlin.coroutines.EmptyCoroutineContext
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun SingleTrashedPhotoView(window: Window) {
+fun SingleTrashedPhotoView(navController: NavHostController, window: Window) {
     val mainViewModel = MainActivity.mainViewModel
 
     val mediaItem = mainViewModel.selectedMediaData.collectAsState(initial = null).value ?: return
@@ -78,8 +71,8 @@ fun SingleTrashedPhotoView(window: Window) {
     var appBarAlpha by remember { mutableFloatStateOf(1f) }
 
     Scaffold (
-        topBar =  { TopBar(mediaItem, appBarAlpha) },
-        bottomBar = { BottomBar(appBarAlpha, mediaItem) },
+        topBar =  { TopBar(navController, mediaItem, appBarAlpha) },
+        bottomBar = { BottomBar(navController, appBarAlpha, mediaItem) },
         containerColor = CustomMaterialTheme.colorScheme.background,
         contentColor = CustomMaterialTheme.colorScheme.onBackground
     ) { _ ->
@@ -124,7 +117,7 @@ fun SingleTrashedPhotoView(window: Window) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TopBar(mediaItem: MediaStoreData?, alpha: Float) {
+private fun TopBar(navController: NavHostController, mediaItem: MediaStoreData?, alpha: Float) {
     TopAppBar(
         modifier = Modifier.alpha(alpha),
         colors = TopAppBarDefaults.topAppBarColors(
@@ -132,10 +125,10 @@ private fun TopBar(mediaItem: MediaStoreData?, alpha: Float) {
         ),
         navigationIcon = {
             IconButton(
-                onClick = { MainActivity.navController.popBackStack() },
+                onClick = { navController.popBackStack() },
             ) {
                 Icon(
-                    painter = painterResource(id = com.kaii.photos.R.drawable.back_arrow),
+                    painter = painterResource(id = R.drawable.back_arrow),
                     contentDescription = "Go back to previous page",
                     tint = CustomMaterialTheme.colorScheme.onBackground,
                     modifier = Modifier
@@ -167,7 +160,7 @@ private fun TopBar(mediaItem: MediaStoreData?, alpha: Float) {
                 onClick = { /* TODO */ },
             ) {
                 Icon(
-                    painter = painterResource(id = com.kaii.photos.R.drawable.more_options),
+                    painter = painterResource(id = R.drawable.more_options),
                     contentDescription = "show more options",
                     tint = CustomMaterialTheme.colorScheme.onBackground,
                     modifier = Modifier
@@ -179,7 +172,7 @@ private fun TopBar(mediaItem: MediaStoreData?, alpha: Float) {
 }
 
 @Composable
-private fun BottomBar(alpha: Float, item: MediaStoreData) {
+private fun BottomBar(navController: NavHostController, alpha: Float, item: MediaStoreData) {
     val context = LocalContext.current
 
     BottomAppBar(
@@ -197,7 +190,7 @@ private fun BottomBar(alpha: Float, item: MediaStoreData) {
                 OutlinedButton(
                     onClick = {
                         operateOnImage(item.absolutePath, item.id, ImageFunctions.UnTrashImage, context)
-                        MainActivity.navController.popBackStack()
+                        navController.popBackStack()
                     },
                     modifier = Modifier
                         .weight(1f)
@@ -247,7 +240,7 @@ private fun BottomBar(alpha: Float, item: MediaStoreData) {
                                 onClick = {
                                     showDialog = false
        	                            operateOnImage(item.absolutePath, item.id, ImageFunctions.PermaDeleteImage, context)
-                            		MainActivity.navController.popBackStack()
+                            		navController.popBackStack()
                                 }
                             ) {
                                 Text(

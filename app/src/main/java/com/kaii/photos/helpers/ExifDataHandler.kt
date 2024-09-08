@@ -18,7 +18,8 @@ fun GetDateTakenForMedia(uri: String) : Long {
     val datetime = exifInterface.getAttribute(ExifInterface.TAG_DATETIME_ORIGINAL)
         ?: (exifInterface.getAttribute(ExifInterface.TAG_DATETIME) ?: lastModified) // this really should not get to last modified
 
-    val dateTimeSinceEpoch = LocalDateTime.parse(datetime, exifDateTimeFormat).atZone(ZoneId.systemDefault()).toEpochSecond()
-	//println("DATE TIME IS $datetime and since epoch $dateTimeSinceEpoch")
+	val parsedDateTime = datetime.replace("-", ":").replace("T", " ").substringBefore("+")
+    val dateTimeSinceEpoch = LocalDateTime.parse(parsedDateTime, exifDateTimeFormat).atZone(ZoneId.systemDefault()).toEpochSecond()
+	println("DATE TIME IS $parsedDateTime and since epoch $dateTimeSinceEpoch")
     return dateTimeSinceEpoch
 }

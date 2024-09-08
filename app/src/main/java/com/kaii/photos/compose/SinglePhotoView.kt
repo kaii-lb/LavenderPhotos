@@ -2,7 +2,6 @@ package com.kaii.photos.compose
 
 import android.annotation.SuppressLint
 import android.graphics.drawable.Drawable
-import android.util.Log
 import android.view.Window
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -57,32 +56,26 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.rememberGlidePreloadingData
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.kaii.photos.MainActivity
-import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.single_image_functions.ImageFunctions
 import com.kaii.photos.helpers.single_image_functions.operateOnImage
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.signature
-import com.kaii.photos.models.gallery_model.GalleryViewModel
-import com.kaii.photos.models.gallery_model.GalleryViewModelFactory
-import com.kaii.photos.models.gallery_model.groupPhotosBy
-import com.kaii.photos.compose.CustomMaterialTheme
 import kotlinx.coroutines.launch
-import java.io.File
 
 private const val TAG = "SINGLE_PHOTO_VIEW"
 
 @OptIn(ExperimentalGlideComposeApi::class, ExperimentalFoundationApi::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun SinglePhotoView(window: Window) {
+fun SinglePhotoView(navController: NavHostController, window: Window) {
     val mainViewModel = MainActivity.mainViewModel
     
     val mediaItem = mainViewModel.selectedMediaData.collectAsState(initial = null).value ?: return
@@ -98,8 +91,8 @@ fun SinglePhotoView(window: Window) {
     var currentMediaItem by remember { mutableStateOf(mediaItem) }
 
     Scaffold (
-        topBar =  { TopBar(currentMediaItem, appBarAlpha) },
-        bottomBar = { BottomBar(appBarAlpha, currentMediaItem) },
+        topBar =  { TopBar(navController, currentMediaItem, appBarAlpha) },
+        bottomBar = { BottomBar(navController, appBarAlpha, currentMediaItem) },
         containerColor = CustomMaterialTheme.colorScheme.background,
         contentColor = CustomMaterialTheme.colorScheme.onBackground
     ) {  _ ->
@@ -196,7 +189,7 @@ fun SinglePhotoView(window: Window) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TopBar(mediaItem: MediaStoreData?, alpha: Float) {
+private fun TopBar(navController: NavHostController, mediaItem: MediaStoreData?, alpha: Float) {
     TopAppBar(
     	modifier = Modifier.alpha(alpha),
     	colors = TopAppBarDefaults.topAppBarColors(
@@ -204,7 +197,7 @@ private fun TopBar(mediaItem: MediaStoreData?, alpha: Float) {
     	),
     	navigationIcon = {
     		IconButton(
-                onClick = { MainActivity.navController.popBackStack() },
+                onClick = { navController.popBackStack() },
             ) {
                 Icon(
                     painter = painterResource(id = com.kaii.photos.R.drawable.back_arrow),
@@ -264,7 +257,7 @@ private fun TopBar(mediaItem: MediaStoreData?, alpha: Float) {
 }
 
 @Composable
-private fun BottomBar(alpha: Float, item: MediaStoreData) {
+private fun BottomBar(navController: NavHostController, alpha: Float, item: MediaStoreData) {
     val context = LocalContext.current
 
     BottomAppBar(
@@ -298,7 +291,7 @@ private fun BottomBar(alpha: Float, item: MediaStoreData) {
 		    		Button(
 		                onClick = {
                             operateOnImage(item.absolutePath, item.id, operation, context)
-                            MainActivity.navController.popBackStack()
+                            navController.popBackStack()
                         },
 		                colors = ButtonDefaults.buttonColors(
 		                	containerColor = Color.Transparent,
