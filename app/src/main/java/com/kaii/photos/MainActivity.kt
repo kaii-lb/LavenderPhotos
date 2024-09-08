@@ -49,6 +49,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -80,6 +81,8 @@ import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.single_image_functions.ImageFunctions
 import com.kaii.photos.models.main_activity.MainDataSharingModel
 import com.kaii.photos.models.main_activity.MainDataSharingModelFactory
+import com.kaii.photos.models.search_page.SearchViewModel
+import com.kaii.photos.models.search_page.SearchViewModelFactory
 import com.kaii.photos.ui.theme.PhotosTheme
 
 class MainActivity : ComponentActivity() {
@@ -256,11 +259,14 @@ class MainActivity : ComponentActivity() {
                 		},
                         label = "MainAnimatedContentView"
                     ) { stateValue ->
+                    	val searchViewModel: SearchViewModel = viewModel(
+                   	        factory = SearchViewModelFactory(LocalContext.current.applicationContext, "")
+                   	    )
 	                    when (stateValue) {
 	                        MainScreenViewType.PhotoGridView -> PhotoGrid(navController, ImageFunctions.LoadNormalImage, stringResource(id = R.string.default_homepage_photogrid_dir), MediaItemSortMode.DateTaken)
 	                        MainScreenViewType.LockedFolder -> PhotoGrid(navController, ImageFunctions.LoadTrashedImage, stringResource(id = R.string.default_homepage_photogrid_dir), MediaItemSortMode.DateTaken)
 	                        MainScreenViewType.AlbumGridView -> AlbumGridView(navController)
-   	                        MainScreenViewType.SearchPage -> SearchPage(navController)
+   	                        MainScreenViewType.SearchPage -> SearchPage(navController, searchViewModel)
 	                    }
                 	}
                 }

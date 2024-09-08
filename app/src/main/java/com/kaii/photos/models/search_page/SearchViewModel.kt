@@ -4,6 +4,8 @@ import android.net.Uri
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.LiveData
 import com.kaii.photos.database.entities.MediaEntity
 import com.kaii.photos.helpers.MediaSearchType
 import com.kaii.photos.mediastore.AlbumStoreDataSource
@@ -21,7 +23,7 @@ class SearchViewModel(context: Context, searchFor: String) : ViewModel() {
     private val mediaStoreDataSource = SearchStoreDataSource(context, searchFor)
 
     private val _uiState: MutableStateFlow<List<MediaStoreData>> = MutableStateFlow(emptyList())
-    val mediaStoreData: StateFlow<List<MediaStoreData>> = _uiState.asStateFlow()
+    val mediaStoreData: StateFlow<List<MediaStoreData>> = _uiState
 
     init {
         viewModelScope.launch {

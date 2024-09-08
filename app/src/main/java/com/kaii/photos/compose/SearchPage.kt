@@ -19,7 +19,9 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -44,6 +46,8 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.bumptech.glide.RequestBuilder
@@ -63,15 +67,19 @@ import com.kaii.photos.models.search_page.SearchViewModel
 import com.kaii.photos.models.search_page.SearchViewModelFactory
 import java.text.SimpleDateFormat
 import java.util.Locale
+import kotlinx.coroutines.delay
 
 @Composable
-fun SearchPage(navController: NavHostController) {
+fun SearchPage(navController: NavHostController, searchViewModel: SearchViewModel) {
     Column (
         modifier = Modifier
             .fillMaxSize(1f)
             .padding(8.dp)
     ) {
         var searchedForText by remember { mutableStateOf("") }
+        var searchNow by remember { mutableStateOf(false) }
+        var showLoadingSpinner by remember { mutableStateOf(true) }
+        
         Column (
         	modifier = Modifier
         		.fillMaxWidth(1f)
@@ -109,19 +117,42 @@ fun SearchPage(navController: NavHostController) {
                     unfocusedIndicatorColor = Color.Transparent,
                     focusedIndicatorColor = Color.Transparent
                 ),
+				keyboardOptions = KeyboardOptions(
+					keyboardType = KeyboardType.Text,
+					imeAction = ImeAction.Search,
+					autoCorrect = false,
+				),
+				keyboardActions = KeyboardActions(
+					onSearch = {
+						if (!showLoadingSpinner) {
+							searchNow = true
+							showLoadingSpinner = true
+
+							// PLEASEEEE fix this
+							Handler(Looper.getMainLooper()).postDelayed(
+								Runnable({
+									searchNow = true
+								}),
+								1000
+							)
+							Handler(Looper.getMainLooper()).postDelayed(
+								Runnable({
+									searchNow = true
+								}),
+								5000
+							)
+						}
+					}
+				),
 	            shape = RoundedCornerShape(1000.dp),
 	            modifier = Modifier
 	                .fillMaxWidth(1f)
 	        )
         }
-
-        val searchViewModel: SearchViewModel = viewModel(
-            factory = SearchViewModelFactory(LocalContext.current.applicationContext, searchedForText)
-        )
         
 		val context = LocalContext.current
        	val mediaStoreDataHolder = searchViewModel.mediaStoreData.collectAsState()
-       	var mediaStoreData by remember { mutableStateOf(mediaStoreDataHolder) }
+       	val mediaStoreData by remember { mutableStateOf(mediaStoreDataHolder) }
 
 		var groupedMedia by remember { mutableStateOf(groupPhotosBy(mediaStoreData.value, MediaItemSortMode.DateTaken)) }
 		if (groupedMedia.isEmpty()) {
@@ -130,10 +161,14 @@ fun SearchPage(navController: NavHostController) {
   	        groupedMedia = groupedMediaLocal			
 		}
   	        
-        LaunchedEffect(key1 = searchedForText) {
+        LaunchedEffect(key1 = searchNow) {
+        	if(!searchNow) return@LaunchedEffect
+
         	searchViewModel.setMediaStoreData(context, searchedForText)
-        	val groupedMediaLocal = groupPhotosBy(mediaStoreData.value, MediaItemSortMode.DateTaken)
-   	        groupedMedia = groupedMediaLocal
+        	var groupedMediaLocal = groupPhotosBy(mediaStoreData.value, MediaItemSortMode.DateTaken)
+   	        groupedMedia = groupedMediaLocal	        
+
+			searchNow = false
         }
 
 
@@ -150,8 +185,6 @@ fun SearchPage(navController: NavHostController) {
             )
 
         val gridState = rememberLazyGridState()
-
-        var showLoadingSpinner by remember { mutableStateOf(true) }
 
 		Box(
 			modifier = Modifier

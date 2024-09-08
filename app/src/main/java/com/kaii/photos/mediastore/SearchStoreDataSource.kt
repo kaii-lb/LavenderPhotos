@@ -118,7 +118,7 @@ internal constructor(
                 val dateModified = Files.getLastModifiedTime(Path(absolutePath)).toMillis() / 1000
                 val displayName = cursor.getString(displayNameIndex)
 
-				Log.d(TAG, "$displayName")
+				// Log.d(TAG, "$displayName")
 				
                 val possibleDateTaken = mediaEntityDao.getDateTaken(id)
                 val dateTaken = if (possibleDateTaken != 0L) {

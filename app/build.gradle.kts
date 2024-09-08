@@ -66,6 +66,7 @@ dependencies {
     implementation("androidx.compose.material3:material3:1.2.1")
     implementation("androidx.compose.animation:animation:1.6.8")
     implementation("androidx.compose.animation:animation-graphics:1.6.8")
+    implementation("androidx.compose.runtime:runtime-livedata:1.6.8")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.cardview:cardview:1.0.0")
     implementation("com.google.android.material:material:1.12.0")
