@@ -26,6 +26,7 @@ uiTestManifest = "1.6.8"
 uiToolingPreview = "1.6.8"
 uiToolingVersion = "1.6.8"
 navigationCompose = "2.7.7"
+biometricKtx = "1.1.0"
 
 [libraries]
 androidx-cardview = { module = "androidx.cardview:cardview", version.ref = "cardview" }
@@ -63,6 +64,7 @@ ui-graphics = { module = "androidx.compose.ui:ui-graphics", version.ref = "uiGra
 ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest", version.ref = "uiTestManifest" }
 ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "uiToolingPreview" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
+androidx-biometric-ktx = { group = "androidx.biometric", name = "biometric-ktx", version.ref = "biometricKtx" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

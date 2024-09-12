@@ -130,15 +130,15 @@ fun SearchPage(navController: NavHostController, searchViewModel: SearchViewMode
 
 							// PLEASEEEE fix this
 							Handler(Looper.getMainLooper()).postDelayed(
-								Runnable({
+								Runnable {
 									searchNow = true
-								}),
+								},
 								1000
 							)
 							Handler(Looper.getMainLooper()).postDelayed(
-								Runnable({
+								Runnable {
 									searchNow = true
-								}),
+								},
 								5000
 							)
 						}
@@ -155,7 +155,7 @@ fun SearchPage(navController: NavHostController, searchViewModel: SearchViewMode
        	val mediaStoreData by remember { mutableStateOf(mediaStoreDataHolder) }
 
 		var groupedMedia by remember { mutableStateOf(groupPhotosBy(mediaStoreData.value, MediaItemSortMode.DateTaken)) }
-		if (groupedMedia.isEmpty()) {
+		if (groupedMedia.isEmpty() && searchedForText == "") {
 	       	searchViewModel.setMediaStoreData(context, searchedForText)
 	       	val groupedMediaLocal = groupPhotosBy(mediaStoreData.value, MediaItemSortMode.DateTaken)
   	        groupedMedia = groupedMediaLocal			
@@ -163,8 +163,11 @@ fun SearchPage(navController: NavHostController, searchViewModel: SearchViewMode
   	        
         LaunchedEffect(key1 = searchNow) {
         	if(!searchNow) return@LaunchedEffect
-
+			
         	searchViewModel.setMediaStoreData(context, searchedForText)
+
+			delay(500)
+        	
         	var groupedMediaLocal = groupPhotosBy(mediaStoreData.value, MediaItemSortMode.DateTaken)
    	        groupedMedia = groupedMediaLocal	        
 
@@ -200,7 +203,8 @@ fun SearchPage(navController: NavHostController, searchViewModel: SearchViewMode
 	            items(
 	                count = preloadingData.size,
 	                span = { index ->
-	                    val item = groupedMedia[index]
+	                	val neededIndex = if (index < groupedMedia.size) index else index - 1
+	                    val item = groupedMedia[neededIndex]
 	                    if (item.type == MediaType.Section) {
 	                        GridItemSpan(maxLineSpan)
 	                    } else {

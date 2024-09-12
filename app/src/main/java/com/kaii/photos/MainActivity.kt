@@ -3,6 +3,7 @@ package com.kaii.photos
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.os.CancellationSignal
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -68,6 +69,8 @@ import androidx.room.Room
 import com.bumptech.glide.Glide
 import com.bumptech.glide.MemoryCategory
 import com.kaii.photos.compose.AlbumGridView
+import com.kaii.photos.compose.LockedFolderView
+import com.kaii.photos.compose.LockedFolderEntryView
 import com.kaii.photos.compose.PhotoGrid
 import com.kaii.photos.compose.SearchPage
 import com.kaii.photos.compose.SingleAlbumView
@@ -142,8 +145,8 @@ class MainActivity : ComponentActivity() {
                     navController = navControllerLocal,
                     startDestination = MultiScreenViewType.MainScreen.name,
                     modifier = Modifier
-                    	.fillMaxSize(1f)
-                    	.background(CustomMaterialTheme.colorScheme.background),
+                        .fillMaxSize(1f)
+                        .background(CustomMaterialTheme.colorScheme.background),
                     enterTransition = {
                         slideInHorizontally (
                             animationSpec = tween(
@@ -216,6 +219,15 @@ class MainActivity : ComponentActivity() {
 
                         TrashedPhotoGridView(navControllerLocal)
                     }
+
+                    composable(MultiScreenViewType.LockedFolderView.name) {
+                        enableEdgeToEdge(
+                            navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
+                            statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.surface.toArgb(), CustomMaterialTheme.colorScheme.surface.toArgb())
+                        )
+
+                        LockedFolderView(navControllerLocal)
+                    }
                 }
             }
         }
@@ -264,7 +276,7 @@ class MainActivity : ComponentActivity() {
                    	    )
 	                    when (stateValue) {
 	                        MainScreenViewType.PhotoGridView -> PhotoGrid(navController, ImageFunctions.LoadNormalImage, stringResource(id = R.string.default_homepage_photogrid_dir), MediaItemSortMode.DateTaken)
-	                        MainScreenViewType.LockedFolder -> PhotoGrid(navController, ImageFunctions.LoadTrashedImage, stringResource(id = R.string.default_homepage_photogrid_dir), MediaItemSortMode.DateTaken)
+	                        MainScreenViewType.LockedFolder -> LockedFolderEntryView(navController)
 	                        MainScreenViewType.AlbumGridView -> AlbumGridView(navController)
    	                        MainScreenViewType.SearchPage -> SearchPage(navController, searchViewModel)
 	                    }

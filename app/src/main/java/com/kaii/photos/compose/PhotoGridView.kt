@@ -73,7 +73,7 @@ private const val TAG = "PHOTO_GRID_VIEW"
 private val THUMBNAIL_SIZE = Size(THUMBNAIL_DIMENSION.toFloat(), THUMBNAIL_DIMENSION.toFloat())
 
 @Composable
-fun PhotoGrid(navController: NavHostController, operation: ImageFunctions, path: String, sortBy: MediaItemSortMode) {
+fun PhotoGrid(navController: NavHostController, operation: ImageFunctions, path: String, sortBy: MediaItemSortMode, emptyText: String = "Empty Folder") {
 	val galleryViewModel: GalleryViewModel = viewModel(
 		factory = GalleryViewModelFactory(LocalContext.current.applicationContext, path)
 	)
@@ -91,7 +91,7 @@ fun PhotoGrid(navController: NavHostController, operation: ImageFunctions, path:
    			horizontalAlignment = Alignment.CenterHorizontally
    		) {
    			Text (
-   				text = "Empty Folder",
+   				text = emptyText,
 		    	fontSize = TextUnit(18f, TextUnitType.Sp)
    			)
    		}

@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -69,6 +70,7 @@ import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.signature
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.MainScope
 
 private const val TAG = "SINGLE_PHOTO_VIEW"
 
@@ -81,22 +83,23 @@ fun SinglePhotoView(navController: NavHostController, window: Window) {
     val mediaItem = mainViewModel.selectedMediaData.collectAsState(initial = null).value ?: return
 
     val holderGroupedMedia = mainViewModel.groupedMedia.collectAsState(initial = null).value ?: return
-
-	val groupedMedia = holderGroupedMedia.filter { item ->
+	
+	val groupedMedia by remember { mutableStateOf(holderGroupedMedia.filter { item ->
         !(item.mimeType == null && item.type == MediaType.Section)
-   	}
+   	}.toMutableList()
+   	)}
 	
     var systemBarsShown by remember { mutableStateOf(true) }
     var appBarAlpha by remember { mutableFloatStateOf(1f) }
     var currentMediaItem by remember { mutableStateOf(mediaItem) }
+	val state = rememberLazyListState()
 
     Scaffold (
         topBar =  { TopBar(navController, currentMediaItem, appBarAlpha) },
-        bottomBar = { BottomBar(navController, appBarAlpha, currentMediaItem) },
+        bottomBar = { BottomBar(groupedMedia, appBarAlpha, currentMediaItem, state) },
         containerColor = CustomMaterialTheme.colorScheme.background,
         contentColor = CustomMaterialTheme.colorScheme.onBackground
     ) {  _ ->
-        val state = rememberLazyListState()
         Column (
             modifier = Modifier
                 .padding(0.dp)
@@ -135,7 +138,7 @@ fun SinglePhotoView(navController: NavHostController, window: Window) {
 
                     val windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
                     windowInsetsController.show(WindowInsetsCompat.Type.systemBars())
-
+	
 					if (mediaStoreItem.type != MediaType.Section && mediaStoreItem.mimeType != null && mediaStoreItem.id != 0L) {
 						currentMediaItem = mediaStoreItem
 						
@@ -169,7 +172,9 @@ fun SinglePhotoView(navController: NavHostController, window: Window) {
 						Column (
 							modifier = Modifier.fillParentMaxSize(1f).background(CustomMaterialTheme.colorScheme.primary)
 						) {
-							
+							Text(
+								text = "this media is broken or is not an image/video"
+							)
 						}
 					}
                 }
@@ -257,7 +262,7 @@ private fun TopBar(navController: NavHostController, mediaItem: MediaStoreData?,
 }
 
 @Composable
-private fun BottomBar(navController: NavHostController, alpha: Float, item: MediaStoreData) {
+private fun BottomBar(groupedMedia: MutableList<MediaStoreData>, alpha: Float, item: MediaStoreData, state: LazyListState) {
     val context = LocalContext.current
 
     BottomAppBar(
@@ -291,7 +296,13 @@ private fun BottomBar(navController: NavHostController, alpha: Float, item: Medi
 		    		Button(
 		                onClick = {
                             operateOnImage(item.absolutePath, item.id, operation, context)
-                            navController.popBackStack()
+                            if (operation == ImageFunctions.TrashImage) {
+                            	MainScope().launch {
+                            		val scrollIndex = groupedMedia.indexOf(item)
+	                            	state.scrollToItem(scrollIndex + 1)
+	                            	groupedMedia.removeAt(scrollIndex)
+                            	}
+                            }
                         },
 		                colors = ButtonDefaults.buttonColors(
 		                	containerColor = Color.Transparent,
