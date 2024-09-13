@@ -74,6 +74,7 @@ import com.kaii.photos.compose.LockedFolderEntryView
 import com.kaii.photos.compose.PhotoGrid
 import com.kaii.photos.compose.SearchPage
 import com.kaii.photos.compose.SingleAlbumView
+import com.kaii.photos.compose.SingleHiddenPhotoView
 import com.kaii.photos.compose.SinglePhotoView
 import com.kaii.photos.compose.SingleTrashedPhotoView
 import com.kaii.photos.compose.TrashedPhotoGridView
@@ -227,6 +228,16 @@ class MainActivity : ComponentActivity() {
                         )
 
                         LockedFolderView(navControllerLocal)
+                    }
+
+                    composable(MultiScreenViewType.SingleHiddenPhotoVew.name) {
+                        enableEdgeToEdge(
+                            navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
+                            statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.surface.toArgb(), CustomMaterialTheme.colorScheme.surface.toArgb())
+                        )
+
+                        // TODO: should merge with SingleTrashedPhotoView???? idfk wait for future
+                        SingleHiddenPhotoView(navControllerLocal, window)
                     }
                 }
             }

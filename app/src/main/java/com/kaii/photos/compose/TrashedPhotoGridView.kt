@@ -24,7 +24,6 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.kaii.photos.MainActivity
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.getAppTrashBinDirectory
 import com.kaii.photos.helpers.single_image_functions.ImageFunctions
@@ -46,8 +45,10 @@ fun TrashedPhotoGridView(navController: NavHostController) {
             PhotoGrid(
                 navController,
                 ImageFunctions.LoadTrashedImage,
-                getAppTrashBinDirectory(LocalContext.current).replace("/storage/emulated/0/", ""),
-                MediaItemSortMode.LastModifiedTrashed
+                LocalContext.current.getAppTrashBinDirectory().replace("/storage/emulated/0/", ""),
+                MediaItemSortMode.LastModified,
+                "Deleted items show up here",
+                "Deleted On "
             )
         }
     }

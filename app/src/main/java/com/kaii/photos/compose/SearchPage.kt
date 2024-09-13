@@ -220,7 +220,8 @@ fun SearchPage(navController: NavHostController, searchViewModel: SearchViewMode
 	                    preloadRequestBuilder,
 	                    ImageFunctions.LoadNormalImage,
 	                    MainActivity.mainViewModel,
-	                    groupedMedia
+	                    groupedMedia,
+	                    ""
 	                )
 
 	                if (i >= 0) {

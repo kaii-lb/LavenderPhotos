@@ -121,7 +121,7 @@ fun LockedFolderEntryView(navController: NavHostController) {
             modifier = Modifier.size(72.dp)
         )
 
-		Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         Button(
             onClick = {

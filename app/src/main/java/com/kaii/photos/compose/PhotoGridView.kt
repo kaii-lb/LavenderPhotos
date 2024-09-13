@@ -73,16 +73,16 @@ private const val TAG = "PHOTO_GRID_VIEW"
 private val THUMBNAIL_SIZE = Size(THUMBNAIL_DIMENSION.toFloat(), THUMBNAIL_DIMENSION.toFloat())
 
 @Composable
-fun PhotoGrid(navController: NavHostController, operation: ImageFunctions, path: String, sortBy: MediaItemSortMode, emptyText: String = "Empty Folder") {
+fun PhotoGrid(navController: NavHostController, operation: ImageFunctions, path: String, sortBy: MediaItemSortMode, emptyText: String = "Empty Folder", prefix: String = "") {
 	val galleryViewModel: GalleryViewModel = viewModel(
 		factory = GalleryViewModelFactory(LocalContext.current.applicationContext, path)
 	)
 	val mediaStoreData = galleryViewModel.mediaStoreData.collectAsState()
 
-    val mainViewModel = MainActivity.mainViewModel
+	val mainViewModel = MainActivity.mainViewModel
 
 	if ((File("/storage/emulated/0/$path").listFiles()?.size ?: 0) != 0) {
-   		DeviceMedia(navController, mediaStoreData.value, operation, mainViewModel, sortBy)
+   		DeviceMedia(navController, mediaStoreData.value, operation, mainViewModel, sortBy, prefix)
    	} else {
    		Column (
    			modifier = Modifier
@@ -104,7 +104,8 @@ fun DeviceMedia(
 	mediaStoreData: List<MediaStoreData>,
 	operation: ImageFunctions,
 	mainViewModel: MainDataSharingModel,
-	sortBy: MediaItemSortMode
+	sortBy: MediaItemSortMode,
+	prefix: String,
 ) {
     val groupedMedia = groupPhotosBy(mediaStoreData, sortBy)
 
@@ -120,7 +121,7 @@ fun DeviceMedia(
             requestBuilderTransform = requestBuilderTransform,
         )
 
-    val gridState = rememberLazyGridState()
+	val gridState = rememberLazyGridState()
 
 	var showLoadingSpinner by remember { mutableStateOf(true) }
 
@@ -159,7 +160,8 @@ fun DeviceMedia(
 	                preloadRequestBuilder,
 	                operation,
 	                mainViewModel,
-	                groupedMedia
+	                groupedMedia,
+	                prefix
 	            )
 
 	            if (i >= 0) {
@@ -214,6 +216,7 @@ fun MediaStoreItem(
     operation: ImageFunctions,
     mainViewModel: MainDataSharingModel,
     groupedMedia: List<MediaStoreData>,
+    prefix: String,
 ) {
     if (item.mimeType == null && item.type == MediaType.Section) {
         Row(
@@ -226,7 +229,7 @@ fun MediaStoreItem(
             horizontalArrangement = Arrangement.Start
         ) {
             Text (
-                text = item.displayName ?: "This was meant to be a dated section",
+                text = prefix + item.displayName,
                 fontSize = TextUnit(16f, TextUnitType.Sp),
                 fontWeight = FontWeight.Bold,
                 color = CustomMaterialTheme.colorScheme.onBackground,
@@ -287,5 +290,4 @@ fun MediaStoreItem(
         	}            
         }
     }
-
 }

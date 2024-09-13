@@ -115,49 +115,60 @@ internal constructor(
 
                 val uri = Uri.withAppendedPath(MEDIA_STORE_FILE_URI, id.toString())
                 val absolutePath = cursor.getString(absolutePathColNum)
-                val dateModified = Files.getLastModifiedTime(Path(absolutePath)).toMillis() / 1000
-                val displayName = cursor.getString(displayNameIndex)
 
-				// Log.d(TAG, "$displayName")
-				
-                val possibleDateTaken = mediaEntityDao.getDateTaken(id)
-                val dateTaken = if (possibleDateTaken != 0L) {
-                    // Log.d(TAG, "date taken from database is $possibleDateTaken")
-                    possibleDateTaken
-                } else {
-                    val taken = GetDateTakenForMedia(
-                        cursor.getString(absolutePathColNum)
-                    )
-                    mediaEntityDao.insertEntity(
-                        MediaEntity(
-                            id = id,
-                            mimeType = mimeType,
-                            dateTaken = taken,
-                            displayName = displayName
-                        )
-                    )
-                    // Log.d(TAG, "date taken was not found in database, inserting $taken")
-                    taken
+                val succeeded = try {
+                	if(java.io.File(absolutePath).exists()) true
+                	else false
+                } catch (e: Throwable) {
+                	Log.w(TAG, e.toString())
+                	false
                 }
-                // val dateTaken = cursor.getLong(dateTakenColNum)
-                val orientation = cursor.getInt(orientationColNum)
-                val dateAdded = cursor.getLong(dateAddedColumnNum)
-                val type = if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) MediaType.Image
-                else MediaType.Video
-                data.add(
-                    MediaStoreData(
-                        type = type,
-                        id = id,
-                        uri = uri,
-                        mimeType = mimeType,
-                        dateModified = dateModified,
-                        orientation = orientation,
-                        dateTaken = dateTaken,
-                        displayName = displayName,
-                        dateAdded = dateAdded,
-                        absolutePath = absolutePath
-                    )
-                )
+
+                if (succeeded) {
+	                val dateModified = Files.getLastModifiedTime(Path(absolutePath)).toMillis() / 1000
+	                val displayName = cursor.getString(displayNameIndex)
+
+					// Log.d(TAG, "$displayName")
+					
+	                val possibleDateTaken = mediaEntityDao.getDateTaken(id)
+	                val dateTaken = if (possibleDateTaken != 0L) {
+	                    // Log.d(TAG, "date taken from database is $possibleDateTaken")
+	                    possibleDateTaken
+	                } else {
+	                    val taken = GetDateTakenForMedia(
+	                        cursor.getString(absolutePathColNum)
+	                    )
+	                    mediaEntityDao.insertEntity(
+	                        MediaEntity(
+	                            id = id,
+	                            mimeType = mimeType,
+	                            dateTaken = taken,
+	                            displayName = displayName
+	                        )
+	                    )
+	                    // Log.d(TAG, "date taken was not found in database, inserting $taken")
+	                    taken
+	                }
+	                // val dateTaken = cursor.getLong(dateTakenColNum)
+	                val orientation = cursor.getInt(orientationColNum)
+	                val dateAdded = cursor.getLong(dateAddedColumnNum)
+	                val type = if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) MediaType.Image
+	                else MediaType.Video
+	                data.add(
+	                    MediaStoreData(
+	                        type = type,
+	                        id = id,
+	                        uri = uri,
+	                        mimeType = mimeType,
+	                        dateModified = dateModified,
+	                        orientation = orientation,
+	                        dateTaken = dateTaken,
+	                        displayName = displayName,
+	                        dateAdded = dateAdded,
+	                        absolutePath = absolutePath
+	                    )
+	                )
+                }
             }
         }
         mediaCursor.close()

@@ -71,6 +71,7 @@ fun AlbumGridView(navController: NavHostController) {
 		listOfDirs.add("Movies")
 		listOfDirs.add("Download")
 		listOfDirs.add("Pictures/Instagram")
+		listOfDirs.add("LavenderPhotos/Restored Files")
 
         listOfDirs.sortByDescending {
             File(it).lastModified()
