@@ -2,11 +2,14 @@ package com.kaii.photos.compose
 
 import android.annotation.SuppressLint
 import android.graphics.drawable.Drawable
+import android.util.Log
 import android.view.Window
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
+import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -21,7 +24,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.movableContentOf
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
@@ -37,6 +39,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -47,8 +50,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -57,7 +62,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.compose.runtime.MutableState
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -74,8 +78,6 @@ import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.signature
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.withContext
 
 private const val TAG = "SINGLE_PHOTO_VIEW"
 
@@ -87,18 +89,20 @@ fun SinglePhotoView(navController: NavHostController, window: Window) {
     
     val mediaItem = mainViewModel.selectedMediaData.collectAsState(initial = null).value ?: return
 
-    val holderGroupedMedia = mainViewModel.groupedMedia.collectAsState(initial = null).value ?: return
-	
-	val groupedMedia by remember { mutableStateOf(holderGroupedMedia.filter { item ->
+	val holderGroupedMedia = mainViewModel.groupedMedia.collectAsState(initial = null).value ?: return
+
+	val groupedMedia = remember { mutableStateOf(holderGroupedMedia.filter { item ->
         !(item.mimeType == null && item.type == MediaType.Section)
-   	}.toMutableList()
-   	)}
+   	})}
 	
     var systemBarsShown by remember { mutableStateOf(true) }
     var appBarAlpha by remember { mutableFloatStateOf(1f) }
     var currentMediaItem by remember { mutableStateOf(mediaItem) }
 	val state = rememberLazyListState()
-	var showDialog = remember { mutableStateOf(false) }
+	val showDialog = remember { mutableStateOf(false) }
+	val neededDialogFunction = remember { mutableStateOf(ImageFunctions.MoveToLockedFolder) }
+	val neededDialogTitle = remember { mutableStateOf("Move this ${currentMediaItem.type.name} to Locked Folder?") }
+	val neededDialogButtonLabel = remember { mutableStateOf("Move") }
 	
 	if (showDialog.value) {
 		val context = LocalContext.current
@@ -112,28 +116,33 @@ fun SinglePhotoView(navController: NavHostController, window: Window) {
 	            Button(
 	                onClick = {
 	                    showDialog.value = false
-	                    operateOnImage(currentMediaItem.absolutePath, currentMediaItem.id, ImageFunctions.MoveToLockedFolder, context)
-	                    
+	                    operateOnImage(currentMediaItem.absolutePath, currentMediaItem.id, neededDialogFunction.value, context)
+
                        	coroutineScope.launch {
-                        	val scrollIndex = groupedMedia.indexOf(currentMediaItem)
-                        	val added = if (scrollIndex == groupedMedia.size) -1 else 1
-                            state.animateScrollToItem(scrollIndex + added)
-                            if (scrollIndex <= 1) {
+                        	val scrollIndex = groupedMedia.value.indexOf(currentMediaItem)
+                        	// val added = if (scrollIndex == groupedMedia.value.size) -1 else 1
+
+                            if (groupedMedia.value.size == 1) {
                             	navController.popBackStack()	
                             }
-                         	groupedMedia.removeAt(scrollIndex)
+
+							val newMedia = groupedMedia.value.toMutableList()
+							newMedia.removeAt(scrollIndex)
+							groupedMedia.value = newMedia
+
+                            state.animateScrollToItem(scrollIndex)
                        	}
 	                }
 	            ) {
 	                Text(
-	                    text = "Move",
+	                    text = neededDialogButtonLabel.value,
 	                    fontSize = TextUnit(14f, TextUnitType.Sp)
 	                )
 	            }
 	        },
 	        title = {
 	            Text(
-	                text = "Move this ${currentMediaItem.type.name}? to Locked Folder?",
+	                text = neededDialogTitle.value,
 	                fontSize = TextUnit(16f, TextUnitType.Sp)
 	            )
 	        },
@@ -159,15 +168,15 @@ fun SinglePhotoView(navController: NavHostController, window: Window) {
 
     Scaffold (
         topBar =  { TopBar(navController, currentMediaItem, appBarAlpha) },
-        bottomBar = { BottomBar(groupedMedia, appBarAlpha, currentMediaItem, state, showDialog, navController) },
+        bottomBar = { BottomBar(appBarAlpha, currentMediaItem, showDialog, neededDialogTitle, neededDialogButtonLabel, neededDialogFunction) },
         containerColor = CustomMaterialTheme.colorScheme.background,
         contentColor = CustomMaterialTheme.colorScheme.onBackground
     ) {  _ ->
         Column (
             modifier = Modifier
-                .padding(0.dp)
-                .background(CustomMaterialTheme.colorScheme.background)
-                .fillMaxSize(1f),
+				.padding(0.dp)
+				.background(CustomMaterialTheme.colorScheme.background)
+				.fillMaxSize(1f),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -178,7 +187,7 @@ fun SinglePhotoView(navController: NavHostController, window: Window) {
 
             val preloadingData =
                 rememberGlidePreloadingData(
-                    groupedMedia,
+                    groupedMedia.value,
                     Size(75f, 75f),
                     requestBuilderTransform = requestBuilderTransform,
                 )
@@ -194,12 +203,12 @@ fun SinglePhotoView(navController: NavHostController, window: Window) {
                 items(
                     count = preloadingData.size,
                     key = {
-       	                groupedMedia[it].uri.toString()
+       	                groupedMedia.value[it].uri.toString()
        	            },
                 ) { i ->
                 	val movableContent = movableContentOf {
                 		val index = if (i+1 == preloadingData.size) 0 else i
-                		println("INDEX IS $index $i ${preloadingData.size}")
+                		Log.d(TAG, "INDEX IS $index $i ${preloadingData.size}")
 						val (mediaStoreItem, preloadRequestBuilder) = preloadingData[index]
 						
 	                    val windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
@@ -207,30 +216,66 @@ fun SinglePhotoView(navController: NavHostController, window: Window) {
 
 						if (mediaStoreItem.type != MediaType.Section && mediaStoreItem.mimeType != null && mediaStoreItem.id != 0L) {
 	                        currentMediaItem = mediaStoreItem
-							
+
+							var scale by remember { mutableFloatStateOf(1f) }
+							var rotation by remember { mutableFloatStateOf(0f) }
+							var offset by remember { mutableStateOf(Offset.Zero) }
+							val transformState = rememberTransformableState { zoomChange, panChange, rotationChange ->
+								scale *= zoomChange
+								rotation += rotationChange
+
+								if (scale > 1) {
+									offset += panChange
+								} else {
+									offset = Offset.Zero
+								}
+							}
 	                        GlideImage(
 		                        model = mediaStoreItem.uri,
 		                        contentDescription = "selected image",
 		                        contentScale = ContentScale.Fit,
 		                        modifier = Modifier
-		                            .fillParentMaxSize(1f)
-		                            .clickable {
-		                                if (systemBarsShown) {
-		                                    windowInsetsController.apply {
-		                                        hide(WindowInsetsCompat.Type.systemBars())
-		                                        systemBarsBehavior =
-		                                            WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-		                                    }
-		                                    window.setDecorFitsSystemWindows(false)
-		                                    systemBarsShown = false
-		                                    appBarAlpha = 0f
-		                                } else {
-		                                    windowInsetsController.show(WindowInsetsCompat.Type.systemBars())
-		                                    window.setDecorFitsSystemWindows(false)
-		                                    systemBarsShown = true
-		                                    appBarAlpha = 1f
-		                                }
-		                            },
+									.fillParentMaxSize(1f)
+									.combinedClickable (
+										onClick = {
+											if (systemBarsShown) {
+												windowInsetsController.apply {
+													hide(WindowInsetsCompat.Type.systemBars())
+													systemBarsBehavior =
+														WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+												}
+												window.setDecorFitsSystemWindows(false)
+												systemBarsShown = false
+												appBarAlpha = 0f
+											} else {
+												windowInsetsController.show(WindowInsetsCompat.Type.systemBars())
+												window.setDecorFitsSystemWindows(false)
+												systemBarsShown = true
+												appBarAlpha = 1f
+											}
+										},
+
+										onDoubleClick = {
+											Log.d(TAG, "scale is $scale")
+											if (scale == 1f) {
+												scale = 2f
+												rotation = 0f
+												offset = Offset.Zero
+											} else {
+												scale = 1f
+												rotation = 0f
+												offset = Offset.Zero
+											}
+										}
+									)
+									.graphicsLayer(
+										scaleX = scale,
+										scaleY = scale,
+										rotationZ = rotation,
+										translationX = offset.x,
+										translationY = offset.y
+									)
+									.transformable(transformState),
 		                    ) {
 		                        it.thumbnail(preloadRequestBuilder).signature(mediaStoreItem.signature()).diskCacheStrategy(DiskCacheStrategy.ALL)
 		                    }
@@ -252,7 +297,7 @@ fun SinglePhotoView(navController: NavHostController, window: Window) {
             LaunchedEffect(key1 = mediaItem) {
                 coroutineScope.launch {
                     state.scrollToItem(
-                        if (groupedMedia.indexOf(mediaItem) >= 0) groupedMedia.indexOf(mediaItem) else 0
+                        if (groupedMedia.value.indexOf(mediaItem) >= 0) groupedMedia.value.indexOf(mediaItem) else 0
                     )
                 }
             }
@@ -330,7 +375,13 @@ private fun TopBar(navController: NavHostController, mediaItem: MediaStoreData?,
 }
 
 @Composable
-private fun BottomBar(groupedMedia: MutableList<MediaStoreData>, alpha: Float, item: MediaStoreData, state: LazyListState, showDialog: MutableState<Boolean>, navController: NavHostController) {
+private fun BottomBar(
+	alpha: Float, item: MediaStoreData,
+	showDialog: MutableState<Boolean>,
+	neededDialogTitle: MutableState<String>,
+	neededDialogButtonLabel: MutableState<String>,
+	neededDialogFunction: MutableState<ImageFunctions>
+) {
     val context = LocalContext.current
 
     BottomAppBar(
@@ -358,29 +409,30 @@ private fun BottomBar(groupedMedia: MutableList<MediaStoreData>, alpha: Float, i
            			"Delete",
            			"Hide"
            		)
-            	val coroutineScope = rememberCoroutineScope()
+
             	repeat(4) { index ->
                     val operation = ImageFunctions.entries[index] // WARNING: ORDER IS VERY IMPORTANT!!!
 		    		Button(
 		                onClick = {
-		                	if (operation != ImageFunctions.MoveToLockedFolder){
-		                		operateOnImage(item.absolutePath, item.id, operation, context)	
-		                		if (operation == ImageFunctions.TrashImage) {
-	                            	coroutineScope.launch {
-		                                val scrollIndex = groupedMedia.indexOf(item)
+							when (operation) {
+								ImageFunctions.MoveToLockedFolder -> {
+									neededDialogTitle.value = "Move this image to Locked Folder?"
+									neededDialogFunction.value = ImageFunctions.MoveToLockedFolder
+									neededDialogButtonLabel.value = "Move"
+									showDialog.value = true
+								}
 
-										val added = if (scrollIndex == groupedMedia.size) -1 else 1
-		                                
-		                                if (groupedMedia.size <= 1) {
-		                                	navController.popBackStack()	
-		                                }
-		                                state.animateScrollToItem(scrollIndex + added)
-		                            	groupedMedia.removeAt(scrollIndex)
-	                            	}
-	                            }
-		                	} else {
-		                		showDialog.value = true	
-		                	} 
+								ImageFunctions.TrashImage -> {
+									neededDialogTitle.value = "Delete this image?"
+									neededDialogFunction.value = ImageFunctions.TrashImage
+									neededDialogButtonLabel.value = "Delete"
+									showDialog.value = true
+								}
+
+								else -> {
+									operateOnImage(item.absolutePath, item.id, operation, context)
+								}
+							}
                         },
 		                colors = ButtonDefaults.buttonColors(
 		                	containerColor = Color.Transparent,

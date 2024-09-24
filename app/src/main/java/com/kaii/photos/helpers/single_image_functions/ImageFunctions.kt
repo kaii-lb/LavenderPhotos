@@ -206,6 +206,7 @@ private fun moveOutOfLockedFolder(path: String, context: Context) {
 	val lastModified = System.currentTimeMillis()
 
 	// TODO: use sidecar files(?) to track where it was from
+	// or write metadata into the media itself
 	val reverseCemetery = context.getAppRestoredFromLockedFolderDirectory() + fileToBeRevived.name
 
 	Files.move(Path(absolutePath), Path(reverseCemetery), StandardCopyOption.REPLACE_EXISTING)

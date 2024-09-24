@@ -117,14 +117,16 @@ fun AlbumGridView(navController: NavHostController) {
 				            requestBuilderTransform = requestBuilderTransform
                         )
 					val (mediaStoreItem, preloadRequestBuilder) = preloadingData[0]
-
-	                AlbumGridItem(
-						navController,
-	                	folder.name,
-	                	neededDir,
-	                	mediaStoreItem,
-	                	preloadRequestBuilder
-	                )
+					
+					if (folder.listFiles().isNotEmpty()) {
+		                AlbumGridItem(
+							navController,
+		                	folder.name,
+		                	neededDir,
+		                	mediaStoreItem,
+		                	preloadRequestBuilder
+		                )
+					}
 				}
             }
         }
