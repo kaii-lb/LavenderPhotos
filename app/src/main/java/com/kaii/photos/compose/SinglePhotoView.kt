@@ -7,6 +7,13 @@ import android.view.Window
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.calculatePan
+import androidx.compose.foundation.gestures.calculateRotation
+import androidx.compose.foundation.gestures.calculateZoom
+import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.gestures.forEachGesture
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.gestures.transformable
@@ -53,7 +60,9 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -78,13 +87,22 @@ import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.signature
 import kotlinx.coroutines.launch
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 
 private const val TAG = "SINGLE_PHOTO_VIEW"
 
 @OptIn(ExperimentalGlideComposeApi::class, ExperimentalFoundationApi::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun SinglePhotoView(navController: NavHostController, window: Window) {
+fun SinglePhotoView(
+	navController: NavHostController,
+	window: Window,
+	scale: MutableState<Float>,
+	rotation: MutableState<Float>,
+	offset: MutableState<Offset>
+) {
     val mainViewModel = MainActivity.mainViewModel
     
     val mediaItem = mainViewModel.selectedMediaData.collectAsState(initial = null).value ?: return
@@ -208,28 +226,15 @@ fun SinglePhotoView(navController: NavHostController, window: Window) {
                 ) { i ->
                 	val movableContent = movableContentOf {
                 		val index = if (i+1 == preloadingData.size) 0 else i
-                		Log.d(TAG, "INDEX IS $index $i ${preloadingData.size}")
+						Log.d(TAG, "INDEX IS $index $i ${preloadingData.size}")
 						val (mediaStoreItem, preloadRequestBuilder) = preloadingData[index]
 						
 	                    val windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
 	                    windowInsetsController.show(WindowInsetsCompat.Type.systemBars())
 
 						if (mediaStoreItem.type != MediaType.Section && mediaStoreItem.mimeType != null && mediaStoreItem.id != 0L) {
-	                        currentMediaItem = mediaStoreItem
+						    currentMediaItem = mediaStoreItem
 
-							var scale by remember { mutableFloatStateOf(1f) }
-							var rotation by remember { mutableFloatStateOf(0f) }
-							var offset by remember { mutableStateOf(Offset.Zero) }
-							val transformState = rememberTransformableState { zoomChange, panChange, rotationChange ->
-								scale *= zoomChange
-								rotation += rotationChange
-
-								if (scale > 1) {
-									offset += panChange
-								} else {
-									offset = Offset.Zero
-								}
-							}
 	                        GlideImage(
 		                        model = mediaStoreItem.uri,
 		                        contentDescription = "selected image",
@@ -256,26 +261,72 @@ fun SinglePhotoView(navController: NavHostController, window: Window) {
 										},
 
 										onDoubleClick = {
-											Log.d(TAG, "scale is $scale")
-											if (scale == 1f) {
-												scale = 2f
-												rotation = 0f
-												offset = Offset.Zero
+											if (scale.value == 1f) {
+												scale.value = 2f
+												rotation.value = 0f
+												offset.value = Offset.Zero
 											} else {
-												scale = 1f
-												rotation = 0f
-												offset = Offset.Zero
+												scale.value = 1f
+												rotation.value = 0f
+												offset.value = Offset.Zero
 											}
 										}
 									)
 									.graphicsLayer(
-										scaleX = scale,
-										scaleY = scale,
-										rotationZ = rotation,
-										translationX = offset.x,
-										translationY = offset.y
+										scaleX = scale.value,
+										scaleY = scale.value,
+										rotationZ = rotation.value,
+										translationX = -offset.value.x * scale.value,
+										translationY = -offset.value.y * scale.value,
+										transformOrigin = TransformOrigin(0.5f, 0.5f)
 									)
-									.transformable(transformState),
+									.pointerInput(Unit) {
+// 										detectTransformGestures (
+// 											panZoomLock = true,
+// 											onGesture = { centerOfTransformation, movedBy, zoom, rotateBy ->
+// 												val oldScale = scale
+// 												val newScale = scale * zoom
+// 
+// 												if (newScale != 1f) {
+// 													offset = (offset + Offset(0.5f, 0.5f) / oldScale).rotateBy(rotateBy) -
+// 															(Offset(0.5f, 0.5f) / newScale + movedBy * 3f / oldScale)
+// 												}
+// 
+// 												scale = newScale
+// 												rotation += rotateBy
+// 											}
+// 										)
+
+										forEachGesture {
+											awaitPointerEventScope {
+												awaitFirstDown()
+
+												do {
+													val event = awaitPointerEvent()
+													
+													if (event.changes.size == 2) {
+														scale.value *= event.calculateZoom()
+														scale.value.coerceIn(0.75f, 5f)
+														rotation.value += event.calculateRotation()
+
+														event.changes.forEach {
+															it.consume()
+														}
+													} else if (event.changes.size == 1 && event.calculatePan() != Offset.Zero) {
+														if (scale.value != 1f) {
+															// this is from android docs, i have no clue what the math here is xD
+															offset.value = (offset.value + Offset(0.5f, 0.5f) / scale.value) -
+																	(Offset(0.5f, 0.5f) / scale.value + event.calculatePan())
+
+															event.changes.forEach {
+																it.consume()
+															}
+														}
+													}
+												} while (event.changes.any { it.pressed })
+											}
+										}
+									},
 		                    ) {
 		                        it.thumbnail(preloadRequestBuilder).signature(mediaStoreItem.signature()).diskCacheStrategy(DiskCacheStrategy.ALL)
 		                    }
@@ -468,4 +519,11 @@ private fun BottomBar(
         },
         modifier = Modifier.alpha(alpha)
     )
+}
+
+private fun Offset.rotateBy(angle: Float): Offset {
+	val rads = angle * (PI / 180)
+	val cos = cos(rads)
+	val sin = sin(rads)
+	return Offset((x * cos - y * sin).toFloat(), (x * sin + y * cos).toFloat())
 }

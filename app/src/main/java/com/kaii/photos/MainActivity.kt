@@ -44,6 +44,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -56,6 +57,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -192,7 +194,10 @@ class MainActivity : ComponentActivity() {
 							statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.surface.copy(alpha = 0.2f).toArgb(),
 								CustomMaterialTheme.colorScheme.surface.copy(alpha = 0.2f).toArgb()) 
 						)
-                    	SinglePhotoView(navControllerLocal, window)
+						val scale = remember { mutableFloatStateOf(1f) }
+						val rotation = remember { mutableFloatStateOf(0f) }
+						val offset = remember { mutableStateOf(Offset.Zero) }
+                    	SinglePhotoView(navControllerLocal, window, scale, rotation, offset)
                     }
 
                     composable(MultiScreenViewType.SingleAlbumView.name) {
