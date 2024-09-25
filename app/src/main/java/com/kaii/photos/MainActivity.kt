@@ -725,16 +725,18 @@ class MainActivity : ComponentActivity() {
                                 iconResId = R.drawable.add,
                                 position = DialogItemPosition.Middle,
                                 action = {
-                               		currentView.value = MainScreenViewType.PhotoGridView	
-                                    
                                     val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
                                         putExtra(DocumentsContract.EXTRA_INITIAL_URI, "".toUri())
                                     }
                                     startActivityForResult(intent, DIR_REQUEST_CODE)
 
-                                	Handler(Looper.getMainLooper()).postDelayed({
-                                		currentView.value = MainScreenViewType.AlbumGridView	
-                                	}, 500)
+									val runnable = Runnable() {
+										Thread.sleep(250)
+										currentView.value = MainScreenViewType.PhotoGridView	
+										Thread.sleep(1000)
+										currentView.value = MainScreenViewType.AlbumGridView
+									}
+                                	Thread(runnable).start()
                                 }
                             )
                         }
@@ -792,9 +794,12 @@ class MainActivity : ComponentActivity() {
     			val path = uri.path ?: ""
 
                 Log.d(TAG, "the path is $path")
-                lifecycleScope.launch {
- 					applicationContext.datastore.addToAlbumsList(path.replace("/tree/primary:", ""))
-                }
+				val runnable = Runnable() {
+					runBlocking {
+ 						applicationContext.datastore.addToAlbumsList(path.replace("/tree/primary:", ""))
+					}
+				}
+               	Thread(runnable).start()
     		}
     	}
     }
