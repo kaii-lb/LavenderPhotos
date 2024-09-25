@@ -15,6 +15,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -23,10 +24,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
+import com.kaii.photos.datastore
+import com.kaii.photos.datastore.removeFromAlbumsList
 import com.kaii.photos.MainActivity
 import com.kaii.photos.helpers.single_image_functions.ImageFunctions
 import com.kaii.photos.helpers.MediaItemSortMode
+import kotlinx.coroutines.launch
 
 @Composable
 fun SingleAlbumView(navController: NavHostController) {
@@ -35,11 +40,9 @@ fun SingleAlbumView(navController: NavHostController) {
     val albumDir = mainViewModel.selectedAlbumDir.collectAsState(initial = null).value
 	println("ALBUM DIR IS $albumDir")
     if (albumDir == null) return
-
-	val topBarTitle = albumDir.split("/").last()
 	
     Scaffold (
-        topBar =  { TopBar(navController, topBarTitle) },
+        topBar =  { TopBar(navController, albumDir) },
         containerColor = CustomMaterialTheme.colorScheme.background,
         contentColor = CustomMaterialTheme.colorScheme.onBackground
     ) { padding ->
@@ -57,7 +60,11 @@ fun SingleAlbumView(navController: NavHostController) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TopBar(navController: NavHostController, title: String?) {
+private fun TopBar(navController: NavHostController, dir: String) {
+	val title = dir.split("/").last()
+	val context = LocalContext.current
+	val coroutineScope = rememberCoroutineScope()
+	
     TopAppBar(
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = CustomMaterialTheme.colorScheme.surfaceContainer
@@ -88,7 +95,12 @@ private fun TopBar(navController: NavHostController, title: String?) {
         },
         actions = {
             IconButton(
-                onClick = { /* TODO */ },
+                onClick = {
+                	coroutineScope.launch {
+						navController.popBackStack()
+						context.datastore.removeFromAlbumsList(dir)
+                	}
+                },
             ) {
                 Icon(
                     painter = painterResource(id = com.kaii.photos.R.drawable.settings),

@@ -43,14 +43,17 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.rememberGlidePreloadingData
 import com.bumptech.glide.load.engine.DiskCacheStrategy
-import com.bumptech.glide.signature.MediaStoreSignature
 import com.kaii.photos.MainActivity
 import com.kaii.photos.R
+import com.kaii.photos.datastore
+import com.kaii.photos.datastore.getAlbumsList
+import com.kaii.photos.datastore.addToAlbumsList
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.signature
 import com.kaii.photos.models.album_grid.AlbumsViewModel
 import com.kaii.photos.models.album_grid.AlbumsViewModelFactory
+import kotlinx.coroutines.runBlocking
 import java.io.File
 
 @Composable
@@ -63,19 +66,23 @@ fun AlbumGridView(navController: NavHostController) {
         verticalArrangement = Arrangement.SpaceEvenly,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-		val listOfDirs = emptyList<String>().toMutableList()
-		listOfDirs.add("DCIM/Camera")
-		listOfDirs.add("Pictures/Screenshot")
-		listOfDirs.add("Pictures/Whatsapp")
-		listOfDirs.add("Pictures/100PINT/Pins")
-		listOfDirs.add("Movies")
-		listOfDirs.add("Download")
-		listOfDirs.add("Pictures/Instagram")
-		listOfDirs.add("LavenderPhotos/Restored Files")
+		// val listOfDirs = emptyList<String>().toMutableList()
+		val context = LocalContext.current
+		runBlocking {
+			context.datastore.addToAlbumsList("DCIM/Camera")
+			context.datastore.addToAlbumsList("Pictures/Screenshot")
+			context.datastore.addToAlbumsList("Pictures/Whatsapp")
+			context.datastore.addToAlbumsList("Pictures/100PINT/Pins")
+			context.datastore.addToAlbumsList("Movies")
+			context.datastore.addToAlbumsList("LavenderPhotos/Restored Files")
+			context.datastore.addToAlbumsList("Download")
+			context.datastore.addToAlbumsList("Pictures/Instagram")
+		}
 
-        listOfDirs.sortByDescending {
-            File(it).lastModified()
-        }
+		val listOfDirs = runBlocking {
+			val list = context.datastore.getAlbumsList()
+			list
+		}
 
 		val albumsViewModel: AlbumsViewModel = viewModel(
 			factory = AlbumsViewModelFactory(LocalContext.current, listOfDirs.toList())
@@ -110,23 +117,21 @@ fun AlbumGridView(navController: NavHostController) {
 				            requestBuilder.load(item.uri).centerCrop()
 				        }
 
-				    val preloadingData =
+					val preloadingData =
 				        rememberGlidePreloadingData(
 				            listOf(mediaItem),
 				            Size(100f, 100f),
 				            requestBuilderTransform = requestBuilderTransform
                         )
 					val (mediaStoreItem, preloadRequestBuilder) = preloadingData[0]
-					
-					if (folder.listFiles().isNotEmpty()) {
-		                AlbumGridItem(
-							navController,
-		                	folder.name,
-		                	neededDir,
-		                	mediaStoreItem,
-		                	preloadRequestBuilder
-		                )
-					}
+
+					AlbumGridItem(
+						navController,
+						folder.name,
+						neededDir,
+						mediaStoreItem,
+						preloadRequestBuilder
+					)
 				}
             }
         }
@@ -144,12 +149,12 @@ private fun AlbumGridItem(
 ) {
 	Column (
         modifier = Modifier
-            .wrapContentHeight()
-            .fillMaxWidth(1f)
-            .padding(6.dp)
-            .clip(RoundedCornerShape(24.dp))
-            .background(CustomMaterialTheme.colorScheme.surfaceContainer)
-			.combinedClickable (
+			.wrapContentHeight()
+			.fillMaxWidth(1f)
+			.padding(6.dp)
+			.clip(RoundedCornerShape(24.dp))
+			.background(CustomMaterialTheme.colorScheme.surfaceContainer)
+			.combinedClickable(
 				onClick = {
 					MainActivity.mainViewModel.setSelectedAlbumDir(neededDir)
 					navController.navigate(MultiScreenViewType.SingleAlbumView.name)
@@ -166,9 +171,9 @@ private fun AlbumGridItem(
     ) {
 	    Column (
 	        modifier = Modifier
-	            .fillMaxSize(1f)
-	            .padding(8.dp, 8.dp, 8.dp, 4.dp)
-	            .clip(RoundedCornerShape(16.dp)),
+				.fillMaxSize(1f)
+				.padding(8.dp, 8.dp, 8.dp, 4.dp)
+				.clip(RoundedCornerShape(16.dp)),
 	        verticalArrangement = Arrangement.SpaceEvenly,
 	        horizontalAlignment = Alignment.CenterHorizontally
 	    ) {
@@ -177,8 +182,8 @@ private fun AlbumGridItem(
                 contentDescription = item.displayName,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-	                .aspectRatio(1f)
-	                .clip(RoundedCornerShape(16.dp)),
+					.aspectRatio(1f)
+					.clip(RoundedCornerShape(16.dp)),
             ) {
                 it.thumbnail(preloadRequestBuilder).signature(item.signature()).diskCacheStrategy(DiskCacheStrategy.ALL)
             }
@@ -279,3 +284,4 @@ private fun CategoryList(navController: NavHostController) {
         }
     }
 }
+

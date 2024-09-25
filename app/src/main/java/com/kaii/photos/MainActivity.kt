@@ -1,9 +1,9 @@
 package com.kaii.photos
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.os.CancellationSignal
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -63,6 +63,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.preferencesDataStore
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -81,6 +86,8 @@ import com.kaii.photos.compose.SinglePhotoView
 import com.kaii.photos.compose.SingleTrashedPhotoView
 import com.kaii.photos.compose.TrashedPhotoGridView
 import com.kaii.photos.database.MediaDatabase
+import com.kaii.photos.datastore.addToAlbumsList
+import com.kaii.photos.datastore.albumsListKey
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
@@ -90,6 +97,9 @@ import com.kaii.photos.models.main_activity.MainDataSharingModelFactory
 import com.kaii.photos.models.search_page.SearchViewModel
 import com.kaii.photos.models.search_page.SearchViewModelFactory
 import com.kaii.photos.ui.theme.PhotosTheme
+import kotlinx.coroutines.launch
+
+val Context.datastore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
 class MainActivity : ComponentActivity() {
     companion object {
@@ -305,6 +315,7 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     private fun TopBar() {
+        val context = LocalContext.current
         TopAppBar(
             title = {
                 Row {
@@ -322,7 +333,11 @@ class MainActivity : ComponentActivity() {
             },
             actions = {
                 IconButton(
-                    onClick = { /*TODO*/ },
+                    onClick = {
+                        lifecycleScope.launch {
+                            context.datastore.addToAlbumsList("Pictures/Telegram")
+                        }
+                    },
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.settings),

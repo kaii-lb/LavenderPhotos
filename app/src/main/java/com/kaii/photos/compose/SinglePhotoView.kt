@@ -281,50 +281,40 @@ fun SinglePhotoView(
 										transformOrigin = TransformOrigin(0.5f, 0.5f)
 									)
 									.pointerInput(Unit) {
-// 										detectTransformGestures (
-// 											panZoomLock = true,
-// 											onGesture = { centerOfTransformation, movedBy, zoom, rotateBy ->
-// 												val oldScale = scale
-// 												val newScale = scale * zoom
-// 
-// 												if (newScale != 1f) {
-// 													offset = (offset + Offset(0.5f, 0.5f) / oldScale).rotateBy(rotateBy) -
-// 															(Offset(0.5f, 0.5f) / newScale + movedBy * 3f / oldScale)
-// 												}
-// 
-// 												scale = newScale
-// 												rotation += rotateBy
-// 											}
-// 										)
+										// loop over each gesture and consume only those we care about
+										// so we don't interfere with other gestures
+										awaitEachGesture {
+											awaitFirstDown()
 
-										forEachGesture {
-											awaitPointerEventScope {
-												awaitFirstDown()
+											do {
+												val event = awaitPointerEvent()
 
-												do {
-													val event = awaitPointerEvent()
-													
-													if (event.changes.size == 2) {
-														scale.value *= event.calculateZoom()
-														scale.value.coerceIn(0.75f, 5f)
-														rotation.value += event.calculateRotation()
+												if (event.changes.size == 2) {
+													scale.value *= event.calculateZoom()
+													scale.value.coerceIn(0.75f, 5f)
+													rotation.value += event.calculateRotation()
+
+													event.changes.forEach {
+														it.consume()
+													}
+												} else if (event.changes.size == 1 && event.calculatePan() != Offset.Zero) {
+													if (scale.value != 1f) {
+														// this is from android docs, i have no clue what the math here is xD
+														offset.value = (offset.value + Offset(
+															0.5f,
+															0.5f
+														) / scale.value) -
+																(Offset(
+																	0.5f,
+																	0.5f
+																) / scale.value + event.calculatePan())
 
 														event.changes.forEach {
 															it.consume()
 														}
-													} else if (event.changes.size == 1 && event.calculatePan() != Offset.Zero) {
-														if (scale.value != 1f) {
-															// this is from android docs, i have no clue what the math here is xD
-															offset.value = (offset.value + Offset(0.5f, 0.5f) / scale.value) -
-																	(Offset(0.5f, 0.5f) / scale.value + event.calculatePan())
-
-															event.changes.forEach {
-																it.consume()
-															}
-														}
 													}
-												} while (event.changes.any { it.pressed })
-											}
+												}
+											} while (event.changes.any { it.pressed })
 										}
 									},
 		                    ) {
@@ -519,11 +509,4 @@ private fun BottomBar(
         },
         modifier = Modifier.alpha(alpha)
     )
-}
-
-private fun Offset.rotateBy(angle: Float): Offset {
-	val rads = angle * (PI / 180)
-	val cos = cos(rads)
-	val sin = sin(rads)
-	return Offset((x * cos - y * sin).toFloat(), (x * sin + y * cos).toFloat())
 }
