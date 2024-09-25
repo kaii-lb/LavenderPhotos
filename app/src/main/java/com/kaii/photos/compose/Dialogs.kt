@@ -56,10 +56,10 @@ fun DialogClickableItem(text: String, iconResId: Int, position: DialogItemPositi
 			.clip(shape)
 			.background(CustomMaterialTheme.colorScheme.surfaceVariant)
 			.wrapContentHeight(align = Alignment.CenterVertically)
-			.padding(8.dp)
 			.clickable {
 				action()
-			},
+			}
+			.padding(8.dp),
 		verticalAlignment = Alignment.CenterVertically,
 		horizontalArrangement = Arrangement.Start
 	) {

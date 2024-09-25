@@ -191,7 +191,7 @@ private fun AlbumGridItem(
 					.aspectRatio(1f)
 					.clip(RoundedCornerShape(16.dp)),
             ) {
-                it.thumbnail(preloadRequestBuilder).signature(item.signature()).diskCacheStrategy(DiskCacheStrategy.ALL)
+                it.thumbnail(preloadRequestBuilder).signature(item.signature())
             }
 
 	        Text(

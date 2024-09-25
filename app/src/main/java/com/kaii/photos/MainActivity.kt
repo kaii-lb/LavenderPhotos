@@ -1,41 +1,43 @@
 package com.kaii.photos
 
 import android.Manifest
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.drawable.Drawable
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.provider.DocumentsContract
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.SystemBarStyle
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.fadeIn
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -45,55 +47,54 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import com.kaii.photos.compose.CustomMaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.ui.res.stringResource
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.net.toFile
+import androidx.core.net.toUri
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.room.Room
 import com.bumptech.glide.Glide
-import com.bumptech.glide.RequestBuilder
+import com.bumptech.glide.MemoryCategory
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.bumptech.glide.RequestManager
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.load.engine.DiskCacheStrategy
-import com.bumptech.glide.MemoryCategory
 import com.kaii.photos.compose.AlbumGridView
-import com.kaii.photos.compose.LockedFolderView
+import com.kaii.photos.compose.CustomMaterialTheme
+import com.kaii.photos.compose.DialogClickableItem
+import com.kaii.photos.compose.DialogItemPosition
 import com.kaii.photos.compose.LockedFolderEntryView
+import com.kaii.photos.compose.LockedFolderView
 import com.kaii.photos.compose.PhotoGrid
 import com.kaii.photos.compose.SearchPage
 import com.kaii.photos.compose.SingleAlbumView
@@ -101,16 +102,13 @@ import com.kaii.photos.compose.SingleHiddenPhotoView
 import com.kaii.photos.compose.SinglePhotoView
 import com.kaii.photos.compose.SingleTrashedPhotoView
 import com.kaii.photos.compose.TrashedPhotoGridView
-import com.kaii.photos.compose.DialogClickableItem
-import com.kaii.photos.compose.DialogItemPosition
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.addToAlbumsList
-import com.kaii.photos.datastore.albumsListKey
 import com.kaii.photos.datastore.getUsername
-import com.kaii.photos.helpers.brightenColor
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.brightenColor
 import com.kaii.photos.helpers.single_image_functions.ImageFunctions
 import com.kaii.photos.models.main_activity.MainDataSharingModel
 import com.kaii.photos.models.main_activity.MainDataSharingModelFactory
@@ -123,6 +121,8 @@ import kotlinx.coroutines.runBlocking
 val Context.datastore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
 private const val DIR_REQUEST_CODE = 1
+private const val TAG = "MAIN_ACTIVITY"
+
 class MainActivity : ComponentActivity() {
     companion object {
         private const val REQUEST_READ_STORAGE = 0
@@ -340,8 +340,6 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     private fun TopBar(showDialog: MutableState<Boolean>, currentView: MutableState<MainScreenViewType>) {
-        val context = LocalContext.current
-
 		MainDialog(showDialog, currentView)
         
         TopAppBar(
@@ -612,7 +610,160 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @OptIn(ExperimentalGlideComposeApi::class)
+    @Composable
+    fun MainDialog(showDialog: MutableState<Boolean>, currentView: MutableState<MainScreenViewType>) {
+        if (showDialog.value) {
+            val context = LocalContext.current
 
+            Dialog(
+                onDismissRequest = {
+                    showDialog.value = false
+                }
+            ) {
+                Column (
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(32.dp))
+                        .background(brightenColor(CustomMaterialTheme.colorScheme.surface, 0.1f))
+                        .padding(8.dp)
+                ) {
+                    Box (
+                        modifier = Modifier
+                            .fillMaxWidth(1f),
+                    ) {
+                        IconButton(
+                            onClick = {
+                                showDialog.value = false
+                            },
+                            modifier = Modifier
+                                .align(Alignment.CenterStart)
+                        ) {
+                            Icon (
+                                painter = painterResource(id = R.drawable.close),
+                                contentDescription = "Close dialog button",
+                                modifier = Modifier
+                                    .size(24.dp)
+                            )
+                        }
+
+                        val splitBy = Regex("(?=[A-Z])")
+                        Text(
+                            text = currentView.value.name.split(splitBy)[1],
+                            fontWeight = FontWeight.Bold,
+                            fontSize = TextUnit(18f, TextUnitType.Sp),
+                            modifier = Modifier
+                                .align(Alignment.Center)
+                        )
+                    }
+
+                    Row (
+                        modifier = Modifier
+                            .fillMaxWidth(1f)
+                            .padding(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Start
+                    ) {
+                        // TODO: update by TextField
+                        var username by remember {
+                            mutableStateOf(
+                                runBlocking {
+                                    context.datastore.getUsername()
+                                }
+
+                            )
+                        }
+
+                        GlideImage (
+                            model = R.drawable.cat_picture,
+                            contentDescription = "User profile picture",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .size(56.dp)
+                                .clip(RoundedCornerShape(1000.dp))
+                        ) {
+                            it
+                                .override(256)
+                                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                        }
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        Text (
+                            text = username,
+                            fontSize = TextUnit(16f, TextUnitType.Sp),
+                            textAlign = TextAlign.Start,
+                        )
+
+//                        TextField (
+//                            value = username,
+//                            onValueChange = { newVal ->
+//                                lifecycleScope.launch {
+//                                    context.datastore.setUsername(newVal)
+//                                }
+//                            },
+//                            textStyle = LocalTextStyle.current.copy(
+//                                fontSize = TextUnit(16f, TextUnitType.Sp),
+//                            )
+//                        )
+                    }
+
+                    Column (
+                        modifier = Modifier
+                            .padding(12.dp)
+                            .wrapContentHeight()
+                    ) {
+                        DialogClickableItem(
+                            text = "Data & Backup",
+                            iconResId = R.drawable.data,
+                            position = DialogItemPosition.Top,
+                            action = {}
+                        )
+
+                        if (currentView.value == MainScreenViewType.AlbumGridView) {
+                            DialogClickableItem(
+                                text = "Add an album",
+                                iconResId = R.drawable.add,
+                                position = DialogItemPosition.Middle,
+                                action = {
+                               		currentView.value = MainScreenViewType.PhotoGridView	
+                                    
+                                    val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
+                                        putExtra(DocumentsContract.EXTRA_INITIAL_URI, "".toUri())
+                                    }
+                                    startActivityForResult(intent, DIR_REQUEST_CODE)
+
+                                	Handler(Looper.getMainLooper()).postDelayed({
+                                		currentView.value = MainScreenViewType.AlbumGridView	
+                                	}, 500)
+                                }
+                            )
+                        }
+
+                        DialogClickableItem(
+                            text = "Settings",
+                            iconResId = R.drawable.settings,
+                            position = DialogItemPosition.Middle,
+                            action = {}
+                        )
+
+                        DialogClickableItem(
+                            text = "Support & Donations",
+                            iconResId = R.drawable.donation,
+                            position = DialogItemPosition.Middle,
+                            action = {}
+                        )
+
+                        DialogClickableItem (
+                            text = "About",
+                            iconResId = R.drawable.info,
+                            position = DialogItemPosition.Bottom,
+                            action = {}
+                        )
+                    }
+                }
+            }
+        }
+    }
 
     @Deprecated("This method has been deprecated in favor of using the Activity Result API\n      which brings increased type safety via an {@link ActivityResultContract} and the prebuilt\n      contracts for common intents available in\n      {@link androidx.activity.result.contract.ActivityResultContracts}, provides hooks for\n      testing, and allow receiving results in separate, testable classes independent from your\n      activity. Use\n      {@link #registerForActivityResult(ActivityResultContract, ActivityResultCallback)} passing\n      in a {@link RequestMultiplePermissions} object for the {@link ActivityResultContract} and\n      handling the result in the {@link ActivityResultCallback#onActivityResult(Object) callback}.")
     override fun onRequestPermissionsResult(
@@ -632,151 +783,19 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    override fun onActivityResult(requetCode: Int, resultCode: Int, resultData: Intent?) {
-    	if (requetCode == DIR_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
-    		resultData?.data?.also { uri ->
+    @Deprecated("This method has been deprecated in favor of using the Activity Result API\n      which brings increased type safety via an {@link ActivityResultContract} and the prebuilt\n      contracts for common intents available in\n      {@link androidx.activity.result.contract.ActivityResultContracts}, provides hooks for\n      testing, and allow receiving results in separate, testable classes independent from your\n      activity. Use\n      {@link #registerForActivityResult(ActivityResultContract, ActivityResultCallback)}\n      with the appropriate {@link ActivityResultContract} and handling the result in the\n      {@link ActivityResultCallback#onActivityResult(Object) callback}.")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == DIR_REQUEST_CODE && resultCode == RESULT_OK) {
+    		data?.data?.also { uri ->
     			val path = uri.path ?: ""
+
+                Log.d(TAG, "the path is $path")
                 lifecycleScope.launch {
- 					applicationContext.datastore.addToAlbumsList(path.replace("/storage/emulated/0/", ""))
+ 					applicationContext.datastore.addToAlbumsList(path.replace("/tree/primary:", ""))
                 }
     		}
     	}
-    }
-}
-
-@OptIn(ExperimentalGlideComposeApi::class)
-@Composable
-fun MainDialog(showDialog: MutableState<Boolean>, currentView: MutableState<MainScreenViewType>) {
-    if (showDialog.value) {
-        val context = LocalContext.current
-        val coroutineScope = rememberCoroutineScope()
-
-        Dialog(
-            onDismissRequest = {
-                showDialog.value = false
-            }
-        ) {
-            Column (
-                modifier = Modifier
-                    .clip(RoundedCornerShape(32.dp))
-                    .background(brightenColor(CustomMaterialTheme.colorScheme.surface, 0.1f))
-                    .padding(8.dp)
-            ) {
-                Box (
-                    modifier = Modifier
-                        .fillMaxWidth(1f),
-                ) {
-                    IconButton(
-                        onClick = {
-                            showDialog.value = false
-                        },
-                        modifier = Modifier
-                            .align(Alignment.CenterStart)
-                    ) {
-                        Icon (
-                            painter = painterResource(id = R.drawable.close),
-                            contentDescription = "Close dialog button",
-                            modifier = Modifier
-                            	.size(24.dp)
-                        )
-                    }
-
-					val splitBy = kotlin.text.Regex("(?=[A-Z])")
-                    Text(
-                        text = currentView.value.name.split(splitBy)[1],
-                        fontWeight = FontWeight.Bold,
-                        fontSize = TextUnit(18f, TextUnitType.Sp),
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                    )
-                }
-
-                Row (
-                	modifier = Modifier
-                		.fillMaxWidth(1f)
-                		.padding(8.dp),
-                	verticalAlignment = Alignment.CenterVertically,
-                	horizontalArrangement = Arrangement.Start
-                ) {
-                	var username by remember { 
-                		mutableStateOf(
-                			runBlocking {
-                				context.datastore.getUsername()	
-                			}
-                			
-                		) 
-               		}
-		
-               		GlideImage (
-               			model = R.drawable.cat_picture,
-               			contentDescription = "User profile picture",
-               			contentScale = ContentScale.Crop,
-               			modifier = Modifier
-               				.size(56.dp)
-               				.clip(RoundedCornerShape(1000.dp))
-               		) {
-               			it
-               				.override(256)
-               				.diskCacheStrategy(DiskCacheStrategy.ALL)
-               		}
-
-               		Spacer(modifier = Modifier.width(8.dp))
-
-               		Text (
-               			text = username,
-               			fontSize = TextUnit(16f, TextUnitType.Sp),
-               			textAlign = TextAlign.Start,
-               		)
-                }
-
-				Column (
-					modifier = Modifier
-						.padding(12.dp)
-						.wrapContentHeight()
-				) {
-					DialogClickableItem(
-						text = "Data & Backup",
-						iconResId = R.drawable.data,
-						position = DialogItemPosition.Top,
-						action = {}
-					)
-
-					if (currentView.value == MainScreenViewType.AlbumGridView) {
-						DialogClickableItem(
-							text = "Add an album",
-							iconResId = R.drawable.add,
-							position = DialogItemPosition.Middle,
-							action = {
-								val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
-									putExtra(DocumentsContract.EXTRA_INITIAL_URI, "".toUri())
-								}
-								context.startActivity(intent)
-							}
-						)
-					}
-									
-					DialogClickableItem(
-						text = "Settings",
-						iconResId = R.drawable.settings,
-						position = DialogItemPosition.Middle,
-						action = {}
-					)
-
-					DialogClickableItem(
-						text = "Support & Donations",
-						iconResId = R.drawable.donation,
-						position = DialogItemPosition.Middle,
-						action = {}
-					)					
-
-					DialogClickableItem (
-						text = "About",
-						iconResId = R.drawable.info,
-						position = DialogItemPosition.Bottom,
-						action = {}
-					)
-				}
-            }
-        }
     }
 }
