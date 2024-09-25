@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.first
 import java.io.File
 
 val albumsListKey = stringPreferencesKey("album_folder_path_list")
+val usernameKey = stringPreferencesKey("username")
 
 suspend fun DataStore<Preferences>.addToAlbumsList(path: String) {
     this.edit {
@@ -44,4 +45,17 @@ suspend fun DataStore<Preferences>.getAlbumsList(): List<String> {
         println("SPLIT VALUE $it")
     }
     return split
+}
+
+
+suspend fun DataStore<Preferences>.setUsername(name: String) {
+    this.edit {
+    	it[usernameKey] = name	
+    }
+}
+
+suspend fun DataStore<Preferences>.getUsername(): String {
+    val name = this.data.first()[usernameKey] ?: "No Username Found"
+
+    return name
 }

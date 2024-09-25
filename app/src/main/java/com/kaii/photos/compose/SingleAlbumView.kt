@@ -178,8 +178,6 @@ private fun SingleAlbumDialog(showDialog: MutableState<Boolean>, dir: String, na
                     )
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
-
 				Column (
 					modifier = Modifier
 						.padding(12.dp)
