@@ -5,6 +5,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -20,10 +21,14 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,6 +41,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.bumptech.glide.RequestBuilder
@@ -195,8 +201,8 @@ private fun AlbumGridItem(
 	            color = CustomMaterialTheme.colorScheme.onSurface,
 	            maxLines = 1,
 	            modifier = Modifier
-	            	.fillMaxWidth(1f)
-	            	.padding(2.dp)
+					.fillMaxWidth(1f)
+					.padding(2.dp)
 	        )
 	    }
     }
@@ -206,18 +212,18 @@ private fun AlbumGridItem(
 private fun CategoryList(navController: NavHostController) {
 	Row (
         modifier = Modifier
-            .fillMaxWidth(1f)
-            .wrapContentHeight()
-            .padding(8.dp)
-            .background(CustomMaterialTheme.colorScheme.background),
+			.fillMaxWidth(1f)
+			.wrapContentHeight()
+			.padding(8.dp)
+			.background(CustomMaterialTheme.colorScheme.background),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         OutlinedButton(
             onClick = { /*TODO*/ },
             modifier = Modifier
-                .weight(1f)
-                .height(48.dp)
+				.weight(1f)
+				.height(48.dp)
         ) {
         	Row (
         		modifier = Modifier.fillMaxWidth(1f),
@@ -229,8 +235,8 @@ private fun CategoryList(navController: NavHostController) {
 					contentDescription = "Favorites Button",
                     tint = CustomMaterialTheme.colorScheme.primary,
                     modifier = Modifier
-                    	.size(22.dp)
-                    	.padding(0.dp, 2.dp, 0.dp, 0.dp)
+						.size(22.dp)
+						.padding(0.dp, 2.dp, 0.dp, 0.dp)
         		)
 
 				Spacer (
@@ -256,8 +262,8 @@ private fun CategoryList(navController: NavHostController) {
 				navController.navigate(MultiScreenViewType.TrashedPhotoView.name)
 			},
             modifier = Modifier
-                .weight(1f)
-                .height(48.dp)
+				.weight(1f)
+				.height(48.dp)
         ) {
         	Row (
         		modifier = Modifier.fillMaxWidth(1f),
@@ -285,3 +291,87 @@ private fun CategoryList(navController: NavHostController) {
     }
 }
 
+
+@Composable
+private fun AlbumDialog(showDialog: MutableState<Boolean>) {
+    if (showDialog.value) {
+        val context = LocalContext.current
+        val coroutineScope = rememberCoroutineScope()
+
+        Dialog(
+            onDismissRequest = {
+                showDialog.value = false
+            }
+        ) {
+            Column (
+                modifier = Modifier
+                    .clip(RoundedCornerShape(32.dp))
+                    .background(brightenColor(CustomMaterialTheme.colorScheme.surface, 0.1f))
+                    .padding(8.dp)
+            ) {
+                Box (
+                    modifier = Modifier
+                        .fillMaxWidth(1f),
+                ) {
+                    IconButton(
+                        onClick = {
+                            showDialog.value = false
+                        },
+                        modifier = Modifier
+                            .align(Alignment.CenterStart)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.close),
+                            contentDescription = "Close dialog button",
+                            modifier = Modifier
+                            	.size(24.dp)
+                        )
+                    }
+
+                    Text(
+                        text = "Albums",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = TextUnit(18f, TextUnitType.Sp),
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+				Column (
+					modifier = Modifier
+						.padding(12.dp)
+						.wrapContentHeight()
+				) {
+					DialogClickableItem(
+						text = "Select",
+						iconResId = R.drawable.check_item,
+						position = DialogItemPosition.Top,
+						action = {}
+					)
+									
+					DialogClickableItem(
+						text = "Rename Album",
+						iconResId = R.drawable.edit,
+						position = DialogItemPosition.Middle,
+						action = {}
+					)
+
+					DialogClickableItem (
+						text = "Remove album from list",
+						iconResId = R.drawable.delete,
+						position = DialogItemPosition.Bottom,
+						action = {
+							coroutineScope.launch {
+								showDialog.value = false
+	                           	navController.popBackStack()
+	                           	context.datastore.removeFromAlbumsList(dir)
+	                       	}
+						}
+					)
+				}
+            }
+        }
+    }
+}

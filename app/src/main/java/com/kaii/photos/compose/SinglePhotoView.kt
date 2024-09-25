@@ -105,7 +105,7 @@ fun SinglePhotoView(
 ) {
     val mainViewModel = MainActivity.mainViewModel
     
-    val mediaItem = mainViewModel.selectedMediaData.collectAsState(initial = null).value ?: return
+	val mediaItem = mainViewModel.selectedMediaData.collectAsState(initial = null).value ?: return
 
 	val holderGroupedMedia = mainViewModel.groupedMedia.collectAsState(initial = null).value ?: return
 
@@ -125,8 +125,8 @@ fun SinglePhotoView(
 	if (showDialog.value) {
 		val context = LocalContext.current
 		val coroutineScope = rememberCoroutineScope()
-		
-	    AlertDialog(
+
+		AlertDialog(
 	        onDismissRequest = {
 	            showDialog.value = false
 	        },
@@ -137,7 +137,7 @@ fun SinglePhotoView(
 	                    operateOnImage(currentMediaItem.absolutePath, currentMediaItem.id, neededDialogFunction.value, context)
 
                        	coroutineScope.launch {
-                        	val scrollIndex = groupedMedia.value.indexOf(currentMediaItem)
+							val scrollIndex = groupedMedia.value.indexOf(currentMediaItem)
                         	// val added = if (scrollIndex == groupedMedia.value.size) -1 else 1
 
                             if (groupedMedia.value.size == 1) {
@@ -225,7 +225,7 @@ fun SinglePhotoView(
        	            },
                 ) { i ->
                 	val movableContent = movableContentOf {
-                		val index = if (i+1 == preloadingData.size) 0 else i
+						val index = if (i+1 == preloadingData.size) 0 else i
 						Log.d(TAG, "INDEX IS $index $i ${preloadingData.size}")
 						val (mediaStoreItem, preloadRequestBuilder) = preloadingData[index]
 						
