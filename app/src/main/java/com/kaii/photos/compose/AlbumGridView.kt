@@ -63,7 +63,7 @@ import kotlinx.coroutines.runBlocking
 import java.io.File
 
 @Composable
-fun AlbumGridView(navController: NavHostController) {
+fun AlbumsGridView(navController: NavHostController) {
     Column (
         modifier = Modifier
 			.fillMaxSize(1f)

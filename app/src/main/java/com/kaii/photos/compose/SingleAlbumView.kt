@@ -58,7 +58,7 @@ fun SingleAlbumView(navController: NavHostController) {
     val mainViewModel = MainActivity.mainViewModel
 
     val albumDir = mainViewModel.selectedAlbumDir.collectAsState(initial = null).value
-	println("ALBUM DIR IS $albumDir")
+    println("ALBUM DIR IS $albumDir")
     if (albumDir == null) return
 	
     Scaffold (

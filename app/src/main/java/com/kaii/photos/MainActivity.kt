@@ -86,7 +86,7 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.kaii.photos.compose.AboutPage
-import com.kaii.photos.compose.AlbumGridView
+import com.kaii.photos.compose.AlbumsGridView
 import com.kaii.photos.compose.CustomMaterialTheme
 import com.kaii.photos.compose.DialogClickableItem
 import com.kaii.photos.compose.LockedFolderEntryView
@@ -171,7 +171,7 @@ class MainActivity : ComponentActivity() {
                 )
 
                 val navControllerLocal = rememberNavController()
-                val currentView = remember { mutableStateOf(MainScreenViewType.PhotoGridView) }
+                val currentView = remember { mutableStateOf(MainScreenViewType.PhotosGridView) }
 				val showDialog = remember { mutableStateOf(false) }
                 
                 NavHost (
@@ -294,6 +294,9 @@ class MainActivity : ComponentActivity() {
         navController: NavHostController,
         showDialog: MutableState<Boolean>
     ) {	
+    	val searchViewModel: SearchViewModel = viewModel(
+   	        factory = SearchViewModelFactory(LocalContext.current.applicationContext, "")
+   	    )
         Scaffold(
             modifier = Modifier
                 .fillMaxSize(1f),
@@ -329,13 +332,10 @@ class MainActivity : ComponentActivity() {
                 		},
                         label = "MainAnimatedContentView"
                     ) { stateValue ->
-                    	val searchViewModel: SearchViewModel = viewModel(
-                   	        factory = SearchViewModelFactory(LocalContext.current.applicationContext, "")
-                   	    )
 	                    when (stateValue) {
-	                        MainScreenViewType.PhotoGridView -> PhotoGrid(navController, ImageFunctions.LoadNormalImage, stringResource(id = R.string.default_homepage_photogrid_dir), MediaItemSortMode.DateTaken)
-	                        MainScreenViewType.LockedFolder -> LockedFolderEntryView(navController)
-	                        MainScreenViewType.AlbumGridView -> AlbumGridView(navController)
+	                        MainScreenViewType.PhotosGridView -> PhotoGrid(navController, ImageFunctions.LoadNormalImage, stringResource(id = R.string.default_homepage_photogrid_dir), MediaItemSortMode.DateTaken)
+	                        MainScreenViewType.SecureFolder -> LockedFolderEntryView(navController)
+	                        MainScreenViewType.AlbumsGridView -> AlbumsGridView(navController)
    	                        MainScreenViewType.SearchPage -> SearchPage(navController, searchViewModel)
 	                    }
                 	}
@@ -414,7 +414,7 @@ class MainActivity : ComponentActivity() {
             	var albumGridIcon by remember { mutableIntStateOf(R.drawable.albums) }
 
 				when (currentView.value) {
-					MainScreenViewType.PhotoGridView -> {
+					MainScreenViewType.PhotosGridView -> {
 						photoGridColor = selectedColor
                         lockedFolderColor = unselectedColor
                         albumGridColor = unselectedColor
@@ -424,7 +424,7 @@ class MainActivity : ComponentActivity() {
                         lockedFolderIcon = R.drawable.locked_folder
                         albumGridIcon = R.drawable.albums
 					}	
-					MainScreenViewType.LockedFolder -> {
+					MainScreenViewType.SecureFolder -> {
 						photoGridColor = unselectedColor
 	                    lockedFolderColor = selectedColor
 	                    albumGridColor = unselectedColor
@@ -434,7 +434,7 @@ class MainActivity : ComponentActivity() {
 	                    lockedFolderIcon = R.drawable.locked_folder_filled
 	                    albumGridIcon = R.drawable.albums						
 					}	
-					MainScreenViewType.AlbumGridView -> {
+					MainScreenViewType.AlbumsGridView -> {
 	                    photoGridColor = unselectedColor
 	                    lockedFolderColor = unselectedColor
 	                    albumGridColor = selectedColor
@@ -463,8 +463,8 @@ class MainActivity : ComponentActivity() {
                         .height(buttonHeight)
                         .clip(RoundedCornerShape(16.dp))
                         .clickable {
-                            if (currentView.value != MainScreenViewType.PhotoGridView) {
-                                currentView.value = MainScreenViewType.PhotoGridView
+                            if (currentView.value != MainScreenViewType.PhotosGridView) {
+                                currentView.value = MainScreenViewType.PhotosGridView
                             }
                         },
                 ) {
@@ -502,8 +502,8 @@ class MainActivity : ComponentActivity() {
                         .height(buttonHeight)
                         .clip(RoundedCornerShape(16.dp))
                         .clickable {
-                            if (currentView.value != MainScreenViewType.LockedFolder) {
-                                currentView.value = MainScreenViewType.LockedFolder
+                            if (currentView.value != MainScreenViewType.SecureFolder) {
+                                currentView.value = MainScreenViewType.SecureFolder
                             }
                         },
                 ) {
@@ -541,8 +541,8 @@ class MainActivity : ComponentActivity() {
                         .height(buttonHeight)
                         .clip(RoundedCornerShape(16.dp))
                         .clickable {
-                            if (currentView.value != MainScreenViewType.AlbumGridView) {
-                                currentView.value = MainScreenViewType.AlbumGridView
+                            if (currentView.value != MainScreenViewType.AlbumsGridView) {
+                                currentView.value = MainScreenViewType.AlbumsGridView
                             }
                         },
                 ) {
@@ -723,15 +723,8 @@ class MainActivity : ComponentActivity() {
                             position = RowPosition.Top,
                             action = {}
                         )
-
-                        DialogClickableItem(
-                            text = "Data & Backup",
-                            iconResId = R.drawable.data,
-                            position = RowPosition.Middle,
-                            action = {}
-                        )
-
-                        if (currentView.value == MainScreenViewType.AlbumGridView) {
+                        
+                        if (currentView.value == MainScreenViewType.AlbumsGridView) {
                             DialogClickableItem(
                                 text = "Add an album",
                                 iconResId = R.drawable.add,
@@ -744,14 +737,21 @@ class MainActivity : ComponentActivity() {
 
                                     val runnable = Runnable() {
 										Thread.sleep(250)
-										currentView.value = MainScreenViewType.PhotoGridView	
+										currentView.value = MainScreenViewType.PhotosGridView
 										Thread.sleep(1000)
-										currentView.value = MainScreenViewType.AlbumGridView
+										currentView.value = MainScreenViewType.AlbumsGridView
 									}
                                 	Thread(runnable).start()
                                 }
                             )
                         }
+
+                        DialogClickableItem(
+                            text = "Data & Backup",
+                            iconResId = R.drawable.data,
+                            position = RowPosition.Middle,
+                            action = {}
+                        )
 
                         DialogClickableItem(
                             text = "Settings",

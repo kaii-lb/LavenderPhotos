@@ -464,7 +464,7 @@ private fun BottomBar(
 								}
 
 								ImageFunctions.TrashImage -> {
-									neededDialogTitle.value = "Delete this image?"
+									neededDialogTitle.value = "Delete this ${item.type}?"
 									neededDialogFunction.value = ImageFunctions.TrashImage
 									neededDialogButtonLabel.value = "Delete"
 									showDialog.value = true

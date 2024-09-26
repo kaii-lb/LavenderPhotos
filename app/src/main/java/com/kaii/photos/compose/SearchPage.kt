@@ -41,6 +41,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
@@ -48,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.bumptech.glide.RequestBuilder
@@ -130,17 +132,17 @@ fun SearchPage(navController: NavHostController, searchViewModel: SearchViewMode
 
 							// PLEASEEEE fix this
 							Handler(Looper.getMainLooper()).postDelayed(
-								Runnable {
+								{
 									searchNow = true
 								},
 								1000
 							)
-							Handler(Looper.getMainLooper()).postDelayed(
-								Runnable {
-									searchNow = true
-								},
-								5000
-							)
+//							Handler(Looper.getMainLooper()).postDelayed(
+//								Runnable {
+//									searchNow = true
+//								},
+//								5000
+//							)
 						}
 					}
 				),
@@ -149,27 +151,34 @@ fun SearchPage(navController: NavHostController, searchViewModel: SearchViewMode
 	                .fillMaxWidth(1f)
 	        )
         }
-        
 		val context = LocalContext.current
-       	val mediaStoreDataHolder = searchViewModel.mediaStoreData.collectAsState()
-       	val mediaStoreData by remember { mutableStateOf(mediaStoreDataHolder) }
+       	var mediaStoreDataHolder = searchViewModel.mediaStoreData.collectAsState()
+      	val mediaStoreData by remember { mutableStateOf(mediaStoreDataHolder) }
+		
+		var originalGroupedMedia by remember { mutableStateOf(groupPhotosBy(mediaStoreData.value, MediaItemSortMode.DateTaken)) }
 
-		var groupedMedia by remember { mutableStateOf(groupPhotosBy(mediaStoreData.value, MediaItemSortMode.DateTaken)) }
-		if (groupedMedia.isEmpty() && searchedForText == "") {
-	       	searchViewModel.setMediaStoreData(context, searchedForText)
-	       	val groupedMediaLocal = groupPhotosBy(mediaStoreData.value, MediaItemSortMode.DateTaken)
-  	        groupedMedia = groupedMediaLocal			
+		var groupedMedia by remember { mutableStateOf(originalGroupedMedia) }
+
+		// println("THE CURRENT STATE IS ${mediaStoreData.value}")
+
+		LaunchedEffect(key1 = mediaStoreData.value) {
+			originalGroupedMedia = groupPhotosBy(mediaStoreData.value, MediaItemSortMode.DateTaken)
+			groupedMedia = originalGroupedMedia
 		}
   	        
         LaunchedEffect(key1 = searchNow) {
         	if(!searchNow) return@LaunchedEffect
 			
-        	searchViewModel.setMediaStoreData(context, searchedForText)
+//        	searchViewModel.setMediaStoreData(context, searchedForText)
 
 			delay(500)
         	
-        	var groupedMediaLocal = groupPhotosBy(mediaStoreData.value, MediaItemSortMode.DateTaken)
-   	        groupedMedia = groupedMediaLocal	        
+        	val groupedMediaLocal = originalGroupedMedia.filter {
+        		val isMedia = it.type == MediaType.Image || it.type == MediaType.Video
+        		val matchesFilter = it.displayName?.contains(searchedForText.trim(), true) == true
+				isMedia && matchesFilter
+			}
+   	        groupedMedia = groupPhotosBy(groupedMediaLocal, MediaItemSortMode.DateTaken)
 
 			searchNow = false
         }

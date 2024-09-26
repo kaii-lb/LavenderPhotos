@@ -66,6 +66,11 @@ import com.kaii.photos.helpers.single_image_functions.ImageFunctions
 import com.kaii.photos.mediastore.signature
 import com.kaii.photos.compose.CustomMaterialTheme
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.LinkOption
+import kotlin.io.path.Path
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
 
 private const val THUMBNAIL_DIMENSION = 50
 private const val TAG = "PHOTO_GRID_VIEW"
@@ -81,7 +86,10 @@ fun PhotoGrid(navController: NavHostController, operation: ImageFunctions, path:
 
 	val mainViewModel = MainActivity.mainViewModel
 
-	if ((File("/storage/emulated/0/$path").listFiles()?.size ?: 0) != 0) {
+	val dirStream = Files.newDirectoryStream(Path("/storage/emulated/0/$path"))
+	val first = dirStream.firstOrNull()
+
+	if (first != null && first.isRegularFile(LinkOption.NOFOLLOW_LINKS)) {
    		DeviceMedia(navController, mediaStoreData.value, operation, mainViewModel, sortBy, prefix)
    	} else {
    		Column (

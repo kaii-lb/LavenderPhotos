@@ -37,6 +37,8 @@ class GalleryViewModel(context: Context, path: String) : ViewModel() {
 
 /** Groups photos by date */
 fun groupPhotosBy(media: List<MediaStoreData>, sortBy: MediaItemSortMode = MediaItemSortMode.DateTaken, sortDescending: Boolean = true) : List<MediaStoreData> {
+	if (media.isEmpty()) return emptyList()
+
     val mediaItems = emptyList<MediaStoreData>().toMutableList()
 
     val mediaDataGroups = LinkedHashMap<Long, MutableList<MediaStoreData>>()
