@@ -44,12 +44,12 @@ import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavHostController
 import com.kaii.photos.MainActivity
 import com.kaii.photos.compose.DialogClickableItem
-import com.kaii.photos.compose.DialogItemPosition
 import com.kaii.photos.R
 import com.kaii.photos.datastore
 import com.kaii.photos.datastore.removeFromAlbumsList
 import com.kaii.photos.helpers.brightenColor
 import com.kaii.photos.helpers.MediaItemSortMode
+import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.single_image_functions.ImageFunctions
 import kotlinx.coroutines.launch
 
@@ -186,21 +186,21 @@ private fun SingleAlbumDialog(showDialog: MutableState<Boolean>, dir: String, na
 					DialogClickableItem(
 						text = "Select",
 						iconResId = R.drawable.check_item,
-						position = DialogItemPosition.Top,
+						position = RowPosition.Top,
 						action = {}
 					)
 									
 					DialogClickableItem(
 						text = "Rename Album",
 						iconResId = R.drawable.edit,
-						position = DialogItemPosition.Middle,
+						position = RowPosition.Middle,
 						action = {}
 					)
 
 					DialogClickableItem (
 						text = "Remove album from list",
 						iconResId = R.drawable.delete,
-						position = DialogItemPosition.Bottom,
+						position = RowPosition.Bottom,
 						action = {
 							coroutineScope.launch {
 								showDialog.value = false

@@ -5,8 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.provider.DocumentsContract
 import android.util.Log
 import android.widget.Toast
@@ -72,12 +70,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.net.toFile
 import androidx.core.net.toUri
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
-import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -89,10 +85,10 @@ import com.bumptech.glide.MemoryCategory
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.kaii.photos.compose.AboutPage
 import com.kaii.photos.compose.AlbumGridView
 import com.kaii.photos.compose.CustomMaterialTheme
 import com.kaii.photos.compose.DialogClickableItem
-import com.kaii.photos.compose.DialogItemPosition
 import com.kaii.photos.compose.LockedFolderEntryView
 import com.kaii.photos.compose.LockedFolderView
 import com.kaii.photos.compose.PhotoGrid
@@ -108,6 +104,7 @@ import com.kaii.photos.datastore.getUsername
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.brightenColor
 import com.kaii.photos.helpers.single_image_functions.ImageFunctions
 import com.kaii.photos.models.main_activity.MainDataSharingModel
@@ -115,7 +112,6 @@ import com.kaii.photos.models.main_activity.MainDataSharingModelFactory
 import com.kaii.photos.models.search_page.SearchViewModel
 import com.kaii.photos.models.search_page.SearchViewModelFactory
 import com.kaii.photos.ui.theme.PhotosTheme
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 val Context.datastore: DataStore<Preferences> by preferencesDataStore(name = "settings")
@@ -278,6 +274,15 @@ class MainActivity : ComponentActivity() {
                         // TODO: should merge with SingleTrashedPhotoView???? idfk wait for future
                         SingleHiddenPhotoView(navControllerLocal, window)
                     }
+
+                    composable(MultiScreenViewType.AboutAndUpdateView.name) {
+                        enableEdgeToEdge(
+                            navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.background.toArgb()),
+                            statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.background.toArgb(), CustomMaterialTheme.colorScheme.background.toArgb())
+                        )
+
+                        AboutPage(navControllerLocal)
+                    }
                 }
             }
         }
@@ -288,7 +293,7 @@ class MainActivity : ComponentActivity() {
         currentView: MutableState<MainScreenViewType>,
         navController: NavHostController,
         showDialog: MutableState<Boolean>
-    ) {
+    ) {	
         Scaffold(
             modifier = Modifier
                 .fillMaxSize(1f),
@@ -307,6 +312,8 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier
                         .padding(0.dp)
                 ) {
+                	MainDialog(showDialog, currentView, navController)
+                	
                 	AnimatedContent(
                 		targetState = currentView.value,
                 		transitionSpec = {
@@ -340,8 +347,6 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     private fun TopBar(showDialog: MutableState<Boolean>, currentView: MutableState<MainScreenViewType>) {
-		MainDialog(showDialog, currentView)
-        
         TopAppBar(
             title = {
                 Row {
@@ -612,7 +617,7 @@ class MainActivity : ComponentActivity() {
 
     @OptIn(ExperimentalGlideComposeApi::class)
     @Composable
-    fun MainDialog(showDialog: MutableState<Boolean>, currentView: MutableState<MainScreenViewType>) {
+    fun MainDialog(showDialog: MutableState<Boolean>, currentView: MutableState<MainScreenViewType>, navController: NavHostController) {
         if (showDialog.value) {
             val context = LocalContext.current
 
@@ -713,9 +718,16 @@ class MainActivity : ComponentActivity() {
                             .wrapContentHeight()
                     ) {
                         DialogClickableItem(
+                            text = "Select",
+                            iconResId = R.drawable.check_item,
+                            position = RowPosition.Top,
+                            action = {}
+                        )
+
+                        DialogClickableItem(
                             text = "Data & Backup",
                             iconResId = R.drawable.data,
-                            position = DialogItemPosition.Top,
+                            position = RowPosition.Middle,
                             action = {}
                         )
 
@@ -723,14 +735,14 @@ class MainActivity : ComponentActivity() {
                             DialogClickableItem(
                                 text = "Add an album",
                                 iconResId = R.drawable.add,
-                                position = DialogItemPosition.Middle,
+                                position = RowPosition.Middle,
                                 action = {
                                     val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
                                         putExtra(DocumentsContract.EXTRA_INITIAL_URI, "".toUri())
                                     }
                                     startActivityForResult(intent, DIR_REQUEST_CODE)
 
-									val runnable = Runnable() {
+                                    val runnable = Runnable() {
 										Thread.sleep(250)
 										currentView.value = MainScreenViewType.PhotoGridView	
 										Thread.sleep(1000)
@@ -744,23 +756,18 @@ class MainActivity : ComponentActivity() {
                         DialogClickableItem(
                             text = "Settings",
                             iconResId = R.drawable.settings,
-                            position = DialogItemPosition.Middle,
-                            action = {}
-                        )
-
-                        DialogClickableItem(
-                            text = "Support & Donations",
-                            iconResId = R.drawable.donation,
-                            position = DialogItemPosition.Middle,
+                            position = RowPosition.Middle,
                             action = {}
                         )
 
                         DialogClickableItem (
-                            text = "About",
+                            text = "About & Updates",
                             iconResId = R.drawable.info,
-                            position = DialogItemPosition.Bottom,
-                            action = {}
-                        )
+                            position = RowPosition.Bottom,
+                        ) {
+                        	showDialog.value = false
+                        	navController.navigate(MultiScreenViewType.AboutAndUpdateView.name)
+                        }
                     }
                 }
             }

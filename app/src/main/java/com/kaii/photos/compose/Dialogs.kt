@@ -26,29 +26,34 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.kaii.photos.helpers.RowPosition
 
 @Composable
-fun DialogClickableItem(text: String, iconResId: Int, position: DialogItemPosition, action: () -> Unit) {
+fun DialogClickableItem(text: String, iconResId: Int, position: RowPosition, action: () -> Unit) {
 	val buttonHeight = 40.dp
 
 	val shape: RoundedCornerShape
 	var spacerHeight = 0.dp
 	
 	when(position) {
-		DialogItemPosition.Top -> {
+		RowPosition.Top -> {
 			shape = RoundedCornerShape(16.dp, 16.dp, 0.dp, 0.dp)
 			spacerHeight = 2.dp
 		}
-		DialogItemPosition.Middle -> {
-			shape = RoundedCornerShape(0.dp, 0.dp, 0.dp, 0.dp)
+		RowPosition.Middle -> {
+			shape = RoundedCornerShape(0.dp)
 			spacerHeight = 2.dp
 		}
-		DialogItemPosition.Bottom -> {
+		RowPosition.Bottom -> {
 			shape = RoundedCornerShape(0.dp, 0.dp, 16.dp, 16.dp)
 			spacerHeight = 0.dp
-		}				
+		}
+		RowPosition.Single -> {
+			shape = RoundedCornerShape(16.dp)
+			spacerHeight = 0.dp
+		}
 	}
-	
+
 	Row (
 		modifier = Modifier
 			.fillMaxWidth(1f)
@@ -84,10 +89,4 @@ fun DialogClickableItem(text: String, iconResId: Int, position: DialogItemPositi
 			.height(spacerHeight)
 			.background(CustomMaterialTheme.colorScheme.surface)
 	)
-}
-
-enum class DialogItemPosition {
-	Top, 
-	Middle,
-	Bottom
 }

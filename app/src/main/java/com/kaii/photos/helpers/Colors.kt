@@ -13,3 +13,15 @@ fun brightenColor(color: Color, percentage: Float) : Color {
 
 	return Color(newR, newG, newB)
 }
+
+fun darkenColor(color: Color, percentage: Float) : Color {
+	val r = (color.red * 255).toInt()
+	val g = (color.green * 255).toInt()
+	val b = (color.blue * 255).toInt()
+
+	val newR = (r * (1 - percentage)).toInt().coerceIn(0, 255)
+	val newG = (g * (1 - percentage)).toInt().coerceIn(0, 255)
+	val newB = (b * (1 - percentage)).toInt().coerceIn(0, 255)
+
+	return Color(newR, newG, newB)
+}

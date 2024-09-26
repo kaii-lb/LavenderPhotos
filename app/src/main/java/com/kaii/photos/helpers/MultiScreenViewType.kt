@@ -8,4 +8,5 @@ enum class MultiScreenViewType {
     TrashedPhotoView,
     LockedFolderView,
     SingleHiddenPhotoVew,
+    AboutAndUpdateView,
 }
