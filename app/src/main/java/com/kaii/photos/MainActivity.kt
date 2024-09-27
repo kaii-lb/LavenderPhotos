@@ -301,7 +301,7 @@ class MainActivity : ComponentActivity() {
             modifier = Modifier
                 .fillMaxSize(1f),
             topBar = {
-                TopBar(showDialog, currentView)
+                TopBar(showDialog)
             },
             bottomBar = { 
             	BottomBar(currentView) 
@@ -346,7 +346,7 @@ class MainActivity : ComponentActivity() {
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    private fun TopBar(showDialog: MutableState<Boolean>, currentView: MutableState<MainScreenViewType>) {
+    private fun TopBar(showDialog: MutableState<Boolean>) {
         TopAppBar(
             title = {
                 Row {
@@ -721,44 +721,47 @@ class MainActivity : ComponentActivity() {
                             text = "Select",
                             iconResId = R.drawable.check_item,
                             position = RowPosition.Top,
-                            action = {}
-                        )
+                        ) {
+                        	//showDialog.value = false
+                        }
                         
                         if (currentView.value == MainScreenViewType.AlbumsGridView) {
                             DialogClickableItem(
                                 text = "Add an album",
                                 iconResId = R.drawable.add,
                                 position = RowPosition.Middle,
-                                action = {
-                                    val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
-                                        putExtra(DocumentsContract.EXTRA_INITIAL_URI, "".toUri())
-                                    }
-                                    startActivityForResult(intent, DIR_REQUEST_CODE)
-
-                                    val runnable = Runnable() {
-										Thread.sleep(250)
-										currentView.value = MainScreenViewType.PhotosGridView
-										Thread.sleep(1000)
-										currentView.value = MainScreenViewType.AlbumsGridView
-									}
-                                	Thread(runnable).start()
+                            ) {
+                               	showDialog.value = false
+                                val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
+                                    putExtra(DocumentsContract.EXTRA_INITIAL_URI, "".toUri())
                                 }
-                            )
+                                startActivityForResult(intent, DIR_REQUEST_CODE)
+
+                                val runnable = Runnable() {
+									Thread.sleep(250)
+									currentView.value = MainScreenViewType.PhotosGridView
+									Thread.sleep(1000)
+									currentView.value = MainScreenViewType.AlbumsGridView
+								}
+                               	Thread(runnable).start()
+                            }
                         }
 
                         DialogClickableItem(
                             text = "Data & Backup",
                             iconResId = R.drawable.data,
                             position = RowPosition.Middle,
-                            action = {}
-                        )
+                        ) {
+                        	//showDialog.value = false
+                        }
 
                         DialogClickableItem(
                             text = "Settings",
                             iconResId = R.drawable.settings,
                             position = RowPosition.Middle,
-                            action = {}
-                        )
+                        ) {
+                        	//showDialog.value = false
+                        }
 
                         DialogClickableItem (
                             text = "About & Updates",
@@ -803,7 +806,7 @@ class MainActivity : ComponentActivity() {
                 Log.d(TAG, "the path is $path")
 				val runnable = Runnable() {
 					runBlocking {
- 						applicationContext.datastore.addToAlbumsList(path.replace("/tree/primary:", ""))
+						applicationContext.datastore.addToAlbumsList(path.replace("/tree/primary:", ""))
 					}
 				}
                	Thread(runnable).start()

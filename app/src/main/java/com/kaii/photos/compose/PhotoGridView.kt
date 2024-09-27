@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.height	
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -49,6 +50,7 @@ import androidx.navigation.NavHostController
 import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
+import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.integration.compose.rememberGlidePreloadingData
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.signature.MediaStoreSignature
@@ -86,24 +88,40 @@ fun PhotoGrid(navController: NavHostController, operation: ImageFunctions, path:
 
 	val mainViewModel = MainActivity.mainViewModel
 
-	val dirStream = Files.newDirectoryStream(Path("/storage/emulated/0/$path"))
-	val first = dirStream.firstOrNull()
-
-	if (first != null && first.isRegularFile(LinkOption.NOFOLLOW_LINKS)) {
-   		DeviceMedia(navController, mediaStoreData.value, operation, mainViewModel, sortBy, prefix)
-   	} else {
-   		Column (
-   			modifier = Modifier
-   				.background(CustomMaterialTheme.colorScheme.background),
-   			verticalArrangement = Arrangement.Center,
-   			horizontalAlignment = Alignment.CenterHorizontally
-   		) {
-   			Text (
-   				text = emptyText,
-		    	fontSize = TextUnit(18f, TextUnitType.Sp)
-   			)
-   		}
-   	}
+	val folder = Files.walk(Path("/storage/emulated/0/$path")).iterator()
+	var hasFiles = false
+	
+	while (folder.hasNext()) {
+		val file = folder.next()
+		if (!file.toString().contains(".thumbnails")) {
+			val isNormal = file.isRegularFile(LinkOption.NOFOLLOW_LINKS)
+			println("$isNormal, $file")
+			if (isNormal) {
+				hasFiles = true
+				break
+			} 
+		}
+		hasFiles = false
+	}
+	 
+	if (hasFiles) {
+		DeviceMedia(navController, mediaStoreData.value, operation, mainViewModel, sortBy, prefix)
+	} else {
+		Column (
+			modifier = Modifier
+				.fillMaxSize(1f)
+				.background(CustomMaterialTheme.colorScheme.background),
+			verticalArrangement = Arrangement.Center,
+			horizontalAlignment = Alignment.CenterHorizontally
+		) {
+			Text (
+				text = emptyText,
+				fontSize = TextUnit(18f, TextUnitType.Sp),
+				modifier = Modifier
+					.wrapContentSize()
+			)
+		}
+	}
 }
 
 @Composable
@@ -279,6 +297,7 @@ fun MediaStoreItem(
                 model = item.uri,
                 contentDescription = item.displayName,
                 contentScale = ContentScale.Crop,
+				failure = placeholder(R.drawable.broken_image),
                 modifier = Modifier
                     .fillMaxSize(1f)
                     .align(Alignment.Center),

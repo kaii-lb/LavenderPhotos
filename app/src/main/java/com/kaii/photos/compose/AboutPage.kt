@@ -26,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -93,6 +94,7 @@ fun AboutPage(navController: NavHostController) {
             GlideImage(
                 model = R.drawable.ic_launcher_foreground,
                 contentDescription = "app icon",
+                colorFilter = ColorFilter.tint(CustomMaterialTheme.colorScheme.onBackground),
                 modifier = Modifier
                     .size(128.dp)
             )
@@ -103,8 +105,11 @@ fun AboutPage(navController: NavHostController) {
                 fontSize = TextUnit(22f, TextUnitType.Sp),
                 fontWeight = FontWeight.Bold,
                 style = LocalTextStyle.current.copy(
-                    color = Color(context.resources.getColor(R.color.lavender, context.theme))
+                    color = CustomMaterialTheme.colorScheme.onBackground
                 )
+                // style = LocalTextStyle.current.copy(
+                //     color = Color(context.resources.getColor(R.color.lavender, context.theme))
+                // )
             )
         }
 
@@ -132,22 +137,9 @@ fun AboutPage(navController: NavHostController) {
 	        }
 
 	        PreferencesRow(
-	            title = "Github Page",
-	            summary = "https://github.com/kaii-lb/LavenderPhotos",
-	            iconResID = R.drawable.memory,
-	            position = RowPosition.Middle
-	        ) {
-	            val intent = Intent(Intent.ACTION_VIEW).apply {
-	                setData("https://github.com/kaii-lb/LavenderPhotos".toUri())
-	            }
-
-	            context.startActivity(intent)
-	        }
-
-	        PreferencesRow(
-	            title = "Support & Donations",
-	            summary = "help us keep the app alive",
-	            iconResID = R.drawable.donation,
+	            title = "Privacy Policy",
+	            summary = "we really don't use your data",
+	            iconResID = R.drawable.privacy_policy,
 	            position = RowPosition.Middle
 	        )
 
@@ -157,6 +149,13 @@ fun AboutPage(navController: NavHostController) {
 	            iconResID = R.drawable.update,
 	            position = RowPosition.Middle,
 	            goesToOtherPage = true
+	        )
+
+	        PreferencesRow(
+	            title = "Support & Donations",
+	            summary = "help us keep the app alive",
+	            iconResID = R.drawable.donation,
+	            position = RowPosition.Middle
 	        )
 
 	        val versionName = try {

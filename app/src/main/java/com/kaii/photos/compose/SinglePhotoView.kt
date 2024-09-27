@@ -4,6 +4,13 @@ import android.annotation.SuppressLint
 import android.graphics.drawable.Drawable
 import android.util.Log
 import android.view.Window
+import android.view.WindowInsetsController
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -12,11 +19,7 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.calculatePan
 import androidx.compose.foundation.gestures.calculateRotation
 import androidx.compose.foundation.gestures.calculateZoom
-import androidx.compose.foundation.gestures.detectTransformGestures
-import androidx.compose.foundation.gestures.forEachGesture
-import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
-import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -25,10 +28,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.movableContentOf
@@ -49,14 +54,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -71,25 +74,22 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import androidx.navigation.NavHostController
 import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
+import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.integration.compose.rememberGlidePreloadingData
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.kaii.photos.MainActivity
+import com.kaii.photos.R
 import com.kaii.photos.helpers.single_image_functions.ImageFunctions
 import com.kaii.photos.helpers.single_image_functions.operateOnImage
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.signature
 import kotlinx.coroutines.launch
-import kotlin.math.PI
-import kotlin.math.cos
-import kotlin.math.sin
 
 private const val TAG = "SINGLE_PHOTO_VIEW"
 
@@ -113,8 +113,8 @@ fun SinglePhotoView(
         !(item.mimeType == null && item.type == MediaType.Section)
    	})}
 	
-    var systemBarsShown by remember { mutableStateOf(true) }
-    var appBarAlpha by remember { mutableFloatStateOf(1f) }
+    val systemBarsShown = remember { mutableStateOf(true) }
+    val appBarsVisible = remember { mutableStateOf(true) }
     var currentMediaItem by remember { mutableStateOf(mediaItem) }
 	val state = rememberLazyListState()
 	val showDialog = remember { mutableStateOf(false) }
@@ -185,8 +185,8 @@ fun SinglePhotoView(
 	}
 
     Scaffold (
-        topBar =  { TopBar(navController, currentMediaItem, appBarAlpha) },
-        bottomBar = { BottomBar(appBarAlpha, currentMediaItem, showDialog, neededDialogTitle, neededDialogButtonLabel, neededDialogFunction) },
+        topBar =  { TopBar(navController, currentMediaItem, appBarsVisible.value) },
+        bottomBar = { BottomBar(appBarsVisible.value, currentMediaItem, showDialog, neededDialogTitle, neededDialogButtonLabel, neededDialogFunction) },
         containerColor = CustomMaterialTheme.colorScheme.background,
         contentColor = CustomMaterialTheme.colorScheme.onBackground
     ) {  _ ->
@@ -228,101 +228,69 @@ fun SinglePhotoView(
 						val index = if (i+1 == preloadingData.size) 0 else i
 						Log.d(TAG, "INDEX IS $index $i ${preloadingData.size}")
 						val (mediaStoreItem, preloadRequestBuilder) = preloadingData[index]
-						
-	                    val windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
+
+						val windowInsetsController = window.insetsController ?: return@movableContentOf
 	                    windowInsetsController.show(WindowInsetsCompat.Type.systemBars())
 
 						if (mediaStoreItem.type != MediaType.Section && mediaStoreItem.mimeType != null && mediaStoreItem.id != 0L) {
 						    currentMediaItem = mediaStoreItem
 
-	                        GlideImage(
-		                        model = mediaStoreItem.uri,
-		                        contentDescription = "selected image",
-		                        contentScale = ContentScale.Fit,
-		                        modifier = Modifier
-									.fillParentMaxSize(1f)
-									.combinedClickable (
-										onClick = {
-											if (systemBarsShown) {
-												windowInsetsController.apply {
-													hide(WindowInsetsCompat.Type.systemBars())
-													systemBarsBehavior =
-														WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-												}
-												window.setDecorFitsSystemWindows(false)
-												systemBarsShown = false
-												appBarAlpha = 0f
-											} else {
-												windowInsetsController.show(WindowInsetsCompat.Type.systemBars())
-												window.setDecorFitsSystemWindows(false)
-												systemBarsShown = true
-												appBarAlpha = 1f
-											}
-										},
-
-										onDoubleClick = {
-											if (scale.value == 1f) {
-												scale.value = 2f
-												rotation.value = 0f
-												offset.value = Offset.Zero
-											} else {
-												scale.value = 1f
-												rotation.value = 0f
-												offset.value = Offset.Zero
-											}
-										}
+							if (mediaStoreItem.type == MediaType.Video) {
+								Column (
+									modifier = Modifier
+										.fillParentMaxSize(1f)
+										.mediaModifier(
+											scale,
+											rotation,
+											offset,
+											systemBarsShown,
+											window,
+											windowInsetsController,
+											appBarsVisible
+										),
+									verticalArrangement = Arrangement.Center,
+									horizontalAlignment = Alignment.CenterHorizontally
+								) {
+									Text (
+										text = "This is a Video!",
+										modifier = Modifier
+											.wrapContentSize()
 									)
-									.graphicsLayer(
-										scaleX = scale.value,
-										scaleY = scale.value,
-										rotationZ = rotation.value,
-										translationX = -offset.value.x * scale.value,
-										translationY = -offset.value.y * scale.value,
-										transformOrigin = TransformOrigin(0.5f, 0.5f)
+
+									Spacer (modifier = Modifier.height(16.dp))
+
+									Text (
+										text = "...the functionality is not yet implemented",
+										modifier = Modifier
+											.wrapContentSize()
 									)
-									.pointerInput(Unit) {
-										// loop over each gesture and consume only those we care about
-										// so we don't interfere with other gestures
-										awaitEachGesture {
-											awaitFirstDown()
-
-											do {
-												val event = awaitPointerEvent()
-
-												if (event.changes.size == 2) {
-													scale.value *= event.calculateZoom()
-													scale.value.coerceIn(0.75f, 5f)
-													rotation.value += event.calculateRotation()
-
-													event.changes.forEach {
-														it.consume()
-													}
-												} else if (event.changes.size == 1 && event.calculatePan() != Offset.Zero) {
-													if (scale.value != 1f) {
-														// this is from android docs, i have no clue what the math here is xD
-														offset.value = (offset.value + Offset(
-															0.5f,
-															0.5f
-														) / scale.value) -
-																(Offset(
-																	0.5f,
-																	0.5f
-																) / scale.value + event.calculatePan())
-
-														event.changes.forEach {
-															it.consume()
-														}
-													}
-												}
-											} while (event.changes.any { it.pressed })
-										}
-									},
-		                    ) {
-		                        it.thumbnail(preloadRequestBuilder).signature(mediaStoreItem.signature()).diskCacheStrategy(DiskCacheStrategy.ALL)
-		                    }
+								}
+							} else {
+								GlideImage(
+									model = mediaStoreItem.uri,
+									contentDescription = "selected image",
+									contentScale = ContentScale.Fit,
+									failure = placeholder(R.drawable.broken_image),
+									modifier = Modifier
+										.fillParentMaxSize(1f)
+										.mediaModifier(
+											scale,
+											rotation,
+											offset,
+											systemBarsShown,
+											window,
+											windowInsetsController,
+											appBarsVisible
+										)
+								) {
+									it.thumbnail(preloadRequestBuilder).signature(mediaStoreItem.signature()).diskCacheStrategy(DiskCacheStrategy.ALL)
+								}
+							}
 						} else {
 							Column (
-								modifier = Modifier.fillParentMaxSize(1f).background(CustomMaterialTheme.colorScheme.primary)
+								modifier = Modifier
+									.fillParentMaxSize(1f)
+									.background(CustomMaterialTheme.colorScheme.primary)
 							) {
 								Text(
 									text = "this media is broken or is not an image/video"
@@ -348,76 +316,93 @@ fun SinglePhotoView(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TopBar(navController: NavHostController, mediaItem: MediaStoreData?, alpha: Float) {
-    TopAppBar(
-    	modifier = Modifier.alpha(alpha),
-    	colors = TopAppBarDefaults.topAppBarColors(
-    		containerColor = CustomMaterialTheme.colorScheme.surfaceContainer
-    	),
-    	navigationIcon = {
-    		IconButton(
-                onClick = { navController.popBackStack() },
-            ) {
-                Icon(
-                    painter = painterResource(id = com.kaii.photos.R.drawable.back_arrow),
-                    contentDescription = "Go back to previous page",
-                    tint = CustomMaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier
-                        .size(24.dp)
+private fun TopBar(navController: NavHostController, mediaItem: MediaStoreData?, visible: Boolean) {
+	AnimatedVisibility(
+		visible = visible,
+        enter = 
+        	slideInVertically (
+                animationSpec = tween(
+                    durationMillis = 250
                 )
-            }
-    	},
-        title = {
-            val mediaTitle = if (mediaItem != null) {
-                mediaItem.displayName ?: mediaItem.type.name
-            } else {
-                "Media"
-            }
-
-            Spacer (modifier = Modifier.width(8.dp))
-
-            Text(
-                text = mediaTitle,
-                fontSize = TextUnit(18f, TextUnitType.Sp),
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier
-                	.width(160.dp)
-            )
-        },
-        actions = {
-    		IconButton(
-                onClick = { /* TODO */ },
-            ) {
-                Icon(
-                    painter = painterResource(id = com.kaii.photos.R.drawable.favorite),
-                    contentDescription = "favorite this media item",
-                    tint = CustomMaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier
-                        .size(24.dp)
-                        .padding(0.dp, 1.dp, 0.dp, 0.dp)
+            ) { width -> -width } + fadeIn(),
+        exit = 
+			slideOutVertically(
+                animationSpec = tween(
+                    durationMillis = 250
                 )
-            }
+            ) { width -> -width } + fadeOut(),        
+	) {
+		TopAppBar(
+//			modifier = Modifier.alpha(alpha),
+			colors = TopAppBarDefaults.topAppBarColors(
+				containerColor = CustomMaterialTheme.colorScheme.surfaceContainer
+			),
+			navigationIcon = {
+				IconButton(
+					onClick = { navController.popBackStack() },
+				) {
+					Icon(
+						painter = painterResource(id = R.drawable.back_arrow),
+						contentDescription = "Go back to previous page",
+						tint = CustomMaterialTheme.colorScheme.onBackground,
+						modifier = Modifier
+							.size(24.dp)
+					)
+				}
+			},
+			title = {
+				val mediaTitle = if (mediaItem != null) {
+					mediaItem.displayName ?: mediaItem.type.name
+				} else {
+					"Media"
+				}
 
-       		IconButton(
-                onClick = { /* TODO */ },
-            ) {
-                Icon(
-                    painter = painterResource(id = com.kaii.photos.R.drawable.more_options),
-                    contentDescription = "show more options",
-                    tint = CustomMaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier
-                        .size(24.dp)
-                )
-            }
-        }
-    )
+				Spacer (modifier = Modifier.width(8.dp))
+
+				Text(
+					text = mediaTitle,
+					fontSize = TextUnit(18f, TextUnitType.Sp),
+					fontWeight = FontWeight.Bold,
+					maxLines = 1,
+					overflow = TextOverflow.Ellipsis,
+					modifier = Modifier
+						.width(160.dp)
+				)
+			},
+			actions = {
+				IconButton(
+					onClick = { /* TODO */ },
+				) {
+					Icon(
+						painter = painterResource(id = R.drawable.favorite),
+						contentDescription = "favorite this media item",
+						tint = CustomMaterialTheme.colorScheme.onBackground,
+						modifier = Modifier
+							.size(24.dp)
+							.padding(0.dp, 1.dp, 0.dp, 0.dp)
+					)
+				}
+
+				IconButton(
+					onClick = { /* TODO */ },
+				) {
+					Icon(
+						painter = painterResource(id = R.drawable.more_options),
+						contentDescription = "show more options",
+						tint = CustomMaterialTheme.colorScheme.onBackground,
+						modifier = Modifier
+							.size(24.dp)
+					)
+				}
+			}
+		)
+	}
 }
 
 @Composable
 private fun BottomBar(
-	alpha: Float, item: MediaStoreData,
+	visible: Boolean,
+	item: MediaStoreData,
 	showDialog: MutableState<Boolean>,
 	neededDialogTitle: MutableState<String>,
 	neededDialogButtonLabel: MutableState<String>,
@@ -425,88 +410,192 @@ private fun BottomBar(
 ) {
     val context = LocalContext.current
 
-    BottomAppBar(
-        containerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
-        contentColor = CustomMaterialTheme.colorScheme.onBackground,
-        contentPadding = PaddingValues(0.dp),
-        actions = {
-            Row (
-				modifier = Modifier
-                    .fillMaxWidth(1f)
-                    .padding(12.dp, 0.dp),
-				verticalAlignment = Alignment.CenterVertically,
-               	horizontalArrangement = Arrangement.SpaceEvenly	
-            ) {	
-            	val listOfResources = listOf(
-            		com.kaii.photos.R.drawable.share,
-           			com.kaii.photos.R.drawable.paintbrush,
-            		com.kaii.photos.R.drawable.trash,	
-            		com.kaii.photos.R.drawable.locked_folder		
-           		)
+	AnimatedVisibility(
+		visible = visible,
+        enter = 
+        	slideInVertically (
+                animationSpec = tween(
+                    durationMillis = 250
+                )
+            ) { width -> width } + fadeIn(),
+        exit = 
+			slideOutVertically(
+                animationSpec = tween(
+                    durationMillis = 250
+                )
+            ) { width -> width } + fadeOut(),
+	) {
+		BottomAppBar(
+			containerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
+			contentColor = CustomMaterialTheme.colorScheme.onBackground,
+			contentPadding = PaddingValues(0.dp),
+			actions = {
+				Row (
+					modifier = Modifier
+						.fillMaxWidth(1f)
+						.padding(12.dp, 0.dp),
+					verticalAlignment = Alignment.CenterVertically,
+					horizontalArrangement = Arrangement.SpaceEvenly
+				) {
+					val listOfResources = listOf(
+						R.drawable.share,
+						R.drawable.paintbrush,
+						R.drawable.trash,
+						R.drawable.locked_folder
+					)
 
-                val listOfStrings = listOf(
-           			"Share",
-           			"Edit",
-           			"Delete",
-           			"Hide"
-           		)
+					val listOfStrings = listOf(
+						"Share",
+						"Edit",
+						"Delete",
+						"Hide"
+					)
 
-            	repeat(4) { index ->
-                    val operation = ImageFunctions.entries[index] // WARNING: ORDER IS VERY IMPORTANT!!!
-		    		Button(
-		                onClick = {
-							when (operation) {
-								ImageFunctions.MoveToLockedFolder -> {
-									neededDialogTitle.value = "Move this image to Locked Folder?"
-									neededDialogFunction.value = ImageFunctions.MoveToLockedFolder
-									neededDialogButtonLabel.value = "Move"
-									showDialog.value = true
+					repeat(4) { index ->
+						val operation = ImageFunctions.entries[index] // WARNING: ORDER IS VERY IMPORTANT!!!
+						Button(
+							onClick = {
+								when (operation) {
+									ImageFunctions.MoveToLockedFolder -> {
+										neededDialogTitle.value = "Move this image to Locked Folder?"
+										neededDialogFunction.value = ImageFunctions.MoveToLockedFolder
+										neededDialogButtonLabel.value = "Move"
+										showDialog.value = true
+									}
+
+									ImageFunctions.TrashImage -> {
+										neededDialogTitle.value = "Delete this ${item.type}?"
+										neededDialogFunction.value = ImageFunctions.TrashImage
+										neededDialogButtonLabel.value = "Delete"
+										showDialog.value = true
+									}
+
+									else -> {
+										operateOnImage(item.absolutePath, item.id, operation, context)
+									}
 								}
-
-								ImageFunctions.TrashImage -> {
-									neededDialogTitle.value = "Delete this ${item.type}?"
-									neededDialogFunction.value = ImageFunctions.TrashImage
-									neededDialogButtonLabel.value = "Delete"
-									showDialog.value = true
-								}
-
-								else -> {
-									operateOnImage(item.absolutePath, item.id, operation, context)
-								}
+							},
+							colors = ButtonDefaults.buttonColors(
+								containerColor = Color.Transparent,
+								contentColor = CustomMaterialTheme.colorScheme.onBackground
+							),
+							contentPadding = PaddingValues(0.dp, 4.dp),
+							modifier = Modifier
+								.wrapContentHeight()
+								.weight(1f)
+						) {
+							Column (
+								verticalArrangement = Arrangement.Center,
+								horizontalAlignment = Alignment.CenterHorizontally
+							) {
+								Icon(
+									painter = painterResource(id = listOfResources[index]),
+									contentDescription = listOfStrings[index],
+									tint = CustomMaterialTheme.colorScheme.onBackground,
+									modifier = Modifier
+										.size(26.dp)
+								)
+								Text(
+									text = listOfStrings[index],
+									fontSize = TextUnit(15f, TextUnitType.Sp),
+									maxLines = 1,
+									modifier = Modifier
+										.padding(0.dp, 2.dp, 0.dp, 0.dp)
+								)
 							}
-                        },
-		                colors = ButtonDefaults.buttonColors(
-		                	containerColor = Color.Transparent,
-		                	contentColor = CustomMaterialTheme.colorScheme.onBackground
-		                ),
-		                contentPadding = PaddingValues(0.dp, 4.dp),
-		                modifier = Modifier
-                            .wrapContentHeight()
-                            .weight(1f)
-		            ) {
-		            	Column (
-		            		verticalArrangement = Arrangement.Center,
-		            		horizontalAlignment = Alignment.CenterHorizontally
-		            	) {
-			                Icon(
-			                    painter = painterResource(id = listOfResources[index]),
-			                    contentDescription = listOfStrings[index],
-			                    tint = CustomMaterialTheme.colorScheme.onBackground,
-			                    modifier = Modifier
-			                        .size(26.dp)
-			                )
-				            Text(
-				                text = listOfStrings[index],
-				                fontSize = TextUnit(15f, TextUnitType.Sp),
-				                maxLines = 1,
-				                modifier = Modifier
-				                	.padding(0.dp, 2.dp, 0.dp, 0.dp)
-				            )
-		            	}
-		            }					            
-            	}
-            }
-        },
-        modifier = Modifier.alpha(alpha)
-    )
+						}
+					}
+				}
+			},
+//			modifier = Modifier.alpha(alpha)
+		)
+	}
 }
+
+
+@OptIn(ExperimentalFoundationApi::class)
+fun Modifier.mediaModifier(
+	scale: MutableState<Float>,
+	rotation: MutableState<Float>,
+	offset: MutableState<Offset>,
+	systemBarsShown: MutableState<Boolean>,
+	window: Window,
+	windowInsetsController: WindowInsetsController,
+	appBarAlpha: MutableState<Boolean>
+) = this.then(Modifier
+	.combinedClickable (
+		onClick = {
+			if (systemBarsShown.value) {
+				windowInsetsController.apply {
+					hide(WindowInsetsCompat.Type.systemBars())
+					systemBarsBehavior =
+						WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+				}
+				window.setDecorFitsSystemWindows(false)
+				systemBarsShown.value = false
+				appBarAlpha.value = false
+			} else {
+				windowInsetsController.show(WindowInsetsCompat.Type.systemBars())
+				window.setDecorFitsSystemWindows(false)
+				systemBarsShown.value = true
+				appBarAlpha.value = true
+			}
+		},
+
+		onDoubleClick = {
+			if (scale.value == 1f) {
+				scale.value = 2f
+				rotation.value = 0f
+				offset.value = Offset.Zero
+			} else {
+				scale.value = 1f
+				rotation.value = 0f
+				offset.value = Offset.Zero
+			}
+		}
+	)
+	.graphicsLayer(
+		scaleX = scale.value,
+		scaleY = scale.value,
+		rotationZ = rotation.value,
+		translationX = -offset.value.x * scale.value,
+		translationY = -offset.value.y * scale.value,
+		transformOrigin = TransformOrigin(0.5f, 0.5f)
+	)
+	.pointerInput(Unit) {
+		// loop over each gesture and consume only those we care about
+		// so we don't interfere with other gestures
+		awaitEachGesture {
+			awaitFirstDown()
+
+			do {
+				val event = awaitPointerEvent()
+
+				if (event.changes.size == 2) {
+					scale.value *= event.calculateZoom()
+					scale.value.coerceIn(0.75f, 5f)
+					rotation.value += event.calculateRotation()
+
+					event.changes.forEach {
+						it.consume()
+					}
+				} else if (event.changes.size == 1 && event.calculatePan() != Offset.Zero) {
+					if (scale.value != 1f) {
+						// this is from android docs, i have no clue what the math here is xD
+						offset.value = (offset.value + Offset(
+							0.5f,
+							0.5f
+						) / scale.value) -
+								(Offset(
+									0.5f,
+									0.5f
+								) / scale.value + event.calculatePan())
+
+						event.changes.forEach {
+							it.consume()
+						}
+					}
+				}
+			} while (event.changes.any { it.pressed })
+		}
+	})

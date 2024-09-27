@@ -69,7 +69,7 @@ fun PreferencesRow(title: String, summary: String, iconResID: Int, position: Row
     Row (
         modifier = Modifier
             .fillMaxWidth(1f)
-            .height(80.dp)
+            .height(72.dp)
             .clip(shape)
             .wrapContentHeight(align = Alignment.CenterVertically)
             .background(CustomMaterialTheme.colorScheme.surfaceVariant)
@@ -89,7 +89,7 @@ fun PreferencesRow(title: String, summary: String, iconResID: Int, position: Row
 
         Column (
             modifier = Modifier
-                .height(80.dp)
+                .height(72.dp)
                 .weight(1f),
             verticalArrangement = Arrangement.SpaceEvenly,
             horizontalAlignment = Alignment.Start

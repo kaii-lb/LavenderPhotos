@@ -47,6 +47,8 @@ import androidx.navigation.NavHostController
 import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
+import com.bumptech.glide.integration.compose.Placeholder
+import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.integration.compose.rememberGlidePreloadingData
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.kaii.photos.MainActivity
@@ -54,6 +56,7 @@ import com.kaii.photos.R
 import com.kaii.photos.datastore
 import com.kaii.photos.datastore.getAlbumsList
 import com.kaii.photos.datastore.addToAlbumsList
+import com.kaii.photos.helpers.brightenColor
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.signature
@@ -187,9 +190,11 @@ private fun AlbumGridItem(
                 model = item.uri,
                 contentDescription = item.displayName,
                 contentScale = ContentScale.Crop,
+				failure = placeholder(R.drawable.broken_image),
                 modifier = Modifier
 					.aspectRatio(1f)
-					.clip(RoundedCornerShape(16.dp)),
+					.clip(RoundedCornerShape(16.dp))
+					.background(brightenColor(CustomMaterialTheme.colorScheme.surfaceContainer, 0.1f)),
             ) {
                 it.thumbnail(preloadRequestBuilder).signature(item.signature())
             }

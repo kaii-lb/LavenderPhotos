@@ -163,13 +163,14 @@ fun SearchPage(navController: NavHostController, searchViewModel: SearchViewMode
 
 		LaunchedEffect(key1 = mediaStoreData.value) {
 			originalGroupedMedia = groupPhotosBy(mediaStoreData.value, MediaItemSortMode.DateTaken)
-			groupedMedia = originalGroupedMedia
+
+			if (searchedForText == "") {
+				groupedMedia = originalGroupedMedia
+			}
 		}
   	        
         LaunchedEffect(key1 = searchNow) {
         	if(!searchNow) return@LaunchedEffect
-			
-//        	searchViewModel.setMediaStoreData(context, searchedForText)
 
 			delay(500)
         	

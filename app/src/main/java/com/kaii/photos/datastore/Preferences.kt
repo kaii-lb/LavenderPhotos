@@ -41,9 +41,6 @@ suspend fun DataStore<Preferences>.getAlbumsList(): List<String> {
 
     split.remove("")
 
-    split.forEach {
-        println("SPLIT VALUE $it")
-    }
     return split
 }
 
