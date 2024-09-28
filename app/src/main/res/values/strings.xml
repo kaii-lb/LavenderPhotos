@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">Photos</string>
     <string name="default_homepage_photogrid_dir">DCIM</string>
-    <string name="locked_folder_help_top"> Locked Folder is a secure folder for your images and videos on this device. The secured media is never uploaded anywhere and is always on-device, encrypted with a key unique to your device\'s password or fingerprint data.</string>
-    <string name="locked_folder_help_bottom"> The secured data cannot be restored if the password was forgotten or the fingerprint was removed.</string>
-    <string name="changelog">- Improved general performance\n- Added base dialogs for albums and main pages\n- Add about page\n- Introduced ability to add and remove albums\n- Images are now zoomable, rotate-able, and pan-able</string>
+    <string name="locked_folder_help_top">Locked Folder is a secure folder for your images and videos on this device.\nThe secured media is never uploaded anywhere and is always on-device, encrypted with a key unique to your device\'s password or fingerprint data.</string>
+    <string name="locked_folder_help_bottom">The secured data cannot be restored if the password was forgotten or the fingerprint was removed.</string>
+    <string name="changelog">- Improved general performance\n- Added base dialogs for albums and main pages\n- Add about page\n- Introduced ability to add and remove albums\n- Images are now zoomable, rotate-able, and pan-able\n- Fixed system bars showing when fullscreen on an image\n- fixed infinite and wrong composition on single photo views</string>
 </resources>

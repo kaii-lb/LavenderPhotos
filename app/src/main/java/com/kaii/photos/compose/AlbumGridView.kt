@@ -5,7 +5,6 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,14 +20,10 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,23 +36,20 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
-import com.bumptech.glide.integration.compose.Placeholder
 import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.integration.compose.rememberGlidePreloadingData
-import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.kaii.photos.MainActivity
 import com.kaii.photos.R
 import com.kaii.photos.datastore
-import com.kaii.photos.datastore.getAlbumsList
 import com.kaii.photos.datastore.addToAlbumsList
-import com.kaii.photos.helpers.brightenColor
+import com.kaii.photos.datastore.getAlbumsList
 import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.brightenColor
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.signature
 import com.kaii.photos.models.album_grid.AlbumsViewModel
@@ -121,7 +113,7 @@ fun AlbumsGridView(navController: NavHostController) {
 				if (actualData.isNotEmpty()) {
 					val mediaItem = actualData[neededDir] ?: MediaStoreData()
 
-				    val requestBuilderTransform =
+					val requestBuilderTransform =
 				        { item: MediaStoreData, requestBuilder: RequestBuilder<Drawable> ->
 				            requestBuilder.load(item.uri).centerCrop()
 				        }

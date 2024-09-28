@@ -1,5 +1,6 @@
 package com.kaii.photos.compose
 
+import android.content.res.Configuration
 import android.graphics.drawable.Drawable
 import android.os.Handler
 import android.os.Looper
@@ -14,18 +15,18 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.layout.height	
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Text
-import androidx.compose.material3.Icon
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -53,25 +54,21 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.integration.compose.rememberGlidePreloadingData
 import com.bumptech.glide.load.engine.DiskCacheStrategy
-import com.bumptech.glide.signature.MediaStoreSignature
+import com.kaii.photos.MainActivity
+import com.kaii.photos.R
+import com.kaii.photos.helpers.MediaItemSortMode
+import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.single_image_functions.ImageFunctions
+import com.kaii.photos.mediastore.MediaStoreData
+import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.mediastore.signature
 import com.kaii.photos.models.gallery_model.GalleryViewModel
 import com.kaii.photos.models.gallery_model.GalleryViewModelFactory
 import com.kaii.photos.models.gallery_model.groupPhotosBy
-import com.kaii.photos.mediastore.MediaStoreData
-import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.helpers.MultiScreenViewType
-import com.kaii.photos.R
 import com.kaii.photos.models.main_activity.MainDataSharingModel
-import com.kaii.photos.MainActivity
-import com.kaii.photos.helpers.MediaItemSortMode
-import com.kaii.photos.helpers.single_image_functions.ImageFunctions
-import com.kaii.photos.mediastore.signature
-import com.kaii.photos.compose.CustomMaterialTheme
-import java.io.File
 import java.nio.file.Files
 import java.nio.file.LinkOption
 import kotlin.io.path.Path
-import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 
 private const val THUMBNAIL_DIMENSION = 50
@@ -151,13 +148,20 @@ fun DeviceMedia(
 
 	var showLoadingSpinner by remember { mutableStateOf(true) }
 
+	val context = LocalContext.current
 	Box (
 		modifier = Modifier
 			.fillMaxSize(1f)
 			.background(CustomMaterialTheme.colorScheme.background)	
 	) {	
 	    LazyVerticalGrid(
-	        columns = GridCells.Fixed(3),
+	        columns = GridCells.Fixed(
+				if (context.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
+					3
+				} else {
+					6
+				}
+			),
 	        modifier = Modifier
 	        	.fillMaxSize(1f)
 	        	.align(Alignment.TopCenter),

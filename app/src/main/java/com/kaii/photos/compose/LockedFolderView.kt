@@ -4,16 +4,15 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -30,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -46,7 +46,6 @@ import com.kaii.photos.helpers.GetDateTakenForMedia
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.getAppLockedFolderDirectory
-import com.kaii.photos.helpers.single_image_functions.ImageFunctions
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.gallery_model.groupPhotosBy
@@ -55,7 +54,6 @@ import java.io.File
 import java.nio.file.Files
 import kotlin.io.path.Path
 
-@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun LockedFolderView(navController: NavHostController) {
     Scaffold (
@@ -97,7 +95,7 @@ fun LockedFolderView(navController: NavHostController) {
 
             val groupedMedia = groupPhotosBy(mediaStoreData, MediaItemSortMode.LastModified)
 
-			if (fileList.size == 0) {
+			if (fileList.isEmpty()) {
 				Column (
 		   			modifier = Modifier
 		   				.background(CustomMaterialTheme.colorScheme.background),

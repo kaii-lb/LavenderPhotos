@@ -239,7 +239,7 @@ private fun BottomBar(navController: NavHostController, alpha: Float, item: Medi
                             Button(
                                 onClick = {
                                     showDialog = false
-       	                            operateOnImage(item.absolutePath, item.id, ImageFunctions.PermaDeleteImage, context)
+                                    operateOnImage(item.absolutePath, item.id, ImageFunctions.PermaDeleteImage, context)
                             		navController.popBackStack()
                                 }
                             ) {

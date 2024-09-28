@@ -162,7 +162,8 @@ private fun shareImage(absolutePath: String, id: Long, context: Context) {
 
 		shareIntent.putExtra(Intent.EXTRA_STREAM, absolutePath.toUri())
 
-		context.startActivity(shareIntent)
+		val chooserIntent = Intent.createChooser(shareIntent, null)
+		context.startActivity(chooserIntent)
 	}
 }
 

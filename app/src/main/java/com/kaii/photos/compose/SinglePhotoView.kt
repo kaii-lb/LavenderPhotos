@@ -6,11 +6,11 @@ import android.util.Log
 import android.view.Window
 import android.view.WindowInsetsController
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -25,9 +25,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -36,7 +36,6 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.runtime.movableContentOf
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomAppBar
@@ -53,7 +52,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -93,7 +94,7 @@ import kotlinx.coroutines.launch
 
 private const val TAG = "SINGLE_PHOTO_VIEW"
 
-@OptIn(ExperimentalGlideComposeApi::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalGlideComposeApi::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun SinglePhotoView(
@@ -110,17 +111,19 @@ fun SinglePhotoView(
 	val holderGroupedMedia = mainViewModel.groupedMedia.collectAsState(initial = null).value ?: return
 
 	val groupedMedia = remember { mutableStateOf(holderGroupedMedia.filter { item ->
-        !(item.mimeType == null && item.type == MediaType.Section)
+        (item.type == MediaType.Image || item.type == MediaType.Video)  && item.mimeType != null && item.id != 0L
    	})}
 	
     val systemBarsShown = remember { mutableStateOf(true) }
     val appBarsVisible = remember { mutableStateOf(true) }
-    var currentMediaItem by remember { mutableStateOf(mediaItem) }
 	val state = rememberLazyListState()
+    val currentMediaItem by remember { derivedStateOf { groupedMedia.value[state.layoutInfo.visibleItemsInfo.firstOrNull()?.index ?: 0] } }
 	val showDialog = remember { mutableStateOf(false) }
 	val neededDialogFunction = remember { mutableStateOf(ImageFunctions.MoveToLockedFolder) }
 	val neededDialogTitle = remember { mutableStateOf("Move this ${currentMediaItem.type.name} to Locked Folder?") }
 	val neededDialogButtonLabel = remember { mutableStateOf("Move") }
+
+	Log.d(TAG, "${currentMediaItem.displayName}")
 	
 	if (showDialog.value) {
 		val context = LocalContext.current
@@ -221,80 +224,66 @@ fun SinglePhotoView(
                 items(
                     count = preloadingData.size,
                     key = {
-       	                groupedMedia.value[it].uri.toString()
+                    	val neededItem = groupedMedia.value[it]
+       	                neededItem.uri.toString()
        	            },
                 ) { i ->
                 	val movableContent = movableContentOf {
-						val index = if (i+1 == preloadingData.size) 0 else i
-						Log.d(TAG, "INDEX IS $index $i ${preloadingData.size}")
-						val (mediaStoreItem, preloadRequestBuilder) = preloadingData[index]
+						// val index = if (i == preloadingData.size) 0 else i
+
+						val (mediaStoreItem, preloadRequestBuilder) = preloadingData[i]
 
 						val windowInsetsController = window.insetsController ?: return@movableContentOf
-	                    windowInsetsController.show(WindowInsetsCompat.Type.systemBars())
 
-						if (mediaStoreItem.type != MediaType.Section && mediaStoreItem.mimeType != null && mediaStoreItem.id != 0L) {
-						    currentMediaItem = mediaStoreItem
-
-							if (mediaStoreItem.type == MediaType.Video) {
-								Column (
-									modifier = Modifier
-										.fillParentMaxSize(1f)
-										.mediaModifier(
-											scale,
-											rotation,
-											offset,
-											systemBarsShown,
-											window,
-											windowInsetsController,
-											appBarsVisible
-										),
-									verticalArrangement = Arrangement.Center,
-									horizontalAlignment = Alignment.CenterHorizontally
-								) {
-									Text (
-										text = "This is a Video!",
-										modifier = Modifier
-											.wrapContentSize()
-									)
-
-									Spacer (modifier = Modifier.height(16.dp))
-
-									Text (
-										text = "...the functionality is not yet implemented",
-										modifier = Modifier
-											.wrapContentSize()
-									)
-								}
-							} else {
-								GlideImage(
-									model = mediaStoreItem.uri,
-									contentDescription = "selected image",
-									contentScale = ContentScale.Fit,
-									failure = placeholder(R.drawable.broken_image),
-									modifier = Modifier
-										.fillParentMaxSize(1f)
-										.mediaModifier(
-											scale,
-											rotation,
-											offset,
-											systemBarsShown,
-											window,
-											windowInsetsController,
-											appBarsVisible
-										)
-								) {
-									it.thumbnail(preloadRequestBuilder).signature(mediaStoreItem.signature()).diskCacheStrategy(DiskCacheStrategy.ALL)
-								}
-							}
-						} else {
+						if (mediaStoreItem.type == MediaType.Video) {
 							Column (
 								modifier = Modifier
 									.fillParentMaxSize(1f)
-									.background(CustomMaterialTheme.colorScheme.primary)
+									.mediaModifier(
+										scale,
+										rotation,
+										offset,
+										systemBarsShown,
+										window,
+										windowInsetsController,
+										appBarsVisible
+									),
+								verticalArrangement = Arrangement.Center,
+								horizontalAlignment = Alignment.CenterHorizontally
 							) {
-								Text(
-									text = "this media is broken or is not an image/video"
+								Text (
+									text = "This is a Video!",
+									modifier = Modifier
+										.wrapContentSize()
 								)
+
+								Spacer (modifier = Modifier.height(16.dp))
+
+								Text (
+									text = "...the functionality is not yet implemented",
+									modifier = Modifier
+										.wrapContentSize()
+								)
+							}
+						} else {
+							GlideImage(
+								model = mediaStoreItem.uri,
+								contentDescription = "selected image",
+								contentScale = ContentScale.Fit,
+								failure = placeholder(R.drawable.broken_image),
+								modifier = Modifier
+									.fillParentMaxSize(1f)
+									.mediaModifier(
+										scale,
+										rotation,
+										offset,
+										systemBarsShown,
+										window,
+										windowInsetsController,
+										appBarsVisible
+									)
+							) {
+								it.thumbnail(preloadRequestBuilder).signature(mediaStoreItem.signature()).diskCacheStrategy(DiskCacheStrategy.ALL)
 							}
 						}
                 	}
@@ -514,6 +503,7 @@ private fun BottomBar(
 
 
 @OptIn(ExperimentalFoundationApi::class)
+@Composable
 fun Modifier.mediaModifier(
 	scale: MutableState<Float>,
 	rotation: MutableState<Float>,
@@ -523,7 +513,9 @@ fun Modifier.mediaModifier(
 	windowInsetsController: WindowInsetsController,
 	appBarAlpha: MutableState<Boolean>
 ) = this.then(Modifier
-	.combinedClickable (
+	.combinedClickable(
+		indication = null,
+		interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
 		onClick = {
 			if (systemBarsShown.value) {
 				windowInsetsController.apply {
@@ -552,7 +544,7 @@ fun Modifier.mediaModifier(
 				rotation.value = 0f
 				offset.value = Offset.Zero
 			}
-		}
+		},
 	)
 	.graphicsLayer(
 		scaleX = scale.value,

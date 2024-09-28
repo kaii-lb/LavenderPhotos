@@ -4,14 +4,19 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Environment
 import android.os.Bundle
 import android.provider.DocumentsContract
 import android.util.Log
+import androidx.core.view.WindowInsetsCompat
+import android.view.WindowInsetsController
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.tween
@@ -37,12 +42,16 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -57,23 +66,27 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -101,6 +114,7 @@ import com.kaii.photos.compose.TrashedPhotoGridView
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.addToAlbumsList
 import com.kaii.photos.datastore.getUsername
+import com.kaii.photos.datastore.setUsername
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
@@ -112,16 +126,15 @@ import com.kaii.photos.models.main_activity.MainDataSharingModelFactory
 import com.kaii.photos.models.search_page.SearchViewModel
 import com.kaii.photos.models.search_page.SearchViewModelFactory
 import com.kaii.photos.ui.theme.PhotosTheme
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 val Context.datastore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
-private const val DIR_REQUEST_CODE = 1
 private const val TAG = "MAIN_ACTIVITY"
 
 class MainActivity : ComponentActivity() {
     companion object {
-        private const val REQUEST_READ_STORAGE = 0
         private val PERMISSIONS_REQUEST =
             arrayOf(
                 Manifest.permission.READ_MEDIA_IMAGES,
@@ -143,22 +156,99 @@ class MainActivity : ComponentActivity() {
         applicationDatabase = mediaDatabase
 
         Glide.get(this).setMemoryCategory(MemoryCategory.HIGH)
-        if (PERMISSIONS_REQUEST.any {
-                ContextCompat.checkSelfPermission(
-                    this,
-                    it
-                ) != PackageManager.PERMISSION_GRANTED
-            }) {
-            requestStoragePermission()
-        } else {
-            setContentForActivity()
-        }
+
+		val failedList = emptyList<String>().toMutableList()
+
+		for (perm in PERMISSIONS_REQUEST) {
+			val hasBeenGranted = 
+				ContextCompat.checkSelfPermission(
+		            this,
+		            perm
+		        ) == PackageManager.PERMISSION_GRANTED
+
+		    if (!hasBeenGranted) {
+		    	failedList.add(perm)
+		    }
+		}
+
+		if (!Environment.isExternalStorageManager()) {
+			val intent = Intent(android.provider.Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+			startActivity(intent)
+
+			val request = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { _ ->
+                if (failedList.isNotEmpty()) {
+                    failedList.forEach {
+                        Log.e(TAG, "PERM FAILED $it")
+                    }
+                    val permRequest = registerForActivityResult(
+                        ActivityResultContracts.RequestMultiplePermissions()
+                    ) { result ->
+                        result.entries.forEach { perm ->
+                            val name = perm.key
+                            val granted = perm.value
+
+                            if (granted) failedList.remove(name)
+                            else {
+                                val shortName = name.split(".").last()
+                                Toast.makeText(this, "$shortName permission is required", Toast.LENGTH_LONG).show()
+                            }
+
+                            if (failedList.isEmpty() && Environment.isExternalStorageManager()) {
+                                setContentForActivity()
+                            }
+
+		                    if (name == failedList.lastOrNull()) {
+	               	           	Toast.makeText(this, "Failed getting necessary permissions", Toast.LENGTH_LONG).show()
+	               	           	finishAffinity()
+		                    }                            
+                        }
+                    }
+
+                    requestStoragePermission(permRequest, failedList)
+                } else {
+                    setContentForActivity()
+                }
+			}
+
+			request.launch(intent)
+		} else {
+			if (failedList.isNotEmpty()) {
+	        	failedList.forEach {
+	        		println("PERM FAILED $it")
+	        	}
+		        val permRequest = registerForActivityResult(
+		            ActivityResultContracts.RequestMultiplePermissions()
+		        ) { result ->
+                    result.entries.forEach { perm ->
+                        val name = perm.key
+                        val granted = perm.value
+
+	                    if (granted) failedList.remove(name)
+	                    else {
+	                        val shortName = name.split(".").last()
+	                        Toast.makeText(this, "$shortName permission is required", Toast.LENGTH_LONG).show()
+	                    }
+
+	                    if (failedList.isEmpty() && Environment.isExternalStorageManager()) {
+	                        setContentForActivity()
+	                    }
+
+	                    if (name == failedList.lastOrNull()) {
+               	           	Toast.makeText(this, "Failed getting necessary permissions", Toast.LENGTH_LONG).show()
+               	           	finishAffinity()
+	                    }
+                    }
+		        }
+	        	
+	            requestStoragePermission(permRequest, failedList)
+	        } else {
+	            setContentForActivity()
+	        }
+		}
     }
 
-    private fun requestStoragePermission() {
-        ActivityCompat.requestPermissions(
-            this, PERMISSIONS_REQUEST, REQUEST_READ_STORAGE
-        )
+    private fun requestStoragePermission(permRequest: ActivityResultLauncher<Array<String>>, failedList: List<String>) {
+    	permRequest.launch(failedList.toTypedArray())
     }
 
     private fun setContentForActivity() {
@@ -173,6 +263,7 @@ class MainActivity : ComponentActivity() {
                 val navControllerLocal = rememberNavController()
                 val currentView = remember { mutableStateOf(MainScreenViewType.PhotosGridView) }
 				val showDialog = remember { mutableStateOf(false) }
+                val windowInsetsController = window.insetsController
                 
                 NavHost (
                     navController = navControllerLocal,
@@ -209,6 +300,11 @@ class MainActivity : ComponentActivity() {
                         ) { width -> -width }
                     }
                 ) {
+   					windowInsetsController?.apply {
+						show(WindowInsetsCompat.Type.systemBars())
+						systemBarsBehavior =
+							WindowInsetsController.BEHAVIOR_DEFAULT
+					}
                     composable(MultiScreenViewType.MainScreen.name) {
        					enableEdgeToEdge(
 							navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
@@ -674,7 +770,6 @@ class MainActivity : ComponentActivity() {
                                 runBlocking {
                                     context.datastore.getUsername()
                                 }
-
                             )
                         }
 
@@ -693,23 +788,43 @@ class MainActivity : ComponentActivity() {
 
                         Spacer(modifier = Modifier.width(8.dp))
 
-                        Text (
-                            text = username,
-                            fontSize = TextUnit(16f, TextUnitType.Sp),
-                            textAlign = TextAlign.Start,
-                        )
-
-//                        TextField (
-//                            value = username,
-//                            onValueChange = { newVal ->
-//                                lifecycleScope.launch {
-//                                    context.datastore.setUsername(newVal)
-//                                }
-//                            },
-//                            textStyle = LocalTextStyle.current.copy(
-//                                fontSize = TextUnit(16f, TextUnitType.Sp),
-//                            )
+//                        Text (
+//                            text = username,
+//                            fontSize = TextUnit(16f, TextUnitType.Sp),
+//                            textAlign = TextAlign.Start,
 //                        )
+
+                        TextField (
+                            value = username,
+                            onValueChange = { newVal ->
+                                username = newVal
+                                lifecycleScope.launch {
+                                    context.datastore.setUsername(newVal)
+                                }
+                            },
+                            textStyle = LocalTextStyle.current.copy(
+                                fontSize = TextUnit(16f, TextUnitType.Sp),
+                                textAlign = TextAlign.Start,
+                                color = CustomMaterialTheme.colorScheme.onSurface,
+                            ),
+                            maxLines = 1,
+                            colors = TextFieldDefaults.colors().copy(
+                                unfocusedContainerColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent,
+                                unfocusedTextColor = CustomMaterialTheme.colorScheme.onSurface,
+                                focusedIndicatorColor = Color.Transparent,
+                                focusedTextColor = CustomMaterialTheme.colorScheme.onSurface,
+                                focusedContainerColor = Color.Transparent
+                            ),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(
+                                capitalization = KeyboardCapitalization.None,
+                                autoCorrectEnabled = false,
+                                keyboardType = KeyboardType.Ascii,
+                                imeAction = ImeAction.Done,
+                                showKeyboardOnFocus = true
+                            )
+                        )
                     }
 
                     Column (
@@ -735,9 +850,26 @@ class MainActivity : ComponentActivity() {
                                 val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
                                     putExtra(DocumentsContract.EXTRA_INITIAL_URI, "".toUri())
                                 }
-                                startActivityForResult(intent, DIR_REQUEST_CODE)
+                                val startForResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                                    if (result.resultCode == RESULT_OK) {
+                                        result.data?.data?.also { uri ->
+                                            val path = uri.path ?: ""
 
-                                val runnable = Runnable() {
+                                            Log.d(TAG, "the path is $path")
+                                            val runnable = Runnable {
+                                                runBlocking {
+                                                    applicationContext.datastore.addToAlbumsList(path.replace("/tree/primary:", ""))
+                                                }
+                                            }
+                                            Thread(runnable).start()
+                                        }
+                                    } else {
+                                        Toast.makeText(context, "Failed to add album", Toast.LENGTH_LONG).show()
+                                    }
+                                }
+                                startForResult.launch(intent)
+
+                                val runnable = Runnable {
 									Thread.sleep(250)
 									currentView.value = MainScreenViewType.PhotosGridView
 									Thread.sleep(1000)
@@ -775,42 +907,5 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
-
-    @Deprecated("This method has been deprecated in favor of using the Activity Result API\n      which brings increased type safety via an {@link ActivityResultContract} and the prebuilt\n      contracts for common intents available in\n      {@link androidx.activity.result.contract.ActivityResultContracts}, provides hooks for\n      testing, and allow receiving results in separate, testable classes independent from your\n      activity. Use\n      {@link #registerForActivityResult(ActivityResultContract, ActivityResultCallback)} passing\n      in a {@link RequestMultiplePermissions} object for the {@link ActivityResultContract} and\n      handling the result in the {@link ActivityResultCallback#onActivityResult(Object) callback}.")
-    override fun onRequestPermissionsResult(
-        requestCode: Int, permissions: Array<String>, grantResults: IntArray,
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        when (requestCode) {
-            REQUEST_READ_STORAGE -> {
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    setContentForActivity()
-                } else {
-                    Toast.makeText(this, "Storage permission is required", Toast.LENGTH_LONG).show()
-                    requestStoragePermission()
-                }
-            }
-        }
-    }
-
-    @Deprecated("This method has been deprecated in favor of using the Activity Result API\n      which brings increased type safety via an {@link ActivityResultContract} and the prebuilt\n      contracts for common intents available in\n      {@link androidx.activity.result.contract.ActivityResultContracts}, provides hooks for\n      testing, and allow receiving results in separate, testable classes independent from your\n      activity. Use\n      {@link #registerForActivityResult(ActivityResultContract, ActivityResultCallback)}\n      with the appropriate {@link ActivityResultContract} and handling the result in the\n      {@link ActivityResultCallback#onActivityResult(Object) callback}.")
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-
-        if (requestCode == DIR_REQUEST_CODE && resultCode == RESULT_OK) {
-    		data?.data?.also { uri ->
-    			val path = uri.path ?: ""
-
-                Log.d(TAG, "the path is $path")
-				val runnable = Runnable() {
-					runBlocking {
-						applicationContext.datastore.addToAlbumsList(path.replace("/tree/primary:", ""))
-					}
-				}
-               	Thread(runnable).start()
-    		}
-    	}
     }
 }
