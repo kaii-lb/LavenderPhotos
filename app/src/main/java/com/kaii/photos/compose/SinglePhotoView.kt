@@ -117,13 +117,20 @@ fun SinglePhotoView(
     val systemBarsShown = remember { mutableStateOf(true) }
     val appBarsVisible = remember { mutableStateOf(true) }
 	val state = rememberLazyListState()
-    val currentMediaItem by remember { derivedStateOf { groupedMedia.value[state.layoutInfo.visibleItemsInfo.firstOrNull()?.index ?: 0] } }
+    val currentMediaItem by remember { derivedStateOf { 
+    	val index = state.layoutInfo.visibleItemsInfo.firstOrNull()?.index ?: 0
+    	if (index != groupedMedia.value.size) {
+    		groupedMedia.value[index] 	
+    	} else {
+    		MediaStoreData(
+    			displayName = "Broken Media"	
+    		)
+    	}
+   	} }
 	val showDialog = remember { mutableStateOf(false) }
 	val neededDialogFunction = remember { mutableStateOf(ImageFunctions.MoveToLockedFolder) }
 	val neededDialogTitle = remember { mutableStateOf("Move this ${currentMediaItem.type.name} to Locked Folder?") }
 	val neededDialogButtonLabel = remember { mutableStateOf("Move") }
-
-	Log.d(TAG, "${currentMediaItem.displayName}")
 	
 	if (showDialog.value) {
 		val context = LocalContext.current
@@ -140,18 +147,23 @@ fun SinglePhotoView(
 	                    operateOnImage(currentMediaItem.absolutePath, currentMediaItem.id, neededDialogFunction.value, context)
 
                        	coroutineScope.launch {
-							val scrollIndex = groupedMedia.value.indexOf(currentMediaItem)
-                        	// val added = if (scrollIndex == groupedMedia.value.size) -1 else 1
+                       		val size = groupedMedia.value.size - 1
+							// val scrollIndex = groupedMedia.value.indexOf(currentMediaItem)
+							val scrollIndex = state.layoutInfo.visibleItemsInfo.firstOrNull()?.index ?: 0
+                        	val added = if (scrollIndex == size) -1 else 1
 
-                            if (groupedMedia.value.size == 1) {
-                            	navController.popBackStack()	
-                            }
-
-							val newMedia = groupedMedia.value.toMutableList()
+							val newMedia = groupedMedia.value.toList().toMutableList()
 							newMedia.removeAt(scrollIndex)
-							groupedMedia.value = newMedia
 
-                            state.animateScrollToItem(scrollIndex)
+							// Log.d(TAG, "$scrollIndex $added is the needed index out of $size")
+
+							if (size == 0) {
+								navController.popBackStack()
+							} else {
+								state.scrollToItem((scrollIndex + added).coerceAtLeast(0))
+							}
+
+							groupedMedia.value = newMedia
                        	}
 	                }
 	            ) {
@@ -222,14 +234,18 @@ fun SinglePhotoView(
                 flingBehavior = rememberSnapFlingBehavior(lazyListState = state)
             ) {
                 items(
-                    count = preloadingData.size,
+                    count = groupedMedia.value.size,
                     key = {
-                    	val neededItem = groupedMedia.value[it]
-       	                neededItem.uri.toString()
+                    	if (groupedMedia.value.size != 0 && it != groupedMedia.value.size) {
+	                    	val neededItem = groupedMedia.value[it]
+	       	                neededItem.uri.toString()
+                    	} else {
+                    		System.currentTimeMillis().toString()
+                    	}
        	            },
                 ) { i ->
                 	val movableContent = movableContentOf {
-						// val index = if (i == preloadingData.size) 0 else i
+//						val index = if (i == preloadingData.size) 0 else i
 
 						val (mediaStoreItem, preloadRequestBuilder) = preloadingData[i]
 
