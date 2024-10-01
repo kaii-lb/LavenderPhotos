@@ -199,7 +199,7 @@ private fun SingleAlbumDialog(showDialog: MutableState<Boolean>, dir: String, na
 						action = {
 							coroutineScope.launch {
 	                           	context.datastore.removeFromAlbumsList(dir)
-								showDialog.value = false
+                                showDialog.value = false
 	                           	navController.popBackStack()
 	                       	}
 						}

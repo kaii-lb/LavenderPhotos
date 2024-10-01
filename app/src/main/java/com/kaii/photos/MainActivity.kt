@@ -262,7 +262,7 @@ class MainActivity : ComponentActivity() {
 
                 val navControllerLocal = rememberNavController()
                 val currentView = remember { mutableStateOf(MainScreenViewType.PhotosGridView) }
-				val showDialog = remember { mutableStateOf(false) }
+                val showDialog = remember { mutableStateOf(false) }
                 val windowInsetsController = window.insetsController
                 val scale = remember { mutableFloatStateOf(1f) }
                 val rotation = remember { mutableFloatStateOf(0f) }

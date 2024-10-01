@@ -2,14 +2,31 @@ package com.kaii.photos.compose.single_photo
 
 import android.annotation.SuppressLint
 import android.view.Window
+import android.widget.Toast
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.EaseInBounce
+import androidx.compose.animation.core.EaseOutBounce
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandIn
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkOut
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -19,44 +36,63 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.DialogWindowProvider
 import androidx.navigation.NavHostController
 import com.kaii.photos.MainActivity
 import com.kaii.photos.R
 import com.kaii.photos.compose.CustomMaterialTheme
+import com.kaii.photos.compose.DialogClickableItem
+import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.helpers.brightenColor
 import com.kaii.photos.helpers.single_image_functions.ImageFunctions
 import com.kaii.photos.helpers.single_image_functions.operateOnImage
 import com.kaii.photos.mediastore.MediaStoreData
@@ -99,75 +135,23 @@ fun SinglePhotoView(
 			)
 		}
 	} }
-	val showDialog = remember { mutableStateOf(false) }
+	val showActionDialog = remember { mutableStateOf(false) }
+	val showInfoDialog = remember { mutableStateOf(false) }
 	val neededDialogFunction = remember { mutableStateOf(ImageFunctions.MoveToLockedFolder) }
 	val neededDialogTitle = remember { mutableStateOf("Move this ${currentMediaItem.type.name} to Locked Folder?") }
 	val neededDialogButtonLabel = remember { mutableStateOf("Move") }
-
-	if (showDialog.value) {
-		val context = LocalContext.current
-		val coroutineScope = rememberCoroutineScope()
-
-		AlertDialog(
-			onDismissRequest = {
-				showDialog.value = false
-			},
-			confirmButton = {
-				Button(
-					onClick = {
-						showDialog.value = false
-						operateOnImage(currentMediaItem.absolutePath, currentMediaItem.id, neededDialogFunction.value, context)
-						sortOutMediaMods(
-							currentMediaItem,
-							groupedMedia,
-							coroutineScope,
-							navController,
-							state
-						)
-					}
-				) {
-					Text(
-						text = neededDialogButtonLabel.value,
-						fontSize = TextUnit(14f, TextUnitType.Sp)
-					)
-				}
-			},
-			title = {
-				Text(
-					text = neededDialogTitle.value,
-					fontSize = TextUnit(16f, TextUnitType.Sp)
-				)
-			},
-			dismissButton = {
-				Button(
-					onClick = {
-						showDialog.value = false
-					},
-					colors = ButtonDefaults.buttonColors(
-						containerColor = CustomMaterialTheme.colorScheme.tertiaryContainer,
-						contentColor = CustomMaterialTheme.colorScheme.onTertiaryContainer
-					)
-				) {
-					Text(
-						text = "Cancel",
-						fontSize = TextUnit(14f, TextUnitType.Sp)
-					)
-				}
-			},
-			shape = RoundedCornerShape(32.dp)
-		)
-	}
 
 	Scaffold (
 		topBar =  { TopBar(
 			navController,
 			currentMediaItem,
-			appBarsVisible.value
+			appBarsVisible.value,
+			showInfoDialog
 		) },
 		bottomBar = { BottomBar(
 			appBarsVisible.value,
 			currentMediaItem,
-			showDialog,
+			showActionDialog,
 			neededDialogTitle,
 			neededDialogButtonLabel,
 			neededDialogFunction
@@ -175,6 +159,25 @@ fun SinglePhotoView(
 		containerColor = CustomMaterialTheme.colorScheme.background,
 		contentColor = CustomMaterialTheme.colorScheme.onBackground
 	) {  _ ->
+
+		// material theme doesn't seem to apply just above????
+		SinglePhotoConfirmationDialog(
+			showActionDialog,
+			currentMediaItem,
+			groupedMedia,
+			neededDialogTitle,
+			neededDialogButtonLabel,
+			neededDialogFunction,
+			navController,
+			state
+		)
+	
+		SinglePhotoInfoDialog(
+			showInfoDialog,
+			currentMediaItem
+		)
+
+		
 		Column (
 			modifier = Modifier
 				.padding(0.dp)
@@ -211,7 +214,8 @@ fun SinglePhotoView(
 private fun TopBar(
 	navController: NavHostController,
 	mediaItem: MediaStoreData?,
-	visible: Boolean
+	visible: Boolean,
+	showInfoDialog: MutableState<Boolean>
 ) {
 	AnimatedVisibility(
 		visible = visible,
@@ -224,7 +228,7 @@ private fun TopBar(
 		exit =
 		slideOutVertically(
 			animationSpec = tween(
-				durationMillis = 250
+				durationMillis = 300
 			)
 		) { width -> -width } + fadeOut(),
 	) {
@@ -280,7 +284,9 @@ private fun TopBar(
 				}
 
 				IconButton(
-					onClick = { /* TODO */ },
+					onClick = {
+						showInfoDialog.value = true
+					},
 				) {
 					Icon(
 						painter = painterResource(id = R.drawable.more_options),
@@ -315,7 +321,7 @@ private fun BottomBar(
 		exit =
 		slideOutVertically(
 			animationSpec = tween(
-				durationMillis = 250
+				durationMillis = 300
 			)
 		) { width -> width } + fadeOut(),
 	) {
@@ -404,5 +410,300 @@ private fun BottomBar(
 			},
 //			modifier = Modifier.alpha(alpha)
 		)
+	}
+}
+
+@Composable
+private fun SinglePhotoConfirmationDialog(
+	showDialog: MutableState<Boolean>,
+	currentMediaItem: MediaStoreData,
+	groupedMedia: MutableState<List<MediaStoreData>>,
+	neededDialogTitle: MutableState<String>,
+	neededDialogButtonLabel: MutableState<String>,
+	neededDialogFunction: MutableState<ImageFunctions>,
+	navController: NavHostController,
+	state: LazyListState
+) {
+	if (showDialog.value) {
+		val context = LocalContext.current
+		val coroutineScope = rememberCoroutineScope()
+
+		AlertDialog(
+			onDismissRequest = {
+				showDialog.value = false
+			},
+			confirmButton = {
+				Button(
+					onClick = {
+						showDialog.value = false
+						operateOnImage(currentMediaItem.absolutePath, currentMediaItem.id, neededDialogFunction.value, context)
+						sortOutMediaMods(
+							currentMediaItem,
+							groupedMedia,
+							coroutineScope,
+							navController,
+							state
+						)
+					}
+				) {
+					Text(
+						text = neededDialogButtonLabel.value,
+						fontSize = TextUnit(14f, TextUnitType.Sp)
+					)
+				}
+			},
+			title = {
+				Text(
+					text = neededDialogTitle.value,
+					fontSize = TextUnit(16f, TextUnitType.Sp)
+				)
+			},
+			dismissButton = {
+				Button(
+					onClick = {
+						showDialog.value = false
+					},
+					colors = ButtonDefaults.buttonColors(
+						containerColor = CustomMaterialTheme.colorScheme.tertiaryContainer,
+						contentColor = CustomMaterialTheme.colorScheme.onTertiaryContainer
+					)
+				) {
+					Text(
+						text = "Cancel",
+						fontSize = TextUnit(14f, TextUnitType.Sp)
+					)
+				}
+			},
+			shape = RoundedCornerShape(32.dp)
+		)
+	}
+}
+
+@Composable
+private fun SinglePhotoInfoDialog(
+	showDialog: MutableState<Boolean>,
+	currentMediaItem: MediaStoreData
+) {
+	val context = LocalContext.current
+//		val coroutineScope = rememberCoroutineScope()
+	var isEditingFileName by remember { mutableStateOf(false) }
+	
+	if (showDialog.value) {
+		Dialog(
+			onDismissRequest = {
+				showDialog.value = false
+			},
+		) {
+			Column (
+				modifier = Modifier
+					.clip(RoundedCornerShape(32.dp))
+					.background(brightenColor(CustomMaterialTheme.colorScheme.surface, 0.1f))
+					.padding(8.dp)
+			) {
+				Box (
+					modifier = Modifier
+						.fillMaxWidth(1f),
+				) {
+					IconButton(
+						onClick = {
+							showDialog.value = false
+							isEditingFileName = false
+						},
+						modifier = Modifier
+							.align(Alignment.CenterStart)
+					) {
+						Icon(
+							painter = painterResource(id = R.drawable.close),
+							contentDescription = "Close dialog button",
+							modifier = Modifier
+								.size(24.dp)
+						)
+					}
+
+					AnimatedContent(
+						targetState = isEditingFileName,
+						label = "Dialog name animated content",
+						transitionSpec = {
+							(expandHorizontally (
+								animationSpec = tween(
+									durationMillis = 250
+								),
+								expandFrom = Alignment.Start
+							) + fadeIn(
+								animationSpec = tween(
+									durationMillis = 250,
+								)
+							)).togetherWith(
+								shrinkHorizontally (
+									animationSpec = tween(
+										durationMillis = 250
+									),
+									shrinkTowards = Alignment.End
+								) + fadeOut(
+									animationSpec = tween(
+										durationMillis = 250,
+									)
+								)
+							)
+						},
+						modifier = Modifier
+							.align(Alignment.Center)
+					) { state ->
+						if (state) {
+							Text(
+								text = "Rename",
+								fontWeight = FontWeight.Bold,
+								fontSize = TextUnit(18f, TextUnitType.Sp),
+								modifier = Modifier
+									.align(Alignment.Center)
+							)
+						} else {
+							Text(
+								text = "More Options",
+								fontWeight = FontWeight.Bold,
+								fontSize = TextUnit(18f, TextUnitType.Sp),
+								modifier = Modifier
+									.align(Alignment.Center)
+							)
+						}
+					}
+				}
+
+				Column (
+					modifier = Modifier
+						.padding(12.dp)
+						.wrapContentHeight()
+				) {
+					var fileName by remember { mutableStateOf(currentMediaItem.displayName ?: "Broken File") }
+					var saveFileName by remember { mutableStateOf(false) }
+					val originalFileName = fileName
+
+					LaunchedEffect(key1 = saveFileName) {
+						if (!saveFileName) {
+							fileName = originalFileName
+							return@LaunchedEffect
+						}
+
+						Toast.makeText(context, "Set file name to $fileName", Toast.LENGTH_SHORT).show()
+						saveFileName = false
+					}
+
+					AnimatedContent (
+						targetState = isEditingFileName,
+						label = "Single File Dialog Animated Content",
+						transitionSpec = {
+							(expandHorizontally (
+								animationSpec = tween(
+									durationMillis = 250
+								),
+								expandFrom = Alignment.Start
+							) + fadeIn(
+								animationSpec = tween(
+									durationMillis = 250,
+								)
+							)).togetherWith(
+								shrinkHorizontally (
+									animationSpec = tween(
+										durationMillis = 250
+									),
+									shrinkTowards = Alignment.End
+								) + fadeOut(
+									animationSpec = tween(
+										durationMillis = 250,
+									)
+								)
+							)
+						}
+					) { state ->
+						if (state) {
+							TextField(
+								value = fileName,
+								onValueChange = {
+									fileName = it
+								},
+								keyboardActions = KeyboardActions(
+									onDone = {
+										isEditingFileName = false
+										saveFileName = true
+									}
+								),
+								keyboardOptions = KeyboardOptions(
+									capitalization = KeyboardCapitalization.None,
+									autoCorrectEnabled = false,
+									keyboardType = KeyboardType.Ascii,
+									imeAction = ImeAction.Done,
+									showKeyboardOnFocus = true
+								),
+								trailingIcon = {
+									IconButton(
+										onClick = {
+											isEditingFileName = false
+											saveFileName = false
+										}
+									) {
+										Icon(
+											painter = painterResource(id = R.drawable.close),
+											contentDescription = "Cancel filename change button"
+										)
+									}
+								},
+								shape = RoundedCornerShape(24.dp)
+							)
+						} else {
+							Column (
+								modifier = Modifier
+									.wrapContentHeight()
+							) {
+								DialogClickableItem(
+									text = "Rename",
+									iconResId = R.drawable.edit,
+									position = RowPosition.Top,
+								) {
+									isEditingFileName = true
+								}
+							}
+						}
+					}
+			
+					val height by androidx.compose.animation.core.animateDpAsState(
+						targetValue = if (!isEditingFileName) 124.dp else 0.dp,
+						label = "akjsdhajskd",
+						animationSpec = tween(
+							durationMillis = 500
+						)
+					)
+
+					Column (
+						modifier = Modifier
+							.height(height)
+							.fillMaxWidth(1f)
+					) {
+						DialogClickableItem(
+							text = "Copy to Album",
+							iconResId = R.drawable.edit,
+							position = RowPosition.Middle,
+						) {
+
+						}
+
+						DialogClickableItem (
+							text = "Move to Album",
+							iconResId = R.drawable.delete,
+							position = RowPosition.Middle,
+						) {
+
+						}
+
+						DialogClickableItem (
+							text = "More Info",
+							iconResId = R.drawable.info,
+							position = RowPosition.Bottom,
+						) {
+
+						}
+					}
+				}
+			}
+		}
 	}
 }
