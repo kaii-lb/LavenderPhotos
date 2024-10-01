@@ -1,4 +1,4 @@
-package com.kaii.photos.compose
+package com.kaii.photos.compose.grids
 
 import android.graphics.drawable.Drawable
 import android.os.Handler
@@ -50,6 +50,7 @@ import androidx.navigation.NavHostController
 import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.integration.compose.rememberGlidePreloadingData
 import com.kaii.photos.MainActivity
+import com.kaii.photos.compose.CustomMaterialTheme
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.single_image_functions.ImageFunctions
 import com.kaii.photos.mediastore.MediaStoreData

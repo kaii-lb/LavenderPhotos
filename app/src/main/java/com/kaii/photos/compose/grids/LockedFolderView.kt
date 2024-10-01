@@ -1,4 +1,4 @@
-package com.kaii.photos.compose
+package com.kaii.photos.compose.grids
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -42,6 +42,7 @@ import androidx.navigation.NavHostController
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.kaii.photos.MainActivity
+import com.kaii.photos.compose.CustomMaterialTheme
 import com.kaii.photos.helpers.GetDateTakenForMedia
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
@@ -93,7 +94,7 @@ fun LockedFolderView(navController: NavHostController) {
                 mediaStoreData.add(item)
             }
 
-            val groupedMedia = groupPhotosBy(mediaStoreData, MediaItemSortMode.LastModified)
+            val groupedMedia = groupPhotosBy(mediaStoreData, MediaItemSortMode.DateTaken)
 
 			if (fileList.isEmpty()) {
 				Column (
@@ -133,7 +134,8 @@ fun LockedFolderView(navController: NavHostController) {
 	                    LockedFolderItem(
 	                        navController = navController,
 	                        item = item,
-	                        mainViewModel = MainActivity.mainViewModel
+	                        mainViewModel = MainActivity.mainViewModel,
+	                        groupedMedia = groupedMedia
 	                    )
 			        }
 			    }
@@ -196,6 +198,7 @@ fun LockedFolderItem(
     navController: NavHostController,
     item: MediaStoreData,
     mainViewModel: MainDataSharingModel,
+    groupedMedia: List<MediaStoreData>
 ) {
     if (item.mimeType == null && item.type == MediaType.Section) {
         Row(
@@ -224,6 +227,7 @@ fun LockedFolderItem(
                 .combinedClickable(
                     onClick = {
                         mainViewModel.setSelectedMediaData(item)
+						mainViewModel.setGroupedMedia(groupedMedia)
                         navController.navigate(MultiScreenViewType.SingleHiddenPhotoVew.name)
                     },
 

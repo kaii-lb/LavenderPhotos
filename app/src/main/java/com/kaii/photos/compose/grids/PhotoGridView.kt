@@ -1,4 +1,4 @@
-package com.kaii.photos.compose
+package com.kaii.photos.compose.grids
 
 import android.content.res.Configuration
 import android.graphics.drawable.Drawable
@@ -56,6 +56,7 @@ import com.bumptech.glide.integration.compose.rememberGlidePreloadingData
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.kaii.photos.MainActivity
 import com.kaii.photos.R
+import com.kaii.photos.compose.CustomMaterialTheme
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.single_image_functions.ImageFunctions
@@ -152,7 +153,7 @@ fun DeviceMedia(
 	Box (
 		modifier = Modifier
 			.fillMaxSize(1f)
-			.background(CustomMaterialTheme.colorScheme.background)	
+			.background(CustomMaterialTheme.colorScheme.background)
 	) {	
 	    LazyVerticalGrid(
 	        columns = GridCells.Fixed(
@@ -282,6 +283,7 @@ fun MediaStoreItem(
 							}
 							ImageFunctions.LoadTrashedImage -> {
 								mainViewModel.setSelectedMediaData(item)
+								mainViewModel.setGroupedMedia(groupedMedia)
 								navController.navigate(MultiScreenViewType.SingleTrashedPhotoView.name)
 							}
 							else -> {

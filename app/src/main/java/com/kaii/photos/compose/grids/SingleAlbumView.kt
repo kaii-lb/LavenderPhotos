@@ -1,4 +1,4 @@
-package com.kaii.photos.compose
+package com.kaii.photos.compose.grids
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -38,6 +38,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavHostController
 import com.kaii.photos.MainActivity
 import com.kaii.photos.R
+import com.kaii.photos.compose.CustomMaterialTheme
+import com.kaii.photos.compose.DialogClickableItem
 import com.kaii.photos.datastore
 import com.kaii.photos.datastore.removeFromAlbumsList
 import com.kaii.photos.helpers.MediaItemSortMode

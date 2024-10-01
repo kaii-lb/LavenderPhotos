@@ -99,18 +99,18 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.kaii.photos.compose.AboutPage
-import com.kaii.photos.compose.AlbumsGridView
+import com.kaii.photos.compose.grids.AlbumsGridView
 import com.kaii.photos.compose.CustomMaterialTheme
 import com.kaii.photos.compose.DialogClickableItem
 import com.kaii.photos.compose.LockedFolderEntryView
-import com.kaii.photos.compose.LockedFolderView
-import com.kaii.photos.compose.PhotoGrid
-import com.kaii.photos.compose.SearchPage
-import com.kaii.photos.compose.SingleAlbumView
-import com.kaii.photos.compose.SingleHiddenPhotoView
-import com.kaii.photos.compose.SinglePhotoView
-import com.kaii.photos.compose.SingleTrashedPhotoView
-import com.kaii.photos.compose.TrashedPhotoGridView
+import com.kaii.photos.compose.grids.LockedFolderView
+import com.kaii.photos.compose.grids.PhotoGrid
+import com.kaii.photos.compose.grids.SearchPage
+import com.kaii.photos.compose.grids.SingleAlbumView
+import com.kaii.photos.compose.single_photo.SingleHiddenPhotoView
+import com.kaii.photos.compose.single_photo.SinglePhotoView
+import com.kaii.photos.compose.single_photo.SingleTrashedPhotoView
+import com.kaii.photos.compose.grids.TrashedPhotoGridView
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.addToAlbumsList
 import com.kaii.photos.datastore.getUsername
@@ -264,7 +264,10 @@ class MainActivity : ComponentActivity() {
                 val currentView = remember { mutableStateOf(MainScreenViewType.PhotosGridView) }
 				val showDialog = remember { mutableStateOf(false) }
                 val windowInsetsController = window.insetsController
-                
+                val scale = remember { mutableFloatStateOf(1f) }
+                val rotation = remember { mutableFloatStateOf(0f) }
+                val offset = remember { mutableStateOf(Offset.Zero) }
+
                 NavHost (
                     navController = navControllerLocal,
                     startDestination = MultiScreenViewType.MainScreen.name,
@@ -300,16 +303,16 @@ class MainActivity : ComponentActivity() {
                         ) { width -> -width }
                     }
                 ) {
-   					windowInsetsController?.apply {
-						show(WindowInsetsCompat.Type.systemBars())
-						systemBarsBehavior =
-							WindowInsetsController.BEHAVIOR_DEFAULT
-					}
                     composable(MultiScreenViewType.MainScreen.name) {
        					enableEdgeToEdge(
 							navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
 							statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.surface.toArgb(), CustomMaterialTheme.colorScheme.surface.toArgb()) 
 						)
+						windowInsetsController?.apply {
+							show(WindowInsetsCompat.Type.systemBars())
+							systemBarsBehavior =
+								WindowInsetsController.BEHAVIOR_DEFAULT
+						}
 
                         Content(currentView, navControllerLocal, showDialog)
                     }
@@ -320,9 +323,12 @@ class MainActivity : ComponentActivity() {
 							statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.surface.copy(alpha = 0.2f).toArgb(),
 								CustomMaterialTheme.colorScheme.surface.copy(alpha = 0.2f).toArgb()) 
 						)
-						val scale = remember { mutableFloatStateOf(1f) }
-						val rotation = remember { mutableFloatStateOf(0f) }
-						val offset = remember { mutableStateOf(Offset.Zero) }
+						windowInsetsController?.apply {
+							show(WindowInsetsCompat.Type.systemBars())
+							systemBarsBehavior =
+								WindowInsetsController.BEHAVIOR_DEFAULT
+						}
+						
                     	SinglePhotoView(navControllerLocal, window, scale, rotation, offset)
                     }
 
@@ -331,6 +337,12 @@ class MainActivity : ComponentActivity() {
                             navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
                             statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.surface.toArgb(), CustomMaterialTheme.colorScheme.surface.toArgb()) 
                         )
+						windowInsetsController?.apply {
+							show(WindowInsetsCompat.Type.systemBars())
+							systemBarsBehavior =
+								WindowInsetsController.BEHAVIOR_DEFAULT
+						}
+						                        
                         SingleAlbumView(navControllerLocal)
                     }
 
@@ -339,8 +351,13 @@ class MainActivity : ComponentActivity() {
                             navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
                             statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.surface.toArgb(), CustomMaterialTheme.colorScheme.surface.toArgb()) 
                         )
-
-                        SingleTrashedPhotoView(navControllerLocal, window)
+						windowInsetsController?.apply {
+							show(WindowInsetsCompat.Type.systemBars())
+							systemBarsBehavior =
+								WindowInsetsController.BEHAVIOR_DEFAULT
+						}
+						
+                        SingleTrashedPhotoView(navControllerLocal, window, scale, rotation, offset)
                     }
 
                     composable(MultiScreenViewType.TrashedPhotoView.name) {
@@ -348,7 +365,12 @@ class MainActivity : ComponentActivity() {
                             navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
                             statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.surface.toArgb(), CustomMaterialTheme.colorScheme.surface.toArgb()) 
                         )
-
+						windowInsetsController?.apply {
+							show(WindowInsetsCompat.Type.systemBars())
+							systemBarsBehavior =
+								WindowInsetsController.BEHAVIOR_DEFAULT
+						}
+						
                         TrashedPhotoGridView(navControllerLocal)
                     }
 
@@ -357,7 +379,12 @@ class MainActivity : ComponentActivity() {
                             navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
                             statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.surface.toArgb(), CustomMaterialTheme.colorScheme.surface.toArgb())
                         )
-
+						windowInsetsController?.apply {
+							show(WindowInsetsCompat.Type.systemBars())
+							systemBarsBehavior =
+								WindowInsetsController.BEHAVIOR_DEFAULT
+						}
+						
                         LockedFolderView(navControllerLocal)
                     }
 
@@ -366,9 +393,14 @@ class MainActivity : ComponentActivity() {
                             navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
                             statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.surface.toArgb(), CustomMaterialTheme.colorScheme.surface.toArgb())
                         )
-
+						windowInsetsController?.apply {
+							show(WindowInsetsCompat.Type.systemBars())
+							systemBarsBehavior =
+								WindowInsetsController.BEHAVIOR_DEFAULT
+						}
+						
                         // TODO: should merge with SingleTrashedPhotoView???? idfk wait for future
-                        SingleHiddenPhotoView(navControllerLocal, window)
+                        SingleHiddenPhotoView(navControllerLocal, window, scale, rotation, offset)
                     }
 
                     composable(MultiScreenViewType.AboutAndUpdateView.name) {
@@ -377,6 +409,11 @@ class MainActivity : ComponentActivity() {
                             statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.background.toArgb(), CustomMaterialTheme.colorScheme.background.toArgb())
                         )
 
+						windowInsetsController?.apply {
+							show(WindowInsetsCompat.Type.systemBars())
+							systemBarsBehavior =
+								WindowInsetsController.BEHAVIOR_DEFAULT
+						}
                         AboutPage(navControllerLocal)
                     }
                 }

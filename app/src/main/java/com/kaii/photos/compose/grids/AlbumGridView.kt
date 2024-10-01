@@ -1,4 +1,4 @@
-package com.kaii.photos.compose
+package com.kaii.photos.compose.grids
 
 import android.graphics.drawable.Drawable
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -45,6 +45,7 @@ import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.integration.compose.rememberGlidePreloadingData
 import com.kaii.photos.MainActivity
 import com.kaii.photos.R
+import com.kaii.photos.compose.CustomMaterialTheme
 import com.kaii.photos.datastore
 import com.kaii.photos.datastore.addToAlbumsList
 import com.kaii.photos.datastore.getAlbumsList
