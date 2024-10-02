@@ -5,6 +5,7 @@ import android.graphics.drawable.Drawable
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -86,7 +87,17 @@ fun PhotoGrid(navController: NavHostController, operation: ImageFunctions, path:
 
 	val mainViewModel = MainActivity.mainViewModel
 
-	val folder = Files.walk(Path("/storage/emulated/0/$path")).iterator()
+	val context = LocalContext.current
+	val folder = try {
+		Files.walk(Path("/storage/emulated/0/$path")).iterator() 
+	} catch(e: Throwable) {
+		Log.e(TAG, e.toString())
+
+		// TODO: maybe wait a bit before exiting
+		Toast.makeText(context, "This folder doesn't exist", Toast.LENGTH_LONG).show()
+		navController.navigate(MultiScreenViewType.MainScreen.name)
+		return
+	}
 	var hasFiles = false
 	
 	while (folder.hasNext()) {

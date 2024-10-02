@@ -2,16 +2,12 @@ package com.kaii.photos.compose.single_photo
 
 import android.annotation.SuppressLint
 import android.view.Window
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,8 +25,6 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
@@ -38,11 +32,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -55,23 +46,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
@@ -81,6 +63,8 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavHostController
 import com.kaii.photos.MainActivity
 import com.kaii.photos.R
+import com.kaii.photos.compose.AnimatableText
+import com.kaii.photos.compose.AnimatableTextField
 import com.kaii.photos.compose.CustomMaterialTheme
 import com.kaii.photos.compose.DialogClickableItem
 import com.kaii.photos.compose.DialogExpandableItem
@@ -91,7 +75,6 @@ import com.kaii.photos.helpers.single_image_functions.operateOnImage
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.delay
 
 //private const val TAG = "SINGLE_PHOTO_VIEW"
 
@@ -481,13 +464,13 @@ private fun SinglePhotoInfoDialog(
 	groupedMedia: MutableState<List<MediaStoreData>>
 ) {
 	val context = LocalContext.current
-	var isEditingFileName by remember { mutableStateOf(false) }
+	val isEditingFileName = remember { mutableStateOf(false) }
 	
 	if (showDialog.value) {
 		Dialog(
 			onDismissRequest = {
 				showDialog.value = false
-				isEditingFileName = false
+				isEditingFileName.value = false
 			},
             properties = DialogProperties(
                 usePlatformDefaultWidth = false
@@ -495,8 +478,8 @@ private fun SinglePhotoInfoDialog(
 		) {
 			Column (
 				modifier = Modifier
-                    .fillMaxWidth(0.85f)
-                    .wrapContentHeight()
+					.fillMaxWidth(0.85f)
+					.wrapContentHeight()
 					.clip(RoundedCornerShape(32.dp))
 					.background(brightenColor(CustomMaterialTheme.colorScheme.surface, 0.1f))
 					.padding(4.dp),
@@ -508,7 +491,7 @@ private fun SinglePhotoInfoDialog(
 					IconButton(
 						onClick = {
 							showDialog.value = false
-							isEditingFileName = false
+							isEditingFileName.value = false
 						},
 						modifier = Modifier
 							.align(Alignment.CenterStart)
@@ -521,54 +504,13 @@ private fun SinglePhotoInfoDialog(
 						)
 					}
 
-					// move to own composable function taking in 2 params
-					AnimatedContent(
-						targetState = isEditingFileName,
-						label = "Dialog name animated content",
-						transitionSpec = {
-							(expandHorizontally (
-								animationSpec = tween(
-									durationMillis = 250
-								),
-								expandFrom = Alignment.Start
-							) + fadeIn(
-								animationSpec = tween(
-									durationMillis = 250,
-								)
-							)).togetherWith(
-								shrinkHorizontally (
-									animationSpec = tween(
-										durationMillis = 250
-									),
-									shrinkTowards = Alignment.End
-								) + fadeOut(
-									animationSpec = tween(
-										durationMillis = 250,
-									)
-								)
-							)
-						},
+					AnimatableText(
+						first = "Rename",
+						second = "More Options",
+						state = isEditingFileName.value,
 						modifier = Modifier
 							.align(Alignment.Center)
-					) { state ->
-						if (state) {
-							Text(
-								text = "Rename",
-								fontWeight = FontWeight.Bold,
-								fontSize = TextUnit(18f, TextUnitType.Sp),
-								modifier = Modifier
-									.align(Alignment.Center)
-							)
-						} else {
-							Text(
-								text = "More Options",
-								fontWeight = FontWeight.Bold,
-								fontSize = TextUnit(18f, TextUnitType.Sp),
-								modifier = Modifier
-									.align(Alignment.Center)
-							)
-						}
-					}
+					)
 				}
 
 				Column (
@@ -576,16 +518,14 @@ private fun SinglePhotoInfoDialog(
 						.padding(12.dp)
 						.wrapContentHeight()
 				) {
-					var fileName by remember { mutableStateOf(currentMediaItem.value.displayName ?: "Broken File") }
-					var saveFileName by remember { mutableStateOf(false) }
-					var waitForKB by remember { mutableStateOf(false) }
 					val originalFileName = currentMediaItem.value.displayName ?: "Broken File"
-					val focus = remember { FocusRequester() }
-					val focusManager = LocalFocusManager.current
-					var expanded = remember { mutableStateOf(false) }
+					val fileName = remember { mutableStateOf(originalFileName) }
+					val saveFileName = remember { mutableStateOf(false) }
 
-					LaunchedEffect(key1 = saveFileName) {
-						if (!saveFileName) {
+					val expanded = remember { mutableStateOf(false) }
+
+					LaunchedEffect(key1 = saveFileName.value) {
+						if (!saveFileName.value) {
 							return@LaunchedEffect
 						}
 
@@ -605,140 +545,40 @@ private fun SinglePhotoInfoDialog(
 						val newGroupedMedia = groupedMedia.value.toMutableList()
 						// set currentMediaItem to new one with new name
 						val newMedia = currentMediaItem.value.copy(
-							displayName = fileName,
-							absolutePath = path.replace(oldName, fileName)
+							displayName = fileName.value,
+							absolutePath = path.replace(oldName, fileName.value)
 						)
 
 						val index = groupedMedia.value.indexOf(currentMediaItem.value)
 						newGroupedMedia[index] = newMedia
 						groupedMedia.value = newGroupedMedia
 
-						saveFileName = false
+						saveFileName.value = false
 					}
 
-					AnimatedContent (
-						targetState = isEditingFileName,
-						label = "Single File Dialog Animated Content",
-						transitionSpec = {
-							(expandHorizontally (
-								animationSpec = tween(
-									durationMillis = 250
-								),
-								expandFrom = Alignment.Start
-							) + fadeIn(
-								animationSpec = tween(
-									durationMillis = 250,
-								)
-							)).togetherWith(
-								shrinkHorizontally (
-									animationSpec = tween(
-										durationMillis = 250
-									),
-									shrinkTowards = Alignment.End
-								) + fadeOut(
-									animationSpec = tween(
-										durationMillis = 250,
-									)
-								)
-							)
-						}
-					) { state ->
-						if (state) {
-							TextField(
-								value = fileName,
-								onValueChange = {
-									fileName = it
-								},
-								keyboardActions = KeyboardActions(
-									onDone = {
-										focusManager.clearFocus()
-										saveFileName = true	
-										waitForKB = true	
-									}
-								),
-								textStyle = LocalTextStyle.current.copy(
-									fontSize = TextUnit(16f, TextUnitType.Sp),
-									textAlign = TextAlign.Start,
-									color = CustomMaterialTheme.colorScheme.onSurface,
-								),
-								keyboardOptions = KeyboardOptions(
-									capitalization = KeyboardCapitalization.None,
-									autoCorrectEnabled = false,
-									keyboardType = KeyboardType.Ascii,
-									imeAction = ImeAction.Done,
-									showKeyboardOnFocus = true
-								),
-								trailingIcon = {
-									IconButton(
-										onClick = {
-											focusManager.clearFocus()
-											saveFileName = false
-											waitForKB = true
-										}
-									) {
-										Icon(
-											painter = painterResource(id = R.drawable.close),
-											contentDescription = "Cancel filename change button"
-										)
-									}
-								},
-								shape = RoundedCornerShape(16.dp),
-								colors = TextFieldDefaults.colors().copy(
-									unfocusedContainerColor = CustomMaterialTheme.colorScheme.surfaceVariant,
-									unfocusedIndicatorColor = Color.Transparent,
-									unfocusedTextColor = CustomMaterialTheme.colorScheme.onSurface,
-									focusedIndicatorColor = Color.Transparent,
-									focusedTextColor = CustomMaterialTheme.colorScheme.onSurface,
-									focusedContainerColor = CustomMaterialTheme.colorScheme.surfaceVariant
-								),
-								modifier = Modifier
-									.focusRequester(focus)
-									.fillMaxWidth(1f)
-							)
-
-							LaunchedEffect(Unit) {
-								delay(500)
-								focus.requestFocus()
-								
-							}
-
-							LaunchedEffect(waitForKB) {
-								if (!waitForKB) return@LaunchedEffect
-								fileName = originalFileName
-								delay(200)
-								isEditingFileName = false								
-								waitForKB = false
-							}
-						} else {
-							Column (
-								modifier = Modifier
-									.wrapContentHeight()
-							) {
-								DialogClickableItem(
-									text = "Rename",
-									iconResId = R.drawable.edit,
-									position = RowPosition.Top,
-								) {
-									isEditingFileName = true
-									expanded.value = false
-								}
-							}
-						}
+					AnimatableTextField(
+						state = isEditingFileName,
+						string = fileName,
+						doAction = saveFileName,
+						extraAction = expanded,
+						rowPosition = RowPosition.Top
+					) {
+						fileName.value = originalFileName
 					}
 
 					// should add a way to automatically calculate height needed for this
-					var addedHeight by remember { mutableStateOf(100.dp) }					
+					val addedHeight by remember { mutableStateOf(100.dp) }
                     val height by androidx.compose.animation.core.animateDpAsState(
-	                    targetValue = if (!isEditingFileName && expanded.value) {
+	                    targetValue = if (!isEditingFileName.value && expanded.value) {
 	                    	124.dp + addedHeight
-	                    } else if (!isEditingFileName && !expanded.value) {
+	                    } else if (!isEditingFileName.value && !expanded.value) {
 	                    	124.dp
 	                    } else {
 	                    	0.dp
 	                    },
 	                    label = "height of other options",
 	                    animationSpec = tween(
-	                    	durationMillis = if (!isEditingFileName && expanded.value) 250 else 500
+	                    	durationMillis = if (!isEditingFileName.value && expanded.value) 250 else 500
 	                    )					
 					)
 

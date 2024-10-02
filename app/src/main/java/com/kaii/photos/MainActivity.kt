@@ -11,7 +11,6 @@ import android.util.Log
 import android.view.WindowInsetsController
 import android.widget.Toast
 import androidx.activity.ComponentActivity
-import androidx.activity.OnBackPressedCallback
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -150,6 +149,8 @@ class MainActivity : ComponentActivity() {
 
         lateinit var applicationDatabase: MediaDatabase
         lateinit var mainViewModel: MainDataSharingModel
+
+        lateinit var startForResult: ActivityResultLauncher<Intent>
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -177,6 +178,24 @@ class MainActivity : ComponentActivity() {
 		    	failedList.add(perm)
 		    }
 		}
+
+		startForResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                result.data?.data?.also { uri ->
+                    val path = uri.path ?: ""
+
+                    Log.d(TAG, "the path is $path")
+                    val runnable = Runnable {
+                        runBlocking {
+                            applicationContext.datastore.addToAlbumsList(path.replace("/tree/primary:", ""))
+                        }
+                    }
+                    Thread(runnable).start()
+                }
+            } else {
+                Toast.makeText(applicationContext, "Failed to add album", Toast.LENGTH_LONG).show()
+            }
+        }		
 
 		if (!Environment.isExternalStorageManager()) {
 			val intent = Intent(android.provider.Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
@@ -852,17 +871,6 @@ class MainActivity : ComponentActivity() {
                             changeName = false
                         }
 
-                        onBackPressedDispatcher.addCallback(
-                            object : OnBackPressedCallback(true) {
-                                override fun handleOnBackPressed() {
-                                	println("AAAAAAAAAAAAAAAAAAAAAAAAaa")
-                                    focusManager.clearFocus()
-                                    changeName = false
-                                    username = originalName
-                                }
-                            }
-                        )
-
                         TextField (
                             value = username,
                             onValueChange = { newVal ->
@@ -943,23 +951,7 @@ class MainActivity : ComponentActivity() {
                                 val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
                                     putExtra(DocumentsContract.EXTRA_INITIAL_URI, "".toUri())
                                 }
-                                val startForResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-                                    if (result.resultCode == RESULT_OK) {
-                                        result.data?.data?.also { uri ->
-                                            val path = uri.path ?: ""
-
-                                            Log.d(TAG, "the path is $path")
-                                            val runnable = Runnable {
-                                                runBlocking {
-                                                    applicationContext.datastore.addToAlbumsList(path.replace("/tree/primary:", ""))
-                                                }
-                                            }
-                                            Thread(runnable).start()
-                                        }
-                                    } else {
-                                        Toast.makeText(context, "Failed to add album", Toast.LENGTH_LONG).show()
-                                    }
-                                }
+                                
                                 startForResult.launch(intent)
 
                                 val runnable = Runnable {
