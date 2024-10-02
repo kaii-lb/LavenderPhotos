@@ -42,6 +42,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -55,6 +56,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -65,11 +67,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -801,7 +806,6 @@ class MainActivity : ComponentActivity() {
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Start
                     ) {
-                        // TODO: update by TextField
                         var username by remember {
                             mutableStateOf(
                                 runBlocking {
@@ -825,19 +829,31 @@ class MainActivity : ComponentActivity() {
 
                         Spacer(modifier = Modifier.width(8.dp))
 
-//                        Text (
-//                            text = username,
-//                            fontSize = TextUnit(16f, TextUnitType.Sp),
-//                            textAlign = TextAlign.Start,
-//                        )
+                        val focus = remember { FocusRequester() }
+                        val focusManager = LocalFocusManager.current
+                        var changeName by remember { mutableStateOf(false) }
+                        val originalName = runBlocking {
+           	 	           context.datastore.getUsername()
+                        }
+
+                        LaunchedEffect(key1 = changeName) {
+                            focusManager.clearFocus()
+
+                            if (!changeName) {
+                                username = originalName
+                                return@LaunchedEffect
+                            }
+
+                            lifecycleScope.launch {
+                                context.datastore.setUsername(username)
+                            }
+                            changeName = false
+                        }
 
                         TextField (
                             value = username,
                             onValueChange = { newVal ->
                                 username = newVal
-                                lifecycleScope.launch {
-                                    context.datastore.setUsername(newVal)
-                                }
                             },
                             textStyle = LocalTextStyle.current.copy(
                                 fontSize = TextUnit(16f, TextUnitType.Sp),
@@ -849,9 +865,11 @@ class MainActivity : ComponentActivity() {
                                 unfocusedContainerColor = Color.Transparent,
                                 unfocusedIndicatorColor = Color.Transparent,
                                 unfocusedTextColor = CustomMaterialTheme.colorScheme.onSurface,
+                                unfocusedTrailingIconColor = Color.Transparent,
                                 focusedIndicatorColor = Color.Transparent,
                                 focusedTextColor = CustomMaterialTheme.colorScheme.onSurface,
-                                focusedContainerColor = Color.Transparent
+                                focusedContainerColor = CustomMaterialTheme.colorScheme.surfaceVariant,
+                                focusedTrailingIconColor = CustomMaterialTheme.colorScheme.onSurface,
                             ),
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(
@@ -860,7 +878,31 @@ class MainActivity : ComponentActivity() {
                                 keyboardType = KeyboardType.Ascii,
                                 imeAction = ImeAction.Done,
                                 showKeyboardOnFocus = true
-                            )
+                            ),
+                            keyboardActions = KeyboardActions(
+                                onDone = {
+                                	focusManager.clearFocus()
+                                    changeName = true
+                                }
+                            ),
+							trailingIcon = {
+								Icon(
+									painter = painterResource(id = R.drawable.close),
+									contentDescription = "Cancel filename change button",
+									modifier = Modifier
+										.clickable (
+									        indication = null,
+									        interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },												
+										) {
+											focusManager.clearFocus()
+											changeName = false
+											username = originalName
+										}
+								)
+							},                            
+                            shape = RoundedCornerShape(1000.dp),
+                            modifier = Modifier
+                                .focusRequester(focus)
                         )
                     }
 
@@ -873,9 +915,7 @@ class MainActivity : ComponentActivity() {
                             text = "Select",
                             iconResId = R.drawable.check_item,
                             position = RowPosition.Top,
-                        ) {
-                        	//showDialog.value = false
-                        }
+                        )
                         
                         if (currentView.value == MainScreenViewType.AlbumsGridView) {
                             DialogClickableItem(
@@ -920,17 +960,13 @@ class MainActivity : ComponentActivity() {
                             text = "Data & Backup",
                             iconResId = R.drawable.data,
                             position = RowPosition.Middle,
-                        ) {
-                        	//showDialog.value = false
-                        }
+                        )
 
                         DialogClickableItem(
                             text = "Settings",
                             iconResId = R.drawable.settings,
                             position = RowPosition.Middle,
-                        ) {
-                        	//showDialog.value = false
-                        }
+                        )
 
                         DialogClickableItem (
                             text = "About & Updates",

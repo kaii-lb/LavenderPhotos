@@ -2,26 +2,14 @@ package com.kaii.photos.compose.single_photo
 
 import android.annotation.SuppressLint
 import android.view.Window
-import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.EaseInBounce
-import androidx.compose.animation.core.EaseOutBounce
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandIn
 import androidx.compose.animation.expandHorizontally
-import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkOut
 import androidx.compose.animation.shrinkHorizontally
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
@@ -33,10 +21,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -48,18 +36,19 @@ import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -70,27 +59,29 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
-import androidx.compose.ui.window.DialogWindowProvider
 import androidx.navigation.NavHostController
 import com.kaii.photos.MainActivity
 import com.kaii.photos.R
 import com.kaii.photos.compose.CustomMaterialTheme
 import com.kaii.photos.compose.DialogClickableItem
+import com.kaii.photos.compose.DialogExpandableItem
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.brightenColor
 import com.kaii.photos.helpers.single_image_functions.ImageFunctions
@@ -98,6 +89,7 @@ import com.kaii.photos.helpers.single_image_functions.operateOnImage
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 
 //private const val TAG = "SINGLE_PHOTO_VIEW"
 
@@ -125,7 +117,7 @@ fun SinglePhotoView(
 	val systemBarsShown = remember { mutableStateOf(true) }
 	val appBarsVisible = remember { mutableStateOf(true) }
 	val state = rememberLazyListState()
-	val currentMediaItem by remember { derivedStateOf {
+	val currentMediaItem = remember { derivedStateOf {
 		val index = state.layoutInfo.visibleItemsInfo.firstOrNull()?.index ?: 0
 		if (index != groupedMedia.value.size) {
 			groupedMedia.value[index]
@@ -138,19 +130,19 @@ fun SinglePhotoView(
 	val showActionDialog = remember { mutableStateOf(false) }
 	val showInfoDialog = remember { mutableStateOf(false) }
 	val neededDialogFunction = remember { mutableStateOf(ImageFunctions.MoveToLockedFolder) }
-	val neededDialogTitle = remember { mutableStateOf("Move this ${currentMediaItem.type.name} to Locked Folder?") }
+	val neededDialogTitle = remember { mutableStateOf("Move this ${currentMediaItem.value.type.name} to Locked Folder?") }
 	val neededDialogButtonLabel = remember { mutableStateOf("Move") }
 
 	Scaffold (
 		topBar =  { TopBar(
 			navController,
-			currentMediaItem,
+			currentMediaItem.value,
 			appBarsVisible.value,
 			showInfoDialog
 		) },
 		bottomBar = { BottomBar(
 			appBarsVisible.value,
-			currentMediaItem,
+			currentMediaItem.value,
 			showActionDialog,
 			neededDialogTitle,
 			neededDialogButtonLabel,
@@ -163,7 +155,7 @@ fun SinglePhotoView(
 		// material theme doesn't seem to apply just above????
 		SinglePhotoConfirmationDialog(
 			showActionDialog,
-			currentMediaItem,
+			currentMediaItem.value,
 			groupedMedia,
 			neededDialogTitle,
 			neededDialogButtonLabel,
@@ -482,10 +474,9 @@ private fun SinglePhotoConfirmationDialog(
 @Composable
 private fun SinglePhotoInfoDialog(
 	showDialog: MutableState<Boolean>,
-	currentMediaItem: MediaStoreData
+	currentMediaItem: State<MediaStoreData>
 ) {
 	val context = LocalContext.current
-//		val coroutineScope = rememberCoroutineScope()
 	var isEditingFileName by remember { mutableStateOf(false) }
 	
 	if (showDialog.value) {
@@ -574,17 +565,31 @@ private fun SinglePhotoInfoDialog(
 						.padding(12.dp)
 						.wrapContentHeight()
 				) {
-					var fileName by remember { mutableStateOf(currentMediaItem.displayName ?: "Broken File") }
+					var fileName by remember { mutableStateOf(currentMediaItem.value.displayName ?: "Broken File") }
 					var saveFileName by remember { mutableStateOf(false) }
-					val originalFileName = fileName
-
+					var waitForKB by remember { mutableStateOf(false) }
+					val originalFileName = currentMediaItem.value.displayName ?: "Broken File"
+					val focus = remember { FocusRequester() }
+					val focusManager = LocalFocusManager.current
+					
 					LaunchedEffect(key1 = saveFileName) {
 						if (!saveFileName) {
-							fileName = originalFileName
 							return@LaunchedEffect
 						}
 
-						Toast.makeText(context, "Set file name to $fileName", Toast.LENGTH_SHORT).show()
+						operateOnImage(
+							currentMediaItem.value.absolutePath,
+							currentMediaItem.value.id,
+							ImageFunctions.RenameImage,
+							context,
+							mapOf(
+								Pair("old_name", currentMediaItem.value.displayName ?: "Broken File"),
+								Pair("new_name", fileName)
+							)
+						)
+
+						// set currentMediaItem to new one with new name
+						
 						saveFileName = false
 					}
 
@@ -623,9 +628,15 @@ private fun SinglePhotoInfoDialog(
 								},
 								keyboardActions = KeyboardActions(
 									onDone = {
-										isEditingFileName = false
-										saveFileName = true
+										focusManager.clearFocus()
+										saveFileName = true	
+										waitForKB = true	
 									}
+								),
+								textStyle = LocalTextStyle.current.copy(
+									fontSize = TextUnit(16f, TextUnitType.Sp),
+									textAlign = TextAlign.Start,
+									color = CustomMaterialTheme.colorScheme.onSurface,
 								),
 								keyboardOptions = KeyboardOptions(
 									capitalization = KeyboardCapitalization.None,
@@ -637,8 +648,9 @@ private fun SinglePhotoInfoDialog(
 								trailingIcon = {
 									IconButton(
 										onClick = {
-											isEditingFileName = false
+											focusManager.clearFocus()
 											saveFileName = false
+											waitForKB = true
 										}
 									) {
 										Icon(
@@ -647,8 +659,32 @@ private fun SinglePhotoInfoDialog(
 										)
 									}
 								},
-								shape = RoundedCornerShape(24.dp)
+								shape = RoundedCornerShape(24.dp),
+								colors = TextFieldDefaults.colors().copy(
+									unfocusedContainerColor = CustomMaterialTheme.colorScheme.surfaceVariant,
+									unfocusedIndicatorColor = Color.Transparent,
+									unfocusedTextColor = CustomMaterialTheme.colorScheme.onSurface,
+									focusedIndicatorColor = Color.Transparent,
+									focusedTextColor = CustomMaterialTheme.colorScheme.onSurface,
+									focusedContainerColor = CustomMaterialTheme.colorScheme.surfaceVariant
+								),
+								modifier = Modifier
+									.focusRequester(focus)
 							)
+
+							LaunchedEffect(Unit) {
+								delay(500)
+								focus.requestFocus()
+								
+							}
+
+							LaunchedEffect(waitForKB) {
+								if (!waitForKB) return@LaunchedEffect
+								fileName = originalFileName
+								delay(400)
+								isEditingFileName = false								
+								waitForKB = false
+							}
 						} else {
 							Column (
 								modifier = Modifier
@@ -667,7 +703,7 @@ private fun SinglePhotoInfoDialog(
 			
 					val height by androidx.compose.animation.core.animateDpAsState(
 						targetValue = if (!isEditingFileName) 124.dp else 0.dp,
-						label = "akjsdhajskd",
+						label = "height of other options",
 						animationSpec = tween(
 							durationMillis = 500
 						)
@@ -682,24 +718,30 @@ private fun SinglePhotoInfoDialog(
 							text = "Copy to Album",
 							iconResId = R.drawable.edit,
 							position = RowPosition.Middle,
-						) {
-
-						}
+						)
 
 						DialogClickableItem (
 							text = "Move to Album",
 							iconResId = R.drawable.delete,
 							position = RowPosition.Middle,
-						) {
+						)
 
-						}
-
-						DialogClickableItem (
+						DialogExpandableItem (
 							text = "More Info",
 							iconResId = R.drawable.info,
 							position = RowPosition.Bottom,
 						) {
-
+							Column (
+								modifier = Modifier
+									.wrapContentHeight()
+							) {
+								Text (text = "this is a text :D", color = CustomMaterialTheme.colorScheme.onSurface)
+								Text (text = "this is a text :D", color = CustomMaterialTheme.colorScheme.onSurface)
+								Text (text = "this is a text :D", color = CustomMaterialTheme.colorScheme.onSurface)
+								Text (text = "this is a text :D", color = CustomMaterialTheme.colorScheme.onSurface)
+								Text (text = "this is a text :D", color = CustomMaterialTheme.colorScheme.onSurface)
+								Text (text = "this is a text :D", color = CustomMaterialTheme.colorScheme.onSurface)
+							}
 						}
 					}
 				}

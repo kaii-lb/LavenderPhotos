@@ -3,6 +3,7 @@ package com.kaii.photos.helpers.single_image_functions
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import android.widget.Toast
 import androidx.core.net.toUri
 import com.kaii.photos.MainActivity
 import com.kaii.photos.database.entities.MediaEntity
@@ -21,7 +22,6 @@ import java.nio.file.attribute.FileTime
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.io.path.Path
 import kotlin.io.path.setAttribute
-import kotlin.jvm.Throws
 
 const val TAG = "IMAGE_FUNCTIONS"
 
@@ -36,10 +36,17 @@ enum class ImageFunctions {
     LoadTrashedImage,
     PermaDeleteImage,
 	SearchImage,
-	MoveOutOfLockedFolder
+	MoveOutOfLockedFolder,
+	RenameImage
 }
 
-fun operateOnImage(absolutePath: String, id: Long, operation: ImageFunctions, context: Context) {
+fun operateOnImage(
+	absolutePath: String,
+	id: Long,
+	operation: ImageFunctions,
+	context: Context,
+	extraData: Map<String, Any>? = null
+) {
     when (operation) {
         ImageFunctions.TrashImage -> {
             trashPhoto(absolutePath, id, context)
@@ -58,6 +65,16 @@ fun operateOnImage(absolutePath: String, id: Long, operation: ImageFunctions, co
 		}
 		ImageFunctions.MoveOutOfLockedFolder -> {
 			moveOutOfLockedFolder(absolutePath, context)
+		}
+		ImageFunctions.RenameImage -> {
+			if (extraData == null) throw Exception("extra data should not be null on renaming an image.")
+
+			renameImage(
+				imagePath = absolutePath,
+				imageName = extraData["old_name"].toString(),
+				newName = extraData["new_name"].toString(),
+				context
+			)
 		}
 
         else -> {
@@ -217,3 +234,18 @@ private fun moveOutOfLockedFolder(path: String, context: Context) {
 	fileToBeRevived.delete()
 }
 
+private fun renameImage(imagePath: String, imageName: String, newName: String, context: Context) {
+	val dir = imagePath.replace(imageName, "")
+	val original = File(dir, imageName)
+	val new = File(dir, newName)
+
+	// if somehow the directory that the file is in stopped existing while renaming
+	if (!File(dir).exists()) {
+		File(dir).mkdirs()
+	}
+
+	val success = original.renameTo(new)
+	if (!success) {
+		Toast.makeText(context, "Failed to rename file", Toast.LENGTH_LONG).show()
+	}
+}
