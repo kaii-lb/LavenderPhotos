@@ -4,19 +4,19 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.os.Environment
 import android.os.Bundle
+import android.os.Environment
 import android.provider.DocumentsContract
 import android.util.Log
-import androidx.core.view.WindowInsetsCompat
 import android.view.WindowInsetsController
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.tween
@@ -69,6 +69,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
@@ -88,6 +89,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
+import androidx.core.view.WindowInsetsCompat
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
@@ -104,18 +106,18 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.kaii.photos.compose.AboutPage
-import com.kaii.photos.compose.grids.AlbumsGridView
 import com.kaii.photos.compose.CustomMaterialTheme
 import com.kaii.photos.compose.DialogClickableItem
 import com.kaii.photos.compose.LockedFolderEntryView
+import com.kaii.photos.compose.grids.AlbumsGridView
 import com.kaii.photos.compose.grids.LockedFolderView
 import com.kaii.photos.compose.grids.PhotoGrid
 import com.kaii.photos.compose.grids.SearchPage
 import com.kaii.photos.compose.grids.SingleAlbumView
+import com.kaii.photos.compose.grids.TrashedPhotoGridView
 import com.kaii.photos.compose.single_photo.SingleHiddenPhotoView
 import com.kaii.photos.compose.single_photo.SinglePhotoView
 import com.kaii.photos.compose.single_photo.SingleTrashedPhotoView
-import com.kaii.photos.compose.grids.TrashedPhotoGridView
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.addToAlbumsList
 import com.kaii.photos.datastore.getUsername
@@ -806,11 +808,12 @@ class MainActivity : ComponentActivity() {
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Start
                     ) {
+                        val originalName = runBlocking {
+                            context.datastore.getUsername()
+                        }
                         var username by remember {
                             mutableStateOf(
-                                runBlocking {
-                                    context.datastore.getUsername()
-                                }
+                                originalName
                             )
                         }
 
@@ -832,9 +835,8 @@ class MainActivity : ComponentActivity() {
                         val focus = remember { FocusRequester() }
                         val focusManager = LocalFocusManager.current
                         var changeName by remember { mutableStateOf(false) }
-                        val originalName = runBlocking {
-           	 	           context.datastore.getUsername()
-                        }
+                        var backPressedCallbackEnabled by remember { mutableStateOf(false) }
+
 
                         LaunchedEffect(key1 = changeName) {
                             focusManager.clearFocus()
@@ -849,6 +851,17 @@ class MainActivity : ComponentActivity() {
                             }
                             changeName = false
                         }
+
+                        onBackPressedDispatcher.addCallback(
+                            object : OnBackPressedCallback(true) {
+                                override fun handleOnBackPressed() {
+                                	println("AAAAAAAAAAAAAAAAAAAAAAAAaa")
+                                    focusManager.clearFocus()
+                                    changeName = false
+                                    username = originalName
+                                }
+                            }
+                        )
 
                         TextField (
                             value = username,
@@ -883,7 +896,7 @@ class MainActivity : ComponentActivity() {
                                 onDone = {
                                 	focusManager.clearFocus()
                                     changeName = true
-                                }
+                                },
                             ),
 							trailingIcon = {
 								Icon(
@@ -903,6 +916,9 @@ class MainActivity : ComponentActivity() {
                             shape = RoundedCornerShape(1000.dp),
                             modifier = Modifier
                                 .focusRequester(focus)
+                                .onFocusChanged {
+                                    backPressedCallbackEnabled = it.isFocused
+                                }
                         )
                     }
 

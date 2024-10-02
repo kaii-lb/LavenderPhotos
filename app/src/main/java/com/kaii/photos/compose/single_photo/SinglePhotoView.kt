@@ -59,6 +59,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
@@ -76,6 +77,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavHostController
 import com.kaii.photos.MainActivity
 import com.kaii.photos.R
@@ -166,7 +168,8 @@ fun SinglePhotoView(
 	
 		SinglePhotoInfoDialog(
 			showInfoDialog,
-			currentMediaItem
+			currentMediaItem,
+			groupedMedia
 		)
 
 		
@@ -474,7 +477,8 @@ private fun SinglePhotoConfirmationDialog(
 @Composable
 private fun SinglePhotoInfoDialog(
 	showDialog: MutableState<Boolean>,
-	currentMediaItem: State<MediaStoreData>
+	currentMediaItem: State<MediaStoreData>,
+	groupedMedia: MutableState<List<MediaStoreData>>
 ) {
 	val context = LocalContext.current
 	var isEditingFileName by remember { mutableStateOf(false) }
@@ -483,13 +487,19 @@ private fun SinglePhotoInfoDialog(
 		Dialog(
 			onDismissRequest = {
 				showDialog.value = false
+				isEditingFileName = false
 			},
+            properties = DialogProperties(
+                usePlatformDefaultWidth = false
+            ),
 		) {
 			Column (
 				modifier = Modifier
+                    .fillMaxWidth(0.85f)
+                    .wrapContentHeight()
 					.clip(RoundedCornerShape(32.dp))
 					.background(brightenColor(CustomMaterialTheme.colorScheme.surface, 0.1f))
-					.padding(8.dp)
+					.padding(4.dp),
 			) {
 				Box (
 					modifier = Modifier
@@ -511,6 +521,7 @@ private fun SinglePhotoInfoDialog(
 						)
 					}
 
+					// move to own composable function taking in 2 params
 					AnimatedContent(
 						targetState = isEditingFileName,
 						label = "Dialog name animated content",
@@ -571,25 +582,37 @@ private fun SinglePhotoInfoDialog(
 					val originalFileName = currentMediaItem.value.displayName ?: "Broken File"
 					val focus = remember { FocusRequester() }
 					val focusManager = LocalFocusManager.current
-					
+					var expanded = remember { mutableStateOf(false) }
+
 					LaunchedEffect(key1 = saveFileName) {
 						if (!saveFileName) {
 							return@LaunchedEffect
 						}
 
+						val oldName = currentMediaItem.value.displayName ?: "Broken File"
+						val path = currentMediaItem.value.absolutePath
 						operateOnImage(
-							currentMediaItem.value.absolutePath,
+							path,
 							currentMediaItem.value.id,
 							ImageFunctions.RenameImage,
 							context,
 							mapOf(
-								Pair("old_name", currentMediaItem.value.displayName ?: "Broken File"),
+								Pair("old_name", oldName),
 								Pair("new_name", fileName)
 							)
 						)
 
+						val newGroupedMedia = groupedMedia.value.toMutableList()
 						// set currentMediaItem to new one with new name
-						
+						val newMedia = currentMediaItem.value.copy(
+							displayName = fileName,
+							absolutePath = path.replace(oldName, fileName)
+						)
+
+						val index = groupedMedia.value.indexOf(currentMediaItem.value)
+						newGroupedMedia[index] = newMedia
+						groupedMedia.value = newGroupedMedia
+
 						saveFileName = false
 					}
 
@@ -659,7 +682,7 @@ private fun SinglePhotoInfoDialog(
 										)
 									}
 								},
-								shape = RoundedCornerShape(24.dp),
+								shape = RoundedCornerShape(16.dp),
 								colors = TextFieldDefaults.colors().copy(
 									unfocusedContainerColor = CustomMaterialTheme.colorScheme.surfaceVariant,
 									unfocusedIndicatorColor = Color.Transparent,
@@ -670,6 +693,7 @@ private fun SinglePhotoInfoDialog(
 								),
 								modifier = Modifier
 									.focusRequester(focus)
+									.fillMaxWidth(1f)
 							)
 
 							LaunchedEffect(Unit) {
@@ -681,7 +705,7 @@ private fun SinglePhotoInfoDialog(
 							LaunchedEffect(waitForKB) {
 								if (!waitForKB) return@LaunchedEffect
 								fileName = originalFileName
-								delay(400)
+								delay(200)
 								isEditingFileName = false								
 								waitForKB = false
 							}
@@ -696,17 +720,26 @@ private fun SinglePhotoInfoDialog(
 									position = RowPosition.Top,
 								) {
 									isEditingFileName = true
+									expanded.value = false
 								}
 							}
 						}
 					}
-			
-					val height by androidx.compose.animation.core.animateDpAsState(
-						targetValue = if (!isEditingFileName) 124.dp else 0.dp,
-						label = "height of other options",
-						animationSpec = tween(
-							durationMillis = 500
-						)
+
+					// should add a way to automatically calculate height needed for this
+					var addedHeight by remember { mutableStateOf(100.dp) }					
+                    val height by androidx.compose.animation.core.animateDpAsState(
+	                    targetValue = if (!isEditingFileName && expanded.value) {
+	                    	124.dp + addedHeight
+	                    } else if (!isEditingFileName && !expanded.value) {
+	                    	124.dp
+	                    } else {
+	                    	0.dp
+	                    },
+	                    label = "height of other options",
+	                    animationSpec = tween(
+	                    	durationMillis = if (!isEditingFileName && expanded.value) 250 else 500
+	                    )					
 					)
 
 					Column (
@@ -724,13 +757,14 @@ private fun SinglePhotoInfoDialog(
 							text = "Move to Album",
 							iconResId = R.drawable.delete,
 							position = RowPosition.Middle,
-						)
+						)						
 
 						DialogExpandableItem (
 							text = "More Info",
 							iconResId = R.drawable.info,
 							position = RowPosition.Bottom,
-						) {
+							expanded = expanded
+						) { 
 							Column (
 								modifier = Modifier
 									.wrapContentHeight()

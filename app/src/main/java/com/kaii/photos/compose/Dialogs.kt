@@ -1,6 +1,12 @@
 package com.kaii.photos.compose
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,8 +24,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -34,6 +42,7 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.darkenColor
+import kotlinx.coroutines.delay
 
 @Composable
 fun DialogClickableItem(text: String, iconResId: Int, position: RowPosition, action: (() -> Unit)? = null) {
@@ -41,7 +50,7 @@ fun DialogClickableItem(text: String, iconResId: Int, position: RowPosition, act
 
 	val (shape, spacerHeight) = getDefaultShapeSpacerForPosition(position)
 
-	val modifier = if (action != null) Modifier.clickable { action() } else Modifier
+	val clickableModifier = if (action != null) Modifier.clickable { action() } else Modifier
 
 	Row (
 		modifier = Modifier
@@ -50,7 +59,7 @@ fun DialogClickableItem(text: String, iconResId: Int, position: RowPosition, act
 			.clip(shape)
 			.background(CustomMaterialTheme.colorScheme.surfaceVariant)
 			.wrapContentHeight(align = Alignment.CenterVertically)
-			.then(modifier)
+			.then(clickableModifier)
 			.padding(8.dp),
 		verticalAlignment = Alignment.CenterVertically,
 		horizontalArrangement = Arrangement.Start
@@ -78,15 +87,15 @@ fun DialogClickableItem(text: String, iconResId: Int, position: RowPosition, act
 	)
 }
 
-/** Do not use background colors for your composable */
+/** Do not use background colors for your composable
+currently you need to calculate dp height of your composable manually */
 @Composable
-fun DialogExpandableItem(text: String, iconResId: Int, position: RowPosition, content: @Composable () -> Unit) {
+fun DialogExpandableItem(text: String, iconResId: Int, position: RowPosition, expanded: MutableState<Boolean>, content: @Composable () -> Unit) {
 	val buttonHeight = 40.dp
 
 	val (firstShape, firstSpacerHeight) = getDefaultShapeSpacerForPosition(position)
 	var shape by remember { mutableStateOf(firstShape) }
 	var spacerHeight by remember { mutableStateOf(firstSpacerHeight) }
-	var expanded by remember { mutableStateOf(false) }
 
 	Row (
 		modifier = Modifier
@@ -96,18 +105,7 @@ fun DialogExpandableItem(text: String, iconResId: Int, position: RowPosition, co
 			.background(CustomMaterialTheme.colorScheme.surfaceVariant)
 			.wrapContentHeight(align = Alignment.CenterVertically)
 			.clickable {
-				if (!expanded) {
-					expanded = true
-					shape = firstShape.copy(
-						bottomEnd = CornerSize(0.dp),
-						bottomStart = CornerSize(0.dp)
-					)
-					spacerHeight = 0.dp
-				} else {
-					expanded = false
-					shape = firstShape
-					spacerHeight = firstSpacerHeight
-				}
+				expanded.value = !expanded.value
 			}
 			.padding(8.dp),
 		verticalAlignment = Alignment.CenterVertically,
@@ -129,30 +127,52 @@ fun DialogExpandableItem(text: String, iconResId: Int, position: RowPosition, co
 		)
 	}
 
-	var neededHeight by remember { mutableStateOf(100.dp) }
-	val height by androidx.compose.animation.core.animateDpAsState(
-		targetValue = if (expanded) 128.dp else 0.dp,
-		label = "height of other options",
-		animationSpec = tween(
-			durationMillis = 500
-		)
-	)
+	LaunchedEffect(key1 = expanded.value) {
+		if (expanded.value) {
+			shape = firstShape.copy(
+				bottomEnd = CornerSize(0.dp),
+				bottomStart = CornerSize(0.dp)
+			)
+			spacerHeight = 0.dp
+		} else {
+			delay(150)
+			shape = firstShape
+			spacerHeight = firstSpacerHeight
+		}		
+	}
 
-	Column (
+	AnimatedVisibility(
+		visible = expanded.value,
 		modifier = Modifier
-			.height(height)
-			.fillMaxWidth(1f)
-			.background(darkenColor(CustomMaterialTheme.colorScheme.surfaceVariant, 0.3f))
+			.fillMaxWidth(1f),
+		enter = expandVertically (
+			animationSpec = tween(
+				durationMillis = 250
+			),
+			expandFrom = Alignment.Top
+		) + fadeIn(
+			animationSpec = tween(
+				durationMillis = 250
+			)			
+		),
+		exit = shrinkVertically(
+			animationSpec = tween(
+				durationMillis = 250
+			),
+			shrinkTowards = Alignment.Top
+		) + fadeOut(
+			animationSpec = tween(
+				durationMillis = 250
+			)			
+		),			
 	) {
-		// Column (
-		// 	modifier = Modifier
-		// 		.wrapContentHeight()
-		// 		.onGloballyPositioned {
-		// 			neededHeight = it.size.height.dp
-		// 		}
-		// ) {
+		Column (
+			modifier = Modifier
+				.wrapContentHeight()
+				.background(darkenColor(CustomMaterialTheme.colorScheme.surfaceVariant, 0.2f))
+		) {
 			content()
-		// }
+		}
 	}
 
 	Spacer (
