@@ -43,7 +43,7 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.kaii.photos.MainActivity
 import com.kaii.photos.compose.CustomMaterialTheme
-import com.kaii.photos.helpers.GetDateTakenForMedia
+import com.kaii.photos.helpers.getDateTakenForMedia
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.getAppLockedFolderDirectory
@@ -74,7 +74,7 @@ fun LockedFolderView(navController: NavHostController) {
 			val mediaStoreData = emptyList<MediaStoreData>().toMutableList()
             fileList.forEachIndexed { index, file ->
                 val mimeType = Files.probeContentType(Path(file.absolutePath))
-                val dateTaken = GetDateTakenForMedia(file.absolutePath)
+                val dateTaken = getDateTakenForMedia(file.absolutePath)
 
                 val item = MediaStoreData(
                     type = if (mimeType.lowercase().contains("image")) MediaType.Image

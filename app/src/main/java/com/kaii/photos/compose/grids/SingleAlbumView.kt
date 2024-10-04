@@ -50,19 +50,22 @@ import com.kaii.photos.compose.CustomMaterialTheme
 import com.kaii.photos.compose.DialogClickableItem
 import com.kaii.photos.datastore
 import com.kaii.photos.datastore.removeFromAlbumsList
+import com.kaii.photos.datastore.editInAlbumsList
 import com.kaii.photos.helpers.MediaItemSortMode
+import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.brightenColor
 import com.kaii.photos.helpers.single_image_functions.ImageFunctions
 import com.kaii.photos.helpers.single_image_functions.operateOnImage
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 
 @Composable
 fun SingleAlbumView(navController: NavHostController) {
     val mainViewModel = MainActivity.mainViewModel
 
     val albumDir = mainViewModel.selectedAlbumDir.collectAsState(initial = null).value
-    println("ALBUM DIR IS $albumDir")
+    // println("ALBUM DIR IS $albumDir")
     if (albumDir == null) return
 	
     Scaffold (
@@ -219,19 +222,27 @@ private fun SingleAlbumDialog(showDialog: MutableState<Boolean>, dir: String, na
                     }
 
                     operateOnImage(
-                        dir,
+                        "/storage/emulated/0/$dir",
                         0L,
                         ImageFunctions.RenameImage,
                         context,
                         mapOf(
                             Pair("old_name", title),
-                            Pair("new_name", fileName)
+                            Pair("new_name", fileName.value)
                         )
                     )
 
-					kotlinx.coroutines.delay(500)
 					val mainViewModel = MainActivity.mainViewModel
-                    mainViewModel.setSelectedAlbumDir(dir.replace(title, fileName.value))
+					val newDir = dir.replace(title, fileName.value)
+                    mainViewModel.setSelectedAlbumDir(newDir)
+
+	                coroutineScope.launch {
+	                    context.datastore.editInAlbumsList(dir, fileName.value)
+	                    showDialog.value = false
+	                }
+
+					navController.popBackStack()
+	                navController.navigate(MultiScreenViewType.SingleAlbumView.name)
 
                     saveFileName.value = false
                 }

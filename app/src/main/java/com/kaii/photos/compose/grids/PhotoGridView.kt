@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -91,20 +92,48 @@ fun PhotoGrid(navController: NavHostController, operation: ImageFunctions, path:
 	val folder = try {
 		Files.walk(Path("/storage/emulated/0/$path")).iterator() 
 	} catch(e: Throwable) {
+		Log.e(TAG, "The needed folder for this PhotoGrid doesn't exist!")
 		Log.e(TAG, e.toString())
-
+		
 		// TODO: maybe wait a bit before exiting
-		Toast.makeText(context, "This folder doesn't exist", Toast.LENGTH_LONG).show()
-		navController.navigate(MultiScreenViewType.MainScreen.name)
+		// Toast.makeText(context, "This folder doesn't exist", Toast.LENGTH_LONG).show()
+		// navController.navigate(MultiScreenViewType.MainScreen.name)
+		null
+	}
+
+	if (folder == null) {
+		Column (
+			modifier = Modifier
+				.fillMaxSize(1f)
+				.background(CustomMaterialTheme.colorScheme.background),
+			verticalArrangement = Arrangement.Center,
+			horizontalAlignment = Alignment.CenterHorizontally
+		) {
+			Text (
+				text = "This folder doesn't exist!",
+				fontSize = TextUnit(18f, TextUnitType.Sp),
+				modifier = Modifier
+					.wrapContentSize()
+			)
+
+			Spacer (modifier = Modifier.height(16.dp))
+
+			Text (
+				text = "you should probably remove it from the list",
+				fontSize = TextUnit(14f, TextUnitType.Sp),
+				modifier = Modifier
+					.wrapContentSize()
+			)			
+		}
 		return
 	}
+	
 	var hasFiles = false
 	
 	while (folder.hasNext()) {
 		val file = folder.next()
 		if (!file.toString().contains(".thumbnails")) {
 			val isNormal = file.isRegularFile(LinkOption.NOFOLLOW_LINKS)
-			println("$isNormal, $file")
 			if (isNormal) {
 				hasFiles = true
 				break

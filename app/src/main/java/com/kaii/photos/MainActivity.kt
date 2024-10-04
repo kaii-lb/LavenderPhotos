@@ -240,7 +240,7 @@ class MainActivity : ComponentActivity() {
 		} else {
 			if (failedList.isNotEmpty()) {
 	        	failedList.forEach {
-	        		println("PERM FAILED $it")
+	        		Log.e(TAG, "PERMISSION FAILED $it")
 	        	}
 		        val permRequest = registerForActivityResult(
 		            ActivityResultContracts.RequestMultiplePermissions()

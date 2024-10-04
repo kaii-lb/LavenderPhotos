@@ -21,6 +21,8 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.io.path.Path
+import kotlin.io.path.exists
+import kotlin.io.path.moveTo
 import kotlin.io.path.setAttribute
 
 const val TAG = "IMAGE_FUNCTIONS"
@@ -188,7 +190,6 @@ private fun moveImageToLockedFolder(absolutePath: String, id: Long, context: Con
 	val fileToBeHidden = File(absolutePath)
 	val lockedFolderDir = context.getAppLockedFolderDirectory()
 	val copyToPath = lockedFolderDir + fileToBeHidden.name
-	println(lockedFolderDir)
 	Files.move(Path(absolutePath), Path(copyToPath), StandardCopyOption.REPLACE_EXISTING)
 
 	val database = MainActivity.applicationDatabase
@@ -235,6 +236,7 @@ private fun moveOutOfLockedFolder(path: String, context: Context) {
 }
 
 private fun renameImage(imagePath: String, imageName: String, newName: String, context: Context) {
+	Log.d(TAG, "$imagePath, $imageName, $newName")
 	val dir = imagePath.replace(imageName, "")
 	val original = File(dir, imageName)
 	val new = File(dir, newName)
@@ -244,8 +246,12 @@ private fun renameImage(imagePath: String, imageName: String, newName: String, c
 		File(dir).mkdirs()
 	}
 
-	val success = original.renameTo(new)
-	if (!success) {
+	try {
+		val success = original.toPath().moveTo(new.toPath())
+		if (!success.exists()) {
+			Toast.makeText(context, "Failed to rename file", Toast.LENGTH_LONG).show()
+		}
+	} catch(e: Throwable) {
 		Toast.makeText(context, "Failed to rename file", Toast.LENGTH_LONG).show()
 	}
 }

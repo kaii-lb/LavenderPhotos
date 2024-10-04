@@ -8,18 +8,16 @@ import android.os.Looper
 import android.provider.MediaStore
 import android.provider.MediaStore.Files.FileColumns
 import android.provider.MediaStore.MediaColumns
-import android.util.Log
 import com.bumptech.glide.util.Preconditions
 import com.bumptech.glide.util.Util
 import com.kaii.photos.MainActivity
 import com.kaii.photos.database.entities.MediaEntity
-import com.kaii.photos.helpers.GetDateTakenForMedia
+import com.kaii.photos.helpers.getDateTakenForMedia
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
 import java.nio.file.Files
-import java.nio.file.attribute.BasicFileAttributes
 import kotlin.io.path.Path
 
 /** Loads metadata from the media store for images and videos. */
@@ -125,7 +123,7 @@ internal constructor(
                     // Log.d(TAG, "date taken from database is $possibleDateTaken")
                     possibleDateTaken
                 } else {
-                    val taken = GetDateTakenForMedia(
+                    val taken = getDateTakenForMedia(
                         cursor.getString(absolutePathColNum)
                     )
                     mediaEntityDao.insertEntity(

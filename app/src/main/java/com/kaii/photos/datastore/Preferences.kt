@@ -30,6 +30,17 @@ suspend fun DataStore<Preferences>.removeFromAlbumsList(path: String) {
     }
 }
 
+suspend fun DataStore<Preferences>.editInAlbumsList(path: String, newName: String) {
+    this.edit {
+    	val stringList = it[albumsListKey]
+		val last = path.split("/").last()
+	
+    	if (stringList?.contains(path) == true) {
+	        it[albumsListKey] = stringList.replace(path, path.replace(last, newName))
+    	}
+    }
+}
+
 suspend fun DataStore<Preferences>.getAlbumsList(): List<String> {
     val list = this.data.first()[albumsListKey] ?: return emptyList()
 

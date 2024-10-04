@@ -1,5 +1,8 @@
 package com.kaii.photos.compose
 
+import android.content.Context
+import android.content.ClipboardManager
+import android.content.ClipData
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -12,6 +15,9 @@ import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -22,6 +28,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -46,12 +53,15 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
@@ -186,6 +196,7 @@ fun DialogExpandableItem(text: String, iconResId: Int, position: RowPosition, ex
 		Column (
 			modifier = Modifier
 				.wrapContentHeight()
+				.clip(RoundedCornerShape(0.dp, 0.dp, 16.dp, 16.dp))
 				.background(darkenColor(CustomMaterialTheme.colorScheme.surfaceVariant, 0.2f))
 		) {
 			content()
@@ -227,7 +238,6 @@ private fun getDefaultShapeSpacerForPosition(position: RowPosition) : Pair<Round
 
 @Composable
 fun AnimatableText(first: String, second: String, state: Boolean, modifier: Modifier) {
-	// move to own composable function taking in 2 params
 	AnimatedContent(
 		targetState = state,
 		label = "Dialog name animated content",
@@ -283,8 +293,8 @@ fun AnimatableTextField(
 	string: MutableState<String>,
 	doAction: MutableState<Boolean>,
 	rowPosition: RowPosition,
-	extraAction: MutableState<Boolean>? = null,
 	modifier: Modifier = Modifier,
+	extraAction: MutableState<Boolean>? = null,
 	resetAction: () -> Unit
 ) {
 	var waitForKB by remember { mutableStateOf(false) }
@@ -382,9 +392,9 @@ fun AnimatableTextField(
 			LaunchedEffect(waitForKB) {
 				if (!waitForKB) return@LaunchedEffect
 
-				resetAction()
-
 				delay(200)
+
+				resetAction()
 				state.value = false
 				waitForKB = false
 			}
@@ -403,5 +413,60 @@ fun AnimatableTextField(
 				}
 			}
 		}
+	}
+}
+
+@Composable
+fun DialogInfoText(firstText: String, secondText: String, iconResId: Int) {
+	val context = LocalContext.current
+	
+	Row (
+		modifier = Modifier
+			.height(36.dp)
+			.padding(10.dp, 4.dp)
+			.clickable {
+				val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+				val clipData = ClipData.newPlainText(firstText, secondText)
+				clipboardManager.setPrimaryClip(clipData)
+			},
+		verticalAlignment = Alignment.CenterVertically
+	) {
+		Icon (
+			painter = painterResource(id = iconResId),
+			contentDescription = "$firstText: $secondText",
+			tint = CustomMaterialTheme.colorScheme.onSurface,
+			modifier = Modifier
+				.size(16.dp)
+		)
+
+		Spacer(modifier = Modifier.width(8.dp))
+
+		val state = rememberScrollState()
+		Text(
+			text = "$firstText: ",
+			color = CustomMaterialTheme.colorScheme.onSurface,
+			style = TextStyle(
+				textAlign = TextAlign.Start,
+				fontSize = TextUnit(14f, TextUnitType.Sp),
+			),
+			maxLines = 1,
+			softWrap = true,
+			modifier = Modifier
+				.wrapContentWidth()
+		)
+				
+		Text(
+			text = secondText,
+			color = CustomMaterialTheme.colorScheme.onSurface,
+			style = TextStyle(
+				textAlign = TextAlign.Start,
+				fontSize = TextUnit(14f, TextUnitType.Sp),
+			),
+			maxLines = 1,
+			softWrap = true,
+			modifier = Modifier
+				.weight(1f)
+				.horizontalScroll(state)
+		)
 	}
 }

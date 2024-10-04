@@ -10,7 +10,7 @@ import android.provider.MediaStore.Files.FileColumns
 import android.provider.MediaStore.MediaColumns
 import com.bumptech.glide.util.Preconditions
 import com.bumptech.glide.util.Util
-import com.kaii.photos.helpers.GetDateTakenForMedia
+import com.kaii.photos.helpers.getDateTakenForMedia
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -107,7 +107,7 @@ internal constructor(
 
             if (cursor.moveToFirst()) {
                 val id = cursor.getLong(idColNum)
-                val dateTaken = GetDateTakenForMedia(
+                val dateTaken = getDateTakenForMedia(
                     cursor.getString(absolutePathColNum)
                 )
                 val mimeType = cursor.getString(mimeTypeColNum)

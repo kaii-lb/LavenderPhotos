@@ -68,8 +68,11 @@ import com.kaii.photos.compose.AnimatableTextField
 import com.kaii.photos.compose.CustomMaterialTheme
 import com.kaii.photos.compose.DialogClickableItem
 import com.kaii.photos.compose.DialogExpandableItem
+import com.kaii.photos.compose.DialogInfoText
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.brightenColor
+import com.kaii.photos.helpers.getExifDataForMedia
+import com.kaii.photos.helpers.MediaData
 import com.kaii.photos.helpers.single_image_functions.ImageFunctions
 import com.kaii.photos.helpers.single_image_functions.operateOnImage
 import com.kaii.photos.mediastore.MediaStoreData
@@ -136,7 +139,6 @@ fun SinglePhotoView(
 		containerColor = CustomMaterialTheme.colorScheme.background,
 		contentColor = CustomMaterialTheme.colorScheme.onBackground
 	) {  _ ->
-
 		// material theme doesn't seem to apply just above????
 		SinglePhotoConfirmationDialog(
 			showActionDialog,
@@ -518,7 +520,7 @@ private fun SinglePhotoInfoDialog(
 						.padding(12.dp)
 						.wrapContentHeight()
 				) {
-					val originalFileName = currentMediaItem.value.displayName ?: "Broken File"
+					var originalFileName = currentMediaItem.value.displayName ?: "Broken File"
 					val fileName = remember { mutableStateOf(originalFileName) }
 					val saveFileName = remember { mutableStateOf(false) }
 
@@ -538,10 +540,11 @@ private fun SinglePhotoInfoDialog(
 							context,
 							mapOf(
 								Pair("old_name", oldName),
-								Pair("new_name", fileName)
+								Pair("new_name", fileName.value)
 							)
 						)
 
+						originalFileName = fileName.value
 						val newGroupedMedia = groupedMedia.value.toMutableList()
 						// set currentMediaItem to new one with new name
 						val newMedia = currentMediaItem.value.copy(
@@ -552,7 +555,7 @@ private fun SinglePhotoInfoDialog(
 						val index = groupedMedia.value.indexOf(currentMediaItem.value)
 						newGroupedMedia[index] = newMedia
 						groupedMedia.value = newGroupedMedia
-
+		
 						saveFileName.value = false
 					}
 
@@ -566,8 +569,9 @@ private fun SinglePhotoInfoDialog(
 						fileName.value = originalFileName
 					}
 
+					val mediaData = getExifDataForMedia(currentMediaItem.value.absolutePath)
 					// should add a way to automatically calculate height needed for this
-					val addedHeight by remember { mutableStateOf(100.dp) }
+					val addedHeight by remember { mutableStateOf(36.dp * mediaData.keys.size) }
                     val height by androidx.compose.animation.core.animateDpAsState(
 	                    targetValue = if (!isEditingFileName.value && expanded.value) {
 	                    	124.dp + addedHeight
@@ -599,23 +603,37 @@ private fun SinglePhotoInfoDialog(
 							position = RowPosition.Middle,
 						)						
 
+						val infoComposable = @Composable {
+							Column (
+								modifier = Modifier
+									.wrapContentHeight()
+							) {
+								for (key in mediaData.keys) {
+									val value = mediaData[key]
+
+									val splitBy = Regex("(?=[A-Z])")
+									val split = key.toString().split(splitBy)
+									// println("SPLIT IS $split")
+									val name = if (split.size >= 3) "${split[1]} ${split[2]}" else key.toString()
+
+									DialogInfoText(
+										firstText = name,
+										secondText = value.toString(),
+										iconResId = key.iconResInt,
+									)
+								}
+
+								Spacer (modifier = Modifier.height(8.dp))
+							}
+						}
+
 						DialogExpandableItem (
 							text = "More Info",
 							iconResId = R.drawable.info,
 							position = RowPosition.Bottom,
 							expanded = expanded
-						) { 
-							Column (
-								modifier = Modifier
-									.wrapContentHeight()
-							) {
-								Text (text = "this is a text :D", color = CustomMaterialTheme.colorScheme.onSurface)
-								Text (text = "this is a text :D", color = CustomMaterialTheme.colorScheme.onSurface)
-								Text (text = "this is a text :D", color = CustomMaterialTheme.colorScheme.onSurface)
-								Text (text = "this is a text :D", color = CustomMaterialTheme.colorScheme.onSurface)
-								Text (text = "this is a text :D", color = CustomMaterialTheme.colorScheme.onSurface)
-								Text (text = "this is a text :D", color = CustomMaterialTheme.colorScheme.onSurface)
-							}
+						) {
+							infoComposable()
 						}
 					}
 				}
