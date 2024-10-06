@@ -6,6 +6,7 @@ import android.os.Looper
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -126,6 +127,8 @@ fun SearchPage(navController: NavHostController, searchViewModel: SearchViewMode
 	                .fillMaxWidth(1f)
 	        )
         }
+
+        Spacer (modifier = Modifier.height(8.dp))
 
        	val mediaStoreDataHolder = searchViewModel.mediaStoreData.collectAsState()
       	val mediaStoreData by remember { mutableStateOf(mediaStoreDataHolder) }

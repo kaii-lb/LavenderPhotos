@@ -302,7 +302,7 @@ fun MediaStoreItem(
                 .fillMaxWidth(1f)
                 .aspectRatio(5.5f)
                 .padding(16.dp, 8.dp)
-                .background(CustomMaterialTheme.colorScheme.background),
+                .background(Color.Transparent),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Start
         ) {
@@ -319,7 +319,7 @@ fun MediaStoreItem(
                 .aspectRatio(1f)
                 .padding(2.dp)
                 .clip(RoundedCornerShape(0.dp))
-                .background(CustomMaterialTheme.colorScheme.primary)
+                .background(CustomMaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
                 .combinedClickable (
                     onClick = {
 						when (operation) {
