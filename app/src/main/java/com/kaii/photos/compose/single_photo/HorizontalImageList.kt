@@ -8,6 +8,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.calculateCentroid
 import androidx.compose.foundation.gestures.calculatePan
 import androidx.compose.foundation.gestures.calculateRotation
 import androidx.compose.foundation.gestures.calculateZoom
@@ -22,9 +23,15 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.movableContentOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -33,6 +40,7 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowInsetsCompat
 import androidx.navigation.NavHostController
@@ -48,10 +56,14 @@ import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.signature
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun HorizontalImageList(
+	currentMediaItem: MediaStoreData,
     groupedMedia: MutableState<List<MediaStoreData>>,
     state: LazyListState,
     scale: MutableState<Float>,
@@ -74,6 +86,12 @@ fun HorizontalImageList(
             requestBuilderTransform = requestBuilderTransform,
         )
 
+	LaunchedEffect(key1 = currentMediaItem) {
+		scale.value = 1f
+		rotation.value = 0f
+		offset.value = Offset.Zero
+	}
+        
     LazyRow (
         modifier = Modifier
             .fillMaxHeight(1f),
@@ -103,7 +121,7 @@ fun HorizontalImageList(
                 if (mediaStoreItem.type == MediaType.Video) {
                     Column (
                         modifier = Modifier
-                            .fillParentMaxSize(1f)
+                            .fillParentMaxSize(1f)                         
                             .mediaModifier(
                                 scale,
                                 rotation,
@@ -138,7 +156,7 @@ fun HorizontalImageList(
                         contentScale = ContentScale.Fit,
                         failure = placeholder(R.drawable.broken_image),
                         modifier = Modifier
-                            .fillParentMaxSize(1f)
+                            .fillParentMaxSize(1f)                         
                             .mediaModifier(
                                 scale,
                                 rotation,
@@ -223,7 +241,8 @@ private fun Modifier.mediaModifier(
 
                 if (event.changes.size == 2) {
                     scale.value *= event.calculateZoom()
-                    scale.value.coerceIn(0.75f, 5f)
+					scale.value = scale.value.coerceIn(0.75f, 5f)
+					
                     rotation.value += event.calculateRotation()
 
                     event.changes.forEach {
@@ -231,15 +250,9 @@ private fun Modifier.mediaModifier(
                     }
                 } else if (event.changes.size == 1 && event.calculatePan() != Offset.Zero) {
                     if (scale.value != 1f) {
-                        // this is from android docs, i have no clue what the math here is xD
-                        offset.value = (offset.value + Offset(
-                            0.5f,
-                            0.5f
-                        ) / scale.value) -
-                                (Offset(
-                                    0.5f,
-                                    0.5f
-                                ) / scale.value + event.calculatePan())
+                       // this is from android docs, i have no clue what the math here is xD
+						offset.value = (offset.value + Offset(0.5f, 0.5f) / scale.value) -
+     	                   (Offset(0.5f, 0.5f) / scale.value + event.calculatePan().rotateBy(rotation.value))
 
                         event.changes.forEach {
                             it.consume()
@@ -250,6 +263,7 @@ private fun Modifier.mediaModifier(
         }
     })
 
+/** deals with grouped media modifications, in this case removing stuff*/
 fun sortOutMediaMods(
     item: MediaStoreData,
     groupedMedia: MutableState<List<MediaStoreData>>,
@@ -276,4 +290,15 @@ fun sortOutMediaMods(
 
         groupedMedia.value = newMedia
     }
+}
+
+fun Offset.rotateBy(angle: Float) : Offset {
+    val angleInRadians = angle * (PI / 180)
+    val cos = cos(angleInRadians)
+    val sin = sin(angleInRadians)
+
+    return Offset(
+        (x * cos - y * sin).toFloat(),
+        (x * sin + y * cos).toFloat()
+    )
 }

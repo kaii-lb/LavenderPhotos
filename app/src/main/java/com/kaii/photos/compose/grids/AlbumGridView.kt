@@ -59,7 +59,7 @@ import kotlinx.coroutines.runBlocking
 import java.io.File
 
 @Composable
-fun AlbumsGridView(navController: NavHostController) {
+fun AlbumsGridView(albumsViewModel: AlbumsViewModel, navController: NavHostController, listOfDirs: List<String>) {
     Column (
         modifier = Modifier
 			.fillMaxSize(1f)
@@ -69,26 +69,7 @@ fun AlbumsGridView(navController: NavHostController) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 		// val listOfDirs = emptyList<String>().toMutableList()
-		val context = LocalContext.current
-		runBlocking {
-			context.datastore.addToAlbumsList("DCIM/Camera")
-			context.datastore.addToAlbumsList("Pictures/Screenshot")
-			context.datastore.addToAlbumsList("Pictures/Whatsapp")
-			context.datastore.addToAlbumsList("Pictures/100PINT/Pins")
-			context.datastore.addToAlbumsList("Movies")
-			context.datastore.addToAlbumsList("LavenderPhotos/Restored Files")
-			context.datastore.addToAlbumsList("Download")
-			context.datastore.addToAlbumsList("Pictures/Instagram")
-		}
 
-		val listOfDirs = runBlocking {
-			val list = context.datastore.getAlbumsList()
-			list
-		}
-
-		val albumsViewModel: AlbumsViewModel = viewModel(
-			factory = AlbumsViewModelFactory(LocalContext.current, listOfDirs.toList())
-		)
 		val mediaStoreData = albumsViewModel.mediaStoreData.collectAsState()
 		val actualData = mediaStoreData.value
 

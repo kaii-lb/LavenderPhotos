@@ -178,6 +178,7 @@ fun SingleHiddenPhotoView(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             HorizontalImageList(
+            	currentMediaItem,
                 groupedMedia,
                 state,
                 scale,

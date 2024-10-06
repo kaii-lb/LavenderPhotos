@@ -119,6 +119,7 @@ import com.kaii.photos.compose.single_photo.SinglePhotoView
 import com.kaii.photos.compose.single_photo.SingleTrashedPhotoView
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.addToAlbumsList
+import com.kaii.photos.datastore.getAlbumsList
 import com.kaii.photos.datastore.getUsername
 import com.kaii.photos.datastore.setUsername
 import com.kaii.photos.helpers.MainScreenViewType
@@ -131,6 +132,10 @@ import com.kaii.photos.models.main_activity.MainDataSharingModel
 import com.kaii.photos.models.main_activity.MainDataSharingModelFactory
 import com.kaii.photos.models.search_page.SearchViewModel
 import com.kaii.photos.models.search_page.SearchViewModelFactory
+import com.kaii.photos.models.album_grid.AlbumsViewModel
+import com.kaii.photos.models.album_grid.AlbumsViewModelFactory
+import com.kaii.photos.models.gallery_model.GalleryViewModel
+import com.kaii.photos.models.gallery_model.GalleryViewModelFactory
 import com.kaii.photos.ui.theme.PhotosTheme
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -466,6 +471,7 @@ class MainActivity : ComponentActivity() {
             	BottomBar(currentView) 
            	}
         ) { padding ->
+			val context = LocalContext.current
             Column(
                 modifier = Modifier
                     .padding(0.dp, padding.calculateTopPadding(), 0.dp, padding.calculateBottomPadding())
@@ -492,9 +498,36 @@ class MainActivity : ComponentActivity() {
                         label = "MainAnimatedContentView"
                     ) { stateValue ->
 	                    when (stateValue) {
-	                        MainScreenViewType.PhotosGridView -> PhotoGrid(navController, ImageFunctions.LoadNormalImage, stringResource(id = R.string.default_homepage_photogrid_dir), MediaItemSortMode.DateTaken)
+	                        MainScreenViewType.PhotosGridView -> {
+	                        	PhotoGrid(
+	                        		navController = navController,
+	                        		operation = ImageFunctions.LoadNormalImage, 
+	                        		path = stringResource(id = R.string.default_homepage_photogrid_dir), 
+	                        		sortBy = MediaItemSortMode.DateTaken, 
+                        		)	
+	                        }
 	                        MainScreenViewType.SecureFolder -> LockedFolderEntryView(navController)
-	                        MainScreenViewType.AlbumsGridView -> AlbumsGridView(navController)
+	                        MainScreenViewType.AlbumsGridView -> {
+								runBlocking {
+									context.datastore.addToAlbumsList("DCIM/Camera")
+									context.datastore.addToAlbumsList("Pictures/Screenshot")
+									context.datastore.addToAlbumsList("Pictures/Whatsapp")
+									context.datastore.addToAlbumsList("Pictures/100PINT/Pins")
+									context.datastore.addToAlbumsList("Movies")
+									context.datastore.addToAlbumsList("LavenderPhotos/Restored Files")
+									context.datastore.addToAlbumsList("Download")
+									context.datastore.addToAlbumsList("Pictures/Instagram")
+								}
+
+								val listOfDirs = runBlocking {
+									val list = context.datastore.getAlbumsList()
+									list
+								}	                        
+	                        	val albumsViewModel: AlbumsViewModel = viewModel(
+                       				factory = AlbumsViewModelFactory(context, listOfDirs.toList())
+                       			)
+	                        	AlbumsGridView(albumsViewModel, navController, listOfDirs)	
+	                        } 
    	                        MainScreenViewType.SearchPage -> SearchPage(navController, searchViewModel)
 	                    }
                 	}

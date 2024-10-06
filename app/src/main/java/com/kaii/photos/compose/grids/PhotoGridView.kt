@@ -80,15 +80,22 @@ private const val TAG = "PHOTO_GRID_VIEW"
 private val THUMBNAIL_SIZE = Size(THUMBNAIL_DIMENSION.toFloat(), THUMBNAIL_DIMENSION.toFloat())
 
 @Composable
-fun PhotoGrid(navController: NavHostController, operation: ImageFunctions, path: String, sortBy: MediaItemSortMode, emptyText: String = "Empty Folder", prefix: String = "") {
+fun PhotoGrid(
+	navController: NavHostController, 
+	operation: ImageFunctions, 
+	path: String, 
+	sortBy: MediaItemSortMode, 
+	emptyText: String = "Empty Folder", 
+	prefix: String = ""
+) {
 	val galleryViewModel: GalleryViewModel = viewModel(
-		factory = GalleryViewModelFactory(LocalContext.current.applicationContext, path)
+		factory = GalleryViewModelFactory(LocalContext.current, path)
 	)
+		
 	val mediaStoreData = galleryViewModel.mediaStoreData.collectAsState()
 
 	val mainViewModel = MainActivity.mainViewModel
 
-	val context = LocalContext.current
 	val folder = try {
 		Files.walk(Path("/storage/emulated/0/$path")).iterator() 
 	} catch(e: Throwable) {

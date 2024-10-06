@@ -43,6 +43,8 @@ fun TrashedPhotoGridView(navController: NavHostController) {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+        	// TODO: check for items older than 30 days and delete them 
+        	
             PhotoGrid(
                 navController,
                 ImageFunctions.LoadTrashedImage,

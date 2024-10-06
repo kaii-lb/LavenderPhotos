@@ -174,22 +174,22 @@ fun DialogExpandableItem(text: String, iconResId: Int, position: RowPosition, ex
 			.fillMaxWidth(1f),
 		enter = expandVertically (
 			animationSpec = tween(
-				durationMillis = 250
+				durationMillis = 350
 			),
 			expandFrom = Alignment.Top
 		) + fadeIn(
 			animationSpec = tween(
-				durationMillis = 250
+				durationMillis = 350
 			)			
 		),
 		exit = shrinkVertically(
 			animationSpec = tween(
-				durationMillis = 250
+				durationMillis = 350
 			),
 			shrinkTowards = Alignment.Top
 		) + fadeOut(
 			animationSpec = tween(
-				durationMillis = 250
+				durationMillis = 350
 			)			
 		),			
 	) {

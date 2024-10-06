@@ -167,6 +167,7 @@ fun SinglePhotoView(
 			horizontalAlignment = Alignment.CenterHorizontally
 		) {
 			HorizontalImageList(
+				currentMediaItem.value,
 				groupedMedia,
 				state,
 				scale,
@@ -582,7 +583,7 @@ private fun SinglePhotoInfoDialog(
 	                    },
 	                    label = "height of other options",
 	                    animationSpec = tween(
-	                    	durationMillis = if (!isEditingFileName.value && expanded.value) 250 else 500
+	                    	durationMillis = 500
 	                    )					
 					)
 
@@ -593,13 +594,13 @@ private fun SinglePhotoInfoDialog(
 					) {
 						DialogClickableItem(
 							text = "Copy to Album",
-							iconResId = R.drawable.edit,
+							iconResId = R.drawable.copy,
 							position = RowPosition.Middle,
 						)
 
 						DialogClickableItem (
 							text = "Move to Album",
-							iconResId = R.drawable.delete,
+							iconResId = R.drawable.cut,
 							position = RowPosition.Middle,
 						)						
 

@@ -196,7 +196,7 @@ private fun SingleAlbumDialog(showDialog: MutableState<Boolean>, dir: String, na
 					targetValue = if (isEditingFileName.value) 0.dp else 42.dp,
 					label = "height of other options",
 					animationSpec = tween(
-						durationMillis = 250
+						durationMillis = 500
 					)
 				)				
 
