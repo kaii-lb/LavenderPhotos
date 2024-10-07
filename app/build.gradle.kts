@@ -87,9 +87,9 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer-dash:1.4.1")
     implementation("androidx.media3:media3-ui:1.4.1")
     implementation("androidx.core:core-splashscreen:1.0.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
 
-    val roomVersion = "2.6.1"
-	
+    val roomVersion = "2.6.1"	
     implementation("androidx.room:room-runtime:$roomVersion")
     annotationProcessor("androidx.room:room-compiler:$roomVersion")
 
