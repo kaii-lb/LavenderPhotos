@@ -88,6 +88,8 @@ dependencies {
     implementation("androidx.media3:media3-ui:1.4.1")
     implementation("androidx.core:core-splashscreen:1.0.0")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
+	implementation("io.coil-kt.coil3:coil-compose:3.0.0-rc01")    
+	//implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.0-rc01")
 
     val roomVersion = "2.6.1"	
     implementation("androidx.room:room-runtime:$roomVersion")

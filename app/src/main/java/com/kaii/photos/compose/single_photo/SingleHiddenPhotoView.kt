@@ -20,8 +20,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomAppBar
@@ -36,11 +36,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -88,9 +88,11 @@ fun SingleHiddenPhotoView(
 
     val systemBarsShown = remember { mutableStateOf(true) }
     val appBarsVisible = remember { mutableStateOf(true) }
-    val state = rememberLazyListState()
+    val state = rememberPagerState {
+        groupedMedia.value.size
+    }
     val currentMediaItem by remember { derivedStateOf {
-        val index = state.layoutInfo.visibleItemsInfo.firstOrNull()?.index ?: 0
+        val index = state.layoutInfo.visiblePagesInfo.firstOrNull()?.index ?: 0
         if (index != groupedMedia.value.size) {
             groupedMedia.value[index]
         } else {
@@ -195,7 +197,7 @@ fun SingleHiddenPhotoView(
     val coroutineScope = rememberCoroutineScope()
     LaunchedEffect(key1 = mediaItem) {
         coroutineScope.launch {
-            state.scrollToItem(
+            state.animateScrollToPage(
                 if (groupedMedia.value.indexOf(mediaItem) >= 0) groupedMedia.value.indexOf(mediaItem) else 0
             )
         }
@@ -281,7 +283,7 @@ private fun BottomBar(
     item: MediaStoreData,
     showDialog: MutableState<Boolean>,
     groupedMedia: MutableState<List<MediaStoreData>>,
-    state: LazyListState
+    state: PagerState
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()

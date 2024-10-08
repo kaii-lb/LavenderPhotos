@@ -1,18 +1,13 @@
 package com.kaii.photos.compose.single_photo
 
-import android.widget.FrameLayout.LayoutParams
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandIn
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkOut
+import android.net.Uri
+import android.view.ViewGroup
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -29,13 +24,16 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -45,231 +43,223 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.media3.common.C.VIDEO_SCALING_MODE_SCALE_TO_FIT
+import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.common.Player
+import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.ProgressiveMediaSource
+import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import com.kaii.photos.R
 import com.kaii.photos.compose.CustomMaterialTheme
+import com.kaii.photos.mediastore.MediaStoreData
 import kotlin.math.roundToInt
+import kotlin.time.Duration.Companion.seconds
+
+// special thanks to @bedirhansaricayir on github, helped a LOT of performance
+// https://github.com/bedirhansaricayir/Instagram-Reels-Jetpack-Compose/blob/master/app/src/main/java/com/reels/example/presentation/components/ExploreVideoPlayer.kt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VideoPlayerControls(
-	exoPlayer: ExoPlayer,
-    showControls: MutableState<Boolean>,
     isPlaying: MutableState<Boolean>,
     isMuted: MutableState<Boolean>,
     currentVideoPosition: MutableState<Float>,
+    skip: MutableState<Int>,
+    duration: MutableState<Float>,
     modifier: Modifier
 ) {
     val interactionSource = remember { MutableInteractionSource() }
 
-    AnimatedVisibility(
-        visible = showControls.value,
-        enter = expandIn(
-            animationSpec = tween(
-                durationMillis = 500
-            )
-        ) + fadeIn(
-            animationSpec = tween(
-                durationMillis = 500
-            )
-        ),
-        exit = shrinkOut(
-            animationSpec = tween(
-                durationMillis = 500
-            )
-        ) + fadeOut(
-            animationSpec = tween(
-                durationMillis = 500
-            )
-        ),
-        modifier = modifier.then(Modifier.background(Color.Transparent))
+    Box (
+        modifier = Modifier
+            .then(modifier)
+            .background(Color.Transparent)
     ) {
-        Box (
+        Row (
             modifier = Modifier
-                .then(modifier)
-                .background(Color.Transparent)
+                .height(172.dp)
+                .align(Alignment.BottomCenter),
+            verticalAlignment = Alignment.Top
         ) {
-            Row (
-                modifier = Modifier
-                    .height(172.dp)
-                    .align(Alignment.BottomCenter),
-                verticalAlignment = Alignment.Top
-            ) {
-                Row (
-                    modifier = Modifier
-                        .fillMaxWidth(1f)
-                        .wrapContentHeight()
-                        .padding(8.dp, 0.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Row (
-                        modifier = Modifier
-                            .height(32.dp)
-                            .wrapContentWidth()
-                            .clip(RoundedCornerShape(1000.dp))
-                            .background(CustomMaterialTheme.colorScheme.secondaryContainer)
-                            .padding(4.dp, 0.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Text (
-                            text = "00:00",
-                            style = TextStyle(
-                                fontSize = TextUnit(12f, TextUnitType.Sp),
-                                color = CustomMaterialTheme.colorScheme.onBackground,
-                                textAlign = TextAlign.Center,
-                            ),
-                        )
-                    }
-
-                    Spacer (modifier = Modifier.width(8.dp))
-
-					var duration = (exoPlayer.duration / 1000).toFloat().roundToInt().toFloat()
-					duration = if (duration < 0) 0f else duration
-					println("DURATION IS $duration")
-                    Slider (
-                        value = currentVideoPosition.value,
-                        valueRange = 0f..duration,
-                        onValueChange = { pos ->
-                            currentVideoPosition.value = pos
-                        },
-                        steps = duration.toInt(),
-                        thumb = {
-                            SliderDefaults.Thumb(
-                                interactionSource = interactionSource,
-                                thumbSize = DpSize(6.dp, 16.dp),
-                            )
-                        },
-                        track = { sliderState ->
-                            val colors = SliderDefaults.colors()
-
-                            SliderDefaults.Track(
-                                sliderState = sliderState,
-                                trackInsideCornerSize = 8.dp,
-                                colors = colors.copy(
-                                    activeTickColor = colors.activeTrackColor,
-                                    inactiveTickColor = colors.inactiveTrackColor,
-                                    disabledActiveTickColor = colors.disabledActiveTrackColor,
-                                    disabledInactiveTickColor = colors.disabledInactiveTrackColor,
-
-                                    activeTrackColor = colors.activeTrackColor,
-                                    inactiveTrackColor = colors.inactiveTrackColor,
-
-                                    disabledThumbColor = colors.activeTrackColor,
-                                    thumbColor = colors.activeTrackColor
-                                ),
-                                thumbTrackGapSize = 4.dp,
-                                drawTick = { _, _ -> },
-                                modifier = Modifier
-                                    .height(16.dp)
-                            )
-                        },
-                        // interactionSource = interactionSource,
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(32.dp)
-                    )
-
-                    Spacer (modifier = Modifier.width(8.dp))
-
-                    Row (
-                        modifier = Modifier
-                            .height(32.dp)
-                            .wrapContentWidth()
-                            .clip(RoundedCornerShape(1000.dp))
-                            .background(CustomMaterialTheme.colorScheme.secondaryContainer)
-                            .padding(4.dp, 0.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Text (
-                            text = "02:34",
-                            style = TextStyle(
-                                fontSize = TextUnit(12f, TextUnitType.Sp),
-                                color = CustomMaterialTheme.colorScheme.onBackground,
-                                textAlign = TextAlign.Center,
-                            ),
-                        )
-                    }
-
-                    Spacer (modifier = Modifier.width(8.dp))
-
-                    FilledTonalIconButton(
-                        onClick = {
-                            isMuted.value = !isMuted.value
-                        },
-                        modifier = Modifier
-                            .size(32.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = if(isMuted.value) R.drawable.volume_mute else R.drawable.volume_max),
-                            contentDescription = "Video player mute or un-mute",
-                            modifier = Modifier
-                                .size(24.dp)
-                        )
-                    }
-                }
-            }
-
             Row (
                 modifier = Modifier
                     .fillMaxWidth(1f)
                     .wrapContentHeight()
-                    .align(Alignment.Center),
+                    .padding(8.dp, 0.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
+                Row (
+                    modifier = Modifier
+                        .height(32.dp)
+                        .wrapContentWidth()
+                        .clip(RoundedCornerShape(1000.dp))
+                        .background(CustomMaterialTheme.colorScheme.secondaryContainer)
+                        .padding(4.dp, 0.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text (
+                        text = "00:00",
+                        style = TextStyle(
+                            fontSize = TextUnit(12f, TextUnitType.Sp),
+                            color = CustomMaterialTheme.colorScheme.onBackground,
+                            textAlign = TextAlign.Center,
+                        ),
+                    )
+                }
+
+                Spacer (modifier = Modifier.width(8.dp))
+
+                duration.value = if (duration.value < 0) 0f else duration.value
+                println("DURATION IS ${duration.value}")
+
+                Slider (
+                    value = currentVideoPosition.value,
+                    valueRange = 0f..duration.value,
+                    onValueChange = { pos ->
+                        currentVideoPosition.value = pos
+                    },
+                    steps = duration.value.toInt(),
+                    thumb = {
+                        SliderDefaults.Thumb(
+                            interactionSource = interactionSource,
+                            thumbSize = DpSize(6.dp, 16.dp),
+                        )
+                    },
+                    track = { sliderState ->
+                        val colors = SliderDefaults.colors()
+
+                        SliderDefaults.Track(
+                            sliderState = sliderState,
+                            trackInsideCornerSize = 8.dp,
+                            colors = colors.copy(
+                                activeTickColor = colors.activeTrackColor,
+                                inactiveTickColor = colors.inactiveTrackColor,
+                                disabledActiveTickColor = colors.disabledActiveTrackColor,
+                                disabledInactiveTickColor = colors.disabledInactiveTrackColor,
+
+                                activeTrackColor = colors.activeTrackColor,
+                                inactiveTrackColor = colors.inactiveTrackColor,
+
+                                disabledThumbColor = colors.activeTrackColor,
+                                thumbColor = colors.activeTrackColor
+                            ),
+                            thumbTrackGapSize = 4.dp,
+                            drawTick = { _, _ -> },
+                            modifier = Modifier
+                                .height(16.dp)
+                        )
+                    },
+                    // interactionSource = interactionSource,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(32.dp)
+                )
+
+                Spacer (modifier = Modifier.width(8.dp))
+
+                Row (
+                    modifier = Modifier
+                        .height(32.dp)
+                        .wrapContentWidth()
+                        .clip(RoundedCornerShape(1000.dp))
+                        .background(CustomMaterialTheme.colorScheme.secondaryContainer)
+                        .padding(4.dp, 0.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text (
+                        text = duration.value.toInt().seconds.toString(),
+                        style = TextStyle(
+                            fontSize = TextUnit(12f, TextUnitType.Sp),
+                            color = CustomMaterialTheme.colorScheme.onBackground,
+                            textAlign = TextAlign.Center,
+                        ),
+                    )
+                }
+
+                Spacer (modifier = Modifier.width(8.dp))
+
                 FilledTonalIconButton(
                     onClick = {
-                        exoPlayer.seekBack()
-                        currentVideoPosition.value = currentVideoPosition.value - 5f
+                        isMuted.value = !isMuted.value
                     },
                     modifier = Modifier
-                        .size(48.dp)
+                        .size(32.dp)
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.fast_rewind),
-                        contentDescription = "Video player skip back 5 seconds",
+                        painter = painterResource(id = if(isMuted.value) R.drawable.volume_mute else R.drawable.volume_max),
+                        contentDescription = "Video player mute or un-mute",
                         modifier = Modifier
-                            .padding(0.dp, 0.dp, 2.dp, 0.dp)
+                            .size(24.dp)
                     )
                 }
+            }
+        }
 
-                Spacer (modifier = Modifier.width(48.dp))
-
-                FilledTonalIconButton(
-                    onClick = {
-                        isPlaying.value = !isPlaying.value
-                    },
+        Row (
+            modifier = Modifier
+                .fillMaxWidth(1f)
+                .wrapContentHeight()
+                .align(Alignment.Center),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            FilledTonalIconButton(
+                onClick = {
+                    skip.value = 2
+                    currentVideoPosition.value -= 5f
+                },
+                modifier = Modifier
+                    .size(48.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.fast_rewind),
+                    contentDescription = "Video player skip back 5 seconds",
                     modifier = Modifier
-                        .size(48.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(id = if (!isPlaying.value) R.drawable.play_arrow else R.drawable.pause),
-                        contentDescription = "Video player play or pause"
-                    )
-                }
+                        .padding(0.dp, 0.dp, 2.dp, 0.dp)
+                )
+            }
 
-                Spacer (modifier = Modifier.width(48.dp))
+            Spacer (modifier = Modifier.width(48.dp))
 
-                FilledTonalIconButton(
-                    onClick = {
-                        exoPlayer.seekForward()
-                        currentVideoPosition.value = currentVideoPosition.value + 5f
-                    },
+            FilledTonalIconButton(
+                onClick = {
+                    isPlaying.value = !isPlaying.value
+                },
+                modifier = Modifier
+                    .size(48.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = if (!isPlaying.value) R.drawable.play_arrow else R.drawable.pause),
+                    contentDescription = "Video player play or pause"
+                )
+            }
+
+            Spacer (modifier = Modifier.width(48.dp))
+
+            FilledTonalIconButton(
+                onClick = {
+                    skip.value = 1
+                    currentVideoPosition.value += 5f
+                },
+                modifier = Modifier
+                    .size(48.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.fast_forward),
+                    contentDescription = "Video player skip forward 5 seconds",
                     modifier = Modifier
-                        .size(48.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.fast_forward),
-                        contentDescription = "Video player skip forward 5 seconds",
-                        modifier = Modifier
-                            .padding(2.dp, 0.dp, 0.dp, 0.dp)
-                    )
-                }
+                        .padding(2.dp, 0.dp, 0.dp, 0.dp)
+                )
             }
         }
     }
@@ -277,28 +267,184 @@ fun VideoPlayerControls(
 
 @androidx.annotation.OptIn(UnstableApi::class)
 @Composable
-fun VideoPlayer(exoPlayer: ExoPlayer, modifier: Modifier) {
+fun VideoPlayer(
+	item: MediaStoreData,
+	isMuted: MutableState<Boolean>,
+	isPlaying: MutableState<Boolean>,
+	shouldPlay: Boolean,
+	skip: MutableState<Int>,
+	duration: MutableState<Float>,
+	modifier: Modifier
+) {
+    val exoPlayer = rememberExoPlayerWithLifeCycle(item.uri, isPlaying, duration)
+    val playerView = rememberPlayerView(exoPlayer)
+
+    Column (
+    	modifier = modifier,
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        AndroidView (
+            factory = { playerView },
+            update = {
+				if (skip.value == 1) {
+					exoPlayer.seekForward()
+					println("SKIPPED FORWARD")	
+				} else if (skip.value == 2) {
+					exoPlayer.seekBack()
+					println("SKIPPED BACKWARD")
+				}
+            	skip.value = 0
+            	
+		        exoPlayer.volume = if (isMuted.value) 0f else 1f
+
+		        exoPlayer.playWhenReady = shouldPlay && isPlaying.value
+            },
+        )
+    }
+}
+
+@UnstableApi
+@Composable
+fun rememberExoPlayerWithLifeCycle(
+    videoSource: Uri,
+    isPlaying: MutableState<Boolean>,
+    duration: MutableState<Float>
+): ExoPlayer {
     val context = LocalContext.current
 
-	Column (
-		modifier = modifier,
-	) {
-	    AndroidView(
-	        factory = {
-	            PlayerView(context).apply{
-	                player = exoPlayer
-	                layoutParams = LayoutParams(
-	                    LayoutParams.MATCH_PARENT,
-	                    LayoutParams.MATCH_PARENT
-	                )
-	                
-	                useController = false
-	                setShutterBackgroundColor(Color.Transparent.toArgb())
-	                controllerAutoShow = false
-	                setControllerShowTimeoutMs(0)
-	                setControllerAnimationEnabled(false)
-	            }
-	        }
-	    )
-	}
+    val exoPlayer = remember(videoSource) {
+        ExoPlayer.Builder(context).apply {
+	            setLoadControl(
+	                DefaultLoadControl.Builder().apply {
+                       setBufferDurationsMs(
+                           1000,
+                           5000,
+                           1000,
+                           1000
+                       )
+
+                       setBackBuffer(
+                           1000,
+                           false
+                       )
+                       
+                       setPrioritizeTimeOverSizeThresholds(false)
+                    }.build()
+            	)
+                setSeekBackIncrementMs(5000)
+                setSeekForwardIncrementMs(5000)
+                // pause on video end   	
+        	}
+            .build()
+            .apply {
+                videoScalingMode = VIDEO_SCALING_MODE_SCALE_TO_FIT
+                repeatMode = ExoPlayer.REPEAT_MODE_ONE
+
+                setHandleAudioBecomingNoisy(true)
+
+                val defaultDataSourceFactory = DefaultDataSource.Factory(context)
+                val dataSourceFactory = DefaultDataSource.Factory(
+                    context,
+                    defaultDataSourceFactory
+                )
+                val source = ProgressiveMediaSource.Factory(dataSourceFactory)
+                    .createMediaSource(MediaItem.fromUri(videoSource))
+
+                setMediaSource(source)
+                prepare()
+    		}
+    }
+
+    val listener = object : Player.Listener {
+    	override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) {
+    		if (playbackState == ExoPlayer.STATE_READY) {
+    			duration.value = (exoPlayer.duration / 1000f).roundToInt().toFloat()
+    		} else if (playbackState == ExoPlayer.STATE_ENDED) {
+    			isPlaying.value = false
+    		}
+    	}
+    }
+    exoPlayer.addListener(listener)
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    var appInBackground by remember { mutableStateOf(false) }
+
+    DisposableEffect(key1 = lifecycleOwner, appInBackground) {
+        val lifecycleObserver = getExoPlayerLifecycleObserver(exoPlayer, appInBackground, isPlaying) {
+            appInBackground = it
+        }
+        lifecycleOwner.lifecycle.addObserver(lifecycleObserver)
+
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(lifecycleObserver)
+        }
+    }
+    return exoPlayer
+}
+
+fun getExoPlayerLifecycleObserver(
+    exoPlayer: ExoPlayer,
+    wasAppInBackground: Boolean,
+    isPlaying: MutableState<Boolean>,
+    setWasAppInBackground: (Boolean) -> Unit
+): LifecycleEventObserver =
+    LifecycleEventObserver { _, event ->
+        when (event) {
+            Lifecycle.Event.ON_RESUME -> {
+                if (wasAppInBackground) {
+                	exoPlayer.playWhenReady = true
+                }
+                isPlaying.value = true
+                setWasAppInBackground(false)
+            }
+
+            Lifecycle.Event.ON_PAUSE -> {
+                exoPlayer.playWhenReady = false
+                isPlaying.value = false
+                setWasAppInBackground(true)
+            }
+
+            Lifecycle.Event.ON_STOP -> {
+                exoPlayer.playWhenReady = false
+                isPlaying.value = false
+                setWasAppInBackground(true)
+            }
+
+            Lifecycle.Event.ON_DESTROY -> {
+            	isPlaying.value = false
+            	exoPlayer.stop()
+                exoPlayer.release()
+            }
+
+            else -> {}
+        }
+    }
+
+
+@UnstableApi
+@Composable
+fun rememberPlayerView(exoPlayer: ExoPlayer): PlayerView {
+    val context = LocalContext.current
+
+    val playerView = remember {
+        PlayerView(context).apply {
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+
+            useController = false
+            // resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+            player = exoPlayer
+
+            setShowBuffering(PlayerView.SHOW_BUFFERING_ALWAYS)
+        }
+    }
+    DisposableEffect(key1 = true) {
+        onDispose {
+            playerView.player = null
+        }
+    }
+    return playerView
 }

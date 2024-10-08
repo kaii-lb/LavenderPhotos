@@ -129,14 +129,12 @@ import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.brightenColor
 import com.kaii.photos.helpers.single_image_functions.ImageFunctions
+import com.kaii.photos.models.album_grid.AlbumsViewModel
+import com.kaii.photos.models.album_grid.AlbumsViewModelFactory
 import com.kaii.photos.models.main_activity.MainDataSharingModel
 import com.kaii.photos.models.main_activity.MainDataSharingModelFactory
 import com.kaii.photos.models.search_page.SearchViewModel
 import com.kaii.photos.models.search_page.SearchViewModelFactory
-import com.kaii.photos.models.album_grid.AlbumsViewModel
-import com.kaii.photos.models.album_grid.AlbumsViewModelFactory
-import com.kaii.photos.models.gallery_model.GalleryViewModel
-import com.kaii.photos.models.gallery_model.GalleryViewModelFactory
 import com.kaii.photos.ui.theme.PhotosTheme
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -173,7 +171,7 @@ class MainActivity : ComponentActivity() {
 
         Glide.get(this).setMemoryCategory(MemoryCategory.HIGH)
 
-		val failedList = emptyList<String>().toMutableList()
+        val failedList = emptyList<String>().toMutableList()
 
 		for (perm in PERMISSIONS_REQUEST) {
 			val hasBeenGranted = 

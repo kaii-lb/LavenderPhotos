@@ -20,8 +20,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomAppBar
@@ -90,9 +90,11 @@ fun SingleTrashedPhotoView(
 
     val systemBarsShown = remember { mutableStateOf(true) }
     val appBarsVisible = remember { mutableStateOf(true) }
-    val state = rememberLazyListState()
+    val state = rememberPagerState {
+        groupedMedia.value.size
+    }
     val currentMediaItem by remember { derivedStateOf {
-        val index = state.layoutInfo.visibleItemsInfo.firstOrNull()?.index ?: 0
+        val index = state.layoutInfo.visiblePagesInfo.firstOrNull()?.index ?: 0
         if (index != groupedMedia.value.size) {
             groupedMedia.value[index]
         } else {
@@ -197,7 +199,7 @@ fun SingleTrashedPhotoView(
     val coroutineScope = rememberCoroutineScope()
     LaunchedEffect(key1 = mediaItem) {
         coroutineScope.launch {
-            state.scrollToItem(
+            state.animateScrollToPage(
                 if (groupedMedia.value.indexOf(mediaItem) >= 0) groupedMedia.value.indexOf(mediaItem) else 0
             )
         }
@@ -283,7 +285,7 @@ private fun BottomBar(
     item: MediaStoreData,
     showDialog: MutableState<Boolean>,
     groupedMedia: MutableState<List<MediaStoreData>>,
-    state: LazyListState
+    state: PagerState
 ) {
     val context = LocalContext.current
    	val coroutineScope = rememberCoroutineScope()

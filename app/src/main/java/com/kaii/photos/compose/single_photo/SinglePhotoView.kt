@@ -22,8 +22,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomAppBar
@@ -72,7 +72,6 @@ import com.kaii.photos.compose.DialogInfoText
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.brightenColor
 import com.kaii.photos.helpers.getExifDataForMedia
-import com.kaii.photos.helpers.MediaData
 import com.kaii.photos.helpers.single_image_functions.ImageFunctions
 import com.kaii.photos.helpers.single_image_functions.operateOnImage
 import com.kaii.photos.mediastore.MediaStoreData
@@ -104,9 +103,11 @@ fun SinglePhotoView(
 
 	val systemBarsShown = remember { mutableStateOf(true) }
 	val appBarsVisible = remember { mutableStateOf(true) }
-	val state = rememberLazyListState()
+	val state = rememberPagerState {
+		groupedMedia.value.size
+	}
 	val currentMediaItem = remember { derivedStateOf {
-		val index = state.layoutInfo.visibleItemsInfo.firstOrNull()?.index ?: 0
+		val index = state.layoutInfo.visiblePagesInfo.firstOrNull()?.index ?: 0
 		if (index != groupedMedia.value.size) {
 			groupedMedia.value[index]
 		} else {
@@ -183,7 +184,7 @@ fun SinglePhotoView(
 	val coroutineScope = rememberCoroutineScope()
 	LaunchedEffect(key1 = mediaItem) {
 		coroutineScope.launch {
-			state.scrollToItem(
+			state.animateScrollToPage(
 				if (groupedMedia.value.indexOf(mediaItem) >= 0) groupedMedia.value.indexOf(mediaItem) else 0
 			)
 		}
@@ -403,7 +404,7 @@ private fun SinglePhotoConfirmationDialog(
 	neededDialogButtonLabel: MutableState<String>,
 	neededDialogFunction: MutableState<ImageFunctions>,
 	navController: NavHostController,
-	state: LazyListState
+	state: PagerState
 ) {
 	if (showDialog.value) {
 		val context = LocalContext.current
