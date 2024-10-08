@@ -27,12 +27,12 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -41,14 +41,8 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.core.view.WindowInsetsCompat
-import androidx.media3.common.AudioAttributes
-import androidx.media3.common.C
-import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.exoplayer.DefaultLoadControl
-import androidx.media3.exoplayer.ExoPlayer
 import androidx.navigation.NavHostController
 import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
@@ -63,9 +57,9 @@ import com.kaii.photos.mediastore.signature
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
-import kotlin.math.abs
 
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalGlideComposeApi::class)
@@ -93,23 +87,7 @@ fun HorizontalImageList(
             Size(75f, 75f),
             requestBuilderTransform = requestBuilderTransform,
         )
-
-    val isPlaying = remember { mutableStateOf(false) }
-    val isMuted = remember { mutableStateOf(false) }
-    val currentVideoPosition = remember { mutableFloatStateOf(0f) }
-   	val skip = remember { mutableStateOf(0) }
-	var duration = remember { mutableFloatStateOf(0f) }
-//	var lastVideoPosition by remember { mutableFloatStateOf(0f) }
-
-	// causes blinking issue, plz fix
-    // LaunchedEffect(isPlaying.value) {
-    // 	while (isPlaying.value) {
-   	// 	 	currentVideoPosition.value = (exoPlayer.currentPosition / 1000).toFloat()
-   	// 	 	lastVideoPosition = currentVideoPosition.value
-    // 		kotlinx.coroutines.delay(1000)
-    // 	}
-    // }
-
+        
     LaunchedEffect(key1 = currentMediaItem) {
         scale.value = 1f
         rotation.value = 0f
@@ -145,66 +123,21 @@ fun HorizontalImageList(
         val path = if (isHidden) mediaStoreItem.uri.path else mediaStoreItem.uri
 
         if (mediaStoreItem.type == MediaType.Video) {
-            Box (
-                modifier = Modifier
-                    .fillMaxSize(1f)
-            ) {
-                VideoPlayer(
-                    item = mediaStoreItem,
-                    isMuted = isMuted,
-                    isPlaying = isPlaying,
-                    shouldPlay = shouldPlay,
-                    skip = skip,
-                    duration = duration,
-                    modifier = Modifier
-//                        .fillMaxSize(1f)
-                        .align(Alignment.Center)
-                        .mediaModifier(
-                            scale,
-                            rotation,
-                            offset,
-                            systemBarsShown,
-                            window,
-                            windowInsetsController,
-                            appBarsVisible
-                        )
-                )
-
-                AnimatedVisibility(
-                    visible = appBarsVisible.value,
-                    enter = expandIn(
-                        animationSpec = tween(
-                            durationMillis = 500
-                        )
-                    ) + fadeIn(
-                        animationSpec = tween(
-                            durationMillis = 500
-                        )
-                    ),
-                    exit = shrinkOut(
-                        animationSpec = tween(
-                            durationMillis = 500
-                        )
-                    ) + fadeOut(
-                        animationSpec = tween(
-                            durationMillis = 500
-                        )
-                    ),
-                    modifier = Modifier
-                       	.fillMaxSize(1f)
-                        .align(Alignment.Center)
-                ) {
-                    VideoPlayerControls(
-                        isPlaying = isPlaying,
-                        isMuted = isMuted,
-                        currentVideoPosition = currentVideoPosition,
-                        skip = skip,
-                        duration = duration,
-                        modifier = Modifier
-                            .fillMaxSize(1f)
-                    )
-                }
-            }
+	        VideoPlayer(
+	            item = mediaStoreItem,
+	            visible = appBarsVisible.value,
+	            shouldPlay = shouldPlay,
+	            modifier = Modifier
+	                .mediaModifier(
+	                    scale,
+	                    rotation,
+	                    offset,
+	                    systemBarsShown,
+	                    window,
+	                    windowInsetsController,
+	                    appBarsVisible
+	                )
+	        )
         } else {
             // AsyncImage(
             //     model = ImageRequest.Builder(LocalContext.current)

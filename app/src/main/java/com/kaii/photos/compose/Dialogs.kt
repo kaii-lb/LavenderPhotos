@@ -242,22 +242,22 @@ fun AnimatableText(first: String, second: String, state: Boolean, modifier: Modi
 		transitionSpec = {
 			(expandHorizontally (
 				animationSpec = tween(
-					durationMillis = 250
+					durationMillis = 350
 				),
 				expandFrom = Alignment.Start
 			) + fadeIn(
 				animationSpec = tween(
-					durationMillis = 250,
+					durationMillis = 350,
 				)
 			)).togetherWith(
 				shrinkHorizontally (
 					animationSpec = tween(
-						durationMillis = 250
+						durationMillis = 350
 					),
 					shrinkTowards = Alignment.End
 				) + fadeOut(
 					animationSpec = tween(
-						durationMillis = 250,
+						durationMillis = 350,
 					)
 				)
 			)
@@ -307,22 +307,22 @@ fun AnimatableTextField(
 		transitionSpec = {
 			(expandHorizontally (
 				animationSpec = tween(
-					durationMillis = 250
+					durationMillis = 350
 				),
 				expandFrom = Alignment.Start
 			) + fadeIn(
 				animationSpec = tween(
-					durationMillis = 250,
+					durationMillis = 350,
 				)
 			)).togetherWith(
 				shrinkHorizontally (
 					animationSpec = tween(
-						durationMillis = 250
+						durationMillis = 350
 					),
 					shrinkTowards = Alignment.End
 				) + fadeOut(
 					animationSpec = tween(
-						durationMillis = 250,
+						durationMillis = 350,
 					)
 				)
 			)

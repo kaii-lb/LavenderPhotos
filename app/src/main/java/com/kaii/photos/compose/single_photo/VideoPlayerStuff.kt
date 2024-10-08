@@ -2,7 +2,14 @@ package com.kaii.photos.compose.single_photo
 
 import android.net.Uri
 import android.view.ViewGroup
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandIn
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,6 +21,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,11 +33,16 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,17 +61,18 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.media3.common.C.VIDEO_SCALING_MODE_SCALE_TO_FIT
 import androidx.media3.common.MediaItem
-import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
-import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import com.kaii.photos.R
 import com.kaii.photos.compose.CustomMaterialTheme
 import com.kaii.photos.mediastore.MediaStoreData
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collect
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.seconds
 
@@ -68,10 +82,10 @@ import kotlin.time.Duration.Companion.seconds
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VideoPlayerControls(
+    exoPlayer: ExoPlayer,
     isPlaying: MutableState<Boolean>,
     isMuted: MutableState<Boolean>,
     currentVideoPosition: MutableState<Float>,
-    skip: MutableState<Int>,
     duration: MutableState<Float>,
     modifier: Modifier
 ) {
@@ -107,7 +121,7 @@ fun VideoPlayerControls(
                     horizontalArrangement = Arrangement.Center
                 ) {
                     Text (
-                        text = "00:00",
+                        text = currentVideoPosition.value.roundToInt().seconds.toString(),
                         style = TextStyle(
                             fontSize = TextUnit(12f, TextUnitType.Sp),
                             color = CustomMaterialTheme.colorScheme.onBackground,
@@ -125,7 +139,7 @@ fun VideoPlayerControls(
                     value = currentVideoPosition.value,
                     valueRange = 0f..duration.value,
                     onValueChange = { pos ->
-                        currentVideoPosition.value = pos
+                        exoPlayer.seekTo((pos * 1000).toLong())
                     },
                     steps = duration.value.toInt(),
                     thumb = {
@@ -215,8 +229,7 @@ fun VideoPlayerControls(
         ) {
             FilledTonalIconButton(
                 onClick = {
-                    skip.value = 2
-                    currentVideoPosition.value -= 5f
+                    exoPlayer.seekBack()
                 },
                 modifier = Modifier
                     .size(48.dp)
@@ -248,8 +261,7 @@ fun VideoPlayerControls(
 
             FilledTonalIconButton(
                 onClick = {
-                    skip.value = 1
-                    currentVideoPosition.value += 5f
+                    exoPlayer.seekForward()
                 },
                 modifier = Modifier
                     .size(48.dp)
@@ -268,39 +280,79 @@ fun VideoPlayerControls(
 @androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun VideoPlayer(
-	item: MediaStoreData,
-	isMuted: MutableState<Boolean>,
-	isPlaying: MutableState<Boolean>,
-	shouldPlay: Boolean,
-	skip: MutableState<Int>,
-	duration: MutableState<Float>,
-	modifier: Modifier
+    item: MediaStoreData,
+    visible: Boolean,
+    shouldPlay: Boolean,
+    modifier: Modifier
 ) {
-    val exoPlayer = rememberExoPlayerWithLifeCycle(item.uri, isPlaying, duration)
+    val isPlaying = remember { mutableStateOf(false) }
+    val isMuted = remember { mutableStateOf(false) }
+    val currentVideoPosition = remember { mutableFloatStateOf(0f) }
+	val duration = remember { mutableFloatStateOf(0f) }
+
+    val exoPlayer = rememberExoPlayerWithLifeCycle(item.uri, isPlaying, duration, currentVideoPosition)
     val playerView = rememberPlayerView(exoPlayer)
+    
+    LaunchedEffect(key1 = isPlaying.value) {
+        while(isPlaying.value) {
+        	currentVideoPosition.value = (exoPlayer.currentPosition / 1000f).roundToInt().toFloat()
+            delay(1000)
+        }
+    }
 
-    Column (
-    	modifier = modifier,
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+    Box (
+        modifier = Modifier
+            .fillMaxSize(1f)
     ) {
-        AndroidView (
-            factory = { playerView },
-            update = {
-				if (skip.value == 1) {
-					exoPlayer.seekForward()
-					println("SKIPPED FORWARD")	
-				} else if (skip.value == 2) {
-					exoPlayer.seekBack()
-					println("SKIPPED BACKWARD")
-				}
-            	skip.value = 0
-            	
-		        exoPlayer.volume = if (isMuted.value) 0f else 1f
+	    Column (
+	    	modifier = modifier.then(Modifier.align(Alignment.Center)),
+	        verticalArrangement = Arrangement.Center,
+	        horizontalAlignment = Alignment.CenterHorizontally
+	    ) {
+	        AndroidView (
+	            factory = { playerView },
+	            update = {
+			        exoPlayer.volume = if (isMuted.value) 0f else 1f
 
-		        exoPlayer.playWhenReady = shouldPlay && isPlaying.value
-            },
-        )
+			        exoPlayer.playWhenReady = shouldPlay && isPlaying.value
+	            },
+	        )
+	    }
+		
+		AnimatedVisibility(
+	        visible = visible,
+	        enter = expandIn(
+	            animationSpec = tween(
+	                durationMillis = 350
+	            )
+	        ) + fadeIn(
+	            animationSpec = tween(
+	                durationMillis = 350
+	            )
+	        ),
+	        exit = shrinkOut(
+	            animationSpec = tween(
+	                durationMillis = 350
+	            )
+	        ) + fadeOut(
+	            animationSpec = tween(
+	                durationMillis = 350
+	            )
+	        ),
+	        modifier = Modifier
+	           	.fillMaxSize(1f)
+	            .align(Alignment.Center)
+	    ) {
+	        VideoPlayerControls(
+	        	exoPlayer = exoPlayer,
+	            isPlaying = isPlaying,
+	            isMuted = isMuted,
+	            currentVideoPosition = currentVideoPosition,
+	            duration = duration,
+	            modifier = Modifier
+	                .fillMaxSize(1f)
+	        )
+	    }	    
     }
 }
 
@@ -309,7 +361,8 @@ fun VideoPlayer(
 fun rememberExoPlayerWithLifeCycle(
     videoSource: Uri,
     isPlaying: MutableState<Boolean>,
-    duration: MutableState<Float>
+    duration: MutableState<Float>,
+    currentVideoPosition: MutableState<Float>
 ): ExoPlayer {
     val context = LocalContext.current
 
@@ -357,13 +410,27 @@ fun rememberExoPlayerWithLifeCycle(
     }
 
     val listener = object : Player.Listener {
-    	override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) {
-    		if (playbackState == ExoPlayer.STATE_READY) {
-    			duration.value = (exoPlayer.duration / 1000f).roundToInt().toFloat()
-    		} else if (playbackState == ExoPlayer.STATE_ENDED) {
-    			isPlaying.value = false
-    		}
-    	}
+        override fun onPlaybackStateChanged(playbackState: Int) {
+            super.onPlaybackStateChanged(playbackState)
+
+            if (playbackState == ExoPlayer.STATE_READY) {
+                duration.value = (exoPlayer.duration / 1000f).roundToInt().toFloat()
+            } else if (playbackState == ExoPlayer.STATE_ENDED) {
+            	exoPlayer.pause()
+                exoPlayer.seekTo(0L)
+                isPlaying.value = false
+                currentVideoPosition.value = 0f
+            }
+        }
+
+        override fun onPositionDiscontinuity(
+            oldPosition: Player.PositionInfo,
+            newPosition: Player.PositionInfo,
+            reason: Int
+        ) {
+            super.onPositionDiscontinuity(oldPosition, newPosition, reason)
+            currentVideoPosition.value = (newPosition.positionMs / 1000f).roundToInt().toFloat()
+        }
     }
     exoPlayer.addListener(listener)
 
@@ -377,7 +444,8 @@ fun rememberExoPlayerWithLifeCycle(
         lifecycleOwner.lifecycle.addObserver(lifecycleObserver)
 
         onDispose {
-            lifecycleOwner.lifecycle.removeObserver(lifecycleObserver)
+        	// its insta-disposing for some reason
+            // lifecycleOwner.lifecycle.removeObserver(lifecycleObserver)
         }
     }
     return exoPlayer

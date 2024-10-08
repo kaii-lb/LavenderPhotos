@@ -3,5 +3,5 @@
     <string name="default_homepage_photogrid_dir">DCIM</string>
     <string name="locked_folder_help_top">Locked Folder is a secure folder for your images and videos on this device.\nThe secured media is never uploaded anywhere and is always on-device, encrypted with a key unique to your device\'s password or fingerprint data.</string>
     <string name="locked_folder_help_bottom">The secured data cannot be restored if the password was forgotten or the fingerprint was removed.</string>
-    <string name="changelog">- Can rename files and folders now\n- Added more info to media dialogs, click info to copy, shutter speed is broken\n- Properly smooth animations\n- Added username changing\n- General stability improvements\n- Basic video playback done (its very bad)</string>
+    <string name="changelog">- Can rename files and folders now\n- Added more info to media dialogs, click info to copy, shutter speed is broken\n- Properly smooth animations\n- Added username changing\n- General stability improvements\n- Added video playback ability :D</string>
 </resources>

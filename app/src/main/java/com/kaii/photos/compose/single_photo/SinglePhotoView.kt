@@ -204,13 +204,13 @@ private fun TopBar(
 		enter =
 		slideInVertically (
 			animationSpec = tween(
-				durationMillis = 250
+				durationMillis = 350
 			)
 		) { width -> -width } + fadeIn(),
 		exit =
 		slideOutVertically(
 			animationSpec = tween(
-				durationMillis = 300
+				durationMillis = 400
 			)
 		) { width -> -width } + fadeOut(),
 	) {
@@ -584,7 +584,7 @@ private fun SinglePhotoInfoDialog(
 	                    },
 	                    label = "height of other options",
 	                    animationSpec = tween(
-	                    	durationMillis = 500
+	                    	durationMillis = 350
 	                    )					
 					)
 
