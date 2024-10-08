@@ -9,21 +9,19 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
@@ -36,13 +34,10 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -59,6 +54,8 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
 import androidx.media3.common.C.VIDEO_SCALING_MODE_SCALE_TO_FIT
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
@@ -72,8 +69,9 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.CustomMaterialTheme
 import com.kaii.photos.mediastore.MediaStoreData
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
 import kotlin.math.roundToInt
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 // special thanks to @bedirhansaricayir on github, helped a LOT of performance
@@ -110,18 +108,20 @@ fun VideoPlayerControls(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
+                val currentDurationFormatted = currentVideoPosition.value.toInt().seconds.formatLikeANormalPerson()
+                
                 Row (
                     modifier = Modifier
                         .height(32.dp)
-                        .wrapContentWidth()
+                        .width(if (currentDurationFormatted.second) 72.dp else 48.dp)
                         .clip(RoundedCornerShape(1000.dp))
                         .background(CustomMaterialTheme.colorScheme.secondaryContainer)
                         .padding(4.dp, 0.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
-                ) {
+                ) { 
                     Text (
-                        text = currentVideoPosition.value.roundToInt().seconds.toString(),
+                        text = currentDurationFormatted.first,
                         style = TextStyle(
                             fontSize = TextUnit(12f, TextUnitType.Sp),
                             color = CustomMaterialTheme.colorScheme.onBackground,
@@ -180,10 +180,12 @@ fun VideoPlayerControls(
 
                 Spacer (modifier = Modifier.width(8.dp))
 
+				val formattedDuration = duration.value.toInt().seconds.formatLikeANormalPerson()
+
                 Row (
                     modifier = Modifier
                         .height(32.dp)
-                        .wrapContentWidth()
+                        .width(if (formattedDuration.second) 72.dp else 48.dp)
                         .clip(RoundedCornerShape(1000.dp))
                         .background(CustomMaterialTheme.colorScheme.secondaryContainer)
                         .padding(4.dp, 0.dp),
@@ -191,7 +193,7 @@ fun VideoPlayerControls(
                     horizontalArrangement = Arrangement.Center
                 ) {
                     Text (
-                        text = duration.value.toInt().seconds.toString(),
+                        text = formattedDuration.first,
                         style = TextStyle(
                             fontSize = TextUnit(12f, TextUnitType.Sp),
                             color = CustomMaterialTheme.colorScheme.onBackground,
@@ -210,7 +212,7 @@ fun VideoPlayerControls(
                         .size(32.dp)
                 ) {
                     Icon(
-                        painter = painterResource(id = if(isMuted.value) R.drawable.volume_mute else R.drawable.volume_max),
+                        painter = painterResource(id = if (isMuted.value) R.drawable.volume_mute else R.drawable.volume_max),
                         contentDescription = "Video player mute or un-mute",
                         modifier = Modifier
                             .size(24.dp)
@@ -295,9 +297,23 @@ fun VideoPlayer(
     
     LaunchedEffect(key1 = isPlaying.value) {
         while(isPlaying.value) {
-        	currentVideoPosition.value = (exoPlayer.currentPosition / 1000f).roundToInt().toFloat()
+        	currentVideoPosition.floatValue = (exoPlayer.currentPosition / 1000f).roundToInt().toFloat()
+
+			if (currentVideoPosition.floatValue == (exoPlayer.duration / 1000f).roundToInt().toFloat()) {
+            	exoPlayer.pause()
+                exoPlayer.seekTo(0L)
+                currentVideoPosition.floatValue = 0f
+                isPlaying.value = false
+			}
+        	
             delay(1000)
         }
+    }
+
+    DisposableEffect(true) {
+    	onDispose {
+    		exoPlayer.release()
+    	}
     }
 
     Box (
@@ -387,7 +403,17 @@ fun rememberExoPlayerWithLifeCycle(
             	)
                 setSeekBackIncrementMs(5000)
                 setSeekForwardIncrementMs(5000)
-                // pause on video end   	
+
+                setPauseAtEndOfMediaItems(true)
+
+                setAudioAttributes(
+                    AudioAttributes.Builder().apply {
+                        setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
+                        AudioAttributes.DEFAULT
+                        setAllowedCapturePolicy(C.ALLOW_CAPTURE_BY_ALL)
+                    }.build(),
+                    true
+                )
         	}
             .build()
             .apply {
@@ -415,11 +441,6 @@ fun rememberExoPlayerWithLifeCycle(
 
             if (playbackState == ExoPlayer.STATE_READY) {
                 duration.value = (exoPlayer.duration / 1000f).roundToInt().toFloat()
-            } else if (playbackState == ExoPlayer.STATE_ENDED) {
-            	exoPlayer.pause()
-                exoPlayer.seekTo(0L)
-                isPlaying.value = false
-                currentVideoPosition.value = 0f
             }
         }
 
@@ -512,7 +533,33 @@ fun rememberPlayerView(exoPlayer: ExoPlayer): PlayerView {
     DisposableEffect(key1 = true) {
         onDispose {
             playerView.player = null
+            exoPlayer.release()
         }
     }
     return playerView
+}
+
+fun Duration.formatLikeANormalPerson(): Pair<String, Boolean> {
+    val longboi = this > 60.minutes
+    val formatted = if (longboi) {
+        this.toComponents { hours, minutes, seconds, _ ->
+            String.format(
+                java.util.Locale.ENGLISH,
+                "%02d:%02d:%02d",
+                hours,
+                minutes,
+                seconds
+            )
+        }
+    } else {
+        this.toComponents { minutes, seconds, _ ->
+            String.format(
+                java.util.Locale.ENGLISH,
+                "%02d:%02d",
+                minutes,
+                seconds
+            )
+        }
+    }
+    return Pair(formatted, longboi)
 }

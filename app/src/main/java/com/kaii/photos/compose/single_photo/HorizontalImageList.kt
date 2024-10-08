@@ -4,12 +4,6 @@ import android.graphics.drawable.Drawable
 import android.util.Log
 import android.view.Window
 import android.view.WindowInsetsController
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandIn
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -19,9 +13,7 @@ import androidx.compose.foundation.gestures.calculateRotation
 import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.runtime.Composable
@@ -29,9 +21,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,6 +30,7 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowInsetsCompat
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavHostController
@@ -97,6 +87,7 @@ fun HorizontalImageList(
     HorizontalPager(
         state = state,
         verticalAlignment = Alignment.CenterVertically,
+        pageSpacing = 8.dp,
         key = {
             if (groupedMedia.value.isNotEmpty() && it != groupedMedia.value.size) {
                 val neededItem = groupedMedia.value[it]
@@ -139,13 +130,6 @@ fun HorizontalImageList(
 	                )
 	        )
         } else {
-            // AsyncImage(
-            //     model = ImageRequest.Builder(LocalContext.current)
-            //         .data("https://example.com/image.jpg")
-            //         .crossfade(true)
-            //         .build(),
-            // )
-
             GlideImage(
                 model = path,
                 contentDescription = "selected image",
@@ -271,17 +255,14 @@ fun sortOutMediaMods(
         val size = groupedMedia.value.size - 1
         val scrollIndex = groupedMedia.value.indexOf(item) // is this better?
 //        val scrollIndex = state.layoutInfo.visibleItemsInfo.firstOrNull()?.index ?: 0 // or this?
-        val added = if (scrollIndex == size) -1 else 1
 
         val newMedia = groupedMedia.value.toList().toMutableList()
         newMedia.removeAt(scrollIndex)
 
-        Log.d("SORT_OUT_MEDIA_MODS", "$scrollIndex $added is the needed index out of $size")
-
         if (size == 0) {
             navController.popBackStack()
         } else {
-            state.animateScrollToPage((scrollIndex + added).coerceAtLeast(0))
+            state.animateScrollToPage((scrollIndex).coerceIn(0, size))
         }
 
         groupedMedia.value = newMedia
