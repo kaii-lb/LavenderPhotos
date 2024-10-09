@@ -14,9 +14,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -30,7 +30,7 @@ import com.kaii.photos.helpers.getAppTrashBinDirectory
 import com.kaii.photos.helpers.single_image_functions.ImageFunctions
 
 @Composable
-fun TrashedPhotoGridView(navController: NavHostController) {
+fun TrashedPhotoGridView(navController: NavHostController, selectedItemsList: SnapshotStateList<String>) {
     Scaffold (
         topBar =  { TopBar(navController) },
         containerColor = CustomMaterialTheme.colorScheme.background,
@@ -46,12 +46,13 @@ fun TrashedPhotoGridView(navController: NavHostController) {
         	// TODO: check for items older than 30 days and delete them 
         	
             PhotoGrid(
-                navController,
-                ImageFunctions.LoadTrashedImage,
-                LocalContext.current.getAppTrashBinDirectory().replace("/storage/emulated/0/", ""),
-                MediaItemSortMode.LastModified,
-                "Deleted items show up here",
-                "Deleted On "
+                navController = navController,
+                operation = ImageFunctions.LoadTrashedImage,
+                path = getAppTrashBinDirectory().replace("/storage/emulated/0/", ""),
+                sortBy = MediaItemSortMode.LastModified,
+                selectedItemsList = selectedItemsList,
+                emptyText = "Deleted items show up here",
+                prefix = "Deleted On "
             )
         }
     }

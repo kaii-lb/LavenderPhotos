@@ -69,7 +69,5 @@ fun MediaStoreData.signature() = MediaStoreSignature(mimeType, dateModified, ori
 enum class MediaType {
     Video,
     Image,
-    Section,
-    Folder,
-    ImageOrVideo
+    Section
 }

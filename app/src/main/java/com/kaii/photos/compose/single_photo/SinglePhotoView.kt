@@ -1,6 +1,7 @@
 package com.kaii.photos.compose.single_photo
 
 import android.annotation.SuppressLint
+import android.content.res.Configuration
 import android.view.Window
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -10,14 +11,12 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -39,18 +38,17 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -58,20 +56,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavHostController
 import com.kaii.photos.MainActivity
 import com.kaii.photos.R
-import com.kaii.photos.compose.AnimatableText
-import com.kaii.photos.compose.AnimatableTextField
 import com.kaii.photos.compose.CustomMaterialTheme
-import com.kaii.photos.compose.DialogClickableItem
-import com.kaii.photos.compose.DialogExpandableItem
-import com.kaii.photos.compose.DialogInfoText
-import com.kaii.photos.helpers.RowPosition
-import com.kaii.photos.helpers.brightenColor
-import com.kaii.photos.helpers.getExifDataForMedia
+import com.kaii.photos.compose.SinglePhotoInfoDialog
 import com.kaii.photos.helpers.single_image_functions.ImageFunctions
 import com.kaii.photos.helpers.single_image_functions.operateOnImage
 import com.kaii.photos.mediastore.MediaStoreData
@@ -158,7 +147,6 @@ fun SinglePhotoView(
 			groupedMedia
 		)
 
-		
 		Column (
 			modifier = Modifier
 				.padding(0.dp)
@@ -199,6 +187,14 @@ private fun TopBar(
 	visible: Boolean,
 	showInfoDialog: MutableState<Boolean>
 ) {
+	val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+	val color = if (isLandscape)
+		CustomMaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.4f)
+	else
+		CustomMaterialTheme.colorScheme.surfaceContainer
+
+	val blueModifier = if (isLandscape) Modifier.blur(16.dp) else Modifier
+
 	AnimatedVisibility(
 		visible = visible,
 		enter =
@@ -215,9 +211,9 @@ private fun TopBar(
 		) { width -> -width } + fadeOut(),
 	) {
 		TopAppBar(
-//			modifier = Modifier.alpha(alpha),
+			modifier = Modifier.then(blueModifier),
 			colors = TopAppBarDefaults.topAppBarColors(
-				containerColor = CustomMaterialTheme.colorScheme.surfaceContainer
+				containerColor = color
 			),
 			navigationIcon = {
 				IconButton(
@@ -292,6 +288,11 @@ private fun BottomBar(
 	neededDialogButtonLabel: MutableState<String>,
 	neededDialogFunction: MutableState<ImageFunctions>
 ) {
+	val color = if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE)
+		CustomMaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.4f)
+	else
+		CustomMaterialTheme.colorScheme.surfaceContainer
+
 	AnimatedVisibility(
 		visible = visible,
 		enter =
@@ -309,7 +310,7 @@ private fun BottomBar(
 	) {
 		val context = LocalContext.current
 		BottomAppBar(
-			containerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
+			containerColor = color,
 			contentColor = CustomMaterialTheme.colorScheme.onBackground,
 			contentPadding = PaddingValues(0.dp),
 			actions = {
@@ -406,6 +407,11 @@ private fun SinglePhotoConfirmationDialog(
 	navController: NavHostController,
 	state: PagerState
 ) {
+	val modifier = if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE)
+		Modifier.width(256.dp)
+	else
+		Modifier
+
 	if (showDialog.value) {
 		val context = LocalContext.current
 		val coroutineScope = rememberCoroutineScope()
@@ -414,6 +420,7 @@ private fun SinglePhotoConfirmationDialog(
 			onDismissRequest = {
 				showDialog.value = false
 			},
+			modifier = modifier,
 			confirmButton = {
 				Button(
 					onClick = {
@@ -458,188 +465,5 @@ private fun SinglePhotoConfirmationDialog(
 			},
 			shape = RoundedCornerShape(32.dp)
 		)
-	}
-}
-
-@Composable
-private fun SinglePhotoInfoDialog(
-	showDialog: MutableState<Boolean>,
-	currentMediaItem: State<MediaStoreData>,
-	groupedMedia: MutableState<List<MediaStoreData>>
-) {
-	val context = LocalContext.current
-	val isEditingFileName = remember { mutableStateOf(false) }
-	
-	if (showDialog.value) {
-		Dialog(
-			onDismissRequest = {
-				showDialog.value = false
-				isEditingFileName.value = false
-			},
-            properties = DialogProperties(
-                usePlatformDefaultWidth = false
-            ),
-		) {
-			Column (
-				modifier = Modifier
-					.fillMaxWidth(0.85f)
-					.wrapContentHeight()
-					.clip(RoundedCornerShape(32.dp))
-					.background(brightenColor(CustomMaterialTheme.colorScheme.surface, 0.1f))
-					.padding(4.dp),
-			) {
-				Box (
-					modifier = Modifier
-						.fillMaxWidth(1f),
-				) {
-					IconButton(
-						onClick = {
-							showDialog.value = false
-							isEditingFileName.value = false
-						},
-						modifier = Modifier
-							.align(Alignment.CenterStart)
-					) {
-						Icon(
-							painter = painterResource(id = R.drawable.close),
-							contentDescription = "Close dialog button",
-							modifier = Modifier
-								.size(24.dp)
-						)
-					}
-
-					AnimatableText(
-						first = "Rename",
-						second = "More Options",
-						state = isEditingFileName.value,
-						modifier = Modifier
-							.align(Alignment.Center)
-					)
-				}
-
-				Column (
-					modifier = Modifier
-						.padding(12.dp)
-						.wrapContentHeight()
-				) {
-					var originalFileName = currentMediaItem.value.displayName ?: "Broken File"
-					val fileName = remember { mutableStateOf(originalFileName) }
-					val saveFileName = remember { mutableStateOf(false) }
-
-					val expanded = remember { mutableStateOf(false) }
-
-					LaunchedEffect(key1 = saveFileName.value) {
-						if (!saveFileName.value) {
-							return@LaunchedEffect
-						}
-
-						val oldName = currentMediaItem.value.displayName ?: "Broken File"
-						val path = currentMediaItem.value.absolutePath
-						operateOnImage(
-							path,
-							currentMediaItem.value.id,
-							ImageFunctions.RenameImage,
-							context,
-							mapOf(
-								Pair("old_name", oldName),
-								Pair("new_name", fileName.value)
-							)
-						)
-
-						originalFileName = fileName.value
-						val newGroupedMedia = groupedMedia.value.toMutableList()
-						// set currentMediaItem to new one with new name
-						val newMedia = currentMediaItem.value.copy(
-							displayName = fileName.value,
-							absolutePath = path.replace(oldName, fileName.value)
-						)
-
-						val index = groupedMedia.value.indexOf(currentMediaItem.value)
-						newGroupedMedia[index] = newMedia
-						groupedMedia.value = newGroupedMedia
-		
-						saveFileName.value = false
-					}
-
-					AnimatableTextField(
-						state = isEditingFileName,
-						string = fileName,
-						doAction = saveFileName,
-						extraAction = expanded,
-						rowPosition = RowPosition.Top
-					) {
-						fileName.value = originalFileName
-					}
-
-					val mediaData = getExifDataForMedia(currentMediaItem.value.absolutePath)
-					// should add a way to automatically calculate height needed for this
-					val addedHeight by remember { mutableStateOf(36.dp * mediaData.keys.size) }
-                    val height by androidx.compose.animation.core.animateDpAsState(
-	                    targetValue = if (!isEditingFileName.value && expanded.value) {
-	                    	124.dp + addedHeight
-	                    } else if (!isEditingFileName.value && !expanded.value) {
-	                    	124.dp
-	                    } else {
-	                    	0.dp
-	                    },
-	                    label = "height of other options",
-	                    animationSpec = tween(
-	                    	durationMillis = 350
-	                    )					
-					)
-
-					Column (
-						modifier = Modifier
-							.height(height)
-							.fillMaxWidth(1f)
-					) {
-						DialogClickableItem(
-							text = "Copy to Album",
-							iconResId = R.drawable.copy,
-							position = RowPosition.Middle,
-						)
-
-						DialogClickableItem (
-							text = "Move to Album",
-							iconResId = R.drawable.cut,
-							position = RowPosition.Middle,
-						)						
-
-						val infoComposable = @Composable {
-							Column (
-								modifier = Modifier
-									.wrapContentHeight()
-							) {
-								for (key in mediaData.keys) {
-									val value = mediaData[key]
-
-									val splitBy = Regex("(?=[A-Z])")
-									val split = key.toString().split(splitBy)
-									// println("SPLIT IS $split")
-									val name = if (split.size >= 3) "${split[1]} ${split[2]}" else key.toString()
-
-									DialogInfoText(
-										firstText = name,
-										secondText = value.toString(),
-										iconResId = key.iconResInt,
-									)
-								}
-
-								Spacer (modifier = Modifier.height(8.dp))
-							}
-						}
-
-						DialogExpandableItem (
-							text = "More Info",
-							iconResId = R.drawable.info,
-							position = RowPosition.Bottom,
-							expanded = expanded
-						) {
-							infoComposable()
-						}
-					}
-				}
-			}
-		}
 	}
 }

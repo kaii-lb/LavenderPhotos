@@ -1,5 +1,6 @@
 package com.kaii.photos.compose.grids
 
+import android.content.res.Configuration
 import android.graphics.drawable.Drawable
 import android.os.Handler
 import android.os.Looper
@@ -35,12 +36,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -71,6 +74,7 @@ fun SearchPage(navController: NavHostController, searchViewModel: SearchViewMode
         var searchedForText by remember { mutableStateOf("") }
         var searchNow by remember { mutableStateOf(false) }
         var showLoadingSpinner by remember { mutableStateOf(true) }
+        val selectedItemsList = remember { SnapshotStateList<String>() } // has the absolute paths of all the selected items
         
         Column (
         	modifier = Modifier
@@ -182,7 +186,13 @@ fun SearchPage(navController: NavHostController, searchViewModel: SearchViewMode
 				.fillMaxSize(1f)	
 		) {
 	        LazyVerticalGrid(
-	            columns = GridCells.Fixed(3),
+				columns = GridCells.Fixed(
+					if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT) {
+						3
+					} else {
+						6
+					}
+				),
 	            modifier = Modifier
 	                .fillMaxSize(1f)
 	                .align(Alignment.Center),
@@ -203,14 +213,16 @@ fun SearchPage(navController: NavHostController, searchViewModel: SearchViewMode
 	                val (mediaStoreItem, preloadRequestBuilder) = preloadingData[i]
 
 	                MediaStoreItem(
-	                    navController,
-	                    mediaStoreItem,
-	                    preloadRequestBuilder,
-	                    ImageFunctions.LoadNormalImage,
-	                    MainActivity.mainViewModel,
-	                    groupedMedia,
-	                    ""
-	                )
+                        navController,
+                        mediaStoreItem,
+                        preloadRequestBuilder,
+                        ImageFunctions.LoadNormalImage,
+                        MainActivity.mainViewModel,
+                        groupedMedia,
+                        "",
+                        selectedItemsList,
+						gridState
+                    )
 
 	                if (i >= 0) {
 	                    val handler = Handler(Looper.getMainLooper())

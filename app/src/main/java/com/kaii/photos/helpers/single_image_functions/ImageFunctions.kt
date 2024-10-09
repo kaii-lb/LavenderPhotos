@@ -88,7 +88,7 @@ fun operateOnImage(
 fun trashPhoto(path: String, id: Long, context: Context) {
     val fileToBeTrashed = File(path)
     val absolutePath = fileToBeTrashed.absolutePath
-    val trashDir = context.getAppTrashBinDirectory()
+    val trashDir = getAppTrashBinDirectory()
     val copyToPath = trashDir + "trashed-" + fileToBeTrashed.name
 
 	Files.move(Path(absolutePath), Path(copyToPath), StandardCopyOption.ATOMIC_MOVE)
@@ -226,7 +226,7 @@ private fun moveOutOfLockedFolder(path: String, context: Context) {
 
 	// TODO: use sidecar files(?) to track where it was from
 	// or write metadata into the media itself
-	val reverseCemetery = context.getAppRestoredFromLockedFolderDirectory() + fileToBeRevived.name
+	val reverseCemetery = getAppRestoredFromLockedFolderDirectory() + fileToBeRevived.name
 
 	Files.move(Path(absolutePath), Path(reverseCemetery), StandardCopyOption.REPLACE_EXISTING)
 

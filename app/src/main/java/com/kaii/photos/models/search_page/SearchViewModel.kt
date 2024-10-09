@@ -1,19 +1,11 @@
 package com.kaii.photos.models.search_page
 
-import android.net.Uri
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.LiveData
-import com.kaii.photos.database.entities.MediaEntity
-import com.kaii.photos.helpers.MediaSearchType
-import com.kaii.photos.mediastore.AlbumStoreDataSource
 import com.kaii.photos.mediastore.MediaStoreData
-import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.SearchStoreDataSource
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOn
@@ -27,15 +19,6 @@ class SearchViewModel(context: Context, searchFor: String) : ViewModel() {
 
     init {
         viewModelScope.launch {
-            mediaStoreDataSource.loadMediaStoreData().flowOn(Dispatchers.IO).collect {
-                _uiState.value = it
-            }
-        }
-    }
-
-    fun setMediaStoreData(context: Context, searchFor: String) {
-    	val mediaStoreDataSource = SearchStoreDataSource(context, searchFor)	
-    	viewModelScope.launch {
             mediaStoreDataSource.loadMediaStoreData().flowOn(Dispatchers.IO).collect {
                 _uiState.value = it
             }

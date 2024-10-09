@@ -1,5 +1,6 @@
 package com.kaii.photos.compose.grids
 
+import android.content.res.Configuration
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -30,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -43,10 +45,10 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.kaii.photos.MainActivity
 import com.kaii.photos.compose.CustomMaterialTheme
-import com.kaii.photos.helpers.getDateTakenForMedia
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.getAppLockedFolderDirectory
+import com.kaii.photos.helpers.getDateTakenForMedia
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.gallery_model.groupPhotosBy
@@ -70,7 +72,7 @@ fun LockedFolderView(navController: NavHostController) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             val secureFolder = File(LocalContext.current.getAppLockedFolderDirectory())
-			val fileList = secureFolder.listFiles() ?: return@Column
+            val fileList = secureFolder.listFiles() ?: return@Column
 			val mediaStoreData = emptyList<MediaStoreData>().toMutableList()
             fileList.forEachIndexed { index, file ->
                 val mimeType = Files.probeContentType(Path(file.absolutePath))
@@ -110,7 +112,13 @@ fun LockedFolderView(navController: NavHostController) {
 		   		}
 			} else {
 				LazyVerticalGrid(
-			        columns = GridCells.Fixed(3),
+                    columns = GridCells.Fixed(
+                        if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT) {
+                            3
+                        } else {
+                            6
+                        }
+                    ),
 			        modifier = Modifier
 			        	.fillMaxSize(1f),
 			    ) {
@@ -148,6 +156,7 @@ fun LockedFolderView(navController: NavHostController) {
 @Composable
 private fun TopBar(navController: NavHostController) {
     val title = "Locked Folder"
+
     TopAppBar(
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = CustomMaterialTheme.colorScheme.surfaceContainer
@@ -188,7 +197,7 @@ private fun TopBar(navController: NavHostController) {
                         .size(24.dp)
                 )
             }
-        }
+        },
     )
 }
 

@@ -1,6 +1,8 @@
 package com.kaii.photos.compose.grids
 
+import android.content.res.Configuration
 import android.graphics.drawable.Drawable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -16,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -30,13 +33,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
@@ -46,16 +48,11 @@ import com.bumptech.glide.integration.compose.rememberGlidePreloadingData
 import com.kaii.photos.MainActivity
 import com.kaii.photos.R
 import com.kaii.photos.compose.CustomMaterialTheme
-import com.kaii.photos.datastore
-import com.kaii.photos.datastore.addToAlbumsList
-import com.kaii.photos.datastore.getAlbumsList
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.brightenColor
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.signature
 import com.kaii.photos.models.album_grid.AlbumsViewModel
-import com.kaii.photos.models.album_grid.AlbumsViewModelFactory
-import kotlinx.coroutines.runBlocking
 import java.io.File
 
 @Composable
@@ -74,7 +71,13 @@ fun AlbumsGridView(albumsViewModel: AlbumsViewModel, navController: NavHostContr
 		val actualData = mediaStoreData.value
 
         LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
+			columns = GridCells.Fixed(
+				if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT) {
+					2
+				} else {
+					4
+				}
+			),
             modifier = Modifier
                 .fillMaxSize(1f),
             horizontalArrangement = Arrangement.Start,
@@ -87,7 +90,11 @@ fun AlbumsGridView(albumsViewModel: AlbumsViewModel, navController: NavHostContr
         	}
 
             items(
-                count = listOfDirs.size
+                count = listOfDirs.size,
+	            key = { key ->
+	                // println("URI STRING ${mediaStoreData[it].uri}")
+	                listOfDirs[key]
+	            },                
             ) { index ->
 				val folder = File("/storage/emulated/0/" + listOfDirs[index])
 				val neededDir = listOfDirs[index]
@@ -108,13 +115,26 @@ fun AlbumsGridView(albumsViewModel: AlbumsViewModel, navController: NavHostContr
                         )
 					val (mediaStoreItem, preloadRequestBuilder) = preloadingData[0]
 
-					AlbumGridItem(
-						navController,
-						folder.name,
-						neededDir,
-						mediaStoreItem,
-						preloadRequestBuilder
-					)
+					Row (
+						modifier = Modifier
+							.wrapContentSize()	
+							.animateItem(
+								fadeInSpec = tween(
+									durationMillis = 350
+								),
+								fadeOutSpec = tween(
+									durationMillis = 350
+								)
+							)
+					) {
+						AlbumGridItem(
+							navController,
+							folder.name,
+							neededDir,
+							mediaStoreItem,
+							preloadRequestBuilder
+						)	
+					}
 				}
             }
         }
@@ -129,9 +149,9 @@ private fun AlbumGridItem(
 	neededDir: String,
 	item: MediaStoreData,
 	preloadRequestBuilder: RequestBuilder<Drawable>
-) {
+) {	
 	Column (
-        modifier = Modifier
+		modifier = Modifier
 			.wrapContentHeight()
 			.fillMaxWidth(1f)
 			.padding(6.dp)
@@ -149,42 +169,47 @@ private fun AlbumGridItem(
 					// TODO: select item
 				}
 			),
-        verticalArrangement = Arrangement.SpaceEvenly,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-	    Column (
-	        modifier = Modifier
+		verticalArrangement = Arrangement.SpaceEvenly,
+		horizontalAlignment = Alignment.CenterHorizontally
+	) {
+		Column (
+			modifier = Modifier
 				.fillMaxSize(1f)
 				.padding(8.dp, 8.dp, 8.dp, 4.dp)
 				.clip(RoundedCornerShape(16.dp)),
-	        verticalArrangement = Arrangement.SpaceEvenly,
-	        horizontalAlignment = Alignment.CenterHorizontally
-	    ) {
-            GlideImage(
-                model = item.uri,
-                contentDescription = item.displayName,
-                contentScale = ContentScale.Crop,
+			verticalArrangement = Arrangement.SpaceEvenly,
+			horizontalAlignment = Alignment.CenterHorizontally
+		) {
+			GlideImage(
+				model = item.uri,
+				contentDescription = item.displayName,
+				contentScale = ContentScale.Crop,
 				failure = placeholder(R.drawable.broken_image),
-                modifier = Modifier
+				modifier = Modifier
 					.aspectRatio(1f)
 					.clip(RoundedCornerShape(16.dp))
-					.background(brightenColor(CustomMaterialTheme.colorScheme.surfaceContainer, 0.1f)),
-            ) {
-                it.thumbnail(preloadRequestBuilder).signature(item.signature())
-            }
+					.background(
+						brightenColor(
+							CustomMaterialTheme.colorScheme.surfaceContainer,
+							0.1f
+						)
+					),
+			) {
+				it.thumbnail(preloadRequestBuilder).signature(item.signature())
+			}
 
-	        Text(
-	            text = " $title",
-	            fontSize = TextUnit(14f, TextUnitType.Sp),
-	            textAlign = TextAlign.Start,
-	            color = CustomMaterialTheme.colorScheme.onSurface,
-	            maxLines = 1,
-	            modifier = Modifier
+			Text(
+				text = " $title",
+				fontSize = TextUnit(14f, TextUnitType.Sp),
+				textAlign = TextAlign.Start,
+				color = CustomMaterialTheme.colorScheme.onSurface,
+				maxLines = 1,
+				modifier = Modifier
 					.fillMaxWidth(1f)
 					.padding(2.dp)
-	        )
-	    }
-    }
+			)
+		}
+	}
 }
 
 @Composable
@@ -209,7 +234,7 @@ private fun CategoryList(navController: NavHostController) {
         		verticalAlignment = Alignment.CenterVertically,
    		        horizontalArrangement = Arrangement.SpaceEvenly
         	) {
-        		Icon (
+				Icon (
         			painter = painterResource(id = R.drawable.favorite),
 					contentDescription = "Favorites Button",
                     tint = CustomMaterialTheme.colorScheme.primary,

@@ -1,7 +1,6 @@
 package com.kaii.photos.compose.single_photo
 
 import android.graphics.drawable.Drawable
-import android.util.Log
 import android.view.Window
 import android.view.WindowInsetsController
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -14,6 +13,7 @@ import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.runtime.Composable
@@ -119,6 +119,7 @@ fun HorizontalImageList(
 	            visible = appBarsVisible.value,
 	            shouldPlay = shouldPlay,
 	            modifier = Modifier
+	            	.fillMaxSize(1f)
 	                .mediaModifier(
 	                    scale,
 	                    rotation,
@@ -136,7 +137,7 @@ fun HorizontalImageList(
                 contentScale = ContentScale.Fit,
                 failure = placeholder(R.drawable.broken_image),
                 modifier = Modifier
-//                    .fillMaxSize(1f)
+                   	.fillMaxSize(1f)
                     .mediaModifier(
                         scale,
                         rotation,

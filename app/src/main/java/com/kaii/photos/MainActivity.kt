@@ -4,9 +4,9 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.os.Bundle
 import android.os.Environment
-import android.provider.DocumentsContract
 import android.util.Log
 import android.view.WindowInsetsController
 import android.widget.Toast
@@ -25,75 +25,29 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.BottomAppBar
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.TextUnit
-import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
-import androidx.core.net.toUri
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowInsetsCompat
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
-import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -102,13 +56,13 @@ import androidx.navigation.compose.rememberNavController
 import androidx.room.Room
 import com.bumptech.glide.Glide
 import com.bumptech.glide.MemoryCategory
-import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.bumptech.glide.integration.compose.GlideImage
-import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.kaii.photos.compose.AboutPage
 import com.kaii.photos.compose.CustomMaterialTheme
-import com.kaii.photos.compose.DialogClickableItem
 import com.kaii.photos.compose.LockedFolderEntryView
+import com.kaii.photos.compose.MainAppBottomBar
+import com.kaii.photos.compose.MainAppDialog
+import com.kaii.photos.compose.MainAppTopBar 
+import com.kaii.photos.compose.IsSelectingTopBar
 import com.kaii.photos.compose.grids.AlbumsGridView
 import com.kaii.photos.compose.grids.LockedFolderView
 import com.kaii.photos.compose.grids.PhotoGrid
@@ -121,13 +75,9 @@ import com.kaii.photos.compose.single_photo.SingleTrashedPhotoView
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.addToAlbumsList
 import com.kaii.photos.datastore.getAlbumsList
-import com.kaii.photos.datastore.getUsername
-import com.kaii.photos.datastore.setUsername
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
-import com.kaii.photos.helpers.RowPosition
-import com.kaii.photos.helpers.brightenColor
 import com.kaii.photos.helpers.single_image_functions.ImageFunctions
 import com.kaii.photos.models.album_grid.AlbumsViewModel
 import com.kaii.photos.models.album_grid.AlbumsViewModelFactory
@@ -136,7 +86,6 @@ import com.kaii.photos.models.main_activity.MainDataSharingModelFactory
 import com.kaii.photos.models.search_page.SearchViewModel
 import com.kaii.photos.models.search_page.SearchViewModelFactory
 import com.kaii.photos.ui.theme.PhotosTheme
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 val Context.datastore: DataStore<Preferences> by preferencesDataStore(name = "settings")
@@ -299,7 +248,9 @@ class MainActivity : ComponentActivity() {
                 val scale = remember { mutableFloatStateOf(1f) }
                 val rotation = remember { mutableFloatStateOf(0f) }
                 val offset = remember { mutableStateOf(Offset.Zero) }
-
+				val selectedItemsList = remember { SnapshotStateList<String>() } // has the absolute paths of all the selected items
+				
+                val context = LocalContext.current
                 NavHost (
                     navController = navControllerLocal,
                     startDestination = MultiScreenViewType.MainScreen.name,
@@ -309,44 +260,45 @@ class MainActivity : ComponentActivity() {
                     enterTransition = {
                         slideInHorizontally (
                             animationSpec = tween(
-                                durationMillis = 250
+                                durationMillis = 350
                             )
-                        ) { width -> width }
+                        ) { width -> width } + fadeIn()
                     },
                     exitTransition = {
 						slideOutHorizontally(
                             animationSpec = tween(
-                                durationMillis = 250
+                                durationMillis = 350
                             )
-                        ) { width -> -width }
+                        ) { width -> -width } + fadeOut()
                     },
                     popExitTransition = {
                         slideOutHorizontally(
                             animationSpec = tween(
-                                durationMillis = 250
+                                durationMillis = 350
                             )
-                        ) { width -> width }
+                        ) { width -> width } + fadeOut()
                     },
                     popEnterTransition = {
                         slideInHorizontally(
                             animationSpec = tween(
-                                durationMillis = 250
+                                durationMillis = 350
                             )
-                        ) { width -> -width }
+                        ) { width -> -width } + fadeIn()
                     }
                 ) {
                     composable(MultiScreenViewType.MainScreen.name) {
        					enableEdgeToEdge(
 							navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
-							statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.surface.toArgb(), CustomMaterialTheme.colorScheme.surface.toArgb()) 
+							statusBarStyle = 
+								if (!isSystemInDarkTheme()) {
+									SystemBarStyle.light(CustomMaterialTheme.colorScheme.background.toArgb(), CustomMaterialTheme.colorScheme.background.toArgb()) 	
+								} else {
+									SystemBarStyle.dark(CustomMaterialTheme.colorScheme.background.toArgb())
+								}
 						)
-						windowInsetsController?.apply {
-							show(WindowInsetsCompat.Type.systemBars())
-							systemBarsBehavior =
-								WindowInsetsController.BEHAVIOR_DEFAULT
-						}
+                        setupNextScreen(context, windowInsetsController, selectedItemsList)
 
-                        Content(currentView, navControllerLocal, showDialog)
+                        Content(currentView, navControllerLocal, showDialog, selectedItemsList)
                     }
 
                     composable(MultiScreenViewType.SinglePhotoView.name) {
@@ -355,11 +307,7 @@ class MainActivity : ComponentActivity() {
 							statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.surface.copy(alpha = 0.2f).toArgb(),
 								CustomMaterialTheme.colorScheme.surface.copy(alpha = 0.2f).toArgb()) 
 						)
-						windowInsetsController?.apply {
-							show(WindowInsetsCompat.Type.systemBars())
-							systemBarsBehavior =
-								WindowInsetsController.BEHAVIOR_DEFAULT
-						}
+                        setupNextScreen(context, windowInsetsController, selectedItemsList)
 						
                     	SinglePhotoView(navControllerLocal, window, scale, rotation, offset)
                     }
@@ -369,13 +317,9 @@ class MainActivity : ComponentActivity() {
                             navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
                             statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.surface.toArgb(), CustomMaterialTheme.colorScheme.surface.toArgb()) 
                         )
-						windowInsetsController?.apply {
-							show(WindowInsetsCompat.Type.systemBars())
-							systemBarsBehavior =
-								WindowInsetsController.BEHAVIOR_DEFAULT
-						}
+                        setupNextScreen(context, windowInsetsController, selectedItemsList)
 						                        
-                        SingleAlbumView(navControllerLocal)
+                        SingleAlbumView(navControllerLocal, selectedItemsList)
                     }
 
                     composable(MultiScreenViewType.SingleTrashedPhotoView.name) {
@@ -383,11 +327,7 @@ class MainActivity : ComponentActivity() {
                             navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
                             statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.surface.toArgb(), CustomMaterialTheme.colorScheme.surface.toArgb()) 
                         )
-						windowInsetsController?.apply {
-							show(WindowInsetsCompat.Type.systemBars())
-							systemBarsBehavior =
-								WindowInsetsController.BEHAVIOR_DEFAULT
-						}
+                        setupNextScreen(context, windowInsetsController, selectedItemsList)
 						
                         SingleTrashedPhotoView(navControllerLocal, window, scale, rotation, offset)
                     }
@@ -397,13 +337,10 @@ class MainActivity : ComponentActivity() {
                             navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
                             statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.surface.toArgb(), CustomMaterialTheme.colorScheme.surface.toArgb()) 
                         )
-						windowInsetsController?.apply {
-							show(WindowInsetsCompat.Type.systemBars())
-							systemBarsBehavior =
-								WindowInsetsController.BEHAVIOR_DEFAULT
-						}
-						
-                        TrashedPhotoGridView(navControllerLocal)
+
+                        setupNextScreen(context, windowInsetsController, selectedItemsList)
+
+                        TrashedPhotoGridView(navControllerLocal, selectedItemsList)
                     }
 
                     composable(MultiScreenViewType.LockedFolderView.name) {
@@ -411,11 +348,7 @@ class MainActivity : ComponentActivity() {
                             navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
                             statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.surface.toArgb(), CustomMaterialTheme.colorScheme.surface.toArgb())
                         )
-						windowInsetsController?.apply {
-							show(WindowInsetsCompat.Type.systemBars())
-							systemBarsBehavior =
-								WindowInsetsController.BEHAVIOR_DEFAULT
-						}
+                        setupNextScreen(context, windowInsetsController, selectedItemsList)
 						
                         LockedFolderView(navControllerLocal)
                     }
@@ -425,11 +358,7 @@ class MainActivity : ComponentActivity() {
                             navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
                             statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.surface.toArgb(), CustomMaterialTheme.colorScheme.surface.toArgb())
                         )
-						windowInsetsController?.apply {
-							show(WindowInsetsCompat.Type.systemBars())
-							systemBarsBehavior =
-								WindowInsetsController.BEHAVIOR_DEFAULT
-						}
+                        setupNextScreen(context, windowInsetsController, selectedItemsList)
 						
                         // TODO: should merge with SingleTrashedPhotoView???? idfk wait for future
                         SingleHiddenPhotoView(navControllerLocal, window, scale, rotation, offset)
@@ -440,12 +369,8 @@ class MainActivity : ComponentActivity() {
                             navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.background.toArgb()),
                             statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.background.toArgb(), CustomMaterialTheme.colorScheme.background.toArgb())
                         )
+                        setupNextScreen(context, windowInsetsController, selectedItemsList)
 
-						windowInsetsController?.apply {
-							show(WindowInsetsCompat.Type.systemBars())
-							systemBarsBehavior =
-								WindowInsetsController.BEHAVIOR_DEFAULT
-						}
                         AboutPage(navControllerLocal)
                     }
                 }
@@ -457,7 +382,8 @@ class MainActivity : ComponentActivity() {
     private fun Content(
         currentView: MutableState<MainScreenViewType>,
         navController: NavHostController,
-        showDialog: MutableState<Boolean>
+        showDialog: MutableState<Boolean>,
+        selectedItemsList: SnapshotStateList<String>
     ) {	
     	val searchViewModel: SearchViewModel = viewModel(
    	        factory = SearchViewModelFactory(LocalContext.current.applicationContext, "")
@@ -466,7 +392,7 @@ class MainActivity : ComponentActivity() {
             modifier = Modifier
                 .fillMaxSize(1f),
             topBar = {
-                TopBar(showDialog)
+                TopBar(showDialog, selectedItemsList)
             },
             bottomBar = { 
             	BottomBar(currentView) 
@@ -481,7 +407,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier
                         .padding(0.dp)
                 ) {
-                	MainDialog(showDialog, currentView, navController)
+                	MainAppDialog(showDialog, currentView, navController)
                 	
                 	AnimatedContent(
                 		targetState = currentView.value,
@@ -498,17 +424,20 @@ class MainActivity : ComponentActivity() {
                 		},
                         label = "MainAnimatedContentView"
                     ) { stateValue ->
+                    	selectedItemsList.clear()
 	                    when (stateValue) {
 	                        MainScreenViewType.PhotosGridView -> {
 	                        	PhotoGrid(
 	                        		navController = navController,
 	                        		operation = ImageFunctions.LoadNormalImage, 
 	                        		path = stringResource(id = R.string.default_homepage_photogrid_dir), 
-	                        		sortBy = MediaItemSortMode.DateTaken, 
+	                        		sortBy = MediaItemSortMode.DateTaken,
+	                        		selectedItemsList = selectedItemsList
                         		)	
 	                        }
 	                        MainScreenViewType.SecureFolder -> LockedFolderEntryView(navController)
 	                        MainScreenViewType.AlbumsGridView -> {
+                                // TODO: please make it not hang lol
 								runBlocking {
 									context.datastore.addToAlbumsList("DCIM/Camera")
 									context.datastore.addToAlbumsList("Pictures/Screenshot")
@@ -537,490 +466,55 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    private fun TopBar(showDialog: MutableState<Boolean>) {
-        TopAppBar(
-            title = {
-                Row {
-                    Text(
-                        text = "Lavender ",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = TextUnit(22f, TextUnitType.Sp)
-                    )
-                    Text(
-                        text = "Photos",
-                        fontWeight = FontWeight.Normal,
-                        fontSize = TextUnit(22f, TextUnitType.Sp)
-                    )
-                }
-            },
-            actions = {
-                IconButton(
-                    onClick = {
-                        showDialog.value = true
-                    },
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.settings),
-                        contentDescription = "Settings Button",
-                        tint = CustomMaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-            },
-            scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(),
-	    	colors = TopAppBarDefaults.topAppBarColors(
-	    		containerColor = CustomMaterialTheme.colorScheme.background
-	    	),
-        )
+    private fun TopBar(showDialog: MutableState<Boolean>, selectedItemsList: SnapshotStateList<String>) {
+    	AnimatedContent(
+    		targetState = selectedItemsList.size > 0,
+    		transitionSpec = {
+    			if (selectedItemsList.size > 0) {
+                    (slideInHorizontally { height -> height } + fadeIn()).togetherWith(
+                        slideOutHorizontally { height -> -height } + fadeOut())
+    			} else {
+                    (slideInHorizontally { height -> -height } + fadeIn()).togetherWith(
+                        slideOutHorizontally { height -> height } + fadeOut())
+    			}.using(
+    				SizeTransform(clip = false)
+    			)
+    		},
+            label = "MainAnimatedContentView"
+        ) { target -> 
+			if (!target) {
+				MainAppTopBar(showDialog = showDialog)
+			} else {
+				IsSelectingTopBar(selectedItemsList)
+			}
+        }
     }
 
     @Composable
     private fun BottomBar(currentView: MutableState<MainScreenViewType>) {
-        BottomAppBar(
-            containerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
-            contentColor = CustomMaterialTheme.colorScheme.onPrimaryContainer,
-            contentPadding = PaddingValues(0.dp),
-        ) {
-            val buttonHeight = 56.dp
-            val buttonWidth = 64.dp
-            val iconSize = 24.dp
-            val textSize = 14f
-
-            Row(
-                modifier = Modifier
-                    .fillMaxSize(1f),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-            	// should find a better way
-            	val unselectedColor = CustomMaterialTheme.colorScheme.surfaceContainer
-            	val selectedColor = CustomMaterialTheme.colorScheme.secondaryContainer
-            	var photoGridColor by remember { mutableStateOf(unselectedColor) }
-            	var lockedFolderColor by remember { mutableStateOf(unselectedColor) }
-            	var albumGridColor by remember { mutableStateOf(unselectedColor) }
-            	var searchPageColor by remember { mutableStateOf(unselectedColor) }
-				// for the love of god find a better way
-            	var photoGridIcon by remember { mutableIntStateOf(R.drawable.photogrid_filled) }
-            	var lockedFolderIcon by remember { mutableIntStateOf(R.drawable.locked_folder) }
-            	var albumGridIcon by remember { mutableIntStateOf(R.drawable.albums) }
-
-				when (currentView.value) {
-					MainScreenViewType.PhotosGridView -> {
-						photoGridColor = selectedColor
-                        lockedFolderColor = unselectedColor
-                        albumGridColor = unselectedColor
-                        searchPageColor = unselectedColor
-
-                        photoGridIcon = R.drawable.photogrid_filled
-                        lockedFolderIcon = R.drawable.locked_folder
-                        albumGridIcon = R.drawable.albums
-					}	
-					MainScreenViewType.SecureFolder -> {
-						photoGridColor = unselectedColor
-	                    lockedFolderColor = selectedColor
-	                    albumGridColor = unselectedColor
-	                    searchPageColor = unselectedColor
-
-	                    photoGridIcon = R.drawable.photogrid
-	                    lockedFolderIcon = R.drawable.locked_folder_filled
-	                    albumGridIcon = R.drawable.albums						
-					}	
-					MainScreenViewType.AlbumsGridView -> {
-	                    photoGridColor = unselectedColor
-	                    lockedFolderColor = unselectedColor
-	                    albumGridColor = selectedColor
-	                    searchPageColor = unselectedColor
-
-	                    photoGridIcon = R.drawable.photogrid
-	                    lockedFolderIcon = R.drawable.locked_folder
-	                    albumGridIcon = R.drawable.albums_filled						
-					}
-					MainScreenViewType.SearchPage -> {
-						photoGridColor = unselectedColor
-	                    lockedFolderColor = unselectedColor
-	                    albumGridColor = unselectedColor
-	                    searchPageColor = selectedColor
-
-	                    photoGridIcon = R.drawable.photogrid
-	                    lockedFolderIcon = R.drawable.locked_folder
-	                    albumGridIcon = R.drawable.albums
-					}
-				}
-
-                // photo grid button
-                Box(
-                    modifier = Modifier
-                        .width(buttonWidth)
-                        .height(buttonHeight)
-                        .clip(RoundedCornerShape(16.dp))
-                        .clickable {
-                            if (currentView.value != MainScreenViewType.PhotosGridView) {
-                                currentView.value = MainScreenViewType.PhotosGridView
-                            }
-                        },
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .height(iconSize + 8.dp)
-                            .width(iconSize * 2.25f)
-                            .align(Alignment.TopCenter)
-                            .clip(RoundedCornerShape(1000.dp))
-                            .background(photoGridColor),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Icon(
-                            painter = painterResource(id = photoGridIcon),
-                            contentDescription = "button",
-                            modifier = Modifier
-                                .size(iconSize)
-                        )
-
-                    }
-                    Text(
-                        text = "Photos",
-                        fontSize = TextUnit(textSize, TextUnitType.Sp),
-                        modifier = Modifier
-                            .wrapContentSize()
-                            .align(Alignment.BottomCenter)
-                    )
-                }
-
-                // locked folder button
-                Box(
-                    modifier = Modifier
-                        .width(buttonWidth)
-                        .height(buttonHeight)
-                        .clip(RoundedCornerShape(16.dp))
-                        .clickable {
-                            if (currentView.value != MainScreenViewType.SecureFolder) {
-                                currentView.value = MainScreenViewType.SecureFolder
-                            }
-                        },
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .height(iconSize + 8.dp)
-                            .width(iconSize * 2.25f)
-                            .clip(RoundedCornerShape(1000.dp))
-                            .align(Alignment.TopCenter)
-                            .background(lockedFolderColor),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-	                    Icon(
-	                        painter = painterResource(id = lockedFolderIcon),
-	                        contentDescription = "button",
-	                        modifier = Modifier
-	                            .size(iconSize)
-	                    )
-                    }                
-
-                    Text(
-                        text = "Secure",
-                        fontSize = TextUnit(textSize, TextUnitType.Sp),
-                        modifier = Modifier
-                            .wrapContentSize()
-                            .align(Alignment.BottomCenter)
-                    )
-                }
-
-                // album grid button
-                Box(
-                    modifier = Modifier
-                        .width(buttonWidth)
-                        .height(buttonHeight)
-                        .clip(RoundedCornerShape(16.dp))
-                        .clickable {
-                            if (currentView.value != MainScreenViewType.AlbumsGridView) {
-                                currentView.value = MainScreenViewType.AlbumsGridView
-                            }
-                        },
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .height(iconSize + 8.dp)
-                            .width(iconSize * 2.25f)
-                            .clip(RoundedCornerShape(1000.dp))
-                            .align(Alignment.TopCenter)
-                            .background(albumGridColor),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-	                    Icon(
-	                        painter = painterResource(id = albumGridIcon),
-	                        contentDescription = "button",
-	                        modifier = Modifier
-	                            .size(iconSize)
-	                    )
-                    }                
-
-                    Text(
-                        text = "Albums",
-                        fontSize = TextUnit(textSize, TextUnitType.Sp),
-                        modifier = Modifier
-                            .wrapContentSize()
-                            .align(Alignment.BottomCenter)
-                    )
-                }
-
-                // search page button
-                Box(
-                    modifier = Modifier
-                        .width(buttonWidth)
-                        .height(buttonHeight)
-                        .clip(RoundedCornerShape(16.dp))
-                        .clickable {
-                            if (currentView.value != MainScreenViewType.SearchPage) {
-                                currentView.value = MainScreenViewType.SearchPage
-                            }
-                        },
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .height(iconSize + 8.dp)
-                            .width(iconSize * 2.25f)
-                            .clip(RoundedCornerShape(1000.dp))
-                            .align(Alignment.TopCenter)
-                            .background(searchPageColor),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-	                    Icon(
-	                        painter = painterResource(id = R.drawable.search),
-	                        contentDescription = "button",
-	                        modifier = Modifier
-	                            .size(iconSize)
-	                    )
-                    }                
-
-                    Text(
-                        text = "Search",
-                        fontSize = TextUnit(textSize, TextUnitType.Sp),
-                        modifier = Modifier
-                            .wrapContentSize()
-                            .align(Alignment.BottomCenter)
-                    )
-                }
-            }
-        }
+        MainAppBottomBar(currentView)
     }
+}
 
-    @OptIn(ExperimentalGlideComposeApi::class)
-    @Composable
-    fun MainDialog(showDialog: MutableState<Boolean>, currentView: MutableState<MainScreenViewType>, navController: NavHostController) {
-        if (showDialog.value) {
-            val context = LocalContext.current
-
-            Dialog(
-                onDismissRequest = {
-                    showDialog.value = false
-                }
-            ) {
-                Column (
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(32.dp))
-                        .background(brightenColor(CustomMaterialTheme.colorScheme.surface, 0.1f))
-                        .padding(8.dp)
-                ) {
-                    Box (
-                        modifier = Modifier
-                            .fillMaxWidth(1f),
-                    ) {
-                        IconButton(
-                            onClick = {
-                                showDialog.value = false
-                            },
-                            modifier = Modifier
-                                .align(Alignment.CenterStart)
-                        ) {
-                            Icon (
-                                painter = painterResource(id = R.drawable.close),
-                                contentDescription = "Close dialog button",
-                                modifier = Modifier
-                                    .size(24.dp)
-                            )
-                        }
-
-                        val splitBy = Regex("(?=[A-Z])")
-                        Text(
-                            text = currentView.value.name.split(splitBy)[1],
-                            fontWeight = FontWeight.Bold,
-                            fontSize = TextUnit(18f, TextUnitType.Sp),
-                            modifier = Modifier
-                                .align(Alignment.Center)
-                        )
-                    }
-
-                    Row (
-                        modifier = Modifier
-                            .fillMaxWidth(1f)
-                            .padding(8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Start
-                    ) {
-                        val originalName = runBlocking {
-                            context.datastore.getUsername()
-                        }
-                        var username by remember {
-                            mutableStateOf(
-                                originalName
-                            )
-                        }
-
-                        GlideImage (
-                            model = R.drawable.cat_picture,
-                            contentDescription = "User profile picture",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .size(56.dp)
-                                .clip(RoundedCornerShape(1000.dp))
-                        ) {
-                            it
-                                .override(256)
-                                .diskCacheStrategy(DiskCacheStrategy.ALL)
-                        }
-
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        val focus = remember { FocusRequester() }
-                        val focusManager = LocalFocusManager.current
-                        var changeName by remember { mutableStateOf(false) }
-                        var backPressedCallbackEnabled by remember { mutableStateOf(false) }
-
-
-                        LaunchedEffect(key1 = changeName) {
-                            focusManager.clearFocus()
-
-                            if (!changeName) {
-                                username = originalName
-                                return@LaunchedEffect
-                            }
-
-                            lifecycleScope.launch {
-                                context.datastore.setUsername(username)
-                            }
-                            changeName = false
-                        }
-
-                        TextField (
-                            value = username,
-                            onValueChange = { newVal ->
-                                username = newVal
-                            },
-                            textStyle = LocalTextStyle.current.copy(
-                                fontSize = TextUnit(16f, TextUnitType.Sp),
-                                textAlign = TextAlign.Start,
-                                color = CustomMaterialTheme.colorScheme.onSurface,
-                            ),
-                            maxLines = 1,
-                            colors = TextFieldDefaults.colors().copy(
-                                unfocusedContainerColor = Color.Transparent,
-                                unfocusedIndicatorColor = Color.Transparent,
-                                unfocusedTextColor = CustomMaterialTheme.colorScheme.onSurface,
-                                unfocusedTrailingIconColor = Color.Transparent,
-                                focusedIndicatorColor = Color.Transparent,
-                                focusedTextColor = CustomMaterialTheme.colorScheme.onSurface,
-                                focusedContainerColor = CustomMaterialTheme.colorScheme.surfaceVariant,
-                                focusedTrailingIconColor = CustomMaterialTheme.colorScheme.onSurface,
-                            ),
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(
-                                capitalization = KeyboardCapitalization.None,
-                                autoCorrectEnabled = false,
-                                keyboardType = KeyboardType.Ascii,
-                                imeAction = ImeAction.Done,
-                                showKeyboardOnFocus = true
-                            ),
-                            keyboardActions = KeyboardActions(
-                                onDone = {
-                                	focusManager.clearFocus()
-                                    changeName = true
-                                },
-                            ),
-							trailingIcon = {
-								Icon(
-									painter = painterResource(id = R.drawable.close),
-									contentDescription = "Cancel filename change button",
-									modifier = Modifier
-										.clickable (
-									        indication = null,
-									        interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },												
-										) {
-											focusManager.clearFocus()
-											changeName = false
-											username = originalName
-										}
-								)
-							},                            
-                            shape = RoundedCornerShape(1000.dp),
-                            modifier = Modifier
-                                .focusRequester(focus)
-                                .onFocusChanged {
-                                    backPressedCallbackEnabled = it.isFocused
-                                }
-                        )
-                    }
-
-                    Column (
-                        modifier = Modifier
-                            .padding(12.dp)
-                            .wrapContentHeight()
-                    ) {
-                        DialogClickableItem(
-                            text = "Select",
-                            iconResId = R.drawable.check_item,
-                            position = RowPosition.Top,
-                        )
-                        
-                        if (currentView.value == MainScreenViewType.AlbumsGridView) {
-                            DialogClickableItem(
-                                text = "Add an album",
-                                iconResId = R.drawable.add,
-                                position = RowPosition.Middle,
-                            ) {
-                               	showDialog.value = false
-                                val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
-                                    putExtra(DocumentsContract.EXTRA_INITIAL_URI, "".toUri())
-                                }
-                                
-                                startForResult.launch(intent)
-
-                                val runnable = Runnable {
-									Thread.sleep(250)
-									currentView.value = MainScreenViewType.PhotosGridView
-									Thread.sleep(1000)
-									currentView.value = MainScreenViewType.AlbumsGridView
-								}
-                               	Thread(runnable).start()
-                            }
-                        }
-
-                        DialogClickableItem(
-                            text = "Data & Backup",
-                            iconResId = R.drawable.data,
-                            position = RowPosition.Middle,
-                        )
-
-                        DialogClickableItem(
-                            text = "Settings",
-                            iconResId = R.drawable.settings,
-                            position = RowPosition.Middle,
-                        )
-
-                        DialogClickableItem (
-                            text = "About & Updates",
-                            iconResId = R.drawable.info,
-                            position = RowPosition.Bottom,
-                        ) {
-                        	showDialog.value = false
-                        	navController.navigate(MultiScreenViewType.AboutAndUpdateView.name)
-                        }
-                    }
-                }
-            }
+private fun setupNextScreen(
+	context: Context,
+	windowInsetsController: WindowInsetsController?,
+	selectedItemsList: SnapshotStateList<String>
+) {
+	selectedItemsList.clear()
+	
+    if (context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+        windowInsetsController?.apply {
+            hide(WindowInsetsCompat.Type.systemBars())
+            systemBarsBehavior =
+                WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        }
+    } else {
+        windowInsetsController?.apply {
+            show(WindowInsetsCompat.Type.systemBars())
+            systemBarsBehavior =
+                WindowInsetsController.BEHAVIOR_DEFAULT
         }
     }
 }

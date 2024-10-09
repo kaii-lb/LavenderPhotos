@@ -5,14 +5,8 @@ import com.kaii.photos.mediastore.MediaStoreData
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import com.kaii.photos.helpers.MultiScreenViewType
-import com.kaii.photos.helpers.MainScreenViewType
 
-class MainDataSharingModel() : ViewModel() {
-    companion object {
-        const val IGNORE_THIS_PATH = "com.kaii.photos.please_ignore_this_path"
-    }
-
+class MainDataSharingModel : ViewModel() {
 	private val _selectedMedia = MutableStateFlow<MediaStoreData?>(null)
     val selectedMediaData: Flow<MediaStoreData?> = _selectedMedia.asStateFlow()
 

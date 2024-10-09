@@ -20,7 +20,7 @@ fun getDateTakenForMedia(uri: String) : Long {
     val datetime = exifInterface.getAttribute(ExifInterface.TAG_DATETIME_ORIGINAL)
         ?: (exifInterface.getAttribute(ExifInterface.TAG_DATETIME) ?: lastModified) // this really should not get to last modified
 
-	val parsedDateTime = datetime.replace("-", ":").replace("T", " ").substringBefore("+")
+    val parsedDateTime = datetime.replace("-", ":").replace("T", " ").substringBefore("+")
     val dateTimeSinceEpoch = LocalDateTime.parse(parsedDateTime, exifDateTimeFormat).atZone(ZoneId.systemDefault()).toEpochSecond()
 	// println("DATE TIME IS $parsedDateTime and since epoch $dateTimeSinceEpoch")
     return dateTimeSinceEpoch
@@ -61,11 +61,12 @@ fun getExifDataForMedia(uri: String): Map<MediaData, Any> {
     } else null
 
     val shutterSpeed = exifInterface.getAttribute(ExifInterface.TAG_SHUTTER_SPEED_VALUE)
-    list[MediaData.ShutterSpeed] = if (shutterSpeed != null) {
-    	val splits = shutterSpeed.split("/")
-    	val apexValue = splits[0].toFloat() / splits[1].toFloat()
-        2.0.pow((-apexValue).toDouble()).toFraction()
-    } else null
+    list[MediaData.ShutterSpeed] =
+        if (shutterSpeed != null) {
+            val splits = shutterSpeed.split("/")
+            val apexValue = splits[0].toFloat() / splits[1].toFloat()
+            2.0.pow((-apexValue).toDouble()).toFraction()
+        } else null
 
     list[MediaData.MegaPixels] = if (resValue != null) {
         val split = resValue.split("x")

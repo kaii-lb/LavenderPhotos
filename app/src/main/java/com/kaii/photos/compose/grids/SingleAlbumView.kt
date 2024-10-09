@@ -8,10 +8,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -29,6 +29,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,8 +50,8 @@ import com.kaii.photos.compose.AnimatableTextField
 import com.kaii.photos.compose.CustomMaterialTheme
 import com.kaii.photos.compose.DialogClickableItem
 import com.kaii.photos.datastore
-import com.kaii.photos.datastore.removeFromAlbumsList
 import com.kaii.photos.datastore.editInAlbumsList
+import com.kaii.photos.datastore.removeFromAlbumsList
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.RowPosition
@@ -58,16 +59,14 @@ import com.kaii.photos.helpers.brightenColor
 import com.kaii.photos.helpers.single_image_functions.ImageFunctions
 import com.kaii.photos.helpers.single_image_functions.operateOnImage
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.delay
 
 @Composable
-fun SingleAlbumView(navController: NavHostController) {
+fun SingleAlbumView(navController: NavHostController, selectedItemsList: SnapshotStateList<String>) {
     val mainViewModel = MainActivity.mainViewModel
 
-    val albumDir = mainViewModel.selectedAlbumDir.collectAsState(initial = null).value
+    val albumDir = mainViewModel.selectedAlbumDir.collectAsState(initial = null).value ?: return
     // println("ALBUM DIR IS $albumDir")
-    if (albumDir == null) return
-	
+
     Scaffold (
         topBar =  { TopBar(navController, albumDir) },
         containerColor = CustomMaterialTheme.colorScheme.background,
@@ -80,7 +79,13 @@ fun SingleAlbumView(navController: NavHostController) {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-       		PhotoGrid(navController, ImageFunctions.LoadNormalImage, albumDir, MediaItemSortMode.DateTaken)
+       		PhotoGrid(
+       			navController = navController, 
+       			operation = ImageFunctions.LoadNormalImage, 
+       			path = albumDir, 
+       			sortBy = MediaItemSortMode.DateTaken, 
+       			selectedItemsList = selectedItemsList
+       		)
         }
     }
 }

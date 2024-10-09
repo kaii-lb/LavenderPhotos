@@ -134,7 +134,7 @@ internal constructor(
         }
         mediaCursor.close()
 
-		data.sortByDescending {
+        data.sortByDescending {
 			it.dateTaken
 		}
         return data

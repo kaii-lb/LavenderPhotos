@@ -8,7 +8,7 @@ private enum class AppDirectories(val path: String) {
     LockedFolder("locked_folder")
 }
 
-fun Context.getAppTrashBinDirectory() : String {
+fun getAppTrashBinDirectory(): String {
     val dir = "/storage/emulated/0/LavenderPhotos/" + AppDirectories.TrashBin.path + "/" // TODO: switch to Environment.getExternalStoragePublicDir
 
     val folder = File(dir)
@@ -31,7 +31,7 @@ fun Context.getAppLockedFolderDirectory() : String {
     return dir
 }
 
-fun Context.getAppRestoredFromLockedFolderDirectory() : String {
+fun getAppRestoredFromLockedFolderDirectory(): String {
     val dir = "/storage/emulated/0/LavenderPhotos/Restored Files/"
     
     val folder = File(dir)

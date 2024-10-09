@@ -27,7 +27,6 @@ internal constructor(
     private val neededPath: String,
 ) {
     companion object {
-        private const val TAG = "MEDIA_STORE_DATA_SOURCE"
         private val MEDIA_STORE_FILE_URI = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL)
         private val PROJECTION =
             arrayOf(

@@ -116,8 +116,7 @@ internal constructor(
                 val absolutePath = cursor.getString(absolutePathColNum)
 
                 val succeeded = try {
-                	if(java.io.File(absolutePath).exists()) true
-                	else false
+                	java.io.File(absolutePath).exists()
                 } catch (e: Throwable) {
                 	Log.w(TAG, e.toString())
                 	false
