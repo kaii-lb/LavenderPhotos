@@ -286,7 +286,11 @@ fun MediaStoreItem(
 
 	if (item.mimeType == null && item.type == MediaType.Section) {
 		val datedMedia = groupedMedia.filter {
-			it.getDateTakenDay() == item.getDateTakenDay() && it.type != MediaType.Section
+			if (prefix == "Deleted On ") { // find a better way to identify when in trash
+				it.getLastModifiedDay() == item.getLastModifiedDay() && it.type != MediaType.Section	
+			} else {
+				it.getDateTakenDay() == item.getDateTakenDay() && it.type != MediaType.Section	
+			}
 		}
 		val sectionSelected by remember { derivedStateOf {
 			selectedItemsList.containsAll(datedMedia)

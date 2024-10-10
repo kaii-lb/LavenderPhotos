@@ -68,6 +68,7 @@ import com.kaii.photos.helpers.operateOnImage
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 
+/** please only use dialogComposable for its intended purpose */
 @Composable
 fun BottomAppBarItem(
     text: String,
@@ -79,7 +80,8 @@ fun BottomAppBarItem(
     color: Color = Color.Transparent,
     showRipple: Boolean = true,
     cornerRadius: Dp = 1000.dp,
-    action: (() -> Unit)? = null
+    action: (() -> Unit)? = null,
+    dialogComposable: (@Composable () -> Unit)? = null
 ) {
     val modifier = if (action != null) {
         Modifier.clickable(
@@ -91,6 +93,8 @@ fun BottomAppBarItem(
     }  else {
         Modifier
     }
+
+	if (dialogComposable != null) dialogComposable()
 
     Box(
         modifier = Modifier
@@ -283,48 +287,52 @@ fun MainAppBottomBar(currentView: MutableState<MainScreenViewType>) {
                 text = "Photos",
                 iconResId = photoGridIcon,
                 color = photoGridColor,
-                cornerRadius = 16.dp
-            ) {
-                if (currentView.value != MainScreenViewType.PhotosGridView) {
-                    currentView.value = MainScreenViewType.PhotosGridView
+                cornerRadius = 16.dp,
+                action = {
+	                if (currentView.value != MainScreenViewType.PhotosGridView) {
+	                    currentView.value = MainScreenViewType.PhotosGridView
+	                }
                 }
-            }
+            )
 
             // locked folder button
             BottomAppBarItem(
                 text = "Secure",
                 iconResId = lockedFolderIcon,
                 color = lockedFolderColor,
-                cornerRadius = 16.dp
-            ) {
-                if (currentView.value != MainScreenViewType.SecureFolder) {
-                    currentView.value = MainScreenViewType.SecureFolder
+                cornerRadius = 16.dp,
+                action = {
+	                if (currentView.value != MainScreenViewType.SecureFolder) {
+	                    currentView.value = MainScreenViewType.SecureFolder
+	                }
                 }
-            }
+            )
 
             // album grid button
             BottomAppBarItem(
                 text = "Albums",
                 iconResId = albumGridIcon,
                 color = albumGridColor,
-                cornerRadius = 16.dp
-            ) {
-                if (currentView.value != MainScreenViewType.AlbumsGridView) {
-                    currentView.value = MainScreenViewType.AlbumsGridView
+                cornerRadius = 16.dp,
+                action = {
+	                if (currentView.value != MainScreenViewType.AlbumsGridView) {
+	                    currentView.value = MainScreenViewType.AlbumsGridView
+	                }
                 }
-            }
+            )
 
             // search page button
             BottomAppBarItem(
                 text = "Search",
                 iconResId = R.drawable.search,
                 color = searchPageColor,
-                cornerRadius = 16.dp
-            ) {
-                if (currentView.value != MainScreenViewType.SearchPage) {
-                    currentView.value = MainScreenViewType.SearchPage
+                cornerRadius = 16.dp,
+                action = {
+	                if (currentView.value != MainScreenViewType.SearchPage) {
+	                    currentView.value = MainScreenViewType.SearchPage
+	                }
                 }
-            }
+            )
         }
     }
 }
@@ -443,6 +451,8 @@ fun IsSelectingBottomAppBar(
 	groupedMedia: MutableState<List<MediaStoreData>>,
 	isTrashBin: Boolean = false
 ) {
+    val context = LocalContext.current
+	
     BottomAppBar(
         containerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
         contentColor = CustomMaterialTheme.colorScheme.onPrimaryContainer,
@@ -454,68 +464,112 @@ fun IsSelectingBottomAppBar(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-	        val context = LocalContext.current
+	        BottomAppBarItem(
+	        	text = "Share", 
+	        	iconResId = R.drawable.share,
+	        	action = {
+		            val hasVideos = selectedItemsList.any {
+		                it.type == MediaType.Video
+		            }
 
-	        BottomAppBarItem(text = "Share", iconResId = R.drawable.share) {
-	            val hasVideos = selectedItemsList.any {
-	                it.type == MediaType.Video
-	            }
+		            val intent = Intent().apply {
+		                action = Intent.ACTION_SEND_MULTIPLE
+		                type = if (hasVideos) "video/*" else "images/*"
+		            }
 
-	            val intent = Intent().apply {
-	                action = Intent.ACTION_SEND_MULTIPLE
-	                type = if (hasVideos) "video/*" else "images/*"
-	            }
+		            val fileUris = ArrayList<Uri>()
+		            selectedItemsList.forEach {
+		                fileUris.add(it.uri)
+		            }
 
-	            val fileUris = ArrayList<Uri>()
-	            selectedItemsList.forEach {
-	                fileUris.add(it.uri)
-	            }
+		            intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, fileUris)
 
-	            intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, fileUris)
-
-	            context.startActivity(Intent.createChooser(intent, null))
-	        }
+		            context.startActivity(Intent.createChooser(intent, null))
+	        	}
+        	)
 
 			if (isTrashBin) {
+				val showRestoreDialog = remember { mutableStateOf(false) }
+				BottomAppBarItem(
+					text = "Restore",
+					iconResId = R.drawable.favorite,
+					cornerRadius = 16.dp,
+					dialogComposable = {
+					    ConfirmationDialog(showDialog = showRestoreDialog, dialogTitle = "Restore these items?", confirmButtonLabel = "Restore") {
+					        val newList = groupedMedia.value.toMutableList()
+					        selectedItemsList.forEach { item ->
+					            operateOnImage(
+					                item.absolutePath,
+					                item.id,
+					                ImageFunctions.UnTrashImage,
+					                context
+					            )
+					            newList.remove(item)
+					        }
+					        selectedItemsList.clear()
+					        groupedMedia.value = newList
+					    }
+					},
+					action = {
+						showRestoreDialog.value = true
+					}	
+				)
+
+				val showPermaDeleteDialog = remember { mutableStateOf(false) }
 				BottomAppBarItem(
 		        	text = "Delete",
-		        	iconResId = R.drawable.delete
-	        	) {
-		             val newList = groupedMedia.value.toMutableList()
-		             selectedItemsList.forEach { item ->
-		                 operateOnImage(
-		                     item.absolutePath,
-		                     item.id,
-		                     ImageFunctions.PermaDeleteImage,
-		                     context
-		                 )
-		                 newList.remove(item)
-		             }
-		             selectedItemsList.clear()
-		             groupedMedia.value = newList
-		        }
+		        	iconResId = R.drawable.delete,
+		        	cornerRadius = 16.dp,
+		        	dialogComposable = {
+					    ConfirmationDialog(showDialog = showPermaDeleteDialog, dialogTitle = "Permanently delete these items?", confirmButtonLabel = "Delete") {
+					        val newList = groupedMedia.value.toMutableList()
+					        selectedItemsList.forEach { item ->
+					            operateOnImage(
+					                item.absolutePath,
+					                item.id,
+					                ImageFunctions.PermaDeleteImage,
+					                context
+					            )
+					            newList.remove(item)
+					        }
+					        selectedItemsList.clear()
+					        groupedMedia.value = newList
+					    }
+		        	},
+		        	action = {
+		        		showPermaDeleteDialog.value = true
+		        	}
+	        	)
 			} else {
 		        BottomAppBarItem(text = "Move", iconResId = R.drawable.cut)
 
 		        BottomAppBarItem(text = "Copy", iconResId = R.drawable.copy)
 
+				val showDeleteDialog = remember { mutableStateOf(false) }
 		        BottomAppBarItem(
 		        	text = "Delete",
-		        	iconResId = R.drawable.delete
-	        	) {
-		             val newList = groupedMedia.value.toMutableList()
-		             selectedItemsList.forEach { item ->
-		                 operateOnImage(
-		                     item.absolutePath,
-		                     item.id,
-		                     ImageFunctions.TrashImage,
-		                     context
-		                 )
-		                 newList.remove(item)
-		             }
-		             selectedItemsList.clear()
-		             groupedMedia.value = newList
-		        }
+		        	iconResId = R.drawable.delete,
+		        	cornerRadius = 16.dp,
+		        	dialogComposable = {
+					    ConfirmationDialog(showDialog = showDeleteDialog, dialogTitle = "Move selected items to Trash Bin?", confirmButtonLabel = "Delete") {
+					        val newList = groupedMedia.value.toMutableList()
+					        selectedItemsList.forEach { item ->
+					            operateOnImage(
+					                item.absolutePath,
+					                item.id,
+					                ImageFunctions.TrashImage,
+					                context
+					            )
+					            newList.remove(item)
+					        }
+					        selectedItemsList.clear()
+					        groupedMedia.value = newList
+					    }
+		        	},
+		        	action = {
+		        		showDeleteDialog.value = true
+		        	}
+	        	)
 			}
         }
     }

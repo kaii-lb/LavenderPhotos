@@ -59,6 +59,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.kaii.photos.MainActivity
 import com.kaii.photos.R
+import com.kaii.photos.compose.ConfirmationDialog
 import com.kaii.photos.compose.CustomMaterialTheme
 import com.kaii.photos.compose.SinglePhotoInfoDialog
 import com.kaii.photos.helpers.ImageFunctions
@@ -130,16 +131,22 @@ fun SinglePhotoView(
 		contentColor = CustomMaterialTheme.colorScheme.onBackground
 	) {  _ ->
 		// material theme doesn't seem to apply just above????
-		SinglePhotoConfirmationDialog(
-			showActionDialog,
-			currentMediaItem.value,
-			groupedMedia,
-			neededDialogTitle,
-			neededDialogButtonLabel,
-			neededDialogFunction,
-			navController,
-			state
-		)
+		val context = LocalContext.current
+		val coroutineScope = rememberCoroutineScope()
+		ConfirmationDialog(
+			showDialog = showActionDialog,
+			dialogTitle = neededDialogTitle.value,
+			confirmButtonLabel = neededDialogButtonLabel.value,
+		) {
+			operateOnImage(currentMediaItem.value.absolutePath, currentMediaItem.value.id, neededDialogFunction.value, context)
+			sortOutMediaMods(
+				currentMediaItem.value,
+				groupedMedia,
+				coroutineScope,
+				navController,
+				state
+			)
+		}
 	
 		SinglePhotoInfoDialog(
 			showInfoDialog,
@@ -393,74 +400,4 @@ private fun BottomBar(
 	}
 }
 
-@Composable
-private fun SinglePhotoConfirmationDialog(
-	showDialog: MutableState<Boolean>,
-	currentMediaItem: MediaStoreData,
-	groupedMedia: MutableState<List<MediaStoreData>>,
-	neededDialogTitle: MutableState<String>,
-	neededDialogButtonLabel: MutableState<String>,
-	neededDialogFunction: MutableState<ImageFunctions>,
-	navController: NavHostController,
-	state: PagerState
-) {
-	val modifier = if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE)
-		Modifier.width(256.dp)
-	else
-		Modifier
 
-	if (showDialog.value) {
-		val context = LocalContext.current
-		val coroutineScope = rememberCoroutineScope()
-
-		AlertDialog(
-			onDismissRequest = {
-				showDialog.value = false
-			},
-			modifier = modifier,
-			confirmButton = {
-				Button(
-					onClick = {
-						showDialog.value = false
-						operateOnImage(currentMediaItem.absolutePath, currentMediaItem.id, neededDialogFunction.value, context)
-						sortOutMediaMods(
-							currentMediaItem,
-							groupedMedia,
-							coroutineScope,
-							navController,
-							state
-						)
-					}
-				) {
-					Text(
-						text = neededDialogButtonLabel.value,
-						fontSize = TextUnit(14f, TextUnitType.Sp)
-					)
-				}
-			},
-			title = {
-				Text(
-					text = neededDialogTitle.value,
-					fontSize = TextUnit(16f, TextUnitType.Sp)
-				)
-			},
-			dismissButton = {
-				Button(
-					onClick = {
-						showDialog.value = false
-					},
-					colors = ButtonDefaults.buttonColors(
-						containerColor = CustomMaterialTheme.colorScheme.tertiaryContainer,
-						contentColor = CustomMaterialTheme.colorScheme.onTertiaryContainer
-					)
-				) {
-					Text(
-						text = "Cancel",
-						fontSize = TextUnit(14f, TextUnitType.Sp)
-					)
-				}
-			},
-			shape = RoundedCornerShape(32.dp)
-		)
-	}
-}

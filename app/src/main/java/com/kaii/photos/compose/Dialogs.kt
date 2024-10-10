@@ -31,11 +31,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
@@ -49,6 +53,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -83,6 +88,7 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.kaii.photos.MainActivity.Companion.startForResult
 import com.kaii.photos.R
+import com.kaii.photos.compose.single_photo.sortOutMediaMods
 import com.kaii.photos.datastore
 import com.kaii.photos.datastore.getUsername
 import com.kaii.photos.datastore.setUsername
@@ -900,5 +906,63 @@ fun SinglePhotoInfoDialog(
 				}
 			}
 		}
+	}
+}
+
+@Composable
+fun ConfirmationDialog(
+	showDialog: MutableState<Boolean>,
+	dialogTitle: String,
+	confirmButtonLabel: String,
+	action: () -> Unit
+) {
+	val modifier = if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE)
+		Modifier.width(256.dp)
+	else
+		Modifier
+
+	if (showDialog.value) {
+		AlertDialog(
+			onDismissRequest = {
+				showDialog.value = false
+			},
+			modifier = modifier,
+			confirmButton = {
+				Button(
+					onClick = {
+						showDialog.value = false
+						action()
+					}
+				) {
+					Text(
+						text = confirmButtonLabel,
+						fontSize = TextUnit(14f, TextUnitType.Sp)
+					)
+				}
+			},
+			title = {
+				Text(
+					text = dialogTitle,
+					fontSize = TextUnit(16f, TextUnitType.Sp)
+				)
+			},
+			dismissButton = {
+				Button(
+					onClick = {
+						showDialog.value = false
+					},
+					colors = ButtonDefaults.buttonColors(
+						containerColor = CustomMaterialTheme.colorScheme.tertiaryContainer,
+						contentColor = CustomMaterialTheme.colorScheme.onTertiaryContainer
+					)
+				) {
+					Text(
+						text = "Cancel",
+						fontSize = TextUnit(14f, TextUnitType.Sp)
+					)
+				}
+			},
+			shape = RoundedCornerShape(32.dp)
+		)
 	}
 }
