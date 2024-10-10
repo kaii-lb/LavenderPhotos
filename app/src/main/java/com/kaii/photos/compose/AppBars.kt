@@ -438,7 +438,11 @@ fun IsSelectingTopBar(selectedItemsList: SnapshotStateList<MediaStoreData>, grou
 }
 
 @Composable
-fun IsSelectingBottomAppBar(selectedItemsList: SnapshotStateList<MediaStoreData>, groupedMedia: MutableState<List<MediaStoreData>>) {
+fun IsSelectingBottomAppBar(
+	selectedItemsList: SnapshotStateList<MediaStoreData>,
+	groupedMedia: MutableState<List<MediaStoreData>>,
+	isTrashBin: Boolean = false
+) {
     BottomAppBar(
         containerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
         contentColor = CustomMaterialTheme.colorScheme.onPrimaryContainer,
@@ -472,27 +476,47 @@ fun IsSelectingBottomAppBar(selectedItemsList: SnapshotStateList<MediaStoreData>
 	            context.startActivity(Intent.createChooser(intent, null))
 	        }
 
-	        BottomAppBarItem(text = "Move", iconResId = R.drawable.cut)
+			if (isTrashBin) {
+				BottomAppBarItem(
+		        	text = "Delete",
+		        	iconResId = R.drawable.delete
+	        	) {
+		             val newList = groupedMedia.value.toMutableList()
+		             selectedItemsList.forEach { item ->
+		                 operateOnImage(
+		                     item.absolutePath,
+		                     item.id,
+		                     ImageFunctions.PermaDeleteImage,
+		                     context
+		                 )
+		                 newList.remove(item)
+		             }
+		             selectedItemsList.clear()
+		             groupedMedia.value = newList
+		        }
+			} else {
+		        BottomAppBarItem(text = "Move", iconResId = R.drawable.cut)
 
-	        BottomAppBarItem(text = "Copy", iconResId = R.drawable.copy)
+		        BottomAppBarItem(text = "Copy", iconResId = R.drawable.copy)
 
-	        BottomAppBarItem(
-	        	text = "Delete",
-	        	iconResId = R.drawable.delete
-        	) {
-	             val newList = groupedMedia.value.toMutableList()
-	             selectedItemsList.forEach { item ->
-	                 operateOnImage(
-	                     item.absolutePath,
-	                     item.id,
-	                     ImageFunctions.TrashImage,
-	                     context
-	                 )
-	                 newList.remove(item)
-	             }
-	             selectedItemsList.clear()
-	             groupedMedia.value = newList
-	        }
+		        BottomAppBarItem(
+		        	text = "Delete",
+		        	iconResId = R.drawable.delete
+	        	) {
+		             val newList = groupedMedia.value.toMutableList()
+		             selectedItemsList.forEach { item ->
+		                 operateOnImage(
+		                     item.absolutePath,
+		                     item.id,
+		                     ImageFunctions.TrashImage,
+		                     context
+		                 )
+		                 newList.remove(item)
+		             }
+		             selectedItemsList.clear()
+		             groupedMedia.value = newList
+		        }
+			}
         }
     }
 }
@@ -674,7 +698,7 @@ fun TrashedPhotoViewBottomBar(
             .fillMaxWidth(1f)
     ) { target ->
         if (target) {
-            IsSelectingBottomAppBar(selectedItemsList = selectedItemsList, groupedMedia = groupedMedia)
+            IsSelectingBottomAppBar(selectedItemsList = selectedItemsList, groupedMedia = groupedMedia, isTrashBin = true)
         }
     }
 }
