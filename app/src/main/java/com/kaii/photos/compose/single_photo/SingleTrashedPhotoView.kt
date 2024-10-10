@@ -59,8 +59,8 @@ import androidx.navigation.NavHostController
 import com.kaii.photos.MainActivity
 import com.kaii.photos.R
 import com.kaii.photos.compose.CustomMaterialTheme
-import com.kaii.photos.helpers.single_image_functions.ImageFunctions
-import com.kaii.photos.helpers.single_image_functions.operateOnImage
+import com.kaii.photos.helpers.ImageFunctions
+import com.kaii.photos.helpers.operateOnImage
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import kotlinx.coroutines.launch

@@ -49,6 +49,8 @@ import com.kaii.photos.compose.AnimatableText
 import com.kaii.photos.compose.AnimatableTextField
 import com.kaii.photos.compose.CustomMaterialTheme
 import com.kaii.photos.compose.DialogClickableItem
+import com.kaii.photos.compose.SingleAlbumViewBottomBar
+import com.kaii.photos.compose.SingleAlbumViewTopBar
 import com.kaii.photos.datastore
 import com.kaii.photos.datastore.editInAlbumsList
 import com.kaii.photos.datastore.removeFromAlbumsList
@@ -56,19 +58,32 @@ import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.brightenColor
-import com.kaii.photos.helpers.single_image_functions.ImageFunctions
-import com.kaii.photos.helpers.single_image_functions.operateOnImage
+import com.kaii.photos.helpers.ImageFunctions
+import com.kaii.photos.helpers.operateOnImage
+import com.kaii.photos.mediastore.MediaStoreData
 import kotlinx.coroutines.launch
 
 @Composable
-fun SingleAlbumView(navController: NavHostController, selectedItemsList: SnapshotStateList<String>) {
+fun SingleAlbumView(
+	navController: NavHostController,
+	selectedItemsList: SnapshotStateList<MediaStoreData>,
+	groupedMedia: MutableState<List<MediaStoreData>>,
+) {
     val mainViewModel = MainActivity.mainViewModel
 
     val albumDir = mainViewModel.selectedAlbumDir.collectAsState(initial = null).value ?: return
     // println("ALBUM DIR IS $albumDir")
 
     Scaffold (
-        topBar =  { TopBar(navController, albumDir) },
+        topBar =  { TopBar(
+            navController,
+            albumDir,
+            selectedItemsList,
+            groupedMedia.value
+        ) },
+        bottomBar = {
+            SingleAlbumViewBottomBar(selectedItemsList = selectedItemsList, groupedMedia = groupedMedia)
+        },
         containerColor = CustomMaterialTheme.colorScheme.background,
         contentColor = CustomMaterialTheme.colorScheme.onBackground
     ) { padding ->
@@ -81,10 +96,11 @@ fun SingleAlbumView(navController: NavHostController, selectedItemsList: Snapsho
         ) {
        		PhotoGrid(
        			navController = navController, 
-       			operation = ImageFunctions.LoadNormalImage, 
+       			operation = ImageFunctions.LoadNormalImage,
        			path = albumDir, 
        			sortBy = MediaItemSortMode.DateTaken, 
-       			selectedItemsList = selectedItemsList
+       			selectedItemsList = selectedItemsList,
+       			groupedMedia = groupedMedia
        		)
         }
     }
@@ -92,55 +108,21 @@ fun SingleAlbumView(navController: NavHostController, selectedItemsList: Snapsho
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TopBar(navController: NavHostController, dir: String) {
+private fun TopBar(
+    navController: NavHostController,
+    dir: String,
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    groupedMedia: List<MediaStoreData>
+) {
 	val title = dir.split("/").last()
 	val showDialog = remember { mutableStateOf(false) }
 
-    SingleAlbumDialog(showDialog, dir, navController)
-
-    TopAppBar(
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = CustomMaterialTheme.colorScheme.surfaceContainer
-        ),
-        navigationIcon = {
-            IconButton(
-                onClick = { navController.popBackStack() },
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.back_arrow),
-                    contentDescription = "Go back to previous page",
-                    tint = CustomMaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier
-                        .size(24.dp)
-                )
-            }
-        },
-        title = {
-            Text(
-                text = title,
-                fontSize = TextUnit(18f, TextUnitType.Sp),
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier
-                    .width(160.dp)
-            )
-        },
-        actions = {
-            IconButton(
-                onClick = {
-                    showDialog.value = true
-                },
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.settings),
-                    contentDescription = "show more options for the album view",
-                    tint = CustomMaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier
-                        .size(24.dp)
-                )
-            }
-        }
+    SingleAlbumViewTopBar(
+        navController = navController,
+        showDialog = showDialog,
+        title = title,
+        selectedItemsList = selectedItemsList,
+        groupedMedia = groupedMedia
     )
 }
 

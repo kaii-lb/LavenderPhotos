@@ -92,8 +92,8 @@ import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.brightenColor
 import com.kaii.photos.helpers.darkenColor
 import com.kaii.photos.helpers.getExifDataForMedia
-import com.kaii.photos.helpers.single_image_functions.ImageFunctions
-import com.kaii.photos.helpers.single_image_functions.operateOnImage
+import com.kaii.photos.helpers.ImageFunctions
+import com.kaii.photos.helpers.operateOnImage
 import com.kaii.photos.mediastore.MediaStoreData
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch

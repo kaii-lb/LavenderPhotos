@@ -61,8 +61,8 @@ import com.kaii.photos.MainActivity
 import com.kaii.photos.R
 import com.kaii.photos.compose.CustomMaterialTheme
 import com.kaii.photos.compose.SinglePhotoInfoDialog
-import com.kaii.photos.helpers.single_image_functions.ImageFunctions
-import com.kaii.photos.helpers.single_image_functions.operateOnImage
+import com.kaii.photos.helpers.ImageFunctions
+import com.kaii.photos.helpers.operateOnImage
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import kotlinx.coroutines.launch
@@ -193,8 +193,6 @@ private fun TopBar(
 	else
 		CustomMaterialTheme.colorScheme.surfaceContainer
 
-	val blueModifier = if (isLandscape) Modifier.blur(16.dp) else Modifier
-
 	AnimatedVisibility(
 		visible = visible,
 		enter =
@@ -211,7 +209,6 @@ private fun TopBar(
 		) { width -> -width } + fadeOut(),
 	) {
 		TopAppBar(
-			modifier = Modifier.then(blueModifier),
 			colors = TopAppBarDefaults.topAppBarColors(
 				containerColor = color
 			),

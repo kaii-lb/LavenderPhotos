@@ -1,23 +1,40 @@
 package com.kaii.photos.compose
 
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Button
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -32,13 +49,127 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
 import com.kaii.photos.R
 import com.kaii.photos.helpers.MainScreenViewType
+import com.kaii.photos.helpers.ImageFunctions
+import com.kaii.photos.helpers.operateOnImage
+import com.kaii.photos.mediastore.MediaStoreData
+import com.kaii.photos.mediastore.MediaType
+
+@Composable
+fun BottomAppBarItem(
+    text: String,
+    iconResId: Int,
+    buttonWidth: Dp = 64.dp,
+    buttonHeight: Dp = 56.dp,
+    iconSize: Dp = 24.dp,
+    textSize: Float = 14f,
+    color: Color = Color.Transparent,
+    showRipple: Boolean = true,
+    cornerRadius: Dp = 1000.dp,
+    action: (() -> Unit)? = null
+) {
+    val modifier = if (action != null) {
+        Modifier.clickable(
+            interactionSource = remember { MutableInteractionSource() },
+            indication = if (!showRipple) null else LocalIndication.current
+        ) {
+            action()
+        }
+    }  else {
+        Modifier
+    }
+
+    Box(
+        modifier = Modifier
+            .width(buttonWidth)
+            .height(buttonHeight)
+            .clip(RoundedCornerShape(cornerRadius))
+            .then(modifier),
+    ) {
+        Row(
+            modifier = Modifier
+                .height(iconSize + 8.dp)
+                .width(iconSize * 2.25f)
+                .clip(RoundedCornerShape(1000.dp))
+                .align(Alignment.TopCenter)
+                .background(color),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                painter = painterResource(id = iconResId),
+                contentDescription = "button",
+                modifier = Modifier
+                    .size(iconSize)
+            )
+        }
+
+        Text(
+            text = text,
+            fontSize = TextUnit(textSize, TextUnitType.Sp),
+            modifier = Modifier
+                .wrapContentSize()
+                .align(Alignment.BottomCenter)
+        )
+    }
+}
+
+fun getAppBarContentTransition(slideLeft: Boolean) = run {
+    if (slideLeft) {
+        (slideInHorizontally(
+            animationSpec = tween(
+                durationMillis = 350
+            )
+        ) { width -> width } + fadeIn(
+            animationSpec = tween(
+                durationMillis = 350
+            )
+        )).togetherWith(
+            slideOutHorizontally(
+                animationSpec = tween(
+                    durationMillis = 350
+                )
+            ) { width -> -width } + fadeOut(
+                animationSpec = tween(
+                    durationMillis = 350
+                )
+            )
+        )
+    } else {
+        (slideInHorizontally(
+            animationSpec = tween(
+                durationMillis = 350
+            )
+        ) { width -> -width } + fadeIn(
+            animationSpec = tween(
+                durationMillis = 350
+            )
+        )).togetherWith(
+            slideOutHorizontally(
+                animationSpec = tween(
+                    durationMillis = 350
+                )
+            ) { width -> width } + fadeOut(
+                animationSpec = tween(
+                    durationMillis = 350
+                )
+            )
+        )
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -86,11 +217,6 @@ fun MainAppBottomBar(currentView: MutableState<MainScreenViewType>) {
         contentColor = CustomMaterialTheme.colorScheme.onPrimaryContainer,
         contentPadding = PaddingValues(0.dp),
     ) {
-        val buttonHeight = 56.dp
-        val buttonWidth = 64.dp
-        val iconSize = 24.dp
-        val textSize = 14f
-
         Row(
             modifier = Modifier
                 .fillMaxSize(1f),
@@ -153,159 +279,51 @@ fun MainAppBottomBar(currentView: MutableState<MainScreenViewType>) {
             }
 
             // photo grid button
-            Box(
-                modifier = Modifier
-                    .width(buttonWidth)
-                    .height(buttonHeight)
-                    .clip(RoundedCornerShape(16.dp))
-                    .clickable {
-                        if (currentView.value != MainScreenViewType.PhotosGridView) {
-                            currentView.value = MainScreenViewType.PhotosGridView
-                        }
-                    },
+            BottomAppBarItem(
+                text = "Photos",
+                iconResId = photoGridIcon,
+                color = photoGridColor,
+                cornerRadius = 16.dp
             ) {
-                Row(
-                    modifier = Modifier
-                        .height(iconSize + 8.dp)
-                        .width(iconSize * 2.25f)
-                        .align(Alignment.TopCenter)
-                        .clip(RoundedCornerShape(1000.dp))
-                        .background(photoGridColor),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Icon(
-                        painter = painterResource(id = photoGridIcon),
-                        contentDescription = "button",
-                        modifier = Modifier
-                            .size(iconSize)
-                    )
-
+                if (currentView.value != MainScreenViewType.PhotosGridView) {
+                    currentView.value = MainScreenViewType.PhotosGridView
                 }
-                Text(
-                    text = "Photos",
-                    fontSize = TextUnit(textSize, TextUnitType.Sp),
-                    modifier = Modifier
-                        .wrapContentSize()
-                        .align(Alignment.BottomCenter)
-                )
             }
 
             // locked folder button
-            Box(
-                modifier = Modifier
-                    .width(buttonWidth)
-                    .height(buttonHeight)
-                    .clip(RoundedCornerShape(16.dp))
-                    .clickable {
-                        if (currentView.value != MainScreenViewType.SecureFolder) {
-                            currentView.value = MainScreenViewType.SecureFolder
-                        }
-                    },
+            BottomAppBarItem(
+                text = "Secure",
+                iconResId = lockedFolderIcon,
+                color = lockedFolderColor,
+                cornerRadius = 16.dp
             ) {
-                Row(
-                    modifier = Modifier
-                        .height(iconSize + 8.dp)
-                        .width(iconSize * 2.25f)
-                        .clip(RoundedCornerShape(1000.dp))
-                        .align(Alignment.TopCenter)
-                        .background(lockedFolderColor),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Icon(
-                        painter = painterResource(id = lockedFolderIcon),
-                        contentDescription = "button",
-                        modifier = Modifier
-                            .size(iconSize)
-                    )
+                if (currentView.value != MainScreenViewType.SecureFolder) {
+                    currentView.value = MainScreenViewType.SecureFolder
                 }
-
-                Text(
-                    text = "Secure",
-                    fontSize = TextUnit(textSize, TextUnitType.Sp),
-                    modifier = Modifier
-                        .wrapContentSize()
-                        .align(Alignment.BottomCenter)
-                )
             }
 
             // album grid button
-            Box(
-                modifier = Modifier
-                    .width(buttonWidth)
-                    .height(buttonHeight)
-                    .clip(RoundedCornerShape(16.dp))
-                    .clickable {
-                        if (currentView.value != MainScreenViewType.AlbumsGridView) {
-                            currentView.value = MainScreenViewType.AlbumsGridView
-                        }
-                    },
+            BottomAppBarItem(
+                text = "Albums",
+                iconResId = albumGridIcon,
+                color = albumGridColor,
+                cornerRadius = 16.dp
             ) {
-                Row(
-                    modifier = Modifier
-                        .height(iconSize + 8.dp)
-                        .width(iconSize * 2.25f)
-                        .clip(RoundedCornerShape(1000.dp))
-                        .align(Alignment.TopCenter)
-                        .background(albumGridColor),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Icon(
-                        painter = painterResource(id = albumGridIcon),
-                        contentDescription = "button",
-                        modifier = Modifier
-                            .size(iconSize)
-                    )
+                if (currentView.value != MainScreenViewType.AlbumsGridView) {
+                    currentView.value = MainScreenViewType.AlbumsGridView
                 }
-
-                Text(
-                    text = "Albums",
-                    fontSize = TextUnit(textSize, TextUnitType.Sp),
-                    modifier = Modifier
-                        .wrapContentSize()
-                        .align(Alignment.BottomCenter)
-                )
             }
 
             // search page button
-            Box(
-                modifier = Modifier
-                    .width(buttonWidth)
-                    .height(buttonHeight)
-                    .clip(RoundedCornerShape(16.dp))
-                    .clickable {
-                        if (currentView.value != MainScreenViewType.SearchPage) {
-                            currentView.value = MainScreenViewType.SearchPage
-                        }
-                    },
+            BottomAppBarItem(
+                text = "Search",
+                iconResId = R.drawable.search,
+                color = searchPageColor,
+                cornerRadius = 16.dp
             ) {
-                Row(
-                    modifier = Modifier
-                        .height(iconSize + 8.dp)
-                        .width(iconSize * 2.25f)
-                        .clip(RoundedCornerShape(1000.dp))
-                        .align(Alignment.TopCenter)
-                        .background(searchPageColor),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.search),
-                        contentDescription = "button",
-                        modifier = Modifier
-                            .size(iconSize)
-                    )
+                if (currentView.value != MainScreenViewType.SearchPage) {
+                    currentView.value = MainScreenViewType.SearchPage
                 }
-
-                Text(
-                    text = "Search",
-                    fontSize = TextUnit(textSize, TextUnitType.Sp),
-                    modifier = Modifier
-                        .wrapContentSize()
-                        .align(Alignment.BottomCenter)
-                )
             }
         }
     }
@@ -313,38 +331,91 @@ fun MainAppBottomBar(currentView: MutableState<MainScreenViewType>) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun IsSelectingTopBar(selectedItemsList: SnapshotStateList<String>) {
+fun IsSelectingTopBar(selectedItemsList: SnapshotStateList<MediaStoreData>, groupedMedia: List<MediaStoreData>) {
+	var first by remember { mutableStateOf(selectedItemsList.first()) }
+	if (selectedItemsList.size == 1) first = selectedItemsList.first()
+	
 	TopAppBar(
         title = {
-            Row (
-            	verticalAlignment = Alignment.CenterVertically,
+        	Row (
+           		verticalAlignment = Alignment.CenterVertically,
             	horizontalArrangement = Arrangement.SpaceEvenly
-            ){
-            	Button(
-            		onClick = {
-            			selectedItemsList.clear()
-            		},
-            		modifier = Modifier
-            			.width(56.dp)
-            	) {
-            		Icon(
-            			painter = painterResource(id = R.drawable.close),
-            			contentDescription = "clear selection button",
-            			modifier = Modifier
-            				// .size(48.dp)
-            		)
-            	}
+        	) {
+	           	Row (
+					modifier = Modifier
+                        .height(42.dp)
+                        .width(48.dp)
+                        .clip(RoundedCornerShape(100.dp, 6.dp, 6.dp, 100.dp))
+                        .background(CustomMaterialTheme.colorScheme.primary)
+                        .padding(4.dp, 0.dp, 0.dp, 0.dp)
+                        .clickable {
+                            selectedItemsList.clear()
+                        },
+	            	verticalAlignment = Alignment.CenterVertically,
+	            	horizontalArrangement = Arrangement.Center
+	           	) {
+					Icon(
+						painter = painterResource(id = R.drawable.close),
+						contentDescription = "clear selection button",
+						tint = CustomMaterialTheme.colorScheme.onPrimary,
+						modifier = Modifier
+							.size(24.dp)
+					) 		
+	           	}
 
-				Spacer(modifier = Modifier.width(16.dp))
-            	
-				Text(
-                    text = selectedItemsList.size.toString(),
-                    fontWeight = FontWeight.Normal,
-                    fontSize = TextUnit(20f, TextUnitType.Sp)
-                )            		
-            }
+	           	Spacer (modifier = Modifier.width(4.dp))
+	               
+	           	Row (
+					modifier = Modifier
+                        .height(42.dp)
+                        .wrapContentWidth()
+                        .clip(RoundedCornerShape(6.dp, 100.dp, 100.dp, 6.dp))
+                        .background(CustomMaterialTheme.colorScheme.secondaryContainer)
+                        .padding(12.dp, 0.dp, 16.dp, 0.dp)
+                        .clickable {
+                            selectedItemsList.clear()
+                        },
+	            	verticalAlignment = Alignment.CenterVertically,
+	            	horizontalArrangement = Arrangement.Center
+	           	) {
+					Text(
+						text = selectedItemsList.size.toString(),
+						color = CustomMaterialTheme.colorScheme.onSecondaryContainer,
+						fontSize = TextUnit(18f, TextUnitType.Sp),
+						modifier = Modifier
+							.wrapContentSize()
+					) 		
+	           	}
+        	}
         },
         actions = {
+            IconButton(
+                onClick = {
+					val filteredMedia = groupedMedia.filter {
+						it.type == MediaType.Image || it.type == MediaType.Video
+					}
+               		
+                	if (selectedItemsList.size == filteredMedia.size) {
+                    	selectedItemsList.clear()
+                    	selectedItemsList.add(first)
+                	} else {
+                		selectedItemsList.clear()
+                		
+	                    for (item in filteredMedia) {
+                   			selectedItemsList.add(item)
+	                    }
+                	}
+                },
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.check_item),
+                    contentDescription = "select all items",
+                    tint = CustomMaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier
+                        .size(24.dp)
+                )
+            }
+
             IconButton(
                 onClick = {
                     // showDialog.value = true
@@ -364,4 +435,246 @@ fun IsSelectingTopBar(selectedItemsList: SnapshotStateList<String>) {
             containerColor = CustomMaterialTheme.colorScheme.background
         ),
     )
+}
+
+@Composable
+fun IsSelectingBottomAppBar(selectedItemsList: SnapshotStateList<MediaStoreData>, groupedMedia: MutableState<List<MediaStoreData>>) {
+    BottomAppBar(
+        containerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
+        contentColor = CustomMaterialTheme.colorScheme.onPrimaryContainer,
+        contentPadding = PaddingValues(0.dp)
+    ) {
+		Row(
+            modifier = Modifier
+                .fillMaxSize(1f),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+	        val context = LocalContext.current
+
+	        BottomAppBarItem(text = "Share", iconResId = R.drawable.share) {
+	            val hasVideos = selectedItemsList.any {
+	                it.type == MediaType.Video
+	            }
+
+	            val intent = Intent().apply {
+	                action = Intent.ACTION_SEND_MULTIPLE
+	                type = if (hasVideos) "video/*" else "images/*"
+	            }
+
+	            val fileUris = ArrayList<Uri>()
+	            selectedItemsList.forEach {
+	                fileUris.add(it.uri)
+	            }
+
+	            intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, fileUris)
+
+	            context.startActivity(Intent.createChooser(intent, null))
+	        }
+
+	        BottomAppBarItem(text = "Move", iconResId = R.drawable.cut)
+
+	        BottomAppBarItem(text = "Copy", iconResId = R.drawable.copy)
+
+	        BottomAppBarItem(
+	        	text = "Delete",
+	        	iconResId = R.drawable.delete
+        	) {
+	             val newList = groupedMedia.value.toMutableList()
+	             selectedItemsList.forEach { item ->
+	                 operateOnImage(
+	                     item.absolutePath,
+	                     item.id,
+	                     ImageFunctions.TrashImage,
+	                     context
+	                 )
+	                 newList.remove(item)
+	             }
+	             selectedItemsList.clear()
+	             groupedMedia.value = newList
+	        }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SingleAlbumViewTopBar(
+    navController: NavHostController,
+    showDialog: MutableState<Boolean>,
+    title: String,
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    groupedMedia: List<MediaStoreData>
+) {
+    AnimatedContent(
+        targetState = selectedItemsList.size > 0,
+        transitionSpec = {
+            getAppBarContentTransition(selectedItemsList.size > 0)
+        },
+        label = "SingleAlbumViewTopBarAnimatedContent"
+    ) { target ->
+        if (!target) {
+            TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = CustomMaterialTheme.colorScheme.surfaceContainer
+                ),
+                navigationIcon = {
+                    IconButton(
+                        onClick = { navController.popBackStack() },
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.back_arrow),
+                            contentDescription = "Go back to previous page",
+                            tint = CustomMaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier
+                                .size(24.dp)
+                        )
+                    }
+                },
+                title = {
+                    Text(
+                        text = title,
+                        fontSize = TextUnit(18f, TextUnitType.Sp),
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier
+                            .width(160.dp)
+                    )
+                },
+                actions = {
+                    IconButton(
+                        onClick = {
+                            showDialog.value = true
+                        },
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.settings),
+                            contentDescription = "show more options for the album view",
+                            tint = CustomMaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier
+                                .size(24.dp)
+                        )
+                    }
+                }
+            )
+        } else {
+            IsSelectingTopBar(selectedItemsList = selectedItemsList, groupedMedia = groupedMedia)
+        }
+    }
+}
+
+@Composable
+fun SingleAlbumViewBottomBar(
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    groupedMedia: MutableState<List<MediaStoreData>>
+) {
+    AnimatedContent(
+        targetState = selectedItemsList.size > 0,
+        transitionSpec = {
+            getAppBarContentTransition(selectedItemsList.size > 0)
+        },
+        label = "SingleAlbumViewTopBarAnimatedContent",
+        modifier = Modifier
+            .fillMaxWidth(1f)
+    ) { target ->
+        if (target) {
+            IsSelectingBottomAppBar(selectedItemsList = selectedItemsList, groupedMedia = groupedMedia)
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TrashedPhotoGridViewTopBar(
+    navController: NavHostController,
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    groupedMedia: List<MediaStoreData>
+) {
+    AnimatedContent(
+        targetState = selectedItemsList.size > 0,
+        transitionSpec = {
+            getAppBarContentTransition(selectedItemsList.size > 0)
+        },
+        label = "TrashedPhotoGridViewBottomBarAnimatedContent"
+    ) { target ->
+        if (!target) {
+            TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = CustomMaterialTheme.colorScheme.surfaceContainer
+                ),
+                navigationIcon = {
+                    IconButton(
+                        onClick = { navController.popBackStack() },
+                    ) {
+                        Icon(
+                            painter = painterResource(id = com.kaii.photos.R.drawable.back_arrow),
+                            contentDescription = "Go back to previous page",
+                            tint = CustomMaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier
+                                .size(24.dp)
+                        )
+                    }
+                },
+                title = {
+                    Text(
+                        text = "Trash Bin",
+                        fontSize = TextUnit(18f, TextUnitType.Sp),
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier
+                            .width(160.dp)
+                    )
+                },
+                actions = {
+                    IconButton(
+                        onClick = { /* TODO */ },
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.trash),
+                            contentDescription = "empty out the trash bin",
+                            tint = CustomMaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier
+                                .size(24.dp)
+                        )
+                    }
+
+                    IconButton(
+                        onClick = { /* TODO */ },
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.settings),
+                            contentDescription = "show more options for the trash bin",
+                            tint = CustomMaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier
+                                .size(24.dp)
+                        )
+                    }
+                }
+            )
+        } else {
+            IsSelectingTopBar(selectedItemsList = selectedItemsList, groupedMedia = groupedMedia)
+        }
+    }
+}
+
+@Composable
+fun TrashedPhotoViewBottomBar(
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    groupedMedia: MutableState<List<MediaStoreData>>
+) {
+    AnimatedContent(
+        targetState = selectedItemsList.size > 0,
+        transitionSpec = {
+            getAppBarContentTransition(selectedItemsList.size > 0)
+        },
+        label = "TrashedPhotoGridViewTopBarAnimatedContent",
+        modifier = Modifier
+            .fillMaxWidth(1f)
+    ) { target ->
+        if (target) {
+            IsSelectingBottomAppBar(selectedItemsList = selectedItemsList, groupedMedia = groupedMedia)
+        }
+    }
 }

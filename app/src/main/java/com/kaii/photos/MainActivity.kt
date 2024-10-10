@@ -17,6 +17,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -29,6 +30,9 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -58,11 +62,13 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.MemoryCategory
 import com.kaii.photos.compose.AboutPage
 import com.kaii.photos.compose.CustomMaterialTheme
+import com.kaii.photos.compose.IsSelectingBottomAppBar
+import com.kaii.photos.compose.IsSelectingTopBar
 import com.kaii.photos.compose.LockedFolderEntryView
 import com.kaii.photos.compose.MainAppBottomBar
 import com.kaii.photos.compose.MainAppDialog
-import com.kaii.photos.compose.MainAppTopBar 
-import com.kaii.photos.compose.IsSelectingTopBar
+import com.kaii.photos.compose.MainAppTopBar
+import com.kaii.photos.compose.getAppBarContentTransition
 import com.kaii.photos.compose.grids.AlbumsGridView
 import com.kaii.photos.compose.grids.LockedFolderView
 import com.kaii.photos.compose.grids.PhotoGrid
@@ -78,7 +84,8 @@ import com.kaii.photos.datastore.getAlbumsList
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
-import com.kaii.photos.helpers.single_image_functions.ImageFunctions
+import com.kaii.photos.helpers.ImageFunctions
+import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.models.album_grid.AlbumsViewModel
 import com.kaii.photos.models.album_grid.AlbumsViewModelFactory
 import com.kaii.photos.models.main_activity.MainDataSharingModel
@@ -248,7 +255,8 @@ class MainActivity : ComponentActivity() {
                 val scale = remember { mutableFloatStateOf(1f) }
                 val rotation = remember { mutableFloatStateOf(0f) }
                 val offset = remember { mutableStateOf(Offset.Zero) }
-				val selectedItemsList = remember { SnapshotStateList<String>() } // has the absolute paths of all the selected items
+				val selectedItemsList = remember { SnapshotStateList<MediaStoreData>() }
+				val groupedMedia = remember { mutableStateOf(emptyList<MediaStoreData>()) }
 				
                 val context = LocalContext.current
                 NavHost (
@@ -298,7 +306,7 @@ class MainActivity : ComponentActivity() {
 						)
                         setupNextScreen(context, windowInsetsController, selectedItemsList)
 
-                        Content(currentView, navControllerLocal, showDialog, selectedItemsList)
+                        Content(currentView, navControllerLocal, showDialog, selectedItemsList, groupedMedia)
                     }
 
                     composable(MultiScreenViewType.SinglePhotoView.name) {
@@ -319,7 +327,7 @@ class MainActivity : ComponentActivity() {
                         )
                         setupNextScreen(context, windowInsetsController, selectedItemsList)
 						                        
-                        SingleAlbumView(navControllerLocal, selectedItemsList)
+                        SingleAlbumView(navControllerLocal, selectedItemsList, groupedMedia)
                     }
 
                     composable(MultiScreenViewType.SingleTrashedPhotoView.name) {
@@ -340,7 +348,7 @@ class MainActivity : ComponentActivity() {
 
                         setupNextScreen(context, windowInsetsController, selectedItemsList)
 
-                        TrashedPhotoGridView(navControllerLocal, selectedItemsList)
+                        TrashedPhotoGridView(navControllerLocal, selectedItemsList, groupedMedia)
                     }
 
                     composable(MultiScreenViewType.LockedFolderView.name) {
@@ -383,19 +391,21 @@ class MainActivity : ComponentActivity() {
         currentView: MutableState<MainScreenViewType>,
         navController: NavHostController,
         showDialog: MutableState<Boolean>,
-        selectedItemsList: SnapshotStateList<String>
+        selectedItemsList: SnapshotStateList<MediaStoreData>,
+        groupedMedia: MutableState<List<MediaStoreData>>
     ) {	
     	val searchViewModel: SearchViewModel = viewModel(
    	        factory = SearchViewModelFactory(LocalContext.current.applicationContext, "")
    	    )
+
         Scaffold(
             modifier = Modifier
                 .fillMaxSize(1f),
             topBar = {
-                TopBar(showDialog, selectedItemsList)
+                TopBar(showDialog, selectedItemsList, groupedMedia.value)
             },
             bottomBar = { 
-            	BottomBar(currentView) 
+            	BottomBar(currentView, selectedItemsList, groupedMedia)
            	}
         ) { padding ->
 			val context = LocalContext.current
@@ -429,10 +439,11 @@ class MainActivity : ComponentActivity() {
 	                        MainScreenViewType.PhotosGridView -> {
 	                        	PhotoGrid(
 	                        		navController = navController,
-	                        		operation = ImageFunctions.LoadNormalImage, 
+	                        		operation = ImageFunctions.LoadNormalImage,
 	                        		path = stringResource(id = R.string.default_homepage_photogrid_dir), 
 	                        		sortBy = MediaItemSortMode.DateTaken,
-	                        		selectedItemsList = selectedItemsList
+	                        		selectedItemsList = selectedItemsList,
+                                    groupedMedia = groupedMedia
                         		)	
 	                        }
 	                        MainScreenViewType.SecureFolder -> LockedFolderEntryView(navController)
@@ -467,40 +478,56 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun TopBar(showDialog: MutableState<Boolean>, selectedItemsList: SnapshotStateList<String>) {
-    	AnimatedContent(
-    		targetState = selectedItemsList.size > 0,
-    		transitionSpec = {
-    			if (selectedItemsList.size > 0) {
-                    (slideInHorizontally { height -> height } + fadeIn()).togetherWith(
-                        slideOutHorizontally { height -> -height } + fadeOut())
-    			} else {
-                    (slideInHorizontally { height -> -height } + fadeIn()).togetherWith(
-                        slideOutHorizontally { height -> height } + fadeOut())
-    			}.using(
-    				SizeTransform(clip = false)
-    			)
-    		},
-            label = "MainAnimatedContentView"
-        ) { target -> 
-			if (!target) {
-				MainAppTopBar(showDialog = showDialog)
-			} else {
-				IsSelectingTopBar(selectedItemsList)
-			}
+    private fun TopBar(
+        showDialog: MutableState<Boolean>,
+        selectedItemsList: SnapshotStateList<MediaStoreData>,
+        groupedMedia: List<MediaStoreData>
+    ) {
+        AnimatedContent(
+           targetState = selectedItemsList.size > 0,
+            transitionSpec = {
+                getAppBarContentTransition(selectedItemsList.size > 0)
+            },
+            label = "MainTopBarAnimatedContentView"
+        ) { target ->
+            if (!target) {
+                MainAppTopBar(showDialog = showDialog)
+            } else {
+                IsSelectingTopBar(selectedItemsList = selectedItemsList, groupedMedia = groupedMedia)
+            }
         }
     }
 
     @Composable
-    private fun BottomBar(currentView: MutableState<MainScreenViewType>) {
-        MainAppBottomBar(currentView)
+    private fun BottomBar(
+        currentView: MutableState<MainScreenViewType>,
+        selectedItemsList: SnapshotStateList<MediaStoreData>,
+        groupedMedia: MutableState<List<MediaStoreData>>
+    ) {
+        AnimatedContent(
+            targetState = selectedItemsList.size == 0,
+            transitionSpec = {
+                getAppBarContentTransition(selectedItemsList.size > 0)
+            },
+            label = "MainBottomBarAnimatedContentView",
+            modifier = Modifier
+                .fillMaxWidth(1f)
+                .wrapContentHeight()
+        ) { state ->
+            if (state) {
+                MainAppBottomBar(currentView)
+            } else {
+                IsSelectingBottomAppBar(selectedItemsList = selectedItemsList, groupedMedia = groupedMedia)
+            }
+        }
+
     }
 }
 
 private fun setupNextScreen(
 	context: Context,
 	windowInsetsController: WindowInsetsController?,
-	selectedItemsList: SnapshotStateList<String>
+	selectedItemsList: SnapshotStateList<MediaStoreData>
 ) {
 	selectedItemsList.clear()
 	

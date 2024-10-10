@@ -56,7 +56,7 @@ import com.bumptech.glide.integration.compose.rememberGlidePreloadingData
 import com.kaii.photos.MainActivity
 import com.kaii.photos.compose.CustomMaterialTheme
 import com.kaii.photos.helpers.MediaItemSortMode
-import com.kaii.photos.helpers.single_image_functions.ImageFunctions
+import com.kaii.photos.helpers.ImageFunctions
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.signature
@@ -74,7 +74,7 @@ fun SearchPage(navController: NavHostController, searchViewModel: SearchViewMode
         var searchedForText by remember { mutableStateOf("") }
         var searchNow by remember { mutableStateOf(false) }
         var showLoadingSpinner by remember { mutableStateOf(true) }
-        val selectedItemsList = remember { SnapshotStateList<String>() } // has the absolute paths of all the selected items
+        val selectedItemsList = remember { SnapshotStateList<MediaStoreData>() } // has all of the selected items
         
         Column (
         	modifier = Modifier
@@ -220,8 +220,7 @@ fun SearchPage(navController: NavHostController, searchViewModel: SearchViewMode
                         MainActivity.mainViewModel,
                         groupedMedia,
                         "",
-                        selectedItemsList,
-						gridState
+                        selectedItemsList
                     )
 
 	                if (i >= 0) {

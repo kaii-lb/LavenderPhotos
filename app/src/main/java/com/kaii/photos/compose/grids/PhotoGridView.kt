@@ -17,7 +17,6 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -31,7 +30,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.CircleShape
@@ -40,6 +38,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -51,11 +50,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -64,8 +61,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.round
-import androidx.compose.ui.unit.toIntRect
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.bumptech.glide.RequestBuilder
@@ -79,10 +74,11 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.CustomMaterialTheme
 import com.kaii.photos.compose.FolderDoesntExist
 import com.kaii.photos.compose.FolderIsEmpty
+import com.kaii.photos.compose.IsSelectingBottomAppBar
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.checkHasFiles
-import com.kaii.photos.helpers.single_image_functions.ImageFunctions
+import com.kaii.photos.helpers.ImageFunctions
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.signature
@@ -99,12 +95,13 @@ private val THUMBNAIL_SIZE = Size(THUMBNAIL_DIMENSION.toFloat(), THUMBNAIL_DIMEN
 
 @Composable
 fun PhotoGrid(
-	navController: NavHostController, 
-	operation: ImageFunctions, 
-	path: String, 
-	sortBy: MediaItemSortMode, 
-	selectedItemsList: SnapshotStateList<String>,
-	emptyText: String = "Empty Folder", 
+	navController: NavHostController,
+	operation: ImageFunctions,
+	path: String,
+	sortBy: MediaItemSortMode,
+	selectedItemsList: SnapshotStateList<MediaStoreData>,
+	groupedMedia: MutableState<List<MediaStoreData>>,
+	emptyText: String = "Empty Folder",
 	prefix: String = ""
 ) {
 	val galleryViewModel: GalleryViewModel = viewModel(
@@ -123,7 +120,16 @@ fun PhotoGrid(
 	}
 	 
 	if (hasFiles) {
-		DeviceMedia(navController, mediaStoreData.value, operation, mainViewModel, selectedItemsList, sortBy, prefix)
+		DeviceMedia(
+			navController,
+			mediaStoreData.value,
+			operation,
+			mainViewModel,
+			selectedItemsList,
+			groupedMedia,
+			sortBy,
+			prefix
+		)
 	} else {
 		FolderIsEmpty(emptyText)
 	}
@@ -135,11 +141,13 @@ fun DeviceMedia(
 	mediaStoreData: List<MediaStoreData>,
 	operation: ImageFunctions,
 	mainViewModel: MainDataSharingModel,
-	selectedItemsList: SnapshotStateList<String>,
+	selectedItemsList: SnapshotStateList<MediaStoreData>,
+	media: MutableState<List<MediaStoreData>>,
 	sortBy: MediaItemSortMode,
 	prefix: String
 ) {
-    val groupedMedia = groupPhotosBy(mediaStoreData, sortBy)
+	media.value = groupPhotosBy(mediaStoreData, sortBy)
+    val groupedMedia = media.value
 
     val requestBuilderTransform =
         { item: MediaStoreData, requestBuilder: RequestBuilder<Drawable> ->
@@ -157,16 +165,12 @@ fun DeviceMedia(
 
 	var showLoadingSpinner by remember { mutableStateOf(true) }
 
+	println("SELECTED ITEMS LIST ${selectedItemsList.size}")
+	
 	Box (
 		modifier = Modifier
 			.fillMaxSize(1f)
 			.background(CustomMaterialTheme.colorScheme.background)
-			.clickable(
-				interactionSource = remember { MutableInteractionSource() },
-				indication = null
-			) {
-				selectedItemsList.clear()
-			}
 	) {	
 	    LazyVerticalGrid(
 	        columns = GridCells.Fixed(
@@ -206,8 +210,7 @@ fun DeviceMedia(
 	                mainViewModel,
 	                groupedMedia,
 	                prefix,
-					selectedItemsList,
-					gridState
+					selectedItemsList
 	            )
 
 	            if (i >= 0) {
@@ -263,14 +266,13 @@ fun MediaStoreItem(
 	mainViewModel: MainDataSharingModel,
 	groupedMedia: List<MediaStoreData>,
 	prefix: String,
-	selectedItemsList: SnapshotStateList<String>,
-	state: LazyGridState
+	selectedItemsList: SnapshotStateList<MediaStoreData>,
 ) {
-	val isSelected by remember { derivedStateOf { selectedItemsList.contains(item.absolutePath) } }
+	val isSelected by remember { derivedStateOf { selectedItemsList.contains(item) } }
 	val animatedItemCornerRadius by animateDpAsState(
 		targetValue = if (isSelected) 16.dp else 0.dp,
         animationSpec = tween(
-        	durationMillis = 150
+        	durationMillis = 150,
         ),
 		label = "animate corner radius of selected item"
 	)
@@ -282,28 +284,46 @@ fun MediaStoreItem(
 		label = "animate scale of selected item"
 	)
 
-    if (item.mimeType == null && item.type == MediaType.Section) {
-        Row(
+	if (item.mimeType == null && item.type == MediaType.Section) {
+		val datedMedia = groupedMedia.filter {
+			it.getDateTakenDay() == item.getDateTakenDay() && it.type != MediaType.Section
+		}
+		val sectionSelected by remember { derivedStateOf {
+			selectedItemsList.containsAll(datedMedia)
+		}}
+
+        Box (
             modifier = Modifier
 				.fillMaxWidth(1f)
-				.aspectRatio(5.5f)
-				.padding(16.dp, 8.dp)
+				.height(56.dp)
 				.background(Color.Transparent)
 				.clickable(
 					interactionSource = remember { MutableInteractionSource() },
 					indication = null,
-				) {
-
-				},
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Start
+				) {	
+					if (selectedItemsList.containsAll(datedMedia)) {
+						selectedItemsList.removeAll(datedMedia)
+					} else {
+						selectedItemsList.addAll(datedMedia)
+					}
+				}
+				.padding(16.dp, 8.dp),
         ) {
             Text (
                 text = prefix + item.displayName,
                 fontSize = TextUnit(16f, TextUnitType.Sp),
                 fontWeight = FontWeight.Bold,
                 color = CustomMaterialTheme.colorScheme.onBackground,
+				modifier = Modifier
+					.align(Alignment.CenterStart)
             )
+
+			ShowSelectedState(
+				isSelected = sectionSelected,
+				selectedItemsList = selectedItemsList,
+				modifier = Modifier
+					.align(Alignment.CenterEnd)
+			)
         }
     } else {
         Box (
@@ -314,11 +334,11 @@ fun MediaStoreItem(
 				.background(CustomMaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
 				.combinedClickable(
 					onClick = {
-						if (selectedItemsList.size > 0) {
+						if (selectedItemsList.size > 0 ) {
 							if (isSelected) {
-								selectedItemsList.remove(item.absolutePath)
+								selectedItemsList.remove(item)
 							} else {
-								selectedItemsList.add(item.absolutePath)
+								selectedItemsList.add(item)
 							}
 							return@combinedClickable
 						}
@@ -347,11 +367,11 @@ fun MediaStoreItem(
 
 					onDoubleClick = { /*ignore double clicks*/ },
 
-					onLongClick = {						
+					onLongClick = {
 						if (isSelected) {
-							selectedItemsList.remove(item.absolutePath)
+							selectedItemsList.remove(item)
 						} else {
-							selectedItemsList.add(item.absolutePath)
+							selectedItemsList.add(item)
 						}
 					}
 				)
@@ -371,14 +391,20 @@ fun MediaStoreItem(
             }
 
 			if (item.type == MediaType.Video) {
-        		Icon (
-        			painter = painterResource(id = R.drawable.movie_filled),
-					contentDescription = "file is video indicator",
-                    tint = Color.White,
-                    modifier = Modifier
-						.size(24.dp)
+				Box (
+					modifier = Modifier
 						.align(Alignment.BottomStart)
-        		)
+						.padding(2.dp)
+				) {			
+	        		Icon (
+	        			painter = painterResource(id = R.drawable.movie_filled),
+						contentDescription = "file is video indicator",
+	                    tint = Color.White,
+	                    modifier = Modifier
+							.size(20.dp)
+							.align(Alignment.Center)
+	        		)
+				}
         	}
 
 			ShowSelectedState(
@@ -394,7 +420,7 @@ fun MediaStoreItem(
 @Composable
 fun ShowSelectedState(
 	isSelected: Boolean,
-	selectedItemsList: SnapshotStateList<String>,
+	selectedItemsList: SnapshotStateList<MediaStoreData>,
 	modifier: Modifier
 ) {
 	AnimatedVisibility(
@@ -419,6 +445,8 @@ fun ShowSelectedState(
 				durationMillis = 150
 			)
 		),
+		modifier = Modifier
+			.then(modifier)
 	) {
 		Box (
 			modifier = Modifier
@@ -430,11 +458,11 @@ fun ShowSelectedState(
 				painter = painterResource(id = if (isSelected) R.drawable.file_is_selected_background else R.drawable.file_not_selected_background),
 				contentDescription = "file is selected indicator",
 				tint =
-				if (isSelected)
-					CustomMaterialTheme.colorScheme.primary
-				else {
-					if (isSystemInDarkTheme()) CustomMaterialTheme.colorScheme.onBackground else CustomMaterialTheme.colorScheme.background
-				},
+					if (isSelected)
+						CustomMaterialTheme.colorScheme.primary
+					else {
+						if (isSystemInDarkTheme()) CustomMaterialTheme.colorScheme.onBackground else CustomMaterialTheme.colorScheme.background
+					},
 				modifier = Modifier
 					.size(24.dp)
 					.clip(CircleShape)

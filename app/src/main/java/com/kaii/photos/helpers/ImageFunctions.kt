@@ -1,4 +1,4 @@
-package com.kaii.photos.helpers.single_image_functions
+package com.kaii.photos.helpers
 
 import android.content.Context
 import android.content.Intent
@@ -8,9 +8,6 @@ import androidx.core.net.toUri
 import com.kaii.photos.MainActivity
 import com.kaii.photos.database.entities.MediaEntity
 import com.kaii.photos.database.entities.TrashedItemEntity
-import com.kaii.photos.helpers.getAppLockedFolderDirectory
-import com.kaii.photos.helpers.getAppTrashBinDirectory
-import com.kaii.photos.helpers.getAppRestoredFromLockedFolderDirectory
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -25,7 +22,7 @@ import kotlin.io.path.exists
 import kotlin.io.path.moveTo
 import kotlin.io.path.setAttribute
 
-const val TAG = "IMAGE_FUNCTIONS"
+private const val TAG = "IMAGE_FUNCTIONS"
 
 /** Order is very important here */
 enum class ImageFunctions {
@@ -51,7 +48,7 @@ fun operateOnImage(
 ) {
     when (operation) {
         ImageFunctions.TrashImage -> {
-            trashPhoto(absolutePath, id, context)
+            trashPhoto(absolutePath, id)
         }
         ImageFunctions.UnTrashImage -> {
             untrashPhoto(absolutePath, id, context)
@@ -66,7 +63,7 @@ fun operateOnImage(
 			moveImageToLockedFolder(absolutePath, id, context)
 		}
 		ImageFunctions.MoveOutOfLockedFolder -> {
-			moveOutOfLockedFolder(absolutePath, context)
+			moveOutOfLockedFolder(absolutePath)
 		}
 		ImageFunctions.RenameImage -> {
 			if (extraData == null) throw Exception("extra data should not be null on renaming an image.")
@@ -85,7 +82,7 @@ fun operateOnImage(
     }
 }
 
-fun trashPhoto(path: String, id: Long, context: Context) {
+fun trashPhoto(path: String, id: Long) {
     val fileToBeTrashed = File(path)
     val absolutePath = fileToBeTrashed.absolutePath
     val trashDir = getAppTrashBinDirectory()
@@ -218,7 +215,7 @@ private fun moveImageToLockedFolder(absolutePath: String, id: Long, context: Con
 	//fileToBeHidden.delete()
 }
 
-private fun moveOutOfLockedFolder(path: String, context: Context) {
+private fun moveOutOfLockedFolder(path: String) {
     val fileToBeRevived = File(path)
 	val absolutePath = fileToBeRevived.absolutePath
 

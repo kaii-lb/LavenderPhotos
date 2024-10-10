@@ -15,6 +15,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -25,14 +26,28 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.kaii.photos.compose.CustomMaterialTheme
+import com.kaii.photos.compose.TrashedPhotoGridViewTopBar
+import com.kaii.photos.compose.TrashedPhotoViewBottomBar
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.getAppTrashBinDirectory
-import com.kaii.photos.helpers.single_image_functions.ImageFunctions
+import com.kaii.photos.helpers.ImageFunctions
+import com.kaii.photos.mediastore.MediaStoreData
 
 @Composable
-fun TrashedPhotoGridView(navController: NavHostController, selectedItemsList: SnapshotStateList<String>) {
+fun TrashedPhotoGridView(
+	navController: NavHostController,
+	selectedItemsList: SnapshotStateList<MediaStoreData>,
+	groupedMedia: MutableState<List<MediaStoreData>>
+) {
     Scaffold (
-        topBar =  { TopBar(navController) },
+        topBar =  { TrashedPhotoGridViewTopBar(
+            navController = navController,
+            selectedItemsList = selectedItemsList,
+            groupedMedia = groupedMedia.value
+        ) },
+        bottomBar = {
+            TrashedPhotoViewBottomBar(selectedItemsList = selectedItemsList, groupedMedia = groupedMedia)
+        },
         containerColor = CustomMaterialTheme.colorScheme.background,
         contentColor = CustomMaterialTheme.colorScheme.onBackground
     ) { padding ->
@@ -51,69 +66,10 @@ fun TrashedPhotoGridView(navController: NavHostController, selectedItemsList: Sn
                 path = getAppTrashBinDirectory().replace("/storage/emulated/0/", ""),
                 sortBy = MediaItemSortMode.LastModified,
                 selectedItemsList = selectedItemsList,
+                groupedMedia = groupedMedia,
                 emptyText = "Deleted items show up here",
                 prefix = "Deleted On "
             )
         }
     }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun TopBar(navController: NavHostController) {
-    val title = "Trash Bin"
-    TopAppBar(
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = CustomMaterialTheme.colorScheme.surfaceContainer
-        ),
-        navigationIcon = {
-            IconButton(
-                onClick = { navController.popBackStack() },
-            ) {
-                Icon(
-                    painter = painterResource(id = com.kaii.photos.R.drawable.back_arrow),
-                    contentDescription = "Go back to previous page",
-                    tint = CustomMaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier
-                        .size(24.dp)
-                )
-            }
-        },
-        title = {
-            Text(
-                text = title,
-                fontSize = TextUnit(18f, TextUnitType.Sp),
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier
-                    .width(160.dp)
-            )
-        },
-        actions = {
-            IconButton(
-                onClick = { /* TODO */ },
-            ) {
-                Icon(
-                    painter = painterResource(id = com.kaii.photos.R.drawable.trash),
-                    contentDescription = "empty out the trash bin",
-                    tint = CustomMaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier
-                        .size(24.dp)
-                )
-            }
-
-            IconButton(
-                onClick = { /* TODO */ },
-            ) {
-                Icon(
-                    painter = painterResource(id = com.kaii.photos.R.drawable.settings),
-                    contentDescription = "show more options for the trash bin",
-                    tint = CustomMaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier
-                        .size(24.dp)
-                )
-            }
-        }
-    )
 }
