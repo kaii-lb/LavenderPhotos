@@ -704,7 +704,9 @@ fun SingleAlbumViewTopBar(
                 }
             )
         } else {
-            IsSelectingTopBar(selectedItemsList = selectedItemsList)
+            IsSelectingTopBar(
+            	selectedItemsList = selectedItemsList
+           	)
         }
     }
 }
@@ -713,28 +715,28 @@ fun SingleAlbumViewTopBar(
 fun SingleAlbumViewBottomBar(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
 ) {
-	val show by remember { derivedStateOf {
-		selectedItemsList.size > 0
-	}}
-
-    AnimatedContent(
-        targetState = show,
-        transitionSpec = {
-		    getAppBarContentTransitionBottomToTop(show)           
-        },
-        label = "SingleAlbumViewBottomBarAnimatedContent",
-        modifier = Modifier
-            .fillMaxWidth(1f)
-    ) { target ->
-        if (target) {
-            IsSelectingBottomAppBar(selectedItemsList = selectedItemsList)            
-        } else {
-        	Row	(
-        		modifier = Modifier
-        			.fillMaxWidth(1f)
-        	) {}
-        }
-    }
+//  	val show by remember { derivedStateOf {
+//  		selectedItemsList.size > 0
+//  	}}
+// 
+//     AnimatedContent(
+//         targetState = show,
+//         transitionSpec = {
+//             getAppBarContentTransitionBottomToTop(show)
+//         },
+//         label = "SingleAlbumViewBottomBarAnimatedContent",
+//         modifier = Modifier
+//             .fillMaxWidth(1f)
+//         ) { target ->
+//             if (target) {
+                IsSelectingBottomAppBar(selectedItemsList = selectedItemsList)
+    //         } else {
+    //         Row	(
+    //             modifier = Modifier
+    //                 .fillMaxWidth(1f)
+    //         ) {}
+    //     }
+    // }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

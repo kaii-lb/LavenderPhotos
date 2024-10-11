@@ -17,47 +17,70 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.animateScrollBy
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
@@ -86,7 +109,12 @@ import com.kaii.photos.models.gallery_model.GalleryViewModel
 import com.kaii.photos.models.gallery_model.GalleryViewModelFactory
 import com.kaii.photos.models.gallery_model.groupPhotosBy
 import com.kaii.photos.models.main_activity.MainDataSharingModel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.io.path.Path
+import kotlin.math.ceil
+import kotlin.math.roundToInt
 
 private const val THUMBNAIL_DIMENSION = 50
 private const val TAG = "PHOTO_GRID_VIEW"
@@ -101,7 +129,8 @@ fun PhotoGrid(
 	sortBy: MediaItemSortMode,
 	selectedItemsList: SnapshotStateList<MediaStoreData>,
 	emptyText: String = "Empty Folder",
-	prefix: String = ""
+	prefix: String = "",
+	shouldPadUp: Boolean = false
 ) {
 	val galleryViewModel: GalleryViewModel = viewModel(
 		factory = GalleryViewModelFactory(LocalContext.current, path)
@@ -121,12 +150,13 @@ fun PhotoGrid(
 	if (hasFiles) {
 		DeviceMedia(
 			navController,
-			mediaStoreData.value,
+			mediaStoreData,
 			operation,
 			mainViewModel,
 			selectedItemsList,
 			sortBy,
-			prefix
+			prefix,
+			shouldPadUp
 		)
 	} else {
 		FolderIsEmpty(emptyText)
@@ -136,14 +166,17 @@ fun PhotoGrid(
 @Composable
 fun DeviceMedia(
 	navController: NavHostController,
-	mediaStoreData: List<MediaStoreData>,
+	mediaStoreData: State<List<MediaStoreData>>,
 	operation: ImageFunctions,
 	mainViewModel: MainDataSharingModel,
 	selectedItemsList: SnapshotStateList<MediaStoreData>,
 	sortBy: MediaItemSortMode,
-	prefix: String
+	prefix: String,
+	shouldPadUp: Boolean
 ) {
-	val groupedMedia = groupPhotosBy(mediaStoreData, sortBy)
+	val groupedMedia by remember { derivedStateOf {
+		groupPhotosBy(mediaStoreData.value, sortBy) 	
+	}}
 	mainViewModel.setGroupedMedia(groupedMedia)
 	
     val requestBuilderTransform =
@@ -151,7 +184,7 @@ fun DeviceMedia(
             requestBuilder.load(item.uri).signature(item.signature()).centerCrop()
         }
 
-    val preloadingData =
+	val preloadingData =
         rememberGlidePreloadingData(
             groupedMedia,
             THUMBNAIL_SIZE,
@@ -159,16 +192,19 @@ fun DeviceMedia(
         )
 
 	val gridState = rememberLazyGridState()
-
 	var showLoadingSpinner by remember { mutableStateOf(true) }
-
-	println("SELECTED ITEMS LIST ${selectedItemsList.size}")
 	
 	Box (
 		modifier = Modifier
 			.fillMaxSize(1f)
 			.background(CustomMaterialTheme.colorScheme.background)
-	) {	
+			.padding(
+				0.dp,
+				0.dp,
+				0.dp,
+				if (selectedItemsList.size > 0 && shouldPadUp) 80.dp else 0.dp
+			)
+	) {
 	    LazyVerticalGrid(
 	        columns = GridCells.Fixed(
 				if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT) {
@@ -249,7 +285,76 @@ fun DeviceMedia(
 					)
 				}
 			}
-		}	    
+		}
+		
+		Box (
+			modifier = Modifier
+				.align(Alignment.TopEnd)
+				.fillMaxHeight(1f)
+				.width(48.dp)
+				.padding(0.dp, 16.dp)
+		) {
+			val stops by remember { derivedStateOf {
+				groupedMedia.filter {
+					it.type == MediaType.Section
+				}
+			}}
+
+			var currentStop by remember { mutableIntStateOf(0) }
+		
+			// var startFading by remember { mutableStateOf(true) }
+			// val alpha by animateFloatAsState(
+			// 	targetValue = if (!startFading) 1f else 0f,
+			// 	label = "animate alpha of scrollbar"
+			// )
+
+			LaunchedEffect(key1 = currentStop) {
+				if (stops.size > 0) {
+					val index = (currentStop - 1).coerceIn(0, stops.size)
+					gridState.scrollToItem(
+						groupedMedia.indexOf(stops[index])
+					)
+				}
+
+				// if (!gridState.isScrollInProgress) {
+				// 	delay(3000)
+				// 	startFading = true
+				// } else {
+				// 	startFading = false
+				// }
+			}
+
+			Slider (
+				value = currentStop.toFloat(),
+				onValueChange = {
+					currentStop = it.roundToInt()
+				},
+				steps = stops.size,
+				valueRange = 0f..stops.size.toFloat(),
+				modifier = Modifier
+					.width(48.dp)
+					.fillMaxHeight(1f)
+					.graphicsLayer {
+						rotationZ = 90f
+						transformOrigin = TransformOrigin(0f, 0f)
+					}
+					.layout { measurable, constraints ->
+						val placeable = measurable.measure(
+							Constraints(
+								minWidth = constraints.minHeight,
+								minHeight = constraints.minWidth,
+								maxWidth = constraints.maxHeight,
+								maxHeight = constraints.maxWidth
+							)
+						)
+
+						layout(placeable.height, placeable.width) {
+							placeable.place(0, -placeable.height)
+						}
+					}
+					// .alpha(alpha)
+			)
+		}			    
 	}
 }
 
@@ -301,7 +406,7 @@ fun MediaStoreItem(
 				.clickable(
 					interactionSource = remember { MutableInteractionSource() },
 					indication = null,
-				) {	
+				) {
 					if (selectedItemsList.containsAll(datedMedia)) {
 						selectedItemsList.removeAll(datedMedia)
 					} else {
@@ -335,7 +440,7 @@ fun MediaStoreItem(
 				.background(CustomMaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
 				.combinedClickable(
 					onClick = {
-						if (selectedItemsList.size > 0 ) {
+						if (selectedItemsList.size > 0) {
 							if (isSelected) {
 								selectedItemsList.remove(item)
 							} else {
