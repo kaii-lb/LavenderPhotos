@@ -16,6 +16,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -25,6 +26,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.kaii.photos.MainActivity
 import com.kaii.photos.compose.CustomMaterialTheme
 import com.kaii.photos.compose.TrashedPhotoGridViewTopBar
 import com.kaii.photos.compose.TrashedPhotoViewBottomBar
@@ -37,16 +39,11 @@ import com.kaii.photos.mediastore.MediaStoreData
 fun TrashedPhotoGridView(
 	navController: NavHostController,
 	selectedItemsList: SnapshotStateList<MediaStoreData>,
-	groupedMedia: MutableState<List<MediaStoreData>>
 ) {
     Scaffold (
-        topBar =  { TrashedPhotoGridViewTopBar(
-            navController = navController,
-            selectedItemsList = selectedItemsList,
-            groupedMedia = groupedMedia.value
-        ) },
+        topBar =  { TrashedPhotoGridViewTopBar(navController = navController, selectedItemsList = selectedItemsList) },
         bottomBar = {
-            TrashedPhotoViewBottomBar(selectedItemsList = selectedItemsList, groupedMedia = groupedMedia)
+            TrashedPhotoViewBottomBar(selectedItemsList = selectedItemsList)
         },
         containerColor = CustomMaterialTheme.colorScheme.background,
         contentColor = CustomMaterialTheme.colorScheme.onBackground
@@ -58,15 +55,13 @@ fun TrashedPhotoGridView(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-        	// TODO: check for items older than 30 days and delete them 
-        	
+        	// TODO: check for items older than 30 days and delete them
             PhotoGrid(
                 navController = navController,
                 operation = ImageFunctions.LoadTrashedImage,
                 path = getAppTrashBinDirectory().replace("/storage/emulated/0/", ""),
                 sortBy = MediaItemSortMode.LastModified,
                 selectedItemsList = selectedItemsList,
-                groupedMedia = groupedMedia,
                 emptyText = "Deleted items show up here",
                 prefix = "Deleted On "
             )

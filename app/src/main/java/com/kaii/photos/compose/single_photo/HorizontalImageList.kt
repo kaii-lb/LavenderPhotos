@@ -263,7 +263,7 @@ fun sortOutMediaMods(
         if (size == 0) {
             navController.popBackStack()
         } else {
-            state.animateScrollToPage((scrollIndex).coerceIn(0, size))
+            state.scrollToPage((scrollIndex).coerceIn(0, size))
         }
 
         groupedMedia.value = newMedia

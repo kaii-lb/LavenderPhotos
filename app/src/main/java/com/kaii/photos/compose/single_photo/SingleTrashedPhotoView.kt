@@ -199,7 +199,7 @@ fun SingleTrashedPhotoView(
     val coroutineScope = rememberCoroutineScope()
     LaunchedEffect(key1 = mediaItem) {
         coroutineScope.launch {
-            state.animateScrollToPage(
+            state.scrollToPage(
                 if (groupedMedia.value.indexOf(mediaItem) >= 0) groupedMedia.value.indexOf(mediaItem) else 0
             )
         }

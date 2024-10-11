@@ -100,7 +100,6 @@ fun PhotoGrid(
 	path: String,
 	sortBy: MediaItemSortMode,
 	selectedItemsList: SnapshotStateList<MediaStoreData>,
-	groupedMedia: MutableState<List<MediaStoreData>>,
 	emptyText: String = "Empty Folder",
 	prefix: String = ""
 ) {
@@ -126,7 +125,6 @@ fun PhotoGrid(
 			operation,
 			mainViewModel,
 			selectedItemsList,
-			groupedMedia,
 			sortBy,
 			prefix
 		)
@@ -142,13 +140,12 @@ fun DeviceMedia(
 	operation: ImageFunctions,
 	mainViewModel: MainDataSharingModel,
 	selectedItemsList: SnapshotStateList<MediaStoreData>,
-	media: MutableState<List<MediaStoreData>>,
 	sortBy: MediaItemSortMode,
 	prefix: String
 ) {
-	media.value = groupPhotosBy(mediaStoreData, sortBy)
-    val groupedMedia = media.value
-
+	val groupedMedia = groupPhotosBy(mediaStoreData, sortBy)
+	mainViewModel.setGroupedMedia(groupedMedia)
+	
     val requestBuilderTransform =
         { item: MediaStoreData, requestBuilder: RequestBuilder<Drawable> ->
             requestBuilder.load(item.uri).signature(item.signature()).centerCrop()

@@ -3,11 +3,14 @@ package com.kaii.photos.compose
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
@@ -43,8 +46,10 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -62,6 +67,8 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.kaii.photos.R
+import com.kaii.photos.MainActivity
+import com.kaii.photos.compose.grids.SingleAlbumDialog
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.ImageFunctions
 import com.kaii.photos.helpers.operateOnImage
@@ -173,6 +180,50 @@ fun getAppBarContentTransition(slideLeft: Boolean) = run {
             )
         )
     }
+}
+
+fun getAppBarContentTransitionBottomToTop(slideUp: Boolean) = run {
+	if (slideUp) {
+        (slideInVertically(
+            animationSpec = tween(
+                durationMillis = 350
+            )
+        ) { width -> width } + fadeIn(
+            animationSpec = tween(
+                durationMillis = 350
+            )
+        )).togetherWith(
+            slideOutVertically(
+                animationSpec = tween(
+                    durationMillis = 350
+                )
+            ) { width -> -width } + fadeOut(
+                animationSpec = tween(
+                    durationMillis = 350
+                )
+            )
+        )
+    } else {
+        (slideInVertically(
+            animationSpec = tween(
+                durationMillis = 350
+            )
+        ) { width -> -width } + fadeIn(
+            animationSpec = tween(
+                durationMillis = 350
+            )
+        )).togetherWith(
+            slideOutVertically(
+                animationSpec = tween(
+                    durationMillis = 350
+                )
+            ) { width -> width } + fadeOut(
+                animationSpec = tween(
+                    durationMillis = 350
+                )
+            )
+        )
+    } 	
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -339,9 +390,11 @@ fun MainAppBottomBar(currentView: MutableState<MainScreenViewType>) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun IsSelectingTopBar(selectedItemsList: SnapshotStateList<MediaStoreData>, groupedMedia: List<MediaStoreData>) {
+fun IsSelectingTopBar(selectedItemsList: SnapshotStateList<MediaStoreData>) {
 	var first by remember { mutableStateOf(selectedItemsList.first()) }
 	if (selectedItemsList.size == 1) first = selectedItemsList.first()
+
+	val groupedMedia = MainActivity.mainViewModel.groupedMedia.collectAsState(initial = emptyList<MediaStoreData>()).value
 	
 	TopAppBar(
         title = {
@@ -378,7 +431,7 @@ fun IsSelectingTopBar(selectedItemsList: SnapshotStateList<MediaStoreData>, grou
                         .height(42.dp)
                         .wrapContentWidth()
                         .clip(RoundedCornerShape(6.dp, 100.dp, 100.dp, 6.dp))
-                        .background(CustomMaterialTheme.colorScheme.secondaryContainer)
+                        .background(CustomMaterialTheme.colorScheme.surfaceContainer)
                         .padding(12.dp, 0.dp, 16.dp, 0.dp)
                         .clickable {
                             selectedItemsList.clear()
@@ -388,7 +441,7 @@ fun IsSelectingTopBar(selectedItemsList: SnapshotStateList<MediaStoreData>, grou
 	           	) {
 					Text(
 						text = selectedItemsList.size.toString(),
-						color = CustomMaterialTheme.colorScheme.onSecondaryContainer,
+						color = CustomMaterialTheme.colorScheme.onSurface,
 						fontSize = TextUnit(18f, TextUnitType.Sp),
 						modifier = Modifier
 							.wrapContentSize()
@@ -399,19 +452,21 @@ fun IsSelectingTopBar(selectedItemsList: SnapshotStateList<MediaStoreData>, grou
         actions = {
             IconButton(
                 onClick = {
-					val filteredMedia = groupedMedia.filter {
-						it.type == MediaType.Image || it.type == MediaType.Video
-					}
-               		
-                	if (selectedItemsList.size == filteredMedia.size) {
-                    	selectedItemsList.clear()
-                    	selectedItemsList.add(first)
-                	} else {
-                		selectedItemsList.clear()
-                		
-	                    for (item in filteredMedia) {
-                   			selectedItemsList.add(item)
-	                    }
+                	if (groupedMedia != null) {
+						val filteredMedia = groupedMedia.filter {
+							it.type == MediaType.Image || it.type == MediaType.Video
+						}
+	               		
+	                	if (selectedItemsList.size == filteredMedia.size) {
+	                    	selectedItemsList.clear()
+	                    	selectedItemsList.add(first)
+	                	} else {
+	                		selectedItemsList.clear()
+	                		
+		                    for (item in filteredMedia) {
+	                   			selectedItemsList.add(item)
+		                    }
+	                	}
                 	}
                 },
             ) {
@@ -448,10 +503,10 @@ fun IsSelectingTopBar(selectedItemsList: SnapshotStateList<MediaStoreData>, grou
 @Composable
 fun IsSelectingBottomAppBar(
 	selectedItemsList: SnapshotStateList<MediaStoreData>,
-	groupedMedia: MutableState<List<MediaStoreData>>,
 	isTrashBin: Boolean = false
 ) {
     val context = LocalContext.current
+	val groupedMedia = MainActivity.mainViewModel.groupedMedia.collectAsState(initial = emptyList<MediaStoreData>()).value
 	
     BottomAppBar(
         containerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
@@ -496,18 +551,20 @@ fun IsSelectingBottomAppBar(
 					cornerRadius = 16.dp,
 					dialogComposable = {
 					    ConfirmationDialog(showDialog = showRestoreDialog, dialogTitle = "Restore these items?", confirmButtonLabel = "Restore") {
-					        val newList = groupedMedia.value.toMutableList()
-					        selectedItemsList.forEach { item ->
-					            operateOnImage(
-					                item.absolutePath,
-					                item.id,
-					                ImageFunctions.UnTrashImage,
-					                context
-					            )
-					            newList.remove(item)
-					        }
-					        selectedItemsList.clear()
-					        groupedMedia.value = newList
+					    	if (groupedMedia != null) {
+						        val newList = groupedMedia.toMutableList()
+						        selectedItemsList.forEach { item ->
+						            operateOnImage(
+						                item.absolutePath,
+						                item.id,
+						                ImageFunctions.UnTrashImage,
+						                context
+						            )
+						            newList.remove(item)
+						        }
+						        selectedItemsList.clear()
+						        // groupedMedia = newList
+					    	}
 					    }
 					},
 					action = {
@@ -522,18 +579,20 @@ fun IsSelectingBottomAppBar(
 		        	cornerRadius = 16.dp,
 		        	dialogComposable = {
 					    ConfirmationDialog(showDialog = showPermaDeleteDialog, dialogTitle = "Permanently delete these items?", confirmButtonLabel = "Delete") {
-					        val newList = groupedMedia.value.toMutableList()
-					        selectedItemsList.forEach { item ->
-					            operateOnImage(
-					                item.absolutePath,
-					                item.id,
-					                ImageFunctions.PermaDeleteImage,
-					                context
-					            )
-					            newList.remove(item)
-					        }
-					        selectedItemsList.clear()
-					        groupedMedia.value = newList
+					    	if (groupedMedia != null) {
+						        val newList = groupedMedia.toMutableList()
+						        selectedItemsList.forEach { item ->
+						            operateOnImage(
+						                item.absolutePath,
+						                item.id,
+						                ImageFunctions.PermaDeleteImage,
+						                context
+						            )
+						            newList.remove(item)
+						        }
+						        selectedItemsList.clear()
+						        // groupedMedia.value = newList
+					    	}
 					    }
 		        	},
 		        	action = {
@@ -552,18 +611,20 @@ fun IsSelectingBottomAppBar(
 		        	cornerRadius = 16.dp,
 		        	dialogComposable = {
 					    ConfirmationDialog(showDialog = showDeleteDialog, dialogTitle = "Move selected items to Trash Bin?", confirmButtonLabel = "Delete") {
-					        val newList = groupedMedia.value.toMutableList()
-					        selectedItemsList.forEach { item ->
-					            operateOnImage(
-					                item.absolutePath,
-					                item.id,
-					                ImageFunctions.TrashImage,
-					                context
-					            )
-					            newList.remove(item)
-					        }
-					        selectedItemsList.clear()
-					        groupedMedia.value = newList
+					    	if (groupedMedia != null) {
+						        val newList = groupedMedia.toMutableList()
+						        selectedItemsList.forEach { item ->
+						            operateOnImage(
+						                item.absolutePath,
+						                item.id,
+						                ImageFunctions.TrashImage,
+						                context
+						            )
+						            newList.remove(item)
+						        }
+						        selectedItemsList.clear()
+						        // groupedMedia.value = newList
+					    	}
 					    }
 		        	},
 		        	action = {
@@ -579,15 +640,21 @@ fun IsSelectingBottomAppBar(
 @Composable
 fun SingleAlbumViewTopBar(
     navController: NavHostController,
-    showDialog: MutableState<Boolean>,
-    title: String,
+    dir: String,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
-    groupedMedia: List<MediaStoreData>
 ) {
+	val title = dir.split("/").last()
+	val showDialog = remember { mutableStateOf(false) }
+	val show by remember { derivedStateOf {
+		selectedItemsList.size > 0
+	}}
+		
+	SingleAlbumDialog(showDialog, dir, navController)
+	
     AnimatedContent(
-        targetState = selectedItemsList.size > 0,
+        targetState = show,
         transitionSpec = {
-            getAppBarContentTransition(selectedItemsList.size > 0)
+            getAppBarContentTransition(show)
         },
         label = "SingleAlbumViewTopBarAnimatedContent"
     ) { target ->
@@ -637,7 +704,7 @@ fun SingleAlbumViewTopBar(
                 }
             )
         } else {
-            IsSelectingTopBar(selectedItemsList = selectedItemsList, groupedMedia = groupedMedia)
+            IsSelectingTopBar(selectedItemsList = selectedItemsList)
         }
     }
 }
@@ -645,19 +712,27 @@ fun SingleAlbumViewTopBar(
 @Composable
 fun SingleAlbumViewBottomBar(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
-    groupedMedia: MutableState<List<MediaStoreData>>
 ) {
+	val show by remember { derivedStateOf {
+		selectedItemsList.size > 0
+	}}
+
     AnimatedContent(
-        targetState = selectedItemsList.size > 0,
+        targetState = show,
         transitionSpec = {
-            getAppBarContentTransition(selectedItemsList.size > 0)
+		    getAppBarContentTransitionBottomToTop(show)           
         },
-        label = "SingleAlbumViewTopBarAnimatedContent",
+        label = "SingleAlbumViewBottomBarAnimatedContent",
         modifier = Modifier
             .fillMaxWidth(1f)
     ) { target ->
         if (target) {
-            IsSelectingBottomAppBar(selectedItemsList = selectedItemsList, groupedMedia = groupedMedia)
+            IsSelectingBottomAppBar(selectedItemsList = selectedItemsList)            
+        } else {
+        	Row	(
+        		modifier = Modifier
+        			.fillMaxWidth(1f)
+        	) {}
         }
     }
 }
@@ -667,12 +742,14 @@ fun SingleAlbumViewBottomBar(
 fun TrashedPhotoGridViewTopBar(
     navController: NavHostController,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
-    groupedMedia: List<MediaStoreData>
 ) {
+	val show by remember { derivedStateOf {
+		selectedItemsList.size > 0
+	}}
     AnimatedContent(
-        targetState = selectedItemsList.size > 0,
+        targetState = show,
         transitionSpec = {
-            getAppBarContentTransition(selectedItemsList.size > 0)
+            getAppBarContentTransition(show)
         },
         label = "TrashedPhotoGridViewBottomBarAnimatedContent"
     ) { target ->
@@ -732,7 +809,7 @@ fun TrashedPhotoGridViewTopBar(
                 }
             )
         } else {
-            IsSelectingTopBar(selectedItemsList = selectedItemsList, groupedMedia = groupedMedia)
+            IsSelectingTopBar(selectedItemsList = selectedItemsList)
         }
     }
 }
@@ -740,19 +817,26 @@ fun TrashedPhotoGridViewTopBar(
 @Composable
 fun TrashedPhotoViewBottomBar(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
-    groupedMedia: MutableState<List<MediaStoreData>>
 ) {
+	val show by remember { derivedStateOf {
+		selectedItemsList.size > 0
+	}}
     AnimatedContent(
-        targetState = selectedItemsList.size > 0,
+        targetState = show,
         transitionSpec = {
-            getAppBarContentTransition(selectedItemsList.size > 0)
+		    getAppBarContentTransitionBottomToTop(show)           
         },
-        label = "TrashedPhotoGridViewTopBarAnimatedContent",
+        label = "TrashedPhotoGridViewBottomBarAnimatedContent",
         modifier = Modifier
             .fillMaxWidth(1f)
     ) { target ->
         if (target) {
-            IsSelectingBottomAppBar(selectedItemsList = selectedItemsList, groupedMedia = groupedMedia, isTrashBin = true)
+            IsSelectingBottomAppBar(selectedItemsList = selectedItemsList, isTrashBin = true)
+        } else {
+        	Row	(
+        		modifier = Modifier
+        			.fillMaxWidth(1f)
+        	) {}
         }
     }
 }

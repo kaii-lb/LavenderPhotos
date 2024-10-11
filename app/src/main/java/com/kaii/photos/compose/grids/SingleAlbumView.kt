@@ -26,6 +26,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -40,6 +41,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavHostController
@@ -67,29 +69,29 @@ import kotlinx.coroutines.launch
 fun SingleAlbumView(
 	navController: NavHostController,
 	selectedItemsList: SnapshotStateList<MediaStoreData>,
-	groupedMedia: MutableState<List<MediaStoreData>>,
 ) {
     val mainViewModel = MainActivity.mainViewModel
 
     val albumDir = mainViewModel.selectedAlbumDir.collectAsState(initial = null).value ?: return
     // println("ALBUM DIR IS $albumDir")
 
+	// referencing padding in any way causes EXTREME lag
+	var topPadding: Dp? by remember { mutableStateOf(null) }
     Scaffold (
-        topBar =  { TopBar(
-            navController,
-            albumDir,
-            selectedItemsList,
-            groupedMedia.value
+        topBar =  { SingleAlbumViewTopBar(
+            navController = navController,
+            dir = albumDir,
+            selectedItemsList = selectedItemsList
         ) },
         bottomBar = {
-            SingleAlbumViewBottomBar(selectedItemsList = selectedItemsList, groupedMedia = groupedMedia)
+            SingleAlbumViewBottomBar(selectedItemsList = selectedItemsList)
         },
         containerColor = CustomMaterialTheme.colorScheme.background,
         contentColor = CustomMaterialTheme.colorScheme.onBackground
-    ) { padding ->
+    ) { _ ->
         Column (
             modifier = Modifier
-                .padding(padding)
+                .padding(0.dp, 104.dp, 0.dp, 0.dp)
                 .fillMaxSize(1f),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
@@ -100,34 +102,13 @@ fun SingleAlbumView(
        			path = albumDir, 
        			sortBy = MediaItemSortMode.DateTaken, 
        			selectedItemsList = selectedItemsList,
-       			groupedMedia = groupedMedia
        		)
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TopBar(
-    navController: NavHostController,
-    dir: String,
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
-    groupedMedia: List<MediaStoreData>
-) {
-	val title = dir.split("/").last()
-	val showDialog = remember { mutableStateOf(false) }
-
-    SingleAlbumViewTopBar(
-        navController = navController,
-        showDialog = showDialog,
-        title = title,
-        selectedItemsList = selectedItemsList,
-        groupedMedia = groupedMedia
-    )
-}
-
-@Composable
-private fun SingleAlbumDialog(showDialog: MutableState<Boolean>, dir: String, navController: NavHostController) {
+fun SingleAlbumDialog(showDialog: MutableState<Boolean>, dir: String, navController: NavHostController) {
     if (showDialog.value) {
         val context = LocalContext.current
         val coroutineScope = rememberCoroutineScope()

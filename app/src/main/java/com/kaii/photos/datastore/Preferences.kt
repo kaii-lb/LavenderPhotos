@@ -14,6 +14,8 @@ suspend fun DataStore<Preferences>.addToAlbumsList(path: String) {
     this.edit {
     	val stringList = it[albumsListKey]
 
+    	if (stringList == null) it[albumsListKey] = ""
+		
     	if (stringList?.contains(path) == false) {
 	        it[albumsListKey] += ",$path"
     	}
@@ -52,13 +54,14 @@ suspend fun DataStore<Preferences>.getAlbumsList(): List<String> {
 
     split.remove("")
 
+	println("LIST IS $split")
     return split
 }
 
 
 suspend fun DataStore<Preferences>.setUsername(name: String) {
     this.edit {
-    	it[usernameKey] = name	
+    	it[usernameKey] = name
     }
 }
 

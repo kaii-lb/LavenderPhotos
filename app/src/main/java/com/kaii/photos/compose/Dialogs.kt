@@ -558,9 +558,9 @@ fun MainAppDialog(showDialog: MutableState<Boolean>, currentView: MutableState<M
 					verticalAlignment = Alignment.CenterVertically,
 					horizontalArrangement = Arrangement.Start
 				) {
-					val originalName = runBlocking {
+					var originalName by remember { mutableStateOf(runBlocking {
 						context.datastore.getUsername()
-					}
+					})}
 					var username by remember {
 						mutableStateOf(
 							originalName
@@ -592,7 +592,7 @@ fun MainAppDialog(showDialog: MutableState<Boolean>, currentView: MutableState<M
 					LaunchedEffect(key1 = changeName) {
 						focusManager.clearFocus()
 
-						if (!changeName) {
+						if (!changeName && username != originalName) {
 							username = originalName
 							return@LaunchedEffect
 						}
@@ -600,6 +600,7 @@ fun MainAppDialog(showDialog: MutableState<Boolean>, currentView: MutableState<M
 						lifecycleScope.launch {
 							context.datastore.setUsername(username)
 						}
+						originalName = username
 						changeName = false
 					}
 
