@@ -12,6 +12,7 @@ import android.view.WindowInsetsController
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
@@ -95,8 +96,6 @@ import com.kaii.photos.models.album_grid.AlbumsViewModel
 import com.kaii.photos.models.album_grid.AlbumsViewModelFactory
 import com.kaii.photos.models.main_activity.MainDataSharingModel
 import com.kaii.photos.models.main_activity.MainDataSharingModelFactory
-import com.kaii.photos.models.search_page.SearchViewModel
-import com.kaii.photos.models.search_page.SearchViewModelFactory
 import com.kaii.photos.ui.theme.PhotosTheme
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.launch
@@ -264,6 +263,18 @@ class MainActivity : ComponentActivity() {
 				val selectedItemsList = remember { SnapshotStateList<MediaStoreData>() }
 				
                 val context = LocalContext.current
+
+                // TODO: please make it not hang lol
+				runBlocking {
+					context.datastore.addToAlbumsList("DCIM/Camera")
+					context.datastore.addToAlbumsList("Pictures/Screenshot")
+					context.datastore.addToAlbumsList("Pictures/Whatsapp")
+					context.datastore.addToAlbumsList("Pictures/100PINT/Pins")
+					context.datastore.addToAlbumsList("Movies")
+					context.datastore.addToAlbumsList("LavenderPhotos/Restored Files")
+					context.datastore.addToAlbumsList("Download")
+					context.datastore.addToAlbumsList("Pictures/Instagram")
+				}
                 
                 NavHost (
                     navController = navControllerLocal,
@@ -399,10 +410,6 @@ class MainActivity : ComponentActivity() {
         showDialog: MutableState<Boolean>,
         selectedItemsList: SnapshotStateList<MediaStoreData>,
     ) {	
-    	val searchViewModel: SearchViewModel = viewModel(
-   	        factory = SearchViewModelFactory(LocalContext.current.applicationContext, "")
-   	    )
-
         Scaffold(
             modifier = Modifier
                 .fillMaxSize(1f),
@@ -414,7 +421,13 @@ class MainActivity : ComponentActivity() {
            	}
         ) { padding ->
 			val context = LocalContext.current
-			
+
+            BackHandler (
+                enabled = currentView.value != MainScreenViewType.PhotosGridView && navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name
+            ) {
+                currentView.value = MainScreenViewType.PhotosGridView
+            }
+
             Column(
                 modifier = Modifier
                     .padding(0.dp, padding.calculateTopPadding(), 0.dp, padding.calculateBottomPadding())
@@ -423,7 +436,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier
                         .padding(0.dp)
                 ) {
-                	MainAppDialog(showDialog, currentView, navController)
+                	MainAppDialog(showDialog, currentView, navController, selectedItemsList)
                 	
                 	AnimatedContent(
                 		targetState = currentView.value,
@@ -454,18 +467,6 @@ class MainActivity : ComponentActivity() {
 	                        }
 	                        MainScreenViewType.SecureFolder -> LockedFolderEntryView(navController)
 	                        MainScreenViewType.AlbumsGridView -> {
-                                // TODO: please make it not hang lol
-								runBlocking {
-									context.datastore.addToAlbumsList("DCIM/Camera")
-									context.datastore.addToAlbumsList("Pictures/Screenshot")
-									context.datastore.addToAlbumsList("Pictures/Whatsapp")
-									context.datastore.addToAlbumsList("Pictures/100PINT/Pins")
-									context.datastore.addToAlbumsList("Movies")
-									context.datastore.addToAlbumsList("LavenderPhotos/Restored Files")
-									context.datastore.addToAlbumsList("Download")
-									context.datastore.addToAlbumsList("Pictures/Instagram")
-								}
-
 								val listOfDirs = runBlocking {
 									val list = context.datastore.getAlbumsList()
 									list
@@ -476,7 +477,7 @@ class MainActivity : ComponentActivity() {
                        			)
 	                        	AlbumsGridView(albumsViewModel, navController, listOfDirs)	
 	                        } 
-   	                        MainScreenViewType.SearchPage -> SearchPage(navController, searchViewModel)
+   	                        MainScreenViewType.SearchPage -> SearchPage(navController)
 	                    }
                 	}
                 }

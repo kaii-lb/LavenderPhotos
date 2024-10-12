@@ -38,6 +38,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.FilledTonalIconToggleButton
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -272,117 +275,112 @@ fun MainAppBottomBar(currentView: MutableState<MainScreenViewType>) {
         contentColor = CustomMaterialTheme.colorScheme.onPrimaryContainer,
         contentPadding = PaddingValues(0.dp),
     ) {
-        Row(
+        NavigationBar (
+            containerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
+            contentColor = CustomMaterialTheme.colorScheme.onPrimaryContainer,
+            tonalElevation = 16.dp,
             modifier = Modifier
-                .fillMaxSize(1f),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceEvenly
+                .fillMaxSize(1f)
+                .padding(8.dp, 0.dp),
         ) {
-            // should find a better way
-            val unselectedColor = CustomMaterialTheme.colorScheme.surfaceContainer
-            val selectedColor = CustomMaterialTheme.colorScheme.secondaryContainer
-            var photoGridColor by remember { mutableStateOf(unselectedColor) }
-            var lockedFolderColor by remember { mutableStateOf(unselectedColor) }
-            var albumGridColor by remember { mutableStateOf(unselectedColor) }
-            var searchPageColor by remember { mutableStateOf(unselectedColor) }
-            // for the love of god find a better way
-            var photoGridIcon by remember { mutableIntStateOf(R.drawable.photogrid_filled) }
-            var lockedFolderIcon by remember { mutableIntStateOf(R.drawable.locked_folder) }
-            var albumGridIcon by remember { mutableIntStateOf(R.drawable.albums) }
-
-            when (currentView.value) {
-                MainScreenViewType.PhotosGridView -> {
-                    photoGridColor = selectedColor
-                    lockedFolderColor = unselectedColor
-                    albumGridColor = unselectedColor
-                    searchPageColor = unselectedColor
-
-                    photoGridIcon = R.drawable.photogrid_filled
-                    lockedFolderIcon = R.drawable.locked_folder
-                    albumGridIcon = R.drawable.albums
-                }
-                MainScreenViewType.SecureFolder -> {
-                    photoGridColor = unselectedColor
-                    lockedFolderColor = selectedColor
-                    albumGridColor = unselectedColor
-                    searchPageColor = unselectedColor
-
-                    photoGridIcon = R.drawable.photogrid
-                    lockedFolderIcon = R.drawable.locked_folder_filled
-                    albumGridIcon = R.drawable.albums
-                }
-                MainScreenViewType.AlbumsGridView -> {
-                    photoGridColor = unselectedColor
-                    lockedFolderColor = unselectedColor
-                    albumGridColor = selectedColor
-                    searchPageColor = unselectedColor
-
-                    photoGridIcon = R.drawable.photogrid
-                    lockedFolderIcon = R.drawable.locked_folder
-                    albumGridIcon = R.drawable.albums_filled
-                }
-                MainScreenViewType.SearchPage -> {
-                    photoGridColor = unselectedColor
-                    lockedFolderColor = unselectedColor
-                    albumGridColor = unselectedColor
-                    searchPageColor = selectedColor
-
-                    photoGridIcon = R.drawable.photogrid
-                    lockedFolderIcon = R.drawable.locked_folder
-                    albumGridIcon = R.drawable.albums
-                }
-            }
-
-            // photo grid button
-            BottomAppBarItem(
-                text = "Photos",
-                iconResId = photoGridIcon,
-                color = photoGridColor,
-                cornerRadius = 16.dp,
-                action = {
+            NavigationBarItem(
+                selected = currentView.value == MainScreenViewType.PhotosGridView,
+                onClick = { 
 	                if (currentView.value != MainScreenViewType.PhotosGridView) {
 	                    currentView.value = MainScreenViewType.PhotosGridView
 	                }
-                }
+                },
+                icon = {
+		            Icon(
+		                painter = painterResource(id = if (currentView.value == MainScreenViewType.PhotosGridView) R.drawable.photogrid_filled else R.drawable.photogrid),
+		                contentDescription = "Navigate to photos page",
+		                modifier = Modifier
+		                    .size(24.dp)
+		            )
+                },
+                label = {
+			        Text(
+			            text = "Photos",
+			            fontSize = TextUnit(14f, TextUnitType.Sp),
+			            modifier = Modifier
+			                .wrapContentSize()
+			        )                	
+                }                
             )
 
-            // locked folder button
-            BottomAppBarItem(
-                text = "Secure",
-                iconResId = lockedFolderIcon,
-                color = lockedFolderColor,
-                cornerRadius = 16.dp,
-                action = {
+            NavigationBarItem(
+                selected = currentView.value == MainScreenViewType.SecureFolder,
+                onClick = { 
 	                if (currentView.value != MainScreenViewType.SecureFolder) {
 	                    currentView.value = MainScreenViewType.SecureFolder
 	                }
+                },
+                icon = {
+		            Icon(
+		                painter = painterResource(id = if (currentView.value == MainScreenViewType.SecureFolder) R.drawable.locked_folder_filled else R.drawable.locked_folder),
+		                contentDescription = "Navigate to secure folder page",
+		                modifier = Modifier
+		                    .size(24.dp)
+		            )
+                },
+                label = {
+			        Text(
+			            text = "Secure",
+			            fontSize = TextUnit(14f, TextUnitType.Sp),
+			            modifier = Modifier
+			                .wrapContentSize()
+			        )                	
                 }
-            )
+            )                
 
-            // album grid button
-            BottomAppBarItem(
-                text = "Albums",
-                iconResId = albumGridIcon,
-                color = albumGridColor,
-                cornerRadius = 16.dp,
-                action = {
+            NavigationBarItem(
+                selected = currentView.value == MainScreenViewType.AlbumsGridView,
+                onClick = { 
 	                if (currentView.value != MainScreenViewType.AlbumsGridView) {
 	                    currentView.value = MainScreenViewType.AlbumsGridView
 	                }
-                }
+                },
+                icon = {
+		            Icon(
+		                painter = painterResource(id = if (currentView.value == MainScreenViewType.AlbumsGridView) R.drawable.albums_filled else R.drawable.albums),
+		                contentDescription = "Navigate to albums page",
+		                modifier = Modifier
+		                    .size(24.dp)
+		            )
+                },
+                label = {
+			        Text(
+			            text = "Albums",
+			            fontSize = TextUnit(14f, TextUnitType.Sp),
+			            modifier = Modifier
+			                .wrapContentSize()
+			        )                	
+                }                
             )
 
-            // search page button
-            BottomAppBarItem(
-                text = "Search",
-                iconResId = R.drawable.search,
-                color = searchPageColor,
-                cornerRadius = 16.dp,
-                action = {
+            NavigationBarItem(
+                selected = currentView.value == MainScreenViewType.SearchPage,
+                onClick = { 
 	                if (currentView.value != MainScreenViewType.SearchPage) {
 	                    currentView.value = MainScreenViewType.SearchPage
 	                }
-                }
+                },
+                icon = {
+		            Icon(
+		                painter = painterResource(id = R.drawable.search),
+		                contentDescription = "Navigate to search page",
+		                modifier = Modifier
+		                    .size(24.dp)
+		            )
+                },
+                label = {
+			        Text(
+			            text = "Search",
+			            fontSize = TextUnit(14f, TextUnitType.Sp),
+			            modifier = Modifier
+			                .wrapContentSize()
+			        )                	
+                }                
             )
         }
     }
@@ -394,7 +392,7 @@ fun IsSelectingTopBar(selectedItemsList: SnapshotStateList<MediaStoreData>) {
 	var first by remember { mutableStateOf(selectedItemsList.first()) }
 	if (selectedItemsList.size == 1) first = selectedItemsList.first()
 
-	val groupedMedia = MainActivity.mainViewModel.groupedMedia.collectAsState(initial = emptyList<MediaStoreData>()).value
+	val groupedMedia = MainActivity.mainViewModel.groupedMedia.collectAsState(initial = emptyList<MediaStoreData>())
 	
 	TopAppBar(
         title = {
@@ -439,8 +437,9 @@ fun IsSelectingTopBar(selectedItemsList: SnapshotStateList<MediaStoreData>) {
 	            	verticalAlignment = Alignment.CenterVertically,
 	            	horizontalArrangement = Arrangement.Center
 	           	) {
+	           		val selectionSize = if (selectedItemsList.size == 1 && selectedItemsList[0] == MediaStoreData()) "0" else selectedItemsList.size.toString()
 					Text(
-						text = selectedItemsList.size.toString(),
+						text = selectionSize,
 						color = CustomMaterialTheme.colorScheme.onSurface,
 						fontSize = TextUnit(18f, TextUnitType.Sp),
 						modifier = Modifier
@@ -450,13 +449,18 @@ fun IsSelectingTopBar(selectedItemsList: SnapshotStateList<MediaStoreData>) {
         	}
         },
         actions = {
+        	val filteredMedia by remember { derivedStateOf {
+				groupedMedia.value?.filter {
+					it.type != MediaType.Section
+				} ?: emptyList()
+        	}}
+        	val isTicked by remember { derivedStateOf {
+        		selectedItemsList.size == filteredMedia.size
+        	}}
+        	
             IconButton(
                 onClick = {
-                	if (groupedMedia != null) {
-						val filteredMedia = groupedMedia.filter {
-							it.type == MediaType.Image || it.type == MediaType.Video
-						}
-	               		
+                	if (groupedMedia.value != null) {
 	                	if (selectedItemsList.size == filteredMedia.size) {
 	                    	selectedItemsList.clear()
 	                    	selectedItemsList.add(first)
@@ -469,11 +473,15 @@ fun IsSelectingTopBar(selectedItemsList: SnapshotStateList<MediaStoreData>) {
 	                	}
                 	}
                 },
+                modifier = Modifier
+                	.clip(RoundedCornerShape(1000.dp))
+                	.size(42.dp)
+                	.background(if (isTicked) CustomMaterialTheme.colorScheme.primary else Color.Transparent)
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.check_item),
+                    painter = painterResource(R.drawable.checklist),
                     contentDescription = "select all items",
-                    tint = CustomMaterialTheme.colorScheme.onPrimaryContainer,
+                    tint = if (isTicked) CustomMaterialTheme.colorScheme.onPrimary else CustomMaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier
                         .size(24.dp)
                 )
@@ -642,14 +650,15 @@ fun SingleAlbumViewTopBar(
     navController: NavHostController,
     dir: String,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
+    showDialog: MutableState<Boolean>
 ) {
 	val title = dir.split("/").last()
-	val showDialog = remember { mutableStateOf(false) }
+	// val showDialog = remember { mutableStateOf(false) }
 	val show by remember { derivedStateOf {
 		selectedItemsList.size > 0
 	}}
 		
-	SingleAlbumDialog(showDialog, dir, navController)
+	// SingleAlbumDialog(showDialog, dir, navController)
 	
     AnimatedContent(
         targetState = show,
@@ -715,28 +724,7 @@ fun SingleAlbumViewTopBar(
 fun SingleAlbumViewBottomBar(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
 ) {
-//  	val show by remember { derivedStateOf {
-//  		selectedItemsList.size > 0
-//  	}}
-// 
-//     AnimatedContent(
-//         targetState = show,
-//         transitionSpec = {
-//             getAppBarContentTransitionBottomToTop(show)
-//         },
-//         label = "SingleAlbumViewBottomBarAnimatedContent",
-//         modifier = Modifier
-//             .fillMaxWidth(1f)
-//         ) { target ->
-//             if (target) {
-                IsSelectingBottomAppBar(selectedItemsList = selectedItemsList)
-    //         } else {
-    //         Row	(
-    //             modifier = Modifier
-    //                 .fillMaxWidth(1f)
-    //         ) {}
-    //     }
-    // }
+    IsSelectingBottomAppBar(selectedItemsList = selectedItemsList)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

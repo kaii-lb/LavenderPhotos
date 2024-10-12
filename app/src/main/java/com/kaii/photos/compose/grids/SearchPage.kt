@@ -44,12 +44,15 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.integration.compose.rememberGlidePreloadingData
@@ -61,11 +64,13 @@ import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.signature
 import com.kaii.photos.models.gallery_model.groupPhotosBy
-import com.kaii.photos.models.search_page.SearchViewModel
+import com.kaii.photos.models.gallery_model.GalleryViewModel
+import com.kaii.photos.models.gallery_model.GalleryViewModelFactory
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
 
 @Composable
-fun SearchPage(navController: NavHostController, searchViewModel: SearchViewModel) {
+fun SearchPage(navController: NavHostController) {
     Column (
         modifier = Modifier
             .fillMaxSize(1f)
@@ -134,17 +139,17 @@ fun SearchPage(navController: NavHostController, searchViewModel: SearchViewMode
 
         Spacer (modifier = Modifier.height(8.dp))
 
-       	val mediaStoreDataHolder = searchViewModel.mediaStoreData.collectAsState()
-      	val mediaStoreData by remember { mutableStateOf(mediaStoreDataHolder) }
+		val searchViewModel: GalleryViewModel = viewModel(
+			factory = GalleryViewModelFactory(LocalContext.current, "", MediaItemSortMode.DateTaken)
+		)
+       	val mediaStoreDataHolder = searchViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 		
-		var originalGroupedMedia by remember { mutableStateOf(groupPhotosBy(mediaStoreData.value, MediaItemSortMode.DateTaken)) }
+		var originalGroupedMedia by remember { mutableStateOf(mediaStoreDataHolder.value) }
 
 		var groupedMedia by remember { mutableStateOf(originalGroupedMedia) }
 
-		// println("THE CURRENT STATE IS ${mediaStoreData.value}")
-
-		LaunchedEffect(key1 = mediaStoreData.value) {
-			originalGroupedMedia = groupPhotosBy(mediaStoreData.value, MediaItemSortMode.DateTaken)
+		LaunchedEffect(key1 = mediaStoreDataHolder.value) {
+			originalGroupedMedia = mediaStoreDataHolder.value
 
 			if (searchedForText == "") {
 				groupedMedia = originalGroupedMedia
@@ -157,7 +162,7 @@ fun SearchPage(navController: NavHostController, searchViewModel: SearchViewMode
 			delay(500)
         	
         	val groupedMediaLocal = originalGroupedMedia.filter {
-        		val isMedia = it.type == MediaType.Image || it.type == MediaType.Video
+        		val isMedia = it.type != MediaType.Section
         		val matchesFilter = it.displayName?.contains(searchedForText.trim(), true) == true
 				isMedia && matchesFilter
 			}
@@ -166,21 +171,20 @@ fun SearchPage(navController: NavHostController, searchViewModel: SearchViewMode
 			searchNow = false
         }
 
-
-        val requestBuilderTransform =
-            { item: MediaStoreData, requestBuilder: RequestBuilder<Drawable> ->
-                requestBuilder.load(item.uri).signature(item.signature()).centerCrop()
-            }
-
-        val preloadingData =
-            rememberGlidePreloadingData(
-                groupedMedia,
-                Size(50f, 50f),
-                requestBuilderTransform = requestBuilderTransform,
-            )
-
         val gridState = rememberLazyGridState()
 
+	    val requestBuilderTransform =
+	        { item: MediaStoreData, requestBuilder: RequestBuilder<Drawable> ->
+	            requestBuilder.load(item.uri).signature(item.signature()).centerCrop()
+	        }
+
+	    val preloadingData =
+	        rememberGlidePreloadingData(
+	            groupedMedia,
+	            Size(50f, 50f),
+	            requestBuilderTransform = requestBuilderTransform,
+	        )
+	        	
 		Box(
 			modifier = Modifier
 				.fillMaxSize(1f)	

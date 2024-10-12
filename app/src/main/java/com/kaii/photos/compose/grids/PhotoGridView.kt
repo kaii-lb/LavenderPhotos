@@ -5,6 +5,7 @@ import android.graphics.drawable.Drawable
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -13,16 +14,14 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.animateScrollBy
-import androidx.compose.foundation.gestures.draggable
-import androidx.compose.foundation.gestures.rememberDraggableState
-import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,31 +31,26 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderState
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -65,7 +59,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Size
@@ -80,10 +73,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Constraints
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.bumptech.glide.RequestBuilder
@@ -97,11 +90,13 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.CustomMaterialTheme
 import com.kaii.photos.compose.FolderDoesntExist
 import com.kaii.photos.compose.FolderIsEmpty
-import com.kaii.photos.compose.IsSelectingBottomAppBar
+import com.kaii.photos.helpers.ImageFunctions
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.checkHasFiles
-import com.kaii.photos.helpers.ImageFunctions
+import com.kaii.photos.helpers.rememberVibratorManager
+import com.kaii.photos.helpers.vibrateLong
+import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.signature
@@ -109,17 +104,15 @@ import com.kaii.photos.models.gallery_model.GalleryViewModel
 import com.kaii.photos.models.gallery_model.GalleryViewModelFactory
 import com.kaii.photos.models.gallery_model.groupPhotosBy
 import com.kaii.photos.models.main_activity.MainDataSharingModel
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.io.path.Path
-import kotlin.math.ceil
 import kotlin.math.roundToInt
 
-private const val THUMBNAIL_DIMENSION = 50
+private const val THUMBNAIL_DIMENSION = 50f
 private const val TAG = "PHOTO_GRID_VIEW"
 
-private val THUMBNAIL_SIZE = Size(THUMBNAIL_DIMENSION.toFloat(), THUMBNAIL_DIMENSION.toFloat())
+private val THUMBNAIL_SIZE = Size(THUMBNAIL_DIMENSION, THUMBNAIL_DIMENSION)
 
 @Composable
 fun PhotoGrid(
@@ -132,14 +125,6 @@ fun PhotoGrid(
 	prefix: String = "",
 	shouldPadUp: Boolean = false
 ) {
-	val galleryViewModel: GalleryViewModel = viewModel(
-		factory = GalleryViewModelFactory(LocalContext.current, path)
-	)
-		
-	val mediaStoreData = galleryViewModel.mediaStoreData.collectAsState()
-
-	val mainViewModel = MainActivity.mainViewModel
-
 	val hasFiles = Path("/storage/emulated/0/$path").checkHasFiles()
 
 	if (hasFiles == null) {
@@ -150,9 +135,8 @@ fun PhotoGrid(
 	if (hasFiles) {
 		DeviceMedia(
 			navController,
-			mediaStoreData,
+			path,
 			operation,
-			mainViewModel,
 			selectedItemsList,
 			sortBy,
 			prefix,
@@ -163,37 +147,62 @@ fun PhotoGrid(
 	}
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DeviceMedia(
 	navController: NavHostController,
-	mediaStoreData: State<List<MediaStoreData>>,
+	path: String,
 	operation: ImageFunctions,
-	mainViewModel: MainDataSharingModel,
 	selectedItemsList: SnapshotStateList<MediaStoreData>,
 	sortBy: MediaItemSortMode,
 	prefix: String,
 	shouldPadUp: Boolean
 ) {
-	val groupedMedia by remember { derivedStateOf {
-		groupPhotosBy(mediaStoreData.value, sortBy) 	
+	val galleryViewModel: GalleryViewModel = viewModel(
+		factory = GalleryViewModelFactory(LocalContext.current, path, sortBy)
+	)
+//	val mediaStoreData = galleryViewModel.mediaStoreData.collectAsState()
+
+	val mediaStoreData = galleryViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+
+	val mainViewModel = MainActivity.mainViewModel
+
+	val groupedMedia by remember(mediaStoreData.value) { derivedStateOf {
+		mediaStoreData.value
 	}}
 	mainViewModel.setGroupedMedia(groupedMedia)
-	
+
+	val gridState = rememberLazyGridState()
+	var showLoadingSpinner by remember { mutableStateOf(true) }
+
+	val stops by remember { derivedStateOf {
+		var lastMonth = 0L
+		groupedMedia.filter {
+			val itsMonth = it.getDateTakenMonth()
+			val shouldAdd = it.type == MediaType.Section && itsMonth != lastMonth
+			lastMonth = itsMonth
+
+			shouldAdd
+		}
+	}}
+
+	val numberOfStops by remember { derivedStateOf {
+		(stops.size - 1).coerceAtLeast(1)
+	}}
+	val coroutineScope = rememberCoroutineScope()
+
     val requestBuilderTransform =
         { item: MediaStoreData, requestBuilder: RequestBuilder<Drawable> ->
             requestBuilder.load(item.uri).signature(item.signature()).centerCrop()
         }
 
-	val preloadingData =
+    val preloadingData =
         rememberGlidePreloadingData(
             groupedMedia,
             THUMBNAIL_SIZE,
             requestBuilderTransform = requestBuilderTransform,
         )
-
-	val gridState = rememberLazyGridState()
-	var showLoadingSpinner by remember { mutableStateOf(true) }
-	
+        	
 	Box (
 		modifier = Modifier
 			.fillMaxSize(1f)
@@ -217,11 +226,10 @@ fun DeviceMedia(
 				.fillMaxSize(1f)
 				.align(Alignment.TopCenter),
 	        state = gridState
-	    ) {	
+	    ) {
 	        items(
 	            count = preloadingData.size,
 	            key = {
-	                // println("URI STRING ${mediaStoreData[it].uri}")
 	                groupedMedia[it].uri.toString()
 	            },
 	            span = { index ->
@@ -235,16 +243,22 @@ fun DeviceMedia(
 	        ) { i ->
 	            val (mediaStoreItem, preloadRequestBuilder) = preloadingData[i]
 
-	            MediaStoreItem(
-					navController,
-	            	mediaStoreItem,
-	                preloadRequestBuilder,
-	                operation,
-	                mainViewModel,
-	                groupedMedia,
-	                prefix,
-					selectedItemsList
-	            )
+				Row (
+					modifier = Modifier
+						.wrapContentSize()
+						.animateItem()
+				) {
+					MediaStoreItem(
+						navController,
+						mediaStoreItem,
+						preloadRequestBuilder,
+						operation,
+						mainViewModel,
+						groupedMedia,
+						prefix,
+						selectedItemsList
+					)
+				}
 
 	            if (i >= 0) {
 					val handler = Handler(Looper.getMainLooper())
@@ -258,8 +272,6 @@ fun DeviceMedia(
 	    }
 	    
 		if (showLoadingSpinner) {
-			// println("SPINNING STARTED AT ${LocalTime.now()}")
-			
 			Row (
 				modifier = Modifier
 					.fillMaxWidth(1f)
@@ -286,7 +298,7 @@ fun DeviceMedia(
 				}
 			}
 		}
-		
+
 		Box (
 			modifier = Modifier
 				.align(Alignment.TopEnd)
@@ -294,67 +306,132 @@ fun DeviceMedia(
 				.width(48.dp)
 				.padding(0.dp, 16.dp)
 		) {
-			val stops by remember { derivedStateOf {
-				groupedMedia.filter {
-					it.type == MediaType.Section
-				}
-			}}
-
 			var currentStop by remember { mutableIntStateOf(0) }
-		
-			// var startFading by remember { mutableStateOf(true) }
-			// val alpha by animateFloatAsState(
-			// 	targetValue = if (!startFading) 1f else 0f,
-			// 	label = "animate alpha of scrollbar"
-			// )
+			var isScrollingByHandle by remember { mutableStateOf(false) }
 
-			LaunchedEffect(key1 = currentStop) {
-				if (stops.size > 0) {
-					val index = (currentStop - 1).coerceIn(0, stops.size)
-					gridState.scrollToItem(
-						groupedMedia.indexOf(stops[index])
-					)
+			val currentIndex by remember { derivedStateOf { gridState.firstVisibleItemIndex } }
+			val interactionSource = remember { MutableInteractionSource() }
+			LaunchedEffect(currentIndex) {
+				if (groupedMedia.isNotEmpty()) {
+					val possibleSection = groupedMedia[currentIndex]
+					if (possibleSection.type == MediaType.Section && !isScrollingByHandle) {
+						val first = stops.filter { it.getDateTakenMonth() == possibleSection.getDateTakenMonth() }.firstOrNull()
+						currentStop = stops.indexOf(first)
+					}
 				}
-
-				// if (!gridState.isScrollInProgress) {
-				// 	delay(3000)
-				// 	startFading = true
-				// } else {
-				// 	startFading = false
-				// }
 			}
 
-			Slider (
-				value = currentStop.toFloat(),
-				onValueChange = {
-					currentStop = it.roundToInt()
-				},
-				steps = stops.size,
-				valueRange = 0f..stops.size.toFloat(),
-				modifier = Modifier
-					.width(48.dp)
-					.fillMaxHeight(1f)
-					.graphicsLayer {
-						rotationZ = 90f
-						transformOrigin = TransformOrigin(0f, 0f)
+			LaunchedEffect(interactionSource) {
+				interactionSource.interactions.collect { interaction -> 
+					when(interaction) {
+						is DragInteraction.Start -> { isScrollingByHandle = true }
+						is DragInteraction.Cancel -> { isScrollingByHandle = false }
+						is DragInteraction.Stop -> { isScrollingByHandle = false }
+						else -> {}
 					}
-					.layout { measurable, constraints ->
-						val placeable = measurable.measure(
-							Constraints(
-								minWidth = constraints.minHeight,
-								minHeight = constraints.minWidth,
-								maxWidth = constraints.maxHeight,
-								maxHeight = constraints.maxWidth
-							)
-						)
+				}
+			}
 
-						layout(placeable.height, placeable.width) {
-							placeable.place(0, -placeable.height)
+			var showHandle by remember { mutableStateOf(false) }
+			LaunchedEffect(key1 = gridState.isScrollInProgress, key2 = isScrollingByHandle) {
+				if (gridState.isScrollInProgress || isScrollingByHandle) {
+					showHandle = true
+				} else {
+					kotlinx.coroutines.delay(3000)
+					showHandle = false
+				}
+			}
+			
+			AnimatedVisibility (
+				visible = showHandle,
+				modifier = Modifier.fillMaxHeight(1f),
+				enter =
+					slideInHorizontally(
+						
+					) { width -> width },
+				exit =
+					slideOutHorizontally(
+						
+					) { width -> width }
+			) {
+				Slider (
+					value = currentStop.toFloat(),
+					interactionSource = interactionSource,
+					onValueChange = {
+						currentStop = it.roundToInt()
+						coroutineScope.launch {
+							if (stops.isNotEmpty()) {
+								val index = (currentStop - 1).coerceIn(0, numberOfStops)
+								gridState.scrollToItem(
+									groupedMedia.indexOf(stops[index])
+								)
+							}
 						}
-					}
-					// .alpha(alpha)
-			)
-		}			    
+					},
+					steps = numberOfStops,
+					valueRange = 1f..numberOfStops.toFloat(),
+					thumb = {
+						Box (
+							modifier = Modifier
+								.size(48.dp)
+								.clip(RoundedCornerShape(0.dp, 0.dp, 1000.dp, 1000.dp))
+								.background(CustomMaterialTheme.colorScheme.secondaryContainer)
+						) {
+							Icon (
+								painter = painterResource(id = R.drawable.code),
+								contentDescription = "scrollbar handle",
+								tint = CustomMaterialTheme.colorScheme.onSecondaryContainer,
+								modifier = Modifier
+									.size(24.dp)
+									.align(Alignment.Center)
+							)
+						}
+					},
+					track = {
+						val colors = SliderDefaults.colors()
+		                SliderDefaults.Track(
+		                    sliderState = it,
+		                    trackInsideCornerSize = 8.dp,
+		                    colors = colors.copy(
+		                        activeTickColor = Color.Transparent,
+		                        inactiveTickColor = Color.Transparent,
+		                        disabledActiveTickColor = Color.Transparent,
+		                        disabledInactiveTickColor = Color.Transparent,
+
+		                        activeTrackColor = Color.Transparent,
+		                        inactiveTrackColor = Color.Transparent
+		                    ),
+		                    thumbTrackGapSize = 4.dp,
+		                    drawTick = { _, _ -> },
+		                    modifier = Modifier
+		                        .height(16.dp)
+		                )					
+					},
+					modifier = Modifier
+						.width(40.dp)
+						.fillMaxHeight(1f)
+						.graphicsLayer {
+							rotationZ = 90f
+							translationX = 30f
+							transformOrigin = TransformOrigin(0f, 0f)
+						}
+						.layout { measurable, constraints ->
+							val placeable = measurable.measure(
+								Constraints(
+									minWidth = constraints.minHeight,
+									minHeight = constraints.minWidth,
+									maxWidth = constraints.maxHeight,
+									maxHeight = constraints.maxWidth
+								)
+							)
+
+							layout(placeable.height, placeable.width) {
+								placeable.place(0, -placeable.height)
+							}
+						}
+				)
+			}
+		}
 	}
 }
 
@@ -370,7 +447,9 @@ fun MediaStoreItem(
 	prefix: String,
 	selectedItemsList: SnapshotStateList<MediaStoreData>,
 ) {
-	val isSelected by remember { derivedStateOf { selectedItemsList.contains(item) } }
+	val isSelected by remember(selectedItemsList.size) { derivedStateOf { selectedItemsList.contains(item) }}
+	val vibratorManager = rememberVibratorManager()
+
 	val animatedItemCornerRadius by animateDpAsState(
 		targetValue = if (isSelected) 16.dp else 0.dp,
         animationSpec = tween(
@@ -385,6 +464,12 @@ fun MediaStoreItem(
         ),
 		label = "animate scale of selected item"
 	)
+
+	BackHandler (
+		enabled = selectedItemsList.size > 0
+	) {
+		selectedItemsList.clear()
+	}
 
 	if (item.mimeType == null && item.type == MediaType.Section) {
 		val datedMedia = groupedMedia.filter {
@@ -410,8 +495,10 @@ fun MediaStoreItem(
 					if (selectedItemsList.containsAll(datedMedia)) {
 						selectedItemsList.removeAll(datedMedia)
 					} else {
+						if (selectedItemsList.size == 1 && selectedItemsList[0] == MediaStoreData()) selectedItemsList.clear()
 						selectedItemsList.addAll(datedMedia)
 					}
+					vibratorManager.vibrateLong()
 				}
 				.padding(16.dp, 8.dp),
         ) {
@@ -441,9 +528,11 @@ fun MediaStoreItem(
 				.combinedClickable(
 					onClick = {
 						if (selectedItemsList.size > 0) {
+							vibratorManager.vibrateShort()
 							if (isSelected) {
 								selectedItemsList.remove(item)
 							} else {
+								if (selectedItemsList.size == 1 && selectedItemsList[0] == MediaStoreData()) selectedItemsList.clear()
 								selectedItemsList.add(item)
 							}
 							return@combinedClickable
@@ -474,9 +563,13 @@ fun MediaStoreItem(
 					onDoubleClick = { /*ignore double clicks*/ },
 
 					onLongClick = {
+						if (selectedItemsList.size > 0) return@combinedClickable
+
+						vibratorManager.vibrateLong()
 						if (isSelected) {
 							selectedItemsList.remove(item)
 						} else {
+							if (selectedItemsList.size == 1 && selectedItemsList[0] == MediaStoreData()) selectedItemsList.clear()
 							selectedItemsList.add(item)
 						}
 					}
@@ -491,10 +584,11 @@ fun MediaStoreItem(
 					.fillMaxSize(1f)
 					.align(Alignment.Center)
 					.scale(animatedItemScale)
-					.clip(RoundedCornerShape(animatedItemCornerRadius)),
+					.clip(RoundedCornerShape(animatedItemCornerRadius))
             ) {
                 it.thumbnail(preloadRequestBuilder).signature(item.signature()).diskCacheStrategy(DiskCacheStrategy.ALL)
             }
+			
 
 			if (item.type == MediaType.Video) {
 				Box (

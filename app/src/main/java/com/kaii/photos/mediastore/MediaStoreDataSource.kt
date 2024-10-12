@@ -3,6 +3,7 @@ package com.kaii.photos.mediastore
 import android.content.Context
 import android.database.ContentObserver
 import android.net.Uri
+import android.os.CancellationSignal
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
@@ -12,11 +13,17 @@ import com.bumptech.glide.util.Preconditions
 import com.bumptech.glide.util.Util
 import com.kaii.photos.MainActivity
 import com.kaii.photos.database.entities.MediaEntity
+import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.getDateTakenForMedia
+import com.kaii.photos.models.gallery_model.groupPhotosBy
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.nio.file.Files
 import kotlin.io.path.Path
 
@@ -25,6 +32,7 @@ class MediaStoreDataSource
 internal constructor(
     private val context: Context,
     private val neededPath: String,
+    private val sortBy: MediaItemSortMode,
 ) {
     companion object {
         private val MEDIA_STORE_FILE_URI = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL)
@@ -44,11 +52,23 @@ internal constructor(
     }
 
     fun loadMediaStoreData(): Flow<List<MediaStoreData>> = callbackFlow {
+        var cancellationSignal = CancellationSignal()
+        val mutex = Mutex()
+
         val contentObserver =
             object : ContentObserver(Handler(Looper.getMainLooper())) {
                 override fun onChange(selfChange: Boolean) {
                     super.onChange(selfChange)
-                    launch { trySend(query()) }
+                    launch(Dispatchers.IO) {
+                        mutex.withLock {
+                            cancellationSignal.cancel()
+                            cancellationSignal = CancellationSignal()
+                        }
+
+                        runCatching {
+                            trySend(query())
+                        }
+                    }
                 }
             }
 
@@ -58,12 +78,17 @@ internal constructor(
             contentObserver
         )
 
-        trySend(query())
+        launch(Dispatchers.IO) {
+            runCatching {
+                trySend(query())
+            }
+        }
 
-        println("MEDIASTOREDATASOURCE PATH IS $neededPath")
-
-        awaitClose { context.contentResolver.unregisterContentObserver(contentObserver) }
-    }
+        awaitClose {
+            context.contentResolver.unregisterContentObserver(contentObserver)
+            cancellationSignal.cancel()
+        }
+    }.conflate()
 
     private fun query(): List<MediaStoreData> {
         val database = MainActivity.applicationDatabase
@@ -81,14 +106,14 @@ internal constructor(
        			FileColumns.MEDIA_TYPE +
 					" = " +
 					FileColumns.MEDIA_TYPE_IMAGE +
-					" AND " + 
+					" AND " +
 					FileColumns.RELATIVE_PATH +
 					" LIKE ? " +
 					" OR " +
 					FileColumns.MEDIA_TYPE +
 					" = " +
 					FileColumns.MEDIA_TYPE_VIDEO +
-					" AND " + 
+					" AND " +
 					FileColumns.RELATIVE_PATH +
 					" LIKE ? ",
                 arrayOf("%$neededPath%", "%$neededPath%"),
@@ -111,7 +136,7 @@ internal constructor(
                 val id = cursor.getLong(idColNum)
                 val mimeType = cursor.getString(mimeTypeColNum)
 				// val dateModified = cursor.getLong(dateModifiedColNum)
-				
+
                 val uri = Uri.withAppendedPath(MEDIA_STORE_FILE_URI, id.toString())
                 val absolutePath = cursor.getString(absolutePathColNum)
 				val dateModified = Files.getLastModifiedTime(Path(absolutePath)).toMillis() / 1000
@@ -158,7 +183,7 @@ internal constructor(
             }
         }
         mediaCursor.close()
-        
-        return data
+
+        return groupPhotosBy(data, sortBy)
     }
 }

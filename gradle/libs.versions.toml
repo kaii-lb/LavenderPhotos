@@ -1,8 +1,10 @@
 [versions]
 agp = "8.5.2"
 kotlin = "1.9.0"
+pagingComposeAndroid = "3.3.2"
 
 [libraries]
+androidx-paging-compose-android = { group = "androidx.paging", name = "paging-compose-android", version.ref = "pagingComposeAndroid" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -103,10 +103,11 @@ fun SingleAlbumView(
 
     val albumDir = mainViewModel.selectedAlbumDir.collectAsState(initial = null).value ?: return
 
+	val showDialog = remember { mutableStateOf(false) }
     val showBottomSheet by remember { derivedStateOf {
         selectedItemsList.size > 0
     }}
-
+    
     val sheetState = rememberStandardBottomSheetState(
         skipHiddenState = false,
         initialValue = SheetValue.Hidden,
@@ -135,7 +136,8 @@ fun SingleAlbumView(
             SingleAlbumViewTopBar(
                 navController = navController,
                 dir = albumDir,
-                selectedItemsList = selectedItemsList
+                selectedItemsList = selectedItemsList,
+                showDialog = showDialog
             )
         },
         sheetContent = {
@@ -162,12 +164,19 @@ fun SingleAlbumView(
        			selectedItemsList = selectedItemsList,
        			shouldPadUp = true
        		)
+
+       		SingleAlbumDialog(showDialog, albumDir, navController, selectedItemsList)
         }
     }
 }
 
 @Composable
-fun SingleAlbumDialog(showDialog: MutableState<Boolean>, dir: String, navController: NavHostController) {
+fun SingleAlbumDialog(
+	showDialog: MutableState<Boolean>,
+	dir: String,
+	navController: NavHostController,
+	selectedItemsList: SnapshotStateList<MediaStoreData>
+) {
     if (showDialog.value) {
         val context = LocalContext.current
         val coroutineScope = rememberCoroutineScope()
@@ -237,7 +246,9 @@ fun SingleAlbumDialog(showDialog: MutableState<Boolean>, dir: String, navControl
 	                    iconResId = R.drawable.check_item,
 	                    position = RowPosition.Top,
 	                ) {
-	                	
+	                	showDialog.value = false
+	                	selectedItemsList.clear()
+	                	selectedItemsList.add(MediaStoreData())
 	                }
 				}
                 val fileName = remember { mutableStateOf(title) }

@@ -14,6 +14,7 @@ import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.runtime.Composable
@@ -23,6 +24,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -131,26 +133,43 @@ fun HorizontalImageList(
 	                )
 	        )
         } else {
-            GlideImage(
-                model = path,
-                contentDescription = "selected image",
-                contentScale = ContentScale.Fit,
-                failure = placeholder(R.drawable.broken_image),
-                modifier = Modifier
-                   	.fillMaxSize(1f)
-                    .mediaModifier(
-                        scale,
-                        rotation,
-                        offset,
-                        systemBarsShown,
-                        window,
-                        windowInsetsController,
-                        appBarsVisible
-                    )
-            ) {
-                it.thumbnail(preloadRequestBuilder).signature(mediaStoreItem.signature()).diskCacheStrategy(
-                    DiskCacheStrategy.ALL)
-            }
+        	Box (
+        		modifier = Modifier
+        			.fillMaxSize(1f)
+        	) {
+				GlideImage(
+	                model = path,
+	                contentDescription = "selected image",
+	                contentScale = ContentScale.Fit,
+	                failure = placeholder(R.drawable.broken_image),
+	                modifier = Modifier
+	                   	.fillMaxSize(1f)
+	                    .blur(16.dp)
+	            ) {
+	                it.thumbnail(preloadRequestBuilder).signature(mediaStoreItem.signature()).diskCacheStrategy(
+	                    DiskCacheStrategy.ALL)
+	            }        		
+	            GlideImage(
+	                model = path,
+	                contentDescription = "selected image",
+	                contentScale = ContentScale.Fit,
+	                failure = placeholder(R.drawable.broken_image),
+	                modifier = Modifier
+	                   	.fillMaxSize(1f)
+	                    .mediaModifier(
+	                        scale,
+	                        rotation,
+	                        offset,
+	                        systemBarsShown,
+	                        window,
+	                        windowInsetsController,
+	                        appBarsVisible
+	                    )
+	            ) {
+	                it.thumbnail(preloadRequestBuilder).signature(mediaStoreItem.signature()).diskCacheStrategy(
+	                    DiskCacheStrategy.ALL)
+	            }
+        	}
         }
     }
 }

@@ -2,12 +2,14 @@ package com.kaii.photos.mediastore
 
 import android.net.Uri
 import android.os.Parcelable
+import androidx.compose.runtime.Immutable
 import com.bumptech.glide.signature.MediaStoreSignature
 import kotlinx.parcelize.Parcelize
 import java.util.Calendar
 import java.util.Locale
 
 /** A data model containing data for a single media item. */
+@Immutable
 @Parcelize
 data class MediaStoreData(
     val type: MediaType = MediaType.Image,
@@ -41,6 +43,7 @@ data class MediaStoreData(
     fun getDateTakenMonth() : Long {
         val calendar = Calendar.getInstance(Locale.ENGLISH).apply {
             timeInMillis = dateTaken * 1000
+            set(Calendar.DAY_OF_MONTH, 0)
             set(Calendar.HOUR_OF_DAY, 0)
             set(Calendar.MINUTE, 0)
             set(Calendar.SECOND, 0)

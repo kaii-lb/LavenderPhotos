@@ -87,7 +87,7 @@ fun SinglePhotoView(
 
 	val groupedMedia = remember { mutableStateOf(
 		holderGroupedMedia.filter { item ->
-			(item.type == MediaType.Image || item.type == MediaType.Video)  && item.mimeType != null && item.id != 0L
+			item.type != MediaType.Section
 		}
 	)}
 

@@ -55,6 +55,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -507,7 +508,12 @@ fun DialogInfoText(firstText: String, secondText: String, iconResId: Int) {
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun MainAppDialog(showDialog: MutableState<Boolean>, currentView: MutableState<MainScreenViewType>, navController: NavHostController) {
+fun MainAppDialog(
+	showDialog: MutableState<Boolean>,
+	currentView: MutableState<MainScreenViewType>, 
+	navController: NavHostController,
+	selectedItemsList: SnapshotStateList<MediaStoreData>
+) {
 	if (showDialog.value) {
 		val context = LocalContext.current
 
@@ -672,7 +678,11 @@ fun MainAppDialog(showDialog: MutableState<Boolean>, currentView: MutableState<M
 						text = "Select",
 						iconResId = R.drawable.check_item,
 						position = RowPosition.Top,
-					)
+	                ) {
+	                	showDialog.value = false
+	                	selectedItemsList.clear()
+	                	selectedItemsList.add(MediaStoreData())
+	                }
 
 					if (currentView.value == MainScreenViewType.AlbumsGridView) {
 						DialogClickableItem(
