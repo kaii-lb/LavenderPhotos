@@ -136,19 +136,7 @@ fun HorizontalImageList(
         	Box (
         		modifier = Modifier
         			.fillMaxSize(1f)
-        	) {
-				GlideImage(
-	                model = path,
-	                contentDescription = "selected image",
-	                contentScale = ContentScale.Fit,
-	                failure = placeholder(R.drawable.broken_image),
-	                modifier = Modifier
-	                   	.fillMaxSize(1f)
-	                    .blur(16.dp)
-	            ) {
-	                it.thumbnail(preloadRequestBuilder).signature(mediaStoreItem.signature()).diskCacheStrategy(
-	                    DiskCacheStrategy.ALL)
-	            }        		
+        	) { 		
 	            GlideImage(
 	                model = path,
 	                contentDescription = "selected image",

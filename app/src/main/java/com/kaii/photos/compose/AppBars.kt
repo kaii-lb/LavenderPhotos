@@ -511,10 +511,10 @@ fun IsSelectingTopBar(selectedItemsList: SnapshotStateList<MediaStoreData>) {
 @Composable
 fun IsSelectingBottomAppBar(
 	selectedItemsList: SnapshotStateList<MediaStoreData>,
-	isTrashBin: Boolean = false
+	isTrashBin: Boolean = false,
+	groupedMedia: MutableState<List<MediaStoreData>>
 ) {
     val context = LocalContext.current
-	val groupedMedia = MainActivity.mainViewModel.groupedMedia.collectAsState(initial = emptyList<MediaStoreData>()).value
 	
     BottomAppBar(
         containerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
@@ -559,20 +559,18 @@ fun IsSelectingBottomAppBar(
 					cornerRadius = 16.dp,
 					dialogComposable = {
 					    ConfirmationDialog(showDialog = showRestoreDialog, dialogTitle = "Restore these items?", confirmButtonLabel = "Restore") {
-					    	if (groupedMedia != null) {
-						        val newList = groupedMedia.toMutableList()
-						        selectedItemsList.forEach { item ->
-						            operateOnImage(
-						                item.absolutePath,
-						                item.id,
-						                ImageFunctions.UnTrashImage,
-						                context
-						            )
-						            newList.remove(item)
-						        }
-						        selectedItemsList.clear()
-						        // groupedMedia = newList
-					    	}
+					        val newList = groupedMedia.value.toMutableList()
+					        selectedItemsList.forEach { item ->
+					            operateOnImage(
+					                item.absolutePath,
+					                item.id,
+					                ImageFunctions.UnTrashImage,
+					                context
+					            )
+					            newList.remove(item)
+					        }
+					        selectedItemsList.clear()
+					        groupedMedia.value = newList
 					    }
 					},
 					action = {
@@ -587,20 +585,18 @@ fun IsSelectingBottomAppBar(
 		        	cornerRadius = 16.dp,
 		        	dialogComposable = {
 					    ConfirmationDialog(showDialog = showPermaDeleteDialog, dialogTitle = "Permanently delete these items?", confirmButtonLabel = "Delete") {
-					    	if (groupedMedia != null) {
-						        val newList = groupedMedia.toMutableList()
-						        selectedItemsList.forEach { item ->
-						            operateOnImage(
-						                item.absolutePath,
-						                item.id,
-						                ImageFunctions.PermaDeleteImage,
-						                context
-						            )
-						            newList.remove(item)
-						        }
-						        selectedItemsList.clear()
-						        // groupedMedia.value = newList
-					    	}
+					        val newList = groupedMedia.value.toMutableList()
+					        selectedItemsList.forEach { item ->
+					            operateOnImage(
+					                item.absolutePath,
+					                item.id,
+					                ImageFunctions.PermaDeleteImage,
+					                context
+					            )
+					            newList.remove(item)
+					        }
+					        selectedItemsList.clear()
+					        groupedMedia.value = newList
 					    }
 		        	},
 		        	action = {
@@ -619,20 +615,18 @@ fun IsSelectingBottomAppBar(
 		        	cornerRadius = 16.dp,
 		        	dialogComposable = {
 					    ConfirmationDialog(showDialog = showDeleteDialog, dialogTitle = "Move selected items to Trash Bin?", confirmButtonLabel = "Delete") {
-					    	if (groupedMedia != null) {
-						        val newList = groupedMedia.toMutableList()
-						        selectedItemsList.forEach { item ->
-						            operateOnImage(
-						                item.absolutePath,
-						                item.id,
-						                ImageFunctions.TrashImage,
-						                context
-						            )
-						            newList.remove(item)
-						        }
-						        selectedItemsList.clear()
-						        // groupedMedia.value = newList
-					    	}
+					        val newList = groupedMedia.value.toMutableList()
+					        selectedItemsList.forEach { item ->
+					            operateOnImage(
+					                item.absolutePath,
+					                item.id,
+					                ImageFunctions.TrashImage,
+					                context
+					            )
+					            newList.remove(item)
+					        }
+					        selectedItemsList.clear()
+					        groupedMedia.value = newList
 					    }
 		        	},
 		        	action = {
@@ -723,8 +717,9 @@ fun SingleAlbumViewTopBar(
 @Composable
 fun SingleAlbumViewBottomBar(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
+    groupedMedia: MutableState<List<MediaStoreData>>
 ) {
-    IsSelectingBottomAppBar(selectedItemsList = selectedItemsList)
+    IsSelectingBottomAppBar(selectedItemsList = selectedItemsList, groupedMedia = groupedMedia)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -807,6 +802,7 @@ fun TrashedPhotoGridViewTopBar(
 @Composable
 fun TrashedPhotoViewBottomBar(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
+    groupedMedia: MutableState<List<MediaStoreData>>
 ) {
 	val show by remember { derivedStateOf {
 		selectedItemsList.size > 0
@@ -821,7 +817,7 @@ fun TrashedPhotoViewBottomBar(
             .fillMaxWidth(1f)
     ) { target ->
         if (target) {
-            IsSelectingBottomAppBar(selectedItemsList = selectedItemsList, isTrashBin = true)
+            IsSelectingBottomAppBar(selectedItemsList = selectedItemsList, groupedMedia = groupedMedia, isTrashBin = true)
         } else {
         	Row	(
         		modifier = Modifier

@@ -68,6 +68,8 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -90,7 +92,11 @@ import com.kaii.photos.helpers.brightenColor
 import com.kaii.photos.helpers.ImageFunctions
 import com.kaii.photos.helpers.operateOnImage
 import com.kaii.photos.mediastore.MediaStoreData
+import com.kaii.photos.models.gallery_model.GalleryViewModel
+import com.kaii.photos.models.gallery_model.GalleryViewModelFactory
+import com.kaii.photos.models.gallery_model.groupPhotosBy
 import com.kaii.photos.compose.getAppBarContentTransitionBottomToTop
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -102,6 +108,21 @@ fun SingleAlbumView(
     val mainViewModel = MainActivity.mainViewModel
 
     val albumDir = mainViewModel.selectedAlbumDir.collectAsState(initial = null).value ?: return
+
+	val galleryViewModel: GalleryViewModel = viewModel(
+		factory = GalleryViewModelFactory(LocalContext.current, albumDir, MediaItemSortMode.DateTaken)
+	)
+//	val mediaStoreData = galleryViewModel.mediaStoreData.collectAsState()
+
+	val mediaStoreData = galleryViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+
+	var groupedMedia = remember { mutableStateOf(mediaStoreData.value) }
+	mainViewModel.setGroupedMedia(groupedMedia.value)
+
+	LaunchedEffect(mediaStoreData.value) {
+		groupedMedia.value = mediaStoreData.value
+		mainViewModel.setGroupedMedia(mediaStoreData.value)
+	}
 
 	val showDialog = remember { mutableStateOf(false) }
     val showBottomSheet by remember { derivedStateOf {
@@ -141,7 +162,7 @@ fun SingleAlbumView(
             )
         },
         sheetContent = {
-            SingleAlbumViewBottomBar(selectedItemsList = selectedItemsList)
+            SingleAlbumViewBottomBar(selectedItemsList = selectedItemsList, groupedMedia = groupedMedia)
         },
         sheetPeekHeight = 0.dp,
         sheetShape = RectangleShape
@@ -157,6 +178,7 @@ fun SingleAlbumView(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
        		PhotoGrid(
+       			groupedMedia = groupedMedia,
        			navController = navController,
        			operation = ImageFunctions.LoadNormalImage,
        			path = albumDir,

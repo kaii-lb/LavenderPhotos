@@ -51,6 +51,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -116,6 +117,7 @@ private val THUMBNAIL_SIZE = Size(THUMBNAIL_DIMENSION, THUMBNAIL_DIMENSION)
 
 @Composable
 fun PhotoGrid(
+	groupedMedia: MutableState<List<MediaStoreData>>,
 	navController: NavHostController,
 	operation: ImageFunctions,
 	path: String,
@@ -134,6 +136,7 @@ fun PhotoGrid(
 	 
 	if (hasFiles) {
 		DeviceMedia(
+			groupedMedia,
 			navController,
 			path,
 			operation,
@@ -150,6 +153,7 @@ fun PhotoGrid(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DeviceMedia(
+	groupedMedia: MutableState<List<MediaStoreData>>,
 	navController: NavHostController,
 	path: String,
 	operation: ImageFunctions,
@@ -158,37 +162,9 @@ fun DeviceMedia(
 	prefix: String,
 	shouldPadUp: Boolean
 ) {
-	val galleryViewModel: GalleryViewModel = viewModel(
-		factory = GalleryViewModelFactory(LocalContext.current, path, sortBy)
-	)
-//	val mediaStoreData = galleryViewModel.mediaStoreData.collectAsState()
-
-	val mediaStoreData = galleryViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
-
-	val mainViewModel = MainActivity.mainViewModel
-
-	val groupedMedia by remember(mediaStoreData.value) { derivedStateOf {
-		mediaStoreData.value
-	}}
-	mainViewModel.setGroupedMedia(groupedMedia)
-
 	val gridState = rememberLazyGridState()
 	var showLoadingSpinner by remember { mutableStateOf(true) }
 
-	val stops by remember { derivedStateOf {
-		var lastMonth = 0L
-		groupedMedia.filter {
-			val itsMonth = it.getDateTakenMonth()
-			val shouldAdd = it.type == MediaType.Section && itsMonth != lastMonth
-			lastMonth = itsMonth
-
-			shouldAdd
-		}
-	}}
-
-	val numberOfStops by remember { derivedStateOf {
-		(stops.size - 1).coerceAtLeast(1)
-	}}
 	val coroutineScope = rememberCoroutineScope()
 
     val requestBuilderTransform =
@@ -198,7 +174,7 @@ fun DeviceMedia(
 
     val preloadingData =
         rememberGlidePreloadingData(
-            groupedMedia,
+            groupedMedia.value,
             THUMBNAIL_SIZE,
             requestBuilderTransform = requestBuilderTransform,
         )
@@ -228,12 +204,12 @@ fun DeviceMedia(
 	        state = gridState
 	    ) {
 	        items(
-	            count = preloadingData.size,
+	            count = groupedMedia.value.size,
 	            key = {
-	                groupedMedia[it].uri.toString()
+	                groupedMedia.value[it].uri.toString()
 	            },
 	            span = { index ->
-	                val item = groupedMedia[index]
+	                val item = groupedMedia.value[index]
 	                if (item.type == MediaType.Section) {
 	                    GridItemSpan(maxLineSpan)
 	                } else {
@@ -246,15 +222,17 @@ fun DeviceMedia(
 				Row (
 					modifier = Modifier
 						.wrapContentSize()
-						.animateItem()
+						.animateItem(
+							fadeInSpec = null
+						)
 				) {
 					MediaStoreItem(
 						navController,
 						mediaStoreItem,
 						preloadRequestBuilder,
 						operation,
-						mainViewModel,
-						groupedMedia,
+						MainActivity.mainViewModel,
+						groupedMedia.value,
 						prefix,
 						selectedItemsList
 					)
@@ -306,21 +284,10 @@ fun DeviceMedia(
 				.width(48.dp)
 				.padding(0.dp, 16.dp)
 		) {
-			var currentStop by remember { mutableIntStateOf(0) }
+			var showHandle by remember { mutableStateOf(false) }
 			var isScrollingByHandle by remember { mutableStateOf(false) }
-
-			val currentIndex by remember { derivedStateOf { gridState.firstVisibleItemIndex } }
 			val interactionSource = remember { MutableInteractionSource() }
-			LaunchedEffect(currentIndex) {
-				if (groupedMedia.isNotEmpty()) {
-					val possibleSection = groupedMedia[currentIndex]
-					if (possibleSection.type == MediaType.Section && !isScrollingByHandle) {
-						val first = stops.filter { it.getDateTakenMonth() == possibleSection.getDateTakenMonth() }.firstOrNull()
-						currentStop = stops.indexOf(first)
-					}
-				}
-			}
-
+			
 			LaunchedEffect(interactionSource) {
 				interactionSource.interactions.collect { interaction -> 
 					when(interaction) {
@@ -331,8 +298,7 @@ fun DeviceMedia(
 					}
 				}
 			}
-
-			var showHandle by remember { mutableStateOf(false) }
+						
 			LaunchedEffect(key1 = gridState.isScrollInProgress, key2 = isScrollingByHandle) {
 				if (gridState.isScrollInProgress || isScrollingByHandle) {
 					showHandle = true
@@ -341,7 +307,7 @@ fun DeviceMedia(
 					showHandle = false
 				}
 			}
-			
+
 			AnimatedVisibility (
 				visible = showHandle,
 				modifier = Modifier.fillMaxHeight(1f),
@@ -354,22 +320,18 @@ fun DeviceMedia(
 						
 					) { width -> width }
 			) {
+				val currentIndex by remember { derivedStateOf { gridState.firstVisibleItemIndex.toFloat() } }
 				Slider (
-					value = currentStop.toFloat(),
+					value = currentIndex / groupedMedia.value.size,
 					interactionSource = interactionSource,
-					onValueChange = {
-						currentStop = it.roundToInt()
+					onValueChange = { it ->
 						coroutineScope.launch {
-							if (stops.isNotEmpty()) {
-								val index = (currentStop - 1).coerceIn(0, numberOfStops)
-								gridState.scrollToItem(
-									groupedMedia.indexOf(stops[index])
-								)
-							}
+							gridState.scrollToItem(
+								(it * groupedMedia.value.size).roundToInt()
+							)
 						}
 					},
-					steps = numberOfStops,
-					valueRange = 1f..numberOfStops.toFloat(),
+					valueRange = 0f..1f,
 					thumb = {
 						Box (
 							modifier = Modifier

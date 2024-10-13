@@ -36,6 +36,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -57,6 +58,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -96,7 +98,11 @@ import com.kaii.photos.models.album_grid.AlbumsViewModel
 import com.kaii.photos.models.album_grid.AlbumsViewModelFactory
 import com.kaii.photos.models.main_activity.MainDataSharingModel
 import com.kaii.photos.models.main_activity.MainDataSharingModelFactory
+import com.kaii.photos.models.gallery_model.GalleryViewModel
+import com.kaii.photos.models.gallery_model.GalleryViewModelFactory
+import com.kaii.photos.models.gallery_model.groupPhotosBy
 import com.kaii.photos.ui.theme.PhotosTheme
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.launch
 
@@ -410,6 +416,21 @@ class MainActivity : ComponentActivity() {
         showDialog: MutableState<Boolean>,
         selectedItemsList: SnapshotStateList<MediaStoreData>,
     ) {	
+		val galleryViewModel: GalleryViewModel = viewModel(
+			factory = GalleryViewModelFactory(LocalContext.current, stringResource(id = R.string.default_homepage_photogrid_dir), MediaItemSortMode.DateTaken)
+		)
+	//	val mediaStoreData = galleryViewModel.mediaStoreData.collectAsState()
+
+		val mediaStoreData = galleryViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+
+		var groupedMedia = remember { mutableStateOf(mediaStoreData.value) }
+		mainViewModel.setGroupedMedia(groupedMedia.value)
+
+		LaunchedEffect(mediaStoreData.value) {
+			groupedMedia.value = mediaStoreData.value
+			mainViewModel.setGroupedMedia(mediaStoreData.value)
+		}
+    
         Scaffold(
             modifier = Modifier
                 .fillMaxSize(1f),
@@ -417,7 +438,7 @@ class MainActivity : ComponentActivity() {
                 TopBar(showDialog, selectedItemsList, navController)
             },
             bottomBar = { 
-            	BottomBar(currentView, selectedItemsList, navController)
+            	BottomBar(currentView, selectedItemsList, navController, groupedMedia)
            	}
         ) { padding ->
 			val context = LocalContext.current
@@ -458,6 +479,7 @@ class MainActivity : ComponentActivity() {
 	                    when (stateValue) {
 	                        MainScreenViewType.PhotosGridView -> {
 	                        	PhotoGrid(
+	                        		groupedMedia = groupedMedia,
 	                        		navController = navController,
 	                        		operation = ImageFunctions.LoadNormalImage,
 	                        		path = stringResource(id = R.string.default_homepage_photogrid_dir), 
@@ -513,7 +535,8 @@ class MainActivity : ComponentActivity() {
     private fun BottomBar(
         currentView: MutableState<MainScreenViewType>,
         selectedItemsList: SnapshotStateList<MediaStoreData>,
-        navController: NavHostController
+        navController: NavHostController,
+        groupedMedia: MutableState<List<MediaStoreData>>
     ) {
 		val show by remember { derivedStateOf {
 			selectedItemsList.size > 0
@@ -528,7 +551,7 @@ class MainActivity : ComponentActivity() {
             if (!state) {
                 MainAppBottomBar(currentView)
             } else {
-                IsSelectingBottomAppBar(selectedItemsList = selectedItemsList)
+                IsSelectingBottomAppBar(selectedItemsList = selectedItemsList, groupedMedia = groupedMedia)
             }
         }
 
