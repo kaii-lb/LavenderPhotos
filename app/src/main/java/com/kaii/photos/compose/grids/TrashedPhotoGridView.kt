@@ -90,7 +90,6 @@ fun TrashedPhotoGridView(
                 navController = navController,
                 operation = ImageFunctions.LoadTrashedImage,
                 path = getAppTrashBinDirectory().replace("/storage/emulated/0/", ""),
-                sortBy = MediaItemSortMode.LastModified,
                 selectedItemsList = selectedItemsList,
                 emptyText = "Deleted items show up here",
                 prefix = "Deleted On "

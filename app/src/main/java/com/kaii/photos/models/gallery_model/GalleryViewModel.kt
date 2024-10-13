@@ -2,19 +2,28 @@ package com.kaii.photos.models.gallery_model
 
 import android.content.Context
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaStoreDataSource
 import com.kaii.photos.mediastore.MediaType
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.replay
+import kotlinx.coroutines.flow.retry
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.util.Calendar
@@ -26,21 +35,9 @@ import java.time.format.DateTimeFormatter
 class GalleryViewModel(context: Context, path: String, sortBy: MediaItemSortMode) : ViewModel() {
     private val mediaStoreDataSource = MediaStoreDataSource(context, path, sortBy)
 
-    private val _uiState: MutableStateFlow<List<MediaStoreData>> = MutableStateFlow(emptyList())
-    val mediaStoreData: StateFlow<List<MediaStoreData>> = _uiState.asStateFlow()
-
-    init {
-        viewModelScope.launch {
-            mediaStoreDataSource.loadMediaStoreData().flowOn(Dispatchers.IO).collect {
-                _uiState.value = it
-            }
-        }
-    }
-
     val mediaFlow by lazy {
         getMediaDataFlow().stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
     }
-
 
     private fun getMediaDataFlow(): Flow<List<MediaStoreData>> {
         return mediaStoreDataSource.loadMediaStoreData().flowOn(Dispatchers.IO)

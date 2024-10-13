@@ -674,21 +674,23 @@ fun MainAppDialog(
 						.padding(12.dp)
 						.wrapContentHeight()
 				) {
-					DialogClickableItem(
-						text = "Select",
-						iconResId = R.drawable.check_item,
-						position = RowPosition.Top,
-	                ) {
-	                	showDialog.value = false
-	                	selectedItemsList.clear()
-	                	selectedItemsList.add(MediaStoreData())
-	                }
+					if (currentView.value != MainScreenViewType.AlbumsGridView) {
+						DialogClickableItem(
+							text = "Select",
+							iconResId = R.drawable.check_item,
+							position = RowPosition.Top,
+		                ) {
+		                	showDialog.value = false
+		                	selectedItemsList.clear()
+		                	selectedItemsList.add(MediaStoreData())
+		                }
+					}
 
 					if (currentView.value == MainScreenViewType.AlbumsGridView) {
 						DialogClickableItem(
 							text = "Add an album",
 							iconResId = R.drawable.add,
-							position = RowPosition.Middle,
+							position = RowPosition.Top,
 						) {
 							showDialog.value = false
 							val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
@@ -697,6 +699,7 @@ fun MainAppDialog(
 
 							startForResult.launch(intent)
 
+							// hack heaven
 							val runnable = Runnable {
 								Thread.sleep(250)
 								currentView.value = MainScreenViewType.PhotosGridView

@@ -182,7 +182,6 @@ fun SingleAlbumView(
        			navController = navController,
        			operation = ImageFunctions.LoadNormalImage,
        			path = albumDir,
-       			sortBy = MediaItemSortMode.DateTaken,
        			selectedItemsList = selectedItemsList,
        			shouldPadUp = true
        		)

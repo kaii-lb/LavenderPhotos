@@ -14,14 +14,18 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.DragInteraction
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,6 +39,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -49,21 +54,23 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
@@ -73,11 +80,11 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.bumptech.glide.RequestBuilder
@@ -103,12 +110,15 @@ import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.signature
 import com.kaii.photos.models.gallery_model.GalleryViewModel
 import com.kaii.photos.models.gallery_model.GalleryViewModelFactory
-import com.kaii.photos.models.gallery_model.groupPhotosBy
 import com.kaii.photos.models.main_activity.MainDataSharingModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.io.path.Path
 import kotlin.math.roundToInt
+import kotlin.math.ceil
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 private const val THUMBNAIL_DIMENSION = 50f
 private const val TAG = "PHOTO_GRID_VIEW"
@@ -121,7 +131,6 @@ fun PhotoGrid(
 	navController: NavHostController,
 	operation: ImageFunctions,
 	path: String,
-	sortBy: MediaItemSortMode,
 	selectedItemsList: SnapshotStateList<MediaStoreData>,
 	emptyText: String = "Empty Folder",
 	prefix: String = "",
@@ -138,10 +147,8 @@ fun PhotoGrid(
 		DeviceMedia(
 			groupedMedia,
 			navController,
-			path,
 			operation,
 			selectedItemsList,
-			sortBy,
 			prefix,
 			shouldPadUp
 		)
@@ -155,10 +162,8 @@ fun PhotoGrid(
 fun DeviceMedia(
 	groupedMedia: MutableState<List<MediaStoreData>>,
 	navController: NavHostController,
-	path: String,
 	operation: ImageFunctions,
 	selectedItemsList: SnapshotStateList<MediaStoreData>,
-	sortBy: MediaItemSortMode,
 	prefix: String,
 	shouldPadUp: Boolean
 ) {
@@ -174,7 +179,7 @@ fun DeviceMedia(
 
     val preloadingData =
         rememberGlidePreloadingData(
-            groupedMedia.value,
+			groupedMedia.value,
             THUMBNAIL_SIZE,
             requestBuilderTransform = requestBuilderTransform,
         )
@@ -206,7 +211,7 @@ fun DeviceMedia(
 	        items(
 	            count = groupedMedia.value.size,
 	            key = {
-	                groupedMedia.value[it].uri.toString()
+					groupedMedia.value[it].uri.toString()
 	            },
 	            span = { index ->
 	                val item = groupedMedia.value[index]
@@ -217,6 +222,7 @@ fun DeviceMedia(
 	                }
 	            }
 	        ) { i ->
+	        	if (preloadingData.size == 0) return@items
 	            val (mediaStoreItem, preloadRequestBuilder) = preloadingData[i]
 
 				Row (
@@ -282,12 +288,11 @@ fun DeviceMedia(
 				.align(Alignment.TopEnd)
 				.fillMaxHeight(1f)
 				.width(48.dp)
-				.padding(0.dp, 16.dp)
 		) {
 			var showHandle by remember { mutableStateOf(false) }
 			var isScrollingByHandle by remember { mutableStateOf(false) }
 			val interactionSource = remember { MutableInteractionSource() }
-			
+
 			LaunchedEffect(interactionSource) {
 				interactionSource.interactions.collect { interaction -> 
 					when(interaction) {
@@ -309,44 +314,102 @@ fun DeviceMedia(
 			}
 
 			AnimatedVisibility (
-				visible = showHandle,
+				visible = showHandle && !showLoadingSpinner,
 				modifier = Modifier.fillMaxHeight(1f),
 				enter =
-					slideInHorizontally(
-						
-					) { width -> width },
+					slideInHorizontally { width -> width },
 				exit =
-					slideOutHorizontally(
-						
-					) { width -> width }
+					slideOutHorizontally { width -> width }
 			) {
-				val currentIndex by remember { derivedStateOf { gridState.firstVisibleItemIndex.toFloat() } }
+				val listSize by remember { derivedStateOf {
+					groupedMedia.value.size - 1
+				}}
+				val totalLeftOverItems by remember { derivedStateOf{
+					(listSize - gridState.layoutInfo.visibleItemsInfo.size).toFloat()
+				}}
+
+				val visibleItemIndex = remember { derivedStateOf { gridState.firstVisibleItemIndex } }
+				val percentScrolled = (visibleItemIndex.value / totalLeftOverItems)
+
 				Slider (
-					value = currentIndex / groupedMedia.value.size,
+					value = percentScrolled,
 					interactionSource = interactionSource,
-					onValueChange = { it ->
+					onValueChange = {
 						coroutineScope.launch {
-							gridState.scrollToItem(
-								(it * groupedMedia.value.size).roundToInt()
-							)
+							if (!gridState.isScrollInProgress)
+								gridState.scrollToItem(
+									(it * groupedMedia.value.size).roundToInt()
+								)
 						}
 					},
 					valueRange = 0f..1f,
-					thumb = {
+					thumb = { state ->
 						Box (
 							modifier = Modifier
-								.size(48.dp)
-								.clip(RoundedCornerShape(0.dp, 0.dp, 1000.dp, 1000.dp))
-								.background(CustomMaterialTheme.colorScheme.secondaryContainer)
+								.height(48.dp)
+								.width(96.dp)
 						) {
-							Icon (
-								painter = painterResource(id = R.drawable.code),
-								contentDescription = "scrollbar handle",
-								tint = CustomMaterialTheme.colorScheme.onSecondaryContainer,
+							
+							Box (
 								modifier = Modifier
-									.size(24.dp)
+									.size(48.dp)
+									.clip(RoundedCornerShape(0.dp, 0.dp, 1000.dp, 1000.dp))
+									.background(CustomMaterialTheme.colorScheme.secondaryContainer)
 									.align(Alignment.Center)
-							)
+							) {
+								Icon (
+									painter = painterResource(id = R.drawable.code),
+									contentDescription = "scrollbar handle",
+									tint = CustomMaterialTheme.colorScheme.onSecondaryContainer,
+									modifier = Modifier
+										.size(24.dp)
+										.align(Alignment.Center)
+								)
+
+							}
+
+							Box (
+								modifier = Modifier
+									.align(Alignment.Center)
+									.rotate(-90f)
+									.graphicsLayer {
+										translationX = -220f
+									}
+							) {
+								AnimatedVisibility(
+									visible = isScrollingByHandle,
+									enter =
+										slideInHorizontally { width -> width / 4 } + fadeIn(),
+									exit =
+										slideOutHorizontally { width -> width / 4 } + fadeOut(),
+									modifier = Modifier
+										.align(Alignment.CenterStart)
+										.height(32.dp)
+										.wrapContentWidth()
+								) {
+									Box (
+										modifier = Modifier
+											.height(32.dp)
+											.wrapContentWidth()
+											.clip(RoundedCornerShape(1000.dp))
+											.background(CustomMaterialTheme.colorScheme.secondaryContainer)
+											.padding(8.dp, 4.dp)
+									) {
+										val item = groupedMedia.value[(state.value * listSize).roundToInt()]
+										val format = DateTimeFormatter.ofPattern("MMM yyyy")
+										val formatted = Instant.ofEpochSecond(item.dateTaken).atZone(ZoneId.systemDefault()).toLocalDateTime().format(format)
+
+										Text(
+											text = formatted,
+											fontSize = TextUnit(14f, TextUnitType.Sp),
+											textAlign = TextAlign.Center,
+											color = CustomMaterialTheme.colorScheme.onSecondaryContainer,
+											modifier = Modifier
+												.align(Alignment.CenterStart)
+										)
+									}
+								}		
+							}
 						}
 					},
 					track = {

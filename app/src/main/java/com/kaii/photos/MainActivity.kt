@@ -483,7 +483,6 @@ class MainActivity : ComponentActivity() {
 	                        		navController = navController,
 	                        		operation = ImageFunctions.LoadNormalImage,
 	                        		path = stringResource(id = R.string.default_homepage_photogrid_dir), 
-	                        		sortBy = MediaItemSortMode.DateTaken,
 	                        		selectedItemsList = selectedItemsList,
                         		)	
 	                        }

@@ -1,15 +1,16 @@
 package com.kaii.photos.compose
 
+import android.content.ContentValues
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.LocalIndication
@@ -20,25 +21,20 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomAppBar
-import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.FilledIconButton
-import androidx.compose.material3.FilledTonalIconToggleButton
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
@@ -46,20 +42,17 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -69,11 +62,10 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.kaii.photos.R
 import com.kaii.photos.MainActivity
-import com.kaii.photos.compose.grids.SingleAlbumDialog
-import com.kaii.photos.helpers.MainScreenViewType
+import com.kaii.photos.R
 import com.kaii.photos.helpers.ImageFunctions
+import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.operateOnImage
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
@@ -277,7 +269,6 @@ fun MainAppBottomBar(currentView: MutableState<MainScreenViewType>) {
     ) {
         NavigationBar (
             containerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
-            contentColor = CustomMaterialTheme.colorScheme.onPrimaryContainer,
             tonalElevation = 16.dp,
             modifier = Modifier
                 .fillMaxSize(1f)
@@ -389,9 +380,6 @@ fun MainAppBottomBar(currentView: MutableState<MainScreenViewType>) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun IsSelectingTopBar(selectedItemsList: SnapshotStateList<MediaStoreData>) {
-	var first by remember { mutableStateOf(selectedItemsList.first()) }
-	if (selectedItemsList.size == 1) first = selectedItemsList.first()
-
 	val groupedMedia = MainActivity.mainViewModel.groupedMedia.collectAsState(initial = emptyList<MediaStoreData>())
 	
 	TopAppBar(
@@ -426,11 +414,12 @@ fun IsSelectingTopBar(selectedItemsList: SnapshotStateList<MediaStoreData>) {
 	               
 	           	Row (
 					modifier = Modifier
-                        .height(42.dp)
+                        .height(43.dp)
                         .wrapContentWidth()
                         .clip(RoundedCornerShape(6.dp, 100.dp, 100.dp, 6.dp))
                         .background(CustomMaterialTheme.colorScheme.surfaceContainer)
                         .padding(12.dp, 0.dp, 16.dp, 0.dp)
+                        .animateContentSize()
                         .clickable {
                             selectedItemsList.clear()
                         },
@@ -463,7 +452,7 @@ fun IsSelectingTopBar(selectedItemsList: SnapshotStateList<MediaStoreData>) {
                 	if (groupedMedia.value != null) {
 	                	if (selectedItemsList.size == filteredMedia.size) {
 	                    	selectedItemsList.clear()
-	                    	selectedItemsList.add(first)
+	                    	selectedItemsList.add(MediaStoreData())
 	                	} else {
 	                		selectedItemsList.clear()
 	                		

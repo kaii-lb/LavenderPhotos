@@ -76,7 +76,7 @@ fun HorizontalImageList(
     val preloadingData =
         rememberGlidePreloadingData(
             groupedMedia.value,
-            Size(75f, 75f),
+            Size(50f, 50f),
             requestBuilderTransform = requestBuilderTransform,
         )
         

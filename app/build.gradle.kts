@@ -14,8 +14,8 @@ android {
         applicationId = "com.kaii.photos"
         minSdk = 33
         targetSdk = 34
-        versionCode = 60
-        versionName = "v0.6.0"
+        versionCode = 64
+        versionName = "v0.6.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -88,8 +88,6 @@ dependencies {
     implementation("androidx.media3:media3-ui:1.4.1")
     implementation("androidx.core:core-splashscreen:1.0.0")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
-    implementation("com.github.nanihadesuka:LazyColumnScrollbar:2.2.0")
-    implementation(libs.androidx.paging.compose.android)
 
     val roomVersion = "2.6.1"	
     implementation("androidx.room:room-runtime:$roomVersion")
