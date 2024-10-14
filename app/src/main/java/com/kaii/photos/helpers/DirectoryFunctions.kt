@@ -1,9 +1,11 @@
 package com.kaii.photos.helpers
 
 import android.util.Log
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
+import java.nio.file.Paths
 import kotlin.io.path.isRegularFile
 
 private const val TAG = "DIRECTORY_FUNCTIONS"
@@ -27,19 +29,23 @@ fun Path.checkHasFiles(): Boolean? {
 
     if (folder == null) return null
 
-    while (folder.hasNext()) {
-        val file = folder.next()
+   	try {    		
+    	while (folder.hasNext()) {
+	        val file = folder.next()
 
-        // TODO: match for ".letters" in file path
-        if (!file.toString().contains(".thumbnails")) {
-            val isNormal = file.isRegularFile(LinkOption.NOFOLLOW_LINKS)
-            if (isNormal) {
-                hasFiles = true
-                break
-            }
-        }
-        hasFiles = false
-    }
+	        // TODO: match for ".letters" in file path
+	        if (!file.toString().contains(".thumbnails")) {
+	            val isNormal = file.isRegularFile(LinkOption.NOFOLLOW_LINKS)
+	            if (isNormal) {
+	                hasFiles = true
+	                break
+	            }
+	        }
+	        hasFiles = false
+    	}
+   	} catch(e: Throwable) {
+   		println(e.toString())
+   	}
 
     return hasFiles
 }

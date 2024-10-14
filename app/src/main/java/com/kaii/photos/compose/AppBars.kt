@@ -381,6 +381,12 @@ fun MainAppBottomBar(currentView: MutableState<MainScreenViewType>) {
 @Composable
 fun IsSelectingTopBar(selectedItemsList: SnapshotStateList<MediaStoreData>) {
 	val groupedMedia = MainActivity.mainViewModel.groupedMedia.collectAsState(initial = emptyList<MediaStoreData>())
+
+	val selectedItemsWithoutSection by remember { derivedStateOf {
+		selectedItemsList.filter {
+			it.type != MediaType.Section
+		}
+	}}
 	
 	TopAppBar(
         title = {
@@ -426,7 +432,7 @@ fun IsSelectingTopBar(selectedItemsList: SnapshotStateList<MediaStoreData>) {
 	            	verticalAlignment = Alignment.CenterVertically,
 	            	horizontalArrangement = Arrangement.Center
 	           	) {
-	           		val selectionSize = if (selectedItemsList.size == 1 && selectedItemsList[0] == MediaStoreData()) "0" else selectedItemsList.size.toString()
+	           		val selectionSize = if (selectedItemsWithoutSection.size == 1 && selectedItemsWithoutSection[0] == MediaStoreData()) "0" else selectedItemsWithoutSection.size.toString()
 					Text(
 						text = selectionSize,
 						color = CustomMaterialTheme.colorScheme.onSurface,
@@ -438,25 +444,21 @@ fun IsSelectingTopBar(selectedItemsList: SnapshotStateList<MediaStoreData>) {
         	}
         },
         actions = {
-        	val filteredMedia by remember { derivedStateOf {
-				groupedMedia.value?.filter {
-					it.type != MediaType.Section
-				} ?: emptyList()
-        	}}
+        	val allItemsList by remember { derivedStateOf { groupedMedia.value ?: emptyList() }}
         	val isTicked by remember { derivedStateOf {
-        		selectedItemsList.size == filteredMedia.size
+        		selectedItemsList.size == allItemsList.size
         	}}
         	
             IconButton(
                 onClick = {
                 	if (groupedMedia.value != null) {
-	                	if (selectedItemsList.size == filteredMedia.size) {
+	                	if (isTicked) {
 	                    	selectedItemsList.clear()
 	                    	selectedItemsList.add(MediaStoreData())
 	                	} else {
 	                		selectedItemsList.clear()
 	                		
-		                    for (item in filteredMedia) {
+		                    for (item in allItemsList) {
 	                   			selectedItemsList.add(item)
 		                    }
 	                	}
@@ -504,6 +506,12 @@ fun IsSelectingBottomAppBar(
 	groupedMedia: MutableState<List<MediaStoreData>>
 ) {
     val context = LocalContext.current
+
+	val selectedItemsWithoutSection by remember { derivedStateOf {
+		selectedItemsList.filter {
+			it.type != MediaType.Section
+		}
+	}}
 	
     BottomAppBar(
         containerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
@@ -520,7 +528,7 @@ fun IsSelectingBottomAppBar(
 	        	text = "Share", 
 	        	iconResId = R.drawable.share,
 	        	action = {
-		            val hasVideos = selectedItemsList.any {
+		            val hasVideos = selectedItemsWithoutSection.any {
 		                it.type == MediaType.Video
 		            }
 
@@ -530,7 +538,7 @@ fun IsSelectingBottomAppBar(
 		            }
 
 		            val fileUris = ArrayList<Uri>()
-		            selectedItemsList.forEach {
+		            selectedItemsWithoutSection.forEach {
 		                fileUris.add(it.uri)
 		            }
 
@@ -549,7 +557,7 @@ fun IsSelectingBottomAppBar(
 					dialogComposable = {
 					    ConfirmationDialog(showDialog = showRestoreDialog, dialogTitle = "Restore these items?", confirmButtonLabel = "Restore") {
 					        val newList = groupedMedia.value.toMutableList()
-					        selectedItemsList.forEach { item ->
+					        selectedItemsWithoutSection.forEach { item ->
 					            operateOnImage(
 					                item.absolutePath,
 					                item.id,
@@ -558,6 +566,16 @@ fun IsSelectingBottomAppBar(
 					            )
 					            newList.remove(item)
 					        }
+							groupedMedia.value.filter {
+								it.type == MediaType.Section
+							}.forEach {
+								val filtered = newList.filter { new ->
+									new.getLastModifiedDay() == it.getLastModifiedDay()
+								}
+
+								if (filtered.size == 1) newList.remove(it)
+							}
+					        
 					        selectedItemsList.clear()
 					        groupedMedia.value = newList
 					    }
@@ -575,7 +593,7 @@ fun IsSelectingBottomAppBar(
 		        	dialogComposable = {
 					    ConfirmationDialog(showDialog = showPermaDeleteDialog, dialogTitle = "Permanently delete these items?", confirmButtonLabel = "Delete") {
 					        val newList = groupedMedia.value.toMutableList()
-					        selectedItemsList.forEach { item ->
+					        selectedItemsWithoutSection.forEach { item ->
 					            operateOnImage(
 					                item.absolutePath,
 					                item.id,
@@ -584,6 +602,17 @@ fun IsSelectingBottomAppBar(
 					            )
 					            newList.remove(item)
 					        }
+
+							groupedMedia.value.filter {
+								it.type == MediaType.Section
+							}.forEach {
+								val filtered = newList.filter { new ->
+									new.getLastModifiedDay() == it.getLastModifiedDay()
+								}
+
+								if (filtered.size == 1) newList.remove(it)
+							}
+					        
 					        selectedItemsList.clear()
 					        groupedMedia.value = newList
 					    }
@@ -605,7 +634,7 @@ fun IsSelectingBottomAppBar(
 		        	dialogComposable = {
 					    ConfirmationDialog(showDialog = showDeleteDialog, dialogTitle = "Move selected items to Trash Bin?", confirmButtonLabel = "Delete") {
 					        val newList = groupedMedia.value.toMutableList()
-					        selectedItemsList.forEach { item ->
+					        selectedItemsWithoutSection.forEach { item ->
 					            operateOnImage(
 					                item.absolutePath,
 					                item.id,
@@ -614,6 +643,17 @@ fun IsSelectingBottomAppBar(
 					            )
 					            newList.remove(item)
 					        }
+
+							groupedMedia.value.filter {
+								it.type == MediaType.Section
+							}.forEach {
+								val filtered = newList.filter { new ->
+									new.getLastModifiedDay() == it.getLastModifiedDay()
+								}
+
+								if (filtered.size == 1) newList.remove(it)
+							}
+					        
 					        selectedItemsList.clear()
 					        groupedMedia.value = newList
 					    }

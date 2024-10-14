@@ -67,19 +67,7 @@ fun HorizontalImageList(
     window: Window,
     appBarsVisible: MutableState<Boolean>,
     isHidden: Boolean = false
-) {
-    val requestBuilderTransform =
-        { item: MediaStoreData, requestBuilder: RequestBuilder<Drawable> ->
-            requestBuilder.load(item.uri).signature(item.signature()).centerCrop()
-        }
-
-    val preloadingData =
-        rememberGlidePreloadingData(
-            groupedMedia.value,
-            Size(50f, 50f),
-            requestBuilderTransform = requestBuilderTransform,
-        )
-        
+) {     
     LaunchedEffect(key1 = currentMediaItem) {
         scale.value = 1f
         rotation.value = 0f
@@ -110,7 +98,7 @@ fun HorizontalImageList(
             }
         }
         
-        val (mediaStoreItem, preloadRequestBuilder) = preloadingData[index]
+        val mediaStoreItem = groupedMedia.value[index]
 
         val windowInsetsController = window.insetsController ?: return@HorizontalPager
         val path = if (isHidden) mediaStoreItem.uri.path else mediaStoreItem.uri
@@ -154,8 +142,7 @@ fun HorizontalImageList(
 	                        appBarsVisible
 	                    )
 	            ) {
-	                it.thumbnail(preloadRequestBuilder).signature(mediaStoreItem.signature()).diskCacheStrategy(
-	                    DiskCacheStrategy.ALL)
+	                it.signature(mediaStoreItem.signature()).diskCacheStrategy(DiskCacheStrategy.ALL)
 	            }
         	}
         }

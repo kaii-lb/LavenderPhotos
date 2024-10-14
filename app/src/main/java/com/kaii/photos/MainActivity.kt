@@ -444,7 +444,7 @@ class MainActivity : ComponentActivity() {
 			val context = LocalContext.current
 
             BackHandler (
-                enabled = currentView.value != MainScreenViewType.PhotosGridView && navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name
+                enabled = currentView.value != MainScreenViewType.PhotosGridView && navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name && selectedItemsList.size == 0
             ) {
                 currentView.value = MainScreenViewType.PhotosGridView
             }
@@ -498,7 +498,7 @@ class MainActivity : ComponentActivity() {
                        			)
 	                        	AlbumsGridView(albumsViewModel, navController, listOfDirs)	
 	                        } 
-   	                        MainScreenViewType.SearchPage -> SearchPage(navController)
+   	                        MainScreenViewType.SearchPage -> SearchPage(navController, selectedItemsList)
 	                    }
                 	}
                 }

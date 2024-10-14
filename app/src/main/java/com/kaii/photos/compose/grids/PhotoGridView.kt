@@ -130,13 +130,18 @@ fun PhotoGrid(
 	groupedMedia: MutableState<List<MediaStoreData>>,
 	navController: NavHostController,
 	operation: ImageFunctions,
-	path: String,
+	path: String?,
 	selectedItemsList: SnapshotStateList<MediaStoreData>,
 	emptyText: String = "Empty Folder",
+	emptyIconResId: Int = R.drawable.error,
 	prefix: String = "",
 	shouldPadUp: Boolean = false
 ) {
-	val hasFiles = Path("/storage/emulated/0/$path").checkHasFiles()
+	val hasFiles = if (path == null) {
+		groupedMedia.value.size > 0
+	} else {
+		Path("/storage/emulated/0/$path").checkHasFiles()
+	}
 
 	if (hasFiles == null) {
 		FolderDoesntExist()
@@ -153,7 +158,7 @@ fun PhotoGrid(
 			shouldPadUp
 		)
 	} else {
-		FolderIsEmpty(emptyText)
+		FolderIsEmpty(emptyText, emptyIconResId)
 	}
 }
 
@@ -172,18 +177,12 @@ fun DeviceMedia(
 
 	val coroutineScope = rememberCoroutineScope()
 
-    val requestBuilderTransform =
-        { item: MediaStoreData, requestBuilder: RequestBuilder<Drawable> ->
-            requestBuilder.load(item.uri).signature(item.signature()).centerCrop()
-        }
-
-    val preloadingData =
-        rememberGlidePreloadingData(
-			groupedMedia.value,
-            THUMBNAIL_SIZE,
-            requestBuilderTransform = requestBuilderTransform,
-        )
-        	
+	BackHandler (
+		enabled = selectedItemsList.size > 0
+	) {
+		selectedItemsList.clear()
+	}
+	
 	Box (
 		modifier = Modifier
 			.fillMaxSize(1f)
@@ -222,8 +221,8 @@ fun DeviceMedia(
 	                }
 	            }
 	        ) { i ->
-	        	if (preloadingData.size == 0) return@items
-	            val (mediaStoreItem, preloadRequestBuilder) = preloadingData[i]
+	        	if (groupedMedia.value.size == 0) return@items
+	            val mediaStoreItem = groupedMedia.value[i]
 
 				Row (
 					modifier = Modifier
@@ -235,7 +234,6 @@ fun DeviceMedia(
 					MediaStoreItem(
 						navController,
 						mediaStoreItem,
-						preloadRequestBuilder,
 						operation,
 						MainActivity.mainViewModel,
 						groupedMedia.value,
@@ -465,47 +463,18 @@ fun DeviceMedia(
 fun MediaStoreItem(
 	navController: NavHostController,
 	item: MediaStoreData,
-	preloadRequestBuilder: RequestBuilder<Drawable>,
 	operation: ImageFunctions,
 	mainViewModel: MainDataSharingModel,
 	groupedMedia: List<MediaStoreData>,
 	prefix: String,
 	selectedItemsList: SnapshotStateList<MediaStoreData>,
 ) {
-	val isSelected by remember(selectedItemsList.size) { derivedStateOf { selectedItemsList.contains(item) }}
 	val vibratorManager = rememberVibratorManager()
+	val coroutineScope = rememberCoroutineScope()
 
-	val animatedItemCornerRadius by animateDpAsState(
-		targetValue = if (isSelected) 16.dp else 0.dp,
-        animationSpec = tween(
-        	durationMillis = 150,
-        ),
-		label = "animate corner radius of selected item"
-	)
-	val animatedItemScale by animateFloatAsState(
-		targetValue = if (isSelected) 0.8f else 1f,
-        animationSpec = tween(
-        	durationMillis = 150
-        ),
-		label = "animate scale of selected item"
-	)
-
-	BackHandler (
-		enabled = selectedItemsList.size > 0
-	) {
-		selectedItemsList.clear()
-	}
-
-	if (item.mimeType == null && item.type == MediaType.Section) {
-		val datedMedia = groupedMedia.filter {
-			if (prefix == "Deleted On ") { // find a better way to identify when in trash
-				it.getLastModifiedDay() == item.getLastModifiedDay() && it.type != MediaType.Section	
-			} else {
-				it.getDateTakenDay() == item.getDateTakenDay() && it.type != MediaType.Section	
-			}
-		}
-		val sectionSelected by remember { derivedStateOf {
-			selectedItemsList.containsAll(datedMedia)
+	if (item.type == MediaType.Section) {
+		val isSectionSelected by remember { derivedStateOf {
+			selectedItemsList.contains(item)	
 		}}
 
         Box (
@@ -517,13 +486,25 @@ fun MediaStoreItem(
 					interactionSource = remember { MutableInteractionSource() },
 					indication = null,
 				) {
-					if (selectedItemsList.containsAll(datedMedia)) {
-						selectedItemsList.removeAll(datedMedia)
-					} else {
-						if (selectedItemsList.size == 1 && selectedItemsList[0] == MediaStoreData()) selectedItemsList.clear()
-						selectedItemsList.addAll(datedMedia)
+					coroutineScope.launch {
+						val datedMedia = groupedMedia.filter {
+							if (prefix == "Deleted On ") { // find a better way to identify when in trash
+								it.getLastModifiedDay() == item.getLastModifiedDay() && it.type != MediaType.Section	
+							} else {
+								it.getDateTakenDay() == item.getDateTakenDay() && it.type != MediaType.Section	
+							}
+						}
+								
+						if (selectedItemsList.containsAll(datedMedia)) {
+							selectedItemsList.removeAll(datedMedia)
+							selectedItemsList.remove(item)
+						} else {
+							if (selectedItemsList.size == 1 && selectedItemsList[0] == MediaStoreData()) selectedItemsList.clear()
+							selectedItemsList.addAll(datedMedia)
+							selectedItemsList.add(item)
+						}
+						vibratorManager.vibrateLong()
 					}
-					vibratorManager.vibrateLong()
 				}
 				.padding(16.dp, 8.dp),
         ) {
@@ -537,13 +518,29 @@ fun MediaStoreItem(
             )
 
 			ShowSelectedState(
-				isSelected = sectionSelected,
+				isSelected = isSectionSelected,
 				selectedItemsList = selectedItemsList,
 				modifier = Modifier
 					.align(Alignment.CenterEnd)
 			)
         }
     } else {
+		val isSelected by remember(selectedItemsList.size) { derivedStateOf { selectedItemsList.contains(item) }}
+
+		val animatedItemCornerRadius by animateDpAsState(
+			targetValue = if (isSelected) 16.dp else 0.dp,
+	        animationSpec = tween(
+	        	durationMillis = 150,
+	        ),
+			label = "animate corner radius of selected item"
+		)
+		val animatedItemScale by animateFloatAsState(
+			targetValue = if (isSelected) 0.8f else 1f,
+	        animationSpec = tween(
+	        	durationMillis = 150
+	        ),
+			label = "animate scale of selected item"
+		)    
         Box (
             modifier = Modifier
 				.aspectRatio(1f)
@@ -552,35 +549,57 @@ fun MediaStoreItem(
 				.background(CustomMaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
 				.combinedClickable(
 					onClick = {
-						if (selectedItemsList.size > 0) {
-							vibratorManager.vibrateShort()
-							if (isSelected) {
-								selectedItemsList.remove(item)
-							} else {
-								if (selectedItemsList.size == 1 && selectedItemsList[0] == MediaStoreData()) selectedItemsList.clear()
-								selectedItemsList.add(item)
-							}
-							return@combinedClickable
-						}
+						vibratorManager.vibrateShort()
+						coroutineScope.launch {
+							if (selectedItemsList.size > 0) {
+								val sectionItems = groupedMedia.filter {
+									if (prefix == "Deleted On ") {
+										it.getLastModifiedDay() == item.getLastModifiedDay()
+									} else {
+										it.getDateTakenDay() == item.getDateTakenDay()
+									}								
+								}
 
-						when (operation) {
-							ImageFunctions.LoadNormalImage -> {
-								mainViewModel.setSelectedMediaData(item)
-								mainViewModel.setGroupedMedia(groupedMedia)
-								navController.navigate(MultiScreenViewType.SinglePhotoView.name)
+								val section = sectionItems.filter { it.type == MediaType.Section }.first()
+								
+								if (isSelected) {
+									if (selectedItemsList.contains(section)) selectedItemsList.remove(section)
+									selectedItemsList.remove(item)
+								} else {
+									if (selectedItemsList.size == 1 && selectedItemsList[0] == MediaStoreData()) selectedItemsList.clear()
+
+									selectedItemsList.add(item)
+									
+									val allItems = sectionItems.filter { it.type != MediaType.Section }
+									if (selectedItemsList.containsAll(allItems)) {
+										selectedItemsList.add(section)
+									} else {
+										selectedItemsList.remove(section)	
+									}
+								}
+
+								return@launch
 							}
 
-							ImageFunctions.LoadTrashedImage -> {
-								mainViewModel.setSelectedMediaData(item)
-								mainViewModel.setGroupedMedia(groupedMedia)
-								navController.navigate(MultiScreenViewType.SingleTrashedPhotoView.name)
-							}
+							when (operation) {
+								ImageFunctions.LoadNormalImage -> {
+									mainViewModel.setSelectedMediaData(item)
+									mainViewModel.setGroupedMedia(groupedMedia)
+									navController.navigate(MultiScreenViewType.SinglePhotoView.name)
+								}
 
-							else -> {
-								Log.e(
-									TAG,
-									"No acceptable ImageFunction provided, this should not happen."
-								)
+								ImageFunctions.LoadTrashedImage -> {
+									mainViewModel.setSelectedMediaData(item)
+									mainViewModel.setGroupedMedia(groupedMedia)
+									navController.navigate(MultiScreenViewType.SingleTrashedPhotoView.name)
+								}
+
+								else -> {
+									Log.e(
+										TAG,
+										"No acceptable ImageFunction provided, this should not happen."
+									)
+								}
 							}
 						}
 					},
@@ -590,12 +609,30 @@ fun MediaStoreItem(
 					onLongClick = {
 						if (selectedItemsList.size > 0) return@combinedClickable
 
+						val sectionItems = groupedMedia.filter {
+							if (prefix == "Deleted On ") {
+								it.getLastModifiedDay() == item.getLastModifiedDay()
+							} else {
+								it.getDateTakenDay() == item.getDateTakenDay()
+							}
+						}
+						println("SECTION ITEMS $sectionItems")
+						val section = sectionItems.filter { it.type == MediaType.Section }.first()
+
 						vibratorManager.vibrateLong()
 						if (isSelected) {
+							if (selectedItemsList.contains(section)) selectedItemsList.remove(section)
 							selectedItemsList.remove(item)
 						} else {
 							if (selectedItemsList.size == 1 && selectedItemsList[0] == MediaStoreData()) selectedItemsList.clear()
 							selectedItemsList.add(item)
+
+							val allItems = sectionItems.filter { it.type != MediaType.Section }
+							if (selectedItemsList.containsAll(allItems)) {
+								selectedItemsList.add(section)
+							} else {
+								selectedItemsList.remove(section)	
+							}							
 						}
 					}
 				)
@@ -611,7 +648,7 @@ fun MediaStoreItem(
 					.scale(animatedItemScale)
 					.clip(RoundedCornerShape(animatedItemCornerRadius))
             ) {
-                it.thumbnail(preloadRequestBuilder).signature(item.signature()).diskCacheStrategy(DiskCacheStrategy.ALL)
+                it.signature(item.signature()).diskCacheStrategy(DiskCacheStrategy.ALL)
             }
 			
 

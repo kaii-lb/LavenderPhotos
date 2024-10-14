@@ -1,5 +1,6 @@
 package com.kaii.photos.compose.grids
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -68,6 +69,12 @@ fun TrashedPhotoGridView(
 		groupedMedia.value = mediaStoreData.value
 		mainViewModel.setGroupedMedia(mediaStoreData.value)
 	}
+
+    BackHandler (
+        enabled = selectedItemsList.size > 0
+    ) {
+        selectedItemsList.clear()
+    }
 	
     Scaffold (
         topBar =  { TrashedPhotoGridViewTopBar(navController = navController, selectedItemsList = selectedItemsList) },

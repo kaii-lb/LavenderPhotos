@@ -12,11 +12,15 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideImage
 import com.kaii.photos.R
 
 @Composable
@@ -36,18 +40,12 @@ fun FolderDoesntExist() {
         )
 
         Spacer (modifier = Modifier.height(16.dp))
-
-        Text (
-            text = "you should probably remove it from the list",
-            fontSize = TextUnit(14f, TextUnitType.Sp),
-            modifier = Modifier
-                .wrapContentSize()
-        )
     }
 }
 
+@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun FolderIsEmpty(emptyText: String, emptyIconResId: Int = R.drawable.broken_image) {
+fun FolderIsEmpty(emptyText: String, emptyIconResId: Int) {
     Column (
         modifier = Modifier
             .fillMaxSize(1f)
@@ -55,18 +53,20 @@ fun FolderIsEmpty(emptyText: String, emptyIconResId: Int = R.drawable.broken_ima
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Icon(
-            painter = painterResource(id = emptyIconResId),
-            contentDescription = emptyText,
+        GlideImage(
+            model = emptyIconResId,
+            contentDescription = "folder doesn't exist icon",
+            colorFilter = ColorFilter.tint(CustomMaterialTheme.colorScheme.onBackground),
+            contentScale = ContentScale.Fit,
             modifier = Modifier
-                .size(48.dp)
+                .size(56.dp)
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+		Spacer(modifier = Modifier.height(16.dp))
 
         Text (
             text = emptyText,
-            fontSize = TextUnit(18f, TextUnitType.Sp),
+            fontSize = TextUnit(16f, TextUnitType.Sp),
             modifier = Modifier
                 .wrapContentSize()
         )

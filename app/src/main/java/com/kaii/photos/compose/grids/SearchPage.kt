@@ -56,7 +56,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.integration.compose.rememberGlidePreloadingData
+import com.kaii.photos.R
 import com.kaii.photos.MainActivity
+import com.kaii.photos.compose.grids.PhotoGrid
 import com.kaii.photos.compose.CustomMaterialTheme
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.ImageFunctions
@@ -70,7 +72,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
 
 @Composable
-fun SearchPage(navController: NavHostController) {
+fun SearchPage(navController: NavHostController, selectedItemsList: SnapshotStateList<MediaStoreData>) {
     Column (
         modifier = Modifier
             .fillMaxSize(1f)
@@ -79,7 +81,6 @@ fun SearchPage(navController: NavHostController) {
         var searchedForText by remember { mutableStateOf("") }
         var searchNow by remember { mutableStateOf(false) }
         var showLoadingSpinner by remember { mutableStateOf(true) }
-        val selectedItemsList = remember { SnapshotStateList<MediaStoreData>() } // has all of the selected items
         
         Column (
         	modifier = Modifier
@@ -146,13 +147,13 @@ fun SearchPage(navController: NavHostController) {
 		
 		var originalGroupedMedia by remember { mutableStateOf(mediaStoreDataHolder.value) }
 
-		var groupedMedia by remember { mutableStateOf(originalGroupedMedia) }
+		var groupedMedia = remember { mutableStateOf(originalGroupedMedia) }
 
 		LaunchedEffect(key1 = mediaStoreDataHolder.value) {
 			originalGroupedMedia = mediaStoreDataHolder.value
 
 			if (searchedForText == "") {
-				groupedMedia = originalGroupedMedia
+				groupedMedia.value = originalGroupedMedia
 			}
 		}
   	        
@@ -166,106 +167,21 @@ fun SearchPage(navController: NavHostController) {
         		val matchesFilter = it.displayName?.contains(searchedForText.trim(), true) == true
 				isMedia && matchesFilter
 			}
-   	        groupedMedia = groupPhotosBy(groupedMediaLocal, MediaItemSortMode.DateTaken)
+   	        groupedMedia.value = groupPhotosBy(groupedMediaLocal, MediaItemSortMode.DateTaken)
 
 			searchNow = false
         }
 
         val gridState = rememberLazyGridState()
-
-	    val requestBuilderTransform =
-	        { item: MediaStoreData, requestBuilder: RequestBuilder<Drawable> ->
-	            requestBuilder.load(item.uri).signature(item.signature()).centerCrop()
-	        }
-
-	    val preloadingData =
-	        rememberGlidePreloadingData(
-	            groupedMedia,
-	            Size(50f, 50f),
-	            requestBuilderTransform = requestBuilderTransform,
-	        )
 	        	
-		Box(
-			modifier = Modifier
-				.fillMaxSize(1f)	
-		) {
-	        LazyVerticalGrid(
-				columns = GridCells.Fixed(
-					if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT) {
-						3
-					} else {
-						6
-					}
-				),
-	            modifier = Modifier
-	                .fillMaxSize(1f)
-	                .align(Alignment.Center),
-	            state = gridState
-	        ) {
-	            items(
-	                count = preloadingData.size,
-	                span = { index ->
-	                	val neededIndex = if (index < groupedMedia.size) index else index - 1
-	                    val item = groupedMedia[neededIndex]
-	                    if (item.type == MediaType.Section) {
-	                        GridItemSpan(maxLineSpan)
-	                    } else {
-	                        GridItemSpan(1)
-	                    }
-	                }
-	            ) { i ->
-	                val (mediaStoreItem, preloadRequestBuilder) = preloadingData[i]
-
-	                MediaStoreItem(
-                        navController,
-                        mediaStoreItem,
-                        preloadRequestBuilder,
-                        ImageFunctions.LoadNormalImage,
-                        MainActivity.mainViewModel,
-                        groupedMedia,
-                        "",
-                        selectedItemsList
-                    )
-
-	                if (i >= 0) {
-	                    val handler = Handler(Looper.getMainLooper())
-	                    val runnable = Runnable {
-	                        showLoadingSpinner = false
-	                    }
-	                    handler.removeCallbacks(runnable)
-	                    handler.postDelayed(runnable, 500)
-	                }
-	            }
-	        }
-
-	        if (showLoadingSpinner) {
-	            // println("SPINNING STARTED AT ${LocalTime.now()}")
-	            Row (
-	                modifier = Modifier
-	                    .fillMaxWidth(1f)
-	                    .height(48.dp)
-	                    .align(Alignment.TopCenter),
-	                verticalAlignment = Alignment.CenterVertically,
-	                horizontalArrangement = Arrangement.Center
-	            ) {
-	                Row (
-	                    modifier = Modifier
-	                        .size(40.dp)
-	                        .clip(RoundedCornerShape(1000.dp))
-	                        .background(CustomMaterialTheme.colorScheme.surfaceContainer),
-	                    verticalAlignment = Alignment.CenterVertically,
-	                    horizontalArrangement = Arrangement.Center
-	                ) {
-	                    CircularProgressIndicator(
-	                        modifier = Modifier
-	                            .size(22.dp),
-	                        color = CustomMaterialTheme.colorScheme.primary,
-	                        strokeWidth = 4.dp,
-	                        strokeCap = StrokeCap.Round
-	                    )
-	                }
-	            }
-	        }
-        }
+		PhotoGrid(
+			groupedMedia = groupedMedia,
+			navController = navController,
+			operation = ImageFunctions.LoadNormalImage, 
+			path = null,
+			selectedItemsList = selectedItemsList,
+			emptyText = "Search for some photos!",
+			emptyIconResId = R.drawable.search
+		)
     }
 }
