@@ -1,20 +1,22 @@
 package com.kaii.photos.compose
 
-import android.content.ContentValues
 import android.content.Intent
 import android.net.Uri
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -23,7 +25,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -47,11 +48,12 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -65,10 +67,13 @@ import androidx.navigation.NavHostController
 import com.kaii.photos.MainActivity
 import com.kaii.photos.R
 import com.kaii.photos.helpers.ImageFunctions
+import com.kaii.photos.helpers.brightenColor
+import com.kaii.photos.helpers.darkenColor
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.operateOnImage
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
+import kotlinx.coroutines.launch
 
 /** please only use dialogComposable for its intended purpose */
 @Composable
@@ -133,6 +138,77 @@ fun BottomAppBarItem(
     }
 }
 
+@Composable
+fun SelectableBottomAppBarItem(
+	selected: Boolean,
+    icon: @Composable () -> Unit,
+    label: @Composable () -> Unit,
+    action: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .width(64.dp)
+            .height(56.dp)
+        	.clickable(
+            	interactionSource = remember { MutableInteractionSource() },
+            	indication = null
+        	) {
+            	action()
+        	}            
+    ) {
+    	AnimatedVisibility(
+    		visible = selected,
+    		enter = 
+    			expandHorizontally(
+    				animationSpec = tween(
+    					durationMillis = 350
+    				),
+    				expandFrom = Alignment.CenterHorizontally
+    			) + fadeIn(),
+    		exit = fadeOut(
+    			animationSpec = tween(
+    				durationMillis = 25
+    			)
+    		),
+    		modifier = Modifier
+                .height(32.dp)  
+                .clip(RoundedCornerShape(1000.dp))
+                .align(Alignment.TopCenter)		
+    	) {
+	        Row(
+	            modifier = Modifier
+	                .height(32.dp)
+	                .width(64.dp)
+	                .clip(RoundedCornerShape(1000.dp))
+	                .align(Alignment.TopCenter)
+	                .background(CustomMaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+	            verticalAlignment = Alignment.CenterVertically,
+	            horizontalArrangement = Arrangement.Center
+	        ) {}
+    	}
+
+		Row (
+			modifier = Modifier
+                .height(32.dp)
+                .width(58.dp)			
+				.align(Alignment.TopCenter),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center			
+		) {
+			icon()
+		}
+
+		Row (
+			modifier = Modifier
+				.align(Alignment.BottomCenter),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center			
+		) {
+	        label()
+		}
+    }
+}
+
 fun getAppBarContentTransition(slideLeft: Boolean) = run {
     if (slideLeft) {
         (slideInHorizontally(
@@ -175,50 +251,6 @@ fun getAppBarContentTransition(slideLeft: Boolean) = run {
             )
         )
     }
-}
-
-fun getAppBarContentTransitionBottomToTop(slideUp: Boolean) = run {
-	if (slideUp) {
-        (slideInVertically(
-            animationSpec = tween(
-                durationMillis = 350
-            )
-        ) { width -> width } + fadeIn(
-            animationSpec = tween(
-                durationMillis = 350
-            )
-        )).togetherWith(
-            slideOutVertically(
-                animationSpec = tween(
-                    durationMillis = 350
-                )
-            ) { width -> -width } + fadeOut(
-                animationSpec = tween(
-                    durationMillis = 350
-                )
-            )
-        )
-    } else {
-        (slideInVertically(
-            animationSpec = tween(
-                durationMillis = 350
-            )
-        ) { width -> -width } + fadeIn(
-            animationSpec = tween(
-                durationMillis = 350
-            )
-        )).togetherWith(
-            slideOutVertically(
-                animationSpec = tween(
-                    durationMillis = 350
-                )
-            ) { width -> width } + fadeOut(
-                animationSpec = tween(
-                    durationMillis = 350
-                )
-            )
-        )
-    } 	
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -267,16 +299,15 @@ fun MainAppBottomBar(currentView: MutableState<MainScreenViewType>) {
         contentColor = CustomMaterialTheme.colorScheme.onPrimaryContainer,
         contentPadding = PaddingValues(0.dp),
     ) {
-        NavigationBar (
-            containerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
-            tonalElevation = 16.dp,
+        Row (
             modifier = Modifier
-                .fillMaxSize(1f)
-                .padding(8.dp, 0.dp),
+                .fillMaxSize(1f),
+       		verticalAlignment = Alignment.CenterVertically,
+           	horizontalArrangement = Arrangement.SpaceEvenly                
         ) {
-            NavigationBarItem(
+            SelectableBottomAppBarItem(
                 selected = currentView.value == MainScreenViewType.PhotosGridView,
-                onClick = { 
+                action = { 
 	                if (currentView.value != MainScreenViewType.PhotosGridView) {
 	                    currentView.value = MainScreenViewType.PhotosGridView
 	                }
@@ -299,9 +330,9 @@ fun MainAppBottomBar(currentView: MutableState<MainScreenViewType>) {
                 }                
             )
 
-            NavigationBarItem(
+            SelectableBottomAppBarItem(
                 selected = currentView.value == MainScreenViewType.SecureFolder,
-                onClick = { 
+                action = { 
 	                if (currentView.value != MainScreenViewType.SecureFolder) {
 	                    currentView.value = MainScreenViewType.SecureFolder
 	                }
@@ -324,9 +355,9 @@ fun MainAppBottomBar(currentView: MutableState<MainScreenViewType>) {
                 }
             )                
 
-            NavigationBarItem(
+            SelectableBottomAppBarItem(
                 selected = currentView.value == MainScreenViewType.AlbumsGridView,
-                onClick = { 
+                action = { 
 	                if (currentView.value != MainScreenViewType.AlbumsGridView) {
 	                    currentView.value = MainScreenViewType.AlbumsGridView
 	                }
@@ -349,9 +380,9 @@ fun MainAppBottomBar(currentView: MutableState<MainScreenViewType>) {
                 }                
             )
 
-            NavigationBarItem(
+            SelectableBottomAppBarItem(
                 selected = currentView.value == MainScreenViewType.SearchPage,
-                onClick = { 
+                action = { 
 	                if (currentView.value != MainScreenViewType.SearchPage) {
 	                    currentView.value = MainScreenViewType.SearchPage
 	                }
@@ -380,7 +411,7 @@ fun MainAppBottomBar(currentView: MutableState<MainScreenViewType>) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun IsSelectingTopBar(selectedItemsList: SnapshotStateList<MediaStoreData>) {
-	val groupedMedia = MainActivity.mainViewModel.groupedMedia.collectAsState(initial = emptyList<MediaStoreData>())
+	val groupedMedia = MainActivity.mainViewModel.groupedMedia.collectAsState(initial = emptyList())
 
 	val selectedItemsWithoutSection by remember { derivedStateOf {
 		selectedItemsList.filter {
@@ -465,9 +496,9 @@ fun IsSelectingTopBar(selectedItemsList: SnapshotStateList<MediaStoreData>) {
                 	}
                 },
                 modifier = Modifier
-                	.clip(RoundedCornerShape(1000.dp))
-                	.size(42.dp)
-                	.background(if (isTicked) CustomMaterialTheme.colorScheme.primary else Color.Transparent)
+                    .clip(RoundedCornerShape(1000.dp))
+                    .size(42.dp)
+                    .background(if (isTicked) CustomMaterialTheme.colorScheme.primary else Color.Transparent)
             ) {
                 Icon(
                     painter = painterResource(R.drawable.checklist),
@@ -506,6 +537,7 @@ fun IsSelectingBottomAppBar(
 	groupedMedia: MutableState<List<MediaStoreData>>
 ) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
 	val selectedItemsWithoutSection by remember { derivedStateOf {
 		selectedItemsList.filter {
@@ -528,23 +560,25 @@ fun IsSelectingBottomAppBar(
 	        	text = "Share", 
 	        	iconResId = R.drawable.share,
 	        	action = {
-		            val hasVideos = selectedItemsWithoutSection.any {
-		                it.type == MediaType.Video
-		            }
+                    coroutineScope.launch {
+                        val hasVideos = selectedItemsWithoutSection.any {
+                            it.type == MediaType.Video
+                        }
 
-		            val intent = Intent().apply {
-		                action = Intent.ACTION_SEND_MULTIPLE
-		                type = if (hasVideos) "video/*" else "images/*"
-		            }
+                        val intent = Intent().apply {
+                            action = Intent.ACTION_SEND_MULTIPLE
+                            type = if (hasVideos) "video/*" else "images/*"
+                        }
 
-		            val fileUris = ArrayList<Uri>()
-		            selectedItemsWithoutSection.forEach {
-		                fileUris.add(it.uri)
-		            }
+                        val fileUris = ArrayList<Uri>()
+                        selectedItemsWithoutSection.forEach {
+                            fileUris.add(it.uri)
+                        }
 
-		            intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, fileUris)
+                        intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, fileUris)
 
-		            context.startActivity(Intent.createChooser(intent, null))
+                        context.startActivity(Intent.createChooser(intent, null))
+                    }
 	        	}
         	)
 
@@ -556,28 +590,30 @@ fun IsSelectingBottomAppBar(
 					cornerRadius = 16.dp,
 					dialogComposable = {
 					    ConfirmationDialog(showDialog = showRestoreDialog, dialogTitle = "Restore these items?", confirmButtonLabel = "Restore") {
-					        val newList = groupedMedia.value.toMutableList()
-					        selectedItemsWithoutSection.forEach { item ->
-					            operateOnImage(
-					                item.absolutePath,
-					                item.id,
-					                ImageFunctions.UnTrashImage,
-					                context
-					            )
-					            newList.remove(item)
-					        }
-							groupedMedia.value.filter {
-								it.type == MediaType.Section
-							}.forEach {
-								val filtered = newList.filter { new ->
-									new.getLastModifiedDay() == it.getLastModifiedDay()
-								}
+                            coroutineScope.launch {
+                                val newList = groupedMedia.value.toMutableList()
+                                selectedItemsWithoutSection.forEach { item ->
+                                    operateOnImage(
+                                        item.absolutePath,
+                                        item.id,
+                                        ImageFunctions.UnTrashImage,
+                                        context
+                                    )
+                                    newList.remove(item)
+                                }
+                                groupedMedia.value.filter {
+                                    it.type == MediaType.Section
+                                }.forEach {
+                                    val filtered = newList.filter { new ->
+                                        new.getLastModifiedDay() == it.getLastModifiedDay()
+                                    }
 
-								if (filtered.size == 1) newList.remove(it)
-							}
-					        
-					        selectedItemsList.clear()
-					        groupedMedia.value = newList
+                                    if (filtered.size == 1) newList.remove(it)
+                                }
+
+                                selectedItemsList.clear()
+                                groupedMedia.value = newList
+                            }
 					    }
 					},
 					action = {
@@ -592,29 +628,31 @@ fun IsSelectingBottomAppBar(
 		        	cornerRadius = 16.dp,
 		        	dialogComposable = {
 					    ConfirmationDialog(showDialog = showPermaDeleteDialog, dialogTitle = "Permanently delete these items?", confirmButtonLabel = "Delete") {
-					        val newList = groupedMedia.value.toMutableList()
-					        selectedItemsWithoutSection.forEach { item ->
-					            operateOnImage(
-					                item.absolutePath,
-					                item.id,
-					                ImageFunctions.PermaDeleteImage,
-					                context
-					            )
-					            newList.remove(item)
-					        }
+                            coroutineScope.launch {
+                                val newList = groupedMedia.value.toMutableList()
+                                selectedItemsWithoutSection.forEach { item ->
+                                    operateOnImage(
+                                        item.absolutePath,
+                                        item.id,
+                                        ImageFunctions.PermaDeleteImage,
+                                        context
+                                    )
+                                    newList.remove(item)
+                                }
 
-							groupedMedia.value.filter {
-								it.type == MediaType.Section
-							}.forEach {
-								val filtered = newList.filter { new ->
-									new.getLastModifiedDay() == it.getLastModifiedDay()
-								}
+                                groupedMedia.value.filter {
+                                    it.type == MediaType.Section
+                                }.forEach {
+                                    val filtered = newList.filter { new ->
+                                        new.getLastModifiedDay() == it.getLastModifiedDay()
+                                    }
 
-								if (filtered.size == 1) newList.remove(it)
-							}
-					        
-					        selectedItemsList.clear()
-					        groupedMedia.value = newList
+                                    if (filtered.size == 1) newList.remove(it)
+                                }
+
+                                selectedItemsList.clear()
+                                groupedMedia.value = newList
+                            }
 					    }
 		        	},
 		        	action = {
@@ -633,29 +671,31 @@ fun IsSelectingBottomAppBar(
 		        	cornerRadius = 16.dp,
 		        	dialogComposable = {
 					    ConfirmationDialog(showDialog = showDeleteDialog, dialogTitle = "Move selected items to Trash Bin?", confirmButtonLabel = "Delete") {
-					        val newList = groupedMedia.value.toMutableList()
-					        selectedItemsWithoutSection.forEach { item ->
-					            operateOnImage(
-					                item.absolutePath,
-					                item.id,
-					                ImageFunctions.TrashImage,
-					                context
-					            )
-					            newList.remove(item)
-					        }
+                            coroutineScope.launch {
+                                val newList = groupedMedia.value.toMutableList()
+                                selectedItemsWithoutSection.forEach { item ->
+                                    operateOnImage(
+                                        item.absolutePath,
+                                        item.id,
+                                        ImageFunctions.TrashImage,
+                                        context
+                                    )
+                                    newList.remove(item)
+                                }
 
-							groupedMedia.value.filter {
-								it.type == MediaType.Section
-							}.forEach {
-								val filtered = newList.filter { new ->
-									new.getLastModifiedDay() == it.getLastModifiedDay()
-								}
+                                groupedMedia.value.filter {
+                                    it.type == MediaType.Section
+                                }.forEach {
+                                    val filtered = newList.filter { new ->
+                                        new.getLastModifiedDay() == it.getLastModifiedDay()
+                                    }
 
-								if (filtered.size == 1) newList.remove(it)
-							}
-					        
-					        selectedItemsList.clear()
-					        groupedMedia.value = newList
+                                    if (filtered.size == 1) newList.remove(it)
+                                }
+
+                                selectedItemsList.clear()
+                                groupedMedia.value = newList
+                            }
 					    }
 		        	},
 		        	action = {
@@ -756,10 +796,36 @@ fun SingleAlbumViewBottomBar(
 fun TrashedPhotoGridViewTopBar(
     navController: NavHostController,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
+    groupedMedia: MutableState<List<MediaStoreData>>
 ) {
+    val showDialog = remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+
+    ConfirmationDialog(
+        showDialog = showDialog,
+        dialogTitle = "Empty trash bin?",
+        dialogBody = "Are you sure you want to delete all items in this trash bin?",
+        confirmButtonLabel = "Empty Out"
+    ) {
+        coroutineScope.launch {
+            groupedMedia.value.forEach { item ->
+                operateOnImage(
+                    item.absolutePath,
+                    item.id,
+                    ImageFunctions.PermaDeleteImage,
+                    context
+                )
+            }
+
+            groupedMedia.value = emptyList()
+        }
+    }
+
 	val show by remember { derivedStateOf {
 		selectedItemsList.size > 0
 	}}
+
     AnimatedContent(
         targetState = show,
         transitionSpec = {
@@ -777,7 +843,7 @@ fun TrashedPhotoGridViewTopBar(
                         onClick = { navController.popBackStack() },
                     ) {
                         Icon(
-                            painter = painterResource(id = com.kaii.photos.R.drawable.back_arrow),
+                            painter = painterResource(id = R.drawable.back_arrow),
                             contentDescription = "Go back to previous page",
                             tint = CustomMaterialTheme.colorScheme.onBackground,
                             modifier = Modifier
@@ -798,7 +864,9 @@ fun TrashedPhotoGridViewTopBar(
                 },
                 actions = {
                     IconButton(
-                        onClick = { /* TODO */ },
+                        onClick = {
+                            showDialog.value = true
+                        },
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.trash),
@@ -824,34 +892,6 @@ fun TrashedPhotoGridViewTopBar(
             )
         } else {
             IsSelectingTopBar(selectedItemsList = selectedItemsList)
-        }
-    }
-}
-
-@Composable
-fun TrashedPhotoViewBottomBar(
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
-    groupedMedia: MutableState<List<MediaStoreData>>
-) {
-	val show by remember { derivedStateOf {
-		selectedItemsList.size > 0
-	}}
-    AnimatedContent(
-        targetState = show,
-        transitionSpec = {
-		    getAppBarContentTransitionBottomToTop(show)           
-        },
-        label = "TrashedPhotoGridViewBottomBarAnimatedContent",
-        modifier = Modifier
-            .fillMaxWidth(1f)
-    ) { target ->
-        if (target) {
-            IsSelectingBottomAppBar(selectedItemsList = selectedItemsList, groupedMedia = groupedMedia, isTrashBin = true)
-        } else {
-        	Row	(
-        		modifier = Modifier
-        			.fillMaxWidth(1f)
-        	) {}
         }
     }
 }

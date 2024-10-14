@@ -1,49 +1,39 @@
 package com.kaii.photos.compose.grids
 
-import android.content.res.Configuration
-import android.graphics.drawable.Drawable
-import android.os.Handler
-import android.os.Looper
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
@@ -54,38 +44,49 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import com.bumptech.glide.RequestBuilder
-import com.bumptech.glide.integration.compose.rememberGlidePreloadingData
 import com.kaii.photos.R
-import com.kaii.photos.MainActivity
-import com.kaii.photos.compose.grids.PhotoGrid
 import com.kaii.photos.compose.CustomMaterialTheme
-import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.ImageFunctions
+import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.mediastore.signature
-import com.kaii.photos.models.gallery_model.groupPhotosBy
 import com.kaii.photos.models.gallery_model.GalleryViewModel
 import com.kaii.photos.models.gallery_model.GalleryViewModelFactory
-import kotlinx.coroutines.delay
+import com.kaii.photos.models.gallery_model.groupPhotosBy
+import com.kaii.photos.models.search_page.SearchViewModel
+import com.kaii.photos.models.search_page.SearchViewModelFactory
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 
 @Composable
 fun SearchPage(navController: NavHostController, selectedItemsList: SnapshotStateList<MediaStoreData>) {
+	val searchViewModel: SearchViewModel = viewModel(
+		factory = SearchViewModelFactory(LocalContext.current, "", MediaItemSortMode.DateTaken)
+	)
+   	val mediaStoreDataHolder = searchViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+
+	// val mediaStoreDataHolder = searchViewModel.mediaStoreData.collectAsState(initial = emptyList())
+	var originalGroupedMedia = remember { mutableStateOf(mediaStoreDataHolder.value) }
+
+	val groupedMedia = remember { mutableStateOf(originalGroupedMedia.value) }
+
     Column (
         modifier = Modifier
             .fillMaxSize(1f)
-            .padding(8.dp)
+            .background(CustomMaterialTheme.colorScheme.background)
     ) {
         var searchedForText by remember { mutableStateOf("") }
         var searchNow by remember { mutableStateOf(false) }
-        var showLoadingSpinner by remember { mutableStateOf(true) }
+        val showLoadingSpinner by remember { derivedStateOf {
+        	groupedMedia.value.size == 0
+        }}
         
         Column (
         	modifier = Modifier
         		.fillMaxWidth(1f)
-        		.fillMaxHeight(0.1f),
+        		.fillMaxHeight(0.1f)
+				.padding(8.dp, 0.dp)
+				.background(CustomMaterialTheme.colorScheme.background),
         	verticalArrangement = Arrangement.Center,
         	horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -104,18 +105,18 @@ fun SearchPage(navController: NavHostController, selectedItemsList: SnapshotStat
 	            },
 	            prefix = {
 	                Icon(
-	                    painter = painterResource(id = com.kaii.photos.R.drawable.search),
+	                    painter = painterResource(id = R.drawable.search),
 	                    contentDescription = "Search Icon"
 	                )
 	            },
 	            colors = TextFieldDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    cursorColor = MaterialTheme.colorScheme.primary,
-                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                    focusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                    unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                    focusedContainerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
+                    unfocusedContainerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
+                    cursorColor = CustomMaterialTheme.colorScheme.primary,
+                    focusedTextColor = CustomMaterialTheme.colorScheme.onSurface,
+                    unfocusedTextColor = CustomMaterialTheme.colorScheme.onSurface,
+                    focusedPlaceholderColor = CustomMaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                    unfocusedPlaceholderColor = CustomMaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
                     unfocusedIndicatorColor = Color.Transparent,
                     focusedIndicatorColor = Color.Transparent
                 ),
@@ -128,7 +129,6 @@ fun SearchPage(navController: NavHostController, selectedItemsList: SnapshotStat
 					onSearch = {
 						if (!showLoadingSpinner) {
 							searchNow = true
-							showLoadingSpinner = true
 						}
 					}
 				),
@@ -140,29 +140,20 @@ fun SearchPage(navController: NavHostController, selectedItemsList: SnapshotStat
 
         Spacer (modifier = Modifier.height(8.dp))
 
-		val searchViewModel: GalleryViewModel = viewModel(
-			factory = GalleryViewModelFactory(LocalContext.current, "", MediaItemSortMode.DateTaken)
-		)
-       	val mediaStoreDataHolder = searchViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
-		
-		var originalGroupedMedia by remember { mutableStateOf(mediaStoreDataHolder.value) }
-
-		var groupedMedia = remember { mutableStateOf(originalGroupedMedia) }
-
 		LaunchedEffect(key1 = mediaStoreDataHolder.value) {
-			originalGroupedMedia = mediaStoreDataHolder.value
+			originalGroupedMedia.value = mediaStoreDataHolder.value
 
 			if (searchedForText == "") {
-				groupedMedia.value = originalGroupedMedia
+				groupedMedia.value = originalGroupedMedia.value
 			}
 		}
   	        
         LaunchedEffect(key1 = searchNow) {
         	if(!searchNow) return@LaunchedEffect
 
-			delay(500)
+			groupedMedia.value = emptyList()
         	
-        	val groupedMediaLocal = originalGroupedMedia.filter {
+        	val groupedMediaLocal = originalGroupedMedia.value.filter {
         		val isMedia = it.type != MediaType.Section
         		val matchesFilter = it.displayName?.contains(searchedForText.trim(), true) == true
 				isMedia && matchesFilter
@@ -172,16 +163,49 @@ fun SearchPage(navController: NavHostController, selectedItemsList: SnapshotStat
 			searchNow = false
         }
 
-        val gridState = rememberLazyGridState()
-	        	
-		PhotoGrid(
-			groupedMedia = groupedMedia,
-			navController = navController,
-			operation = ImageFunctions.LoadNormalImage, 
-			path = null,
-			selectedItemsList = selectedItemsList,
-			emptyText = "Search for some photos!",
-			emptyIconResId = R.drawable.search
-		)
+	    Box (
+	    	modifier = Modifier
+	    		.fillMaxHeight(1f)	
+	    ) {
+			PhotoGrid(
+				groupedMedia = groupedMedia,
+				navController = navController,
+				operation = ImageFunctions.LoadNormalImage, 
+				path = null,
+				selectedItemsList = selectedItemsList,
+				emptyText = if (searchedForText != "") "Unable to find anything with that name" else "Search for some photos!",
+				emptyIconResId = R.drawable.search,
+				modifier = Modifier
+					.align(Alignment.Center)
+			)
+
+			if (showLoadingSpinner) {
+				Row (
+					modifier = Modifier
+						.fillMaxWidth(1f)
+						.height(48.dp)
+						.align(Alignment.TopCenter),
+					verticalAlignment = Alignment.CenterVertically,
+					horizontalArrangement = Arrangement.Center
+				) {
+					Row (
+						modifier = Modifier
+							.size(40.dp)
+							.clip(RoundedCornerShape(1000.dp))
+							.background(CustomMaterialTheme.colorScheme.surfaceContainer),
+						verticalAlignment = Alignment.CenterVertically,
+						horizontalArrangement = Arrangement.Center
+					) {
+						CircularProgressIndicator(
+							modifier = Modifier
+								.size(22.dp),
+							color = CustomMaterialTheme.colorScheme.primary,
+							strokeWidth = 4.dp,
+							strokeCap = StrokeCap.Round
+						)
+					}
+				}
+			}		
+	    }
     }
 }

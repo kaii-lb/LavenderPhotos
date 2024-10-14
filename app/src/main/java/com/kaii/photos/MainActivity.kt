@@ -418,8 +418,7 @@ class MainActivity : ComponentActivity() {
     ) {	
 		val galleryViewModel: GalleryViewModel = viewModel(
 			factory = GalleryViewModelFactory(LocalContext.current, stringResource(id = R.string.default_homepage_photogrid_dir), MediaItemSortMode.DateTaken)
-		)
-	//	val mediaStoreData = galleryViewModel.mediaStoreData.collectAsState()
+		)	
 
 		val mediaStoreData = galleryViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 

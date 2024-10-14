@@ -31,7 +31,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -53,7 +52,6 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
@@ -89,17 +87,16 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.kaii.photos.MainActivity.Companion.startForResult
 import com.kaii.photos.R
-import com.kaii.photos.compose.single_photo.sortOutMediaMods
 import com.kaii.photos.datastore
 import com.kaii.photos.datastore.getUsername
 import com.kaii.photos.datastore.setUsername
+import com.kaii.photos.helpers.ImageFunctions
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.brightenColor
 import com.kaii.photos.helpers.darkenColor
 import com.kaii.photos.helpers.getExifDataForMedia
-import com.kaii.photos.helpers.ImageFunctions
 import com.kaii.photos.helpers.operateOnImage
 import com.kaii.photos.mediastore.MediaStoreData
 import kotlinx.coroutines.delay
@@ -460,7 +457,8 @@ fun DialogInfoText(firstText: String, secondText: String, iconResId: Int) {
 			.height(36.dp)
 			.padding(10.dp, 4.dp)
 			.clickable {
-				val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+				val clipboardManager =
+					context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
 				val clipData = ClipData.newPlainText(firstText, secondText)
 				clipboardManager.setPrimaryClip(clipData)
 			},
@@ -927,6 +925,7 @@ fun SinglePhotoInfoDialog(
 fun ConfirmationDialog(
 	showDialog: MutableState<Boolean>,
 	dialogTitle: String,
+	dialogBody: String? = null,
 	confirmButtonLabel: String,
 	action: () -> Unit
 ) {
@@ -959,6 +958,14 @@ fun ConfirmationDialog(
 					text = dialogTitle,
 					fontSize = TextUnit(16f, TextUnitType.Sp)
 				)
+			},
+			text = {
+				if (dialogBody != null) {
+					Text(
+						text = dialogBody,
+						fontSize = TextUnit(14f, TextUnitType.Sp)
+					)
+				}
 			},
 			dismissButton = {
 				Button(

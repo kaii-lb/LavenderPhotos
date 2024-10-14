@@ -1,6 +1,5 @@
 package com.kaii.photos.compose.single_photo
 
-import android.graphics.drawable.Drawable
 import android.view.Window
 import android.view.WindowInsetsController
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -12,22 +11,21 @@ import androidx.compose.foundation.gestures.calculateRotation
 import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -36,11 +34,9 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowInsetsCompat
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavHostController
-import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
-import com.bumptech.glide.integration.compose.rememberGlidePreloadingData
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.kaii.photos.R
 import com.kaii.photos.mediastore.MediaStoreData
@@ -57,6 +53,7 @@ import kotlin.math.sin
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun HorizontalImageList(
+    navController: NavHostController,
 	currentMediaItem: MediaStoreData,
     groupedMedia: MutableState<List<MediaStoreData>>,
     state: PagerState,
@@ -104,10 +101,12 @@ fun HorizontalImageList(
         val path = if (isHidden) mediaStoreItem.uri.path else mediaStoreItem.uri
 
         if (mediaStoreItem.type == MediaType.Video) {
+        	val showVideoPlayerControls = remember { mutableStateOf(true) }
 	        VideoPlayer(
 	            item = mediaStoreItem,
-	            visible = appBarsVisible.value,
+	            visible = showVideoPlayerControls.value,
 	            shouldPlay = shouldPlay,
+                navController = navController,
 	            modifier = Modifier
 	            	.fillMaxSize(1f)
 	                .mediaModifier(
@@ -117,7 +116,9 @@ fun HorizontalImageList(
 	                    systemBarsShown,
 	                    window,
 	                    windowInsetsController,
-	                    appBarsVisible
+	                    appBarsVisible,
+	                    mediaStoreItem,
+	                    showVideoPlayerControls
 	                )
 	        )
         } else {
@@ -159,7 +160,9 @@ private fun Modifier.mediaModifier(
     systemBarsShown: MutableState<Boolean>,
     window: Window,
     windowInsetsController: WindowInsetsController,
-    appBarAlpha: MutableState<Boolean>
+    appBarAlpha: MutableState<Boolean>,
+    item: MediaStoreData? = null,
+    showVideoPlayerController: MutableState<Boolean>? = null
 ) = this.then(
     Modifier
         .combinedClickable(
@@ -184,15 +187,19 @@ private fun Modifier.mediaModifier(
             },
 
             onDoubleClick = {
-                if (scale.value == 1f) {
-                    scale.value = 2f
-                    rotation.value = 0f
-                    offset.value = Offset.Zero
-                } else {
-                    scale.value = 1f
-                    rotation.value = 0f
-                    offset.value = Offset.Zero
-                }
+            	if (item?.type == MediaType.Video && showVideoPlayerController != null) {
+            		showVideoPlayerController.value = !showVideoPlayerController.value
+            	} else {
+	                if (scale.value == 1f) {
+	                    scale.value = 2f
+	                    rotation.value = 0f
+	                    offset.value = Offset.Zero
+	                } else {
+	                    scale.value = 1f
+	                    rotation.value = 0f
+	                    offset.value = Offset.Zero
+	                }
+            	}
             },
         )
         .graphicsLayer(

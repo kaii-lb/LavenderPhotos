@@ -1,7 +1,6 @@
 package com.kaii.photos.compose.grids
 
 import android.content.res.Configuration
-import android.graphics.drawable.Drawable
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -14,16 +13,13 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.animation.expandHorizontally
-import androidx.compose.animation.shrinkHorizontally
-import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -57,20 +53,18 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
@@ -78,6 +72,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -85,13 +80,10 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
-import com.bumptech.glide.integration.compose.rememberGlidePreloadingData
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.kaii.photos.MainActivity
 import com.kaii.photos.R
@@ -99,7 +91,6 @@ import com.kaii.photos.compose.CustomMaterialTheme
 import com.kaii.photos.compose.FolderDoesntExist
 import com.kaii.photos.compose.FolderIsEmpty
 import com.kaii.photos.helpers.ImageFunctions
-import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.checkHasFiles
 import com.kaii.photos.helpers.rememberVibratorManager
@@ -108,22 +99,15 @@ import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.signature
-import com.kaii.photos.models.gallery_model.GalleryViewModel
-import com.kaii.photos.models.gallery_model.GalleryViewModelFactory
 import com.kaii.photos.models.main_activity.MainDataSharingModel
 import kotlinx.coroutines.launch
-import kotlin.io.path.Path
-import kotlin.math.roundToInt
-import kotlin.math.ceil
 import java.time.Instant
-import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import kotlin.io.path.Path
+import kotlin.math.roundToInt
 
-private const val THUMBNAIL_DIMENSION = 50f
 private const val TAG = "PHOTO_GRID_VIEW"
-
-private val THUMBNAIL_SIZE = Size(THUMBNAIL_DIMENSION, THUMBNAIL_DIMENSION)
 
 @Composable
 fun PhotoGrid(
@@ -135,10 +119,11 @@ fun PhotoGrid(
 	emptyText: String = "Empty Folder",
 	emptyIconResId: Int = R.drawable.error,
 	prefix: String = "",
-	shouldPadUp: Boolean = false
+	shouldPadUp: Boolean = false,
+	modifier: Modifier = Modifier
 ) {
 	val hasFiles = if (path == null) {
-		groupedMedia.value.size > 0
+		groupedMedia.value.isNotEmpty()
 	} else {
 		Path("/storage/emulated/0/$path").checkHasFiles()
 	}
@@ -149,14 +134,20 @@ fun PhotoGrid(
 	}
 	 
 	if (hasFiles) {
-		DeviceMedia(
-			groupedMedia,
-			navController,
-			operation,
-			selectedItemsList,
-			prefix,
-			shouldPadUp
-		)
+		Row (
+			modifier = Modifier
+				.fillMaxSize(1f)
+				.then(modifier)	
+		) {		
+			DeviceMedia(
+				groupedMedia,
+				navController,
+				operation,
+				selectedItemsList,
+				prefix,
+				shouldPadUp
+			)
+		}
 	} else {
 		FolderIsEmpty(emptyText, emptyIconResId)
 	}
@@ -182,6 +173,15 @@ fun DeviceMedia(
 	) {
 		selectedItemsList.clear()
 	}
+
+	if (groupedMedia.value.isNotEmpty()) {
+		val handler = Handler(Looper.getMainLooper())
+		val runnable = Runnable {
+			showLoadingSpinner = false
+		}
+		handler.removeCallbacks(runnable)
+		handler.postDelayed(runnable, 500)
+	}
 	
 	Box (
 		modifier = Modifier
@@ -194,7 +194,7 @@ fun DeviceMedia(
 				if (selectedItemsList.size > 0 && shouldPadUp) 80.dp else 0.dp
 			)
 	) {
-	    LazyVerticalGrid(
+		LazyVerticalGrid(
 	        columns = GridCells.Fixed(
 				if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT) {
 					3
@@ -221,8 +221,8 @@ fun DeviceMedia(
 	                }
 	            }
 	        ) { i ->
-	        	if (groupedMedia.value.size == 0) return@items
-	            val mediaStoreItem = groupedMedia.value[i]
+	        	if (groupedMedia.value.isEmpty()) return@items
+				val mediaStoreItem = groupedMedia.value[i]
 
 				Row (
 					modifier = Modifier
@@ -241,15 +241,6 @@ fun DeviceMedia(
 						selectedItemsList
 					)
 				}
-
-	            if (i >= 0) {
-					val handler = Handler(Looper.getMainLooper())
-					val runnable = Runnable {
-		                showLoadingSpinner = false	
-		            }
-		            handler.removeCallbacks(runnable)
-		            handler.postDelayed(runnable, 500)
-	            }
 	        }
 	    }
 	    
@@ -311,21 +302,21 @@ fun DeviceMedia(
 				}
 			}
 
+
+			val listSize by remember { derivedStateOf {
+				groupedMedia.value.size - 1
+			}}
+			val totalLeftOverItems by remember { derivedStateOf{
+				(listSize - gridState.layoutInfo.visibleItemsInfo.size).toFloat()
+			}}
 			AnimatedVisibility (
-				visible = showHandle && !showLoadingSpinner,
+				visible = showHandle && !showLoadingSpinner && totalLeftOverItems > 50f,
 				modifier = Modifier.fillMaxHeight(1f),
 				enter =
 					slideInHorizontally { width -> width },
 				exit =
 					slideOutHorizontally { width -> width }
 			) {
-				val listSize by remember { derivedStateOf {
-					groupedMedia.value.size - 1
-				}}
-				val totalLeftOverItems by remember { derivedStateOf{
-					(listSize - gridState.layoutInfo.visibleItemsInfo.size).toFloat()
-				}}
-
 				val visibleItemIndex = remember { derivedStateOf { gridState.firstVisibleItemIndex } }
 				val percentScrolled = (visibleItemIndex.value / totalLeftOverItems)
 
@@ -334,10 +325,11 @@ fun DeviceMedia(
 					interactionSource = interactionSource,
 					onValueChange = {
 						coroutineScope.launch {
-							if (!gridState.isScrollInProgress)
+							if (!gridState.isScrollInProgress) {
 								gridState.scrollToItem(
 									(it * groupedMedia.value.size).roundToInt()
 								)
+							}
 						}
 					},
 					valueRange = 0f..1f,
@@ -560,8 +552,8 @@ fun MediaStoreItem(
 									}								
 								}
 
-								val section = sectionItems.filter { it.type == MediaType.Section }.first()
-								
+								val section = sectionItems.first { it.type == MediaType.Section }
+
 								if (isSelected) {
 									if (selectedItemsList.contains(section)) selectedItemsList.remove(section)
 									selectedItemsList.remove(item)
@@ -617,7 +609,7 @@ fun MediaStoreItem(
 							}
 						}
 						println("SECTION ITEMS $sectionItems")
-						val section = sectionItems.filter { it.type == MediaType.Section }.first()
+						val section = sectionItems.first { it.type == MediaType.Section }
 
 						vibratorManager.vibrateLong()
 						if (isSelected) {

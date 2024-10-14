@@ -1,44 +1,27 @@
 package com.kaii.photos.compose.grids
 
-import android.annotation.SuppressLint
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomSheetScaffold
-import androidx.compose.material3.BottomSheetScaffoldState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.ModalBottomSheetProperties
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetValue
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberBottomSheetScaffoldState
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -46,7 +29,6 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -54,25 +36,14 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.TextUnit
-import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.Dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.kaii.photos.MainActivity
 import com.kaii.photos.R
@@ -85,17 +56,15 @@ import com.kaii.photos.compose.SingleAlbumViewTopBar
 import com.kaii.photos.datastore
 import com.kaii.photos.datastore.editInAlbumsList
 import com.kaii.photos.datastore.removeFromAlbumsList
+import com.kaii.photos.helpers.ImageFunctions
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.brightenColor
-import com.kaii.photos.helpers.ImageFunctions
 import com.kaii.photos.helpers.operateOnImage
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.models.gallery_model.GalleryViewModel
 import com.kaii.photos.models.gallery_model.GalleryViewModelFactory
-import com.kaii.photos.models.gallery_model.groupPhotosBy
-import com.kaii.photos.compose.getAppBarContentTransitionBottomToTop
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -112,11 +81,10 @@ fun SingleAlbumView(
 	val galleryViewModel: GalleryViewModel = viewModel(
 		factory = GalleryViewModelFactory(LocalContext.current, albumDir, MediaItemSortMode.DateTaken)
 	)
-//	val mediaStoreData = galleryViewModel.mediaStoreData.collectAsState()
 
 	val mediaStoreData = galleryViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
-	var groupedMedia = remember { mutableStateOf(mediaStoreData.value) }
+	val groupedMedia = remember { mutableStateOf(mediaStoreData.value) }
 	mainViewModel.setGroupedMedia(groupedMedia.value)
 
 	LaunchedEffect(mediaStoreData.value) {
@@ -140,7 +108,6 @@ fun SingleAlbumView(
         } else {
             sheetState.hide()
         }
-        println("SHEET STATE $showBottomSheet")
     }
 
     val scaffoldState = rememberBottomSheetScaffoldState(

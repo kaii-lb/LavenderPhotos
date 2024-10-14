@@ -1,7 +1,9 @@
 package com.kaii.photos.compose.single_photo
 
+import android.content.res.Configuration
 import android.net.Uri
 import android.view.ViewGroup
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandIn
@@ -37,11 +39,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -65,6 +69,7 @@ import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.ui.PlayerView
+import androidx.navigation.NavHostController
 import com.kaii.photos.R
 import com.kaii.photos.compose.CustomMaterialTheme
 import com.kaii.photos.mediastore.MediaStoreData
@@ -96,7 +101,7 @@ fun VideoPlayerControls(
     ) {
         Row (
             modifier = Modifier
-                .height(172.dp)
+                .height(if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE) 48.dp else 172.dp)
                 .align(Alignment.BottomCenter),
             verticalAlignment = Alignment.Top
         ) {
@@ -285,21 +290,48 @@ fun VideoPlayer(
     item: MediaStoreData,
     visible: Boolean,
     shouldPlay: Boolean,
+    navController: NavHostController,
     modifier: Modifier
 ) {
-    val isPlaying = remember { mutableStateOf(false) }
-    val isMuted = remember { mutableStateOf(false) }
-    val currentVideoPosition = remember { mutableFloatStateOf(0f) }
-	val duration = remember { mutableFloatStateOf(0f) }
+    val isPlaying = rememberSaveable { mutableStateOf(false) }
+    val isMuted = rememberSaveable { mutableStateOf(false) }
+    /** In Seconds */
+    val currentVideoPosition = rememberSaveable { mutableFloatStateOf(0f) }
+	val duration = rememberSaveable { mutableFloatStateOf(0f) }
 
     val exoPlayer = rememberExoPlayerWithLifeCycle(item.uri, isPlaying, duration, currentVideoPosition)
     val playerView = rememberPlayerView(exoPlayer)
+
+	var lastItem by rememberSaveable { mutableStateOf(item) }
+
+    LaunchedEffect(item) {
+    	if (item != lastItem) {
+		    isPlaying.value = false
+		    currentVideoPosition.floatValue = 0f
+		    duration.floatValue = 0f
+
+		    lastItem = item
+    	}
+    }
+
+    BackHandler {
+        isPlaying.value = false
+        currentVideoPosition.floatValue = 0f
+        duration.floatValue = 0f
+
+        navController.popBackStack()
+    }
+
+    LaunchedEffect(key1 = LocalConfiguration.current) {
+        exoPlayer.seekTo((currentVideoPosition.floatValue * 1000).toLong())
+        exoPlayer.volume = if (isMuted.value) 0f else 1f
+    }
     
     LaunchedEffect(key1 = isPlaying.value) {
         while(isPlaying.value) {
         	currentVideoPosition.floatValue = (exoPlayer.currentPosition / 1000f).roundToInt().toFloat()
 
-			if (currentVideoPosition.floatValue == (exoPlayer.duration / 1000f).roundToInt().toFloat()) {
+            if (currentVideoPosition.floatValue == (exoPlayer.duration / 1000f).roundToInt().toFloat()) {
             	exoPlayer.pause()
                 exoPlayer.seekTo(0L)
                 currentVideoPosition.floatValue = 0f
@@ -356,8 +388,8 @@ fun VideoPlayer(
 	            )
 	        ),
 	        modifier = Modifier
-	           	.fillMaxSize(1f)
-	            .align(Alignment.Center)
+                .fillMaxSize(1f)
+                .align(Alignment.Center)
 	    ) {
 	        VideoPlayerControls(
 	        	exoPlayer = exoPlayer,

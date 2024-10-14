@@ -180,6 +180,7 @@ fun SingleHiddenPhotoView(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             HorizontalImageList(
+                navController,
             	currentMediaItem,
                 groupedMedia,
                 state,
