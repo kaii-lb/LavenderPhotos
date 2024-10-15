@@ -423,11 +423,9 @@ class MainActivity : ComponentActivity() {
 		val mediaStoreData = galleryViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
 		var groupedMedia = remember { mutableStateOf(mediaStoreData.value) }
-		mainViewModel.setGroupedMedia(groupedMedia.value)
 
 		LaunchedEffect(mediaStoreData.value) {
 			groupedMedia.value = mediaStoreData.value
-			mainViewModel.setGroupedMedia(mediaStoreData.value)
 		}
     
         Scaffold(
@@ -473,10 +471,9 @@ class MainActivity : ComponentActivity() {
                 		},
                         label = "MainAnimatedContentView"
                     ) { stateValue ->
-                    	selectedItemsList.clear()
-                    	
 	                    when (stateValue) {
 	                        MainScreenViewType.PhotosGridView -> {
+	                        	selectedItemsList.clear()
 	                        	PhotoGrid(
 	                        		groupedMedia = groupedMedia,
 	                        		navController = navController,
@@ -497,7 +494,10 @@ class MainActivity : ComponentActivity() {
                        			)
 	                        	AlbumsGridView(albumsViewModel, navController, listOfDirs)	
 	                        } 
-   	                        MainScreenViewType.SearchPage -> SearchPage(navController, selectedItemsList)
+   	                        MainScreenViewType.SearchPage -> {
+   	                        	// selectedItemsList.clear() // how does this cause infinite insane and completely unhinged recomposition???
+   	                        	SearchPage(navController, selectedItemsList)
+                        	}
 	                    }
                 	}
                 }
@@ -547,7 +547,7 @@ class MainActivity : ComponentActivity() {
             label = "MainBottomBarAnimatedContentView"
         ) { state ->
             if (!state) {
-                MainAppBottomBar(currentView)
+                MainAppBottomBar(currentView, selectedItemsList)
             } else {
                 IsSelectingBottomAppBar(selectedItemsList = selectedItemsList, groupedMedia = groupedMedia)
             }

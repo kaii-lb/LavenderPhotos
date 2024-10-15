@@ -293,7 +293,7 @@ fun MainAppTopBar(showDialog: MutableState<Boolean>) {
 }
 
 @Composable
-fun MainAppBottomBar(currentView: MutableState<MainScreenViewType>) {
+fun MainAppBottomBar(currentView: MutableState<MainScreenViewType>, selectedItemsList: SnapshotStateList<MediaStoreData>) {
     BottomAppBar(
         containerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
         contentColor = CustomMaterialTheme.colorScheme.onPrimaryContainer,
@@ -384,6 +384,7 @@ fun MainAppBottomBar(currentView: MutableState<MainScreenViewType>) {
                 selected = currentView.value == MainScreenViewType.SearchPage,
                 action = { 
 	                if (currentView.value != MainScreenViewType.SearchPage) {
+	                	selectedItemsList.clear()
 	                    currentView.value = MainScreenViewType.SearchPage
 	                }
                 },

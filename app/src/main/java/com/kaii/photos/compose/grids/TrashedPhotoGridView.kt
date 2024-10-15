@@ -46,8 +46,6 @@ fun TrashedPhotoGridView(
 	navController: NavHostController,
 	selectedItemsList: SnapshotStateList<MediaStoreData>,
 ) {
-    val mainViewModel = MainActivity.mainViewModel
-
     val galleryViewModel: GalleryViewModel = viewModel(
 		factory = GalleryViewModelFactory(
             LocalContext.current,
@@ -60,11 +58,9 @@ fun TrashedPhotoGridView(
 	val mediaStoreData = galleryViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
 	val groupedMedia = remember { mutableStateOf(mediaStoreData.value) }
-	mainViewModel.setGroupedMedia(groupedMedia.value)
 
 	LaunchedEffect(mediaStoreData.value) {
 		groupedMedia.value = mediaStoreData.value
-		mainViewModel.setGroupedMedia(mediaStoreData.value)
 	}
 
     BackHandler (

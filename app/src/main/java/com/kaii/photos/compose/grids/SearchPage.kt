@@ -65,7 +65,6 @@ fun SearchPage(navController: NavHostController, selectedItemsList: SnapshotStat
 	)
    	val mediaStoreDataHolder = searchViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
-	// val mediaStoreDataHolder = searchViewModel.mediaStoreData.collectAsState(initial = emptyList())
 	var originalGroupedMedia = remember { mutableStateOf(mediaStoreDataHolder.value) }
 
 	val groupedMedia = remember { mutableStateOf(originalGroupedMedia.value) }

@@ -182,6 +182,10 @@ fun DeviceMedia(
 		handler.removeCallbacks(runnable)
 		handler.postDelayed(runnable, 500)
 	}
+
+	LaunchedEffect(groupedMedia.value) {
+		MainActivity.mainViewModel.setGroupedMedia(groupedMedia.value)	
+	}
 	
 	Box (
 		modifier = Modifier
@@ -480,7 +484,7 @@ fun MediaStoreItem(
 				) {
 					coroutineScope.launch {
 						val datedMedia = groupedMedia.filter {
-							if (prefix == "Deleted On ") { // find a better way to identify when in trash
+							if (prefix == "Trashed On ") { // find a better way to identify when in trash
 								it.getLastModifiedDay() == item.getLastModifiedDay() && it.type != MediaType.Section	
 							} else {
 								it.getDateTakenDay() == item.getDateTakenDay() && it.type != MediaType.Section	
@@ -545,7 +549,7 @@ fun MediaStoreItem(
 						coroutineScope.launch {
 							if (selectedItemsList.size > 0) {
 								val sectionItems = groupedMedia.filter {
-									if (prefix == "Deleted On ") {
+									if (prefix == "Trashed On ") {
 										it.getLastModifiedDay() == item.getLastModifiedDay()
 									} else {
 										it.getDateTakenDay() == item.getDateTakenDay()
@@ -596,19 +600,17 @@ fun MediaStoreItem(
 						}
 					},
 
-					onDoubleClick = { /*ignore double clicks*/ },
-
 					onLongClick = {
 						if (selectedItemsList.size > 0) return@combinedClickable
 
 						val sectionItems = groupedMedia.filter {
-							if (prefix == "Deleted On ") {
+							if (prefix == "Trashed On ") {
 								it.getLastModifiedDay() == item.getLastModifiedDay()
 							} else {
 								it.getDateTakenDay() == item.getDateTakenDay()
 							}
 						}
-						println("SECTION ITEMS $sectionItems")
+						
 						val section = sectionItems.first { it.type == MediaType.Section }
 
 						vibratorManager.vibrateLong()
@@ -624,7 +626,7 @@ fun MediaStoreItem(
 								selectedItemsList.add(section)
 							} else {
 								selectedItemsList.remove(section)	
-							}							
+							}
 						}
 					}
 				)

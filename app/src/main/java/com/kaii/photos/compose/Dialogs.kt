@@ -672,7 +672,7 @@ fun MainAppDialog(
 						.padding(12.dp)
 						.wrapContentHeight()
 				) {
-					if (currentView.value != MainScreenViewType.AlbumsGridView) {
+					if (currentView.value != MainScreenViewType.AlbumsGridView && currentView.value != MainScreenViewType.SecureFolder) {
 						DialogClickableItem(
 							text = "Select",
 							iconResId = R.drawable.check_item,
@@ -706,6 +706,14 @@ fun MainAppDialog(
 							}
 							Thread(runnable).start()
 						}
+					}
+
+					if (currentView.value == MainScreenViewType.SecureFolder) {
+						DialogClickableItem(
+							text = "Reset Locked Folder",
+							iconResId = R.drawable.delete,
+							position = RowPosition.Top,
+						) {}						
 					}
 
 					DialogClickableItem(

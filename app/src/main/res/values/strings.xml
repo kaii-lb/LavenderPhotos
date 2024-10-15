@@ -3,5 +3,5 @@
     <string name="default_homepage_photogrid_dir">DCIM</string>
     <string name="locked_folder_help_top">Locked Folder is a secure folder for your images and videos on this device.\nThe secured media is never uploaded anywhere and is always on-device, encrypted with a key unique to your device\'s password or fingerprint data.</string>
     <string name="locked_folder_help_bottom">The secured data cannot be restored if the password was forgotten or the fingerprint was removed.</string>
-    <string name="changelog">- Added scrollbars to grids\n- Major performance improvements\n- Added selecting items from grid\n- Fix lag when showing bottom bars\n- Can clear trash bin now\n- Infinitely faster search\n- Fix single photo view resetting on rotation change</string>
+    <string name="changelog">- Added scrollbars to grids\n- Major performance improvements\n- Added selecting items from grid\n- Fix lag when showing bottom bars\n- Can clear trash bin now\n- Infinitely faster search\n- Fix single photo view resetting on rotation change\n- Fix search not allowing selection</string>
 </resources>

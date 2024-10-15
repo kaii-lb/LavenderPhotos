@@ -57,8 +57,8 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.kaii.photos.MainActivity
 import com.kaii.photos.R
+import com.kaii.photos.MainActivity
 import com.kaii.photos.compose.ConfirmationDialog
 import com.kaii.photos.compose.CustomMaterialTheme
 import com.kaii.photos.compose.SinglePhotoInfoDialog
@@ -92,7 +92,7 @@ fun SinglePhotoView(
 
 	var currentMediaItemIndex by rememberSaveable { mutableIntStateOf(groupedMedia.value.indexOf(mediaItem)) }
 	val state = rememberPagerState(
-		initialPage = currentMediaItemIndex
+		initialPage = currentMediaItemIndex.coerceAtLeast(0)
 	) {
 		groupedMedia.value.size
 	}
