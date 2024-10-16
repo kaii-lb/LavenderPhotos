@@ -75,6 +75,7 @@ import com.kaii.photos.compose.getAppBarContentTransition
 import com.kaii.photos.compose.grids.AlbumsGridView
 import com.kaii.photos.compose.grids.FavouritesGridView
 import com.kaii.photos.compose.grids.LockedFolderView
+import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.compose.grids.PhotoGrid
 import com.kaii.photos.compose.grids.SearchPage
 import com.kaii.photos.compose.grids.SingleAlbumView
@@ -133,162 +134,190 @@ class MainActivity : ComponentActivity() {
 
         val failedList = emptyList<String>().toMutableList()
 
-		for (perm in PERMISSIONS_REQUEST) {
-			val hasBeenGranted = 
-				ContextCompat.checkSelfPermission(
-		            this,
-		            perm
-		        ) == PackageManager.PERMISSION_GRANTED
+        for (perm in PERMISSIONS_REQUEST) {
+            val hasBeenGranted =
+                ContextCompat.checkSelfPermission(
+                    this,
+                    perm
+                ) == PackageManager.PERMISSION_GRANTED
 
-		    if (!hasBeenGranted) {
-		    	failedList.add(perm)
-		    }
-		}
-
-		startForResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == RESULT_OK) {
-                result.data?.data?.also { uri ->
-                    val path = uri.path ?: ""
-
-                    val runnable = Runnable {
-                        runBlocking {
-                            applicationContext.datastore.addToAlbumsList(path.replace("/tree/primary:", ""))
-                        }
-                    }
-                    Thread(runnable).start()
-                }
-            } else {
-                Toast.makeText(applicationContext, "Failed to add album", Toast.LENGTH_LONG).show()
+            if (!hasBeenGranted) {
+                failedList.add(perm)
             }
-        }		
+        }
 
-		if (!Environment.isExternalStorageManager()) {
-			val intent = Intent(android.provider.Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
-			startActivity(intent)
+        startForResult =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                if (result.resultCode == RESULT_OK) {
+                    result.data?.data?.also { uri ->
+                        val path = uri.path ?: ""
 
-			val request = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { _ ->
-                if (failedList.isNotEmpty()) {
-                    failedList.forEach {
-                        Log.e(TAG, "PERM FAILED $it")
-                    }
-                    val permRequest = registerForActivityResult(
-                        ActivityResultContracts.RequestMultiplePermissions()
-                    ) { result ->
-                        result.entries.forEach { perm ->
-                            val name = perm.key
-                            val granted = perm.value
-
-                            if (granted) failedList.remove(name)
-                            else {
-                                val shortName = name.split(".").last()
-                                Toast.makeText(this, "$shortName permission is required", Toast.LENGTH_LONG).show()
+                        val runnable = Runnable {
+                            runBlocking {
+                                applicationContext.datastore.addToAlbumsList(
+                                    path.replace(
+                                        "/tree/primary:",
+                                        ""
+                                    )
+                                )
                             }
-
-                            if (failedList.isEmpty() && Environment.isExternalStorageManager()) {
-                                setContentForActivity()
-                            }
-
-		                    if (name == failedList.lastOrNull()) {
-	               	           	Toast.makeText(this, "Failed getting necessary permissions", Toast.LENGTH_LONG).show()
-	               	           	finishAffinity()
-		                    }                            
                         }
+                        Thread(runnable).start()
                     }
-
-                    requestStoragePermission(permRequest, failedList)
                 } else {
-                    setContentForActivity()
+                    Toast.makeText(applicationContext, "Failed to add album", Toast.LENGTH_LONG)
+                        .show()
                 }
-			}
+            }
 
-			request.launch(intent)
-		} else {
-			if (failedList.isNotEmpty()) {
-	        	failedList.forEach {
-	        		Log.e(TAG, "PERMISSION FAILED $it")
-	        	}
-		        val permRequest = registerForActivityResult(
-		            ActivityResultContracts.RequestMultiplePermissions()
-		        ) { result ->
+        if (!Environment.isExternalStorageManager()) {
+            val intent = Intent(android.provider.Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+            startActivity(intent)
+
+            val request =
+                registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { _ ->
+                    if (failedList.isNotEmpty()) {
+                        failedList.forEach {
+                            Log.e(TAG, "PERM FAILED $it")
+                        }
+                        val permRequest = registerForActivityResult(
+                            ActivityResultContracts.RequestMultiplePermissions()
+                        ) { result ->
+                            result.entries.forEach { perm ->
+                                val name = perm.key
+                                val granted = perm.value
+
+                                if (granted) failedList.remove(name)
+                                else {
+                                    val shortName = name.split(".").last()
+                                    Toast.makeText(
+                                        this,
+                                        "$shortName permission is required",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
+
+                                if (failedList.isEmpty() && Environment.isExternalStorageManager()) {
+                                    setContentForActivity()
+                                }
+
+                                if (name == failedList.lastOrNull()) {
+                                    Toast.makeText(
+                                        this,
+                                        "Failed getting necessary permissions",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                    finishAffinity()
+                                }
+                            }
+                        }
+
+                        requestStoragePermission(permRequest, failedList)
+                    } else {
+                        setContentForActivity()
+                    }
+                }
+
+            request.launch(intent)
+        } else {
+            if (failedList.isNotEmpty()) {
+                failedList.forEach {
+                    Log.e(TAG, "PERMISSION FAILED $it")
+                }
+                val permRequest = registerForActivityResult(
+                    ActivityResultContracts.RequestMultiplePermissions()
+                ) { result ->
                     result.entries.forEach { perm ->
                         val name = perm.key
                         val granted = perm.value
 
-	                    if (granted) failedList.remove(name)
-	                    else {
-	                        val shortName = name.split(".").last()
-	                        Toast.makeText(this, "$shortName permission is required", Toast.LENGTH_LONG).show()
-	                    }
+                        if (granted) failedList.remove(name)
+                        else {
+                            val shortName = name.split(".").last()
+                            Toast.makeText(
+                                this,
+                                "$shortName permission is required",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
 
-	                    if (failedList.isEmpty() && Environment.isExternalStorageManager()) {
-	                        setContentForActivity()
-	                    }
+                        if (failedList.isEmpty() && Environment.isExternalStorageManager()) {
+                            setContentForActivity()
+                        }
 
-	                    if (name == failedList.lastOrNull()) {
-               	           	Toast.makeText(this, "Failed getting necessary permissions", Toast.LENGTH_LONG).show()
-               	           	finishAffinity()
-	                    }
+                        if (name == failedList.lastOrNull()) {
+                            Toast.makeText(
+                                this,
+                                "Failed getting necessary permissions",
+                                Toast.LENGTH_LONG
+                            ).show()
+                            finishAffinity()
+                        }
                     }
-		        }
-	        	
-	            requestStoragePermission(permRequest, failedList)
-	        } else {
-	            setContentForActivity()
-	        }
-		}
+                }
+
+                requestStoragePermission(permRequest, failedList)
+            } else {
+                setContentForActivity()
+            }
+        }
     }
 
-    private fun requestStoragePermission(permRequest: ActivityResultLauncher<Array<String>>, failedList: List<String>) {
-    	permRequest.launch(failedList.toTypedArray())
+    private fun requestStoragePermission(
+        permRequest: ActivityResultLauncher<Array<String>>,
+        failedList: List<String>
+    ) {
+        permRequest.launch(failedList.toTypedArray())
     }
 
     private fun setContentForActivity() {
         setContent {
             PhotosTheme {
-				window.decorView.setBackgroundColor(CustomMaterialTheme.colorScheme.background.toArgb())
+                window.decorView.setBackgroundColor(CustomMaterialTheme.colorScheme.background.toArgb())
 
                 mainViewModel = viewModel(
                     factory = MainDataSharingModelFactory()
                 )
 
                 val navControllerLocal = rememberNavController()
-                val currentView = rememberSaveable { mutableStateOf(MainScreenViewType.PhotosGridView) }
+                val currentView =
+                    rememberSaveable { mutableStateOf(MainScreenViewType.PhotosGridView) }
                 val showDialog = remember { mutableStateOf(false) }
                 val windowInsetsController = window.insetsController
                 val scale = remember { mutableFloatStateOf(1f) }
                 val rotation = remember { mutableFloatStateOf(0f) }
                 val offset = remember { mutableStateOf(Offset.Zero) }
                 val selectedItemsList = remember { SnapshotStateList<MediaStoreData>() }
-				
+
                 val context = LocalContext.current
 
                 // TODO: please make it not hang lol
-				runBlocking {
-					context.datastore.addToAlbumsList("DCIM/Camera")
-					context.datastore.addToAlbumsList("Pictures/Screenshot")
-					context.datastore.addToAlbumsList("Pictures/Whatsapp")
-					context.datastore.addToAlbumsList("Pictures/100PINT/Pins")
-					context.datastore.addToAlbumsList("Movies")
-					context.datastore.addToAlbumsList("LavenderPhotos/Restored Files")
-					context.datastore.addToAlbumsList("Download")
-					context.datastore.addToAlbumsList("Pictures/Instagram")
-				}
-                
-                NavHost (
+                runBlocking {
+                    context.datastore.addToAlbumsList("DCIM/Camera")
+                    context.datastore.addToAlbumsList("Pictures/Screenshot")
+                    context.datastore.addToAlbumsList("Pictures/Whatsapp")
+                    context.datastore.addToAlbumsList("Pictures/100PINT/Pins")
+                    context.datastore.addToAlbumsList("Movies")
+                    context.datastore.addToAlbumsList("LavenderPhotos/Restored Files")
+                    context.datastore.addToAlbumsList("Download")
+                    context.datastore.addToAlbumsList("Pictures/Instagram")
+                }
+
+                NavHost(
                     navController = navControllerLocal,
                     startDestination = MultiScreenViewType.MainScreen.name,
                     modifier = Modifier
                         .fillMaxSize(1f)
                         .background(CustomMaterialTheme.colorScheme.background),
                     enterTransition = {
-                        slideInHorizontally (
+                        slideInHorizontally(
                             animationSpec = tween(
                                 durationMillis = 350
                             )
                         ) { width -> width } + fadeIn()
                     },
                     exitTransition = {
-						slideOutHorizontally(
+                        slideOutHorizontally(
                             animationSpec = tween(
                                 durationMillis = 350
                             )
@@ -310,15 +339,18 @@ class MainActivity : ComponentActivity() {
                     }
                 ) {
                     composable(MultiScreenViewType.MainScreen.name) {
-       					enableEdgeToEdge(
-							navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
-							statusBarStyle = 
-								if (!isSystemInDarkTheme()) {
-									SystemBarStyle.light(CustomMaterialTheme.colorScheme.background.toArgb(), CustomMaterialTheme.colorScheme.background.toArgb()) 	
-								} else {
-									SystemBarStyle.dark(CustomMaterialTheme.colorScheme.background.toArgb())
-								}
-						)
+                        enableEdgeToEdge(
+                            navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
+                            statusBarStyle =
+                            if (!isSystemInDarkTheme()) {
+                                SystemBarStyle.light(
+                                    CustomMaterialTheme.colorScheme.background.toArgb(),
+                                    CustomMaterialTheme.colorScheme.background.toArgb()
+                                )
+                            } else {
+                                SystemBarStyle.dark(CustomMaterialTheme.colorScheme.background.toArgb())
+                            }
+                        )
                         setupNextScreen(
                             context,
                             windowInsetsController,
@@ -329,52 +361,67 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable(MultiScreenViewType.SinglePhotoView.name) {
-						enableEdgeToEdge(
-							navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.2f).toArgb()),
-							statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.surface.copy(alpha = 0.2f).toArgb(),
-								CustomMaterialTheme.colorScheme.surface.copy(alpha = 0.2f).toArgb()) 
-						)
+                        enableEdgeToEdge(
+                            navigationBarStyle = SystemBarStyle.dark(
+                                CustomMaterialTheme.colorScheme.surfaceContainer.copy(
+                                    alpha = 0.2f
+                                ).toArgb()
+                            ),
+                            statusBarStyle = SystemBarStyle.auto(
+                                CustomMaterialTheme.colorScheme.surface.copy(alpha = 0.2f).toArgb(),
+                                CustomMaterialTheme.colorScheme.surface.copy(alpha = 0.2f).toArgb()
+                            )
+                        )
                         setupNextScreen(
                             context,
                             windowInsetsController,
                             selectedItemsList,
                         )
-						
-                    	SinglePhotoView(navControllerLocal, window, scale, rotation, offset)
+
+                        SinglePhotoView(navControllerLocal, window, scale, rotation, offset)
                     }
 
                     composable(MultiScreenViewType.SingleAlbumView.name) {
                         enableEdgeToEdge(
                             navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
-                            statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.surface.toArgb(), CustomMaterialTheme.colorScheme.surface.toArgb()) 
+                            statusBarStyle = SystemBarStyle.auto(
+                                CustomMaterialTheme.colorScheme.surface.toArgb(),
+                                CustomMaterialTheme.colorScheme.surface.toArgb()
+                            )
                         )
                         setupNextScreen(
                             context,
                             windowInsetsController,
                             selectedItemsList,
                         )
-						                        
+
                         SingleAlbumView(navControllerLocal, selectedItemsList)
                     }
 
                     composable(MultiScreenViewType.SingleTrashedPhotoView.name) {
                         enableEdgeToEdge(
                             navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
-                            statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.surface.toArgb(), CustomMaterialTheme.colorScheme.surface.toArgb()) 
+                            statusBarStyle = SystemBarStyle.auto(
+                                CustomMaterialTheme.colorScheme.surface.toArgb(),
+                                CustomMaterialTheme.colorScheme.surface.toArgb()
+                            )
                         )
                         setupNextScreen(
                             context,
                             windowInsetsController,
                             selectedItemsList,
                         )
-						
+
                         SingleTrashedPhotoView(navControllerLocal, window, scale, rotation, offset)
                     }
 
                     composable(MultiScreenViewType.TrashedPhotoView.name) {
                         enableEdgeToEdge(
                             navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
-                            statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.surface.toArgb(), CustomMaterialTheme.colorScheme.surface.toArgb()) 
+                            statusBarStyle = SystemBarStyle.auto(
+                                CustomMaterialTheme.colorScheme.surface.toArgb(),
+                                CustomMaterialTheme.colorScheme.surface.toArgb()
+                            )
                         )
 
                         setupNextScreen(
@@ -389,28 +436,34 @@ class MainActivity : ComponentActivity() {
                     composable(MultiScreenViewType.LockedFolderView.name) {
                         enableEdgeToEdge(
                             navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
-                            statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.surface.toArgb(), CustomMaterialTheme.colorScheme.surface.toArgb())
+                            statusBarStyle = SystemBarStyle.auto(
+                                CustomMaterialTheme.colorScheme.surface.toArgb(),
+                                CustomMaterialTheme.colorScheme.surface.toArgb()
+                            )
                         )
                         setupNextScreen(
                             context,
                             windowInsetsController,
                             selectedItemsList,
                         )
-						
+
                         LockedFolderView(navControllerLocal)
                     }
 
                     composable(MultiScreenViewType.SingleHiddenPhotoVew.name) {
                         enableEdgeToEdge(
                             navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
-                            statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.surface.toArgb(), CustomMaterialTheme.colorScheme.surface.toArgb())
+                            statusBarStyle = SystemBarStyle.auto(
+                                CustomMaterialTheme.colorScheme.surface.toArgb(),
+                                CustomMaterialTheme.colorScheme.surface.toArgb()
+                            )
                         )
                         setupNextScreen(
                             context,
                             windowInsetsController,
                             selectedItemsList,
                         )
-						
+
                         // TODO: should merge with SingleTrashedPhotoView???? idfk wait for future
                         SingleHiddenPhotoView(navControllerLocal, window, scale, rotation, offset)
                     }
@@ -418,7 +471,10 @@ class MainActivity : ComponentActivity() {
                     composable(MultiScreenViewType.AboutAndUpdateView.name) {
                         enableEdgeToEdge(
                             navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.background.toArgb()),
-                            statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.background.toArgb(), CustomMaterialTheme.colorScheme.background.toArgb())
+                            statusBarStyle = SystemBarStyle.auto(
+                                CustomMaterialTheme.colorScheme.background.toArgb(),
+                                CustomMaterialTheme.colorScheme.background.toArgb()
+                            )
                         )
                         setupNextScreen(
                             context,
@@ -432,7 +488,10 @@ class MainActivity : ComponentActivity() {
                     composable(MultiScreenViewType.FavouritesGridView.name) {
                         enableEdgeToEdge(
                             navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.background.toArgb()),
-                            statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.background.toArgb(), CustomMaterialTheme.colorScheme.background.toArgb())
+                            statusBarStyle = SystemBarStyle.auto(
+                                CustomMaterialTheme.colorScheme.background.toArgb(),
+                                CustomMaterialTheme.colorScheme.background.toArgb()
+                            )
                         )
                         setupNextScreen(
                             context,
@@ -440,7 +499,10 @@ class MainActivity : ComponentActivity() {
                             selectedItemsList,
                         )
 
-                        FavouritesGridView(navController = navControllerLocal, selectedItemsList = selectedItemsList)
+                        FavouritesGridView(
+                            navController = navControllerLocal,
+                            selectedItemsList = selectedItemsList
+                        )
                     }
                 }
             }
@@ -453,32 +515,37 @@ class MainActivity : ComponentActivity() {
         navController: NavHostController,
         showDialog: MutableState<Boolean>,
         selectedItemsList: SnapshotStateList<MediaStoreData>,
-    ) {	
-		val galleryViewModel: GalleryViewModel = viewModel(
-			factory = GalleryViewModelFactory(LocalContext.current, stringResource(id = R.string.default_homepage_photogrid_dir), MediaItemSortMode.DateTaken)
-		)	
+    ) {
+        val galleryViewModel: GalleryViewModel = viewModel(
+            factory = GalleryViewModelFactory(
+                LocalContext.current,
+                stringResource(id = R.string.default_homepage_photogrid_dir),
+                MediaItemSortMode.DateTaken
+            )
+        )
 
-		val mediaStoreData = galleryViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+        val mediaStoreData =
+            galleryViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
-		val groupedMedia = remember { mutableStateOf(mediaStoreData.value) }
+        val groupedMedia = remember { mutableStateOf(mediaStoreData.value) }
 
-		LaunchedEffect(mediaStoreData.value) {
-			groupedMedia.value = mediaStoreData.value
-		}
-    
+        LaunchedEffect(mediaStoreData.value) {
+            groupedMedia.value = mediaStoreData.value
+        }
+
         Scaffold(
             modifier = Modifier
                 .fillMaxSize(1f),
             topBar = {
                 TopBar(showDialog, selectedItemsList, navController)
             },
-            bottomBar = { 
-            	BottomBar(currentView, selectedItemsList, navController, groupedMedia)
-           	}
+            bottomBar = {
+                BottomBar(currentView, selectedItemsList, navController, groupedMedia)
+            }
         ) { padding ->
-			val context = LocalContext.current
+            val context = LocalContext.current
 
-            BackHandler (
+            BackHandler(
                 enabled = currentView.value != MainScreenViewType.PhotosGridView && navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name && selectedItemsList.size == 0
             ) {
                 currentView.value = MainScreenViewType.PhotosGridView
@@ -486,58 +553,65 @@ class MainActivity : ComponentActivity() {
 
             Column(
                 modifier = Modifier
-                    .padding(0.dp, padding.calculateTopPadding(), 0.dp, padding.calculateBottomPadding())
+                    .padding(
+                        0.dp,
+                        padding.calculateTopPadding(),
+                        0.dp,
+                        padding.calculateBottomPadding()
+                    )
             ) {
                 Column(
                     modifier = Modifier
                         .padding(0.dp)
                 ) {
-                	MainAppDialog(showDialog, currentView, navController, selectedItemsList)
-                	
-                	AnimatedContent(
-                		targetState = currentView.value,
-                		transitionSpec = {
-                			if (targetState.index > initialState.index ) {
+                    MainAppDialog(showDialog, currentView, navController, selectedItemsList)
+
+                    AnimatedContent(
+                        targetState = currentView.value,
+                        transitionSpec = {
+                            if (targetState.index > initialState.index) {
                                 (slideInHorizontally { height -> height } + fadeIn()).togetherWith(
                                     slideOutHorizontally { height -> -height } + fadeOut())
-                			} else {
+                            } else {
                                 (slideInHorizontally { height -> -height } + fadeIn()).togetherWith(
                                     slideOutHorizontally { height -> height } + fadeOut())
-                			}.using(
-                				SizeTransform(clip = false)
-                			)
-                		},
+                            }.using(
+                                SizeTransform(clip = false)
+                            )
+                        },
                         label = "MainAnimatedContentView"
                     ) { stateValue ->
-	                    when (stateValue) {
-	                        MainScreenViewType.PhotosGridView -> {
-	                        	selectedItemsList.clear()
-	                        	PhotoGrid(
-	                        		groupedMedia = groupedMedia,
-	                        		navController = navController,
-	                        		path = stringResource(id = R.string.default_homepage_photogrid_dir),
+                        when (stateValue) {
+                            MainScreenViewType.PhotosGridView -> {
+                                selectedItemsList.clear()
+                                PhotoGrid(
+                                    groupedMedia = groupedMedia,
+                                    navController = navController,
+                                    path = stringResource(id = R.string.default_homepage_photogrid_dir),
                                     viewProperties = ViewProperties.Album,
-	                        		selectedItemsList = selectedItemsList,
-                        		)
-	                        }
-	                        MainScreenViewType.SecureFolder -> LockedFolderEntryView(navController)
-	                        MainScreenViewType.AlbumsGridView -> {
-								val listOfDirs = runBlocking {
-									val list = context.datastore.getAlbumsList()
-									list
-								}
-								             
-	                        	val albumsViewModel: AlbumsViewModel = viewModel(
-                       				factory = AlbumsViewModelFactory(context, listOfDirs.toList())
-                       			)
-	                        	AlbumsGridView(albumsViewModel, navController, listOfDirs)	
-	                        } 
-   	                        MainScreenViewType.SearchPage -> {
-   	                        	// selectedItemsList.clear() // how does this cause infinite insane and completely unhinged recomposition???
-   	                        	SearchPage(navController, selectedItemsList)
-                        	}
-	                    }
-                	}
+                                    selectedItemsList = selectedItemsList,
+                                )
+                            }
+
+                            MainScreenViewType.SecureFolder -> LockedFolderEntryView(navController)
+                            MainScreenViewType.AlbumsGridView -> {
+                                val listOfDirs = runBlocking {
+                                    val list = context.datastore.getAlbumsList()
+                                    list
+                                }
+
+                                val albumsViewModel: AlbumsViewModel = viewModel(
+                                    factory = AlbumsViewModelFactory(context, listOfDirs.toList())
+                                )
+                                AlbumsGridView(albumsViewModel, navController, listOfDirs)
+                            }
+
+                            MainScreenViewType.SearchPage -> {
+                                // selectedItemsList.clear() // how does this cause infinite insane and completely unhinged recomposition???
+                                SearchPage(navController, selectedItemsList)
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -549,11 +623,13 @@ class MainActivity : ComponentActivity() {
         selectedItemsList: SnapshotStateList<MediaStoreData>,
         navController: NavHostController
     ) {
-		val show by remember { derivedStateOf {
-			selectedItemsList.size > 0
-		}}
+        val show by remember {
+            derivedStateOf {
+                selectedItemsList.size > 0
+            }
+        }
         AnimatedContent(
-           	targetState = show && navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name,
+            targetState = show && navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name,
             transitionSpec = {
                 getAppBarContentTransition(show)
             },
@@ -574,9 +650,11 @@ class MainActivity : ComponentActivity() {
         navController: NavHostController,
         groupedMedia: MutableState<List<MediaStoreData>>
     ) {
-		val show by remember { derivedStateOf {
-			selectedItemsList.size > 0
-		}}    
+        val show by remember {
+            derivedStateOf {
+                selectedItemsList.size > 0
+            }
+        }
         AnimatedContent(
             targetState = show && navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name,
             transitionSpec = {
@@ -598,7 +676,7 @@ private fun setupNextScreen(
     windowInsetsController: WindowInsetsController?,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
 ) {
-	selectedItemsList.clear()
+    selectedItemsList.clear()
 
     if (context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
         windowInsetsController?.apply {

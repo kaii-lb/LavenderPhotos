@@ -49,7 +49,7 @@ fun LockedFolderEntryView(navController: NavHostController) {
         var showHelpDialog by remember { mutableStateOf(false) }
 
         val prompt = BiometricPrompt.Builder(LocalContext.current)
-            .setTitle("Unlock Locked Folder")
+            .setTitle("Unlock Secure Folder")
             .setSubtitle("Use your biometric credentials to unlock")
             .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL)
             .build()

@@ -24,7 +24,9 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -175,17 +177,20 @@ fun DeviceMedia(
 	}
 
 	val mainViewModel = MainActivity.mainViewModel
-	Box (
+	BoxWithConstraints (
 		modifier = Modifier
 			.fillMaxSize(1f)
 			.background(CustomMaterialTheme.colorScheme.background)
-			.padding(
-				0.dp,
-				0.dp,
-				0.dp,
-				if (selectedItemsList.size > 0 && shouldPadUp) 80.dp else 0.dp
-			)
 	) {
+		val spacerHeight by animateDpAsState(
+			targetValue = if (selectedItemsList.size > 0 && shouldPadUp) 80.dp else 0.dp,
+			animationSpec = tween(
+				durationMillis = 350,
+				delayMillis = if (selectedItemsList.size > 0 && shouldPadUp) 350 else 0
+			),
+			label = "animate spacer on bottom of photogrid"
+		)
+			
 		LazyVerticalGrid(
 	        columns = GridCells.Fixed(
 				if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT) {
@@ -195,7 +200,8 @@ fun DeviceMedia(
 				}
 			),
 	        modifier = Modifier
-				.fillMaxSize(1f)
+				.fillMaxWidth(1f)
+				.height(maxHeight - spacerHeight)
 				.align(Alignment.TopCenter),
 	        state = gridState
 	    ) {
@@ -495,12 +501,12 @@ fun MediaStoreItem(
 					coroutineScope.launch {
 						val datedMedia = groupedMedia.filter {
 							if (viewProperties.sortMode == MediaItemSortMode.LastModified) {
-								it.getLastModifiedDay() == item.getLastModifiedDay() && it.type != MediaType.Section	
+								it.getLastModifiedDay() == item.getLastModifiedDay() && it.type != MediaType.Section
 							} else {
-								it.getDateTakenDay() == item.getDateTakenDay() && it.type != MediaType.Section	
+								it.getDateTakenDay() == item.getDateTakenDay() && it.type != MediaType.Section
 							}
 						}
-								
+
 						if (selectedItemsList.containsAll(datedMedia)) {
 							selectedItemsList.removeAll(datedMedia)
 							selectedItemsList.remove(item)
@@ -564,24 +570,27 @@ fun MediaStoreItem(
 										it.getLastModifiedDay() == item.getLastModifiedDay()
 									} else {
 										it.getDateTakenDay() == item.getDateTakenDay()
-									}								
+									}
 								}
 
 								val section = sectionItems.first { it.type == MediaType.Section }
 
 								if (isSelected) {
-									if (selectedItemsList.contains(section)) selectedItemsList.remove(section)
+									if (selectedItemsList.contains(section)) selectedItemsList.remove(
+										section
+									)
 									selectedItemsList.remove(item)
 								} else {
 									if (selectedItemsList.size == 1 && selectedItemsList[0] == MediaStoreData()) selectedItemsList.clear()
 
 									selectedItemsList.add(item)
-									
-									val allItems = sectionItems.filter { it.type != MediaType.Section }
+
+									val allItems =
+										sectionItems.filter { it.type != MediaType.Section }
 									if (selectedItemsList.containsAll(allItems)) {
 										selectedItemsList.add(section)
 									} else {
-										selectedItemsList.remove(section)	
+										selectedItemsList.remove(section)
 									}
 								}
 
@@ -602,12 +611,14 @@ fun MediaStoreItem(
 								it.getDateTakenDay() == item.getDateTakenDay()
 							}
 						}
-						
+
 						val section = sectionItems.first { it.type == MediaType.Section }
 
 						vibratorManager.vibrateLong()
 						if (isSelected) {
-							if (selectedItemsList.contains(section)) selectedItemsList.remove(section)
+							if (selectedItemsList.contains(section)) selectedItemsList.remove(
+								section
+							)
 							selectedItemsList.remove(item)
 						} else {
 							if (selectedItemsList.size == 1 && selectedItemsList[0] == MediaStoreData()) selectedItemsList.clear()
@@ -617,7 +628,7 @@ fun MediaStoreItem(
 							if (selectedItemsList.containsAll(allItems)) {
 								selectedItemsList.add(section)
 							} else {
-								selectedItemsList.remove(section)	
+								selectedItemsList.remove(section)
 							}
 						}
 					}

@@ -247,13 +247,13 @@ fun DialogExpandableItem(text: String, iconResId: Int, position: RowPosition, ex
 	)
 }
 
-private fun getDefaultShapeSpacerForPosition(position: RowPosition) : Pair<RoundedCornerShape, Dp> {
+fun getDefaultShapeSpacerForPosition(position: RowPosition, cornerRadius: Dp = 16.dp) : Pair<RoundedCornerShape, Dp> {
 	val shape: RoundedCornerShape
 	val spacerHeight: Dp
 
 	when(position) {
 		RowPosition.Top -> {
-			shape = RoundedCornerShape(16.dp, 16.dp, 0.dp, 0.dp)
+			shape = RoundedCornerShape(cornerRadius, cornerRadius, 0.dp, 0.dp)
 			spacerHeight = 2.dp
 		}
 		RowPosition.Middle -> {
@@ -261,11 +261,11 @@ private fun getDefaultShapeSpacerForPosition(position: RowPosition) : Pair<Round
 			spacerHeight = 2.dp
 		}
 		RowPosition.Bottom -> {
-			shape = RoundedCornerShape(0.dp, 0.dp, 16.dp, 16.dp)
+			shape = RoundedCornerShape(0.dp, 0.dp, cornerRadius, cornerRadius)
 			spacerHeight = 0.dp
 		}
 		RowPosition.Single -> {
-			shape = RoundedCornerShape(16.dp)
+			shape = RoundedCornerShape(cornerRadius)
 			spacerHeight = 0.dp
 		}
 	}

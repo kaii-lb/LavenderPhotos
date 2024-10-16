@@ -45,6 +45,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,12 +61,15 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import com.kaii.photos.MainActivity
 import com.kaii.photos.R
+import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.helpers.ImageFunctions
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.operateOnImage
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** please only use dialogComposable for its intended purpose */
 @Composable
@@ -89,7 +93,7 @@ fun BottomAppBarItem(
         ) {
             action()
         }
-    }  else {
+    } else {
         Modifier
     }
 
@@ -132,7 +136,7 @@ fun BottomAppBarItem(
 
 @Composable
 fun SelectableBottomAppBarItem(
-	selected: Boolean,
+    selected: Boolean,
     icon: @Composable () -> Unit,
     label: @Composable () -> Unit,
     action: () -> Unit
@@ -149,55 +153,55 @@ fun SelectableBottomAppBarItem(
             }
     ) {
         AnimatedVisibility(
-    		visible = selected,
-    		enter = 
-    			expandHorizontally(
-    				animationSpec = tween(
-    					durationMillis = 350
-    				),
-    				expandFrom = Alignment.CenterHorizontally
-    			) + fadeIn(),
-    		exit = fadeOut(
-    			animationSpec = tween(
-    				durationMillis = 25
-    			)
-    		),
-    		modifier = Modifier
+            visible = selected,
+            enter =
+            expandHorizontally(
+                animationSpec = tween(
+                    durationMillis = 350
+                ),
+                expandFrom = Alignment.CenterHorizontally
+            ) + fadeIn(),
+            exit = fadeOut(
+                animationSpec = tween(
+                    durationMillis = 25
+                )
+            ),
+            modifier = Modifier
                 .height(32.dp)
                 .clip(RoundedCornerShape(1000.dp))
-                .align(Alignment.TopCenter)		
-    	) {
-	        Row(
-	            modifier = Modifier
+                .align(Alignment.TopCenter)
+        ) {
+            Row(
+                modifier = Modifier
                     .height(32.dp)
                     .width(64.dp)
                     .clip(RoundedCornerShape(1000.dp))
                     .align(Alignment.TopCenter)
                     .background(CustomMaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
-	            verticalAlignment = Alignment.CenterVertically,
-	            horizontalArrangement = Arrangement.Center
-	        ) {}
-    	}
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {}
+        }
 
-		Row (
-			modifier = Modifier
+        Row(
+            modifier = Modifier
                 .height(32.dp)
                 .width(58.dp)
                 .align(Alignment.TopCenter),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center			
-		) {
-			icon()
-		}
+            horizontalArrangement = Arrangement.Center
+        ) {
+            icon()
+        }
 
-		Row (
-			modifier = Modifier
-				.align(Alignment.BottomCenter),
+        Row(
+            modifier = Modifier
+                .align(Alignment.BottomCenter),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center			
-		) {
-	        label()
-		}
+            horizontalArrangement = Arrangement.Center
+        ) {
+            label()
+        }
     }
 }
 
@@ -285,133 +289,141 @@ fun MainAppTopBar(showDialog: MutableState<Boolean>) {
 }
 
 @Composable
-fun MainAppBottomBar(currentView: MutableState<MainScreenViewType>, selectedItemsList: SnapshotStateList<MediaStoreData>) {
+fun MainAppBottomBar(
+    currentView: MutableState<MainScreenViewType>,
+    selectedItemsList: SnapshotStateList<MediaStoreData>
+) {
     BottomAppBar(
         containerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
         contentColor = CustomMaterialTheme.colorScheme.onPrimaryContainer,
         contentPadding = PaddingValues(0.dp),
     ) {
-        Row (
+        Row(
             modifier = Modifier
                 .fillMaxSize(1f),
-       		verticalAlignment = Alignment.CenterVertically,
-           	horizontalArrangement = Arrangement.SpaceEvenly                
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             SelectableBottomAppBarItem(
                 selected = currentView.value == MainScreenViewType.PhotosGridView,
-                action = { 
-	                if (currentView.value != MainScreenViewType.PhotosGridView) {
-	                    currentView.value = MainScreenViewType.PhotosGridView
-	                }
+                action = {
+                    if (currentView.value != MainScreenViewType.PhotosGridView) {
+                        currentView.value = MainScreenViewType.PhotosGridView
+                    }
                 },
                 icon = {
-		            Icon(
-		                painter = painterResource(id = if (currentView.value == MainScreenViewType.PhotosGridView) R.drawable.photogrid_filled else R.drawable.photogrid),
-		                contentDescription = "Navigate to photos page",
-		                modifier = Modifier
-		                    .size(24.dp)
-		            )
+                    Icon(
+                        painter = painterResource(id = if (currentView.value == MainScreenViewType.PhotosGridView) R.drawable.photogrid_filled else R.drawable.photogrid),
+                        contentDescription = "Navigate to photos page",
+                        modifier = Modifier
+                            .size(24.dp)
+                    )
                 },
                 label = {
-			        Text(
-			            text = "Photos",
-			            fontSize = TextUnit(14f, TextUnitType.Sp),
-			            modifier = Modifier
-			                .wrapContentSize()
-			        )                	
-                }                
+                    Text(
+                        text = "Photos",
+                        fontSize = TextUnit(14f, TextUnitType.Sp),
+                        modifier = Modifier
+                            .wrapContentSize()
+                    )
+                }
             )
 
             SelectableBottomAppBarItem(
                 selected = currentView.value == MainScreenViewType.SecureFolder,
-                action = { 
-	                if (currentView.value != MainScreenViewType.SecureFolder) {
-	                    currentView.value = MainScreenViewType.SecureFolder
-	                }
+                action = {
+                    if (currentView.value != MainScreenViewType.SecureFolder) {
+                        currentView.value = MainScreenViewType.SecureFolder
+                    }
                 },
                 icon = {
-		            Icon(
-		                painter = painterResource(id = if (currentView.value == MainScreenViewType.SecureFolder) R.drawable.locked_folder_filled else R.drawable.locked_folder),
-		                contentDescription = "Navigate to secure folder page",
-		                modifier = Modifier
-		                    .size(24.dp)
-		            )
+                    Icon(
+                        painter = painterResource(id = if (currentView.value == MainScreenViewType.SecureFolder) R.drawable.locked_folder_filled else R.drawable.locked_folder),
+                        contentDescription = "Navigate to secure folder page",
+                        modifier = Modifier
+                            .size(24.dp)
+                    )
                 },
                 label = {
-			        Text(
-			            text = "Secure",
-			            fontSize = TextUnit(14f, TextUnitType.Sp),
-			            modifier = Modifier
-			                .wrapContentSize()
-			        )                	
+                    Text(
+                        text = "Secure",
+                        fontSize = TextUnit(14f, TextUnitType.Sp),
+                        modifier = Modifier
+                            .wrapContentSize()
+                    )
                 }
-            )                
+            )
 
             SelectableBottomAppBarItem(
                 selected = currentView.value == MainScreenViewType.AlbumsGridView,
-                action = { 
-	                if (currentView.value != MainScreenViewType.AlbumsGridView) {
-	                    currentView.value = MainScreenViewType.AlbumsGridView
-	                }
+                action = {
+                    if (currentView.value != MainScreenViewType.AlbumsGridView) {
+                        currentView.value = MainScreenViewType.AlbumsGridView
+                    }
                 },
                 icon = {
-		            Icon(
-		                painter = painterResource(id = if (currentView.value == MainScreenViewType.AlbumsGridView) R.drawable.albums_filled else R.drawable.albums),
-		                contentDescription = "Navigate to albums page",
-		                modifier = Modifier
-		                    .size(24.dp)
-		            )
+                    Icon(
+                        painter = painterResource(id = if (currentView.value == MainScreenViewType.AlbumsGridView) R.drawable.albums_filled else R.drawable.albums),
+                        contentDescription = "Navigate to albums page",
+                        modifier = Modifier
+                            .size(24.dp)
+                    )
                 },
                 label = {
-			        Text(
-			            text = "Albums",
-			            fontSize = TextUnit(14f, TextUnitType.Sp),
-			            modifier = Modifier
-			                .wrapContentSize()
-			        )                	
-                }                
+                    Text(
+                        text = "Albums",
+                        fontSize = TextUnit(14f, TextUnitType.Sp),
+                        modifier = Modifier
+                            .wrapContentSize()
+                    )
+                }
             )
 
             SelectableBottomAppBarItem(
                 selected = currentView.value == MainScreenViewType.SearchPage,
-                action = { 
-	                if (currentView.value != MainScreenViewType.SearchPage) {
-	                	selectedItemsList.clear()
-	                    currentView.value = MainScreenViewType.SearchPage
-	                }
+                action = {
+                    if (currentView.value != MainScreenViewType.SearchPage) {
+                        selectedItemsList.clear()
+                        currentView.value = MainScreenViewType.SearchPage
+                    }
                 },
                 icon = {
-		            Icon(
-		                painter = painterResource(id = R.drawable.search),
-		                contentDescription = "Navigate to search page",
-		                modifier = Modifier
-		                    .size(24.dp)
-		            )
+                    Icon(
+                        painter = painterResource(id = R.drawable.search),
+                        contentDescription = "Navigate to search page",
+                        modifier = Modifier
+                            .size(24.dp)
+                    )
                 },
                 label = {
-			        Text(
-			            text = "Search",
-			            fontSize = TextUnit(14f, TextUnitType.Sp),
-			            modifier = Modifier
-			                .wrapContentSize()
-			        )                	
-                }                
+                    Text(
+                        text = "Search",
+                        fontSize = TextUnit(14f, TextUnitType.Sp),
+                        modifier = Modifier
+                            .wrapContentSize()
+                    )
+                }
             )
         }
     }
 }
 
 @Composable
-fun MainAppSelectingBottomBar(selectedItemsList: SnapshotStateList<MediaStoreData>, groupedMedia: MutableState<List<MediaStoreData>>) {
+fun MainAppSelectingBottomBar(
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    groupedMedia: MutableState<List<MediaStoreData>>
+) {
     IsSelectingBottomAppBar {
         val context = LocalContext.current
         val coroutineScope = rememberCoroutineScope()
 
-        val selectedItemsWithoutSection by remember { derivedStateOf {
-            selectedItemsList.filter {
-                it.type != MediaType.Section
+        val selectedItemsWithoutSection by remember {
+            derivedStateOf {
+                selectedItemsList.filter {
+                    it.type != MediaType.Section
+                }
             }
-        }}
+        }
 
         BottomAppBarItem(
             text = "Share",
@@ -439,9 +451,27 @@ fun MainAppSelectingBottomBar(selectedItemsList: SnapshotStateList<MediaStoreDat
             }
         )
 
-        BottomAppBarItem(text = "Move", iconResId = R.drawable.cut)
+        val show = remember { mutableStateOf(false) }
+        var isMoving by remember { mutableStateOf(false) }
+        MoveCopyAlbumListView(show, selectedItemsWithoutSection, isMoving)
 
-        BottomAppBarItem(text = "Copy", iconResId = R.drawable.copy)
+        BottomAppBarItem(
+            text = "Move",
+            iconResId = R.drawable.cut,
+            action = {
+                isMoving = true
+                show.value = true
+            }
+        )
+
+        BottomAppBarItem(
+            text = "Copy",
+            iconResId = R.drawable.copy,
+            action = {
+                isMoving = false
+                show.value = true
+            }
+        )
 
         val showDeleteDialog = remember { mutableStateOf(false) }
         BottomAppBarItem(
@@ -449,31 +479,37 @@ fun MainAppSelectingBottomBar(selectedItemsList: SnapshotStateList<MediaStoreDat
             iconResId = R.drawable.delete,
             cornerRadius = 16.dp,
             dialogComposable = {
-                ConfirmationDialog(showDialog = showDeleteDialog, dialogTitle = "Move these items to Trash Bin?", confirmButtonLabel = "Delete") {
+                ConfirmationDialog(
+                    showDialog = showDeleteDialog,
+                    dialogTitle = "Move these items to Trash Bin?",
+                    confirmButtonLabel = "Delete"
+                ) {
                     coroutineScope.launch {
-                        val newList = groupedMedia.value.toMutableList()
-                        selectedItemsWithoutSection.forEach { item ->
-                            operateOnImage(
-                                item.absolutePath,
-                                item.id,
-                                ImageFunctions.TrashImage,
-                                context
-                            )
-                            newList.remove(item)
-                        }
-
-                        groupedMedia.value.filter {
-                            it.type == MediaType.Section
-                        }.forEach {
-                            val filtered = newList.filter { new ->
-                                new.getLastModifiedDay() == it.getLastModifiedDay()
+                        withContext(Dispatchers.IO) {
+                            val newList = groupedMedia.value.toMutableList()
+                            selectedItemsWithoutSection.forEach { item ->
+                                operateOnImage(
+                                    item.absolutePath,
+                                    item.id,
+                                    ImageFunctions.TrashImage,
+                                    context
+                                )
+                                newList.remove(item)
                             }
 
-                            if (filtered.size == 1) newList.remove(it)
-                        }
+                            groupedMedia.value.filter {
+                                it.type == MediaType.Section
+                            }.forEach {
+                                val filtered = newList.filter { new ->
+                                    new.getLastModifiedDay() == it.getLastModifiedDay()
+                                }
 
-                        selectedItemsList.clear()
-                        groupedMedia.value = newList
+                                if (filtered.size == 1) newList.remove(it)
+                            }
+
+                            selectedItemsList.clear()
+                            groupedMedia.value = newList
+                        }
                     }
                 }
             },
@@ -487,22 +523,24 @@ fun MainAppSelectingBottomBar(selectedItemsList: SnapshotStateList<MediaStoreDat
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun IsSelectingTopBar(selectedItemsList: SnapshotStateList<MediaStoreData>) {
-	val groupedMedia = MainActivity.mainViewModel.groupedMedia.collectAsState(initial = emptyList())
+    val groupedMedia = MainActivity.mainViewModel.groupedMedia.collectAsState(initial = emptyList())
 
-	val selectedItemsWithoutSection by remember { derivedStateOf {
-		selectedItemsList.filter {
-			it.type != MediaType.Section
-		}
-	}}
-	
-	TopAppBar(
+    val selectedItemsWithoutSection by remember {
+        derivedStateOf {
+            selectedItemsList.filter {
+                it.type != MediaType.Section
+            }
+        }
+    }
+
+    TopAppBar(
         title = {
-        	Row (
-           		verticalAlignment = Alignment.CenterVertically,
-            	horizontalArrangement = Arrangement.SpaceEvenly
-        	) {
-	           	Row (
-					modifier = Modifier
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Row(
+                    modifier = Modifier
                         .height(42.dp)
                         .width(48.dp)
                         .clip(RoundedCornerShape(100.dp, 6.dp, 6.dp, 100.dp))
@@ -511,22 +549,22 @@ fun IsSelectingTopBar(selectedItemsList: SnapshotStateList<MediaStoreData>) {
                         .clickable {
                             selectedItemsList.clear()
                         },
-	            	verticalAlignment = Alignment.CenterVertically,
-	            	horizontalArrangement = Arrangement.Center
-	           	) {
-					Icon(
-						painter = painterResource(id = R.drawable.close),
-						contentDescription = "clear selection button",
-						tint = CustomMaterialTheme.colorScheme.onPrimary,
-						modifier = Modifier
-							.size(24.dp)
-					) 		
-	           	}
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.close),
+                        contentDescription = "clear selection button",
+                        tint = CustomMaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier
+                            .size(24.dp)
+                    )
+                }
 
-	           	Spacer (modifier = Modifier.width(4.dp))
-	               
-	           	Row (
-					modifier = Modifier
+                Spacer(modifier = Modifier.width(4.dp))
+
+                Row(
+                    modifier = Modifier
                         .height(43.dp)
                         .wrapContentWidth()
                         .clip(RoundedCornerShape(6.dp, 100.dp, 100.dp, 6.dp))
@@ -536,40 +574,43 @@ fun IsSelectingTopBar(selectedItemsList: SnapshotStateList<MediaStoreData>) {
                         .clickable {
                             selectedItemsList.clear()
                         },
-	            	verticalAlignment = Alignment.CenterVertically,
-	            	horizontalArrangement = Arrangement.Center
-	           	) {
-	           		val selectionSize = if (selectedItemsWithoutSection.size == 1 && selectedItemsWithoutSection[0] == MediaStoreData()) "0" else selectedItemsWithoutSection.size.toString()
-					Text(
-						text = selectionSize,
-						color = CustomMaterialTheme.colorScheme.onSurface,
-						fontSize = TextUnit(18f, TextUnitType.Sp),
-						modifier = Modifier
-							.wrapContentSize()
-					) 		
-	           	}
-        	}
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    val selectionSize =
+                        if (selectedItemsWithoutSection.size == 1 && selectedItemsWithoutSection[0] == MediaStoreData()) "0" else selectedItemsWithoutSection.size.toString()
+                    Text(
+                        text = selectionSize,
+                        color = CustomMaterialTheme.colorScheme.onSurface,
+                        fontSize = TextUnit(18f, TextUnitType.Sp),
+                        modifier = Modifier
+                            .wrapContentSize()
+                    )
+                }
+            }
         },
         actions = {
-        	val allItemsList by remember { derivedStateOf { groupedMedia.value ?: emptyList() }}
-        	val isTicked by remember { derivedStateOf {
-        		selectedItemsList.size == allItemsList.size
-        	}}
-        	
+            val allItemsList by remember { derivedStateOf { groupedMedia.value ?: emptyList() } }
+            val isTicked by remember {
+                derivedStateOf {
+                    selectedItemsList.size == allItemsList.size
+                }
+            }
+
             IconButton(
                 onClick = {
-                	if (groupedMedia.value != null) {
-	                	if (isTicked) {
-	                    	selectedItemsList.clear()
-	                    	selectedItemsList.add(MediaStoreData())
-	                	} else {
-	                		selectedItemsList.clear()
-	                		
-		                    for (item in allItemsList) {
-	                   			selectedItemsList.add(item)
-		                    }
-	                	}
-                	}
+                    if (groupedMedia.value != null) {
+                        if (isTicked) {
+                            selectedItemsList.clear()
+                            selectedItemsList.add(MediaStoreData())
+                        } else {
+                            selectedItemsList.clear()
+
+                            for (item in allItemsList) {
+                                selectedItemsList.add(item)
+                            }
+                        }
+                    }
                 },
                 modifier = Modifier
                     .clip(RoundedCornerShape(1000.dp))
@@ -595,9 +636,9 @@ fun IsSelectingTopBar(selectedItemsList: SnapshotStateList<MediaStoreData>) {
                     contentDescription = "show more options for selected items",
                     tint = CustomMaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier
-                    	.size(24.dp)
+                        .size(24.dp)
                 )
-            }        	
+            }
         },
         scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(),
         colors = TopAppBarDefaults.topAppBarColors(
@@ -615,13 +656,13 @@ fun IsSelectingBottomAppBar(
         contentColor = CustomMaterialTheme.colorScheme.onPrimaryContainer,
         contentPadding = PaddingValues(0.dp)
     ) {
-		Row(
+        Row(
             modifier = Modifier
                 .fillMaxSize(1f),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-	        items()
+            items()
         }
     }
 }
@@ -634,10 +675,12 @@ fun SingleAlbumViewTopBar(
     showDialog: MutableState<Boolean>,
     onBackClick: () -> Unit
 ) {
-	val title = dir.split("/").last()
-	val show by remember { derivedStateOf {
-		selectedItemsList.size > 0
-	}}
+    val title = dir.split("/").last()
+    val show by remember {
+        derivedStateOf {
+            selectedItemsList.size > 0
+        }
+    }
 
     AnimatedContent(
         targetState = show,
@@ -693,8 +736,8 @@ fun SingleAlbumViewTopBar(
             )
         } else {
             IsSelectingTopBar(
-            	selectedItemsList = selectedItemsList
-           	)
+                selectedItemsList = selectedItemsList
+            )
         }
     }
 }
@@ -708,11 +751,13 @@ fun SingleAlbumViewBottomBar(
         val context = LocalContext.current
         val coroutineScope = rememberCoroutineScope()
 
-        val selectedItemsWithoutSection by remember { derivedStateOf {
-            selectedItemsList.filter {
-                it.type != MediaType.Section
+        val selectedItemsWithoutSection by remember {
+            derivedStateOf {
+                selectedItemsList.filter {
+                    it.type != MediaType.Section
+                }
             }
-        }}
+        }
 
         BottomAppBarItem(
             text = "Share",
@@ -740,9 +785,27 @@ fun SingleAlbumViewBottomBar(
             }
         )
 
-        BottomAppBarItem(text = "Move", iconResId = R.drawable.cut)
+        val show = remember { mutableStateOf(false) }
+        var isMoving by remember { mutableStateOf(false) }
+        MoveCopyAlbumListView(show, selectedItemsWithoutSection, isMoving)
 
-        BottomAppBarItem(text = "Copy", iconResId = R.drawable.copy)
+        BottomAppBarItem(
+            text = "Move",
+            iconResId = R.drawable.cut,
+            action = {
+                isMoving = true
+                show.value = true
+            }
+        )
+
+        BottomAppBarItem(
+            text = "Copy",
+            iconResId = R.drawable.copy,
+            action = {
+                isMoving = false
+                show.value = true
+            }
+        )
 
         val showDeleteDialog = remember { mutableStateOf(false) }
         BottomAppBarItem(
@@ -750,31 +813,37 @@ fun SingleAlbumViewBottomBar(
             iconResId = R.drawable.delete,
             cornerRadius = 16.dp,
             dialogComposable = {
-                ConfirmationDialog(showDialog = showDeleteDialog, dialogTitle = "Move selected items to Trash Bin?", confirmButtonLabel = "Delete") {
+                ConfirmationDialog(
+                    showDialog = showDeleteDialog,
+                    dialogTitle = "Move selected items to Trash Bin?",
+                    confirmButtonLabel = "Delete"
+                ) {
                     coroutineScope.launch {
-                        val newList = groupedMedia.value.toMutableList()
-                        selectedItemsWithoutSection.forEach { item ->
-                            operateOnImage(
-                                item.absolutePath,
-                                item.id,
-                                ImageFunctions.TrashImage,
-                                context
-                            )
-                            newList.remove(item)
-                        }
-
-                        groupedMedia.value.filter {
-                            it.type == MediaType.Section
-                        }.forEach {
-                            val filtered = newList.filter { new ->
-                                new.getLastModifiedDay() == it.getLastModifiedDay()
+                        withContext(Dispatchers.IO) {
+                            val newList = groupedMedia.value.toMutableList()
+                            selectedItemsWithoutSection.forEach { item ->
+                                operateOnImage(
+                                    item.absolutePath,
+                                    item.id,
+                                    ImageFunctions.TrashImage,
+                                    context
+                                )
+                                newList.remove(item)
                             }
 
-                            if (filtered.size == 1) newList.remove(it)
-                        }
+                            groupedMedia.value.filter {
+                                it.type == MediaType.Section
+                            }.forEach {
+                                val filtered = newList.filter { new ->
+                                    new.getLastModifiedDay() == it.getLastModifiedDay()
+                                }
 
-                        selectedItemsList.clear()
-                        groupedMedia.value = newList
+                                if (filtered.size == 1) newList.remove(it)
+                            }
+
+                            selectedItemsList.clear()
+                            groupedMedia.value = newList
+                        }
                     }
                 }
             },
@@ -816,9 +885,11 @@ fun TrashedPhotoGridViewTopBar(
         }
     }
 
-	val show by remember { derivedStateOf {
-		selectedItemsList.size > 0
-	}}
+    val show by remember {
+        derivedStateOf {
+            selectedItemsList.size > 0
+        }
+    }
 
     AnimatedContent(
         targetState = show,
@@ -895,125 +966,135 @@ fun TrashedPhotoGridViewBottomBar(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     groupedMedia: MutableState<List<MediaStoreData>>
 ) {
-	IsSelectingBottomAppBar {
-		
-	    val context = LocalContext.current
-	    val coroutineScope = rememberCoroutineScope()
+    IsSelectingBottomAppBar {
 
-	    val selectedItemsWithoutSection by remember { derivedStateOf {
-	        selectedItemsList.filter {
-	            it.type != MediaType.Section
-	        }
-	    }}
+        val context = LocalContext.current
+        val coroutineScope = rememberCoroutineScope()
 
-	    BottomAppBarItem(
-	        text = "Share",
-	        iconResId = R.drawable.share,
-	        action = {
-	            coroutineScope.launch {
-	                val hasVideos = selectedItemsWithoutSection.any {
-	                    it.type == MediaType.Video
-	                }
+        val selectedItemsWithoutSection by remember {
+            derivedStateOf {
+                selectedItemsList.filter {
+                    it.type != MediaType.Section
+                }
+            }
+        }
 
-	                val intent = Intent().apply {
-	                    action = Intent.ACTION_SEND_MULTIPLE
-	                    type = if (hasVideos) "video/*" else "images/*"
-	                }
+        BottomAppBarItem(
+            text = "Share",
+            iconResId = R.drawable.share,
+            action = {
+                coroutineScope.launch {
+                    val hasVideos = selectedItemsWithoutSection.any {
+                        it.type == MediaType.Video
+                    }
 
-	                val fileUris = ArrayList<Uri>()
-	                selectedItemsWithoutSection.forEach {
-	                    fileUris.add(it.uri)
-	                }
+                    val intent = Intent().apply {
+                        action = Intent.ACTION_SEND_MULTIPLE
+                        type = if (hasVideos) "video/*" else "images/*"
+                    }
 
-	                intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, fileUris)
+                    val fileUris = ArrayList<Uri>()
+                    selectedItemsWithoutSection.forEach {
+                        fileUris.add(it.uri)
+                    }
 
-	                context.startActivity(Intent.createChooser(intent, null))
-	            }
-	        }
-	    )
+                    intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, fileUris)
 
-	    val showRestoreDialog = remember { mutableStateOf(false) }
-	    BottomAppBarItem(
-	        text = "Restore",
-	        iconResId = R.drawable.untrash,
-	        cornerRadius = 16.dp,
-	        dialogComposable = {
-	            ConfirmationDialog(showDialog = showRestoreDialog, dialogTitle = "Restore these items?", confirmButtonLabel = "Restore") {
-	                coroutineScope.launch {
-	                    val newList = groupedMedia.value.toMutableList()
-	                    selectedItemsWithoutSection.forEach { item ->
-	                        operateOnImage(
-	                            item.absolutePath,
-	                            item.id,
-	                            ImageFunctions.UnTrashImage,
-	                            context
-	                        )
-	                        newList.remove(item)
-	                    }
-	                    groupedMedia.value.filter {
-	                        it.type == MediaType.Section
-	                    }.forEach {
-	                        val filtered = newList.filter { new ->
-	                            new.getLastModifiedDay() == it.getLastModifiedDay()
-	                        }
+                    context.startActivity(Intent.createChooser(intent, null))
+                }
+            }
+        )
 
-	                        if (filtered.size == 1) newList.remove(it)
-	                    }
+        val showRestoreDialog = remember { mutableStateOf(false) }
+        BottomAppBarItem(
+            text = "Restore",
+            iconResId = R.drawable.untrash,
+            cornerRadius = 16.dp,
+            dialogComposable = {
+                ConfirmationDialog(
+                    showDialog = showRestoreDialog,
+                    dialogTitle = "Restore these items?",
+                    confirmButtonLabel = "Restore"
+                ) {
+                    coroutineScope.launch {
+                        withContext(Dispatchers.IO) {
+                            val newList = groupedMedia.value.toMutableList()
+                            selectedItemsWithoutSection.forEach { item ->
+                                operateOnImage(
+                                    item.absolutePath,
+                                    item.id,
+                                    ImageFunctions.UnTrashImage,
+                                    context
+                                )
+                                newList.remove(item)
+                            }
+                            groupedMedia.value.filter {
+                                it.type == MediaType.Section
+                            }.forEach {
+                                val filtered = newList.filter { new ->
+                                    new.getLastModifiedDay() == it.getLastModifiedDay()
+                                }
 
-	                    selectedItemsList.clear()
-	                    groupedMedia.value = newList
-	                }
-	            }
-	        },
-	        action = {
-	            showRestoreDialog.value = true
-	        }
-	    )
+                                if (filtered.size == 1) newList.remove(it)
+                            }
 
-	    val showPermaDeleteDialog = remember { mutableStateOf(false) }
-	    BottomAppBarItem(
-	        text = "Delete",
-	        iconResId = R.drawable.delete,
-	        cornerRadius = 16.dp,
-	        dialogComposable = {
-	            ConfirmationDialogWithBody(
-	            	showDialog = showPermaDeleteDialog,
-	            	dialogTitle = "Permanently delete these items?", 
-	            	dialogBody = "This action cannot be undone!",
-	            	confirmButtonLabel = "Delete"
-            	) {
-	                coroutineScope.launch {
-	                    val newList = groupedMedia.value.toMutableList()
-	                    selectedItemsWithoutSection.forEach { item ->
-	                        operateOnImage(
-	                            item.absolutePath,
-	                            item.id,
-	                            ImageFunctions.PermaDeleteImage,
-	                            context
-	                        )
-	                        newList.remove(item)
-	                    }
+                            selectedItemsList.clear()
+                            groupedMedia.value = newList
+                        }
+                    }
+                }
+            },
+            action = {
+                showRestoreDialog.value = true
+            }
+        )
 
-	                    groupedMedia.value.filter {
-	                        it.type == MediaType.Section
-	                    }.forEach {
-	                        val filtered = newList.filter { new ->
-	                            new.getLastModifiedDay() == it.getLastModifiedDay()
-	                        }
+        val showPermaDeleteDialog = remember { mutableStateOf(false) }
+        BottomAppBarItem(
+            text = "Delete",
+            iconResId = R.drawable.delete,
+            cornerRadius = 16.dp,
+            dialogComposable = {
+                ConfirmationDialogWithBody(
+                    showDialog = showPermaDeleteDialog,
+                    dialogTitle = "Permanently delete these items?",
+                    dialogBody = "This action cannot be undone!",
+                    confirmButtonLabel = "Delete"
+                ) {
+                    coroutineScope.launch {
+                        withContext(Dispatchers.IO) {
+                            val newList = groupedMedia.value.toMutableList()
+                            selectedItemsWithoutSection.forEach { item ->
+                                operateOnImage(
+                                    item.absolutePath,
+                                    item.id,
+                                    ImageFunctions.PermaDeleteImage,
+                                    context
+                                )
+                                newList.remove(item)
+                            }
 
-	                        if (filtered.size == 1) newList.remove(it)
-	                    }
+                            groupedMedia.value.filter {
+                                it.type == MediaType.Section
+                            }.forEach {
+                                val filtered = newList.filter { new ->
+                                    new.getLastModifiedDay() == it.getLastModifiedDay()
+                                }
 
-	                    selectedItemsList.clear()
-	                    groupedMedia.value = newList
-	                }
-	            }
-	        },
-	        action = {
-	            showPermaDeleteDialog.value = true
-	        }
-	    )
-	}
+                                if (filtered.size == 1) newList.remove(it)
+                            }
+
+                            selectedItemsList.clear()
+                            groupedMedia.value = newList
+                        }
+                    }
+                }
+            },
+            action = {
+                showPermaDeleteDialog.value = true
+            }
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -1022,9 +1103,11 @@ fun SecureFolderViewTopAppBar(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     onBackClicked: () -> Unit
 ) {
-    val show by remember { derivedStateOf {
-        selectedItemsList.size > 0
-    }}
+    val show by remember {
+        derivedStateOf {
+            selectedItemsList.size > 0
+        }
+    }
 
     AnimatedContent(
         targetState = show,
@@ -1083,16 +1166,21 @@ fun SecureFolderViewTopAppBar(
 }
 
 @Composable
-fun SecureFolderViewBottomAppBar(selectedItemsList: SnapshotStateList<MediaStoreData>, groupedMedia: MutableState<List<MediaStoreData>>) {
+fun SecureFolderViewBottomAppBar(
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    groupedMedia: MutableState<List<MediaStoreData>>
+) {
     IsSelectingBottomAppBar {
         val context = LocalContext.current
         val coroutineScope = rememberCoroutineScope()
 
-        val selectedItemsWithoutSection by remember { derivedStateOf {
-            selectedItemsList.filter {
-                it.type != MediaType.Section
+        val selectedItemsWithoutSection by remember {
+            derivedStateOf {
+                selectedItemsList.filter {
+                    it.type != MediaType.Section
+                }
             }
-        }}
+        }
 
         BottomAppBarItem(
             text = "Share",
@@ -1126,30 +1214,36 @@ fun SecureFolderViewBottomAppBar(selectedItemsList: SnapshotStateList<MediaStore
             iconResId = R.drawable.unlock,
             cornerRadius = 16.dp,
             dialogComposable = {
-                ConfirmationDialog(showDialog = showRestoreDialog, dialogTitle = "Restore these items?", confirmButtonLabel = "Restore") {
+                ConfirmationDialog(
+                    showDialog = showRestoreDialog,
+                    dialogTitle = "Restore these items?",
+                    confirmButtonLabel = "Restore"
+                ) {
                     coroutineScope.launch {
-                        val newList = groupedMedia.value.toMutableList()
-                        selectedItemsWithoutSection.forEach { item ->
-                            operateOnImage(
-                                item.absolutePath,
-                                item.id,
-                                ImageFunctions.MoveOutOfLockedFolder,
-                                context
-                            )
-                            newList.remove(item)
-                        }
-                        groupedMedia.value.filter {
-                            it.type == MediaType.Section
-                        }.forEach {
-                            val filtered = newList.filter { new ->
-                                new.getLastModifiedDay() == it.getLastModifiedDay()
+                        withContext(Dispatchers.IO) {
+                            val newList = groupedMedia.value.toMutableList()
+                            selectedItemsWithoutSection.forEach { item ->
+                                operateOnImage(
+                                    item.absolutePath,
+                                    item.id,
+                                    ImageFunctions.MoveOutOfLockedFolder,
+                                    context
+                                )
+                                newList.remove(item)
+                            }
+                            groupedMedia.value.filter {
+                                it.type == MediaType.Section
+                            }.forEach {
+                                val filtered = newList.filter { new ->
+                                    new.getLastModifiedDay() == it.getLastModifiedDay()
+                                }
+
+                                if (filtered.size == 1) newList.remove(it)
                             }
 
-                            if (filtered.size == 1) newList.remove(it)
+                            selectedItemsList.clear()
+                            groupedMedia.value = newList
                         }
-
-                        selectedItemsList.clear()
-                        groupedMedia.value = newList
                     }
                 }
             },
@@ -1165,35 +1259,37 @@ fun SecureFolderViewBottomAppBar(selectedItemsList: SnapshotStateList<MediaStore
             cornerRadius = 16.dp,
             dialogComposable = {
                 ConfirmationDialogWithBody(
-                	showDialog = showPermaDeleteDialog, 
-                	dialogTitle = "Permanently delete these items?", 
-                	dialogBody = "This action cannot be undone!",
-                	confirmButtonLabel = "Delete"
-               	) {
+                    showDialog = showPermaDeleteDialog,
+                    dialogTitle = "Permanently delete these items?",
+                    dialogBody = "This action cannot be undone!",
+                    confirmButtonLabel = "Delete"
+                ) {
                     coroutineScope.launch {
-                        val newList = groupedMedia.value.toMutableList()
-                        selectedItemsWithoutSection.forEach { item ->
-                            operateOnImage(
-                                item.absolutePath,
-                                item.id,
-                                ImageFunctions.PermaDeleteImage,
-                                context
-                            )
-                            newList.remove(item)
-                        }
-
-                        groupedMedia.value.filter {
-                            it.type == MediaType.Section
-                        }.forEach {
-                            val filtered = newList.filter { new ->
-                                new.getLastModifiedDay() == it.getLastModifiedDay()
+                        withContext(Dispatchers.IO) {
+                            val newList = groupedMedia.value.toMutableList()
+                            selectedItemsWithoutSection.forEach { item ->
+                                operateOnImage(
+                                    item.absolutePath,
+                                    item.id,
+                                    ImageFunctions.PermaDeleteImage,
+                                    context
+                                )
+                                newList.remove(item)
                             }
 
-                            if (filtered.size == 1) newList.remove(it)
-                        }
+                            groupedMedia.value.filter {
+                                it.type == MediaType.Section
+                            }.forEach {
+                                val filtered = newList.filter { new ->
+                                    new.getLastModifiedDay() == it.getLastModifiedDay()
+                                }
 
-                        selectedItemsList.clear()
-                        groupedMedia.value = newList
+                                if (filtered.size == 1) newList.remove(it)
+                            }
+
+                            selectedItemsList.clear()
+                            groupedMedia.value = newList
+                        }
                     }
                 }
             },
@@ -1206,10 +1302,15 @@ fun SecureFolderViewBottomAppBar(selectedItemsList: SnapshotStateList<MediaStore
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FavouritesViewTopAppBar(selectedItemsList: SnapshotStateList<MediaStoreData>, onBackClick: () -> Unit) {
-    val show by remember { derivedStateOf {
-        selectedItemsList.size > 0
-    }}
+fun FavouritesViewTopAppBar(
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    onBackClick: () -> Unit
+) {
+    val show by remember {
+        derivedStateOf {
+            selectedItemsList.size > 0
+        }
+    }
 
     AnimatedContent(
         targetState = show,
@@ -1265,17 +1366,22 @@ fun FavouritesViewTopAppBar(selectedItemsList: SnapshotStateList<MediaStoreData>
 }
 
 @Composable
-fun FavouritesViewBottomAppBar(selectedItemsList: SnapshotStateList<MediaStoreData>, groupedMedia: MutableState<List<MediaStoreData>>) {
+fun FavouritesViewBottomAppBar(
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    groupedMedia: MutableState<List<MediaStoreData>>
+) {
     IsSelectingBottomAppBar {
         val context = LocalContext.current
         val coroutineScope = rememberCoroutineScope()
         val dao = MainActivity.applicationDatabase.favouritedItemEntityDao()
 
-        val selectedItemsWithoutSection by remember { derivedStateOf {
-            selectedItemsList.filter {
-                it.type != MediaType.Section
+        val selectedItemsWithoutSection by remember {
+            derivedStateOf {
+                selectedItemsList.filter {
+                    it.type != MediaType.Section
+                }
             }
-        }}
+        }
 
         BottomAppBarItem(
             text = "Share",
@@ -1303,7 +1409,16 @@ fun FavouritesViewBottomAppBar(selectedItemsList: SnapshotStateList<MediaStoreDa
             }
         )
 
-        BottomAppBarItem(text = "Copy", iconResId = R.drawable.copy)
+        val show = remember { mutableStateOf(false) }
+        MoveCopyAlbumListView(show, selectedItemsWithoutSection, false)
+
+        BottomAppBarItem(
+            text = "Copy",
+            iconResId = R.drawable.copy,
+            action = {
+                show.value = true
+            }
+        )
 
         val showUnFavDialog = remember { mutableStateOf(false) }
         BottomAppBarItem(
@@ -1317,24 +1432,26 @@ fun FavouritesViewBottomAppBar(selectedItemsList: SnapshotStateList<MediaStoreDa
                     confirmButtonLabel = "Remove"
                 ) {
                     coroutineScope.launch {
-                        val newList = groupedMedia.value.toMutableList()
-                        selectedItemsWithoutSection.forEach { item ->
-                            dao.deleteEntityById(item.id)
-                            newList.remove(item)
-                        }
-
-                        groupedMedia.value.filter {
-                            it.type == MediaType.Section
-                        }.forEach {
-                            val filtered = newList.filter { new ->
-                                new.getLastModifiedDay() == it.getLastModifiedDay()
+                        withContext(Dispatchers.IO) {
+                            val newList = groupedMedia.value.toMutableList()
+                            selectedItemsWithoutSection.forEach { item ->
+                                dao.deleteEntityById(item.id)
+                                newList.remove(item)
                             }
 
-                            if (filtered.size == 1) newList.remove(it)
-                        }
+                            groupedMedia.value.filter {
+                                it.type == MediaType.Section
+                            }.forEach {
+                                val filtered = newList.filter { new ->
+                                    new.getLastModifiedDay() == it.getLastModifiedDay()
+                                }
 
-                        selectedItemsList.clear()
-                        groupedMedia.value = newList
+                                if (filtered.size == 1) newList.remove(it)
+                            }
+
+                            selectedItemsList.clear()
+                            groupedMedia.value = newList
+                        }
                     }
                 }
             },
@@ -1349,31 +1466,37 @@ fun FavouritesViewBottomAppBar(selectedItemsList: SnapshotStateList<MediaStoreDa
             iconResId = R.drawable.delete,
             cornerRadius = 16.dp,
             dialogComposable = {
-                ConfirmationDialog(showDialog = showDeleteDialog, dialogTitle = "Move selected items to trash?", confirmButtonLabel = "Delete") {
+                ConfirmationDialog(
+                    showDialog = showDeleteDialog,
+                    dialogTitle = "Move selected items to trash?",
+                    confirmButtonLabel = "Delete"
+                ) {
                     coroutineScope.launch {
-                        val newList = groupedMedia.value.toMutableList()
-                        selectedItemsWithoutSection.forEach { item ->
-                            operateOnImage(
-                                item.absolutePath,
-                                item.id,
-                                ImageFunctions.TrashImage,
-                                context
-                            )
-                            newList.remove(item)
-                        }
-
-                        groupedMedia.value.filter {
-                            it.type == MediaType.Section
-                        }.forEach {
-                            val filtered = newList.filter { new ->
-                                new.getLastModifiedDay() == it.getLastModifiedDay()
+                        withContext(Dispatchers.IO) {
+                            val newList = groupedMedia.value.toMutableList()
+                            selectedItemsWithoutSection.forEach { item ->
+                                operateOnImage(
+                                    item.absolutePath,
+                                    item.id,
+                                    ImageFunctions.TrashImage,
+                                    context
+                                )
+                                newList.remove(item)
                             }
 
-                            if (filtered.size == 1) newList.remove(it)
-                        }
+                            groupedMedia.value.filter {
+                                it.type == MediaType.Section
+                            }.forEach {
+                                val filtered = newList.filter { new ->
+                                    new.getLastModifiedDay() == it.getLastModifiedDay()
+                                }
 
-                        selectedItemsList.clear()
-                        groupedMedia.value = newList
+                                if (filtered.size == 1) newList.remove(it)
+                            }
+
+                            selectedItemsList.clear()
+                            groupedMedia.value = newList
+                        }
                     }
                 }
             },

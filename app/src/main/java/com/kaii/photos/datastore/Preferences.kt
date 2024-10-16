@@ -12,34 +12,34 @@ val usernameKey = stringPreferencesKey("username")
 
 suspend fun DataStore<Preferences>.addToAlbumsList(path: String) {
     this.edit {
-    	val stringList = it[albumsListKey]
+        val stringList = it[albumsListKey]
 
-    	if (stringList == null) it[albumsListKey] = ""
-		
-    	if (stringList?.contains(path) == false) {
-	        it[albumsListKey] += ",$path"
-    	}
+        if (stringList == null) it[albumsListKey] = ""
+
+        if (stringList?.contains(path) == false) {
+            it[albumsListKey] += ",$path"
+        }
     }
 }
 
 suspend fun DataStore<Preferences>.removeFromAlbumsList(path: String) {
     this.edit {
-    	val stringList = it[albumsListKey]
+        val stringList = it[albumsListKey]
 
-    	if (stringList?.contains(path) == true) {
-	        it[albumsListKey] = stringList.replace(",$path", "")
-    	}
+        if (stringList?.contains(path) == true) {
+            it[albumsListKey] = stringList.replace(",$path", "")
+        }
     }
 }
 
 suspend fun DataStore<Preferences>.editInAlbumsList(path: String, newName: String) {
     this.edit {
-    	val stringList = it[albumsListKey]
-		val last = path.split("/").last()
-	
-    	if (stringList?.contains(path) == true) {
-	        it[albumsListKey] = stringList.replace(path, path.replace(last, newName))
-    	}
+        val stringList = it[albumsListKey]
+        val last = path.split("/").last()
+
+        if (stringList?.contains(path) == true) {
+            it[albumsListKey] = stringList.replace(path, path.replace(last, newName))
+        }
     }
 }
 
@@ -60,7 +60,7 @@ suspend fun DataStore<Preferences>.getAlbumsList(): List<String> {
 
 suspend fun DataStore<Preferences>.setUsername(name: String) {
     this.edit {
-    	it[usernameKey] = name
+        it[usernameKey] = name
     }
 }
 

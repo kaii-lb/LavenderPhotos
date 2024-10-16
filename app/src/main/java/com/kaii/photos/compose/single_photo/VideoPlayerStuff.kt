@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
@@ -45,6 +46,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -99,6 +101,7 @@ fun VideoPlayerControls(
     isMuted: MutableState<Boolean>,
     currentVideoPosition: MutableState<Float>,
     duration: MutableState<Float>,
+    title: String,
     modifier: Modifier
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -108,9 +111,34 @@ fun VideoPlayerControls(
             .then(modifier)
             .background(Color.Transparent)
     ) {
+    	val localConfig = LocalConfiguration.current
+    	val isLandscape by remember { derivedStateOf { localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE } }
+
+		if (isLandscape) {
+			Row (
+				modifier = Modifier
+					.wrapContentSize()
+					.align(Alignment.TopStart)
+					.padding(16.dp),
+				verticalAlignment = Alignment.CenterVertically,
+				horizontalArrangement = Arrangement.Center				
+			) {
+				Text(
+					text = title,
+					fontSize = TextUnit(12f, TextUnitType.Sp),
+					color = CustomMaterialTheme.colorScheme.onSecondaryContainer,
+					modifier = Modifier
+						.wrapContentSize()
+						.clip(RoundedCornerShape(1000.dp))
+						.background(CustomMaterialTheme.colorScheme.secondaryContainer)
+						.padding(8.dp)										
+				)
+			}
+		}
+    	
         Row (
             modifier = Modifier
-                .height(if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE) 48.dp else 172.dp)
+                .height(if (isLandscape) 48.dp else 172.dp)
                 .align(Alignment.BottomCenter),
             verticalAlignment = Alignment.Top
         ) {
@@ -118,7 +146,7 @@ fun VideoPlayerControls(
                 modifier = Modifier
                     .fillMaxWidth(1f)
                     .wrapContentHeight()
-                    .padding(8.dp, 0.dp),
+                    .padding(16.dp, 0.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
@@ -423,6 +451,7 @@ fun VideoPlayer(
 	            isMuted = isMuted,
 	            currentVideoPosition = currentVideoPosition,
 	            duration = duration,
+	            title = item.displayName ?: "Media",
 	            modifier = Modifier
 	                .fillMaxSize(1f)
 	        )

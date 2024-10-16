@@ -18,13 +18,17 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.io.path.Path
+import kotlin.io.path.absolutePathString
 import kotlin.io.path.exists
 import kotlin.io.path.moveTo
+import kotlin.io.path.pathString
 import kotlin.io.path.setAttribute
 
 private const val TAG = "IMAGE_FUNCTIONS"
 
-/** Order is very important here */
+/** Order is very important here
+ * bad decisions where made, that's why this exists
+ * should really be refactored and fixed but we in too deep */
 enum class ImageFunctions {
     ShareImage,
     EditImage,
@@ -37,7 +41,9 @@ enum class ImageFunctions {
     PermaDeleteImage,
     SearchImage,
     MoveOutOfLockedFolder,
-    RenameImage
+    RenameImage,
+    CopyImage,
+    MoveImage
 }
 
 fun operateOnImage(
@@ -81,6 +87,14 @@ fun operateOnImage(
                 newName = extraData["new_name"].toString(),
                 context
             )
+        }
+
+        ImageFunctions.CopyImage -> {
+            extraData?.get("albumPath")?.let { copyToPath(absolutePath, it.toString(), false) }
+        }
+
+        ImageFunctions.MoveImage -> {
+            extraData?.get("albumPath")?.let { copyToPath(absolutePath, it.toString(), true) }
         }
 
         else -> {
@@ -215,7 +229,7 @@ private fun moveImageToLockedFolder(absolutePath: String, id: Long, context: Con
             FileTime.fromMillis(lastModified)
         )
 
-        // TODO: replace this with a sidecar file
+        // TODO: replace with locked folder thing
         // database.trashedItemEntityDao().insertEntity(
         // 	TrashedItemEntity(
         // 		absolutePath,
@@ -239,8 +253,7 @@ private fun moveOutOfLockedFolder(path: String) {
 
     val lastModified = System.currentTimeMillis()
 
-    // TODO: use sidecar files(?) to track where it was from
-    // or write metadata into the media itself
+    // TODO: use database to track where it was from
     val reverseCemetery = getAppRestoredFromLockedFolderDirectory() + fileToBeRevived.name
 
     Files.move(Path(absolutePath), Path(reverseCemetery), StandardCopyOption.REPLACE_EXISTING)
@@ -249,6 +262,7 @@ private fun moveOutOfLockedFolder(path: String) {
         BasicFileAttributes::lastModifiedTime.name,
         FileTime.fromMillis(lastModified)
     )
+    File(reverseCemetery).lastModified()
 
     fileToBeRevived.delete()
 }
@@ -272,4 +286,23 @@ private fun renameImage(imagePath: String, imageName: String, newName: String, c
     } catch (e: Throwable) {
         Toast.makeText(context, "Failed to rename file", Toast.LENGTH_LONG).show()
     }
+}
+
+private fun copyToPath(mediaPath: String, albumPath: String, deleteOriginal: Boolean = false) {
+    val fileToBeCopied = File(mediaPath)
+    val absoluteAlbumPath = Path("/storage/emulated/0/", albumPath)
+    val copyToPath = Path(absoluteAlbumPath.pathString, fileToBeCopied.name)
+    Files.copy(Path(mediaPath), copyToPath, StandardCopyOption.REPLACE_EXISTING)
+
+    val lastModified = System.currentTimeMillis()
+    copyToPath.setAttribute(
+        BasicFileAttributes::lastModifiedTime.name,
+        FileTime.fromMillis(lastModified)
+    )
+
+    if (deleteOriginal) {
+        fileToBeCopied.delete()
+    }
+
+    File(copyToPath.absolutePathString()).lastModified()
 }

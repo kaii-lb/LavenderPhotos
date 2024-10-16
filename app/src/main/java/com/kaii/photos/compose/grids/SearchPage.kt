@@ -13,37 +13,25 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.TextUnit
-import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import com.kaii.photos.R
 import com.kaii.photos.compose.CustomMaterialTheme
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.helpers.MediaItemSortMode
@@ -71,72 +59,42 @@ fun SearchPage(
 
     Column(
         modifier = Modifier
-			.fillMaxSize(1f)
-			.background(CustomMaterialTheme.colorScheme.background)
+            .fillMaxSize(1f)
+            .background(CustomMaterialTheme.colorScheme.background)
     ) {
-        var searchedForText by remember { mutableStateOf("") }
-        var searchNow by remember { mutableStateOf(false) }
+        val searchedForText = rememberSaveable { mutableStateOf("") }
+        var searchNow by rememberSaveable { mutableStateOf(false) }
         val showLoadingSpinner by remember {
             derivedStateOf {
-                groupedMedia.value.isEmpty()
+                groupedMedia.value.isEmpty() && searchedForText.value == ""
             }
         }
 
         Column(
             modifier = Modifier
-				.fillMaxWidth(1f)
-				.fillMaxHeight(0.1f)
-				.padding(8.dp, 0.dp)
-				.background(CustomMaterialTheme.colorScheme.background),
+                .fillMaxWidth(1f)
+                .height(56.dp)
+                .background(CustomMaterialTheme.colorScheme.background),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            TextField(
-                value = searchedForText,
-                onValueChange = {
-                    searchedForText = it
-                },
-                maxLines = 1,
-                singleLine = true,
-                placeholder = {
-                    Text(
-                        text = "Search for an image's name",
-                        fontSize = TextUnit(16f, TextUnitType.Sp)
-                    )
-                },
-                prefix = {
-                    Icon(
-                        painter = painterResource(id = R.drawable.search),
-                        contentDescription = "Search Icon"
-                    )
-                },
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
-                    unfocusedContainerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
-                    cursorColor = CustomMaterialTheme.colorScheme.primary,
-                    focusedTextColor = CustomMaterialTheme.colorScheme.onSurface,
-                    unfocusedTextColor = CustomMaterialTheme.colorScheme.onSurface,
-                    focusedPlaceholderColor = CustomMaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                    unfocusedPlaceholderColor = CustomMaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                    unfocusedIndicatorColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent
-                ),
-                keyboardOptions = KeyboardOptions(
-                    autoCorrectEnabled = false,
-                    keyboardType = KeyboardType.Text,
-                    imeAction = ImeAction.Search
-                ),
-                keyboardActions = KeyboardActions(
-                    onSearch = {
-                        if (!showLoadingSpinner) {
-                            searchNow = true
-                        }
-                    }
-                ),
-                shape = RoundedCornerShape(1000.dp),
-                modifier = Modifier
-                    .fillMaxWidth(1f)
-            )
+            SearchTextField(
+            	searchedForText = searchedForText, 
+            	placeholder = "Search for a photo's name",
+            	modifier = Modifier
+   		            .fillMaxWidth(1f)
+  		            .height(56.dp)
+  		            .padding(8.dp, 0.dp),
+  		        onSearch = {	        	
+	                if (!showLoadingSpinner) {
+	                    searchNow = true
+	                }
+  		        },
+  		        onClear = {
+  		        	searchedForText.value = ""
+  		        	searchNow = true
+  		        }
+           	)
         }
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -144,22 +102,26 @@ fun SearchPage(
         LaunchedEffect(key1 = mediaStoreDataHolder.value) {
             originalGroupedMedia.value = mediaStoreDataHolder.value
 
-            if (searchedForText == "") {
+            if (searchedForText.value == "") {
                 groupedMedia.value = originalGroupedMedia.value
             }
         }
 
-        LaunchedEffect(key1 = searchNow) {
-            if (!searchNow) return@LaunchedEffect
+        LaunchedEffect(key1 = searchedForText.value) {
+            // if (!searchNow) return@LaunchedEffect
 
             groupedMedia.value = emptyList()
 
-            val groupedMediaLocal = originalGroupedMedia.value.filter {
-                val isMedia = it.type != MediaType.Section
-                val matchesFilter = it.displayName?.contains(searchedForText.trim(), true) == true
-                isMedia && matchesFilter
+            if (searchedForText.value == "") {
+                groupedMedia.value = originalGroupedMedia.value
+            } else {
+                val groupedMediaLocal = originalGroupedMedia.value.filter {
+                    val isMedia = it.type != MediaType.Section
+                    val matchesFilter = it.displayName?.contains(searchedForText.value.trim(), true) == true
+                    isMedia && matchesFilter
+                }
+                groupedMedia.value = groupPhotosBy(groupedMediaLocal, MediaItemSortMode.DateTaken)
             }
-            groupedMedia.value = groupPhotosBy(groupedMediaLocal, MediaItemSortMode.DateTaken)
 
             searchNow = false
         }
@@ -173,7 +135,7 @@ fun SearchPage(
                 navController = navController,
                 path = null,
                 selectedItemsList = selectedItemsList,
-                viewProperties = if (searchedForText == "") ViewProperties.SearchLoading else ViewProperties.SearchNotFound,
+                viewProperties = if (searchedForText.value == "") ViewProperties.SearchLoading else ViewProperties.SearchNotFound,
                 modifier = Modifier
                     .align(Alignment.Center)
             )
@@ -181,17 +143,17 @@ fun SearchPage(
             if (showLoadingSpinner) {
                 Row(
                     modifier = Modifier
-						.fillMaxWidth(1f)
-						.height(48.dp)
-						.align(Alignment.TopCenter),
+                        .fillMaxWidth(1f)
+                        .height(48.dp)
+                        .align(Alignment.TopCenter),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
                 ) {
                     Row(
                         modifier = Modifier
-							.size(40.dp)
-							.clip(RoundedCornerShape(1000.dp))
-							.background(CustomMaterialTheme.colorScheme.surfaceContainer),
+                            .size(40.dp)
+                            .clip(RoundedCornerShape(1000.dp))
+                            .background(CustomMaterialTheme.colorScheme.surfaceContainer),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
                     ) {

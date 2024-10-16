@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
@@ -96,11 +97,15 @@ fun FolderDoesntExist() {
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun FolderIsEmpty(emptyText: String, emptyIconResId: Int) {
+fun FolderIsEmpty(
+	emptyText: String, 
+	emptyIconResId: Int, 
+	backgroundColor: Color = CustomMaterialTheme.colorScheme.background
+) {
     Column (
         modifier = Modifier
             .fillMaxSize(1f)
-            .background(CustomMaterialTheme.colorScheme.background),
+            .background(backgroundColor),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -118,6 +123,7 @@ fun FolderIsEmpty(emptyText: String, emptyIconResId: Int) {
         Text (
             text = emptyText,
             fontSize = TextUnit(16f, TextUnitType.Sp),
+            color = CustomMaterialTheme.colorScheme.onBackground,
             modifier = Modifier
                 .wrapContentSize()
         )
