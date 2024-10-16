@@ -90,7 +90,7 @@ internal constructor(
                         FileColumns.RELATIVE_PATH +
                         " LIKE ? ",
                 arrayOf("%$neededPath%", "%$neededPath%"),
-                "${MediaColumns.DATE_MODIFIED} DESC"
+                "${MediaColumns.DATE_ADDED} DESC"
             ) ?: return data
 
         mediaCursor.use { cursor ->
@@ -127,7 +127,7 @@ internal constructor(
         mediaCursor.close()
 
         data.sortByDescending {
-			it.dateTaken
+			it.dateModified
 		}
         return data
     }

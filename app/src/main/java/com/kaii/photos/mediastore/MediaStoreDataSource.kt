@@ -40,7 +40,7 @@ internal constructor(
             arrayOf(
                 MediaColumns._ID,
                 MediaStore.Images.Media.DATA,
-                MediaColumns.DATE_MODIFIED,
+                MediaColumns.DATE_ADDED,
                 MediaColumns.MIME_TYPE,
                 MediaColumns.DISPLAY_NAME,
                 FileColumns.MEDIA_TYPE,
@@ -115,7 +115,7 @@ internal constructor(
 					FileColumns.RELATIVE_PATH +
 					" LIKE ? ",
                 arrayOf("%$neededPath%", "%$neededPath%"),
-                "" // "${MediaColumns.DATE_TAKEN} DESC"
+                "${MediaColumns.DATE_TAKEN} DESC"
             ) ?: return data
 
         mediaCursor.use { cursor ->
@@ -124,13 +124,15 @@ internal constructor(
             val mimeTypeColNum = cursor.getColumnIndexOrThrow(MediaColumns.MIME_TYPE)
             val mediaTypeColumnIndex = cursor.getColumnIndexOrThrow(FileColumns.MEDIA_TYPE)
             val displayNameIndex = cursor.getColumnIndexOrThrow(FileColumns.DISPLAY_NAME)
+            val dateModifiedColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATE_ADDED)
             
             while (cursor.moveToNext()) {
                 val id = cursor.getLong(idColNum)
                 val mimeType = cursor.getString(mimeTypeColNum)
                 val uri = Uri.withAppendedPath(MEDIA_STORE_FILE_URI, id.toString())
                 val absolutePath = cursor.getString(absolutePathColNum)
-                val dateModified = Files.getLastModifiedTime(Path(absolutePath)).toMillis() / 1000
+                // val dateModified = Files.getLastModifiedTime(Path(absolutePath)).toMillis() / 1000
+                val dateModified = cursor.getLong(dateModifiedColumn)
                 val displayName = cursor.getString(displayNameIndex)
 
                 val possibleDateTaken = mediaEntityDao.getDateTaken(id)

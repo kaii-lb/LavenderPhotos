@@ -109,6 +109,8 @@ fun trashPhoto(path: String, id: Long) {
     val trashDir = getAppTrashBinDirectory()
     val copyToPath = trashDir + "trashed-" + fileToBeTrashed.name
 
+	Log.d(TAG, "path of trash photo $absolutePath")
+
     Files.move(Path(absolutePath), Path(copyToPath), StandardCopyOption.ATOMIC_MOVE)
 
     val database = MainActivity.applicationDatabase
@@ -163,6 +165,8 @@ private fun untrashPhoto(path: String, id: Long, context: Context) {
             )
 
             val reverseCemetery = item.originalPath
+
+			Log.d(TAG, "path of untrashed photo $reverseCemetery")
 
             database.trashedItemEntityDao().deleteEntityByPath(absolutePath)
 
@@ -292,7 +296,7 @@ private fun copyToPath(mediaPath: String, albumPath: String, deleteOriginal: Boo
     val fileToBeCopied = File(mediaPath)
     val absoluteAlbumPath = Path("/storage/emulated/0/", albumPath)
     val copyToPath = Path(absoluteAlbumPath.pathString, fileToBeCopied.name)
-    Files.copy(Path(mediaPath), copyToPath, StandardCopyOption.REPLACE_EXISTING)
+    Files.copy(Path(mediaPath), copyToPath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
 
     val lastModified = System.currentTimeMillis()
     copyToPath.setAttribute(
@@ -301,7 +305,11 @@ private fun copyToPath(mediaPath: String, albumPath: String, deleteOriginal: Boo
     )
 
     if (deleteOriginal) {
-        fileToBeCopied.delete()
+    	try {
+	        fileToBeCopied.delete()
+    	} catch(e: Throwable) {
+    		Log.e(TAG, e.toString())
+    	}
     }
 
     File(copyToPath.absolutePathString()).lastModified()

@@ -484,6 +484,10 @@ fun MainAppSelectingBottomBar(
                     dialogTitle = "Move these items to Trash Bin?",
                     confirmButtonLabel = "Delete"
                 ) {
+                	selectedItemsWithoutSection.forEach {
+                		println("SELECTED ITEM $it")
+                	}
+                	
                     coroutineScope.launch {
                         withContext(Dispatchers.IO) {
                             val newList = groupedMedia.value.toMutableList()

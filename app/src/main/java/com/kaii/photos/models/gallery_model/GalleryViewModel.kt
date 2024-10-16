@@ -98,7 +98,23 @@ fun groupPhotosBy(media: List<MediaStoreData>, sortBy: MediaItemSortMode = Media
             it.gridPosition = currentGridPosition++
         }
 
-        mediaItems.addAll(value)
+		if (sortDescending) {
+			if (sortBy == MediaItemSortMode.DateTaken) {
+				value.sortByDescending { it.dateTaken }
+			} else {
+				value.sortByDescending { it.dateModified }
+			}
+		} else {
+			if (sortBy == MediaItemSortMode.DateTaken) {
+				value.sortBy { it.dateTaken }
+			} else {
+				value.sortBy { it.dateModified }
+			}			
+		}
+		
+        mediaItems.addAll(
+        	value	
+       	)
     }
 
     return mediaItems
