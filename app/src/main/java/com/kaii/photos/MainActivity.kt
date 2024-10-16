@@ -18,7 +18,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -31,20 +30,17 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.toArgb
@@ -55,7 +51,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowInsetsCompat
 import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -69,14 +64,16 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.MemoryCategory
 import com.kaii.photos.compose.AboutPage
 import com.kaii.photos.compose.CustomMaterialTheme
-import com.kaii.photos.compose.IsSelectingBottomAppBar
 import com.kaii.photos.compose.IsSelectingTopBar
 import com.kaii.photos.compose.LockedFolderEntryView
 import com.kaii.photos.compose.MainAppBottomBar
 import com.kaii.photos.compose.MainAppDialog
+import com.kaii.photos.compose.MainAppSelectingBottomBar
 import com.kaii.photos.compose.MainAppTopBar
+import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.getAppBarContentTransition
 import com.kaii.photos.compose.grids.AlbumsGridView
+import com.kaii.photos.compose.grids.FavouritesGridView
 import com.kaii.photos.compose.grids.LockedFolderView
 import com.kaii.photos.compose.grids.PhotoGrid
 import com.kaii.photos.compose.grids.SearchPage
@@ -87,24 +84,20 @@ import com.kaii.photos.compose.single_photo.SinglePhotoView
 import com.kaii.photos.compose.single_photo.SingleTrashedPhotoView
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.addToAlbumsList
-import com.kaii.photos.datastore.albumsListKey
 import com.kaii.photos.datastore.getAlbumsList
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
-import com.kaii.photos.helpers.ImageFunctions
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.models.album_grid.AlbumsViewModel
 import com.kaii.photos.models.album_grid.AlbumsViewModelFactory
-import com.kaii.photos.models.main_activity.MainDataSharingModel
-import com.kaii.photos.models.main_activity.MainDataSharingModelFactory
 import com.kaii.photos.models.gallery_model.GalleryViewModel
 import com.kaii.photos.models.gallery_model.GalleryViewModelFactory
-import com.kaii.photos.models.gallery_model.groupPhotosBy
+import com.kaii.photos.models.main_activity.MainDataSharingModel
+import com.kaii.photos.models.main_activity.MainDataSharingModelFactory
 import com.kaii.photos.ui.theme.PhotosTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.launch
 
 val Context.datastore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
@@ -157,7 +150,6 @@ class MainActivity : ComponentActivity() {
                 result.data?.data?.also { uri ->
                     val path = uri.path ?: ""
 
-                    Log.d(TAG, "the path is $path")
                     val runnable = Runnable {
                         runBlocking {
                             applicationContext.datastore.addToAlbumsList(path.replace("/tree/primary:", ""))
@@ -260,13 +252,13 @@ class MainActivity : ComponentActivity() {
                 )
 
                 val navControllerLocal = rememberNavController()
-                val currentView = remember { mutableStateOf(MainScreenViewType.PhotosGridView) }
+                val currentView = rememberSaveable { mutableStateOf(MainScreenViewType.PhotosGridView) }
                 val showDialog = remember { mutableStateOf(false) }
                 val windowInsetsController = window.insetsController
                 val scale = remember { mutableFloatStateOf(1f) }
                 val rotation = remember { mutableFloatStateOf(0f) }
                 val offset = remember { mutableStateOf(Offset.Zero) }
-				val selectedItemsList = remember { SnapshotStateList<MediaStoreData>() }
+                val selectedItemsList = remember { SnapshotStateList<MediaStoreData>() }
 				
                 val context = LocalContext.current
 
@@ -327,7 +319,11 @@ class MainActivity : ComponentActivity() {
 									SystemBarStyle.dark(CustomMaterialTheme.colorScheme.background.toArgb())
 								}
 						)
-                        setupNextScreen(context, windowInsetsController, selectedItemsList)
+                        setupNextScreen(
+                            context,
+                            windowInsetsController,
+                            selectedItemsList,
+                        )
 
                         Content(currentView, navControllerLocal, showDialog, selectedItemsList)
                     }
@@ -338,7 +334,11 @@ class MainActivity : ComponentActivity() {
 							statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.surface.copy(alpha = 0.2f).toArgb(),
 								CustomMaterialTheme.colorScheme.surface.copy(alpha = 0.2f).toArgb()) 
 						)
-                        setupNextScreen(context, windowInsetsController, selectedItemsList)
+                        setupNextScreen(
+                            context,
+                            windowInsetsController,
+                            selectedItemsList,
+                        )
 						
                     	SinglePhotoView(navControllerLocal, window, scale, rotation, offset)
                     }
@@ -348,7 +348,11 @@ class MainActivity : ComponentActivity() {
                             navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
                             statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.surface.toArgb(), CustomMaterialTheme.colorScheme.surface.toArgb()) 
                         )
-                        setupNextScreen(context, windowInsetsController, selectedItemsList)
+                        setupNextScreen(
+                            context,
+                            windowInsetsController,
+                            selectedItemsList,
+                        )
 						                        
                         SingleAlbumView(navControllerLocal, selectedItemsList)
                     }
@@ -358,7 +362,11 @@ class MainActivity : ComponentActivity() {
                             navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
                             statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.surface.toArgb(), CustomMaterialTheme.colorScheme.surface.toArgb()) 
                         )
-                        setupNextScreen(context, windowInsetsController, selectedItemsList)
+                        setupNextScreen(
+                            context,
+                            windowInsetsController,
+                            selectedItemsList,
+                        )
 						
                         SingleTrashedPhotoView(navControllerLocal, window, scale, rotation, offset)
                     }
@@ -369,7 +377,11 @@ class MainActivity : ComponentActivity() {
                             statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.surface.toArgb(), CustomMaterialTheme.colorScheme.surface.toArgb()) 
                         )
 
-                        setupNextScreen(context, windowInsetsController, selectedItemsList)
+                        setupNextScreen(
+                            context,
+                            windowInsetsController,
+                            selectedItemsList,
+                        )
 
                         TrashedPhotoGridView(navControllerLocal, selectedItemsList)
                     }
@@ -379,7 +391,11 @@ class MainActivity : ComponentActivity() {
                             navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
                             statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.surface.toArgb(), CustomMaterialTheme.colorScheme.surface.toArgb())
                         )
-                        setupNextScreen(context, windowInsetsController, selectedItemsList)
+                        setupNextScreen(
+                            context,
+                            windowInsetsController,
+                            selectedItemsList,
+                        )
 						
                         LockedFolderView(navControllerLocal)
                     }
@@ -389,7 +405,11 @@ class MainActivity : ComponentActivity() {
                             navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
                             statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.surface.toArgb(), CustomMaterialTheme.colorScheme.surface.toArgb())
                         )
-                        setupNextScreen(context, windowInsetsController, selectedItemsList)
+                        setupNextScreen(
+                            context,
+                            windowInsetsController,
+                            selectedItemsList,
+                        )
 						
                         // TODO: should merge with SingleTrashedPhotoView???? idfk wait for future
                         SingleHiddenPhotoView(navControllerLocal, window, scale, rotation, offset)
@@ -400,9 +420,27 @@ class MainActivity : ComponentActivity() {
                             navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.background.toArgb()),
                             statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.background.toArgb(), CustomMaterialTheme.colorScheme.background.toArgb())
                         )
-                        setupNextScreen(context, windowInsetsController, selectedItemsList)
+                        setupNextScreen(
+                            context,
+                            windowInsetsController,
+                            selectedItemsList,
+                        )
 
                         AboutPage(navControllerLocal)
+                    }
+
+                    composable(MultiScreenViewType.FavouritesGridView.name) {
+                        enableEdgeToEdge(
+                            navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.background.toArgb()),
+                            statusBarStyle = SystemBarStyle.auto(CustomMaterialTheme.colorScheme.background.toArgb(), CustomMaterialTheme.colorScheme.background.toArgb())
+                        )
+                        setupNextScreen(
+                            context,
+                            windowInsetsController,
+                            selectedItemsList,
+                        )
+
+                        FavouritesGridView(navController = navControllerLocal, selectedItemsList = selectedItemsList)
                     }
                 }
             }
@@ -422,7 +460,7 @@ class MainActivity : ComponentActivity() {
 
 		val mediaStoreData = galleryViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
-		var groupedMedia = remember { mutableStateOf(mediaStoreData.value) }
+		val groupedMedia = remember { mutableStateOf(mediaStoreData.value) }
 
 		LaunchedEffect(mediaStoreData.value) {
 			groupedMedia.value = mediaStoreData.value
@@ -477,10 +515,10 @@ class MainActivity : ComponentActivity() {
 	                        	PhotoGrid(
 	                        		groupedMedia = groupedMedia,
 	                        		navController = navController,
-	                        		operation = ImageFunctions.LoadNormalImage,
-	                        		path = stringResource(id = R.string.default_homepage_photogrid_dir), 
+	                        		path = stringResource(id = R.string.default_homepage_photogrid_dir),
+                                    viewProperties = ViewProperties.Album,
 	                        		selectedItemsList = selectedItemsList,
-                        		)	
+                        		)
 	                        }
 	                        MainScreenViewType.SecureFolder -> LockedFolderEntryView(navController)
 	                        MainScreenViewType.AlbumsGridView -> {
@@ -549,20 +587,19 @@ class MainActivity : ComponentActivity() {
             if (!state) {
                 MainAppBottomBar(currentView, selectedItemsList)
             } else {
-                IsSelectingBottomAppBar(selectedItemsList = selectedItemsList, groupedMedia = groupedMedia)
+                MainAppSelectingBottomBar(selectedItemsList, groupedMedia)
             }
         }
-
     }
 }
 
 private fun setupNextScreen(
-	context: Context,
-	windowInsetsController: WindowInsetsController?,
-	selectedItemsList: SnapshotStateList<MediaStoreData>
+    context: Context,
+    windowInsetsController: WindowInsetsController?,
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
 ) {
 	selectedItemsList.clear()
-	
+
     if (context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
         windowInsetsController?.apply {
             hide(WindowInsetsCompat.Type.systemBars())

@@ -8,6 +8,7 @@ import android.content.res.Configuration
 import android.provider.DocumentsContract
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.expandVertically
@@ -52,6 +53,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
@@ -85,10 +87,13 @@ import androidx.navigation.NavHostController
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.kaii.photos.MainActivity
 import com.kaii.photos.MainActivity.Companion.startForResult
 import com.kaii.photos.R
 import com.kaii.photos.datastore
+import com.kaii.photos.datastore.editInAlbumsList
 import com.kaii.photos.datastore.getUsername
+import com.kaii.photos.datastore.removeFromAlbumsList
 import com.kaii.photos.datastore.setUsername
 import com.kaii.photos.helpers.ImageFunctions
 import com.kaii.photos.helpers.MainScreenViewType
@@ -708,18 +713,10 @@ fun MainAppDialog(
 						}
 					}
 
-					if (currentView.value == MainScreenViewType.SecureFolder) {
-						DialogClickableItem(
-							text = "Reset Locked Folder",
-							iconResId = R.drawable.delete,
-							position = RowPosition.Top,
-						) {}						
-					}
-
 					DialogClickableItem(
 						text = "Data & Backup",
 						iconResId = R.drawable.data,
-						position = RowPosition.Middle,
+						position = if (currentView.value == MainScreenViewType.SecureFolder) RowPosition.Top else RowPosition.Middle,
 					)
 
 					DialogClickableItem(
@@ -933,7 +930,65 @@ fun SinglePhotoInfoDialog(
 fun ConfirmationDialog(
 	showDialog: MutableState<Boolean>,
 	dialogTitle: String,
-	dialogBody: String? = null,
+	confirmButtonLabel: String,
+	action: () -> Unit
+) {
+	val modifier = if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE)
+		Modifier.width(256.dp)
+	else
+		Modifier
+
+	if (showDialog.value) {
+		AlertDialog(
+			onDismissRequest = {
+				showDialog.value = false
+			},
+			modifier = modifier,
+			confirmButton = {
+				Button(
+					onClick = {
+						showDialog.value = false
+						action()
+					}
+				) {
+					Text(
+						text = confirmButtonLabel,
+						fontSize = TextUnit(14f, TextUnitType.Sp)
+					)
+				}
+			},
+			title = {
+				Text(
+					text = dialogTitle,
+					fontSize = TextUnit(16f, TextUnitType.Sp)
+				)
+			},
+			dismissButton = {
+				Button(
+					onClick = {
+						showDialog.value = false
+					},
+					colors = ButtonDefaults.buttonColors(
+						containerColor = CustomMaterialTheme.colorScheme.tertiaryContainer,
+						contentColor = CustomMaterialTheme.colorScheme.onTertiaryContainer
+					)
+				) {
+					Text(
+						text = "Cancel",
+						fontSize = TextUnit(14f, TextUnitType.Sp)
+					)
+				}
+			},
+			shape = RoundedCornerShape(32.dp)
+		)
+	}
+}
+
+@Composable
+fun ConfirmationDialogWithBody(
+	showDialog: MutableState<Boolean>,
+	dialogTitle: String,
+	dialogBody: String,
 	confirmButtonLabel: String,
 	action: () -> Unit
 ) {
@@ -968,12 +1023,10 @@ fun ConfirmationDialog(
 				)
 			},
 			text = {
-				if (dialogBody != null) {
-					Text(
-						text = dialogBody,
-						fontSize = TextUnit(14f, TextUnitType.Sp)
-					)
-				}
+				Text(
+					text = dialogBody,
+					fontSize = TextUnit(14f, TextUnitType.Sp)
+				)
 			},
 			dismissButton = {
 				Button(
@@ -993,5 +1046,153 @@ fun ConfirmationDialog(
 			},
 			shape = RoundedCornerShape(32.dp)
 		)
+	}
+}
+
+@Composable
+fun SingleAlbumDialog(
+	showDialog: MutableState<Boolean>,
+	dir: String,
+	navController: NavHostController,
+	selectedItemsList: SnapshotStateList<MediaStoreData>
+) {
+	if (showDialog.value) {
+		val context = LocalContext.current
+		val coroutineScope = rememberCoroutineScope()
+		val title = dir.split("/").last()
+
+		Dialog(
+			onDismissRequest = {
+				showDialog.value = false
+			},
+			properties = DialogProperties(
+				usePlatformDefaultWidth = false
+			),
+		) {
+			Column (
+				modifier = Modifier
+					.fillMaxWidth(0.85f)
+					.wrapContentHeight()
+					.clip(RoundedCornerShape(32.dp))
+					.background(brightenColor(CustomMaterialTheme.colorScheme.surface, 0.1f))
+					.padding(8.dp)
+			) {
+				val isEditingFileName = remember { mutableStateOf(false) }
+
+				Box (
+					modifier = Modifier
+						.fillMaxWidth(1f),
+				) {
+					IconButton(
+						onClick = {
+							showDialog.value = false
+						},
+						modifier = Modifier
+							.align(Alignment.CenterStart)
+					) {
+						Icon(
+							painter = painterResource(id = R.drawable.close),
+							contentDescription = "Close dialog button",
+							modifier = Modifier
+								.size(24.dp)
+						)
+					}
+
+					AnimatableText(
+						first = "Rename",
+						second = title,
+						state = isEditingFileName.value,
+						modifier = Modifier
+							.align(Alignment.Center)
+					)
+				}
+
+				val reverseHeight by animateDpAsState(
+					targetValue = if (isEditingFileName.value) 0.dp else 42.dp,
+					label = "height of other options",
+					animationSpec = tween(
+						durationMillis = 500
+					)
+				)
+
+				Column (
+					modifier = Modifier
+						.height(reverseHeight)
+						.padding(8.dp, 0.dp)
+				) {
+					DialogClickableItem(
+						text = "Select",
+						iconResId = R.drawable.check_item,
+						position = RowPosition.Top,
+					) {
+						showDialog.value = false
+						selectedItemsList.clear()
+						selectedItemsList.add(MediaStoreData())
+					}
+				}
+				val fileName = remember { mutableStateOf(title) }
+				val saveFileName = remember { mutableStateOf(false) }
+
+				LaunchedEffect(key1 = saveFileName.value) {
+					if (!saveFileName.value) {
+						return@LaunchedEffect
+					}
+
+					operateOnImage(
+						"/storage/emulated/0/$dir",
+						0L,
+						ImageFunctions.RenameImage,
+						context,
+						mapOf(
+							Pair("old_name", title),
+							Pair("new_name", fileName.value)
+						)
+					)
+
+					val mainViewModel = MainActivity.mainViewModel
+					val newDir = dir.replace(title, fileName.value)
+					mainViewModel.setSelectedAlbumDir(newDir)
+
+					coroutineScope.launch {
+						context.datastore.editInAlbumsList(dir, fileName.value)
+						showDialog.value = false
+					}
+
+					navController.popBackStack()
+					navController.navigate(MultiScreenViewType.SingleAlbumView.name)
+
+					saveFileName.value = false
+				}
+
+				AnimatableTextField(
+					state = isEditingFileName,
+					string = fileName,
+					doAction = saveFileName,
+					rowPosition = RowPosition.Middle,
+					modifier = Modifier
+						.padding(8.dp, 0.dp)
+				) {
+					fileName.value = title
+				}
+
+				Column (
+					modifier = Modifier
+						.height(reverseHeight + 6.dp)
+						.padding(8.dp, 0.dp, 8.dp, 6.dp)
+				) {
+					DialogClickableItem (
+						text = "Remove album from list",
+						iconResId = R.drawable.delete,
+						position = RowPosition.Bottom,
+					) {
+						coroutineScope.launch {
+							context.datastore.removeFromAlbumsList(dir)
+							showDialog.value = false
+							navController.popBackStack()
+						}
+					}
+				}
+			}
+		}
 	}
 }

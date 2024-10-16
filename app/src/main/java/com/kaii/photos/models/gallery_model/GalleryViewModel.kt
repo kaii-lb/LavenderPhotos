@@ -2,35 +2,22 @@ package com.kaii.photos.models.gallery_model
 
 import android.content.Context
 import android.net.Uri
-import android.os.Handler
-import android.os.Looper
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaStoreDataSource
 import com.kaii.photos.mediastore.MediaType
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.replay
-import kotlinx.coroutines.flow.retry
-import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
-import java.util.Calendar
-import java.util.Locale
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.util.Calendar
+import java.util.Locale
 
 class GalleryViewModel(context: Context, path: String, sortBy: MediaItemSortMode) : ViewModel() {
     private val mediaStoreDataSource = MediaStoreDataSource(context, path, sortBy)
@@ -135,10 +122,8 @@ private fun listSection(title: String, key: Long): MediaStoreData {
         dateTaken = key,
         uri = Uri.parse(key.toString()),
         displayName = title,
-        orientation = 0,
         id = 0L,
         mimeType = null,
-        dateAdded = key,
     )
     return mediaSection
 }

@@ -41,9 +41,7 @@ internal constructor(
                 MediaColumns._ID,
                 MediaStore.Images.Media.DATA,
                 MediaColumns.DATE_MODIFIED,
-                MediaColumns.DATE_ADDED,
                 MediaColumns.MIME_TYPE,
-                MediaColumns.ORIENTATION,
                 MediaColumns.DISPLAY_NAME,
                 FileColumns.MEDIA_TYPE,
 
@@ -117,26 +115,19 @@ internal constructor(
 					FileColumns.RELATIVE_PATH +
 					" LIKE ? ",
                 arrayOf("%$neededPath%", "%$neededPath%"),
-                "${MediaColumns.DATE_TAKEN} DESC"
+                "" // "${MediaColumns.DATE_TAKEN} DESC"
             ) ?: return data
 
         mediaCursor.use { cursor ->
             val idColNum = cursor.getColumnIndexOrThrow(MediaColumns._ID)
             val absolutePathColNum = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA) // look into using the uri + id if this is deprecated
             val mimeTypeColNum = cursor.getColumnIndexOrThrow(MediaColumns.MIME_TYPE)
-            val orientationColNum = cursor.getColumnIndexOrThrow(MediaColumns.ORIENTATION)
             val mediaTypeColumnIndex = cursor.getColumnIndexOrThrow(FileColumns.MEDIA_TYPE)
             val displayNameIndex = cursor.getColumnIndexOrThrow(FileColumns.DISPLAY_NAME)
-            val dateAddedColumnNum = cursor.getColumnIndexOrThrow(MediaColumns.DATE_ADDED)
-
-            // val dateModifiedColNum = cursor.getColumnIndexOrThrow(MediaColumns.DATE_MODIFIED)
-            // val dateTakenColNum = cursor.getColumnIndexOrThrow(MediaColumns.DATE_TAKEN)
-
+            
             while (cursor.moveToNext()) {
                 val id = cursor.getLong(idColNum)
                 val mimeType = cursor.getString(mimeTypeColNum)
-				// val dateModified = cursor.getLong(dateModifiedColNum)
-
                 val uri = Uri.withAppendedPath(MEDIA_STORE_FILE_URI, id.toString())
                 val absolutePath = cursor.getString(absolutePathColNum)
                 val dateModified = Files.getLastModifiedTime(Path(absolutePath)).toMillis() / 1000
@@ -158,12 +149,9 @@ internal constructor(
                             displayName = displayName
                         )
                     )
-                    // Log.d(TAG, "date taken was not found in database, inserting $taken")
                     taken
                 }
-				// val dateTaken = cursor.getLong(dateTakenColNum)
-                val orientation = cursor.getInt(orientationColNum)
-                val dateAdded = cursor.getLong(dateAddedColumnNum)
+				
                 val type = if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) MediaType.Image
                     else MediaType.Video
                 data.add(
@@ -173,10 +161,8 @@ internal constructor(
                         uri = uri,
                         mimeType = mimeType,
                         dateModified = dateModified,
-                        orientation = orientation,
                         dateTaken = dateTaken,
                         displayName = displayName,
-                        dateAdded = dateAdded,
                         absolutePath = absolutePath
                     )
                 )

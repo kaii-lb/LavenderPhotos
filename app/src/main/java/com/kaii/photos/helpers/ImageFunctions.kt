@@ -33,48 +33,55 @@ enum class ImageFunctions {
     UnTrashImage,
     LoadNormalImage,
     LoadTrashedImage,
+    LoadSecuredImage,
     PermaDeleteImage,
-	SearchImage,
-	MoveOutOfLockedFolder,
-	RenameImage
+    SearchImage,
+    MoveOutOfLockedFolder,
+    RenameImage
 }
 
 fun operateOnImage(
-	absolutePath: String,
-	id: Long,
-	operation: ImageFunctions,
-	context: Context,
-	extraData: Map<String, Any>? = null
+    absolutePath: String,
+    id: Long,
+    operation: ImageFunctions,
+    context: Context,
+    extraData: Map<String, Any>? = null
 ) {
     when (operation) {
         ImageFunctions.TrashImage -> {
             trashPhoto(absolutePath, id)
         }
+
         ImageFunctions.UnTrashImage -> {
             untrashPhoto(absolutePath, id, context)
         }
+
         ImageFunctions.PermaDeleteImage -> {
             permanentlyDeletePhoto(absolutePath)
         }
-		ImageFunctions.ShareImage -> {
-			shareImage(absolutePath, id, context)
-		}
-		ImageFunctions.MoveToLockedFolder -> {
-			moveImageToLockedFolder(absolutePath, id, context)
-		}
-		ImageFunctions.MoveOutOfLockedFolder -> {
-			moveOutOfLockedFolder(absolutePath)
-		}
-		ImageFunctions.RenameImage -> {
-			if (extraData == null) throw Exception("extra data should not be null on renaming an image.")
 
-			renameImage(
-				imagePath = absolutePath,
-				imageName = extraData["old_name"].toString(),
-				newName = extraData["new_name"].toString(),
-				context
-			)
-		}
+        ImageFunctions.ShareImage -> {
+            shareImage(absolutePath, id, context)
+        }
+
+        ImageFunctions.MoveToLockedFolder -> {
+            moveImageToLockedFolder(absolutePath, id, context)
+        }
+
+        ImageFunctions.MoveOutOfLockedFolder -> {
+            moveOutOfLockedFolder(absolutePath)
+        }
+
+        ImageFunctions.RenameImage -> {
+            if (extraData == null) throw Exception("extra data should not be null on renaming an image.")
+
+            renameImage(
+                imagePath = absolutePath,
+                imageName = extraData["old_name"].toString(),
+                newName = extraData["new_name"].toString(),
+                context
+            )
+        }
 
         else -> {
             Log.d(TAG, "chosen function was ${operation.name}")
@@ -88,167 +95,181 @@ fun trashPhoto(path: String, id: Long) {
     val trashDir = getAppTrashBinDirectory()
     val copyToPath = trashDir + "trashed-" + fileToBeTrashed.name
 
-	Files.move(Path(absolutePath), Path(copyToPath), StandardCopyOption.ATOMIC_MOVE)
-	
-	val database = MainActivity.applicationDatabase
+    Files.move(Path(absolutePath), Path(copyToPath), StandardCopyOption.ATOMIC_MOVE)
 
-	val lastModified = System.currentTimeMillis()
-	CoroutineScope(EmptyCoroutineContext + CoroutineName("delete_file_context")).launch {
-	  	val entity = database.mediaEntityDao().getFromId(id)
+    val database = MainActivity.applicationDatabase
 
-		Path(copyToPath).setAttribute(BasicFileAttributes::lastModifiedTime.name, FileTime.fromMillis(lastModified))
-		
-	    database.trashedItemEntityDao().insertEntity(
-	        TrashedItemEntity(
-	            absolutePath,
-	            copyToPath,
-	            entity.dateTaken,
-	            entity.mimeType,
-				entity.displayName
-	        )
-	    )
+    val lastModified = System.currentTimeMillis()
+    CoroutineScope(EmptyCoroutineContext + CoroutineName("delete_file_context")).launch {
+        val entity = database.mediaEntityDao().getFromId(id)
 
-		database.mediaEntityDao().deleteEntityById(id)	
-	}
-	File(copyToPath).lastModified()
+        Path(copyToPath).setAttribute(
+            BasicFileAttributes::lastModifiedTime.name,
+            FileTime.fromMillis(lastModified)
+        )
 
-	fileToBeTrashed.delete()
+        database.trashedItemEntityDao().insertEntity(
+            TrashedItemEntity(
+                absolutePath,
+                copyToPath,
+                entity.dateTaken,
+                entity.mimeType,
+                entity.displayName
+            )
+        )
+
+        database.favouritedItemEntityDao().deleteEntityById(id)
+
+        database.mediaEntityDao().deleteEntityById(id)
+    }
+    File(copyToPath).lastModified()
+
+    fileToBeTrashed.delete()
 }
 
 private fun untrashPhoto(path: String, id: Long, context: Context) {
     val fileToBeRevived = File(path)
-	val absolutePath = fileToBeRevived.absolutePath
-	val lockedFolderPath = context.getAppLockedFolderDirectory()
+    val absolutePath = fileToBeRevived.absolutePath
+    val lockedFolderPath = context.getAppLockedFolderDirectory()
 
-	val database = MainActivity.applicationDatabase
-	val lastModified = System.currentTimeMillis()
-	
-	try {
-		CoroutineScope(EmptyCoroutineContext + CoroutineName("undelete_file_context")).launch {
-			val item = database.trashedItemEntityDao().getFromTrashedPath(absolutePath)
+    val database = MainActivity.applicationDatabase
+    val lastModified = System.currentTimeMillis()
 
-			database.mediaEntityDao().insertEntity(
-				MediaEntity(
-					id = id,
-					mimeType = item.mimeType,
-					dateTaken = item.dateTaken,
-					displayName = item.displayName
-				)
-			)
+    try {
+        CoroutineScope(EmptyCoroutineContext + CoroutineName("undelete_file_context")).launch {
+            val item = database.trashedItemEntityDao().getFromTrashedPath(absolutePath)
 
-			val reverseCemetery = item.originalPath
+            database.mediaEntityDao().insertEntity(
+                MediaEntity(
+                    id = id,
+                    mimeType = item.mimeType,
+                    dateTaken = item.dateTaken,
+                    displayName = item.displayName
+                )
+            )
 
-			database.trashedItemEntityDao().deleteEntityByPath(absolutePath)
+            val reverseCemetery = item.originalPath
 
-			val moveOp = if (absolutePath.contains(lockedFolderPath)) {
-				StandardCopyOption.REPLACE_EXISTING
-			} else {
-				StandardCopyOption.ATOMIC_MOVE
-			}
+            database.trashedItemEntityDao().deleteEntityByPath(absolutePath)
 
-			Files.move(Path(absolutePath), Path(reverseCemetery), moveOp)
+            val moveOp = if (absolutePath.contains(lockedFolderPath)) {
+                StandardCopyOption.REPLACE_EXISTING
+            } else {
+                StandardCopyOption.ATOMIC_MOVE
+            }
 
-			Path(reverseCemetery).setAttribute(BasicFileAttributes::lastModifiedTime.name, FileTime.fromMillis(lastModified))
+            Files.move(Path(absolutePath), Path(reverseCemetery), moveOp)
 
-			fileToBeRevived.delete()
-		}
-	} catch (e: Throwable) {
-		Log.e(TAG, e.toString())
-	}
+            Path(reverseCemetery).setAttribute(
+                BasicFileAttributes::lastModifiedTime.name,
+                FileTime.fromMillis(lastModified)
+            )
+
+            fileToBeRevived.delete()
+        }
+    } catch (e: Throwable) {
+        Log.e(TAG, e.toString())
+    }
 }
 
 private fun permanentlyDeletePhoto(absolutePath: String) {
     val fileToBeShredded = File(absolutePath)
     fileToBeShredded.delete()
 
-	CoroutineScope(EmptyCoroutineContext + CoroutineName("permanently_delete_file_context")).launch {
-		MainActivity.applicationDatabase.trashedItemEntityDao().deleteEntityByPath(absolutePath)
-	}
+    CoroutineScope(EmptyCoroutineContext + CoroutineName("permanently_delete_file_context")).launch {
+        MainActivity.applicationDatabase.trashedItemEntityDao().deleteEntityByPath(absolutePath)
+    }
 }
 
 private fun shareImage(absolutePath: String, id: Long, context: Context) {
-	val database = MainActivity.applicationDatabase
-	CoroutineScope(EmptyCoroutineContext + CoroutineName("delete_file_context")).launch {
-		val mimeType = database.mediaEntityDao().getMimeType(id)
+    val database = MainActivity.applicationDatabase
+    CoroutineScope(EmptyCoroutineContext + CoroutineName("delete_file_context")).launch {
+        val mimeType = database.mediaEntityDao().getMimeType(id)
 
-		val shareIntent = Intent().apply {
-			action = Intent.ACTION_SEND
-			type = mimeType
-		}
+        val shareIntent = Intent().apply {
+            action = Intent.ACTION_SEND
+            type = mimeType
+        }
 
-		shareIntent.putExtra(Intent.EXTRA_STREAM, absolutePath.toUri())
+        shareIntent.putExtra(Intent.EXTRA_STREAM, absolutePath.toUri())
 
-		val chooserIntent = Intent.createChooser(shareIntent, null)
-		context.startActivity(chooserIntent)
-	}
+        val chooserIntent = Intent.createChooser(shareIntent, null)
+        context.startActivity(chooserIntent)
+    }
 }
 
 private fun moveImageToLockedFolder(absolutePath: String, id: Long, context: Context) {
-	val fileToBeHidden = File(absolutePath)
-	val lockedFolderDir = context.getAppLockedFolderDirectory()
-	val copyToPath = lockedFolderDir + fileToBeHidden.name
-	Files.move(Path(absolutePath), Path(copyToPath), StandardCopyOption.REPLACE_EXISTING)
+    val fileToBeHidden = File(absolutePath)
+    val lockedFolderDir = context.getAppLockedFolderDirectory()
+    val copyToPath = lockedFolderDir + fileToBeHidden.name
+    Files.move(Path(absolutePath), Path(copyToPath), StandardCopyOption.REPLACE_EXISTING)
 
-	val database = MainActivity.applicationDatabase
+    val database = MainActivity.applicationDatabase
 
-	val lastModified = System.currentTimeMillis()
-	CoroutineScope(EmptyCoroutineContext + CoroutineName("hide_file_context")).launch {
-		// val entity = database.mediaEntityDao().getFromId(id)
+    val lastModified = System.currentTimeMillis()
+    CoroutineScope(EmptyCoroutineContext + CoroutineName("hide_file_context")).launch {
+        // val entity = database.mediaEntityDao().getFromId(id)
 
-		Path(copyToPath).setAttribute(BasicFileAttributes::lastModifiedTime.name, FileTime.fromMillis(lastModified))
+        Path(copyToPath).setAttribute(
+            BasicFileAttributes::lastModifiedTime.name,
+            FileTime.fromMillis(lastModified)
+        )
 
-		// TODO: replace this with a sidecar file
-		// database.trashedItemEntityDao().insertEntity(
-		// 	TrashedItemEntity(
-		// 		absolutePath,
-		// 		copyToPath,
-		// 		entity.dateTaken,
-		// 		entity.mimeType,
-		// 		entity.displayName
-		// 	)
-		// )
+        // TODO: replace this with a sidecar file
+        // database.trashedItemEntityDao().insertEntity(
+        // 	TrashedItemEntity(
+        // 		absolutePath,
+        // 		copyToPath,
+        // 		entity.dateTaken,
+        // 		entity.mimeType,
+        // 		entity.displayName
+        // 	)
+        // )
 
-		database.mediaEntityDao().deleteEntityById(id)
-	}
-	File(copyToPath).lastModified()
+        database.mediaEntityDao().deleteEntityById(id)
+    }
+    File(copyToPath).lastModified()
 
-	//fileToBeHidden.delete()
+    //fileToBeHidden.delete()
 }
 
 private fun moveOutOfLockedFolder(path: String) {
     val fileToBeRevived = File(path)
-	val absolutePath = fileToBeRevived.absolutePath
+    val absolutePath = fileToBeRevived.absolutePath
 
-	val lastModified = System.currentTimeMillis()
+    val lastModified = System.currentTimeMillis()
 
-	// TODO: use sidecar files(?) to track where it was from
-	// or write metadata into the media itself
-	val reverseCemetery = getAppRestoredFromLockedFolderDirectory() + fileToBeRevived.name
+    // TODO: use sidecar files(?) to track where it was from
+    // or write metadata into the media itself
+    val reverseCemetery = getAppRestoredFromLockedFolderDirectory() + fileToBeRevived.name
 
-	Files.move(Path(absolutePath), Path(reverseCemetery), StandardCopyOption.REPLACE_EXISTING)
+    Files.move(Path(absolutePath), Path(reverseCemetery), StandardCopyOption.REPLACE_EXISTING)
 
-	Path(reverseCemetery).setAttribute(BasicFileAttributes::lastModifiedTime.name, FileTime.fromMillis(lastModified))
+    Path(reverseCemetery).setAttribute(
+        BasicFileAttributes::lastModifiedTime.name,
+        FileTime.fromMillis(lastModified)
+    )
 
-	fileToBeRevived.delete()
+    fileToBeRevived.delete()
 }
 
 private fun renameImage(imagePath: String, imageName: String, newName: String, context: Context) {
-	Log.d(TAG, "$imagePath, $imageName, $newName")
-	val dir = imagePath.replace(imageName, "")
-	val original = File(dir, imageName)
-	val new = File(dir, newName)
+    Log.d(TAG, "$imagePath, $imageName, $newName")
+    val dir = imagePath.replace(imageName, "")
+    val original = File(dir, imageName)
+    val new = File(dir, newName)
 
-	// if somehow the directory that the file is in stopped existing while renaming
-	if (!File(dir).exists()) {
-		File(dir).mkdirs()
-	}
+    // if somehow the directory that the file is in stopped existing while renaming
+    if (!File(dir).exists()) {
+        File(dir).mkdirs()
+    }
 
-	try {
-		val success = original.toPath().moveTo(new.toPath())
-		if (!success.exists()) {
-			Toast.makeText(context, "Failed to rename file", Toast.LENGTH_LONG).show()
-		}
-	} catch(e: Throwable) {
-		Toast.makeText(context, "Failed to rename file", Toast.LENGTH_LONG).show()
-	}
+    try {
+        val success = original.toPath().moveTo(new.toPath())
+        if (!success.exists()) {
+            Toast.makeText(context, "Failed to rename file", Toast.LENGTH_LONG).show()
+        }
+    } catch (e: Throwable) {
+        Toast.makeText(context, "Failed to rename file", Toast.LENGTH_LONG).show()
+    }
 }

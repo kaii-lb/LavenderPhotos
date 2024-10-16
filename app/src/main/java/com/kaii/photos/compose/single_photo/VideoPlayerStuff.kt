@@ -1,8 +1,14 @@
 package com.kaii.photos.compose.single_photo
 
+import android.content.Context
 import android.content.res.Configuration
+import android.media.AudioFocusRequest
+import android.media.AudioManager
 import android.net.Uri
+import android.view.KeyEvent
 import android.view.ViewGroup
+import android.view.Window
+import android.view.WindowInsetsController
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -32,6 +38,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -55,6 +62,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -74,6 +82,7 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.CustomMaterialTheme
 import com.kaii.photos.mediastore.MediaStoreData
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
@@ -144,7 +153,9 @@ fun VideoPlayerControls(
                     value = currentVideoPosition.value,
                     valueRange = 0f..duration.value,
                     onValueChange = { pos ->
+                    	val prev = isPlaying.value
                         exoPlayer.seekTo((pos * 1000).toLong())
+                        isPlaying.value = prev
                     },
                     steps = duration.value.toInt(),
                     thumb = {
@@ -236,7 +247,9 @@ fun VideoPlayerControls(
         ) {
             FilledTonalIconButton(
                 onClick = {
+                	val prev = isPlaying.value
                     exoPlayer.seekBack()
+                    isPlaying.value = prev
                 },
                 modifier = Modifier
                     .size(48.dp)
@@ -268,7 +281,9 @@ fun VideoPlayerControls(
 
             FilledTonalIconButton(
                 onClick = {
+                	val prev = isPlaying.value
                     exoPlayer.seekForward()
+                    isPlaying.value = prev
                 },
                 modifier = Modifier
                     .size(48.dp)
@@ -288,12 +303,16 @@ fun VideoPlayerControls(
 @Composable
 fun VideoPlayer(
     item: MediaStoreData,
-    visible: Boolean,
+    visible: MutableState<Boolean>,
+    appBarsVisible: MutableState<Boolean>,
     shouldPlay: Boolean,
     navController: NavHostController,
+    canFadeControls: MutableState<Boolean>,
+    windowInsetsController: WindowInsetsController,
+    window: Window,
     modifier: Modifier
 ) {
-    val isPlaying = rememberSaveable { mutableStateOf(false) }
+    val isPlaying = rememberSaveable { mutableStateOf(true) }
     val isMuted = rememberSaveable { mutableStateOf(false) }
     /** In Seconds */
     val currentVideoPosition = rememberSaveable { mutableFloatStateOf(0f) }
@@ -301,18 +320,6 @@ fun VideoPlayer(
 
     val exoPlayer = rememberExoPlayerWithLifeCycle(item.uri, isPlaying, duration, currentVideoPosition)
     val playerView = rememberPlayerView(exoPlayer)
-
-	var lastItem by rememberSaveable { mutableStateOf(item) }
-
-    LaunchedEffect(item) {
-    	if (item != lastItem) {
-		    isPlaying.value = false
-		    currentVideoPosition.floatValue = 0f
-		    duration.floatValue = 0f
-
-		    lastItem = item
-    	}
-    }
 
     BackHandler {
         isPlaying.value = false
@@ -325,9 +332,22 @@ fun VideoPlayer(
     LaunchedEffect(key1 = LocalConfiguration.current) {
         exoPlayer.seekTo((currentVideoPosition.floatValue * 1000).toLong())
         exoPlayer.volume = if (isMuted.value) 0f else 1f
+        isPlaying.value = true
     }
-    
+
+    val localConfig = LocalConfiguration.current
     LaunchedEffect(key1 = isPlaying.value) {
+    	if (isPlaying.value) {
+    		canFadeControls.value = true
+    	} else {
+    		visible.value = true
+    		if (localConfig.orientation != Configuration.ORIENTATION_LANDSCAPE) {
+    			appBarsVisible.value = true
+				windowInsetsController.show(WindowInsetsCompat.Type.systemBars())
+                window.setDecorFitsSystemWindows(false)    			
+   			}
+    	}
+    	    	
         while(isPlaying.value) {
         	currentVideoPosition.floatValue = (exoPlayer.currentPosition / 1000f).roundToInt().toFloat()
 
@@ -342,9 +362,15 @@ fun VideoPlayer(
         }
     }
 
+
+	LaunchedEffect(shouldPlay) {
+		currentVideoPosition.floatValue = 0f
+   		duration.floatValue = 0f
+	}
+	
     DisposableEffect(true) {
     	onDispose {
-    		exoPlayer.release()
+   			exoPlayer.release()
     	}
     }
 
@@ -368,7 +394,7 @@ fun VideoPlayer(
 	    }
 		
 		AnimatedVisibility(
-	        visible = visible,
+	        visible = visible.value,
 	        enter = expandIn(
 	            animationSpec = tween(
 	                durationMillis = 350
@@ -484,6 +510,12 @@ fun rememberExoPlayerWithLifeCycle(
             super.onPositionDiscontinuity(oldPosition, newPosition, reason)
             currentVideoPosition.value = (newPosition.positionMs / 1000f).roundToInt().toFloat()
         }
+
+        override fun onIsPlayingChanged(playerIsPlaying: Boolean) {
+        	super.onIsPlayingChanged(playerIsPlaying)
+
+        	isPlaying.value = playerIsPlaying
+        }
     }
     exoPlayer.addListener(listener)
 
@@ -491,9 +523,8 @@ fun rememberExoPlayerWithLifeCycle(
     var appInBackground by remember { mutableStateOf(false) }
 
     DisposableEffect(key1 = lifecycleOwner, appInBackground) {
-        val lifecycleObserver = getExoPlayerLifecycleObserver(exoPlayer, appInBackground, isPlaying) {
-            appInBackground = it
-        }
+        val lifecycleObserver = getExoPlayerLifecycleObserver(exoPlayer, isPlaying)
+        
         lifecycleOwner.lifecycle.addObserver(lifecycleObserver)
 
         onDispose {
@@ -506,30 +537,18 @@ fun rememberExoPlayerWithLifeCycle(
 
 fun getExoPlayerLifecycleObserver(
     exoPlayer: ExoPlayer,
-    wasAppInBackground: Boolean,
     isPlaying: MutableState<Boolean>,
-    setWasAppInBackground: (Boolean) -> Unit
 ): LifecycleEventObserver =
     LifecycleEventObserver { _, event ->
         when (event) {
-            Lifecycle.Event.ON_RESUME -> {
-                if (wasAppInBackground) {
-                	exoPlayer.playWhenReady = true
-                }
-                isPlaying.value = true
-                setWasAppInBackground(false)
-            }
-
             Lifecycle.Event.ON_PAUSE -> {
                 exoPlayer.playWhenReady = false
                 isPlaying.value = false
-                setWasAppInBackground(true)
             }
 
             Lifecycle.Event.ON_STOP -> {
                 exoPlayer.playWhenReady = false
                 isPlaying.value = false
-                setWasAppInBackground(true)
             }
 
             Lifecycle.Event.ON_DESTROY -> {

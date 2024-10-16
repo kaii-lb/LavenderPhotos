@@ -19,7 +19,6 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -53,7 +52,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -71,8 +69,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -90,6 +86,7 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.CustomMaterialTheme
 import com.kaii.photos.compose.FolderDoesntExist
 import com.kaii.photos.compose.FolderIsEmpty
+import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.helpers.ImageFunctions
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.checkHasFiles
@@ -99,7 +96,6 @@ import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.signature
-import com.kaii.photos.models.main_activity.MainDataSharingModel
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.ZoneId
@@ -113,14 +109,11 @@ private const val TAG = "PHOTO_GRID_VIEW"
 fun PhotoGrid(
 	groupedMedia: MutableState<List<MediaStoreData>>,
 	navController: NavHostController,
-	operation: ImageFunctions,
 	path: String?,
 	selectedItemsList: SnapshotStateList<MediaStoreData>,
-	emptyText: String = "Empty Folder",
-	emptyIconResId: Int = R.drawable.error,
-	prefix: String = "",
-	shouldPadUp: Boolean = false,
-	modifier: Modifier = Modifier
+	modifier: Modifier = Modifier,
+	viewProperties: ViewProperties,
+	shouldPadUp: Boolean = false
 ) {
 	val hasFiles = if (path == null) {
 		groupedMedia.value.isNotEmpty()
@@ -142,14 +135,13 @@ fun PhotoGrid(
 			DeviceMedia(
 				groupedMedia,
 				navController,
-				operation,
 				selectedItemsList,
-				prefix,
+				viewProperties,
 				shouldPadUp
 			)
 		}
 	} else {
-		FolderIsEmpty(emptyText, emptyIconResId)
+		FolderIsEmpty(viewProperties.emptyText, viewProperties.emptyIconResId)
 	}
 }
 
@@ -158,9 +150,8 @@ fun PhotoGrid(
 fun DeviceMedia(
 	groupedMedia: MutableState<List<MediaStoreData>>,
 	navController: NavHostController,
-	operation: ImageFunctions,
 	selectedItemsList: SnapshotStateList<MediaStoreData>,
-	prefix: String,
+	viewProperties: ViewProperties,
 	shouldPadUp: Boolean
 ) {
 	val gridState = rememberLazyGridState()
@@ -175,18 +166,14 @@ fun DeviceMedia(
 	}
 
 	if (groupedMedia.value.isNotEmpty()) {
-		val handler = Handler(Looper.getMainLooper())
-		val runnable = Runnable {
-			showLoadingSpinner = false
-		}
-		handler.removeCallbacks(runnable)
-		handler.postDelayed(runnable, 500)
+		showLoadingSpinner = false
 	}
 
 	LaunchedEffect(groupedMedia.value) {
 		MainActivity.mainViewModel.setGroupedMedia(groupedMedia.value)	
 	}
-	
+
+	val mainViewModel = MainActivity.mainViewModel
 	Box (
 		modifier = Modifier
 			.fillMaxSize(1f)
@@ -225,7 +212,7 @@ fun DeviceMedia(
 	                }
 	            }
 	        ) { i ->
-	        	if (groupedMedia.value.isEmpty()) return@items
+				if (groupedMedia.value.isEmpty()) return@items
 				val mediaStoreItem = groupedMedia.value[i]
 
 				Row (
@@ -236,14 +223,38 @@ fun DeviceMedia(
 						)
 				) {
 					MediaStoreItem(
-						navController,
 						mediaStoreItem,
-						operation,
-						MainActivity.mainViewModel,
 						groupedMedia.value,
-						prefix,
+						viewProperties,
 						selectedItemsList
-					)
+					) {
+						when (viewProperties.operation) {
+							ImageFunctions.LoadNormalImage -> {
+								mainViewModel.setSelectedMediaData(mediaStoreItem)
+								mainViewModel.setGroupedMedia(groupedMedia.value)
+								navController.navigate(MultiScreenViewType.SinglePhotoView.name)
+							}
+
+							ImageFunctions.LoadTrashedImage -> {
+								mainViewModel.setSelectedMediaData(mediaStoreItem)
+								mainViewModel.setGroupedMedia(groupedMedia.value)
+								navController.navigate(MultiScreenViewType.SingleTrashedPhotoView.name)
+							}
+
+							ImageFunctions.LoadSecuredImage -> {
+								mainViewModel.setSelectedMediaData(mediaStoreItem)
+								mainViewModel.setGroupedMedia(groupedMedia.value)
+								navController.navigate(MultiScreenViewType.SingleHiddenPhotoVew.name)
+							}
+
+							else -> {
+								Log.e(
+									TAG,
+									"No acceptable ImageFunction provided, this should not happen."
+								)
+							}
+						}
+					}
 				}
 	        }
 	    }
@@ -329,7 +340,7 @@ fun DeviceMedia(
 					interactionSource = interactionSource,
 					onValueChange = {
 						coroutineScope.launch {
-							if (!gridState.isScrollInProgress) {
+							if (isScrollingByHandle) {
 								gridState.scrollToItem(
 									(it * groupedMedia.value.size).roundToInt()
 								)
@@ -457,13 +468,11 @@ fun DeviceMedia(
 @OptIn(ExperimentalGlideComposeApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun MediaStoreItem(
-	navController: NavHostController,
 	item: MediaStoreData,
-	operation: ImageFunctions,
-	mainViewModel: MainDataSharingModel,
 	groupedMedia: List<MediaStoreData>,
-	prefix: String,
+	viewProperties: ViewProperties,
 	selectedItemsList: SnapshotStateList<MediaStoreData>,
+	onClick: () -> Unit
 ) {
 	val vibratorManager = rememberVibratorManager()
 	val coroutineScope = rememberCoroutineScope()
@@ -484,7 +493,7 @@ fun MediaStoreItem(
 				) {
 					coroutineScope.launch {
 						val datedMedia = groupedMedia.filter {
-							if (prefix == "Trashed On ") { // find a better way to identify when in trash
+							if (viewProperties == ViewProperties.Trash || viewProperties == ViewProperties.Favourites) {
 								it.getLastModifiedDay() == item.getLastModifiedDay() && it.type != MediaType.Section	
 							} else {
 								it.getDateTakenDay() == item.getDateTakenDay() && it.type != MediaType.Section	
@@ -505,7 +514,7 @@ fun MediaStoreItem(
 				.padding(16.dp, 8.dp),
         ) {
             Text (
-                text = prefix + item.displayName,
+                text = "${viewProperties.prefix}${item.displayName}",
                 fontSize = TextUnit(16f, TextUnitType.Sp),
                 fontWeight = FontWeight.Bold,
                 color = CustomMaterialTheme.colorScheme.onBackground,
@@ -536,8 +545,9 @@ fun MediaStoreItem(
 	        	durationMillis = 150
 	        ),
 			label = "animate scale of selected item"
-		)    
-        Box (
+		)
+
+		Box (
             modifier = Modifier
 				.aspectRatio(1f)
 				.padding(2.dp)
@@ -549,7 +559,7 @@ fun MediaStoreItem(
 						coroutineScope.launch {
 							if (selectedItemsList.size > 0) {
 								val sectionItems = groupedMedia.filter {
-									if (prefix == "Trashed On ") {
+									if (viewProperties == ViewProperties.Trash || viewProperties == ViewProperties.Favourites) {
 										it.getLastModifiedDay() == item.getLastModifiedDay()
 									} else {
 										it.getDateTakenDay() == item.getDateTakenDay()
@@ -577,26 +587,7 @@ fun MediaStoreItem(
 								return@launch
 							}
 
-							when (operation) {
-								ImageFunctions.LoadNormalImage -> {
-									mainViewModel.setSelectedMediaData(item)
-									mainViewModel.setGroupedMedia(groupedMedia)
-									navController.navigate(MultiScreenViewType.SinglePhotoView.name)
-								}
-
-								ImageFunctions.LoadTrashedImage -> {
-									mainViewModel.setSelectedMediaData(item)
-									mainViewModel.setGroupedMedia(groupedMedia)
-									navController.navigate(MultiScreenViewType.SingleTrashedPhotoView.name)
-								}
-
-								else -> {
-									Log.e(
-										TAG,
-										"No acceptable ImageFunction provided, this should not happen."
-									)
-								}
-							}
+							onClick()
 						}
 					},
 
@@ -604,7 +595,7 @@ fun MediaStoreItem(
 						if (selectedItemsList.size > 0) return@combinedClickable
 
 						val sectionItems = groupedMedia.filter {
-							if (prefix == "Trashed On ") {
+							if (viewProperties == ViewProperties.Trash || viewProperties == ViewProperties.Favourites) {
 								it.getLastModifiedDay() == item.getLastModifiedDay()
 							} else {
 								it.getDateTakenDay() == item.getDateTakenDay()
@@ -631,8 +622,8 @@ fun MediaStoreItem(
 					}
 				)
         ) {
-            GlideImage(
-                model = item.uri,
+			GlideImage(
+                model = if (viewProperties == ViewProperties.SecureFolder) item.uri.path else item.uri,
                 contentDescription = item.displayName,
                 contentScale = ContentScale.Crop,
 				failure = placeholder(R.drawable.broken_image),
@@ -644,14 +635,13 @@ fun MediaStoreItem(
             ) {
                 it.signature(item.signature()).diskCacheStrategy(DiskCacheStrategy.ALL)
             }
-			
 
 			if (item.type == MediaType.Video) {
 				Box (
 					modifier = Modifier
 						.align(Alignment.BottomStart)
 						.padding(2.dp)
-				) {			
+				) {
 	        		Icon (
 	        			painter = painterResource(id = R.drawable.movie_filled),
 						contentDescription = "file is video indicator",

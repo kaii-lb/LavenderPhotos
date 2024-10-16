@@ -1,5 +1,6 @@
 package com.kaii.photos.compose.single_photo
 
+import android.content.res.Configuration
 import android.view.Window
 import android.view.WindowInsetsController
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -22,6 +23,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,6 +31,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowInsetsCompat
@@ -44,6 +47,7 @@ import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.signature
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.cos
@@ -102,11 +106,36 @@ fun HorizontalImageList(
 
         if (mediaStoreItem.type == MediaType.Video) {
         	val showVideoPlayerControls = remember { mutableStateOf(true) }
+			var canFadeControls = remember { mutableStateOf(true) }
+
+			LaunchedEffect(key1 = showVideoPlayerControls.value, key2 = canFadeControls.value, key3 = appBarsVisible.value) {
+				if (canFadeControls.value == true) {
+					delay(5000)
+					showVideoPlayerControls.value = false
+					appBarsVisible.value = false
+					systemBarsShown.value = false
+
+                    windowInsetsController.apply {
+                        hide(WindowInsetsCompat.Type.systemBars())
+                        systemBarsBehavior =
+                            WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                    }
+                    window.setDecorFitsSystemWindows(false)
+
+
+					canFadeControls.value = false
+				}
+			}
+
 	        VideoPlayer(
 	            item = mediaStoreItem,
-	            visible = showVideoPlayerControls.value,
+	            visible = showVideoPlayerControls,
+	            appBarsVisible = appBarsVisible,
 	            shouldPlay = shouldPlay,
                 navController = navController,
+                canFadeControls = canFadeControls,
+                windowInsetsController = windowInsetsController,
+                window = window,
 	            modifier = Modifier
 	            	.fillMaxSize(1f)
 	                .mediaModifier(
@@ -163,95 +192,103 @@ private fun Modifier.mediaModifier(
     appBarAlpha: MutableState<Boolean>,
     item: MediaStoreData? = null,
     showVideoPlayerController: MutableState<Boolean>? = null
-) = this.then(
-    Modifier
-        .combinedClickable(
-            indication = null,
-            interactionSource = remember { MutableInteractionSource() },
-            onClick = {
-                if (systemBarsShown.value) {
-                    windowInsetsController.apply {
-                        hide(WindowInsetsCompat.Type.systemBars())
-                        systemBarsBehavior =
-                            WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-                    }
-                    window.setDecorFitsSystemWindows(false)
-                    systemBarsShown.value = false
-                    appBarAlpha.value = false
-                } else {
-                    windowInsetsController.show(WindowInsetsCompat.Type.systemBars())
-                    window.setDecorFitsSystemWindows(false)
-                    systemBarsShown.value = true
-                    appBarAlpha.value = true
-                }
-            },
+) : Modifier {
+   	val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
 
-            onDoubleClick = {
-            	if (item?.type == MediaType.Video && showVideoPlayerController != null) {
-            		showVideoPlayerController.value = !showVideoPlayerController.value
-            	} else {
-	                if (scale.value == 1f) {
-	                    scale.value = 2f
-	                    rotation.value = 0f
-	                    offset.value = Offset.Zero
+	return this.then(
+	    Modifier
+	        .combinedClickable(
+	            indication = null,
+	            interactionSource = remember { MutableInteractionSource() },
+	            onClick = {
+	                if (systemBarsShown.value) {
+	                    windowInsetsController.apply {
+	                        hide(WindowInsetsCompat.Type.systemBars())
+	                        systemBarsBehavior =
+	                            WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+	                    }
+	                    window.setDecorFitsSystemWindows(false)
+	                    systemBarsShown.value = false
+	                    appBarAlpha.value = false
+	                    
+	                    if (!isLandscape) showVideoPlayerController?.value = false
 	                } else {
-	                    scale.value = 1f
-	                    rotation.value = 0f
-	                    offset.value = Offset.Zero
+	                    windowInsetsController.show(WindowInsetsCompat.Type.systemBars())
+	                    window.setDecorFitsSystemWindows(false)
+	                    systemBarsShown.value = true
+	                    appBarAlpha.value = true
+
+	                    if (!isLandscape) showVideoPlayerController?.value = true
 	                }
-            	}
-            },
-        )
-        .graphicsLayer(
-            scaleX = scale.value,
-            scaleY = scale.value,
-            rotationZ = rotation.value,
-            translationX = -offset.value.x * scale.value,
-            translationY = -offset.value.y * scale.value,
-            transformOrigin = TransformOrigin(0.5f, 0.5f)
-        )
-        .pointerInput(Unit) {
-            // loop over each gesture and consume only those we care about
-            // so we don't interfere with other gestures
-            awaitEachGesture {
-                awaitFirstDown()
+	            },
 
-                do {
-                    val event = awaitPointerEvent()
+	            onDoubleClick = {
+	            	if (item?.type == MediaType.Video && showVideoPlayerController != null) {
+	            		if (isLandscape) showVideoPlayerController.value = !showVideoPlayerController.value
+	            	} else {
+		                if (scale.value == 1f) {
+		                    scale.value = 2f
+		                    rotation.value = 0f
+		                    offset.value = Offset.Zero
+		                } else {
+		                    scale.value = 1f
+		                    rotation.value = 0f
+		                    offset.value = Offset.Zero
+		                }
+	            	}
+	            },
+	        )
+	        .graphicsLayer(
+	            scaleX = scale.value,
+	            scaleY = scale.value,
+	            rotationZ = rotation.value,
+	            translationX = -offset.value.x * scale.value,
+	            translationY = -offset.value.y * scale.value,
+	            transformOrigin = TransformOrigin(0.5f, 0.5f)
+	        )
+	        .pointerInput(Unit) {
+	            // loop over each gesture and consume only those we care about
+	            // so we don't interfere with other gestures
+	            awaitEachGesture {
+	                awaitFirstDown()
 
-                    if (event.changes.size == 2) {
-                        scale.value *= event.calculateZoom()
-                        scale.value = scale.value.coerceIn(0.75f, 5f)
+	                do {
+	                    val event = awaitPointerEvent()
 
-                        rotation.value += event.calculateRotation()
+	                    if (event.changes.size == 2) {
+	                        scale.value *= event.calculateZoom()
+	                        scale.value = scale.value.coerceIn(0.75f, 5f)
 
-                        event.changes.forEach {
-                            it.consume()
-                        }
-                    } else if (event.changes.size == 1 && event.calculatePan() != Offset.Zero) {
-                        if (scale.value != 1f) {
-                            // this is from android docs, i have no clue what the math here is xD
-                            offset.value = (offset.value + Offset(0.5f, 0.5f) / scale.value) -
-                                    (Offset(0.5f, 0.5f) / scale.value + event
-                                        .calculatePan()
-                                        .rotateBy(rotation.value))
+	                        rotation.value += event.calculateRotation()
 
-                            event.changes.forEach {
-                                it.consume()
-                            }
-                        }
-                    }
-                } while (event.changes.any { it.pressed })
-            }
-        })
+	                        event.changes.forEach {
+	                            it.consume()
+	                        }
+	                    } else if (event.changes.size == 1 && event.calculatePan() != Offset.Zero) {
+	                        if (scale.value != 1f) {
+	                            // this is from android docs, i have no clue what the math here is xD
+	                            offset.value = (offset.value + Offset(0.5f, 0.5f) / scale.value) -
+	                                    (Offset(0.5f, 0.5f) / scale.value + event
+	                                        .calculatePan()
+	                                        .rotateBy(rotation.value))
+
+	                            event.changes.forEach {
+	                                it.consume()
+	                            }
+	                        }
+	                    }
+	                } while (event.changes.any { it.pressed } && showVideoPlayerController == null)
+	            }
+	        })
+}
 
 /** deals with grouped media modifications, in this case removing stuff*/
 fun sortOutMediaMods(
     item: MediaStoreData,
     groupedMedia: MutableState<List<MediaStoreData>>,
     coroutineScope: CoroutineScope,
-    navController: NavHostController,
-    state: PagerState
+    state: PagerState,
+    popBackStackAction: () -> Unit
 ) {
     coroutineScope.launch {
         val size = groupedMedia.value.size - 1
@@ -262,7 +299,7 @@ fun sortOutMediaMods(
         newMedia.removeAt(scrollIndex)
 
         if (size == 0) {
-            navController.popBackStack()
+            popBackStackAction()
         } else {
             state.scrollToPage((scrollIndex).coerceIn(0, size))
         }

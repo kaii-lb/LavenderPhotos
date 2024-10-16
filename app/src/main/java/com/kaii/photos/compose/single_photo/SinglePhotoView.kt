@@ -56,16 +56,25 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import com.kaii.photos.R
 import com.kaii.photos.MainActivity
+import com.kaii.photos.R
 import com.kaii.photos.compose.ConfirmationDialog
 import com.kaii.photos.compose.CustomMaterialTheme
 import com.kaii.photos.compose.SinglePhotoInfoDialog
+import com.kaii.photos.database.entities.FavouritedItemEntity
 import com.kaii.photos.helpers.ImageFunctions
 import com.kaii.photos.helpers.operateOnImage
+import com.kaii.photos.helpers.rememberVibratorManager
+import com.kaii.photos.helpers.vibrateShort
+import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.models.favourites_grid.FavouritesViewModel
+import com.kaii.photos.models.favourites_grid.FavouritesViewModelFactory
+import kotlinx.coroutines.launch
 
 //private const val TAG = "SINGLE_PHOTO_VIEW"
 
@@ -119,13 +128,31 @@ fun SinglePhotoView(
 	val neededDialogTitle = remember { mutableStateOf("Move this ${currentMediaItem.value.type.name} to Locked Folder?") }
 	val neededDialogButtonLabel = remember { mutableStateOf("Move") }
 
+	val coroutineScope = rememberCoroutineScope()
+
 	Scaffold (
-		topBar =  { TopBar(
-			navController,
-			currentMediaItem.value,
-			appBarsVisible.value,
-			showInfoDialog
-		) },
+		topBar =  {
+			TopBar(
+				mediaItem = currentMediaItem.value,
+				visible = appBarsVisible.value,
+				showInfoDialog = showInfoDialog,
+				removeIfInFavGrid = {
+					if (navController.previousBackStackEntry?.destination?.route == MultiScreenViewType.FavouritesGridView.name) {
+						sortOutMediaMods(
+							currentMediaItem.value,
+							groupedMedia,
+							coroutineScope,
+							state
+						) {
+							navController.popBackStack()
+						}
+					}
+				},
+				onBackClick = {
+					navController.popBackStack()		
+				}
+			)
+	  	},
 		bottomBar = { BottomBar(
 			appBarsVisible.value,
 			currentMediaItem.value,
@@ -139,7 +166,7 @@ fun SinglePhotoView(
 	) {  _ ->
 		// material theme doesn't seem to apply just above????
 		val context = LocalContext.current
-		val coroutineScope = rememberCoroutineScope()
+
 		ConfirmationDialog(
 			showDialog = showActionDialog,
 			dialogTitle = neededDialogTitle.value,
@@ -147,12 +174,13 @@ fun SinglePhotoView(
 		) {
 			operateOnImage(currentMediaItem.value.absolutePath, currentMediaItem.value.id, neededDialogFunction.value, context)
 			sortOutMediaMods(
-				currentMediaItem.value,
+				mediaItem,
 				groupedMedia,
 				coroutineScope,
-				navController,
 				state
-			)
+			) {
+				navController.popBackStack()
+			}
 		}
 	
 		SinglePhotoInfoDialog(
@@ -188,16 +216,23 @@ fun SinglePhotoView(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TopBar(
-	navController: NavHostController,
-	mediaItem: MediaStoreData?,
+	mediaItem: MediaStoreData,
 	visible: Boolean,
-	showInfoDialog: MutableState<Boolean>
+	showInfoDialog: MutableState<Boolean>,
+	removeIfInFavGrid: () -> Unit,
+	onBackClick: () -> Unit
 ) {
 	val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
 	val color = if (isLandscape)
 		CustomMaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.4f)
 	else
 		CustomMaterialTheme.colorScheme.surfaceContainer
+
+	val vibratorManager = rememberVibratorManager()
+
+	val favouritesViewModel: FavouritesViewModel = viewModel(
+		factory = FavouritesViewModelFactory()
+	)
 
 	AnimatedVisibility(
 		visible = visible,
@@ -220,7 +255,7 @@ private fun TopBar(
 			),
 			navigationIcon = {
 				IconButton(
-					onClick = { navController.popBackStack() },
+					onClick = { onBackClick() },
 				) {
 					Icon(
 						painter = painterResource(id = R.drawable.back_arrow),
@@ -232,11 +267,7 @@ private fun TopBar(
 				}
 			},
 			title = {
-				val mediaTitle = if (mediaItem != null) {
-					mediaItem.displayName ?: mediaItem.type.name
-				} else {
-					"Media"
-				}
+				val mediaTitle = mediaItem.displayName ?: mediaItem.type.name
 
 				Spacer (modifier = Modifier.width(8.dp))
 
@@ -251,13 +282,27 @@ private fun TopBar(
 				)
 			},
 			actions = {
+				val isInDB = favouritesViewModel.isInFavourites(mediaItem.id).collectAsState()
+				val isSelected by remember { derivedStateOf {
+					isInDB.value
+				}}
+
 				IconButton(
-					onClick = { /* TODO */ },
+					onClick = {
+						vibratorManager.vibrateShort()
+
+						if (!isSelected) {
+							favouritesViewModel.addToFavourites(mediaItem)
+						} else {
+							favouritesViewModel.removeFromFavourites(mediaItem.id)
+							removeIfInFavGrid()
+						}
+					},
 				) {
 					Icon(
-						painter = painterResource(id = R.drawable.favorite),
+						painter = painterResource(id = if (isSelected) R.drawable.favourite_filled else R.drawable.favourite),
 						contentDescription = "favorite this media item",
-						tint = CustomMaterialTheme.colorScheme.onBackground,
+						tint = if (isSelected) CustomMaterialTheme.colorScheme.primary else CustomMaterialTheme.colorScheme.onBackground,
 						modifier = Modifier
 							.size(24.dp)
 							.padding(0.dp, 1.dp, 0.dp, 0.dp)
@@ -393,8 +438,7 @@ private fun BottomBar(
 						}
 					}
 				}
-			},
-//			modifier = Modifier.alpha(alpha)
+			}
 		)
 	}
 }

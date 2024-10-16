@@ -9,4 +9,5 @@ enum class MultiScreenViewType {
     LockedFolderView,
     SingleHiddenPhotoVew,
     AboutAndUpdateView,
+    FavouritesGridView,
 }

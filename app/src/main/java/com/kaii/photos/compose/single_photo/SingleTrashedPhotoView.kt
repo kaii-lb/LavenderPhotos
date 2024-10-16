@@ -124,9 +124,10 @@ fun SingleTrashedPhotoView(
                             currentMediaItem,
                             groupedMedia,
                             coroutineScope,
-                            navController,
                             state
-                        )
+                        ) {
+                            navController.popBackStack()
+                        }
                     }
                ) {
                    Text(
@@ -326,9 +327,10 @@ private fun BottomBar(
                                 item,
                                 groupedMedia,
                                 coroutineScope,
-                                navController,
                                 state
-                            )
+                            ) {
+                                navController.popBackStack()
+                            }
                         },
                         modifier = Modifier
                             .weight(1f)
@@ -340,12 +342,11 @@ private fun BottomBar(
                             horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
                             Icon (
-                                painter = painterResource(id = R.drawable.favorite),
+                                painter = painterResource(id = R.drawable.favourite),
                                 contentDescription = "Restore Image Button",
                                 tint = CustomMaterialTheme.colorScheme.primary,
                                 modifier = Modifier
                                     .size(22.dp)
-                                    .padding(0.dp, 2.dp, 0.dp, 0.dp)
                             )
 
                             Spacer (
@@ -385,7 +386,6 @@ private fun BottomBar(
                                 tint = CustomMaterialTheme.colorScheme.primary,
                                 modifier = Modifier
                                     .size(22.dp)
-                                    .padding(0.dp, 2.dp, 0.dp, 0.dp)
                             )
 
                             Spacer (

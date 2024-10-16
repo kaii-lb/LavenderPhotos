@@ -1,7 +1,6 @@
 package com.kaii.photos.compose.grids
 
 import android.content.res.Configuration
-import android.graphics.drawable.Drawable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -31,7 +30,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
@@ -40,11 +38,9 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
-import com.bumptech.glide.integration.compose.rememberGlidePreloadingData
 import com.kaii.photos.MainActivity
 import com.kaii.photos.R
 import com.kaii.photos.compose.CustomMaterialTheme
@@ -65,8 +61,6 @@ fun AlbumsGridView(albumsViewModel: AlbumsViewModel, navController: NavHostContr
         verticalArrangement = Arrangement.SpaceEvenly,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-		// val listOfDirs = emptyList<String>().toMutableList()
-
 		val mediaStoreData = albumsViewModel.mediaStoreData.collectAsState()
 		val actualData = mediaStoreData.value
 
@@ -86,13 +80,19 @@ fun AlbumsGridView(albumsViewModel: AlbumsViewModel, navController: NavHostContr
         	item (
         		span = { GridItemSpan(maxLineSpan) }
         	) {
-        		CategoryList(navController)
+        		CategoryList(
+					navigateToFavourites = {
+						navController.navigate(MultiScreenViewType.FavouritesGridView.name)
+					},
+					navigateToTrash = {
+						navController.navigate(MultiScreenViewType.TrashedPhotoView.name)
+					}
+				)
         	}
 
             items(
                 count = listOfDirs.size,
 	            key = { key ->
-	                // println("URI STRING ${mediaStoreData[it].uri}")
 	                listOfDirs[key]
 	            },                
             ) { index ->
@@ -102,38 +102,25 @@ fun AlbumsGridView(albumsViewModel: AlbumsViewModel, navController: NavHostContr
 				if (actualData.isNotEmpty()) {
 					val mediaItem = actualData[neededDir] ?: MediaStoreData()
 
-					val requestBuilderTransform =
-				        { item: MediaStoreData, requestBuilder: RequestBuilder<Drawable> ->
-				            requestBuilder.load(item.uri).centerCrop()
-				        }
-
-					val preloadingData =
-				        rememberGlidePreloadingData(
-				            listOf(mediaItem),
-				            Size(100f, 100f),
-				            requestBuilderTransform = requestBuilderTransform
-                        )
-					val (mediaStoreItem, preloadRequestBuilder) = preloadingData[0]
-
 					Row (
 						modifier = Modifier
 							.wrapContentSize()	
 							.animateItem(
 								fadeInSpec = tween(
-									durationMillis = 350
+									durationMillis = 250
 								),
 								fadeOutSpec = tween(
-									durationMillis = 350
+									durationMillis = 250
 								)
 							)
 					) {
 						AlbumGridItem(
-							navController,
-							folder.name,
-							neededDir,
-							mediaStoreItem,
-							preloadRequestBuilder
-						)	
+							title = folder.name,
+							item = mediaItem
+						) {
+							MainActivity.mainViewModel.setSelectedAlbumDir(neededDir)
+							navController.navigate(MultiScreenViewType.SingleAlbumView.name)
+						}
 					}
 				}
             }
@@ -144,11 +131,9 @@ fun AlbumsGridView(albumsViewModel: AlbumsViewModel, navController: NavHostContr
 @OptIn(ExperimentalGlideComposeApi::class, ExperimentalFoundationApi::class)
 @Composable
 private fun AlbumGridItem(
-	navController: NavHostController,
 	title: String,
-	neededDir: String,
 	item: MediaStoreData,
-	preloadRequestBuilder: RequestBuilder<Drawable>
+	onClick: () -> Unit
 ) {	
 	Column (
 		modifier = Modifier
@@ -159,11 +144,8 @@ private fun AlbumGridItem(
 			.background(CustomMaterialTheme.colorScheme.surfaceContainer)
 			.combinedClickable(
 				onClick = {
-					MainActivity.mainViewModel.setSelectedAlbumDir(neededDir)
-					navController.navigate(MultiScreenViewType.SingleAlbumView.name)
+					onClick()
 				},
-
-				onDoubleClick = { /*ignore double clicks*/ },
 
 				onLongClick = {
 					// TODO: select item
@@ -195,7 +177,7 @@ private fun AlbumGridItem(
 						)
 					),
 			) {
-				it.thumbnail(preloadRequestBuilder).signature(item.signature())
+				it.signature(item.signature())
 			}
 
 			Text(
@@ -213,7 +195,10 @@ private fun AlbumGridItem(
 }
 
 @Composable
-private fun CategoryList(navController: NavHostController) {
+private fun CategoryList(
+	navigateToTrash: () -> Unit,
+	navigateToFavourites: () -> Unit
+) {
 	Row (
         modifier = Modifier
 			.fillMaxWidth(1f)
@@ -224,7 +209,9 @@ private fun CategoryList(navController: NavHostController) {
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         OutlinedButton(
-            onClick = { /*TODO*/ },
+            onClick = {
+				navigateToFavourites()
+			},
             modifier = Modifier
 				.weight(1f)
 				.height(48.dp)
@@ -235,8 +222,8 @@ private fun CategoryList(navController: NavHostController) {
    		        horizontalArrangement = Arrangement.SpaceEvenly
         	) {
 				Icon (
-        			painter = painterResource(id = R.drawable.favorite),
-					contentDescription = "Favorites Button",
+        			painter = painterResource(id = R.drawable.favourite),
+					contentDescription = "Favourites Button",
                     tint = CustomMaterialTheme.colorScheme.primary,
                     modifier = Modifier
 						.size(22.dp)
@@ -249,7 +236,7 @@ private fun CategoryList(navController: NavHostController) {
 				)
 
 	            Text(
-	            	text = "Favorites",
+	            	text = "Favourites",
 		         	fontSize = TextUnit(16f, TextUnitType.Sp),
 		          	textAlign = TextAlign.Center,
 		         	color = CustomMaterialTheme.colorScheme.onBackground,
@@ -263,7 +250,7 @@ private fun CategoryList(navController: NavHostController) {
 
         OutlinedButton(
             onClick = {
-				navController.navigate(MultiScreenViewType.TrashedPhotoView.name)
+				navigateToTrash()
 			},
             modifier = Modifier
 				.weight(1f)

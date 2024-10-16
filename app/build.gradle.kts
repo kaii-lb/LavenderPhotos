@@ -14,8 +14,8 @@ android {
         applicationId = "com.kaii.photos"
         minSdk = 33
         targetSdk = 34
-        versionCode = 66
-        versionName = "v0.6.6"
+        versionCode = 69
+        versionName = "v0.6.9"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -91,6 +91,7 @@ dependencies {
 
     val roomVersion = "2.6.1"	
     implementation("androidx.room:room-runtime:$roomVersion")
+    implementation("androidx.room:room-ktx:$roomVersion")
     annotationProcessor("androidx.room:room-compiler:$roomVersion")
 
 	testImplementation("junit:junit:4.13.2")

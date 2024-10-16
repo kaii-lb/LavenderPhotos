@@ -8,20 +8,63 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.kaii.photos.R
+import com.kaii.photos.helpers.ImageFunctions
+
+enum class ViewProperties(
+    val emptyText: String,
+    val emptyIconResId: Int,
+    val prefix: String,
+    val operation: ImageFunctions
+) {
+    Trash(
+        emptyText = "Trashed items show up here",
+        emptyIconResId = R.drawable.delete,
+        prefix = "Trashed On ",
+        operation = ImageFunctions.LoadTrashedImage
+    ),
+    Album(
+        emptyText = "This album is empty",
+        emptyIconResId = R.drawable.error,
+        prefix = "",
+        operation = ImageFunctions.LoadNormalImage
+    ),
+    SearchLoading(
+        emptyText = "Search for some photos!",
+        emptyIconResId = R.drawable.search,
+        prefix = "",
+        operation = ImageFunctions.LoadNormalImage
+    ),
+    SearchNotFound(
+        emptyText = "Unable to find any matches",
+        emptyIconResId = R.drawable.error,
+        prefix = "",
+        operation = ImageFunctions.LoadNormalImage
+    ),
+    SecureFolder(
+        emptyText = "Add items here to secure them",
+        emptyIconResId = R.drawable.locked_folder,
+        prefix = "Secured On ",
+        operation = ImageFunctions.LoadSecuredImage
+    ),
+    Favourites(
+        emptyText = "Add your most precious memories",
+        emptyIconResId = R.drawable.favourite,
+        prefix = "",
+        operation = ImageFunctions.LoadNormalImage
+    )
+}
 
 @Composable
 fun FolderDoesntExist() {

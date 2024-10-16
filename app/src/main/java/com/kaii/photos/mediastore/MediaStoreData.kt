@@ -17,10 +17,8 @@ data class MediaStoreData(
     val uri: Uri = Uri.parse(""),
     val mimeType: String? = "image",
     val dateModified: Long = 0L,
-    val orientation: Int = 0,
     val dateTaken: Long = 0L,
     val displayName: String? = "",
-    val dateAdded: Long = 0L,
     val absolutePath: String = "",
 
     var gridPosition: Int = 0
@@ -66,7 +64,7 @@ data class MediaStoreData(
     }
 }
 
-fun MediaStoreData.signature() = MediaStoreSignature(mimeType, dateModified, orientation)
+fun MediaStoreData.signature() = MediaStoreSignature(mimeType, dateModified, 0)
 
 /** The type of data. */
 enum class MediaType {

@@ -5,24 +5,22 @@ import android.net.Uri
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -36,8 +34,6 @@ import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -53,7 +49,6 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -63,12 +58,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
 import com.kaii.photos.MainActivity
 import com.kaii.photos.R
 import com.kaii.photos.helpers.ImageFunctions
-import com.kaii.photos.helpers.brightenColor
-import com.kaii.photos.helpers.darkenColor
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.operateOnImage
 import com.kaii.photos.mediastore.MediaStoreData
@@ -101,7 +93,7 @@ fun BottomAppBarItem(
         Modifier
     }
 
-	if (dialogComposable != null) dialogComposable()
+    if (dialogComposable != null) dialogComposable()
 
     Box(
         modifier = Modifier
@@ -149,14 +141,14 @@ fun SelectableBottomAppBarItem(
         modifier = Modifier
             .width(64.dp)
             .height(56.dp)
-        	.clickable(
-            	interactionSource = remember { MutableInteractionSource() },
-            	indication = null
-        	) {
-            	action()
-        	}            
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) {
+                action()
+            }
     ) {
-    	AnimatedVisibility(
+        AnimatedVisibility(
     		visible = selected,
     		enter = 
     			expandHorizontally(
@@ -171,17 +163,17 @@ fun SelectableBottomAppBarItem(
     			)
     		),
     		modifier = Modifier
-                .height(32.dp)  
+                .height(32.dp)
                 .clip(RoundedCornerShape(1000.dp))
                 .align(Alignment.TopCenter)		
     	) {
 	        Row(
 	            modifier = Modifier
-	                .height(32.dp)
-	                .width(64.dp)
-	                .clip(RoundedCornerShape(1000.dp))
-	                .align(Alignment.TopCenter)
-	                .background(CustomMaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+                    .height(32.dp)
+                    .width(64.dp)
+                    .clip(RoundedCornerShape(1000.dp))
+                    .align(Alignment.TopCenter)
+                    .background(CustomMaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
 	            verticalAlignment = Alignment.CenterVertically,
 	            horizontalArrangement = Arrangement.Center
 	        ) {}
@@ -190,8 +182,8 @@ fun SelectableBottomAppBarItem(
 		Row (
 			modifier = Modifier
                 .height(32.dp)
-                .width(58.dp)			
-				.align(Alignment.TopCenter),
+                .width(58.dp)
+                .align(Alignment.TopCenter),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center			
 		) {
@@ -409,6 +401,89 @@ fun MainAppBottomBar(currentView: MutableState<MainScreenViewType>, selectedItem
     }
 }
 
+@Composable
+fun MainAppSelectingBottomBar(selectedItemsList: SnapshotStateList<MediaStoreData>, groupedMedia: MutableState<List<MediaStoreData>>) {
+    IsSelectingBottomAppBar {
+        val context = LocalContext.current
+        val coroutineScope = rememberCoroutineScope()
+
+        val selectedItemsWithoutSection by remember { derivedStateOf {
+            selectedItemsList.filter {
+                it.type != MediaType.Section
+            }
+        }}
+
+        BottomAppBarItem(
+            text = "Share",
+            iconResId = R.drawable.share,
+            action = {
+                coroutineScope.launch {
+                    val hasVideos = selectedItemsWithoutSection.any {
+                        it.type == MediaType.Video
+                    }
+
+                    val intent = Intent().apply {
+                        action = Intent.ACTION_SEND_MULTIPLE
+                        type = if (hasVideos) "video/*" else "images/*"
+                    }
+
+                    val fileUris = ArrayList<Uri>()
+                    selectedItemsWithoutSection.forEach {
+                        fileUris.add(it.uri)
+                    }
+
+                    intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, fileUris)
+
+                    context.startActivity(Intent.createChooser(intent, null))
+                }
+            }
+        )
+
+        BottomAppBarItem(text = "Move", iconResId = R.drawable.cut)
+
+        BottomAppBarItem(text = "Copy", iconResId = R.drawable.copy)
+
+        val showDeleteDialog = remember { mutableStateOf(false) }
+        BottomAppBarItem(
+            text = "Delete",
+            iconResId = R.drawable.delete,
+            cornerRadius = 16.dp,
+            dialogComposable = {
+                ConfirmationDialog(showDialog = showDeleteDialog, dialogTitle = "Move these items to Trash Bin?", confirmButtonLabel = "Delete") {
+                    coroutineScope.launch {
+                        val newList = groupedMedia.value.toMutableList()
+                        selectedItemsWithoutSection.forEach { item ->
+                            operateOnImage(
+                                item.absolutePath,
+                                item.id,
+                                ImageFunctions.TrashImage,
+                                context
+                            )
+                            newList.remove(item)
+                        }
+
+                        groupedMedia.value.filter {
+                            it.type == MediaType.Section
+                        }.forEach {
+                            val filtered = newList.filter { new ->
+                                new.getLastModifiedDay() == it.getLastModifiedDay()
+                            }
+
+                            if (filtered.size == 1) newList.remove(it)
+                        }
+
+                        selectedItemsList.clear()
+                        groupedMedia.value = newList
+                    }
+                }
+            },
+            action = {
+                showDeleteDialog.value = true
+            }
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun IsSelectingTopBar(selectedItemsList: SnapshotStateList<MediaStoreData>) {
@@ -533,19 +608,8 @@ fun IsSelectingTopBar(selectedItemsList: SnapshotStateList<MediaStoreData>) {
 
 @Composable
 fun IsSelectingBottomAppBar(
-	selectedItemsList: SnapshotStateList<MediaStoreData>,
-	isTrashBin: Boolean = false,
-	groupedMedia: MutableState<List<MediaStoreData>>
+    items: @Composable (RowScope.() -> Unit)
 ) {
-    val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
-
-	val selectedItemsWithoutSection by remember { derivedStateOf {
-		selectedItemsList.filter {
-			it.type != MediaType.Section
-		}
-	}}
-	
     BottomAppBar(
         containerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
         contentColor = CustomMaterialTheme.colorScheme.onPrimaryContainer,
@@ -557,153 +621,7 @@ fun IsSelectingBottomAppBar(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-	        BottomAppBarItem(
-	        	text = "Share", 
-	        	iconResId = R.drawable.share,
-	        	action = {
-                    coroutineScope.launch {
-                        val hasVideos = selectedItemsWithoutSection.any {
-                            it.type == MediaType.Video
-                        }
-
-                        val intent = Intent().apply {
-                            action = Intent.ACTION_SEND_MULTIPLE
-                            type = if (hasVideos) "video/*" else "images/*"
-                        }
-
-                        val fileUris = ArrayList<Uri>()
-                        selectedItemsWithoutSection.forEach {
-                            fileUris.add(it.uri)
-                        }
-
-                        intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, fileUris)
-
-                        context.startActivity(Intent.createChooser(intent, null))
-                    }
-	        	}
-        	)
-
-			if (isTrashBin) {
-				val showRestoreDialog = remember { mutableStateOf(false) }
-				BottomAppBarItem(
-					text = "Restore",
-					iconResId = R.drawable.favorite,
-					cornerRadius = 16.dp,
-					dialogComposable = {
-					    ConfirmationDialog(showDialog = showRestoreDialog, dialogTitle = "Restore these items?", confirmButtonLabel = "Restore") {
-                            coroutineScope.launch {
-                                val newList = groupedMedia.value.toMutableList()
-                                selectedItemsWithoutSection.forEach { item ->
-                                    operateOnImage(
-                                        item.absolutePath,
-                                        item.id,
-                                        ImageFunctions.UnTrashImage,
-                                        context
-                                    )
-                                    newList.remove(item)
-                                }
-                                groupedMedia.value.filter {
-                                    it.type == MediaType.Section
-                                }.forEach {
-                                    val filtered = newList.filter { new ->
-                                        new.getLastModifiedDay() == it.getLastModifiedDay()
-                                    }
-
-                                    if (filtered.size == 1) newList.remove(it)
-                                }
-
-                                selectedItemsList.clear()
-                                groupedMedia.value = newList
-                            }
-					    }
-					},
-					action = {
-						showRestoreDialog.value = true
-					}	
-				)
-
-				val showPermaDeleteDialog = remember { mutableStateOf(false) }
-				BottomAppBarItem(
-		        	text = "Delete",
-		        	iconResId = R.drawable.delete,
-		        	cornerRadius = 16.dp,
-		        	dialogComposable = {
-					    ConfirmationDialog(showDialog = showPermaDeleteDialog, dialogTitle = "Permanently delete these items?", confirmButtonLabel = "Delete") {
-                            coroutineScope.launch {
-                                val newList = groupedMedia.value.toMutableList()
-                                selectedItemsWithoutSection.forEach { item ->
-                                    operateOnImage(
-                                        item.absolutePath,
-                                        item.id,
-                                        ImageFunctions.PermaDeleteImage,
-                                        context
-                                    )
-                                    newList.remove(item)
-                                }
-
-                                groupedMedia.value.filter {
-                                    it.type == MediaType.Section
-                                }.forEach {
-                                    val filtered = newList.filter { new ->
-                                        new.getLastModifiedDay() == it.getLastModifiedDay()
-                                    }
-
-                                    if (filtered.size == 1) newList.remove(it)
-                                }
-
-                                selectedItemsList.clear()
-                                groupedMedia.value = newList
-                            }
-					    }
-		        	},
-		        	action = {
-		        		showPermaDeleteDialog.value = true
-		        	}
-	        	)
-			} else {
-		        BottomAppBarItem(text = "Move", iconResId = R.drawable.cut)
-
-		        BottomAppBarItem(text = "Copy", iconResId = R.drawable.copy)
-
-				val showDeleteDialog = remember { mutableStateOf(false) }
-		        BottomAppBarItem(
-		        	text = "Delete",
-		        	iconResId = R.drawable.delete,
-		        	cornerRadius = 16.dp,
-		        	dialogComposable = {
-					    ConfirmationDialog(showDialog = showDeleteDialog, dialogTitle = "Move selected items to Trash Bin?", confirmButtonLabel = "Delete") {
-                            coroutineScope.launch {
-                                val newList = groupedMedia.value.toMutableList()
-                                selectedItemsWithoutSection.forEach { item ->
-                                    operateOnImage(
-                                        item.absolutePath,
-                                        item.id,
-                                        ImageFunctions.TrashImage,
-                                        context
-                                    )
-                                    newList.remove(item)
-                                }
-
-                                groupedMedia.value.filter {
-                                    it.type == MediaType.Section
-                                }.forEach {
-                                    val filtered = newList.filter { new ->
-                                        new.getLastModifiedDay() == it.getLastModifiedDay()
-                                    }
-
-                                    if (filtered.size == 1) newList.remove(it)
-                                }
-
-                                selectedItemsList.clear()
-                                groupedMedia.value = newList
-                            }
-					    }
-		        	},
-		        	action = {
-		        		showDeleteDialog.value = true
-		        	}
-	        	)
-			}
+	        items()
         }
     }
 }
@@ -711,19 +629,16 @@ fun IsSelectingBottomAppBar(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SingleAlbumViewTopBar(
-    navController: NavHostController,
     dir: String,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
-    showDialog: MutableState<Boolean>
+    showDialog: MutableState<Boolean>,
+    onBackClick: () -> Unit
 ) {
 	val title = dir.split("/").last()
-	// val showDialog = remember { mutableStateOf(false) }
 	val show by remember { derivedStateOf {
 		selectedItemsList.size > 0
 	}}
-		
-	// SingleAlbumDialog(showDialog, dir, navController)
-	
+
     AnimatedContent(
         targetState = show,
         transitionSpec = {
@@ -738,7 +653,7 @@ fun SingleAlbumViewTopBar(
                 ),
                 navigationIcon = {
                     IconButton(
-                        onClick = { navController.popBackStack() },
+                        onClick = { onBackClick() },
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.back_arrow),
@@ -789,24 +704,102 @@ fun SingleAlbumViewBottomBar(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     groupedMedia: MutableState<List<MediaStoreData>>
 ) {
-    IsSelectingBottomAppBar(selectedItemsList = selectedItemsList, groupedMedia = groupedMedia)
+    IsSelectingBottomAppBar {
+        val context = LocalContext.current
+        val coroutineScope = rememberCoroutineScope()
+
+        val selectedItemsWithoutSection by remember { derivedStateOf {
+            selectedItemsList.filter {
+                it.type != MediaType.Section
+            }
+        }}
+
+        BottomAppBarItem(
+            text = "Share",
+            iconResId = R.drawable.share,
+            action = {
+                coroutineScope.launch {
+                    val hasVideos = selectedItemsWithoutSection.any {
+                        it.type == MediaType.Video
+                    }
+
+                    val intent = Intent().apply {
+                        action = Intent.ACTION_SEND_MULTIPLE
+                        type = if (hasVideos) "video/*" else "images/*"
+                    }
+
+                    val fileUris = ArrayList<Uri>()
+                    selectedItemsWithoutSection.forEach {
+                        fileUris.add(it.uri)
+                    }
+
+                    intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, fileUris)
+
+                    context.startActivity(Intent.createChooser(intent, null))
+                }
+            }
+        )
+
+        BottomAppBarItem(text = "Move", iconResId = R.drawable.cut)
+
+        BottomAppBarItem(text = "Copy", iconResId = R.drawable.copy)
+
+        val showDeleteDialog = remember { mutableStateOf(false) }
+        BottomAppBarItem(
+            text = "Delete",
+            iconResId = R.drawable.delete,
+            cornerRadius = 16.dp,
+            dialogComposable = {
+                ConfirmationDialog(showDialog = showDeleteDialog, dialogTitle = "Move selected items to Trash Bin?", confirmButtonLabel = "Delete") {
+                    coroutineScope.launch {
+                        val newList = groupedMedia.value.toMutableList()
+                        selectedItemsWithoutSection.forEach { item ->
+                            operateOnImage(
+                                item.absolutePath,
+                                item.id,
+                                ImageFunctions.TrashImage,
+                                context
+                            )
+                            newList.remove(item)
+                        }
+
+                        groupedMedia.value.filter {
+                            it.type == MediaType.Section
+                        }.forEach {
+                            val filtered = newList.filter { new ->
+                                new.getLastModifiedDay() == it.getLastModifiedDay()
+                            }
+
+                            if (filtered.size == 1) newList.remove(it)
+                        }
+
+                        selectedItemsList.clear()
+                        groupedMedia.value = newList
+                    }
+                }
+            },
+            action = {
+                showDeleteDialog.value = true
+            }
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TrashedPhotoGridViewTopBar(
-    navController: NavHostController,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
-    groupedMedia: MutableState<List<MediaStoreData>>
+    groupedMedia: MutableState<List<MediaStoreData>>,
+    onBackClick: () -> Unit
 ) {
     val showDialog = remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    ConfirmationDialog(
+    ConfirmationDialogWithBody(
         showDialog = showDialog,
         dialogTitle = "Empty trash bin?",
-        dialogBody = "Are you sure you want to delete all items in this trash bin?",
+        dialogBody = "This deletes all items in the trash bin, action cannot be undone",
         confirmButtonLabel = "Empty Out"
     ) {
         coroutineScope.launch {
@@ -832,7 +825,7 @@ fun TrashedPhotoGridViewTopBar(
         transitionSpec = {
             getAppBarContentTransition(show)
         },
-        label = "TrashedPhotoGridViewBottomBarAnimatedContent"
+        label = "TrashedPhotoGridViewTopBarAnimatedContent"
     ) { target ->
         if (!target) {
             TopAppBar(
@@ -841,7 +834,7 @@ fun TrashedPhotoGridViewTopBar(
                 ),
                 navigationIcon = {
                     IconButton(
-                        onClick = { navController.popBackStack() },
+                        onClick = { onBackClick() },
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.back_arrow),
@@ -894,5 +887,499 @@ fun TrashedPhotoGridViewTopBar(
         } else {
             IsSelectingTopBar(selectedItemsList = selectedItemsList)
         }
+    }
+}
+
+@Composable
+fun TrashedPhotoGridViewBottomBar(
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    groupedMedia: MutableState<List<MediaStoreData>>
+) {
+	IsSelectingBottomAppBar {
+		
+	    val context = LocalContext.current
+	    val coroutineScope = rememberCoroutineScope()
+
+	    val selectedItemsWithoutSection by remember { derivedStateOf {
+	        selectedItemsList.filter {
+	            it.type != MediaType.Section
+	        }
+	    }}
+
+	    BottomAppBarItem(
+	        text = "Share",
+	        iconResId = R.drawable.share,
+	        action = {
+	            coroutineScope.launch {
+	                val hasVideos = selectedItemsWithoutSection.any {
+	                    it.type == MediaType.Video
+	                }
+
+	                val intent = Intent().apply {
+	                    action = Intent.ACTION_SEND_MULTIPLE
+	                    type = if (hasVideos) "video/*" else "images/*"
+	                }
+
+	                val fileUris = ArrayList<Uri>()
+	                selectedItemsWithoutSection.forEach {
+	                    fileUris.add(it.uri)
+	                }
+
+	                intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, fileUris)
+
+	                context.startActivity(Intent.createChooser(intent, null))
+	            }
+	        }
+	    )
+
+	    val showRestoreDialog = remember { mutableStateOf(false) }
+	    BottomAppBarItem(
+	        text = "Restore",
+	        iconResId = R.drawable.untrash,
+	        cornerRadius = 16.dp,
+	        dialogComposable = {
+	            ConfirmationDialog(showDialog = showRestoreDialog, dialogTitle = "Restore these items?", confirmButtonLabel = "Restore") {
+	                coroutineScope.launch {
+	                    val newList = groupedMedia.value.toMutableList()
+	                    selectedItemsWithoutSection.forEach { item ->
+	                        operateOnImage(
+	                            item.absolutePath,
+	                            item.id,
+	                            ImageFunctions.UnTrashImage,
+	                            context
+	                        )
+	                        newList.remove(item)
+	                    }
+	                    groupedMedia.value.filter {
+	                        it.type == MediaType.Section
+	                    }.forEach {
+	                        val filtered = newList.filter { new ->
+	                            new.getLastModifiedDay() == it.getLastModifiedDay()
+	                        }
+
+	                        if (filtered.size == 1) newList.remove(it)
+	                    }
+
+	                    selectedItemsList.clear()
+	                    groupedMedia.value = newList
+	                }
+	            }
+	        },
+	        action = {
+	            showRestoreDialog.value = true
+	        }
+	    )
+
+	    val showPermaDeleteDialog = remember { mutableStateOf(false) }
+	    BottomAppBarItem(
+	        text = "Delete",
+	        iconResId = R.drawable.delete,
+	        cornerRadius = 16.dp,
+	        dialogComposable = {
+	            ConfirmationDialogWithBody(
+	            	showDialog = showPermaDeleteDialog,
+	            	dialogTitle = "Permanently delete these items?", 
+	            	dialogBody = "This action cannot be undone!",
+	            	confirmButtonLabel = "Delete"
+            	) {
+	                coroutineScope.launch {
+	                    val newList = groupedMedia.value.toMutableList()
+	                    selectedItemsWithoutSection.forEach { item ->
+	                        operateOnImage(
+	                            item.absolutePath,
+	                            item.id,
+	                            ImageFunctions.PermaDeleteImage,
+	                            context
+	                        )
+	                        newList.remove(item)
+	                    }
+
+	                    groupedMedia.value.filter {
+	                        it.type == MediaType.Section
+	                    }.forEach {
+	                        val filtered = newList.filter { new ->
+	                            new.getLastModifiedDay() == it.getLastModifiedDay()
+	                        }
+
+	                        if (filtered.size == 1) newList.remove(it)
+	                    }
+
+	                    selectedItemsList.clear()
+	                    groupedMedia.value = newList
+	                }
+	            }
+	        },
+	        action = {
+	            showPermaDeleteDialog.value = true
+	        }
+	    )
+	}
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SecureFolderViewTopAppBar(
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    onBackClicked: () -> Unit
+) {
+    val show by remember { derivedStateOf {
+        selectedItemsList.size > 0
+    }}
+
+    AnimatedContent(
+        targetState = show,
+        transitionSpec = {
+            getAppBarContentTransition(show)
+        },
+        label = "SecureFolderGridViewBottomBarAnimatedContent"
+    ) { target ->
+        if (!target) {
+            TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = CustomMaterialTheme.colorScheme.surfaceContainer
+                ),
+                navigationIcon = {
+                    IconButton(
+                        onClick = { onBackClicked() },
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.back_arrow),
+                            contentDescription = "Go back to previous page",
+                            tint = CustomMaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier
+                                .size(24.dp)
+                        )
+                    }
+                },
+                title = {
+                    Text(
+                        text = "Secure Folder",
+                        fontSize = TextUnit(18f, TextUnitType.Sp),
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier
+                            .width(160.dp)
+                    )
+                },
+                actions = {
+                    IconButton(
+                        onClick = { /* TODO */ },
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.settings),
+                            contentDescription = "show more options for the locked folder",
+                            tint = CustomMaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier
+                                .size(24.dp)
+                        )
+                    }
+                },
+            )
+        } else {
+            IsSelectingTopBar(selectedItemsList = selectedItemsList)
+        }
+    }
+}
+
+@Composable
+fun SecureFolderViewBottomAppBar(selectedItemsList: SnapshotStateList<MediaStoreData>, groupedMedia: MutableState<List<MediaStoreData>>) {
+    IsSelectingBottomAppBar {
+        val context = LocalContext.current
+        val coroutineScope = rememberCoroutineScope()
+
+        val selectedItemsWithoutSection by remember { derivedStateOf {
+            selectedItemsList.filter {
+                it.type != MediaType.Section
+            }
+        }}
+
+        BottomAppBarItem(
+            text = "Share",
+            iconResId = R.drawable.share,
+            action = {
+                coroutineScope.launch {
+                    val hasVideos = selectedItemsWithoutSection.any {
+                        it.type == MediaType.Video
+                    }
+
+                    val intent = Intent().apply {
+                        action = Intent.ACTION_SEND_MULTIPLE
+                        type = if (hasVideos) "video/*" else "images/*"
+                    }
+
+                    val fileUris = ArrayList<Uri>()
+                    selectedItemsWithoutSection.forEach {
+                        fileUris.add(it.uri)
+                    }
+
+                    intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, fileUris)
+
+                    context.startActivity(Intent.createChooser(intent, null))
+                }
+            }
+        )
+
+        val showRestoreDialog = remember { mutableStateOf(false) }
+        BottomAppBarItem(
+            text = "Restore",
+            iconResId = R.drawable.unlock,
+            cornerRadius = 16.dp,
+            dialogComposable = {
+                ConfirmationDialog(showDialog = showRestoreDialog, dialogTitle = "Restore these items?", confirmButtonLabel = "Restore") {
+                    coroutineScope.launch {
+                        val newList = groupedMedia.value.toMutableList()
+                        selectedItemsWithoutSection.forEach { item ->
+                            operateOnImage(
+                                item.absolutePath,
+                                item.id,
+                                ImageFunctions.MoveOutOfLockedFolder,
+                                context
+                            )
+                            newList.remove(item)
+                        }
+                        groupedMedia.value.filter {
+                            it.type == MediaType.Section
+                        }.forEach {
+                            val filtered = newList.filter { new ->
+                                new.getLastModifiedDay() == it.getLastModifiedDay()
+                            }
+
+                            if (filtered.size == 1) newList.remove(it)
+                        }
+
+                        selectedItemsList.clear()
+                        groupedMedia.value = newList
+                    }
+                }
+            },
+            action = {
+                showRestoreDialog.value = true
+            }
+        )
+
+        val showPermaDeleteDialog = remember { mutableStateOf(false) }
+        BottomAppBarItem(
+            text = "Delete",
+            iconResId = R.drawable.delete,
+            cornerRadius = 16.dp,
+            dialogComposable = {
+                ConfirmationDialogWithBody(
+                	showDialog = showPermaDeleteDialog, 
+                	dialogTitle = "Permanently delete these items?", 
+                	dialogBody = "This action cannot be undone!",
+                	confirmButtonLabel = "Delete"
+               	) {
+                    coroutineScope.launch {
+                        val newList = groupedMedia.value.toMutableList()
+                        selectedItemsWithoutSection.forEach { item ->
+                            operateOnImage(
+                                item.absolutePath,
+                                item.id,
+                                ImageFunctions.PermaDeleteImage,
+                                context
+                            )
+                            newList.remove(item)
+                        }
+
+                        groupedMedia.value.filter {
+                            it.type == MediaType.Section
+                        }.forEach {
+                            val filtered = newList.filter { new ->
+                                new.getLastModifiedDay() == it.getLastModifiedDay()
+                            }
+
+                            if (filtered.size == 1) newList.remove(it)
+                        }
+
+                        selectedItemsList.clear()
+                        groupedMedia.value = newList
+                    }
+                }
+            },
+            action = {
+                showPermaDeleteDialog.value = true
+            }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun FavouritesViewTopAppBar(selectedItemsList: SnapshotStateList<MediaStoreData>, onBackClick: () -> Unit) {
+    val show by remember { derivedStateOf {
+        selectedItemsList.size > 0
+    }}
+
+    AnimatedContent(
+        targetState = show,
+        transitionSpec = {
+            getAppBarContentTransition(show)
+        },
+        label = "FavouritesGridViewTopBarAnimatedContent"
+    ) { target ->
+        if (!target) {
+            TopAppBar(
+                navigationIcon = {
+                    IconButton(
+                        onClick = { onBackClick() },
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.back_arrow),
+                            contentDescription = "Go back to previous page",
+                            tint = CustomMaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier
+                                .size(24.dp)
+                        )
+                    }
+                },
+                title = {
+                    Text(
+                        text = "Favourites",
+                        fontSize = TextUnit(18f, TextUnitType.Sp),
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier
+                            .width(160.dp)
+                    )
+                },
+                actions = {
+                    IconButton(
+                        onClick = { /* TODO */ },
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.settings),
+                            contentDescription = "show more options for the favourites folder",
+                            tint = CustomMaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier
+                                .size(24.dp)
+                        )
+                    }
+                },
+            )
+        } else {
+            IsSelectingTopBar(selectedItemsList = selectedItemsList)
+        }
+    }
+}
+
+@Composable
+fun FavouritesViewBottomAppBar(selectedItemsList: SnapshotStateList<MediaStoreData>, groupedMedia: MutableState<List<MediaStoreData>>) {
+    IsSelectingBottomAppBar {
+        val context = LocalContext.current
+        val coroutineScope = rememberCoroutineScope()
+        val dao = MainActivity.applicationDatabase.favouritedItemEntityDao()
+
+        val selectedItemsWithoutSection by remember { derivedStateOf {
+            selectedItemsList.filter {
+                it.type != MediaType.Section
+            }
+        }}
+
+        BottomAppBarItem(
+            text = "Share",
+            iconResId = R.drawable.share,
+            action = {
+                coroutineScope.launch {
+                    val hasVideos = selectedItemsWithoutSection.any {
+                        it.type == MediaType.Video
+                    }
+
+                    val intent = Intent().apply {
+                        action = Intent.ACTION_SEND_MULTIPLE
+                        type = if (hasVideos) "video/*" else "images/*"
+                    }
+
+                    val fileUris = ArrayList<Uri>()
+                    selectedItemsWithoutSection.forEach {
+                        fileUris.add(it.uri)
+                    }
+
+                    intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, fileUris)
+
+                    context.startActivity(Intent.createChooser(intent, null))
+                }
+            }
+        )
+
+        BottomAppBarItem(text = "Copy", iconResId = R.drawable.copy)
+
+        val showUnFavDialog = remember { mutableStateOf(false) }
+        BottomAppBarItem(
+            text = "Remove",
+            iconResId = R.drawable.unfavourite,
+            cornerRadius = 16.dp,
+            dialogComposable = {
+                ConfirmationDialog(
+                    showDialog = showUnFavDialog,
+                    dialogTitle = "Remove selected items from favourites?",
+                    confirmButtonLabel = "Remove"
+                ) {
+                    coroutineScope.launch {
+                        val newList = groupedMedia.value.toMutableList()
+                        selectedItemsWithoutSection.forEach { item ->
+                            dao.deleteEntityById(item.id)
+                            newList.remove(item)
+                        }
+
+                        groupedMedia.value.filter {
+                            it.type == MediaType.Section
+                        }.forEach {
+                            val filtered = newList.filter { new ->
+                                new.getLastModifiedDay() == it.getLastModifiedDay()
+                            }
+
+                            if (filtered.size == 1) newList.remove(it)
+                        }
+
+                        selectedItemsList.clear()
+                        groupedMedia.value = newList
+                    }
+                }
+            },
+            action = {
+                showUnFavDialog.value = true
+            }
+        )
+
+        val showDeleteDialog = remember { mutableStateOf(false) }
+        BottomAppBarItem(
+            text = "Delete",
+            iconResId = R.drawable.delete,
+            cornerRadius = 16.dp,
+            dialogComposable = {
+                ConfirmationDialog(showDialog = showDeleteDialog, dialogTitle = "Move selected items to trash?", confirmButtonLabel = "Delete") {
+                    coroutineScope.launch {
+                        val newList = groupedMedia.value.toMutableList()
+                        selectedItemsWithoutSection.forEach { item ->
+                            operateOnImage(
+                                item.absolutePath,
+                                item.id,
+                                ImageFunctions.TrashImage,
+                                context
+                            )
+                            newList.remove(item)
+                        }
+
+                        groupedMedia.value.filter {
+                            it.type == MediaType.Section
+                        }.forEach {
+                            val filtered = newList.filter { new ->
+                                new.getLastModifiedDay() == it.getLastModifiedDay()
+                            }
+
+                            if (filtered.size == 1) newList.remove(it)
+                        }
+
+                        selectedItemsList.clear()
+                        groupedMedia.value = newList
+                    }
+                }
+            },
+            action = {
+                showDeleteDialog.value = true
+            }
+        )
     }
 }

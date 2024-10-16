@@ -21,7 +21,8 @@
         android:theme="@style/Theme.Photos.Splashscreen"
         android:enableOnBackInvokedCallback="true"
         android:largeHeap="true"
-        android:hardwareAccelerated="true">
+        android:hardwareAccelerated="true"
+        android:configChanges="orientation">
         
         <activity
             android:name=".MainActivity"

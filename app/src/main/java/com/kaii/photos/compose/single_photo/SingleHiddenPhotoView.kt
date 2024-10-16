@@ -59,6 +59,8 @@ import androidx.navigation.NavHostController
 import com.kaii.photos.MainActivity
 import com.kaii.photos.R
 import com.kaii.photos.compose.CustomMaterialTheme
+import com.kaii.photos.compose.ConfirmationDialog
+import com.kaii.photos.compose.ConfirmationDialogWithBody
 import com.kaii.photos.helpers.ImageFunctions
 import com.kaii.photos.helpers.operateOnImage
 import com.kaii.photos.mediastore.MediaStoreData
@@ -102,69 +104,12 @@ fun SingleHiddenPhotoView(
         }
     } }
 
-    val showDialog = remember { mutableStateOf(false) }
-
-    if (showDialog.value) {
-        val context = LocalContext.current
-        val coroutineScope = rememberCoroutineScope()
-
-        AlertDialog(
-            onDismissRequest = {
-                showDialog.value = false
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        showDialog.value = false
-                        operateOnImage(currentMediaItem.absolutePath, currentMediaItem.id, ImageFunctions.PermaDeleteImage, context)
-
-                        sortOutMediaMods(
-                            currentMediaItem,
-                            groupedMedia,
-                            coroutineScope,
-                            navController,
-                            state
-                        )
-                    }
-                ) {
-                    Text(
-                        text = "Delete",
-                        fontSize = TextUnit(14f, TextUnitType.Sp)
-                    )
-                }
-            },
-            title = {
-                Text(
-                    text = "Permanently delete this ${currentMediaItem.type.name}?",
-                    fontSize = TextUnit(16f, TextUnitType.Sp)
-                )
-            },
-            dismissButton = {
-                Button(
-                    onClick = {
-                        showDialog.value = false
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = CustomMaterialTheme.colorScheme.tertiaryContainer,
-                        contentColor = CustomMaterialTheme.colorScheme.onTertiaryContainer
-                    )
-                ) {
-                    Text(
-                        text = "Cancel",
-                        fontSize = TextUnit(14f, TextUnitType.Sp)
-                    )
-                }
-            },
-            shape = RoundedCornerShape(32.dp)
-        )
-    }
     Scaffold (
         topBar =  { TopBar(navController, mediaItem, appBarsVisible.value) },
         bottomBar = { BottomBar(
             navController,
             appBarsVisible.value,
             currentMediaItem,
-            showDialog,
             groupedMedia,
             state
         ) },
@@ -282,12 +227,45 @@ private fun BottomBar(
     navController: NavHostController,
     visible: Boolean,
     item: MediaStoreData,
-    showDialog: MutableState<Boolean>,
     groupedMedia: MutableState<List<MediaStoreData>>,
     state: PagerState
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+
+	val showRestoreDialog = remember { mutableStateOf(false) }
+	val showDeleteDialog = remember { mutableStateOf(false) }
+
+	ConfirmationDialog(showDialog = showRestoreDialog, dialogTitle = "Move item out of Secure Folder?", confirmButtonLabel = "Move") {
+		operateOnImage(item.absolutePath, item.id, ImageFunctions.MoveOutOfLockedFolder, context)
+
+		sortOutMediaMods(
+		    item,
+		    groupedMedia,
+		    coroutineScope,
+		    state
+		) {
+		    navController.popBackStack()
+		}
+	}
+
+	ConfirmationDialogWithBody(
+		showDialog = showDeleteDialog, 
+		dialogTitle = "Permanently delete this item?",
+		dialogBody = "This action cannot be undone!",
+		confirmButtonLabel = "Delete"
+	) {
+	    operateOnImage(item.absolutePath, item.id, ImageFunctions.PermaDeleteImage, context)
+
+	    sortOutMediaMods(
+	        item,
+	        groupedMedia,
+	        coroutineScope,
+	        state
+	    ) {
+	        navController.popBackStack()
+	    }		
+	}
 
     AnimatedVisibility(
         visible = visible,
@@ -319,15 +297,7 @@ private fun BottomBar(
                 ) {
                     OutlinedButton(
                         onClick = {
-                            operateOnImage(item.absolutePath, item.id, ImageFunctions.MoveOutOfLockedFolder, context)
-
-                            sortOutMediaMods(
-                                item,
-                                groupedMedia,
-                                coroutineScope,
-                                navController,
-                                state
-                            )
+							showRestoreDialog.value = true
                         },
                         modifier = Modifier
                             .weight(1f)
@@ -339,12 +309,11 @@ private fun BottomBar(
                             horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
                             Icon (
-                                painter = painterResource(id = R.drawable.favorite),
+                                painter = painterResource(id = R.drawable.unlock),
                                 contentDescription = "Restore Image Button",
                                 tint = CustomMaterialTheme.colorScheme.primary,
                                 modifier = Modifier
                                     .size(22.dp)
-                                    .padding(0.dp, 2.dp, 0.dp, 0.dp)
                             )
 
                             Spacer (
@@ -367,7 +336,7 @@ private fun BottomBar(
 
                     OutlinedButton(
                         onClick = {
-                            showDialog.value = true
+                            showDeleteDialog.value = true
                         },
                         modifier = Modifier
                             .weight(1f)
@@ -384,7 +353,6 @@ private fun BottomBar(
                                 tint = CustomMaterialTheme.colorScheme.primary,
                                 modifier = Modifier
                                     .size(22.dp)
-                                    .padding(0.dp, 2.dp, 0.dp, 0.dp)
                             )
 
                             Spacer (
