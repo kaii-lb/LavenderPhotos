@@ -131,7 +131,7 @@ fun VideoPlayerControls(
 						.wrapContentSize()
 						.clip(RoundedCornerShape(1000.dp))
 						.background(CustomMaterialTheme.colorScheme.secondaryContainer)
-						.padding(8.dp)										
+						.padding(8.dp, 4.dp)
 				)
 			}
 		}

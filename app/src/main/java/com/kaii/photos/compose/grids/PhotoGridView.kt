@@ -177,296 +177,303 @@ fun DeviceMedia(
 	}
 
 	val mainViewModel = MainActivity.mainViewModel
+
+	val spacerHeight by animateDpAsState(
+		targetValue = if (selectedItemsList.size > 0 && shouldPadUp) 80.dp else 0.dp,
+		animationSpec = tween(
+			durationMillis = 350,
+			delayMillis = if (selectedItemsList.size > 0 && shouldPadUp) 350 else 0
+		),
+		label = "animate spacer on bottom of photogrid"
+	)
+	
 	BoxWithConstraints (
 		modifier = Modifier
 			.fillMaxSize(1f)
 			.background(CustomMaterialTheme.colorScheme.background)
 	) {
-		val spacerHeight by animateDpAsState(
-			targetValue = if (selectedItemsList.size > 0 && shouldPadUp) 80.dp else 0.dp,
-			animationSpec = tween(
-				durationMillis = 350,
-				delayMillis = if (selectedItemsList.size > 0 && shouldPadUp) 350 else 0
-			),
-			label = "animate spacer on bottom of photogrid"
-		)
-			
-		LazyVerticalGrid(
-	        columns = GridCells.Fixed(
-				if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT) {
-					3
-				} else {
-					6
-				}
-			),
-	        modifier = Modifier
+		Box (
+			modifier = Modifier
 				.fillMaxWidth(1f)
 				.height(maxHeight - spacerHeight)
-				.align(Alignment.TopCenter),
-	        state = gridState
-	    ) {
-	        items(
-	            count = groupedMedia.value.size,
-	            key = {
-					groupedMedia.value[it].uri.toString()
-	            },
-	            span = { index ->
-	                val item = groupedMedia.value[index]
-	                if (item.type == MediaType.Section) {
-	                    GridItemSpan(maxLineSpan)
-	                } else {
-	                    GridItemSpan(1)
-	                }
-	            }
-	        ) { i ->
-				if (groupedMedia.value.isEmpty()) return@items
-				val mediaStoreItem = groupedMedia.value[i]
+				.align(Alignment.TopCenter)
+		) {
+			LazyVerticalGrid(
+		        columns = GridCells.Fixed(
+					if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT) {
+						3
+					} else {
+						6
+					}
+				),
+		        modifier = Modifier
+					.fillMaxSize(1f)
+					.align(Alignment.TopCenter),
+		        state = gridState
+		    ) {
+		        items(
+		            count = groupedMedia.value.size,
+		            key = {
+						groupedMedia.value[it].uri.toString()
+		            },
+		            span = { index ->
+		                val item = groupedMedia.value[index]
+		                if (item.type == MediaType.Section) {
+		                    GridItemSpan(maxLineSpan)
+		                } else {
+		                    GridItemSpan(1)
+		                }
+		            }
+		        ) { i ->
+					if (groupedMedia.value.isEmpty()) return@items
+					val mediaStoreItem = groupedMedia.value[i]
 
-				Row (
-					modifier = Modifier
-						.wrapContentSize()
-						.animateItem(
-							fadeInSpec = null
-						)
-				) {
-					MediaStoreItem(
-						mediaStoreItem,
-						groupedMedia.value,
-						viewProperties,
-						selectedItemsList
+					Row (
+						modifier = Modifier
+							.wrapContentSize()
+							.animateItem(
+								fadeInSpec = null
+							)
 					) {
-						when (viewProperties.operation) {
-							ImageFunctions.LoadNormalImage -> {
-								mainViewModel.setSelectedMediaData(mediaStoreItem)
-								mainViewModel.setGroupedMedia(groupedMedia.value)
-								navController.navigate(MultiScreenViewType.SinglePhotoView.name)
-							}
+						MediaStoreItem(
+							mediaStoreItem,
+							groupedMedia.value,
+							viewProperties,
+							selectedItemsList
+						) {
+							when (viewProperties.operation) {
+								ImageFunctions.LoadNormalImage -> {
+									mainViewModel.setSelectedMediaData(mediaStoreItem)
+									mainViewModel.setGroupedMedia(groupedMedia.value)
+									navController.navigate(MultiScreenViewType.SinglePhotoView.name)
+								}
 
-							ImageFunctions.LoadTrashedImage -> {
-								mainViewModel.setSelectedMediaData(mediaStoreItem)
-								mainViewModel.setGroupedMedia(groupedMedia.value)
-								navController.navigate(MultiScreenViewType.SingleTrashedPhotoView.name)
-							}
+								ImageFunctions.LoadTrashedImage -> {
+									mainViewModel.setSelectedMediaData(mediaStoreItem)
+									mainViewModel.setGroupedMedia(groupedMedia.value)
+									navController.navigate(MultiScreenViewType.SingleTrashedPhotoView.name)
+								}
 
-							ImageFunctions.LoadSecuredImage -> {
-								mainViewModel.setSelectedMediaData(mediaStoreItem)
-								mainViewModel.setGroupedMedia(groupedMedia.value)
-								navController.navigate(MultiScreenViewType.SingleHiddenPhotoVew.name)
-							}
+								ImageFunctions.LoadSecuredImage -> {
+									mainViewModel.setSelectedMediaData(mediaStoreItem)
+									mainViewModel.setGroupedMedia(groupedMedia.value)
+									navController.navigate(MultiScreenViewType.SingleHiddenPhotoVew.name)
+								}
 
-							else -> {
-								Log.e(
-									TAG,
-									"No acceptable ImageFunction provided, this should not happen."
-								)
+								else -> {
+									Log.e(
+										TAG,
+										"No acceptable ImageFunction provided, this should not happen."
+									)
+								}
 							}
 						}
 					}
-				}
-	        }
-	    }
-	    
-		if (showLoadingSpinner) {
-			Row (
-				modifier = Modifier
-					.fillMaxWidth(1f)
-					.height(48.dp)
-					.align(Alignment.TopCenter),
-				verticalAlignment = Alignment.CenterVertically,
-				horizontalArrangement = Arrangement.Center
-			) {
+		        }
+		    }
+		    
+			if (showLoadingSpinner) {
 				Row (
 					modifier = Modifier
-						.size(40.dp)
-						.clip(RoundedCornerShape(1000.dp))
-						.background(CustomMaterialTheme.colorScheme.surfaceContainer),
+						.fillMaxWidth(1f)
+						.height(48.dp)
+						.align(Alignment.TopCenter),
 					verticalAlignment = Alignment.CenterVertically,
 					horizontalArrangement = Arrangement.Center
 				) {
-					CircularProgressIndicator(
+					Row (
 						modifier = Modifier
-							.size(22.dp),
-						color = CustomMaterialTheme.colorScheme.primary,
-						strokeWidth = 4.dp,
-						strokeCap = StrokeCap.Round
-					)
-				}
-			}
-		}
-
-		Box (
-			modifier = Modifier
-				.align(Alignment.TopEnd)
-				.fillMaxHeight(1f)
-				.width(48.dp)
-		) {
-			var showHandle by remember { mutableStateOf(false) }
-			var isScrollingByHandle by remember { mutableStateOf(false) }
-			val interactionSource = remember { MutableInteractionSource() }
-
-			LaunchedEffect(interactionSource) {
-				interactionSource.interactions.collect { interaction -> 
-					when(interaction) {
-						is DragInteraction.Start -> { isScrollingByHandle = true }
-						is DragInteraction.Cancel -> { isScrollingByHandle = false }
-						is DragInteraction.Stop -> { isScrollingByHandle = false }
-						else -> {}
+							.size(40.dp)
+							.clip(RoundedCornerShape(1000.dp))
+							.background(CustomMaterialTheme.colorScheme.surfaceContainer),
+						verticalAlignment = Alignment.CenterVertically,
+						horizontalArrangement = Arrangement.Center
+					) {
+						CircularProgressIndicator(
+							modifier = Modifier
+								.size(22.dp),
+							color = CustomMaterialTheme.colorScheme.primary,
+							strokeWidth = 4.dp,
+							strokeCap = StrokeCap.Round
+						)
 					}
 				}
 			}
-						
-			LaunchedEffect(key1 = gridState.isScrollInProgress, key2 = isScrollingByHandle) {
-				if (gridState.isScrollInProgress || isScrollingByHandle) {
-					showHandle = true
-				} else {
-					kotlinx.coroutines.delay(3000)
-					showHandle = false
-				}
-			}
 
-
-			val listSize by remember { derivedStateOf {
-				groupedMedia.value.size - 1
-			}}
-			val totalLeftOverItems by remember { derivedStateOf{
-				(listSize - gridState.layoutInfo.visibleItemsInfo.size).toFloat()
-			}}
-			AnimatedVisibility (
-				visible = showHandle && !showLoadingSpinner && totalLeftOverItems > 50f,
-				modifier = Modifier.fillMaxHeight(1f),
-				enter =
-					slideInHorizontally { width -> width },
-				exit =
-					slideOutHorizontally { width -> width }
+			Box (
+				modifier = Modifier
+					.align(Alignment.TopEnd)
+					.fillMaxHeight(1f)
+					.width(48.dp)
 			) {
-				val visibleItemIndex = remember { derivedStateOf { gridState.firstVisibleItemIndex } }
-				val percentScrolled = (visibleItemIndex.value / totalLeftOverItems)
+				var showHandle by remember { mutableStateOf(false) }
+				var isScrollingByHandle by remember { mutableStateOf(false) }
+				val interactionSource = remember { MutableInteractionSource() }
 
-				Slider (
-					value = percentScrolled,
-					interactionSource = interactionSource,
-					onValueChange = {
-						coroutineScope.launch {
-							if (isScrollingByHandle) {
-								gridState.scrollToItem(
-									(it * groupedMedia.value.size).roundToInt()
-								)
-							}
+				LaunchedEffect(interactionSource) {
+					interactionSource.interactions.collect { interaction -> 
+						when(interaction) {
+							is DragInteraction.Start -> { isScrollingByHandle = true }
+							is DragInteraction.Cancel -> { isScrollingByHandle = false }
+							is DragInteraction.Stop -> { isScrollingByHandle = false }
+							else -> {}
 						}
-					},
-					valueRange = 0f..1f,
-					thumb = { state ->
-						Box (
-							modifier = Modifier
-								.height(48.dp)
-								.width(96.dp)
-						) {
+					}
+				}
 							
-							Box (
-								modifier = Modifier
-									.size(48.dp)
-									.clip(RoundedCornerShape(0.dp, 0.dp, 1000.dp, 1000.dp))
-									.background(CustomMaterialTheme.colorScheme.secondaryContainer)
-									.align(Alignment.Center)
-							) {
-								Icon (
-									painter = painterResource(id = R.drawable.code),
-									contentDescription = "scrollbar handle",
-									tint = CustomMaterialTheme.colorScheme.onSecondaryContainer,
-									modifier = Modifier
-										.size(24.dp)
-										.align(Alignment.Center)
-								)
+				LaunchedEffect(key1 = gridState.isScrollInProgress, key2 = isScrollingByHandle) {
+					if (gridState.isScrollInProgress || isScrollingByHandle) {
+						showHandle = true
+					} else {
+						kotlinx.coroutines.delay(3000)
+						showHandle = false
+					}
+				}
 
+
+				val listSize by remember { derivedStateOf {
+					groupedMedia.value.size - 1
+				}}
+				val totalLeftOverItems by remember { derivedStateOf{
+					(listSize - gridState.layoutInfo.visibleItemsInfo.size).toFloat()
+				}}
+				AnimatedVisibility (
+					visible = showHandle && !showLoadingSpinner && totalLeftOverItems > 50f,
+					modifier = Modifier.fillMaxHeight(1f),
+					enter =
+						slideInHorizontally { width -> width },
+					exit =
+						slideOutHorizontally { width -> width }
+				) {
+					val visibleItemIndex = remember { derivedStateOf { gridState.firstVisibleItemIndex } }
+					val percentScrolled = (visibleItemIndex.value / totalLeftOverItems)
+
+					Slider (
+						value = percentScrolled,
+						interactionSource = interactionSource,
+						onValueChange = {
+							coroutineScope.launch {
+								if (isScrollingByHandle) {
+									gridState.scrollToItem(
+										(it * groupedMedia.value.size).roundToInt()
+									)
+								}
 							}
-
+						},
+						valueRange = 0f..1f,
+						thumb = { state ->
 							Box (
 								modifier = Modifier
-									.align(Alignment.Center)
-									.rotate(-90f)
-									.graphicsLayer {
-										translationX = -220f
-									}
+									.height(48.dp)
+									.width(96.dp)
 							) {
-								AnimatedVisibility(
-									visible = isScrollingByHandle,
-									enter =
-										slideInHorizontally { width -> width / 4 } + fadeIn(),
-									exit =
-										slideOutHorizontally { width -> width / 4 } + fadeOut(),
+								
+								Box (
 									modifier = Modifier
-										.align(Alignment.CenterStart)
-										.height(32.dp)
-										.wrapContentWidth()
+										.size(48.dp)
+										.clip(RoundedCornerShape(0.dp, 0.dp, 1000.dp, 1000.dp))
+										.background(CustomMaterialTheme.colorScheme.secondaryContainer)
+										.align(Alignment.Center)
 								) {
-									Box (
+									Icon (
+										painter = painterResource(id = R.drawable.code),
+										contentDescription = "scrollbar handle",
+										tint = CustomMaterialTheme.colorScheme.onSecondaryContainer,
 										modifier = Modifier
+											.size(24.dp)
+											.align(Alignment.Center)
+									)
+
+								}
+
+								Box (
+									modifier = Modifier
+										.align(Alignment.Center)
+										.rotate(-90f)
+										.graphicsLayer {
+											translationX = -220f
+										}
+								) {
+									AnimatedVisibility(
+										visible = isScrollingByHandle,
+										enter =
+											slideInHorizontally { width -> width / 4 } + fadeIn(),
+										exit =
+											slideOutHorizontally { width -> width / 4 } + fadeOut(),
+										modifier = Modifier
+											.align(Alignment.CenterStart)
 											.height(32.dp)
 											.wrapContentWidth()
-											.clip(RoundedCornerShape(1000.dp))
-											.background(CustomMaterialTheme.colorScheme.secondaryContainer)
-											.padding(8.dp, 4.dp)
 									) {
-										val item = groupedMedia.value[(state.value * listSize).roundToInt()]
-										val format = DateTimeFormatter.ofPattern("MMM yyyy")
-										val formatted = Instant.ofEpochSecond(item.dateTaken).atZone(ZoneId.systemDefault()).toLocalDateTime().format(format)
-
-										Text(
-											text = formatted,
-											fontSize = TextUnit(14f, TextUnitType.Sp),
-											textAlign = TextAlign.Center,
-											color = CustomMaterialTheme.colorScheme.onSecondaryContainer,
+										Box (
 											modifier = Modifier
-												.align(Alignment.CenterStart)
-										)
-									}
-								}		
-							}
-						}
-					},
-					track = {
-						val colors = SliderDefaults.colors()
-		                SliderDefaults.Track(
-		                    sliderState = it,
-		                    trackInsideCornerSize = 8.dp,
-		                    colors = colors.copy(
-		                        activeTickColor = Color.Transparent,
-		                        inactiveTickColor = Color.Transparent,
-		                        disabledActiveTickColor = Color.Transparent,
-		                        disabledInactiveTickColor = Color.Transparent,
+												.height(32.dp)
+												.wrapContentWidth()
+												.clip(RoundedCornerShape(1000.dp))
+												.background(CustomMaterialTheme.colorScheme.secondaryContainer)
+												.padding(8.dp, 4.dp)
+										) {
+											val item = groupedMedia.value[(state.value * listSize).roundToInt()]
+											val format = DateTimeFormatter.ofPattern("MMM yyyy")
+											val formatted = Instant.ofEpochSecond(item.dateTaken).atZone(ZoneId.systemDefault()).toLocalDateTime().format(format)
 
-		                        activeTrackColor = Color.Transparent,
-		                        inactiveTrackColor = Color.Transparent
-		                    ),
-		                    thumbTrackGapSize = 4.dp,
-		                    drawTick = { _, _ -> },
-		                    modifier = Modifier
-		                        .height(16.dp)
-		                )					
-					},
-					modifier = Modifier
-						.width(40.dp)
-						.fillMaxHeight(1f)
-						.graphicsLayer {
-							rotationZ = 90f
-							translationX = 30f
-							transformOrigin = TransformOrigin(0f, 0f)
-						}
-						.layout { measurable, constraints ->
-							val placeable = measurable.measure(
-								Constraints(
-									minWidth = constraints.minHeight,
-									minHeight = constraints.minWidth,
-									maxWidth = constraints.maxHeight,
-									maxHeight = constraints.maxWidth
+											Text(
+												text = formatted,
+												fontSize = TextUnit(14f, TextUnitType.Sp),
+												textAlign = TextAlign.Center,
+												color = CustomMaterialTheme.colorScheme.onSecondaryContainer,
+												modifier = Modifier
+													.align(Alignment.CenterStart)
+											)
+										}
+									}		
+								}
+							}
+						},
+						track = {
+							val colors = SliderDefaults.colors()
+			                SliderDefaults.Track(
+			                    sliderState = it,
+			                    trackInsideCornerSize = 8.dp,
+			                    colors = colors.copy(
+			                        activeTickColor = Color.Transparent,
+			                        inactiveTickColor = Color.Transparent,
+			                        disabledActiveTickColor = Color.Transparent,
+			                        disabledInactiveTickColor = Color.Transparent,
+
+			                        activeTrackColor = Color.Transparent,
+			                        inactiveTrackColor = Color.Transparent
+			                    ),
+			                    thumbTrackGapSize = 4.dp,
+			                    drawTick = { _, _ -> },
+			                    modifier = Modifier
+			                        .height(16.dp)
+			                )					
+						},
+						modifier = Modifier
+							.width(40.dp)
+							.fillMaxHeight(1f)
+							.graphicsLayer {
+								rotationZ = 90f
+								translationX = 30f
+								transformOrigin = TransformOrigin(0f, 0f)
+							}
+							.layout { measurable, constraints ->
+								val placeable = measurable.measure(
+									Constraints(
+										minWidth = constraints.minHeight,
+										minHeight = constraints.minWidth,
+										maxWidth = constraints.maxHeight,
+										maxHeight = constraints.maxWidth
+									)
 								)
-							)
 
-							layout(placeable.height, placeable.width) {
-								placeable.place(0, -placeable.height)
+								layout(placeable.height, placeable.width) {
+									placeable.place(0, -placeable.height)
+								}
 							}
-						}
-				)
+					)
+				}
 			}
 		}
 	}
