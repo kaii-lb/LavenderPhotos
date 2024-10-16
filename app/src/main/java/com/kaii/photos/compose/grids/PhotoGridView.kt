@@ -88,6 +88,7 @@ import com.kaii.photos.compose.FolderDoesntExist
 import com.kaii.photos.compose.FolderIsEmpty
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.helpers.ImageFunctions
+import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.checkHasFiles
 import com.kaii.photos.helpers.rememberVibratorManager
@@ -493,7 +494,7 @@ fun MediaStoreItem(
 				) {
 					coroutineScope.launch {
 						val datedMedia = groupedMedia.filter {
-							if (viewProperties == ViewProperties.Trash || viewProperties == ViewProperties.Favourites) {
+							if (viewProperties.sortMode == MediaItemSortMode.LastModified) {
 								it.getLastModifiedDay() == item.getLastModifiedDay() && it.type != MediaType.Section	
 							} else {
 								it.getDateTakenDay() == item.getDateTakenDay() && it.type != MediaType.Section	
@@ -559,7 +560,7 @@ fun MediaStoreItem(
 						coroutineScope.launch {
 							if (selectedItemsList.size > 0) {
 								val sectionItems = groupedMedia.filter {
-									if (viewProperties == ViewProperties.Trash || viewProperties == ViewProperties.Favourites) {
+									if (viewProperties.sortMode == MediaItemSortMode.LastModified) {
 										it.getLastModifiedDay() == item.getLastModifiedDay()
 									} else {
 										it.getDateTakenDay() == item.getDateTakenDay()
@@ -595,7 +596,7 @@ fun MediaStoreItem(
 						if (selectedItemsList.size > 0) return@combinedClickable
 
 						val sectionItems = groupedMedia.filter {
-							if (viewProperties == ViewProperties.Trash || viewProperties == ViewProperties.Favourites) {
+							if (viewProperties.sortMode == MediaItemSortMode.LastModified) {
 								it.getLastModifiedDay() == item.getLastModifiedDay()
 							} else {
 								it.getDateTakenDay() == item.getDateTakenDay()

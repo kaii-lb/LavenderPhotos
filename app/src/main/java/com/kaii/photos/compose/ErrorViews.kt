@@ -21,48 +21,56 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.kaii.photos.R
 import com.kaii.photos.helpers.ImageFunctions
+import com.kaii.photos.helpers.MediaItemSortMode
 
 enum class ViewProperties(
     val emptyText: String,
     val emptyIconResId: Int,
     val prefix: String,
-    val operation: ImageFunctions
+    val operation: ImageFunctions,
+    val sortMode: MediaItemSortMode
 ) {
     Trash(
         emptyText = "Trashed items show up here",
         emptyIconResId = R.drawable.delete,
         prefix = "Trashed On ",
-        operation = ImageFunctions.LoadTrashedImage
+        operation = ImageFunctions.LoadTrashedImage,
+        sortMode = MediaItemSortMode.LastModified
     ),
     Album(
         emptyText = "This album is empty",
         emptyIconResId = R.drawable.error,
         prefix = "",
-        operation = ImageFunctions.LoadNormalImage
+        operation = ImageFunctions.LoadNormalImage,
+        sortMode = MediaItemSortMode.DateTaken
     ),
     SearchLoading(
         emptyText = "Search for some photos!",
         emptyIconResId = R.drawable.search,
         prefix = "",
-        operation = ImageFunctions.LoadNormalImage
+        operation = ImageFunctions.LoadNormalImage,
+        sortMode = MediaItemSortMode.DateTaken
     ),
     SearchNotFound(
         emptyText = "Unable to find any matches",
         emptyIconResId = R.drawable.error,
         prefix = "",
-        operation = ImageFunctions.LoadNormalImage
+        operation = ImageFunctions.LoadNormalImage,
+        sortMode = MediaItemSortMode.DateTaken
     ),
     SecureFolder(
         emptyText = "Add items here to secure them",
         emptyIconResId = R.drawable.locked_folder,
         prefix = "Secured On ",
-        operation = ImageFunctions.LoadSecuredImage
+        operation = ImageFunctions.LoadSecuredImage,
+        sortMode = MediaItemSortMode.LastModified
     ),
     Favourites(
         emptyText = "Add your most precious memories",
         emptyIconResId = R.drawable.favourite,
         prefix = "",
-        operation = ImageFunctions.LoadNormalImage
+        operation = ImageFunctions.LoadNormalImage,
+        sortMode = MediaItemSortMode.LastModified
     )
 }
 
