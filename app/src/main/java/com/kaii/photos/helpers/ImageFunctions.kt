@@ -107,15 +107,14 @@ fun trashPhoto(path: String, id: Long) {
     val fileToBeTrashed = File(path)
     val absolutePath = fileToBeTrashed.absolutePath
     val trashDir = getAppTrashBinDirectory()
-    val copyToPath = trashDir + "trashed-" + fileToBeTrashed.name
 
-	Log.d(TAG, "path of trash photo $absolutePath")
+    val lastModified = System.currentTimeMillis()
+    var copyToPath = trashDir + "trashed-$lastModified-" + fileToBeTrashed.name
 
     Files.move(Path(absolutePath), Path(copyToPath), StandardCopyOption.ATOMIC_MOVE)
 
     val database = MainActivity.applicationDatabase
 
-    val lastModified = System.currentTimeMillis()
     CoroutineScope(EmptyCoroutineContext + CoroutineName("delete_file_context")).launch {
         val entity = database.mediaEntityDao().getFromId(id)
 
@@ -123,6 +122,8 @@ fun trashPhoto(path: String, id: Long) {
             BasicFileAttributes::lastModifiedTime.name,
             FileTime.fromMillis(lastModified)
         )
+
+        database.trashedItemEntityDao().deleteEntityByPath(absolutePath)
 
         database.trashedItemEntityDao().insertEntity(
             TrashedItemEntity(
@@ -133,6 +134,8 @@ fun trashPhoto(path: String, id: Long) {
                 entity.displayName
             )
         )
+
+		Log.d(TAG, "path of trash photo $absolutePath")
 
         database.favouritedItemEntityDao().deleteEntityById(id)
 
@@ -165,8 +168,6 @@ private fun untrashPhoto(path: String, id: Long, context: Context) {
             )
 
             val reverseCemetery = item.originalPath
-
-			Log.d(TAG, "path of untrashed photo $reverseCemetery")
 
             database.trashedItemEntityDao().deleteEntityByPath(absolutePath)
 
@@ -297,6 +298,10 @@ private fun copyToPath(mediaPath: String, albumPath: String, deleteOriginal: Boo
     val absoluteAlbumPath = Path("/storage/emulated/0/", albumPath)
     val copyToPath = Path(absoluteAlbumPath.pathString, fileToBeCopied.name)
     Files.copy(Path(mediaPath), copyToPath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
+
+	val origPath = MainActivity.applicationDatabase.trashedItemEntityDao().getFromOriginalPath(mediaPath)
+	val newPath = MainActivity.applicationDatabase.trashedItemEntityDao().getFromOriginalPath(copyToPath.absolutePathString())
+	Log.d(TAG, "path of original photo $origPath and copied $newPath")
 
     val lastModified = System.currentTimeMillis()
     copyToPath.setAttribute(

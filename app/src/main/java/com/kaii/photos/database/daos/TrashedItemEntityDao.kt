@@ -12,6 +12,9 @@ interface TrashedItemEntityDao {
     @Query("SELECT * FROM trasheditementity WHERE trashed_path = :path")
     fun getFromTrashedPath(path: String) : TrashedItemEntity
 
+    @Query("SELECT * FROM trasheditementity WHERE originalPath = :path")
+    fun getFromOriginalPath(path: String) : TrashedItemEntity
+
     @Query("SELECT date_taken FROM trasheditementity WHERE trashed_path = :path")
     fun getDateTakenFromTrashedPath(path: String) : Long
 
@@ -21,7 +24,6 @@ interface TrashedItemEntityDao {
     @Query("SELECT originalPath FROM trasheditementity WHERE trashed_path = :trashedPath")
     fun getOriginalPathFrom(trashedPath: String) : String
 
-    // maybe try ignore and see performance difference?
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertEntity(vararg entity: TrashedItemEntity)
 

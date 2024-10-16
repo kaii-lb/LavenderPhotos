@@ -1,5 +1,6 @@
 package com.kaii.photos.helpers
 
+import android.util.Log
 import androidx.exifinterface.media.ExifInterface
 import java.io.File
 import java.time.Instant
@@ -12,18 +13,25 @@ import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.pow
 
+private const val TAG = "EXIT_DATA_HANDLER"
+
 fun getDateTakenForMedia(uri: String) : Long {
-    val exifInterface = ExifInterface(uri)
-    val exifDateTimeFormat = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss")
+	try {	
+	    val exifInterface = ExifInterface(uri)
+	    val exifDateTimeFormat = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss")
 
-    val lastModified = LocalDateTime.ofInstant(Instant.ofEpochMilli(File(uri).lastModified()), ZoneId.systemDefault()).format(exifDateTimeFormat)
-    val datetime = exifInterface.getAttribute(ExifInterface.TAG_DATETIME_ORIGINAL)
-        ?: (exifInterface.getAttribute(ExifInterface.TAG_DATETIME) ?: lastModified) // this really should not get to last modified
+	    val lastModified = LocalDateTime.ofInstant(Instant.ofEpochMilli(File(uri).lastModified()), ZoneId.systemDefault()).format(exifDateTimeFormat)
+	    val datetime = exifInterface.getAttribute(ExifInterface.TAG_DATETIME_ORIGINAL)
+	        ?: (exifInterface.getAttribute(ExifInterface.TAG_DATETIME) ?: lastModified) // this really should not get to last modified
 
-    val parsedDateTime = datetime.replace("-", ":").replace("T", " ").substringBefore("+")
-    val dateTimeSinceEpoch = LocalDateTime.parse(parsedDateTime, exifDateTimeFormat).atZone(ZoneId.systemDefault()).toEpochSecond()
-	// println("DATE TIME IS $parsedDateTime and since epoch $dateTimeSinceEpoch")
-    return dateTimeSinceEpoch
+	    val parsedDateTime = datetime.replace("-", ":").replace("T", " ").substringBefore("+")
+	    val dateTimeSinceEpoch = LocalDateTime.parse(parsedDateTime, exifDateTimeFormat).atZone(ZoneId.systemDefault()).toEpochSecond()
+		// println("DATE TIME IS $parsedDateTime and since epoch $dateTimeSinceEpoch")
+	    return dateTimeSinceEpoch
+	} catch (e: Throwable) {
+		Log.e(TAG, e.toString())
+		return 0L
+	}
 }
 
 fun getExifDataForMedia(uri: String): Map<MediaData, Any> {

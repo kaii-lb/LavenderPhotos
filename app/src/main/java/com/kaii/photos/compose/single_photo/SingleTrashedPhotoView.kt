@@ -253,8 +253,9 @@ private fun TopBar(navController: NavHostController, mediaItem: MediaStoreData?,
 
                 Spacer (modifier = Modifier.width(8.dp))
 
+				val splitBy = Regex("trashed-[0-9]+-")
                 Text(
-                    text = mediaTitle,
+                    text = mediaTitle.split(splitBy).lastOrNull() ?: "Media",
                     fontSize = TextUnit(18f, TextUnitType.Sp),
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
