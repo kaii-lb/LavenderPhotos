@@ -15,6 +15,7 @@ import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
 import com.kaii.photos.MainActivity
@@ -23,6 +24,8 @@ import com.kaii.photos.database.entities.TrashedItemEntity
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
@@ -218,9 +221,14 @@ fun PermanentlyDeletePhotoList(list: List<Uri>) {
     val context = LocalContext.current
     val contentResolver = context.contentResolver
 
-    list.forEach {
-        contentResolver.delete(it, null)
-    }
+	val coroutineScope = rememberCoroutineScope()
+	coroutineScope.launch {
+		withContext(Dispatchers.IO) {
+		    list.forEach {
+		        contentResolver.delete(it, null)
+		    }
+		}	
+	}
 }
 
 @Composable
@@ -232,9 +240,14 @@ fun SetTrashedOnPhotoList(list: List<Uri>, trashed: Boolean) {
         put(MediaColumns.IS_TRASHED, trashed)
     }
 
-    list.forEach {
-        contentResolver.update(it, trashedValues, null)
-    }
+	val coroutineScope = rememberCoroutineScope()
+	coroutineScope.launch {
+		withContext(Dispatchers.IO) {
+		    list.forEach {
+		        contentResolver.update(it, trashedValues, null)
+		    }
+		}	
+	}
 }
 
 private fun shareImage(absolutePath: String, id: Long, context: Context) {

@@ -43,14 +43,20 @@ import kotlinx.coroutines.Dispatchers
 fun TrashedPhotoGridView(
     navController: NavHostController,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
-    trashViewModel: TrashViewModel
 ) {
+	val trashViewModel: TrashViewModel = viewModel(
+	    factory = TrashViewModelFactory(
+	        LocalContext.current
+	    )
+	)
+	
     val mediaStoreData = trashViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
     val groupedMedia = remember { mutableStateOf(mediaStoreData.value) }
 
     LaunchedEffect(mediaStoreData.value) {
         groupedMedia.value = mediaStoreData.value
+        // set mainViewModel groupedMedia too
     }
 
     BackHandler(

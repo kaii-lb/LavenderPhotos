@@ -61,6 +61,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
@@ -68,6 +69,7 @@ import com.kaii.photos.compose.CustomMaterialTheme
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.trash_bin.TrashViewModel
+import com.kaii.photos.models.trash_bin.TrashViewModelFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -82,19 +84,24 @@ fun SingleTrashedPhotoView(
     scale: MutableState<Float>,
     rotation: MutableState<Float>,
     offset: MutableState<Offset>,
-    trashViewModel: TrashViewModel
-) {
+) {  
     val mediaItem = mainViewModel.selectedMediaData.collectAsState(initial = null).value ?: return
 
-    val holderGroupedMedia =
-        trashViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+    val holderGroupedMedia = mainViewModel.groupedMedia.collectAsState(initial = null).value ?: return
 
     val groupedMedia = remember {
-        derivedStateOf {
-            holderGroupedMedia.value.filter { item ->
+        mutableStateOf(
+            holderGroupedMedia.filter { item ->
                 item.type != MediaType.Section
             }
-        }
+        )
+    }
+
+    LaunchedEffect(holderGroupedMedia) {
+    	groupedMedia.value = 
+    		holderGroupedMedia.filter { item ->
+                item.type != MediaType.Section
+            }
     }
 
     val systemBarsShown = remember { mutableStateOf(true) }
@@ -149,7 +156,7 @@ fun SingleTrashedPhotoView(
 
                         sortOutMediaMods(
                             currentMediaItem,
-                            groupedMedia.value,
+                            groupedMedia,
                             coroutineScope,
                             state
                         ) {
@@ -197,7 +204,7 @@ fun SingleTrashedPhotoView(
                 appBarsVisible.value,
                 currentMediaItem,
                 showDialog,
-                groupedMedia.value,
+                groupedMedia,
                 state
             )
         },
@@ -307,7 +314,7 @@ private fun BottomBar(
     visible: Boolean,
     item: MediaStoreData,
     showDialog: MutableState<Boolean>,
-    groupedMedia: List<MediaStoreData>,
+    groupedMedia: MutableState<List<MediaStoreData>>,
     state: PagerState
 ) {
     val context = LocalContext.current
@@ -431,25 +438,5 @@ private fun BottomBar(
             },
 //            modifier = Modifier.alpha(alpha)
         )
-    }
-}
-
-/** deals with grouped media modifications, in this case removing stuff*/
-private fun sortOutMediaMods(
-    item: MediaStoreData,
-    groupedMedia: List<MediaStoreData>,
-    coroutineScope: CoroutineScope,
-    state: PagerState,
-    popBackStackAction: () -> Unit
-) {
-    coroutineScope.launch {
-        val size = groupedMedia.size - 1
-        val scrollIndex = groupedMedia.indexOf(item) // is this better?
-
-        if (size == 0) {
-            popBackStackAction()
-        } else {
-            state.scrollToPage((scrollIndex).coerceIn(0, size))
-        }
     }
 }

@@ -96,8 +96,6 @@ import com.kaii.photos.models.gallery_model.GalleryViewModel
 import com.kaii.photos.models.gallery_model.GalleryViewModelFactory
 import com.kaii.photos.models.main_activity.MainDataSharingModel
 import com.kaii.photos.models.main_activity.MainDataSharingModelFactory
-import com.kaii.photos.models.trash_bin.TrashViewModel
-import com.kaii.photos.models.trash_bin.TrashViewModelFactory
 import com.kaii.photos.ui.theme.PhotosTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -281,12 +279,6 @@ class MainActivity : ComponentActivity() {
                     factory = MainDataSharingModelFactory()
                 )
 
-			    val trashViewModel: TrashViewModel = viewModel(
-			        factory = TrashViewModelFactory(
-			            LocalContext.current
-			        )
-			    )
-
                 val navControllerLocal = rememberNavController()
                 val currentView =
                     rememberSaveable { mutableStateOf(MainScreenViewType.PhotosGridView) }
@@ -420,7 +412,7 @@ class MainActivity : ComponentActivity() {
                             selectedItemsList,
                         )
 
-                        SingleTrashedPhotoView(navControllerLocal, window, scale, rotation, offset, trashViewModel)
+                        SingleTrashedPhotoView(navControllerLocal, window, scale, rotation, offset)
                     }
 
                     composable(MultiScreenViewType.TrashedPhotoView.name) {
@@ -438,7 +430,7 @@ class MainActivity : ComponentActivity() {
                             selectedItemsList,
                         )
 
-                        TrashedPhotoGridView(navControllerLocal, selectedItemsList, trashViewModel)
+                        TrashedPhotoGridView(navControllerLocal, selectedItemsList)
                     }
 
                     composable(MultiScreenViewType.LockedFolderView.name) {
