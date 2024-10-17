@@ -56,25 +56,22 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import com.kaii.photos.MainActivity
+import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.ConfirmationDialog
 import com.kaii.photos.compose.CustomMaterialTheme
 import com.kaii.photos.compose.SinglePhotoInfoDialog
-import com.kaii.photos.database.entities.FavouritedItemEntity
 import com.kaii.photos.helpers.ImageFunctions
+import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.operateOnImage
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.vibrateShort
-import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.favourites_grid.FavouritesViewModel
 import com.kaii.photos.models.favourites_grid.FavouritesViewModelFactory
-import kotlinx.coroutines.launch
 
 //private const val TAG = "SINGLE_PHOTO_VIEW"
 
@@ -87,8 +84,6 @@ fun SinglePhotoView(
 	rotation: MutableState<Float>,
 	offset: MutableState<Offset>,
 ) {
-	val mainViewModel = MainActivity.mainViewModel
-
 	val mediaItem = mainViewModel.selectedMediaData.collectAsState(initial = null).value ?: return
 
 	val holderGroupedMedia = mainViewModel.groupedMedia.collectAsState(initial = null).value ?: return
@@ -200,7 +195,7 @@ fun SinglePhotoView(
 			HorizontalImageList(
 				navController,
 				currentMediaItem.value,
-				groupedMedia,
+				groupedMedia.value,
 				state,
 				scale,
 				rotation,

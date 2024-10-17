@@ -90,6 +90,7 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.kaii.photos.MainActivity
 import com.kaii.photos.MainActivity.Companion.startForResult
 import com.kaii.photos.R
+import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.datastore
 import com.kaii.photos.datastore.editInAlbumsList
 import com.kaii.photos.datastore.getUsername
@@ -875,17 +876,36 @@ fun SinglePhotoInfoDialog(
 							.height(height)
 							.fillMaxWidth(1f)
 					) {
+						val show = remember { mutableStateOf(false) }
+						var isMoving by remember { mutableStateOf(false) }
+
+						MoveCopyAlbumListView(
+							show,
+							listOf(currentMediaItem.value),
+							isMoving
+						)
+
 						DialogClickableItem(
 							text = "Copy to Album",
 							iconResId = R.drawable.copy,
 							position = RowPosition.Middle,
-						)
+						) {
+							isMoving = true
+							show.value = true
+						}
 
 						DialogClickableItem (
 							text = "Move to Album",
 							iconResId = R.drawable.cut,
 							position = RowPosition.Middle,
-						)
+						) {
+							isMoving = false
+							show.value = true
+
+							val newList = groupedMedia.value.toMutableList()
+							newList.remove(currentMediaItem.value)
+							groupedMedia.value = newList
+						}
 
 						val infoComposable = @Composable {
 							Column (

@@ -109,7 +109,7 @@ fun MoveCopyAlbumListView(
 
     val searchedForText = remember { mutableStateOf("") }
 
-	val state = rememberLazyListState()
+    val state = rememberLazyListState()
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true,
     )
@@ -120,12 +120,12 @@ fun MoveCopyAlbumListView(
         albumsList = originalAlbumsList.filter {
             it.contains(searchedForText.value, true)
         }
-    	if (albumsList.size != 0) state.scrollToItem(0)	    
+        if (albumsList.isNotEmpty()) state.scrollToItem(0)
     }
 
-	LaunchedEffect(show.value) {
-		searchedForText.value = ""
-	}
+    LaunchedEffect(show.value) {
+        searchedForText.value = ""
+    }
 
     if (show.value) {
         ModalBottomSheet(
@@ -142,18 +142,18 @@ fun MoveCopyAlbumListView(
                     WindowInsets.statusBars
                 ),
         ) {
-			BackHandler (
-				enabled = show.value == true && !WindowInsets.isImeVisible
-			) {
-				coroutineScope.launch {
-					sheetState.hide()
-					show.value = false
-				}
-			}
-        
-            AnimatedVisibility (
+            BackHandler(
+                enabled = show.value && !WindowInsets.isImeVisible
+            ) {
+                coroutineScope.launch {
+                    sheetState.hide()
+                    show.value = false
+                }
+            }
+
+            AnimatedVisibility(
                 visible = sheetState.currentValue == SheetValue.Expanded,
-                enter = expandVertically (
+                enter = expandVertically(
                     expandFrom = Alignment.Top
                 ) + fadeIn(),
                 exit = shrinkVertically(
@@ -163,29 +163,29 @@ fun MoveCopyAlbumListView(
                     .fillMaxWidth(1f)
             ) {
                 SearchTextField(
-                	searchedForText = searchedForText, 
-                	placeholder = "Search for an album's name",
-                	modifier = Modifier
-       		            .fillMaxWidth(1f)
-            			.height(56.dp)
-            			.padding(16.dp, 0.dp),
-           			onClear = {
-           				searchedForText.value = ""
-           			},
-           			onSearch = {}
-               	)
+                    searchedForText = searchedForText,
+                    placeholder = "Search for an album's name",
+                    modifier = Modifier
+                        .fillMaxWidth(1f)
+                        .height(56.dp)
+                        .padding(16.dp, 0.dp),
+                    onClear = {
+                        searchedForText.value = ""
+                    },
+                    onSearch = {}
+                )
 
-               	Spacer (modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
             }
 
             if (albumsList.isEmpty()) {
                 FolderIsEmpty(
-                	emptyText = "No such albums exists", 
-                	emptyIconResId = R.drawable.error,
-                	backgroundColor = Color.Transparent
-               	)
+                    emptyText = "No such albums exists",
+                    emptyIconResId = R.drawable.error,
+                    backgroundColor = Color.Transparent
+                )
             } else {
-                LazyColumn (
+                LazyColumn(
                     state = state,
                     modifier = Modifier
                         .fillMaxSize(1f)
@@ -226,95 +226,95 @@ fun SearchTextField(
     onSearch: () -> Unit,
     onClear: () -> Unit
 ) {
-	Row (
-		modifier = modifier,
-		verticalAlignment = Alignment.CenterVertically,
-		horizontalArrangement = Arrangement.SpaceEvenly
-	) {
-	    val keyboardController = LocalSoftwareKeyboardController.current
-	    
-	    TextField(
-	        value = searchedForText.value,
-	        onValueChange = {
-	            searchedForText.value = it
-	        },
-	        maxLines = 1,
-	        singleLine = true,
-	        placeholder = {
-	            Text(
-	                text = placeholder,
-	                fontSize = TextUnit(16f, TextUnitType.Sp)
-	            )
-	        },
-	        prefix = {
-	        	Row {
-		            Icon(
-		                painter = painterResource(id = R.drawable.search),
-		                contentDescription = "Search Icon",
-		                   modifier = Modifier
-		                       .size(24.dp)
-		            )
-	        		
-	        		Spacer (modifier = Modifier.width(8.dp))
-	        	}
-	        },
-	        colors = TextFieldDefaults.colors(
-	            focusedContainerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
-	            unfocusedContainerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
-	            cursorColor = CustomMaterialTheme.colorScheme.primary,
-	            focusedTextColor = CustomMaterialTheme.colorScheme.onSurface,
-	            unfocusedTextColor = CustomMaterialTheme.colorScheme.onSurface,
-	            focusedPlaceholderColor = CustomMaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-	            unfocusedPlaceholderColor = CustomMaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-	            unfocusedIndicatorColor = Color.Transparent,
-	            focusedIndicatorColor = Color.Transparent
-	        ),
-	        keyboardOptions = KeyboardOptions(
-	            autoCorrectEnabled = false,
-	            keyboardType = KeyboardType.Text,
-	            imeAction = ImeAction.Search
-	        ),
-	        keyboardActions = KeyboardActions(
-	            onSearch = {
-	                onSearch()
-	                keyboardController?.hide()
-	            }
-	        ),
-	        shape = RoundedCornerShape(1000.dp, 0.dp, 0.dp, 1000.dp),
-	        modifier = Modifier
-	        	.weight(1f)
-	    )
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        val keyboardController = LocalSoftwareKeyboardController.current
 
-	    Row(
-	    	modifier = Modifier
-	    		.height(56.dp)
-	    		.width(32.dp)
-	    		.clip(RoundedCornerShape(0.dp, 1000.dp, 1000.dp, 0.dp))
-	    		.background(CustomMaterialTheme.colorScheme.surfaceContainer)
-	    		.weight(0.2f),
-    		verticalAlignment = Alignment.CenterVertically,
-    		horizontalArrangement = Arrangement.Center
-	    ) {
-	    	Row (
-	    		modifier = Modifier
-	    			.size(36.dp)
-	    			.clip(RoundedCornerShape(1000.dp))
-		    		.clickable {
-		    			onClear()
-		    		},
-	    		verticalAlignment = Alignment.CenterVertically,
-	    		horizontalArrangement = Arrangement.Center
-	    	) {
-		    	Icon(
-		    		painter = painterResource(id = R.drawable.close),
-		    		contentDescription = "Clear search query",
-		    		tint = CustomMaterialTheme.colorScheme.onSurface,
-		    		modifier = Modifier
-		    			.size(24.dp)
-		    	)
-	    	}
-	    }
-	}
+        TextField(
+            value = searchedForText.value,
+            onValueChange = {
+                searchedForText.value = it
+            },
+            maxLines = 1,
+            singleLine = true,
+            placeholder = {
+                Text(
+                    text = placeholder,
+                    fontSize = TextUnit(16f, TextUnitType.Sp)
+                )
+            },
+            prefix = {
+                Row {
+                    Icon(
+                        painter = painterResource(id = R.drawable.search),
+                        contentDescription = "Search Icon",
+                        modifier = Modifier
+                            .size(24.dp)
+                    )
+
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
+            },
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
+                unfocusedContainerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
+                cursorColor = CustomMaterialTheme.colorScheme.primary,
+                focusedTextColor = CustomMaterialTheme.colorScheme.onSurface,
+                unfocusedTextColor = CustomMaterialTheme.colorScheme.onSurface,
+                focusedPlaceholderColor = CustomMaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                unfocusedPlaceholderColor = CustomMaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                unfocusedIndicatorColor = Color.Transparent,
+                focusedIndicatorColor = Color.Transparent
+            ),
+            keyboardOptions = KeyboardOptions(
+                autoCorrectEnabled = false,
+                keyboardType = KeyboardType.Text,
+                imeAction = ImeAction.Search
+            ),
+            keyboardActions = KeyboardActions(
+                onSearch = {
+                    onSearch()
+                    keyboardController?.hide()
+                }
+            ),
+            shape = RoundedCornerShape(1000.dp, 0.dp, 0.dp, 1000.dp),
+            modifier = Modifier
+                .weight(1f)
+        )
+
+        Row(
+            modifier = Modifier
+                .height(56.dp)
+                .width(32.dp)
+                .clip(RoundedCornerShape(0.dp, 1000.dp, 1000.dp, 0.dp))
+                .background(CustomMaterialTheme.colorScheme.surfaceContainer)
+                .weight(0.2f),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Row(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(1000.dp))
+                    .clickable {
+                        onClear()
+                    },
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.close),
+                    contentDescription = "Clear search query",
+                    tint = CustomMaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier
+                        .size(24.dp)
+                )
+            }
+        }
+    }
 }
 
 @OptIn(ExperimentalGlideComposeApi::class)
@@ -332,13 +332,13 @@ fun AlbumsListItem(
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    Row (
+    Row(
         modifier = modifier
             .height(88.dp)
             .clip(shape)
             .background(CustomMaterialTheme.colorScheme.surfaceContainer)
             .clickable {
-            	show.value = false
+                show.value = false
                 coroutineScope.launch {
                     withContext(Dispatchers.IO) {
                         if (isMoving) {
@@ -371,8 +371,8 @@ fun AlbumsListItem(
             },
         verticalAlignment = Alignment.CenterVertically
     ) {
-		Spacer (modifier = Modifier.width(12.dp))
-    
+        Spacer(modifier = Modifier.width(12.dp))
+
         GlideImage(
             model = data.uri,
             contentDescription = album,
@@ -383,7 +383,7 @@ fun AlbumsListItem(
                 .clip(RoundedCornerShape(16.dp))
         )
 
-        Spacer (modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(16.dp))
 
         Text(
             text = album.split("/").last(),

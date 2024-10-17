@@ -64,6 +64,8 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.helpers.ImageFunctions
 import com.kaii.photos.helpers.MainScreenViewType
+import com.kaii.photos.helpers.PermanentlyDeletePhotoList
+import com.kaii.photos.helpers.SetTrashedOnPhotoList
 import com.kaii.photos.helpers.operateOnImage
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
@@ -420,7 +422,7 @@ fun MainAppSelectingBottomBar(
         val selectedItemsWithoutSection by remember {
             derivedStateOf {
                 selectedItemsList.filter {
-                    it.type != MediaType.Section
+                    it.type != MediaType.Section && it != MediaStoreData()
                 }
             }
         }
@@ -461,6 +463,7 @@ fun MainAppSelectingBottomBar(
             action = {
                 isMoving = true
                 show.value = true
+                selectedItemsList.clear()
             }
         )
 
@@ -470,10 +473,23 @@ fun MainAppSelectingBottomBar(
             action = {
                 isMoving = false
                 show.value = true
+                selectedItemsList.clear()
             }
         )
 
         val showDeleteDialog = remember { mutableStateOf(false) }
+        var runDeleteAction by remember { mutableStateOf(false) }
+
+        if (runDeleteAction) {
+            SetTrashedOnPhotoList(
+                list = selectedItemsWithoutSection.map { it.uri },
+                trashed = true
+            )
+
+            selectedItemsList.clear()
+            runDeleteAction = false
+        }
+
         BottomAppBarItem(
             text = "Delete",
             iconResId = R.drawable.delete,
@@ -484,37 +500,7 @@ fun MainAppSelectingBottomBar(
                     dialogTitle = "Move these items to Trash Bin?",
                     confirmButtonLabel = "Delete"
                 ) {
-                	selectedItemsWithoutSection.forEach {
-                		println("SELECTED ITEM $it")
-                	}
-                	
-                    coroutineScope.launch {
-                        withContext(Dispatchers.IO) {
-                            val newList = groupedMedia.value.toMutableList()
-                            selectedItemsWithoutSection.forEach { item ->
-                                operateOnImage(
-                                    item.absolutePath,
-                                    item.id,
-                                    ImageFunctions.TrashImage,
-                                    context
-                                )
-                                newList.remove(item)
-                            }
-
-                            groupedMedia.value.filter {
-                                it.type == MediaType.Section
-                            }.forEach {
-                                val filtered = newList.filter { new ->
-                                    new.getLastModifiedDay() == it.getLastModifiedDay()
-                                }
-
-                                if (filtered.size == 1) newList.remove(it)
-                            }
-
-                            selectedItemsList.clear()
-                            groupedMedia.value = newList
-                        }
-                    }
+                    runDeleteAction = true
                 }
             },
             action = {
@@ -532,7 +518,7 @@ fun IsSelectingTopBar(selectedItemsList: SnapshotStateList<MediaStoreData>) {
     val selectedItemsWithoutSection by remember {
         derivedStateOf {
             selectedItemsList.filter {
-                it.type != MediaType.Section
+                it.type != MediaType.Section && it != MediaStoreData()
             }
         }
     }
@@ -581,10 +567,8 @@ fun IsSelectingTopBar(selectedItemsList: SnapshotStateList<MediaStoreData>) {
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    val selectionSize =
-                        if (selectedItemsWithoutSection.size == 1 && selectedItemsWithoutSection[0] == MediaStoreData()) "0" else selectedItemsWithoutSection.size.toString()
                     Text(
-                        text = selectionSize,
+                        text = selectedItemsWithoutSection.size.toString(),
                         color = CustomMaterialTheme.colorScheme.onSurface,
                         fontSize = TextUnit(18f, TextUnitType.Sp),
                         modifier = Modifier
@@ -758,7 +742,7 @@ fun SingleAlbumViewBottomBar(
         val selectedItemsWithoutSection by remember {
             derivedStateOf {
                 selectedItemsList.filter {
-                    it.type != MediaType.Section
+                    it.type != MediaType.Section && it != MediaStoreData()
                 }
             }
         }
@@ -799,6 +783,7 @@ fun SingleAlbumViewBottomBar(
             action = {
                 isMoving = true
                 show.value = true
+                selectedItemsList.clear()
             }
         )
 
@@ -808,10 +793,23 @@ fun SingleAlbumViewBottomBar(
             action = {
                 isMoving = false
                 show.value = true
+                selectedItemsList.clear()
             }
         )
 
         val showDeleteDialog = remember { mutableStateOf(false) }
+        var runTrashAction by remember { mutableStateOf(false) }
+
+        if (runTrashAction) {
+            SetTrashedOnPhotoList(
+                selectedItemsWithoutSection.map { it.uri },
+                true
+            )
+
+            selectedItemsList.removeAll(selectedItemsWithoutSection)
+            runTrashAction = false
+        }
+
         BottomAppBarItem(
             text = "Delete",
             iconResId = R.drawable.delete,
@@ -822,33 +820,7 @@ fun SingleAlbumViewBottomBar(
                     dialogTitle = "Move selected items to Trash Bin?",
                     confirmButtonLabel = "Delete"
                 ) {
-                    coroutineScope.launch {
-                        withContext(Dispatchers.IO) {
-                            val newList = groupedMedia.value.toMutableList()
-                            selectedItemsWithoutSection.forEach { item ->
-                                operateOnImage(
-                                    item.absolutePath,
-                                    item.id,
-                                    ImageFunctions.TrashImage,
-                                    context
-                                )
-                                newList.remove(item)
-                            }
-
-                            groupedMedia.value.filter {
-                                it.type == MediaType.Section
-                            }.forEach {
-                                val filtered = newList.filter { new ->
-                                    new.getLastModifiedDay() == it.getLastModifiedDay()
-                                }
-
-                                if (filtered.size == 1) newList.remove(it)
-                            }
-
-                            selectedItemsList.clear()
-                            groupedMedia.value = newList
-                        }
-                    }
+                    runTrashAction = true
                 }
             },
             action = {
@@ -862,12 +834,17 @@ fun SingleAlbumViewBottomBar(
 @Composable
 fun TrashedPhotoGridViewTopBar(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
-    groupedMedia: MutableState<List<MediaStoreData>>,
+    groupedMedia: List<MediaStoreData>,
     onBackClick: () -> Unit
 ) {
     val showDialog = remember { mutableStateOf(false) }
-    val coroutineScope = rememberCoroutineScope()
-    val context = LocalContext.current
+
+    var runEmptyTrashAction by remember { mutableStateOf(false) }
+
+    if (runEmptyTrashAction) {
+        PermanentlyDeletePhotoList(list = groupedMedia.map { it.uri })
+        runEmptyTrashAction = false
+    }
 
     ConfirmationDialogWithBody(
         showDialog = showDialog,
@@ -875,18 +852,7 @@ fun TrashedPhotoGridViewTopBar(
         dialogBody = "This deletes all items in the trash bin, action cannot be undone",
         confirmButtonLabel = "Empty Out"
     ) {
-        coroutineScope.launch {
-            groupedMedia.value.forEach { item ->
-                operateOnImage(
-                    item.absolutePath,
-                    item.id,
-                    ImageFunctions.PermaDeleteImage,
-                    context
-                )
-            }
-
-            groupedMedia.value = emptyList()
-        }
+        runEmptyTrashAction = true
     }
 
     val show by remember {
@@ -968,7 +934,6 @@ fun TrashedPhotoGridViewTopBar(
 @Composable
 fun TrashedPhotoGridViewBottomBar(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
-    groupedMedia: MutableState<List<MediaStoreData>>
 ) {
     IsSelectingBottomAppBar {
 
@@ -978,7 +943,7 @@ fun TrashedPhotoGridViewBottomBar(
         val selectedItemsWithoutSection by remember {
             derivedStateOf {
                 selectedItemsList.filter {
-                    it.type != MediaType.Section
+                    it.type != MediaType.Section && it != MediaStoreData()
                 }
             }
         }
@@ -1010,6 +975,18 @@ fun TrashedPhotoGridViewBottomBar(
         )
 
         val showRestoreDialog = remember { mutableStateOf(false) }
+        var runRestoreAction by remember { mutableStateOf(false) }
+
+        if (runRestoreAction) {
+            SetTrashedOnPhotoList(
+                selectedItemsWithoutSection.map { it.uri },
+                false
+            )
+
+            selectedItemsList.removeAll(selectedItemsWithoutSection)
+            runRestoreAction = false
+        }
+
         BottomAppBarItem(
             text = "Restore",
             iconResId = R.drawable.untrash,
@@ -1020,32 +997,7 @@ fun TrashedPhotoGridViewBottomBar(
                     dialogTitle = "Restore these items?",
                     confirmButtonLabel = "Restore"
                 ) {
-                    coroutineScope.launch {
-                        withContext(Dispatchers.IO) {
-                            val newList = groupedMedia.value.toMutableList()
-                            selectedItemsWithoutSection.forEach { item ->
-                                operateOnImage(
-                                    item.absolutePath,
-                                    item.id,
-                                    ImageFunctions.UnTrashImage,
-                                    context
-                                )
-                                newList.remove(item)
-                            }
-                            groupedMedia.value.filter {
-                                it.type == MediaType.Section
-                            }.forEach {
-                                val filtered = newList.filter { new ->
-                                    new.getLastModifiedDay() == it.getLastModifiedDay()
-                                }
-
-                                if (filtered.size == 1) newList.remove(it)
-                            }
-
-                            selectedItemsList.clear()
-                            groupedMedia.value = newList
-                        }
-                    }
+                    runRestoreAction = true
                 }
             },
             action = {
@@ -1054,6 +1006,17 @@ fun TrashedPhotoGridViewBottomBar(
         )
 
         val showPermaDeleteDialog = remember { mutableStateOf(false) }
+        var runPermaDeleteAction by remember { mutableStateOf(false) }
+
+        if (runPermaDeleteAction) {
+            PermanentlyDeletePhotoList(
+                selectedItemsWithoutSection.map { it.uri }
+            )
+
+            selectedItemsList.removeAll(selectedItemsWithoutSection)
+            runPermaDeleteAction = false
+        }
+
         BottomAppBarItem(
             text = "Delete",
             iconResId = R.drawable.delete,
@@ -1065,37 +1028,13 @@ fun TrashedPhotoGridViewBottomBar(
                     dialogBody = "This action cannot be undone!",
                     confirmButtonLabel = "Delete"
                 ) {
-                    coroutineScope.launch {
-                        withContext(Dispatchers.IO) {
-                            val newList = groupedMedia.value.toMutableList()
-                            selectedItemsWithoutSection.forEach { item ->
-                                operateOnImage(
-                                    item.absolutePath,
-                                    item.id,
-                                    ImageFunctions.PermaDeleteImage,
-                                    context
-                                )
-                                newList.remove(item)
-                            }
-
-                            groupedMedia.value.filter {
-                                it.type == MediaType.Section
-                            }.forEach {
-                                val filtered = newList.filter { new ->
-                                    new.getLastModifiedDay() == it.getLastModifiedDay()
-                                }
-
-                                if (filtered.size == 1) newList.remove(it)
-                            }
-
-                            selectedItemsList.clear()
-                            groupedMedia.value = newList
-                        }
-                    }
+                    runPermaDeleteAction = true
                 }
             },
             action = {
-                showPermaDeleteDialog.value = true
+                if (selectedItemsWithoutSection.isNotEmpty()) {
+                    showPermaDeleteDialog.value = true
+                }
             }
         )
     }
@@ -1213,6 +1152,7 @@ fun SecureFolderViewBottomAppBar(
         )
 
         val showRestoreDialog = remember { mutableStateOf(false) }
+
         BottomAppBarItem(
             text = "Restore",
             iconResId = R.drawable.unlock,
@@ -1257,6 +1197,7 @@ fun SecureFolderViewBottomAppBar(
         )
 
         val showPermaDeleteDialog = remember { mutableStateOf(false) }
+
         BottomAppBarItem(
             text = "Delete",
             iconResId = R.drawable.delete,
@@ -1421,6 +1362,7 @@ fun FavouritesViewBottomAppBar(
             iconResId = R.drawable.copy,
             action = {
                 show.value = true
+                selectedItemsList.clear()
             }
         )
 
@@ -1465,6 +1407,17 @@ fun FavouritesViewBottomAppBar(
         )
 
         val showDeleteDialog = remember { mutableStateOf(false) }
+        var runTrashAction by remember { mutableStateOf(false) }
+        if (runTrashAction) {
+            SetTrashedOnPhotoList(
+                selectedItemsWithoutSection.map { it.uri },
+                true
+            )
+
+            selectedItemsList.clear()
+            runTrashAction = false
+        }
+
         BottomAppBarItem(
             text = "Delete",
             iconResId = R.drawable.delete,
@@ -1476,31 +1429,10 @@ fun FavouritesViewBottomAppBar(
                     confirmButtonLabel = "Delete"
                 ) {
                     coroutineScope.launch {
-                        withContext(Dispatchers.IO) {
-                            val newList = groupedMedia.value.toMutableList()
-                            selectedItemsWithoutSection.forEach { item ->
-                                operateOnImage(
-                                    item.absolutePath,
-                                    item.id,
-                                    ImageFunctions.TrashImage,
-                                    context
-                                )
-                                newList.remove(item)
-                            }
-
-                            groupedMedia.value.filter {
-                                it.type == MediaType.Section
-                            }.forEach {
-                                val filtered = newList.filter { new ->
-                                    new.getLastModifiedDay() == it.getLastModifiedDay()
-                                }
-
-                                if (filtered.size == 1) newList.remove(it)
-                            }
-
-                            selectedItemsList.clear()
-                            groupedMedia.value = newList
+                        selectedItemsList.forEach {
+                            dao.deleteEntityById(it.id)
                         }
+                        runTrashAction = true
                     }
                 }
             },

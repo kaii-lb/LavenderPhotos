@@ -19,6 +19,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,48 +29,41 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import com.kaii.photos.compose.IsSelectingBottomAppBar
 import com.kaii.photos.compose.TrashedPhotoGridViewBottomBar
 import com.kaii.photos.compose.TrashedPhotoGridViewTopBar
 import com.kaii.photos.compose.ViewProperties
-import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.getAppTrashBinDirectory
 import com.kaii.photos.mediastore.MediaStoreData
-import com.kaii.photos.models.gallery_model.GalleryViewModel
-import com.kaii.photos.models.gallery_model.GalleryViewModelFactory
+import com.kaii.photos.models.trash_bin.TrashViewModel
+import com.kaii.photos.models.trash_bin.TrashViewModelFactory
 import kotlinx.coroutines.Dispatchers
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TrashedPhotoGridView(
-	navController: NavHostController,
-	selectedItemsList: SnapshotStateList<MediaStoreData>,
+    navController: NavHostController,
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    trashViewModel: TrashViewModel
 ) {
-    val galleryViewModel: GalleryViewModel = viewModel(
-		factory = GalleryViewModelFactory(
-            LocalContext.current,
-            getAppTrashBinDirectory().replace("/storage/emulated/0/", ""),
-            MediaItemSortMode.LastModified
-        )
-	)
+    val mediaStoreData = trashViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
-	val mediaStoreData = galleryViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+    val groupedMedia = remember { mutableStateOf(mediaStoreData.value) }
 
-	val groupedMedia = remember { mutableStateOf(mediaStoreData.value) }
+    LaunchedEffect(mediaStoreData.value) {
+        groupedMedia.value = mediaStoreData.value
+    }
 
-	LaunchedEffect(mediaStoreData.value) {
-		groupedMedia.value = mediaStoreData.value
-	}
-
-    BackHandler (
+    BackHandler(
         enabled = selectedItemsList.size > 0
     ) {
         selectedItemsList.clear()
     }
 
-    val showBottomSheet by remember { derivedStateOf {
-        selectedItemsList.size > 0
-    }}
+    val showBottomSheet by remember {
+        derivedStateOf {
+            selectedItemsList.size > 0
+        }
+    }
 
     val sheetState = rememberStandardBottomSheetState(
         skipHiddenState = false,
@@ -93,29 +87,32 @@ fun TrashedPhotoGridView(
         modifier = Modifier
             .fillMaxSize(1f),
         topBar = {
-            TrashedPhotoGridViewTopBar(selectedItemsList = selectedItemsList, groupedMedia = groupedMedia) {
+            TrashedPhotoGridViewTopBar(
+                selectedItemsList = selectedItemsList,
+                groupedMedia = groupedMedia.value
+            ) {
                 navController.popBackStack()
             }
         },
         sheetContent = {
-            TrashedPhotoGridViewBottomBar(selectedItemsList = selectedItemsList, groupedMedia = groupedMedia)
+            TrashedPhotoGridViewBottomBar(selectedItemsList = selectedItemsList)
         },
         sheetPeekHeight = 0.dp,
         sheetShape = RectangleShape
     ) { padding ->
-        Column (
+        Column(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize(1f)
                 .windowInsetsPadding(
-                	WindowInsets.navigationBars
+                    WindowInsets.navigationBars
                 ),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-        	// TODO: check for items older than 30 days and delete them
+            // TODO: check for items older than 30 days and delete them
             PhotoGrid(
-            	groupedMedia = groupedMedia,
+                groupedMedia = groupedMedia,
                 navController = navController,
                 path = getAppTrashBinDirectory().replace("/storage/emulated/0/", ""),
                 selectedItemsList = selectedItemsList,

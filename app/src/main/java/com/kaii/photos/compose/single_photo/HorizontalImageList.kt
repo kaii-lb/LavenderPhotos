@@ -20,10 +20,9 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,8 +30,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowInsetsCompat
 import androidx.media3.common.util.UnstableApi
@@ -46,8 +45,8 @@ import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.signature
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.cos
@@ -59,7 +58,7 @@ import kotlin.math.sin
 fun HorizontalImageList(
     navController: NavHostController,
 	currentMediaItem: MediaStoreData,
-    groupedMedia: MutableState<List<MediaStoreData>>,
+    groupedMedia: List<MediaStoreData>,
     state: PagerState,
     scale: MutableState<Float>,
     rotation: MutableState<Float>,
@@ -80,8 +79,8 @@ fun HorizontalImageList(
         verticalAlignment = Alignment.CenterVertically,
         pageSpacing = 8.dp,
         key = {
-            if (groupedMedia.value.isNotEmpty() && it != groupedMedia.value.size) {
-                val neededItem = groupedMedia.value[it]
+            if (groupedMedia.isNotEmpty() && it != groupedMedia.size) {
+                val neededItem = groupedMedia[it]
                 neededItem.uri.toString()
             } else {
                 System.currentTimeMillis().toString() // this should be unique enough in case of failure right?
@@ -99,17 +98,17 @@ fun HorizontalImageList(
             }
         }
         
-        val mediaStoreItem = groupedMedia.value[index]
+        val mediaStoreItem = groupedMedia[index]
 
         val windowInsetsController = window.insetsController ?: return@HorizontalPager
         val path = if (isHidden) mediaStoreItem.uri.path else mediaStoreItem.uri
 
         if (mediaStoreItem.type == MediaType.Video) {
         	val showVideoPlayerControls = remember { mutableStateOf(true) }
-			var canFadeControls = remember { mutableStateOf(true) }
+			val canFadeControls = remember { mutableStateOf(true) }
 
 			LaunchedEffect(key1 = showVideoPlayerControls.value, key2 = canFadeControls.value, key3 = appBarsVisible.value) {
-				if (canFadeControls.value == true) {
+				if (canFadeControls.value) {
 					delay(5000)
 					showVideoPlayerControls.value = false
 					appBarsVisible.value = false

@@ -127,7 +127,7 @@ fun SingleHiddenPhotoView(
             HorizontalImageList(
                 navController,
             	currentMediaItem,
-                groupedMedia,
+                groupedMedia.value,
                 state,
                 scale,
                 rotation,

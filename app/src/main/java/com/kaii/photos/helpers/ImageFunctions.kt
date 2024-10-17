@@ -1,9 +1,21 @@
 package com.kaii.photos.helpers
 
+import android.app.Activity
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
+import android.provider.MediaStore
+import android.provider.MediaStore.MediaColumns
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
 import com.kaii.photos.MainActivity
 import com.kaii.photos.database.entities.MediaEntity
@@ -16,6 +28,7 @@ import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
+import java.util.Collections
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
@@ -135,7 +148,7 @@ fun trashPhoto(path: String, id: Long) {
             )
         )
 
-		Log.d(TAG, "path of trash photo $absolutePath")
+        Log.d(TAG, "path of trash photo $absolutePath")
 
         database.favouritedItemEntityDao().deleteEntityById(id)
 
@@ -200,21 +213,44 @@ private fun permanentlyDeletePhoto(absolutePath: String) {
     }
 }
 
+@Composable
+fun PermanentlyDeletePhotoList(list: List<Uri>) {
+    val context = LocalContext.current
+    val contentResolver = context.contentResolver
+
+    list.forEach {
+        contentResolver.delete(it, null)
+    }
+}
+
+@Composable
+fun SetTrashedOnPhotoList(list: List<Uri>, trashed: Boolean) {
+    val context = LocalContext.current
+    val contentResolver = context.contentResolver
+
+    val trashedValues = ContentValues().apply {
+        put(MediaColumns.IS_TRASHED, trashed)
+    }
+
+    list.forEach {
+        contentResolver.update(it, trashedValues, null)
+    }
+}
+
 private fun shareImage(absolutePath: String, id: Long, context: Context) {
     val database = MainActivity.applicationDatabase
-    CoroutineScope(EmptyCoroutineContext + CoroutineName("delete_file_context")).launch {
-        val mimeType = database.mediaEntityDao().getMimeType(id)
 
-        val shareIntent = Intent().apply {
-            action = Intent.ACTION_SEND
-            type = mimeType
-        }
+    val mimeType = database.mediaEntityDao().getMimeType(id)
 
-        shareIntent.putExtra(Intent.EXTRA_STREAM, absolutePath.toUri())
-
-        val chooserIntent = Intent.createChooser(shareIntent, null)
-        context.startActivity(chooserIntent)
+    val shareIntent = Intent().apply {
+        action = Intent.ACTION_SEND
+        type = mimeType
     }
+
+    shareIntent.putExtra(Intent.EXTRA_STREAM, absolutePath.toUri())
+
+    val chooserIntent = Intent.createChooser(shareIntent, null)
+    context.startActivity(chooserIntent)
 }
 
 private fun moveImageToLockedFolder(absolutePath: String, id: Long, context: Context) {
@@ -294,28 +330,23 @@ private fun renameImage(imagePath: String, imageName: String, newName: String, c
 }
 
 private fun copyToPath(mediaPath: String, albumPath: String, deleteOriginal: Boolean = false) {
-    val fileToBeCopied = File(mediaPath)
-    val absoluteAlbumPath = Path("/storage/emulated/0/", albumPath)
-    val copyToPath = Path(absoluteAlbumPath.pathString, fileToBeCopied.name)
-    Files.copy(Path(mediaPath), copyToPath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
+    try {
+        val fileToBeCopied = File(mediaPath)
+        val absoluteAlbumPath = Path("/storage/emulated/0/", albumPath)
+        val copyToPath = Path(absoluteAlbumPath.pathString, fileToBeCopied.name)
+        Files.copy(
+            Path(mediaPath),
+            copyToPath,
+            StandardCopyOption.REPLACE_EXISTING,
+            StandardCopyOption.COPY_ATTRIBUTES
+        )
 
-	val origPath = MainActivity.applicationDatabase.trashedItemEntityDao().getFromOriginalPath(mediaPath)
-	val newPath = MainActivity.applicationDatabase.trashedItemEntityDao().getFromOriginalPath(copyToPath.absolutePathString())
-	Log.d(TAG, "path of original photo $origPath and copied $newPath")
+        if (deleteOriginal) {
+            fileToBeCopied.delete()
+        }
 
-    val lastModified = System.currentTimeMillis()
-    copyToPath.setAttribute(
-        BasicFileAttributes::lastModifiedTime.name,
-        FileTime.fromMillis(lastModified)
-    )
-
-    if (deleteOriginal) {
-    	try {
-	        fileToBeCopied.delete()
-    	} catch(e: Throwable) {
-    		Log.e(TAG, e.toString())
-    	}
+        File(copyToPath.absolutePathString()).lastModified()
+    } catch (e: Throwable) {
+        Log.e(TAG, e.toString())
     }
-
-    File(copyToPath.absolutePathString()).lastModified()
 }

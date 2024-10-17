@@ -1,6 +1,7 @@
 package com.kaii.photos.mediastore
 
 import android.content.Context
+import android.content.ContentUris
 import android.database.ContentObserver
 import android.net.Uri
 import android.os.Handler
@@ -104,8 +105,6 @@ internal constructor(
                 val id = cursor.getLong(idColNum)
                 val mimeType = cursor.getString(mimeTypeColNum)
                 // val dateModified = cursor.getLong(dateModifiedColNum)
-
-                val uri = Uri.withAppendedPath(MEDIA_STORE_FILE_URI, id.toString())
                 val absolutePath = cursor.getString(absolutePathColNum)
 
                 val succeeded = try {
@@ -142,7 +141,11 @@ internal constructor(
 	                }
 	                
 	                val type = if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) MediaType.Image
-	                else MediaType.Video
+				               else MediaType.Video
+
+					val uriParentPath = if (type == MediaType.Image) MediaStore.Images.Media.EXTERNAL_CONTENT_URI else MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+	                val uri = ContentUris.withAppendedId(uriParentPath, id)
+	                
 	                data.add(
 	                    MediaStoreData(
 	                        type = type,

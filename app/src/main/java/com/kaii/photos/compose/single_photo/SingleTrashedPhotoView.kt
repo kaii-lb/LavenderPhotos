@@ -1,6 +1,8 @@
 package com.kaii.photos.compose.single_photo
 
 import android.annotation.SuppressLint
+import android.content.ContentValues
+import android.provider.MediaStore.MediaColumns
 import android.view.Window
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -41,9 +43,12 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -55,14 +60,16 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import com.kaii.photos.MainActivity
+import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.CustomMaterialTheme
-import com.kaii.photos.helpers.ImageFunctions
-import com.kaii.photos.helpers.operateOnImage
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.models.trash_bin.TrashViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 //private const val TAG = "SINGLE_TRASHED_PHOTO_VIEW"
@@ -75,107 +82,129 @@ fun SingleTrashedPhotoView(
     scale: MutableState<Float>,
     rotation: MutableState<Float>,
     offset: MutableState<Offset>,
+    trashViewModel: TrashViewModel
 ) {
-    val mainViewModel = MainActivity.mainViewModel
-
     val mediaItem = mainViewModel.selectedMediaData.collectAsState(initial = null).value ?: return
 
-    val holderGroupedMedia = mainViewModel.groupedMedia.collectAsState(initial = null).value ?: return
+    val holderGroupedMedia =
+        trashViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
-    val groupedMedia = remember { mutableStateOf(
-        holderGroupedMedia.filter { item ->
-            (item.type == MediaType.Image || item.type == MediaType.Video)  && item.mimeType != null && item.id != 0L
+    val groupedMedia = remember {
+        derivedStateOf {
+            holderGroupedMedia.value.filter { item ->
+                item.type != MediaType.Section
+            }
         }
-    )}
+    }
 
     val systemBarsShown = remember { mutableStateOf(true) }
     val appBarsVisible = remember { mutableStateOf(true) }
-    val state = rememberPagerState {
+
+    var currentMediaItemIndex by rememberSaveable {
+        mutableIntStateOf(
+            groupedMedia.value.indexOf(
+                mediaItem
+            )
+        )
+    }
+    val state = rememberPagerState(
+        initialPage = currentMediaItemIndex.coerceAtLeast(0)
+    ) {
         groupedMedia.value.size
     }
-    val currentMediaItem by remember { derivedStateOf {
-        val index = state.layoutInfo.visiblePagesInfo.firstOrNull()?.index ?: 0
-        if (index != groupedMedia.value.size) {
-            groupedMedia.value[index]
-        } else {
-            MediaStoreData(
-                displayName = "Broken Media"
-            )
-        }
-    } }
 
-	val showDialog = remember { mutableStateOf(false) }
+    LaunchedEffect(key1 = state.currentPage) {
+        currentMediaItemIndex = state.currentPage
+    }
+
+    val currentMediaItem by remember {
+        derivedStateOf {
+            val index = state.layoutInfo.visiblePagesInfo.firstOrNull()?.index ?: 0
+            if (index != groupedMedia.value.size) {
+                groupedMedia.value[index]
+            } else {
+                MediaStoreData(
+                    displayName = "Broken Media"
+                )
+            }
+        }
+    }
+
+    val showDialog = remember { mutableStateOf(false) }
 
     if (showDialog.value) {
-    	val context = LocalContext.current
+        val context = LocalContext.current
         val coroutineScope = rememberCoroutineScope()
-                   	
+
         AlertDialog(
-           onDismissRequest = {
-               showDialog.value = false
-           },
-           confirmButton = {
-               Button(
+            onDismissRequest = {
+                showDialog.value = false
+            },
+            confirmButton = {
+                Button(
                     onClick = {
                         showDialog.value = false
-                        operateOnImage(currentMediaItem.absolutePath, currentMediaItem.id, ImageFunctions.PermaDeleteImage, context)
+
+                        context.contentResolver.delete(currentMediaItem.uri, null)
 
                         sortOutMediaMods(
                             currentMediaItem,
-                            groupedMedia,
+                            groupedMedia.value,
                             coroutineScope,
                             state
                         ) {
                             navController.popBackStack()
                         }
                     }
-               ) {
-                   Text(
-                       text = "Delete",
-                       fontSize = TextUnit(14f, TextUnitType.Sp)
-                   )
-               }
-           },
-           title = {
-               Text(
-                   text = "Permanently delete this ${currentMediaItem.type.name}?",
-                   fontSize = TextUnit(16f, TextUnitType.Sp)
-               )
-           },
-           dismissButton = {
-               Button(
-                   onClick = {
-                       showDialog.value = false
-                   },
-                   colors = ButtonDefaults.buttonColors(
-                       containerColor = CustomMaterialTheme.colorScheme.tertiaryContainer,
-                       contentColor = CustomMaterialTheme.colorScheme.onTertiaryContainer
-                   )
-               ) {
-                   Text(
-                       text = "Cancel",
-                       fontSize = TextUnit(14f, TextUnitType.Sp)
-                   )
-               }
-           },
-           shape = RoundedCornerShape(32.dp)
-       )
+                ) {
+                    Text(
+                        text = "Delete",
+                        fontSize = TextUnit(14f, TextUnitType.Sp)
+                    )
+                }
+            },
+            title = {
+                Text(
+                    text = "Permanently delete this ${currentMediaItem.type.name}?",
+                    fontSize = TextUnit(16f, TextUnitType.Sp)
+                )
+            },
+            dismissButton = {
+                Button(
+                    onClick = {
+                        showDialog.value = false
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = CustomMaterialTheme.colorScheme.tertiaryContainer,
+                        contentColor = CustomMaterialTheme.colorScheme.onTertiaryContainer
+                    )
+                ) {
+                    Text(
+                        text = "Cancel",
+                        fontSize = TextUnit(14f, TextUnitType.Sp)
+                    )
+                }
+            },
+            shape = RoundedCornerShape(32.dp)
+        )
     }
 
-    Scaffold (
-        topBar =  { TopBar(navController, currentMediaItem, appBarsVisible.value) },
-        bottomBar = { BottomBar(
-            navController,
-            appBarsVisible.value,
-            currentMediaItem,
-            showDialog,
-            groupedMedia,
-            state
-        ) },
+    Scaffold(
+        topBar = { TopBar(navController, currentMediaItem, appBarsVisible.value) },
+        bottomBar = {
+            BottomBar(
+                navController,
+                appBarsVisible.value,
+                currentMediaItem,
+                showDialog,
+                groupedMedia.value,
+                state
+            )
+        },
         containerColor = CustomMaterialTheme.colorScheme.background,
         contentColor = CustomMaterialTheme.colorScheme.onBackground
     ) { _ ->
-        Column (
+        Column(
             modifier = Modifier
                 .padding(0.dp)
                 .background(CustomMaterialTheme.colorScheme.background)
@@ -185,8 +214,8 @@ fun SingleTrashedPhotoView(
         ) {
             HorizontalImageList(
                 navController,
-            	currentMediaItem,
-                groupedMedia,
+                currentMediaItem,
+                groupedMedia.value,
                 state,
                 scale,
                 rotation,
@@ -194,15 +223,6 @@ fun SingleTrashedPhotoView(
                 systemBarsShown,
                 window,
                 appBarsVisible
-            )
-        }
-    }
-
-    val coroutineScope = rememberCoroutineScope()
-    LaunchedEffect(key1 = mediaItem) {
-        coroutineScope.launch {
-            state.scrollToPage(
-                if (groupedMedia.value.indexOf(mediaItem) >= 0) groupedMedia.value.indexOf(mediaItem) else 0
             )
         }
     }
@@ -214,7 +234,7 @@ private fun TopBar(navController: NavHostController, mediaItem: MediaStoreData?,
     AnimatedVisibility(
         visible = visible,
         enter =
-        slideInVertically (
+        slideInVertically(
             animationSpec = tween(
                 durationMillis = 250
             )
@@ -251,9 +271,9 @@ private fun TopBar(navController: NavHostController, mediaItem: MediaStoreData?,
                     "Media"
                 }
 
-                Spacer (modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(8.dp))
 
-				val splitBy = Regex("trashed-[0-9]+-")
+                val splitBy = Regex("trashed-[0-9]+-")
                 Text(
                     text = mediaTitle.split(splitBy).lastOrNull() ?: "Media",
                     fontSize = TextUnit(18f, TextUnitType.Sp),
@@ -287,16 +307,16 @@ private fun BottomBar(
     visible: Boolean,
     item: MediaStoreData,
     showDialog: MutableState<Boolean>,
-    groupedMedia: MutableState<List<MediaStoreData>>,
+    groupedMedia: List<MediaStoreData>,
     state: PagerState
 ) {
     val context = LocalContext.current
-   	val coroutineScope = rememberCoroutineScope()
-                            	
+    val coroutineScope = rememberCoroutineScope()
+
     AnimatedVisibility(
         visible = visible,
         enter =
-        slideInVertically (
+        slideInVertically(
             animationSpec = tween(
                 durationMillis = 250
             )
@@ -313,7 +333,7 @@ private fun BottomBar(
             contentColor = CustomMaterialTheme.colorScheme.onBackground,
             contentPadding = PaddingValues(0.dp),
             actions = {
-                Row (
+                Row(
                     modifier = Modifier
                         .fillMaxWidth(1f)
                         .padding(12.dp, 0.dp),
@@ -322,7 +342,10 @@ private fun BottomBar(
                 ) {
                     OutlinedButton(
                         onClick = {
-                            operateOnImage(item.absolutePath, item.id, ImageFunctions.UnTrashImage, context)
+                            val untrashValues = ContentValues().apply {
+                                put(MediaColumns.IS_TRASHED, false)
+                            }
+                            context.contentResolver.update(item.uri, untrashValues, null)
 
                             sortOutMediaMods(
                                 item,
@@ -337,12 +360,12 @@ private fun BottomBar(
                             .weight(1f)
                             .height(48.dp)
                     ) {
-                        Row (
+                        Row(
                             modifier = Modifier.fillMaxWidth(1f),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
-                            Icon (
+                            Icon(
                                 painter = painterResource(id = R.drawable.favourite),
                                 contentDescription = "Restore Image Button",
                                 tint = CustomMaterialTheme.colorScheme.primary,
@@ -350,7 +373,7 @@ private fun BottomBar(
                                     .size(22.dp)
                             )
 
-                            Spacer (
+                            Spacer(
                                 modifier = Modifier
                                     .width(8.dp)
                             )
@@ -366,7 +389,7 @@ private fun BottomBar(
                         }
                     }
 
-                    Spacer (modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
 
                     OutlinedButton(
                         onClick = {
@@ -376,12 +399,12 @@ private fun BottomBar(
                             .weight(1f)
                             .height(48.dp)
                     ) {
-                        Row (
+                        Row(
                             modifier = Modifier.fillMaxWidth(1f),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
-                            Icon (
+                            Icon(
                                 painter = painterResource(id = R.drawable.trash),
                                 contentDescription = "Permanently Delete Image Button",
                                 tint = CustomMaterialTheme.colorScheme.primary,
@@ -389,7 +412,7 @@ private fun BottomBar(
                                     .size(22.dp)
                             )
 
-                            Spacer (
+                            Spacer(
                                 modifier = Modifier
                                     .width(8.dp)
                             )
@@ -408,5 +431,25 @@ private fun BottomBar(
             },
 //            modifier = Modifier.alpha(alpha)
         )
+    }
+}
+
+/** deals with grouped media modifications, in this case removing stuff*/
+private fun sortOutMediaMods(
+    item: MediaStoreData,
+    groupedMedia: List<MediaStoreData>,
+    coroutineScope: CoroutineScope,
+    state: PagerState,
+    popBackStackAction: () -> Unit
+) {
+    coroutineScope.launch {
+        val size = groupedMedia.size - 1
+        val scrollIndex = groupedMedia.indexOf(item) // is this better?
+
+        if (size == 0) {
+            popBackStackAction()
+        } else {
+            state.scrollToPage((scrollIndex).coerceIn(0, size))
+        }
     }
 }

@@ -1,8 +1,6 @@
 package com.kaii.photos.compose.grids
 
 import android.content.res.Configuration
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -26,7 +24,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -51,9 +48,9 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -173,7 +170,7 @@ fun DeviceMedia(
 	}
 
 	LaunchedEffect(groupedMedia.value) {
-		MainActivity.mainViewModel.setGroupedMedia(groupedMedia.value)	
+		MainActivity.mainViewModel.setGroupedMedia(groupedMedia.value)
 	}
 
 	val mainViewModel = MainActivity.mainViewModel
@@ -237,7 +234,7 @@ fun DeviceMedia(
 					) {
 						MediaStoreItem(
 							mediaStoreItem,
-							groupedMedia.value,
+							groupedMedia,
 							viewProperties,
 							selectedItemsList
 						) {
@@ -334,7 +331,7 @@ fun DeviceMedia(
 				val listSize by remember { derivedStateOf {
 					groupedMedia.value.size - 1
 				}}
-				val totalLeftOverItems by remember { derivedStateOf{
+				val totalLeftOverItems by remember { derivedStateOf {
 					(listSize - gridState.layoutInfo.visibleItemsInfo.size).toFloat()
 				}}
 				AnimatedVisibility (
@@ -483,7 +480,7 @@ fun DeviceMedia(
 @Composable
 fun MediaStoreItem(
 	item: MediaStoreData,
-	groupedMedia: List<MediaStoreData>,
+	groupedMedia: MutableState<List<MediaStoreData>>,
 	viewProperties: ViewProperties,
 	selectedItemsList: SnapshotStateList<MediaStoreData>,
 	onClick: () -> Unit
@@ -506,7 +503,7 @@ fun MediaStoreItem(
 					indication = null,
 				) {
 					coroutineScope.launch {
-						val datedMedia = groupedMedia.filter {
+						val datedMedia = groupedMedia.value.filter {
 							if (viewProperties.sortMode == MediaItemSortMode.LastModified) {
 								it.getLastModifiedDay() == item.getLastModifiedDay() && it.type != MediaType.Section
 							} else {
@@ -572,7 +569,7 @@ fun MediaStoreItem(
 						vibratorManager.vibrateShort()
 						coroutineScope.launch {
 							if (selectedItemsList.size > 0) {
-								val sectionItems = groupedMedia.filter {
+								val sectionItems = groupedMedia.value.filter {
 									if (viewProperties.sortMode == MediaItemSortMode.LastModified) {
 										it.getLastModifiedDay() == item.getLastModifiedDay()
 									} else {
@@ -611,7 +608,7 @@ fun MediaStoreItem(
 					onLongClick = {
 						if (selectedItemsList.size > 0) return@combinedClickable
 
-						val sectionItems = groupedMedia.filter {
+						val sectionItems = groupedMedia.value.filter {
 							if (viewProperties.sortMode == MediaItemSortMode.LastModified) {
 								it.getLastModifiedDay() == item.getLastModifiedDay()
 							} else {
