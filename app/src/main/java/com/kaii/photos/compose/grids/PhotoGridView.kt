@@ -1,7 +1,6 @@
 package com.kaii.photos.compose.grids
 
 import android.content.res.Configuration
-import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
@@ -103,7 +102,7 @@ import java.time.format.DateTimeFormatter
 import kotlin.io.path.Path
 import kotlin.math.roundToInt
 
-private const val TAG = "PHOTO_GRID_VIEW"
+//private const val TAG = "PHOTO_GRID_VIEW"
 
 @Composable
 fun PhotoGrid(
@@ -118,7 +117,11 @@ fun PhotoGrid(
 	val hasFiles = if (path == null) {
 		groupedMedia.value.isNotEmpty()
 	} else {
-		Path("/storage/emulated/0/$path").checkHasFiles()
+		if (viewProperties == ViewProperties.Trash) {
+			Path("/storage/emulated/0/$path").checkHasFiles(true)	
+		} else {
+			Path("/storage/emulated/0/$path").checkHasFiles()
+		}
 	}
 
 	if (hasFiles == null) {
@@ -181,7 +184,7 @@ fun DeviceMedia(
 			durationMillis = 350,
 			delayMillis = if (selectedItemsList.size > 0 && shouldPadUp) 350 else 0
 		),
-		label = "animate spacer on bottom of photogrid"
+		label = "animate spacer on bottom of photo grid"
 	)
 	
 	BoxWithConstraints (
@@ -255,13 +258,6 @@ fun DeviceMedia(
 									mainViewModel.setSelectedMediaData(mediaStoreItem)
 									mainViewModel.setGroupedMedia(groupedMedia.value)
 									navController.navigate(MultiScreenViewType.SingleHiddenPhotoVew.name)
-								}
-
-								else -> {
-									Log.e(
-										TAG,
-										"No acceptable ImageFunction provided, this should not happen."
-									)
 								}
 							}
 						}

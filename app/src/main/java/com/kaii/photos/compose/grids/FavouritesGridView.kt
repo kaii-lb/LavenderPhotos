@@ -35,22 +35,35 @@ import kotlinx.coroutines.Dispatchers
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FavouritesGridView(navController: NavHostController, selectedItemsList: SnapshotStateList<MediaStoreData>) {
+fun FavouritesGridView(
+    navController: NavHostController,
+    selectedItemsList: SnapshotStateList<MediaStoreData>
+) {
     val favouritesViewModel: FavouritesViewModel = viewModel(
         factory = FavouritesViewModelFactory()
     )
 
-    val mediaStoreData = favouritesViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+    val mediaStoreData =
+        favouritesViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
-    val groupedMedia = remember { mutableStateOf(groupPhotosBy(mediaStoreData.value, MediaItemSortMode.LastModified)) }
+    val groupedMedia = remember {
+        mutableStateOf(
+            groupPhotosBy(
+                mediaStoreData.value,
+                MediaItemSortMode.LastModified
+            )
+        )
+    }
 
-	LaunchedEffect(mediaStoreData.value) {
-		groupedMedia.value = groupPhotosBy(mediaStoreData.value, MediaItemSortMode.LastModified)
-	}
+    LaunchedEffect(mediaStoreData.value) {
+        groupedMedia.value = groupPhotosBy(mediaStoreData.value, MediaItemSortMode.LastModified)
+    }
 
-    val showBottomSheet by remember { derivedStateOf {
-        selectedItemsList.size > 0
-    }}
+    val showBottomSheet by remember {
+        derivedStateOf {
+            selectedItemsList.size > 0
+        }
+    }
 
     val sheetState = rememberStandardBottomSheetState(
         skipHiddenState = false,
@@ -81,12 +94,15 @@ fun FavouritesGridView(navController: NavHostController, selectedItemsList: Snap
             }
         },
         sheetContent = {
-            FavouritesViewBottomAppBar(selectedItemsList = selectedItemsList, groupedMedia = groupedMedia)
+            FavouritesViewBottomAppBar(
+                selectedItemsList = selectedItemsList,
+                groupedMedia = groupedMedia
+            )
         },
         sheetPeekHeight = 0.dp,
         sheetShape = RectangleShape
     ) { padding ->
-        Column (
+        Column(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize(1f),

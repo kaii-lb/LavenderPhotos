@@ -102,21 +102,9 @@ internal constructor(
             context.contentResolver.query(
                 MEDIA_STORE_FILE_URI,
                 PROJECTION,
-       			FileColumns.MEDIA_TYPE +
-					" = " +
-					FileColumns.MEDIA_TYPE_IMAGE +
-					" AND " +
-					FileColumns.RELATIVE_PATH +
-					" LIKE ? " +
-					" OR " +
-					FileColumns.MEDIA_TYPE +
-					" = " +
-					FileColumns.MEDIA_TYPE_VIDEO +
-					" AND " +
-					FileColumns.RELATIVE_PATH +
-					" LIKE ? ",
-                arrayOf("%$neededPath%", "%$neededPath%"),
-                "" //"${MediaColumns.DATE_TAKEN} DESC"
+                "(${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_IMAGE} AND ${FileColumns.RELATIVE_PATH} LIKE ? AND ${FileColumns.RELATIVE_PATH} NOT LIKE ?) OR (${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_VIDEO} AND ${FileColumns.RELATIVE_PATH} LIKE ? AND ${FileColumns.RELATIVE_PATH} NOT LIKE ?)",
+                arrayOf("%$neededPath%", "%$neededPath/%/%",  "%$neededPath%", "%$neededPath/%/%"),
+                ""
             ) ?: return data
 
         mediaCursor.use { cursor ->

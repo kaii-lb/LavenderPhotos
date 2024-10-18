@@ -75,7 +75,6 @@ import com.kaii.photos.compose.getAppBarContentTransition
 import com.kaii.photos.compose.grids.AlbumsGridView
 import com.kaii.photos.compose.grids.FavouritesGridView
 import com.kaii.photos.compose.grids.LockedFolderView
-import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.compose.grids.PhotoGrid
 import com.kaii.photos.compose.grids.SearchPage
 import com.kaii.photos.compose.grids.SingleAlbumView
@@ -94,8 +93,8 @@ import com.kaii.photos.models.album_grid.AlbumsViewModel
 import com.kaii.photos.models.album_grid.AlbumsViewModelFactory
 import com.kaii.photos.models.gallery_model.GalleryViewModel
 import com.kaii.photos.models.gallery_model.GalleryViewModelFactory
-import com.kaii.photos.models.main_activity.MainDataSharingModel
-import com.kaii.photos.models.main_activity.MainDataSharingModelFactory
+import com.kaii.photos.models.main_activity.MainViewModel
+import com.kaii.photos.models.main_activity.MainViewModelFactory
 import com.kaii.photos.ui.theme.PhotosTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -113,7 +112,7 @@ class MainActivity : ComponentActivity() {
             )
 
         lateinit var applicationDatabase: MediaDatabase
-        lateinit var mainViewModel: MainDataSharingModel
+        lateinit var mainViewModel: MainViewModel
 
         lateinit var startForResult: ActivityResultLauncher<Intent>
     }
@@ -151,6 +150,8 @@ class MainActivity : ComponentActivity() {
                 if (result.resultCode == RESULT_OK) {
                     result.data?.data?.also { uri ->
                         val path = uri.path ?: ""
+
+						Log.d(TAG, "Added album path ${path.replace("/tree/primary:", "")}")
 
                         val runnable = Runnable {
                             runBlocking {
@@ -276,7 +277,7 @@ class MainActivity : ComponentActivity() {
                 window.decorView.setBackgroundColor(CustomMaterialTheme.colorScheme.background.toArgb())
 
                 mainViewModel = viewModel(
-                    factory = MainDataSharingModelFactory()
+                    factory = MainViewModelFactory()
                 )
 
                 val navControllerLocal = rememberNavController()
@@ -540,7 +541,7 @@ class MainActivity : ComponentActivity() {
                 TopBar(showDialog, selectedItemsList, navController)
             },
             bottomBar = {
-                BottomBar(currentView, selectedItemsList, navController, groupedMedia)
+                BottomBar(currentView, selectedItemsList, navController)
             }
         ) { padding ->
             val context = LocalContext.current
@@ -600,6 +601,10 @@ class MainActivity : ComponentActivity() {
                                     list
                                 }
 
+                                listOfDirs.forEach {
+                                	Log.d(TAG, "Albums list item $it")
+                                }
+
                                 val albumsViewModel: AlbumsViewModel = viewModel(
                                     factory = AlbumsViewModelFactory(context, listOfDirs.toList())
                                 )
@@ -647,8 +652,7 @@ class MainActivity : ComponentActivity() {
     private fun BottomBar(
         currentView: MutableState<MainScreenViewType>,
         selectedItemsList: SnapshotStateList<MediaStoreData>,
-        navController: NavHostController,
-        groupedMedia: MutableState<List<MediaStoreData>>
+        navController: NavHostController
     ) {
         val show by remember {
             derivedStateOf {
@@ -665,7 +669,7 @@ class MainActivity : ComponentActivity() {
             if (!state) {
                 MainAppBottomBar(currentView, selectedItemsList)
             } else {
-                MainAppSelectingBottomBar(selectedItemsList, groupedMedia)
+                MainAppSelectingBottomBar(selectedItemsList)
             }
         }
     }

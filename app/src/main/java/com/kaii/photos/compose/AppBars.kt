@@ -2,6 +2,7 @@ package com.kaii.photos.compose
 
 import android.content.Intent
 import android.net.Uri
+import android.os.CancellationSignal
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
@@ -64,9 +65,9 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.helpers.ImageFunctions
 import com.kaii.photos.helpers.MainScreenViewType
-import com.kaii.photos.helpers.PermanentlyDeletePhotoList
-import com.kaii.photos.helpers.SetTrashedOnPhotoList
-import com.kaii.photos.helpers.operateOnImage
+import com.kaii.photos.helpers.moveImageOutOfLockedFolder
+import com.kaii.photos.helpers.permanentlyDeletePhotoList
+import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import kotlinx.coroutines.Dispatchers
@@ -412,8 +413,7 @@ fun MainAppBottomBar(
 
 @Composable
 fun MainAppSelectingBottomBar(
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
-    groupedMedia: MutableState<List<MediaStoreData>>
+    selectedItemsList: SnapshotStateList<MediaStoreData>
 ) {
     IsSelectingBottomAppBar {
         val context = LocalContext.current
@@ -455,7 +455,7 @@ fun MainAppSelectingBottomBar(
 
         val show = remember { mutableStateOf(false) }
         var isMoving by remember { mutableStateOf(false) }
-        MoveCopyAlbumListView(show, selectedItemsWithoutSection, isMoving)
+        MoveCopyAlbumListView(show, selectedItemsList, isMoving)
 
         BottomAppBarItem(
             text = "Move",
@@ -463,7 +463,6 @@ fun MainAppSelectingBottomBar(
             action = {
                 isMoving = true
                 show.value = true
-                selectedItemsList.clear()
             }
         )
 
@@ -473,7 +472,6 @@ fun MainAppSelectingBottomBar(
             action = {
                 isMoving = false
                 show.value = true
-                selectedItemsList.clear()
             }
         )
 
@@ -481,7 +479,8 @@ fun MainAppSelectingBottomBar(
         var runDeleteAction by remember { mutableStateOf(false) }
 
         if (runDeleteAction) {
-            SetTrashedOnPhotoList(
+            setTrashedOnPhotoList(
+                context,
                 list = selectedItemsWithoutSection.map { it.uri },
                 trashed = true
             )
@@ -732,8 +731,7 @@ fun SingleAlbumViewTopBar(
 
 @Composable
 fun SingleAlbumViewBottomBar(
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
-    groupedMedia: MutableState<List<MediaStoreData>>
+    selectedItemsList: SnapshotStateList<MediaStoreData>
 ) {
     IsSelectingBottomAppBar {
         val context = LocalContext.current
@@ -775,7 +773,7 @@ fun SingleAlbumViewBottomBar(
 
         val show = remember { mutableStateOf(false) }
         var isMoving by remember { mutableStateOf(false) }
-        MoveCopyAlbumListView(show, selectedItemsWithoutSection, isMoving)
+        MoveCopyAlbumListView(show, selectedItemsList, isMoving)
 
         BottomAppBarItem(
             text = "Move",
@@ -783,7 +781,6 @@ fun SingleAlbumViewBottomBar(
             action = {
                 isMoving = true
                 show.value = true
-                selectedItemsList.clear()
             }
         )
 
@@ -793,7 +790,6 @@ fun SingleAlbumViewBottomBar(
             action = {
                 isMoving = false
                 show.value = true
-                selectedItemsList.clear()
             }
         )
 
@@ -801,12 +797,13 @@ fun SingleAlbumViewBottomBar(
         var runTrashAction by remember { mutableStateOf(false) }
 
         if (runTrashAction) {
-            SetTrashedOnPhotoList(
+            setTrashedOnPhotoList(
+                context,
                 selectedItemsWithoutSection.map { it.uri },
                 true
             )
 
-            selectedItemsList.removeAll(selectedItemsWithoutSection)
+            selectedItemsList.clear()
             runTrashAction = false
         }
 
@@ -842,7 +839,7 @@ fun TrashedPhotoGridViewTopBar(
     var runEmptyTrashAction by remember { mutableStateOf(false) }
 
     if (runEmptyTrashAction) {
-        PermanentlyDeletePhotoList(list = groupedMedia.map { it.uri })
+        permanentlyDeletePhotoList(LocalContext.current, list = groupedMedia.map { it.uri })
         runEmptyTrashAction = false
     }
 
@@ -978,12 +975,13 @@ fun TrashedPhotoGridViewBottomBar(
         var runRestoreAction by remember { mutableStateOf(false) }
 
         if (runRestoreAction) {
-            SetTrashedOnPhotoList(
+            setTrashedOnPhotoList(
+                context,
                 selectedItemsWithoutSection.map { it.uri },
                 false
             )
 
-            selectedItemsList.removeAll(selectedItemsWithoutSection)
+            selectedItemsList.clear()
             runRestoreAction = false
         }
 
@@ -1009,11 +1007,12 @@ fun TrashedPhotoGridViewBottomBar(
         var runPermaDeleteAction by remember { mutableStateOf(false) }
 
         if (runPermaDeleteAction) {
-            PermanentlyDeletePhotoList(
+            permanentlyDeletePhotoList(
+                context,
                 selectedItemsWithoutSection.map { it.uri }
             )
 
-            selectedItemsList.removeAll(selectedItemsWithoutSection)
+            selectedItemsList.clear()
             runPermaDeleteAction = false
         }
 
@@ -1166,13 +1165,10 @@ fun SecureFolderViewBottomAppBar(
                     coroutineScope.launch {
                         withContext(Dispatchers.IO) {
                             val newList = groupedMedia.value.toMutableList()
+
                             selectedItemsWithoutSection.forEach { item ->
-                                operateOnImage(
-                                    item.absolutePath,
-                                    item.id,
-                                    ImageFunctions.MoveOutOfLockedFolder,
-                                    context
-                                )
+                                moveImageOutOfLockedFolder(item.absolutePath)
+
                                 newList.remove(item)
                             }
                             groupedMedia.value.filter {
@@ -1212,15 +1208,8 @@ fun SecureFolderViewBottomAppBar(
                     coroutineScope.launch {
                         withContext(Dispatchers.IO) {
                             val newList = groupedMedia.value.toMutableList()
-                            selectedItemsWithoutSection.forEach { item ->
-                                operateOnImage(
-                                    item.absolutePath,
-                                    item.id,
-                                    ImageFunctions.PermaDeleteImage,
-                                    context
-                                )
-                                newList.remove(item)
-                            }
+
+                            permanentlyDeletePhotoList(context, selectedItemsWithoutSection.map { it.uri })
 
                             groupedMedia.value.filter {
                                 it.type == MediaType.Section
@@ -1355,14 +1344,13 @@ fun FavouritesViewBottomAppBar(
         )
 
         val show = remember { mutableStateOf(false) }
-        MoveCopyAlbumListView(show, selectedItemsWithoutSection, false)
+        MoveCopyAlbumListView(show, selectedItemsList, false)
 
         BottomAppBarItem(
             text = "Copy",
             iconResId = R.drawable.copy,
             action = {
                 show.value = true
-                selectedItemsList.clear()
             }
         )
 
@@ -1409,7 +1397,8 @@ fun FavouritesViewBottomAppBar(
         val showDeleteDialog = remember { mutableStateOf(false) }
         var runTrashAction by remember { mutableStateOf(false) }
         if (runTrashAction) {
-            SetTrashedOnPhotoList(
+            setTrashedOnPhotoList(
+                context,
                 selectedItemsWithoutSection.map { it.uri },
                 true
             )

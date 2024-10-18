@@ -33,7 +33,8 @@ import kotlin.io.path.Path
 /** Loads metadata from the media store for images and videos. */
 class TrashStoreDataSource
 internal constructor(
-    private val context: Context
+    private val context: Context,
+    private val cancellationSignal: CancellationSignal
 ) {
     companion object {
         private val MEDIA_STORE_FILE_URI = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL)
@@ -50,7 +51,7 @@ internal constructor(
     }
 
     fun loadMediaStoreData(): Flow<List<MediaStoreData>> = callbackFlow {
-        var cancellationSignal = CancellationSignal()
+        var localCancellationSignal = CancellationSignal()
         val mutex = Mutex()
 
         val contentObserver =
@@ -59,8 +60,8 @@ internal constructor(
                     super.onChange(selfChange)
                     launch(Dispatchers.IO) {
                         mutex.withLock {
-                            cancellationSignal.cancel()
-                            cancellationSignal = CancellationSignal()
+                            localCancellationSignal.cancel()
+                            localCancellationSignal = CancellationSignal()
                         }
 
                         runCatching {
@@ -82,9 +83,11 @@ internal constructor(
             }
         }
 
+        cancellationSignal.setOnCancelListener { close() }
+
         awaitClose {
             context.contentResolver.unregisterContentObserver(contentObserver)
-            cancellationSignal.cancel()
+            localCancellationSignal.cancel()
         }
     }.conflate()
 

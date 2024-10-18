@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -196,24 +197,33 @@ private fun VersionInfoDialog(showDialog: MutableState<Boolean>) {
                 }
             },
             text = {
-                Column (
+            	Column (
                     verticalArrangement = Arrangement.SpaceEvenly,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
+                    horizontalAlignment = Alignment.CenterHorizontally            		
+            	) {
+					Text (
                         text = "Changelog",
                         fontSize = TextUnit(18f, TextUnitType.Sp),
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Text(
-                        text = stringResource(id = R.string.changelog),
-                        fontSize = TextUnit(14f, TextUnitType.Sp),
-                    )
-                }
+                    Spacer (modifier = Modifier.height(8.dp))
+                    
+	                LazyColumn (
+	                	modifier = Modifier
+	                		.height(320.dp),
+	                    verticalArrangement = Arrangement.SpaceEvenly,
+	                    horizontalAlignment = Alignment.CenterHorizontally
+	                ) {
+	                	item {
+		                    Text(
+		                        text = stringResource(id = R.string.changelog),
+		                        fontSize = TextUnit(14f, TextUnitType.Sp),
+		                    )
+	                	}
+	                }
+            	}
             }
         )
     }

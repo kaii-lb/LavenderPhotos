@@ -106,8 +106,7 @@ fun SingleAlbumView(
         },
         sheetContent = {
             SingleAlbumViewBottomBar(
-                selectedItemsList = selectedItemsList,
-                groupedMedia = groupedMedia
+                selectedItemsList = selectedItemsList
             )
         },
         sheetPeekHeight = 0.dp,

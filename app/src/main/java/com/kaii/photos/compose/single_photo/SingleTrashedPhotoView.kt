@@ -60,19 +60,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.CustomMaterialTheme
+import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.models.trash_bin.TrashViewModel
-import com.kaii.photos.models.trash_bin.TrashViewModelFactory
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 //private const val TAG = "SINGLE_TRASHED_PHOTO_VIEW"
 
@@ -152,7 +146,7 @@ fun SingleTrashedPhotoView(
                     onClick = {
                         showDialog.value = false
 
-                        context.contentResolver.delete(currentMediaItem.uri, null)
+                        permanentlyDeletePhotoList(context, listOf(currentMediaItem.uri))
 
                         sortOutMediaMods(
                             currentMediaItem,

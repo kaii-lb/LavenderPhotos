@@ -19,7 +19,6 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.compose.TrashedPhotoGridViewBottomBar
 import com.kaii.photos.compose.TrashedPhotoGridViewTopBar
 import com.kaii.photos.compose.ViewProperties
@@ -56,13 +56,20 @@ fun TrashedPhotoGridView(
 
     LaunchedEffect(mediaStoreData.value) {
         groupedMedia.value = mediaStoreData.value
-        // set mainViewModel groupedMedia too
+        mainViewModel.setGroupedMedia(mediaStoreData.value)
     }
 
     BackHandler(
         enabled = selectedItemsList.size > 0
     ) {
         selectedItemsList.clear()
+    }
+
+    BackHandler (
+        enabled = selectedItemsList.size == 0
+    ) {
+        trashViewModel.cancelMediaSource()
+        navController.popBackStack()
     }
 
     val showBottomSheet by remember {
@@ -95,8 +102,9 @@ fun TrashedPhotoGridView(
         topBar = {
             TrashedPhotoGridViewTopBar(
                 selectedItemsList = selectedItemsList,
-                groupedMedia = groupedMedia.value
+                groupedMedia = groupedMedia.value,
             ) {
+                trashViewModel.cancelMediaSource()
                 navController.popBackStack()
             }
         },

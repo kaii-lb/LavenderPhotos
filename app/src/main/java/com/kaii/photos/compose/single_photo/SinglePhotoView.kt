@@ -20,11 +20,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.BottomAppBar
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -47,7 +45,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -60,13 +57,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
+import com.kaii.photos.compose.BottomAppBarItem
 import com.kaii.photos.compose.ConfirmationDialog
 import com.kaii.photos.compose.CustomMaterialTheme
 import com.kaii.photos.compose.SinglePhotoInfoDialog
-import com.kaii.photos.helpers.ImageFunctions
 import com.kaii.photos.helpers.MultiScreenViewType
-import com.kaii.photos.helpers.operateOnImage
+import com.kaii.photos.helpers.moveImageToLockedFolder
 import com.kaii.photos.helpers.rememberVibratorManager
+import com.kaii.photos.helpers.setTrashedOnPhotoList
+import com.kaii.photos.helpers.shareImage
 import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
@@ -117,11 +116,7 @@ fun SinglePhotoView(
 			)
 		}
 	} }
-	val showActionDialog = remember { mutableStateOf(false) }
 	val showInfoDialog = remember { mutableStateOf(false) }
-	val neededDialogFunction = remember { mutableStateOf(ImageFunctions.MoveToLockedFolder) }
-	val neededDialogTitle = remember { mutableStateOf("Move this ${currentMediaItem.value.type.name} to Locked Folder?") }
-	val neededDialogButtonLabel = remember { mutableStateOf("Move") }
 
 	val coroutineScope = rememberCoroutineScope()
 
@@ -148,36 +143,19 @@ fun SinglePhotoView(
 				}
 			)
 	  	},
-		bottomBar = { BottomBar(
-			appBarsVisible.value,
-			currentMediaItem.value,
-			showActionDialog,
-			neededDialogTitle,
-			neededDialogButtonLabel,
-			neededDialogFunction
-		)},
-		containerColor = CustomMaterialTheme.colorScheme.background,
-		contentColor = CustomMaterialTheme.colorScheme.onBackground
-	) {  _ ->
-		// material theme doesn't seem to apply just above????
-		val context = LocalContext.current
-
-		ConfirmationDialog(
-			showDialog = showActionDialog,
-			dialogTitle = neededDialogTitle.value,
-			confirmButtonLabel = neededDialogButtonLabel.value,
-		) {
-			operateOnImage(currentMediaItem.value.absolutePath, currentMediaItem.value.id, neededDialogFunction.value, context)
-			sortOutMediaMods(
-				mediaItem,
-				groupedMedia,
-				coroutineScope,
-				state
+		bottomBar = {
+			BottomBar(
+				appBarsVisible.value,
+				currentMediaItem.value,
+				state = state,
+				groupedMedia = groupedMedia,
 			) {
 				navController.popBackStack()
 			}
-		}
-	
+		},
+		containerColor = CustomMaterialTheme.colorScheme.background,
+		contentColor = CustomMaterialTheme.colorScheme.onBackground
+	) {  _ ->
 		SinglePhotoInfoDialog(
 			showInfoDialog,
 			currentMediaItem,
@@ -325,16 +303,17 @@ private fun TopBar(
 @Composable
 private fun BottomBar(
 	visible: Boolean,
-	item: MediaStoreData,
-	showDialog: MutableState<Boolean>,
-	neededDialogTitle: MutableState<String>,
-	neededDialogButtonLabel: MutableState<String>,
-	neededDialogFunction: MutableState<ImageFunctions>
+	currentItem: MediaStoreData,
+	state: PagerState,
+	groupedMedia: MutableState<List<MediaStoreData>>,
+	onZeroItemsLeft: () -> Unit
 ) {
 	val color = if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE)
 		CustomMaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.4f)
 	else
 		CustomMaterialTheme.colorScheme.surfaceContainer
+
+	val coroutineScope = rememberCoroutineScope()
 
 	AnimatedVisibility(
 		visible = visible,
@@ -364,74 +343,69 @@ private fun BottomBar(
 					verticalAlignment = Alignment.CenterVertically,
 					horizontalArrangement = if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE) Arrangement.spacedBy(32.dp) else Arrangement.SpaceEvenly
 				) {
-					val listOfResources = listOf(
-						R.drawable.share,
-						R.drawable.paintbrush,
-						R.drawable.trash,
-						R.drawable.locked_folder
-					)
-
-					val listOfStrings = listOf(
-						"Share",
-						"Edit",
-						"Delete",
-						"Hide"
-					)
-
-					repeat(4) { index ->
-						val operation = ImageFunctions.entries[index] // WARNING: ORDER IS VERY IMPORTANT!!!
-						Button(
-							onClick = {
-								when (operation) {
-									ImageFunctions.MoveToLockedFolder -> {
-										neededDialogTitle.value = "Move this image to Locked Folder?"
-										neededDialogFunction.value = ImageFunctions.MoveToLockedFolder
-										neededDialogButtonLabel.value = "Move"
-										showDialog.value = true
-									}
-
-									ImageFunctions.TrashImage -> {
-										neededDialogTitle.value = "Delete this ${item.type}?"
-										neededDialogFunction.value = ImageFunctions.TrashImage
-										neededDialogButtonLabel.value = "Delete"
-										showDialog.value = true
-									}
-
-									else -> {
-										operateOnImage(item.absolutePath, item.id, operation, context)
-									}
-								}
-							},
-							colors = ButtonDefaults.buttonColors(
-								containerColor = Color.Transparent,
-								contentColor = CustomMaterialTheme.colorScheme.onBackground
-							),
-							contentPadding = PaddingValues(0.dp, 4.dp),
-							modifier = Modifier
-								.wrapContentHeight()
-								.weight(1f)
-						) {
-							Column (
-								verticalArrangement = Arrangement.Center,
-								horizontalAlignment = Alignment.CenterHorizontally
-							) {
-								Icon(
-									painter = painterResource(id = listOfResources[index]),
-									contentDescription = listOfStrings[index],
-									tint = CustomMaterialTheme.colorScheme.onBackground,
-									modifier = Modifier
-										.size(26.dp)
-								)
-								Text(
-									text = listOfStrings[index],
-									fontSize = TextUnit(15f, TextUnitType.Sp),
-									maxLines = 1,
-									modifier = Modifier
-										.padding(0.dp, 2.dp, 0.dp, 0.dp)
-								)
-							}
+					BottomAppBarItem(
+						text = "Share",
+						iconResId = R.drawable.share,
+						action = {
+							shareImage(currentItem.absolutePath, currentItem.id, context)
 						}
-					}
+					)
+
+					BottomAppBarItem(text = "Edit", iconResId = R.drawable.paintbrush)
+
+					val showDeleteDialog = remember { mutableStateOf(false) }
+					BottomAppBarItem(
+						text = "Delete",
+						iconResId = R.drawable.trash,
+						dialogComposable = {
+							ConfirmationDialog(
+								showDialog = showDeleteDialog,
+								dialogTitle = "Delete this ${currentItem.type}?",
+								confirmButtonLabel = "Delete"
+							) {
+								setTrashedOnPhotoList(context, listOf(currentItem.uri), true)
+
+								sortOutMediaMods(
+									currentItem,
+									groupedMedia,
+									coroutineScope,
+									state
+								) {
+									onZeroItemsLeft()
+								}
+							}
+						},
+						action = {
+							showDeleteDialog.value = true
+						}
+					)
+
+					val showMoveToSecureFolderDialog = remember { mutableStateOf(false) }
+					BottomAppBarItem(
+						text = "Secure",
+						iconResId = R.drawable.locked_folder,
+						dialogComposable = {
+							ConfirmationDialog(
+								showDialog = showMoveToSecureFolderDialog,
+								dialogTitle = "Move this ${currentItem.type} to Secure Folder?",
+								confirmButtonLabel = "Secure"
+							) {
+								moveImageToLockedFolder(currentItem.absolutePath, currentItem.id, context)
+
+								sortOutMediaMods(
+									currentItem,
+									groupedMedia,
+									coroutineScope,
+									state
+								) {
+									onZeroItemsLeft()
+								}
+							}
+						},
+						action = {
+							showMoveToSecureFolderDialog.value = true
+						}
+					)
 				}
 			}
 		)

@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class MainDataSharingModel : ViewModel() {
+class MainViewModel : ViewModel() {
 	private val _selectedMedia = MutableStateFlow<MediaStoreData?>(null)
     val selectedMediaData: Flow<MediaStoreData?> = _selectedMedia.asStateFlow()
 

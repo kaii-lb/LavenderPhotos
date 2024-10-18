@@ -96,14 +96,14 @@ import com.kaii.photos.datastore.editInAlbumsList
 import com.kaii.photos.datastore.getUsername
 import com.kaii.photos.datastore.removeFromAlbumsList
 import com.kaii.photos.datastore.setUsername
-import com.kaii.photos.helpers.ImageFunctions
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.brightenColor
 import com.kaii.photos.helpers.darkenColor
 import com.kaii.photos.helpers.getExifDataForMedia
-import com.kaii.photos.helpers.operateOnImage
+import com.kaii.photos.helpers.renameDirectory
+import com.kaii.photos.helpers.renameImage
 import com.kaii.photos.mediastore.MediaStoreData
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -818,16 +818,8 @@ fun SinglePhotoInfoDialog(
 
 						val oldName = currentMediaItem.value.displayName ?: "Broken File"
 						val path = currentMediaItem.value.absolutePath
-						operateOnImage(
-							path,
-							currentMediaItem.value.id,
-							ImageFunctions.RenameImage,
-							context,
-							mapOf(
-								Pair("old_name", oldName),
-								Pair("new_name", fileName.value)
-							)
-						)
+
+						renameImage(context, currentMediaItem.value.uri, fileName.value)
 
 						originalFileName = fileName.value
 						val newGroupedMedia = groupedMedia.value.toMutableList()
@@ -857,7 +849,7 @@ fun SinglePhotoInfoDialog(
 					val mediaData = getExifDataForMedia(currentMediaItem.value.absolutePath)
 					// should add a way to automatically calculate height needed for this
 					val addedHeight by remember { mutableStateOf(36.dp * mediaData.keys.size) }
-					val height by androidx.compose.animation.core.animateDpAsState(
+					val height by animateDpAsState(
 						targetValue = if (!isEditingFileName.value && expanded.value) {
 							124.dp + addedHeight
 						} else if (!isEditingFileName.value && !expanded.value) {
@@ -879,10 +871,13 @@ fun SinglePhotoInfoDialog(
 						val show = remember { mutableStateOf(false) }
 						var isMoving by remember { mutableStateOf(false) }
 
+						val stateList = SnapshotStateList<MediaStoreData>()
+						stateList.add(currentMediaItem.value)
 						MoveCopyAlbumListView(
 							show,
-							listOf(currentMediaItem.value),
-							isMoving
+							stateList,
+							isMoving,
+							groupedMedia
 						)
 
 						DialogClickableItem(
@@ -890,7 +885,7 @@ fun SinglePhotoInfoDialog(
 							iconResId = R.drawable.copy,
 							position = RowPosition.Middle,
 						) {
-							isMoving = true
+							isMoving = false
 							show.value = true
 						}
 
@@ -899,12 +894,8 @@ fun SinglePhotoInfoDialog(
 							iconResId = R.drawable.cut,
 							position = RowPosition.Middle,
 						) {
-							isMoving = false
+							isMoving = true
 							show.value = true
-
-							val newList = groupedMedia.value.toMutableList()
-							newList.remove(currentMediaItem.value)
-							groupedMedia.value = newList
 						}
 
 						val infoComposable = @Composable {
@@ -1158,16 +1149,7 @@ fun SingleAlbumDialog(
 						return@LaunchedEffect
 					}
 
-					operateOnImage(
-						"/storage/emulated/0/$dir",
-						0L,
-						ImageFunctions.RenameImage,
-						context,
-						mapOf(
-							Pair("old_name", title),
-							Pair("new_name", fileName.value)
-						)
-					)
+					renameDirectory("/storage/emulated/0/$dir", fileName.value)
 
 					val mainViewModel = MainActivity.mainViewModel
 					val newDir = dir.replace(title, fileName.value)

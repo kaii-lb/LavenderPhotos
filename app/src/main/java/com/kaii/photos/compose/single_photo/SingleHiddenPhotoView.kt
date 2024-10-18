@@ -22,11 +22,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomAppBar
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -58,11 +54,12 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.kaii.photos.MainActivity
 import com.kaii.photos.R
-import com.kaii.photos.compose.CustomMaterialTheme
 import com.kaii.photos.compose.ConfirmationDialog
 import com.kaii.photos.compose.ConfirmationDialogWithBody
-import com.kaii.photos.helpers.ImageFunctions
-import com.kaii.photos.helpers.operateOnImage
+import com.kaii.photos.compose.CustomMaterialTheme
+import com.kaii.photos.helpers.moveImageOutOfLockedFolder
+import com.kaii.photos.helpers.permanentlyDeletePhotoList
+import com.kaii.photos.helpers.permanentlyDeleteSecureFolderImageList
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import kotlinx.coroutines.launch
@@ -237,7 +234,7 @@ private fun BottomBar(
 	val showDeleteDialog = remember { mutableStateOf(false) }
 
 	ConfirmationDialog(showDialog = showRestoreDialog, dialogTitle = "Move item out of Secure Folder?", confirmButtonLabel = "Move") {
-		operateOnImage(item.absolutePath, item.id, ImageFunctions.MoveOutOfLockedFolder, context)
+        moveImageOutOfLockedFolder(item.absolutePath)
 
 		sortOutMediaMods(
 		    item,
@@ -255,7 +252,7 @@ private fun BottomBar(
 		dialogBody = "This action cannot be undone!",
 		confirmButtonLabel = "Delete"
 	) {
-	    operateOnImage(item.absolutePath, item.id, ImageFunctions.PermaDeleteImage, context)
+	    permanentlyDeleteSecureFolderImageList(listOf(item.absolutePath))
 
 	    sortOutMediaMods(
 	        item,
