@@ -743,8 +743,9 @@ fun MainAppDialog(
 @Composable
 fun SinglePhotoInfoDialog(
 	showDialog: MutableState<Boolean>,
-	currentMediaItem: State<MediaStoreData>,
-	groupedMedia: MutableState<List<MediaStoreData>>
+	currentMediaItem: MediaStoreData,
+	groupedMedia: MutableState<List<MediaStoreData>>,
+	showMoveCopy: Boolean = true
 ) {
 	val context = LocalContext.current
 	val isEditingFileName = remember { mutableStateOf(false) }
@@ -805,7 +806,7 @@ fun SinglePhotoInfoDialog(
 						.padding(12.dp)
 						.wrapContentHeight()
 				) {
-					var originalFileName = currentMediaItem.value.displayName ?: "Broken File"
+					var originalFileName = currentMediaItem.displayName ?: "Broken File"
 					val fileName = remember { mutableStateOf(originalFileName) }
 					val saveFileName = remember { mutableStateOf(false) }
 
@@ -816,20 +817,20 @@ fun SinglePhotoInfoDialog(
 							return@LaunchedEffect
 						}
 
-						val oldName = currentMediaItem.value.displayName ?: "Broken File"
-						val path = currentMediaItem.value.absolutePath
+						val oldName = currentMediaItem.displayName ?: "Broken File"
+						val path = currentMediaItem.absolutePath
 
-						renameImage(context, currentMediaItem.value.uri, fileName.value)
+						renameImage(context, currentMediaItem.uri, fileName.value)
 
 						originalFileName = fileName.value
 						val newGroupedMedia = groupedMedia.value.toMutableList()
 						// set currentMediaItem to new one with new name
-						val newMedia = currentMediaItem.value.copy(
+						val newMedia = currentMediaItem.copy(
 							displayName = fileName.value,
 							absolutePath = path.replace(oldName, fileName.value)
 						)
 
-						val index = groupedMedia.value.indexOf(currentMediaItem.value)
+						val index = groupedMedia.value.indexOf(currentMediaItem)
 						newGroupedMedia[index] = newMedia
 						groupedMedia.value = newGroupedMedia
 
@@ -846,14 +847,15 @@ fun SinglePhotoInfoDialog(
 						fileName.value = originalFileName
 					}
 
-					val mediaData = getExifDataForMedia(currentMediaItem.value.absolutePath)
+					val mediaData = getExifDataForMedia(currentMediaItem.absolutePath)
 					// should add a way to automatically calculate height needed for this
 					val addedHeight by remember { mutableStateOf(36.dp * mediaData.keys.size) }
+					val moveCopyHeight = if(showMoveCopy) 82.dp else 0.dp // 40.dp is height of one single row
 					val height by animateDpAsState(
 						targetValue = if (!isEditingFileName.value && expanded.value) {
-							124.dp + addedHeight
+							42.dp + addedHeight + moveCopyHeight
 						} else if (!isEditingFileName.value && !expanded.value) {
-							124.dp
+							42.dp + moveCopyHeight
 						} else {
 							0.dp
 						},
@@ -868,34 +870,36 @@ fun SinglePhotoInfoDialog(
 							.height(height)
 							.fillMaxWidth(1f)
 					) {
-						val show = remember { mutableStateOf(false) }
-						var isMoving by remember { mutableStateOf(false) }
+						if (showMoveCopy) {
+							val show = remember { mutableStateOf(false) }
+							var isMoving by remember { mutableStateOf(false) }
 
-						val stateList = SnapshotStateList<MediaStoreData>()
-						stateList.add(currentMediaItem.value)
-						MoveCopyAlbumListView(
-							show,
-							stateList,
-							isMoving,
-							groupedMedia
-						)
+							val stateList = SnapshotStateList<MediaStoreData>()
+							stateList.add(currentMediaItem)
+							MoveCopyAlbumListView(
+								show,
+								stateList,
+								isMoving,
+								groupedMedia
+							)
 
-						DialogClickableItem(
-							text = "Copy to Album",
-							iconResId = R.drawable.copy,
-							position = RowPosition.Middle,
-						) {
-							isMoving = false
-							show.value = true
-						}
+							DialogClickableItem(
+								text = "Copy to Album",
+								iconResId = R.drawable.copy,
+								position = RowPosition.Middle,
+							) {
+								isMoving = false
+								show.value = true
+							}
 
-						DialogClickableItem (
-							text = "Move to Album",
-							iconResId = R.drawable.cut,
-							position = RowPosition.Middle,
-						) {
-							isMoving = true
-							show.value = true
+							DialogClickableItem (
+								text = "Move to Album",
+								iconResId = R.drawable.cut,
+								position = RowPosition.Middle,
+							) {
+								isMoving = true
+								show.value = true
+							}
 						}
 
 						val infoComposable = @Composable {

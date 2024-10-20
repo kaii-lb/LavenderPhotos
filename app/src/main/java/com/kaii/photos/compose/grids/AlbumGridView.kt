@@ -31,28 +31,55 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.kaii.photos.MainActivity
 import com.kaii.photos.R
+import com.kaii.photos.datastore
 import com.kaii.photos.compose.CustomMaterialTheme
+import com.kaii.photos.datastore.getAlbumsList
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.brightenColor
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.signature
 import com.kaii.photos.models.album_grid.AlbumsViewModel
+import com.kaii.photos.models.album_grid.AlbumsViewModelFactory
+import kotlinx.coroutines.runBlocking
 import java.io.File
 
 @Composable
-fun AlbumsGridView(albumsViewModel: AlbumsViewModel, navController: NavHostController, listOfDirs: List<String>) {
+fun AlbumsGridView(navController: NavHostController) {
+	val context = LocalContext.current
+	val listOfDirs = runBlocking {
+		val list = context.datastore.getAlbumsList()
+		list.toMutableList()
+	}
+
+	listOfDirs.sortByDescending {
+		File("/storage/emulated/0/" + it).lastModified()
+	}
+	listOfDirs.find { it == "DCIM/Camera" }?.let { cameraItem ->
+		listOfDirs.remove(cameraItem)
+		listOfDirs.add(0, cameraItem)
+	}
+
+	val albumsViewModel: AlbumsViewModel = viewModel(
+		factory = AlbumsViewModelFactory(context, listOfDirs.toList())
+	)
+
+	val mediaStoreData = albumsViewModel.mediaStoreData.collectAsState()
+	val actualData = mediaStoreData.value
+
     Column (
         modifier = Modifier
 			.fillMaxSize(1f)
@@ -61,9 +88,6 @@ fun AlbumsGridView(albumsViewModel: AlbumsViewModel, navController: NavHostContr
         verticalArrangement = Arrangement.SpaceEvenly,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-		val mediaStoreData = albumsViewModel.mediaStoreData.collectAsState()
-		val actualData = mediaStoreData.value
-
         LazyVerticalGrid(
 			columns = GridCells.Fixed(
 				if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT) {

@@ -1,9 +1,7 @@
 package com.kaii.photos.mediastore
 
-import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.Context
-import android.os.Bundle
 import android.os.CancellationSignal
 import android.provider.MediaStore
 import android.provider.MediaStore.Files.FileColumns
@@ -17,12 +15,13 @@ import com.kaii.photos.helpers.getDateTakenForMedia
 import com.kaii.photos.models.gallery_model.groupPhotosBy
 
 /** Loads metadata from the media store for images and videos. */
-class TrashStoreDataSource(
+class DefaultMediaStoreDataSource(
     context: Context,
+    neededPath: String,
     sortBy: MediaItemSortMode,
     cancellationSignal: CancellationSignal
 ) : MediaStoreDataSource(
-    context, "trash", sortBy, cancellationSignal
+    context, neededPath, sortBy, cancellationSignal,
 ) {
     companion object {
         private val PROJECTION =
@@ -32,8 +31,7 @@ class TrashStoreDataSource(
                 MediaColumns.DATE_ADDED,
                 MediaColumns.MIME_TYPE,
                 MediaColumns.DISPLAY_NAME,
-                FileColumns.MEDIA_TYPE,
-                MediaColumns.IS_TRASHED
+                FileColumns.MEDIA_TYPE
             )
     }
 
@@ -46,25 +44,18 @@ class TrashStoreDataSource(
             "Can only query from a background thread"
         )
         val data: MutableList<MediaStoreData> = emptyList<MediaStoreData>().toMutableList()
-
-        val bundle = Bundle()
-        bundle.putInt(MediaStore.QUERY_ARG_MATCH_TRASHED, MediaStore.MATCH_ONLY)
-        bundle.putString(
-            ContentResolver.QUERY_ARG_SQL_SELECTION,
-            "(${MediaColumns.IS_TRASHED} = 1 AND ${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_IMAGE}) OR (${MediaColumns.IS_TRASHED} = 1 AND ${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_VIDEO})"
-        )
-
-        val mediaCursor = context.contentResolver.query(
-            MEDIA_STORE_FILE_URI,
-            PROJECTION,
-            bundle,
-            null
-        ) ?: return data
+        val mediaCursor =
+            context.contentResolver.query(
+                MEDIA_STORE_FILE_URI,
+                PROJECTION,
+                "(${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_IMAGE} AND ${FileColumns.RELATIVE_PATH} LIKE ? AND ${FileColumns.RELATIVE_PATH} NOT LIKE ?) OR (${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_VIDEO} AND ${FileColumns.RELATIVE_PATH} LIKE ? AND ${FileColumns.RELATIVE_PATH} NOT LIKE ?)",
+                arrayOf("%$neededPath%", "%$neededPath/%/%", "%$neededPath%", "%$neededPath/%/%"),
+                ""
+            ) ?: return data
 
         mediaCursor.use { cursor ->
             val idColNum = cursor.getColumnIndexOrThrow(MediaColumns._ID)
-            val absolutePathColNum =
-                cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA) // look into using the uri + id if this is deprecated
+            val absolutePathColNum = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA)
             val mimeTypeColNum = cursor.getColumnIndexOrThrow(MediaColumns.MIME_TYPE)
             val mediaTypeColumnIndex = cursor.getColumnIndexOrThrow(FileColumns.MEDIA_TYPE)
             val displayNameIndex = cursor.getColumnIndexOrThrow(FileColumns.DISPLAY_NAME)
@@ -119,6 +110,6 @@ class TrashStoreDataSource(
         }
         mediaCursor.close()
 
-        return groupPhotosBy(data, MediaItemSortMode.LastModified)
+        return groupPhotosBy(data, sortBy)
     }
 }

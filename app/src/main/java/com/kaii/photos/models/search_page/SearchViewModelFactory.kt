@@ -6,10 +6,10 @@ import androidx.lifecycle.ViewModelProvider
 import com.kaii.photos.helpers.MediaItemSortMode
 
 @Suppress("UNCHECKED_CAST")
-class SearchViewModelFactory(private val context: Context, private val path: String, private val sortBy: MediaItemSortMode) : ViewModelProvider.NewInstanceFactory() {
+class SearchViewModelFactory(private val context: Context, private val sortBy: MediaItemSortMode) : ViewModelProvider.NewInstanceFactory() {
 	override fun <T : ViewModel> create(modelClass: Class<T>): T {
 		if (modelClass == SearchViewModel::class.java) {
-			return SearchViewModel(context, path, sortBy) as T
+			return SearchViewModel(context, sortBy) as T
 		}
 		throw IllegalArgumentException("SearchViewModel: Cannot cast ${modelClass.simpleName} as ${SearchViewModel::class.java.simpleName}!! This should never happen!!")
 	}

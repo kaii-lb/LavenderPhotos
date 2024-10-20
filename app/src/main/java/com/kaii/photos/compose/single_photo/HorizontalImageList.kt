@@ -7,12 +7,13 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.calculateCentroid
 import androidx.compose.foundation.gestures.calculatePan
 import androidx.compose.foundation.gestures.calculateRotation
 import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
@@ -24,6 +25,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -32,6 +34,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowInsetsCompat
 import androidx.media3.common.util.UnstableApi
@@ -88,6 +91,7 @@ fun HorizontalImageList(
             }
         },
         snapPosition = SnapPosition.Center,
+        userScrollEnabled = scale.value == 1f,
         modifier = Modifier
             .fillMaxHeight(1f)
     ) { index ->
@@ -131,31 +135,38 @@ fun HorizontalImageList(
                 }
             }
 
-            VideoPlayer(
-                item = mediaStoreItem,
-                visible = showVideoPlayerControls,
-                appBarsVisible = appBarsVisible,
-                shouldPlay = shouldPlay,
-                navController = navController,
-                canFadeControls = canFadeControls,
-                windowInsetsController = windowInsetsController,
-                window = window,
+            BoxWithConstraints (
                 modifier = Modifier
-					.fillMaxSize(1f)
-					.mediaModifier(
-						scale,
-						rotation,
-						offset,
-						systemBarsShown,
-						window,
-						windowInsetsController,
-						appBarsVisible,
-						mediaStoreItem,
-						showVideoPlayerControls
-					)
-            )
+                    .fillMaxSize(1f)
+            ) {
+                VideoPlayer(
+                    item = mediaStoreItem,
+                    visible = showVideoPlayerControls,
+                    appBarsVisible = appBarsVisible,
+                    shouldPlay = shouldPlay,
+                    navController = navController,
+                    canFadeControls = canFadeControls,
+                    windowInsetsController = windowInsetsController,
+                    window = window,
+                    modifier = Modifier
+                        .fillMaxSize(1f)
+                        .mediaModifier(
+                            scale = scale,
+                            rotation = rotation,
+                            offset = offset,
+                            systemBarsShown = systemBarsShown,
+                            window = window,
+                            windowInsetsController = windowInsetsController,
+                            appBarsVisible = appBarsVisible,
+                            item = mediaStoreItem,
+                            showVideoPlayerController = showVideoPlayerControls,
+                            maxWidth,
+                            maxHeight
+                        )
+                )
+            }
         } else {
-            Box(
+            BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxSize(1f)
             ) {
@@ -165,16 +176,18 @@ fun HorizontalImageList(
                     contentScale = ContentScale.Fit,
                     failure = placeholder(R.drawable.broken_image),
                     modifier = Modifier
-						.fillMaxSize(1f)
-						.mediaModifier(
-							scale,
-							rotation,
-							offset,
-							systemBarsShown,
-							window,
-							windowInsetsController,
-							appBarsVisible
-						)
+                        .fillMaxSize(1f)
+                        .mediaModifier(
+                            scale = scale,
+                            rotation = rotation,
+                            offset = offset,
+                            systemBarsShown = systemBarsShown,
+                            window = window,
+                            windowInsetsController = windowInsetsController,
+                            appBarsVisible = appBarsVisible,
+                            maxWidth = maxWidth,
+                            maxHeight = maxHeight
+                        )
                 ) {
                     it.signature(mediaStoreItem.signature())
                         .diskCacheStrategy(DiskCacheStrategy.ALL)
@@ -194,98 +207,117 @@ private fun Modifier.mediaModifier(
     systemBarsShown: MutableState<Boolean>,
     window: Window,
     windowInsetsController: WindowInsetsController,
-    appBarAlpha: MutableState<Boolean>,
+    appBarsVisible: MutableState<Boolean>,
     item: MediaStoreData? = null,
-    showVideoPlayerController: MutableState<Boolean>? = null
+    showVideoPlayerController: MutableState<Boolean>? = null,
+    maxWidth: Dp,
+    maxHeight: Dp
 ): Modifier {
     val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    var transformOrigin by remember { mutableStateOf(TransformOrigin(0.5f, 0.5f)) }
 
     return this.then(
-		Modifier
-			.combinedClickable(
-				indication = null,
-				interactionSource = remember { MutableInteractionSource() },
-				onClick = {
-					if (systemBarsShown.value) {
-						windowInsetsController.apply {
-							hide(WindowInsetsCompat.Type.systemBars())
-							systemBarsBehavior =
-								WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-						}
-						window.setDecorFitsSystemWindows(false)
-						systemBarsShown.value = false
-						appBarAlpha.value = false
+        Modifier
+            .combinedClickable(
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() },
+                onClick = {
+                    if (systemBarsShown.value) {
+                        windowInsetsController.apply {
+                            hide(WindowInsetsCompat.Type.systemBars())
+                            systemBarsBehavior =
+                                WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                        }
+                        window.setDecorFitsSystemWindows(false)
+                        systemBarsShown.value = false
+                        appBarsVisible.value = false
 
-						if (!isLandscape) showVideoPlayerController?.value = false
-					} else {
-						windowInsetsController.show(WindowInsetsCompat.Type.systemBars())
-						window.setDecorFitsSystemWindows(false)
-						systemBarsShown.value = true
-						appBarAlpha.value = true
+                        if (!isLandscape) showVideoPlayerController?.value = false
+                    } else {
+                        windowInsetsController.show(WindowInsetsCompat.Type.systemBars())
+                        window.setDecorFitsSystemWindows(false)
+                        systemBarsShown.value = true
+                        appBarsVisible.value = true
 
-						if (!isLandscape) showVideoPlayerController?.value = true
-					}
-				},
+                        if (!isLandscape) showVideoPlayerController?.value = true
+                    }
+                },
 
-				onDoubleClick = {
-					if (item?.type == MediaType.Video && showVideoPlayerController != null) {
-						if (isLandscape) showVideoPlayerController.value =
-							!showVideoPlayerController.value
-					} else {
-						if (scale.value == 1f) {
-							scale.value = 2f
-							rotation.value = 0f
-							offset.value = Offset.Zero
-						} else {
-							scale.value = 1f
-							rotation.value = 0f
-							offset.value = Offset.Zero
-						}
-					}
-				},
-			)
-			.graphicsLayer(
-				scaleX = scale.value,
-				scaleY = scale.value,
-				rotationZ = rotation.value,
-				translationX = -offset.value.x * scale.value,
-				translationY = -offset.value.y * scale.value,
-				transformOrigin = TransformOrigin(0.5f, 0.5f)
-			)
-			.pointerInput(Unit) {
-				// loop over each gesture and consume only those we care about
-				// so we don't interfere with other gestures
-				awaitEachGesture {
-					awaitFirstDown()
+                onDoubleClick = {
+                    if (item?.type == MediaType.Video && showVideoPlayerController != null) {
+                        if (isLandscape) showVideoPlayerController.value =
+                            !showVideoPlayerController.value
+                    } else {
+                        if (scale.value == 1f) {
+                            scale.value = 2f
+                            rotation.value = 0f
+                            offset.value = Offset.Zero
+                        } else {
+                            scale.value = 1f
+                            rotation.value = 0f
+                            offset.value = Offset.Zero
+                        }
+                    }
+                },
+            )
+            .graphicsLayer(
+                scaleX = scale.value,
+                scaleY = scale.value,
+                rotationZ = rotation.value,
+                translationX = -offset.value.x * scale.value,
+                translationY = -offset.value.y * scale.value,
+                transformOrigin = transformOrigin//TransformOrigin(0.5f, 0.5f)
+            )
+            .pointerInput(Unit) {
+                // loop over each gesture and consume only those we care about
+                // so we don't interfere with other gestures
+                awaitEachGesture {
+                    awaitFirstDown()
 
-					do {
-						val event = awaitPointerEvent()
+                    do {
+                        val event = awaitPointerEvent()
 
-						if (event.changes.size == 2) {
-							scale.value *= event.calculateZoom()
-							scale.value = scale.value.coerceIn(0.75f, 5f)
+                        if (event.changes.size == 2 && event.calculateRotation() in -5f..5f) {
+                            scale.value *= event.calculateZoom()
+                            scale.value = scale.value.coerceIn(0.75f, 5f)
 
-							rotation.value += event.calculateRotation()
+                            val origin = event.calculateCentroid(true)
+                            transformOrigin = TransformOrigin(
+                                pivotFractionX = origin.x / maxWidth.toPx(),
+                                pivotFractionY = origin.y / maxHeight.toPx()
+                            )
 
-							event.changes.forEach {
-								it.consume()
-							}
-						} else if (event.changes.size == 1 && event.calculatePan() != Offset.Zero) {
-							if (scale.value != 1f) {
-								// this is from android docs, i have no clue what the math here is xD
-								offset.value = (offset.value + Offset(0.5f, 0.5f) / scale.value) -
-										(Offset(0.5f, 0.5f) / scale.value + event
-											.calculatePan()
-											.rotateBy(rotation.value))
+                            event.changes.forEach {
+                                it.consume()
+                            }
+                        } else if (event.changes.size == 2) {
+                            rotation.value += event.calculateRotation()
 
-								event.changes.forEach {
-									it.consume()
-								}
-							}
-						}
-					} while (event.changes.any { it.pressed } && showVideoPlayerController == null)
-				}
-			})
+                            val origin = event.calculateCentroid(true)
+                            transformOrigin = TransformOrigin(
+                                pivotFractionX = origin.x / maxWidth.toPx(),
+                                pivotFractionY = origin.y / maxHeight.toPx()
+                            )
+
+                            event.changes.forEach {
+                                it.consume()
+                            }
+                        } else if (event.changes.size == 1 && event.calculatePan() != Offset.Zero) {
+                            if (scale.value != 1f) {
+                                // this is from android docs, i have no clue what the math here is xD
+                                offset.value = (offset.value + Offset(0.5f, 0.5f) / scale.value) -
+                                        (Offset(0.5f, 0.5f) / scale.value + event
+                                            .calculatePan()
+                                            .rotateBy(rotation.value))
+
+                                event.changes.forEach {
+                                    it.consume()
+                                }
+                            }
+                        }
+                    } while (event.changes.any { it.pressed } && showVideoPlayerController == null)
+                }
+            })
 }
 
 /** deals with grouped media modifications, in this case removing stuff*/

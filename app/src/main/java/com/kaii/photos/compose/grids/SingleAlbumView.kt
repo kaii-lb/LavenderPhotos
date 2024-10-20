@@ -1,5 +1,6 @@
 package com.kaii.photos.compose.grids
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
@@ -56,6 +57,13 @@ fun SingleAlbumView(
             MediaItemSortMode.DateTaken
         )
     )
+
+    BackHandler (
+        enabled = selectedItemsList.size == 0
+    ) {
+        galleryViewModel.cancelMediaFlow()
+        navController.popBackStack()
+    }
 
     val mediaStoreData = galleryViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 

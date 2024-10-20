@@ -1,5 +1,6 @@
 package com.kaii.photos.compose.grids
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,10 +13,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,21 +37,31 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.kaii.photos.compose.CustomMaterialTheme
 import com.kaii.photos.compose.ViewProperties
+import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MediaItemSortMode
+import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.gallery_model.groupPhotosBy
 import com.kaii.photos.models.search_page.SearchViewModel
 import com.kaii.photos.models.search_page.SearchViewModelFactory
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.datetime.DatePeriod
+import kotlinx.datetime.plus
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun SearchPage(
     navController: NavHostController,
-    selectedItemsList: SnapshotStateList<MediaStoreData>
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    currentView: MutableState<MainScreenViewType>
 ) {
     val searchViewModel: SearchViewModel = viewModel(
-        factory = SearchViewModelFactory(LocalContext.current, "", MediaItemSortMode.DateTaken)
+        factory = SearchViewModelFactory(LocalContext.current, MediaItemSortMode.DateTaken)
     )
     val mediaStoreDataHolder =
         searchViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
@@ -56,6 +69,15 @@ fun SearchPage(
     val originalGroupedMedia = remember { mutableStateOf(mediaStoreDataHolder.value) }
 
     val groupedMedia = remember { mutableStateOf(originalGroupedMedia.value) }
+
+    val gridState = rememberLazyGridState()
+
+    BackHandler(
+        enabled = currentView.value == MainScreenViewType.SearchPage && navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name
+    ) {
+        searchViewModel.cancelMediaFlow()
+        currentView.value = MainScreenViewType.PhotosGridView
+    }
 
     Column(
         modifier = Modifier
@@ -66,7 +88,7 @@ fun SearchPage(
         var searchNow by rememberSaveable { mutableStateOf(false) }
         val showLoadingSpinner by remember {
             derivedStateOf {
-                groupedMedia.value.isEmpty() && searchedForText.value == ""
+                groupedMedia.value.isEmpty()
             }
         }
 
@@ -79,22 +101,22 @@ fun SearchPage(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             SearchTextField(
-            	searchedForText = searchedForText, 
-            	placeholder = "Search for a photo's name",
-            	modifier = Modifier
-   		            .fillMaxWidth(1f)
-  		            .height(56.dp)
-  		            .padding(8.dp, 0.dp),
-  		        onSearch = {	        	
-	                if (!showLoadingSpinner) {
-	                    searchNow = true
-	                }
-  		        },
-  		        onClear = {
-  		        	searchedForText.value = ""
-  		        	searchNow = true
-  		        }
-           	)
+                searchedForText = searchedForText,
+                placeholder = "Search for a photo's name",
+                modifier = Modifier
+                    .fillMaxWidth(1f)
+                    .height(56.dp)
+                    .padding(8.dp, 0.dp),
+                onSearch = {
+                    if (!showLoadingSpinner) {
+                        searchNow = true
+                    }
+                },
+                onClear = {
+                    searchedForText.value = ""
+                    searchNow = true
+                }
+            )
         }
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -114,16 +136,58 @@ fun SearchPage(
 
             if (searchedForText.value == "") {
                 groupedMedia.value = originalGroupedMedia.value
-            } else {
+                return@LaunchedEffect
+            }
+
+            launch(Dispatchers.IO) {
+                val possibleDate = searchedForText.value.toDateListOrNull()
+                if (possibleDate.component1() != null) {
+                    val local = originalGroupedMedia.value.filter {
+                        it.type != MediaType.Section &&
+                                (possibleDate.getOrNull(0)?.toDayLong()?.let { date -> it.getDateTakenDay() == date } ?: false ||
+                                        possibleDate.getOrNull(1)?.toDayLong()?.let { date -> it.getDateTakenDay() == date } ?: false ||
+                                        possibleDate.getOrNull(2)?.toDayLong()?.let { date -> it.getDateTakenDay() == date } ?: false ||
+                                        possibleDate.getOrNull(3)?.toDayLong()?.let { date -> it.getDateTakenDay() == date } ?: false)
+                    }
+
+                    groupedMedia.value = groupPhotosBy(local, MediaItemSortMode.DateTaken)
+                    gridState.scrollToItem(0)
+                    return@launch
+                }
+
+                val onlyMonthYearSplit = searchedForText.value.split(" ")
+                val month = months.firstOrNull { onlyMonthYearSplit[0] in it }
+                val year = onlyMonthYearSplit[1]
+                if (onlyMonthYearSplit.size == 2 && year.contains(Regex("[0-9]{4}")) && month != null && year.toIntOrNull() != null) {
+                    val calendar = Calendar.getInstance().apply {
+                        set(Calendar.YEAR, year.toIntOrNull()!!)
+                        set(Calendar.MONTH, months.indexOf(month))
+                        set(Calendar.DAY_OF_MONTH, 0)
+                        set(Calendar.HOUR_OF_DAY, 0)
+                        set(Calendar.MINUTE, 0)
+                        set(Calendar.SECOND, 0)
+                        set(Calendar.MILLISECOND, 0)
+                    }
+
+                    val local = originalGroupedMedia.value.filter {
+                        it.type != MediaType.Section &&
+                                it.getDateTakenMonth() == calendar.timeInMillis / 1000
+                    }
+
+                    groupedMedia.value = local
+                    gridState.scrollToItem(0)
+                    return@launch
+                }
+
                 val groupedMediaLocal = originalGroupedMedia.value.filter {
                     val isMedia = it.type != MediaType.Section
-                    val matchesFilter = it.displayName?.contains(searchedForText.value.trim(), true) == true
+                    val matchesFilter =
+                        it.displayName?.contains(searchedForText.value.trim(), true) == true
                     isMedia && matchesFilter
                 }
                 groupedMedia.value = groupPhotosBy(groupedMediaLocal, MediaItemSortMode.DateTaken)
+                gridState.scrollToItem(0)
             }
-
-            searchNow = false
         }
 
         Box(
@@ -136,6 +200,7 @@ fun SearchPage(
                 path = null,
                 selectedItemsList = selectedItemsList,
                 viewProperties = if (searchedForText.value == "") ViewProperties.SearchLoading else ViewProperties.SearchNotFound,
+                state = gridState,
                 modifier = Modifier
                     .align(Alignment.Center)
             )
@@ -169,4 +234,117 @@ fun SearchPage(
             }
         }
     }
+}
+
+private val months = listOf(
+    "january",
+    "february",
+    "march",
+    "april",
+    "may",
+    "june",
+    "july",
+    "august",
+    "september",
+    "october",
+    "november",
+    "december"
+)
+
+private fun String.toDateListOrNull(): List<Date?> {
+    val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+    dateFormat.isLenient = true
+
+    val days = listOf("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
+
+    val year = run {
+        val split = this.split(" ")
+        if (split.size == 3) {
+            if (split[2].contains(Regex("[0-9]{4}"))) split[2].toIntOrNull()
+            else null
+        } else null
+    }
+
+    val month = months.firstOrNull {
+        this.lowercase().split(" ").getOrElse(1) { "definitely is not a month" } in it
+    }?.let {
+        months.indexOf(it) + 1
+    }
+
+    if (year != null && month != null) {
+        days.firstOrNull {
+            this.lowercase().split(" ").getOrElse(0) { "definitely is not a day" } in it
+        }?.let { weekDay ->
+            var localDate = kotlinx.datetime.LocalDate(year, month, 1)
+
+            val list = emptyList<Date?>().toMutableList()
+            while (localDate.dayOfWeek != kotlinx.datetime.DayOfWeek.of(days.indexOf(weekDay) + 1) && localDate.month == kotlinx.datetime.Month.of(
+                    month
+                ) && localDate.year == year
+            ) {
+                localDate = localDate.plus(DatePeriod.parse("P0Y1D"))
+            }
+            list.add(
+                try {
+                    dateFormat.parse("${localDate.dayOfMonth}/$month/$year")
+                } catch (_: Throwable) {
+                    null
+                }
+            )
+            list.add(
+                try {
+                    dateFormat.parse("${localDate.dayOfMonth + 7}/$month/$year")
+                } catch (_: Throwable) {
+                    null
+                }
+            )
+            list.add(
+                try {
+                    dateFormat.parse("${localDate.dayOfMonth + 14}/$month/$year")
+                } catch (_: Throwable) {
+                    null
+                }
+            )
+            list.add(
+                try {
+                    dateFormat.parse("${localDate.dayOfMonth + 21}/$month/$year")
+                } catch (_: Throwable) {
+                    null
+                }
+            )
+
+            return list
+        }
+    }
+
+    val formats = listOf(
+        "dd/MM/yyyy",
+        "dd/MM/yyyy",
+        "dd-MM-yyyy",
+        "dd MM yyyy",
+        "dd MMM yyyy",
+        "dd MMMM yyyy"
+    )
+
+    for (format in formats) {
+        val dateFormatter = SimpleDateFormat(format, Locale.getDefault())
+        try {
+            return listOf(dateFormatter.parse(this))
+        } catch (_: Throwable) {
+        }
+    }
+    return listOf(null)
+}
+
+private fun Date.toDayLong(): Long {
+    val millis = this.time
+    val calendar = Calendar.getInstance(Locale.ENGLISH).apply {
+        timeInMillis = millis
+        set(Calendar.HOUR_OF_DAY, 0)
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }
+
+    return calendar.timeInMillis / 1000
 }

@@ -2,11 +2,12 @@ package com.kaii.photos.models.gallery_model
 
 import android.content.Context
 import android.net.Uri
+import android.os.CancellationSignal
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.helpers.MediaItemSortMode
+import com.kaii.photos.mediastore.DefaultMediaStoreDataSource
 import com.kaii.photos.mediastore.MediaStoreData
-import com.kaii.photos.mediastore.MediaStoreDataSource
 import com.kaii.photos.mediastore.MediaType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -20,7 +21,8 @@ import java.util.Calendar
 import java.util.Locale
 
 class GalleryViewModel(context: Context, path: String, sortBy: MediaItemSortMode) : ViewModel() {
-    private val mediaStoreDataSource = MediaStoreDataSource(context, path, sortBy)
+	private val cancellationSignal = CancellationSignal()
+    private val mediaStoreDataSource = DefaultMediaStoreDataSource(context, path, sortBy, cancellationSignal)
 
     val mediaFlow by lazy {
         getMediaDataFlow().stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
@@ -28,6 +30,10 @@ class GalleryViewModel(context: Context, path: String, sortBy: MediaItemSortMode
 
     private fun getMediaDataFlow(): Flow<List<MediaStoreData>> {
         return mediaStoreDataSource.loadMediaStoreData().flowOn(Dispatchers.IO)
+    }
+
+    fun cancelMediaFlow() {
+    	cancellationSignal.cancel()
     }
 }
 
@@ -68,18 +74,17 @@ fun groupPhotosBy(media: List<MediaStoreData>, sortBy: MediaItemSortMode = Media
     }
 
     val calendar = Calendar.getInstance(Locale.ENGLISH).apply {
-         timeInMillis = System.currentTimeMillis()
-         set(Calendar.HOUR_OF_DAY, 0)
-         set(Calendar.MINUTE, 0)
-         set(Calendar.SECOND, 0)
-         set(Calendar.MILLISECOND, 0)
+        timeInMillis = System.currentTimeMillis()
+        set(Calendar.HOUR_OF_DAY, 0)
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
     }
 
-	val today = calendar.timeInMillis
-    val dayMillis = 86400000
-    val yesterday = today - dayMillis
+	val today = calendar.timeInMillis / 1000
+    val daySeconds= 86400
+    val yesterday = today - daySeconds
     for ((key, value) in mediaDataGroups) {
-        var currentGridPosition = 0
         val sectionKey = when (key) {
             today -> {
                 "Today"
@@ -88,15 +93,10 @@ fun groupPhotosBy(media: List<MediaStoreData>, sortBy: MediaItemSortMode = Media
                 "Yesterday"
             }
             else -> {
-            	// println("TRYING TO FORMAT DATE WITH KEY $key")
                 formatDate(key)
             }
         }
         mediaItems.add(listSection(sectionKey, key))
-
-        value.forEach {
-            it.gridPosition = currentGridPosition++
-        }
 
 		if (sortDescending) {
 			if (sortBy == MediaItemSortMode.DateTaken) {
@@ -117,7 +117,7 @@ fun groupPhotosBy(media: List<MediaStoreData>, sortBy: MediaItemSortMode = Media
        	)
     }
 
-    return mediaItems
+    return mediaItems.distinct()
 }
 
 private fun formatDate(timestamp: Long): String {
@@ -136,7 +136,7 @@ private fun listSection(title: String, key: Long): MediaStoreData {
         type = MediaType.Section,
         dateModified = key,
         dateTaken = key,
-        uri = Uri.parse(key.toString()),
+        uri = Uri.parse("$title $key"),
         displayName = title,
         id = 0L,
         mimeType = null,

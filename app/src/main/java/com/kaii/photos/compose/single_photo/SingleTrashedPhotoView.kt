@@ -64,6 +64,7 @@ import androidx.navigation.NavHostController
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.CustomMaterialTheme
+import com.kaii.photos.compose.SinglePhotoInfoDialog
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
@@ -132,7 +133,8 @@ fun SingleTrashedPhotoView(
     }
 
     val showDialog = remember { mutableStateOf(false) }
-
+	val showInfoDialog = remember { mutableStateOf(false) }
+	
     if (showDialog.value) {
         val context = LocalContext.current
         val coroutineScope = rememberCoroutineScope()
@@ -191,7 +193,7 @@ fun SingleTrashedPhotoView(
     }
 
     Scaffold(
-        topBar = { TopBar(navController, currentMediaItem, appBarsVisible.value) },
+        topBar = { TopBar(navController, currentMediaItem, appBarsVisible.value, showInfoDialog) },
         bottomBar = {
             BottomBar(
                 navController,
@@ -226,12 +228,14 @@ fun SingleTrashedPhotoView(
                 appBarsVisible
             )
         }
+        
+        SinglePhotoInfoDialog(showDialog = showInfoDialog, currentMediaItem = currentMediaItem, groupedMedia = groupedMedia, showMoveCopy = false)
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TopBar(navController: NavHostController, mediaItem: MediaStoreData?, visible: Boolean) {
+private fun TopBar(navController: NavHostController, mediaItem: MediaStoreData?, visible: Boolean, showInfoDialog: MutableState<Boolean>) {
     AnimatedVisibility(
         visible = visible,
         enter =
@@ -287,7 +291,9 @@ private fun TopBar(navController: NavHostController, mediaItem: MediaStoreData?,
             },
             actions = {
                 IconButton(
-                    onClick = { /* TODO */ },
+                    onClick = { 
+						showInfoDialog.value = true
+                   	},
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.more_options),
@@ -429,8 +435,7 @@ private fun BottomBar(
                         }
                     }
                 }
-            },
-//            modifier = Modifier.alpha(alpha)
+            }
         )
     }
 }

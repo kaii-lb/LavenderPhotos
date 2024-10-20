@@ -327,7 +327,6 @@ fun AlbumsListItem(
     groupedMedia: MutableState<List<MediaStoreData>>? = null
 ) {
     val (shape, spacerHeight) = getDefaultShapeSpacerForPosition(position, 24.dp)
-    val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
 
     val selectedItemsWithoutSection by remember {

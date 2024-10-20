@@ -1,14 +1,13 @@
 package com.kaii.photos.helpers
 
-import android.content.ContentResolver
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.MediaStore.MediaColumns
 import android.util.Log
-import androidx.core.net.toUri
-import com.kaii.photos.MainActivity
+import com.kaii.photos.MainActivity.Companion.applicationDatabase
+import com.kaii.photos.database.entities.SecuredItemEntity
 import com.kaii.photos.mediastore.MediaStoreData
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -68,18 +67,18 @@ fun setTrashedOnPhotoList(context: Context, list: List<Uri>, trashed: Boolean) {
     }
 }
 
-fun shareImage(absolutePath: String, id: Long, context: Context) {
-    val database = MainActivity.applicationDatabase
+fun shareImage(uri: Uri, context: Context) {
+    val contentResolver = context.contentResolver
 
 	CoroutineScope(Dispatchers.IO).launch {
-	    val mimeType = database.mediaEntityDao().getMimeType(id) // TODO: replace with contentResovler's method
+	    val mimeType = contentResolver.getType(uri)
 
 	    val shareIntent = Intent().apply {
 	        action = Intent.ACTION_SEND
 	        type = mimeType
 	    }
 
-	    shareIntent.putExtra(Intent.EXTRA_STREAM, absolutePath.toUri())
+	    shareIntent.putExtra(Intent.EXTRA_STREAM, uri)
 
 	    val chooserIntent = Intent.createChooser(shareIntent, null)
 	    context.startActivity(chooserIntent)
@@ -92,24 +91,44 @@ fun moveImageToLockedFolder(absolutePath: String, id: Long, context: Context) {
     val copyToPath = lockedFolderDir + fileToBeHidden.name
     Files.move(Path(absolutePath), Path(copyToPath), StandardCopyOption.REPLACE_EXISTING)
 
-    val database = MainActivity.applicationDatabase
-
     val lastModified = System.currentTimeMillis()
     CoroutineScope(EmptyCoroutineContext + CoroutineName("hide_file_context")).launch {
-        // val entity = database.mediaEntityDao().getFromId(id)
-
         Path(copyToPath).setAttribute(
             BasicFileAttributes::lastModifiedTime.name,
             FileTime.fromMillis(lastModified)
         )
 
-        // TODO: use a database to store locked folder original paths
-
-        database.mediaEntityDao().deleteEntityById(id)
+        applicationDatabase.securedItemEntityDao().insertEntity(
+            SecuredItemEntity(
+                originalPath = absolutePath,
+                securedPath = copyToPath
+            )
+        )
+        applicationDatabase.mediaEntityDao().deleteEntityById(id)
     }
     File(copyToPath).lastModified()
+}
 
-    //fileToBeHidden.delete()
+/** @param path is the secured folder path (/data/ path) to this item */
+fun moveImageOutOfLockedFolder(path: String) {
+    val fileToBeRevived = File(path)
+    val absolutePath = fileToBeRevived.absolutePath
+
+	CoroutineScope(Dispatchers.IO).launch {
+	    val reverseCemetery =
+	        applicationDatabase.securedItemEntityDao().getOriginalPathFromSecuredPath(path)
+	            ?: (getAppRestoredFromLockedFolderDirectory() + fileToBeRevived.name)
+
+	    Files.move(Path(absolutePath), Path(reverseCemetery), StandardCopyOption.REPLACE_EXISTING)
+
+	    val lastModified = System.currentTimeMillis()
+	    Path(reverseCemetery).setAttribute(
+	        BasicFileAttributes::lastModifiedTime.name,
+	        FileTime.fromMillis(lastModified)
+	    )
+	    File(reverseCemetery).lastModified()
+	    applicationDatabase.securedItemEntityDao().deleteEntityBySecuredPath(path)
+	}
 }
 
 /** @param list is a list of the absolute path of every image to be deleted */
@@ -121,26 +140,6 @@ fun permanentlyDeleteSecureFolderImageList(list: List<String>) {
     } catch (e: Throwable) {
         Log.e(TAG, e.toString())
     }
-}
-
-fun moveImageOutOfLockedFolder(path: String) {
-    val fileToBeRevived = File(path)
-    val absolutePath = fileToBeRevived.absolutePath
-
-    val lastModified = System.currentTimeMillis()
-
-    // TODO: use database to track where it was from
-    val reverseCemetery = getAppRestoredFromLockedFolderDirectory() + fileToBeRevived.name
-
-    Files.move(Path(absolutePath), Path(reverseCemetery), StandardCopyOption.REPLACE_EXISTING)
-
-    Path(reverseCemetery).setAttribute(
-        BasicFileAttributes::lastModifiedTime.name,
-        FileTime.fromMillis(lastModified)
-    )
-    File(reverseCemetery).lastModified()
-
-    fileToBeRevived.delete()
 }
 
 fun renameImage(context: Context, uri: Uri, newName: String) {
@@ -174,9 +173,7 @@ fun moveImageListToPath(context: Context, list: List<MediaStoreData>, destinatio
     CoroutineScope(Dispatchers.IO).launch {
         for (chunk in chunks) {
             chunk.forEach {
-                val fileName = File(it.absolutePath).name
-                val path = if (destination.endsWith("/")) destination else destination + "/"
-                println("PATH IS $path")
+                val path = destination.removeSuffix("/") + "/"
                 val contentValues = ContentValues().apply {
                     put(MediaColumns.RELATIVE_PATH, path)
                 }
@@ -199,7 +196,6 @@ fun copyImageListToPath(context: Context, list: List<MediaStoreData>, destinatio
             chunk.forEach {
                 val file = File(it.absolutePath)
                 val path = "/storage/emulated/0/" + destination.removeSuffix("/") + "/${file.name}"
-                println("PATH IS $path")
                 val inputStream = contentResolver.openInputStream(it.uri)
                 val outputStream = File(path).outputStream()
 

@@ -1,70 +1,40 @@
 package com.kaii.photos.mediastore
 
-import android.content.Context
 import android.content.ContentUris
-import android.database.ContentObserver
-import android.net.Uri
-import android.os.Handler
-import android.os.Looper
+import android.content.Context
+import android.os.CancellationSignal
 import android.provider.MediaStore
 import android.provider.MediaStore.Files.FileColumns
 import android.provider.MediaStore.MediaColumns
-import android.util.Log
 import com.bumptech.glide.util.Preconditions
 import com.bumptech.glide.util.Util
 import com.kaii.photos.MainActivity
 import com.kaii.photos.database.entities.MediaEntity
+import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.getDateTakenForMedia
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.launch
-import java.nio.file.Files
-import kotlin.io.path.Path
+import com.kaii.photos.models.gallery_model.groupPhotosBy
 
 /** Loads metadata from the media store for images and videos. */
-class SearchStoreDataSource
-internal constructor(
-    private val context: Context,
-    private val searchedFor: String,
+class SearchStoreDataSource(
+    context: Context,
+    sortBy: MediaItemSortMode,
+    cancellationSignal: CancellationSignal
+) : MediaStoreDataSource(
+    context, "search", sortBy, cancellationSignal,
 ) {
     companion object {
-        private const val TAG = "SEARCH_STORE_DATA_SOURCE"
-        private val MEDIA_STORE_FILE_URI = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL)
         private val PROJECTION =
             arrayOf(
                 MediaColumns._ID,
                 MediaStore.Images.Media.DATA,
-                MediaColumns.DATE_MODIFIED,
+                MediaColumns.DATE_ADDED,
                 MediaColumns.MIME_TYPE,
                 MediaColumns.DISPLAY_NAME,
-                FileColumns.MEDIA_TYPE,
+                FileColumns.MEDIA_TYPE
             )
     }
 
-    fun loadMediaStoreData(): Flow<List<MediaStoreData>> = callbackFlow {
-        val contentObserver =
-            object : ContentObserver(Handler(Looper.getMainLooper())) {
-                override fun onChange(selfChange: Boolean) {
-                    super.onChange(selfChange)
-                    launch { trySend(query()) }
-                }
-            }
-
-        context.contentResolver.registerContentObserver(
-            MEDIA_STORE_FILE_URI,
-            true,
-            contentObserver
-        )
-
-        trySend(query())
-
-        // println("SEARCHSTOREDATASOURCE SEARCHED FOR IS $searchedFor")
-
-        awaitClose { context.contentResolver.unregisterContentObserver(contentObserver) }
-    }
-
-    private fun query(): List<MediaStoreData> {
+    override fun query(): List<MediaStoreData> {
         val database = MainActivity.applicationDatabase
         val mediaEntityDao = database.mediaEntityDao()
 
@@ -77,92 +47,68 @@ internal constructor(
             context.contentResolver.query(
                 MEDIA_STORE_FILE_URI,
                 PROJECTION,
-                FileColumns.MEDIA_TYPE +
-                        " = " +
-                        FileColumns.MEDIA_TYPE_IMAGE +
-                        " AND " +
-                        FileColumns.DISPLAY_NAME +
-                        " LIKE ? " +
-                        " OR " +
-                        FileColumns.MEDIA_TYPE +
-                        " = " +
-                        FileColumns.MEDIA_TYPE_VIDEO +
-                        " AND " +
-                        FileColumns.DISPLAY_NAME +
-                        " LIKE ? ",
-                arrayOf("%$searchedFor%", "%$searchedFor%"),
-                "${MediaColumns.DATE_TAKEN} DESC"
+                "(${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_IMAGE}) OR (${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_VIDEO})",
+                null,
+                ""
             ) ?: return data
 
         mediaCursor.use { cursor ->
             val idColNum = cursor.getColumnIndexOrThrow(MediaColumns._ID)
-            val absolutePathColNum = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA) // look into using the uri + id if this is deprecated
+            val absolutePathColNum = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA)
             val mimeTypeColNum = cursor.getColumnIndexOrThrow(MediaColumns.MIME_TYPE)
             val mediaTypeColumnIndex = cursor.getColumnIndexOrThrow(FileColumns.MEDIA_TYPE)
             val displayNameIndex = cursor.getColumnIndexOrThrow(FileColumns.DISPLAY_NAME)
+            val dateModifiedColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATE_ADDED)
 
             while (cursor.moveToNext()) {
                 val id = cursor.getLong(idColNum)
                 val mimeType = cursor.getString(mimeTypeColNum)
-                // val dateModified = cursor.getLong(dateModifiedColNum)
                 val absolutePath = cursor.getString(absolutePathColNum)
+                val dateModified = cursor.getLong(dateModifiedColumn)
+                val displayName = cursor.getString(displayNameIndex)
 
-                val succeeded = try {
-                	java.io.File(absolutePath).exists()
-                } catch (e: Throwable) {
-                	Log.w(TAG, e.toString())
-                	false
+                val possibleDateTaken = mediaEntityDao.getDateTaken(id)
+                val dateTaken = if (possibleDateTaken != 0L) {
+                    possibleDateTaken
+                } else {
+                    val taken = getDateTakenForMedia(
+                        cursor.getString(absolutePathColNum)
+                    )
+                    mediaEntityDao.insertEntity(
+                        MediaEntity(
+                            id = id,
+                            mimeType = mimeType,
+                            dateTaken = taken,
+                            displayName = displayName
+                        )
+                    )
+                    taken
                 }
 
-                if (succeeded) {
-	                val dateModified = Files.getLastModifiedTime(Path(absolutePath)).toMillis() / 1000
-	                val displayName = cursor.getString(displayNameIndex)
+                val type =
+                    if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) MediaType.Image
+                    else MediaType.Video
 
-					// Log.d(TAG, "$displayName")
-					
-	                val possibleDateTaken = mediaEntityDao.getDateTaken(id)
-	                val dateTaken = if (possibleDateTaken != 0L) {
-	                    // Log.d(TAG, "date taken from database is $possibleDateTaken")
-	                    possibleDateTaken
-	                } else {
-	                    val taken = getDateTakenForMedia(
-	                        cursor.getString(absolutePathColNum)
-	                    )
-	                    mediaEntityDao.insertEntity(
-	                        MediaEntity(
-	                            id = id,
-	                            mimeType = mimeType,
-	                            dateTaken = taken,
-	                            displayName = displayName
-	                        )
-	                    )
-	                    // Log.d(TAG, "date taken was not found in database, inserting $taken")
-	                    taken
-	                }
-	                
-	                val type = if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) MediaType.Image
-				               else MediaType.Video
+                val uriParentPath =
+                    if (type == MediaType.Image) MediaStore.Images.Media.EXTERNAL_CONTENT_URI else MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+                val uri = ContentUris.withAppendedId(uriParentPath, id)
 
-					val uriParentPath = if (type == MediaType.Image) MediaStore.Images.Media.EXTERNAL_CONTENT_URI else MediaStore.Video.Media.EXTERNAL_CONTENT_URI
-	                val uri = ContentUris.withAppendedId(uriParentPath, id)
-	                
-	                data.add(
-	                    MediaStoreData(
-	                        type = type,
-	                        id = id,
-	                        uri = uri,
-	                        mimeType = mimeType,
-	                        dateModified = dateModified,
-	                        dateTaken = dateTaken,
-	                        displayName = displayName,
-	                        absolutePath = absolutePath
-	                    )
-	                )
-                }
+                data.add(
+                    MediaStoreData(
+                        type = type,
+                        id = id,
+                        uri = uri,
+                        mimeType = mimeType,
+                        dateModified = dateModified,
+                        dateTaken = dateTaken,
+                        displayName = displayName,
+                        absolutePath = absolutePath
+                    )
+                )
             }
         }
         mediaCursor.close()
 
-        return data
+        return groupPhotosBy(data, sortBy)
     }
 }

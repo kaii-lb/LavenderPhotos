@@ -31,3 +31,4 @@ captures/
 output.json
 obj/
 .externalNativeBuild
+keys/

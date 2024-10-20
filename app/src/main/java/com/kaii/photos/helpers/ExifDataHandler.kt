@@ -1,17 +1,15 @@
 package com.kaii.photos.helpers
 
+import android.graphics.BitmapFactory
 import android.util.Log
 import androidx.exifinterface.media.ExifInterface
+import com.kaii.photos.R
 import java.io.File
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import kotlin.math.round
-import com.kaii.photos.R
-import kotlin.math.abs
-import kotlin.math.floor
-import kotlin.math.pow
 
 private const val TAG = "EXIT_DATA_HANDLER"
 
@@ -50,15 +48,12 @@ fun getExifDataForMedia(uri: String): Map<MediaData, Any> {
 
     list[MediaData.LatLong] = exifInterface.latLong
 
-    val res = Pair(exifInterface.getAttribute(ExifInterface.TAG_PIXEL_X_DIMENSION), exifInterface.getAttribute(ExifInterface.TAG_PIXEL_Y_DIMENSION))
-    val resValue = if (res.first != null && res.second != null) {
-        val x = res.first!!.toIntOrNull()
-        val y = res.second!!.toIntOrNull()
-
-        if (x != null && y != null) {
-            "${x}x$y"
-        } else null
-    } else null
+    val options = BitmapFactory.Options()
+    options.inJustDecodeBounds = true
+    BitmapFactory.decodeFile(uri, options)
+    val resValue = run {
+        "${options.outWidth}x${options.outHeight}"
+    }
     list[MediaData.Resolution] = resValue
 
     list[MediaData.Device] = exifInterface.getAttribute(ExifInterface.TAG_MODEL)
@@ -70,19 +65,15 @@ fun getExifDataForMedia(uri: String): Map<MediaData, Any> {
 
     val shutterSpeed = exifInterface.getAttribute(ExifInterface.TAG_SHUTTER_SPEED_VALUE)
     list[MediaData.ShutterSpeed] =
-        if (shutterSpeed != null) {
-            val splits = shutterSpeed.split("/")
-            val apexValue = splits[0].toFloat() / splits[1].toFloat()
-            2.0.pow((-apexValue).toDouble()).toFraction()
-        } else null
+        shutterSpeed
 
-    list[MediaData.MegaPixels] = if (resValue != null) {
+    list[MediaData.MegaPixels] = run {
         val split = resValue.split("x")
         val x = split[0].toInt()
         val y = split[1].toInt()
 
-        round((x * y) / 100000f) / 10f // divide by 1mil then multiply by 100, so divide by 100k
-    } else null
+        round((x * y) / 100000f) / 10f // divide by 1mil then multiply by 10, so divide by 100k
+    }
 
     list[MediaData.Size] = "${round(file.length() / 100000f) / 10} MB"
 
@@ -106,28 +97,4 @@ enum class MediaData(val iconResInt: Int) {
     MegaPixels(R.drawable.maybe_megapixel),
     Resolution(R.drawable.resolution),
     Size(R.drawable.storage),
-}
-
-fun Double.toFraction(): String {
-    val tolerance = 1.0E-6
-    var h1 = 1.0
-    var h2 = 0.0
-    var k1 = 0.0
-    var k2 = 1.0
-    var b = this
-
-    do {
-        val a = floor(b)
-        var aux = h1
-        h1 = a * h1 + h2
-        h2 = aux
-
-        aux = k1
-        k1 = a * k1 + k2
-        k2 = aux
-
-        b = 1/(b-a)
-    } while (abs(this-h1/k1) > this * tolerance)
-
-    return "$h1/$k1"
 }

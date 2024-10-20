@@ -20,11 +20,9 @@ data class MediaStoreData(
     val dateTaken: Long = 0L,
     val displayName: String? = "",
     val absolutePath: String = "",
-
-    var gridPosition: Int = 0
 ) : Parcelable {
 	/** gets the date taken in days (no hours/minutes/seconds/milliseconds) */
-    /** its returned in unix epoch millis*/
+    /** its returned in unix epoch seconds*/
     fun getDateTakenDay() : Long {
         val calendar = Calendar.getInstance(Locale.ENGLISH).apply {
             timeInMillis = dateTaken * 1000
@@ -37,7 +35,7 @@ data class MediaStoreData(
         return calendar.timeInMillis / 1000
     }
     /** gets the date taken in months (no days/hours/minutes/seconds/milliseconds) */
-    /** its returned in unix epoch millis*/
+    /** its returned in unix epoch seconds*/
     fun getDateTakenMonth() : Long {
         val calendar = Calendar.getInstance(Locale.ENGLISH).apply {
             timeInMillis = dateTaken * 1000

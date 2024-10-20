@@ -158,7 +158,7 @@ fun SinglePhotoView(
 	) {  _ ->
 		SinglePhotoInfoDialog(
 			showInfoDialog,
-			currentMediaItem,
+			currentMediaItem.value,
 			groupedMedia
 		)
 
@@ -347,7 +347,7 @@ private fun BottomBar(
 						text = "Share",
 						iconResId = R.drawable.share,
 						action = {
-							shareImage(currentItem.absolutePath, currentItem.id, context)
+							shareImage(currentItem.uri, context)
 						}
 					)
 

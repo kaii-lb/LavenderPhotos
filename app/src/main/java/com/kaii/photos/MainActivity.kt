@@ -98,6 +98,7 @@ import com.kaii.photos.models.main_activity.MainViewModelFactory
 import com.kaii.photos.ui.theme.PhotosTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import java.io.File
 
 val Context.datastore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
@@ -547,7 +548,7 @@ class MainActivity : ComponentActivity() {
             val context = LocalContext.current
 
             BackHandler(
-                enabled = currentView.value != MainScreenViewType.PhotosGridView && navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name && selectedItemsList.size == 0
+                enabled = currentView.value != MainScreenViewType.PhotosGridView && currentView.value != MainScreenViewType.SearchPage && navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name && selectedItemsList.size == 0
             ) {
                 currentView.value = MainScreenViewType.PhotosGridView
             }
@@ -596,24 +597,11 @@ class MainActivity : ComponentActivity() {
 
                             MainScreenViewType.SecureFolder -> LockedFolderEntryView(navController)
                             MainScreenViewType.AlbumsGridView -> {
-                                val listOfDirs = runBlocking {
-                                    val list = context.datastore.getAlbumsList()
-                                    list
-                                }
-
-                                listOfDirs.forEach {
-                                	Log.d(TAG, "Albums list item $it")
-                                }
-
-                                val albumsViewModel: AlbumsViewModel = viewModel(
-                                    factory = AlbumsViewModelFactory(context, listOfDirs.toList())
-                                )
-                                AlbumsGridView(albumsViewModel, navController, listOfDirs)
+                                AlbumsGridView(navController)
                             }
 
                             MainScreenViewType.SearchPage -> {
-                                // selectedItemsList.clear() // how does this cause infinite insane and completely unhinged recomposition???
-                                SearchPage(navController, selectedItemsList)
+                                SearchPage(navController, selectedItemsList, currentView)
                             }
                         }
                     }

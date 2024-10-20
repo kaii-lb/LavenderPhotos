@@ -44,22 +44,21 @@ fun LockedFolderView(navController: NavHostController) {
     val secureFolder = File(LocalContext.current.getAppLockedFolderDirectory())
     val fileList = secureFolder.listFiles() ?: return
     val mediaStoreData = emptyList<MediaStoreData>().toMutableList()
-    fileList.forEachIndexed { index, file ->
+    fileList.forEachIndexed { _, file ->
         val mimeType = Files.probeContentType(Path(file.absolutePath))
         val dateTaken = getDateTakenForMedia(file.absolutePath)
 
         val item = MediaStoreData(
             type = if (mimeType.lowercase().contains("image")) MediaType.Image
-            else if (mimeType.lowercase().contains("video")) MediaType.Video
-            else MediaType.Section,
+           			else if (mimeType.lowercase().contains("video")) MediaType.Video
+           			else MediaType.Section,
             id = file.hashCode()  * file.length() * file.lastModified(),
             uri = file.absolutePath.toUri(),
             mimeType = mimeType,
-            dateModified = System.currentTimeMillis() / 1000,
+            dateModified = file.lastModified() / 1000,
             dateTaken = dateTaken,
             displayName = file.name,
             absolutePath = file.absolutePath,
-            gridPosition = index
         )
         mediaStoreData.add(item)
     }

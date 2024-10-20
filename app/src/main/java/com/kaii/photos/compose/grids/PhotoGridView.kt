@@ -16,6 +16,8 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -35,6 +37,7 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.CircleShape
@@ -112,7 +115,8 @@ fun PhotoGrid(
 	selectedItemsList: SnapshotStateList<MediaStoreData>,
 	modifier: Modifier = Modifier,
 	viewProperties: ViewProperties,
-	shouldPadUp: Boolean = false
+	shouldPadUp: Boolean = false,
+	state: LazyGridState = rememberLazyGridState()
 ) {
 	val hasFiles = if (path == null) {
 		groupedMedia.value.isNotEmpty()
@@ -140,7 +144,8 @@ fun PhotoGrid(
 				navController,
 				selectedItemsList,
 				viewProperties,
-				shouldPadUp
+				shouldPadUp,
+				state
 			)
 		}
 	} else {
@@ -155,9 +160,9 @@ fun DeviceMedia(
 	navController: NavHostController,
 	selectedItemsList: SnapshotStateList<MediaStoreData>,
 	viewProperties: ViewProperties,
-	shouldPadUp: Boolean
+	shouldPadUp: Boolean,
+	gridState: LazyGridState
 ) {
-	val gridState = rememberLazyGridState()
 	var showLoadingSpinner by remember { mutableStateOf(true) }
 
 	val coroutineScope = rememberCoroutineScope()
@@ -305,7 +310,7 @@ fun DeviceMedia(
 
 				LaunchedEffect(interactionSource) {
 					interactionSource.interactions.collect { interaction -> 
-						when(interaction) {
+						when (interaction) {
 							is DragInteraction.Start -> { isScrollingByHandle = true }
 							is DragInteraction.Cancel -> { isScrollingByHandle = false }
 							is DragInteraction.Stop -> { isScrollingByHandle = false }
@@ -313,7 +318,7 @@ fun DeviceMedia(
 						}
 					}
 				}
-							
+				
 				LaunchedEffect(key1 = gridState.isScrollInProgress, key2 = isScrollingByHandle) {
 					if (gridState.isScrollInProgress || isScrollingByHandle) {
 						showHandle = true
@@ -360,7 +365,6 @@ fun DeviceMedia(
 									.height(48.dp)
 									.width(96.dp)
 							) {
-								
 								Box (
 									modifier = Modifier
 										.size(48.dp)

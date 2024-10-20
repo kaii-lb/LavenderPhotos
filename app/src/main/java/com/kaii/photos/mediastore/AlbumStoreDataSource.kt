@@ -3,6 +3,7 @@ package com.kaii.photos.mediastore
 import android.content.Context
 import android.database.ContentObserver
 import android.net.Uri
+import android.os.CancellationSignal
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
@@ -11,10 +12,13 @@ import android.provider.MediaStore.MediaColumns
 import com.bumptech.glide.util.Preconditions
 import com.bumptech.glide.util.Util
 import com.kaii.photos.helpers.getDateTakenForMedia
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /** Loads metadata from the media store for images and videos. */
 class AlbumStoreDataSource
@@ -23,7 +27,6 @@ internal constructor(
     private val multiplePaths: List<String>,
 ) {
     companion object {
-
         private val MEDIA_STORE_FILE_URI = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL)
         private val PROJECTION =
             arrayOf(
@@ -37,16 +40,26 @@ internal constructor(
     }
 
     fun loadMediaStoreData(): Flow<LinkedHashMap<String, MediaStoreData>> = callbackFlow {
+        var cancellationSignal = CancellationSignal()
+        val mutex = Mutex()
+
         val contentObserver =
             object : ContentObserver(Handler(Looper.getMainLooper())) {
                 override fun onChange(selfChange: Boolean) {
                     super.onChange(selfChange)
-                    launch {
-                        val returnVal = LinkedHashMap<String, MediaStoreData>()
-                        for (directory in multiplePaths) {
-                            returnVal[directory] = if (query(directory).isNotEmpty()) query(directory)[0] else MediaStoreData()
+                    launch(Dispatchers.IO) {
+                        mutex.withLock {
+                            cancellationSignal.cancel()
+                            cancellationSignal = CancellationSignal()
                         }
-                        trySend(returnVal)
+
+                        runCatching {
+                            val returnVal = LinkedHashMap<String, MediaStoreData>()
+                            for (directory in multiplePaths) {
+                                returnVal[directory] = if (query(directory).isNotEmpty()) query(directory)[0] else MediaStoreData()
+                            }
+                            trySend(returnVal)
+                        }
                     }
                 }
             }
@@ -57,13 +70,20 @@ internal constructor(
             contentObserver
         )
 
-        val returnVal = LinkedHashMap<String, MediaStoreData>()
-        for (directory in multiplePaths) {
-            returnVal[directory] = if (query(directory).isNotEmpty()) query(directory)[0] else MediaStoreData()
+        launch(Dispatchers.IO) {
+            runCatching {
+                val returnVal = LinkedHashMap<String, MediaStoreData>()
+                for (directory in multiplePaths) {
+                    returnVal[directory] = if (query(directory).isNotEmpty()) query(directory)[0] else MediaStoreData()
+                }
+                trySend(returnVal)
+            }
         }
-        trySend(returnVal)
 
-        awaitClose { context.contentResolver.unregisterContentObserver(contentObserver) }
+        awaitClose {
+            cancellationSignal.cancel()
+            context.contentResolver.unregisterContentObserver(contentObserver)
+        }
     }
 
     private fun query(neededPath: String): List<MediaStoreData> {
@@ -78,7 +98,7 @@ internal constructor(
                 PROJECTION,
                 "(${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_IMAGE} AND ${FileColumns.RELATIVE_PATH} LIKE ? AND ${FileColumns.RELATIVE_PATH} NOT LIKE ?) OR (${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_VIDEO} AND ${FileColumns.RELATIVE_PATH} LIKE ? AND ${FileColumns.RELATIVE_PATH} NOT LIKE ?)",
                 arrayOf("%$neededPath%", "%$neededPath/%/%",  "%$neededPath%", "%$neededPath/%/%"),
-                "${MediaColumns.DATE_ADDED} DESC"
+                "${MediaColumns.DATE_MODIFIED} DESC"
             ) ?: return data
 
         mediaCursor.use { cursor ->
@@ -115,7 +135,7 @@ internal constructor(
         mediaCursor.close()
 
         data.sortByDescending {
-			it.dateModified
+			it.dateTaken
 		}
         return data
     }
