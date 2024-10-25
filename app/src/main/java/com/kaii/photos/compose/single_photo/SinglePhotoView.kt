@@ -3,12 +3,16 @@ package com.kaii.photos.compose.single_photo
 import android.annotation.SuppressLint
 import android.content.res.Configuration
 import android.view.Window
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -61,6 +65,7 @@ import com.kaii.photos.compose.BottomAppBarItem
 import com.kaii.photos.compose.ConfirmationDialog
 import com.kaii.photos.compose.CustomMaterialTheme
 import com.kaii.photos.compose.SinglePhotoInfoDialog
+import com.kaii.photos.compose.single_photo.EditingView
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.moveImageToLockedFolder
 import com.kaii.photos.helpers.rememberVibratorManager
@@ -120,68 +125,89 @@ fun SinglePhotoView(
 
 	val coroutineScope = rememberCoroutineScope()
 
-	Scaffold (
-		topBar =  {
-			TopBar(
-				mediaItem = currentMediaItem.value,
-				visible = appBarsVisible.value,
-				showInfoDialog = showInfoDialog,
-				removeIfInFavGrid = {
-					if (navController.previousBackStackEntry?.destination?.route == MultiScreenViewType.FavouritesGridView.name) {
-						sortOutMediaMods(
-							currentMediaItem.value,
-							groupedMedia,
-							coroutineScope,
-							state
-						) {
+	val showEditingView = remember { mutableStateOf(false) }
+
+	AnimatedContent(
+		targetState = !showEditingView.value,
+		modifier = Modifier
+			.fillMaxSize(1f),
+		transitionSpec = {
+			(
+				slideInHorizontally { width -> -width } + fadeIn()
+			).togetherWith(
+				slideOutHorizontally { width -> width } + fadeOut()
+			)
+		},
+		label = "Animate between single photo and editing view"
+	) { targetState ->
+		if (targetState) {
+			Scaffold (
+				topBar =  {
+					TopBar(
+						mediaItem = currentMediaItem.value,
+						visible = appBarsVisible.value,
+						showInfoDialog = showInfoDialog,
+						removeIfInFavGrid = {
+							if (navController.previousBackStackEntry?.destination?.route == MultiScreenViewType.FavouritesGridView.name) {
+								sortOutMediaMods(
+									currentMediaItem.value,
+									groupedMedia,
+									coroutineScope,
+									state
+								) {
+									navController.popBackStack()
+								}
+							}
+						},
+						onBackClick = {
 							navController.popBackStack()
 						}
+					)
+				},
+				bottomBar = {
+					BottomBar(
+						appBarsVisible.value,
+						currentMediaItem.value,
+						state = state,
+						groupedMedia = groupedMedia,
+						showEditingView = showEditingView
+					) {
+						navController.popBackStack()
 					}
 				},
-				onBackClick = {
-					navController.popBackStack()		
-				}
-			)
-	  	},
-		bottomBar = {
-			BottomBar(
-				appBarsVisible.value,
-				currentMediaItem.value,
-				state = state,
-				groupedMedia = groupedMedia,
-			) {
-				navController.popBackStack()
-			}
-		},
-		containerColor = CustomMaterialTheme.colorScheme.background,
-		contentColor = CustomMaterialTheme.colorScheme.onBackground
-	) {  _ ->
-		SinglePhotoInfoDialog(
-			showInfoDialog,
-			currentMediaItem.value,
-			groupedMedia
-		)
+				containerColor = CustomMaterialTheme.colorScheme.background,
+				contentColor = CustomMaterialTheme.colorScheme.onBackground
+			) {  _ ->
+				SinglePhotoInfoDialog(
+					showInfoDialog,
+					currentMediaItem.value,
+					groupedMedia
+				)
 
-		Column (
-			modifier = Modifier
-				.padding(0.dp)
-				.background(CustomMaterialTheme.colorScheme.background)
-				.fillMaxSize(1f),
-			verticalArrangement = Arrangement.Center,
-			horizontalAlignment = Alignment.CenterHorizontally
-		) {
-			HorizontalImageList(
-				navController,
-				currentMediaItem.value,
-				groupedMedia.value,
-				state,
-				scale,
-				rotation,
-				offset,
-				systemBarsShown,
-				window,
-				appBarsVisible
-			)
+				Column (
+					modifier = Modifier
+						.padding(0.dp)
+						.background(CustomMaterialTheme.colorScheme.background)
+						.fillMaxSize(1f),
+					verticalArrangement = Arrangement.Center,
+					horizontalAlignment = Alignment.CenterHorizontally
+				) {
+					HorizontalImageList(
+						navController,
+						currentMediaItem.value,
+						groupedMedia.value,
+						state,
+						scale,
+						rotation,
+						offset,
+						systemBarsShown,
+						window,
+						appBarsVisible
+					)
+				}
+			}
+		} else {
+			EditingView(currentMediaItem.value.uri, showEditingView)
 		}
 	}
 }
@@ -306,6 +332,7 @@ private fun BottomBar(
 	currentItem: MediaStoreData,
 	state: PagerState,
 	groupedMedia: MutableState<List<MediaStoreData>>,
+	showEditingView: MutableState<Boolean>,
 	onZeroItemsLeft: () -> Unit
 ) {
 	val color = if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE)
@@ -346,17 +373,26 @@ private fun BottomBar(
 					BottomAppBarItem(
 						text = "Share",
 						iconResId = R.drawable.share,
+						cornerRadius = 32.dp,
 						action = {
 							shareImage(currentItem.uri, context)
 						}
 					)
 
-					BottomAppBarItem(text = "Edit", iconResId = R.drawable.paintbrush)
+					BottomAppBarItem(
+						text = "Edit", 
+						iconResId = R.drawable.paintbrush, 
+						cornerRadius = 32.dp,
+						action = {
+							showEditingView.value = true
+						}
+					)
 
 					val showDeleteDialog = remember { mutableStateOf(false) }
 					BottomAppBarItem(
 						text = "Delete",
 						iconResId = R.drawable.trash,
+						cornerRadius = 32.dp,
 						dialogComposable = {
 							ConfirmationDialog(
 								showDialog = showDeleteDialog,
@@ -384,6 +420,7 @@ private fun BottomBar(
 					BottomAppBarItem(
 						text = "Secure",
 						iconResId = R.drawable.locked_folder,
+						cornerRadius = 32.dp,
 						dialogComposable = {
 							ConfirmationDialog(
 								showDialog = showMoveToSecureFolderDialog,

@@ -466,7 +466,6 @@ class MainActivity : ComponentActivity() {
                             selectedItemsList,
                         )
 
-                        // TODO: should merge with SingleTrashedPhotoView???? idfk wait for future
                         SingleHiddenPhotoView(navControllerLocal, window, scale, rotation, offset)
                     }
 

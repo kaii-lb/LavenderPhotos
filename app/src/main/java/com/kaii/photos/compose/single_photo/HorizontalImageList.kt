@@ -277,23 +277,13 @@ private fun Modifier.mediaModifier(
                     do {
                         val event = awaitPointerEvent()
 
-                        if (event.changes.size == 2 && event.calculateRotation() in -5f..5f) {
+                        if (event.changes.size == 2) {
                             scale.value *= event.calculateZoom()
                             scale.value = scale.value.coerceIn(0.75f, 5f)
 
-                            val origin = event.calculateCentroid(true)
-                            transformOrigin = TransformOrigin(
-                                pivotFractionX = origin.x / maxWidth.toPx(),
-                                pivotFractionY = origin.y / maxHeight.toPx()
-                            )
+							rotation.value += event.calculateRotation()
 
-                            event.changes.forEach {
-                                it.consume()
-                            }
-                        } else if (event.changes.size == 2) {
-                            rotation.value += event.calculateRotation()
-
-                            val origin = event.calculateCentroid(true)
+                            val origin = event.calculateCentroid()
                             transformOrigin = TransformOrigin(
                                 pivotFractionX = origin.x / maxWidth.toPx(),
                                 pivotFractionY = origin.y / maxHeight.toPx()

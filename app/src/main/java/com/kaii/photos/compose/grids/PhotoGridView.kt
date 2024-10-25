@@ -56,6 +56,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
@@ -344,7 +345,9 @@ fun DeviceMedia(
 						slideOutHorizontally { width -> width }
 				) {
 					val visibleItemIndex = remember { derivedStateOf { gridState.firstVisibleItemIndex } }
-					val percentScrolled = (visibleItemIndex.value / totalLeftOverItems)
+					val percentScrolled by remember { derivedStateOf {
+						visibleItemIndex.value / totalLeftOverItems
+					}}
 
 					Slider (
 						value = percentScrolled,

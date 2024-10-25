@@ -79,6 +79,7 @@ import kotlinx.coroutines.withContext
 fun BottomAppBarItem(
     text: String,
     iconResId: Int,
+    modifier: Modifier = Modifier,
     buttonWidth: Dp = 64.dp,
     buttonHeight: Dp = 56.dp,
     iconSize: Dp = 24.dp,
@@ -89,7 +90,7 @@ fun BottomAppBarItem(
     action: (() -> Unit)? = null,
     dialogComposable: (@Composable () -> Unit)? = null
 ) {
-    val modifier = if (action != null) {
+    val clickModifier = if (action != null) {
         Modifier.clickable(
             interactionSource = remember { MutableInteractionSource() },
             indication = if (!showRipple) null else LocalIndication.current
@@ -107,6 +108,7 @@ fun BottomAppBarItem(
             .width(buttonWidth)
             .height(buttonHeight)
             .clip(RoundedCornerShape(cornerRadius))
+            .then(clickModifier)
             .then(modifier),
     ) {
         Row(
@@ -560,7 +562,10 @@ fun IsSelectingTopBar(selectedItemsList: SnapshotStateList<MediaStoreData>) {
                         .background(CustomMaterialTheme.colorScheme.surfaceContainer)
                         .padding(12.dp, 0.dp, 16.dp, 0.dp)
                         .animateContentSize()
-                        .clickable {
+                        .clickable (
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) {
                             selectedItemsList.clear()
                         },
                     verticalAlignment = Alignment.CenterVertically,
@@ -593,9 +598,7 @@ fun IsSelectingTopBar(selectedItemsList: SnapshotStateList<MediaStoreData>) {
                         } else {
                             selectedItemsList.clear()
 
-                            for (item in allItemsList) {
-                                selectedItemsList.add(item)
-                            }
+                            selectedItemsList.addAll(allItemsList)
                         }
                     }
                 },

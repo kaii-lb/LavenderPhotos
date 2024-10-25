@@ -23,6 +23,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
@@ -46,6 +47,7 @@ import com.kaii.photos.models.gallery_model.groupPhotosBy
 import com.kaii.photos.models.search_page.SearchViewModel
 import com.kaii.photos.models.search_page.SearchViewModelFactory
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.plus
@@ -86,9 +88,10 @@ fun SearchPage(
     ) {
         val searchedForText = rememberSaveable { mutableStateOf("") }
         var searchNow by rememberSaveable { mutableStateOf(false) }
+        var hideLoadingSpinner by remember { mutableStateOf(false) }
         val showLoadingSpinner by remember {
             derivedStateOf {
-                groupedMedia.value.isEmpty()
+                if (groupedMedia.value.isEmpty()) true else !hideLoadingSpinner
             }
         }
 
@@ -126,57 +129,75 @@ fun SearchPage(
 
             if (searchedForText.value == "") {
                 groupedMedia.value = originalGroupedMedia.value
+                hideLoadingSpinner = true
             }
         }
 
+        LaunchedEffect(hideLoadingSpinner) {
+            if (!hideLoadingSpinner) {
+                delay(10000)
+                hideLoadingSpinner = true
+            }
+        }
+
+        val coroutineScope = rememberCoroutineScope()
         LaunchedEffect(key1 = searchedForText.value) {
-            // if (!searchNow) return@LaunchedEffect
-
-            groupedMedia.value = emptyList()
-
             if (searchedForText.value == "") {
                 groupedMedia.value = originalGroupedMedia.value
                 return@LaunchedEffect
             }
 
-            launch(Dispatchers.IO) {
-                val possibleDate = searchedForText.value.toDateListOrNull()
+            hideLoadingSpinner = false
+
+            coroutineScope.launch {
+                val possibleDate = searchedForText.value.trim().toDateListOrNull()
                 if (possibleDate.component1() != null) {
                     val local = originalGroupedMedia.value.filter {
                         it.type != MediaType.Section &&
-                                (possibleDate.getOrNull(0)?.toDayLong()?.let { date -> it.getDateTakenDay() == date } ?: false ||
-                                        possibleDate.getOrNull(1)?.toDayLong()?.let { date -> it.getDateTakenDay() == date } ?: false ||
-                                        possibleDate.getOrNull(2)?.toDayLong()?.let { date -> it.getDateTakenDay() == date } ?: false ||
-                                        possibleDate.getOrNull(3)?.toDayLong()?.let { date -> it.getDateTakenDay() == date } ?: false)
+                                (possibleDate.getOrNull(0)?.toDayLong()
+                                    ?.let { date -> it.getDateTakenDay() == date } ?: false ||
+                                        possibleDate.getOrNull(1)?.toDayLong()
+                                            ?.let { date -> it.getDateTakenDay() == date } ?: false ||
+                                        possibleDate.getOrNull(2)?.toDayLong()
+                                            ?.let { date -> it.getDateTakenDay() == date } ?: false ||
+                                        possibleDate.getOrNull(3)?.toDayLong()
+                                            ?.let { date -> it.getDateTakenDay() == date } ?: false)
                     }
 
                     groupedMedia.value = groupPhotosBy(local, MediaItemSortMode.DateTaken)
                     gridState.scrollToItem(0)
+                    hideLoadingSpinner = true
+
                     return@launch
                 }
 
-                val onlyMonthYearSplit = searchedForText.value.split(" ")
-                val month = months.firstOrNull { onlyMonthYearSplit[0] in it }
-                val year = onlyMonthYearSplit[1]
-                if (onlyMonthYearSplit.size == 2 && year.contains(Regex("[0-9]{4}")) && month != null && year.toIntOrNull() != null) {
-                    val calendar = Calendar.getInstance().apply {
-                        set(Calendar.YEAR, year.toIntOrNull()!!)
-                        set(Calendar.MONTH, months.indexOf(month))
-                        set(Calendar.DAY_OF_MONTH, 0)
-                        set(Calendar.HOUR_OF_DAY, 0)
-                        set(Calendar.MINUTE, 0)
-                        set(Calendar.SECOND, 0)
-                        set(Calendar.MILLISECOND, 0)
-                    }
+                val onlyMonthYearSplit = searchedForText.value.trim().split(" ")
+                if (onlyMonthYearSplit.size == 2) {
+                    val month = months.firstOrNull { onlyMonthYearSplit[0] in it }
+                    val year = onlyMonthYearSplit[1]
 
-                    val local = originalGroupedMedia.value.filter {
-                        it.type != MediaType.Section &&
-                                it.getDateTakenMonth() == calendar.timeInMillis / 1000
-                    }
+                    if (year.contains(Regex("[0-9]{4}")) && month != null && year.toIntOrNull() != null) {
+                        val calendar = Calendar.getInstance().apply {
+                            set(Calendar.YEAR, year.toIntOrNull()!!)
+                            set(Calendar.MONTH, months.indexOf(month))
+                            set(Calendar.DAY_OF_MONTH, 0)
+                            set(Calendar.HOUR_OF_DAY, 0)
+                            set(Calendar.MINUTE, 0)
+                            set(Calendar.SECOND, 0)
+                            set(Calendar.MILLISECOND, 0)
+                        }
 
-                    groupedMedia.value = local
-                    gridState.scrollToItem(0)
-                    return@launch
+                        val local = originalGroupedMedia.value.filter {
+                            it.type != MediaType.Section &&
+                                    it.getDateTakenMonth() == calendar.timeInMillis / 1000
+                        }
+
+                        groupedMedia.value = groupPhotosBy(local, MediaItemSortMode.DateTaken)
+                        gridState.scrollToItem(0)
+                        hideLoadingSpinner = true
+
+                        return@launch
+                    }
                 }
 
                 val groupedMediaLocal = originalGroupedMedia.value.filter {
@@ -185,8 +206,10 @@ fun SearchPage(
                         it.displayName?.contains(searchedForText.value.trim(), true) == true
                     isMedia && matchesFilter
                 }
+
                 groupedMedia.value = groupPhotosBy(groupedMediaLocal, MediaItemSortMode.DateTaken)
                 gridState.scrollToItem(0)
+                hideLoadingSpinner = true
             }
         }
 

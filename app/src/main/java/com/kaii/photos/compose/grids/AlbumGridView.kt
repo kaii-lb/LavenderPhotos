@@ -169,10 +169,6 @@ private fun AlbumGridItem(
 			.combinedClickable(
 				onClick = {
 					onClick()
-				},
-
-				onLongClick = {
-					// TODO: select item
 				}
 			),
 		verticalArrangement = Arrangement.SpaceEvenly,
