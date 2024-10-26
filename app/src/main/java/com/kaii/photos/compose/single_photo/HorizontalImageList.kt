@@ -266,7 +266,8 @@ private fun Modifier.mediaModifier(
                         }
                     }
                 )
-
+            }
+            .pointerInput(Unit) {
                 awaitEachGesture {
                     var localRotation = 0f
                     var localZoom = 1f
