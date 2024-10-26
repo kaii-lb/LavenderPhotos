@@ -207,6 +207,8 @@ fun SinglePhotoView(
 				}
 			}
 		} else {
+			appBarsVisible.value = true
+			systemBarsShown.value = true
 			EditingView(currentMediaItem.value.uri, showEditingView)
 		}
 	}

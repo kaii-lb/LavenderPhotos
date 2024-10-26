@@ -56,6 +56,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
@@ -162,7 +164,7 @@ private fun EditingViewBottomBar(pagerState: PagerState) {
         modifier = Modifier
             .background(CustomMaterialTheme.colorScheme.surfaceContainer)
             .fillMaxWidth(1f)
-            .height(180.dp)
+            .height(160.dp)
             .padding(0.dp, 0.dp, 0.dp, 40.dp)
     ) {
         val coroutineScope = rememberCoroutineScope()
@@ -173,6 +175,7 @@ private fun EditingViewBottomBar(pagerState: PagerState) {
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+        	// TODO: use composition local to make ripple go away
             TabRow(
                 selectedTabIndex = pagerState.currentPage,
                 divider = {},
@@ -228,7 +231,8 @@ private fun EditingViewBottomBar(pagerState: PagerState) {
                 ) {
                     Text(
                     	text = "Crop",
-                    	color = if (pagerState.currentPage == 0) CustomMaterialTheme.colorScheme.onPrimary else CustomMaterialTheme.colorScheme.onSurface
+                    	color = if (pagerState.currentPage == 0) CustomMaterialTheme.colorScheme.onPrimary else CustomMaterialTheme.colorScheme.onSurface,
+                    	fontSize = TextUnit(14f, TextUnitType.Sp)
                    	)
                 }
 
@@ -246,7 +250,8 @@ private fun EditingViewBottomBar(pagerState: PagerState) {
                 ) {
                     Text(
                     	text = "Adjust",
-                    	color = if (pagerState.currentPage == 1) CustomMaterialTheme.colorScheme.onPrimary else CustomMaterialTheme.colorScheme.onSurface
+                    	color = if (pagerState.currentPage == 1) CustomMaterialTheme.colorScheme.onPrimary else CustomMaterialTheme.colorScheme.onSurface,
+                    	fontSize = TextUnit(14f, TextUnitType.Sp)
                    	)
                 }
 
@@ -264,7 +269,8 @@ private fun EditingViewBottomBar(pagerState: PagerState) {
                 ) {
                     Text(
                     	text = "Filters",
-                    	color = if (pagerState.currentPage == 2) CustomMaterialTheme.colorScheme.onPrimary else CustomMaterialTheme.colorScheme.onSurface
+                    	color = if (pagerState.currentPage == 2) CustomMaterialTheme.colorScheme.onPrimary else CustomMaterialTheme.colorScheme.onSurface,
+                    	fontSize = TextUnit(14f, TextUnitType.Sp)
                    	)
                 }
 
@@ -282,7 +288,8 @@ private fun EditingViewBottomBar(pagerState: PagerState) {
                 ) {
                     Text(
                     	text = "Draw",
-                    	color = if (pagerState.currentPage == 3) CustomMaterialTheme.colorScheme.onPrimary else CustomMaterialTheme.colorScheme.onSurface
+                    	color = if (pagerState.currentPage == 3) CustomMaterialTheme.colorScheme.onPrimary else CustomMaterialTheme.colorScheme.onSurface,
+                    	fontSize = TextUnit(14f, TextUnitType.Sp)
                    	)
                 }
             }

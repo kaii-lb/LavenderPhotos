@@ -8,33 +8,37 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.calculateCentroid
+import androidx.compose.foundation.gestures.calculateCentroidSize
 import androidx.compose.foundation.gestures.calculatePan
 import androidx.compose.foundation.gestures.calculateRotation
 import androidx.compose.foundation.gestures.calculateZoom
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowInsetsCompat
 import androidx.media3.common.util.UnstableApi
@@ -44,15 +48,18 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.kaii.photos.R
+import com.kaii.photos.helpers.rememberVibratorManager
+import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.signature
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.cos
+import kotlin.math.roundToInt
+import kotlin.math.PI
 import kotlin.math.sin
 
 @androidx.annotation.OptIn(UnstableApi::class)
@@ -91,7 +98,7 @@ fun HorizontalImageList(
             }
         },
         snapPosition = SnapPosition.Center,
-        userScrollEnabled = scale.value == 1f,
+        userScrollEnabled = scale.value == 1f && rotation.value == 0f && offset.value == Offset.Zero,
         modifier = Modifier
             .fillMaxHeight(1f)
     ) { index ->
@@ -135,7 +142,7 @@ fun HorizontalImageList(
                 }
             }
 
-            BoxWithConstraints (
+            Box (
                 modifier = Modifier
                     .fillMaxSize(1f)
             ) {
@@ -160,13 +167,11 @@ fun HorizontalImageList(
                             appBarsVisible = appBarsVisible,
                             item = mediaStoreItem,
                             showVideoPlayerController = showVideoPlayerControls,
-                            maxWidth,
-                            maxHeight
                         )
                 )
             }
         } else {
-            BoxWithConstraints(
+            Box (
                 modifier = Modifier
                     .fillMaxSize(1f)
             ) {
@@ -184,9 +189,7 @@ fun HorizontalImageList(
                             systemBarsShown = systemBarsShown,
                             window = window,
                             windowInsetsController = windowInsetsController,
-                            appBarsVisible = appBarsVisible,
-                            maxWidth = maxWidth,
-                            maxHeight = maxHeight
+                            appBarsVisible = appBarsVisible
                         )
                 ) {
                     it.signature(mediaStoreItem.signature())
@@ -210,102 +213,128 @@ private fun Modifier.mediaModifier(
     appBarsVisible: MutableState<Boolean>,
     item: MediaStoreData? = null,
     showVideoPlayerController: MutableState<Boolean>? = null,
-    maxWidth: Dp,
-    maxHeight: Dp
 ): Modifier {
     val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
-    var transformOrigin by remember { mutableStateOf(TransformOrigin(0.5f, 0.5f)) }
 
     return this.then(
         Modifier
-            .combinedClickable(
-                indication = null,
-                interactionSource = remember { MutableInteractionSource() },
-                onClick = {
-                    if (systemBarsShown.value) {
-                        windowInsetsController.apply {
-                            hide(WindowInsetsCompat.Type.systemBars())
-                            systemBarsBehavior =
-                                WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-                        }
-                        window.setDecorFitsSystemWindows(false)
-                        systemBarsShown.value = false
-                        appBarsVisible.value = false
-
-                        if (!isLandscape) showVideoPlayerController?.value = false
-                    } else {
-                        windowInsetsController.show(WindowInsetsCompat.Type.systemBars())
-                        window.setDecorFitsSystemWindows(false)
-                        systemBarsShown.value = true
-                        appBarsVisible.value = true
-
-                        if (!isLandscape) showVideoPlayerController?.value = true
-                    }
-                },
-
-                onDoubleClick = {
-                    if (item?.type == MediaType.Video && showVideoPlayerController != null) {
-                        if (isLandscape) showVideoPlayerController.value =
-                            !showVideoPlayerController.value
-                    } else {
-                        if (scale.value == 1f) {
-                            scale.value = 2f
-                            rotation.value = 0f
-                            offset.value = Offset.Zero
-                        } else {
-                            scale.value = 1f
-                            rotation.value = 0f
-                            offset.value = Offset.Zero
-                        }
-                    }
-                },
-            )
             .graphicsLayer(
                 scaleX = scale.value,
                 scaleY = scale.value,
                 rotationZ = rotation.value,
                 translationX = -offset.value.x * scale.value,
                 translationY = -offset.value.y * scale.value,
-                transformOrigin = transformOrigin//TransformOrigin(0.5f, 0.5f)
+                transformOrigin = TransformOrigin(0f, 0f)
             )
             .pointerInput(Unit) {
-                // loop over each gesture and consume only those we care about
-                // so we don't interfere with other gestures
+				detectTapGestures(
+                    onTap = {
+                        if (systemBarsShown.value) {
+                            windowInsetsController.apply {
+                                hide(WindowInsetsCompat.Type.systemBars())
+                                systemBarsBehavior =
+                                    WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                            }
+                            window.setDecorFitsSystemWindows(false)
+                            systemBarsShown.value = false
+                            appBarsVisible.value = false
+
+                            if (!isLandscape) showVideoPlayerController?.value = false
+                        } else {
+                            windowInsetsController.show(WindowInsetsCompat.Type.systemBars())
+                            window.setDecorFitsSystemWindows(false)
+                            systemBarsShown.value = true
+                            appBarsVisible.value = true
+
+                            if (!isLandscape) showVideoPlayerController?.value = true
+                        }
+                    },
+
+                    onDoubleTap = { clickOffset ->
+                        if (item?.type == MediaType.Video && showVideoPlayerController != null) {
+                            if (isLandscape) showVideoPlayerController.value = !showVideoPlayerController.value
+                        } else {
+                            if (scale.value == 1f && offset.value == Offset.Zero) {
+                                scale.value = 2f
+                                rotation.value = 0f
+                                offset.value = clickOffset / scale.value
+                            } else {
+                                scale.value = 1f
+                                rotation.value = 0f
+                                offset.value = Offset.Zero
+                            }
+                        }
+                    }
+                )
+
                 awaitEachGesture {
+                    var localRotation = 0f
+                    var localZoom = 1f
+                    var localOffset = Offset.Zero
+                    var pastTouchSlop = false
+                    var panZoomLock = false
+                    val touchSlop = viewConfiguration.touchSlop
+
                     awaitFirstDown()
 
                     do {
                         val event = awaitPointerEvent()
 
-                        if (event.changes.size == 2) {
-                            scale.value *= event.calculateZoom()
-                            scale.value = scale.value.coerceIn(0.75f, 5f)
+                        // ignore gesture if it is already consumed or user is not using two fingers
+                        val canceled =
+                            event.changes.any { it.isConsumed }
 
-							rotation.value += event.calculateRotation()
+                        if (!canceled) {
+                            val zoomChange = event.calculateZoom()
+                            val rotationChange = event.calculateRotation()
+                            val offsetChange = event.calculatePan()
 
-                            val origin = event.calculateCentroid()
-                            transformOrigin = TransformOrigin(
-                                pivotFractionX = origin.x / maxWidth.toPx(),
-                                pivotFractionY = origin.y / maxHeight.toPx()
-                            )
+                            if (!pastTouchSlop) {
+                                localZoom *= zoomChange
+                                localRotation += rotationChange
+                                localOffset += offsetChange
 
-                            event.changes.forEach {
-                                it.consume()
-                            }
-                        } else if (event.changes.size == 1 && event.calculatePan() != Offset.Zero) {
-                            if (scale.value != 1f) {
-                                // this is from android docs, i have no clue what the math here is xD
-                                offset.value = (offset.value + Offset(0.5f, 0.5f) / scale.value) -
-                                        (Offset(0.5f, 0.5f) / scale.value + event
-                                            .calculatePan()
-                                            .rotateBy(rotation.value))
+                                val centroidSize = event.calculateCentroidSize()
 
-                                event.changes.forEach {
-                                    it.consume()
+                                // were basically getting the amount of change here
+                                val zoomMotion = abs(1 - localZoom) * centroidSize
+                                val rotationMotion = abs(localRotation * PI.toFloat() * centroidSize / 180f)
+                                val offsetMotion = localOffset.getDistance()
+
+                                // calculate the amount of movement/zoom/rotation happening and if its past a certain point
+                                // then go ahead and try to apply the gestures
+                                if (zoomMotion > touchSlop || rotationMotion > touchSlop || offsetMotion > touchSlop) {
+                                    pastTouchSlop = true
+                                    panZoomLock = rotationMotion < touchSlop
                                 }
                             }
+
+                            if (pastTouchSlop) {
+								val centroid = event.calculateCentroid()
+
+                                // ignore rotation if user is moving or zooming, QOL thing
+                                val actualRotation = if (panZoomLock) 0f else rotationChange
+
+                                if (actualRotation != 0f || zoomChange != 1f || offsetChange != Offset.Zero) {
+                                    val oldScale = scale.value
+
+                                    scale.value = (scale.value * zoomChange).coerceIn(1f, 5f)
+									rotation.value += actualRotation
+
+                                    // compensate for change of visual center of image and offset by that
+                                    // this makes it "cleaner" to scale since the image isn't bouncing around when the user moves or scales it
+                                    offset.value = if (scale.value == 1f && rotation.value == 0f) Offset.Zero else
+                                        (offset.value + centroid / oldScale).rotateBy(actualRotation) - (centroid / scale.value + offsetChange.rotateBy(rotation.value + actualRotation))
+                                }
+
+								if (offset.value != Offset.Zero || event.changes.size == 2 || scale.value != 1f) {
+	                                event.changes.forEach {
+	                                    it.consume()
+	                                }
+								}
+                            }
                         }
-                    } while (event.changes.any { it.pressed } && showVideoPlayerController == null)
+                    } while (!canceled && event.changes.any { it.pressed } && showVideoPlayerController == null)
                 }
             })
 }
@@ -337,7 +366,7 @@ fun sortOutMediaMods(
 }
 
 fun Offset.rotateBy(angle: Float): Offset {
-    val angleInRadians = angle * (PI / 180)
+    val angleInRadians = angle * PI / 180
     val cos = cos(angleInRadians)
     val sin = sin(angleInRadians)
 
@@ -346,11 +375,3 @@ fun Offset.rotateBy(angle: Float): Offset {
         (x * sin + y * cos).toFloat()
     )
 }
-
-//private fun LazyListState.itemIsVisible(item: MediaStoreData, list: List<MediaStoreData>) : Boolean {
-//    if (list.isEmpty()) return false
-//
-//    return layoutInfo.visibleItemsInfo.map {
-//        list[it.index]
-//    }.contains(item)
-//}
