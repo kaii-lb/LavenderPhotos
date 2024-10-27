@@ -26,6 +26,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -215,6 +216,7 @@ private fun Modifier.mediaModifier(
     showVideoPlayerController: MutableState<Boolean>? = null,
 ): Modifier {
     val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+	val vibratorManager = rememberVibratorManager()
 
     return this.then(
         Modifier
@@ -314,18 +316,37 @@ private fun Modifier.mediaModifier(
 								val centroid = event.calculateCentroid()
 
                                 // ignore rotation if user is moving or zooming, QOL thing
-                                val actualRotation = if (panZoomLock) 0f else rotationChange
+                                var actualRotation = if (panZoomLock) 0f else rotationChange
 
                                 if (actualRotation != 0f || zoomChange != 1f || offsetChange != Offset.Zero) {
                                     val oldScale = scale.value
 
-                                    scale.value = (scale.value * zoomChange).coerceIn(1f, 5f)
-									rotation.value += actualRotation
+									if (panZoomLock) {
+										scale.value = (scale.value * zoomChange).coerceIn(1f, 5f)
+									}
 
+									val nextRotation = rotation.value + actualRotation
+
+									val closestPoint = (nextRotation / 360f).roundToInt() * 360f
+									val delta = abs(closestPoint - nextRotation)
+									if (
+										delta < 2.5f &&
+										scale.value == 1f &&
+										rotation.value != closestPoint
+									) {
+										vibratorManager.vibrateShort()
+										rotation.value = closestPoint
+									} else if (delta > 2.5f || scale.value != 1f) {
+										rotation.value = nextRotation
+									}
+
+
+									var isRotating = actualRotation != 0f
+									val counterOffset = if (isRotating) offsetChange else Offset.Zero
                                     // compensate for change of visual center of image and offset by that
                                     // this makes it "cleaner" to scale since the image isn't bouncing around when the user moves or scales it
                                     offset.value = if (scale.value == 1f && rotation.value == 0f) Offset.Zero else
-                                        (offset.value + centroid / oldScale).rotateBy(actualRotation) - (centroid / scale.value + offsetChange.rotateBy(rotation.value + actualRotation))
+                                        (offset.value + centroid / oldScale).rotateBy(actualRotation) - (centroid / scale.value + (offsetChange - counterOffset).rotateBy(rotation.value + actualRotation))
                                 }
 
 								if (offset.value != Offset.Zero || event.changes.size == 2 || scale.value != 1f) {

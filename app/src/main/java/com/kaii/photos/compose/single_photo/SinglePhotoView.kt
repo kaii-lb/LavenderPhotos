@@ -3,6 +3,7 @@ package com.kaii.photos.compose.single_photo
 import android.annotation.SuppressLint
 import android.content.res.Configuration
 import android.view.Window
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -15,21 +16,33 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ModalBottomSheetProperties
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -47,6 +60,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalConfiguration
@@ -79,6 +93,7 @@ import com.kaii.photos.models.favourites_grid.FavouritesViewModelFactory
 
 //private const val TAG = "SINGLE_PHOTO_VIEW"
 
+@OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun SinglePhotoView(
@@ -127,89 +142,86 @@ fun SinglePhotoView(
 
 	val showEditingView = remember { mutableStateOf(false) }
 
-	AnimatedContent(
-		targetState = !showEditingView.value,
-		modifier = Modifier
-			.fillMaxSize(1f),
-		transitionSpec = {
-			(
-				slideInHorizontally { width -> -width } + fadeIn()
-			).togetherWith(
-				slideOutHorizontally { width -> width } + fadeOut()
-			)
-		},
-		label = "Animate between single photo and editing view"
-	) { targetState ->
-		if (targetState) {
-			Scaffold (
-				topBar =  {
-					TopBar(
-						mediaItem = currentMediaItem.value,
-						visible = appBarsVisible.value,
-						showInfoDialog = showInfoDialog,
-						removeIfInFavGrid = {
-							if (navController.previousBackStackEntry?.destination?.route == MultiScreenViewType.FavouritesGridView.name) {
-								sortOutMediaMods(
-									currentMediaItem.value,
-									groupedMedia,
-									coroutineScope,
-									state
-								) {
-									navController.popBackStack()
-								}
-							}
-						},
-						onBackClick = {
+	Scaffold (
+		topBar =  {
+			TopBar(
+				mediaItem = currentMediaItem.value,
+				visible = appBarsVisible.value,
+				showInfoDialog = showInfoDialog,
+				removeIfInFavGrid = {
+					if (navController.previousBackStackEntry?.destination?.route == MultiScreenViewType.FavouritesGridView.name) {
+						sortOutMediaMods(
+							currentMediaItem.value,
+							groupedMedia,
+							coroutineScope,
+							state
+						) {
 							navController.popBackStack()
 						}
-					)
-				},
-				bottomBar = {
-					BottomBar(
-						appBarsVisible.value,
-						currentMediaItem.value,
-						state = state,
-						groupedMedia = groupedMedia,
-						showEditingView = showEditingView
-					) {
-						navController.popBackStack()
 					}
 				},
-				containerColor = CustomMaterialTheme.colorScheme.background,
-				contentColor = CustomMaterialTheme.colorScheme.onBackground
-			) {  _ ->
-				SinglePhotoInfoDialog(
-					showInfoDialog,
-					currentMediaItem.value,
-					groupedMedia
-				)
-
-				Column (
-					modifier = Modifier
-						.padding(0.dp)
-						.background(CustomMaterialTheme.colorScheme.background)
-						.fillMaxSize(1f),
-					verticalArrangement = Arrangement.Center,
-					horizontalAlignment = Alignment.CenterHorizontally
-				) {
-					HorizontalImageList(
-						navController,
-						currentMediaItem.value,
-						groupedMedia.value,
-						state,
-						scale,
-						rotation,
-						offset,
-						systemBarsShown,
-						window,
-						appBarsVisible
-					)
+				onBackClick = {
+					navController.popBackStack()
 				}
+			)
+		},
+		bottomBar = {
+			BottomBar(
+				appBarsVisible.value,
+				currentMediaItem.value,
+				state = state,
+				groupedMedia = groupedMedia,
+				showEditingView = showEditingView
+			) {
+				navController.popBackStack()
 			}
-		} else {
-			appBarsVisible.value = true
-			systemBarsShown.value = true
-			EditingView(currentMediaItem.value.uri, showEditingView)
+		},
+		containerColor = CustomMaterialTheme.colorScheme.background,
+		contentColor = CustomMaterialTheme.colorScheme.onBackground
+	) {  _ ->
+		SinglePhotoInfoDialog(
+			showInfoDialog,
+			currentMediaItem.value,
+			groupedMedia
+		)
+
+		Column (
+			modifier = Modifier
+				.padding(0.dp)
+				.background(CustomMaterialTheme.colorScheme.background)
+				.fillMaxSize(1f),
+			verticalArrangement = Arrangement.Center,
+			horizontalAlignment = Alignment.CenterHorizontally
+		) {
+			HorizontalImageList(
+				navController,
+				currentMediaItem.value,
+				groupedMedia.value,
+				state,
+				scale,
+				rotation,
+				offset,
+				systemBarsShown,
+				window,
+				appBarsVisible
+			)
+		}
+	}
+
+	AnimatedVisibility(
+		visible = showEditingView.value,
+		enter = slideInVertically { height -> height } + fadeIn(),
+		exit = slideOutVertically { height -> height } + fadeOut()
+	) {
+		val showDialog = remember { mutableStateOf(false) }
+
+		appBarsVisible.value = true
+		systemBarsShown.value = true
+
+		EditingView(currentMediaItem.value.uri, showDialog)
+
+		ConfirmationDialog(showDialog = showDialog, dialogTitle = "Discard ongoing edits?", confirmButtonLabel = "Discard") {
+			showEditingView.value = false
 		}
 	}
 }
