@@ -85,6 +85,7 @@ fun BottomAppBarItem(
     iconSize: Dp = 24.dp,
     textSize: Float = 14f,
     color: Color = Color.Transparent,
+    contentColor: Color = CustomMaterialTheme.colorScheme.onBackground,
     showRipple: Boolean = true,
     cornerRadius: Dp = 1000.dp,
     action: (() -> Unit)? = null,
@@ -124,6 +125,7 @@ fun BottomAppBarItem(
             Icon(
                 painter = painterResource(id = iconResId),
                 contentDescription = "button",
+                tint = contentColor,
                 modifier = Modifier
                     .size(iconSize)
             )
@@ -132,6 +134,7 @@ fun BottomAppBarItem(
         Text(
             text = text,
             fontSize = TextUnit(textSize, TextUnitType.Sp),
+            color = CustomMaterialTheme.colorScheme.onBackground,
             modifier = Modifier
                 .wrapContentSize()
                 .align(Alignment.BottomCenter)

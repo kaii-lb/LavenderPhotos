@@ -1,5 +1,8 @@
 package com.kaii.photos.helpers
 
+import android.net.Uri
+import kotlinx.serialization.Serializable
+
 enum class MultiScreenViewType {
     MainScreen,
     SinglePhotoView,
@@ -9,5 +12,11 @@ enum class MultiScreenViewType {
     LockedFolderView,
     SingleHiddenPhotoVew,
     AboutAndUpdateView,
-    FavouritesGridView
+    FavouritesGridView,
+    EditingView
 }
+
+@Serializable
+data class EditingScreen(
+    val imagePath: String
+)

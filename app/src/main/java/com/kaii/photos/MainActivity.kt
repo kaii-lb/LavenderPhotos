@@ -19,11 +19,15 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -48,6 +52,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowInsetsCompat
 import androidx.datastore.core.DataStore
@@ -55,10 +60,14 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavArgument
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import androidx.navigation.toRoute
 import androidx.room.Room
 import com.bumptech.glide.Glide
 import com.bumptech.glide.MemoryCategory
@@ -79,12 +88,14 @@ import com.kaii.photos.compose.grids.PhotoGrid
 import com.kaii.photos.compose.grids.SearchPage
 import com.kaii.photos.compose.grids.SingleAlbumView
 import com.kaii.photos.compose.grids.TrashedPhotoGridView
+import com.kaii.photos.compose.single_photo.EditingView
 import com.kaii.photos.compose.single_photo.SingleHiddenPhotoView
 import com.kaii.photos.compose.single_photo.SinglePhotoView
 import com.kaii.photos.compose.single_photo.SingleTrashedPhotoView
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.addToAlbumsList
 import com.kaii.photos.datastore.getAlbumsList
+import com.kaii.photos.helpers.EditingScreen
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
@@ -313,30 +324,30 @@ class MainActivity : ComponentActivity() {
                         .background(CustomMaterialTheme.colorScheme.background),
                     enterTransition = {
                         slideInHorizontally(
-                            animationSpec = tween(
-                                durationMillis = 350
-                            )
+	                        animationSpec = tween(
+	                        	durationMillis = 350
+	                        )
                         ) { width -> width } + fadeIn()
                     },
                     exitTransition = {
                         slideOutHorizontally(
-                            animationSpec = tween(
-                                durationMillis = 350
-                            )
+	                        animationSpec = tween(
+	                        	durationMillis = 350
+	                        )
                         ) { width -> -width } + fadeOut()
                     },
                     popExitTransition = {
                         slideOutHorizontally(
-                            animationSpec = tween(
-                                durationMillis = 350
-                            )
+	                        animationSpec = tween(
+	                        	durationMillis = 350
+	                        )
                         ) { width -> width } + fadeOut()
                     },
                     popEnterTransition = {
                         slideInHorizontally(
-                            animationSpec = tween(
-                                durationMillis = 350
-                            )
+	                        animationSpec = tween(
+	                        	durationMillis = 350
+	                        )
                         ) { width -> -width } + fadeIn()
                     }
                 ) {
@@ -362,7 +373,31 @@ class MainActivity : ComponentActivity() {
                         Content(currentView, navControllerLocal, showDialog, selectedItemsList)
                     }
 
-                    composable(MultiScreenViewType.SinglePhotoView.name) {
+                    composable(
+                    	route = MultiScreenViewType.SinglePhotoView.name,
+                        popEnterTransition = {
+                            slideInHorizontally	(
+		                        animationSpec = tween(
+		                        	durationMillis = 350
+		                        )
+                            ) { height -> -height } + fadeIn(
+                                animationSpec = tween(
+                                    durationMillis = 350
+                                )
+                            )
+                        },
+                        popExitTransition = {
+                            slideOutHorizontally(
+		                        animationSpec = tween(
+		                        	durationMillis = 350
+		                        )
+                            ) { height -> height } + fadeOut(
+                                animationSpec = tween(
+                                    durationMillis = 350
+                                )
+                            )
+                        }
+                    ) {
                         enableEdgeToEdge(
                             navigationBarStyle = SystemBarStyle.dark(
                                 CustomMaterialTheme.colorScheme.surfaceContainer.copy(
@@ -503,6 +538,72 @@ class MainActivity : ComponentActivity() {
                         FavouritesGridView(
                             navController = navControllerLocal,
                             selectedItemsList = selectedItemsList
+                        )
+                    }
+
+                    composable<EditingScreen>(
+                        enterTransition = {
+                            slideInVertically(
+		                        animationSpec = tween(
+		                        	durationMillis = 350
+		                        )
+                            ) { height -> height } + fadeIn(
+                                animationSpec = tween(
+                                    durationMillis = 350
+                                )
+                            )
+                        },
+                        exitTransition = {
+                            slideOutVertically(
+		                        animationSpec = tween(
+		                        	durationMillis = 350
+		                        )
+                            ) { height -> height } + fadeOut(
+                                animationSpec = tween(
+                                    durationMillis = 350
+                                )
+                            )
+                        },
+                        popEnterTransition = {
+                            slideInVertically(
+		                        animationSpec = tween(
+		                        	durationMillis = 350
+		                        )
+                            ) { height -> height } + fadeIn(
+                                animationSpec = tween(
+                                    durationMillis = 350
+                                )
+                            )
+                        },
+                        popExitTransition = {
+                            slideOutVertically(
+		                        animationSpec = tween(
+		                        	durationMillis = 350
+		                        )
+                            ) { height -> height } + fadeOut(
+                                animationSpec = tween(
+                                    durationMillis = 350
+                                )
+                            )
+                        }
+                    ) {
+                        enableEdgeToEdge(
+                            navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.background.toArgb()),
+                            statusBarStyle = SystemBarStyle.auto(
+                                CustomMaterialTheme.colorScheme.background.toArgb(),
+                                CustomMaterialTheme.colorScheme.background.toArgb()
+                            )
+                        )
+                        setupNextScreen(
+                            context,
+                            windowInsetsController,
+                            selectedItemsList,
+                        )
+
+                        val screen: EditingScreen = it.toRoute()
+                        EditingView(
+                            navController = navControllerLocal,
+                            uri = screen.imagePath.toUri()
                         )
                     }
                 }
