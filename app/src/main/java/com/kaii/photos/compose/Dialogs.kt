@@ -49,7 +49,6 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -96,6 +95,7 @@ import com.kaii.photos.datastore.editInAlbumsList
 import com.kaii.photos.datastore.getUsername
 import com.kaii.photos.datastore.removeFromAlbumsList
 import com.kaii.photos.datastore.setUsername
+import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.RowPosition

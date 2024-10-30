@@ -60,7 +60,7 @@ import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.BottomAppBarItem
 import com.kaii.photos.compose.ConfirmationDialog
-import com.kaii.photos.compose.CustomMaterialTheme
+import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.compose.SinglePhotoInfoDialog
 import com.kaii.photos.helpers.EditingScreen
 import com.kaii.photos.helpers.MultiScreenViewType
@@ -168,7 +168,12 @@ fun SinglePhotoView(
                     window.setDecorFitsSystemWindows(false)
                     systemBarsShown.value = true
                     appBarsVisible.value = true
-                    navController.navigate(EditingScreen(currentMediaItem.value.uri.toString()))
+                    navController.navigate(
+                    	EditingScreen(
+                    		absolutePath = currentMediaItem.value.absolutePath,
+                    		uri = currentMediaItem.value.uri.toString()
+                   		)
+                    )
                 },
                 onZeroItemsLeft = {
                     navController.popBackStack()

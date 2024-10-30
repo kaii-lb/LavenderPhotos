@@ -46,7 +46,7 @@ import com.bumptech.glide.integration.compose.placeholder
 import com.kaii.photos.MainActivity
 import com.kaii.photos.R
 import com.kaii.photos.datastore
-import com.kaii.photos.compose.CustomMaterialTheme
+import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.datastore.getAlbumsList
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.brightenColor

@@ -2,7 +2,6 @@ package com.kaii.photos.compose
 
 import android.content.Intent
 import android.net.Uri
-import android.os.CancellationSignal
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
@@ -63,7 +62,7 @@ import androidx.compose.ui.unit.dp
 import com.kaii.photos.MainActivity
 import com.kaii.photos.R
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
-import com.kaii.photos.helpers.ImageFunctions
+import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.moveImageOutOfLockedFolder
 import com.kaii.photos.helpers.permanentlyDeletePhotoList

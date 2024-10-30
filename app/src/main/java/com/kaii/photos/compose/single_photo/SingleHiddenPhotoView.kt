@@ -63,7 +63,7 @@ import com.kaii.photos.MainActivity
 import com.kaii.photos.R
 import com.kaii.photos.compose.ConfirmationDialog
 import com.kaii.photos.compose.ConfirmationDialogWithBody
-import com.kaii.photos.compose.CustomMaterialTheme
+import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.compose.DialogInfoText
 import com.kaii.photos.helpers.brightenColor
 import com.kaii.photos.helpers.getExifDataForMedia

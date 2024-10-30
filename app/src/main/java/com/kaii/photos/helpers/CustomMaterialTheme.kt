@@ -1,4 +1,4 @@
-package com.kaii.photos.compose
+package com.kaii.photos.helpers
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme

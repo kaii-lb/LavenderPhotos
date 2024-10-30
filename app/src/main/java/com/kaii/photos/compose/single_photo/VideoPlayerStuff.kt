@@ -1,11 +1,7 @@
 package com.kaii.photos.compose.single_photo
 
-import android.content.Context
 import android.content.res.Configuration
-import android.media.AudioFocusRequest
-import android.media.AudioManager
 import android.net.Uri
-import android.view.KeyEvent
 import android.view.ViewGroup
 import android.view.Window
 import android.view.WindowInsetsController
@@ -39,7 +35,6 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -81,10 +76,9 @@ import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.ui.PlayerView
 import androidx.navigation.NavHostController
 import com.kaii.photos.R
-import com.kaii.photos.compose.CustomMaterialTheme
+import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.mediastore.MediaStoreData
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes

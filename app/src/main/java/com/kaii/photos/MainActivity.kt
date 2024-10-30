@@ -19,8 +19,6 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -60,19 +58,16 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavArgument
 import androidx.navigation.NavHostController
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 import androidx.navigation.toRoute
 import androidx.room.Room
 import com.bumptech.glide.Glide
 import com.bumptech.glide.MemoryCategory
 import com.kaii.photos.compose.AboutPage
-import com.kaii.photos.compose.CustomMaterialTheme
+import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.compose.IsSelectingTopBar
 import com.kaii.photos.compose.LockedFolderEntryView
 import com.kaii.photos.compose.MainAppBottomBar
@@ -94,14 +89,11 @@ import com.kaii.photos.compose.single_photo.SinglePhotoView
 import com.kaii.photos.compose.single_photo.SingleTrashedPhotoView
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.addToAlbumsList
-import com.kaii.photos.datastore.getAlbumsList
 import com.kaii.photos.helpers.EditingScreen
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.mediastore.MediaStoreData
-import com.kaii.photos.models.album_grid.AlbumsViewModel
-import com.kaii.photos.models.album_grid.AlbumsViewModelFactory
 import com.kaii.photos.models.gallery_model.GalleryViewModel
 import com.kaii.photos.models.gallery_model.GalleryViewModelFactory
 import com.kaii.photos.models.main_activity.MainViewModel
@@ -109,7 +101,6 @@ import com.kaii.photos.models.main_activity.MainViewModelFactory
 import com.kaii.photos.ui.theme.PhotosTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import java.io.File
 
 val Context.datastore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
@@ -603,7 +594,8 @@ class MainActivity : ComponentActivity() {
                         val screen: EditingScreen = it.toRoute()
                         EditingView(
                             navController = navControllerLocal,
-                            uri = screen.imagePath.toUri()
+                            absolutePath = screen.absolutePath,
+                            uri = screen.uri.toUri()
                         )
                     }
                 }
@@ -645,8 +637,6 @@ class MainActivity : ComponentActivity() {
                 BottomBar(currentView, selectedItemsList, navController)
             }
         ) { padding ->
-            val context = LocalContext.current
-
             BackHandler(
                 enabled = currentView.value != MainScreenViewType.PhotosGridView && currentView.value != MainScreenViewType.SearchPage && navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name && selectedItemsList.size == 0
             ) {

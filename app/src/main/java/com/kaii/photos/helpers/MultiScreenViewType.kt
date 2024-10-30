@@ -18,5 +18,6 @@ enum class MultiScreenViewType {
 
 @Serializable
 data class EditingScreen(
-    val imagePath: String
+    val absolutePath: String,
+    val uri: String
 )
