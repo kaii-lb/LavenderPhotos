@@ -61,12 +61,12 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -77,29 +77,21 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.FilterQuality
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Matrix
-import androidx.compose.ui.graphics.NativePaint
-import androidx.compose.ui.graphics.Paint
-import androidx.compose.ui.graphics.PaintingStyle
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.Shader
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.asAndroidPath
+import androidx.compose.ui.graphics.asComposePath
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.graphics.vector.DefaultStrokeLineMiter
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.layout
@@ -108,8 +100,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
@@ -123,13 +115,15 @@ import com.kaii.photos.compose.ConfirmationDialog
 import com.kaii.photos.helpers.ColorIndicator
 import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.DrawingColors
-import com.kaii.photos.mediastore.MediaStoreData
+import com.kaii.photos.helpers.DrawingPaints
+import com.kaii.photos.helpers.ExtendedPaint
+import com.kaii.photos.helpers.PathWithPaint
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.math.max
-import kotlin.math.min
 import java.io.File
 import java.io.FileOutputStream
+import kotlin.math.min
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -152,19 +146,7 @@ fun EditingView(navController: NavHostController, absolutePath: String, uri: Uri
     val pagerState = rememberPagerState { 4 }
 
     val paths = remember { mutableStateListOf<PathWithPaint>() }
-    val paint = remember { mutableStateOf(
-        ExtendedPaint().apply {
-            label = "Pencil"
-            strokeWidth = 20f
-            strokeCap = StrokeCap.Round
-            strokeJoin = StrokeJoin.Round
-            strokeMiterLimit = DefaultStrokeLineMiter
-            pathEffect = PathEffect.cornerPathEffect(50f)
-            blendMode = BlendMode.SrcOver
-            color = Color.Red
-            alpha = 1f
-        }
-    )}
+    val paint = remember { mutableStateOf(DrawingPaints.Pencil) }
 
     val context = LocalContext.current
     val inputStream = remember { context.contentResolver.openInputStream(uri) }
@@ -177,56 +159,75 @@ fun EditingView(navController: NavHostController, absolutePath: String, uri: Uri
         label = "Animate rotation"
     )
 
+    var maxSize by remember { mutableStateOf(Size.Unspecified) }
+    val coroutineScope = rememberCoroutineScope()
+
     Scaffold(
         topBar = {
             EditingViewTopBar(
                 showCloseDialog = showCloseDialog
             ) {
-            	val isVertical = rotation % 180f == 0f
-                val size = IntSize(
-                	if (isVertical) image.width else image.height,
-                	if (isVertical) image.height else image.width
-               	)
-                val savedImage = ImageBitmap(size.width, size.height)
-                val drawScope = CanvasDrawScope()
+                coroutineScope.launch(Dispatchers.IO) {
+					val pathList = emptyList<PathWithPaint>().toMutableList()
+					paths.forEach {
+						pathList.add(it)
+					}
 
-                drawScope.draw(
-                    Density(1f),
-                    LayoutDirection.Ltr,
-                    androidx.compose.ui.graphics.Canvas(savedImage),
-                    size.toSize()
-                ) {
-                    rotate(rotation) {
-                        drawImage(
-                            image = image
-                        )
+					val rotationMatrix = android.graphics.Matrix().apply {
+						postRotate(rotation)
+					}
 
-	                    paths.forEach { (path, paint) ->
-	                        drawPath(
-	                            path = path,
-	                            style = Stroke(
-	                                width = paint.strokeWidth,
-	                                cap = paint.strokeCap,
-	                                join = paint.strokeJoin,
-	                                miter = paint.strokeMiterLimit,
-	                                pathEffect = paint.pathEffect
-	                            ),
-	                            blendMode = paint.blendMode,
-	                            color = paint.color,
-	                            alpha = paint.alpha
-	                        )
-	                    }
+                    val savedImage = Bitmap.createBitmap(image.asAndroidBitmap(), 0, 0, image.width, image.height)
+                    					.copy(Bitmap.Config.ARGB_8888, true).asImageBitmap()
+                    val size = IntSize(
+                        savedImage.width,
+                        savedImage.height
+                    )
+
+                    val ratio = 1 / min(maxSize.width / size.width, maxSize.height / size.height)
+                    val drawScope = CanvasDrawScope()
+					val canvas = androidx.compose.ui.graphics.Canvas(savedImage)
+
+                    drawScope.draw(
+                        Density(1f),
+                        LayoutDirection.Ltr,
+                        canvas,
+                        size.toSize()
+                    ) {
+						pathList.toList().forEach { (path, paint) ->
+							scale(ratio, Offset(0.5f, 0.5f)) {
+								drawPath(
+									path = path,
+									style = Stroke(
+										width = paint.strokeWidth,
+										cap = paint.strokeCap,
+										join = paint.strokeJoin,
+										miter = paint.strokeMiterLimit,
+										pathEffect = paint.pathEffect
+									),
+									blendMode = paint.blendMode,
+									color = paint.color,
+									alpha = paint.alpha
+								)
+							}
+						}
                     }
 
+					val rotatedImage = Bitmap.createBitmap(savedImage.asAndroidBitmap(), 0, 0, image.width, image.height, rotationMatrix, false)
+                    					.copy(Bitmap.Config.ARGB_8888, true).asImageBitmap()
+
+                    val original = File(absolutePath)
+                    // change the "edited at" thing to make more sense, like copy(1) copy(2) or something
+                    val newPath = original.absolutePath.replace(
+                        original.name,
+                        original.nameWithoutExtension + "-edited-at-" + System.currentTimeMillis() + ".png"
+                    )
+
+                    val fileOutputStream = FileOutputStream(File(newPath))
+                    rotatedImage.asAndroidBitmap()
+                        .compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream)
+                    fileOutputStream.close()
                 }
-
-				val original = File(absolutePath)
-
-				// change the "edited at" thing to make more sense, like copy(1) copy(2) or something
-				val newPath = original.absolutePath.replace(original.name, original.nameWithoutExtension + "-edited-at-" + System.currentTimeMillis() + "." + original.extension)
-
-				val fileOutputStream = FileOutputStream(File(newPath))
-                savedImage.asAndroidBitmap().compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream)
             }
         },
         bottomBar = {
@@ -259,32 +260,38 @@ fun EditingView(navController: NavHostController, absolutePath: String, uri: Uri
             )
 
             val localDensity = LocalDensity.current
-            val scaledSize = remember {
-            	with(localDensity) {
-            		val isVertical = rotation % 180f == 0f
-	                val xRatio = if (isVertical) maxWidth.toPx() / image.width else maxHeight.toPx() / image.height
-	                val yRatio = if (isVertical) maxHeight.toPx() / image.height else maxWidth.toPx() / image.width
-	                val ratio = min(xRatio, yRatio)
 
-	                IntSize((image.width * ratio).toInt(), (image.height * ratio).toInt())
-				}
+            val scaledSize = remember {
+                with(localDensity) {
+                    val xRatio = maxWidth.toPx() / image.width
+                    val yRatio = maxHeight.toPx() / image.height
+                    val ratio = min(xRatio, yRatio)
+
+                    maxSize = Size(maxWidth.toPx(), maxHeight.toPx())
+
+                    IntSize((image.width * ratio).toInt(), (image.height * ratio).toInt())
+                }
             }
 
-            val size by remember { derivedStateOf {
-            	IntSize(
-            		(scaledSize.width * animatedSize).toInt(),
-            		(scaledSize.height * animatedSize).toInt()
-            	)
-            }}
+            val size by remember {
+                derivedStateOf {
+                    IntSize(
+                        (scaledSize.width * animatedSize).toInt(),
+                        (scaledSize.height * animatedSize).toInt()
+                    )
+                }
+            }
 
-            val dpSize by remember{ derivedStateOf {
-            	with(localDensity) {
-	            	val width = size.width.toDp()
-	            	val height = size.height.toDp()
+            val dpSize by remember {
+                derivedStateOf {
+                    with(localDensity) {
+                        val width = size.width.toDp()
+                        val height = size.height.toDp()
 
-	            	DpSize(width, height)
-	            }
-            }}
+                        DpSize(width, height)
+                    }
+                }
+            }
 
             Canvas(
                 modifier = Modifier
@@ -311,26 +318,29 @@ fun EditingView(navController: NavHostController, absolutePath: String, uri: Uri
                     dstSize = size
                 )
 
-                paths.forEach { (path, paint) ->
-                    drawPath(
-                        path = path.apply {
-                            transform(
-                                Matrix().apply {
-                                    scale(animatedSize, animatedSize, 1f)
-                                }
+                scale(animatedSize) {
+                    paths.forEach { (path, paint) ->
+                        val center = path.getBounds().centerLeft
+
+                        translate(
+                            center.x * animatedSize / center.x,
+                            center.y * animatedSize / center.y
+                        ) {
+                            drawPath(
+                                path = path,
+                                style = Stroke(
+                                    width = paint.strokeWidth,
+                                    cap = paint.strokeCap,
+                                    join = paint.strokeJoin,
+                                    miter = paint.strokeMiterLimit,
+                                    pathEffect = paint.pathEffect
+                                ),
+                                blendMode = paint.blendMode,
+                                color = paint.color,
+                                alpha = paint.alpha
                             )
-                        },
-                        style = Stroke(
-                            width = paint.strokeWidth,
-                            cap = paint.strokeCap,
-                            join = paint.strokeJoin,
-                            miter = paint.strokeMiterLimit,
-                            pathEffect = paint.pathEffect
-                        ),
-                        blendMode = paint.blendMode,
-                        color = paint.color,
-                        alpha = paint.alpha
-                    )
+                        }
+                    }
                 }
             }
 
@@ -754,7 +764,7 @@ fun FiltersTools() {
 
 @Composable
 fun DrawTools(
-	paint: MutableState<ExtendedPaint>
+    paint: MutableState<ExtendedPaint>
 ) {
     Row(
         modifier = Modifier
@@ -763,49 +773,37 @@ fun DrawTools(
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         EditingViewBottomAppBarItem(
-        	text = "Pencil",
-        	iconResId = R.drawable.pencil,
-        	selected = paint.value.label == "Pencil"
-       	) {
-       		paint.value = paint.value.copy(
-       			pathEffect = PathEffect.cornerPathEffect(50f),
-       			strokeCap = StrokeCap.Round,
-       			strokeJoin = StrokeJoin.Round,
-       			blendMode = BlendMode.SrcOver,
-                label = "Pencil",
-       			alpha = 1f
-       		)
-       	}
+            text = "Pencil",
+            iconResId = R.drawable.pencil,
+            selected = paint.value.label == "Pencil"
+        ) {
+            paint.value = DrawingPaints.Pencil.copy(
+                strokeWidth = paint.value.strokeWidth,
+                color = paint.value.color
+            )
+        }
 
         EditingViewBottomAppBarItem(
-        	text = "Highlighter",
-        	iconResId = R.drawable.highlighter,
-        	selected = paint.value.label == "Highlighter"
-       	) {
-       		paint.value = paint.value.copy(
-       			pathEffect = null,
-       			strokeCap = StrokeCap.Square,
-       			strokeJoin = StrokeJoin.Miter,
-       			blendMode = BlendMode.SrcOver,
-                label = "Highlighter",
-       			alpha = 0.5f
-       		)
-       	}
+            text = "Highlighter",
+            iconResId = R.drawable.highlighter,
+            selected = paint.value.label == "Highlighter"
+        ) {
+            paint.value = DrawingPaints.Highlighter.copy(
+                strokeWidth = paint.value.strokeWidth,
+                color = paint.value.color
+            )
+        }
 
         EditingViewBottomAppBarItem(
-        	text = "Text",
-        	iconResId = R.drawable.text,
-        	selected = paint.value.label == "Text"
-       	) {
-       		paint.value = paint.value.copy(
-       			pathEffect = PathEffect.cornerPathEffect(50f),
-       			strokeCap = StrokeCap.Round,
-       			strokeJoin = StrokeJoin.Round,
-       			blendMode = BlendMode.SrcOver,
-                label = "Text",
-       			alpha = 1f
-       		)
-       	}
+            text = "Text",
+            iconResId = R.drawable.text,
+            selected = paint.value.label == "Text"
+        ) {
+            paint.value = DrawingPaints.Pencil.copy(
+                strokeWidth = paint.value.strokeWidth,
+                color = paint.value.color
+            )
+        }
     }
 }
 
@@ -833,79 +831,6 @@ val NoRippleConfiguration = RippleConfiguration(
     color = Color.Transparent,
     rippleAlpha = RippleAlpha(0f, 0f, 0f, 0f)
 )
-
-data class PathWithPaint(
-    val path: Path,
-    val paint: ExtendedPaint
-)
-
-class ExtendedPaint(
-    override var alpha: Float = 1.0f,
-    override var blendMode: BlendMode = BlendMode.SrcOver,
-    override var color: Color = DrawingColors.Black,
-    override var colorFilter: ColorFilter? = null,
-    override var filterQuality: FilterQuality = FilterQuality.Low,
-    override var isAntiAlias: Boolean = true,
-    override var pathEffect: PathEffect? = null,
-    override var shader: Shader? = null,
-    override var strokeCap: StrokeCap = StrokeCap.Round,
-    override var strokeJoin: StrokeJoin = StrokeJoin.Round,
-    override var strokeMiterLimit: Float = DefaultStrokeLineMiter,
-    override var strokeWidth: Float = 20f,
-    override var style: PaintingStyle = PaintingStyle.Stroke,
-    var label: String = "",
-) : Paint {
-    fun copy(
-        color: Color = this.color,
-        strokeCap: StrokeCap = this.strokeCap,
-        strokeWidth: Float = this.strokeWidth,
-        strokeJoin: StrokeJoin = this.strokeJoin,
-        style: PaintingStyle = this.style,
-        blendMode: BlendMode = this.blendMode,
-        alpha: Float = this.alpha,
-        pathEffect: PathEffect? = this.pathEffect,
-        label: String = this.label,
-        filterQuality: FilterQuality = this.filterQuality,
-        isAntiAlias: Boolean = this.isAntiAlias,
-        strokeMiterLimit: Float = this.strokeMiterLimit,
-        shader: Shader? = this.shader,
-        colorFilter: ColorFilter? = this.colorFilter
-    ) = ExtendedPaint().also { paint ->
-        paint.color = color
-        paint.strokeCap = strokeCap
-        paint.strokeWidth = strokeWidth
-        paint.strokeJoin = strokeJoin
-        paint.style = style
-        paint.blendMode = blendMode
-        paint.alpha = alpha
-        paint.pathEffect = pathEffect
-        paint.filterQuality = filterQuality
-        paint.isAntiAlias = isAntiAlias
-        paint.strokeMiterLimit = strokeMiterLimit
-        paint.shader = shader
-        paint.colorFilter = colorFilter
-        paint.label = label
-    }
-
-    override fun asFrameworkPaint(): NativePaint {
-        return Paint().also { paint ->
-            paint.color = color
-            paint.strokeCap = strokeCap
-            paint.strokeWidth = strokeWidth
-            paint.strokeJoin = strokeJoin
-            paint.style = style
-            paint.blendMode = blendMode
-            paint.alpha = alpha
-            paint.pathEffect = pathEffect
-            paint.filterQuality = filterQuality
-            paint.isAntiAlias = isAntiAlias
-            paint.strokeMiterLimit = strokeMiterLimit
-            paint.shader = shader
-            paint.colorFilter = colorFilter
-        }.asFrameworkPaint()
-    }
-}
-
 
 /** @param allowedToDraw no drawing happens if this is false
  * @param paths a list of [PathWithPaint] which is all the new paths drawn
@@ -946,7 +871,7 @@ private fun Modifier.makeDrawCanvas(
                                     isDrawing.value = true
 
                                     event.changes.forEach {
-                                    	it.consume()
+                                        it.consume()
                                     }
                                 }
 
@@ -954,24 +879,24 @@ private fun Modifier.makeDrawCanvas(
                                     val offset = event.changes.first().position
                                     var path = paths.lastOrNull()?.path
 
-									if (path == null) {
-	                                    paths.add(
-	                                        PathWithPaint(
-	                                            Path().apply {
-	                                                moveTo(offset.x, offset.y)
-	                                            },
-	                                            paint.value
-	                                        )
-	                                    )
-	                                    path = paths.last().path
-									} else {
-										paths.remove(
-											PathWithPaint(
-												path,
-												paint.value
-											)
-										)
-									}
+                                    if (path == null) {
+                                        paths.add(
+                                            PathWithPaint(
+                                                Path().apply {
+                                                    moveTo(offset.x, offset.y)
+                                                },
+                                                paint.value
+                                            )
+                                        )
+                                        path = paths.last().path
+                                    } else {
+                                        paths.remove(
+                                            PathWithPaint(
+                                                path,
+                                                paint.value
+                                            )
+                                        )
+                                    }
 
                                     path.quadraticTo(
                                         lastPoint.x,
@@ -981,17 +906,17 @@ private fun Modifier.makeDrawCanvas(
                                     )
 
                                     paths.add(
-										PathWithPaint(
-											path,
-											paint.value
-										)
+                                        PathWithPaint(
+                                            path,
+                                            paint.value
+                                        )
                                     )
 
                                     lastPoint = offset
                                     isDrawing.value = true
 
                                     event.changes.forEach {
-                                    	it.consume()
+                                        it.consume()
                                     }
                                 }
 
@@ -1005,7 +930,7 @@ private fun Modifier.makeDrawCanvas(
                                     isDrawing.value = false
 
                                     event.changes.forEach {
-                                    	it.consume()
+                                        it.consume()
                                     }
                                 }
                             }
