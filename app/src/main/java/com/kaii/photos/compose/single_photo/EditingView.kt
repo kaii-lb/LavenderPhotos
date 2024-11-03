@@ -98,7 +98,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
@@ -129,6 +132,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.min
+import kotlin.math.max
 import kotlin.math.roundToInt
 import kotlin.math.PI
 import kotlin.math.cos
@@ -184,10 +188,11 @@ fun EditingView(navController: NavHostController, absolutePath: String, uri: Uri
                 saveImage = {
                     coroutineScope.launch {
 
-                        val pathList = modifications.filter { it is PathWithPaint }.map { it as PathWithPaint }
+                        val pathList = modifications.filterIsInstance<PathWithPaint>()
 
-                        val textList = modifications.filter { it is DrawableText }.map { it as DrawableText }
+                        val textList = modifications.filterIsInstance<DrawableText>()
 
+						// TODO: move to modifications and draw one by one so text isnt always on top of paths
                         savePathListToBitmap(
                             pathList = pathList,
                             textList = textList,
@@ -195,8 +200,7 @@ fun EditingView(navController: NavHostController, absolutePath: String, uri: Uri
                             image = image,
                             maxSize = maxSize,
                             rotation = rotation,
-                            textMeasurer = textMeasurer,
-                            localDensity = localDensity
+                            textMeasurer = textMeasurer
                         )
                     }
                 },
@@ -228,23 +232,13 @@ fun EditingView(navController: NavHostController, absolutePath: String, uri: Uri
                 initialLoad = true
             }
 
-            val animatedSize by animateFloatAsState(
-                targetValue = if (pagerState.currentPage == 0 && initialLoad) 0.8f else 1f,
-                label = "Animate size of preview image in crop mode"
-            )
-
-            val scaledSize = remember(rotation) {
+            val scaledSize = remember {
                 with(localDensity) {
-                	val isVertical = rotation % 180f == 0f
-                    val xRatio = if (!isVertical) maxHeight.toPx() / image.height else maxWidth.toPx() / image.width
-                    val yRatio = if (!isVertical) maxWidth.toPx() / image.width else maxHeight.toPx() / image.height
+                    val xRatio = maxWidth.toPx() / image.width
+                    val yRatio = maxHeight.toPx() / image.height
                     val ratio = min(xRatio, yRatio)
 
-					if (isVertical) {
-	                    IntSize((image.width * ratio).toInt(), (image.height * ratio).toInt())
-					} else {
-						IntSize((image.height * ratio).toInt(), (image.width * ratio).toInt())
-					}
+                    IntSize((image.width * ratio).toInt(), (image.height * ratio).toInt())
                 }
             }
 
@@ -269,6 +263,28 @@ fun EditingView(navController: NavHostController, absolutePath: String, uri: Uri
                     }
                 }
             }
+
+			val isVertical = remember(rotation) { rotation % 180f == 0f }
+			val isHorizontal = remember(rotation) { abs(rotation % 180f) == 90f }
+
+			var lastScale by remember { mutableStateOf(1f) }
+			val maxScale = remember(isVertical, isHorizontal) {
+				with(localDensity) {
+					if (isVertical) {
+						lastScale = maxWidth.toPx() / size.width
+						lastScale
+					} else if (isHorizontal) {
+						lastScale = maxWidth.toPx() / size.height
+						lastScale
+					} else lastScale
+				}
+			}
+			val minScale = remember(maxScale) {  0.8f * maxScale }
+
+            val animatedSize by animateFloatAsState(
+                targetValue = if (pagerState.currentPage == 0 && initialLoad) minScale else maxScale,
+                label = "Animate size of preview image in crop mode"
+            )
 
             val canDraw = remember {
                 derivedStateOf {
@@ -317,7 +333,7 @@ fun EditingView(navController: NavHostController, absolutePath: String, uri: Uri
             }
 
 
-            BoxWithConstraints(
+            Box (
                 modifier = Modifier
                     .size(dpSize)
                     .align(Alignment.Center)
@@ -328,7 +344,7 @@ fun EditingView(navController: NavHostController, absolutePath: String, uri: Uri
                     }
                     .clipToBounds()
             ) {
-                val texts = modifications.filter { it is DrawableText }.map { it as DrawableText }
+                val texts = modifications.filterIsInstance<DrawableText>()
                 texts.forEach { text ->
                     var offsetX by remember { mutableFloatStateOf(text.position.x) }
                     var offsetY by remember { mutableFloatStateOf(text.position.y) }
@@ -336,12 +352,17 @@ fun EditingView(navController: NavHostController, absolutePath: String, uri: Uri
                     val neededRotation = remember { -rotation }
                     text.rotation = neededRotation
 
+                    val style = DrawableText.Styles.Default.style
+
                     Text(
                         text = text.text,
                         style = LocalTextStyle.current.copy(
-                            fontSize = TextUnit(text.paint.strokeWidth, TextUnitType.Sp),
                             color = text.paint.color,
-                            textAlign = TextAlign.Center
+                            fontSize = TextUnit(text.paint.strokeWidth, TextUnitType.Sp),
+                            textAlign = style.textAlign,
+                            platformStyle = style.platformStyle,
+                            lineHeightStyle = style.lineHeightStyle,
+                            baselineShift = style.baselineShift
                         ),
                         modifier = Modifier
                             .wrapContentSize()
@@ -349,16 +370,22 @@ fun EditingView(navController: NavHostController, absolutePath: String, uri: Uri
                                 IntOffset(offsetX.roundToInt(), offsetY.roundToInt())
                             }
                             .graphicsLayer {
-                            	rotationZ = neededRotation
+                                rotationZ = neededRotation
                             }
                             .pointerInput(Unit) {
                                 detectDragGestures { change, dragAmount ->
                                     change.consume()
 
-									val angleInRadians = neededRotation * PI / 180
+                                    val angleInRadians = neededRotation * PI / 180
 
-                                    val x = (dragAmount.x * cos(angleInRadians) - dragAmount.y * sin(angleInRadians)).toFloat()
-                                    val y = (dragAmount.x * sin(angleInRadians) + dragAmount.y * cos(angleInRadians)).toFloat()
+                                    val x =
+                                        (dragAmount.x * cos(angleInRadians) - dragAmount.y * sin(
+                                            angleInRadians
+                                        )).toFloat()
+                                    val y =
+                                        (dragAmount.x * sin(angleInRadians) + dragAmount.y * cos(
+                                            angleInRadians
+                                        )).toFloat()
 
                                     offsetX = (offsetX + x)
                                     offsetY = (offsetY + y)
@@ -872,7 +899,7 @@ val NoRippleConfiguration = RippleConfiguration(
 )
 
 /** @param allowedToDraw no drawing happens if this is false
- * @param paths a list of [PathWithPaint] which is all the new paths drawn
+ * @param modifications a list of [DrawableItem] which is all the new [PathWithPaint]s or [DrawableText]s drawn
  * @param paint the paint to draw with
  * @param isDrawing is the user drawing right now? */
 @Composable
@@ -883,6 +910,10 @@ private fun Modifier.makeDrawCanvas(
     isDrawing: MutableState<Boolean>,
     changesSize: MutableIntState
 ): Modifier {
+    val textMeasurer = rememberTextMeasurer()
+    val localTextStyle = LocalTextStyle.current
+	val style = DrawableText.Styles.Default.style
+
     val modifier = Modifier
     	.pointerInput(Unit) {
             if (allowedToDraw.value) {
@@ -987,17 +1018,31 @@ private fun Modifier.makeDrawCanvas(
 								PointerEventType.Press -> {
 									val position = event.changes.first().position
 
+                                    val textLayout = textMeasurer.measure(
+                                        text = "text",
+                                        style = localTextStyle.copy(
+                                            color = paint.value.color,
+                                            fontSize = TextUnit(paint.value.strokeWidth, TextUnitType.Sp),
+                                            textAlign = style.textAlign,
+                                            platformStyle = style.platformStyle,
+                                            lineHeightStyle = style.lineHeightStyle,
+                                            baselineShift = style.baselineShift
+                                        )
+                                    )
 
-									// TODO: calculate text size and subtract from position
 				                    modifications.add(
 				                        DrawableText(
 				                            text = "text",
 				                            position = Offset(
-				                                position.x,
-				                                position.y
+				                                position.x - textLayout.size.width / 2f,
+				                                position.y - textLayout.size.height / 2f
 				                            ),
 				                            paint = paint.value,
-				                            rotation = 0f
+				                            rotation = 0f,
+                                            size = Offset(
+                                                textLayout.size.width.toFloat(),
+                                                textLayout.size.height.toFloat()
+                                            )
 				                        )
 				                    )
 

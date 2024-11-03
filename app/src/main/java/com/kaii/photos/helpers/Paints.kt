@@ -14,6 +14,11 @@ import androidx.compose.ui.graphics.Shader
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.vector.DefaultStrokeLineMiter
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.BaselineShift
+import androidx.compose.ui.text.style.LineHeightStyle
+import androidx.compose.ui.text.style.TextAlign
 
 class ExtendedPaint(
     override var alpha: Float = 1.0f,
@@ -40,7 +45,7 @@ class ExtendedPaint(
         blendMode: BlendMode = this.blendMode,
         alpha: Float = this.alpha,
         pathEffect: PathEffect? = this.pathEffect,
-        label: PaintType = this.type,
+        type: PaintType = this.type,
         filterQuality: FilterQuality = this.filterQuality,
         isAntiAlias: Boolean = this.isAntiAlias,
         strokeMiterLimit: Float = this.strokeMiterLimit,
@@ -60,7 +65,7 @@ class ExtendedPaint(
         paint.strokeMiterLimit = strokeMiterLimit
         paint.shader = shader
         paint.colorFilter = colorFilter
-        paint.type = label
+        paint.type = type
     }
 
     override fun asFrameworkPaint(): NativePaint {
@@ -125,7 +130,7 @@ class DrawingPaints {
     }
 }
 
-abstract class DrawableItem (
+abstract class DrawableItem(
     val type: ModificationType
 )
 
@@ -148,6 +153,26 @@ enum class ModificationType {
 data class DrawableText(
     var text: String,
     var position: Offset,
-    var paint: ExtendedPaint,
-    var rotation: Float
-) : DrawableItem(ModificationType.Text)
+    val paint: ExtendedPaint,
+    var rotation: Float,
+    var size: Offset
+) : DrawableItem(ModificationType.Text){
+    @JvmInline
+    value class Styles(val style: TextStyle) {
+        companion object {
+            val Default = Styles(
+                TextStyle(
+                    textAlign = TextAlign.Center,
+                    platformStyle = PlatformTextStyle(
+                        includeFontPadding = false
+                    ),
+                    lineHeightStyle = LineHeightStyle(
+                        trim = LineHeightStyle.Trim.Both,
+                        alignment = LineHeightStyle.Alignment.Center
+                    ),
+                    baselineShift = BaselineShift.None,
+                ),
+            )
+        }
+    }
+}

@@ -7,27 +7,26 @@ import android.graphics.Bitmap
 import android.net.Uri
 import android.provider.MediaStore.MediaColumns
 import android.util.Log
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.unit.TextUnit
-import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.text.drawText
-import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.toSize
 import com.kaii.photos.MainActivity.Companion.applicationDatabase
 import com.kaii.photos.database.entities.SecuredItemEntity
@@ -241,8 +240,7 @@ suspend fun savePathListToBitmap(
     image: ImageBitmap,
     maxSize: Size,
     absolutePath: String,
-    textMeasurer: TextMeasurer,
-    localDensity: Density
+    textMeasurer: TextMeasurer
 ) {
     withContext(Dispatchers.IO) {
         val rotationMatrix = android.graphics.Matrix().apply {
@@ -290,23 +288,24 @@ suspend fun savePathListToBitmap(
                 }
             }
 
-			textList.forEach { (text, position, paint, textRotation) ->
-				scale(ratio, Offset(0.5f, 0.5f)) {
-					translate(position.x, position.y) {
-						// TODO: see what the pivot is and how it works and do rotation
-						drawText(
-							textMeasurer = textMeasurer,
-							text = text,
-							style = TextStyle(
-								fontSize = TextUnit(paint.strokeWidth * 0.8f * ratio, TextUnitType.Sp),
-								color = paint.color,
-								textAlign = TextAlign.Center,
-							),
-							blendMode = BlendMode.SrcOver,
-						)
-					}
-				}
-			}
+			textList.forEach { text ->
+                scale(ratio, Offset(0.5f, 0.5f)) {
+                    rotate(text.rotation, text.position + text.size / 2f) {
+                    	translate(text.position.x, text.position.y) {
+                            drawText(
+                                textMeasurer = textMeasurer,
+                                text = text.text,
+                                style = TextStyle(
+                                    fontSize = TextUnit(text.paint.strokeWidth * 0.8f * ratio, TextUnitType.Sp),
+                                    color = text.paint.color,
+                                    textAlign = TextAlign.Center,
+                                ),
+                                blendMode = BlendMode.SrcOver,
+                            )
+                        }
+                    }
+                }
+            }
         }
 
         val rotatedImage = Bitmap.createBitmap(
