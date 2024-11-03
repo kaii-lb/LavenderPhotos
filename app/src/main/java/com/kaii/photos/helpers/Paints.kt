@@ -146,8 +146,8 @@ enum class ModificationType {
 }
 
 data class DrawableText(
-    val text: String,
+    var text: String,
     var position: Offset,
-    val paint: ExtendedPaint,
+    var paint: ExtendedPaint,
     var rotation: Float
 ) : DrawableItem(ModificationType.Text)

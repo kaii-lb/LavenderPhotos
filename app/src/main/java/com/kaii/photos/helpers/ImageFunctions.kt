@@ -20,6 +20,8 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
@@ -288,24 +290,23 @@ suspend fun savePathListToBitmap(
                 }
             }
 
-            textList.forEach { (text, position, paint, rotation) ->
-           		rotate(rotation) {
-                	scale(ratio, Offset(0.5f, 0.5f)) {
-		               	translate(position.x, position.y) {
-			                drawText(
-			                    textMeasurer = textMeasurer,
-			                    text = text,
-			                    style = TextStyle(
-			                        fontSize = paint.strokeWidth.toSp() * ratio * 0.8f, // why 0.8f? who the fuck knows
-			                        color = paint.color,
-			                        textAlign = TextAlign.Center,
-			                    ),
-			                    blendMode = BlendMode.SrcOver
-			                )
-	                	}
-               		}
+			textList.forEach { (text, position, paint, textRotation) ->
+				scale(ratio, Offset(0.5f, 0.5f)) {
+					translate(position.x, position.y) {
+						// TODO: see what the pivot is and how it works and do rotation
+						drawText(
+							textMeasurer = textMeasurer,
+							text = text,
+							style = TextStyle(
+								fontSize = TextUnit(paint.strokeWidth * 0.8f * ratio, TextUnitType.Sp),
+								color = paint.color,
+								textAlign = TextAlign.Center,
+							),
+							blendMode = BlendMode.SrcOver,
+						)
+					}
 				}
-            }
+			}
         }
 
         val rotatedImage = Bitmap.createBitmap(

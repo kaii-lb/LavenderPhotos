@@ -183,17 +183,10 @@ fun EditingView(navController: NavHostController, absolutePath: String, uri: Uri
                 changesSize = changesSize,
                 saveImage = {
                     coroutineScope.launch {
-                        val pathList = emptyList<PathWithPaint>().toMutableList()
-                        modifications.filter { it is PathWithPaint }.map { it as PathWithPaint }
-                        .forEach {
-                            pathList.add(it)
-                        }
 
-                        val textList = emptyList<DrawableText>().toMutableList()
-                        modifications.filter { it is DrawableText }.map { it as DrawableText }
-                        .forEach {
-                            textList.add(it)
-                        }
+                        val pathList = modifications.filter { it is PathWithPaint }.map { it as PathWithPaint }
+
+                        val textList = modifications.filter { it is DrawableText }.map { it as DrawableText }
 
                         savePathListToBitmap(
                             pathList = pathList,
@@ -227,7 +220,6 @@ fun EditingView(navController: NavHostController, absolutePath: String, uri: Uri
                 .padding(innerPadding)
                 .fillMaxSize(1f)
         ) {
-            val shouldClearPaths = remember { mutableStateOf(false) }
             val isDrawing = remember { mutableStateOf(false) }
 
             var initialLoad by remember { mutableStateOf(false) }
@@ -241,13 +233,18 @@ fun EditingView(navController: NavHostController, absolutePath: String, uri: Uri
                 label = "Animate size of preview image in crop mode"
             )
 
-            val scaledSize = remember {
+            val scaledSize = remember(rotation) {
                 with(localDensity) {
-                    val xRatio = maxWidth.toPx() / image.width
-                    val yRatio = maxHeight.toPx() / image.height
+                	val isVertical = rotation % 180f == 0f
+                    val xRatio = if (!isVertical) maxHeight.toPx() / image.height else maxWidth.toPx() / image.width
+                    val yRatio = if (!isVertical) maxWidth.toPx() / image.width else maxHeight.toPx() / image.height
                     val ratio = min(xRatio, yRatio)
 
-                    IntSize((image.width * ratio).toInt(), (image.height * ratio).toInt())
+					if (isVertical) {
+	                    IntSize((image.width * ratio).toInt(), (image.height * ratio).toInt())
+					} else {
+						IntSize((image.height * ratio).toInt(), (image.width * ratio).toInt())
+					}
                 }
             }
 
@@ -331,11 +328,10 @@ fun EditingView(navController: NavHostController, absolutePath: String, uri: Uri
                     }
                     .clipToBounds()
             ) {
-                modifications.filter { it is DrawableText }.map { it as DrawableText }
-                .forEach { text ->
+                val texts = modifications.filter { it is DrawableText }.map { it as DrawableText }
+                texts.forEach { text ->
                     var offsetX by remember { mutableFloatStateOf(text.position.x) }
                     var offsetY by remember { mutableFloatStateOf(text.position.y) }
-                    var textSize by remember { mutableStateOf(Offset.Zero) }
 
                     val neededRotation = remember { -rotation }
                     text.rotation = neededRotation
@@ -349,15 +345,6 @@ fun EditingView(navController: NavHostController, absolutePath: String, uri: Uri
                         ),
                         modifier = Modifier
                             .wrapContentSize()
-                            .onSizeChanged {
-                                textSize = Offset(
-                                    it.width.toFloat(),
-                                    it.height.toFloat()
-                                )
-
-                                offsetX -= it.width / 2f
-                                offsetY -= it.height / 2f
-                            }
                             .offset {
                                 IntOffset(offsetX.roundToInt(), offsetY.roundToInt())
                             }
@@ -415,7 +402,9 @@ fun EditingView(navController: NavHostController, absolutePath: String, uri: Uri
                     value = slideVal,
                     onValueChange = { newVal ->
                         slideVal = newVal
-                        paint.value = paint.value.copy(strokeWidth = newVal * 128)
+                        paint.value = paint.value.copy(
+                        	strokeWidth = newVal * 128f
+                       	)
                     },
                     steps = 16,
                     valueRange = 0f..1f,
@@ -461,7 +450,6 @@ fun EditingView(navController: NavHostController, absolutePath: String, uri: Uri
             ) {
                 DrawActionsAndColors(
                     modifications = modifications,
-                    shouldClearPaths = shouldClearPaths,
                     paint = paint,
                     changesSize = changesSize
                 )
@@ -895,8 +883,6 @@ private fun Modifier.makeDrawCanvas(
     isDrawing: MutableState<Boolean>,
     changesSize: MutableIntState
 ): Modifier {
-	println("ALLOW ${allowedToDraw.value} PAINT ${paint.value.type}")
-
     val modifier = Modifier
     	.pointerInput(Unit) {
             if (allowedToDraw.value) {
@@ -1001,6 +987,8 @@ private fun Modifier.makeDrawCanvas(
 								PointerEventType.Press -> {
 									val position = event.changes.first().position
 
+
+									// TODO: calculate text size and subtract from position
 				                    modifications.add(
 				                        DrawableText(
 				                            text = "text",
@@ -1041,7 +1029,6 @@ private fun Modifier.makeDrawCanvas(
 @Composable
 private fun BoxWithConstraintsScope.DrawActionsAndColors(
     modifications: SnapshotStateList<DrawableItem>,
-    shouldClearPaths: MutableState<Boolean>,
     paint: MutableState<ExtendedPaint>,
     changesSize: MutableIntState
 ) {
@@ -1080,7 +1067,6 @@ private fun BoxWithConstraintsScope.DrawActionsAndColors(
                         )
                         .align(Alignment.CenterStart)
                         .clickable {
-                            shouldClearPaths.value = true
                             modifications.clear()
                             changesSize.intValue += 1
                         },
