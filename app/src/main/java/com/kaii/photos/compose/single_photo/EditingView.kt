@@ -1,6 +1,5 @@
 package com.kaii.photos.compose.single_photo
 
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.activity.compose.BackHandler
@@ -19,6 +18,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.gestures.snapping.SnapPosition
@@ -32,6 +34,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -45,9 +48,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ripple.RippleAlpha
 import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalRippleConfiguration
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.RippleConfiguration
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
@@ -61,6 +66,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -75,60 +81,65 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Matrix
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.TransformOrigin
-import androidx.compose.ui.graphics.asAndroidBitmap
-import androidx.compose.ui.graphics.asAndroidPath
-import androidx.compose.ui.graphics.asComposePath
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
-import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.LineHeightStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
 import com.kaii.photos.R
 import com.kaii.photos.compose.BottomAppBarItem
 import com.kaii.photos.compose.ConfirmationDialog
+import com.kaii.photos.compose.single_photo.rotateBy
 import com.kaii.photos.helpers.ColorIndicator
 import com.kaii.photos.helpers.CustomMaterialTheme
+import com.kaii.photos.helpers.DrawableItem
+import com.kaii.photos.helpers.DrawableText
 import com.kaii.photos.helpers.DrawingColors
 import com.kaii.photos.helpers.DrawingPaints
 import com.kaii.photos.helpers.ExtendedPaint
+import com.kaii.photos.helpers.ModificationType
+import com.kaii.photos.helpers.PaintType
 import com.kaii.photos.helpers.PathWithPaint
-import kotlinx.coroutines.Dispatchers
+import com.kaii.photos.helpers.savePathListToBitmap
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.io.File
-import java.io.FileOutputStream
+import kotlin.math.abs
 import kotlin.math.min
+import kotlin.math.roundToInt
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditingView(navController: NavHostController, absolutePath: String, uri: Uri) {
     val showCloseDialog = remember { mutableStateOf(false) }
+    val changesSize = remember { mutableIntStateOf(0) }
 
     ConfirmationDialog(
         showDialog = showCloseDialog,
@@ -145,7 +156,7 @@ fun EditingView(navController: NavHostController, absolutePath: String, uri: Uri
 
     val pagerState = rememberPagerState { 4 }
 
-    val paths = remember { mutableStateListOf<PathWithPaint>() }
+    val modifications = remember { mutableStateListOf<DrawableItem>() }
     val paint = remember { mutableStateOf(DrawingPaints.Pencil) }
 
     val context = LocalContext.current
@@ -162,73 +173,44 @@ fun EditingView(navController: NavHostController, absolutePath: String, uri: Uri
     var maxSize by remember { mutableStateOf(Size.Unspecified) }
     val coroutineScope = rememberCoroutineScope()
 
+    val textMeasurer = rememberTextMeasurer()
+    val localDensity = LocalDensity.current
+
     Scaffold(
         topBar = {
             EditingViewTopBar(
-                showCloseDialog = showCloseDialog
-            ) {
-                coroutineScope.launch(Dispatchers.IO) {
-					val pathList = emptyList<PathWithPaint>().toMutableList()
-					paths.forEach {
-						pathList.add(it)
-					}
+                showCloseDialog = showCloseDialog,
+                changesSize = changesSize,
+                saveImage = {
+                    coroutineScope.launch {
+                        val pathList = emptyList<PathWithPaint>().toMutableList()
+                        modifications.filter { it is PathWithPaint }.map { it as PathWithPaint }
+                        .forEach {
+                            pathList.add(it)
+                        }
 
-					val rotationMatrix = android.graphics.Matrix().apply {
-						postRotate(rotation)
-					}
+                        val textList = emptyList<DrawableText>().toMutableList()
+                        modifications.filter { it is DrawableText }.map { it as DrawableText }
+                        .forEach {
+                            textList.add(it)
+                        }
 
-                    val savedImage = Bitmap.createBitmap(image.asAndroidBitmap(), 0, 0, image.width, image.height)
-                    					.copy(Bitmap.Config.ARGB_8888, true).asImageBitmap()
-                    val size = IntSize(
-                        savedImage.width,
-                        savedImage.height
-                    )
-
-                    val ratio = 1 / min(maxSize.width / size.width, maxSize.height / size.height)
-                    val drawScope = CanvasDrawScope()
-					val canvas = androidx.compose.ui.graphics.Canvas(savedImage)
-
-                    drawScope.draw(
-                        Density(1f),
-                        LayoutDirection.Ltr,
-                        canvas,
-                        size.toSize()
-                    ) {
-						pathList.toList().forEach { (path, paint) ->
-							scale(ratio, Offset(0.5f, 0.5f)) {
-								drawPath(
-									path = path,
-									style = Stroke(
-										width = paint.strokeWidth,
-										cap = paint.strokeCap,
-										join = paint.strokeJoin,
-										miter = paint.strokeMiterLimit,
-										pathEffect = paint.pathEffect
-									),
-									blendMode = paint.blendMode,
-									color = paint.color,
-									alpha = paint.alpha
-								)
-							}
-						}
+                        savePathListToBitmap(
+                            pathList = pathList,
+                            textList = textList,
+                            absolutePath = absolutePath,
+                            image = image,
+                            maxSize = maxSize,
+                            rotation = rotation,
+                            textMeasurer = textMeasurer,
+                            localDensity = localDensity
+                        )
                     }
-
-					val rotatedImage = Bitmap.createBitmap(savedImage.asAndroidBitmap(), 0, 0, image.width, image.height, rotationMatrix, false)
-                    					.copy(Bitmap.Config.ARGB_8888, true).asImageBitmap()
-
-                    val original = File(absolutePath)
-                    // change the "edited at" thing to make more sense, like copy(1) copy(2) or something
-                    val newPath = original.absolutePath.replace(
-                        original.name,
-                        original.nameWithoutExtension + "-edited-at-" + System.currentTimeMillis() + ".png"
-                    )
-
-                    val fileOutputStream = FileOutputStream(File(newPath))
-                    rotatedImage.asAndroidBitmap()
-                        .compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream)
-                    fileOutputStream.close()
+                },
+                popBackStack = {
+                    navController.popBackStack()
                 }
-            }
+            )
         },
         bottomBar = {
             EditingViewBottomBar(
@@ -259,15 +241,11 @@ fun EditingView(navController: NavHostController, absolutePath: String, uri: Uri
                 label = "Animate size of preview image in crop mode"
             )
 
-            val localDensity = LocalDensity.current
-
             val scaledSize = remember {
                 with(localDensity) {
                     val xRatio = maxWidth.toPx() / image.width
                     val yRatio = maxHeight.toPx() / image.height
                     val ratio = min(xRatio, yRatio)
-
-                    maxSize = Size(maxWidth.toPx(), maxHeight.toPx())
 
                     IntSize((image.width * ratio).toInt(), (image.height * ratio).toInt())
                 }
@@ -275,9 +253,11 @@ fun EditingView(navController: NavHostController, absolutePath: String, uri: Uri
 
             val size by remember {
                 derivedStateOf {
+                    maxSize = Size(scaledSize.width.toFloat(), scaledSize.height.toFloat())
+
                     IntSize(
-                        (scaledSize.width * animatedSize).toInt(),
-                        (scaledSize.height * animatedSize).toInt()
+                        scaledSize.width,
+                        scaledSize.height
                     )
                 }
             }
@@ -293,24 +273,27 @@ fun EditingView(navController: NavHostController, absolutePath: String, uri: Uri
                 }
             }
 
+            val canDraw = remember {
+                derivedStateOf {
+                    pagerState.currentPage == 3
+                }
+            }
             Canvas(
                 modifier = Modifier
                     .size(dpSize)
                     .align(Alignment.Center)
-                    .rotate(
-                        if (rotation == 360f) {
-                            rotationMultiplier.intValue = 0
-                            0f
-                        } else {
-                            rotation
-                        }
-                    )
+                    .graphicsLayer {
+                        scaleX = animatedSize
+                        scaleY = animatedSize
+                        rotationZ = rotation
+                    }
                     .clipToBounds()
                     .makeDrawCanvas(
-                        allowedToDraw = pagerState.currentPage == 3,
-                        paths = paths,
+                        allowedToDraw = canDraw,
+                        modifications = modifications,
                         paint = paint,
-                        isDrawing = isDrawing
+                        isDrawing = isDrawing,
+                        changesSize = changesSize
                     )
             ) {
                 drawImage(
@@ -318,31 +301,89 @@ fun EditingView(navController: NavHostController, absolutePath: String, uri: Uri
                     dstSize = size
                 )
 
-                scale(animatedSize) {
-                    paths.forEach { (path, paint) ->
-                        val center = path.getBounds().centerLeft
-
-                        translate(
-                            center.x * animatedSize / center.x,
-                            center.y * animatedSize / center.y
-                        ) {
-                            drawPath(
-                                path = path,
-                                style = Stroke(
-                                    width = paint.strokeWidth,
-                                    cap = paint.strokeCap,
-                                    join = paint.strokeJoin,
-                                    miter = paint.strokeMiterLimit,
-                                    pathEffect = paint.pathEffect
-                                ),
-                                blendMode = paint.blendMode,
-                                color = paint.color,
-                                alpha = paint.alpha
-                            )
-                        }
+                modifications.filter { it.type == ModificationType.Paint }.map { it as PathWithPaint }
+                    .forEach { (path, paint) ->
+                        drawPath(
+                            path = path,
+                            style = Stroke(
+                                width = paint.strokeWidth,
+                                cap = paint.strokeCap,
+                                join = paint.strokeJoin,
+                                miter = paint.strokeMiterLimit,
+                                pathEffect = paint.pathEffect
+                            ),
+                            blendMode = paint.blendMode,
+                            color = paint.color,
+                            alpha = paint.alpha
+                        )
                     }
+            }
+
+
+            BoxWithConstraints(
+                modifier = Modifier
+                    .size(dpSize)
+                    .align(Alignment.Center)
+                    .graphicsLayer {
+                        scaleX = animatedSize
+                        scaleY = animatedSize
+                        rotationZ = rotation
+                    }
+                    .clipToBounds()
+            ) {
+                modifications.filter { it is DrawableText }.map { it as DrawableText }
+                .forEach { text ->
+                    var offsetX by remember { mutableFloatStateOf(text.position.x) }
+                    var offsetY by remember { mutableFloatStateOf(text.position.y) }
+                    var textSize by remember { mutableStateOf(Offset.Zero) }
+
+                    val neededRotation = remember { -rotation }
+                    text.rotation = neededRotation
+
+                    Text(
+                        text = text.text,
+                        style = LocalTextStyle.current.copy(
+                            fontSize = TextUnit(text.paint.strokeWidth, TextUnitType.Sp),
+                            color = text.paint.color,
+                            textAlign = TextAlign.Center
+                        ),
+                        modifier = Modifier
+                            .wrapContentSize()
+                            .onSizeChanged {
+                                textSize = Offset(
+                                    it.width.toFloat(),
+                                    it.height.toFloat()
+                                )
+
+                                offsetX -= it.width / 2f
+                                offsetY -= it.height / 2f
+                            }
+                            .offset {
+                                IntOffset(offsetX.roundToInt(), offsetY.roundToInt())
+                            }
+                            .graphicsLayer {
+                            	rotationZ = neededRotation
+                            }
+                            .pointerInput(Unit) {
+                                detectDragGestures { change, dragAmount ->
+                                    change.consume()
+
+									val angleInRadians = neededRotation * PI / 180
+
+                                    val x = (dragAmount.x * cos(angleInRadians) - dragAmount.y * sin(angleInRadians)).toFloat()
+                                    val y = (dragAmount.x * sin(angleInRadians) + dragAmount.y * cos(angleInRadians)).toFloat()
+
+                                    offsetX = (offsetX + x)
+                                    offsetY = (offsetY + y)
+
+                                    text.position = Offset(offsetX, offsetY)
+                                }
+                            }
+                            .clipToBounds()
+                    )
                 }
             }
+
 
             var shouldShowDrawOptions by remember { mutableStateOf(false) }
             var lastPage by remember { mutableIntStateOf(pagerState.currentPage) }
@@ -418,7 +459,12 @@ fun EditingView(navController: NavHostController, absolutePath: String, uri: Uri
                     .fillMaxWidth(1f)
                     .align(Alignment.BottomCenter),
             ) {
-                DrawActionsAndColors(paths, shouldClearPaths, paint)
+                DrawActionsAndColors(
+                    modifications = modifications,
+                    shouldClearPaths = shouldClearPaths,
+                    paint = paint,
+                    changesSize = changesSize
+                )
             }
         }
     }
@@ -428,8 +474,12 @@ fun EditingView(navController: NavHostController, absolutePath: String, uri: Uri
 @Composable
 private fun EditingViewTopBar(
     showCloseDialog: MutableState<Boolean>,
-    saveImage: () -> Unit
+    changesSize: MutableIntState,
+    saveImage: () -> Unit,
+    popBackStack: () -> Unit
 ) {
+    var oldChangesSize by remember { mutableIntStateOf(changesSize.intValue) }
+
     TopAppBar(
         navigationIcon = {
             Column(
@@ -439,7 +489,12 @@ private fun EditingViewTopBar(
                     .clip(CircleShape)
                     .background(CustomMaterialTheme.colorScheme.surfaceVariant)
                     .clickable {
-                        showCloseDialog.value = true
+                        if (changesSize.intValue != oldChangesSize) {
+                            showCloseDialog.value = true
+                        } else {
+                            oldChangesSize = changesSize.intValue
+                            popBackStack()
+                        }
                     },
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -454,17 +509,13 @@ private fun EditingViewTopBar(
             }
         },
         actions = {
-            Column(
-                modifier = Modifier
-                    .height(40.dp)
-                    .width(96.dp)
-                    .clip(CircleShape)
-                    .background(CustomMaterialTheme.colorScheme.primary)
-                    .clickable {
-                        saveImage()
-                    },
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
+            Button(
+                onClick = {
+                    saveImage()
+                    oldChangesSize = changesSize.intValue
+                },
+                shape = CircleShape,
+                enabled = changesSize.intValue != oldChangesSize
             ) {
                 Text(
                     text = "Save Copy",
@@ -775,7 +826,7 @@ fun DrawTools(
         EditingViewBottomAppBarItem(
             text = "Pencil",
             iconResId = R.drawable.pencil,
-            selected = paint.value.label == "Pencil"
+            selected = paint.value.type == PaintType.Pencil
         ) {
             paint.value = DrawingPaints.Pencil.copy(
                 strokeWidth = paint.value.strokeWidth,
@@ -786,7 +837,7 @@ fun DrawTools(
         EditingViewBottomAppBarItem(
             text = "Highlighter",
             iconResId = R.drawable.highlighter,
-            selected = paint.value.label == "Highlighter"
+            selected = paint.value.type == PaintType.Highlighter
         ) {
             paint.value = DrawingPaints.Highlighter.copy(
                 strokeWidth = paint.value.strokeWidth,
@@ -797,9 +848,9 @@ fun DrawTools(
         EditingViewBottomAppBarItem(
             text = "Text",
             iconResId = R.drawable.text,
-            selected = paint.value.label == "Text"
+            selected = paint.value.type == PaintType.Text
         ) {
-            paint.value = DrawingPaints.Pencil.copy(
+            paint.value = DrawingPaints.Text.copy(
                 strokeWidth = paint.value.strokeWidth,
                 color = paint.value.color
             )
@@ -838,27 +889,30 @@ val NoRippleConfiguration = RippleConfiguration(
  * @param isDrawing is the user drawing right now? */
 @Composable
 private fun Modifier.makeDrawCanvas(
-    allowedToDraw: Boolean,
-    paths: SnapshotStateList<PathWithPaint>,
+    allowedToDraw: State<Boolean>,
+    modifications: SnapshotStateList<DrawableItem>,
     paint: MutableState<ExtendedPaint>,
-    isDrawing: MutableState<Boolean>
+    isDrawing: MutableState<Boolean>,
+    changesSize: MutableIntState
 ): Modifier {
+	println("ALLOW ${allowedToDraw.value} PAINT ${paint.value.type}")
+
     val modifier = Modifier
-        .pointerInput(Unit) {
-            if (allowedToDraw) {
+    	.pointerInput(Unit) {
+            if (allowedToDraw.value) {
                 awaitEachGesture {
                     var lastPoint = Offset.Unspecified
 
                     do {
                         val event = awaitPointerEvent()
-                        val canceled = event.changes.any { it.isConsumed }
+                        val canceled = event.changes.any { it.isConsumed } || !allowedToDraw.value
 
-                        if (!canceled) {
+                        if (!canceled && (paint.value.type == PaintType.Pencil || paint.value.type == PaintType.Highlighter)) {
                             when (event.type) {
                                 PointerEventType.Press -> {
                                     val offset = event.changes.first().position
 
-                                    paths.add(
+                                    modifications.add(
                                         PathWithPaint(
                                             Path().apply {
                                                 moveTo(offset.x, offset.y)
@@ -869,6 +923,7 @@ private fun Modifier.makeDrawCanvas(
 
                                     lastPoint = offset
                                     isDrawing.value = true
+                                    changesSize.intValue += 1
 
                                     event.changes.forEach {
                                         it.consume()
@@ -877,20 +932,23 @@ private fun Modifier.makeDrawCanvas(
 
                                 PointerEventType.Move -> {
                                     val offset = event.changes.first().position
-                                    var path = paths.lastOrNull()?.path
+                                    var path =
+                                        (modifications.findLast {
+                                            it is PathWithPaint
+                                        } as PathWithPaint?)?.path
 
                                     if (path == null) {
-                                        paths.add(
+                                        val newPath =
                                             PathWithPaint(
                                                 Path().apply {
                                                     moveTo(offset.x, offset.y)
                                                 },
                                                 paint.value
                                             )
-                                        )
-                                        path = paths.last().path
+                                        modifications.add(newPath)
+                                        path = newPath.path
                                     } else {
-                                        paths.remove(
+                                        modifications.remove(
                                             PathWithPaint(
                                                 path,
                                                 paint.value
@@ -905,7 +963,7 @@ private fun Modifier.makeDrawCanvas(
                                         (lastPoint.y + offset.y) / 2
                                     )
 
-                                    paths.add(
+                                    modifications.add(
                                         PathWithPaint(
                                             path,
                                             paint.value
@@ -914,6 +972,7 @@ private fun Modifier.makeDrawCanvas(
 
                                     lastPoint = offset
                                     isDrawing.value = true
+                                    changesSize.intValue += 1
 
                                     event.changes.forEach {
                                         it.consume()
@@ -922,32 +981,69 @@ private fun Modifier.makeDrawCanvas(
 
                                 PointerEventType.Release -> {
                                     val offset = event.changes.first().position
-                                    val path = paths.last().path
+                                    val path = (modifications.findLast {
+                                        it is PathWithPaint
+                                    } as PathWithPaint).path
 
                                     path.lineTo(offset.x, offset.y)
                                     lastPoint = offset
 
                                     isDrawing.value = false
+                                    changesSize.intValue += 1
 
                                     event.changes.forEach {
                                         it.consume()
                                     }
                                 }
                             }
+                        } else if (!canceled && paint.value.type == PaintType.Text) {
+                        	when (event.type) {
+								PointerEventType.Press -> {
+									val position = event.changes.first().position
+
+				                    modifications.add(
+				                        DrawableText(
+				                            text = "text",
+				                            position = Offset(
+				                                position.x,
+				                                position.y
+				                            ),
+				                            paint = paint.value,
+				                            rotation = 0f
+				                        )
+				                    )
+
+									isDrawing.value = false
+				                    changesSize.intValue += 1
+                                    event.changes.forEach {
+                                        it.consume()
+                                	}
+								}
+
+								PointerEventType.Release -> {
+                                    isDrawing.value = false
+
+                                    event.changes.forEach {
+                                        it.consume()
+                                    }
+								}
+							}
                         }
                     } while (!canceled && event.changes.any { it.pressed })
                 }
             }
         }
 
+
     return this.then(modifier)
 }
 
 @Composable
 private fun BoxWithConstraintsScope.DrawActionsAndColors(
-    paths: SnapshotStateList<PathWithPaint>,
+    modifications: SnapshotStateList<DrawableItem>,
     shouldClearPaths: MutableState<Boolean>,
-    paint: MutableState<ExtendedPaint>
+    paint: MutableState<ExtendedPaint>,
+    changesSize: MutableIntState
 ) {
     var showColorPalette by remember { mutableStateOf(false) }
     val colorPaletteWidth by animateDpAsState(
@@ -985,7 +1081,8 @@ private fun BoxWithConstraintsScope.DrawActionsAndColors(
                         .align(Alignment.CenterStart)
                         .clickable {
                             shouldClearPaths.value = true
-                            paths.clear()
+                            modifications.clear()
+                            changesSize.intValue += 1
                         },
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -1010,7 +1107,8 @@ private fun BoxWithConstraintsScope.DrawActionsAndColors(
                         )
                         .align(Alignment.Center)
                         .clickable {
-                            paths.removeLastOrNull()
+                            modifications.removeLastOrNull()
+                            changesSize.intValue += 1
                         },
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally

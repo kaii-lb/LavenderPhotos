@@ -1,5 +1,6 @@
 package com.kaii.photos.helpers
 
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -28,7 +29,7 @@ class ExtendedPaint(
     override var strokeMiterLimit: Float = DefaultStrokeLineMiter,
     override var strokeWidth: Float = 20f,
     override var style: PaintingStyle = PaintingStyle.Stroke,
-    var label: String = "",
+    var type: PaintType = PaintType.Pencil,
 ) : Paint {
     fun copy(
         color: Color = this.color,
@@ -39,7 +40,7 @@ class ExtendedPaint(
         blendMode: BlendMode = this.blendMode,
         alpha: Float = this.alpha,
         pathEffect: PathEffect? = this.pathEffect,
-        label: String = this.label,
+        label: PaintType = this.type,
         filterQuality: FilterQuality = this.filterQuality,
         isAntiAlias: Boolean = this.isAntiAlias,
         strokeMiterLimit: Float = this.strokeMiterLimit,
@@ -59,7 +60,7 @@ class ExtendedPaint(
         paint.strokeMiterLimit = strokeMiterLimit
         paint.shader = shader
         paint.colorFilter = colorFilter
-        paint.label = label
+        paint.type = label
     }
 
     override fun asFrameworkPaint(): NativePaint {
@@ -85,7 +86,7 @@ class DrawingPaints {
     companion object {
         val Pencil =
             ExtendedPaint().apply {
-                label = "Pencil"
+                type = PaintType.Pencil
                 strokeWidth = 20f
                 strokeCap = StrokeCap.Round
                 strokeJoin = StrokeJoin.Round
@@ -98,7 +99,7 @@ class DrawingPaints {
 
         val Highlighter =
             ExtendedPaint().apply {
-                label = "Highlighter"
+                type = PaintType.Highlighter
                 strokeWidth = 20f
                 strokeCap = StrokeCap.Square
                 strokeJoin = StrokeJoin.Miter
@@ -111,7 +112,7 @@ class DrawingPaints {
 
         val Text =
             ExtendedPaint().apply {
-                label = "Text"
+                type = PaintType.Text
                 strokeWidth = 20f
                 strokeCap = StrokeCap.Round
                 strokeJoin = StrokeJoin.Round
@@ -124,7 +125,29 @@ class DrawingPaints {
     }
 }
 
+abstract class DrawableItem (
+    val type: ModificationType
+)
+
 data class PathWithPaint(
     val path: Path,
     val paint: ExtendedPaint
-)
+) : DrawableItem(ModificationType.Paint)
+
+enum class PaintType {
+    Pencil,
+    Highlighter,
+    Text
+}
+
+enum class ModificationType {
+    Paint,
+    Text,
+}
+
+data class DrawableText(
+    val text: String,
+    var position: Offset,
+    val paint: ExtendedPaint,
+    var rotation: Float
+) : DrawableItem(ModificationType.Text)

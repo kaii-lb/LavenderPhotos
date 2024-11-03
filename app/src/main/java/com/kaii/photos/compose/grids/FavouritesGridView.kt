@@ -2,8 +2,11 @@ package com.kaii.photos.compose.grids
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetValue
@@ -87,7 +90,10 @@ fun FavouritesGridView(
         sheetDragHandle = {},
         sheetSwipeEnabled = false,
         modifier = Modifier
-            .fillMaxSize(1f),
+            .fillMaxSize(1f)
+            .windowInsetsPadding(
+                WindowInsets.systemBars
+            ),
         topBar = {
             FavouritesViewTopAppBar(selectedItemsList = selectedItemsList) {
                 navController.popBackStack()

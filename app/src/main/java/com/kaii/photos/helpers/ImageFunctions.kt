@@ -3,9 +3,30 @@ package com.kaii.photos.helpers
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.net.Uri
 import android.provider.MediaStore.MediaColumns
 import android.util.Log
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.toSize
 import com.kaii.photos.MainActivity.Companion.applicationDatabase
 import com.kaii.photos.database.entities.SecuredItemEntity
 import com.kaii.photos.mediastore.MediaStoreData
@@ -14,7 +35,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.FileOutputStream
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.BasicFileAttributes
@@ -22,6 +45,7 @@ import java.nio.file.attribute.FileTime
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.io.path.Path
 import kotlin.io.path.setAttribute
+import kotlin.math.min
 
 private const val TAG = "IMAGE_FUNCTIONS"
 
@@ -205,5 +229,106 @@ fun copyImageListToPath(context: Context, list: List<MediaStoreData>, destinatio
                 inputStream?.close()
             }
         }
+    }
+}
+
+suspend fun savePathListToBitmap(
+    pathList: List<PathWithPaint>,
+    textList: List<DrawableText>,
+    rotation: Float,
+    image: ImageBitmap,
+    maxSize: Size,
+    absolutePath: String,
+    textMeasurer: TextMeasurer,
+    localDensity: Density
+) {
+    withContext(Dispatchers.IO) {
+        val rotationMatrix = android.graphics.Matrix().apply {
+            postRotate(rotation)
+        }
+
+        val savedImage = Bitmap.createBitmap(
+            image.asAndroidBitmap(),
+            0,
+            0,
+            image.width,
+            image.height
+        )
+            .copy(Bitmap.Config.ARGB_8888, true).asImageBitmap()
+        val size = IntSize(
+            savedImage.width,
+            savedImage.height
+        )
+
+        val ratio = 1f / min(maxSize.width / size.width, maxSize.height / size.height)
+        val drawScope = CanvasDrawScope()
+        val canvas = androidx.compose.ui.graphics.Canvas(savedImage)
+
+        drawScope.draw(
+            Density(1f),
+            LayoutDirection.Ltr,
+            canvas,
+            size.toSize()
+        ) {
+            pathList.forEach { (path, paint) ->
+                scale(ratio, Offset(0.5f, 0.5f)) {
+                    drawPath(
+                        path = path,
+                        style = Stroke(
+                            width = paint.strokeWidth,
+                            cap = paint.strokeCap,
+                            join = paint.strokeJoin,
+                            miter = paint.strokeMiterLimit,
+                            pathEffect = paint.pathEffect
+                        ),
+                        blendMode = paint.blendMode,
+                        color = paint.color,
+                        alpha = paint.alpha
+                    )
+                }
+            }
+
+            textList.forEach { (text, position, paint, rotation) ->
+           		rotate(rotation) {
+                	scale(ratio, Offset(0.5f, 0.5f)) {
+		               	translate(position.x, position.y) {
+			                drawText(
+			                    textMeasurer = textMeasurer,
+			                    text = text,
+			                    style = TextStyle(
+			                        fontSize = paint.strokeWidth.toSp() * ratio * 0.8f, // why 0.8f? who the fuck knows
+			                        color = paint.color,
+			                        textAlign = TextAlign.Center,
+			                    ),
+			                    blendMode = BlendMode.SrcOver
+			                )
+	                	}
+               		}
+				}
+            }
+        }
+
+        val rotatedImage = Bitmap.createBitmap(
+            savedImage.asAndroidBitmap(),
+            0,
+            0,
+            image.width,
+            image.height,
+            rotationMatrix,
+            false
+        )
+            .copy(Bitmap.Config.ARGB_8888, true).asImageBitmap()
+
+        val original = File(absolutePath)
+        // change the "edited at" thing to make more sense, like copy(1) copy(2) or something
+        val newPath = original.absolutePath.replace(
+            original.name,
+            original.nameWithoutExtension + "-edited-at-" + System.currentTimeMillis() + ".png"
+        )
+
+        val fileOutputStream = FileOutputStream(File(newPath))
+        rotatedImage.asAndroidBitmap()
+            .compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream)
+        fileOutputStream.close()
     }
 }
