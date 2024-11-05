@@ -10,7 +10,9 @@ import android.util.Log
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
@@ -234,14 +236,15 @@ fun copyImageListToPath(context: Context, list: List<MediaStoreData>, destinatio
 }
 
 suspend fun savePathListToBitmap(
-    pathList: List<PathWithPaint>,
-    textList: List<DrawableText>,
+    modifications: List<DrawableItem>,
     rotation: Float,
     image: ImageBitmap,
     maxSize: Size,
     absolutePath: String,
     textMeasurer: TextMeasurer
 ) {
+    val style = DrawableText.Styles.Default.style
+
     withContext(Dispatchers.IO) {
         val rotationMatrix = android.graphics.Matrix().apply {
             postRotate(rotation)
@@ -270,38 +273,49 @@ suspend fun savePathListToBitmap(
             canvas,
             size.toSize()
         ) {
-            pathList.forEach { (path, paint) ->
-                scale(ratio, Offset(0.5f, 0.5f)) {
-                    drawPath(
-                        path = path,
-                        style = Stroke(
-                            width = paint.strokeWidth,
-                            cap = paint.strokeCap,
-                            join = paint.strokeJoin,
-                            miter = paint.strokeMiterLimit,
-                            pathEffect = paint.pathEffect
-                        ),
-                        blendMode = paint.blendMode,
-                        color = paint.color,
-                        alpha = paint.alpha
-                    )
-                }
-            }
+            modifications.forEach { modification ->
+                if (modification is PathWithPaint) {
+                    val (path, paint) = modification
+                    scale(ratio, Offset(0.5f, 0.5f)) {
+                        drawPath(
+                            path = path,
+                            style = Stroke(
+                                width = paint.strokeWidth,
+                                cap = paint.strokeCap,
+                                join = paint.strokeJoin,
+                                miter = paint.strokeMiterLimit,
+                                pathEffect = paint.pathEffect
+                            ),
+                            blendMode = paint.blendMode,
+                            color = paint.color,
+                            alpha = paint.alpha
+                        )
+                    }
+                } else if (modification is DrawableText) {
+                    val (text, position, paint, textRotation, textSize) = modification
 
-			textList.forEach { text ->
-                scale(ratio, Offset(0.5f, 0.5f)) {
-                    rotate(text.rotation, text.position + text.size / 2f) {
-                    	translate(text.position.x, text.position.y) {
-                            drawText(
-                                textMeasurer = textMeasurer,
-                                text = text.text,
-                                style = TextStyle(
-                                    fontSize = TextUnit(text.paint.strokeWidth * 0.8f * ratio, TextUnitType.Sp),
-                                    color = text.paint.color,
-                                    textAlign = TextAlign.Center,
-                                ),
-                                blendMode = BlendMode.SrcOver,
-                            )
+                    scale(ratio, Offset(0.5f, 0.5f)) {
+                        rotate(textRotation, position + textSize / 2f) {
+                            translate(position.x, position.y) {
+                                val textLayout = textMeasurer.measure(
+                                    text = text,
+                                    style = TextStyle(
+                                        color = paint.color,
+                                        fontSize = TextUnit(paint.strokeWidth, TextUnitType.Sp), // TextUnit(text.paint.strokeWidth * 0.8f * ratio, TextUnitType.Sp)
+                                        textAlign = style.textAlign,
+                                        platformStyle = style.platformStyle,
+                                        lineHeightStyle = style.lineHeightStyle,
+                                        baselineShift = style.baselineShift
+                                    )
+                                )
+
+                                drawText(
+                                    textLayoutResult = textLayout,
+                                    color = paint.color,
+                                    alpha = 1f,
+                                    blendMode = paint.blendMode
+                                )
+                            }
                         }
                     }
                 }

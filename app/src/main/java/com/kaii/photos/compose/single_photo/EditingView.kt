@@ -187,15 +187,9 @@ fun EditingView(navController: NavHostController, absolutePath: String, uri: Uri
                 changesSize = changesSize,
                 saveImage = {
                     coroutineScope.launch {
-
-                        val pathList = modifications.filterIsInstance<PathWithPaint>()
-
-                        val textList = modifications.filterIsInstance<DrawableText>()
-
 						// TODO: move to modifications and draw one by one so text isnt always on top of paths
                         savePathListToBitmap(
-                            pathList = pathList,
-                            textList = textList,
+                            modifications = modifications,
                             absolutePath = absolutePath,
                             image = image,
                             maxSize = maxSize,
