@@ -350,11 +350,11 @@ fun AlbumsListItem(
                         album
                     )
 
-				if (groupedMedia != null) {
-					val newList = groupedMedia.value.toMutableList()
-					newList.removeAll(selectedItemsWithoutSection)
-					groupedMedia.value = newList
-				}                    
+                    if (groupedMedia != null) {
+                        val newList = groupedMedia.value.toMutableList()
+                        newList.removeAll(selectedItemsWithoutSection)
+                        groupedMedia.value = newList
+                    }
                 } else {
                     copyImageListToPath(
                         context,

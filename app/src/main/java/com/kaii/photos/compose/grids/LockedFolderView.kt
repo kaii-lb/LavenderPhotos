@@ -1,5 +1,8 @@
 package com.kaii.photos.compose.grids
 
+import android.view.Window
+import android.view.WindowManager
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -38,8 +41,15 @@ import kotlin.io.path.Path
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LockedFolderView(navController: NavHostController) {
+fun LockedFolderView(navController: NavHostController, window: Window) {
     val selectedItemsList = remember { SnapshotStateList<MediaStoreData>() }
+
+    window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+
+    BackHandler {
+        window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        navController.popBackStack()
+    }
 
     val secureFolder = File(LocalContext.current.getAppLockedFolderDirectory())
     val fileList = secureFolder.listFiles() ?: return
@@ -50,9 +60,9 @@ fun LockedFolderView(navController: NavHostController) {
 
         val item = MediaStoreData(
             type = if (mimeType.lowercase().contains("image")) MediaType.Image
-           			else if (mimeType.lowercase().contains("video")) MediaType.Video
-           			else MediaType.Section,
-            id = file.hashCode()  * file.length() * file.lastModified(),
+            else if (mimeType.lowercase().contains("video")) MediaType.Video
+            else MediaType.Section,
+            id = file.hashCode() * file.length() * file.lastModified(),
             uri = file.absolutePath.toUri(),
             mimeType = mimeType,
             dateModified = file.lastModified() / 1000,
@@ -63,11 +73,14 @@ fun LockedFolderView(navController: NavHostController) {
         mediaStoreData.add(item)
     }
 
-    val groupedMedia = remember { mutableStateOf(groupPhotosBy(mediaStoreData, MediaItemSortMode.LastModified)) }
+    val groupedMedia =
+        remember { mutableStateOf(groupPhotosBy(mediaStoreData, MediaItemSortMode.LastModified)) }
 
-    val showBottomSheet by remember { derivedStateOf {
-        selectedItemsList.size > 0
-    }}
+    val showBottomSheet by remember {
+        derivedStateOf {
+            selectedItemsList.size > 0
+        }
+    }
 
     val sheetState = rememberStandardBottomSheetState(
         skipHiddenState = false,
@@ -98,12 +111,15 @@ fun LockedFolderView(navController: NavHostController) {
             }
         },
         sheetContent = {
-            SecureFolderViewBottomAppBar(selectedItemsList = selectedItemsList, groupedMedia = groupedMedia)
+            SecureFolderViewBottomAppBar(
+                selectedItemsList = selectedItemsList,
+                groupedMedia = groupedMedia
+            )
         },
         sheetPeekHeight = 0.dp,
         sheetShape = RectangleShape
     ) { padding ->
-        Column (
+        Column(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize(1f),

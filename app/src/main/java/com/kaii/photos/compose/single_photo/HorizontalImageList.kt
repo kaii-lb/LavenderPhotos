@@ -143,7 +143,7 @@ fun HorizontalImageList(
                 }
             }
 
-            Box (
+            Box(
                 modifier = Modifier
                     .fillMaxSize(1f)
             ) {
@@ -172,7 +172,7 @@ fun HorizontalImageList(
                 )
             }
         } else {
-            Box (
+            Box(
                 modifier = Modifier
                     .fillMaxSize(1f)
             ) {
@@ -201,8 +201,6 @@ fun HorizontalImageList(
     }
 }
 
-
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun Modifier.mediaModifier(
     scale: MutableState<Float>,
@@ -216,7 +214,7 @@ private fun Modifier.mediaModifier(
     showVideoPlayerController: MutableState<Boolean>? = null,
 ): Modifier {
     val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
-	val vibratorManager = rememberVibratorManager()
+    val vibratorManager = rememberVibratorManager()
 
     return this.then(
         Modifier
@@ -229,7 +227,7 @@ private fun Modifier.mediaModifier(
                 transformOrigin = TransformOrigin(0f, 0f)
             )
             .pointerInput(Unit) {
-				detectTapGestures(
+                detectTapGestures(
                     onTap = {
                         if (systemBarsShown.value) {
                             windowInsetsController.apply {
@@ -254,7 +252,8 @@ private fun Modifier.mediaModifier(
 
                     onDoubleTap = { clickOffset ->
                         if (item?.type == MediaType.Video && showVideoPlayerController != null) {
-                            if (isLandscape) showVideoPlayerController.value = !showVideoPlayerController.value
+                            if (isLandscape) showVideoPlayerController.value =
+                                !showVideoPlayerController.value
                         } else {
                             if (scale.value == 1f && offset.value == Offset.Zero) {
                                 scale.value = 2f
@@ -301,7 +300,8 @@ private fun Modifier.mediaModifier(
 
                                 // were basically getting the amount of change here
                                 val zoomMotion = abs(1 - localZoom) * centroidSize
-                                val rotationMotion = abs(localRotation * PI.toFloat() * centroidSize / 180f)
+                                val rotationMotion =
+                                    abs(localRotation * PI.toFloat() * centroidSize / 180f)
                                 val offsetMotion = localOffset.getDistance()
 
                                 // calculate the amount of movement/zoom/rotation happening and if its past a certain point
@@ -313,7 +313,7 @@ private fun Modifier.mediaModifier(
                             }
 
                             if (pastTouchSlop) {
-								val centroid = event.calculateCentroid()
+                                val centroid = event.calculateCentroid()
 
                                 // ignore rotation if user is moving or zooming, QOL thing
                                 var actualRotation = if (panZoomLock) 0f else rotationChange
@@ -321,39 +321,45 @@ private fun Modifier.mediaModifier(
                                 if (actualRotation != 0f || zoomChange != 1f || offsetChange != Offset.Zero) {
                                     val oldScale = scale.value
 
-									if (panZoomLock) {
-										scale.value = (scale.value * zoomChange).coerceIn(1f, 5f)
-									}
+                                    if (panZoomLock) {
+                                        scale.value = (scale.value * zoomChange).coerceIn(1f, 5f)
+                                    }
 
-									val nextRotation = rotation.value + actualRotation
+                                    val nextRotation = rotation.value + actualRotation
 
-									val closestPoint = (nextRotation / 360f).roundToInt() * 360f
-									val delta = abs(closestPoint - nextRotation)
-									if (
-										delta < 2.5f &&
-										scale.value == 1f &&
-										rotation.value != closestPoint
-									) {
-										vibratorManager.vibrateShort()
-										rotation.value = closestPoint
-									} else if (delta > 2.5f || scale.value != 1f) {
-										rotation.value = nextRotation
-									}
+                                    val closestPoint = (nextRotation / 360f).roundToInt() * 360f
+                                    val delta = abs(closestPoint - nextRotation)
+                                    if (
+                                        delta < 2.5f &&
+                                        scale.value == 1f &&
+                                        rotation.value != closestPoint
+                                    ) {
+                                        vibratorManager.vibrateShort()
+                                        rotation.value = closestPoint
+                                    } else if (delta > 2.5f || scale.value != 1f) {
+                                        rotation.value = nextRotation
+                                    }
 
 
-									var isRotating = actualRotation != 0f
-									val counterOffset = if (isRotating) offsetChange else Offset.Zero
+                                    var isRotating = actualRotation != 0f
+                                    val counterOffset =
+                                        if (isRotating) offsetChange else Offset.Zero
                                     // compensate for change of visual center of image and offset by that
                                     // this makes it "cleaner" to scale since the image isn't bouncing around when the user moves or scales it
-                                    offset.value = if (scale.value == 1f && rotation.value == 0f) Offset.Zero else
-                                        (offset.value + centroid / oldScale).rotateBy(actualRotation) - (centroid / scale.value + (offsetChange - counterOffset).rotateBy(rotation.value + actualRotation))
+                                    offset.value =
+                                        if (scale.value == 1f && rotation.value == 0f) Offset.Zero else
+                                            (offset.value + centroid / oldScale).rotateBy(
+                                                actualRotation
+                                            ) - (centroid / scale.value + (offsetChange - counterOffset).rotateBy(
+                                                rotation.value + actualRotation
+                                            ))
                                 }
 
-								if (offset.value != Offset.Zero || event.changes.size == 2 || scale.value != 1f) {
-	                                event.changes.forEach {
-	                                    it.consume()
-	                                }
-								}
+                                if (offset.value != Offset.Zero || event.changes.size == 2 || scale.value != 1f) {
+                                    event.changes.forEach {
+                                        it.consume()
+                                    }
+                                }
                             }
                         }
                     } while (!canceled && event.changes.any { it.pressed } && showVideoPlayerController == null)
@@ -371,8 +377,7 @@ fun sortOutMediaMods(
 ) {
     coroutineScope.launch {
         val size = groupedMedia.value.size - 1
-        val scrollIndex = groupedMedia.value.indexOf(item) // is this better?
-//        val scrollIndex = state.layoutInfo.visibleItemsInfo.firstOrNull()?.index ?: 0 // or this?
+        val scrollIndex = groupedMedia.value.indexOf(item)
 
         val newMedia = groupedMedia.value.toList().toMutableList()
         newMedia.removeAt(scrollIndex)
@@ -380,7 +385,8 @@ fun sortOutMediaMods(
         if (size == 0) {
             popBackStackAction()
         } else {
-            state.scrollToPage((scrollIndex).coerceIn(0, size))
+            state.animateScrollToPage((scrollIndex).coerceIn(0, size))
+//            state.scrollToPage((scrollIndex).coerceIn(0, size))
         }
 
         groupedMedia.value = newMedia

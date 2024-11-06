@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -749,8 +750,10 @@ fun SinglePhotoInfoDialog(
 ) {
 	val context = LocalContext.current
 	val isEditingFileName = remember { mutableStateOf(false) }
-	val modifier = if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE)
-		Modifier.width(256.dp)
+
+	val localConfiguration = LocalConfiguration.current
+	val modifier = if (localConfiguration.orientation == Configuration.ORIENTATION_LANDSCAPE)
+		Modifier.width(328.dp)
 	else
 		Modifier.fillMaxWidth(0.85f)
 
@@ -903,26 +906,26 @@ fun SinglePhotoInfoDialog(
 						}
 
 						val infoComposable = @Composable {
-							Column (
+							LazyColumn (
 								modifier = Modifier
 									.wrapContentHeight()
 							) {
 								for (key in mediaData.keys) {
-									val value = mediaData[key]
+									item {
+										val value = mediaData[key]
 
-									val splitBy = Regex("(?=[A-Z])")
-									val split = key.toString().split(splitBy)
-									// println("SPLIT IS $split")
-									val name = if (split.size >= 3) "${split[1]} ${split[2]}" else key.toString()
+										val splitBy = Regex("(?=[A-Z])")
+										val split = key.toString().split(splitBy)
+										// println("SPLIT IS $split")
+										val name = if (split.size >= 3) "${split[1]} ${split[2]}" else key.toString()
 
-									DialogInfoText(
-										firstText = name,
-										secondText = value.toString(),
-										iconResId = key.iconResInt,
-									)
+										DialogInfoText(
+											firstText = name,
+											secondText = value.toString(),
+											iconResId = key.iconResInt,
+										)
+									}
 								}
-
-								Spacer (modifier = Modifier.height(8.dp))
 							}
 						}
 

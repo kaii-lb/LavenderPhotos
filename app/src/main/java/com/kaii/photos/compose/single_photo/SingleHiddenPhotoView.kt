@@ -3,6 +3,7 @@ package com.kaii.photos.compose.single_photo
 import android.annotation.SuppressLint
 import android.content.res.Configuration
 import android.view.Window
+import android.view.WindowManager
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -82,6 +83,8 @@ fun SingleHiddenPhotoView(
     rotation: MutableState<Float>,
     offset: MutableState<Offset>,
 ) {
+    window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+
     val mainViewModel = MainActivity.mainViewModel
 
     val mediaItem = mainViewModel.selectedMediaData.collectAsState(initial = null).value ?: return

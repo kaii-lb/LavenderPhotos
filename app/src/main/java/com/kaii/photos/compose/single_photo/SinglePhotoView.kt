@@ -273,7 +273,7 @@ private fun TopBar(
 
                 Text(
                     text = mediaTitle,
-                    fontSize = TextUnit(18f, TextUnitType.Sp),
+                    fontSize = TextUnit(16f, TextUnitType.Sp),
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -371,9 +371,13 @@ private fun BottomBar(
                         .fillMaxWidth(1f)
                         .padding(12.dp, 0.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE) Arrangement.spacedBy(
-                        32.dp
-                    ) else Arrangement.SpaceEvenly
+                    horizontalArrangement =
+	                    if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE) 
+		                    Arrangement.spacedBy(
+		                        space = 48.dp,
+		                        alignment = Alignment.CenterHorizontally
+		                    )
+	                    else Arrangement.SpaceEvenly
                 ) {
                     BottomAppBarItem(
                         text = "Share",

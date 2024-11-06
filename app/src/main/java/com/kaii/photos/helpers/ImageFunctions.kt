@@ -9,10 +9,7 @@ import android.provider.MediaStore.MediaColumns
 import android.util.Log
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
@@ -23,7 +20,6 @@ import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
@@ -274,7 +270,7 @@ suspend fun savePathListToBitmap(
             size.toSize()
         ) {
             modifications.forEach { modification ->
-                if (modification is PathWithPaint) {
+                if (modification is DrawablePath) {
                     val (path, paint) = modification
                     scale(ratio, Offset(0.5f, 0.5f)) {
                         drawPath(
@@ -312,7 +308,7 @@ suspend fun savePathListToBitmap(
                                 drawText(
                                     textLayoutResult = textLayout,
                                     color = paint.color,
-                                    alpha = 1f,
+                                    alpha = paint.alpha,
                                     blendMode = paint.blendMode
                                 )
                             }

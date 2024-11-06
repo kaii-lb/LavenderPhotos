@@ -130,24 +130,17 @@ class DrawingPaints {
     }
 }
 
-abstract class DrawableItem(
-    val type: ModificationType
-)
+abstract class DrawableItem
 
-data class PathWithPaint(
+data class DrawablePath(
     val path: Path,
     val paint: ExtendedPaint
-) : DrawableItem(ModificationType.Paint)
+) : DrawableItem()
 
 enum class PaintType {
     Pencil,
     Highlighter,
     Text
-}
-
-enum class ModificationType {
-    Paint,
-    Text,
 }
 
 data class DrawableText(
@@ -156,7 +149,7 @@ data class DrawableText(
     val paint: ExtendedPaint,
     var rotation: Float,
     var size: Offset
-) : DrawableItem(ModificationType.Text){
+) : DrawableItem() {
     @JvmInline
     value class Styles(val style: TextStyle) {
         companion object {

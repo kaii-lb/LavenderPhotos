@@ -23,7 +23,8 @@
         android:enableOnBackInvokedCallback="true"
         android:largeHeap="true"
         android:hardwareAccelerated="true"
-        android:configChanges="orientation">
+        android:configChanges="orientation"
+        android:windowSoftInputMode="adjustResize">
         
         <activity
             android:name=".MainActivity"

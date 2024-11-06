@@ -475,7 +475,7 @@ class MainActivity : ComponentActivity() {
                             selectedItemsList,
                         )
 
-                        LockedFolderView(navControllerLocal)
+                        LockedFolderView(navControllerLocal, window)
                     }
 
                     composable(MultiScreenViewType.SingleHiddenPhotoVew.name) {
@@ -536,44 +536,44 @@ class MainActivity : ComponentActivity() {
                         enterTransition = {
                             slideInVertically(
 		                        animationSpec = tween(
-		                        	durationMillis = 350
+		                        	durationMillis = 600
 		                        )
                             ) { height -> height } + fadeIn(
                                 animationSpec = tween(
-                                    durationMillis = 350
+                                    durationMillis = 600
                                 )
                             )
                         },
                         exitTransition = {
                             slideOutVertically(
 		                        animationSpec = tween(
-		                        	durationMillis = 350
+		                        	durationMillis = 600
 		                        )
                             ) { height -> height } + fadeOut(
                                 animationSpec = tween(
-                                    durationMillis = 350
+                                    durationMillis = 600
                                 )
                             )
                         },
                         popEnterTransition = {
                             slideInVertically(
 		                        animationSpec = tween(
-		                        	durationMillis = 350
+		                        	durationMillis = 600
 		                        )
                             ) { height -> height } + fadeIn(
                                 animationSpec = tween(
-                                    durationMillis = 350
+                                    durationMillis = 600
                                 )
                             )
                         },
                         popExitTransition = {
                             slideOutVertically(
 		                        animationSpec = tween(
-		                        	durationMillis = 350
+		                        	durationMillis = 600
 		                        )
                             ) { height -> height } + fadeOut(
                                 animationSpec = tween(
-                                    durationMillis = 350
+                                    durationMillis = 600
                                 )
                             )
                         }
