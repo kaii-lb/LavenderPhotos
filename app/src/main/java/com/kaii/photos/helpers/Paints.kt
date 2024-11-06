@@ -19,6 +19,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntSize
 
 class ExtendedPaint(
     override var alpha: Float = 1.0f,
@@ -148,7 +149,7 @@ data class DrawableText(
     var position: Offset,
     val paint: ExtendedPaint,
     var rotation: Float,
-    var size: Offset
+    var size: IntSize
 ) : DrawableItem() {
     @JvmInline
     value class Styles(val style: TextStyle) {
@@ -169,3 +170,5 @@ data class DrawableText(
         }
     }
 }
+
+fun IntSize.toOffset() : Offset = Offset(this.width.toFloat(), this.height.toFloat())

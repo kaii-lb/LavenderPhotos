@@ -18,8 +18,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.gestures.snapping.SnapPosition
@@ -33,7 +31,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -101,7 +98,6 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.DpSize
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
@@ -122,14 +118,11 @@ import com.kaii.photos.helpers.ExtendedPaint
 import com.kaii.photos.helpers.PaintType
 import com.kaii.photos.helpers.DrawablePath
 import com.kaii.photos.helpers.savePathListToBitmap
+import com.kaii.photos.helpers.toOffset
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.math.PI
 import kotlin.math.abs
-import kotlin.math.cos
 import kotlin.math.min
-import kotlin.math.roundToInt
-import kotlin.math.sin
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -233,7 +226,8 @@ fun EditingView(navController: NavHostController, absolutePath: String, uri: Uri
 
         SetEditingViewDrawableTextBottomSheet(
             showBottomSheet = showEditTextBottomSheet,
-            modifications = modifications
+            modifications = modifications,
+            textMeasurer
         )
 
         BoxWithConstraints(
@@ -303,7 +297,7 @@ fun EditingView(navController: NavHostController, absolutePath: String, uri: Uri
                 label = "Animate size of preview image in crop mode"
             )
 
-            val style = DrawableText.Styles.Default.style
+            val defaultTextStyle = DrawableText.Styles.Default.style
             val canDraw = remember {
                 derivedStateOf {
                     pagerState.currentPage == 3
@@ -357,14 +351,14 @@ fun EditingView(navController: NavHostController, absolutePath: String, uri: Uri
                             style = TextStyle(
                                 color = textPaint.color,
                                 fontSize = TextUnit(textPaint.strokeWidth, TextUnitType.Sp),
-                                textAlign = style.textAlign,
-                                platformStyle = style.platformStyle,
-                                lineHeightStyle = style.lineHeightStyle,
-                                baselineShift = style.baselineShift
+                                textAlign = defaultTextStyle.textAlign,
+                                platformStyle = defaultTextStyle.platformStyle,
+                                lineHeightStyle = defaultTextStyle.lineHeightStyle,
+                                baselineShift = defaultTextStyle.baselineShift
                             )
                         )
 
-                        rotate(textRotation, textPosition + textSize / 2f) {
+                        rotate(textRotation, textPosition + textSize.toOffset() / 2f) {
                             translate(textPosition.x, textPosition.y) {
                                 drawText(
                                     textLayoutResult = textLayout,
@@ -890,15 +884,15 @@ private fun Modifier.makeDrawCanvas(
 ): Modifier {
     val textMeasurer = rememberTextMeasurer()
     val localTextStyle = LocalTextStyle.current
-    val style = DrawableText.Styles.Default.style
+    val defaultTextStyle = DrawableText.Styles.Default.style
 
     val modifier = Modifier
         .pointerInput(Unit) {
             if (allowedToDraw.value) {
                 awaitEachGesture {
                     var lastPoint = Offset.Unspecified
-					var lastText: DrawableText? = null
-					var touchOffset = Offset.Zero
+                    var lastText: DrawableText? = null
+                    var touchOffset = Offset.Zero
 
                     do {
                         val event = awaitPointerEvent()
@@ -998,14 +992,13 @@ private fun Modifier.makeDrawCanvas(
                                 PointerEventType.Press -> {
                                     val position = event.changes.first().position
 
-                                    val tappedOnText = modifications.filterIsInstance<DrawableText>().firstOrNull {
-                                        checkIfClickedOnText(
-                                            text = it,
-                                            clickPosition = position
-                                        )
-                                    }
-
-                                    println("TEXT ${tappedOnText?.position} CLICK $position")
+                                    val tappedOnText =
+                                        modifications.filterIsInstance<DrawableText>().firstOrNull {
+                                            checkIfClickedOnText(
+                                                text = it,
+                                                clickPosition = position
+                                            )
+                                        }
 
                                     if (tappedOnText == null) {
                                         val textLayout = textMeasurer.measure(
@@ -1016,26 +1009,23 @@ private fun Modifier.makeDrawCanvas(
                                                     paint.value.strokeWidth,
                                                     TextUnitType.Sp
                                                 ),
-                                                textAlign = style.textAlign,
-                                                platformStyle = style.platformStyle,
-                                                lineHeightStyle = style.lineHeightStyle,
-                                                baselineShift = style.baselineShift
+                                                textAlign = defaultTextStyle.textAlign,
+                                                platformStyle = defaultTextStyle.platformStyle,
+                                                lineHeightStyle = defaultTextStyle.lineHeightStyle,
+                                                baselineShift = defaultTextStyle.baselineShift
                                             )
                                         )
 
-	                                    val text = DrawableText(
-	                                            text = "text",
-	                                            position = Offset(
-	                                                position.x - textLayout.size.width / 2f,
-	                                                position.y - textLayout.size.height / 2f
-	                                            ),
-	                                            paint = paint.value,
-	                                            rotation = 0f,
-	                                            size = Offset(
-	                                                textLayout.size.width.toFloat(),
-	                                                textLayout.size.height.toFloat()
-	                                            )
-	                                        )
+                                        val text = DrawableText(
+                                            text = "text",
+                                            position = Offset(
+                                                position.x - textLayout.size.width / 2f,
+                                                position.y - textLayout.size.height / 2f
+                                            ),
+                                            paint = paint.value,
+                                            rotation = 0f,
+                                            size = textLayout.size
+                                        )
                                         modifications.add(text)
                                         lastText = text
                                     } else {
@@ -1054,12 +1044,12 @@ private fun Modifier.makeDrawCanvas(
                                 PointerEventType.Move -> {
                                     val offset = event.changes.first().position
 
-									if (lastText != null) {
-	                                   	modifications.remove(lastText)
+                                    if (lastText != null) {
+                                        modifications.remove(lastText)
 
-	                                    lastText.position += (offset - lastText.position - touchOffset)
-										modifications.add(lastText)
-									}
+                                        lastText.position += (offset - lastText.position - touchOffset)
+                                        modifications.add(lastText)
+                                    }
 
                                     isDrawing.value = true
 
@@ -1245,17 +1235,17 @@ private fun BoxWithConstraintsScope.DrawActionsAndColors(
     }
 }
 
-fun checkIfClickedOnText(text: DrawableText, clickPosition: Offset) : Boolean {
+fun checkIfClickedOnText(text: DrawableText, clickPosition: Offset): Boolean {
     val textPosition = text.position
     val textSize = text.size
 
-    val textRight = textPosition.x + textSize.x
+    val textRight = textPosition.x + textSize.width
     val textLeft = textPosition.x
     val textTop = textPosition.y
-    val textBottom = textPosition.y + textSize.y
+    val textBottom = textPosition.y + textSize.height
 
-    val isInTextWidth = clickPosition.x >= textLeft && clickPosition.x <= textRight
-    val isInTextHeight = clickPosition.y >= textTop && clickPosition.y <= textBottom
+    val isInTextWidth = clickPosition.x in textLeft..textRight
+    val isInTextHeight = clickPosition.y in textTop..textBottom
 
     return isInTextWidth && isInTextHeight
 }

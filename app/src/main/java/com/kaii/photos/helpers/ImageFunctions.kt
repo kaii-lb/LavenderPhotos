@@ -67,7 +67,7 @@ fun permanentlyDeletePhotoList(context: Context, list: List<Uri>) {
 
             delay(3000)
         }
-	}
+    }
 }
 
 fun setTrashedOnPhotoList(context: Context, list: List<Uri>, trashed: Boolean) {
@@ -93,19 +93,19 @@ fun setTrashedOnPhotoList(context: Context, list: List<Uri>, trashed: Boolean) {
 fun shareImage(uri: Uri, context: Context) {
     val contentResolver = context.contentResolver
 
-	CoroutineScope(Dispatchers.IO).launch {
-	    val mimeType = contentResolver.getType(uri)
+    CoroutineScope(Dispatchers.IO).launch {
+        val mimeType = contentResolver.getType(uri)
 
-	    val shareIntent = Intent().apply {
-	        action = Intent.ACTION_SEND
-	        type = mimeType
-	    }
+        val shareIntent = Intent().apply {
+            action = Intent.ACTION_SEND
+            type = mimeType
+        }
 
-	    shareIntent.putExtra(Intent.EXTRA_STREAM, uri)
+        shareIntent.putExtra(Intent.EXTRA_STREAM, uri)
 
-	    val chooserIntent = Intent.createChooser(shareIntent, null)
-	    context.startActivity(chooserIntent)
-	}
+        val chooserIntent = Intent.createChooser(shareIntent, null)
+        context.startActivity(chooserIntent)
+    }
 }
 
 fun moveImageToLockedFolder(absolutePath: String, id: Long, context: Context) {
@@ -137,21 +137,21 @@ fun moveImageOutOfLockedFolder(path: String) {
     val fileToBeRevived = File(path)
     val absolutePath = fileToBeRevived.absolutePath
 
-	CoroutineScope(Dispatchers.IO).launch {
-	    val reverseCemetery =
-	        applicationDatabase.securedItemEntityDao().getOriginalPathFromSecuredPath(path)
-	            ?: (getAppRestoredFromLockedFolderDirectory() + fileToBeRevived.name)
+    CoroutineScope(Dispatchers.IO).launch {
+        val reverseCemetery =
+            applicationDatabase.securedItemEntityDao().getOriginalPathFromSecuredPath(path)
+                ?: (getAppRestoredFromLockedFolderDirectory() + fileToBeRevived.name)
 
-	    Files.move(Path(absolutePath), Path(reverseCemetery), StandardCopyOption.REPLACE_EXISTING)
+        Files.move(Path(absolutePath), Path(reverseCemetery), StandardCopyOption.REPLACE_EXISTING)
 
-	    val lastModified = System.currentTimeMillis()
-	    Path(reverseCemetery).setAttribute(
-	        BasicFileAttributes::lastModifiedTime.name,
-	        FileTime.fromMillis(lastModified)
-	    )
-	    File(reverseCemetery).lastModified()
-	    applicationDatabase.securedItemEntityDao().deleteEntityBySecuredPath(path)
-	}
+        val lastModified = System.currentTimeMillis()
+        Path(reverseCemetery).setAttribute(
+            BasicFileAttributes::lastModifiedTime.name,
+            FileTime.fromMillis(lastModified)
+        )
+        File(reverseCemetery).lastModified()
+        applicationDatabase.securedItemEntityDao().deleteEntityBySecuredPath(path)
+    }
 }
 
 /** @param list is a list of the absolute path of every image to be deleted */
@@ -239,7 +239,7 @@ suspend fun savePathListToBitmap(
     absolutePath: String,
     textMeasurer: TextMeasurer
 ) {
-    val style = DrawableText.Styles.Default.style
+    val defaultTextStyle = DrawableText.Styles.Default.style
 
     withContext(Dispatchers.IO) {
         val rotationMatrix = android.graphics.Matrix().apply {
@@ -291,17 +291,20 @@ suspend fun savePathListToBitmap(
                     val (text, position, paint, textRotation, textSize) = modification
 
                     scale(ratio, Offset(0.5f, 0.5f)) {
-                        rotate(textRotation, position + textSize / 2f) {
+                        rotate(textRotation, position + textSize.toOffset() / 2f) {
                             translate(position.x, position.y) {
                                 val textLayout = textMeasurer.measure(
                                     text = text,
                                     style = TextStyle(
                                         color = paint.color,
-                                        fontSize = TextUnit(paint.strokeWidth, TextUnitType.Sp), // TextUnit(text.paint.strokeWidth * 0.8f * ratio, TextUnitType.Sp)
-                                        textAlign = style.textAlign,
-                                        platformStyle = style.platformStyle,
-                                        lineHeightStyle = style.lineHeightStyle,
-                                        baselineShift = style.baselineShift
+                                        fontSize = TextUnit(
+                                            paint.strokeWidth,
+                                            TextUnitType.Sp
+                                        ), // TextUnit(text.paint.strokeWidth * 0.8f * ratio, TextUnitType.Sp)
+                                        textAlign = defaultTextStyle.textAlign,
+                                        platformStyle = defaultTextStyle.platformStyle,
+                                        lineHeightStyle = defaultTextStyle.lineHeightStyle,
+                                        baselineShift = defaultTextStyle.baselineShift
                                     )
                                 )
 

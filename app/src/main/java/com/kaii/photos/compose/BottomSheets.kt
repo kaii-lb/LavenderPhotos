@@ -22,6 +22,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -42,6 +43,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.TextUnit
@@ -57,7 +59,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun SetEditingViewDrawableTextBottomSheet(
     showBottomSheet: MutableState<Boolean>,
-    modifications: SnapshotStateList<DrawableItem>
+    modifications: SnapshotStateList<DrawableItem>,
+    textMeasurer: TextMeasurer
 ) {
     val drawableText = modifications.findLast { it is DrawableText } as DrawableText? ?: return
     var hasSavedName by remember { mutableStateOf(false) }
@@ -88,7 +91,10 @@ fun SetEditingViewDrawableTextBottomSheet(
             val text = remember { mutableStateOf(drawableText.text) }
 
 			val imeHeight = WindowInsets.ime.getBottom(LocalDensity.current).dp
-			val height = remember(hasSavedName) { if (imeHeight > 72.dp || hasSavedName) imeHeight - 72.dp else 72.dp }
+			val height = remember(hasSavedName) { if (imeHeight > 72.dp || hasSavedName) imeHeight - 96.dp else 72.dp }
+
+            val localTextStyle = LocalTextStyle.current
+            val defaultStyle = DrawableText.Styles.Default.style
 
             TextFieldWithConfirm(
                 text = text,
@@ -101,9 +107,26 @@ fun SetEditingViewDrawableTextBottomSheet(
             ) {
                 hasSavedName = true
 
+                val textLayout = textMeasurer.measure(
+                    text = text.value,
+                    style = localTextStyle.copy(
+                        color = drawableText.paint.color,
+                        fontSize = TextUnit(
+                            drawableText.paint.strokeWidth,
+                            TextUnitType.Sp
+                        ),
+                        textAlign = defaultStyle.textAlign,
+                        platformStyle = defaultStyle.platformStyle,
+                        lineHeightStyle = defaultStyle.lineHeightStyle,
+                        baselineShift = defaultStyle.baselineShift
+                    )
+                )
+
                 keyboardController?.hide()
                 modifications.remove(drawableText)
+
                 drawableText.text = text.value
+                drawableText.size = textLayout.size
 				modifications.add(drawableText)
 
                 coroutineScope.launch {
