@@ -290,12 +290,7 @@ private fun TopBar(
                 )
             },
             actions = {
-                val isInDB = favouritesViewModel.isInFavourites(mediaItem.id).collectAsState()
-                val isSelected by remember {
-                    derivedStateOf {
-                        isInDB.value
-                    }
-                }
+                val isSelected by favouritesViewModel.isInFavourites(mediaItem.id).collectAsState()
 
                 IconButton(
                     onClick = {

@@ -49,7 +49,7 @@ fun TrashedPhotoGridView(
 	        LocalContext.current
 	    )
 	)
-	
+
     val mediaStoreData = trashViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
     val groupedMedia = remember { mutableStateOf(mediaStoreData.value) }

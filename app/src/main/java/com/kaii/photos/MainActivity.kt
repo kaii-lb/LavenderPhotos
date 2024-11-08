@@ -774,6 +774,8 @@ private fun setupNextScreen(
     selectedItemsList.clear()
     window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
 
+    window.setDecorFitsSystemWindows(false)
+
     if (context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
         windowInsetsController?.apply {
             hide(WindowInsetsCompat.Type.systemBars())

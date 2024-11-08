@@ -72,8 +72,8 @@ import com.kaii.photos.helpers.getAppTrashBinDirectory
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.models.gallery_model.GalleryViewModel
-import com.kaii.photos.models.gallery_model.GalleryViewModelFactory
+import com.kaii.photos.models.trash_bin.TrashViewModel
+import com.kaii.photos.models.trash_bin.TrashViewModelFactory
 import kotlinx.coroutines.Dispatchers
 
 //private const val TAG = "SINGLE_TRASHED_PHOTO_VIEW"
@@ -89,15 +89,15 @@ fun SingleTrashedPhotoView(
 ) {
     val mediaItem = mainViewModel.selectedMediaData.collectAsState(initial = null).value ?: return
 
-    val galleryViewModel: GalleryViewModel = viewModel(
-        factory = GalleryViewModelFactory(
-            LocalContext.current,
-            getAppTrashBinDirectory().replace("/storage/emulated/0/", ""),
-            MediaItemSortMode.DateTaken
-        )
-    )
+	val trashViewModel: TrashViewModel = viewModel(
+	    factory = TrashViewModelFactory(
+	        LocalContext.current
+	    )
+	)
 
-    val holderGroupedMedia by galleryViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+    val holderGroupedMedia by trashViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+
+	if (holderGroupedMedia.size == 0) return
 
     val groupedMedia = remember {
         mutableStateOf(
@@ -105,6 +105,10 @@ fun SingleTrashedPhotoView(
                 item.type != MediaType.Section
             }
         )
+    }
+
+    groupedMedia.value.forEach {
+    	println("GROUPED $it")
     }
 
     LaunchedEffect(holderGroupedMedia) {
@@ -165,6 +169,7 @@ fun SingleTrashedPhotoView(
 
                         permanentlyDeletePhotoList(context, listOf(currentMediaItem.uri))
 
+						// TODO: this is no longer necessary, remove from here and move all other Single* to flow list
 //                        sortOutMediaMods(
 //                            currentMediaItem,
 //                            groupedMedia,
@@ -243,7 +248,7 @@ fun SingleTrashedPhotoView(
                 appBarsVisible
             )
         }
-        
+
         SinglePhotoInfoDialog(showDialog = showInfoDialog, currentMediaItem = currentMediaItem, groupedMedia = groupedMedia, showMoveCopy = false)
     }
 }
