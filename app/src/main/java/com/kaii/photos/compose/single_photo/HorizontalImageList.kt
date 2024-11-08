@@ -3,8 +3,6 @@ package com.kaii.photos.compose.single_photo
 import android.content.res.Configuration
 import android.view.Window
 import android.view.WindowInsetsController
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.calculateCentroid
@@ -14,30 +12,24 @@ import androidx.compose.foundation.gestures.calculateRotation
 import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.snapping.SnapPosition
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
@@ -57,10 +49,10 @@ import com.kaii.photos.mediastore.signature
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.roundToInt
-import kotlin.math.PI
 import kotlin.math.sin
 
 @androidx.annotation.OptIn(UnstableApi::class)
@@ -316,7 +308,7 @@ private fun Modifier.mediaModifier(
                                 val centroid = event.calculateCentroid()
 
                                 // ignore rotation if user is moving or zooming, QOL thing
-                                var actualRotation = if (panZoomLock) 0f else rotationChange
+                                val actualRotation = if (panZoomLock) 0f else rotationChange
 
                                 if (actualRotation != 0f || zoomChange != 1f || offsetChange != Offset.Zero) {
                                     val oldScale = scale.value
@@ -341,7 +333,7 @@ private fun Modifier.mediaModifier(
                                     }
 
 
-                                    var isRotating = actualRotation != 0f
+                                    val isRotating = actualRotation != 0f
                                     val counterOffset =
                                         if (isRotating) offsetChange else Offset.Zero
                                     // compensate for change of visual center of image and offset by that

@@ -98,6 +98,13 @@ fun SinglePhotoView(
         )
     }
 
+    LaunchedEffect(holderGroupedMedia) {
+        groupedMedia.value =
+            holderGroupedMedia.filter { item ->
+                item.type != MediaType.Section
+            }
+    }
+
     var currentMediaItemIndex by rememberSaveable {
         mutableIntStateOf(
             groupedMedia.value.indexOf(
@@ -171,7 +178,8 @@ fun SinglePhotoView(
                     navController.navigate(
                     	EditingScreen(
                     		absolutePath = currentMediaItem.value.absolutePath,
-                    		uri = currentMediaItem.value.uri.toString()
+                    		uri = currentMediaItem.value.uri.toString(),
+                    		dateTaken = currentMediaItem.value.dateTaken
                    		)
                     )
                 },

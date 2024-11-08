@@ -445,7 +445,7 @@ fun DeviceMedia(
 			                    drawTick = { _, _ -> },
 			                    modifier = Modifier
 			                        .height(16.dp)
-			                )					
+			                )
 						},
 						modifier = Modifier
 							.width(40.dp)

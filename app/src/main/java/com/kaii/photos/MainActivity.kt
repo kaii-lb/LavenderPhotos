@@ -8,7 +8,9 @@ import android.content.res.Configuration
 import android.os.Bundle
 import android.os.Environment
 import android.util.Log
+import android.view.Window
 import android.view.WindowInsetsController
+import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -359,6 +361,7 @@ class MainActivity : ComponentActivity() {
                             context,
                             windowInsetsController,
                             selectedItemsList,
+                            window,
                         )
 
                         Content(currentView, navControllerLocal, showDialog, selectedItemsList)
@@ -404,6 +407,7 @@ class MainActivity : ComponentActivity() {
                             context,
                             windowInsetsController,
                             selectedItemsList,
+                            window,
                         )
 
                         SinglePhotoView(navControllerLocal, window, scale, rotation, offset)
@@ -421,6 +425,7 @@ class MainActivity : ComponentActivity() {
                             context,
                             windowInsetsController,
                             selectedItemsList,
+                            window,
                         )
 
                         SingleAlbumView(navControllerLocal, selectedItemsList)
@@ -438,6 +443,7 @@ class MainActivity : ComponentActivity() {
                             context,
                             windowInsetsController,
                             selectedItemsList,
+                            window,
                         )
 
                         SingleTrashedPhotoView(navControllerLocal, window, scale, rotation, offset)
@@ -456,6 +462,7 @@ class MainActivity : ComponentActivity() {
                             context,
                             windowInsetsController,
                             selectedItemsList,
+                            window,
                         )
 
                         TrashedPhotoGridView(navControllerLocal, selectedItemsList)
@@ -473,6 +480,7 @@ class MainActivity : ComponentActivity() {
                             context,
                             windowInsetsController,
                             selectedItemsList,
+                            window,
                         )
 
                         LockedFolderView(navControllerLocal, window)
@@ -490,6 +498,7 @@ class MainActivity : ComponentActivity() {
                             context,
                             windowInsetsController,
                             selectedItemsList,
+                            window,
                         )
 
                         SingleHiddenPhotoView(navControllerLocal, window, scale, rotation, offset)
@@ -507,6 +516,7 @@ class MainActivity : ComponentActivity() {
                             context,
                             windowInsetsController,
                             selectedItemsList,
+                            window,
                         )
 
                         AboutPage(navControllerLocal)
@@ -524,6 +534,7 @@ class MainActivity : ComponentActivity() {
                             context,
                             windowInsetsController,
                             selectedItemsList,
+                            window,
                         )
 
                         FavouritesGridView(
@@ -579,16 +590,17 @@ class MainActivity : ComponentActivity() {
                         }
                     ) {
                         enableEdgeToEdge(
-                            navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.background.toArgb()),
+                            navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
                             statusBarStyle = SystemBarStyle.auto(
-                                CustomMaterialTheme.colorScheme.background.toArgb(),
-                                CustomMaterialTheme.colorScheme.background.toArgb()
+                                CustomMaterialTheme.colorScheme.surfaceContainer.toArgb(),
+                                CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()
                             )
                         )
                         setupNextScreen(
                             context,
                             windowInsetsController,
                             selectedItemsList,
+                            window
                         )
 
                         val screen: EditingScreen = it.toRoute()
@@ -757,8 +769,10 @@ private fun setupNextScreen(
     context: Context,
     windowInsetsController: WindowInsetsController?,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
+    window: Window,
 ) {
     selectedItemsList.clear()
+    window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
 
     if (context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
         windowInsetsController?.apply {

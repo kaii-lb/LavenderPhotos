@@ -233,11 +233,11 @@ fun copyImageListToPath(context: Context, list: List<MediaStoreData>, destinatio
 
 suspend fun savePathListToBitmap(
     modifications: List<DrawableItem>,
-    rotation: Float,
+    absolutePath: String,
     image: ImageBitmap,
     maxSize: Size,
-    absolutePath: String,
-    textMeasurer: TextMeasurer
+    rotation: Float,
+    textMeasurer: TextMeasurer,
 ) {
     val defaultTextStyle = DrawableText.Styles.Default.style
 
@@ -329,8 +329,7 @@ suspend fun savePathListToBitmap(
             image.height,
             rotationMatrix,
             false
-        )
-            .copy(Bitmap.Config.ARGB_8888, true).asImageBitmap()
+        ).copy(Bitmap.Config.ARGB_8888, true).asImageBitmap()
 
         val original = File(absolutePath)
         // change the "edited at" thing to make more sense, like copy(1) copy(2) or something
@@ -339,7 +338,9 @@ suspend fun savePathListToBitmap(
             original.nameWithoutExtension + "-edited-at-" + System.currentTimeMillis() + ".png"
         )
 
-        val fileOutputStream = FileOutputStream(File(newPath))
+        val newFile = File(newPath)
+        val fileOutputStream = FileOutputStream(newFile)
+
         rotatedImage.asAndroidBitmap()
             .compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream)
         fileOutputStream.close()

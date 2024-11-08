@@ -16,7 +16,7 @@ data class MediaStoreData(
     var id: Long = 0L,
     val uri: Uri = Uri.parse(""),
     val mimeType: String? = "image",
-    val dateModified: Long = 0L,
+    var dateModified: Long = 0L,
     val dateTaken: Long = 0L,
     val displayName: String? = "",
     val absolutePath: String = "",

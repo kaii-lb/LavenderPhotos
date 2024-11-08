@@ -1,5 +1,6 @@
 package com.kaii.photos.compose.single_photo
 
+import android.content.res.Configuration
 import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.activity.compose.BackHandler
@@ -31,10 +32,15 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
@@ -57,6 +63,7 @@ import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -77,6 +84,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -90,6 +98,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -98,6 +107,7 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
@@ -111,12 +121,12 @@ import com.kaii.photos.compose.SetEditingViewDrawableTextBottomSheet
 import com.kaii.photos.helpers.ColorIndicator
 import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.DrawableItem
+import com.kaii.photos.helpers.DrawablePath
 import com.kaii.photos.helpers.DrawableText
 import com.kaii.photos.helpers.DrawingColors
 import com.kaii.photos.helpers.DrawingPaints
 import com.kaii.photos.helpers.ExtendedPaint
 import com.kaii.photos.helpers.PaintType
-import com.kaii.photos.helpers.DrawablePath
 import com.kaii.photos.helpers.savePathListToBitmap
 import com.kaii.photos.helpers.toOffset
 import kotlinx.coroutines.delay
@@ -126,7 +136,11 @@ import kotlin.math.min
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditingView(navController: NavHostController, absolutePath: String, uri: Uri) {
+fun EditingView(
+    navController: NavHostController,
+    absolutePath: String,
+    uri: Uri
+) {
     val showCloseDialog = remember { mutableStateOf(false) }
     val showBackClickCloseDialog = remember { mutableStateOf(false) }
     val changesSize = remember { mutableIntStateOf(0) }
@@ -230,10 +244,11 @@ fun EditingView(navController: NavHostController, absolutePath: String, uri: Uri
             textMeasurer
         )
 
+		val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
         BoxWithConstraints(
             modifier = Modifier
-                .padding(innerPadding)
                 .fillMaxSize(1f)
+                .padding(if (isLandscape) PaddingValues(0.dp) else innerPadding)
         ) {
             val isDrawing = remember { mutableStateOf(false) }
 
@@ -243,24 +258,17 @@ fun EditingView(navController: NavHostController, absolutePath: String, uri: Uri
                 initialLoad = true
             }
 
-            val scaledSize = remember {
+            val size = remember {
                 with(localDensity) {
                     val xRatio = maxWidth.toPx() / image.width
                     val yRatio = maxHeight.toPx() / image.height
                     val ratio = min(xRatio, yRatio)
 
-                    IntSize((image.width * ratio).toInt(), (image.height * ratio).toInt())
-                }
-            }
+                    val width = image.width * ratio
+                    val height = image.height * ratio
+                    maxSize = Size(width, height)
 
-            val size by remember {
-                derivedStateOf {
-                    maxSize = Size(scaledSize.width.toFloat(), scaledSize.height.toFloat())
-
-                    IntSize(
-                        scaledSize.width,
-                        scaledSize.height
-                    )
+                    IntSize(width.toInt(), height.toInt())
                 }
             }
 
@@ -282,10 +290,10 @@ fun EditingView(navController: NavHostController, absolutePath: String, uri: Uri
             val maxScale = remember(isVertical, isHorizontal) {
                 with(localDensity) {
                     if (isVertical) {
-                        lastScale = maxWidth.toPx() / size.width
+                        lastScale = if (isLandscape) maxHeight.toPx() / size.height else maxWidth.toPx() / size.width
                         lastScale
                     } else if (isHorizontal) {
-                        lastScale = maxWidth.toPx() / size.height
+                        lastScale = if (isLandscape) maxHeight.toPx() / size.width else maxWidth.toPx() / size.height
                         lastScale
                     } else lastScale
                 }
@@ -397,6 +405,7 @@ fun EditingView(navController: NavHostController, absolutePath: String, uri: Uri
                     .padding(0.dp, 16.dp),
             ) {
                 var slideVal by remember { mutableFloatStateOf(paint.value.strokeWidth / 128f) }
+				// val statusBarPadding =  WindowInsets.getInsets(statusBars).left
 
                 Slider(
                     value = slideVal,
@@ -420,15 +429,16 @@ fun EditingView(navController: NavHostController, absolutePath: String, uri: Uri
                     modifier = Modifier
                         .graphicsLayer {
                             rotationZ = 270f
-                            translationX = 50f
+                            translationX = if (isLandscape) 40.dp.toPx().toFloat() else 16.dp.toPx()
                             transformOrigin = TransformOrigin(0f, 0f)
                         }
                         .layout { measurable, constraints ->
+                        	val scale = if (isLandscape) 1.25f else 2f
                             val placeable = measurable.measure(
                                 Constraints(
-                                    minWidth = constraints.minHeight / 2,
+                                    minWidth = (constraints.minHeight / scale).toInt(),
                                     minHeight = constraints.minWidth,
-                                    maxWidth = constraints.maxHeight / 2,
+                                    maxWidth = (constraints.maxHeight / scale).toInt(),
                                     maxHeight = constraints.maxWidth
                                 )
                             )
@@ -440,20 +450,58 @@ fun EditingView(navController: NavHostController, absolutePath: String, uri: Uri
                 )
             }
 
-            AnimatedVisibility(
-                visible = pagerState.currentPage == 3 && shouldShowDrawOptions,
-                enter = slideInVertically { height -> height } + fadeIn(),
-                exit = slideOutVertically { height -> height } + fadeOut(),
-                modifier = Modifier
-                    .fillMaxWidth(1f)
-                    .align(Alignment.BottomCenter),
-            ) {
-                DrawActionsAndColors(
-                    modifications = modifications,
-                    paint = paint,
-                    changesSize = changesSize
-                )
-            }
+			if (!isLandscape) {
+	            AnimatedVisibility(
+	                visible = pagerState.currentPage == 3 && shouldShowDrawOptions,
+	                enter = slideInVertically { height -> height } + fadeIn(),
+	                exit = slideOutVertically { height -> height } + fadeOut(),
+	                modifier = Modifier
+	                    .fillMaxWidth(1f)
+	                    .align(Alignment.BottomCenter),
+	            ) {
+	                DrawActionsAndColors(
+	                    modifications = modifications,
+	                    paint = paint,
+	                    changesSize = changesSize
+	                )
+	            }
+			} else {
+	            AnimatedVisibility(
+	                visible = pagerState.currentPage == 3 && shouldShowDrawOptions,
+	                enter = slideInVertically { width -> -width } + fadeIn(),
+	                exit = slideOutVertically { width -> -width } + fadeOut(),
+	                modifier = Modifier
+	                    .fillMaxWidth(1f)
+	                    .wrapContentHeight()
+	                    .align(Alignment.CenterEnd)
+                        .graphicsLayer {
+                            rotationZ = 90f
+                            translationX = -8.dp.toPx()
+                            transformOrigin = TransformOrigin(0f, 0f)
+                        }
+                        .layout { measurable, constraints ->
+                            val placeable = measurable.measure(
+                                Constraints(
+                                    minWidth = constraints.minHeight,
+                                    minHeight = constraints.minWidth,
+                                    maxWidth = constraints.maxHeight,
+                                    maxHeight = constraints.maxWidth
+                                )
+                            )
+
+                            layout(placeable.height, placeable.width) {
+                                placeable.place(0, -placeable.height)
+                            }
+                        }
+	            ) {
+	                DrawActionsAndColors(
+	                    modifications = modifications,
+	                    paint = paint,
+	                    changesSize = changesSize,
+	                    landscapeMode = true
+	                )
+	            }
+			}
         }
     }
 }
@@ -467,55 +515,127 @@ private fun EditingViewTopBar(
     saveImage: () -> Unit,
     popBackStack: () -> Unit
 ) {
-    TopAppBar(
-        navigationIcon = {
-            Column(
-                modifier = Modifier
-                    .height(40.dp)
-                    .width(56.dp)
-                    .clip(CircleShape)
-                    .background(CustomMaterialTheme.colorScheme.surfaceVariant)
-                    .clickable {
-                        if (changesSize.intValue != oldChangesSize.intValue) {
-                            showCloseDialog.value = true
-                        } else {
-                            oldChangesSize.intValue = changesSize.intValue
-                            popBackStack()
-                        }
-                    },
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.close),
-                    contentDescription = "Close editing view",
-                    tint = CustomMaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier
-                        .size(24.dp)
-                )
-            }
-        },
-        actions = {
-            Button(
-                onClick = {
-                    saveImage()
-                    oldChangesSize.intValue = changesSize.intValue
-                },
-                shape = CircleShape,
-                enabled = changesSize.intValue != oldChangesSize.intValue
-            ) {
-                Text(
-                    text = "Save Copy",
-                    fontSize = TextUnit(14f, TextUnitType.Sp),
-                    color = CustomMaterialTheme.colorScheme.onPrimary
-                )
-            }
-        },
-        title = {},
+    val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    var showInLandscape by remember { mutableStateOf(false) }
+
+    val animatedHeight by animateDpAsState(
+        targetValue = if (isLandscape && !showInLandscape) -64.dp else 0.dp,
+        animationSpec = tween(
+            durationMillis = if (isLandscape) 350 else 0
+        ),
+        label = "Animate editing view top bar height"
+    )
+
+    val animatedRotation by animateFloatAsState(
+        targetValue = if (showInLandscape) -90f else 90f,
+        animationSpec = tween(
+            durationMillis = 350
+        ),
+        label = "Animate editing view top bar icon rotation"
+    )
+
+    Column (
         modifier = Modifier
             .fillMaxWidth(1f)
-            .padding(8.dp, 0.dp)
-    )
+            .offset {
+                IntOffset(
+                    0,
+                    animatedHeight
+                        .toPx()
+                        .toInt()
+                )
+            },
+        verticalArrangement = Arrangement.Top,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+	    TopAppBar(
+	        navigationIcon = {
+	        	Box (
+	        		modifier = Modifier
+	        			.padding(8.dp, 0.dp, 0.dp, 0.dp)
+	        	) {
+		            Column(
+		                modifier = Modifier
+		                    .height(40.dp)
+		                    .width(56.dp)
+		                    .align(Alignment.Center)
+		                    .clip(CircleShape)
+		                    .background(CustomMaterialTheme.colorScheme.surfaceVariant)
+		                    .clickable {
+		                        if (changesSize.intValue != oldChangesSize.intValue) {
+		                            showCloseDialog.value = true
+		                        } else {
+		                            oldChangesSize.intValue = changesSize.intValue
+		                            popBackStack()
+		                        }
+		                    },
+		                verticalArrangement = Arrangement.Center,
+		                horizontalAlignment = Alignment.CenterHorizontally
+		            ) {
+		                Icon(
+		                    painter = painterResource(id = R.drawable.close),
+		                    contentDescription = "Close editing view",
+		                    tint = CustomMaterialTheme.colorScheme.onSurface,
+		                    modifier = Modifier
+		                        .size(24.dp)
+		                )
+		            }
+	        	}
+	        },
+	        actions = {
+	        	Box (
+	        		modifier = Modifier
+	        			.padding(0.dp, 0.dp, 8.dp, 0.dp)
+	        	) {
+		            Button(
+		                onClick = {
+		                    saveImage()
+		                    oldChangesSize.intValue = changesSize.intValue
+		                },
+		                shape = CircleShape,
+		                enabled = changesSize.intValue != oldChangesSize.intValue
+		            ) {
+		                Text(
+		                    text = "Save Copy",
+		                    fontSize = TextUnit(14f, TextUnitType.Sp),
+		                    color = CustomMaterialTheme.colorScheme.onPrimary
+		                )
+		            }
+	        	}
+	        },
+	        title = {}
+	    )
+
+		if (isLandscape) {
+	        Box (
+	            modifier = Modifier
+	            	.align(Alignment.Start)
+	            	.offset {
+	            		IntOffset(
+	            			24.dp.toPx().toInt(),
+	            			0
+	            		)
+	            	}
+	                .height(28.dp)
+	                .width(32.dp)
+	                .clip(RoundedCornerShape(0.dp, 0.dp, 1000.dp, 1000.dp))
+	                .background(CustomMaterialTheme.colorScheme.surfaceContainer)
+	                .clickable {
+	                	showInLandscape = !showInLandscape
+	                }
+	        ) {
+	            Icon(
+	                painter = painterResource(id = R.drawable.other_page_indicator),
+	                tint = CustomMaterialTheme.colorScheme.onSurface,
+	                contentDescription = "Show editing top bar",
+	                modifier = Modifier
+	                	.padding(0.dp, 0.dp, 0.dp, 4.dp)
+	                    .rotate(animatedRotation)
+	                    .align(Alignment.Center)
+	            )
+	        }
+	   	}
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -525,171 +645,232 @@ private fun EditingViewBottomBar(
     paint: MutableState<ExtendedPaint>,
     rotationMultiplier: MutableIntState
 ) {
-    Column(
+    val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    var showInLandscape by remember { mutableStateOf(false) }
+
+    val animatedHeight by animateDpAsState(
+        targetValue = if (isLandscape && !showInLandscape) 120.dp else 0.dp,
+        animationSpec = tween(
+            durationMillis = if (isLandscape) 350 else 0
+        ),
+        label = "Animate editing view bottom bar height"
+    )
+
+    val animatedRotation by animateFloatAsState(
+        targetValue = if (showInLandscape) 90f else -90f,
+        animationSpec = tween(
+            durationMillis = 350
+        ),
+        label = "Animate editing view bottom bar height"
+    )
+
+    Column (
         modifier = Modifier
             .fillMaxWidth(1f)
-            .height(160.dp),
+            .offset {
+                IntOffset(
+                    0,
+                    animatedHeight
+                        .toPx()
+                        .toInt()
+                )
+            },
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        BottomAppBar(
-            containerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
-            contentColor = CustomMaterialTheme.colorScheme.onSurface,
+    	if (isLandscape) {
+	        Box (
+	            modifier = Modifier
+	                .align(Alignment.Start)
+	                .offset {
+	                	IntOffset(24.dp.toPx().toInt(), 0)
+	                }
+	                .height(28.dp)
+	                .width(32.dp)
+	                .clip(RoundedCornerShape(1000.dp, 1000.dp, 0.dp, 0.dp))
+	                .background(CustomMaterialTheme.colorScheme.surfaceContainer)
+	                .clickable {
+	                	showInLandscape = !showInLandscape
+	                }
+	        ) {
+	            Icon(
+	                painter = painterResource(id = R.drawable.other_page_indicator),
+	                tint = CustomMaterialTheme.colorScheme.onSurface,
+	                contentDescription = "Show editing tools",
+	                modifier = Modifier
+	                    .padding(0.dp, 4.dp, 0.dp, 0.dp)
+	                    .rotate(animatedRotation)
+	                    .align(Alignment.Center)
+	            )
+	        }
+    	}
+
+        Column(
             modifier = Modifier
                 .fillMaxWidth(1f)
-                .height(160.dp)
+                .height(if (isLandscape) 120.dp else 160.dp),
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            val coroutineScope = rememberCoroutineScope()
-
-            Column(
+            BottomAppBar(
+                containerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
+                contentColor = CustomMaterialTheme.colorScheme.onSurface,
                 modifier = Modifier
-                    .fillMaxSize(1f),
-                verticalArrangement = Arrangement.Top,
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .fillMaxWidth(1f)
+                    .height(160.dp)
             ) {
-                CompositionLocalProvider(LocalRippleConfiguration provides NoRippleConfiguration) {
-                    TabRow(
-                        selectedTabIndex = pagerState.currentPage,
-                        divider = {},
-                        indicator = { tabPosition ->
-                            Box(
-                                modifier = Modifier
-                                    .tabIndicatorOffset(tabPosition[pagerState.currentPage])
-                                    .padding(4.dp)
-                                    .fillMaxHeight(1f)
-                                    .clip(RoundedCornerShape(100.dp))
-                                    .background(CustomMaterialTheme.colorScheme.primary)
-                                    .zIndex(1f)
-                            )
-                        },
-                        containerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
-                        contentColor = CustomMaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(1000.dp))
-                            .draggable(
-                                state = rememberDraggableState { delta ->
-                                    if (delta < 0) {
-                                        coroutineScope.launch {
-                                            pagerState.animateScrollToPage(
-                                                (pagerState.currentPage + 1).coerceAtMost(
-                                                    3
+                val coroutineScope = rememberCoroutineScope()
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize(1f),
+                    verticalArrangement = Arrangement.Top,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    CompositionLocalProvider(LocalRippleConfiguration provides NoRippleConfiguration) {
+                        TabRow(
+                            selectedTabIndex = pagerState.currentPage,
+                            divider = {},
+                            indicator = { tabPosition ->
+                                Box(
+                                    modifier = Modifier
+                                        .tabIndicatorOffset(tabPosition[pagerState.currentPage])
+                                        .padding(4.dp)
+                                        .fillMaxHeight(1f)
+                                        .clip(RoundedCornerShape(100.dp))
+                                        .background(CustomMaterialTheme.colorScheme.primary)
+                                        .zIndex(1f)
+                                )
+                            },
+                            containerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
+                            contentColor = CustomMaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(1000.dp))
+                                .draggable(
+                                    state = rememberDraggableState { delta ->
+                                        if (delta < 0) {
+                                            coroutineScope.launch {
+                                                pagerState.animateScrollToPage(
+                                                    (pagerState.currentPage + 1).coerceAtMost(
+                                                        3
+                                                    )
                                                 )
-                                            )
-                                        }
-                                    } else {
-                                        coroutineScope.launch {
-                                            pagerState.animateScrollToPage(
-                                                (pagerState.currentPage - 1).coerceAtLeast(
-                                                    0
+                                            }
+                                        } else {
+                                            coroutineScope.launch {
+                                                pagerState.animateScrollToPage(
+                                                    (pagerState.currentPage - 1).coerceAtLeast(
+                                                        0
+                                                    )
                                                 )
-                                            )
+                                            }
                                         }
+                                    },
+                                    orientation = Orientation.Horizontal
+                                )
+                        ) {
+                            Tab(
+                                selected = pagerState.currentPage == 0,
+                                onClick = {
+                                    coroutineScope.launch {
+                                        pagerState.animateScrollToPage(0)
                                     }
                                 },
-                                orientation = Orientation.Horizontal
-                            )
-                    ) {
-                        Tab(
-                            selected = pagerState.currentPage == 0,
-                            onClick = {
-                                coroutineScope.launch {
-                                    pagerState.animateScrollToPage(0)
-                                }
-                            },
-                            modifier = Modifier
-                                .height(40.dp)
-                                .zIndex(2f)
-                                .clip(RoundedCornerShape(100.dp))
-                        ) {
-                            Text(
-                                text = "Crop",
-                                color = if (pagerState.currentPage == 0) CustomMaterialTheme.colorScheme.onPrimary else CustomMaterialTheme.colorScheme.onSurface,
-                                fontSize = TextUnit(14f, TextUnitType.Sp)
-                            )
-                        }
+                                modifier = Modifier
+                                    .height(40.dp)
+                                    .zIndex(2f)
+                                    .clip(RoundedCornerShape(100.dp))
+                            ) {
+                                Text(
+                                    text = "Crop",
+                                    color = if (pagerState.currentPage == 0) CustomMaterialTheme.colorScheme.onPrimary else CustomMaterialTheme.colorScheme.onSurface,
+                                    fontSize = TextUnit(14f, TextUnitType.Sp)
+                                )
+                            }
 
-                        Tab(
-                            selected = pagerState.currentPage == 1,
-                            onClick = {
-                                coroutineScope.launch {
-                                    pagerState.animateScrollToPage(1)
-                                }
-                            },
-                            modifier = Modifier
-                                .height(40.dp)
-                                .zIndex(2f)
-                                .clip(RoundedCornerShape(100.dp))
-                        ) {
-                            Text(
-                                text = "Adjust",
-                                color = if (pagerState.currentPage == 1) CustomMaterialTheme.colorScheme.onPrimary else CustomMaterialTheme.colorScheme.onSurface,
-                                fontSize = TextUnit(14f, TextUnitType.Sp)
-                            )
-                        }
+                            Tab(
+                                selected = pagerState.currentPage == 1,
+                                onClick = {
+                                    coroutineScope.launch {
+                                        pagerState.animateScrollToPage(1)
+                                    }
+                                },
+                                modifier = Modifier
+                                    .height(40.dp)
+                                    .zIndex(2f)
+                                    .clip(RoundedCornerShape(100.dp))
+                            ) {
+                                Text(
+                                    text = "Adjust",
+                                    color = if (pagerState.currentPage == 1) CustomMaterialTheme.colorScheme.onPrimary else CustomMaterialTheme.colorScheme.onSurface,
+                                    fontSize = TextUnit(14f, TextUnitType.Sp)
+                                )
+                            }
 
-                        Tab(
-                            selected = pagerState.currentPage == 2,
-                            onClick = {
-                                coroutineScope.launch {
-                                    pagerState.animateScrollToPage(2)
-                                }
-                            },
-                            modifier = Modifier
-                                .height(40.dp)
-                                .zIndex(2f)
-                                .clip(RoundedCornerShape(100.dp))
-                        ) {
-                            Text(
-                                text = "Filters",
-                                color = if (pagerState.currentPage == 2) CustomMaterialTheme.colorScheme.onPrimary else CustomMaterialTheme.colorScheme.onSurface,
-                                fontSize = TextUnit(14f, TextUnitType.Sp)
-                            )
-                        }
+                            Tab(
+                                selected = pagerState.currentPage == 2,
+                                onClick = {
+                                    coroutineScope.launch {
+                                        pagerState.animateScrollToPage(2)
+                                    }
+                                },
+                                modifier = Modifier
+                                    .height(40.dp)
+                                    .zIndex(2f)
+                                    .clip(RoundedCornerShape(100.dp))
+                            ) {
+                                Text(
+                                    text = "Filters",
+                                    color = if (pagerState.currentPage == 2) CustomMaterialTheme.colorScheme.onPrimary else CustomMaterialTheme.colorScheme.onSurface,
+                                    fontSize = TextUnit(14f, TextUnitType.Sp)
+                                )
+                            }
 
-                        Tab(
-                            selected = pagerState.currentPage == 3,
-                            onClick = {
-                                coroutineScope.launch {
-                                    pagerState.animateScrollToPage(3)
-                                }
-                            },
-                            modifier = Modifier
-                                .height(40.dp)
-                                .zIndex(2f)
-                                .clip(RoundedCornerShape(100.dp))
-                        ) {
-                            Text(
-                                text = "Draw",
-                                color = if (pagerState.currentPage == 3) CustomMaterialTheme.colorScheme.onPrimary else CustomMaterialTheme.colorScheme.onSurface,
-                                fontSize = TextUnit(14f, TextUnitType.Sp)
-                            )
+                            Tab(
+                                selected = pagerState.currentPage == 3,
+                                onClick = {
+                                    coroutineScope.launch {
+                                        pagerState.animateScrollToPage(3)
+                                    }
+                                },
+                                modifier = Modifier
+                                    .height(40.dp)
+                                    .zIndex(2f)
+                                    .clip(RoundedCornerShape(100.dp))
+                            ) {
+                                Text(
+                                    text = "Draw",
+                                    color = if (pagerState.currentPage == 3) CustomMaterialTheme.colorScheme.onPrimary else CustomMaterialTheme.colorScheme.onSurface,
+                                    fontSize = TextUnit(14f, TextUnitType.Sp)
+                                )
+                            }
                         }
                     }
-                }
 
-                HorizontalPager(
-                    state = pagerState,
-                    userScrollEnabled = false,
-                    snapPosition = SnapPosition.Center,
-                    pageSize = PageSize.Fill,
-                ) { index ->
-                    when (index) {
-                        0 -> {
-                            CropTools(
-                                rotationMultiplier = rotationMultiplier
-                            )
-                        }
+                    HorizontalPager(
+                        state = pagerState,
+                        userScrollEnabled = false,
+                        snapPosition = SnapPosition.Center,
+                        pageSize = PageSize.Fill,
+                    ) { index ->
+                        when (index) {
+                            0 -> {
+                                CropTools(
+                                    rotationMultiplier = rotationMultiplier
+                                )
+                            }
 
-                        1 -> {
-                            AdjustTools()
-                        }
+                            1 -> {
+                                AdjustTools()
+                            }
 
-                        2 -> {
-                            FiltersTools()
-                        }
+                            2 -> {
+                                FiltersTools()
+                            }
 
-                        3 -> {
-                            DrawTools(paint)
+                            3 -> {
+                                DrawTools(paint)
+                            }
                         }
                     }
                 }
@@ -726,7 +907,7 @@ fun CropTools(
 fun AdjustTools() {
     LazyRow(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
         modifier = Modifier
             .fillMaxSize(1f)
     ) {
@@ -774,7 +955,7 @@ fun AdjustTools() {
 fun FiltersTools() {
     LazyRow(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
         modifier = Modifier
             .fillMaxSize(1f)
     ) {
@@ -1081,11 +1262,14 @@ private fun Modifier.makeDrawCanvas(
 private fun BoxWithConstraintsScope.DrawActionsAndColors(
     modifications: SnapshotStateList<DrawableItem>,
     paint: MutableState<ExtendedPaint>,
-    changesSize: MutableIntState
+    changesSize: MutableIntState,
+    landscapeMode: Boolean = false,
 ) {
+	val neededWidth = if (landscapeMode) maxHeight else maxWidth
+
     var showColorPalette by remember { mutableStateOf(false) }
     val colorPaletteWidth by animateDpAsState(
-        targetValue = if (showColorPalette) maxWidth - 24.dp else 0.dp, // - 24.dp to account for padding, stops the sudden width decrease
+        targetValue = if (showColorPalette) neededWidth - 24.dp else 0.dp, // - 24.dp to account for padding, stops the sudden width decrease
         animationSpec = tween(
             durationMillis = 350
         ),
@@ -1104,34 +1288,64 @@ private fun BoxWithConstraintsScope.DrawActionsAndColors(
             Box(
                 modifier = Modifier
                     .fillMaxWidth(1f)
-                    .height(48.dp),
+                    .height(48.dp)
+                    .padding(
+                    	if (landscapeMode) 40.dp else 0.dp,
+                    	0.dp
+                    ),
             ) {
-                Column(
-                    modifier = Modifier
-                        .height(40.dp)
-                        .width(64.dp)
-                        .clip(CircleShape)
-                        .background(
-                            CustomMaterialTheme.colorScheme.surfaceVariant.copy(
-                                alpha = 0.8f
-                            )
-                        )
-                        .align(Alignment.CenterStart)
-                        .clickable {
-                            modifications.clear()
-                            changesSize.intValue += 1
-                        },
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "Clear",
-                        fontSize = TextUnit(14f, TextUnitType.Sp),
-                        color = CustomMaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier
-                            .wrapContentSize()
-                    )
-                }
+            	if (!landscapeMode) {
+	                Column(
+	                    modifier = Modifier
+	                        .height(40.dp)
+	                        .width(64.dp)
+	                        .clip(CircleShape)
+	                        .background(
+	                            CustomMaterialTheme.colorScheme.surfaceVariant.copy(
+	                                alpha = 0.8f
+	                            )
+	                        )
+	                        .align(Alignment.CenterStart)
+	                        .clickable {
+	                            modifications.clear()
+	                            changesSize.intValue += 1
+	                        },
+	                    verticalArrangement = Arrangement.Center,
+	                    horizontalAlignment = Alignment.CenterHorizontally
+	                ) {
+	                    Text(
+	                        text = "Clear",
+	                        fontSize = TextUnit(14f, TextUnitType.Sp),
+	                        color = CustomMaterialTheme.colorScheme.onSurface,
+	                        modifier = Modifier
+	                            .wrapContentSize()
+	                    )
+	                }
+            	} else {
+	                Column(
+	                    modifier = Modifier
+	                        .size(40.dp)
+	                        .clip(CircleShape)
+	                        .background(
+	                            CustomMaterialTheme.colorScheme.surfaceVariant.copy(
+	                                alpha = 0.8f
+	                            )
+	                        )
+	                        .align(Alignment.CenterStart)
+	                        .clickable {
+	                            modifications.clear()
+	                            changesSize.intValue += 1
+	                        },
+	                    verticalArrangement = Arrangement.Center,
+	                    horizontalAlignment = Alignment.CenterHorizontally
+	                ) {
+	                    Icon(
+	                        painter = painterResource(id = R.drawable.close),
+	                        contentDescription = "undo all actions",
+	                        tint = CustomMaterialTheme.colorScheme.onSurface
+	                    )
+	                }
+            	}
 
                 Column(
                     modifier = Modifier
@@ -1172,7 +1386,7 @@ private fun BoxWithConstraintsScope.DrawActionsAndColors(
             modifier = Modifier
                 .height(48.dp)
                 .width(colorPaletteWidth)
-                .align(Alignment.CenterEnd),
+                .align(if (landscapeMode) Alignment.TopEnd else Alignment.CenterEnd),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceAround
         ) {

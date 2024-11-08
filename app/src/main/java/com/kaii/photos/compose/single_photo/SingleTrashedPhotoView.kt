@@ -60,14 +60,21 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.compose.SinglePhotoInfoDialog
+import com.kaii.photos.helpers.MediaItemSortMode
+import com.kaii.photos.helpers.getAppTrashBinDirectory
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.models.gallery_model.GalleryViewModel
+import com.kaii.photos.models.gallery_model.GalleryViewModelFactory
+import kotlinx.coroutines.Dispatchers
 
 //private const val TAG = "SINGLE_TRASHED_PHOTO_VIEW"
 
@@ -79,10 +86,18 @@ fun SingleTrashedPhotoView(
     scale: MutableState<Float>,
     rotation: MutableState<Float>,
     offset: MutableState<Offset>,
-) {  
+) {
     val mediaItem = mainViewModel.selectedMediaData.collectAsState(initial = null).value ?: return
 
-    val holderGroupedMedia = mainViewModel.groupedMedia.collectAsState(initial = null).value ?: return
+    val galleryViewModel: GalleryViewModel = viewModel(
+        factory = GalleryViewModelFactory(
+            LocalContext.current,
+            getAppTrashBinDirectory().replace("/storage/emulated/0/", ""),
+            MediaItemSortMode.DateTaken
+        )
+    )
+
+    val holderGroupedMedia by galleryViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
     val groupedMedia = remember {
         mutableStateOf(
@@ -93,7 +108,7 @@ fun SingleTrashedPhotoView(
     }
 
     LaunchedEffect(holderGroupedMedia) {
-    	groupedMedia.value = 
+    	groupedMedia.value =
     		holderGroupedMedia.filter { item ->
                 item.type != MediaType.Section
             }
@@ -133,7 +148,7 @@ fun SingleTrashedPhotoView(
     }
 
     val showDialog = remember { mutableStateOf(false) }
-	val showInfoDialog = remember { mutableStateOf(false) }
+    val showInfoDialog = remember { mutableStateOf(false) }
 	
     if (showDialog.value) {
         val context = LocalContext.current
@@ -150,14 +165,14 @@ fun SingleTrashedPhotoView(
 
                         permanentlyDeletePhotoList(context, listOf(currentMediaItem.uri))
 
-                        sortOutMediaMods(
-                            currentMediaItem,
-                            groupedMedia,
-                            coroutineScope,
-                            state
-                        ) {
-                            navController.popBackStack()
-                        }
+//                        sortOutMediaMods(
+//                            currentMediaItem,
+//                            groupedMedia,
+//                            coroutineScope,
+//                            state
+//                        ) {
+//                            navController.popBackStack()
+//                        }
                     }
                 ) {
                     Text(
@@ -354,14 +369,14 @@ private fun BottomBar(
                             }
                             context.contentResolver.update(item.uri, untrashValues, null)
 
-                            sortOutMediaMods(
-                                item,
-                                groupedMedia,
-                                coroutineScope,
-                                state
-                            ) {
-                                navController.popBackStack()
-                            }
+//                            sortOutMediaMods(
+//                                item,
+//                                groupedMedia,
+//                                coroutineScope,
+//                                state
+//                            ) {
+//                                navController.popBackStack()
+//                            }
                         },
                         modifier = Modifier
                             .weight(1f)

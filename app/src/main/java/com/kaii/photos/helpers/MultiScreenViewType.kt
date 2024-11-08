@@ -19,5 +19,6 @@ enum class MultiScreenViewType {
 @Serializable
 data class EditingScreen(
     val absolutePath: String,
-    val uri: String
+    val uri: String,
+    val dateTaken: Long
 )
