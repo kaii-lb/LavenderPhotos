@@ -115,7 +115,7 @@ fun VideoPlayerControls(
 					.align(Alignment.TopStart)
 					.padding(16.dp),
 				verticalAlignment = Alignment.CenterVertically,
-				horizontalArrangement = Arrangement.Center				
+				horizontalArrangement = Arrangement.Center
 			) {
 				Text(
 					text = title,
@@ -129,7 +129,7 @@ fun VideoPlayerControls(
 				)
 			}
 		}
-    	
+
         Row (
             modifier = Modifier
                 .height(if (isLandscape) 48.dp else 172.dp)
@@ -144,8 +144,8 @@ fun VideoPlayerControls(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
-                val currentDurationFormatted = currentVideoPosition.value.toInt().seconds.formatLikeANormalPerson()
-                
+                val currentDurationFormatted = currentVideoPosition.value.roundToInt().seconds.formatLikeANormalPerson()
+
                 Row (
                     modifier = Modifier
                         .height(32.dp)
@@ -155,7 +155,7 @@ fun VideoPlayerControls(
                         .padding(4.dp, 0.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
-                ) { 
+                ) {
                     Text (
                         text = currentDurationFormatted.first,
                         style = TextStyle(
@@ -169,7 +169,6 @@ fun VideoPlayerControls(
                 Spacer (modifier = Modifier.width(8.dp))
 
                 duration.value = if (duration.value < 0) 0f else duration.value
-                println("DURATION IS ${duration.value}")
 
                 Slider (
                     value = currentVideoPosition.value,
@@ -179,7 +178,7 @@ fun VideoPlayerControls(
                         exoPlayer.seekTo((pos * 1000).toLong())
                         isPlaying.value = prev
                     },
-                    steps = duration.value.toInt(),
+                    steps = (duration.value.roundToInt() - 1).coerceAtLeast(0),
                     thumb = {
                         SliderDefaults.Thumb(
                             interactionSource = interactionSource,
@@ -218,7 +217,7 @@ fun VideoPlayerControls(
 
                 Spacer (modifier = Modifier.width(8.dp))
 
-				val formattedDuration = duration.value.toInt().seconds.formatLikeANormalPerson()
+				val formattedDuration = duration.value.roundToInt().seconds.formatLikeANormalPerson()
 
                 Row (
                     modifier = Modifier
@@ -335,6 +334,8 @@ fun VideoPlayer(
     modifier: Modifier
 ) {
     val isPlaying = rememberSaveable { mutableStateOf(true) }
+    val lastIsPlaying = rememberSaveable { mutableStateOf(true) }
+
     val isMuted = rememberSaveable { mutableStateOf(false) }
     /** In Seconds */
     val currentVideoPosition = rememberSaveable { mutableFloatStateOf(0f) }
@@ -354,7 +355,7 @@ fun VideoPlayer(
     LaunchedEffect(key1 = LocalConfiguration.current) {
         exoPlayer.seekTo((currentVideoPosition.floatValue * 1000).toLong())
         exoPlayer.volume = if (isMuted.value) 0f else 1f
-        isPlaying.value = true
+        isPlaying.value = lastIsPlaying.value
     }
 
     val localConfig = LocalConfiguration.current
@@ -366,20 +367,22 @@ fun VideoPlayer(
     		if (localConfig.orientation != Configuration.ORIENTATION_LANDSCAPE) {
     			appBarsVisible.value = true
 				windowInsetsController.show(WindowInsetsCompat.Type.systemBars())
-                window.setDecorFitsSystemWindows(false)    			
+                window.setDecorFitsSystemWindows(false)
    			}
     	}
-    	    	
-        while(isPlaying.value) {
-        	currentVideoPosition.floatValue = (exoPlayer.currentPosition / 1000f).roundToInt().toFloat()
 
-            if (currentVideoPosition.floatValue == (exoPlayer.duration / 1000f).roundToInt().toFloat()) {
+    	lastIsPlaying.value = isPlaying.value
+
+        while(isPlaying.value) {
+        	currentVideoPosition.floatValue = exoPlayer.currentPosition / 1000f
+
+            if (currentVideoPosition.floatValue == exoPlayer.duration / 1000f) {
             	exoPlayer.pause()
                 exoPlayer.seekTo(0L)
                 currentVideoPosition.floatValue = 0f
                 isPlaying.value = false
 			}
-        	
+
             delay(1000)
         }
     }
@@ -389,7 +392,7 @@ fun VideoPlayer(
 		currentVideoPosition.floatValue = 0f
    		duration.floatValue = 0f
 	}
-	
+
     DisposableEffect(true) {
     	onDispose {
    			exoPlayer.release()
@@ -414,7 +417,7 @@ fun VideoPlayer(
 	            },
 	        )
 	    }
-		
+
 		AnimatedVisibility(
 	        visible = visible.value,
 	        enter = expandIn(
@@ -449,7 +452,7 @@ fun VideoPlayer(
 	            modifier = Modifier
 	                .fillMaxSize(1f)
 	        )
-	    }	    
+	    }
     }
 }
 
@@ -521,7 +524,7 @@ fun rememberExoPlayerWithLifeCycle(
             super.onPlaybackStateChanged(playbackState)
 
             if (playbackState == ExoPlayer.STATE_READY) {
-                duration.value = (exoPlayer.duration / 1000f).roundToInt().toFloat()
+                duration.value = exoPlayer.duration / 1000f
             }
         }
 
@@ -547,7 +550,7 @@ fun rememberExoPlayerWithLifeCycle(
 
     DisposableEffect(key1 = lifecycleOwner, appInBackground) {
         val lifecycleObserver = getExoPlayerLifecycleObserver(exoPlayer, isPlaying)
-        
+
         lifecycleOwner.lifecycle.addObserver(lifecycleObserver)
 
         onDispose {
