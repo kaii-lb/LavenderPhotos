@@ -297,11 +297,19 @@ fun EditingView(
                 with(localDensity) {
                     if (isVertical) {
                         lastScale =
-                            if (isLandscape) maxHeight.toPx() / size.height else maxWidth.toPx() / size.width
+                            if (isLandscape) {
+                            	maxHeight.toPx() / size.height
+                           	} else {
+                           		min(maxWidth.toPx() / size.width, maxHeight.toPx() / size.height)
+                       		}
                         lastScale
                     } else if (isHorizontal) {
                         lastScale =
-                            if (isLandscape) maxHeight.toPx() / size.width else maxWidth.toPx() / size.height
+                            if (isLandscape) {
+                            	maxHeight.toPx() / size.width
+                           	} else {
+                           		min(maxWidth.toPx() / size.height, maxHeight.toPx() / size.height)
+                       		}
                         lastScale
                     } else lastScale
                 }

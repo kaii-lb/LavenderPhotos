@@ -1008,6 +1008,7 @@ fun ConfirmationDialogWithBody(
 	dialogTitle: String,
 	dialogBody: String,
 	confirmButtonLabel: String,
+	showCancelButton: Boolean = true,
 	action: () -> Unit
 ) {
 	val modifier = if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE)
@@ -1047,19 +1048,21 @@ fun ConfirmationDialogWithBody(
 				)
 			},
 			dismissButton = {
-				Button(
-					onClick = {
-						showDialog.value = false
-					},
-					colors = ButtonDefaults.buttonColors(
-						containerColor = CustomMaterialTheme.colorScheme.tertiaryContainer,
-						contentColor = CustomMaterialTheme.colorScheme.onTertiaryContainer
-					)
-				) {
-					Text(
-						text = "Cancel",
-						fontSize = TextUnit(14f, TextUnitType.Sp)
-					)
+				if (showCancelButton) {
+					Button(
+						onClick = {
+							showDialog.value = false
+						},
+						colors = ButtonDefaults.buttonColors(
+							containerColor = CustomMaterialTheme.colorScheme.tertiaryContainer,
+							contentColor = CustomMaterialTheme.colorScheme.onTertiaryContainer
+						)
+					) {
+						Text(
+							text = "Cancel",
+							fontSize = TextUnit(14f, TextUnitType.Sp)
+						)
+					}
 				}
 			},
 			shape = RoundedCornerShape(32.dp)
