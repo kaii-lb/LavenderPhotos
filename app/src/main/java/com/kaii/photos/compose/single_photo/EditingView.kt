@@ -1,6 +1,7 @@
 package com.kaii.photos.compose.single_photo
 
 import android.content.res.Configuration
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.activity.compose.BackHandler
@@ -14,10 +15,8 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -35,7 +34,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateStartPadding
-import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -44,7 +42,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContent
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
@@ -97,6 +94,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
@@ -109,7 +107,6 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
@@ -143,7 +140,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.min
-import kotlin.math.roundToInt
 
 @Composable
 fun EditingView(
@@ -190,7 +186,7 @@ fun EditingView(
     val inputStream = remember { context.contentResolver.openInputStream(uri) }
 
     val originalImage = remember { BitmapFactory.decodeStream(inputStream) }
-    val image = remember { originalImage.asImageBitmap() }
+    var image by remember { mutableStateOf(originalImage.asImageBitmap()) }
     inputStream?.close()
 
     val rotationMultiplier = remember { mutableIntStateOf(0) }
@@ -272,7 +268,7 @@ fun EditingView(
                 initialLoad = true
             }
 
-            val size = remember {
+            val size by remember { derivedStateOf {
                 with(localDensity) {
                     val xRatio = maxWidth.toPx() / image.width
                     val yRatio = maxHeight.toPx() / image.height
@@ -284,9 +280,9 @@ fun EditingView(
 
                     IntSize(width.toInt(), height.toInt())
                 }
-            }
+            }}
 
-            val dpSize by remember {
+            val dpSize by remember(size) {
                 derivedStateOf {
                     with(localDensity) {
                         val width = size.width.toDp()
@@ -405,7 +401,7 @@ fun EditingView(
                 }
             }
 
-            var topLefttOffset by remember { mutableStateOf(
+            var topLeftOffset by remember { mutableStateOf(
                 IntOffset(
                     0,
                     0
@@ -414,7 +410,7 @@ fun EditingView(
             var topRightOffset by remember { mutableStateOf(
                 with(localDensity) {
                     IntOffset(
-                        dpSize.width.toPx().toInt(),
+                        size.width.toInt(),
                         0
                     )
                 }
@@ -423,18 +419,49 @@ fun EditingView(
                 with(localDensity) {
                     IntOffset(
                         0,
-                        dpSize.height.toPx().toInt()
+                        size.height.toInt()
                     )
                 }
             )}
             var bottomRightOffset by remember { mutableStateOf(
                 with(localDensity) {
                     IntOffset(
-                        dpSize.width.toPx().toInt(),
-                        dpSize.height.toPx().toInt()
+                        size.width.toInt(),
+                        size.height.toInt()
                     )
                 }
             )}
+
+            var isDragging by remember { mutableStateOf(false) }
+            LaunchedEffect(isDragging) {
+                if (isDragging) {
+                    changesSize.intValue += 1
+                    return@LaunchedEffect
+                }
+
+                delay(1000)
+
+				val ratio = 1f / min(size.width.toFloat() / image.width.toFloat(), size.height.toFloat() / image.height.toFloat())
+
+				val x = (topLeftOffset.x * ratio).toInt()
+				val y = (topLeftOffset.y * ratio).toInt()
+				val width = ((topRightOffset.x - topLeftOffset.x) * ratio).toInt().coerceIn(0, image.width)
+				val height = ((bottomLeftOffset.y - topLeftOffset.y) * ratio).toInt().coerceIn(0, image.height)
+
+				println("$x $y $width $height ${image.width} ${image.height}")
+                image = Bitmap.createBitmap(
+                    image.asAndroidBitmap(),
+                    x,
+                    y,
+                    width,
+                    height
+                ).asImageBitmap()
+
+                topLeftOffset = IntOffset.Zero
+                topRightOffset = IntOffset(size.width.toInt(), 0)
+                bottomLeftOffset = IntOffset(0, size.height.toInt())
+                bottomRightOffset = IntOffset(size.width.toInt(), size.height.toInt())
+            }
 
             Box (
                 modifier = Modifier
@@ -454,14 +481,14 @@ fun EditingView(
 
                             drawLine(
                                 color = DrawingColors.White,
-                                start = topLefttOffset.toOffset(),
+                                start = topLeftOffset.toOffset(),
                                 end = topRightOffset.toOffset(),
                                 strokeWidth = 4.dp.toPx()
                             )
 
                             drawLine(
                                 color = DrawingColors.White,
-                                start = topLefttOffset.toOffset(),
+                                start = topLeftOffset.toOffset(),
                                 end = bottomLeftOffset.toOffset(),
                                 strokeWidth = 4.dp.toPx()
                             )
@@ -482,68 +509,91 @@ fun EditingView(
                         }
                     }
                     .pointerInput(Unit) {
-                    	detectDragGestures { change, dragAmount ->
-							val isInCropRect = checkIfInRect(
-								change.position,
-								with(localDensity) { 24.dp.toPx() },
-								bottomLeftOffset.x,
-								topLefttOffset.y,
-								topRightOffset.x,
-								bottomRightOffset.y
-							)
+                    	detectDragGestures(
+                            onDragStart = {
+                                isDragging = true
+                            },
+                            onDrag = { change, dragAmount ->
+                                isDragging = true
+                                val isInCropRect = checkIfInRect(
+                                    change.position,
+                                    with(localDensity) { 24.dp.toPx() },
+                                    bottomLeftOffset.x,
+                                    topLeftOffset.y,
+                                    topRightOffset.x,
+                                    bottomRightOffset.y
+                                )
 
-							if (isInCropRect) {
-								val width = topRightOffset.x - topLefttOffset.x
-								val height = bottomRightOffset.y - topRightOffset.y
+                                if (isInCropRect) {
+                                    val width = topRightOffset.x - topLeftOffset.x
+                                    val height = bottomRightOffset.y - topRightOffset.y
 
-								topLefttOffset = (topLefttOffset + dragAmount)
-									.coerceIn(
-										minX = 0,
-										minY = 0,
-										maxX = size.width - width,
-										maxY = size.height - height
-									)
+                                    topLeftOffset = (topLeftOffset + dragAmount)
+                                        .coerceIn(
+                                            minX = 0,
+                                            minY = 0,
+                                            maxX = size.width - width,
+                                            maxY = size.height - height
+                                        )
 
-								topRightOffset = IntOffset(topLefttOffset.x + width, topLefttOffset.y)
+                                    topRightOffset = IntOffset(topLeftOffset.x + width, topLeftOffset.y)
 
-								bottomLeftOffset = IntOffset(topLefttOffset.x, topLefttOffset.y + height)
+                                    bottomLeftOffset = IntOffset(topLeftOffset.x, topLeftOffset.y + height)
 
-								bottomRightOffset = IntOffset(topLefttOffset.x + width, topLefttOffset.y + height)
-							}
-                    	}
+                                    bottomRightOffset = IntOffset(topLeftOffset.x + width, topLeftOffset.y + height)
+                                }
+                            },
+                            onDragCancel = {
+                                isDragging = false
+                            },
+                            onDragEnd = {
+                                isDragging = false
+                            }
+                        )
                     }
             ) {
                 Box (
                     modifier = Modifier
                         .offset {
-                        	topLefttOffset - IntOffset(12.dp.toPx().toInt(), 12.dp.toPx().toInt())
+                        	topLeftOffset - IntOffset(12.dp.toPx().toInt(), 12.dp.toPx().toInt())
                         }
                         .size(24.dp)
                         .pointerInput(Unit) {
-                            detectDragGestures { change, dragAmount ->
-                                val position = change.position
-                                change.consume()
+                            detectDragGestures(
+                                onDragStart = {
+                                    isDragging = true
+                                },
+                                onDrag = { change, dragAmount ->
+                                    isDragging = true
+                                    change.consume()
 
-                                topLefttOffset = (topLefttOffset + dragAmount)
-	                                .coerceIn(
-	                                	minX = 0,
-	                                	minY = 0,
-	                                	maxX = topRightOffset.x - 56.dp.toPx().toInt(),
-	                                	maxY = bottomLeftOffset.y - 56.dp.toPx().toInt()
-	                                )
+                                    topLeftOffset = (topLeftOffset + dragAmount)
+                                        .coerceIn(
+                                            minX = 0,
+                                            minY = 0,
+                                            maxX = topRightOffset.x - 56.dp.toPx().toInt(),
+                                            maxY = bottomLeftOffset.y - 56.dp.toPx().toInt()
+                                        )
 
-                                topRightOffset =
-                                    IntOffset(
-                                        topRightOffset.x,
-                                        topLefttOffset.y
-                                    )
+                                    topRightOffset =
+                                        IntOffset(
+                                            topRightOffset.x,
+                                            topLeftOffset.y
+                                        )
 
-                                bottomLeftOffset =
-                                    IntOffset(
-                                        topLefttOffset.x,
-                                        bottomLeftOffset.y
-                                    )
-                            }
+                                    bottomLeftOffset =
+                                        IntOffset(
+                                            topLeftOffset.x,
+                                            bottomLeftOffset.y
+                                        )
+                                },
+                                onDragCancel = {
+                                    isDragging = false
+                                },
+                                onDragEnd = {
+                                    isDragging = false
+                                }
+                            )
                         }
                         .padding(4.dp)
                         .clip(CircleShape)
@@ -557,30 +607,41 @@ fun EditingView(
                         }
                         .size(24.dp)
                         .pointerInput(Unit) {
-                            detectDragGestures { change, dragAmount ->
-                                val position = change.position
-                                change.consume()
+                            detectDragGestures (
+                                onDragStart = {
+                                    isDragging = true
+                                },
+                                onDrag = { change, dragAmount ->
+                                    isDragging = true
+                                    change.consume()
 
-                                topRightOffset = (topRightOffset + dragAmount)
-                                	.coerceIn(
-                                		minX = topLefttOffset.x + 56.dp.toPx().toInt(),
-                                		minY = 0,
-                                		maxX = size.width,
-                                		maxY = bottomRightOffset.y - 56.dp.toPx().toInt()
-                                	)
+                                    topRightOffset = (topRightOffset + dragAmount)
+                                        .coerceIn(
+                                            minX = topLeftOffset.x + 56.dp.toPx().toInt(),
+                                            minY = 0,
+                                            maxX = size.width,
+                                            maxY = bottomRightOffset.y - 56.dp.toPx().toInt()
+                                        )
 
-                                bottomRightOffset =
-                                    IntOffset(
-                                        topRightOffset.x,
-                                        bottomRightOffset.y
-                                    )
+                                    bottomRightOffset =
+                                        IntOffset(
+                                            topRightOffset.x,
+                                            bottomRightOffset.y
+                                        )
 
-                                topLefttOffset =
-                                    IntOffset(
-                                        topLefttOffset.x,
-                                        topRightOffset.y
-                                    )
-                            }
+                                    topLeftOffset =
+                                        IntOffset(
+                                            topLeftOffset.x,
+                                            topRightOffset.y
+                                        )
+                                },
+                                onDragCancel = {
+                                    isDragging = false
+                                },
+                                onDragEnd = {
+                                    isDragging = false
+                                }
+                            )
                         }
                         .padding(4.dp)
                         .clip(CircleShape)
@@ -594,30 +655,41 @@ fun EditingView(
                         }
                         .size(24.dp)
                         .pointerInput(Unit) {
-                            detectDragGestures { change, dragAmount->
-                                val position = change.position
-                                change.consume()
+                            detectDragGestures (
+                                onDragStart = {
+                                    isDragging = true
+                                },
+                                onDrag = { change, dragAmount->
+                                    isDragging = true
+                                    change.consume()
 
-                                bottomLeftOffset = (bottomLeftOffset + dragAmount)
-                                	.coerceIn(
-                                		minX = 0,
-                                		minY = topLefttOffset.y + 56.dp.toPx().toInt(),
-                                		maxX = bottomRightOffset.x - 56.dp.toPx().toInt(),
-                                		maxY = size.height
-                                	)
+                                    bottomLeftOffset = (bottomLeftOffset + dragAmount)
+                                        .coerceIn(
+                                            minX = 0,
+                                            minY = topLeftOffset.y + 56.dp.toPx().toInt(),
+                                            maxX = bottomRightOffset.x - 56.dp.toPx().toInt(),
+                                            maxY = size.height
+                                        )
 
-                                topLefttOffset =
-                                    IntOffset(
-                                        bottomLeftOffset.x,
-                                        topLefttOffset.y
-                                    )
+                                    topLeftOffset =
+                                        IntOffset(
+                                            bottomLeftOffset.x,
+                                            topLeftOffset.y
+                                        )
 
-                                bottomRightOffset =
-                                    IntOffset(
-                                        bottomRightOffset.x,
-                                        bottomLeftOffset.y
-                                    )
-                            }
+                                    bottomRightOffset =
+                                        IntOffset(
+                                            bottomRightOffset.x,
+                                            bottomLeftOffset.y
+                                        )
+                                },
+                                onDragCancel = {
+                                    isDragging = false
+                                },
+                                onDragEnd = {
+                                    isDragging = false
+                                }
+                            )
                         }
                         .padding(4.dp)
                         .clip(CircleShape)
@@ -631,30 +703,41 @@ fun EditingView(
                         }
                         .size(24.dp)
                         .pointerInput(Unit) {
-                            detectDragGestures { change, dragAmount ->
-                                val position = change.position
-                                change.consume()
+                            detectDragGestures (
+                                onDragStart = {
+                                    isDragging = true
+                                },
+                                onDrag = { change, dragAmount ->
+                                    isDragging = true
+                                    change.consume()
 
-                                bottomRightOffset = (bottomRightOffset + dragAmount)
-                                	.coerceIn(
-                                		minX = bottomLeftOffset.x + 56.dp.toPx().toInt(),
-                                		minY = topRightOffset.y + 56.dp.toPx().toInt(),
-                                		maxX = size.width,
-                                		maxY = size.height
-                                	)
+                                    bottomRightOffset = (bottomRightOffset + dragAmount)
+                                        .coerceIn(
+                                            minX = bottomLeftOffset.x + 56.dp.toPx().toInt(),
+                                            minY = topRightOffset.y + 56.dp.toPx().toInt(),
+                                            maxX = size.width,
+                                            maxY = size.height
+                                        )
 
-                                topRightOffset =
-                                    IntOffset(
-                                        bottomRightOffset.x,
-                                        topRightOffset.y
-                                    )
+                                    topRightOffset =
+                                        IntOffset(
+                                            bottomRightOffset.x,
+                                            topRightOffset.y
+                                        )
 
-                                bottomLeftOffset =
-                                    IntOffset(
-                                        bottomLeftOffset.x,
-                                        bottomRightOffset.y
-                                    )
-                            }
+                                    bottomLeftOffset =
+                                        IntOffset(
+                                            bottomLeftOffset.x,
+                                            bottomRightOffset.y
+                                        )
+                                },
+                                onDragCancel = {
+                                    isDragging = false
+                                },
+                                onDragEnd = {
+                                    isDragging = false
+                                }
+                            )
                         }
                         .padding(4.dp)
                         .clip(CircleShape)
