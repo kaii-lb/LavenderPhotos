@@ -14,11 +14,14 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.gestures.snapping.SnapPosition
@@ -87,6 +90,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -117,6 +121,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
 import com.kaii.photos.R
@@ -138,8 +143,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.min
+import kotlin.math.roundToInt
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditingView(
     navController: NavHostController,
@@ -183,7 +188,9 @@ fun EditingView(
 
     val context = LocalContext.current
     val inputStream = remember { context.contentResolver.openInputStream(uri) }
-    val image = remember { BitmapFactory.decodeStream(inputStream).asImageBitmap() }
+
+    val originalImage = remember { BitmapFactory.decodeStream(inputStream) }
+    val image = remember { originalImage.asImageBitmap() }
     inputStream?.close()
 
     val rotationMultiplier = remember { mutableIntStateOf(0) }
@@ -225,7 +232,8 @@ fun EditingView(
             EditingViewBottomBar(
                 pagerState = pagerState,
                 paint = paint,
-                rotationMultiplier = rotationMultiplier
+                rotationMultiplier = rotationMultiplier,
+                changesSize = changesSize
             )
         },
         modifier = Modifier
@@ -342,7 +350,8 @@ fun EditingView(
                         modifications = modifications,
                         paint = paint,
                         isDrawing = isDrawing,
-                        changesSize = changesSize
+                        changesSize = changesSize,
+                        rotationMultiplier = rotationMultiplier
                     )
             ) {
                 drawImage(
@@ -396,129 +405,270 @@ fun EditingView(
                 }
             }
 
-            var shouldShowDrawOptions by remember { mutableStateOf(false) }
-            var lastPage by remember { mutableIntStateOf(pagerState.currentPage) }
-            LaunchedEffect(isDrawing.value, pagerState.currentPage) {
-                if (isDrawing.value) {
-                    shouldShowDrawOptions = false
-                } else {
-                    if (lastPage != 3 && pagerState.currentPage == 3) {
-                        shouldShowDrawOptions = true
-                    } else {
-                        delay(500)
-                        shouldShowDrawOptions = true
-                    }
+            var topLefttOffset by remember { mutableStateOf(
+                IntOffset(
+                    0,
+                    0
+                )
+            )}
+            var topRightOffset by remember { mutableStateOf(
+                with(localDensity) {
+                    IntOffset(
+                        dpSize.width.toPx().toInt(),
+                        0
+                    )
                 }
-                lastPage = pagerState.currentPage
-            }
+            )}
+            var bottomLeftOffset by remember { mutableStateOf(
+                with(localDensity) {
+                    IntOffset(
+                        0,
+                        dpSize.height.toPx().toInt()
+                    )
+                }
+            )}
+            var bottomRightOffset by remember { mutableStateOf(
+                with(localDensity) {
+                    IntOffset(
+                        dpSize.width.toPx().toInt(),
+                        dpSize.height.toPx().toInt()
+                    )
+                }
+            )}
 
-            val statusBarPadding = WindowInsets.safeContent.asPaddingValues()
-                .calculateStartPadding(LocalLayoutDirection.current)
-            AnimatedVisibility(
-                visible = pagerState.currentPage == 3 && shouldShowDrawOptions,
-                enter = slideInHorizontally { width -> -width } + fadeIn(),
-                exit = slideOutHorizontally { width -> -width } + fadeOut(),
+            Box (
                 modifier = Modifier
-                    .fillMaxHeight(1f)
-                    .padding(statusBarPadding, 16.dp),
-            ) {
-                var slideVal by remember { mutableFloatStateOf(paint.value.strokeWidth / 128f) }
+                	.align(Alignment.Center)
+                    .size(
+                    	dpSize.width,
+                        dpSize.height
+                   	)
+                    .graphicsLayer {
+                        scaleX = animatedSize
+                        scaleY = animatedSize
+						rotationZ = rotation
+                    }
+                    .drawWithCache {
+                        onDrawWithContent {
+                        	drawContent()
 
-                Slider(
-                    value = slideVal,
-                    onValueChange = { newVal ->
-                        slideVal = newVal
-                        paint.value = paint.value.copy(
-                            strokeWidth = newVal * 128f
-                        )
-                    },
-                    steps = 16,
-                    valueRange = 0f..1f,
-                    thumb = {
-                        Box(
-                            modifier = Modifier
-                                .height(16.dp)
-                                .width(8.dp)
-                                .clip(CircleShape)
-                                .background(CustomMaterialTheme.colorScheme.primary)
-                        )
-                    },
-                    modifier = Modifier
-                        .graphicsLayer {
-                            rotationZ = 270f
-                            translationX = 16.dp.toPx()
-                            transformOrigin = TransformOrigin(0f, 0f)
-                        }
-                        .layout { measurable, constraints ->
-                            val scale = if (isLandscape) 1.25f else 2f
-                            val placeable = measurable.measure(
-                                Constraints(
-                                    minWidth = (constraints.minHeight / scale).toInt(),
-                                    minHeight = constraints.minWidth,
-                                    maxWidth = (constraints.maxHeight / scale).toInt(),
-                                    maxHeight = constraints.maxWidth
-                                )
+                            drawLine(
+                                color = DrawingColors.White,
+                                start = topLefttOffset.toOffset(),
+                                end = topRightOffset.toOffset(),
+                                strokeWidth = 4.dp.toPx()
                             )
 
-                            layout(placeable.height, placeable.width) {
-                                placeable.place(-placeable.width, -placeable.height / 2)
+                            drawLine(
+                                color = DrawingColors.White,
+                                start = topLefttOffset.toOffset(),
+                                end = bottomLeftOffset.toOffset(),
+                                strokeWidth = 4.dp.toPx()
+                            )
+
+                            drawLine(
+                                color = DrawingColors.White,
+                                start = topRightOffset.toOffset(),
+                                end = bottomRightOffset.toOffset(),
+                                strokeWidth = 4.dp.toPx()
+                            )
+
+                            drawLine(
+                                color = DrawingColors.White,
+                                start = bottomLeftOffset.toOffset(),
+                                end = bottomRightOffset.toOffset(),
+                                strokeWidth = 4.dp.toPx()
+                            )
+                        }
+                    }
+                    .pointerInput(Unit) {
+                    	detectDragGestures { change, dragAmount ->
+							val isInCropRect = checkIfInRect(
+								change.position,
+								with(localDensity) { 24.dp.toPx() },
+								bottomLeftOffset.x,
+								topLefttOffset.y,
+								topRightOffset.x,
+								bottomRightOffset.y
+							)
+
+							if (isInCropRect) {
+								val width = topRightOffset.x - topLefttOffset.x
+								val height = bottomRightOffset.y - topRightOffset.y
+
+								topLefttOffset = (topLefttOffset + dragAmount)
+									.coerceIn(
+										minX = 0,
+										minY = 0,
+										maxX = size.width - width,
+										maxY = size.height - height
+									)
+
+								topRightOffset = IntOffset(topLefttOffset.x + width, topLefttOffset.y)
+
+								bottomLeftOffset = IntOffset(topLefttOffset.x, topLefttOffset.y + height)
+
+								bottomRightOffset = IntOffset(topLefttOffset.x + width, topLefttOffset.y + height)
+							}
+                    	}
+                    }
+            ) {
+                Box (
+                    modifier = Modifier
+                        .offset {
+                        	topLefttOffset - IntOffset(12.dp.toPx().toInt(), 12.dp.toPx().toInt())
+                        }
+                        .size(24.dp)
+                        .pointerInput(Unit) {
+                            detectDragGestures { change, dragAmount ->
+                                val position = change.position
+                                change.consume()
+
+                                topLefttOffset = (topLefttOffset + dragAmount)
+	                                .coerceIn(
+	                                	minX = 0,
+	                                	minY = 0,
+	                                	maxX = topRightOffset.x - 56.dp.toPx().toInt(),
+	                                	maxY = bottomLeftOffset.y - 56.dp.toPx().toInt()
+	                                )
+
+                                topRightOffset =
+                                    IntOffset(
+                                        topRightOffset.x,
+                                        topLefttOffset.y
+                                    )
+
+                                bottomLeftOffset =
+                                    IntOffset(
+                                        topLefttOffset.x,
+                                        bottomLeftOffset.y
+                                    )
                             }
                         }
+                        .padding(4.dp)
+                        .clip(CircleShape)
+                        .background(DrawingColors.White)
+                )
+
+                Box (
+                    modifier = Modifier
+                        .offset {
+                        	topRightOffset - IntOffset(12.dp.toPx().toInt(), 12.dp.toPx().toInt())
+                        }
+                        .size(24.dp)
+                        .pointerInput(Unit) {
+                            detectDragGestures { change, dragAmount ->
+                                val position = change.position
+                                change.consume()
+
+                                topRightOffset = (topRightOffset + dragAmount)
+                                	.coerceIn(
+                                		minX = topLefttOffset.x + 56.dp.toPx().toInt(),
+                                		minY = 0,
+                                		maxX = size.width,
+                                		maxY = bottomRightOffset.y - 56.dp.toPx().toInt()
+                                	)
+
+                                bottomRightOffset =
+                                    IntOffset(
+                                        topRightOffset.x,
+                                        bottomRightOffset.y
+                                    )
+
+                                topLefttOffset =
+                                    IntOffset(
+                                        topLefttOffset.x,
+                                        topRightOffset.y
+                                    )
+                            }
+                        }
+                        .padding(4.dp)
+                        .clip(CircleShape)
+                        .background(DrawingColors.White)
+                )
+
+                Box (
+                    modifier = Modifier
+                        .offset {
+                        	bottomLeftOffset - IntOffset(12.dp.toPx().toInt(), 12.dp.toPx().toInt())
+                        }
+                        .size(24.dp)
+                        .pointerInput(Unit) {
+                            detectDragGestures { change, dragAmount->
+                                val position = change.position
+                                change.consume()
+
+                                bottomLeftOffset = (bottomLeftOffset + dragAmount)
+                                	.coerceIn(
+                                		minX = 0,
+                                		minY = topLefttOffset.y + 56.dp.toPx().toInt(),
+                                		maxX = bottomRightOffset.x - 56.dp.toPx().toInt(),
+                                		maxY = size.height
+                                	)
+
+                                topLefttOffset =
+                                    IntOffset(
+                                        bottomLeftOffset.x,
+                                        topLefttOffset.y
+                                    )
+
+                                bottomRightOffset =
+                                    IntOffset(
+                                        bottomRightOffset.x,
+                                        bottomLeftOffset.y
+                                    )
+                            }
+                        }
+                        .padding(4.dp)
+                        .clip(CircleShape)
+                        .background(DrawingColors.White)
+                )
+
+                Box (
+                    modifier = Modifier
+                        .offset {
+                            bottomRightOffset - IntOffset(12.dp.toPx().toInt(), 12.dp.toPx().toInt())
+                        }
+                        .size(24.dp)
+                        .pointerInput(Unit) {
+                            detectDragGestures { change, dragAmount ->
+                                val position = change.position
+                                change.consume()
+
+                                bottomRightOffset = (bottomRightOffset + dragAmount)
+                                	.coerceIn(
+                                		minX = bottomLeftOffset.x + 56.dp.toPx().toInt(),
+                                		minY = topRightOffset.y + 56.dp.toPx().toInt(),
+                                		maxX = size.width,
+                                		maxY = size.height
+                                	)
+
+                                topRightOffset =
+                                    IntOffset(
+                                        bottomRightOffset.x,
+                                        topRightOffset.y
+                                    )
+
+                                bottomLeftOffset =
+                                    IntOffset(
+                                        bottomLeftOffset.x,
+                                        bottomRightOffset.y
+                                    )
+                            }
+                        }
+                        .padding(4.dp)
+                        .clip(CircleShape)
+                        .background(DrawingColors.White)
                 )
             }
 
-            if (!isLandscape) {
-                AnimatedVisibility(
-                    visible = pagerState.currentPage == 3 && shouldShowDrawOptions,
-                    enter = slideInVertically { height -> height } + fadeIn(),
-                    exit = slideOutVertically { height -> height } + fadeOut(),
-                    modifier = Modifier
-                        .fillMaxWidth(1f)
-                        .align(Alignment.BottomCenter),
-                ) {
-                    DrawActionsAndColors(
-                        modifications = modifications,
-                        paint = paint,
-                        changesSize = changesSize
-                    )
-                }
-            } else {
-                AnimatedVisibility(
-                    visible = pagerState.currentPage == 3 && shouldShowDrawOptions,
-                    enter = slideInVertically { width -> -width } + fadeIn(),
-                    exit = slideOutVertically { width -> -width } + fadeOut(),
-                    modifier = Modifier
-                        .fillMaxWidth(1f)
-                        .wrapContentHeight()
-                        .align(Alignment.CenterEnd)
-                        .graphicsLayer {
-                            rotationZ = 90f
-                            translationX = -8.dp.toPx()
-                            transformOrigin = TransformOrigin(0f, 0f)
-                        }
-                        .layout { measurable, constraints ->
-                            val placeable = measurable.measure(
-                                Constraints(
-                                    minWidth = constraints.minHeight,
-                                    minHeight = constraints.minWidth,
-                                    maxWidth = constraints.maxHeight,
-                                    maxHeight = constraints.maxWidth
-                                )
-                            )
-
-                            layout(placeable.height, placeable.width) {
-                                placeable.place(0, -placeable.height)
-                            }
-                        }
-                ) {
-                    DrawActionsAndColors(
-                        modifications = modifications,
-                        paint = paint,
-                        changesSize = changesSize,
-                        landscapeMode = true
-                    )
-                }
-            }
+            DrawingControls(
+                pagerState = pagerState,
+                modifications = modifications,
+                paint = paint,
+                changesSize = changesSize,
+                isDrawing = isDrawing
+            )
         }
     }
 }
@@ -665,7 +815,8 @@ private fun EditingViewTopBar(
 private fun EditingViewBottomBar(
     pagerState: PagerState,
     paint: MutableState<ExtendedPaint>,
-    rotationMultiplier: MutableIntState
+    rotationMultiplier: MutableIntState,
+    changesSize: MutableIntState
 ) {
     val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     var showInLandscape by remember { mutableStateOf(false) }
@@ -886,7 +1037,8 @@ private fun EditingViewBottomBar(
                         when (index) {
                             0 -> {
                                 CropTools(
-                                    rotationMultiplier = rotationMultiplier
+                                    rotationMultiplier = rotationMultiplier,
+                                    changesSize = changesSize
                                 )
                             }
 
@@ -911,7 +1063,8 @@ private fun EditingViewBottomBar(
 
 @Composable
 fun CropTools(
-    rotationMultiplier: MutableIntState
+    rotationMultiplier: MutableIntState,
+    changesSize: MutableIntState
 ) {
     Row(
         modifier = Modifier
@@ -921,6 +1074,7 @@ fun CropTools(
     ) {
         EditingViewBottomAppBarItem(text = "Rotate", iconResId = R.drawable.rotate_ccw) {
             rotationMultiplier.intValue += 1
+            changesSize.intValue += 1
         }
 
         EditingViewBottomAppBarItem(text = "Ratio", iconResId = R.drawable.resolution) {
@@ -929,6 +1083,7 @@ fun CropTools(
 
         EditingViewBottomAppBarItem(text = "Reset", iconResId = R.drawable.reset) {
             rotationMultiplier.intValue = 0
+            changesSize.intValue += 1
         }
     }
 }
@@ -1091,7 +1246,8 @@ private fun Modifier.makeDrawCanvas(
     modifications: SnapshotStateList<DrawableItem>,
     paint: MutableState<ExtendedPaint>,
     isDrawing: MutableState<Boolean>,
-    changesSize: MutableIntState
+    changesSize: MutableIntState,
+    rotationMultiplier: MutableIntState
 ): Modifier {
     val textMeasurer = rememberTextMeasurer()
     val localTextStyle = LocalTextStyle.current
@@ -1114,11 +1270,13 @@ private fun Modifier.makeDrawCanvas(
                                 PointerEventType.Press -> {
                                     val offset = event.changes.first().position
 
+                                    val path = Path().apply {
+                                        moveTo(offset.x, offset.y)
+                                    }
+
                                     modifications.add(
                                         DrawablePath(
-                                            Path().apply {
-                                                moveTo(offset.x, offset.y)
-                                            },
+                                            path,
                                             paint.value
                                         )
                                     )
@@ -1234,7 +1392,7 @@ private fun Modifier.makeDrawCanvas(
                                                 position.y - textLayout.size.height / 2f
                                             ),
                                             paint = paint.value,
-                                            rotation = 0f,
+                                            rotation = 90f * rotationMultiplier.intValue,
                                             size = textLayout.size
                                         )
                                         modifications.add(text)
@@ -1493,3 +1651,170 @@ fun checkIfClickedOnText(text: DrawableText, clickPosition: Offset): Boolean {
 
     return isInTextWidth && isInTextHeight
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BoxWithConstraintsScope.DrawingControls(
+    pagerState: PagerState,
+    isDrawing: MutableState<Boolean>,
+    paint: MutableState<ExtendedPaint>,
+    modifications: SnapshotStateList<DrawableItem>,
+    changesSize: MutableIntState
+) {
+    val localConfiguration = LocalConfiguration.current
+    val isLandscape by remember { derivedStateOf {
+        localConfiguration.orientation == Configuration.ORIENTATION_LANDSCAPE
+    }}
+
+    var shouldShowDrawOptions by remember { mutableStateOf(false) }
+    var lastPage by remember { mutableIntStateOf(pagerState.currentPage) }
+    LaunchedEffect(isDrawing.value, pagerState.currentPage) {
+        if (isDrawing.value) {
+            shouldShowDrawOptions = false
+        } else {
+            if (lastPage != 3 && pagerState.currentPage == 3) {
+                shouldShowDrawOptions = true
+            } else {
+                delay(500)
+                shouldShowDrawOptions = true
+            }
+        }
+        lastPage = pagerState.currentPage
+    }
+
+    val statusBarPadding = WindowInsets.safeContent.asPaddingValues()
+        .calculateStartPadding(LocalLayoutDirection.current)
+    AnimatedVisibility(
+        visible = pagerState.currentPage == 3 && shouldShowDrawOptions,
+        enter = slideInHorizontally { width -> -width } + fadeIn(),
+        exit = slideOutHorizontally { width -> -width } + fadeOut(),
+        modifier = Modifier
+            .fillMaxHeight(1f)
+            .padding(statusBarPadding, 16.dp),
+    ) {
+        var slideVal by remember { mutableFloatStateOf(paint.value.strokeWidth / 128f) }
+
+        Slider(
+            value = slideVal,
+            onValueChange = { newVal ->
+                slideVal = newVal
+                paint.value = paint.value.copy(
+                    strokeWidth = newVal * 128f
+                )
+            },
+            steps = 16,
+            valueRange = 0f..1f,
+            thumb = {
+                Box(
+                    modifier = Modifier
+                        .height(16.dp)
+                        .width(8.dp)
+                        .clip(CircleShape)
+                        .background(CustomMaterialTheme.colorScheme.primary)
+                )
+            },
+            modifier = Modifier
+                .graphicsLayer {
+                    rotationZ = 270f
+                    translationX = 16.dp.toPx()
+                    transformOrigin = TransformOrigin(0f, 0f)
+                }
+                .layout { measurable, constraints ->
+                    val scale = if (isLandscape) 1.25f else 2f
+                    val placeable = measurable.measure(
+                        Constraints(
+                            minWidth = (constraints.minHeight / scale).toInt(),
+                            minHeight = constraints.minWidth,
+                            maxWidth = (constraints.maxHeight / scale).toInt(),
+                            maxHeight = constraints.maxWidth
+                        )
+                    )
+
+                    layout(placeable.height, placeable.width) {
+                        placeable.place(-placeable.width, -placeable.height / 2)
+                    }
+                }
+        )
+    }
+
+    if (!isLandscape) {
+        AnimatedVisibility(
+            visible = pagerState.currentPage == 3 && shouldShowDrawOptions,
+            enter = slideInVertically { height -> height } + fadeIn(),
+            exit = slideOutVertically { height -> height } + fadeOut(),
+            modifier = Modifier
+                .fillMaxWidth(1f)
+                .align(Alignment.BottomCenter),
+        ) {
+            DrawActionsAndColors(
+                modifications = modifications,
+                paint = paint,
+                changesSize = changesSize
+            )
+        }
+    } else {
+        AnimatedVisibility(
+            visible = pagerState.currentPage == 3 && shouldShowDrawOptions,
+            enter = slideInVertically { width -> -width } + fadeIn(),
+            exit = slideOutVertically { width -> -width } + fadeOut(),
+            modifier = Modifier
+                .fillMaxWidth(1f)
+                .wrapContentHeight()
+                .align(Alignment.CenterEnd)
+                .graphicsLayer {
+                    rotationZ = 90f
+                    translationX = -8.dp.toPx()
+                    transformOrigin = TransformOrigin(0f, 0f)
+                }
+                .layout { measurable, constraints ->
+                    val placeable = measurable.measure(
+                        Constraints(
+                            minWidth = constraints.minHeight,
+                            minHeight = constraints.minWidth,
+                            maxWidth = constraints.maxHeight,
+                            maxHeight = constraints.maxWidth
+                        )
+                    )
+
+                    layout(placeable.height, placeable.width) {
+                        placeable.place(0, -placeable.height)
+                    }
+                }
+        ) {
+            DrawActionsAndColors(
+                modifications = modifications,
+                paint = paint,
+                changesSize = changesSize,
+                landscapeMode = true
+            )
+        }
+    }
+}
+
+
+fun checkIfInRect(
+	position: Offset,
+	padding: Float,
+	left: Int,
+	top: Int,
+	right: Int,
+	bottom: Int
+) : Boolean {
+	val isPastLeft = position.x > left + padding
+	val isBeforeRight = position.x < right - padding
+	val isBelowTop = position.y > top - padding
+	val isAboveBottom = position.y < bottom + padding
+
+	println("POS $position $isPastLeft $isBeforeRight $isBelowTop $isAboveBottom")
+
+	return isPastLeft && isBeforeRight && isBelowTop && isAboveBottom
+}
+
+fun IntOffset.coerceIn(
+	minX: Int,
+	minY: Int,
+	maxX: Int,
+	maxY: Int
+) : IntOffset = IntOffset(this.x.coerceIn(minX, maxX), this.y.coerceIn(minY, maxY))
+
+operator fun IntOffset.plus(offset: Offset) : IntOffset = IntOffset(this.x + offset.x.toInt(), this.y + offset.y.toInt())

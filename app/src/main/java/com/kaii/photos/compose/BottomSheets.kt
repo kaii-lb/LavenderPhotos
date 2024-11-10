@@ -72,8 +72,6 @@ fun SetEditingViewDrawableTextBottomSheet(
     )
 
     if (showBottomSheet.value) {
-    	keyboardController?.show()
-
         ModalBottomSheet(
             onDismissRequest = {
             	keyboardController?.hide()
