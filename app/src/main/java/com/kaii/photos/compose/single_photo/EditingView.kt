@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -91,12 +92,15 @@ import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
@@ -119,6 +123,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toOffset
+import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
 import com.kaii.photos.R
@@ -229,7 +234,11 @@ fun EditingView(
                 pagerState = pagerState,
                 paint = paint,
                 rotationMultiplier = rotationMultiplier,
-                changesSize = changesSize
+                changesSize = changesSize,
+                resetCropping = {
+                    rotationMultiplier.intValue = 0
+                    image = originalImage.asImageBitmap()
+                }
             )
         },
         modifier = Modifier
@@ -268,21 +277,23 @@ fun EditingView(
                 initialLoad = true
             }
 
-            val size by remember { derivedStateOf {
-                with(localDensity) {
-                    val xRatio = maxWidth.toPx() / image.width
-                    val yRatio = maxHeight.toPx() / image.height
-                    val ratio = min(xRatio, yRatio)
+            val size by remember {
+                derivedStateOf {
+                    with(localDensity) {
+                        val xRatio = maxWidth.toPx() / image.width
+                        val yRatio = maxHeight.toPx() / image.height
+                        val ratio = min(xRatio, yRatio)
 
-                    val width = image.width * ratio
-                    val height = image.height * ratio
-                    maxSize = Size(width, height)
+                        val width = image.width * ratio
+                        val height = image.height * ratio
+                        maxSize = Size(width, height)
 
-                    IntSize(width.toInt(), height.toInt())
+                        IntSize(width.toInt(), height.toInt())
+                    }
                 }
-            }}
+            }
 
-            val dpSize by remember(size) {
+            val dpSize by remember {
                 derivedStateOf {
                     with(localDensity) {
                         val width = size.width.toDp()
@@ -293,32 +304,34 @@ fun EditingView(
                 }
             }
 
-            val isVertical = remember(rotation) { rotation % 180f == 0f }
-            val isHorizontal = remember(rotation) { abs(rotation % 180f) == 90f }
+            val isVertical by remember { derivedStateOf { rotation % 180f == 0f }}
+            val isHorizontal by remember { derivedStateOf { abs(rotation % 180f) == 90f }}
 
             var lastScale by remember { mutableFloatStateOf(1f) }
-            val maxScale = remember(isVertical, isHorizontal) {
-                with(localDensity) {
-                    if (isVertical) {
-                        lastScale =
-                            if (isLandscape) {
-                            	maxHeight.toPx() / size.height
-                           	} else {
-                           		min(maxWidth.toPx() / size.width, maxHeight.toPx() / size.height)
-                       		}
-                        lastScale
-                    } else if (isHorizontal) {
-                        lastScale =
-                            if (isLandscape) {
-                            	maxHeight.toPx() / size.width
-                           	} else {
-                           		min(maxWidth.toPx() / size.height, maxHeight.toPx() / size.height)
-                       		}
-                        lastScale
-                    } else lastScale
-                }
+            val maxScale by remember {
+            	derivedStateOf {
+	                with(localDensity) {
+	                    if (isVertical) {
+	                        lastScale =
+	                            if (isLandscape) {
+	                                maxHeight.toPx() / size.height
+	                            } else {
+	                                min(maxWidth.toPx() / size.width, maxHeight.toPx() / size.height)
+	                            }
+	                        lastScale
+	                    } else if (isHorizontal) {
+	                        lastScale =
+	                            if (isLandscape) {
+	                                maxHeight.toPx() / size.width
+	                            } else {
+	                                min(maxWidth.toPx() / size.height, maxHeight.toPx() / size.height)
+	                            }
+	                        lastScale
+	                    } else lastScale
+	                }
+            	}
             }
-            val minScale = remember(maxScale) { 0.8f * maxScale }
+            val minScale by remember { derivedStateOf { 0.8f * maxScale }}
 
             val animatedSize by animateFloatAsState(
                 targetValue = if (pagerState.currentPage == 0 && initialLoad) minScale else maxScale,
@@ -331,6 +344,7 @@ fun EditingView(
                     pagerState.currentPage == 3
                 }
             }
+
             Canvas(
                 modifier = Modifier
                     .size(dpSize)
@@ -401,343 +415,403 @@ fun EditingView(
                 }
             }
 
-            var topLeftOffset by remember { mutableStateOf(
-                IntOffset(
-                    0,
-                    0
-                )
-            )}
-            var topRightOffset by remember { mutableStateOf(
-                with(localDensity) {
-                    IntOffset(
-                        size.width.toInt(),
-                        0
-                    )
-                }
-            )}
-            var bottomLeftOffset by remember { mutableStateOf(
-                with(localDensity) {
+            var topLeftOffset by remember {
+                mutableStateOf(
                     IntOffset(
                         0,
-                        size.height.toInt()
+                        0
                     )
-                }
-            )}
-            var bottomRightOffset by remember { mutableStateOf(
-                with(localDensity) {
+                )
+            }
+            var topRightOffset by remember {
+                mutableStateOf(
                     IntOffset(
-                        size.width.toInt(),
-                        size.height.toInt()
+                        size.width,
+                        0
                     )
-                }
-            )}
-
-            var isDragging by remember { mutableStateOf(false) }
-            LaunchedEffect(isDragging) {
-                if (isDragging) {
-                    changesSize.intValue += 1
-                    return@LaunchedEffect
-                }
-
-                delay(1000)
-
-				val ratio = 1f / min(size.width.toFloat() / image.width.toFloat(), size.height.toFloat() / image.height.toFloat())
-
-				val x = (topLeftOffset.x * ratio).toInt()
-				val y = (topLeftOffset.y * ratio).toInt()
-				val width = ((topRightOffset.x - topLeftOffset.x) * ratio).toInt().coerceIn(0, image.width)
-				val height = ((bottomLeftOffset.y - topLeftOffset.y) * ratio).toInt().coerceIn(0, image.height)
-
-				println("$x $y $width $height ${image.width} ${image.height}")
-                image = Bitmap.createBitmap(
-                    image.asAndroidBitmap(),
-                    x,
-                    y,
-                    width,
-                    height
-                ).asImageBitmap()
-
-                topLeftOffset = IntOffset.Zero
-                topRightOffset = IntOffset(size.width.toInt(), 0)
-                bottomLeftOffset = IntOffset(0, size.height.toInt())
-                bottomRightOffset = IntOffset(size.width.toInt(), size.height.toInt())
+                )
+            }
+            var bottomLeftOffset by remember {
+                mutableStateOf(
+                    IntOffset(
+                        0,
+                        size.height
+                    )
+                )
+            }
+            var bottomRightOffset by remember {
+                mutableStateOf(
+                    IntOffset(
+                        size.width,
+                        size.height
+                    )
+                )
             }
 
-            Box (
+            LaunchedEffect(image) {
+	            topLeftOffset = IntOffset.Zero
+	            topRightOffset = IntOffset(size.width, 0)
+	            bottomLeftOffset = IntOffset(0, size.height)
+	            bottomRightOffset = IntOffset(size.width, size.height)
+            }
+
+            AnimatedVisibility(
+                visible = topRightOffset.x - topLeftOffset.x != size.width || bottomLeftOffset.y - topLeftOffset.y != size.height,
+                enter = slideInVertically { height -> height } + fadeIn(),
+                exit = slideOutVertically { height -> height } + fadeOut(),
+                modifier = Modifier
+                    .width(80.dp)
+                    .align(Alignment.BottomCenter)
+                    .padding(0.dp, 8.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .height(40.dp)
+                        .width(80.dp)
+                        .clip(CircleShape)
+                        .background(
+                            CustomMaterialTheme.colorScheme.surfaceVariant
+                        )
+                        .align(Alignment.BottomCenter)
+                        .clickable {
+                            val ratio = 1f / min(
+                                size.width.toFloat() / image.width.toFloat(),
+                                size.height.toFloat() / image.height.toFloat()
+                            )
+
+                            val x = (topLeftOffset.x * ratio).toInt()
+                            val y = (topLeftOffset.y * ratio).toInt()
+                            val width = ((topRightOffset.x - topLeftOffset.x) * ratio).toInt().coerceIn(0, image.width) - 2 // 2 magic number?
+                            val height = ((bottomLeftOffset.y - topLeftOffset.y) * ratio).toInt().coerceIn(0, image.height) - 2 // 2 magic number?
+
+							println("POS $x $y $width $height ${image.width} ${image.height}")
+
+							if (x + width <= image.width && y + height <= image.height && width > 0 && height > 0) {
+	                            image = Bitmap
+	                                .createBitmap(
+	                                    image.asAndroidBitmap(),
+	                                    x,
+	                                    y,
+	                                    width,
+	                                    height
+	                                )
+	                                .asImageBitmap()
+
+		                            topLeftOffset = IntOffset.Zero
+		                            topRightOffset = IntOffset(size.width, 0)
+		                            bottomLeftOffset = IntOffset(0, size.height)
+		                            bottomRightOffset = IntOffset(size.width, size.height)
+
+		                            changesSize.intValue += 1
+							} else {
+								// TODO: show can't crop snackbar
+							}
+                        },
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Confirm",
+                        fontSize = TextUnit(14f, TextUnitType.Sp),
+                        color = CustomMaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier
+                            .wrapContentSize()
+                    )
+                }
+            }
+
+            Box(
                 modifier = Modifier
                 	.align(Alignment.Center)
                     .size(
-                    	dpSize.width,
+                        dpSize.width,
                         dpSize.height
-                   	)
+                    )
                     .graphicsLayer {
                         scaleX = animatedSize
                         scaleY = animatedSize
-						rotationZ = rotation
+                        rotationZ = rotation
                     }
                     .drawWithCache {
                         onDrawWithContent {
-                        	drawContent()
+                            clipRect(
+                                left = topLeftOffset.x.toFloat(),
+                                top = topLeftOffset.y.toFloat(),
+                                right = topRightOffset.x.toFloat(),
+                                bottom = bottomRightOffset.y.toFloat(),
+                                clipOp = ClipOp.Difference
+                            ) {
+                                drawRect(
+                                    color = DrawingColors.Black,
+                                    alpha = 0.5f,
+                                    blendMode = BlendMode.SrcOver,
+                                    topLeft = Offset.Zero,
+                                    size = size.toSize()
+                                )
+                            }
 
                             drawLine(
                                 color = DrawingColors.White,
                                 start = topLeftOffset.toOffset(),
                                 end = topRightOffset.toOffset(),
-                                strokeWidth = 4.dp.toPx()
+                                strokeWidth = 4.dp.toPx(),
+                                blendMode = BlendMode.SrcOver,
                             )
 
                             drawLine(
                                 color = DrawingColors.White,
                                 start = topLeftOffset.toOffset(),
                                 end = bottomLeftOffset.toOffset(),
-                                strokeWidth = 4.dp.toPx()
+                                strokeWidth = 4.dp.toPx(),
+                                blendMode = BlendMode.SrcOver,
                             )
 
                             drawLine(
                                 color = DrawingColors.White,
                                 start = topRightOffset.toOffset(),
                                 end = bottomRightOffset.toOffset(),
-                                strokeWidth = 4.dp.toPx()
+                                strokeWidth = 4.dp.toPx(),
+                                blendMode = BlendMode.SrcOver,
                             )
 
                             drawLine(
                                 color = DrawingColors.White,
                                 start = bottomLeftOffset.toOffset(),
                                 end = bottomRightOffset.toOffset(),
-                                strokeWidth = 4.dp.toPx()
+                                strokeWidth = 4.dp.toPx(),
+                                blendMode = BlendMode.SrcOver,
                             )
+
+                            drawContent()
                         }
                     }
                     .pointerInput(Unit) {
-                    	detectDragGestures(
-                            onDragStart = {
-                                isDragging = true
-                            },
-                            onDrag = { change, dragAmount ->
-                                isDragging = true
-                                val isInCropRect = checkIfInRect(
-                                    change.position,
-                                    with(localDensity) { 24.dp.toPx() },
-                                    bottomLeftOffset.x,
-                                    topLeftOffset.y,
-                                    topRightOffset.x,
-                                    bottomRightOffset.y
-                                )
+                        detectDragGestures { change, dragAmount ->
+                            val isInCropRect = checkIfInRect(
+                                change.position,
+                                with(localDensity) { 24.dp.toPx() },
+                                bottomLeftOffset.x,
+                                topLeftOffset.y,
+                                topRightOffset.x,
+                                bottomRightOffset.y
+                            )
 
-                                if (isInCropRect) {
-                                    val width = topRightOffset.x - topLeftOffset.x
-                                    val height = bottomRightOffset.y - topRightOffset.y
+                            if (isInCropRect) {
+                                val width = topRightOffset.x - topLeftOffset.x
+                                val height = bottomRightOffset.y - topRightOffset.y
 
-                                    topLeftOffset = (topLeftOffset + dragAmount)
-                                        .coerceIn(
-                                            minX = 0,
-                                            minY = 0,
-                                            maxX = size.width - width,
-                                            maxY = size.height - height
-                                        )
+                                topLeftOffset = (topLeftOffset + dragAmount)
+                                    .coerceIn(
+                                        minX = 0,
+                                        minY = 0,
+                                        maxX = size.width - width,
+                                        maxY = size.height - height
+                                    )
 
-                                    topRightOffset = IntOffset(topLeftOffset.x + width, topLeftOffset.y)
+                                topRightOffset =
+                                    IntOffset(topLeftOffset.x + width, topLeftOffset.y)
 
-                                    bottomLeftOffset = IntOffset(topLeftOffset.x, topLeftOffset.y + height)
+                                bottomLeftOffset =
+                                    IntOffset(topLeftOffset.x, topLeftOffset.y + height)
 
-                                    bottomRightOffset = IntOffset(topLeftOffset.x + width, topLeftOffset.y + height)
-                                }
-                            },
-                            onDragCancel = {
-                                isDragging = false
-                            },
-                            onDragEnd = {
-                                isDragging = false
+                                bottomRightOffset =
+                                    IntOffset(topLeftOffset.x + width, topLeftOffset.y + height)
                             }
-                        )
+                        }
                     }
             ) {
-                Box (
+                Box(
                     modifier = Modifier
                         .offset {
-                        	topLeftOffset - IntOffset(12.dp.toPx().toInt(), 12.dp.toPx().toInt())
+                            topLeftOffset - IntOffset(
+                                12.dp
+                                    .toPx()
+                                    .toInt(),
+                                12.dp
+                                    .toPx()
+                                    .toInt()
+                            )
                         }
                         .size(24.dp)
                         .pointerInput(Unit) {
-                            detectDragGestures(
-                                onDragStart = {
-                                    isDragging = true
-                                },
-                                onDrag = { change, dragAmount ->
-                                    isDragging = true
-                                    change.consume()
+                            detectDragGestures { change, dragAmount ->
+                                change.consume()
 
-                                    topLeftOffset = (topLeftOffset + dragAmount)
-                                        .coerceIn(
-                                            minX = 0,
-                                            minY = 0,
-                                            maxX = topRightOffset.x - 56.dp.toPx().toInt(),
-                                            maxY = bottomLeftOffset.y - 56.dp.toPx().toInt()
-                                        )
+                                val topLeftOffsetPos = (topLeftOffset + dragAmount)
+                                    .coerceIn(
+                                        minX = 0,
+                                        minY = 0,
+                                        maxX = (topRightOffset.x - 56.dp.toPx().toInt()).coerceAtLeast(0),
+                                        maxY = (bottomLeftOffset.y - 56.dp.toPx().toInt()).coerceAtLeast(0)
+                                    )
 
-                                    topRightOffset =
-                                        IntOffset(
-                                            topRightOffset.x,
-                                            topLeftOffset.y
-                                        )
+								//if (freeform crop)
+								topLeftOffset = topLeftOffsetPos
+                                topRightOffset =
+                                    IntOffset(
+                                        topRightOffset.x,
+                                        topLeftOffset.y
+                                    )
 
-                                    bottomLeftOffset =
-                                        IntOffset(
-                                            topLeftOffset.x,
-                                            bottomLeftOffset.y
-                                        )
-                                },
-                                onDragCancel = {
-                                    isDragging = false
-                                },
-                                onDragEnd = {
-                                    isDragging = false
-                                }
-                            )
+                                bottomLeftOffset =
+                                    IntOffset(
+                                        topLeftOffset.x,
+                                        bottomLeftOffset.y
+                                    )
+
+								// if not freeform
+								// check where to multiply by ratio
+// 								val width = topRightOffset.x - topLeftOffsetPos.x
+// 								val height = bottomRightOffset.y - topLeftOffsetPos.y
+// 								val needed = min(width, height)
+// 
+// 								topLeftOffset =
+// 									IntOffset(
+// 										topRightOffset.x - needed,
+// 										bottomRightOffset.y - needed
+// 									)
+// 
+//                                 bottomLeftOffset =
+//                                     IntOffset(
+//                                         topLeftOffset.x,
+//                                         bottomLeftOffset.y
+//                                     )
+// 
+//                                 topRightOffset =
+//                                     IntOffset(
+//                                         topRightOffset.x,
+//                                         topLeftOffset.y
+//                                     )
+                            }
                         }
                         .padding(4.dp)
                         .clip(CircleShape)
                         .background(DrawingColors.White)
                 )
 
-                Box (
+                Box(
                     modifier = Modifier
                         .offset {
-                        	topRightOffset - IntOffset(12.dp.toPx().toInt(), 12.dp.toPx().toInt())
+                            topRightOffset - IntOffset(
+                                12.dp
+                                    .toPx()
+                                    .toInt(),
+                                12.dp
+                                    .toPx()
+                                    .toInt()
+                            )
                         }
                         .size(24.dp)
                         .pointerInput(Unit) {
-                            detectDragGestures (
-                                onDragStart = {
-                                    isDragging = true
-                                },
-                                onDrag = { change, dragAmount ->
-                                    isDragging = true
-                                    change.consume()
+                            detectDragGestures { change, dragAmount ->
+                                change.consume()
 
-                                    topRightOffset = (topRightOffset + dragAmount)
-                                        .coerceIn(
-                                            minX = topLeftOffset.x + 56.dp.toPx().toInt(),
-                                            minY = 0,
-                                            maxX = size.width,
-                                            maxY = bottomRightOffset.y - 56.dp.toPx().toInt()
-                                        )
+                                topRightOffset = (topRightOffset + dragAmount)
+                                    .coerceIn(
+                                        minX = (topLeftOffset.x + 56.dp.toPx().toInt()).coerceAtMost(size.width),
+                                        minY = 0,
+                                        maxX = size.width,
+                                        maxY = (bottomRightOffset.y - 56.dp.toPx().toInt()).coerceAtLeast(0)
+                                    )
 
-                                    bottomRightOffset =
-                                        IntOffset(
-                                            topRightOffset.x,
-                                            bottomRightOffset.y
-                                        )
+                                bottomRightOffset =
+                                    IntOffset(
+                                        topRightOffset.x,
+                                        bottomRightOffset.y
+                                    )
 
-                                    topLeftOffset =
-                                        IntOffset(
-                                            topLeftOffset.x,
-                                            topRightOffset.y
-                                        )
-                                },
-                                onDragCancel = {
-                                    isDragging = false
-                                },
-                                onDragEnd = {
-                                    isDragging = false
-                                }
-                            )
+                                topLeftOffset =
+                                    IntOffset(
+                                        topLeftOffset.x,
+                                        topRightOffset.y
+                                    )
+                            }
                         }
                         .padding(4.dp)
                         .clip(CircleShape)
                         .background(DrawingColors.White)
                 )
 
-                Box (
+                Box(
                     modifier = Modifier
                         .offset {
-                        	bottomLeftOffset - IntOffset(12.dp.toPx().toInt(), 12.dp.toPx().toInt())
+                            bottomLeftOffset - IntOffset(
+                                12.dp
+                                    .toPx()
+                                    .toInt(),
+                                12.dp
+                                    .toPx()
+                                    .toInt()
+                            )
                         }
                         .size(24.dp)
                         .pointerInput(Unit) {
-                            detectDragGestures (
-                                onDragStart = {
-                                    isDragging = true
-                                },
-                                onDrag = { change, dragAmount->
-                                    isDragging = true
-                                    change.consume()
+                            detectDragGestures { change, dragAmount ->
+                                change.consume()
 
-                                    bottomLeftOffset = (bottomLeftOffset + dragAmount)
-                                        .coerceIn(
-                                            minX = 0,
-                                            minY = topLeftOffset.y + 56.dp.toPx().toInt(),
-                                            maxX = bottomRightOffset.x - 56.dp.toPx().toInt(),
-                                            maxY = size.height
-                                        )
+                                bottomLeftOffset = (bottomLeftOffset + dragAmount)
+                                    .coerceIn(
+                                        minX = 0,
+                                        minY = (topLeftOffset.y + 56.dp.toPx().toInt()).coerceAtMost(size.height),
+                                        maxX = (bottomRightOffset.x - 56.dp.toPx().toInt()).coerceAtLeast(0),
+                                        maxY = size.height
+                                    )
 
-                                    topLeftOffset =
-                                        IntOffset(
-                                            bottomLeftOffset.x,
-                                            topLeftOffset.y
-                                        )
+                                topLeftOffset =
+                                    IntOffset(
+                                        bottomLeftOffset.x,
+                                        topLeftOffset.y
+                                    )
 
-                                    bottomRightOffset =
-                                        IntOffset(
-                                            bottomRightOffset.x,
-                                            bottomLeftOffset.y
-                                        )
-                                },
-                                onDragCancel = {
-                                    isDragging = false
-                                },
-                                onDragEnd = {
-                                    isDragging = false
-                                }
-                            )
+                                bottomRightOffset =
+                                    IntOffset(
+                                        bottomRightOffset.x,
+                                        bottomLeftOffset.y
+                                    )
+                            }
                         }
                         .padding(4.dp)
                         .clip(CircleShape)
                         .background(DrawingColors.White)
                 )
 
-                Box (
+                Box(
                     modifier = Modifier
                         .offset {
-                            bottomRightOffset - IntOffset(12.dp.toPx().toInt(), 12.dp.toPx().toInt())
+                            bottomRightOffset - IntOffset(
+                                12.dp
+                                    .toPx()
+                                    .toInt(),
+                                12.dp
+                                    .toPx()
+                                    .toInt()
+                            )
                         }
                         .size(24.dp)
                         .pointerInput(Unit) {
-                            detectDragGestures (
-                                onDragStart = {
-                                    isDragging = true
-                                },
-                                onDrag = { change, dragAmount ->
-                                    isDragging = true
-                                    change.consume()
+                            detectDragGestures { change, dragAmount ->
+                                change.consume()
 
-                                    bottomRightOffset = (bottomRightOffset + dragAmount)
-                                        .coerceIn(
-                                            minX = bottomLeftOffset.x + 56.dp.toPx().toInt(),
-                                            minY = topRightOffset.y + 56.dp.toPx().toInt(),
-                                            maxX = size.width,
-                                            maxY = size.height
-                                        )
+                                bottomRightOffset = (bottomRightOffset + dragAmount)
+                                    .coerceIn(
+                                        minX = (bottomLeftOffset.x + 56.dp.toPx().toInt()).coerceAtMost(size.width),
+                                        minY = (topRightOffset.y + 56.dp.toPx().toInt()).coerceAtMost(size.height),
+                                        maxX = size.width,
+                                        maxY = size.height
+                                    )
 
-                                    topRightOffset =
-                                        IntOffset(
-                                            bottomRightOffset.x,
-                                            topRightOffset.y
-                                        )
+                                topRightOffset =
+                                    IntOffset(
+                                        bottomRightOffset.x,
+                                        topRightOffset.y
+                                    )
 
-                                    bottomLeftOffset =
-                                        IntOffset(
-                                            bottomLeftOffset.x,
-                                            bottomRightOffset.y
-                                        )
-                                },
-                                onDragCancel = {
-                                    isDragging = false
-                                },
-                                onDragEnd = {
-                                    isDragging = false
-                                }
-                            )
+                                bottomLeftOffset =
+                                    IntOffset(
+                                        bottomLeftOffset.x,
+                                        bottomRightOffset.y
+                                    )
+                            }
                         }
                         .padding(4.dp)
                         .clip(CircleShape)
@@ -899,7 +973,8 @@ private fun EditingViewBottomBar(
     pagerState: PagerState,
     paint: MutableState<ExtendedPaint>,
     rotationMultiplier: MutableIntState,
-    changesSize: MutableIntState
+    changesSize: MutableIntState,
+    resetCropping: () -> Unit
 ) {
     val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     var showInLandscape by remember { mutableStateOf(false) }
@@ -1121,7 +1196,8 @@ private fun EditingViewBottomBar(
                             0 -> {
                                 CropTools(
                                     rotationMultiplier = rotationMultiplier,
-                                    changesSize = changesSize
+                                    changesSize = changesSize,
+                                    resetCropping = resetCropping
                                 )
                             }
 
@@ -1147,7 +1223,8 @@ private fun EditingViewBottomBar(
 @Composable
 fun CropTools(
     rotationMultiplier: MutableIntState,
-    changesSize: MutableIntState
+    changesSize: MutableIntState,
+    resetCropping: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -1165,7 +1242,7 @@ fun CropTools(
         }
 
         EditingViewBottomAppBarItem(text = "Reset", iconResId = R.drawable.reset) {
-            rotationMultiplier.intValue = 0
+            resetCropping()
             changesSize.intValue += 1
         }
     }
@@ -1745,9 +1822,11 @@ fun BoxWithConstraintsScope.DrawingControls(
     changesSize: MutableIntState
 ) {
     val localConfiguration = LocalConfiguration.current
-    val isLandscape by remember { derivedStateOf {
-        localConfiguration.orientation == Configuration.ORIENTATION_LANDSCAPE
-    }}
+    val isLandscape by remember {
+        derivedStateOf {
+            localConfiguration.orientation == Configuration.ORIENTATION_LANDSCAPE
+        }
+    }
 
     var shouldShowDrawOptions by remember { mutableStateOf(false) }
     var lastPage by remember { mutableIntStateOf(pagerState.currentPage) }
@@ -1876,28 +1955,29 @@ fun BoxWithConstraintsScope.DrawingControls(
 
 
 fun checkIfInRect(
-	position: Offset,
-	padding: Float,
-	left: Int,
-	top: Int,
-	right: Int,
-	bottom: Int
-) : Boolean {
-	val isPastLeft = position.x > left + padding
-	val isBeforeRight = position.x < right - padding
-	val isBelowTop = position.y > top - padding
-	val isAboveBottom = position.y < bottom + padding
+    position: Offset,
+    padding: Float,
+    left: Int,
+    top: Int,
+    right: Int,
+    bottom: Int
+): Boolean {
+    val isPastLeft = position.x > left + padding
+    val isBeforeRight = position.x < right - padding
+    val isBelowTop = position.y > top - padding
+    val isAboveBottom = position.y < bottom + padding
 
-	println("POS $position $isPastLeft $isBeforeRight $isBelowTop $isAboveBottom")
+    println("POS $position $isPastLeft $isBeforeRight $isBelowTop $isAboveBottom")
 
-	return isPastLeft && isBeforeRight && isBelowTop && isAboveBottom
+    return isPastLeft && isBeforeRight && isBelowTop && isAboveBottom
 }
 
 fun IntOffset.coerceIn(
-	minX: Int,
-	minY: Int,
-	maxX: Int,
-	maxY: Int
-) : IntOffset = IntOffset(this.x.coerceIn(minX, maxX), this.y.coerceIn(minY, maxY))
+    minX: Int,
+    minY: Int,
+    maxX: Int,
+    maxY: Int
+): IntOffset = IntOffset(this.x.coerceIn(minX, maxX), this.y.coerceIn(minY, maxY))
 
-operator fun IntOffset.plus(offset: Offset) : IntOffset = IntOffset(this.x + offset.x.toInt(), this.y + offset.y.toInt())
+operator fun IntOffset.plus(offset: Offset): IntOffset =
+    IntOffset(this.x + offset.x.toInt(), this.y + offset.y.toInt())
