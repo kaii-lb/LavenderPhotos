@@ -68,6 +68,7 @@ import com.bumptech.glide.integration.compose.placeholder
 import com.kaii.photos.R
 import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.compose.FolderIsEmpty
+import com.kaii.photos.compose.SearchTextField
 import com.kaii.photos.compose.getDefaultShapeSpacerForPosition
 import com.kaii.photos.datastore
 import com.kaii.photos.datastore.getAlbumsList
@@ -208,105 +209,6 @@ fun MoveCopyAlbumListView(
                         )
                     }
                 }
-            }
-        }
-    }
-}
-
-@Composable
-fun SearchTextField(
-    searchedForText: MutableState<String>,
-    placeholder: String,
-    modifier: Modifier = Modifier,
-    onSearch: () -> Unit,
-    onClear: () -> Unit
-) {
-    Row(
-        modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceEvenly
-    ) {
-        val keyboardController = LocalSoftwareKeyboardController.current
-
-        TextField(
-            value = searchedForText.value,
-            onValueChange = {
-                searchedForText.value = it
-            },
-            maxLines = 1,
-            singleLine = true,
-            placeholder = {
-                Text(
-                    text = placeholder,
-                    fontSize = TextUnit(16f, TextUnitType.Sp)
-                )
-            },
-            prefix = {
-                Row {
-                    Icon(
-                        painter = painterResource(id = R.drawable.search),
-                        contentDescription = "Search Icon",
-                        modifier = Modifier
-                            .size(24.dp)
-                    )
-
-                    Spacer(modifier = Modifier.width(8.dp))
-                }
-            },
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
-                unfocusedContainerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
-                cursorColor = CustomMaterialTheme.colorScheme.primary,
-                focusedTextColor = CustomMaterialTheme.colorScheme.onSurface,
-                unfocusedTextColor = CustomMaterialTheme.colorScheme.onSurface,
-                focusedPlaceholderColor = CustomMaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                unfocusedPlaceholderColor = CustomMaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                unfocusedIndicatorColor = Color.Transparent,
-                focusedIndicatorColor = Color.Transparent
-            ),
-            keyboardOptions = KeyboardOptions(
-                autoCorrectEnabled = false,
-                keyboardType = KeyboardType.Text,
-                imeAction = ImeAction.Search
-            ),
-            keyboardActions = KeyboardActions(
-                onSearch = {
-                    onSearch()
-                    keyboardController?.hide()
-                }
-            ),
-            shape = RoundedCornerShape(1000.dp, 0.dp, 0.dp, 1000.dp),
-            modifier = Modifier
-                .weight(1f)
-        )
-
-        Row(
-            modifier = Modifier
-                .height(56.dp)
-                .width(32.dp)
-                .clip(RoundedCornerShape(0.dp, 1000.dp, 1000.dp, 0.dp))
-                .background(CustomMaterialTheme.colorScheme.surfaceContainer)
-                .weight(0.2f),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Row(
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(RoundedCornerShape(1000.dp))
-                    .clickable {
-                        onClear()
-                    },
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.close),
-                    contentDescription = "Clear search query",
-                    tint = CustomMaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier
-                        .size(24.dp)
-                )
             }
         }
     }

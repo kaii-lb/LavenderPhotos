@@ -6,7 +6,6 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -71,6 +70,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
@@ -129,6 +129,7 @@ import androidx.navigation.NavHostController
 import com.kaii.photos.R
 import com.kaii.photos.compose.BottomAppBarItem
 import com.kaii.photos.compose.ConfirmationDialog
+import com.kaii.photos.compose.CroppingRatioBottomSheet
 import com.kaii.photos.compose.SetEditingViewDrawableTextBottomSheet
 import com.kaii.photos.helpers.ColorIndicator
 import com.kaii.photos.helpers.CustomMaterialTheme
@@ -191,7 +192,31 @@ fun EditingView(
     val inputStream = remember { context.contentResolver.openInputStream(uri) }
 
     val originalImage = remember { BitmapFactory.decodeStream(inputStream) }
-    var image by remember { mutableStateOf(originalImage.asImageBitmap()) }
+    var image by remember {
+        mutableStateOf(
+//         run {
+//             var holder = Bitmap.createBitmap(512, 512, Bitmap.Config.ARGB_8888)
+// 
+//             Glide
+//                 .with(context)
+//                 .asBitmap()
+//                 .load(originalImage)
+//                 .into(object : CustomTarget<Bitmap>() {
+//                     override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
+//                         holder = resource
+//                     }
+// 
+//                     override fun onLoadCleared(placeholder: Drawable?) {
+//                         holder = Bitmap.createBitmap(512, 512, Bitmap.Config.ARGB_8888)
+//                     }
+//                 })
+// 
+//             holder.asImageBitmap()
+//         }
+
+            originalImage.asImageBitmap()
+        )
+    }
     inputStream?.close()
 
     val rotationMultiplier = remember { mutableIntStateOf(0) }
@@ -202,6 +227,8 @@ fun EditingView(
 
     var maxSize by remember { mutableStateOf(Size.Unspecified) }
     val coroutineScope = rememberCoroutineScope()
+
+    val croppingRatio = remember { mutableFloatStateOf(0f) }
 
     val textMeasurer = rememberTextMeasurer()
     val localDensity = LocalDensity.current
@@ -235,6 +262,8 @@ fun EditingView(
                 paint = paint,
                 rotationMultiplier = rotationMultiplier,
                 changesSize = changesSize,
+                croppingRatio = croppingRatio,
+                originalImageRatio = image.width.toFloat() / image.height.toFloat(),
                 resetCropping = {
                     rotationMultiplier.intValue = 0
                     image = originalImage.asImageBitmap()
@@ -304,34 +333,34 @@ fun EditingView(
                 }
             }
 
-            val isVertical by remember { derivedStateOf { rotation % 180f == 0f }}
-            val isHorizontal by remember { derivedStateOf { abs(rotation % 180f) == 90f }}
+            val isVertical by remember { derivedStateOf { rotation % 180f == 0f } }
+            val isHorizontal by remember { derivedStateOf { abs(rotation % 180f) == 90f } }
 
             var lastScale by remember { mutableFloatStateOf(1f) }
             val maxScale by remember {
-            	derivedStateOf {
-	                with(localDensity) {
-	                    if (isVertical) {
-	                        lastScale =
-	                            if (isLandscape) {
-	                                maxHeight.toPx() / size.height
-	                            } else {
-	                                min(maxWidth.toPx() / size.width, maxHeight.toPx() / size.height)
-	                            }
-	                        lastScale
-	                    } else if (isHorizontal) {
-	                        lastScale =
-	                            if (isLandscape) {
-	                                maxHeight.toPx() / size.width
-	                            } else {
-	                                min(maxWidth.toPx() / size.height, maxHeight.toPx() / size.height)
-	                            }
-	                        lastScale
-	                    } else lastScale
-	                }
-            	}
+                derivedStateOf {
+                    with(localDensity) {
+                        if (isVertical) {
+                            lastScale =
+                                if (isLandscape) {
+                                    maxHeight.toPx() / size.height
+                                } else {
+                                    min(maxWidth.toPx() / size.width, maxHeight.toPx() / size.height)
+                                }
+                            lastScale
+                        } else if (isHorizontal) {
+                            lastScale =
+                                if (isLandscape) {
+                                    maxHeight.toPx() / size.width
+                                } else {
+                                    min(maxWidth.toPx() / size.height, maxHeight.toPx() / size.height)
+                                }
+                            lastScale
+                        } else lastScale
+                    }
+                }
             }
-            val minScale by remember { derivedStateOf { 0.8f * maxScale }}
+            val minScale by remember { derivedStateOf { 0.8f * maxScale } }
 
             val animatedSize by animateFloatAsState(
                 targetValue = if (pagerState.currentPage == 0 && initialLoad) minScale else maxScale,
@@ -415,408 +444,701 @@ fun EditingView(
                 }
             }
 
-            var topLeftOffset by remember {
-                mutableStateOf(
-                    IntOffset(
-                        0,
-                        0
-                    )
-                )
-            }
-            var topRightOffset by remember {
-                mutableStateOf(
-                    IntOffset(
-                        size.width,
-                        0
-                    )
-                )
-            }
-            var bottomLeftOffset by remember {
-                mutableStateOf(
-                    IntOffset(
-                        0,
-                        size.height
-                    )
-                )
-            }
-            var bottomRightOffset by remember {
-                mutableStateOf(
-                    IntOffset(
-                        size.width,
-                        size.height
-                    )
-                )
-            }
-
-            LaunchedEffect(image) {
-	            topLeftOffset = IntOffset.Zero
-	            topRightOffset = IntOffset(size.width, 0)
-	            bottomLeftOffset = IntOffset(0, size.height)
-	            bottomRightOffset = IntOffset(size.width, size.height)
-            }
-
-            AnimatedVisibility(
-                visible = topRightOffset.x - topLeftOffset.x != size.width || bottomLeftOffset.y - topLeftOffset.y != size.height,
-                enter = slideInVertically { height -> height } + fadeIn(),
-                exit = slideOutVertically { height -> height } + fadeOut(),
-                modifier = Modifier
-                    .width(80.dp)
-                    .align(Alignment.BottomCenter)
-                    .padding(0.dp, 8.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .height(40.dp)
-                        .width(80.dp)
-                        .clip(CircleShape)
-                        .background(
-                            CustomMaterialTheme.colorScheme.surfaceVariant
+            if (pagerState.currentPage == 0) {
+                var topLeftOffset by remember {
+                    mutableStateOf(
+                        IntOffset(
+                            0,
+                            0
                         )
-                        .align(Alignment.BottomCenter)
-                        .clickable {
-                            val ratio = 1f / min(
-                                size.width.toFloat() / image.width.toFloat(),
-                                size.height.toFloat() / image.height.toFloat()
-                            )
-
-                            val x = (topLeftOffset.x * ratio).toInt()
-                            val y = (topLeftOffset.y * ratio).toInt()
-                            val width = ((topRightOffset.x - topLeftOffset.x) * ratio).toInt().coerceIn(0, image.width) - 2 // 2 magic number?
-                            val height = ((bottomLeftOffset.y - topLeftOffset.y) * ratio).toInt().coerceIn(0, image.height) - 2 // 2 magic number?
-
-							println("POS $x $y $width $height ${image.width} ${image.height}")
-
-							if (x + width <= image.width && y + height <= image.height && width > 0 && height > 0) {
-	                            image = Bitmap
-	                                .createBitmap(
-	                                    image.asAndroidBitmap(),
-	                                    x,
-	                                    y,
-	                                    width,
-	                                    height
-	                                )
-	                                .asImageBitmap()
-
-		                            topLeftOffset = IntOffset.Zero
-		                            topRightOffset = IntOffset(size.width, 0)
-		                            bottomLeftOffset = IntOffset(0, size.height)
-		                            bottomRightOffset = IntOffset(size.width, size.height)
-
-		                            changesSize.intValue += 1
-							} else {
-								// TODO: show can't crop snackbar
-							}
-                        },
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "Confirm",
-                        fontSize = TextUnit(14f, TextUnitType.Sp),
-                        color = CustomMaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier
-                            .wrapContentSize()
                     )
                 }
-            }
-
-            Box(
-                modifier = Modifier
-                	.align(Alignment.Center)
-                    .size(
-                        dpSize.width,
-                        dpSize.height
+                var topRightOffset by remember {
+                    mutableStateOf(
+                        IntOffset(
+                            size.width,
+                            0
+                        )
                     )
-                    .graphicsLayer {
-                        scaleX = animatedSize
-                        scaleY = animatedSize
-                        rotationZ = rotation
+                }
+                var bottomLeftOffset by remember {
+                    mutableStateOf(
+                        IntOffset(
+                            0,
+                            size.height
+                        )
+                    )
+                }
+                var bottomRightOffset by remember {
+                    mutableStateOf(
+                        IntOffset(
+                            size.width,
+                            size.height
+                        )
+                    )
+                }
+
+                LaunchedEffect(image) {
+                    topLeftOffset = IntOffset.Zero
+                    topRightOffset = IntOffset(size.width, 0)
+                    bottomLeftOffset = IntOffset(0, size.height)
+                    bottomRightOffset = IntOffset(size.width, size.height)
+                }
+
+                AnimatedVisibility(
+                    visible = topRightOffset.x - topLeftOffset.x != size.width || bottomLeftOffset.y - topLeftOffset.y != size.height,
+                    enter = slideInVertically { height -> height } + fadeIn(),
+                    exit = slideOutVertically { height -> height } + fadeOut(),
+                    modifier = Modifier
+                        .width(80.dp)
+                        .align(Alignment.BottomCenter)
+                        .padding(0.dp, 8.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .height(40.dp)
+                            .width(80.dp)
+                            .clip(CircleShape)
+                            .background(
+                                CustomMaterialTheme.colorScheme.surfaceVariant
+                            )
+                            .align(Alignment.BottomCenter)
+                            .clickable {
+                                val ratio = 1f / min(
+                                    size.width.toFloat() / image.width.toFloat(),
+                                    size.height.toFloat() / image.height.toFloat()
+                                )
+
+                                val x = (topLeftOffset.x * ratio).toInt()
+                                val y = (topLeftOffset.y * ratio).toInt()
+                                var width = ((topRightOffset.x - topLeftOffset.x) * ratio)
+                                    .toInt()
+                                    .coerceIn(0, image.width)
+                                var height = ((bottomLeftOffset.y - topLeftOffset.y) * ratio)
+                                    .toInt()
+                                    .coerceIn(0, image.height)
+
+                                val widthExtra = (x + width) - image.width
+                                val heightExtra = (x + width) - image.height
+
+                                if (widthExtra > 0) width -= widthExtra
+                                if (heightExtra > 0) height -= heightExtra
+
+                                if (width > 0 && height > 0) {
+                                    val loadable = Bitmap
+                                        .createBitmap(
+                                            image.asAndroidBitmap(),
+                                            x,
+                                            y,
+                                            width,
+                                            height
+                                        )
+
+//                                     var holder = Bitmap.createBitmap(512, 512, Bitmap.Config.ARGB_8888)
+// 
+//                                     Glide
+//                                         .with(context)
+//                                         .asBitmap()
+//                                         .load(loadable)
+//                                         .into(object : CustomTarget<Bitmap>() {
+//                                             override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
+//                                                 holder = resource
+//                                             }
+// 
+//                                             override fun onLoadCleared(placeholder: Drawable?) {
+//                                                 holder = Bitmap.createBitmap(512, 512, Bitmap.Config.ARGB_8888)
+//                                             }
+//                                         })
+
+                                    image = loadable
+                                        .asImageBitmap()
+
+                                    topLeftOffset = IntOffset.Zero
+                                    topRightOffset = IntOffset(size.width, 0)
+                                    bottomLeftOffset = IntOffset(0, size.height)
+                                    bottomRightOffset = IntOffset(size.width, size.height)
+
+                                    changesSize.intValue += 1
+                                } else {
+                                    // TODO: show can't crop snackbar
+                                }
+                            },
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Confirm",
+                            fontSize = TextUnit(14f, TextUnitType.Sp),
+                            color = CustomMaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier
+                                .wrapContentSize()
+                        )
                     }
-                    .drawWithCache {
-                        onDrawWithContent {
-                            clipRect(
-                                left = topLeftOffset.x.toFloat(),
-                                top = topLeftOffset.y.toFloat(),
-                                right = topRightOffset.x.toFloat(),
-                                bottom = bottomRightOffset.y.toFloat(),
-                                clipOp = ClipOp.Difference
-                            ) {
-                                drawRect(
-                                    color = DrawingColors.Black,
-                                    alpha = 0.5f,
+                }
+
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .size(
+                            dpSize.width,
+                            dpSize.height
+                        )
+                        .graphicsLayer {
+                            scaleX = animatedSize
+                            scaleY = animatedSize
+                            rotationZ = rotation
+                        }
+                        .drawWithCache {
+                            onDrawWithContent {
+                                clipRect(
+                                    left = topLeftOffset.x.toFloat(),
+                                    top = topLeftOffset.y.toFloat(),
+                                    right = topRightOffset.x.toFloat(),
+                                    bottom = bottomRightOffset.y.toFloat(),
+                                    clipOp = ClipOp.Difference
+                                ) {
+                                    drawRect(
+                                        color = DrawingColors.Black,
+                                        alpha = 0.75f,
+                                        blendMode = BlendMode.SrcOver,
+                                        topLeft = Offset.Zero,
+                                        size = size.toSize()
+                                    )
+                                }
+
+                                drawLine(
+                                    color = DrawingColors.White,
+                                    start = topLeftOffset.toOffset(),
+                                    end = topRightOffset.toOffset(),
+                                    strokeWidth = 4.dp.toPx(),
                                     blendMode = BlendMode.SrcOver,
-                                    topLeft = Offset.Zero,
-                                    size = size.toSize()
+                                )
+
+                                drawLine(
+                                    color = DrawingColors.White,
+                                    start = topLeftOffset.toOffset(),
+                                    end = bottomLeftOffset.toOffset(),
+                                    strokeWidth = 4.dp.toPx(),
+                                    blendMode = BlendMode.SrcOver,
+                                )
+
+                                drawLine(
+                                    color = DrawingColors.White,
+                                    start = topRightOffset.toOffset(),
+                                    end = bottomRightOffset.toOffset(),
+                                    strokeWidth = 4.dp.toPx(),
+                                    blendMode = BlendMode.SrcOver,
+                                )
+
+                                drawLine(
+                                    color = DrawingColors.White,
+                                    start = bottomLeftOffset.toOffset(),
+                                    end = bottomRightOffset.toOffset(),
+                                    strokeWidth = 4.dp.toPx(),
+                                    blendMode = BlendMode.SrcOver,
+                                )
+
+                                drawContent()
+                            }
+                        }
+                        .pointerInput(Unit) {
+                            detectDragGestures { change, dragAmount ->
+                                val isInCropRect = checkIfInRect(
+                                    change.position,
+                                    with(localDensity) {
+                                        24.dp.toPx() * ((topRightOffset.x - topLeftOffset.x).toFloat() / size.width)
+                                    },
+                                    bottomLeftOffset.x,
+                                    topLeftOffset.y,
+                                    topRightOffset.x,
+                                    bottomRightOffset.y
+                                )
+
+                                if (isInCropRect) {
+                                    val width = topRightOffset.x - topLeftOffset.x
+                                    val height = bottomRightOffset.y - topRightOffset.y
+
+                                    topLeftOffset = (topLeftOffset + dragAmount)
+                                        .coerceIn(
+                                            minX = 0,
+                                            minY = 0,
+                                            maxX = size.width - width,
+                                            maxY = size.height - height
+                                        )
+
+                                    topRightOffset =
+                                        IntOffset(topLeftOffset.x + width, topLeftOffset.y)
+
+                                    bottomLeftOffset =
+                                        IntOffset(topLeftOffset.x, topLeftOffset.y + height)
+
+                                    bottomRightOffset =
+                                        IntOffset(topLeftOffset.x + width, topLeftOffset.y + height)
+                                }
+                            }
+                        }
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .offset {
+                                topLeftOffset - IntOffset(
+                                    12.dp
+                                        .toPx()
+                                        .toInt(),
+                                    12.dp
+                                        .toPx()
+                                        .toInt()
                                 )
                             }
+                            .size(24.dp)
+                            .pointerInput(Unit) {
+                                detectDragGestures { change, dragAmount ->
+                                    change.consume()
 
-                            drawLine(
-                                color = DrawingColors.White,
-                                start = topLeftOffset.toOffset(),
-                                end = topRightOffset.toOffset(),
-                                strokeWidth = 4.dp.toPx(),
-                                blendMode = BlendMode.SrcOver,
-                            )
+                                    val topLeftOffsetPos = (topLeftOffset + dragAmount)
+                                        .coerceIn(
+                                            minX = 0,
+                                            minY = 0,
+                                            maxX = (topRightOffset.x - 56.dp
+                                                .toPx()
+                                                .toInt()).coerceAtLeast(0),
+                                            maxY = (bottomLeftOffset.y - 56.dp
+                                                .toPx()
+                                                .toInt()).coerceAtLeast(0)
+                                        )
 
-                            drawLine(
-                                color = DrawingColors.White,
-                                start = topLeftOffset.toOffset(),
-                                end = bottomLeftOffset.toOffset(),
-                                strokeWidth = 4.dp.toPx(),
-                                blendMode = BlendMode.SrcOver,
-                            )
+                                    if (croppingRatio.floatValue == 0f) {
+                                        //if (freeform crop)
+                                        topLeftOffset = topLeftOffsetPos
+                                    } else if (croppingRatio.floatValue >= 1f) {
+                                        // if not freeform and wide ratio
+                                        val width = topRightOffset.x - topLeftOffsetPos.x
+                                        val height = bottomRightOffset.y - topLeftOffsetPos.y
 
-                            drawLine(
-                                color = DrawingColors.White,
-                                start = topRightOffset.toOffset(),
-                                end = bottomRightOffset.toOffset(),
-                                strokeWidth = 4.dp.toPx(),
-                                blendMode = BlendMode.SrcOver,
-                            )
+                                        val positionChange = topLeftOffsetPos - topLeftOffset
 
-                            drawLine(
-                                color = DrawingColors.White,
-                                start = bottomLeftOffset.toOffset(),
-                                end = bottomRightOffset.toOffset(),
-                                strokeWidth = 4.dp.toPx(),
-                                blendMode = BlendMode.SrcOver,
-                            )
+                                        if (height + positionChange.y !in height - 5..height + 5) {
+                                            topLeftOffset =
+                                                IntOffset(
+                                                    (topRightOffset.x - height * croppingRatio.floatValue).toInt(),
+                                                    bottomRightOffset.y - height
+                                                ).coerceIn(
+                                                    minX = 0,
+                                                    minY = bottomRightOffset.y - (width / croppingRatio.floatValue).toInt(),
+                                                    maxX = (topRightOffset.x - 56.dp
+                                                        .toPx()
+                                                        .toInt()).coerceAtLeast(0),
+                                                    maxY = (bottomLeftOffset.y - (56.dp.toPx() / croppingRatio.floatValue).toInt()).coerceAtLeast(0)
+                                                )
+                                        } else if (width + positionChange.x !in width - 5..width + 5) {
+                                            topLeftOffset =
+                                                IntOffset(
+                                                    topRightOffset.x - width + positionChange.x,
+                                                    (bottomRightOffset.y - width / croppingRatio.floatValue).toInt()
+                                                ).coerceIn(
+                                                    minX = 0,
+                                                    minY = bottomRightOffset.y - width,
+                                                    maxX = (topRightOffset.x - (56.dp.toPx() * croppingRatio.floatValue).toInt()).coerceAtLeast(0),
+                                                    maxY = (bottomLeftOffset.y - 56.dp
+                                                        .toPx()
+                                                        .toInt()).coerceAtLeast(0)
+                                                )
+                                        }
+                                    } else {
+                                        // if not freeform and tall ratio
+                                        val width = topRightOffset.x - topLeftOffsetPos.x
+                                        val height = bottomRightOffset.y - topLeftOffsetPos.y
 
-                            drawContent()
-                        }
-                    }
-                    .pointerInput(Unit) {
-                        detectDragGestures { change, dragAmount ->
-                            val isInCropRect = checkIfInRect(
-                                change.position,
-                                with(localDensity) { 24.dp.toPx() },
-                                bottomLeftOffset.x,
-                                topLeftOffset.y,
-                                topRightOffset.x,
-                                bottomRightOffset.y
-                            )
+                                        val positionChange = topLeftOffsetPos - topLeftOffset
 
-                            if (isInCropRect) {
-                                val width = topRightOffset.x - topLeftOffset.x
-                                val height = bottomRightOffset.y - topRightOffset.y
+                                        if (height + positionChange.y !in height - 5..height + 5) {
+                                            topLeftOffset =
+                                                IntOffset(
+                                                    (topRightOffset.x - height * croppingRatio.floatValue).toInt(),
+                                                    bottomRightOffset.y - height
+                                                ).coerceIn(
+                                                    minX = bottomRightOffset.x - height,
+                                                    minY = 0,
+                                                    maxX = (topRightOffset.x - 56.dp
+                                                        .toPx()
+                                                        .toInt()).coerceAtLeast(0),
+                                                    maxY = (bottomLeftOffset.y - (56.dp.toPx() / croppingRatio.floatValue).toInt()).coerceAtLeast(0)
+                                                )
+                                        } else if (width + positionChange.x !in width - 5..width + 5) {
+                                            topLeftOffset =
+                                                IntOffset(
+                                                    topRightOffset.x - width,
+                                                    (bottomRightOffset.y - width / croppingRatio.floatValue).toInt()
+                                                ).coerceIn(
+                                                    minX = bottomRightOffset.x - (height * croppingRatio.floatValue).toInt(),
+                                                    minY = 0,
+                                                    maxX = (topRightOffset.x - (56.dp.toPx() * croppingRatio.floatValue).toInt()).coerceAtLeast(0),
+                                                    maxY = (bottomLeftOffset.y - 56.dp
+                                                        .toPx()
+                                                        .toInt()).coerceAtLeast(0)
+                                                )
+                                        }
 
-                                topLeftOffset = (topLeftOffset + dragAmount)
-                                    .coerceIn(
-                                        minX = 0,
-                                        minY = 0,
-                                        maxX = size.width - width,
-                                        maxY = size.height - height
-                                    )
+                                    }
 
-                                topRightOffset =
-                                    IntOffset(topLeftOffset.x + width, topLeftOffset.y)
+                                    bottomLeftOffset =
+                                        IntOffset(
+                                            topLeftOffset.x,
+                                            bottomLeftOffset.y
+                                        )
 
-                                bottomLeftOffset =
-                                    IntOffset(topLeftOffset.x, topLeftOffset.y + height)
-
-                                bottomRightOffset =
-                                    IntOffset(topLeftOffset.x + width, topLeftOffset.y + height)
+                                    topRightOffset =
+                                        IntOffset(
+                                            topRightOffset.x,
+                                            topLeftOffset.y
+                                        )
+                                }
                             }
-                        }
-                    }
-            ) {
-                Box(
-                    modifier = Modifier
-                        .offset {
-                            topLeftOffset - IntOffset(
-                                12.dp
-                                    .toPx()
-                                    .toInt(),
-                                12.dp
-                                    .toPx()
-                                    .toInt()
-                            )
-                        }
-                        .size(24.dp)
-                        .pointerInput(Unit) {
-                            detectDragGestures { change, dragAmount ->
-                                change.consume()
+                            .padding(4.dp)
+                            .clip(CircleShape)
+                            .background(DrawingColors.White)
+                    )
 
-                                val topLeftOffsetPos = (topLeftOffset + dragAmount)
-                                    .coerceIn(
-                                        minX = 0,
-                                        minY = 0,
-                                        maxX = (topRightOffset.x - 56.dp.toPx().toInt()).coerceAtLeast(0),
-                                        maxY = (bottomLeftOffset.y - 56.dp.toPx().toInt()).coerceAtLeast(0)
-                                    )
-
-								//if (freeform crop)
-								topLeftOffset = topLeftOffsetPos
-                                topRightOffset =
-                                    IntOffset(
-                                        topRightOffset.x,
-                                        topLeftOffset.y
-                                    )
-
-                                bottomLeftOffset =
-                                    IntOffset(
-                                        topLeftOffset.x,
-                                        bottomLeftOffset.y
-                                    )
-
-								// if not freeform
-								// check where to multiply by ratio
-// 								val width = topRightOffset.x - topLeftOffsetPos.x
-// 								val height = bottomRightOffset.y - topLeftOffsetPos.y
-// 								val needed = min(width, height)
-// 
-// 								topLeftOffset =
-// 									IntOffset(
-// 										topRightOffset.x - needed,
-// 										bottomRightOffset.y - needed
-// 									)
-// 
-//                                 bottomLeftOffset =
-//                                     IntOffset(
-//                                         topLeftOffset.x,
-//                                         bottomLeftOffset.y
-//                                     )
-// 
-//                                 topRightOffset =
-//                                     IntOffset(
-//                                         topRightOffset.x,
-//                                         topLeftOffset.y
-//                                     )
+                    Box(
+                        modifier = Modifier
+                            .offset {
+                                topRightOffset - IntOffset(
+                                    12.dp
+                                        .toPx()
+                                        .toInt(),
+                                    12.dp
+                                        .toPx()
+                                        .toInt()
+                                )
                             }
-                        }
-                        .padding(4.dp)
-                        .clip(CircleShape)
-                        .background(DrawingColors.White)
-                )
+                            .size(24.dp)
+                            .pointerInput(Unit) {
+                                detectDragGestures { change, dragAmount ->
+                                    change.consume()
 
-                Box(
-                    modifier = Modifier
-                        .offset {
-                            topRightOffset - IntOffset(
-                                12.dp
-                                    .toPx()
-                                    .toInt(),
-                                12.dp
-                                    .toPx()
-                                    .toInt()
-                            )
-                        }
-                        .size(24.dp)
-                        .pointerInput(Unit) {
-                            detectDragGestures { change, dragAmount ->
-                                change.consume()
+                                    val topRightOffsetPos = (topRightOffset + dragAmount)
+                                        .coerceIn(
+                                            minX = (topLeftOffset.x + 56.dp
+                                                .toPx()
+                                                .toInt()).coerceAtMost(size.width),
+                                            minY = 0,
+                                            maxX = size.width,
+                                            maxY = (bottomRightOffset.y - 56.dp
+                                                .toPx()
+                                                .toInt()).coerceAtLeast(0)
+                                        )
 
-                                topRightOffset = (topRightOffset + dragAmount)
-                                    .coerceIn(
-                                        minX = (topLeftOffset.x + 56.dp.toPx().toInt()).coerceAtMost(size.width),
-                                        minY = 0,
-                                        maxX = size.width,
-                                        maxY = (bottomRightOffset.y - 56.dp.toPx().toInt()).coerceAtLeast(0)
-                                    )
+                                    if (croppingRatio.floatValue == 0f) {
+                                        // if freeform crop
+                                        topRightOffset = topRightOffsetPos
+                                    } else if (croppingRatio.floatValue >= 1f) {
+                                        // if not freeform and wide ratio
+                                        val width = topRightOffsetPos.x - topLeftOffset.x
+                                        val height = bottomRightOffset.y - topRightOffsetPos.y
 
-                                bottomRightOffset =
-                                    IntOffset(
-                                        topRightOffset.x,
-                                        bottomRightOffset.y
-                                    )
+                                        val positionChange = topRightOffsetPos - topRightOffset
 
-                                topLeftOffset =
-                                    IntOffset(
-                                        topLeftOffset.x,
-                                        topRightOffset.y
-                                    )
+                                        if (height + positionChange.y !in height - 5..height + 5) {
+                                            topRightOffset =
+                                                IntOffset(
+                                                    (topLeftOffset.x + height * croppingRatio.floatValue).toInt(),
+                                                    bottomRightOffset.y - height
+                                                ).coerceIn(
+                                                    minX = (topLeftOffset.x + 56.dp.toPx().toInt()),
+                                                    minY = bottomRightOffset.y - (width / croppingRatio.floatValue).toInt(),
+                                                    maxX = size.width,
+                                                    maxY = (bottomRightOffset.y - (56.dp.toPx() / croppingRatio.floatValue).toInt()).coerceAtLeast(0)
+                                                )
+                                        } else if (width + positionChange.x !in width - 5..width + 5) {
+                                            topRightOffset =
+                                                IntOffset(
+                                                    topLeftOffset.x + width + positionChange.x,
+                                                    (bottomRightOffset.y - width / croppingRatio.floatValue).toInt()
+                                                ).coerceIn(
+                                                    minX = (topLeftOffset.x + (56.dp.toPx() * croppingRatio.floatValue).toInt()),
+                                                    minY = bottomRightOffset.y - width,
+                                                    maxX = size.width,
+                                                    maxY = (bottomRightOffset.y - 56.dp.toPx().toInt()).coerceAtLeast(0)
+                                                )
+                                        }
+                                    } else {
+                                        // if not freeform and tall ratio
+                                        val width = topRightOffsetPos.x - topLeftOffset.x
+                                        val height = bottomRightOffset.y - topRightOffsetPos.y
+
+                                        val positionChange = topRightOffsetPos - topRightOffset
+
+                                        if (height + positionChange.y !in height - 5..height + 5) {
+                                            topRightOffset =
+                                                IntOffset(
+                                                    (topLeftOffset.x + height * croppingRatio.floatValue).toInt(),
+                                                    bottomRightOffset.y - height
+                                                ).coerceIn(
+                                                    minX = (topLeftOffset.x + (56.dp.toPx() * croppingRatio.floatValue).toInt()),
+                                                    minY = 0,
+                                                    maxX = topLeftOffset.x + width,
+                                                    maxY = (bottomRightOffset.y - (56.dp.toPx() / croppingRatio.floatValue).toInt()).coerceAtLeast(0)
+                                                )
+                                        } else if (width + positionChange.x !in width - 5..width + 5) {
+                                            topRightOffset =
+                                                IntOffset(
+                                                    topLeftOffset.x + width,
+                                                    (bottomRightOffset.y - width / croppingRatio.floatValue).toInt()
+                                                ).coerceIn(
+                                                    minX = (topLeftOffset.x + (56.dp.toPx() * croppingRatio.floatValue).toInt()),
+                                                    minY = 0,
+                                                    maxX = topLeftOffset.x + (height * croppingRatio.floatValue).toInt(),
+                                                    maxY = (bottomLeftOffset.y - 56.dp.toPx().toInt()).coerceAtLeast(0)
+                                                )
+                                        }
+                                    }
+
+                                    bottomRightOffset =
+                                        IntOffset(
+                                            topRightOffset.x,
+                                            bottomRightOffset.y
+                                        )
+
+                                    topLeftOffset =
+                                        IntOffset(
+                                            topLeftOffset.x,
+                                            topRightOffset.y
+                                        )
+                                }
                             }
-                        }
-                        .padding(4.dp)
-                        .clip(CircleShape)
-                        .background(DrawingColors.White)
-                )
+                            .padding(4.dp)
+                            .clip(CircleShape)
+                            .background(DrawingColors.White)
+                    )
 
-                Box(
-                    modifier = Modifier
-                        .offset {
-                            bottomLeftOffset - IntOffset(
-                                12.dp
-                                    .toPx()
-                                    .toInt(),
-                                12.dp
-                                    .toPx()
-                                    .toInt()
-                            )
-                        }
-                        .size(24.dp)
-                        .pointerInput(Unit) {
-                            detectDragGestures { change, dragAmount ->
-                                change.consume()
-
-                                bottomLeftOffset = (bottomLeftOffset + dragAmount)
-                                    .coerceIn(
-                                        minX = 0,
-                                        minY = (topLeftOffset.y + 56.dp.toPx().toInt()).coerceAtMost(size.height),
-                                        maxX = (bottomRightOffset.x - 56.dp.toPx().toInt()).coerceAtLeast(0),
-                                        maxY = size.height
-                                    )
-
-                                topLeftOffset =
-                                    IntOffset(
-                                        bottomLeftOffset.x,
-                                        topLeftOffset.y
-                                    )
-
-                                bottomRightOffset =
-                                    IntOffset(
-                                        bottomRightOffset.x,
-                                        bottomLeftOffset.y
-                                    )
+                    Box(
+                        modifier = Modifier
+                            .offset {
+                                bottomLeftOffset - IntOffset(
+                                    12.dp
+                                        .toPx()
+                                        .toInt(),
+                                    12.dp
+                                        .toPx()
+                                        .toInt()
+                                )
                             }
-                        }
-                        .padding(4.dp)
-                        .clip(CircleShape)
-                        .background(DrawingColors.White)
-                )
+                            .size(24.dp)
+                            .pointerInput(Unit) {
+                                detectDragGestures { change, dragAmount ->
+                                    change.consume()
 
-                Box(
-                    modifier = Modifier
-                        .offset {
-                            bottomRightOffset - IntOffset(
-                                12.dp
-                                    .toPx()
-                                    .toInt(),
-                                12.dp
-                                    .toPx()
-                                    .toInt()
-                            )
-                        }
-                        .size(24.dp)
-                        .pointerInput(Unit) {
-                            detectDragGestures { change, dragAmount ->
-                                change.consume()
+                                    val bottomLeftOffsetPos = (bottomLeftOffset + dragAmount)
+                                        .coerceIn(
+                                            minX = 0,
+                                            minY = (topLeftOffset.y + 56.dp
+                                                .toPx()
+                                                .toInt()).coerceAtMost(size.height),
+                                            maxX = (bottomRightOffset.x - 56.dp
+                                                .toPx()
+                                                .toInt()).coerceAtLeast(0),
+                                            maxY = size.height
+                                        )
 
-                                bottomRightOffset = (bottomRightOffset + dragAmount)
-                                    .coerceIn(
-                                        minX = (bottomLeftOffset.x + 56.dp.toPx().toInt()).coerceAtMost(size.width),
-                                        minY = (topRightOffset.y + 56.dp.toPx().toInt()).coerceAtMost(size.height),
-                                        maxX = size.width,
-                                        maxY = size.height
-                                    )
+                                    if (croppingRatio.floatValue == 0f) {
+                                        // if freeform crop
+                                        bottomLeftOffset = bottomLeftOffsetPos
+                                    } else if (croppingRatio.floatValue >= 1f) {
+                                        // if not freeform and wide ratio
+                                        val width = bottomRightOffset.x - bottomLeftOffsetPos.x
+                                        val height = bottomLeftOffsetPos.y - topLeftOffset.y
 
-                                topRightOffset =
-                                    IntOffset(
-                                        bottomRightOffset.x,
-                                        topRightOffset.y
-                                    )
+                                        val positionChange = bottomLeftOffsetPos - bottomLeftOffset
 
-                                bottomLeftOffset =
-                                    IntOffset(
-                                        bottomLeftOffset.x,
-                                        bottomRightOffset.y
-                                    )
+                                        if (height + positionChange.y !in height - 5..height + 5) {
+                                            bottomLeftOffset =
+                                                IntOffset(
+                                                    (bottomRightOffset.x - height * croppingRatio.floatValue).toInt(),
+                                                    topLeftOffset.y + height
+                                                ).coerceIn(
+                                                    minX = 0,
+                                                    minY = topLeftOffset.y + width,
+                                                    maxX = bottomRightOffset.x - (56.dp.toPx() / croppingRatio.floatValue).toInt(),
+                                                    maxY = size.height
+                                                )
+                                        } else if (width + positionChange.x !in width - 5..width + 5) {
+                                            bottomLeftOffset =
+                                                IntOffset(
+                                                    bottomRightOffset.x - width + positionChange.x,
+                                                    (topLeftOffset.y + width / croppingRatio.floatValue).toInt()
+                                                ).coerceIn(
+                                                    minX = 0,
+                                                    minY = topLeftOffset.y + height,
+                                                    maxX = (bottomRightOffset.x - (56.dp.toPx() * croppingRatio.floatValue).toInt()).coerceAtLeast(0),
+                                                    maxY = size.height
+                                                )
+                                        }
+                                    } else {
+                                        // if not freeform and tall ratio
+                                        val width = bottomRightOffset.x - bottomLeftOffsetPos.x
+                                        val height = bottomRightOffset.y - topRightOffset.y
+
+                                        val positionChange = bottomLeftOffsetPos - bottomLeftOffset
+
+                                        if (height + positionChange.y !in height - 5..height + 5) {
+                                            bottomLeftOffset =
+                                                IntOffset(
+                                                    (topLeftOffset.x + height * croppingRatio.floatValue).toInt(),
+                                                    bottomRightOffset.y - height
+                                                ).coerceIn(
+                                                    minX = bottomRightOffset.x - height,
+                                                    minY = 0,
+                                                    maxX = (topLeftOffset.x + 56.dp
+                                                        .toPx()
+                                                        .toInt()).coerceAtMost(size.width),
+                                                    maxY = (bottomLeftOffset.y - (56.dp.toPx() / croppingRatio.floatValue).toInt()).coerceAtLeast(0)
+                                                )
+                                        } else if (width + positionChange.x !in width - 5..width + 5) {
+                                            bottomLeftOffset =
+                                                IntOffset(
+                                                    topLeftOffset.x + width,
+                                                    (bottomRightOffset.y - width / croppingRatio.floatValue).toInt()
+                                                ).coerceIn(
+                                                    minX = topLeftOffset.x + (height * croppingRatio.floatValue).toInt(),
+                                                    minY = 0,
+                                                    maxX = (topLeftOffset.x + (56.dp.toPx() * croppingRatio.floatValue).toInt()).coerceAtMost(size.width),
+                                                    maxY = (bottomLeftOffset.y - 56.dp
+                                                        .toPx()
+                                                        .toInt()).coerceAtLeast(0)
+                                                )
+                                        }
+                                    }
+
+                                    topLeftOffset =
+                                        IntOffset(
+                                            bottomLeftOffset.x,
+                                            topLeftOffset.y
+                                        )
+
+                                    bottomRightOffset =
+                                        IntOffset(
+                                            bottomRightOffset.x,
+                                            bottomLeftOffset.y
+                                        )
+                                }
                             }
-                        }
-                        .padding(4.dp)
-                        .clip(CircleShape)
-                        .background(DrawingColors.White)
-                )
+                            .padding(4.dp)
+                            .clip(CircleShape)
+                            .background(DrawingColors.White)
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .offset {
+                                bottomRightOffset - IntOffset(
+                                    12.dp
+                                        .toPx()
+                                        .toInt(),
+                                    12.dp
+                                        .toPx()
+                                        .toInt()
+                                )
+                            }
+                            .size(24.dp)
+                            .pointerInput(Unit) {
+                                detectDragGestures { change, dragAmount ->
+                                    change.consume()
+
+                                    val bottomRightOffsetPos = (bottomRightOffset + dragAmount)
+                                        .coerceIn(
+                                            minX = (bottomLeftOffset.x + 56.dp
+                                                .toPx()
+                                                .toInt()).coerceAtMost(size.width),
+                                            minY = (topRightOffset.y + 56.dp
+                                                .toPx()
+                                                .toInt()).coerceAtMost(size.height),
+                                            maxX = size.width,
+                                            maxY = size.height
+                                        )
+
+                                    if (croppingRatio.floatValue == 0f) {
+                                        // if freeform crop
+                                        bottomRightOffset = bottomRightOffsetPos
+                                    } else if (croppingRatio.floatValue >= 1f) {
+                                        // if not freeform and wide ratio
+                                        val width = bottomRightOffset.x - bottomLeftOffset.x
+                                        val height = bottomRightOffset.y - topRightOffset.y
+
+                                        val positionChange = bottomRightOffsetPos - bottomRightOffset
+
+                                        if (height + positionChange.y !in height - 5..height + 5) {
+                                            bottomRightOffset =
+                                                IntOffset(
+                                                    (bottomLeftOffset.x + height * croppingRatio.floatValue).toInt(),
+                                                    topRightOffset.y + height
+                                                ).coerceIn(
+                                                    minX = 0,
+                                                    minY = topRightOffset.y + width,
+                                                    maxX = bottomLeftOffset.x + (56.dp.toPx() / croppingRatio.floatValue).toInt(),
+                                                    maxY = size.height
+                                                )
+                                        } else if (width + positionChange.x !in width - 5..width + 5) {
+                                            bottomRightOffset =
+                                                IntOffset(
+                                                    bottomLeftOffset.x + width + positionChange.x,
+                                                    (topRightOffset.y + width / croppingRatio.floatValue).toInt()
+                                                ).coerceIn(
+                                                    minX = 0,
+                                                    minY = topLeftOffset.y + height,
+                                                    maxX = (bottomLeftOffset.x + (56.dp.toPx() * croppingRatio.floatValue).toInt()).coerceAtMost(size.width),
+                                                    maxY = size.height
+                                                )
+                                        }
+                                    } else {
+                                        // if not freeform and tall ratio
+                                        val width = bottomRightOffset.x - bottomLeftOffset.x
+                                        val height = bottomRightOffset.y - topRightOffset.y
+
+                                        val positionChange = bottomRightOffsetPos - bottomLeftOffset
+
+                                        if (height + positionChange.y !in height - 5..height + 5) {
+                                            bottomRightOffset =
+                                                IntOffset(
+                                                    (topLeftOffset.x + height * croppingRatio.floatValue).toInt(),
+                                                    topRightOffset.y + height
+                                                ).coerceIn(
+                                                    minX = bottomLeftOffset.x + 56.dp.toPx().toInt(),
+                                                    minY = topRightOffset.y + height,
+                                                    maxX = size.width,
+                                                    maxY = size.height
+                                                )
+                                        } else if (width + positionChange.x !in width - 5..width + 5) {
+                                            bottomRightOffset =
+                                                IntOffset(
+                                                    topLeftOffset.x + width,
+                                                    (topRightOffset.y + width / croppingRatio.floatValue).toInt()
+                                                ).coerceIn(
+                                                    minX = bottomLeftOffset.x + 56.dp.toPx().toInt(),
+                                                    minY = topRightOffset.y + width,
+                                                    maxX = size.width,
+                                                    maxY = size.height
+                                                )
+                                        }
+                                    }
+
+                                    topRightOffset =
+                                        IntOffset(
+                                            bottomRightOffset.x,
+                                            topRightOffset.y
+                                        )
+
+                                    bottomLeftOffset =
+                                        IntOffset(
+                                            bottomLeftOffset.x,
+                                            bottomRightOffset.y
+                                        )
+                                }
+                            }
+                            .padding(4.dp)
+                            .clip(CircleShape)
+                            .background(DrawingColors.White)
+                    )
+                }
             }
 
             DrawingControls(
@@ -974,6 +1296,8 @@ private fun EditingViewBottomBar(
     paint: MutableState<ExtendedPaint>,
     rotationMultiplier: MutableIntState,
     changesSize: MutableIntState,
+    croppingRatio: MutableFloatState,
+    originalImageRatio: Float,
     resetCropping: () -> Unit
 ) {
     val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
@@ -1197,6 +1521,8 @@ private fun EditingViewBottomBar(
                                 CropTools(
                                     rotationMultiplier = rotationMultiplier,
                                     changesSize = changesSize,
+                                    croppingRatio = croppingRatio,
+                                    originalImageRatio = originalImageRatio,
                                     resetCropping = resetCropping
                                 )
                             }
@@ -1224,6 +1550,8 @@ private fun EditingViewBottomBar(
 fun CropTools(
     rotationMultiplier: MutableIntState,
     changesSize: MutableIntState,
+    croppingRatio: MutableFloatState,
+    originalImageRatio: Float,
     resetCropping: () -> Unit
 ) {
     Row(
@@ -1237,8 +1565,16 @@ fun CropTools(
             changesSize.intValue += 1
         }
 
+        val showBottomSheet = remember { mutableStateOf(false) }
+        CroppingRatioBottomSheet(
+            showBottomSheet = showBottomSheet,
+            originalImageRatio = originalImageRatio,
+            onSetCroppingRatio = { ratio ->
+                croppingRatio.floatValue = ratio
+            }
+        )
         EditingViewBottomAppBarItem(text = "Ratio", iconResId = R.drawable.resolution) {
-
+            showBottomSheet.value = true
         }
 
         EditingViewBottomAppBarItem(text = "Reset", iconResId = R.drawable.reset) {

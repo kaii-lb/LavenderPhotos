@@ -3,34 +3,28 @@ package com.kaii.photos.compose
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.add
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -39,13 +33,10 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextMeasurer
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
@@ -53,6 +44,7 @@ import com.kaii.photos.R
 import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.DrawableItem
 import com.kaii.photos.helpers.DrawableText
+import com.kaii.photos.helpers.RowPosition
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -65,8 +57,8 @@ fun SetEditingViewDrawableTextBottomSheet(
     val drawableText = modifications.findLast { it is DrawableText } as DrawableText? ?: return
     var hasSavedName by remember { mutableStateOf(false) }
 
-	val coroutineScope = rememberCoroutineScope()
-	val keyboardController = LocalSoftwareKeyboardController.current
+    val coroutineScope = rememberCoroutineScope()
+    val keyboardController = LocalSoftwareKeyboardController.current
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = false
     )
@@ -74,7 +66,7 @@ fun SetEditingViewDrawableTextBottomSheet(
     if (showBottomSheet.value) {
         ModalBottomSheet(
             onDismissRequest = {
-            	keyboardController?.hide()
+                keyboardController?.hide()
 
                 if (!hasSavedName) {
                     modifications.remove(drawableText)
@@ -88,8 +80,8 @@ fun SetEditingViewDrawableTextBottomSheet(
         ) {
             val text = remember { mutableStateOf(drawableText.text) }
 
-			val imeHeight = WindowInsets.ime.getBottom(LocalDensity.current).dp
-			val height = remember(hasSavedName) { if (imeHeight > 72.dp || hasSavedName) imeHeight - 96.dp else 72.dp }
+            val imeHeight = WindowInsets.ime.getBottom(LocalDensity.current).dp
+            val height = remember(hasSavedName) { if (imeHeight > 72.dp || hasSavedName) imeHeight - 96.dp else 72.dp }
 
             val localTextStyle = LocalTextStyle.current
             val defaultStyle = DrawableText.Styles.Default.style
@@ -101,7 +93,6 @@ fun SetEditingViewDrawableTextBottomSheet(
                     .padding(8.dp)
                     .fillMaxWidth(1f)
                     .height(height)
-                    // .height(72.dp)
             ) {
                 hasSavedName = true
 
@@ -125,12 +116,135 @@ fun SetEditingViewDrawableTextBottomSheet(
 
                 drawableText.text = text.value
                 drawableText.size = textLayout.size
-				modifications.add(drawableText)
+                modifications.add(drawableText)
 
                 coroutineScope.launch {
-                	sheetState.hide()
-                	showBottomSheet.value = false
-					hasSavedName = false
+                    sheetState.hide()
+                    showBottomSheet.value = false
+                    hasSavedName = false
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CroppingRatioBottomSheet(
+    showBottomSheet: MutableState<Boolean>,
+    originalImageRatio: Float,
+    onSetCroppingRatio: (ratio: Float) -> Unit
+) {
+    var ratio by remember { mutableFloatStateOf(0f) }
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true
+    )
+
+    if (showBottomSheet.value) {
+        ModalBottomSheet(
+            onDismissRequest = {
+                showBottomSheet.value = false
+            },
+            sheetState = sheetState,
+            containerColor = CustomMaterialTheme.colorScheme.background,
+            contentWindowInsets = { WindowInsets.navigationBars },
+        ) {
+            Column(
+                modifier = Modifier
+                    .wrapContentHeight()
+                    .fillMaxWidth(1f)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.SpaceEvenly,
+                horizontalAlignment = Alignment.Start
+            ) {
+                ClickableRow(
+                    title = "Freeform",
+                    position = RowPosition.Top,
+                    selected = ratio == 0f
+                ) {
+                    ratio = 0f
+                    onSetCroppingRatio(0f)
+                    showBottomSheet.value = false
+                }
+
+                ClickableRow(
+                    title = "Image Ratio",
+                    position = RowPosition.Middle,
+                    selected = ratio == originalImageRatio
+                ) {
+                    ratio = originalImageRatio
+                    onSetCroppingRatio(originalImageRatio)
+                    showBottomSheet.value = false
+                }
+
+                ClickableRow(
+                    title = "Square",
+                    position = RowPosition.Middle,
+                    selected = ratio == 1f
+                ) {
+                    ratio = 1f
+                    onSetCroppingRatio(1f)
+                    showBottomSheet.value = false
+                }
+
+                ClickableRow(
+                    title = "21:9",
+                    position = RowPosition.Middle,
+                    selected = ratio == 21f / 9f
+                ) {
+                    ratio = 21f / 9f
+                    onSetCroppingRatio(21f / 9f)
+                    showBottomSheet.value = false
+                }
+
+                ClickableRow(
+                    title = "9:16 (vertical)",
+                    position = RowPosition.Middle,
+                    selected = ratio == 9f / 16f
+                ) {
+                    ratio = 9f / 16f
+                    onSetCroppingRatio(9f / 16f)
+                    showBottomSheet.value = false
+                }
+
+                ClickableRow(
+                    title = "16:9 (horizontal)",
+                    position = RowPosition.Middle,
+                    selected = ratio == 16f / 9f
+                ) {
+                    ratio = 16f / 9f
+                    onSetCroppingRatio(16f / 9f)
+                    showBottomSheet.value = false
+                }
+
+                ClickableRow(
+                    title = "5:4",
+                    position = RowPosition.Middle,
+                    selected = ratio == 1.25f
+                ) {
+                    ratio = 1.25f
+                    onSetCroppingRatio(1.25f)
+                    showBottomSheet.value = false
+                }
+
+                ClickableRow(
+                    title = "4:3",
+                    position = RowPosition.Middle,
+                    selected = ratio == 4f / 3f
+                ) {
+                    ratio = 4f / 3f
+                    onSetCroppingRatio(4f / 3f)
+                    showBottomSheet.value = false
+                }
+
+                ClickableRow(
+                    title = "3:2",
+                    position = RowPosition.Bottom,
+                    selected = ratio == 1.5f
+                ) {
+                    ratio = 1.5f
+                    onSetCroppingRatio(1.5f)
+                    showBottomSheet.value = false
                 }
             }
         }
@@ -138,101 +252,49 @@ fun SetEditingViewDrawableTextBottomSheet(
 }
 
 @Composable
-fun TextFieldWithConfirm(
-    text: MutableState<String>,
-    placeholder: String,
-    modifier: Modifier = Modifier,
-    onConfirm: () -> Unit
+fun ClickableRow(
+    title: String,
+    position: RowPosition,
+    selected: Boolean,
+    action: () -> Unit
 ) {
-    val keyboardController = LocalSoftwareKeyboardController.current
+    val (shape, spacerHeight) = getDefaultShapeSpacerForPosition(position, 32.dp)
 
-    Row(
-        modifier = modifier,
-        verticalAlignment = Alignment.Top,
-        horizontalArrangement = Arrangement.SpaceEvenly
+    Column(
+        modifier = Modifier
+            .height(64.dp)
+            .fillMaxWidth(1f)
+            .clip(shape)
+            .background(CustomMaterialTheme.colorScheme.surfaceContainer)
+            .clickable {
+                action()
+            }
+            .padding(16.dp, 8.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.Start
     ) {
-        TextField(
-            value = text.value,
-            onValueChange = {
-                text.value = it
-            },
-            maxLines = 1,
-            singleLine = true,
-            placeholder = {
-                Text(
-                    text = placeholder,
-                    fontSize = TextUnit(16f, TextUnitType.Sp)
-                )
-            },
-            prefix = {
-                Row {
-                    Icon(
-                        painter = painterResource(id = R.drawable.edit),
-                        contentDescription = "Edit Icon",
-                        modifier = Modifier
-                            .size(24.dp)
-                    )
-
-                    Spacer(modifier = Modifier.width(8.dp))
-                }
-            },
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
-                unfocusedContainerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
-                cursorColor = CustomMaterialTheme.colorScheme.primary,
-                focusedTextColor = CustomMaterialTheme.colorScheme.onSurface,
-                unfocusedTextColor = CustomMaterialTheme.colorScheme.onSurface,
-                focusedPlaceholderColor = CustomMaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                unfocusedPlaceholderColor = CustomMaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                unfocusedIndicatorColor = Color.Transparent,
-                focusedIndicatorColor = Color.Transparent
-            ),
-            keyboardOptions = KeyboardOptions(
-                autoCorrectEnabled = false,
-                keyboardType = KeyboardType.Text,
-                imeAction = ImeAction.Search
-            ),
-            keyboardActions = KeyboardActions(
-                onSearch = {
-                    onConfirm()
-                    keyboardController?.hide()
-                }
-            ),
-            shape = RoundedCornerShape(1000.dp, 0.dp, 0.dp, 1000.dp),
-            modifier = Modifier
-                .weight(1f)
+        Text(
+            text = title,
+            fontSize = TextUnit(18f, TextUnitType.Sp),
+            color = CustomMaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.wrapContentSize()
         )
 
-        Row(
-            modifier = Modifier
-                .height(56.dp)
-                .width(32.dp)
-                .clip(RoundedCornerShape(0.dp, 1000.dp, 1000.dp, 0.dp))
-                .background(CustomMaterialTheme.colorScheme.surfaceContainer)
-                .weight(0.2f),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Row(
+        if (selected) {
+            Icon(
+                painter = painterResource(id = R.drawable.file_is_selected_foreground),
+                contentDescription = "this cropping ratio is selected",
+                tint = CustomMaterialTheme.colorScheme.onSurface,
                 modifier = Modifier
-                    .size(36.dp)
-                    .clip(RoundedCornerShape(1000.dp))
-                    .clickable {
-                        onConfirm()
-                        keyboardController?.hide()
-                    },
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.file_is_selected_foreground),
-                    contentDescription = "Confirm text change",
-                    tint = CustomMaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier
-                        .size(24.dp)
-                )
-            }
+                    .size(24.dp)
+                    .align(Alignment.End)
+            )
         }
     }
 
+    Spacer(
+        modifier = Modifier
+            .height(spacerHeight)
+            .background(CustomMaterialTheme.colorScheme.background)
+    )
 }

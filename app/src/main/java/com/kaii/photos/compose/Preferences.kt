@@ -32,7 +32,14 @@ import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.darkenColor
 
 @Composable
-fun PreferencesRow(title: String, summary: String, iconResID: Int, position: RowPosition, goesToOtherPage: Boolean = false, action: (() -> Unit)? = null) {
+fun PreferencesRow(
+    title: String,
+    summary: String,
+    iconResID: Int,
+    position: RowPosition,
+    goesToOtherPage: Boolean = false,
+    action: (() -> Unit)? = null
+) {
     val spacerHeight: Dp
     val shape: RoundedCornerShape
 
@@ -41,14 +48,17 @@ fun PreferencesRow(title: String, summary: String, iconResID: Int, position: Row
             spacerHeight = 2.dp
             shape = RoundedCornerShape(24.dp, 24.dp, 0.dp, 0.dp)
         }
+
         RowPosition.Middle -> {
             spacerHeight = 2.dp
             shape = RoundedCornerShape(0.dp)
         }
+
         RowPosition.Bottom -> {
             spacerHeight = 0.dp
             shape = RoundedCornerShape(0.dp, 0.dp, 24.dp, 24.dp)
         }
+
         RowPosition.Single -> {
             spacerHeight = 0.dp
             shape = RoundedCornerShape(24.dp)
@@ -63,7 +73,7 @@ fun PreferencesRow(title: String, summary: String, iconResID: Int, position: Row
         Modifier
     }
 
-    Row (
+    Row(
         modifier = Modifier
             .fillMaxWidth(1f)
             .height(72.dp)
@@ -72,9 +82,9 @@ fun PreferencesRow(title: String, summary: String, iconResID: Int, position: Row
             .background(CustomMaterialTheme.colorScheme.surfaceVariant)
             .then(clickable)
             .padding(16.dp, 12.dp),
-       	verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon (
+        Icon(
             painter = painterResource(id = iconResID),
             contentDescription = "an icon describing: $title",
             tint = CustomMaterialTheme.colorScheme.onBackground,
@@ -82,9 +92,9 @@ fun PreferencesRow(title: String, summary: String, iconResID: Int, position: Row
                 .size(32.dp)
         )
 
-        Spacer (modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(16.dp))
 
-        Column (
+        Column(
             modifier = Modifier
                 .height(72.dp)
                 .weight(1f),
@@ -109,7 +119,7 @@ fun PreferencesRow(title: String, summary: String, iconResID: Int, position: Row
         }
 
         if (goesToOtherPage) {
-            Icon (
+            Icon(
                 painter = painterResource(id = R.drawable.other_page_indicator),
                 contentDescription = "this preference row leads to another page",
                 tint = CustomMaterialTheme.colorScheme.onBackground,
