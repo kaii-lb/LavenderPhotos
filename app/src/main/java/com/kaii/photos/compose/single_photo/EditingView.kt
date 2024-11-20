@@ -40,6 +40,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.safeContent
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -55,6 +56,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ripple.RippleAlpha
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalRippleConfiguration
@@ -96,6 +98,7 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
@@ -226,7 +229,6 @@ fun EditingView(
     )
 
     var maxSize by remember { mutableStateOf(Size.Unspecified) }
-    val coroutineScope = rememberCoroutineScope()
 
     val croppingRatio = remember { mutableFloatStateOf(0f) }
 
@@ -239,17 +241,15 @@ fun EditingView(
                 showCloseDialog = showCloseDialog,
                 changesSize = changesSize,
                 oldChangesSize = oldChangesSize,
-                saveImage = {
-                    coroutineScope.launch {
-                        savePathListToBitmap(
-                            modifications = modifications,
-                            absolutePath = absolutePath,
-                            image = image,
-                            maxSize = maxSize,
-                            rotation = rotation,
-                            textMeasurer = textMeasurer
-                        )
-                    }
+                saveImage = suspend {
+                    savePathListToBitmap(
+                        modifications = modifications,
+                        absolutePath = absolutePath,
+                        image = image,
+                        maxSize = maxSize,
+                        rotation = rotation,
+                        textMeasurer = textMeasurer
+                    )
                 },
                 popBackStack = {
                     navController.popBackStack()
@@ -485,6 +485,115 @@ fun EditingView(
                     bottomRightOffset = IntOffset(size.width, size.height)
                 }
 
+                LaunchedEffect(croppingRatio.floatValue) {
+                	if (croppingRatio.floatValue == 0f) return@LaunchedEffect
+
+                    val width = topRightOffset.x - topLeftOffset.x
+                    val height = bottomRightOffset.y - topRightOffset.y
+
+                    if (croppingRatio.floatValue >= 1f) {
+                        // if not freeform and wide ratio
+
+                        topLeftOffset =
+                            IntOffset(
+                                topRightOffset.x - width,
+                                (bottomRightOffset.y - width / croppingRatio.floatValue).toInt()
+                            ).coerceIn(
+                                minX = 0,
+                                minY = 0,
+                                maxX = (topRightOffset.x - (with (localDensity) { 56.dp.toPx() } * croppingRatio.floatValue).toInt()).coerceAtLeast(0),
+                                maxY = (bottomLeftOffset.y - with (localDensity) { 56.dp.toPx().toInt() }).coerceAtLeast(0)
+                            )
+                    } else {
+                        // if not freeform and tall ratio
+
+                        topLeftOffset =
+                            IntOffset(
+                                (topRightOffset.x - height * croppingRatio.floatValue).toInt(),
+                                bottomRightOffset.y - height
+                            ).coerceIn(
+                                minX = 0,
+                                minY = 0,
+                                maxX = (topRightOffset.x - with (localDensity) { 56.dp.toPx() }.toInt()).coerceAtLeast(0),
+                                maxY = (bottomLeftOffset.y - (with (localDensity) { 56.dp.toPx() } / croppingRatio.floatValue).toInt()).coerceAtLeast(0)
+                            )
+                    }
+
+                    topRightOffset =
+                        IntOffset(
+                            topRightOffset.x,
+                            topLeftOffset.y
+                        )
+
+                    bottomLeftOffset =
+                        IntOffset(
+                            topLeftOffset.x,
+                            bottomLeftOffset.y
+                        )
+
+// 					val originalMidpoint = IntOffset(
+// 						topLeftOffset.x + width / 2,
+// 						topLeftOffset.y + height / 2
+// 					)
+// 
+//                 	val newWidth = if (croppingRatio.floatValue > 1f) (width * croppingRatio.floatValue).toInt()
+//                 					else (height * croppingRatio.floatValue).toInt()
+// 					val newHeight = (newWidth / croppingRatio.floatValue).toInt()
+// 
+// 					topLeftOffset = IntOffset(
+// 						topRightOffset.x - newWidth,
+// 						bottomLeftOffset.y - newHeight
+// 					)
+// 
+// 					val midpoint = IntOffset(
+// 						topLeftOffset.x + newWidth / 2,
+// 						topLeftOffset.y + newHeight / 2
+// 					)
+// 
+// 					val difference = run {
+// 						val top = midpoint.y - newHeight / 2
+// 						val left = midpoint.x - newWidth / 2
+// 						val right = midpoint.x + newWidth / 2
+// 						val bottom = midpoint.y + newHeight / 2
+// 
+// 						println("PLACES $top $left $right $bottom")
+// 
+// 						val xDifference = if (left < 0) -left else if (right > size.width) size.width - right else 0f
+// 						val yDifference = if (top < 0) -top else if (bottom > size.height) size.height - bottom else 0f
+// 
+// 						IntOffset(
+// 							xDifference.toInt(),
+// 							yDifference.toInt()
+// 						)
+// 					}
+// 
+// 					println("MIDPOINT $midpoint DIFFERENCE $difference ORIGINAL $originalMidpoint SIZE $size")
+// 
+// 					val midpointDifference = midpoint - originalMidpoint
+// 
+// 					topLeftOffset = with(localDensity) {
+// 						IntOffset(
+// 							(topLeftOffset.x).coerceIn(0, topRightOffset.x - 56.dp.toPx().toInt()),
+// 							(topLeftOffset.y).coerceIn(0, bottomRightOffset.y - 56.dp.toPx().toInt())
+// 						)
+// 					}
+// 
+// 					topRightOffset = IntOffset(
+// 						topLeftOffset.x + newWidth,
+// 						topLeftOffset.y
+// 					)
+// 
+// 					bottomLeftOffset = IntOffset(
+// 						topLeftOffset.x,
+// 						topLeftOffset.y + newHeight
+// 					)
+// 
+// 					bottomRightOffset = IntOffset(
+// 						topRightOffset.x,
+// 						bottomLeftOffset.y
+// 					)
+                }
+
                 AnimatedVisibility(
                     visible = topRightOffset.x - topLeftOffset.x != size.width || bottomLeftOffset.y - topLeftOffset.y != size.height,
                     enter = slideInVertically { height -> height } + fadeIn(),
@@ -519,7 +628,7 @@ fun EditingView(
                                     .coerceIn(0, image.height)
 
                                 val widthExtra = (x + width) - image.width
-                                val heightExtra = (x + width) - image.height
+                                val heightExtra = (y + height) - image.height
 
                                 if (widthExtra > 0) width -= widthExtra
                                 if (heightExtra > 0) height -= heightExtra
@@ -733,7 +842,7 @@ fun EditingView(
                                         } else if (width + positionChange.x !in width - 5..width + 5) {
                                             topLeftOffset =
                                                 IntOffset(
-                                                    topRightOffset.x - width + positionChange.x,
+                                                    topRightOffset.x - width,
                                                     (bottomRightOffset.y - width / croppingRatio.floatValue).toInt()
                                                 ).coerceIn(
                                                     minX = 0,
@@ -844,7 +953,9 @@ fun EditingView(
                                                     (topLeftOffset.x + height * croppingRatio.floatValue).toInt(),
                                                     bottomRightOffset.y - height
                                                 ).coerceIn(
-                                                    minX = (topLeftOffset.x + 56.dp.toPx().toInt()),
+                                                    minX = (topLeftOffset.x + 56.dp
+                                                        .toPx()
+                                                        .toInt()),
                                                     minY = bottomRightOffset.y - (width / croppingRatio.floatValue).toInt(),
                                                     maxX = size.width,
                                                     maxY = (bottomRightOffset.y - (56.dp.toPx() / croppingRatio.floatValue).toInt()).coerceAtLeast(0)
@@ -852,13 +963,15 @@ fun EditingView(
                                         } else if (width + positionChange.x !in width - 5..width + 5) {
                                             topRightOffset =
                                                 IntOffset(
-                                                    topLeftOffset.x + width + positionChange.x,
+                                                    topLeftOffset.x + width,
                                                     (bottomRightOffset.y - width / croppingRatio.floatValue).toInt()
                                                 ).coerceIn(
                                                     minX = (topLeftOffset.x + (56.dp.toPx() * croppingRatio.floatValue).toInt()),
                                                     minY = bottomRightOffset.y - width,
                                                     maxX = size.width,
-                                                    maxY = (bottomRightOffset.y - 56.dp.toPx().toInt()).coerceAtLeast(0)
+                                                    maxY = (bottomRightOffset.y - 56.dp
+                                                        .toPx()
+                                                        .toInt()).coerceAtLeast(0)
                                                 )
                                         }
                                     } else {
@@ -871,12 +984,14 @@ fun EditingView(
                                         if (height + positionChange.y !in height - 5..height + 5) {
                                             topRightOffset =
                                                 IntOffset(
-                                                    (topLeftOffset.x + height * croppingRatio.floatValue).toInt(),
+                                                    topLeftOffset.x + (height * croppingRatio.floatValue).toInt(),
                                                     bottomRightOffset.y - height
                                                 ).coerceIn(
-                                                    minX = (topLeftOffset.x + (56.dp.toPx() * croppingRatio.floatValue).toInt()),
+                                                    minX = topLeftOffset.x + 56.dp
+                                                        .toPx()
+                                                        .toInt(),
                                                     minY = 0,
-                                                    maxX = topLeftOffset.x + width,
+                                                    maxX = size.width,
                                                     maxY = (bottomRightOffset.y - (56.dp.toPx() / croppingRatio.floatValue).toInt()).coerceAtLeast(0)
                                                 )
                                         } else if (width + positionChange.x !in width - 5..width + 5) {
@@ -885,10 +1000,14 @@ fun EditingView(
                                                     topLeftOffset.x + width,
                                                     (bottomRightOffset.y - width / croppingRatio.floatValue).toInt()
                                                 ).coerceIn(
-                                                    minX = (topLeftOffset.x + (56.dp.toPx() * croppingRatio.floatValue).toInt()),
-                                                    minY = 0,
+                                                    minX = topLeftOffset.x + 56.dp
+                                                        .toPx()
+                                                        .toInt(),
+                                                    minY = (bottomRightOffset.y - (height / croppingRatio.floatValue).toInt()).coerceAtLeast(0),
                                                     maxX = topLeftOffset.x + (height * croppingRatio.floatValue).toInt(),
-                                                    maxY = (bottomLeftOffset.y - 56.dp.toPx().toInt()).coerceAtLeast(0)
+                                                    maxY = (bottomRightOffset.y - 56.dp
+                                                        .toPx()
+                                                        .toInt()).coerceAtLeast(0)
                                                 )
                                         }
                                     }
@@ -957,54 +1076,56 @@ fun EditingView(
                                                     topLeftOffset.y + height
                                                 ).coerceIn(
                                                     minX = 0,
-                                                    minY = topLeftOffset.y + width,
-                                                    maxX = bottomRightOffset.x - (56.dp.toPx() / croppingRatio.floatValue).toInt(),
-                                                    maxY = size.height
+                                                    minY = topRightOffset.y + (56.dp.toPx() / croppingRatio.floatValue).toInt(),
+                                                    maxX = bottomRightOffset.x - (56.dp.toPx() * croppingRatio.floatValue).toInt(),
+                                                    maxY = topLeftOffset.y + (width / croppingRatio.floatValue).toInt()
                                                 )
                                         } else if (width + positionChange.x !in width - 5..width + 5) {
                                             bottomLeftOffset =
                                                 IntOffset(
-                                                    bottomRightOffset.x - width + positionChange.x,
+                                                    bottomRightOffset.x - width,
                                                     (topLeftOffset.y + width / croppingRatio.floatValue).toInt()
                                                 ).coerceIn(
                                                     minX = 0,
-                                                    minY = topLeftOffset.y + height,
-                                                    maxX = (bottomRightOffset.x - (56.dp.toPx() * croppingRatio.floatValue).toInt()).coerceAtLeast(0),
-                                                    maxY = size.height
+                                                    minY = topRightOffset.y + 56.dp
+                                                        .toPx()
+                                                        .toInt(),
+                                                    maxX = bottomRightOffset.x - (56.dp.toPx() * croppingRatio.floatValue).toInt(),
+                                                    maxY = topLeftOffset.y + width
                                                 )
                                         }
                                     } else {
                                         // if not freeform and tall ratio
                                         val width = bottomRightOffset.x - bottomLeftOffsetPos.x
-                                        val height = bottomRightOffset.y - topRightOffset.y
+                                        val height = bottomLeftOffsetPos.y - topLeftOffset.y
 
                                         val positionChange = bottomLeftOffsetPos - bottomLeftOffset
 
                                         if (height + positionChange.y !in height - 5..height + 5) {
                                             bottomLeftOffset =
                                                 IntOffset(
-                                                    (topLeftOffset.x + height * croppingRatio.floatValue).toInt(),
-                                                    bottomRightOffset.y - height
+                                                    (topRightOffset.x - height * croppingRatio.floatValue).toInt(),
+                                                    topLeftOffset.y + height
                                                 ).coerceIn(
-                                                    minX = bottomRightOffset.x - height,
-                                                    minY = 0,
-                                                    maxX = (topLeftOffset.x + 56.dp
+                                                    minX = 0,
+                                                    minY = topLeftOffset.y + (56.dp.toPx() / croppingRatio.floatValue).toInt(),
+                                                    maxX = bottomRightOffset.x - 56.dp
                                                         .toPx()
-                                                        .toInt()).coerceAtMost(size.width),
-                                                    maxY = (bottomLeftOffset.y - (56.dp.toPx() / croppingRatio.floatValue).toInt()).coerceAtLeast(0)
+                                                        .toInt(),
+                                                    maxY = topLeftOffset.y + (width / croppingRatio.floatValue).toInt()
                                                 )
                                         } else if (width + positionChange.x !in width - 5..width + 5) {
                                             bottomLeftOffset =
                                                 IntOffset(
-                                                    topLeftOffset.x + width,
-                                                    (bottomRightOffset.y - width / croppingRatio.floatValue).toInt()
+                                                    topRightOffset.x - width,
+                                                    (topLeftOffset.y + width / croppingRatio.floatValue).toInt()
                                                 ).coerceIn(
-                                                    minX = topLeftOffset.x + (height * croppingRatio.floatValue).toInt(),
-                                                    minY = 0,
-                                                    maxX = (topLeftOffset.x + (56.dp.toPx() * croppingRatio.floatValue).toInt()).coerceAtMost(size.width),
-                                                    maxY = (bottomLeftOffset.y - 56.dp
+                                                    minX = topRightOffset.x - (height * croppingRatio.floatValue).toInt(),
+                                                    minY = topLeftOffset.y + (56.dp.toPx() / croppingRatio.floatValue).toInt(),
+                                                    maxX = bottomRightOffset.x - 56.dp
                                                         .toPx()
-                                                        .toInt()).coerceAtLeast(0)
+                                                        .toInt(),
+                                                    maxY = (topLeftOffset.y + (width / croppingRatio.floatValue).toInt()).coerceAtMost(size.height)
                                                 )
                                         }
                                     }
@@ -1061,8 +1182,8 @@ fun EditingView(
                                         bottomRightOffset = bottomRightOffsetPos
                                     } else if (croppingRatio.floatValue >= 1f) {
                                         // if not freeform and wide ratio
-                                        val width = bottomRightOffset.x - bottomLeftOffset.x
-                                        val height = bottomRightOffset.y - topRightOffset.y
+                                        val width = bottomRightOffsetPos.x - bottomLeftOffset.x
+                                        val height = bottomRightOffsetPos.y - topRightOffset.y
 
                                         val positionChange = bottomRightOffsetPos - bottomRightOffset
 
@@ -1072,51 +1193,59 @@ fun EditingView(
                                                     (bottomLeftOffset.x + height * croppingRatio.floatValue).toInt(),
                                                     topRightOffset.y + height
                                                 ).coerceIn(
-                                                    minX = 0,
-                                                    minY = topRightOffset.y + width,
-                                                    maxX = bottomLeftOffset.x + (56.dp.toPx() / croppingRatio.floatValue).toInt(),
-                                                    maxY = size.height
+                                                    minX = bottomLeftOffset.x + (56.dp
+                                                        .toPx()
+                                                        .toInt() * croppingRatio.floatValue).toInt(),
+                                                    minY = topRightOffset.y + (56.dp.toPx() / croppingRatio.floatValue).toInt(),
+                                                    maxX = (bottomLeftOffset.x + (width * croppingRatio.floatValue).toInt()).coerceAtMost(size.width),
+                                                    maxY = topRightOffset.y + (width / croppingRatio.floatValue).toInt()
                                                 )
                                         } else if (width + positionChange.x !in width - 5..width + 5) {
                                             bottomRightOffset =
                                                 IntOffset(
-                                                    bottomLeftOffset.x + width + positionChange.x,
+                                                    bottomLeftOffset.x + width,
                                                     (topRightOffset.y + width / croppingRatio.floatValue).toInt()
                                                 ).coerceIn(
-                                                    minX = 0,
-                                                    minY = topLeftOffset.y + height,
-                                                    maxX = (bottomLeftOffset.x + (56.dp.toPx() * croppingRatio.floatValue).toInt()).coerceAtMost(size.width),
-                                                    maxY = size.height
+                                                    minX = bottomLeftOffset.x + (56.dp.toPx() * croppingRatio.floatValue).toInt(),
+                                                    minY = topLeftOffset.y + 56.dp
+                                                        .toPx()
+                                                        .toInt(),
+                                                    maxX = bottomLeftOffset.x + (height * croppingRatio.floatValue).toInt(),
+                                                    maxY = topRightOffset.y + height
                                                 )
                                         }
                                     } else {
                                         // if not freeform and tall ratio
-                                        val width = bottomRightOffset.x - bottomLeftOffset.x
-                                        val height = bottomRightOffset.y - topRightOffset.y
+                                        val width = bottomRightOffsetPos.x - bottomLeftOffset.x
+                                        val height = bottomRightOffsetPos.y - topRightOffset.y
 
                                         val positionChange = bottomRightOffsetPos - bottomLeftOffset
 
                                         if (height + positionChange.y !in height - 5..height + 5) {
                                             bottomRightOffset =
                                                 IntOffset(
-                                                    (topLeftOffset.x + height * croppingRatio.floatValue).toInt(),
+                                                    (bottomLeftOffset.x + height * croppingRatio.floatValue).toInt(),
                                                     topRightOffset.y + height
                                                 ).coerceIn(
-                                                    minX = bottomLeftOffset.x + 56.dp.toPx().toInt(),
-                                                    minY = topRightOffset.y + height,
-                                                    maxX = size.width,
-                                                    maxY = size.height
+                                                    minX = bottomLeftOffset.x + 56.dp
+                                                        .toPx()
+                                                        .toInt(),
+                                                    minY = topRightOffset.y + (56.dp.toPx() / croppingRatio.floatValue).toInt(),
+                                                    maxX = (bottomLeftOffset.x + (height * croppingRatio.floatValue).toInt()).coerceAtMost(size.width),
+                                                    maxY = (topRightOffset.y + (width / croppingRatio.floatValue).toInt()).coerceAtMost(size.height)
                                                 )
                                         } else if (width + positionChange.x !in width - 5..width + 5) {
                                             bottomRightOffset =
                                                 IntOffset(
-                                                    topLeftOffset.x + width,
+                                                    bottomLeftOffset.x + width,
                                                     (topRightOffset.y + width / croppingRatio.floatValue).toInt()
                                                 ).coerceIn(
-                                                    minX = bottomLeftOffset.x + 56.dp.toPx().toInt(),
-                                                    minY = topRightOffset.y + width,
-                                                    maxX = size.width,
-                                                    maxY = size.height
+                                                    minX = bottomLeftOffset.x + 56.dp
+                                                        .toPx()
+                                                        .toInt(),
+                                                    minY = topLeftOffset.y + (56.dp.toPx() / croppingRatio.floatValue).toInt(),
+                                                    maxX = (bottomLeftOffset.x + (height * croppingRatio.floatValue).toInt()).coerceAtMost(size.width),
+                                                    maxY = (topRightOffset.y + (width / croppingRatio.floatValue).toInt()).coerceAtMost(size.height)
                                                 )
                                         }
                                     }
@@ -1158,11 +1287,13 @@ private fun EditingViewTopBar(
     showCloseDialog: MutableState<Boolean>,
     changesSize: MutableIntState,
     oldChangesSize: MutableIntState,
-    saveImage: () -> Unit,
+    saveImage: suspend () -> Unit,
     popBackStack: () -> Unit
 ) {
     val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     var showInLandscape by remember { mutableStateOf(false) }
+
+    var canExit by remember { mutableStateOf(true) }
 
     val animatedHeight by animateDpAsState(
         targetValue = if (isLandscape && !showInLandscape) (-64).dp else 0.dp,
@@ -1179,6 +1310,8 @@ private fun EditingViewTopBar(
         ),
         label = "Animate editing view top bar icon rotation"
     )
+
+    val coroutineScope = rememberCoroutineScope()
 
     Column(
         modifier = Modifier
@@ -1208,6 +1341,8 @@ private fun EditingViewTopBar(
                             .clip(CircleShape)
                             .background(CustomMaterialTheme.colorScheme.surfaceVariant)
                             .clickable {
+                                if (!canExit) return@clickable
+
                                 if (changesSize.intValue != oldChangesSize.intValue) {
                                     showCloseDialog.value = true
                                 } else {
@@ -1229,14 +1364,36 @@ private fun EditingViewTopBar(
                 }
             },
             actions = {
-                Box(
+                Row (
                     modifier = Modifier
-                        .padding(0.dp, 0.dp, 8.dp, 0.dp)
+                        .padding(0.dp, 0.dp, 8.dp, 0.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
+                    if (!canExit) {
+                        CircularProgressIndicator(
+                            color = CustomMaterialTheme.colorScheme.secondary,
+                            strokeWidth = 4.dp,
+                            strokeCap = StrokeCap.Round,
+                            trackColor = Color.Transparent,
+                            modifier = Modifier
+                            	.size(28.dp)
+                        )
+
+                        Spacer (modifier = Modifier.width(8.dp))
+                    }
+
                     Button(
                         onClick = {
-                            saveImage()
                             oldChangesSize.intValue = changesSize.intValue
+
+                            coroutineScope.launch {
+                                canExit = false
+                                saveImage()
+
+                                delay(500)
+                                canExit = true
+                            }
                         },
                         shape = CircleShape,
                         enabled = changesSize.intValue != oldChangesSize.intValue
@@ -2313,7 +2470,12 @@ fun IntOffset.coerceIn(
     minY: Int,
     maxX: Int,
     maxY: Int
-): IntOffset = IntOffset(this.x.coerceIn(minX, maxX), this.y.coerceIn(minY, maxY))
+): IntOffset {
+	val maxXLimited = if (maxX <= minX) minX else maxX
+	val maxYLimited = if (maxY <= minY) minY else maxY
+
+	return IntOffset(this.x.coerceIn(minX, maxXLimited), this.y.coerceIn(minY, maxYLimited))
+}
 
 operator fun IntOffset.plus(offset: Offset): IntOffset =
     IntOffset(this.x + offset.x.toInt(), this.y + offset.y.toInt())

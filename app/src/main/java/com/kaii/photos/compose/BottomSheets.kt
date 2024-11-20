@@ -3,6 +3,7 @@ package com.kaii.photos.compose
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -135,6 +136,8 @@ fun CroppingRatioBottomSheet(
     originalImageRatio: Float,
     onSetCroppingRatio: (ratio: Float) -> Unit
 ) {
+	val coroutineScope = rememberCoroutineScope()
+
     var ratio by remember { mutableFloatStateOf(0f) }
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true
@@ -164,7 +167,11 @@ fun CroppingRatioBottomSheet(
                 ) {
                     ratio = 0f
                     onSetCroppingRatio(0f)
-                    showBottomSheet.value = false
+
+                    coroutineScope.launch {
+                    	sheetState.hide()
+	                    showBottomSheet.value = false
+                    }
                 }
 
                 ClickableRow(
@@ -174,7 +181,11 @@ fun CroppingRatioBottomSheet(
                 ) {
                     ratio = originalImageRatio
                     onSetCroppingRatio(originalImageRatio)
-                    showBottomSheet.value = false
+
+                    coroutineScope.launch {
+                    	sheetState.hide()
+	                    showBottomSheet.value = false
+                    }
                 }
 
                 ClickableRow(
@@ -184,17 +195,25 @@ fun CroppingRatioBottomSheet(
                 ) {
                     ratio = 1f
                     onSetCroppingRatio(1f)
-                    showBottomSheet.value = false
+
+                    coroutineScope.launch {
+                    	sheetState.hide()
+	                    showBottomSheet.value = false
+                    }
                 }
 
                 ClickableRow(
-                    title = "21:9",
+                    title = "9:21",
                     position = RowPosition.Middle,
-                    selected = ratio == 21f / 9f
+                    selected = ratio == 9f / 21f
                 ) {
-                    ratio = 21f / 9f
-                    onSetCroppingRatio(21f / 9f)
-                    showBottomSheet.value = false
+                    ratio = 9f / 21f
+                    onSetCroppingRatio(9f / 21f)
+
+                    coroutineScope.launch {
+                    	sheetState.hide()
+	                    showBottomSheet.value = false
+                    }
                 }
 
                 ClickableRow(
@@ -204,7 +223,11 @@ fun CroppingRatioBottomSheet(
                 ) {
                     ratio = 9f / 16f
                     onSetCroppingRatio(9f / 16f)
-                    showBottomSheet.value = false
+
+                    coroutineScope.launch {
+                    	sheetState.hide()
+	                    showBottomSheet.value = false
+                    }
                 }
 
                 ClickableRow(
@@ -214,7 +237,11 @@ fun CroppingRatioBottomSheet(
                 ) {
                     ratio = 16f / 9f
                     onSetCroppingRatio(16f / 9f)
-                    showBottomSheet.value = false
+
+                    coroutineScope.launch {
+                    	sheetState.hide()
+	                    showBottomSheet.value = false
+                    }
                 }
 
                 ClickableRow(
@@ -224,7 +251,10 @@ fun CroppingRatioBottomSheet(
                 ) {
                     ratio = 1.25f
                     onSetCroppingRatio(1.25f)
-                    showBottomSheet.value = false
+                    coroutineScope.launch {
+                    	sheetState.hide()
+	                    showBottomSheet.value = false
+                    }
                 }
 
                 ClickableRow(
@@ -234,7 +264,10 @@ fun CroppingRatioBottomSheet(
                 ) {
                     ratio = 4f / 3f
                     onSetCroppingRatio(4f / 3f)
-                    showBottomSheet.value = false
+                    coroutineScope.launch {
+                    	sheetState.hide()
+	                    showBottomSheet.value = false
+                    }
                 }
 
                 ClickableRow(
@@ -244,7 +277,11 @@ fun CroppingRatioBottomSheet(
                 ) {
                     ratio = 1.5f
                     onSetCroppingRatio(1.5f)
-                    showBottomSheet.value = false
+
+                    coroutineScope.launch {
+                    	sheetState.hide()
+	                    showBottomSheet.value = false
+                    }
                 }
             }
         }
@@ -260,7 +297,7 @@ fun ClickableRow(
 ) {
     val (shape, spacerHeight) = getDefaultShapeSpacerForPosition(position, 32.dp)
 
-    Column(
+    Box (
         modifier = Modifier
             .height(64.dp)
             .fillMaxWidth(1f)
@@ -269,15 +306,15 @@ fun ClickableRow(
             .clickable {
                 action()
             }
-            .padding(16.dp, 8.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.Start
+            .padding(16.dp, 8.dp)
     ) {
         Text(
             text = title,
             fontSize = TextUnit(18f, TextUnitType.Sp),
             color = CustomMaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.wrapContentSize()
+            modifier = Modifier
+            	.wrapContentSize()
+            	.align(Alignment.CenterStart)
         )
 
         if (selected) {
@@ -287,7 +324,7 @@ fun ClickableRow(
                 tint = CustomMaterialTheme.colorScheme.onSurface,
                 modifier = Modifier
                     .size(24.dp)
-                    .align(Alignment.End)
+                    .align(Alignment.CenterEnd)
             )
         }
     }
