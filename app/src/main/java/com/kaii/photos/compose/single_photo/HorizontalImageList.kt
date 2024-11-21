@@ -82,7 +82,7 @@ fun HorizontalImageList(
         verticalAlignment = Alignment.CenterVertically,
         pageSpacing = 8.dp,
         key = {
-            if (groupedMedia.isNotEmpty() && it != groupedMedia.size) {
+            if (groupedMedia.isNotEmpty() && it <= groupedMedia.size - 1) {
                 val neededItem = groupedMedia[it]
                 neededItem.uri.toString()
             } else {
