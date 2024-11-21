@@ -129,6 +129,7 @@ import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
+import com.bumptech.glide.Glide
 import com.kaii.photos.R
 import com.kaii.photos.compose.BottomAppBarItem
 import com.kaii.photos.compose.ConfirmationDialog
@@ -136,7 +137,7 @@ import com.kaii.photos.compose.CroppingRatioBottomSheet
 import com.kaii.photos.compose.SetEditingViewDrawableTextBottomSheet
 import com.kaii.photos.helpers.ColorIndicator
 import com.kaii.photos.helpers.CustomMaterialTheme
-import com.kaii.photos.helpers.DrawableItem
+import com.kaii.photos.helpers.Modification
 import com.kaii.photos.helpers.DrawablePath
 import com.kaii.photos.helpers.DrawableText
 import com.kaii.photos.helpers.DrawingColors
@@ -146,6 +147,8 @@ import com.kaii.photos.helpers.PaintType
 import com.kaii.photos.helpers.savePathListToBitmap
 import com.kaii.photos.helpers.toOffset
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.min
@@ -188,7 +191,7 @@ fun EditingView(
 
     val pagerState = rememberPagerState { 4 }
 
-    val modifications = remember { mutableStateListOf<DrawableItem>() }
+    val modifications = remember { mutableStateListOf<Modification>() }
     val paint = remember { mutableStateOf(DrawingPaints.Pencil) }
 
     val context = LocalContext.current
@@ -197,25 +200,16 @@ fun EditingView(
     val originalImage = remember { BitmapFactory.decodeStream(inputStream) }
     var image by remember {
         mutableStateOf(
-//         run {
-//             var holder = Bitmap.createBitmap(512, 512, Bitmap.Config.ARGB_8888)
-// 
-//             Glide
-//                 .with(context)
-//                 .asBitmap()
-//                 .load(originalImage)
-//                 .into(object : CustomTarget<Bitmap>() {
-//                     override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
-//                         holder = resource
-//                     }
-// 
-//                     override fun onLoadCleared(placeholder: Drawable?) {
-//                         holder = Bitmap.createBitmap(512, 512, Bitmap.Config.ARGB_8888)
-//                     }
-//                 })
-// 
-//             holder.asImageBitmap()
-//         }
+//            run {
+//                val holder = Glide
+//                    .with(context)
+//                    .asBitmap()
+//                    .load(originalImage)
+//                    .fitCenter()
+//                    .submit()
+//
+//                holder.get().asImageBitmap()
+//            }
 
             originalImage.asImageBitmap()
         )
@@ -374,6 +368,19 @@ fun EditingView(
                 }
             }
 
+            val canvasAppropriateImage by remember { derivedStateOf {
+	       		val imageRatio = image.width / image.height
+	       		val canvasWidth = size.width * imageRatio
+	       		val canvasHeight = canvasWidth / imageRatio
+
+				Bitmap.createScaledBitmap(
+					image.asAndroidBitmap(),
+					canvasWidth,
+					canvasHeight,
+					true
+				).asImageBitmap()
+            }}
+
             Canvas(
                 modifier = Modifier
                     .size(dpSize)
@@ -394,7 +401,7 @@ fun EditingView(
                     )
             ) {
                 drawImage(
-                    image = image,
+                    image = canvasAppropriateImage,
                     dstSize = size
                 )
 
@@ -530,68 +537,6 @@ fun EditingView(
                             topLeftOffset.x,
                             bottomLeftOffset.y
                         )
-
-// 					val originalMidpoint = IntOffset(
-// 						topLeftOffset.x + width / 2,
-// 						topLeftOffset.y + height / 2
-// 					)
-// 
-//                 	val newWidth = if (croppingRatio.floatValue > 1f) (width * croppingRatio.floatValue).toInt()
-//                 					else (height * croppingRatio.floatValue).toInt()
-// 					val newHeight = (newWidth / croppingRatio.floatValue).toInt()
-// 
-// 					topLeftOffset = IntOffset(
-// 						topRightOffset.x - newWidth,
-// 						bottomLeftOffset.y - newHeight
-// 					)
-// 
-// 					val midpoint = IntOffset(
-// 						topLeftOffset.x + newWidth / 2,
-// 						topLeftOffset.y + newHeight / 2
-// 					)
-// 
-// 					val difference = run {
-// 						val top = midpoint.y - newHeight / 2
-// 						val left = midpoint.x - newWidth / 2
-// 						val right = midpoint.x + newWidth / 2
-// 						val bottom = midpoint.y + newHeight / 2
-// 
-// 						println("PLACES $top $left $right $bottom")
-// 
-// 						val xDifference = if (left < 0) -left else if (right > size.width) size.width - right else 0f
-// 						val yDifference = if (top < 0) -top else if (bottom > size.height) size.height - bottom else 0f
-// 
-// 						IntOffset(
-// 							xDifference.toInt(),
-// 							yDifference.toInt()
-// 						)
-// 					}
-// 
-// 					println("MIDPOINT $midpoint DIFFERENCE $difference ORIGINAL $originalMidpoint SIZE $size")
-// 
-// 					val midpointDifference = midpoint - originalMidpoint
-// 
-// 					topLeftOffset = with(localDensity) {
-// 						IntOffset(
-// 							(topLeftOffset.x).coerceIn(0, topRightOffset.x - 56.dp.toPx().toInt()),
-// 							(topLeftOffset.y).coerceIn(0, bottomRightOffset.y - 56.dp.toPx().toInt())
-// 						)
-// 					}
-// 
-// 					topRightOffset = IntOffset(
-// 						topLeftOffset.x + newWidth,
-// 						topLeftOffset.y
-// 					)
-// 
-// 					bottomLeftOffset = IntOffset(
-// 						topLeftOffset.x,
-// 						topLeftOffset.y + newHeight
-// 					)
-// 
-// 					bottomRightOffset = IntOffset(
-// 						topRightOffset.x,
-// 						bottomLeftOffset.y
-// 					)
                 }
 
                 AnimatedVisibility(
@@ -642,22 +587,6 @@ fun EditingView(
                                             width,
                                             height
                                         )
-
-//                                     var holder = Bitmap.createBitmap(512, 512, Bitmap.Config.ARGB_8888)
-// 
-//                                     Glide
-//                                         .with(context)
-//                                         .asBitmap()
-//                                         .load(loadable)
-//                                         .into(object : CustomTarget<Bitmap>() {
-//                                             override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
-//                                                 holder = resource
-//                                             }
-// 
-//                                             override fun onLoadCleared(placeholder: Drawable?) {
-//                                                 holder = Bitmap.createBitmap(512, 512, Bitmap.Config.ARGB_8888)
-//                                             }
-//                                         })
 
                                     image = loadable
                                         .asImageBitmap()
@@ -1890,13 +1819,13 @@ val NoRippleConfiguration = RippleConfiguration(
 )
 
 /** @param allowedToDraw no drawing happens if this is false
- * @param modifications a list of [DrawableItem] which is all the new [DrawablePath]s or [DrawableText]s drawn
+ * @param modifications a list of [Modification] which is all the new [DrawablePath]s or [DrawableText]s drawn
  * @param paint the paint to draw with
  * @param isDrawing is the user drawing right now? */
 @Composable
 private fun Modifier.makeDrawCanvas(
     allowedToDraw: State<Boolean>,
-    modifications: SnapshotStateList<DrawableItem>,
+    modifications: SnapshotStateList<Modification>,
     paint: MutableState<ExtendedPaint>,
     isDrawing: MutableState<Boolean>,
     changesSize: MutableIntState,
@@ -2101,7 +2030,7 @@ private fun Modifier.makeDrawCanvas(
 
 @Composable
 private fun BoxWithConstraintsScope.DrawActionsAndColors(
-    modifications: SnapshotStateList<DrawableItem>,
+    modifications: SnapshotStateList<Modification>,
     paint: MutableState<ExtendedPaint>,
     changesSize: MutableIntState,
     landscapeMode: Boolean = false,
@@ -2311,7 +2240,7 @@ fun BoxWithConstraintsScope.DrawingControls(
     pagerState: PagerState,
     isDrawing: MutableState<Boolean>,
     paint: MutableState<ExtendedPaint>,
-    modifications: SnapshotStateList<DrawableItem>,
+    modifications: SnapshotStateList<Modification>,
     changesSize: MutableIntState
 ) {
     val localConfiguration = LocalConfiguration.current

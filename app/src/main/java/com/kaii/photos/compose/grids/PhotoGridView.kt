@@ -321,11 +321,12 @@ fun DeviceMedia(
 					if (gridState.isScrollInProgress || isScrollingByHandle) {
 						showHandle = true
 					} else {
-						kotlinx.coroutines.delay(3000)
+						kotlinx.coroutines.delay(
+							if (selectedItemsList.isNotEmpty()) 1000 else 3000
+						)
 						showHandle = false
 					}
 				}
-
 
 				val listSize by remember { derivedStateOf {
 					groupedMedia.value.size - 1

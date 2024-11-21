@@ -43,7 +43,7 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import com.kaii.photos.R
 import com.kaii.photos.helpers.CustomMaterialTheme
-import com.kaii.photos.helpers.DrawableItem
+import com.kaii.photos.helpers.Modification
 import com.kaii.photos.helpers.DrawableText
 import com.kaii.photos.helpers.RowPosition
 import kotlinx.coroutines.launch
@@ -52,7 +52,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun SetEditingViewDrawableTextBottomSheet(
     showBottomSheet: MutableState<Boolean>,
-    modifications: SnapshotStateList<DrawableItem>,
+    modifications: SnapshotStateList<Modification>,
     textMeasurer: TextMeasurer
 ) {
     val drawableText = modifications.findLast { it is DrawableText } as DrawableText? ?: return

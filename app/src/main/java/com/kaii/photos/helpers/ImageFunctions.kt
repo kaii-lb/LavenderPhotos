@@ -232,7 +232,7 @@ fun copyImageListToPath(context: Context, list: List<MediaStoreData>, destinatio
 }
 
 suspend fun savePathListToBitmap(
-    modifications: List<DrawableItem>,
+    modifications: List<Modification>,
     absolutePath: String,
     image: ImageBitmap,
     maxSize: Size,
@@ -245,6 +245,40 @@ suspend fun savePathListToBitmap(
         val rotationMatrix = android.graphics.Matrix().apply {
             postRotate(rotation)
         }
+
+//        var image = originalImage
+//        modifications.filterIsInstance<CropRectangle>().forEach { (topLeftOffset, topRightOffset, bottomLeftOffset, bottomRightOffset, size) ->
+//            val ratio = 1f / min(
+//                size.width.toFloat() / image.width.toFloat(),
+//                size.height.toFloat() / image.height.toFloat()
+//            )
+//
+//            val x = (topLeftOffset.x * ratio).toInt()
+//            val y = (topLeftOffset.y * ratio).toInt()
+//            var width = ((topRightOffset.x - topLeftOffset.x) * ratio)
+//                .toInt()
+//                .coerceIn(0, image.width)
+//            var height = ((bottomLeftOffset.y - topLeftOffset.y) * ratio)
+//                .toInt()
+//                .coerceIn(0, image.height)
+//
+//            val widthExtra = (x + width) - image.width
+//            val heightExtra = (y + height) - image.height
+//
+//            if (widthExtra > 0) width -= widthExtra
+//            if (heightExtra > 0) height -= heightExtra
+//
+//            if (width > 0 && height > 0) {
+//                image = Bitmap
+//                    .createBitmap(
+//                        image,
+//                        x,
+//                        y,
+//                        width,
+//                        height
+//                    )
+//            }
+//        }
 
         val savedImage = Bitmap.createBitmap(
             image.asAndroidBitmap(),

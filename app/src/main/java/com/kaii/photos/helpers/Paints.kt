@@ -19,6 +19,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 
 class ExtendedPaint(
@@ -131,12 +132,12 @@ class DrawingPaints {
     }
 }
 
-abstract class DrawableItem
+abstract class Modification
 
 data class DrawablePath(
     val path: Path,
     val paint: ExtendedPaint
-) : DrawableItem()
+) : Modification()
 
 enum class PaintType {
     Pencil,
@@ -150,7 +151,7 @@ data class DrawableText(
     val paint: ExtendedPaint,
     var rotation: Float,
     var size: IntSize
-) : DrawableItem() {
+) : Modification() {
     @JvmInline
     value class Styles(val style: TextStyle) {
         companion object {
