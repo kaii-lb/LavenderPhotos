@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -92,7 +92,7 @@ fun FavouritesGridView(
         modifier = Modifier
             .fillMaxSize(1f)
             .windowInsetsPadding(
-                WindowInsets.systemBars
+                WindowInsets.navigationBars
             ),
         topBar = {
             FavouritesViewTopAppBar(selectedItemsList = selectedItemsList) {

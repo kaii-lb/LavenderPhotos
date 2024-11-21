@@ -37,14 +37,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -84,7 +84,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
-// special thanks to @bedirhansaricayir on github, helped a LOT of performance
+// special thanks to @bedirhansaricayir on github, helped with a LOT of performance stuff
 // https://github.com/bedirhansaricayir/Instagram-Reels-Jetpack-Compose/blob/master/app/src/main/java/com/reels/example/presentation/components/ExploreVideoPlayer.kt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -93,8 +93,8 @@ fun VideoPlayerControls(
     exoPlayer: ExoPlayer,
     isPlaying: MutableState<Boolean>,
     isMuted: MutableState<Boolean>,
-    currentVideoPosition: MutableState<Float>,
-    duration: MutableState<Float>,
+    currentVideoPosition: MutableFloatState,
+    duration: MutableFloatState,
     title: String,
     modifier: Modifier
 ) {
@@ -144,7 +144,7 @@ fun VideoPlayerControls(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
-                val currentDurationFormatted = currentVideoPosition.value.roundToInt().seconds.formatLikeANormalPerson()
+                val currentDurationFormatted = currentVideoPosition.floatValue.roundToInt().seconds.formatLikeANormalPerson()
 
                 Row (
                     modifier = Modifier
@@ -168,17 +168,19 @@ fun VideoPlayerControls(
 
                 Spacer (modifier = Modifier.width(8.dp))
 
-                duration.value = if (duration.value < 0) 0f else duration.value
+                duration.floatValue = duration.floatValue.coerceAtLeast(0f)
 
                 Slider (
-                    value = currentVideoPosition.value,
-                    valueRange = 0f..duration.value,
+                    value = currentVideoPosition.floatValue,
+                    valueRange = 0f..duration.floatValue,
                     onValueChange = { pos ->
                     	val prev = isPlaying.value
-                        exoPlayer.seekTo((pos * 1000).toLong())
+                        exoPlayer.seekTo(
+                        	(pos * 1000f).coerceAtMost(duration.floatValue * 1000f).toLong()
+                       	)
                         isPlaying.value = prev
                     },
-                    steps = (duration.value.roundToInt() - 1).coerceAtLeast(0),
+                    steps = (duration.floatValue.roundToInt() - 1).coerceAtLeast(0),
                     thumb = {
                         SliderDefaults.Thumb(
                             interactionSource = interactionSource,
@@ -217,7 +219,7 @@ fun VideoPlayerControls(
 
                 Spacer (modifier = Modifier.width(8.dp))
 
-				val formattedDuration = duration.value.roundToInt().seconds.formatLikeANormalPerson()
+				val formattedDuration = duration.floatValue.roundToInt().seconds.formatLikeANormalPerson()
 
                 Row (
                     modifier = Modifier
@@ -373,15 +375,17 @@ fun VideoPlayer(
 
     	lastIsPlaying.value = isPlaying.value
 
+		currentVideoPosition.floatValue = exoPlayer.currentPosition / 1000f
+		if (kotlin.math.ceil(currentVideoPosition.floatValue) >= kotlin.math.ceil(duration.floatValue)) {
+			delay(1000)
+			exoPlayer.pause()
+			exoPlayer.seekTo(0)
+			currentVideoPosition.floatValue = 0f
+			isPlaying.value = false
+		}
+
         while(isPlaying.value) {
         	currentVideoPosition.floatValue = exoPlayer.currentPosition / 1000f
-
-            if (currentVideoPosition.floatValue == exoPlayer.duration / 1000f) {
-            	exoPlayer.pause()
-                exoPlayer.seekTo(0L)
-                currentVideoPosition.floatValue = 0f
-                isPlaying.value = false
-			}
 
             delay(1000)
         }
@@ -461,8 +465,8 @@ fun VideoPlayer(
 fun rememberExoPlayerWithLifeCycle(
     videoSource: Uri,
     isPlaying: MutableState<Boolean>,
-    duration: MutableState<Float>,
-    currentVideoPosition: MutableState<Float>
+    duration: MutableFloatState,
+    currentVideoPosition: MutableFloatState
 ): ExoPlayer {
     val context = LocalContext.current
 
@@ -481,7 +485,7 @@ fun rememberExoPlayerWithLifeCycle(
                            1000,
                            false
                        )
-                       
+
                        setPrioritizeTimeOverSizeThresholds(false)
                     }.build()
             	)
@@ -524,7 +528,7 @@ fun rememberExoPlayerWithLifeCycle(
             super.onPlaybackStateChanged(playbackState)
 
             if (playbackState == ExoPlayer.STATE_READY) {
-                duration.value = exoPlayer.duration / 1000f
+                duration.floatValue = exoPlayer.duration / 1000f
             }
         }
 
@@ -534,7 +538,7 @@ fun rememberExoPlayerWithLifeCycle(
             reason: Int
         ) {
             super.onPositionDiscontinuity(oldPosition, newPosition, reason)
-            currentVideoPosition.value = (newPosition.positionMs / 1000f).roundToInt().toFloat()
+            currentVideoPosition.floatValue = newPosition.positionMs / 1000f
         }
 
         override fun onIsPlayingChanged(playerIsPlaying: Boolean) {
@@ -546,9 +550,8 @@ fun rememberExoPlayerWithLifeCycle(
     exoPlayer.addListener(listener)
 
     val lifecycleOwner = LocalLifecycleOwner.current
-    var appInBackground by remember { mutableStateOf(false) }
 
-    DisposableEffect(key1 = lifecycleOwner, appInBackground) {
+    DisposableEffect(key1 = lifecycleOwner) {
         val lifecycleObserver = getExoPlayerLifecycleObserver(exoPlayer, isPlaying)
 
         lifecycleOwner.lifecycle.addObserver(lifecycleObserver)

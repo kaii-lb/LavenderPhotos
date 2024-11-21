@@ -16,7 +16,7 @@ suspend fun DataStore<Preferences>.addToAlbumsList(path: String) {
 
         if (stringList == null) it[albumsListKey] = ""
 
-        if (stringList?.contains(",$path,") == false) {
+        if (stringList?.contains(",$path") == false) {
             it[albumsListKey] += ",$path"
         }
     }

@@ -304,7 +304,6 @@ class MainActivity : ComponentActivity() {
                     context.datastore.addToAlbumsList("Pictures/Whatsapp")
                     context.datastore.addToAlbumsList("Pictures/100PINT/Pins")
                     context.datastore.addToAlbumsList("Movies")
-                    context.datastore.addToAlbumsList("LavenderPhotos/Restored Files")
                     context.datastore.addToAlbumsList("Download")
                     context.datastore.addToAlbumsList("Pictures/Instagram")
                 }
