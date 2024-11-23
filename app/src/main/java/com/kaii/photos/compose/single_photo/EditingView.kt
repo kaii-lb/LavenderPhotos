@@ -21,6 +21,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.calculateZoom
+import androidx.compose.foundation.gestures.calculateRotation
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
@@ -1939,7 +1940,7 @@ private fun Modifier.makeDrawCanvas(
                                     }
                                 }
                             }
-                        } else if (!canceled && paint.value.type == PaintType.Text && event.changes.size == 1) {
+                        } else if (!canceled && paint.value.type == PaintType.Text && event.changes.size == 1 && event.calculateZoom() == 1f && event.calculateRotation() == 0f) {
                             when (event.type) {
                                 PointerEventType.Press -> {
                                     val position = event.changes.first().position
@@ -1948,7 +1949,8 @@ private fun Modifier.makeDrawCanvas(
                                         modifications.filterIsInstance<DrawableText>().firstOrNull {
                                             checkIfClickedOnText(
                                                 text = it,
-                                                clickPosition = position
+                                                clickPosition = position,
+                                                extraPadding = if (it.paint.strokeWidth <= 40f) 60f else 0f
                                             )
                                         }
 
@@ -2019,9 +2021,9 @@ private fun Modifier.makeDrawCanvas(
                                     }
                                 }
                             }
-                        } else if (!canceled && paint.value.type == PaintType.Text && event.changes.size == 2) {
+                        } else if (!canceled && paint.value.type == PaintType.Text && event.changes.size == 2 && event.calculateZoom() != 1f) {
                             when (event.type) {
-                                PointerEventType.Press -> {
+                                PointerEventType.Press, PointerEventType.Move -> {
                                     val positionFirst = event.changes.first().position
                                     val positionSecond = event.changes[1].position
 
@@ -2029,18 +2031,56 @@ private fun Modifier.makeDrawCanvas(
                                         modifications.filterIsInstance<DrawableText>().firstOrNull {
                                             val matchesFirstDown = checkIfClickedOnText(
                                                 text = it,
-                                                clickPosition = positionFirst
+                                                clickPosition = positionFirst,
+                                                extraPadding = if (it.paint.strokeWidth <= 40f) 60f else 0f
                                             )
 
                                             val matchesSecondDown = checkIfClickedOnText(
                                                 text = it,
-                                                clickPosition = positionSecond
+                                                clickPosition = positionSecond,
+                                                extraPadding = if (it.paint.strokeWidth <= 40f) 60f else 0f
                                             )
 
                                             matchesFirstDown && matchesSecondDown
                                         }
 
-                                    tappedOnText?.let { lastText = it }
+                                    tappedOnText?.let { text ->
+		                                val zoom = event.calculateZoom()
+		                                val rotation = event.calculateRotation()
+
+		                                modifications.remove(text)
+
+		                                // move topLeft of textbox to the text's position
+		                                // basically removes decenters the text so we can center it to that position with the new size
+		                                val oldPosition = text.position + (text.size.toOffset() / 2f)
+		                                val newWidth = text.paint.strokeWidth * zoom
+
+		                                val textLayout = textMeasurer.measure(
+		                                    text = text.text,
+		                                    style = localTextStyle.copy(
+		                                        color = paint.value.color,
+		                                        fontSize = TextUnit(
+		                                            newWidth,
+		                                            TextUnitType.Sp
+		                                        ),
+		                                        textAlign = defaultTextStyle.textAlign,
+		                                        platformStyle = defaultTextStyle.platformStyle,
+		                                        lineHeightStyle = defaultTextStyle.lineHeightStyle,
+		                                        baselineShift = defaultTextStyle.baselineShift
+		                                    )
+		                                )
+		                                val zoomedText = text.copy(
+		                                    paint = text.paint.copy(
+		                                        strokeWidth = newWidth
+		                                    ),
+		                                    size = textLayout.size,
+		                                    position = oldPosition - (textLayout.size.toOffset() / 2f), // move from old topLeft to new center
+		                                    rotation = if (zoom != 1f) text.rotation + rotation else text.rotation
+		                                )
+
+		                                modifications.add(zoomedText)
+                                    }
+
                                     isDrawing.value = true
                                     event.changes.forEach {
                                         it.consume()
@@ -2048,48 +2088,12 @@ private fun Modifier.makeDrawCanvas(
                                 }
 
                                 PointerEventType.Release -> {
-                                    lastText = null
                                     isDrawing.value = false
 
                                     event.changes.forEach {
                                         it.consume()
                                     }
                                 }
-                            }
-
-                            if (lastText != null) {
-                                val zoom = event.calculateZoom()
-
-                                modifications.remove(lastText!!)
-
-                                // move topLeft of textbox to the text's position
-                                // basically removes decenters the text so we can center it to that position with the new size
-                                val oldPosition = lastText!!.position + (lastText!!.size.toOffset() / 2f)
-                                val newWidth = lastText!!.paint.strokeWidth * zoom
-
-                                val textLayout = textMeasurer.measure(
-                                    text = lastText!!.text,
-                                    style = localTextStyle.copy(
-                                        color = paint.value.color,
-                                        fontSize = TextUnit(
-                                            newWidth,
-                                            TextUnitType.Sp
-                                        ),
-                                        textAlign = defaultTextStyle.textAlign,
-                                        platformStyle = defaultTextStyle.platformStyle,
-                                        lineHeightStyle = defaultTextStyle.lineHeightStyle,
-                                        baselineShift = defaultTextStyle.baselineShift
-                                    )
-                                )
-                                val zoomedText = lastText!!.copy(
-                                    paint = lastText!!.paint.copy(
-                                        strokeWidth = newWidth
-                                    ),
-                                    size = textLayout.size,
-                                    position = oldPosition - (textLayout.size.toOffset() / 2f) // move from old topLeft to new center
-                                )
-
-                                modifications.add(zoomedText)
                             }
                         }
                     } while (!canceled && event.changes.any { it.pressed })
@@ -2292,7 +2296,11 @@ private fun BoxWithConstraintsScope.DrawActionsAndColors(
     }
 }
 
-fun checkIfClickedOnText(text: DrawableText, clickPosition: Offset): Boolean {
+fun checkIfClickedOnText(
+	text: DrawableText,
+	clickPosition: Offset,
+	extraPadding: Float = 0f
+): Boolean {
     val textPosition = text.position
     val textSize = text.size
 
@@ -2301,8 +2309,8 @@ fun checkIfClickedOnText(text: DrawableText, clickPosition: Offset): Boolean {
     val textTop = textPosition.y
     val textBottom = textPosition.y + textSize.height
 
-    val isInTextWidth = clickPosition.x in textLeft..textRight
-    val isInTextHeight = clickPosition.y in textTop..textBottom
+    val isInTextWidth = clickPosition.x in textLeft - extraPadding..textRight + extraPadding
+    val isInTextHeight = clickPosition.y in textTop - extraPadding..textBottom + extraPadding
 
     return isInTextWidth && isInTextHeight
 }
