@@ -371,14 +371,14 @@ fun EditingView(
             }
 
             val canvasAppropriateImage by remember { derivedStateOf {
-	       		val imageRatio = image.width / image.height
+	       		val imageRatio = image.width.toFloat() / image.height.toFloat()
 	       		val canvasWidth = size.width * imageRatio
 	       		val canvasHeight = canvasWidth / imageRatio
 
 				Bitmap.createScaledBitmap(
 					image.asAndroidBitmap(),
-					canvasWidth,
-					canvasHeight,
+					canvasWidth.toInt(),
+					canvasHeight.toInt(),
 					true
 				).asImageBitmap()
             }}

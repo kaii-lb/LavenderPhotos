@@ -170,7 +170,7 @@ fun SelectableBottomAppBarItem(
             ) + fadeIn(),
             exit = fadeOut(
                 animationSpec = tween(
-                    durationMillis = 25
+                    durationMillis = 150
                 )
             ),
             modifier = Modifier
