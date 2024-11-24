@@ -120,7 +120,7 @@ fun PhotoGrid(
 		groupedMedia.value.isNotEmpty()
 	} else {
 		if (viewProperties == ViewProperties.Trash) {
-			Path("/storage/emulated/0/$path").checkHasFiles(true)	
+			Path("/storage/emulated/0/$path").checkHasFiles(true)
 		} else {
 			Path("/storage/emulated/0/$path").checkHasFiles()
 		}
@@ -130,13 +130,13 @@ fun PhotoGrid(
 		FolderDoesntExist()
 		return
 	}
-	 
+
 	if (hasFiles) {
 		Row (
 			modifier = Modifier
 				.fillMaxSize(1f)
-				.then(modifier)	
-		) {		
+				.then(modifier)
+		) {
 			DeviceMedia(
 				groupedMedia,
 				navController,
@@ -267,7 +267,7 @@ fun DeviceMedia(
 					}
 		        }
 		    }
-		    
+
 			if (showLoadingSpinner) {
 				Row (
 					modifier = Modifier

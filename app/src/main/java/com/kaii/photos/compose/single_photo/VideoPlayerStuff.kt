@@ -376,7 +376,7 @@ fun VideoPlayer(
     	lastIsPlaying.value = isPlaying.value
 
 		currentVideoPosition.floatValue = exoPlayer.currentPosition / 1000f
-		if (kotlin.math.ceil(currentVideoPosition.floatValue) >= kotlin.math.ceil(duration.floatValue)) {
+		if (kotlin.math.ceil(currentVideoPosition.floatValue) >= kotlin.math.ceil(duration.floatValue) && duration.floatValue != 0f) {
 			delay(1000)
 			exoPlayer.pause()
 			exoPlayer.seekTo(0)
@@ -557,8 +557,8 @@ fun rememberExoPlayerWithLifeCycle(
         lifecycleOwner.lifecycle.addObserver(lifecycleObserver)
 
         onDispose {
-        	// its insta-disposing for some reason
-            // lifecycleOwner.lifecycle.removeObserver(lifecycleObserver)
+        	// its insta-disposing for some reason (maybe not?)
+            lifecycleOwner.lifecycle.removeObserver(lifecycleObserver)
         }
     }
     return exoPlayer

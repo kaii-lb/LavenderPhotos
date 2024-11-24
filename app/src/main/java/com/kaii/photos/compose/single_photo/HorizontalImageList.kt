@@ -77,7 +77,7 @@ fun HorizontalImageList(
         offset.value = Offset.Zero
     }
 
-    HorizontalPager(
+    HorizontalPager (
         state = state,
         verticalAlignment = Alignment.CenterVertically,
         pageSpacing = 8.dp,

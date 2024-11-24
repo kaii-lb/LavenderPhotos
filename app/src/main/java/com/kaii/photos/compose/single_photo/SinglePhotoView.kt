@@ -113,8 +113,9 @@ fun SinglePhotoView(
             )
         )
     }
+
     val state = rememberPagerState(
-        initialPage = currentMediaItemIndex.coerceAtLeast(0)
+        initialPage = currentMediaItemIndex.coerceIn(0, groupedMedia.value.size - 1)
     ) {
         groupedMedia.value.size
     }
@@ -128,7 +129,7 @@ fun SinglePhotoView(
     val currentMediaItem = remember {
         derivedStateOf {
             val index = state.layoutInfo.visiblePagesInfo.firstOrNull()?.index ?: 0
-            if (index != groupedMedia.value.size) {
+            if (index < groupedMedia.value.size) {
                 groupedMedia.value[index]
             } else {
                 MediaStoreData(
