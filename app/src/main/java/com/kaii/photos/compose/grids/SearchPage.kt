@@ -50,6 +50,7 @@ import com.kaii.photos.models.search_page.SearchViewModelFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.plus
 import java.text.SimpleDateFormat
@@ -87,8 +88,16 @@ fun SearchPage(
             .fillMaxSize(1f)
             .background(CustomMaterialTheme.colorScheme.background)
     ) {
+    	val coroutineScope = rememberCoroutineScope()
+		val scrollBackToTop = {
+			coroutineScope.launch {
+				gridState.animateScrollToItem(0)
+			}
+		}
+
         val searchedForText = rememberSaveable { mutableStateOf("") }
         var searchNow by rememberSaveable { mutableStateOf(false) }
+
         var hideLoadingSpinner by remember { mutableStateOf(false) }
         val showLoadingSpinner by remember {
             derivedStateOf {
@@ -114,11 +123,13 @@ fun SearchPage(
                 onSearch = {
                     if (!showLoadingSpinner) {
                         searchNow = true
+                        scrollBackToTop()
                     }
                 },
                 onClear = {
                     searchedForText.value = ""
                     searchNow = true
+                    scrollBackToTop()
                 }
             )
         }
@@ -141,7 +152,6 @@ fun SearchPage(
             }
         }
 
-        val coroutineScope = rememberCoroutineScope()
         LaunchedEffect(key1 = searchedForText.value) {
             if (searchedForText.value == "") {
                 groupedMedia.value = originalGroupedMedia.value
@@ -150,8 +160,9 @@ fun SearchPage(
 
             hideLoadingSpinner = false
 
-            coroutineScope.launch {
+			coroutineScope.launch {
                 val possibleDate = searchedForText.value.trim().toDateListOrNull()
+
                 if (possibleDate.component1() != null) {
                     val local = originalGroupedMedia.value.filter {
                         it.type != MediaType.Section &&
@@ -166,8 +177,7 @@ fun SearchPage(
                     }
 
                     groupedMedia.value = groupPhotosBy(local, MediaItemSortMode.DateTaken)
-                    gridState.scrollToItem(0)
-                    hideLoadingSpinner = true
+		       		hideLoadingSpinner = true
 
                     return@launch
                 }
@@ -194,8 +204,7 @@ fun SearchPage(
                         }
 
                         groupedMedia.value = groupPhotosBy(local, MediaItemSortMode.DateTaken)
-                        gridState.scrollToItem(0)
-                        hideLoadingSpinner = true
+			       		hideLoadingSpinner = true
 
                         return@launch
                     }
@@ -209,8 +218,7 @@ fun SearchPage(
                 }
 
                 groupedMedia.value = groupPhotosBy(groupedMediaLocal, MediaItemSortMode.DateTaken)
-                gridState.scrollToItem(0)
-                hideLoadingSpinner = true
+	       		hideLoadingSpinner = true
             }
         }
 

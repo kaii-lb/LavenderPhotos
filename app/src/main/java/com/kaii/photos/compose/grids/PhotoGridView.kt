@@ -220,12 +220,16 @@ fun DeviceMedia(
 						groupedMedia.value[it].uri.toString()
 		            },
 		            span = { index ->
-		                val item = groupedMedia.value[index]
-		                if (item.type == MediaType.Section) {
-		                    GridItemSpan(maxLineSpan)
-		                } else {
-		                    GridItemSpan(1)
-		                }
+		            	if (index < groupedMedia.value.size) {
+			                val item = groupedMedia.value[index]
+			                if (item.type == MediaType.Section) {
+			                    GridItemSpan(maxLineSpan)
+			                } else {
+			                    GridItemSpan(1)
+			                }
+		            	} else {
+		            		GridItemSpan(1)
+		            	}
 		            }
 		        ) { i ->
 					if (groupedMedia.value.isEmpty()) return@items
