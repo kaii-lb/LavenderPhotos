@@ -29,7 +29,7 @@ class TrashStoreDataSource(
             arrayOf(
                 MediaColumns._ID,
                 MediaStore.Images.Media.DATA,
-                MediaColumns.DATE_ADDED,
+                MediaColumns.DATE_MODIFIED,
                 MediaColumns.MIME_TYPE,
                 MediaColumns.DISPLAY_NAME,
                 FileColumns.MEDIA_TYPE,
@@ -68,7 +68,7 @@ class TrashStoreDataSource(
             val mimeTypeColNum = cursor.getColumnIndexOrThrow(MediaColumns.MIME_TYPE)
             val mediaTypeColumnIndex = cursor.getColumnIndexOrThrow(FileColumns.MEDIA_TYPE)
             val displayNameIndex = cursor.getColumnIndexOrThrow(FileColumns.DISPLAY_NAME)
-            val dateModifiedColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATE_ADDED)
+            val dateModifiedColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATE_MODIFIED)
 
             while (cursor.moveToNext()) {
                 val id = cursor.getLong(idColNum)

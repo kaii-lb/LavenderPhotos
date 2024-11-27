@@ -109,11 +109,11 @@ fun groupPhotosBy(media: List<MediaStoreData>, sortBy: MediaItemSortMode = Media
 				value.sortBy { it.dateTaken }
 			} else {
 				value.sortBy { it.dateModified }
-			}			
+			}
 		}
-		
+
         mediaItems.addAll(
-        	value	
+        	value
        	)
     }
 

@@ -421,7 +421,7 @@ private fun BottomBar(
                                 dialogTitle = "Delete this ${currentItem.type}?",
                                 confirmButtonLabel = "Delete"
                             ) {
-                                setTrashedOnPhotoList(context, listOf(currentItem.uri), true)
+                                setTrashedOnPhotoList(context, listOf(Pair(currentItem.uri, currentItem.absolutePath)), true)
 
                                 sortOutMediaMods(
                                     currentItem,

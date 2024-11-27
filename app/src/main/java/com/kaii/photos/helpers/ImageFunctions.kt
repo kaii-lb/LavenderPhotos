@@ -70,19 +70,21 @@ fun permanentlyDeletePhotoList(context: Context, list: List<Uri>) {
     }
 }
 
-fun setTrashedOnPhotoList(context: Context, list: List<Uri>, trashed: Boolean) {
+fun setTrashedOnPhotoList(context: Context, list: List<Pair<Uri, String>>, trashed: Boolean) {
     val contentResolver = context.contentResolver
 
     val trashedValues = ContentValues().apply {
         put(MediaColumns.IS_TRASHED, trashed)
     }
 
-    val chunks = list.chunked(100)
+    val chunks = list.chunked(25)
 
+    val currentTime = System.currentTimeMillis()
     CoroutineScope(Dispatchers.IO).launch {
         for (chunk in chunks) {
-            chunk.forEach {
-                contentResolver.update(it, trashedValues, null)
+            chunk.forEach { (uri, path) ->
+				File(path).setLastModified(currentTime)
+                contentResolver.update(uri, trashedValues, null)
             }
 
             delay(3000)
@@ -245,40 +247,6 @@ suspend fun savePathListToBitmap(
         val rotationMatrix = android.graphics.Matrix().apply {
             postRotate(rotation)
         }
-
-//        var image = originalImage
-//        modifications.filterIsInstance<CropRectangle>().forEach { (topLeftOffset, topRightOffset, bottomLeftOffset, bottomRightOffset, size) ->
-//            val ratio = 1f / min(
-//                size.width.toFloat() / image.width.toFloat(),
-//                size.height.toFloat() / image.height.toFloat()
-//            )
-//
-//            val x = (topLeftOffset.x * ratio).toInt()
-//            val y = (topLeftOffset.y * ratio).toInt()
-//            var width = ((topRightOffset.x - topLeftOffset.x) * ratio)
-//                .toInt()
-//                .coerceIn(0, image.width)
-//            var height = ((bottomLeftOffset.y - topLeftOffset.y) * ratio)
-//                .toInt()
-//                .coerceIn(0, image.height)
-//
-//            val widthExtra = (x + width) - image.width
-//            val heightExtra = (y + height) - image.height
-//
-//            if (widthExtra > 0) width -= widthExtra
-//            if (heightExtra > 0) height -= heightExtra
-//
-//            if (width > 0 && height > 0) {
-//                image = Bitmap
-//                    .createBitmap(
-//                        image,
-//                        x,
-//                        y,
-//                        width,
-//                        height
-//                    )
-//            }
-//        }
 
         val savedImage = Bitmap.createBitmap(
             image.asAndroidBitmap(),

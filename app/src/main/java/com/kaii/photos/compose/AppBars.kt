@@ -485,7 +485,7 @@ fun MainAppSelectingBottomBar(
         if (runDeleteAction) {
             setTrashedOnPhotoList(
                 context,
-                list = selectedItemsWithoutSection.map { it.uri },
+                list = selectedItemsWithoutSection.map { Pair(it.uri, it.absolutePath) },
                 trashed = true
             )
 
@@ -804,7 +804,7 @@ fun SingleAlbumViewBottomBar(
         if (runTrashAction) {
             setTrashedOnPhotoList(
                 context,
-                selectedItemsWithoutSection.map { it.uri },
+                selectedItemsWithoutSection.map { Pair(it.uri, it.absolutePath) },
                 true
             )
 
@@ -982,7 +982,7 @@ fun TrashedPhotoGridViewBottomBar(
         if (runRestoreAction) {
             setTrashedOnPhotoList(
                 context,
-                selectedItemsWithoutSection.map { it.uri },
+                selectedItemsWithoutSection.map { Pair(it.uri, it.absolutePath) },
                 false
             )
 
@@ -1404,7 +1404,7 @@ fun FavouritesViewBottomAppBar(
         if (runTrashAction) {
             setTrashedOnPhotoList(
                 context,
-                selectedItemsWithoutSection.map { it.uri },
+                selectedItemsWithoutSection.map { Pair(it.uri, it.absolutePath) },
                 true
             )
 
