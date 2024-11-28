@@ -254,7 +254,7 @@ fun AlbumsListItem(
 
                     if (groupedMedia != null) {
                         val newList = groupedMedia.value.toMutableList()
-                        newList.removeAll(selectedItemsWithoutSection)
+                        newList.removeAll(selectedItemsWithoutSection.toSet())
                         groupedMedia.value = newList
                     }
                 } else {

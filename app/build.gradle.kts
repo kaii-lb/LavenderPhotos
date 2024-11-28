@@ -14,7 +14,7 @@ android {
 
     defaultConfig {
         applicationId = "com.kaii.photos"
-        minSdk = 33
+        minSdk = 30
         targetSdk = 34
         versionCode = 81
         versionName = "v0.8.1"

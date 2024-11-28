@@ -9,6 +9,7 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.util.EnumMap
 import kotlin.math.round
 
 private const val TAG = "EXIT_DATA_HANDLER"
@@ -95,7 +96,7 @@ fun getExifDataForMedia(uri: String): Map<MediaData, Any> {
 	    return nonNullList
 	} catch (e: Throwable) {
 		Log.e(TAG, e.toString())
-		return HashMap<MediaData, Any>()
+		return EnumMap(com.kaii.photos.helpers.MediaData::class.java)
 	}
 }
 

@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.util.Log
@@ -110,11 +111,25 @@ private const val TAG = "MAIN_ACTIVITY"
 
 class MainActivity : ComponentActivity() {
     companion object {
-        private val PERMISSIONS_REQUEST =
+        private val PERMISSIONS_REQUEST = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             arrayOf(
                 Manifest.permission.READ_MEDIA_IMAGES,
                 Manifest.permission.READ_MEDIA_VIDEO,
             )
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            arrayOf(
+                Manifest.permission.MANAGE_MEDIA,
+                Manifest.permission.MANAGE_EXTERNAL_STORAGE,
+                Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
+            )
+        } else {
+            arrayOf(
+                Manifest.permission.MANAGE_EXTERNAL_STORAGE,
+                Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
+            )
+        }
 
         lateinit var applicationDatabase: MediaDatabase
         lateinit var mainViewModel: MainViewModel
@@ -784,8 +799,12 @@ private fun setupNextScreen(
     } else {
         windowInsetsController?.apply {
             show(WindowInsetsCompat.Type.systemBars())
-            systemBarsBehavior =
+
+            systemBarsBehavior = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 WindowInsetsController.BEHAVIOR_DEFAULT
+            } else {
+                WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            }
         }
     }
 }

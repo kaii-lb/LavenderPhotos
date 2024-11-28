@@ -517,7 +517,7 @@ fun MediaStoreItem(
 						}
 
 						if (selectedItemsList.containsAll(datedMedia)) {
-							selectedItemsList.removeAll(datedMedia)
+							selectedItemsList.removeAll(datedMedia.toSet())
 							selectedItemsList.remove(item)
 						} else {
 							if (selectedItemsList.size == 1 && selectedItemsList[0] == MediaStoreData()) selectedItemsList.clear()

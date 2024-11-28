@@ -97,7 +97,7 @@ fun SingleTrashedPhotoView(
 
     val holderGroupedMedia by trashViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
-	if (holderGroupedMedia.size == 0) return
+	if (holderGroupedMedia.isEmpty()) return
 
     val groupedMedia = remember {
         mutableStateOf(

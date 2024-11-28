@@ -66,7 +66,7 @@ fun AlbumsGridView(navController: NavHostController) {
 	}
 
 	listOfDirs.sortByDescending {
-		File("/storage/emulated/0/" + it).lastModified()
+		File("/storage/emulated/0/$it").lastModified()
 	}
 	listOfDirs.find { it == "DCIM/Camera" }?.let { cameraItem ->
 		listOfDirs.remove(cameraItem)
