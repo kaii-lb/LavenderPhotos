@@ -208,7 +208,9 @@ class MainActivity : ComponentActivity() {
                                 val name = perm.key
                                 val granted = perm.value
 
-                                if (granted) failedList.remove(name)
+                                if (granted) {
+                                	failedList.remove(name)
+                               	}
                                 else {
                                     val shortName = name.split(".").last()
                                     Toast.makeText(
@@ -316,11 +318,11 @@ class MainActivity : ComponentActivity() {
                 runBlocking {
                     context.datastore.addToAlbumsList("DCIM/Camera")
                     context.datastore.addToAlbumsList("Pictures/Screenshot")
-                    context.datastore.addToAlbumsList("Pictures/Whatsapp")
-                    context.datastore.addToAlbumsList("Pictures/100PINT/Pins")
-                    context.datastore.addToAlbumsList("Movies")
+                    // context.datastore.addToAlbumsList("Pictures/Whatsapp")
+                    // context.datastore.addToAlbumsList("Pictures/100PINT/Pins")
+                    // context.datastore.addToAlbumsList("Movies")
                     context.datastore.addToAlbumsList("Download")
-                    context.datastore.addToAlbumsList("Pictures/Instagram")
+                    // context.datastore.addToAlbumsList("Pictures/Instagram")
                 }
 
                 NavHost(
