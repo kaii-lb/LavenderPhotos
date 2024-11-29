@@ -86,6 +86,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
@@ -99,11 +100,14 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.colorspace.Rgb
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.rotate
@@ -129,6 +133,7 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.unit.toSize
+import androidx.compose.ui.util.fastCoerceIn
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
 import com.bumptech.glide.Glide
@@ -231,6 +236,9 @@ fun EditingView(
     val textMeasurer = rememberTextMeasurer()
     val localDensity = LocalDensity.current
 
+    val adjustSliderValue = remember { mutableFloatStateOf(0f) }
+    val colorMatrix = remember { mutableStateOf(ColorMatrix()) }
+
     Scaffold(
         topBar = {
             EditingViewTopBar(
@@ -260,6 +268,8 @@ fun EditingView(
                 changesSize = changesSize,
                 croppingRatio = croppingRatio,
                 originalImageRatio = image.width.toFloat() / image.height.toFloat(),
+                adjustSliderValue = adjustSliderValue,
+                colorMatrix = colorMatrix,
                 resetCropping = {
                     rotationMultiplier.intValue = 0
                     image = originalImage.asImageBitmap()
@@ -404,7 +414,8 @@ fun EditingView(
             ) {
                 drawImage(
                     image = canvasAppropriateImage,
-                    dstSize = size
+                    dstSize = size,
+                    colorFilter = ColorFilter.colorMatrix(colorMatrix.value)
                 )
 
                 modifications.forEach { modification ->
@@ -1386,6 +1397,8 @@ private fun EditingViewBottomBar(
     changesSize: MutableIntState,
     croppingRatio: MutableFloatState,
     originalImageRatio: Float,
+    adjustSliderValue: MutableFloatState,
+    colorMatrix: MutableState<ColorMatrix>,
     resetCropping: () -> Unit
 ) {
     val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
@@ -1455,6 +1468,31 @@ private fun EditingViewBottomBar(
                 )
             }
         }
+
+	    val animatedSliderHeight by animateDpAsState(
+	        targetValue = if (pagerState.currentPage == 1) 48.dp else 0.dp,
+	        animationSpec = tween(
+	            durationMillis = 350
+	        ),
+	        label = "Animate editing view bottom bar slider height"
+	    )
+
+		Box (
+			modifier = Modifier
+				.height(animatedSliderHeight)
+				.clipToBounds()
+		) {
+			Slider (
+				value = adjustSliderValue.floatValue,
+				onValueChange = {
+					adjustSliderValue.floatValue = it
+				},
+				valueRange = -1f..1f,
+				modifier = Modifier
+					.fillMaxWidth(1f)
+					.padding(16.dp, 0.dp)
+			)
+		}
 
         Column(
             modifier = Modifier
@@ -1616,7 +1654,7 @@ private fun EditingViewBottomBar(
                             }
 
                             1 -> {
-                                AdjustTools()
+                                AdjustTools(adjustSliderValue, colorMatrix)
                             }
 
                             2 -> {
@@ -1672,24 +1710,158 @@ fun CropTools(
     }
 }
 
+enum class SelectedImageProperties {
+    Contrast,
+    Brightness,
+    Saturation,
+    BlackPoint,
+    WhitePoint,
+    Shadows,
+    Warmth,
+    Tint
+}
+
+data class ImageProperties(
+    val contrast: Float = 0f,
+    val brightness: ColorMatrix = ColorMatrix(),
+    val saturation: Float = 0f,
+    val blackPoint: Float = 0f,
+    val whitePoint: Float = 0f,
+    val shadows: Float = 0f,
+    val warmth: Float = 0f,
+    val tint: Float = 0f
+)
+
 @Composable
-fun AdjustTools() {
-    LazyRow(
+fun AdjustTools(
+    sliderValue: MutableFloatState,
+    colorMatrix: MutableState<ColorMatrix>
+) {
+    var selectedProperty by remember { mutableStateOf(SelectedImageProperties.Contrast) }
+
+    var contrastValue by rememberSaveable { mutableFloatStateOf(0f) }
+    var brightnessValue by rememberSaveable { mutableFloatStateOf(0f) }
+    var saturationValue by rememberSaveable { mutableFloatStateOf(0f) }
+
+	val emptyFloatArray = floatArrayOf(
+		1f, 0f, 0f, 0f, 1f,
+		0f, 1f, 0f, 0f, 1f,
+		0f, 0f, 1f, 0f, 1f,
+		0f, 0f, 0f, 1f, 0f
+	)
+
+	var contrastMatrix by remember { mutableStateOf(ColorMatrix(emptyFloatArray)) }
+	var brightnessMatrix by remember { mutableStateOf(ColorMatrix(emptyFloatArray)) }
+	var saturationMatrix by remember { mutableStateOf(ColorMatrix(emptyFloatArray)) }
+
+	LaunchedEffect(contrastMatrix, brightnessMatrix, saturationMatrix) {
+		val floatArray = emptyList<Float>().toMutableList()
+
+		if (contrastMatrix.values == emptyFloatArray) return@LaunchedEffect
+
+		for (i in 0..contrastMatrix.values.size - 1) {
+			val newElement = contrastMatrix.values[i] * brightnessMatrix.values[i] + saturationMatrix.values[i]
+			floatArray.add(newElement)
+		}
+
+		colorMatrix.value = ColorMatrix(floatArray.toTypedArray().toFloatArray())
+	}
+
+    LaunchedEffect(sliderValue.floatValue) {
+        when (selectedProperty) {
+            SelectedImageProperties.Contrast -> run {
+            	if (sliderValue.floatValue == contrastValue) return@run
+
+				val contrast = sliderValue.floatValue * 0.85f
+                val floatArray = floatArrayOf(
+                    contrast, 0f, 0f, 0f, 1f,
+                    0f, contrast, 0f, 0f, 1f,
+                    0f, 0f, contrast, 0f, 1f,
+                    0f, 0f, 0f,       1f, 0f
+                )
+
+                val newMatrix = ColorMatrix(floatArray)
+
+                contrastMatrix = newMatrix
+
+                contrastValue = sliderValue.floatValue
+            }
+
+            SelectedImageProperties.Brightness -> run {
+            	if (sliderValue.floatValue == brightnessValue) return@run
+
+                val brightness = 225f * sliderValue.floatValue
+                val floatArray = floatArrayOf(
+                	1f, 0f, 0f, 0f, brightness,
+                	0f, 1f, 0f, 0f, brightness,
+                	0f, 0f, 1f, 0f, brightness,
+                	0f, 0f, 0f, 1f, 0f
+                )
+
+                val newMatrix = ColorMatrix(floatArray)
+
+                brightnessMatrix = newMatrix
+
+                brightnessValue = sliderValue.floatValue
+            }
+
+            SelectedImageProperties.Saturation -> run {
+            	if (sliderValue.floatValue == saturationValue) return@run
+
+				val saturation = sliderValue.floatValue + 1f
+
+                var newMatrix = ColorMatrix()
+                newMatrix.setToSaturation(saturation)
+
+                saturationMatrix = newMatrix
+
+                saturationValue = sliderValue.floatValue
+            }
+
+            else -> {}
+        }
+    }
+
+    LazyRow (
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceEvenly,
         modifier = Modifier
             .fillMaxSize(1f)
     ) {
         item {
-            EditingViewBottomAppBarItem(text = "Contrast", iconResId = R.drawable.contrast)
+            EditingViewBottomAppBarItem(
+                text = "Contrast",
+                iconResId = R.drawable.contrast,
+                selected = selectedProperty == SelectedImageProperties.Contrast
+            ) {
+                selectedProperty = SelectedImageProperties.Contrast
+
+                sliderValue.floatValue = contrastValue
+            }
         }
 
         item {
-            EditingViewBottomAppBarItem(text = "Brightness", iconResId = R.drawable.palette)
+            EditingViewBottomAppBarItem(
+                text = "Brightness",
+                iconResId = R.drawable.palette,
+                selected = selectedProperty == SelectedImageProperties.Brightness
+            ) {
+                selectedProperty = SelectedImageProperties.Brightness
+
+                sliderValue.floatValue = brightnessValue
+            }
         }
 
         item {
-            EditingViewBottomAppBarItem(text = "Saturation", iconResId = R.drawable.resolution)
+            EditingViewBottomAppBarItem(
+                text = "Saturation",
+                iconResId = R.drawable.resolution,
+                selected = selectedProperty == SelectedImageProperties.Saturation
+            ) {
+                selectedProperty = SelectedImageProperties.Saturation
+
+                sliderValue.floatValue = saturationValue
+            }
         }
 
         item {
@@ -1715,7 +1887,7 @@ fun AdjustTools() {
         }
 
         item {
-            EditingViewBottomAppBarItem(text = "Tint", iconResId = R.drawable.colors)
+            EditingViewBottomAppBarItem(text = "Color Tint", iconResId = R.drawable.colors)
         }
     }
 }

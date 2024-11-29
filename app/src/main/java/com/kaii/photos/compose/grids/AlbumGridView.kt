@@ -80,7 +80,7 @@ fun AlbumsGridView(navController: NavHostController) {
 	val mediaStoreData = albumsViewModel.mediaStoreData.collectAsState()
 	val actualData = mediaStoreData.value
 
-    Column (
+	Column (
         modifier = Modifier
 			.fillMaxSize(1f)
 			.background(CustomMaterialTheme.colorScheme.background)

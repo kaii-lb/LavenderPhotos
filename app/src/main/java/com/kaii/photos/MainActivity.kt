@@ -118,14 +118,11 @@ class MainActivity : ComponentActivity() {
             )
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             arrayOf(
-                Manifest.permission.MANAGE_MEDIA,
-                Manifest.permission.MANAGE_EXTERNAL_STORAGE,
                 Manifest.permission.READ_EXTERNAL_STORAGE,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE
             )
         } else {
             arrayOf(
-                Manifest.permission.MANAGE_EXTERNAL_STORAGE,
                 Manifest.permission.READ_EXTERNAL_STORAGE,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE
             )
