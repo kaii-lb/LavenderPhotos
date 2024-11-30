@@ -190,7 +190,9 @@ class MainActivity : ComponentActivity() {
 
         if (!Environment.isExternalStorageManager()) {
             val intent = Intent(android.provider.Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+           	val intent2 = Intent(android.provider.Settings.ACTION_REQUEST_MANAGE_MEDIA)
             startActivity(intent)
+           	startActivity(intent2)
 
             val request =
                 registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { _ ->
@@ -251,7 +253,9 @@ class MainActivity : ComponentActivity() {
                         val name = perm.key
                         val granted = perm.value
 
-                        if (granted) failedList.remove(name)
+                        if (granted) {
+                        	failedList.remove(name)
+                       	}
                         else {
                             val shortName = name.split(".").last()
                             Toast.makeText(

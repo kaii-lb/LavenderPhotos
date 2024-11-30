@@ -1,5 +1,6 @@
 package com.kaii.photos.helpers
 
+import android.app.Activity
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
@@ -73,23 +74,32 @@ fun permanentlyDeletePhotoList(context: Context, list: List<Uri>) {
 fun setTrashedOnPhotoList(context: Context, list: List<Pair<Uri, String>>, trashed: Boolean) {
     val contentResolver = context.contentResolver
 
-    val trashedValues = ContentValues().apply {
-        put(MediaColumns.IS_TRASHED, trashed)
-    }
+	val currentTime = System.currentTimeMillis()
+	list.map { it.second }.forEach { path ->
+		File(path).setLastModified(currentTime)
+	}
+	val request = android.provider.MediaStore.createTrashRequest(contentResolver, list.map { it.first }, true)
 
-    val chunks = list.chunked(25)
+	(context as Activity).startIntentSenderForResult(request.intentSender, 69, null, 0, 0, 0)
 
-    val currentTime = System.currentTimeMillis()
-    CoroutineScope(Dispatchers.IO).launch {
-        for (chunk in chunks) {
-            chunk.forEach { (uri, path) ->
-				File(path).setLastModified(currentTime)
-                contentResolver.update(uri, trashedValues, null)
-            }
-
-            delay(3000)
-        }
-    }
+// TODO: check if has MANAGE_MEDIA permission and do either this or just show the shitty dialog
+//     val trashedValues = ContentValues().apply {
+//         put(MediaColumns.IS_TRASHED, trashed)
+//     }
+// 
+//     val chunks = list.chunked(25)
+// 
+//     val currentTime = System.currentTimeMillis()
+//     CoroutineScope(Dispatchers.IO).launch {
+//         for (chunk in chunks) {
+//             chunk.forEach { (uri, path) ->
+// 				File(path).setLastModified(currentTime)
+//                 contentResolver.update(uri, trashedValues, null)
+//             }
+// 
+//             delay(3000)
+//         }
+//     }
 }
 
 fun shareImage(uri: Uri, context: Context) {

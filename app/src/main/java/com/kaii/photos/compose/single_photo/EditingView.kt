@@ -158,7 +158,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.launch
 import kotlin.math.abs
+import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.pow
+import kotlin.math.ln
 
 @Composable
 fun EditingView(
@@ -1718,19 +1721,8 @@ enum class SelectedImageProperties {
     WhitePoint,
     Shadows,
     Warmth,
-    Tint
+    ColorTint
 }
-
-data class ImageProperties(
-    val contrast: Float = 0f,
-    val brightness: ColorMatrix = ColorMatrix(),
-    val saturation: Float = 0f,
-    val blackPoint: Float = 0f,
-    val whitePoint: Float = 0f,
-    val shadows: Float = 0f,
-    val warmth: Float = 0f,
-    val tint: Float = 0f
-)
 
 @Composable
 fun AdjustTools(
@@ -1742,26 +1734,48 @@ fun AdjustTools(
     var contrastValue by rememberSaveable { mutableFloatStateOf(0f) }
     var brightnessValue by rememberSaveable { mutableFloatStateOf(0f) }
     var saturationValue by rememberSaveable { mutableFloatStateOf(0f) }
+    var blackPointValue by rememberSaveable { mutableFloatStateOf(0f) }
+    var warmthValue by rememberSaveable { mutableFloatStateOf(0f) }
 
-	val emptyFloatArray = floatArrayOf(
-		1f, 0f, 0f, 0f, 1f,
-		0f, 1f, 0f, 0f, 1f,
-		0f, 0f, 1f, 0f, 1f,
+	val additiveEmptyArray = floatArrayOf(
+		0f, 0f, 0f, 0f, 0f,
+		0f, 0f, 0f, 0f, 0f,
+		0f, 0f, 0f, 0f, 0f,
+		0f, 0f, 0f, 0f, 0f
+	)
+
+	val multiplicativeEmptyArray = floatArrayOf(
+		1f, 1f, 1f, 0f, 1f,
+		1f, 1f, 1f, 0f, 1f,
+		1f, 1f, 1f, 0f, 1f,
 		0f, 0f, 0f, 1f, 0f
 	)
 
-	var contrastMatrix by remember { mutableStateOf(ColorMatrix(emptyFloatArray)) }
-	var brightnessMatrix by remember { mutableStateOf(ColorMatrix(emptyFloatArray)) }
-	var saturationMatrix by remember { mutableStateOf(ColorMatrix(emptyFloatArray)) }
+	var contrastMatrix by remember { mutableStateOf(ColorMatrix(multiplicativeEmptyArray)) }
+	var brightnessMatrix by remember { mutableStateOf(ColorMatrix(additiveEmptyArray)) }
 
-	LaunchedEffect(contrastMatrix, brightnessMatrix, saturationMatrix) {
+	var saturationMatrix by remember { mutableStateOf(
+		ColorMatrix(
+			ColorMatrix().apply {
+				setToSaturation(1f)
+                set(0, 4, 1f)
+                set(1, 4, 1f)
+                set(2, 4, 1f)
+			}.values
+		)
+	)}
+
+	var blackPointMatrix by remember { mutableStateOf(ColorMatrix(additiveEmptyArray)) }
+	var warmthMatrix by remember { mutableStateOf(ColorMatrix(multiplicativeEmptyArray)) }
+
+	LaunchedEffect(contrastMatrix, brightnessMatrix, saturationMatrix, blackPointMatrix, warmthMatrix) {
 		val floatArray = emptyList<Float>().toMutableList()
 
-		if (contrastMatrix.values == emptyFloatArray) return@LaunchedEffect
-
 		for (i in 0..contrastMatrix.values.size - 1) {
-			val newElement = contrastMatrix.values[i] * brightnessMatrix.values[i] + saturationMatrix.values[i]
-			floatArray.add(newElement)
+			val multiply = contrastMatrix.values[i] * saturationMatrix.values[i] * warmthMatrix.values[i]
+			val add = brightnessMatrix.values[i] + blackPointMatrix.values[i]
+
+			floatArray.add(multiply + add)
 		}
 
 		colorMatrix.value = ColorMatrix(floatArray.toTypedArray().toFloatArray())
@@ -1772,17 +1786,17 @@ fun AdjustTools(
             SelectedImageProperties.Contrast -> run {
             	if (sliderValue.floatValue == contrastValue) return@run
 
-				val contrast = sliderValue.floatValue * 0.85f
+				val contrast = sliderValue.floatValue + 1f
+				val offset = 0.5f * (1f - contrast) * 255f
+
                 val floatArray = floatArrayOf(
-                    contrast, 0f, 0f, 0f, 1f,
-                    0f, contrast, 0f, 0f, 1f,
-                    0f, 0f, contrast, 0f, 1f,
-                    0f, 0f, 0f,       1f, 0f
+                	contrast, contrast, contrast, 0f, offset,
+                	contrast, contrast, contrast, 0f, offset,
+                	contrast, contrast, contrast, 0f, offset,
+                	0f,       0f,       0f,       1f, 0f
                 )
 
-                val newMatrix = ColorMatrix(floatArray)
-
-                contrastMatrix = newMatrix
+                contrastMatrix = ColorMatrix(floatArray)
 
                 contrastValue = sliderValue.floatValue
             }
@@ -1790,12 +1804,12 @@ fun AdjustTools(
             SelectedImageProperties.Brightness -> run {
             	if (sliderValue.floatValue == brightnessValue) return@run
 
-                val brightness = 225f * sliderValue.floatValue
+				val brightness = sliderValue.floatValue
                 val floatArray = floatArrayOf(
-                	1f, 0f, 0f, 0f, brightness,
-                	0f, 1f, 0f, 0f, brightness,
-                	0f, 0f, 1f, 0f, brightness,
-                	0f, 0f, 0f, 1f, 0f
+                	brightness, 0f, 0f, 0f, 0f,
+                	0f, brightness, 0f, 0f, 0f,
+                	0f, 0f, brightness, 0f, 0f,
+                	0f, 0f, 0f,         0f, 0f
                 )
 
                 val newMatrix = ColorMatrix(floatArray)
@@ -1812,10 +1826,85 @@ fun AdjustTools(
 
                 var newMatrix = ColorMatrix()
                 newMatrix.setToSaturation(saturation)
+                newMatrix[0,4] = 1f
+                newMatrix[1,4] = 1f
+                newMatrix[2,4] = 1f
 
                 saturationMatrix = newMatrix
 
                 saturationValue = sliderValue.floatValue
+            }
+
+            SelectedImageProperties.BlackPoint -> run {
+            	if (sliderValue.floatValue == blackPointValue) return@run
+
+                val blackPoint = 150f * sliderValue.floatValue
+                val floatArray = floatArrayOf(
+                	0f, 0f, 0f, 0f, blackPoint,
+                	0f, 0f, 0f, 0f, blackPoint,
+                	0f, 0f, 0f, 0f, blackPoint,
+                	0f, 0f, 0f, 0f, 0f
+                )
+
+                blackPointMatrix = ColorMatrix(floatArray)
+
+                blackPointValue = sliderValue.floatValue
+            }
+
+            SelectedImageProperties.Warmth -> run {
+            	if (sliderValue.floatValue == warmthValue) return@run
+
+				val slider = (sliderValue.floatValue * 0.4375f + 0.65f)
+
+				// taken from https://tannerhelland.com/2012/09/18/convert-temperature-rgb-algorithm-code.html and modified for brighter blues
+                val warmth = slider * 100f
+				var red = 0f
+				var green = 0f
+				var blue = 0f
+
+				if (warmth <= 66f) {
+					red = 255f
+				}
+				else {
+					red = warmth - 60
+					red = 329.698727446f * (red.pow(-0.1332047592f))
+					red = red.coerceIn(0f, 255f)
+				}
+
+				if (warmth <= 66) {
+					green = ln(warmth) * 99.4708025861f
+					green -= 161.1195681661f
+					green = green.coerceIn(0f, 255f)
+				} else {
+					green = warmth - 60f
+					green = 288.1221695283f * green.pow(-0.0755148492f)
+					green = green.coerceIn(0f, 255f)
+				}
+
+				if (warmth <= 19f) {
+					blue = 0f
+				} else {
+					blue = warmth
+					blue = 138.5177312231f * ln(blue) - 305.0447927307f
+
+					blue = max(blue, blue * (1.25f * slider))
+					blue = blue.coerceAtLeast(0f)
+				}
+
+				red /= 255
+				green /= 255f
+				blue /= 255
+
+                val floatArray = floatArrayOf(
+                	red, green, blue, 0f, 1f,
+                	red, green, blue, 0f, 1f,
+                	red, green, blue, 0f, 1f,
+                	0f, 0f, 0f, 1f, 0f
+                )
+
+                warmthMatrix = ColorMatrix(floatArray)
+
+                warmthValue = sliderValue.floatValue
             }
 
             else -> {}
@@ -1867,27 +1956,49 @@ fun AdjustTools(
         item {
             EditingViewBottomAppBarItem(
                 text = "Black Point",
-                iconResId = R.drawable.file_is_selected_background
-            )
+                iconResId = R.drawable.file_is_selected_background,
+                selected = selectedProperty == SelectedImageProperties.BlackPoint
+            ) {
+            	selectedProperty = SelectedImageProperties.BlackPoint
+
+            	sliderValue.floatValue = blackPointValue
+            }
         }
 
         item {
             EditingViewBottomAppBarItem(
                 text = "White Point",
-                iconResId = R.drawable.file_not_selected_background
+                iconResId = R.drawable.file_not_selected_background,
+                selected = selectedProperty == SelectedImageProperties.WhitePoint
             )
         }
 
         item {
-            EditingViewBottomAppBarItem(text = "Shadows", iconResId = R.drawable.shadow)
+            EditingViewBottomAppBarItem(
+            	text = "Shadows",
+            	iconResId = R.drawable.shadow,
+            	selected = selectedProperty == SelectedImageProperties.Shadows
+           	)
         }
 
         item {
-            EditingViewBottomAppBarItem(text = "Warmth", iconResId = R.drawable.skillet)
+            EditingViewBottomAppBarItem(
+            	text = "Warmth",
+            	iconResId = R.drawable.skillet,
+            	selected = selectedProperty == SelectedImageProperties.Warmth
+           	) {
+            	selectedProperty = SelectedImageProperties.Warmth
+
+            	sliderValue.floatValue = warmthValue
+           	}
         }
 
         item {
-            EditingViewBottomAppBarItem(text = "Color Tint", iconResId = R.drawable.colors)
+            EditingViewBottomAppBarItem(
+            	text = "Color Tint",
+            	iconResId = R.drawable.colors,
+            	selected = selectedProperty == SelectedImageProperties.ColorTint
+           	)
         }
     }
 }
