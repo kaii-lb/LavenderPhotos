@@ -30,7 +30,7 @@ fun Path.checkHasFiles(flipDotFileMatch: Boolean = false): Boolean? {
     try {
         while (folder.hasNext()) {
             val path = folder.next()
-			
+
 			val matchForDotFiles = Regex("\\.[A-z]")
 			val file = path.toFile()
 			val isAlr = file.absolutePath.contains(matchForDotFiles) && file.name.startsWith(".")

@@ -13,6 +13,7 @@ import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -50,6 +51,8 @@ fun LockedFolderView(navController: NavHostController, window: Window) {
         window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
         navController.popBackStack()
     }
+
+    // TODO: exit secure folder when app state changes (go to homescreen, recent, etc while secure folder open)
 
     val secureFolder = File(LocalContext.current.getAppLockedFolderDirectory())
     val fileList = secureFolder.listFiles() ?: return

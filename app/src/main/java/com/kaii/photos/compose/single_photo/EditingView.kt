@@ -20,8 +20,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.gestures.calculateRotation
+import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
@@ -33,6 +33,7 @@ import androidx.compose.foundation.layout.BoxWithConstraintsScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateStartPadding
@@ -42,7 +43,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.safeContent
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -107,7 +107,6 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.colorspace.Rgb
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.rotate
@@ -133,10 +132,8 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.unit.toSize
-import androidx.compose.ui.util.fastCoerceIn
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
-import com.bumptech.glide.Glide
 import com.kaii.photos.R
 import com.kaii.photos.compose.BottomAppBarItem
 import com.kaii.photos.compose.ConfirmationDialog
@@ -144,24 +141,22 @@ import com.kaii.photos.compose.CroppingRatioBottomSheet
 import com.kaii.photos.compose.SetEditingViewDrawableTextBottomSheet
 import com.kaii.photos.helpers.ColorIndicator
 import com.kaii.photos.helpers.CustomMaterialTheme
-import com.kaii.photos.helpers.Modification
 import com.kaii.photos.helpers.DrawablePath
 import com.kaii.photos.helpers.DrawableText
 import com.kaii.photos.helpers.DrawingColors
 import com.kaii.photos.helpers.DrawingPaints
 import com.kaii.photos.helpers.ExtendedPaint
+import com.kaii.photos.helpers.Modification
 import com.kaii.photos.helpers.PaintType
 import com.kaii.photos.helpers.savePathListToBitmap
 import com.kaii.photos.helpers.toOffset
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.launch
 import kotlin.math.abs
+import kotlin.math.ln
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
-import kotlin.math.ln
 
 @Composable
 fun EditingView(
@@ -383,18 +378,20 @@ fun EditingView(
                 }
             }
 
-            val canvasAppropriateImage by remember { derivedStateOf {
-	       		val imageRatio = image.width.toFloat() / image.height.toFloat()
-	       		val canvasWidth = size.width * imageRatio
-	       		val canvasHeight = canvasWidth / imageRatio
+            val canvasAppropriateImage by remember {
+                derivedStateOf {
+                    val imageRatio = image.width.toFloat() / image.height.toFloat()
+                    val canvasWidth = size.width * imageRatio
+                    val canvasHeight = canvasWidth / imageRatio
 
-				Bitmap.createScaledBitmap(
-					image.asAndroidBitmap(),
-					canvasWidth.toInt(),
-					canvasHeight.toInt(),
-					true
-				).asImageBitmap()
-            }}
+                    Bitmap.createScaledBitmap(
+                        image.asAndroidBitmap(),
+                        canvasWidth.toInt(),
+                        canvasHeight.toInt(),
+                        true
+                    ).asImageBitmap()
+                }
+            }
 
             Canvas(
                 modifier = Modifier
@@ -509,7 +506,7 @@ fun EditingView(
                 }
 
                 LaunchedEffect(croppingRatio.floatValue) {
-                	if (croppingRatio.floatValue == 0f) return@LaunchedEffect
+                    if (croppingRatio.floatValue == 0f) return@LaunchedEffect
 
                     val width = topRightOffset.x - topLeftOffset.x
                     val height = bottomRightOffset.y - topRightOffset.y
@@ -524,8 +521,8 @@ fun EditingView(
                             ).coerceIn(
                                 minX = 0,
                                 minY = 0,
-                                maxX = (topRightOffset.x - (with (localDensity) { 56.dp.toPx() } * croppingRatio.floatValue).toInt()).coerceAtLeast(0),
-                                maxY = (bottomLeftOffset.y - with (localDensity) { 56.dp.toPx().toInt() }).coerceAtLeast(0)
+                                maxX = (topRightOffset.x - (with(localDensity) { 56.dp.toPx() } * croppingRatio.floatValue).toInt()).coerceAtLeast(0),
+                                maxY = (bottomLeftOffset.y - with(localDensity) { 56.dp.toPx().toInt() }).coerceAtLeast(0)
                             )
                     } else {
                         // if not freeform and tall ratio
@@ -537,8 +534,8 @@ fun EditingView(
                             ).coerceIn(
                                 minX = 0,
                                 minY = 0,
-                                maxX = (topRightOffset.x - with (localDensity) { 56.dp.toPx() }.toInt()).coerceAtLeast(0),
-                                maxY = (bottomLeftOffset.y - (with (localDensity) { 56.dp.toPx() } / croppingRatio.floatValue).toInt()).coerceAtLeast(0)
+                                maxX = (topRightOffset.x - with(localDensity) { 56.dp.toPx() }.toInt()).coerceAtLeast(0),
+                                maxY = (bottomLeftOffset.y - (with(localDensity) { 56.dp.toPx() } / croppingRatio.floatValue).toInt()).coerceAtLeast(0)
                             )
                     }
 
@@ -762,7 +759,7 @@ fun EditingView(
                                         )
 
                                     if (croppingRatio.floatValue == 0f) {
-                                        //if (freeform crop)
+                                        // if (freeform crop)
                                         topLeftOffset = topLeftOffsetPos
                                     } else if (croppingRatio.floatValue >= 1f) {
                                         // if not freeform and wide ratio
@@ -1309,7 +1306,7 @@ private fun EditingViewTopBar(
                 }
             },
             actions = {
-                Row (
+                Row(
                     modifier = Modifier
                         .padding(0.dp, 0.dp, 8.dp, 0.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -1322,10 +1319,10 @@ private fun EditingViewTopBar(
                             strokeCap = StrokeCap.Round,
                             trackColor = Color.Transparent,
                             modifier = Modifier
-                            	.size(28.dp)
+                                .size(28.dp)
                         )
 
-                        Spacer (modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
                     }
 
                     Button(
@@ -1404,6 +1401,7 @@ private fun EditingViewBottomBar(
     colorMatrix: MutableState<ColorMatrix>,
     resetCropping: () -> Unit
 ) {
+	val localDensity = LocalDensity.current
     val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     var showInLandscape by remember { mutableStateOf(false) }
 
@@ -1472,30 +1470,78 @@ private fun EditingViewBottomBar(
             }
         }
 
-	    val animatedSliderHeight by animateDpAsState(
-	        targetValue = if (pagerState.currentPage == 1) 48.dp else 0.dp,
-	        animationSpec = tween(
-	            durationMillis = 350
-	        ),
-	        label = "Animate editing view bottom bar slider height"
-	    )
+        val animatedSliderHeight by animateDpAsState(
+            targetValue = if (pagerState.currentPage == 1) 48.dp else 0.dp,
+            animationSpec = tween(
+                durationMillis = 350
+            ),
+            label = "Animate editing view bottom bar slider height"
+        )
 
-		Box (
-			modifier = Modifier
-				.height(animatedSliderHeight)
-				.clipToBounds()
-		) {
-			Slider (
-				value = adjustSliderValue.floatValue,
-				onValueChange = {
-					adjustSliderValue.floatValue = it
-				},
-				valueRange = -1f..1f,
+        BoxWithConstraints (
+            modifier = Modifier
+       			.fillMaxWidth(1f)
+                .height(animatedSliderHeight)
+                .padding(16.dp, 0.dp)
+        ) {
+        	val multiplier = adjustSliderValue.floatValue * 0.5f + 0.5f
+        	val neededOffset = with (localDensity) {
+        		val position = multiplier * maxWidth.toPx() - 32.dp.toPx()
+        		position.coerceIn(0f, maxWidth.toPx() - 64.dp.toPx())
+        	}
+
+            Box(
+                modifier = Modifier
+					.offset {
+						IntOffset(neededOffset.toInt(), with (localDensity) { -24.dp.toPx().toInt() })
+					}
+                    .height(32.dp)
+                    .width(64.dp)
+                    .clip(CircleShape)
+                    .background(CustomMaterialTheme.colorScheme.primary)
+            ) {
+                Text(
+                    text = (adjustSliderValue.floatValue * 100f).toInt().toString(),
+                    color = CustomMaterialTheme.colorScheme.onPrimary,
+                    fontSize = TextUnit(14f, TextUnitType.Sp),
+                    modifier = Modifier
+                    	.wrapContentSize()
+                    	.align(Alignment.Center)
+                )
+            }
+
+			Box (
 				modifier = Modifier
-					.fillMaxWidth(1f)
-					.padding(16.dp, 0.dp)
-			)
-		}
+					.align(Alignment.Center)
+					.clipToBounds()
+			) {
+	            Slider(
+	                value = adjustSliderValue.floatValue,
+	                onValueChange = {
+	                    adjustSliderValue.floatValue = it
+	                },
+	                valueRange = -1f..1f,
+	                thumb = { state ->
+	                    Box(
+	                        modifier = Modifier
+	                            .width(16.dp)
+	                            .height(24.dp)
+	                    ) {
+	                        Box(
+	                            modifier = Modifier
+	                                .size(16.dp)
+	                                .clip(CircleShape)
+	                                .background(CustomMaterialTheme.colorScheme.primary)
+	                                .align(Alignment.Center)
+	                        )
+	                    }
+	                },
+	                modifier = Modifier
+	                    .fillMaxWidth(1f)
+	                    .align(Alignment.Center)
+	            )
+			}
+        }
 
         Column(
             modifier = Modifier
@@ -1737,63 +1783,65 @@ fun AdjustTools(
     var blackPointValue by rememberSaveable { mutableFloatStateOf(0f) }
     var warmthValue by rememberSaveable { mutableFloatStateOf(0f) }
 
-	val additiveEmptyArray = floatArrayOf(
-		0f, 0f, 0f, 0f, 0f,
-		0f, 0f, 0f, 0f, 0f,
-		0f, 0f, 0f, 0f, 0f,
-		0f, 0f, 0f, 0f, 0f
-	)
+    val additiveEmptyArray = floatArrayOf(
+        0f, 0f, 0f, 0f, 0f,
+        0f, 0f, 0f, 0f, 0f,
+        0f, 0f, 0f, 0f, 0f,
+        0f, 0f, 0f, 0f, 0f
+    )
 
-	val multiplicativeEmptyArray = floatArrayOf(
-		1f, 1f, 1f, 0f, 1f,
-		1f, 1f, 1f, 0f, 1f,
-		1f, 1f, 1f, 0f, 1f,
-		0f, 0f, 0f, 1f, 0f
-	)
+    val multiplicativeEmptyArray = floatArrayOf(
+        1f, 1f, 1f, 0f, 1f,
+        1f, 1f, 1f, 0f, 1f,
+        1f, 1f, 1f, 0f, 1f,
+        0f, 0f, 0f, 1f, 0f
+    )
 
-	var contrastMatrix by remember { mutableStateOf(ColorMatrix(multiplicativeEmptyArray)) }
-	var brightnessMatrix by remember { mutableStateOf(ColorMatrix(additiveEmptyArray)) }
+    var contrastMatrix by remember { mutableStateOf(ColorMatrix(multiplicativeEmptyArray)) }
+    var brightnessMatrix by remember { mutableStateOf(ColorMatrix(additiveEmptyArray)) }
 
-	var saturationMatrix by remember { mutableStateOf(
-		ColorMatrix(
-			ColorMatrix().apply {
-				setToSaturation(1f)
-                set(0, 4, 1f)
-                set(1, 4, 1f)
-                set(2, 4, 1f)
-			}.values
-		)
-	)}
+    var saturationMatrix by remember {
+        mutableStateOf(
+            ColorMatrix(
+                ColorMatrix().apply {
+                    setToSaturation(1f)
+                    set(0, 4, 1f)
+                    set(1, 4, 1f)
+                    set(2, 4, 1f)
+                }.values
+            )
+        )
+    }
 
-	var blackPointMatrix by remember { mutableStateOf(ColorMatrix(additiveEmptyArray)) }
-	var warmthMatrix by remember { mutableStateOf(ColorMatrix(multiplicativeEmptyArray)) }
+    var blackPointMatrix by remember { mutableStateOf(ColorMatrix(additiveEmptyArray)) }
+    var warmthMatrix by remember { mutableStateOf(ColorMatrix(multiplicativeEmptyArray)) }
 
-	LaunchedEffect(contrastMatrix, brightnessMatrix, saturationMatrix, blackPointMatrix, warmthMatrix) {
-		val floatArray = emptyList<Float>().toMutableList()
+    LaunchedEffect(contrastMatrix, brightnessMatrix, saturationMatrix, blackPointMatrix, warmthMatrix) {
+        val floatArray = emptyList<Float>().toMutableList()
 
-		for (i in 0..contrastMatrix.values.size - 1) {
-			val multiply = contrastMatrix.values[i] * saturationMatrix.values[i] * warmthMatrix.values[i]
-			val add = brightnessMatrix.values[i] + blackPointMatrix.values[i]
+        for (i in 0..<contrastMatrix.values.size) {
+            val multiply = contrastMatrix.values[i] * saturationMatrix.values[i] * warmthMatrix.values[i]
+            val add = brightnessMatrix.values[i] + blackPointMatrix.values[i]
 
-			floatArray.add(multiply + add)
-		}
+            floatArray.add(multiply + add)
+        }
 
-		colorMatrix.value = ColorMatrix(floatArray.toTypedArray().toFloatArray())
-	}
+        colorMatrix.value = ColorMatrix(floatArray.toTypedArray().toFloatArray())
+    }
 
     LaunchedEffect(sliderValue.floatValue) {
         when (selectedProperty) {
             SelectedImageProperties.Contrast -> run {
-            	if (sliderValue.floatValue == contrastValue) return@run
+                if (sliderValue.floatValue == contrastValue) return@run
 
-				val contrast = sliderValue.floatValue + 1f
-				val offset = 0.5f * (1f - contrast) * 255f
+                val contrast = sliderValue.floatValue + 1f
+                val offset = 0.5f * (1f - contrast) * 255f
 
                 val floatArray = floatArrayOf(
-                	contrast, contrast, contrast, 0f, offset,
-                	contrast, contrast, contrast, 0f, offset,
-                	contrast, contrast, contrast, 0f, offset,
-                	0f,       0f,       0f,       1f, 0f
+                    contrast, contrast, contrast, 0f, offset,
+                    contrast, contrast, contrast, 0f, offset,
+                    contrast, contrast, contrast, 0f, offset,
+                    0f, 0f, 0f, 1f, 0f
                 )
 
                 contrastMatrix = ColorMatrix(floatArray)
@@ -1802,14 +1850,14 @@ fun AdjustTools(
             }
 
             SelectedImageProperties.Brightness -> run {
-            	if (sliderValue.floatValue == brightnessValue) return@run
+                if (sliderValue.floatValue == brightnessValue) return@run
 
-				val brightness = sliderValue.floatValue
+                val brightness = sliderValue.floatValue
                 val floatArray = floatArrayOf(
-                	brightness, 0f, 0f, 0f, 0f,
-                	0f, brightness, 0f, 0f, 0f,
-                	0f, 0f, brightness, 0f, 0f,
-                	0f, 0f, 0f,         0f, 0f
+                    brightness, 0f, 0f, 0f, 0f,
+                    0f, brightness, 0f, 0f, 0f,
+                    0f, 0f, brightness, 0f, 0f,
+                    0f, 0f, 0f, 0f, 0f
                 )
 
                 val newMatrix = ColorMatrix(floatArray)
@@ -1820,15 +1868,15 @@ fun AdjustTools(
             }
 
             SelectedImageProperties.Saturation -> run {
-            	if (sliderValue.floatValue == saturationValue) return@run
+                if (sliderValue.floatValue == saturationValue) return@run
 
-				val saturation = sliderValue.floatValue + 1f
+                val saturation = sliderValue.floatValue + 1f
 
-                var newMatrix = ColorMatrix()
+                val newMatrix = ColorMatrix()
                 newMatrix.setToSaturation(saturation)
-                newMatrix[0,4] = 1f
-                newMatrix[1,4] = 1f
-                newMatrix[2,4] = 1f
+                newMatrix[0, 4] = 1f
+                newMatrix[1, 4] = 1f
+                newMatrix[2, 4] = 1f
 
                 saturationMatrix = newMatrix
 
@@ -1836,14 +1884,14 @@ fun AdjustTools(
             }
 
             SelectedImageProperties.BlackPoint -> run {
-            	if (sliderValue.floatValue == blackPointValue) return@run
+                if (sliderValue.floatValue == blackPointValue) return@run
 
                 val blackPoint = 150f * sliderValue.floatValue
                 val floatArray = floatArrayOf(
-                	0f, 0f, 0f, 0f, blackPoint,
-                	0f, 0f, 0f, 0f, blackPoint,
-                	0f, 0f, 0f, 0f, blackPoint,
-                	0f, 0f, 0f, 0f, 0f
+                    0f, 0f, 0f, 0f, blackPoint,
+                    0f, 0f, 0f, 0f, blackPoint,
+                    0f, 0f, 0f, 0f, blackPoint,
+                    0f, 0f, 0f, 0f, 0f
                 )
 
                 blackPointMatrix = ColorMatrix(floatArray)
@@ -1852,54 +1900,54 @@ fun AdjustTools(
             }
 
             SelectedImageProperties.Warmth -> run {
-            	if (sliderValue.floatValue == warmthValue) return@run
+                if (sliderValue.floatValue == warmthValue) return@run
 
-				val slider = (sliderValue.floatValue * 0.4375f + 0.65f)
+                val slider = (sliderValue.floatValue * 0.4375f + 0.65f)
 
-				// taken from https://tannerhelland.com/2012/09/18/convert-temperature-rgb-algorithm-code.html and modified for brighter blues
+                // taken from https://tannerhelland.com/2012/09/18/convert-temperature-rgb-algorithm-code.html and modified for brighter blues
+                // values rounded because idk if the quality difference is enough to warrant casting 700 things to float and double
                 val warmth = slider * 100f
-				var red = 0f
-				var green = 0f
-				var blue = 0f
+                var red: Float
+                var green: Float
+                var blue: Float
 
-				if (warmth <= 66f) {
-					red = 255f
-				}
-				else {
-					red = warmth - 60
-					red = 329.698727446f * (red.pow(-0.1332047592f))
-					red = red.coerceIn(0f, 255f)
-				}
+                if (warmth <= 66f) {
+                    red = 255f
+                } else {
+                    red = warmth - 60f
+                    red = 329.69873f * red.pow(-0.13320476f)
+                    red = red.coerceIn(0f, 255f)
+                }
 
-				if (warmth <= 66) {
-					green = ln(warmth) * 99.4708025861f
-					green -= 161.1195681661f
-					green = green.coerceIn(0f, 255f)
-				} else {
-					green = warmth - 60f
-					green = 288.1221695283f * green.pow(-0.0755148492f)
-					green = green.coerceIn(0f, 255f)
-				}
+                if (warmth <= 66) {
+                    green = ln(warmth) * 99.4708f
+                    green -= 161.11957f
+                    green = green.coerceIn(0f, 255f)
+                } else {
+                    green = warmth - 60f
+                    green = 288.12216f * green.pow(-0.075514846f)
+                    green = green.coerceIn(0f, 255f)
+                }
 
-				if (warmth <= 19f) {
-					blue = 0f
-				} else {
-					blue = warmth
-					blue = 138.5177312231f * ln(blue) - 305.0447927307f
+                if (warmth <= 19f) {
+                    blue = 0f
+                } else {
+                    blue = warmth
+                    blue = 138.51773f * ln(blue) - 305.0448f
 
-					blue = max(blue, blue * (1.25f * slider))
-					blue = blue.coerceAtLeast(0f)
-				}
+                    blue = max(blue, blue * (1.25f * slider))
+                    blue = blue.coerceAtLeast(0f)
+                }
 
-				red /= 255
-				green /= 255f
-				blue /= 255
+                red /= 255f
+                green /= 255f
+                blue /= 255f
 
                 val floatArray = floatArrayOf(
-                	red, green, blue, 0f, 1f,
-                	red, green, blue, 0f, 1f,
-                	red, green, blue, 0f, 1f,
-                	0f, 0f, 0f, 1f, 0f
+                    red, green, blue, 0f, 1f,
+                    red, green, blue, 0f, 1f,
+                    red, green, blue, 0f, 1f,
+                    0f, 0f, 0f, 1f, 0f
                 )
 
                 warmthMatrix = ColorMatrix(floatArray)
@@ -1911,7 +1959,7 @@ fun AdjustTools(
         }
     }
 
-    LazyRow (
+    LazyRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceEvenly,
         modifier = Modifier
@@ -1959,9 +2007,9 @@ fun AdjustTools(
                 iconResId = R.drawable.file_is_selected_background,
                 selected = selectedProperty == SelectedImageProperties.BlackPoint
             ) {
-            	selectedProperty = SelectedImageProperties.BlackPoint
+                selectedProperty = SelectedImageProperties.BlackPoint
 
-            	sliderValue.floatValue = blackPointValue
+                sliderValue.floatValue = blackPointValue
             }
         }
 
@@ -1975,30 +2023,30 @@ fun AdjustTools(
 
         item {
             EditingViewBottomAppBarItem(
-            	text = "Shadows",
-            	iconResId = R.drawable.shadow,
-            	selected = selectedProperty == SelectedImageProperties.Shadows
-           	)
+                text = "Shadows",
+                iconResId = R.drawable.shadow,
+                selected = selectedProperty == SelectedImageProperties.Shadows
+            )
         }
 
         item {
             EditingViewBottomAppBarItem(
-            	text = "Warmth",
-            	iconResId = R.drawable.skillet,
-            	selected = selectedProperty == SelectedImageProperties.Warmth
-           	) {
-            	selectedProperty = SelectedImageProperties.Warmth
+                text = "Warmth",
+                iconResId = R.drawable.skillet,
+                selected = selectedProperty == SelectedImageProperties.Warmth
+            ) {
+                selectedProperty = SelectedImageProperties.Warmth
 
-            	sliderValue.floatValue = warmthValue
-           	}
+                sliderValue.floatValue = warmthValue
+            }
         }
 
         item {
             EditingViewBottomAppBarItem(
-            	text = "Color Tint",
-            	iconResId = R.drawable.colors,
-            	selected = selectedProperty == SelectedImageProperties.ColorTint
-           	)
+                text = "Color Tint",
+                iconResId = R.drawable.colors,
+                selected = selectedProperty == SelectedImageProperties.ColorTint
+            )
         }
     }
 }
@@ -2132,7 +2180,7 @@ private fun Modifier.makeDrawCanvas(
                         val event = awaitPointerEvent()
                         val canceled = event.changes.any { it.isConsumed } || !allowedToDraw.value
 
-                        if (!canceled && (paint.value.type == PaintType.Pencil || paint.value.type == PaintType.Highlighter)  && event.changes.size == 1) {
+                        if (!canceled && (paint.value.type == PaintType.Pencil || paint.value.type == PaintType.Highlighter) && event.changes.size == 1) {
                             when (event.type) {
                                 PointerEventType.Press -> {
                                     val offset = event.changes.first().position
@@ -2328,40 +2376,40 @@ private fun Modifier.makeDrawCanvas(
                                         }
 
                                     tappedOnText?.let { text ->
-		                                val zoom = event.calculateZoom()
-		                                val rotation = event.calculateRotation()
+                                        val zoom = event.calculateZoom()
+                                        val rotation = event.calculateRotation()
 
-		                                modifications.remove(text)
+                                        modifications.remove(text)
 
-		                                // move topLeft of textbox to the text's position
-		                                // basically removes decenters the text so we can center it to that position with the new size
-		                                val oldPosition = text.position + (text.size.toOffset() / 2f)
-		                                val newWidth = text.paint.strokeWidth * zoom
+                                        // move topLeft of textbox to the text's position
+                                        // basically removes decenters the text so we can center it to that position with the new size
+                                        val oldPosition = text.position + (text.size.toOffset() / 2f)
+                                        val newWidth = text.paint.strokeWidth * zoom
 
-		                                val textLayout = textMeasurer.measure(
-		                                    text = text.text,
-		                                    style = localTextStyle.copy(
-		                                        color = paint.value.color,
-		                                        fontSize = TextUnit(
-		                                            newWidth,
-		                                            TextUnitType.Sp
-		                                        ),
-		                                        textAlign = defaultTextStyle.textAlign,
-		                                        platformStyle = defaultTextStyle.platformStyle,
-		                                        lineHeightStyle = defaultTextStyle.lineHeightStyle,
-		                                        baselineShift = defaultTextStyle.baselineShift
-		                                    )
-		                                )
-		                                val zoomedText = text.copy(
-		                                    paint = text.paint.copy(
-		                                        strokeWidth = newWidth
-		                                    ),
-		                                    size = textLayout.size,
-		                                    position = oldPosition - (textLayout.size.toOffset() / 2f), // move from old topLeft to new center
-		                                    rotation = if (zoom != 1f) text.rotation + rotation else text.rotation
-		                                )
+                                        val textLayout = textMeasurer.measure(
+                                            text = text.text,
+                                            style = localTextStyle.copy(
+                                                color = paint.value.color,
+                                                fontSize = TextUnit(
+                                                    newWidth,
+                                                    TextUnitType.Sp
+                                                ),
+                                                textAlign = defaultTextStyle.textAlign,
+                                                platformStyle = defaultTextStyle.platformStyle,
+                                                lineHeightStyle = defaultTextStyle.lineHeightStyle,
+                                                baselineShift = defaultTextStyle.baselineShift
+                                            )
+                                        )
+                                        val zoomedText = text.copy(
+                                            paint = text.paint.copy(
+                                                strokeWidth = newWidth
+                                            ),
+                                            size = textLayout.size,
+                                            position = oldPosition - (textLayout.size.toOffset() / 2f), // move from old topLeft to new center
+                                            rotation = if (zoom != 1f) text.rotation + rotation else text.rotation
+                                        )
 
-		                                modifications.add(zoomedText)
+                                        modifications.add(zoomedText)
                                     }
 
                                     isDrawing.value = true
@@ -2580,9 +2628,9 @@ private fun BoxWithConstraintsScope.DrawActionsAndColors(
 }
 
 fun checkIfClickedOnText(
-	text: DrawableText,
-	clickPosition: Offset,
-	extraPadding: Float = 0f
+    text: DrawableText,
+    clickPosition: Offset,
+    extraPadding: Float = 0f
 ): Boolean {
     val textPosition = text.position
     val textSize = text.size
@@ -2764,10 +2812,10 @@ fun IntOffset.coerceIn(
     maxX: Int,
     maxY: Int
 ): IntOffset {
-	val maxXLimited = if (maxX <= minX) minX else maxX
-	val maxYLimited = if (maxY <= minY) minY else maxY
+    val maxXLimited = if (maxX <= minX) minX else maxX
+    val maxYLimited = if (maxY <= minY) minY else maxY
 
-	return IntOffset(this.x.coerceIn(minX, maxXLimited), this.y.coerceIn(minY, maxYLimited))
+    return IntOffset(this.x.coerceIn(minX, maxXLimited), this.y.coerceIn(minY, maxYLimited))
 }
 
 operator fun IntOffset.plus(offset: Offset): IntOffset =

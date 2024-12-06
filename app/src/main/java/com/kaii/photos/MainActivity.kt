@@ -92,6 +92,10 @@ import com.kaii.photos.compose.single_photo.SinglePhotoView
 import com.kaii.photos.compose.single_photo.SingleTrashedPhotoView
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.addToAlbumsList
+import com.kaii.photos.datastore.getIsV083FirstStart
+import com.kaii.photos.datastore.setIsV083FirstStart
+import com.kaii.photos.datastore.getAlbumsList
+import com.kaii.photos.datastore.setAlbumsList
 import com.kaii.photos.helpers.EditingScreen
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MediaItemSortMode
@@ -190,9 +194,12 @@ class MainActivity : ComponentActivity() {
 
         if (!Environment.isExternalStorageManager()) {
             val intent = Intent(android.provider.Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
-           	val intent2 = Intent(android.provider.Settings.ACTION_REQUEST_MANAGE_MEDIA)
             startActivity(intent)
-           	startActivity(intent2)
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val manageMediaIntent = Intent(android.provider.Settings.ACTION_REQUEST_MANAGE_MEDIA)
+           	    startActivity(manageMediaIntent)
+            }
 
             val request =
                 registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { _ ->
@@ -317,12 +324,19 @@ class MainActivity : ComponentActivity() {
 
                 // TODO: please make it not hang lol
                 runBlocking {
+					if (context.datastore.getIsV083FirstStart(context)) {
+						context.datastore.setIsV083FirstStart(false)
+
+						val list = context.datastore.getAlbumsList(true)
+						context.datastore.setAlbumsList(list)
+					}
+
                     context.datastore.addToAlbumsList("DCIM/Camera")
-                    context.datastore.addToAlbumsList("Pictures/Screenshot")
+                    // context.datastore.addToAlbumsList("Pictures/Screenshot")
                     // context.datastore.addToAlbumsList("Pictures/Whatsapp")
                     // context.datastore.addToAlbumsList("Pictures/100PINT/Pins")
                     // context.datastore.addToAlbumsList("Movies")
-                    context.datastore.addToAlbumsList("Download")
+                    // context.datastore.addToAlbumsList("Download")
                     // context.datastore.addToAlbumsList("Pictures/Instagram")
                 }
 

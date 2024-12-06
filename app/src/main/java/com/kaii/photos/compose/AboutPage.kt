@@ -200,7 +200,7 @@ private fun VersionInfoDialog(showDialog: MutableState<Boolean>) {
             text = {
             	Column (
                     verticalArrangement = Arrangement.SpaceEvenly,
-                    horizontalAlignment = Alignment.CenterHorizontally            		
+                    horizontalAlignment = Alignment.CenterHorizontally
             	) {
 					Text (
                         text = "Changelog",
@@ -210,7 +210,7 @@ private fun VersionInfoDialog(showDialog: MutableState<Boolean>) {
                     )
 
                     Spacer (modifier = Modifier.height(8.dp))
-                    
+
 	                LazyColumn (
 	                	modifier = Modifier
 	                		.height(320.dp),

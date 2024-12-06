@@ -33,7 +33,7 @@ fun Context.getAppLockedFolderDirectory() : String {
 
 fun getAppRestoredFromLockedFolderDirectory(): String {
     val dir = "/storage/emulated/0/LavenderPhotos/Restored Files/"
-    
+
     val folder = File(dir)
     if (!folder.exists()) {
         folder.mkdirs()

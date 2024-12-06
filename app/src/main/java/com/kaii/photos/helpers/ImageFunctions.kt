@@ -58,17 +58,21 @@ enum class ImageFunctions {
 fun permanentlyDeletePhotoList(context: Context, list: List<Uri>) {
     val contentResolver = context.contentResolver
 
-    val chunks = list.chunked(100)
+	val request = android.provider.MediaStore.createDeleteRequest(contentResolver, list)
 
-    CoroutineScope(Dispatchers.IO).launch {
-        for (chunk in chunks) {
-            chunk.forEach {
-                contentResolver.delete(it, null)
-            }
+	(context as Activity).startIntentSenderForResult(request.intentSender, 69, null, 0, 0, 0)
 
-            delay(3000)
-        }
-    }
+//	   val chunks = list.chunked(100)
+
+//     CoroutineScope(Dispatchers.IO).launch {
+//         for (chunk in chunks) {
+//             chunk.forEach {
+//                 contentResolver.delete(it, null)
+//             }
+//
+//             delay(3000)
+//         }
+//     }
 }
 
 fun setTrashedOnPhotoList(context: Context, list: List<Pair<Uri, String>>, trashed: Boolean) {
@@ -86,9 +90,9 @@ fun setTrashedOnPhotoList(context: Context, list: List<Pair<Uri, String>>, trash
 //     val trashedValues = ContentValues().apply {
 //         put(MediaColumns.IS_TRASHED, trashed)
 //     }
-// 
+//
 //     val chunks = list.chunked(25)
-// 
+//
 //     val currentTime = System.currentTimeMillis()
 //     CoroutineScope(Dispatchers.IO).launch {
 //         for (chunk in chunks) {
@@ -96,7 +100,7 @@ fun setTrashedOnPhotoList(context: Context, list: List<Pair<Uri, String>>, trash
 // 				File(path).setLastModified(currentTime)
 //                 contentResolver.update(uri, trashedValues, null)
 //             }
-// 
+//
 //             delay(3000)
 //         }
 //     }
@@ -128,10 +132,7 @@ fun moveImageToLockedFolder(absolutePath: String, id: Long, context: Context) {
 
     val lastModified = System.currentTimeMillis()
     CoroutineScope(EmptyCoroutineContext + CoroutineName("hide_file_context")).launch {
-        Path(copyToPath).setAttribute(
-            BasicFileAttributes::lastModifiedTime.name,
-            FileTime.fromMillis(lastModified)
-        )
+        File(copyToPath).setLastModified(lastModified)
 
         applicationDatabase.securedItemEntityDao().insertEntity(
             SecuredItemEntity(
@@ -141,7 +142,6 @@ fun moveImageToLockedFolder(absolutePath: String, id: Long, context: Context) {
         )
         applicationDatabase.mediaEntityDao().deleteEntityById(id)
     }
-    File(copyToPath).lastModified()
 }
 
 /** @param path is the secured folder path (/data/ path) to this item */
@@ -157,24 +157,22 @@ fun moveImageOutOfLockedFolder(path: String) {
         Files.move(Path(absolutePath), Path(reverseCemetery), StandardCopyOption.REPLACE_EXISTING)
 
         val lastModified = System.currentTimeMillis()
-        Path(reverseCemetery).setAttribute(
-            BasicFileAttributes::lastModifiedTime.name,
-            FileTime.fromMillis(lastModified)
-        )
-        File(reverseCemetery).lastModified()
+        File(reverseCemetery).setLastModified(lastModified)
         applicationDatabase.securedItemEntityDao().deleteEntityBySecuredPath(path)
     }
 }
 
 /** @param list is a list of the absolute path of every image to be deleted */
 fun permanentlyDeleteSecureFolderImageList(list: List<String>) {
-    try {
-        list.forEach { path ->
-            File(path).delete()
-        }
-    } catch (e: Throwable) {
-        Log.e(TAG, e.toString())
-    }
+	CoroutineScope(Dispatchers.IO).launch {
+	    try {
+	        list.forEach { path ->
+	            File(path).delete()
+	        }
+	    } catch (e: Throwable) {
+	        Log.e(TAG, e.toString())
+	    }
+	}
 }
 
 fun renameImage(context: Context, uri: Uri, newName: String) {
@@ -234,7 +232,11 @@ fun copyImageListToPath(context: Context, list: List<MediaStoreData>, destinatio
                 val inputStream = contentResolver.openInputStream(it.uri)
                 val outputStream = File(path).outputStream()
 
-                inputStream?.copyTo(outputStream)
+                if (inputStream != null){
+                	inputStream.copyTo(outputStream)
+                } else {
+                	Log.e(TAG, "The input stream for uri $it was null")
+                }
 
                 outputStream.close()
                 inputStream?.close()
