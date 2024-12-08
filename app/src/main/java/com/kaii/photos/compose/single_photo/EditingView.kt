@@ -26,6 +26,8 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.gestures.snapping.SnapPosition
+import androidx.compose.foundation.interaction.DragInteraction
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -59,7 +61,10 @@ import androidx.compose.material.ripple.RippleAlpha
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.LocalTextStyle
@@ -132,6 +137,7 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.unit.toSize
+import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
 import com.kaii.photos.R
@@ -162,6 +168,7 @@ import kotlin.math.pow
 fun EditingView(
     navController: NavHostController,
     absolutePath: String,
+    dateTaken: Long,
     uri: Uri
 ) {
     val showCloseDialog = remember { mutableStateOf(false) }
@@ -239,18 +246,26 @@ fun EditingView(
 
     Scaffold(
         topBar = {
+            val overwrite = remember { mutableStateOf(false) }
+
             EditingViewTopBar(
                 showCloseDialog = showCloseDialog,
                 changesSize = changesSize,
                 oldChangesSize = oldChangesSize,
+                overwrite = overwrite,
                 saveImage = suspend {
                     savePathListToBitmap(
                         modifications = modifications,
+                        adjustmentColorMatrix = colorMatrix.value,
                         absolutePath = absolutePath,
+                        dateTaken = dateTaken,
+                        uri = uri,
                         image = image,
                         maxSize = maxSize,
                         rotation = rotation,
-                        textMeasurer = textMeasurer
+                        textMeasurer = textMeasurer,
+                        overwrite = overwrite.value,
+                        context = context
                     )
                 },
                 popBackStack = {
@@ -759,7 +774,7 @@ fun EditingView(
                                         )
 
                                     if (croppingRatio.floatValue == 0f) {
-                                        // if (freeform crop)
+                                        // if freeform crop
                                         topLeftOffset = topLeftOffsetPos
                                     } else if (croppingRatio.floatValue >= 1f) {
                                         // if not freeform and wide ratio
@@ -829,7 +844,6 @@ fun EditingView(
                                                         .toInt()).coerceAtLeast(0)
                                                 )
                                         }
-
                                     }
 
                                     bottomLeftOffset =
@@ -1229,8 +1243,9 @@ private fun EditingViewTopBar(
     showCloseDialog: MutableState<Boolean>,
     changesSize: MutableIntState,
     oldChangesSize: MutableIntState,
+    overwrite: MutableState<Boolean>,
     saveImage: suspend () -> Unit,
-    popBackStack: () -> Unit
+    popBackStack: () -> Unit,
 ) {
     val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     var showInLandscape by remember { mutableStateOf(false) }
@@ -1275,25 +1290,20 @@ private fun EditingViewTopBar(
                     modifier = Modifier
                         .padding(8.dp, 0.dp, 0.dp, 0.dp)
                 ) {
-                    Column(
+                    FilledTonalIconButton(
+                        onClick = {
+                            if (changesSize.intValue != oldChangesSize.intValue) {
+                                showCloseDialog.value = true
+                            } else {
+                                oldChangesSize.intValue = changesSize.intValue
+                                popBackStack()
+                            }
+                        },
+                        enabled = canExit,
                         modifier = Modifier
                             .height(40.dp)
                             .width(56.dp)
                             .align(Alignment.Center)
-                            .clip(CircleShape)
-                            .background(CustomMaterialTheme.colorScheme.surfaceVariant)
-                            .clickable {
-                                if (!canExit) return@clickable
-
-                                if (changesSize.intValue != oldChangesSize.intValue) {
-                                    showCloseDialog.value = true
-                                } else {
-                                    oldChangesSize.intValue = changesSize.intValue
-                                    popBackStack()
-                                }
-                            },
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.close),
@@ -1325,8 +1335,14 @@ private fun EditingViewTopBar(
                         Spacer(modifier = Modifier.width(8.dp))
                     }
 
-                    Button(
-                        onClick = {
+                    Row(
+                        modifier = Modifier
+                            .wrapContentSize(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        var saveButtonTitle by remember { mutableStateOf("Save Copy") }
+                        val saveAction = {
                             oldChangesSize.intValue = changesSize.intValue
 
                             coroutineScope.launch {
@@ -1336,15 +1352,115 @@ private fun EditingViewTopBar(
                                 delay(500)
                                 canExit = true
                             }
-                        },
-                        shape = CircleShape,
-                        enabled = changesSize.intValue != oldChangesSize.intValue
-                    ) {
-                        Text(
-                            text = "Save Copy",
-                            fontSize = TextUnit(14f, TextUnitType.Sp),
-                            color = CustomMaterialTheme.colorScheme.onPrimary
-                        )
+                        }
+
+                        Button(
+                            onClick = {
+                                saveAction()
+                            },
+                            shape = RoundedCornerShape(1000.dp, 4.dp, 4.dp, 1000.dp),
+                            enabled = changesSize.intValue != oldChangesSize.intValue,
+                            contentPadding = PaddingValues(11.dp)
+                        ) {
+                            Text(
+                                text = saveButtonTitle,
+                                fontSize = TextUnit(14f, TextUnitType.Sp),
+                                color = CustomMaterialTheme.colorScheme.onPrimary
+                            )
+                        }
+
+                        var dropDownExpanded by remember { mutableStateOf(false) }
+
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Button(
+                            onClick = {
+                                dropDownExpanded = true
+                            },
+                            shape = RoundedCornerShape(4.dp, 1000.dp, 1000.dp, 4.dp),
+                            enabled = changesSize.intValue != oldChangesSize.intValue,
+                            contentPadding = PaddingValues(2.dp, 5.dp, 4.dp, 5.dp),
+                            modifier = Modifier
+                                .width(40.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.drop_down_arrow),
+                                contentDescription = "Show save options",
+                                modifier = Modifier
+                                    .size(32.dp)
+                            )
+                        }
+
+                        DropdownMenu(
+                            expanded = dropDownExpanded,
+                            onDismissRequest = {
+                                dropDownExpanded = false
+                            },
+                            shape = RoundedCornerShape(24.dp),
+                            properties = PopupProperties(
+                                dismissOnClickOutside = true,
+                                dismissOnBackPress = true
+                            ),
+                            containerColor = CustomMaterialTheme.colorScheme.primaryContainer,
+                            shadowElevation = 8.dp
+                        ) {
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        text = "Overwrite Original",
+                                        fontSize = TextUnit(14f, TextUnitType.Sp),
+                                    )
+
+                                    Spacer(
+                                        modifier = Modifier
+                                            .height(2.dp)
+                                            .background(CustomMaterialTheme.colorScheme.onPrimary)
+                                    )
+                                },
+                                onClick = {
+                                    dropDownExpanded = false
+                                    overwrite.value = true
+                                    saveButtonTitle = "Save"
+                                    saveAction()
+                                },
+                                trailingIcon = {
+                                    if (overwrite.value) {
+                                        Icon(
+                                            painter = painterResource(id = R.drawable.file_is_selected_foreground),
+                                            contentDescription = "This save option is selected",
+                                            tint = CustomMaterialTheme.colorScheme.onSurface,
+                                            modifier = Modifier
+                                                .size(24.dp)
+                                        )
+                                    }
+                                }
+                            )
+
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        text = "Save Copy",
+                                        fontSize = TextUnit(14f, TextUnitType.Sp),
+                                    )
+                                },
+                                onClick = {
+                                    dropDownExpanded = false
+                                    overwrite.value = false
+                                    saveButtonTitle = "Save Copy"
+                                    saveAction()
+                                },
+                                trailingIcon = {
+                                    if (!overwrite.value) {
+                                        Icon(
+                                            painter = painterResource(id = R.drawable.file_is_selected_foreground),
+                                            contentDescription = "This save option is selected",
+                                            tint = CustomMaterialTheme.colorScheme.onSurface,
+                                            modifier = Modifier
+                                                .size(24.dp)
+                                        )
+                                    }
+                                }
+                            )
+                        }
                     }
                 }
             },
@@ -1401,7 +1517,7 @@ private fun EditingViewBottomBar(
     colorMatrix: MutableState<ColorMatrix>,
     resetCropping: () -> Unit
 ) {
-	val localDensity = LocalDensity.current
+    val localDensity = LocalDensity.current
     val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     var showInLandscape by remember { mutableStateOf(false) }
 
@@ -1478,69 +1594,127 @@ private fun EditingViewBottomBar(
             label = "Animate editing view bottom bar slider height"
         )
 
-        BoxWithConstraints (
+        BoxWithConstraints(
             modifier = Modifier
-       			.fillMaxWidth(1f)
+                .fillMaxWidth(1f)
                 .height(animatedSliderHeight)
-                .padding(16.dp, 0.dp)
         ) {
-        	val multiplier = adjustSliderValue.floatValue * 0.5f + 0.5f
-        	val neededOffset = with (localDensity) {
-        		val position = multiplier * maxWidth.toPx() - 32.dp.toPx()
-        		position.coerceIn(0f, maxWidth.toPx() - 64.dp.toPx())
-        	}
+            val interactionSource = remember { MutableInteractionSource() }
+            var isDraggingSlider by remember { mutableStateOf(false) }
+
+            LaunchedEffect(interactionSource.interactions) {
+                interactionSource.interactions.collect { interaction ->
+                    when (interaction) {
+                        is DragInteraction.Start -> {
+                            isDraggingSlider = true; changesSize.intValue += 1
+                        }
+
+                        is DragInteraction.Cancel -> {
+                            isDraggingSlider = false
+                        }
+
+                        is DragInteraction.Stop -> {
+                            isDraggingSlider = false
+                        }
+
+                        else -> {}
+                    }
+                }
+            }
+
+            val animatedPillHeight by animateDpAsState(
+                targetValue = if (isDraggingSlider) 32.dp else 0.dp,
+                animationSpec = tween(
+                    durationMillis = 150,
+                    delayMillis = if (isDraggingSlider) 0 else 100
+                ),
+                label = "Animate editing view bottom bar slider pill height"
+            )
+
+            val animatedPillHeightOffset by animateDpAsState(
+                targetValue = if (isDraggingSlider) 0.dp else 32.dp,
+                animationSpec = tween(
+                    durationMillis = 150,
+                    delayMillis = if (isDraggingSlider) 0 else 100
+                ),
+                label = "Animate editing view bottom bar slider pill height"
+            )
+
+            val animatedPillWidth by animateDpAsState(
+                targetValue = if (isDraggingSlider) 48.dp else 4.dp,
+                animationSpec = tween(
+                    durationMillis = 150,
+                    delayMillis = if (!isDraggingSlider) 0 else 100
+                ),
+                label = "Animate editing view bottom bar slider pill width"
+            )
+
+            val multiplier = adjustSliderValue.floatValue * 0.5f + 0.5f
+            val neededOffset = with(localDensity) {
+                val position = multiplier * maxWidth.toPx() - (24.dp.toPx() * adjustSliderValue.floatValue) - (animatedPillWidth / 2).toPx() // offset by the opposite of the movement so the pill stays in the same place, then subtract half the width to center it
+                position.coerceIn(16.dp.toPx(), (maxWidth - animatedPillWidth - 16.dp).toPx()) // -width - 16.dp because width of pill + padding
+            }
 
             Box(
                 modifier = Modifier
-					.offset {
-						IntOffset(neededOffset.toInt(), with (localDensity) { -24.dp.toPx().toInt() })
-					}
-                    .height(32.dp)
-                    .width(64.dp)
+                    .offset {
+                        IntOffset(
+                            neededOffset.toInt(),
+                            with(localDensity) {
+                                ((-24).dp + animatedPillHeightOffset)
+                                    .toPx()
+                                    .toInt()
+                            })
+                    }
+                    .height(animatedPillHeight)
+                    .width(animatedPillWidth)
                     .clip(CircleShape)
                     .background(CustomMaterialTheme.colorScheme.primary)
             ) {
                 Text(
-                    text = (adjustSliderValue.floatValue * 100f).toInt().toString(),
+                    text = (adjustSliderValue.floatValue * 100).toInt().toString(),
                     color = CustomMaterialTheme.colorScheme.onPrimary,
                     fontSize = TextUnit(14f, TextUnitType.Sp),
                     modifier = Modifier
-                    	.wrapContentSize()
-                    	.align(Alignment.Center)
+                        .wrapContentSize()
+                        .align(Alignment.Center)
                 )
             }
 
-			Box (
-				modifier = Modifier
-					.align(Alignment.Center)
-					.clipToBounds()
-			) {
-	            Slider(
-	                value = adjustSliderValue.floatValue,
-	                onValueChange = {
-	                    adjustSliderValue.floatValue = it
-	                },
-	                valueRange = -1f..1f,
-	                thumb = { state ->
-	                    Box(
-	                        modifier = Modifier
-	                            .width(16.dp)
-	                            .height(24.dp)
-	                    ) {
-	                        Box(
-	                            modifier = Modifier
-	                                .size(16.dp)
-	                                .clip(CircleShape)
-	                                .background(CustomMaterialTheme.colorScheme.primary)
-	                                .align(Alignment.Center)
-	                        )
-	                    }
-	                },
-	                modifier = Modifier
-	                    .fillMaxWidth(1f)
-	                    .align(Alignment.Center)
-	            )
-			}
+            Box(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .padding(16.dp, 0.dp)
+                    .clipToBounds()
+            ) {
+                Slider(
+                    value = adjustSliderValue.floatValue * 100f,
+                    onValueChange = {
+                        adjustSliderValue.floatValue = it / 100f
+                    },
+                    valueRange = -100f..100f,
+                    steps = 199,
+                    thumb = {
+                        Box(
+                            modifier = Modifier
+                                .width(16.dp)
+                                .height(24.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(16.dp)
+                                    .clip(CircleShape)
+                                    .background(CustomMaterialTheme.colorScheme.primary)
+                                    .align(Alignment.Center)
+                            )
+                        }
+                    },
+                    interactionSource = interactionSource,
+                    modifier = Modifier
+                        .fillMaxWidth(1f)
+                        .align(Alignment.Center)
+                )
+            }
         }
 
         Column(
@@ -2382,7 +2556,7 @@ private fun Modifier.makeDrawCanvas(
                                         modifications.remove(text)
 
                                         // move topLeft of textbox to the text's position
-                                        // basically removes decenters the text so we can center it to that position with the new size
+                                        // basically de-centers the text so we can center it to that position with the new size
                                         val oldPosition = text.position + (text.size.toOffset() / 2f)
                                         val newWidth = text.paint.strokeWidth * zoom
 

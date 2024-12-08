@@ -4,6 +4,7 @@ import android.net.Uri
 import android.os.Parcelable
 import androidx.compose.runtime.Immutable
 import com.bumptech.glide.signature.MediaStoreSignature
+import com.bumptech.glide.signature.ObjectKey
 import kotlinx.parcelize.Parcelize
 import java.util.Calendar
 import java.util.Locale
@@ -62,7 +63,7 @@ data class MediaStoreData(
     }
 }
 
-fun MediaStoreData.signature() = MediaStoreSignature(mimeType, dateModified, 0)
+fun MediaStoreData.signature() = ObjectKey(dateTaken + dateModified + absolutePath.hashCode() + id + mimeType.hashCode())
 
 /** The type of data. */
 enum class MediaType {

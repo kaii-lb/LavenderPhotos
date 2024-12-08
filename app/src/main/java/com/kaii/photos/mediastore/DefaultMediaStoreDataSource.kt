@@ -28,7 +28,7 @@ class DefaultMediaStoreDataSource(
             arrayOf(
                 MediaColumns._ID,
                 MediaStore.Images.Media.DATA,
-                MediaColumns.DATE_ADDED,
+                MediaColumns.DATE_MODIFIED,
                 MediaColumns.MIME_TYPE,
                 MediaColumns.DISPLAY_NAME,
                 FileColumns.MEDIA_TYPE
@@ -59,7 +59,7 @@ class DefaultMediaStoreDataSource(
             val mimeTypeColNum = cursor.getColumnIndexOrThrow(MediaColumns.MIME_TYPE)
             val mediaTypeColumnIndex = cursor.getColumnIndexOrThrow(FileColumns.MEDIA_TYPE)
             val displayNameIndex = cursor.getColumnIndexOrThrow(FileColumns.DISPLAY_NAME)
-            val dateModifiedColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATE_ADDED)
+            val dateModifiedColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATE_MODIFIED)
 
             while (cursor.moveToNext()) {
                 val id = cursor.getLong(idColNum)
@@ -72,9 +72,8 @@ class DefaultMediaStoreDataSource(
                 val dateTaken = if (possibleDateTaken != 0L) {
                     possibleDateTaken
                 } else {
-                    val taken = getDateTakenForMedia(
-                        cursor.getString(absolutePathColNum)
-                    )
+                    val taken = getDateTakenForMedia(absolutePath)
+
                     mediaEntityDao.insertEntity(
                         MediaEntity(
                             id = id,

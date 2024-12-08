@@ -3,9 +3,9 @@ package com.kaii.photos.datastore
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.core.booleanPreferencesKey
 import kotlinx.coroutines.flow.first
 import java.io.File
 
@@ -20,8 +20,8 @@ suspend fun DataStore<Preferences>.addToAlbumsList(path: String) {
 
         if (stringList == null) it[albumsListKey] = ""
 
-		println("ALBUMS STRING LIST $stringList")
-		println("ALBUMS KEYS PATH $path ${stringList?.contains("$separator$path") == false}")
+        println("ALBUMS STRING LIST $stringList")
+        println("ALBUMS KEYS PATH $path ${stringList?.contains("$separator$path") == false}")
 
         if (stringList?.contains("$separator$path") == false || stringList?.contains("$path$separator") == false) {
             it[albumsListKey] += "$separator$path"
@@ -53,7 +53,7 @@ suspend fun DataStore<Preferences>.editInAlbumsList(path: String, newName: Strin
 suspend fun DataStore<Preferences>.getAlbumsList(isPreV083: Boolean = false): List<String> {
     val list = this.data.first()[albumsListKey] ?: return emptyList()
 
-	val splitBy = if (isPreV083) "," else separator
+    val splitBy = if (isPreV083) "," else separator
     val split = list.split(splitBy).distinct().toMutableList()
 
     split.sortByDescending {
@@ -66,10 +66,10 @@ suspend fun DataStore<Preferences>.getAlbumsList(isPreV083: Boolean = false): Li
 }
 
 suspend fun DataStore<Preferences>.setAlbumsList(list: List<String>) {
-	this.edit {
+    this.edit {
         var stringList = ""
-        list.distinct().forEach {
-       		if (stringList?.contains("$separator$it") == false || stringList?.contains("$it$separator") == false) stringList += "$separator$it"
+        list.distinct().forEach { album ->
+            if (!stringList.contains("$separator$it") || !stringList.contains("$it$separator")) stringList += "$separator$album"
         }
 
         it[albumsListKey] = stringList
@@ -89,13 +89,13 @@ suspend fun DataStore<Preferences>.getUsername(): String {
     return name
 }
 
-suspend fun DataStore<Preferences>.getIsV083FirstStart(context: Context) : Boolean {
-	val currentVersion = context.packageManager.getPackageInfo(context.packageName,0).versionName
-	return (this.data.first()[v083firstStart] ?: true) && currentVersion == "v0.8.3-beta"
+suspend fun DataStore<Preferences>.getIsV083FirstStart(context: Context): Boolean {
+    val currentVersion = context.packageManager.getPackageInfo(context.packageName, 0).versionName
+    return (this.data.first()[v083firstStart] ?: true) && currentVersion == "v0.8.3-beta"
 }
 
 suspend fun DataStore<Preferences>.setIsV083FirstStart(value: Boolean) {
-	this.edit {
-		it[v083firstStart] = value
-	}
+    this.edit {
+        it[v083firstStart] = value
+    }
 }

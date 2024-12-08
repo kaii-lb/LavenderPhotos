@@ -1,16 +1,23 @@
 package com.kaii.photos.helpers
 
+import android.Manifest
 import android.app.Activity
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.net.Uri
+import android.os.Build
+import android.provider.MediaStore
 import android.provider.MediaStore.MediaColumns
 import android.util.Log
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
@@ -40,11 +47,8 @@ import java.io.File
 import java.io.FileOutputStream
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
-import java.nio.file.attribute.BasicFileAttributes
-import java.nio.file.attribute.FileTime
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.io.path.Path
-import kotlin.io.path.setAttribute
 import kotlin.math.min
 
 private const val TAG = "IMAGE_FUNCTIONS"
@@ -58,52 +62,73 @@ enum class ImageFunctions {
 fun permanentlyDeletePhotoList(context: Context, list: List<Uri>) {
     val contentResolver = context.contentResolver
 
-	val request = android.provider.MediaStore.createDeleteRequest(contentResolver, list)
+    val hasManageMediaPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        context.checkPermission(
+            Manifest.permission.MANAGE_MEDIA,
+            android.os.Process.myPid(),
+            android.os.Process.myUid()
+        ) == PackageManager.PERMISSION_GRANTED
+    } else {
+        false
+    }
 
-	(context as Activity).startIntentSenderForResult(request.intentSender, 69, null, 0, 0, 0)
+    if (hasManageMediaPermission) {
+        val request = MediaStore.createDeleteRequest(contentResolver, list)
 
-//	   val chunks = list.chunked(100)
+        (context as Activity).startIntentSenderForResult(request.intentSender, 69, null, 0, 0, 0)
+    } else {
+        val chunks = list.chunked(100)
 
-//     CoroutineScope(Dispatchers.IO).launch {
-//         for (chunk in chunks) {
-//             chunk.forEach {
-//                 contentResolver.delete(it, null)
-//             }
-//
-//             delay(3000)
-//         }
-//     }
+        CoroutineScope(Dispatchers.IO).launch {
+            for (chunk in chunks) {
+                chunk.forEach {
+                    contentResolver.delete(it, null)
+                }
+
+                delay(3000)
+            }
+        }
+    }
 }
 
 fun setTrashedOnPhotoList(context: Context, list: List<Pair<Uri, String>>, trashed: Boolean) {
     val contentResolver = context.contentResolver
 
-	val currentTime = System.currentTimeMillis()
-	list.map { it.second }.forEach { path ->
-		File(path).setLastModified(currentTime)
-	}
-	val request = android.provider.MediaStore.createTrashRequest(contentResolver, list.map { it.first }, true)
+    val currentTime = System.currentTimeMillis()
+    list.forEach { (_, path) ->
+        File(path).setLastModified(currentTime)
+    }
 
-	(context as Activity).startIntentSenderForResult(request.intentSender, 69, null, 0, 0, 0)
+    val hasManageMediaPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        context.checkPermission(
+            Manifest.permission.MANAGE_MEDIA,
+            android.os.Process.myPid(),
+            android.os.Process.myUid()
+        ) == PackageManager.PERMISSION_GRANTED
+    } else {
+        false
+    }
 
-// TODO: check if has MANAGE_MEDIA permission and do either this or just show the shitty dialog
-//     val trashedValues = ContentValues().apply {
-//         put(MediaColumns.IS_TRASHED, trashed)
-//     }
-//
-//     val chunks = list.chunked(25)
-//
-//     val currentTime = System.currentTimeMillis()
-//     CoroutineScope(Dispatchers.IO).launch {
-//         for (chunk in chunks) {
-//             chunk.forEach { (uri, path) ->
-// 				File(path).setLastModified(currentTime)
-//                 contentResolver.update(uri, trashedValues, null)
-//             }
-//
-//             delay(3000)
-//         }
-//     }
+    if (hasManageMediaPermission) {
+        val request = MediaStore.createTrashRequest(contentResolver, list.map { it.first }, trashed)
+
+        (context as Activity).startIntentSenderForResult(request.intentSender, 69, null, 0, 0, 0)
+    } else {
+        val trashedValues = ContentValues().apply {
+            put(MediaColumns.IS_TRASHED, trashed)
+        }
+        val chunks = list.chunked(25)
+
+        CoroutineScope(Dispatchers.IO).launch {
+            for (chunk in chunks) {
+                chunk.forEach { (uri, _) ->
+                    contentResolver.update(uri, trashedValues, null)
+                }
+
+                delay(3000)
+            }
+        }
+    }
 }
 
 fun shareImage(uri: Uri, context: Context) {
@@ -164,15 +189,15 @@ fun moveImageOutOfLockedFolder(path: String) {
 
 /** @param list is a list of the absolute path of every image to be deleted */
 fun permanentlyDeleteSecureFolderImageList(list: List<String>) {
-	CoroutineScope(Dispatchers.IO).launch {
-	    try {
-	        list.forEach { path ->
-	            File(path).delete()
-	        }
-	    } catch (e: Throwable) {
-	        Log.e(TAG, e.toString())
-	    }
-	}
+    CoroutineScope(Dispatchers.IO).launch {
+        try {
+            list.forEach { path ->
+                File(path).delete()
+            }
+        } catch (e: Throwable) {
+            Log.e(TAG, e.toString())
+        }
+    }
 }
 
 fun renameImage(context: Context, uri: Uri, newName: String) {
@@ -201,19 +226,15 @@ fun renameDirectory(path: String, newName: String) {
 fun moveImageListToPath(context: Context, list: List<MediaStoreData>, destination: String) {
     val contentResolver = context.contentResolver
 
-    val chunks = list.chunked(100)
-
     CoroutineScope(Dispatchers.IO).launch {
-        for (chunk in chunks) {
-            chunk.forEach {
-                val path = destination.removeSuffix("/") + "/"
-                val contentValues = ContentValues().apply {
-                    put(MediaColumns.RELATIVE_PATH, path)
-                }
-                contentResolver.update(it.uri, contentValues, null)
+        list.forEach { media ->
+            val path = destination.removeSuffix("/") + "/"
+            val contentValues = ContentValues().apply {
+                put(MediaColumns.RELATIVE_PATH, path)
             }
 
-            delay(3000)
+            contentResolver.update(media.uri, contentValues, null)
+            delay(50)
         }
     }
 }
@@ -222,36 +243,39 @@ fun moveImageListToPath(context: Context, list: List<MediaStoreData>, destinatio
 fun copyImageListToPath(context: Context, list: List<MediaStoreData>, destination: String) {
     val contentResolver = context.contentResolver
 
-    val chunks = list.chunked(100)
-
     CoroutineScope(Dispatchers.IO).launch {
-        for (chunk in chunks) {
-            chunk.forEach {
-                val file = File(it.absolutePath)
-                val path = "/storage/emulated/0/" + destination.removeSuffix("/") + "/${file.name}"
-                val inputStream = contentResolver.openInputStream(it.uri)
-                val outputStream = File(path).outputStream()
+        list.forEach { media ->
+            val file = File(media.absolutePath)
+            val path = "/storage/emulated/0/" + destination.removeSuffix("/") + "/${file.name}"
+            val inputStream = contentResolver.openInputStream(media.uri)
+            val outputStream = File(path).outputStream()
 
-                if (inputStream != null){
-                	inputStream.copyTo(outputStream)
-                } else {
-                	Log.e(TAG, "The input stream for uri $it was null")
-                }
-
-                outputStream.close()
-                inputStream?.close()
+            if (inputStream != null) {
+                inputStream.copyTo(outputStream)
+            } else {
+                Log.e(TAG, "The input stream for uri $media was null")
             }
+
+            outputStream.close()
+            inputStream?.close()
+
+            delay(50)
         }
     }
 }
 
 suspend fun savePathListToBitmap(
     modifications: List<Modification>,
+    adjustmentColorMatrix: ColorMatrix,
     absolutePath: String,
+    dateTaken: Long,
+    uri: Uri,
     image: ImageBitmap,
     maxSize: Size,
     rotation: Float,
     textMeasurer: TextMeasurer,
+    overwrite: Boolean,
+    context: Context
 ) {
     val defaultTextStyle = DrawableText.Styles.Default.style
 
@@ -260,14 +284,21 @@ suspend fun savePathListToBitmap(
             postRotate(rotation)
         }
 
-        val savedImage = Bitmap.createBitmap(
+        val unadjustedImage = Bitmap.createBitmap(
             image.asAndroidBitmap(),
             0,
             0,
             image.width,
             image.height
-        )
-            .copy(Bitmap.Config.ARGB_8888, true).asImageBitmap()
+        ).copy(Bitmap.Config.ARGB_8888, true)
+
+        val colorFilteredPaint = Paint().apply {
+            colorFilter = ColorFilter.colorMatrix(adjustmentColorMatrix)
+        }
+        val savedImage = Bitmap.createBitmap(unadjustedImage.width, unadjustedImage.height, Bitmap.Config.ARGB_8888).asImageBitmap()
+        val adjustCanvas = android.graphics.Canvas(savedImage.asAndroidBitmap())
+        adjustCanvas.drawBitmap(unadjustedImage, 0f, 0f, colorFilteredPaint.asFrameworkPaint())
+
         val size = IntSize(
             savedImage.width,
             savedImage.height
@@ -346,17 +377,65 @@ suspend fun savePathListToBitmap(
         ).copy(Bitmap.Config.ARGB_8888, true).asImageBitmap()
 
         val original = File(absolutePath)
+        val format = when (original.extension) {
+            "webp" -> Bitmap.CompressFormat.WEBP_LOSSLESS
+            "jpeg", "jpg" -> Bitmap.CompressFormat.JPEG
+            else -> Bitmap.CompressFormat.PNG
+        }
+
+        val currentTime = System.currentTimeMillis()
+
         // change the "edited at" thing to make more sense, like copy(1) copy(2) or something
-        val newPath = original.absolutePath.replace(
-            original.name,
-            original.nameWithoutExtension + "-edited-at-" + System.currentTimeMillis() + ".png"
-        )
+        val displayName = "${original.nameWithoutExtension}-edited-at-$currentTime.png"
+        val newPath = if (!overwrite) {
+            original.absolutePath.replace(
+                original.name,
+                displayName
+            )
+        } else {
+            original.absolutePath
+        }
 
-        val newFile = File(newPath)
-        val fileOutputStream = FileOutputStream(newFile)
+        if (!overwrite) {
+            val contentValues = ContentValues().apply {
+                put(MediaStore.Images.Media.DISPLAY_NAME, displayName)
+                put(MediaStore.Images.Media.DATE_MODIFIED, currentTime)
+                put(MediaStore.Images.Media.DATE_ADDED, currentTime)
+                put(MediaColumns.DATE_ADDED, currentTime)
+                put(MediaStore.Images.Media.MIME_TYPE, "image/$format")
+                put(MediaStore.Images.Media.DATE_TAKEN, dateTaken + 1)
+                put(MediaStore.Images.Media.RELATIVE_PATH, original.absolutePath.replace(original.name, ""))
+                put(MediaStore.Images.Media.DATA, newPath)
+            }
 
-        rotatedImage.asAndroidBitmap()
-            .compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream)
-        fileOutputStream.close()
+            val copyUri = context.contentResolver.insert(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                contentValues
+            )
+
+            val outputStream = copyUri?.let {
+                context.contentResolver.openOutputStream(it)
+            } ?: FileOutputStream(File(newPath))
+
+            rotatedImage.asAndroidBitmap()
+                .compress(format, 100, outputStream)
+            outputStream.close()
+        } else {
+            val outputStream = context.contentResolver.openOutputStream(uri) ?: FileOutputStream(File(newPath))
+
+            rotatedImage.asAndroidBitmap()
+                .compress(format, 100, outputStream)
+            outputStream.close()
+
+            // update date modified and invalidate cache by proxy
+            context.contentResolver.update(
+                uri,
+                ContentValues().apply {
+                    put(MediaStore.Images.Media.DATE_MODIFIED, currentTime)
+                    put(MediaStore.Images.Media.DATE_ADDED, currentTime)
+                },
+                null
+            )
+        }
     }
 }

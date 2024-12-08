@@ -638,6 +638,7 @@ class MainActivity : ComponentActivity() {
                         EditingView(
                             navController = navControllerLocal,
                             absolutePath = screen.absolutePath,
+                            dateTaken = screen.dateTaken,
                             uri = screen.uri.toUri()
                         )
                     }
