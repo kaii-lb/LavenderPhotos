@@ -51,7 +51,7 @@ class TrashStoreDataSource(
         bundle.putInt(MediaStore.QUERY_ARG_MATCH_TRASHED, MediaStore.MATCH_ONLY)
         bundle.putString(
             ContentResolver.QUERY_ARG_SQL_SELECTION,
-            "(${MediaColumns.IS_TRASHED} = 1 AND ${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_IMAGE}) OR (${MediaColumns.IS_TRASHED} = 1 AND ${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_VIDEO})"
+            "(${MediaColumns.IS_TRASHED} = 1 AND ((${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_IMAGE}) OR (${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_VIDEO})))"
         )
 
         val mediaCursor = context.contentResolver.query(

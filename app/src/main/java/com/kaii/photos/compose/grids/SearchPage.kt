@@ -113,9 +113,31 @@ fun SearchPage(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            val placeholdersList = remember {
+            	val month = months.random().replaceFirstChar {
+            			it.uppercase()
+            		}
+            	val day = days.random().replaceFirstChar {
+            			it.uppercase()
+            		}
+            	val date = (1..31).random()
+            	val year = (2016..2024).random()
+
+	            listOf(
+	                "Search for a photo's name",
+	                "Search for a specific date",
+	                "$month $date $year",
+	                "$month $year",
+	                "Search by day",
+	                "$day $month $year",
+	                "$date $month $year"
+	            )
+            }
+            val placeholder = remember { placeholdersList.random() }
+
             SearchTextField(
                 searchedForText = searchedForText,
-                placeholder = "Search for a photo's name",
+                placeholder = placeholder,
                 modifier = Modifier
                     .fillMaxWidth(1f)
                     .height(56.dp)
@@ -283,11 +305,19 @@ private val months = listOf(
     "december"
 )
 
+private val days = listOf(
+	"monday",
+	"tuesday",
+	"wednesday",
+	"thursday",
+	"friday",
+	"saturday",
+	"sunday"
+)
+
 private fun String.toDateListOrNull(): List<Date?> {
     val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
     dateFormat.isLenient = true
-
-    val days = listOf("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
 
     val year = run {
         val split = this.split(" ")
@@ -355,7 +385,12 @@ private fun String.toDateListOrNull(): List<Date?> {
         "dd-MM-yyyy",
         "dd MM yyyy",
         "dd MMM yyyy",
-        "dd MMMM yyyy"
+        "dd MMMM yyyy",
+        "MM/dd/yyyy",
+        "MM-dd-yyyy",
+        "MM dd yyyy",
+        "MMM dd yyyy",
+        "MMMM dd yyyy"
     )
 
     for (format in formats) {
