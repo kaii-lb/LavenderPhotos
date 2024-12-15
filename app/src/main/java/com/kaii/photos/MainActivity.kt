@@ -31,8 +31,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -62,7 +64,7 @@ import androidx.navigation.toRoute
 import androidx.room.Room
 import com.bumptech.glide.Glide
 import com.bumptech.glide.MemoryCategory
-import com.kaii.photos.compose.AboutPage
+import com.kaii.photos.compose.settings.AboutPage
 import com.kaii.photos.compose.IsSelectingTopBar
 import com.kaii.photos.compose.LockedFolderEntryView
 import com.kaii.photos.compose.MainAppBottomBar
@@ -101,6 +103,7 @@ import com.kaii.photos.models.main_activity.MainViewModel
 import com.kaii.photos.models.main_activity.MainViewModelFactory
 import com.kaii.photos.ui.theme.PhotosTheme
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.runBlocking
 
 val Context.datastore: DataStore<Preferences> by preferencesDataStore(name = "settings")
@@ -131,7 +134,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             mainViewModel = viewModel(
-                factory = MainViewModelFactory()
+                factory = MainViewModelFactory(applicationContext)
             )
 
             mainViewModel.startupPermissionCheck(applicationContext)
@@ -146,19 +149,25 @@ class MainActivity : ComponentActivity() {
                 if (!continueToApp.value) {
                     PermissionHandler(continueToApp)
                 } else {
-                    setContentForActivity()
+                    SetContentForActivity()
                 }
             }
         }
     }
 
     @Composable
-    private fun setContentForActivity() {
+    private fun SetContentForActivity() {
         window.decorView.setBackgroundColor(CustomMaterialTheme.colorScheme.background.toArgb())
 
         val navControllerLocal = rememberNavController()
+
+        val LocalNavController = compositionLocalOf {
+            navControllerLocal
+        }
+
         val currentView =
             rememberSaveable { mutableStateOf(MainScreenViewType.PhotosGridView) }
+
         val showDialog = remember { mutableStateOf(false) }
         val windowInsetsController = window.insetsController
         val scale = remember { mutableFloatStateOf(1f) }
@@ -174,7 +183,11 @@ class MainActivity : ComponentActivity() {
         } catch (e: Throwable) {
             // ignore
         }
-        val thing = Runtime.getRuntime().exec("logcat -f $logPath");
+
+        val canRecordLogs = mainViewModel.settingsLogs.recordLogs.collectAsStateWithLifecycle(initialValue = false)
+        if (canRecordLogs.value) {
+            Runtime.getRuntime().exec("logcat -f $logPath");
+        }
 
         // TODO: please make it not hang lol
         runBlocking {
@@ -194,307 +207,309 @@ class MainActivity : ComponentActivity() {
             // context.datastore.addToAlbumsList("Pictures/Instagram")
         }
 
-        NavHost(
-            navController = navControllerLocal,
-            startDestination = MultiScreenViewType.MainScreen.name,
-            modifier = Modifier
-                .fillMaxSize(1f)
-                .background(CustomMaterialTheme.colorScheme.background),
-            enterTransition = {
-                slideInHorizontally(
-                    animationSpec = tween(
-                        durationMillis = 350
-                    )
-                ) { width -> width } + fadeIn()
-            },
-            exitTransition = {
-                slideOutHorizontally(
-                    animationSpec = tween(
-                        durationMillis = 350
-                    )
-                ) { width -> -width } + fadeOut()
-            },
-            popExitTransition = {
-                slideOutHorizontally(
-                    animationSpec = tween(
-                        durationMillis = 350
-                    )
-                ) { width -> width } + fadeOut()
-            },
-            popEnterTransition = {
-                slideInHorizontally(
-                    animationSpec = tween(
-                        durationMillis = 350
-                    )
-                ) { width -> -width } + fadeIn()
-            }
-        ) {
-            composable(MultiScreenViewType.MainScreen.name) {
-                enableEdgeToEdge(
-                    navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
-                    statusBarStyle =
-                    if (!isSystemInDarkTheme()) {
-                        SystemBarStyle.light(
-                            CustomMaterialTheme.colorScheme.background.toArgb(),
-                            CustomMaterialTheme.colorScheme.background.toArgb()
-                        )
-                    } else {
-                        SystemBarStyle.dark(CustomMaterialTheme.colorScheme.background.toArgb())
-                    }
-                )
-                setupNextScreen(
-                    context,
-                    windowInsetsController,
-                    selectedItemsList,
-                    window,
-                )
-
-                Content(currentView, navControllerLocal, showDialog, selectedItemsList)
-            }
-
-            composable(
-                route = MultiScreenViewType.SinglePhotoView.name,
-                popEnterTransition = {
+        CompositionLocalProvider(LocalNavController provides navControllerLocal) {
+            NavHost(
+                navController = navControllerLocal,
+                startDestination = MultiScreenViewType.MainScreen.name,
+                modifier = Modifier
+                    .fillMaxSize(1f)
+                    .background(CustomMaterialTheme.colorScheme.background),
+                enterTransition = {
                     slideInHorizontally(
                         animationSpec = tween(
                             durationMillis = 350
                         )
-                    ) { height -> -height } + fadeIn(
+                    ) { width -> width } + fadeIn()
+                },
+                exitTransition = {
+                    slideOutHorizontally(
                         animationSpec = tween(
                             durationMillis = 350
                         )
-                    )
+                    ) { width -> -width } + fadeOut()
                 },
                 popExitTransition = {
                     slideOutHorizontally(
                         animationSpec = tween(
                             durationMillis = 350
                         )
-                    ) { height -> height } + fadeOut(
+                    ) { width -> width } + fadeOut()
+                },
+                popEnterTransition = {
+                    slideInHorizontally(
                         animationSpec = tween(
                             durationMillis = 350
                         )
-                    )
+                    ) { width -> -width } + fadeIn()
                 }
             ) {
-                enableEdgeToEdge(
-                    navigationBarStyle = SystemBarStyle.dark(
-                        CustomMaterialTheme.colorScheme.surfaceContainer.copy(
-                            alpha = 0.2f
-                        ).toArgb()
-                    ),
-                    statusBarStyle = SystemBarStyle.auto(
-                        CustomMaterialTheme.colorScheme.surface.copy(alpha = 0.2f).toArgb(),
-                        CustomMaterialTheme.colorScheme.surface.copy(alpha = 0.2f).toArgb()
+                composable(MultiScreenViewType.MainScreen.name) {
+                    enableEdgeToEdge(
+                        navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
+                        statusBarStyle =
+                        if (!isSystemInDarkTheme()) {
+                            SystemBarStyle.light(
+                                CustomMaterialTheme.colorScheme.background.toArgb(),
+                                CustomMaterialTheme.colorScheme.background.toArgb()
+                            )
+                        } else {
+                            SystemBarStyle.dark(CustomMaterialTheme.colorScheme.background.toArgb())
+                        }
                     )
-                )
-                setupNextScreen(
-                    context,
-                    windowInsetsController,
-                    selectedItemsList,
-                    window,
-                )
-
-                SinglePhotoView(navControllerLocal, window, scale, rotation, offset)
-            }
-
-            composable(MultiScreenViewType.SingleAlbumView.name) {
-                enableEdgeToEdge(
-                    navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
-                    statusBarStyle = SystemBarStyle.auto(
-                        CustomMaterialTheme.colorScheme.surface.toArgb(),
-                        CustomMaterialTheme.colorScheme.surface.toArgb()
+                    setupNextScreen(
+                        context,
+                        windowInsetsController,
+                        selectedItemsList,
+                        window,
                     )
-                )
-                setupNextScreen(
-                    context,
-                    windowInsetsController,
-                    selectedItemsList,
-                    window,
-                )
 
-                SingleAlbumView(navControllerLocal, selectedItemsList)
-            }
+                    Content(currentView, navControllerLocal, showDialog, selectedItemsList)
+                }
 
-            composable(MultiScreenViewType.SingleTrashedPhotoView.name) {
-                enableEdgeToEdge(
-                    navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
-                    statusBarStyle = SystemBarStyle.auto(
-                        CustomMaterialTheme.colorScheme.surface.toArgb(),
-                        CustomMaterialTheme.colorScheme.surface.toArgb()
-                    )
-                )
-                setupNextScreen(
-                    context,
-                    windowInsetsController,
-                    selectedItemsList,
-                    window,
-                )
-
-                SingleTrashedPhotoView(navControllerLocal, window, scale, rotation, offset)
-            }
-
-            composable(MultiScreenViewType.TrashedPhotoView.name) {
-                enableEdgeToEdge(
-                    navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
-                    statusBarStyle = SystemBarStyle.auto(
-                        CustomMaterialTheme.colorScheme.surface.toArgb(),
-                        CustomMaterialTheme.colorScheme.surface.toArgb()
-                    )
-                )
-
-                setupNextScreen(
-                    context,
-                    windowInsetsController,
-                    selectedItemsList,
-                    window,
-                )
-
-                TrashedPhotoGridView(navControllerLocal, selectedItemsList)
-            }
-
-            composable(MultiScreenViewType.LockedFolderView.name) {
-                enableEdgeToEdge(
-                    navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
-                    statusBarStyle = SystemBarStyle.auto(
-                        CustomMaterialTheme.colorScheme.surface.toArgb(),
-                        CustomMaterialTheme.colorScheme.surface.toArgb()
-                    )
-                )
-                setupNextScreen(
-                    context,
-                    windowInsetsController,
-                    selectedItemsList,
-                    window,
-                )
-
-                LockedFolderView(navControllerLocal, window)
-            }
-
-            composable(MultiScreenViewType.SingleHiddenPhotoVew.name) {
-                enableEdgeToEdge(
-                    navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
-                    statusBarStyle = SystemBarStyle.auto(
-                        CustomMaterialTheme.colorScheme.surface.toArgb(),
-                        CustomMaterialTheme.colorScheme.surface.toArgb()
-                    )
-                )
-                setupNextScreen(
-                    context,
-                    windowInsetsController,
-                    selectedItemsList,
-                    window,
-                )
-
-                SingleHiddenPhotoView(navControllerLocal, window, scale, rotation, offset)
-            }
-
-            composable(MultiScreenViewType.AboutAndUpdateView.name) {
-                enableEdgeToEdge(
-                    navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.background.toArgb()),
-                    statusBarStyle = SystemBarStyle.auto(
-                        CustomMaterialTheme.colorScheme.background.toArgb(),
-                        CustomMaterialTheme.colorScheme.background.toArgb()
-                    )
-                )
-                setupNextScreen(
-                    context,
-                    windowInsetsController,
-                    selectedItemsList,
-                    window,
-                )
-
-                AboutPage(navControllerLocal)
-            }
-
-            composable(MultiScreenViewType.FavouritesGridView.name) {
-                enableEdgeToEdge(
-                    navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.background.toArgb()),
-                    statusBarStyle = SystemBarStyle.auto(
-                        CustomMaterialTheme.colorScheme.background.toArgb(),
-                        CustomMaterialTheme.colorScheme.background.toArgb()
-                    )
-                )
-                setupNextScreen(
-                    context,
-                    windowInsetsController,
-                    selectedItemsList,
-                    window,
-                )
-
-                FavouritesGridView(
-                    navController = navControllerLocal,
-                    selectedItemsList = selectedItemsList
-                )
-            }
-
-            composable<EditingScreen>(
-                enterTransition = {
-                    slideInVertically(
-                        animationSpec = tween(
-                            durationMillis = 600
+                composable(
+                    route = MultiScreenViewType.SinglePhotoView.name,
+                    popEnterTransition = {
+                        slideInHorizontally(
+                            animationSpec = tween(
+                                durationMillis = 350
+                            )
+                        ) { height -> -height } + fadeIn(
+                            animationSpec = tween(
+                                durationMillis = 350
+                            )
                         )
-                    ) { height -> height } + fadeIn(
-                        animationSpec = tween(
-                            durationMillis = 600
+                    },
+                    popExitTransition = {
+                        slideOutHorizontally(
+                            animationSpec = tween(
+                                durationMillis = 350
+                            )
+                        ) { height -> height } + fadeOut(
+                            animationSpec = tween(
+                                durationMillis = 350
+                            )
+                        )
+                    }
+                ) {
+                    enableEdgeToEdge(
+                        navigationBarStyle = SystemBarStyle.dark(
+                            CustomMaterialTheme.colorScheme.surfaceContainer.copy(
+                                alpha = 0.2f
+                            ).toArgb()
+                        ),
+                        statusBarStyle = SystemBarStyle.auto(
+                            CustomMaterialTheme.colorScheme.surface.copy(alpha = 0.2f).toArgb(),
+                            CustomMaterialTheme.colorScheme.surface.copy(alpha = 0.2f).toArgb()
                         )
                     )
-                },
-                exitTransition = {
-                    slideOutVertically(
-                        animationSpec = tween(
-                            durationMillis = 600
-                        )
-                    ) { height -> height } + fadeOut(
-                        animationSpec = tween(
-                            durationMillis = 600
+                    setupNextScreen(
+                        context,
+                        windowInsetsController,
+                        selectedItemsList,
+                        window,
+                    )
+
+                    SinglePhotoView(navControllerLocal, window, scale, rotation, offset)
+                }
+
+                composable(MultiScreenViewType.SingleAlbumView.name) {
+                    enableEdgeToEdge(
+                        navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
+                        statusBarStyle = SystemBarStyle.auto(
+                            CustomMaterialTheme.colorScheme.surface.toArgb(),
+                            CustomMaterialTheme.colorScheme.surface.toArgb()
                         )
                     )
-                },
-                popEnterTransition = {
-                    slideInVertically(
-                        animationSpec = tween(
-                            durationMillis = 600
-                        )
-                    ) { height -> height } + fadeIn(
-                        animationSpec = tween(
-                            durationMillis = 600
+                    setupNextScreen(
+                        context,
+                        windowInsetsController,
+                        selectedItemsList,
+                        window,
+                    )
+
+                    SingleAlbumView(navControllerLocal, selectedItemsList)
+                }
+
+                composable(MultiScreenViewType.SingleTrashedPhotoView.name) {
+                    enableEdgeToEdge(
+                        navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
+                        statusBarStyle = SystemBarStyle.auto(
+                            CustomMaterialTheme.colorScheme.surface.toArgb(),
+                            CustomMaterialTheme.colorScheme.surface.toArgb()
                         )
                     )
-                },
-                popExitTransition = {
-                    slideOutVertically(
-                        animationSpec = tween(
-                            durationMillis = 600
+                    setupNextScreen(
+                        context,
+                        windowInsetsController,
+                        selectedItemsList,
+                        window,
+                    )
+
+                    SingleTrashedPhotoView(navControllerLocal, window, scale, rotation, offset)
+                }
+
+                composable(MultiScreenViewType.TrashedPhotoView.name) {
+                    enableEdgeToEdge(
+                        navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
+                        statusBarStyle = SystemBarStyle.auto(
+                            CustomMaterialTheme.colorScheme.surface.toArgb(),
+                            CustomMaterialTheme.colorScheme.surface.toArgb()
                         )
-                    ) { height -> height } + fadeOut(
-                        animationSpec = tween(
-                            durationMillis = 600
+                    )
+
+                    setupNextScreen(
+                        context,
+                        windowInsetsController,
+                        selectedItemsList,
+                        window,
+                    )
+
+                    TrashedPhotoGridView(navControllerLocal, selectedItemsList)
+                }
+
+                composable(MultiScreenViewType.LockedFolderView.name) {
+                    enableEdgeToEdge(
+                        navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
+                        statusBarStyle = SystemBarStyle.auto(
+                            CustomMaterialTheme.colorScheme.surface.toArgb(),
+                            CustomMaterialTheme.colorScheme.surface.toArgb()
                         )
+                    )
+                    setupNextScreen(
+                        context,
+                        windowInsetsController,
+                        selectedItemsList,
+                        window,
+                    )
+
+                    LockedFolderView(navControllerLocal, window)
+                }
+
+                composable(MultiScreenViewType.SingleHiddenPhotoVew.name) {
+                    enableEdgeToEdge(
+                        navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
+                        statusBarStyle = SystemBarStyle.auto(
+                            CustomMaterialTheme.colorScheme.surface.toArgb(),
+                            CustomMaterialTheme.colorScheme.surface.toArgb()
+                        )
+                    )
+                    setupNextScreen(
+                        context,
+                        windowInsetsController,
+                        selectedItemsList,
+                        window,
+                    )
+
+                    SingleHiddenPhotoView(navControllerLocal, window, scale, rotation, offset)
+                }
+
+                composable(MultiScreenViewType.AboutAndUpdateView.name) {
+                    enableEdgeToEdge(
+                        navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.background.toArgb()),
+                        statusBarStyle = SystemBarStyle.auto(
+                            CustomMaterialTheme.colorScheme.background.toArgb(),
+                            CustomMaterialTheme.colorScheme.background.toArgb()
+                        )
+                    )
+                    setupNextScreen(
+                        context,
+                        windowInsetsController,
+                        selectedItemsList,
+                        window,
+                    )
+
+                    AboutPage(navControllerLocal)
+                }
+
+                composable(MultiScreenViewType.FavouritesGridView.name) {
+                    enableEdgeToEdge(
+                        navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.background.toArgb()),
+                        statusBarStyle = SystemBarStyle.auto(
+                            CustomMaterialTheme.colorScheme.background.toArgb(),
+                            CustomMaterialTheme.colorScheme.background.toArgb()
+                        )
+                    )
+                    setupNextScreen(
+                        context,
+                        windowInsetsController,
+                        selectedItemsList,
+                        window,
+                    )
+
+                    FavouritesGridView(
+                        navController = navControllerLocal,
+                        selectedItemsList = selectedItemsList
                     )
                 }
-            ) {
-                enableEdgeToEdge(
-                    navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
-                    statusBarStyle = SystemBarStyle.auto(
-                        CustomMaterialTheme.colorScheme.surfaceContainer.toArgb(),
-                        CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()
-                    )
-                )
-                setupNextScreen(
-                    context,
-                    windowInsetsController,
-                    selectedItemsList,
-                    window
-                )
 
-                val screen: EditingScreen = it.toRoute()
-                EditingView(
-                    navController = navControllerLocal,
-                    absolutePath = screen.absolutePath,
-                    dateTaken = screen.dateTaken,
-                    uri = screen.uri.toUri()
-                )
+                composable<EditingScreen>(
+                    enterTransition = {
+                        slideInVertically(
+                            animationSpec = tween(
+                                durationMillis = 600
+                            )
+                        ) { height -> height } + fadeIn(
+                            animationSpec = tween(
+                                durationMillis = 600
+                            )
+                        )
+                    },
+                    exitTransition = {
+                        slideOutVertically(
+                            animationSpec = tween(
+                                durationMillis = 600
+                            )
+                        ) { height -> height } + fadeOut(
+                            animationSpec = tween(
+                                durationMillis = 600
+                            )
+                        )
+                    },
+                    popEnterTransition = {
+                        slideInVertically(
+                            animationSpec = tween(
+                                durationMillis = 600
+                            )
+                        ) { height -> height } + fadeIn(
+                            animationSpec = tween(
+                                durationMillis = 600
+                            )
+                        )
+                    },
+                    popExitTransition = {
+                        slideOutVertically(
+                            animationSpec = tween(
+                                durationMillis = 600
+                            )
+                        ) { height -> height } + fadeOut(
+                            animationSpec = tween(
+                                durationMillis = 600
+                            )
+                        )
+                    }
+                ) {
+                    enableEdgeToEdge(
+                        navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
+                        statusBarStyle = SystemBarStyle.auto(
+                            CustomMaterialTheme.colorScheme.surfaceContainer.toArgb(),
+                            CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()
+                        )
+                    )
+                    setupNextScreen(
+                        context,
+                        windowInsetsController,
+                        selectedItemsList,
+                        window
+                    )
+
+                    val screen: EditingScreen = it.toRoute()
+                    EditingView(
+                        navController = navControllerLocal,
+                        absolutePath = screen.absolutePath,
+                        dateTaken = screen.dateTaken,
+                        uri = screen.uri.toUri()
+                    )
+                }
             }
         }
     }

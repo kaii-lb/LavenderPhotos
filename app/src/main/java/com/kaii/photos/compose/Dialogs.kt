@@ -103,8 +103,10 @@ import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.brightenColor
 import com.kaii.photos.helpers.darkenColor
 import com.kaii.photos.helpers.getExifDataForMedia
+import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.renameDirectory
 import com.kaii.photos.helpers.renameImage
+import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaStoreData
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -249,26 +251,31 @@ fun DialogExpandableItem(text: String, iconResId: Int, position: RowPosition, ex
 	)
 }
 
-fun getDefaultShapeSpacerForPosition(position: RowPosition, cornerRadius: Dp = 16.dp) : Pair<RoundedCornerShape, Dp> {
+fun getDefaultShapeSpacerForPosition(
+	position: RowPosition,
+	cornerRadius: Dp = 16.dp,
+	innerCornerRadius: Dp = 0.dp,
+	spacerHeight: Dp = 2.dp
+) : Pair<RoundedCornerShape, Dp> {
 	val shape: RoundedCornerShape
-	val spacerHeight: Dp
+	val height: Dp
 
 	when(position) {
 		RowPosition.Top -> {
-			shape = RoundedCornerShape(cornerRadius, cornerRadius, 0.dp, 0.dp)
-			spacerHeight = 2.dp
+			shape = RoundedCornerShape(cornerRadius, cornerRadius, innerCornerRadius, innerCornerRadius)
+			height = spacerHeight
 		}
 		RowPosition.Middle -> {
-			shape = RoundedCornerShape(0.dp)
-			spacerHeight = 2.dp
+			shape = RoundedCornerShape(innerCornerRadius)
+			height = spacerHeight
 		}
 		RowPosition.Bottom -> {
-			shape = RoundedCornerShape(0.dp, 0.dp, cornerRadius, cornerRadius)
-			spacerHeight = 0.dp
+			shape = RoundedCornerShape(innerCornerRadius, innerCornerRadius, cornerRadius, cornerRadius)
+			height = 0.dp
 		}
 		RowPosition.Single -> {
 			shape = RoundedCornerShape(cornerRadius)
-			spacerHeight = 0.dp
+			height = 0.dp
 		}
 	}
 
@@ -390,6 +397,8 @@ fun MainAppDialog(
 	navController: NavHostController,
 	selectedItemsList: SnapshotStateList<MediaStoreData>
 ) {
+	val vibratorManager = rememberVibratorManager()
+
 	if (showDialog.value) {
 		val context = LocalContext.current
 
@@ -559,6 +568,7 @@ fun MainAppDialog(
 		                	showDialog.value = false
 		                	selectedItemsList.clear()
 		                	selectedItemsList.add(MediaStoreData())
+							vibratorManager.vibrateShort()
 		                }
 					}
 
@@ -750,6 +760,7 @@ fun SinglePhotoInfoDialog(
 
 							val stateList = SnapshotStateList<MediaStoreData>()
 							stateList.add(currentMediaItem)
+
 							MoveCopyAlbumListView(
 								show,
 								stateList,
