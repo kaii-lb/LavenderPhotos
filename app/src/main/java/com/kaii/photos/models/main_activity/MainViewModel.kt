@@ -13,6 +13,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.datastore
 import com.kaii.photos.datastore.SettingsLogs
+import com.kaii.photos.datastore.SettingsPermissions
 import com.kaii.photos.mediastore.MediaStoreData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -37,6 +38,7 @@ class MainViewModel(context: Context) : ViewModel() {
     val permissionQueue = mutableStateListOf<String>()
 
 	val settingsLogs = SettingsLogs(viewModelScope, context)
+	val settingsPermissions = SettingsPermissions(viewModelScope, context)
 
     fun setSelectedMediaData(newMediaStoreData: MediaStoreData?) {
         _selectedMedia.value = newMediaStoreData

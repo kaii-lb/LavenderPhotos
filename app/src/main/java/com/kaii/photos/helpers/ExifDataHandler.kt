@@ -50,7 +50,7 @@ fun getExifDataForMedia(uri: String): Map<MediaData, Any> {
 	    list[MediaData.Path] = file.absolutePath
 
 	    val datetime = getDateTakenForMedia(uri)
-	    val formatter = DateTimeFormatter.ofPattern("h:mm:ss a - d MMM yyyy")
+	    val formatter = DateTimeFormatter.ofPattern("d MMM yyyy - h:mm:ss a")
 	    val formattedDateTime =
 	        LocalDateTime.ofInstant(Instant.ofEpochSecond(datetime), ZoneId.systemDefault())
 	            .format(formatter)

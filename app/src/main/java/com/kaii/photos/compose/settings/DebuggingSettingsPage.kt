@@ -14,117 +14,76 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.R
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.PreferencesRow
+import com.kaii.photos.compose.PreferencesSwitchRow
 import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.MainActivity.Companion.mainViewModel
 
 @Composable
-fun MainSettingsPage() {
-    Scaffold (
-		topBar = {
-			MainSettingsTopBar()
-		}
-    ) { innerPadding ->
-    	val navController = LocalNavController.current ?: return@Scaffold
+fun DebuggingSettingsPage() {
+	val shouldRecordLogs = mainViewModel.settingsLogs.recordLogs.collectAsStateWithLifecycle(initialValue = false)
 
+	Scaffold (
+		topBar = {
+			DebuggingSettingsTopBar()
+		}
+	) { innerPadding ->
         LazyColumn (
             modifier = Modifier
                 .padding(innerPadding)
                 .background(CustomMaterialTheme.colorScheme.background),
             verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.Start
         ) {
-            item {
-                PreferencesRow(
-                    title = "General",
-                    summary = "App preferences and customizations",
+        	item {
+        		Text(
+        			text = "Logs",
+        			fontSize = TextUnit(16f, TextUnitType.Sp),
+        			color = CustomMaterialTheme.colorScheme.primary,
+        			modifier = Modifier
+        				.padding(12.dp)
+        		)
+        	}
+
+        	item {
+                PreferencesSwitchRow(
+                    title = "Record Logs",
+                    summary = "Store logs in 'Internal Storage/LavenderPhotos/logs.txt'",
                     iconResID = R.drawable.settings,
-                    position = RowPosition.Top,
+                    checked = shouldRecordLogs,
+                    position = RowPosition.Single,
                     showBackground = false,
                     height = 80.dp,
-                    titleTextSize = 20f
                 ) {
-					navController.navigate(MultiScreenViewType.SettingsGeneralView.name)
+					mainViewModel.settingsLogs.setRecordLogs(it)
                 }
-            }
-
-            item {
-                PreferencesRow(
-                    title = "Privacy & Security",
-                    summary = "Fine grained control over your data",
-                    iconResID = R.drawable.privacy_policy,
-                    position = RowPosition.Middle,
-                    showBackground = false,
-                    height = 80.dp,
-                    titleTextSize = 20f
-                ) {
-
-                }
-            }
-
-            item {
-                PreferencesRow(
-                    title = "Look & Feel",
-                    summary = "Change how the app looks",
-                    iconResID = R.drawable.palette,
-                    position = RowPosition.Middle,
-                    showBackground = false,
-                    height = 80.dp,
-                    titleTextSize = 20f
-                ) {
-
-                }
-            }
-
-			item {
-                PreferencesRow(
-                    title = "Memory & Storage",
-                    summary = "Performance and space options",
-                    iconResID = R.drawable.privacy_policy,
-                    position = RowPosition.Middle,
-                    showBackground = false,
-                    height = 80.dp,
-                    titleTextSize = 20f
-                ) {
-
-                }
-            }
-
-            item {
-                PreferencesRow(
-                    title = "Debugging",
-                    summary = "Tools for debugging issues",
-                    iconResID = R.drawable.memory,
-                    position = RowPosition.Bottom,
-                    showBackground = false,
-                    height = 80.dp,
-                    titleTextSize = 20f
-                ) {
-					navController.navigate(MultiScreenViewType.SettingsDebuggingView.name)
-                }
-            }
+        	}
         }
-    }
+	}
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun MainSettingsTopBar() {
+private fun DebuggingSettingsTopBar() {
 	val navController = LocalNavController.current ?: return
 
 	TopAppBar(
         title = {
             Text(
-                text = "Settings",
+                text = "Debugging",
                 fontSize = TextUnit(22f, TextUnitType.Sp)
             )
         },

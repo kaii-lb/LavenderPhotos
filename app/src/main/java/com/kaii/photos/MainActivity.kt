@@ -34,6 +34,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -81,6 +82,9 @@ import com.kaii.photos.compose.grids.PhotoGrid
 import com.kaii.photos.compose.grids.SearchPage
 import com.kaii.photos.compose.grids.SingleAlbumView
 import com.kaii.photos.compose.grids.TrashedPhotoGridView
+import com.kaii.photos.compose.settings.DebuggingSettingsPage
+import com.kaii.photos.compose.settings.GeneralSettingsPage
+import com.kaii.photos.compose.settings.MainSettingsPage
 import com.kaii.photos.compose.single_photo.EditingView
 import com.kaii.photos.compose.single_photo.SingleHiddenPhotoView
 import com.kaii.photos.compose.single_photo.SinglePhotoView
@@ -107,6 +111,10 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.runBlocking
 
 val Context.datastore: DataStore<Preferences> by preferencesDataStore(name = "settings")
+
+val LocalNavController: ProvidableCompositionLocal<NavHostController?> = compositionLocalOf {
+   null
+}
 
 private const val TAG = "MAIN_ACTIVITY"
 
@@ -160,10 +168,6 @@ class MainActivity : ComponentActivity() {
         window.decorView.setBackgroundColor(CustomMaterialTheme.colorScheme.background.toArgb())
 
         val navControllerLocal = rememberNavController()
-
-        val LocalNavController = compositionLocalOf {
-            navControllerLocal
-        }
 
         val currentView =
             rememberSaveable { mutableStateOf(MainScreenViewType.PhotosGridView) }
@@ -509,6 +513,60 @@ class MainActivity : ComponentActivity() {
                         dateTaken = screen.dateTaken,
                         uri = screen.uri.toUri()
                     )
+                }
+
+                composable(MultiScreenViewType.SettingsMainView.name) {
+                    enableEdgeToEdge(
+                        navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.background.toArgb()),
+                        statusBarStyle = SystemBarStyle.auto(
+                            CustomMaterialTheme.colorScheme.background.toArgb(),
+                            CustomMaterialTheme.colorScheme.background.toArgb()
+                        )
+                    )
+                    setupNextScreen(
+                        context,
+                        windowInsetsController,
+                        selectedItemsList,
+                        window,
+                    )
+
+                    MainSettingsPage()
+                }
+
+                composable(MultiScreenViewType.SettingsDebuggingView.name) {
+                   enableEdgeToEdge(
+                       navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.background.toArgb()),
+                       statusBarStyle = SystemBarStyle.auto(
+                           CustomMaterialTheme.colorScheme.background.toArgb(),
+                           CustomMaterialTheme.colorScheme.background.toArgb()
+                       )
+                   )
+                   setupNextScreen(
+                       context,
+                       windowInsetsController,
+                       selectedItemsList,
+                       window,
+                   )
+
+                   DebuggingSettingsPage()
+                }
+
+                composable(MultiScreenViewType.SettingsGeneralView.name) {
+                   enableEdgeToEdge(
+                       navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.background.toArgb()),
+                       statusBarStyle = SystemBarStyle.auto(
+                           CustomMaterialTheme.colorScheme.background.toArgb(),
+                           CustomMaterialTheme.colorScheme.background.toArgb()
+                       )
+                   )
+                   setupNextScreen(
+                       context,
+                       windowInsetsController,
+                       selectedItemsList,
+                       window,
+                   )
+
+                   GeneralSettingsPage()
                 }
             }
         }

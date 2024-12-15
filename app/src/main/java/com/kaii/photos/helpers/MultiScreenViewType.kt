@@ -12,7 +12,10 @@ enum class MultiScreenViewType {
     LockedFolderView,
     SingleHiddenPhotoVew,
     AboutAndUpdateView,
-    FavouritesGridView
+    FavouritesGridView,
+    SettingsMainView,
+    SettingsDebuggingView,
+    SettingsGeneralView
 }
 
 @Serializable

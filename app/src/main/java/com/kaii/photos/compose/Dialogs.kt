@@ -606,7 +606,10 @@ fun MainAppDialog(
 						text = "Settings",
 						iconResId = R.drawable.settings,
 						position = RowPosition.Middle,
-					)
+					) {
+						showDialog.value = false
+						navController.navigate(MultiScreenViewType.SettingsMainView.name)
+					}
 
 					DialogClickableItem (
 						text = "About & Updates",
