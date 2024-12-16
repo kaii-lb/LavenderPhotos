@@ -27,6 +27,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -459,7 +461,13 @@ fun MainAppSelectingBottomBar(
 
         val show = remember { mutableStateOf(false) }
         var isMoving by remember { mutableStateOf(false) }
-        MoveCopyAlbumListView(show, selectedItemsList, isMoving)
+        MoveCopyAlbumListView(
+        	show = show,
+        	selectedItemsList = selectedItemsList,
+        	isMoving = isMoving,
+        	groupedMedia = null,
+        	insetsPadding = WindowInsets.statusBars
+       	)
 
         BottomAppBarItem(
             text = "Move",
@@ -778,7 +786,13 @@ fun SingleAlbumViewBottomBar(
 
         val show = remember { mutableStateOf(false) }
         var isMoving by remember { mutableStateOf(false) }
-        MoveCopyAlbumListView(show, selectedItemsList, isMoving)
+        MoveCopyAlbumListView(
+        	show = show,
+        	selectedItemsList = selectedItemsList,
+        	isMoving = isMoving,
+        	groupedMedia = null,
+        	insetsPadding = WindowInsets.statusBars
+       	)
 
         BottomAppBarItem(
             text = "Move",
@@ -1349,7 +1363,13 @@ fun FavouritesViewBottomAppBar(
         )
 
         val show = remember { mutableStateOf(false) }
-        MoveCopyAlbumListView(show, selectedItemsList, false)
+        MoveCopyAlbumListView(
+        	show = show,
+        	selectedItemsList = selectedItemsList,
+        	isMoving = false,
+        	groupedMedia = null,
+        	insetsPadding = WindowInsets.statusBars
+       	)
 
         BottomAppBarItem(
             text = "Copy",

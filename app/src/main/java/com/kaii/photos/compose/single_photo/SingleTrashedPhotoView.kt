@@ -153,7 +153,7 @@ fun SingleTrashedPhotoView(
 
     val showDialog = remember { mutableStateOf(false) }
     val showInfoDialog = remember { mutableStateOf(false) }
-	
+
     if (showDialog.value) {
         val context = LocalContext.current
         val coroutineScope = rememberCoroutineScope()
@@ -249,7 +249,13 @@ fun SingleTrashedPhotoView(
             )
         }
 
-        SinglePhotoInfoDialog(showDialog = showInfoDialog, currentMediaItem = currentMediaItem, groupedMedia = groupedMedia, showMoveCopy = false)
+        SinglePhotoInfoDialog(
+        	showDialog = showInfoDialog,
+        	currentMediaItem = currentMediaItem,
+        	groupedMedia = groupedMedia,
+        	showMoveCopyOptions = false,
+        	moveCopyInsetsPadding = null
+       	)
     }
 }
 

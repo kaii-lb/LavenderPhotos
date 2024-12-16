@@ -28,7 +28,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
@@ -625,12 +628,14 @@ fun MainAppDialog(
 	}
 }
 
+/* @param moveCopyInsetsPadding should only be used when showMoveCopyOptions is enabled */
 @Composable
 fun SinglePhotoInfoDialog(
 	showDialog: MutableState<Boolean>,
 	currentMediaItem: MediaStoreData,
 	groupedMedia: MutableState<List<MediaStoreData>>,
-	showMoveCopy: Boolean = true
+	showMoveCopyOptions: Boolean = true,
+	moveCopyInsetsPadding: WindowInsets? = WindowInsets.statusBars
 ) {
 	val context = LocalContext.current
 	val isEditingFileName = remember { mutableStateOf(false) }
@@ -737,7 +742,7 @@ fun SinglePhotoInfoDialog(
 					val mediaData = getExifDataForMedia(currentMediaItem.absolutePath)
 					// should add a way to automatically calculate height needed for this
 					val addedHeight by remember { mutableStateOf(36.dp * mediaData.keys.size) }
-					val moveCopyHeight = if(showMoveCopy) 82.dp else 0.dp // 40.dp is height of one single row
+					val moveCopyHeight = if(showMoveCopyOptions) 82.dp else 0.dp // 40.dp is height of one single row
 					val height by animateDpAsState(
 						targetValue = if (!isEditingFileName.value && expanded.value) {
 							42.dp + addedHeight + moveCopyHeight
@@ -757,7 +762,7 @@ fun SinglePhotoInfoDialog(
 							.height(height)
 							.fillMaxWidth(1f)
 					) {
-						if (showMoveCopy) {
+						if (showMoveCopyOptions && moveCopyInsetsPadding != null) {
 							val show = remember { mutableStateOf(false) }
 							var isMoving by remember { mutableStateOf(false) }
 
@@ -765,10 +770,11 @@ fun SinglePhotoInfoDialog(
 							stateList.add(currentMediaItem)
 
 							MoveCopyAlbumListView(
-								show,
-								stateList,
-								isMoving,
-								groupedMedia
+								show = show,
+								selectedItemsList = stateList,
+								isMoving = isMoving,
+								groupedMedia = null,
+								insetsPadding = moveCopyInsetsPadding
 							)
 
 							DialogClickableItem(

@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
@@ -79,7 +80,8 @@ fun MoveCopyAlbumListView(
     show: MutableState<Boolean>,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     isMoving: Boolean,
-    groupedMedia: MutableState<List<MediaStoreData>>? = null
+    groupedMedia: MutableState<List<MediaStoreData>>? = null,
+    insetsPadding: WindowInsets
 ) {
     val context = LocalContext.current
     val originalAlbumsList = runBlocking {
@@ -125,7 +127,7 @@ fun MoveCopyAlbumListView(
             onDismissRequest = { show.value = false },
             modifier = Modifier
                 .windowInsetsPadding(
-                    WindowInsets.statusBars
+                     insetsPadding
                 ),
         ) {
             BackHandler(
@@ -202,6 +204,10 @@ fun MoveCopyAlbumListView(
                 }
             }
         }
+    } else {
+    	coroutineScope.launch {
+    		state.scrollToItem(0)
+    	}
     }
 }
 
