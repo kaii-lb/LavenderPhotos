@@ -90,6 +90,7 @@ import com.kaii.photos.helpers.ImageFunctions
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.checkHasFiles
+import com.kaii.photos.helpers.getBaseInternalStorageDirectory
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.vibrateLong
 import com.kaii.photos.helpers.vibrateShort
@@ -119,10 +120,11 @@ fun PhotoGrid(
 	val hasFiles = if (path == null) {
 		groupedMedia.value.isNotEmpty()
 	} else {
+		val basePath = getBaseInternalStorageDirectory()
 		if (viewProperties == ViewProperties.Trash) {
-			Path("/storage/emulated/0/$path").checkHasFiles(true)
+			Path("$basePath$path").checkHasFiles(true)
 		} else {
-			Path("/storage/emulated/0/$path").checkHasFiles()
+			Path("$basePath$path").checkHasFiles()
 		}
 	}
 
@@ -201,9 +203,16 @@ fun DeviceMedia(
 				.height(maxHeight - spacerHeight)
 				.align(Alignment.TopCenter)
 		) {
+			val localConfig = LocalConfiguration.current
+		    var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
+
+		    LaunchedEffect(localConfig) {
+		    	isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
+		    }
+
 			LazyVerticalGrid(
 		        columns = GridCells.Fixed(
-					if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT) {
+					if (!isLandscape) {
 						3
 					} else {
 						6

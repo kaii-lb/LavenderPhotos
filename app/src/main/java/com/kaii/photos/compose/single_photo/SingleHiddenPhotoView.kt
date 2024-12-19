@@ -42,6 +42,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -50,6 +51,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -64,12 +66,13 @@ import com.kaii.photos.MainActivity
 import com.kaii.photos.R
 import com.kaii.photos.compose.ConfirmationDialog
 import com.kaii.photos.compose.ConfirmationDialogWithBody
-import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.compose.DialogInfoText
+import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.brightenColor
 import com.kaii.photos.helpers.getExifDataForMedia
 import com.kaii.photos.helpers.moveImageOutOfLockedFolder
 import com.kaii.photos.helpers.permanentlyDeleteSecureFolderImageList
+import com.kaii.photos.helpers.shareImage
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import kotlinx.coroutines.launch
@@ -100,7 +103,6 @@ fun SingleHiddenPhotoView(
         )
     }
 
-    val systemBarsShown = remember { mutableStateOf(true) }
     val appBarsVisible = remember { mutableStateOf(true) }
     val state = rememberPagerState {
         groupedMedia.value.size
@@ -150,7 +152,6 @@ fun SingleHiddenPhotoView(
                 scale,
                 rotation,
                 offset,
-                systemBarsShown,
                 window,
                 appBarsVisible,
                 true
@@ -187,8 +188,9 @@ private fun TopBar(navController: NavHostController, mediaItem: MediaStoreData, 
             )
         ) { width -> -width } + fadeOut(),
     ) {
+        val context = LocalContext.current
+
         TopAppBar(
-//            modifier = Modifier.alpha(alpha),
             colors = TopAppBarDefaults.topAppBarColors(
                 containerColor = CustomMaterialTheme.colorScheme.surfaceContainer
             ),
@@ -221,6 +223,20 @@ private fun TopBar(navController: NavHostController, mediaItem: MediaStoreData, 
                 )
             },
             actions = {
+                IconButton(
+                    onClick = {
+                        shareImage(mediaItem.uri, context)
+                    }
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.share),
+                        contentDescription = "share this secured photo",
+                        tint = CustomMaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier
+                            .size(24.dp)
+                    )
+                }
+
                 IconButton(
                     onClick = {
                         showInfoDialog.value = true
@@ -399,9 +415,16 @@ private fun BottomBar(
 @Composable
 private fun SingleSecuredPhotoInfoDialog(
 	showDialog: MutableState<Boolean>,
-	currentMediaItem: MediaStoreData	
+	currentMediaItem: MediaStoreData
 ) {
-	val modifier = if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE)
+	val localConfig = LocalConfiguration.current
+    var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
+
+    LaunchedEffect(localConfig) {
+    	isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
+    }
+
+	val modifier = if (isLandscape)
 		Modifier.width(256.dp)
 	else
 		Modifier.fillMaxWidth(0.85f)
@@ -417,11 +440,11 @@ private fun SingleSecuredPhotoInfoDialog(
 		) {
 			Column (
 				modifier = Modifier
-					.then(modifier)
-					.wrapContentHeight()
-					.clip(RoundedCornerShape(32.dp))
-					.background(brightenColor(CustomMaterialTheme.colorScheme.surface, 0.1f))
-					.padding(4.dp),
+                    .then(modifier)
+                    .wrapContentHeight()
+                    .clip(RoundedCornerShape(32.dp))
+                    .background(brightenColor(CustomMaterialTheme.colorScheme.surface, 0.1f))
+                    .padding(4.dp),
 			) {
 				Box (
 					modifier = Modifier
@@ -453,8 +476,8 @@ private fun SingleSecuredPhotoInfoDialog(
 
 				Column (
 					modifier = Modifier
-						.padding(12.dp)
-						.wrapContentHeight()
+                        .padding(12.dp)
+                        .wrapContentHeight()
 				) {
 					val mediaData = getExifDataForMedia(currentMediaItem.absolutePath)
 

@@ -38,6 +38,7 @@ import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,6 +48,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
@@ -100,6 +102,7 @@ import com.kaii.photos.helpers.EditingScreen
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.getBaseInternalStorageDirectory
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.models.gallery_model.GalleryViewModel
 import com.kaii.photos.models.gallery_model.GalleryViewModelFactory
@@ -181,7 +184,7 @@ class MainActivity : ComponentActivity() {
 
         val context = LocalContext.current
 
-        val logPath = "/storage/emulated/0/LavenderPhotos/log.txt"
+        val logPath = "${getBaseInternalStorageDirectory()}LavenderPhotos/log.txt"
         try {
             java.io.File(logPath).delete()
         } catch (e: Throwable) {
@@ -210,6 +213,13 @@ class MainActivity : ComponentActivity() {
             // context.datastore.addToAlbumsList("Download")
             // context.datastore.addToAlbumsList("Pictures/Instagram")
         }
+
+		val localConfig = LocalConfiguration.current
+		var orientation by remember { mutableStateOf(localConfig.orientation) }
+
+		LaunchedEffect(localConfig) {
+			orientation = localConfig.orientation
+		}
 
         CompositionLocalProvider(LocalNavController provides navControllerLocal) {
             NavHost(
@@ -265,6 +275,7 @@ class MainActivity : ComponentActivity() {
                         windowInsetsController,
                         selectedItemsList,
                         window,
+                        orientation
                     )
 
                     Content(currentView, navControllerLocal, showDialog, selectedItemsList)
@@ -311,6 +322,7 @@ class MainActivity : ComponentActivity() {
                         windowInsetsController,
                         selectedItemsList,
                         window,
+                        orientation
                     )
 
                     SinglePhotoView(navControllerLocal, window, scale, rotation, offset)
@@ -329,6 +341,7 @@ class MainActivity : ComponentActivity() {
                         windowInsetsController,
                         selectedItemsList,
                         window,
+                        orientation
                     )
 
                     SingleAlbumView(navControllerLocal, selectedItemsList)
@@ -347,6 +360,7 @@ class MainActivity : ComponentActivity() {
                         windowInsetsController,
                         selectedItemsList,
                         window,
+                        orientation
                     )
 
                     SingleTrashedPhotoView(navControllerLocal, window, scale, rotation, offset)
@@ -366,6 +380,7 @@ class MainActivity : ComponentActivity() {
                         windowInsetsController,
                         selectedItemsList,
                         window,
+                        orientation
                     )
 
                     TrashedPhotoGridView(navControllerLocal, selectedItemsList)
@@ -384,6 +399,7 @@ class MainActivity : ComponentActivity() {
                         windowInsetsController,
                         selectedItemsList,
                         window,
+                        orientation
                     )
 
                     LockedFolderView(navControllerLocal, window)
@@ -402,6 +418,7 @@ class MainActivity : ComponentActivity() {
                         windowInsetsController,
                         selectedItemsList,
                         window,
+                        orientation
                     )
 
                     SingleHiddenPhotoView(navControllerLocal, window, scale, rotation, offset)
@@ -420,6 +437,7 @@ class MainActivity : ComponentActivity() {
                         windowInsetsController,
                         selectedItemsList,
                         window,
+                        orientation
                     )
 
                     AboutPage(navControllerLocal)
@@ -438,6 +456,7 @@ class MainActivity : ComponentActivity() {
                         windowInsetsController,
                         selectedItemsList,
                         window,
+                        orientation
                     )
 
                     FavouritesGridView(
@@ -503,7 +522,8 @@ class MainActivity : ComponentActivity() {
                         context,
                         windowInsetsController,
                         selectedItemsList,
-                        window
+                        window,
+                        orientation
                     )
 
                     val screen: EditingScreen = it.toRoute()
@@ -528,6 +548,7 @@ class MainActivity : ComponentActivity() {
                         windowInsetsController,
                         selectedItemsList,
                         window,
+                        orientation
                     )
 
                     MainSettingsPage()
@@ -546,6 +567,7 @@ class MainActivity : ComponentActivity() {
                        windowInsetsController,
                        selectedItemsList,
                        window,
+                       orientation
                    )
 
                    DebuggingSettingsPage()
@@ -564,6 +586,7 @@ class MainActivity : ComponentActivity() {
                        windowInsetsController,
                        selectedItemsList,
                        window,
+                       orientation
                    )
 
                    GeneralSettingsPage()
@@ -727,27 +750,10 @@ private fun setupNextScreen(
     windowInsetsController: WindowInsetsController?,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     window: Window,
+    orientation: Int
 ) {
     selectedItemsList.clear()
     window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
 
     window.setDecorFitsSystemWindows(false)
-
-    if (context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-        windowInsetsController?.apply {
-            hide(WindowInsetsCompat.Type.systemBars())
-            systemBarsBehavior =
-                WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-        }
-    } else {
-        windowInsetsController?.apply {
-            show(WindowInsetsCompat.Type.systemBars())
-
-            systemBarsBehavior = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                WindowInsetsController.BEHAVIOR_DEFAULT
-            } else {
-                WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            }
-        }
-    }
 }

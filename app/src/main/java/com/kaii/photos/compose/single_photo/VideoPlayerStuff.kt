@@ -1,10 +1,10 @@
 package com.kaii.photos.compose.single_photo
 
+import android.app.Activity
 import android.content.res.Configuration
 import android.net.Uri
 import android.view.ViewGroup
 import android.view.Window
-import android.view.WindowInsetsController
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -13,6 +13,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,12 +25,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.FilledTonalIconToggleButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -40,11 +44,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -55,11 +59,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -76,6 +80,7 @@ import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.ui.PlayerView
 import androidx.navigation.NavHostController
 import com.kaii.photos.R
+import com.kaii.photos.compose.setBarVisibility
 import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.mediastore.MediaStoreData
 import kotlinx.coroutines.delay
@@ -95,48 +100,53 @@ fun VideoPlayerControls(
     isMuted: MutableState<Boolean>,
     currentVideoPosition: MutableFloatState,
     duration: MutableFloatState,
+    isTouchLocked: MutableState<Boolean>,
     title: String,
     modifier: Modifier
 ) {
     val interactionSource = remember { MutableInteractionSource() }
 
-    Box (
+    Box(
         modifier = Modifier
             .then(modifier)
             .background(Color.Transparent)
     ) {
-    	val localConfig = LocalConfiguration.current
-    	val isLandscape by remember { derivedStateOf { localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE } }
+        val localConfig = LocalConfiguration.current
+        var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
 
-		if (isLandscape) {
-			Row (
-				modifier = Modifier
-					.wrapContentSize()
-					.align(Alignment.TopStart)
-					.padding(16.dp),
-				verticalAlignment = Alignment.CenterVertically,
-				horizontalArrangement = Arrangement.Center
-			) {
-				Text(
-					text = title,
-					fontSize = TextUnit(12f, TextUnitType.Sp),
-					color = CustomMaterialTheme.colorScheme.onSecondaryContainer,
-					modifier = Modifier
-						.wrapContentSize()
-						.clip(RoundedCornerShape(1000.dp))
-						.background(CustomMaterialTheme.colorScheme.secondaryContainer)
-						.padding(8.dp, 4.dp)
-				)
-			}
-		}
+        LaunchedEffect(localConfig) {
+            isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
+        }
 
-        Row (
+        if (isLandscape) {
+            Box (
+                modifier = Modifier
+                    .wrapContentSize()
+                    .align(Alignment.TopStart)
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = title,
+                    fontSize = TextUnit(12f, TextUnitType.Sp),
+                    color = CustomMaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier
+                    	// TODO: .widthIn some width: 1/2 screen width?
+                        .wrapContentSize()
+                        .clip(RoundedCornerShape(1000.dp))
+                        .background(CustomMaterialTheme.colorScheme.secondaryContainer)
+                        .padding(8.dp, 4.dp)
+                        .align(Alignment.CenterStart)
+                )
+            }
+        }
+
+        Row(
             modifier = Modifier
                 .height(if (isLandscape) 48.dp else 172.dp)
                 .align(Alignment.BottomCenter),
             verticalAlignment = Alignment.Top
         ) {
-            Row (
+            Row(
                 modifier = Modifier
                     .fillMaxWidth(1f)
                     .wrapContentHeight()
@@ -146,7 +156,7 @@ fun VideoPlayerControls(
             ) {
                 val currentDurationFormatted = currentVideoPosition.floatValue.roundToInt().seconds.formatLikeANormalPerson()
 
-                Row (
+                Row(
                     modifier = Modifier
                         .height(32.dp)
                         .width(if (currentDurationFormatted.second) 72.dp else 48.dp)
@@ -156,7 +166,7 @@ fun VideoPlayerControls(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    Text (
+                    Text(
                         text = currentDurationFormatted.first,
                         style = TextStyle(
                             fontSize = TextUnit(12f, TextUnitType.Sp),
@@ -166,18 +176,18 @@ fun VideoPlayerControls(
                     )
                 }
 
-                Spacer (modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(8.dp))
 
                 duration.floatValue = duration.floatValue.coerceAtLeast(0f)
 
-                Slider (
+                Slider(
                     value = currentVideoPosition.floatValue,
                     valueRange = 0f..duration.floatValue,
                     onValueChange = { pos ->
-                    	val prev = isPlaying.value
+                        val prev = isPlaying.value
                         exoPlayer.seekTo(
-                        	(pos * 1000f).coerceAtMost(duration.floatValue * 1000f).toLong()
-                       	)
+                            (pos * 1000f).coerceAtMost(duration.floatValue * 1000f).toLong()
+                        )
                         isPlaying.value = prev
                     },
                     steps = (duration.floatValue.roundToInt() - 1).coerceAtLeast(0),
@@ -217,11 +227,11 @@ fun VideoPlayerControls(
                         .height(32.dp)
                 )
 
-                Spacer (modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(8.dp))
 
-				val formattedDuration = duration.floatValue.roundToInt().seconds.formatLikeANormalPerson()
+                val formattedDuration = duration.floatValue.roundToInt().seconds.formatLikeANormalPerson()
 
-                Row (
+                Row(
                     modifier = Modifier
                         .height(32.dp)
                         .width(if (formattedDuration.second) 72.dp else 48.dp)
@@ -231,7 +241,7 @@ fun VideoPlayerControls(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    Text (
+                    Text(
                         text = formattedDuration.first,
                         style = TextStyle(
                             fontSize = TextUnit(12f, TextUnitType.Sp),
@@ -241,7 +251,7 @@ fun VideoPlayerControls(
                     )
                 }
 
-                Spacer (modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(8.dp))
 
                 FilledTonalIconButton(
                     onClick = {
@@ -260,7 +270,7 @@ fun VideoPlayerControls(
             }
         }
 
-        Row (
+        Row(
             modifier = Modifier
                 .fillMaxWidth(1f)
                 .wrapContentHeight()
@@ -270,7 +280,7 @@ fun VideoPlayerControls(
         ) {
             FilledTonalIconButton(
                 onClick = {
-                	val prev = isPlaying.value
+                    val prev = isPlaying.value
                     exoPlayer.seekBack()
                     isPlaying.value = prev
                 },
@@ -285,7 +295,7 @@ fun VideoPlayerControls(
                 )
             }
 
-            Spacer (modifier = Modifier.width(48.dp))
+            Spacer(modifier = Modifier.width(48.dp))
 
             FilledTonalIconButton(
                 onClick = {
@@ -300,11 +310,11 @@ fun VideoPlayerControls(
                 )
             }
 
-            Spacer (modifier = Modifier.width(48.dp))
+            Spacer(modifier = Modifier.width(48.dp))
 
             FilledTonalIconButton(
                 onClick = {
-                	val prev = isPlaying.value
+                    val prev = isPlaying.value
                     exoPlayer.seekForward()
                     isPlaying.value = prev
                 },
@@ -326,12 +336,12 @@ fun VideoPlayerControls(
 @Composable
 fun VideoPlayer(
     item: MediaStoreData,
-    visible: MutableState<Boolean>,
+    controlsVisible: MutableState<Boolean>,
     appBarsVisible: MutableState<Boolean>,
     shouldPlay: Boolean,
     navController: NavHostController,
     canFadeControls: MutableState<Boolean>,
-    windowInsetsController: WindowInsetsController,
+    isTouchLocked: MutableState<Boolean>,
     window: Window,
     modifier: Modifier
 ) {
@@ -339,9 +349,10 @@ fun VideoPlayer(
     val lastIsPlaying = rememberSaveable { mutableStateOf(true) }
 
     val isMuted = rememberSaveable { mutableStateOf(false) }
+
     /** In Seconds */
     val currentVideoPosition = rememberSaveable { mutableFloatStateOf(0f) }
-	val duration = rememberSaveable { mutableFloatStateOf(0f) }
+    val duration = rememberSaveable { mutableFloatStateOf(0f) }
 
     val exoPlayer = rememberExoPlayerWithLifeCycle(item.uri, isPlaying, duration, currentVideoPosition)
     val playerView = rememberPlayerView(exoPlayer)
@@ -351,112 +362,141 @@ fun VideoPlayer(
         currentVideoPosition.floatValue = 0f
         duration.floatValue = 0f
 
+        exoPlayer.stop()
+        exoPlayer.release()
+
         navController.popBackStack()
     }
 
-    LaunchedEffect(key1 = LocalConfiguration.current) {
-        exoPlayer.seekTo((currentVideoPosition.floatValue * 1000).toLong())
-        exoPlayer.volume = if (isMuted.value) 0f else 1f
-        isPlaying.value = lastIsPlaying.value
-    }
-
     val localConfig = LocalConfiguration.current
-    LaunchedEffect(key1 = isPlaying.value) {
-    	if (isPlaying.value) {
-    		canFadeControls.value = true
-    	} else {
-    		visible.value = true
-    		if (localConfig.orientation != Configuration.ORIENTATION_LANDSCAPE) {
-    			appBarsVisible.value = true
-				windowInsetsController.show(WindowInsetsCompat.Type.systemBars())
-                window.setDecorFitsSystemWindows(false)
-   			}
-    	}
 
-    	lastIsPlaying.value = isPlaying.value
+    LaunchedEffect(key1 = isPlaying.value, localConfig.orientation) {
+        if (isPlaying.value) {
+            canFadeControls.value = true
+        } else if (!isPlaying.value) {
+            controlsVisible.value = true
 
-		currentVideoPosition.floatValue = exoPlayer.currentPosition / 1000f
-		if (kotlin.math.ceil(currentVideoPosition.floatValue) >= kotlin.math.ceil(duration.floatValue) && duration.floatValue != 0f) {
-			delay(1000)
-			exoPlayer.pause()
-			exoPlayer.seekTo(0)
-			currentVideoPosition.floatValue = 0f
-			isPlaying.value = false
-		}
+            if (localConfig.orientation != Configuration.ORIENTATION_LANDSCAPE) {
+                setBarVisibility(
+                    visible = true,
+                    window = window
+                ) {
+                    appBarsVisible.value = true
+                }
+            }
+        }
 
-        while(isPlaying.value) {
-        	currentVideoPosition.floatValue = exoPlayer.currentPosition / 1000f
+        lastIsPlaying.value = isPlaying.value
+
+        currentVideoPosition.floatValue = exoPlayer.currentPosition / 1000f
+        if (kotlin.math.ceil(currentVideoPosition.floatValue) >= kotlin.math.ceil(duration.floatValue) && duration.floatValue != 0f) {
+            delay(1000)
+            exoPlayer.pause()
+            exoPlayer.seekTo(0)
+            currentVideoPosition.floatValue = 0f
+            isPlaying.value = false
+        }
+
+        while (isPlaying.value) {
+            currentVideoPosition.floatValue = exoPlayer.currentPosition / 1000f
 
             delay(1000)
         }
     }
 
 
-	LaunchedEffect(shouldPlay) {
-		currentVideoPosition.floatValue = 0f
-   		duration.floatValue = 0f
-	}
+    // LaunchedEffect(shouldPlay) {
+    //     currentVideoPosition.floatValue = 0f
+    //     duration.floatValue = 0f
+    // }
 
-    DisposableEffect(true) {
-    	onDispose {
-   			exoPlayer.release()
-    	}
-    }
+    // DisposableEffect(true) {
+    //     onDispose {
+    //         exoPlayer.release()
+    //     }
+    // }
 
-    Box (
+    Box(
         modifier = Modifier
             .fillMaxSize(1f)
     ) {
-	    Column (
-	    	modifier = modifier.then(Modifier.align(Alignment.Center)),
-	        verticalArrangement = Arrangement.Center,
-	        horizontalAlignment = Alignment.CenterHorizontally
-	    ) {
-	        AndroidView (
-	            factory = { playerView },
-	            update = {
-			        exoPlayer.volume = if (isMuted.value) 0f else 1f
+        Column(
+            modifier = modifier.then(Modifier.align(Alignment.Center)),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            AndroidView(
+                factory = { playerView },
+                update = {
+                    exoPlayer.volume = if (isMuted.value) 0f else 1f
 
-			        exoPlayer.playWhenReady = shouldPlay && isPlaying.value
-	            },
-	        )
-	    }
+                    exoPlayer.playWhenReady = shouldPlay && isPlaying.value
+                },
+            )
+        }
 
-		AnimatedVisibility(
-	        visible = visible.value,
-	        enter = expandIn(
-	            animationSpec = tween(
-	                durationMillis = 350
-	            )
-	        ) + fadeIn(
-	            animationSpec = tween(
-	                durationMillis = 350
-	            )
-	        ),
-	        exit = shrinkOut(
-	            animationSpec = tween(
-	                durationMillis = 350
-	            )
-	        ) + fadeOut(
-	            animationSpec = tween(
-	                durationMillis = 350
-	            )
-	        ),
-	        modifier = Modifier
+        AnimatedVisibility(
+            visible = controlsVisible.value,
+            enter = expandIn(
+                animationSpec = tween(
+                    durationMillis = 350
+                )
+            ) + fadeIn(
+                animationSpec = tween(
+                    durationMillis = 350
+                )
+            ),
+            exit = shrinkOut(
+                animationSpec = tween(
+                    durationMillis = 350
+                )
+            ) + fadeOut(
+                animationSpec = tween(
+                    durationMillis = 350
+                )
+            ),
+            modifier = Modifier
                 .fillMaxSize(1f)
                 .align(Alignment.Center)
-	    ) {
-	        VideoPlayerControls(
-	        	exoPlayer = exoPlayer,
-	            isPlaying = isPlaying,
-	            isMuted = isMuted,
-	            currentVideoPosition = currentVideoPosition,
-	            duration = duration,
-	            title = item.displayName ?: "Media",
+        ) {
+            VideoPlayerControls(
+                exoPlayer = exoPlayer,
+                isPlaying = isPlaying,
+                isMuted = isMuted,
+                currentVideoPosition = currentVideoPosition,
+                duration = duration,
+                isTouchLocked = isTouchLocked,
+                title = item.displayName ?: "Media",
+                modifier = Modifier
+                    .fillMaxSize(1f)
+            )
+        }
+
+		if (isTouchLocked.value || controlsVisible.value) {
+	        Box (
 	            modifier = Modifier
-	                .fillMaxSize(1f)
-	        )
-	    }
+	                .wrapContentSize()
+	                .align(Alignment.TopEnd)
+	                .padding(16.dp)
+	        ) {
+		        FilledTonalIconToggleButton(
+		        	checked = isTouchLocked.value,
+		            onCheckedChange = {
+		                isTouchLocked.value = it
+		            },
+		            modifier = Modifier
+		            	.size(32.dp)
+		                .align(Alignment.Center)
+		        ) {
+		            Icon(
+		                painter = painterResource(id = if (isTouchLocked.value) R.drawable.locked_folder else R.drawable.unlock),
+		                contentDescription = "Lock the screen preventing miss-touch",
+		                modifier = Modifier
+		                    .size(20.dp)
+		            )
+		        }
+	        }
+		}
     }
 }
 
@@ -472,37 +512,37 @@ fun rememberExoPlayerWithLifeCycle(
 
     val exoPlayer = remember(videoSource) {
         ExoPlayer.Builder(context).apply {
-	            setLoadControl(
-	                DefaultLoadControl.Builder().apply {
-                       setBufferDurationsMs(
-                           1000,
-                           5000,
-                           1000,
-                           1000
-                       )
+            setLoadControl(
+                DefaultLoadControl.Builder().apply {
+                    setBufferDurationsMs(
+                        1000,
+                        5000,
+                        1000,
+                        1000
+                    )
 
-                       setBackBuffer(
-                           1000,
-                           false
-                       )
+                    setBackBuffer(
+                        1000,
+                        false
+                    )
 
-                       setPrioritizeTimeOverSizeThresholds(false)
-                    }.build()
-            	)
-                setSeekBackIncrementMs(5000)
-                setSeekForwardIncrementMs(5000)
+                    setPrioritizeTimeOverSizeThresholds(false)
+                }.build()
+            )
+            setSeekBackIncrementMs(5000)
+            setSeekForwardIncrementMs(5000)
 
-                setPauseAtEndOfMediaItems(true)
+            setPauseAtEndOfMediaItems(true)
 
-                setAudioAttributes(
-                    AudioAttributes.Builder().apply {
-                        setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
-                        AudioAttributes.DEFAULT
-                        setAllowedCapturePolicy(C.ALLOW_CAPTURE_BY_ALL)
-                    }.build(),
-                    true
-                )
-        	}
+            setAudioAttributes(
+                AudioAttributes.Builder().apply {
+                    setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
+                    AudioAttributes.DEFAULT
+                    setAllowedCapturePolicy(C.ALLOW_CAPTURE_BY_ALL)
+                }.build(),
+                true
+            )
+        }
             .build()
             .apply {
                 videoScalingMode = VIDEO_SCALING_MODE_SCALE_TO_FIT
@@ -520,14 +560,14 @@ fun rememberExoPlayerWithLifeCycle(
 
                 setMediaSource(source)
                 prepare()
-    		}
+            }
     }
 
     val listener = object : Player.Listener {
         override fun onPlaybackStateChanged(playbackState: Int) {
             super.onPlaybackStateChanged(playbackState)
 
-            if (playbackState == ExoPlayer.STATE_READY) {
+            if (playbackState == ExoPlayer.STATE_READY) { // TODO: fix issue where duration goes to 0 when exiting app while exoplayer is playing
                 duration.floatValue = exoPlayer.duration / 1000f
             }
         }
@@ -542,22 +582,22 @@ fun rememberExoPlayerWithLifeCycle(
         }
 
         override fun onIsPlayingChanged(playerIsPlaying: Boolean) {
-        	super.onIsPlayingChanged(playerIsPlaying)
+            super.onIsPlayingChanged(playerIsPlaying)
 
-        	isPlaying.value = playerIsPlaying
+            isPlaying.value = playerIsPlaying
         }
     }
     exoPlayer.addListener(listener)
 
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    DisposableEffect(key1 = lifecycleOwner) {
-        val lifecycleObserver = getExoPlayerLifecycleObserver(exoPlayer, isPlaying)
+    DisposableEffect(key1 = lifecycleOwner.lifecycle.currentState) {
+        val lifecycleObserver = getExoPlayerLifecycleObserver(exoPlayer, isPlaying, context as Activity)
 
         lifecycleOwner.lifecycle.addObserver(lifecycleObserver)
 
         onDispose {
-        	// its insta-disposing for some reason (maybe not?)
+            // its insta-disposing for some reason (maybe not?)
             lifecycleOwner.lifecycle.removeObserver(lifecycleObserver)
         }
     }
@@ -567,6 +607,7 @@ fun rememberExoPlayerWithLifeCycle(
 fun getExoPlayerLifecycleObserver(
     exoPlayer: ExoPlayer,
     isPlaying: MutableState<Boolean>,
+    activity: Activity
 ): LifecycleEventObserver =
     LifecycleEventObserver { _, event ->
         when (event) {
@@ -575,15 +616,13 @@ fun getExoPlayerLifecycleObserver(
                 isPlaying.value = false
             }
 
-            Lifecycle.Event.ON_STOP -> {
-                exoPlayer.playWhenReady = false
+            Lifecycle.Event.ON_STOP, Lifecycle.Event.ON_DESTROY -> {
                 isPlaying.value = false
-            }
 
-            Lifecycle.Event.ON_DESTROY -> {
-            	isPlaying.value = false
-            	exoPlayer.stop()
-                exoPlayer.release()
+                if (!activity.isChangingConfigurations) {
+                    exoPlayer.stop()
+                    exoPlayer.release()
+                }
             }
 
             else -> {}

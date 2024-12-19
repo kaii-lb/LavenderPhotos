@@ -67,8 +67,6 @@ import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.compose.SinglePhotoInfoDialog
-import com.kaii.photos.helpers.MediaItemSortMode
-import com.kaii.photos.helpers.getAppTrashBinDirectory
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
@@ -118,9 +116,7 @@ fun SingleTrashedPhotoView(
             }
     }
 
-    val systemBarsShown = remember { mutableStateOf(true) }
     val appBarsVisible = remember { mutableStateOf(true) }
-
     var currentMediaItemIndex by rememberSaveable {
         mutableIntStateOf(
             groupedMedia.value.indexOf(
@@ -156,7 +152,6 @@ fun SingleTrashedPhotoView(
 
     if (showDialog.value) {
         val context = LocalContext.current
-        val coroutineScope = rememberCoroutineScope()
 
         AlertDialog(
             onDismissRequest = {
@@ -216,12 +211,9 @@ fun SingleTrashedPhotoView(
         topBar = { TopBar(navController, currentMediaItem, appBarsVisible.value, showInfoDialog) },
         bottomBar = {
             BottomBar(
-                navController,
                 appBarsVisible.value,
                 currentMediaItem,
-                showDialog,
-                groupedMedia,
-                state
+                showDialog
             )
         },
         containerColor = CustomMaterialTheme.colorScheme.background,
@@ -243,7 +235,6 @@ fun SingleTrashedPhotoView(
                 scale,
                 rotation,
                 offset,
-                systemBarsShown,
                 window,
                 appBarsVisible
             )
@@ -336,15 +327,11 @@ private fun TopBar(navController: NavHostController, mediaItem: MediaStoreData?,
 
 @Composable
 private fun BottomBar(
-    navController: NavHostController,
     visible: Boolean,
     item: MediaStoreData,
-    showDialog: MutableState<Boolean>,
-    groupedMedia: MutableState<List<MediaStoreData>>,
-    state: PagerState
+    showDialog: MutableState<Boolean>
 ) {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
 
     AnimatedVisibility(
         visible = visible,
@@ -379,15 +366,6 @@ private fun BottomBar(
                                 put(MediaColumns.IS_TRASHED, false)
                             }
                             context.contentResolver.update(item.uri, untrashValues, null)
-
-//                            sortOutMediaMods(
-//                                item,
-//                                groupedMedia,
-//                                coroutineScope,
-//                                state
-//                            ) {
-//                                navController.popBackStack()
-//                            }
                         },
                         modifier = Modifier
                             .weight(1f)

@@ -1,5 +1,6 @@
 package com.kaii.photos.compose.grids
 
+import android.app.Activity
 import android.view.Window
 import android.view.WindowManager
 import androidx.activity.compose.BackHandler
@@ -15,6 +16,7 @@ import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,11 +28,18 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
 import com.kaii.photos.compose.SecureFolderViewBottomAppBar
 import com.kaii.photos.compose.SecureFolderViewTopAppBar
 import com.kaii.photos.compose.ViewProperties
+import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MediaItemSortMode
+import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.getAppLockedFolderDirectory
 import com.kaii.photos.helpers.getDateTakenForMedia
 import com.kaii.photos.mediastore.MediaStoreData
@@ -42,7 +51,10 @@ import kotlin.io.path.Path
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LockedFolderView(navController: NavHostController, window: Window) {
+fun LockedFolderView(
+    navController: NavHostController,
+    window: Window
+) {
     val selectedItemsList = remember { SnapshotStateList<MediaStoreData>() }
 
     window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
@@ -63,8 +75,8 @@ fun LockedFolderView(navController: NavHostController, window: Window) {
 
         val item = MediaStoreData(
             type = if (mimeType.lowercase().contains("image")) MediaType.Image
-            else if (mimeType.lowercase().contains("video")) MediaType.Video
-            else MediaType.Section,
+                    else if (mimeType.lowercase().contains("video")) MediaType.Video
+                    else MediaType.Section,
             id = file.hashCode() * file.length() * file.lastModified(),
             uri = file.absolutePath.toUri(),
             mimeType = mimeType,

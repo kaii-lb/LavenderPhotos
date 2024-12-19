@@ -33,6 +33,7 @@ import com.kaii.photos.compose.TrashedPhotoGridViewBottomBar
 import com.kaii.photos.compose.TrashedPhotoGridViewTopBar
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.helpers.getAppTrashBinDirectory
+import com.kaii.photos.helpers.getBaseInternalStorageDirectory
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.models.trash_bin.TrashViewModel
 import com.kaii.photos.models.trash_bin.TrashViewModelFactory
@@ -128,7 +129,7 @@ fun TrashedPhotoGridView(
             PhotoGrid(
                 groupedMedia = groupedMedia,
                 navController = navController,
-                path = getAppTrashBinDirectory().replace("/storage/emulated/0/", ""),
+                path = getAppTrashBinDirectory().replace(getBaseInternalStorageDirectory(), ""),
                 selectedItemsList = selectedItemsList,
                 viewProperties = ViewProperties.Trash,
                 shouldPadUp = true

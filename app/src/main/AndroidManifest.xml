@@ -26,13 +26,13 @@
         android:enableOnBackInvokedCallback="true"
         android:largeHeap="true"
         android:hardwareAccelerated="true"
-        android:configChanges="orientation"
         android:windowSoftInputMode="adjustResize">
 
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.Photos">
+            android:theme="@style/Theme.Photos"
+            android:configChanges="orientation|screenSize|density|screenLayout">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

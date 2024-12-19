@@ -1,6 +1,7 @@
 package com.kaii.photos.helpers
 
 import android.content.Context
+import android.os.Environment
 import java.io.File
 
 private enum class AppDirectories(val path: String) {
@@ -8,8 +9,16 @@ private enum class AppDirectories(val path: String) {
     LockedFolder("locked_folder")
 }
 
-fun getAppTrashBinDirectory(): String {
-    val dir = "/storage/emulated/0/LavenderPhotos/" + AppDirectories.TrashBin.path + "/" // TODO: switch to Environment.getExternalStoragePublicDir
+/** ends with a "/" */
+fun getBaseInternalStorageDirectory() : String {
+    val absolutePath = Environment.getExternalStorageDirectory().absolutePath
+
+    return absolutePath.removeSuffix("/") + "/"
+}
+
+/** ends with a "/" */
+fun getAppTrashBinDirectory() : String {
+    val dir = "${getBaseInternalStorageDirectory()}LavenderPhotos/" + AppDirectories.TrashBin.path + "/" // TODO: switch to Environment.getExternalStoragePublicDir
 
     val folder = File(dir)
     if (!folder.exists()) {
@@ -19,6 +28,7 @@ fun getAppTrashBinDirectory(): String {
     return dir
 }
 
+/** ends with a "/" */
 fun Context.getAppLockedFolderDirectory() : String {
     var dir = this.getDir(AppDirectories.LockedFolder.path, Context.MODE_PRIVATE)?.absolutePath ?: throw Exception("cannot get absolute path of null object")
     if (!dir.endsWith("/")) dir += "/"
@@ -31,8 +41,9 @@ fun Context.getAppLockedFolderDirectory() : String {
     return dir
 }
 
+/** ends with a "/" */
 fun getAppRestoredFromLockedFolderDirectory(): String {
-    val dir = "/storage/emulated/0/LavenderPhotos/Restored Files/"
+    val dir = "${getBaseInternalStorageDirectory()}LavenderPhotos/Restored Files/"
 
     val folder = File(dir)
     if (!folder.exists()) {

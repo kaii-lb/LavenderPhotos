@@ -27,6 +27,11 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,6 +55,7 @@ import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.datastore.getAlbumsList
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.brightenColor
+import com.kaii.photos.helpers.getBaseInternalStorageDirectory
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.signature
 import com.kaii.photos.models.album_grid.AlbumsViewModel
@@ -66,7 +72,7 @@ fun AlbumsGridView(navController: NavHostController) {
 	}
 
 	listOfDirs.sortByDescending {
-		File("/storage/emulated/0/$it").lastModified()
+		File("${getBaseInternalStorageDirectory()}$it").lastModified()
 	}
 	listOfDirs.find { it == "DCIM/Camera" }?.let { cameraItem ->
 		listOfDirs.remove(cameraItem)
@@ -88,9 +94,16 @@ fun AlbumsGridView(navController: NavHostController) {
         verticalArrangement = Arrangement.SpaceEvenly,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+		val localConfig = LocalConfiguration.current
+	    var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
+
+	    LaunchedEffect(localConfig) {
+	    	isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
+	    }
+
         LazyVerticalGrid(
 			columns = GridCells.Fixed(
-				if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT) {
+				if (!isLandscape) {
 					2
 				} else {
 					4
@@ -120,7 +133,7 @@ fun AlbumsGridView(navController: NavHostController) {
 	                listOfDirs[key]
 	            },                
             ) { index ->
-				val folder = File("/storage/emulated/0/" + listOfDirs[index])
+				val folder = File("${getBaseInternalStorageDirectory()}" + listOfDirs[index])
 				val neededDir = listOfDirs[index]
 
 				if (actualData.isNotEmpty()) {

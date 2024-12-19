@@ -246,7 +246,7 @@ fun copyImageListToPath(context: Context, list: List<MediaStoreData>, destinatio
     CoroutineScope(Dispatchers.IO).launch {
         list.forEach { media ->
             val file = File(media.absolutePath)
-            val path = "/storage/emulated/0/" + destination.removeSuffix("/") + "/${file.name}"
+            val path = getBaseInternalStorageDirectory() + destination.removeSuffix("/") + "/${file.name}"
             val inputStream = contentResolver.openInputStream(media.uri)
             val outputStream = File(path).outputStream()
 

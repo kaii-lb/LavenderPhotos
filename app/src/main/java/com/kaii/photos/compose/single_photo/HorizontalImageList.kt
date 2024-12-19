@@ -2,7 +2,6 @@ package com.kaii.photos.compose.single_photo
 
 import android.content.res.Configuration
 import android.view.Window
-import android.view.WindowInsetsController
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.calculateCentroid
@@ -22,6 +21,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -33,7 +33,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
-import androidx.core.view.WindowInsetsCompat
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavHostController
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
@@ -41,6 +40,7 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.kaii.photos.R
+import com.kaii.photos.compose.setBarVisibility
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaStoreData
@@ -66,7 +66,6 @@ fun HorizontalImageList(
     scale: MutableState<Float>,
     rotation: MutableState<Float>,
     offset: MutableState<Offset>,
-    systemBarsShown: MutableState<Boolean>,
     window: Window,
     appBarsVisible: MutableState<Boolean>,
     isHidden: Boolean = false
@@ -76,6 +75,15 @@ fun HorizontalImageList(
         rotation.value = 0f
         offset.value = Offset.Zero
     }
+
+	val localConfig = LocalConfiguration.current
+    var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
+
+    LaunchedEffect(localConfig) {
+    	isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
+    }
+
+	val isTouchLocked = remember { mutableStateOf(false) }
 
     HorizontalPager (
         state = state,
@@ -91,15 +99,14 @@ fun HorizontalImageList(
             }
         },
         snapPosition = SnapPosition.Center,
-        userScrollEnabled = scale.value == 1f && rotation.value == 0f && offset.value == Offset.Zero,
+        userScrollEnabled = (scale.value == 1f && rotation.value == 0f && offset.value == Offset.Zero) && !isTouchLocked.value,
         modifier = Modifier
             .fillMaxHeight(1f)
     ) { index ->
         val shouldPlay by remember(state) {
             derivedStateOf {
-                (abs(state.currentPageOffsetFraction) < .5 && state.currentPage == index) || (abs(
-                    state.currentPageOffsetFraction
-                ) > .5 && state.targetPage == index)
+                (abs(state.currentPageOffsetFraction) < .5 && state.currentPage == index)
+                	|| (abs(state.currentPageOffsetFraction) > .5 && state.targetPage == index)
             }
         }
 
@@ -119,17 +126,14 @@ fun HorizontalImageList(
             ) {
                 if (canFadeControls.value) {
                     delay(5000)
-                    showVideoPlayerControls.value = false
-                    appBarsVisible.value = false
-                    systemBarsShown.value = false
+                    setBarVisibility(
+                        visible = false,
+                        window = window
+                    ) {
+                        appBarsVisible.value = it
 
-                    windowInsetsController.apply {
-                        hide(WindowInsetsCompat.Type.systemBars())
-                        systemBarsBehavior =
-                            WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                        showVideoPlayerControls.value = it
                     }
-                    window.setDecorFitsSystemWindows(false)
-
 
                     canFadeControls.value = false
                 }
@@ -141,12 +145,12 @@ fun HorizontalImageList(
             ) {
                 VideoPlayer(
                     item = mediaStoreItem,
-                    visible = showVideoPlayerControls,
+                    controlsVisible = showVideoPlayerControls,
                     appBarsVisible = appBarsVisible,
                     shouldPlay = shouldPlay,
                     navController = navController,
                     canFadeControls = canFadeControls,
-                    windowInsetsController = windowInsetsController,
+                    isTouchLocked = isTouchLocked,
                     window = window,
                     modifier = Modifier
                         .fillMaxSize(1f)
@@ -154,12 +158,11 @@ fun HorizontalImageList(
                             scale = scale,
                             rotation = rotation,
                             offset = offset,
-                            systemBarsShown = systemBarsShown,
                             window = window,
-                            windowInsetsController = windowInsetsController,
                             appBarsVisible = appBarsVisible,
                             item = mediaStoreItem,
                             showVideoPlayerController = showVideoPlayerControls,
+                            isTouchLocked = isTouchLocked
                         )
                 )
             }
@@ -179,10 +182,9 @@ fun HorizontalImageList(
                             scale = scale,
                             rotation = rotation,
                             offset = offset,
-                            systemBarsShown = systemBarsShown,
                             window = window,
-                            windowInsetsController = windowInsetsController,
-                            appBarsVisible = appBarsVisible
+                            appBarsVisible = appBarsVisible,
+                            isTouchLocked = isTouchLocked
                         )
                 ) {
                     it.signature(mediaStoreItem.signature())
@@ -198,15 +200,21 @@ private fun Modifier.mediaModifier(
     scale: MutableState<Float>,
     rotation: MutableState<Float>,
     offset: MutableState<Offset>,
-    systemBarsShown: MutableState<Boolean>,
     window: Window,
-    windowInsetsController: WindowInsetsController,
     appBarsVisible: MutableState<Boolean>,
+    isTouchLocked: MutableState<Boolean>,
     item: MediaStoreData? = null,
     showVideoPlayerController: MutableState<Boolean>? = null,
 ): Modifier {
-    val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+	val localConfig = LocalConfiguration.current
+    var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
     val vibratorManager = rememberVibratorManager()
+
+	LaunchedEffect(localConfig) {
+		isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
+	}
+
+    println("IS LANDSCAPE $isLandscape")
 
     return this.then(
         Modifier
@@ -221,42 +229,43 @@ private fun Modifier.mediaModifier(
             .pointerInput(Unit) {
                 detectTapGestures(
                     onTap = {
-                        if (systemBarsShown.value) {
-                            windowInsetsController.apply {
-                                hide(WindowInsetsCompat.Type.systemBars())
-                                systemBarsBehavior =
-                                    WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-                            }
-                            window.setDecorFitsSystemWindows(false)
-                            systemBarsShown.value = false
-                            appBarsVisible.value = false
+                    	if (!isTouchLocked.value) {
+	           	        	if (item?.type == MediaType.Video && showVideoPlayerController != null && isLandscape) {
+	           	        		showVideoPlayerController.value = !showVideoPlayerController.value
+	               	        } else {
+	                            setBarVisibility(
+	                                visible = !appBarsVisible.value,
+	                                window = window
+	                            ) {
+	                                appBarsVisible.value = it
 
-                            if (!isLandscape) showVideoPlayerController?.value = false
-                        } else {
-                            windowInsetsController.show(WindowInsetsCompat.Type.systemBars())
-                            window.setDecorFitsSystemWindows(false)
-                            systemBarsShown.value = true
-                            appBarsVisible.value = true
-
-                            if (!isLandscape) showVideoPlayerController?.value = true
-                        }
+	                                if (!isLandscape) showVideoPlayerController?.value = it
+	                            }
+	               	        }
+                    	}
                     },
 
                     onDoubleTap = { clickOffset ->
-                        if (item?.type == MediaType.Video && showVideoPlayerController != null) {
-                            if (isLandscape) showVideoPlayerController.value =
-                                !showVideoPlayerController.value
-                        } else {
-                            if (scale.value == 1f && offset.value == Offset.Zero) {
-                                scale.value = 2f
-                                rotation.value = 0f
-                                offset.value = clickOffset / scale.value
-                            } else {
-                                scale.value = 1f
-                                rotation.value = 0f
-                                offset.value = Offset.Zero
-                            }
-                        }
+                    	if (!isTouchLocked.value) {
+	                        if (item?.type == MediaType.Video && showVideoPlayerController != null && isLandscape) {
+	                            setBarVisibility(
+	                                visible = !appBarsVisible.value,
+	                                window = window
+	                            ) {
+	                                appBarsVisible.value = it
+	                            }
+	                        } else if (item?.type != MediaType.Video && showVideoPlayerController == null) {
+	                            if (scale.value == 1f && offset.value == Offset.Zero) {
+	                                scale.value = 2f
+	                                rotation.value = 0f
+	                                offset.value = clickOffset / scale.value
+	                            } else {
+	                                scale.value = 1f
+	                                rotation.value = 0f
+	                                offset.value = Offset.Zero
+	                            }
+	                        }
+                    	}
                     }
                 )
             }

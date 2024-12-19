@@ -2,6 +2,8 @@ package com.kaii.photos.compose
 
 import android.content.Intent
 import android.net.Uri
+import android.view.Window
+import android.view.WindowInsetsController
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
@@ -61,6 +63,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.core.view.WindowInsetsCompat
 import com.kaii.photos.MainActivity
 import com.kaii.photos.R
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
@@ -1297,20 +1300,7 @@ fun FavouritesViewTopAppBar(
                         modifier = Modifier
                             .width(160.dp)
                     )
-                },
-                actions = {
-                    IconButton(
-                        onClick = { /* TODO */ },
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.settings),
-                            contentDescription = "show more options for the favourites folder",
-                            tint = CustomMaterialTheme.colorScheme.onBackground,
-                            modifier = Modifier
-                                .size(24.dp)
-                        )
-                    }
-                },
+                }
             )
         } else {
             IsSelectingTopBar(selectedItemsList = selectedItemsList)
@@ -1455,4 +1445,24 @@ fun FavouritesViewBottomAppBar(
             }
         )
     }
+}
+
+fun setBarVisibility(
+    visible: Boolean,
+    window: Window,
+    onSetBarVisible: (isVisible: Boolean) -> Unit
+) {
+    onSetBarVisible(visible)
+
+    window.insetsController?.apply {
+        if (visible) {
+            show(WindowInsetsCompat.Type.systemBars())
+        } else {
+            hide(WindowInsetsCompat.Type.systemBars())
+            systemBarsBehavior =
+                WindowInsetsController.BEHAVIOR_DEFAULT
+        }
+    }
+
+    window.setDecorFitsSystemWindows(false)
 }

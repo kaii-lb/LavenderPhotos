@@ -310,8 +310,13 @@ fun EditingView(
             textMeasurer
         )
 
-        val isLandscape =
-            LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+		val localConfig = LocalConfiguration.current
+	    var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
+
+	    LaunchedEffect(localConfig) {
+	    	isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
+	    }
+
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize(1f)
@@ -1247,7 +1252,13 @@ private fun EditingViewTopBar(
     saveImage: suspend () -> Unit,
     popBackStack: () -> Unit,
 ) {
-    val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+	val localConfig = LocalConfiguration.current
+    var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
+
+    LaunchedEffect(localConfig) {
+    	isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
+    }
+
     var showInLandscape by remember { mutableStateOf(false) }
 
     var canExit by remember { mutableStateOf(true) }
@@ -1518,7 +1529,14 @@ private fun EditingViewBottomBar(
     resetCropping: () -> Unit
 ) {
     val localDensity = LocalDensity.current
-    val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+
+	val localConfig = LocalConfiguration.current
+    var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
+
+    LaunchedEffect(localConfig) {
+    	isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
+    }
+
     var showInLandscape by remember { mutableStateOf(false) }
 
     val animatedHeight by animateDpAsState(
@@ -2829,11 +2847,11 @@ fun BoxWithConstraintsScope.DrawingControls(
     modifications: SnapshotStateList<Modification>,
     changesSize: MutableIntState
 ) {
-    val localConfiguration = LocalConfiguration.current
-    val isLandscape by remember {
-        derivedStateOf {
-            localConfiguration.orientation == Configuration.ORIENTATION_LANDSCAPE
-        }
+	val localConfig = LocalConfiguration.current
+    var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
+
+    LaunchedEffect(localConfig) {
+    	isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
     }
 
     var shouldShowDrawOptions by remember { mutableStateOf(false) }

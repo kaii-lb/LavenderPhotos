@@ -105,6 +105,7 @@ import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.brightenColor
 import com.kaii.photos.helpers.darkenColor
+import com.kaii.photos.helpers.getBaseInternalStorageDirectory
 import com.kaii.photos.helpers.getExifDataForMedia
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.renameDirectory
@@ -640,8 +641,14 @@ fun SinglePhotoInfoDialog(
 	val context = LocalContext.current
 	val isEditingFileName = remember { mutableStateOf(false) }
 
-	val localConfiguration = LocalConfiguration.current
-	val modifier = if (localConfiguration.orientation == Configuration.ORIENTATION_LANDSCAPE)
+	val localConfig = LocalConfiguration.current
+    var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
+
+    LaunchedEffect(localConfig) {
+    	isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
+    }
+
+	val modifier = if (isLandscape)
 		Modifier.width(328.dp)
 	else
 		Modifier.fillMaxWidth(0.85f)
@@ -842,7 +849,14 @@ fun ConfirmationDialog(
 	confirmButtonLabel: String,
 	action: () -> Unit
 ) {
-	val modifier = if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE)
+	val localConfig = LocalConfiguration.current
+    var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
+
+    LaunchedEffect(localConfig) {
+    	isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
+    }
+
+	val modifier = if (isLandscape)
 		Modifier.width(256.dp)
 	else
 		Modifier
@@ -902,7 +916,14 @@ fun ConfirmationDialogWithBody(
 	showCancelButton: Boolean = true,
 	action: () -> Unit
 ) {
-	val modifier = if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE)
+	val localConfig = LocalConfiguration.current
+    var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
+
+    LaunchedEffect(localConfig) {
+    	isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
+    }
+
+	val modifier = if (isLandscape)
 		Modifier.width(256.dp)
 	else
 		Modifier
@@ -1050,7 +1071,7 @@ fun SingleAlbumDialog(
 						return@LaunchedEffect
 					}
 
-					renameDirectory("/storage/emulated/0/$dir", fileName.value)
+					renameDirectory("${getBaseInternalStorageDirectory()}$dir", fileName.value)
 
 					val mainViewModel = MainActivity.mainViewModel
 					val newDir = dir.replace(title, fileName.value)

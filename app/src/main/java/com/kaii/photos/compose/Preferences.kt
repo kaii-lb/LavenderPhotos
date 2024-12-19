@@ -229,10 +229,4 @@ fun PreferencesSwitchRow(
             enabled = enabled
         )
     }
-
-    Spacer(
-        modifier = Modifier
-            .height(spacerHeight)
-            .background(CustomMaterialTheme.colorScheme.background)
-    )
 }

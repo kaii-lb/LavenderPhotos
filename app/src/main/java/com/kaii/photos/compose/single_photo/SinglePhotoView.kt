@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.res.Configuration
 import android.view.Window
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -19,7 +20,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.statusBarsIgnoringVisibility
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.PagerState
@@ -49,6 +54,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -65,6 +71,7 @@ import com.kaii.photos.compose.ConfirmationDialog
 import com.kaii.photos.compose.ConfirmationDialogWithBody
 import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.compose.SinglePhotoInfoDialog
+import com.kaii.photos.compose.setBarVisibility
 import com.kaii.photos.helpers.EditingScreen
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.moveImageToLockedFolder
@@ -126,7 +133,6 @@ fun SinglePhotoView(
         currentMediaItemIndex = state.currentPage
     }
 
-    val systemBarsShown = remember { mutableStateOf(true) }
     val appBarsVisible = remember { mutableStateOf(true) }
     val currentMediaItem = remember {
         derivedStateOf {
@@ -174,11 +180,13 @@ fun SinglePhotoView(
                 state = state,
                 groupedMedia = groupedMedia,
                 showEditingView = {
-                    val windowInsetsController = window.insetsController ?: return@BottomBar
-                    windowInsetsController.show(WindowInsetsCompat.Type.systemBars())
-                    window.setDecorFitsSystemWindows(false)
-                    systemBarsShown.value = true
-                    appBarsVisible.value = true
+                    setBarVisibility(
+                        visible = true,
+                        window = window
+                    ) {
+                        appBarsVisible.value = it
+                    }
+
                     navController.navigate(
                     	EditingScreen(
                     		absolutePath = currentMediaItem.value.absolutePath,
@@ -219,7 +227,6 @@ fun SinglePhotoView(
                 scale,
                 rotation,
                 offset,
-                systemBarsShown,
                 window,
                 appBarsVisible
             )
@@ -236,7 +243,13 @@ private fun TopBar(
     removeIfInFavGrid: () -> Unit,
     onBackClick: () -> Unit
 ) {
-    val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+	val localConfig = LocalConfiguration.current
+    var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
+
+    LaunchedEffect(localConfig) {
+    	isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
+    }
+
     val color = if (isLandscape)
         CustomMaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.4f)
     else
@@ -347,7 +360,14 @@ private fun BottomBar(
     showEditingView: () -> Unit,
     onZeroItemsLeft: () -> Unit
 ) {
-    val color = if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE)
+	val localConfig = LocalConfiguration.current
+    var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
+
+    LaunchedEffect(localConfig) {
+    	isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
+    }
+
+    val color = if (isLandscape)
         CustomMaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.4f)
     else
         CustomMaterialTheme.colorScheme.surfaceContainer
@@ -381,7 +401,7 @@ private fun BottomBar(
                         .padding(12.dp, 0.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement =
-	                    if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE) 
+	                    if (isLandscape)
 		                    Arrangement.spacedBy(
 		                        space = 48.dp,
 		                        alignment = Alignment.CenterHorizontally
