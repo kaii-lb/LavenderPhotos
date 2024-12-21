@@ -40,6 +40,9 @@ class MainViewModel(context: Context) : ViewModel() {
 	val settingsLogs = SettingsLogs(viewModelScope, context)
 	val settingsPermissions = SettingsPermissions(viewModelScope, context)
 
+    private val _singlePhotoPath = MutableStateFlow<String?>(null)
+    val singlePhotoPath: Flow<String?> = _singlePhotoPath.asStateFlow()
+
     fun setSelectedMediaData(newMediaStoreData: MediaStoreData?) {
         _selectedMedia.value = newMediaStoreData
     }
@@ -47,9 +50,14 @@ class MainViewModel(context: Context) : ViewModel() {
     fun setSelectedAlbumDir(newAlbumDir: String?) {
         _selectedAlbumDir.value = newAlbumDir
     }
+
     fun setGroupedMedia(media: List<MediaStoreData>?) {
         _groupedMedia.value = media
     }
+
+	fun setSinglePhotoPath(path: String) {
+		_singlePhotoPath.value = path
+	}
 
     fun startupPermissionCheck(context: Context) {
     	// READ_MEDIA_VIDEO isn't necessary as its bundled with READ_MEDIA_IMAGES

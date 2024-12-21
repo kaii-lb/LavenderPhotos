@@ -63,6 +63,7 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
@@ -79,10 +80,14 @@ import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareImage
 import com.kaii.photos.helpers.vibrateShort
+import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.favourites_grid.FavouritesViewModel
 import com.kaii.photos.models.favourites_grid.FavouritesViewModelFactory
+import com.kaii.photos.models.gallery_model.GalleryViewModel
+import com.kaii.photos.models.gallery_model.GalleryViewModelFactory
+import kotlinx.coroutines.Dispatchers
 
 //private const val TAG = "SINGLE_PHOTO_VIEW"
 
@@ -96,23 +101,34 @@ fun SinglePhotoView(
     offset: MutableState<Offset>,
 ) {
     val mediaItem = mainViewModel.selectedMediaData.collectAsState(initial = null).value ?: return
+	val path = mainViewModel.singlePhotoPath.collectAsState(initial = null).value ?: return
 
-    val holderGroupedMedia =
-        mainViewModel.groupedMedia.collectAsState(initial = null).value ?: return
+	val galleryViewModel: GalleryViewModel = viewModel(
+	    factory = GalleryViewModelFactory(
+	        LocalContext.current,
+	        path,
+	        MediaItemSortMode.DateTaken
+	    )
+	)
+
+	val holderGroupedMedia by galleryViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+	val fastLoadedGroupedMedia = mainViewModel.groupedMedia.collectAsState(initial = null).value ?: return
 
     val groupedMedia = remember {
         mutableStateOf(
-            holderGroupedMedia.filter { item ->
+            fastLoadedGroupedMedia.filter { item ->
                 item.type != MediaType.Section
             }
         )
     }
 
     LaunchedEffect(holderGroupedMedia) {
-        groupedMedia.value =
-            holderGroupedMedia.filter { item ->
-                item.type != MediaType.Section
-            }
+    	if (holderGroupedMedia.isNotEmpty()) {
+	        groupedMedia.value =
+	            holderGroupedMedia.filter { item ->
+	                item.type != MediaType.Section
+	            }
+    	}
     }
 
     var currentMediaItemIndex by rememberSaveable {
@@ -124,7 +140,12 @@ fun SinglePhotoView(
     }
 
     val state = rememberPagerState(
-        initialPage = currentMediaItemIndex.coerceIn(0, groupedMedia.value.size - 1)
+        initialPage = currentMediaItemIndex
+        	.coerceIn(
+        		0,
+        		(groupedMedia.value.size - 1)
+        			.coerceAtLeast(0)
+   			)
     ) {
         groupedMedia.value.size
     }

@@ -1,6 +1,7 @@
 package com.kaii.photos.compose.single_photo
 
 import android.app.Activity
+import android.content.Context
 import android.content.res.Configuration
 import android.net.Uri
 import android.view.ViewGroup
@@ -35,6 +36,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FilledTonalIconToggleButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
@@ -130,7 +132,7 @@ fun VideoPlayerControls(
                     fontSize = TextUnit(12f, TextUnitType.Sp),
                     color = CustomMaterialTheme.colorScheme.onSecondaryContainer,
                     modifier = Modifier
-                    	// TODO: .widthIn some width: 1/2 screen width?
+                        // TODO: .widthIn some width: 1/2 screen width?
                         .wrapContentSize()
                         .clip(RoundedCornerShape(1000.dp))
                         .background(CustomMaterialTheme.colorScheme.secondaryContainer)
@@ -354,8 +356,8 @@ fun VideoPlayer(
     val currentVideoPosition = rememberSaveable { mutableFloatStateOf(0f) }
     val duration = rememberSaveable { mutableFloatStateOf(0f) }
 
-    val exoPlayer = rememberExoPlayerWithLifeCycle(item.uri, isPlaying, duration, currentVideoPosition)
-    val playerView = rememberPlayerView(exoPlayer)
+    var exoPlayer = rememberExoPlayerWithLifeCycle(item.uri, isPlaying, duration, currentVideoPosition)
+    var playerView = rememberPlayerView(exoPlayer)
 
     BackHandler {
         isPlaying.value = false
@@ -371,9 +373,7 @@ fun VideoPlayer(
     val localConfig = LocalConfiguration.current
 
     LaunchedEffect(key1 = isPlaying.value, localConfig.orientation) {
-        if (isPlaying.value) {
-            canFadeControls.value = true
-        } else if (!isPlaying.value) {
+        if (!isPlaying.value) {
             controlsVisible.value = true
 
             if (localConfig.orientation != Configuration.ORIENTATION_LANDSCAPE) {
@@ -405,16 +405,9 @@ fun VideoPlayer(
     }
 
 
-    // LaunchedEffect(shouldPlay) {
-    //     currentVideoPosition.floatValue = 0f
-    //     duration.floatValue = 0f
-    // }
-
-    // DisposableEffect(true) {
-    //     onDispose {
-    //         exoPlayer.release()
-    //     }
-    // }
+	LaunchedEffect(controlsVisible.value) {
+		if (controlsVisible.value) canFadeControls.value = true
+	}
 
     Box(
         modifier = Modifier
@@ -472,21 +465,28 @@ fun VideoPlayer(
             )
         }
 
-		if (isTouchLocked.value || controlsVisible.value) {
+		if ((isTouchLocked.value || controlsVisible.value) && localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
 	        Box (
 	            modifier = Modifier
-	                .wrapContentSize()
-	                .align(Alignment.TopEnd)
-	                .padding(16.dp)
+                    .wrapContentSize()
+                    .align(Alignment.TopEnd)
+                    .padding(16.dp)
 	        ) {
 		        FilledTonalIconToggleButton(
 		        	checked = isTouchLocked.value,
 		            onCheckedChange = {
 		                isTouchLocked.value = it
+		                canFadeControls.value = true
 		            },
+                    colors = IconButtonDefaults.filledTonalIconToggleButtonColors().copy(
+                        checkedContainerColor = CustomMaterialTheme.colorScheme.primary,
+                        checkedContentColor = CustomMaterialTheme.colorScheme.onPrimary,
+                        containerColor = CustomMaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = CustomMaterialTheme.colorScheme.onSecondaryContainer
+                    ),
 		            modifier = Modifier
-		            	.size(32.dp)
-		                .align(Alignment.Center)
+                        .size(32.dp)
+                        .align(Alignment.Center)
 		        ) {
 		            Icon(
 		                painter = painterResource(id = if (isTouchLocked.value) R.drawable.locked_folder else R.drawable.unlock),
@@ -510,8 +510,65 @@ fun rememberExoPlayerWithLifeCycle(
 ): ExoPlayer {
     val context = LocalContext.current
 
-    val exoPlayer = remember(videoSource) {
-        ExoPlayer.Builder(context).apply {
+    var exoPlayer = remember(videoSource) {
+    	createExoPlayer(
+    		videoSource,
+    		context,
+    		isPlaying,
+    		currentVideoPosition,
+    		duration
+   		)
+   	}
+
+	val lifecycleOwner = LocalLifecycleOwner.current
+
+    DisposableEffect(key1 = lifecycleOwner.lifecycle.currentState) {
+        val lifecycleObserver = LifecycleEventObserver { _, event ->
+                when (event) {
+                    Lifecycle.Event.ON_START, Lifecycle.Event.ON_CREATE -> {
+						exoPlayer =
+							createExoPlayer(
+								videoSource,
+								context,
+								isPlaying,
+								currentVideoPosition,
+								duration
+	   						)
+                    }
+
+                    else -> {}
+                }
+            }
+
+        lifecycleOwner.lifecycle.addObserver(lifecycleObserver)
+
+        onDispose {
+            // its insta-disposing for some reason (maybe not?)
+            lifecycleOwner.lifecycle.removeObserver(lifecycleObserver)
+        }
+    }
+
+    DisposableEffect(key1 = lifecycleOwner.lifecycle.currentState) {
+        val lifecycleObserver = getExoPlayerLifecycleObserver(exoPlayer, isPlaying, context as Activity, videoSource)
+
+        lifecycleOwner.lifecycle.addObserver(lifecycleObserver)
+
+        onDispose {
+            // its insta-disposing for some reason (maybe not?)
+            lifecycleOwner.lifecycle.removeObserver(lifecycleObserver)
+        }
+    }
+    return exoPlayer
+}
+
+fun createExoPlayer(
+	videoSource: Uri,
+	context: Context,
+	isPlaying: MutableState<Boolean>,
+	currentVideoPosition: MutableFloatState,
+	duration: MutableFloatState
+) : ExoPlayer {
+	val exoPlayer = ExoPlayer.Builder(context).apply {
             setLoadControl(
                 DefaultLoadControl.Builder().apply {
                     setBufferDurationsMs(
@@ -561,7 +618,6 @@ fun rememberExoPlayerWithLifeCycle(
                 setMediaSource(source)
                 prepare()
             }
-    }
 
     val listener = object : Player.Listener {
         override fun onPlaybackStateChanged(playbackState: Int) {
@@ -589,25 +645,15 @@ fun rememberExoPlayerWithLifeCycle(
     }
     exoPlayer.addListener(listener)
 
-    val lifecycleOwner = LocalLifecycleOwner.current
-
-    DisposableEffect(key1 = lifecycleOwner.lifecycle.currentState) {
-        val lifecycleObserver = getExoPlayerLifecycleObserver(exoPlayer, isPlaying, context as Activity)
-
-        lifecycleOwner.lifecycle.addObserver(lifecycleObserver)
-
-        onDispose {
-            // its insta-disposing for some reason (maybe not?)
-            lifecycleOwner.lifecycle.removeObserver(lifecycleObserver)
-        }
-    }
     return exoPlayer
 }
 
+@UnstableApi
 fun getExoPlayerLifecycleObserver(
     exoPlayer: ExoPlayer,
     isPlaying: MutableState<Boolean>,
-    activity: Activity
+    activity: Activity,
+    videoSource: Uri,
 ): LifecycleEventObserver =
     LifecycleEventObserver { _, event ->
         when (event) {
@@ -652,7 +698,6 @@ fun rememberPlayerView(exoPlayer: ExoPlayer): PlayerView {
     DisposableEffect(key1 = true) {
         onDispose {
             playerView.player = null
-            exoPlayer.release()
         }
     }
     return playerView

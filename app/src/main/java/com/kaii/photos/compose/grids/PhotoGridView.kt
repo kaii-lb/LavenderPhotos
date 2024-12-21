@@ -145,7 +145,8 @@ fun PhotoGrid(
 				selectedItemsList,
 				viewProperties,
 				shouldPadUp,
-				state
+				state,
+				path ?: ""
 			)
 		}
 	} else {
@@ -161,7 +162,8 @@ fun DeviceMedia(
 	selectedItemsList: SnapshotStateList<MediaStoreData>,
 	viewProperties: ViewProperties,
 	shouldPadUp: Boolean,
-	gridState: LazyGridState
+	gridState: LazyGridState,
+	path: String
 ) {
 	var showLoadingSpinner by remember { mutableStateOf(true) }
 
@@ -191,7 +193,7 @@ fun DeviceMedia(
 		),
 		label = "animate spacer on bottom of photo grid"
 	)
-	
+
 	BoxWithConstraints (
 		modifier = Modifier
 			.fillMaxSize(1f)
@@ -259,6 +261,7 @@ fun DeviceMedia(
 						) {
 							when (viewProperties.operation) {
 								ImageFunctions.LoadNormalImage -> {
+									mainViewModel.setSinglePhotoPath(path)
 									mainViewModel.setSelectedMediaData(mediaStoreItem)
 									mainViewModel.setGroupedMedia(groupedMedia.value)
 									navController.navigate(MultiScreenViewType.SinglePhotoView.name)

@@ -107,6 +107,7 @@ import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.graphics.ColorMatrixColorFilter
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TransformOrigin
@@ -139,6 +140,7 @@ import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
+import androidx.core.graphics.ColorUtils
 import androidx.navigation.NavHostController
 import com.kaii.photos.R
 import com.kaii.photos.compose.BottomAppBarItem
@@ -1973,6 +1975,7 @@ fun AdjustTools(
     var brightnessValue by rememberSaveable { mutableFloatStateOf(0f) }
     var saturationValue by rememberSaveable { mutableFloatStateOf(0f) }
     var blackPointValue by rememberSaveable { mutableFloatStateOf(0f) }
+    var whitePointValue by rememberSaveable { mutableFloatStateOf(0f) }
     var warmthValue by rememberSaveable { mutableFloatStateOf(0f) }
 
     val additiveEmptyArray = floatArrayOf(
@@ -1989,31 +1992,34 @@ fun AdjustTools(
         0f, 0f, 0f, 1f, 0f
     )
 
-    var contrastMatrix by remember { mutableStateOf(ColorMatrix(multiplicativeEmptyArray)) }
-    var brightnessMatrix by remember { mutableStateOf(ColorMatrix(additiveEmptyArray)) }
+    var contrastMatrix by rememberSaveable { mutableStateOf(multiplicativeEmptyArray) }
+    var brightnessMatrix by rememberSaveable { mutableStateOf(additiveEmptyArray) }
 
-    var saturationMatrix by remember {
+    var saturationMatrix by rememberSaveable {
         mutableStateOf(
-            ColorMatrix(
-                ColorMatrix().apply {
-                    setToSaturation(1f)
-                    set(0, 4, 1f)
-                    set(1, 4, 1f)
-                    set(2, 4, 1f)
-                }.values
-            )
+            ColorMatrix().apply {
+                setToSaturation(1f)
+                set(0, 4, 1f)
+                set(1, 4, 1f)
+                set(2, 4, 1f)
+            }.values
         )
     }
 
-    var blackPointMatrix by remember { mutableStateOf(ColorMatrix(additiveEmptyArray)) }
-    var warmthMatrix by remember { mutableStateOf(ColorMatrix(multiplicativeEmptyArray)) }
+    var blackPointMatrix by rememberSaveable { mutableStateOf(additiveEmptyArray) }
+    var whitePointMatrix by rememberSaveable { mutableStateOf(multiplicativeEmptyArray) }
+    var warmthMatrix by rememberSaveable { mutableStateOf(multiplicativeEmptyArray) }
 
-    LaunchedEffect(contrastMatrix, brightnessMatrix, saturationMatrix, blackPointMatrix, warmthMatrix) {
+	LaunchedEffect(Unit) {
+		if (selectedProperty == SelectedImageProperties.Contrast) sliderValue.floatValue = contrastValue
+	}
+
+    LaunchedEffect(brightnessMatrix, contrastMatrix, saturationMatrix, blackPointMatrix, warmthMatrix, whitePointMatrix) {
         val floatArray = emptyList<Float>().toMutableList()
 
-        for (i in 0..<contrastMatrix.values.size) {
-            val multiply = contrastMatrix.values[i] * saturationMatrix.values[i] * warmthMatrix.values[i]
-            val add = brightnessMatrix.values[i] + blackPointMatrix.values[i]
+        for (i in 0..<contrastMatrix.size) {
+            val multiply = contrastMatrix[i] * saturationMatrix[i] * warmthMatrix[i] * whitePointMatrix[i]
+            val add = brightnessMatrix[i] + blackPointMatrix[i]
 
             floatArray.add(multiply + add)
         }
@@ -2036,7 +2042,7 @@ fun AdjustTools(
                     0f, 0f, 0f, 1f, 0f
                 )
 
-                contrastMatrix = ColorMatrix(floatArray)
+                contrastMatrix = floatArray
 
                 contrastValue = sliderValue.floatValue
             }
@@ -2045,14 +2051,16 @@ fun AdjustTools(
                 if (sliderValue.floatValue == brightnessValue) return@run
 
                 val brightness = sliderValue.floatValue
+				val offset = brightness * 127f
+
                 val floatArray = floatArrayOf(
-                    brightness, 0f, 0f, 0f, 0f,
-                    0f, brightness, 0f, 0f, 0f,
-                    0f, 0f, brightness, 0f, 0f,
+                    0f, 0f, 0f, 0f, offset,
+                    0f, 0f, 0f, 0f, offset,
+                    0f, 0f, 0f, 0f, offset,
                     0f, 0f, 0f, 0f, 0f
                 )
 
-                val newMatrix = ColorMatrix(floatArray)
+                val newMatrix = floatArray
 
                 brightnessMatrix = newMatrix
 
@@ -2070,7 +2078,7 @@ fun AdjustTools(
                 newMatrix[1, 4] = 1f
                 newMatrix[2, 4] = 1f
 
-                saturationMatrix = newMatrix
+                saturationMatrix = newMatrix.values
 
                 saturationValue = sliderValue.floatValue
             }
@@ -2078,7 +2086,7 @@ fun AdjustTools(
             SelectedImageProperties.BlackPoint -> run {
                 if (sliderValue.floatValue == blackPointValue) return@run
 
-                val blackPoint = 150f * sliderValue.floatValue
+                val blackPoint = 150f * -sliderValue.floatValue
                 val floatArray = floatArrayOf(
                     0f, 0f, 0f, 0f, blackPoint,
                     0f, 0f, 0f, 0f, blackPoint,
@@ -2086,15 +2094,34 @@ fun AdjustTools(
                     0f, 0f, 0f, 0f, 0f
                 )
 
-                blackPointMatrix = ColorMatrix(floatArray)
+                blackPointMatrix = floatArray
 
                 blackPointValue = sliderValue.floatValue
+            }
+
+            SelectedImageProperties.WhitePoint -> run {
+                if (sliderValue.floatValue == whitePointValue) return@run
+
+                val whitePoint = sliderValue.floatValue + 1f
+
+                val floatArray = floatArrayOf(
+			        whitePoint, 1f, 1f, 0f, 1f,
+			        1f, whitePoint, 1f, 0f, 1f,
+			        1f, 1f, whitePoint, 0f, 1f,
+			        0f, 0f, 0f, 1f, 0f
+                )
+
+                whitePointMatrix = floatArray
+
+                whitePointValue = sliderValue.floatValue
             }
 
             SelectedImageProperties.Warmth -> run {
                 if (sliderValue.floatValue == warmthValue) return@run
 
-                val slider = (sliderValue.floatValue * 0.4375f + 0.65f)
+				// linear equation y = ax + b
+				// shifts input by 0.65f
+                val slider = (-sliderValue.floatValue * 0.4375f + 0.65f)
 
                 // taken from https://tannerhelland.com/2012/09/18/convert-temperature-rgb-algorithm-code.html and modified for brighter blues
                 // values rounded because idk if the quality difference is enough to warrant casting 700 things to float and double
@@ -2142,7 +2169,7 @@ fun AdjustTools(
                     0f, 0f, 0f, 1f, 0f
                 )
 
-                warmthMatrix = ColorMatrix(floatArray)
+                warmthMatrix = floatArray
 
                 warmthValue = sliderValue.floatValue
             }
@@ -2210,7 +2237,11 @@ fun AdjustTools(
                 text = "White Point",
                 iconResId = R.drawable.file_not_selected_background,
                 selected = selectedProperty == SelectedImageProperties.WhitePoint
-            )
+            ) {
+            	selectedProperty = SelectedImageProperties.WhitePoint
+
+            	sliderValue.floatValue = whitePointValue
+            }
         }
 
         item {

@@ -121,10 +121,9 @@ fun HorizontalImageList(
 
             LaunchedEffect(
                 key1 = showVideoPlayerControls.value,
-                key2 = canFadeControls.value,
-                key3 = appBarsVisible.value
+                key2 = canFadeControls.value
             ) {
-                if (canFadeControls.value) {
+                if (canFadeControls.value && showVideoPlayerControls.value) {
                     delay(5000)
                     setBarVisibility(
                         visible = false,

@@ -16,8 +16,8 @@ android {
         applicationId = "com.kaii.photos"
         minSdk = 30
         targetSdk = 34
-        versionCode = 83
-        versionName = "v0.8.3-beta"
+        versionCode = 85
+        versionName = "v0.8.5-beta"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

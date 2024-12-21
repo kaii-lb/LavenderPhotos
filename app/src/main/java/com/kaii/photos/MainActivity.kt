@@ -8,12 +8,15 @@ import android.os.Bundle
 import android.view.Window
 import android.view.WindowInsetsController
 import android.view.WindowManager
+import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.tween
@@ -143,18 +146,44 @@ class MainActivity : ComponentActivity() {
 
         Glide.get(this).setMemoryCategory(MemoryCategory.HIGH)
 
+        startForResult =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                if (result.resultCode == RESULT_OK) {
+                    result.data?.data?.also { uri ->
+                        val path = uri.path ?: ""
+
+						Log.d(TAG, "Added album path ${path.replace("/tree/primary:", "")}")
+
+                        val runnable = Runnable {
+                            runBlocking {
+                                applicationContext.datastore.addToAlbumsList(
+                                    path.replace(
+                                        "/tree/primary:",
+                                        ""
+                                    )
+                                )
+                            }
+                        }
+                        Thread(runnable).start()
+                    }
+                } else {
+                    Toast.makeText(applicationContext, "Failed to add album", Toast.LENGTH_LONG)
+                        .show()
+                }
+            }
+
         setContent {
             mainViewModel = viewModel(
                 factory = MainViewModelFactory(applicationContext)
             )
 
             mainViewModel.startupPermissionCheck(applicationContext)
-            val continueToApp = remember {
-                mutableStateOf(
-                    // Manifest.permission.MANAGE_MEDIA is optional
-                    mainViewModel.checkCanPass()
-                )
-            }
+            val continueToApp = remember { 
+           		// Manifest.permission.MANAGE_MEDIA is optional
+            	mutableStateOf(
+            		mainViewModel.checkCanPass()
+           		)
+           	}
 
             PhotosTheme {
                 if (!continueToApp.value) {

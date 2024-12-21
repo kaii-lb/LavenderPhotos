@@ -37,6 +37,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
@@ -46,6 +47,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -61,6 +63,11 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
 import com.kaii.photos.MainActivity
 import com.kaii.photos.R
@@ -71,6 +78,7 @@ import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.brightenColor
 import com.kaii.photos.helpers.getExifDataForMedia
 import com.kaii.photos.helpers.moveImageOutOfLockedFolder
+import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.permanentlyDeleteSecureFolderImageList
 import com.kaii.photos.helpers.shareImage
 import com.kaii.photos.mediastore.MediaStoreData
@@ -87,6 +95,58 @@ fun SingleHiddenPhotoView(
     offset: MutableState<Offset>,
 ) {
     window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+
+	val lifecycleOwner = LocalLifecycleOwner.current
+	val context = LocalContext.current
+	var lastLifecycleState by rememberSaveable {
+		mutableStateOf(Lifecycle.State.STARTED)
+	}
+	var hideSecureFolder by rememberSaveable {
+		mutableStateOf(false)
+	}
+
+	LaunchedEffect(hideSecureFolder) {
+		if (hideSecureFolder
+			&& navController.currentBackStackEntry?.destination?.route != MultiScreenViewType.LockedFolderView.name
+		) {
+			navController.navigate(MultiScreenViewType.MainScreen.name)
+		}
+	}
+
+    DisposableEffect(key1 = lifecycleOwner.lifecycle.currentState) {
+        val lifecycleObserver =
+			LifecycleEventObserver { _, event ->
+
+			    when (event) {
+			    	Lifecycle.Event.ON_PAUSE, Lifecycle.Event.ON_STOP, Lifecycle.Event.ON_DESTROY -> {
+			    		if (navController.currentBackStackEntry?.destination?.route != MultiScreenViewType.LockedFolderView.name
+			    			&& navController.currentBackStackEntry?.destination?.route != MultiScreenViewType.MainScreen.name
+		    			) {
+			    			lastLifecycleState = Lifecycle.State.DESTROYED
+			    		}
+			    	}
+
+			        Lifecycle.Event.ON_RESUME, Lifecycle.Event.ON_START, Lifecycle.Event.ON_CREATE -> {
+			        	if (lastLifecycleState == Lifecycle.State.DESTROYED && navController.currentBackStackEntry != null) {
+			            	lastLifecycleState = Lifecycle.State.STARTED
+
+			        		hideSecureFolder = true
+		        		}
+			        }
+
+			        else -> {}
+			    }
+			}
+
+        lifecycleOwner.lifecycle.addObserver(lifecycleObserver)
+
+        onDispose {
+            // its insta-disposing for some reason (maybe not?)
+            lifecycleOwner.lifecycle.removeObserver(lifecycleObserver)
+        }
+    }
+
+	if (hideSecureFolder) return
 
     val mainViewModel = MainActivity.mainViewModel
 

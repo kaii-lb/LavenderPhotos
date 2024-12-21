@@ -105,10 +105,6 @@ fun SingleTrashedPhotoView(
         )
     }
 
-    groupedMedia.value.forEach {
-    	println("GROUPED $it")
-    }
-
     LaunchedEffect(holderGroupedMedia) {
     	groupedMedia.value =
     		holderGroupedMedia.filter { item ->
@@ -124,6 +120,7 @@ fun SingleTrashedPhotoView(
             )
         )
     }
+
     val state = rememberPagerState(
         initialPage = currentMediaItemIndex.coerceAtLeast(0)
     ) {
