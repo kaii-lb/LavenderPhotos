@@ -64,14 +64,15 @@ class SettingsAlbumsListImpl(private val context: Context, private val viewModel
             val splitBy = if (isPreV083) "," else separator
             val split = list.split(splitBy).distinct().toMutableList()
 
-            split.sortByDescending {
-                File(it).lastModified()
-            }
-
             split.remove("")
 
             return@map split
         }
+
+    fun getRawAlbumsList() : Flow<String> = 
+    	context.datastore.data.map { data ->
+			return@map data[albumsListKey] ?: ""
+    	}
 
     fun setAlbumsList(list: List<String>) = viewModelScope.launch {
         context.datastore.edit {

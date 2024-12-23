@@ -232,6 +232,16 @@ class MainActivity : ComponentActivity() {
 
         mainViewModel.settings.AlbumsList.addToAlbumsList("DCIM/Camera")
 
+		val listOfDirs = mainViewModel.settings.AlbumsList.getAlbumsList().collectAsStateWithLifecycle(initialValue = emptyList()).value.toMutableList()
+
+		listOfDirs.sortByDescending {
+			File("${getBaseInternalStorageDirectory()}$it").lastModified()
+		}
+		listOfDirs.find { it == "DCIM/Camera" }?.let { cameraItem ->
+			listOfDirs.remove(cameraItem)
+			listOfDirs.add(0, cameraItem)
+		}
+
         CompositionLocalProvider(LocalNavController provides navControllerLocal) {
             NavHost(
                 navController = navControllerLocal,
@@ -286,7 +296,7 @@ class MainActivity : ComponentActivity() {
                         window = window
                     )
 
-                    Content(currentView, navControllerLocal, showDialog, selectedItemsList)
+                    Content(currentView, navControllerLocal, showDialog, selectedItemsList, listOfDirs)
                 }
 
                 composable(
@@ -589,6 +599,7 @@ class MainActivity : ComponentActivity() {
         navController: NavHostController,
         showDialog: MutableState<Boolean>,
         selectedItemsList: SnapshotStateList<MediaStoreData>,
+        listOfDirs: List<String>
     ) {
         val galleryViewModel: GalleryViewModel = viewModel(
             factory = GalleryViewModelFactory(
@@ -646,15 +657,6 @@ class MainActivity : ComponentActivity() {
                     )
             ) {
                 MainAppDialog(showDialog, currentView, navController, selectedItemsList)
-
-				val listOfDirs = mainViewModel.settings.AlbumsList.getAlbumsList().collectAsStateWithLifecycle(initialValue = emptyList()).value.toMutableList()
-				listOfDirs.sortByDescending {
-					File("${getBaseInternalStorageDirectory()}$it").lastModified()
-				}
-				listOfDirs.find { it == "DCIM/Camera" }?.let { cameraItem ->
-					listOfDirs.remove(cameraItem)
-					listOfDirs.add(0, cameraItem)
-				}
 
                 AnimatedContent(
                     targetState = currentView.value,

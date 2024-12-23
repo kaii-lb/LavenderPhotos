@@ -42,10 +42,17 @@ fun Path.checkHasFiles(flipDotFileMatch: Boolean = false): Boolean? {
                     val matches = if (flipDotFileMatch) isAlr else !isAlr
                     if (matches) {
                         val isNormal = path.isRegularFile(LinkOption.NOFOLLOW_LINKS)
-                        if (isNormal) {
-                            hasFiles = true
-                            return FileVisitResult.TERMINATE
-                        }
+                        val mimeType = Files.probeContentType(path)
+
+						if (mimeType != null) {
+							val isPhoto = mimeType.contains("image")
+							val isVideo = mimeType.contains("video")
+
+	                        if (isNormal && (isPhoto || isVideo)) {
+	                            hasFiles = true
+	                            return FileVisitResult.TERMINATE
+	                        }
+						}
                     }
                 }
 
@@ -54,18 +61,10 @@ fun Path.checkHasFiles(flipDotFileMatch: Boolean = false): Boolean? {
             }
 
             override fun visitFileFailed(file: Path?, exc: IOException?): FileVisitResult {
-				if (exc != null) {
-					throw exc
-				}
-				return FileVisitResult.TERMINATE
+				return FileVisitResult.CONTINUE
             }
 
             override fun postVisitDirectory(dir: Path?, exc: IOException?): FileVisitResult {
-            	if (exc != null) {
-            		throw exc
-            		return FileVisitResult.TERMINATE
-            	}
-
                 return FileVisitResult.CONTINUE
             }
         })

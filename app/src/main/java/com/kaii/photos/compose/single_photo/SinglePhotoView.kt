@@ -117,7 +117,6 @@ fun SinglePhotoView(
 	var galleryViewModel: GalleryViewModel? = null
 
 	if (path != null) {
-		println("IT HAS RUNNNNNNNNNNNNNNNNNNNNNNNNNNNNN") // TODO: remove
 		galleryViewModel = viewModel(
 		    factory = GalleryViewModelFactory(
 		        LocalContext.current,
