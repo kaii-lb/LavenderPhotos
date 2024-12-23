@@ -268,7 +268,7 @@ fun MainAppTopBar(showDialog: MutableState<Boolean>) {
     TopAppBar(
         title = {
             Row {
-                Text(
+               Text(
                     text = "Lavender ",
                     fontWeight = FontWeight.Bold,
                     fontSize = TextUnit(22f, TextUnitType.Sp)
@@ -294,7 +294,6 @@ fun MainAppTopBar(showDialog: MutableState<Boolean>) {
                 )
             }
         },
-        scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(),
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = CustomMaterialTheme.colorScheme.background
         ),
@@ -644,7 +643,6 @@ fun IsSelectingTopBar(selectedItemsList: SnapshotStateList<MediaStoreData>) {
                 )
             }
         },
-        scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(),
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = CustomMaterialTheme.colorScheme.background
         ),

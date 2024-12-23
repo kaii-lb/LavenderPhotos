@@ -1,6 +1,7 @@
 package com.kaii.photos
 
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Bundle
 import android.util.Log
 import android.view.Window
@@ -29,7 +30,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContent
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -51,6 +55,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
@@ -65,6 +70,7 @@ import androidx.navigation.toRoute
 import androidx.room.Room
 import com.bumptech.glide.Glide
 import com.bumptech.glide.MemoryCategory
+import com.kaii.photos.compose.setBarVisibility
 import com.kaii.photos.compose.IsSelectingTopBar
 import com.kaii.photos.compose.LockedFolderEntryView
 import com.kaii.photos.compose.MainAppBottomBar
@@ -107,6 +113,7 @@ import com.kaii.photos.models.main_activity.MainViewModel
 import com.kaii.photos.models.main_activity.MainViewModelFactory
 import com.kaii.photos.ui.theme.PhotosTheme
 import kotlinx.coroutines.Dispatchers
+import java.io.File
 
 private const val TAG = "MAIN_ACTIVITY"
 
@@ -202,7 +209,7 @@ class MainActivity : ComponentActivity() {
 
         val logPath = "${getBaseInternalStorageDirectory()}LavenderPhotos/log.txt"
         try {
-            java.io.File(logPath).delete()
+            File(logPath).delete()
         } catch (e: Throwable) {
             // ignore
         }
@@ -224,13 +231,6 @@ class MainActivity : ComponentActivity() {
         }
 
         mainViewModel.settings.AlbumsList.addToAlbumsList("DCIM/Camera")
-
-        val localConfig = LocalConfiguration.current
-        var orientation by remember { mutableIntStateOf(localConfig.orientation) }
-
-        LaunchedEffect(localConfig) {
-            orientation = localConfig.orientation
-        }
 
         CompositionLocalProvider(LocalNavController provides navControllerLocal) {
             NavHost(
@@ -282,8 +282,8 @@ class MainActivity : ComponentActivity() {
                         }
                     )
                     setupNextScreen(
-                        selectedItemsList,
-                        window
+                        selectedItemsList = selectedItemsList,
+                        window = window
                     )
 
                     Content(currentView, navControllerLocal, showDialog, selectedItemsList)
@@ -608,15 +608,14 @@ class MainActivity : ComponentActivity() {
         }
 
         Scaffold(
-            modifier = Modifier
-                .fillMaxSize(1f),
             topBar = {
                 TopBar(showDialog, selectedItemsList, navController)
             },
             bottomBar = {
                 BottomBar(currentView, selectedItemsList, navController)
             },
-            contentWindowInsets = WindowInsets.safeContent
+            modifier = Modifier
+                .fillMaxSize(1f)
         ) { padding ->
             BackHandler(
                 enabled = currentView.value != MainScreenViewType.PhotosGridView && currentView.value != MainScreenViewType.SearchPage && navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name && selectedItemsList.size == 0
@@ -624,56 +623,79 @@ class MainActivity : ComponentActivity() {
                 currentView.value = MainScreenViewType.PhotosGridView
             }
 
+			val localConfig = LocalConfiguration.current
+		    var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
+
+		    LaunchedEffect(localConfig) {
+		    	isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
+		    }
+
+			val safeDrawingPadding = if (isLandscape) {
+				val safeDrawing = WindowInsets.safeDrawing.asPaddingValues()
+
+				val layoutDirection = LocalLayoutDirection.current
+				val left = safeDrawing.calculateStartPadding(layoutDirection)
+				val right = safeDrawing.calculateEndPadding(layoutDirection)
+
+				Pair(left, right)
+			} else {
+				Pair(0.dp, 0.dp)
+			}
+
             Column(
                 modifier = Modifier
-                    .padding(
-                        0.dp,
+					.padding(
+                        safeDrawingPadding.first,
                         padding.calculateTopPadding(),
-                        0.dp,
+                        safeDrawingPadding.second,
                         padding.calculateBottomPadding()
                     )
             ) {
-                Column(
-                    modifier = Modifier
-                        .padding(0.dp)
-                ) {
-                    MainAppDialog(showDialog, currentView, navController, selectedItemsList)
+                MainAppDialog(showDialog, currentView, navController, selectedItemsList)
 
-                    AnimatedContent(
-                        targetState = currentView.value,
-                        transitionSpec = {
-                            if (targetState.index > initialState.index) {
-                                (slideInHorizontally { height -> height } + fadeIn()).togetherWith(
-                                    slideOutHorizontally { height -> -height } + fadeOut())
-                            } else {
-                                (slideInHorizontally { height -> -height } + fadeIn()).togetherWith(
-                                    slideOutHorizontally { height -> height } + fadeOut())
-                            }.using(
-                                SizeTransform(clip = false)
+				val listOfDirs = mainViewModel.settings.AlbumsList.getAlbumsList().collectAsStateWithLifecycle(initialValue = emptyList()).value.toMutableList()
+				listOfDirs.sortByDescending {
+					File("${getBaseInternalStorageDirectory()}$it").lastModified()
+				}
+				listOfDirs.find { it == "DCIM/Camera" }?.let { cameraItem ->
+					listOfDirs.remove(cameraItem)
+					listOfDirs.add(0, cameraItem)
+				}
+
+                AnimatedContent(
+                    targetState = currentView.value,
+                    transitionSpec = {
+                        if (targetState.index > initialState.index) {
+                            (slideInHorizontally { height -> height } + fadeIn()).togetherWith(
+                                slideOutHorizontally { height -> -height } + fadeOut())
+                        } else {
+                            (slideInHorizontally { height -> -height } + fadeIn()).togetherWith(
+                                slideOutHorizontally { height -> height } + fadeOut())
+                        }.using(
+                            SizeTransform(clip = true)
+                        )
+                    },
+                    label = "MainAnimatedContentView"
+                ) { stateValue ->
+                    when (stateValue) {
+                        MainScreenViewType.PhotosGridView -> {
+                            selectedItemsList.clear()
+                            PhotoGrid(
+                                groupedMedia = groupedMedia,
+                                navController = navController,
+                                path = stringResource(id = R.string.default_homepage_photogrid_dir),
+                                viewProperties = ViewProperties.Album,
+                                selectedItemsList = selectedItemsList,
                             )
-                        },
-                        label = "MainAnimatedContentView"
-                    ) { stateValue ->
-                        when (stateValue) {
-                            MainScreenViewType.PhotosGridView -> {
-                                selectedItemsList.clear()
-                                PhotoGrid(
-                                    groupedMedia = groupedMedia,
-                                    navController = navController,
-                                    path = stringResource(id = R.string.default_homepage_photogrid_dir),
-                                    viewProperties = ViewProperties.Album,
-                                    selectedItemsList = selectedItemsList,
-                                )
-                            }
+                        }
 
-                            MainScreenViewType.SecureFolder -> LockedFolderEntryView(navController)
-                            MainScreenViewType.AlbumsGridView -> {
-                                AlbumsGridView(navController)
-                            }
+                        MainScreenViewType.SecureFolder -> LockedFolderEntryView(navController)
+                        MainScreenViewType.AlbumsGridView -> {
+                            AlbumsGridView(navController, listOfDirs)
+                        }
 
-                            MainScreenViewType.SearchPage -> {
-                                SearchPage(navController, selectedItemsList, currentView)
-                            }
+                        MainScreenViewType.SearchPage -> {
+                            SearchPage(navController, selectedItemsList, currentView)
                         }
                     }
                 }
@@ -736,10 +758,15 @@ class MainActivity : ComponentActivity() {
 
 private fun setupNextScreen(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
-    window: Window,
+    window: Window
 ) {
     selectedItemsList.clear()
     window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
 
     window.setDecorFitsSystemWindows(false)
+
+	setBarVisibility (
+		visible = true,
+		window = window
+	) {}
 }

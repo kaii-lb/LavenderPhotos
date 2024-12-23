@@ -63,17 +63,8 @@ import com.kaii.photos.models.album_grid.AlbumsViewModelFactory
 import java.io.File
 
 @Composable
-fun AlbumsGridView(navController: NavHostController) {
+fun AlbumsGridView(navController: NavHostController, listOfDirs: List<String>) {
 	val context = LocalContext.current
-	val listOfDirs = MainActivity.mainViewModel.settings.AlbumsList.getAlbumsList().collectAsStateWithLifecycle(initialValue = null).value?.toMutableList() ?: return
-
-	listOfDirs.sortByDescending {
-		File("${getBaseInternalStorageDirectory()}$it").lastModified()
-	}
-	listOfDirs.find { it == "DCIM/Camera" }?.let { cameraItem ->
-		listOfDirs.remove(cameraItem)
-		listOfDirs.add(0, cameraItem)
-	}
 
 	val albumsViewModel: AlbumsViewModel = viewModel(
 		factory = AlbumsViewModelFactory(context, listOfDirs.toList())
