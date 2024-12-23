@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
@@ -46,7 +45,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -65,8 +63,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
-import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.compose.SinglePhotoInfoDialog
+import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
@@ -74,7 +72,7 @@ import com.kaii.photos.models.trash_bin.TrashViewModel
 import com.kaii.photos.models.trash_bin.TrashViewModelFactory
 import kotlinx.coroutines.Dispatchers
 
-//private const val TAG = "SINGLE_TRASHED_PHOTO_VIEW"
+// private const val TAG = "SINGLE_TRASHED_PHOTO_VIEW"
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -87,15 +85,15 @@ fun SingleTrashedPhotoView(
 ) {
     val mediaItem = mainViewModel.selectedMediaData.collectAsState(initial = null).value ?: return
 
-	val trashViewModel: TrashViewModel = viewModel(
-	    factory = TrashViewModelFactory(
-	        LocalContext.current
-	    )
-	)
+    val trashViewModel: TrashViewModel = viewModel(
+        factory = TrashViewModelFactory(
+            LocalContext.current
+        )
+    )
 
     val holderGroupedMedia by trashViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
-	if (holderGroupedMedia.isEmpty()) return
+    if (holderGroupedMedia.isEmpty()) return
 
     val groupedMedia = remember {
         mutableStateOf(
@@ -106,8 +104,8 @@ fun SingleTrashedPhotoView(
     }
 
     LaunchedEffect(holderGroupedMedia) {
-    	groupedMedia.value =
-    		holderGroupedMedia.filter { item ->
+        groupedMedia.value =
+            holderGroupedMedia.filter { item ->
                 item.type != MediaType.Section
             }
     }
@@ -160,16 +158,6 @@ fun SingleTrashedPhotoView(
                         showDialog.value = false
 
                         permanentlyDeletePhotoList(context, listOf(currentMediaItem.uri))
-
-						// TODO: this is no longer necessary, remove from here and move all other Single* to flow list
-//                        sortOutMediaMods(
-//                            currentMediaItem,
-//                            groupedMedia,
-//                            coroutineScope,
-//                            state
-//                        ) {
-//                            navController.popBackStack()
-//                        }
                     }
                 ) {
                     Text(
@@ -238,12 +226,12 @@ fun SingleTrashedPhotoView(
         }
 
         SinglePhotoInfoDialog(
-        	showDialog = showInfoDialog,
-        	currentMediaItem = currentMediaItem,
-        	groupedMedia = groupedMedia,
-        	showMoveCopyOptions = false,
-        	moveCopyInsetsPadding = null
-       	)
+            showDialog = showInfoDialog,
+            currentMediaItem = currentMediaItem,
+            groupedMedia = groupedMedia,
+            showMoveCopyOptions = false,
+            moveCopyInsetsPadding = null
+        )
     }
 }
 
@@ -305,9 +293,9 @@ private fun TopBar(navController: NavHostController, mediaItem: MediaStoreData?,
             },
             actions = {
                 IconButton(
-                    onClick = { 
-						showInfoDialog.value = true
-                   	},
+                    onClick = {
+                        showInfoDialog.value = true
+                    },
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.more_options),

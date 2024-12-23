@@ -1,5 +1,6 @@
 package com.kaii.photos.compose.grids
 
+import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,8 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,12 +35,14 @@ import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.compose.TrashedPhotoGridViewBottomBar
 import com.kaii.photos.compose.TrashedPhotoGridViewTopBar
 import com.kaii.photos.compose.ViewProperties
-import com.kaii.photos.helpers.getAppTrashBinDirectory
-import com.kaii.photos.helpers.getBaseInternalStorageDirectory
+import com.kaii.photos.datastore.TrashBin
+import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.mediastore.MediaStoreData
+import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.trash_bin.TrashViewModel
 import com.kaii.photos.models.trash_bin.TrashViewModelFactory
 import kotlinx.coroutines.Dispatchers
+import kotlin.time.Duration.Companion.days
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,11 +50,12 @@ fun TrashedPhotoGridView(
     navController: NavHostController,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
 ) {
-	val trashViewModel: TrashViewModel = viewModel(
-	    factory = TrashViewModelFactory(
-	        LocalContext.current
-	    )
-	)
+    val context = LocalContext.current
+    val trashViewModel: TrashViewModel = viewModel(
+        factory = TrashViewModelFactory(
+            context
+        )
+    )
 
     val mediaStoreData = trashViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
@@ -60,13 +66,37 @@ fun TrashedPhotoGridView(
         mainViewModel.setGroupedMedia(mediaStoreData.value)
     }
 
+    var triedDeletingAlready by rememberSaveable { mutableStateOf(false) }
+    val autoDeleteInterval by mainViewModel.settings.TrashBin.getAutoDeleteInterval().collectAsStateWithLifecycle(initialValue = 0)
+
+    LaunchedEffect(groupedMedia.value, autoDeleteInterval) {
+        if (groupedMedia.value.isEmpty() || triedDeletingAlready || autoDeleteInterval == 0) return@LaunchedEffect
+
+        triedDeletingAlready = true
+        val currentDate = System.currentTimeMillis()
+        val toBeDeleted = emptyList<Uri>().toMutableList()
+
+        groupedMedia.value
+            .filter { it.type != MediaType.Section }
+            .forEach { media ->
+                val dateDeletedMillis = currentDate - (media.dateModified * 1000) // dateModified is in seconds
+                val dateDeletedDays = (dateDeletedMillis / (1000 * 60 * 60 * 24)).days
+
+                if (dateDeletedDays > autoDeleteInterval.days) {
+                    toBeDeleted.add(media.uri)
+                }
+            }
+
+        permanentlyDeletePhotoList(context, toBeDeleted)
+    }
+
     BackHandler(
         enabled = selectedItemsList.size > 0
     ) {
         selectedItemsList.clear()
     }
 
-    BackHandler (
+    BackHandler(
         enabled = selectedItemsList.size == 0
     ) {
         trashViewModel.cancelMediaSource()
@@ -125,11 +155,10 @@ fun TrashedPhotoGridView(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // TODO: check for items older than 30 days and delete them
             PhotoGrid(
                 groupedMedia = groupedMedia,
                 navController = navController,
-                path = getAppTrashBinDirectory().replace(getBaseInternalStorageDirectory(), ""),
+                path = null,
                 selectedItemsList = selectedItemsList,
                 viewProperties = ViewProperties.Trash,
                 shouldPadUp = true

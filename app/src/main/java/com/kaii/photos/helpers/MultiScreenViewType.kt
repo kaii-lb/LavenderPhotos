@@ -15,7 +15,8 @@ enum class MultiScreenViewType {
     FavouritesGridView,
     SettingsMainView,
     SettingsDebuggingView,
-    SettingsGeneralView
+    SettingsGeneralView,
+    SettingsMemoryAndStorageView
 }
 
 @Serializable

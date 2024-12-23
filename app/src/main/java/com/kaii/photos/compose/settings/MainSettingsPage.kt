@@ -1,25 +1,20 @@
 package com.kaii.photos.compose.settings
 
 import android.content.res.Configuration
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsIgnoringVisibility
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -30,26 +25,27 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
-import com.kaii.photos.R
+import androidx.compose.ui.unit.dp
 import com.kaii.photos.LocalNavController
+import com.kaii.photos.R
 import com.kaii.photos.compose.PreferencesRow
 import com.kaii.photos.helpers.CustomMaterialTheme
-import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.RowPosition
 
 @Composable
 fun MainSettingsPage() {
-    Scaffold (
-		topBar = {
-			MainSettingsTopBar()
-		}
+    Scaffold(
+        topBar = {
+            MainSettingsTopBar()
+        },
+        contentWindowInsets = WindowInsets.systemBars
     ) { innerPadding ->
-    	val navController = LocalNavController.current ?: return@Scaffold
+        val navController = LocalNavController.current ?: return@Scaffold
 
-        LazyColumn (
+        LazyColumn(
             modifier = Modifier
                 .padding(innerPadding)
                 .background(CustomMaterialTheme.colorScheme.background),
@@ -63,10 +59,11 @@ fun MainSettingsPage() {
                     iconResID = R.drawable.settings,
                     position = RowPosition.Top,
                     showBackground = false,
-                    height = 84.dp,
-                    titleTextSize = 20f
+                    titleTextSize = 20f,
+                    modifier = Modifier
+                    	.padding(0.dp, 6.dp)
                 ) {
-					navController.navigate(MultiScreenViewType.SettingsGeneralView.name)
+                    navController.navigate(MultiScreenViewType.SettingsGeneralView.name)
                 }
             }
 
@@ -77,8 +74,9 @@ fun MainSettingsPage() {
                     iconResID = R.drawable.privacy_policy,
                     position = RowPosition.Middle,
                     showBackground = false,
-                    height = 84.dp,
-                    titleTextSize = 20f
+                    titleTextSize = 20f,
+                    modifier = Modifier
+                    	.padding(0.dp, 6.dp)
                 ) {
 
                 }
@@ -91,24 +89,26 @@ fun MainSettingsPage() {
                     iconResID = R.drawable.palette,
                     position = RowPosition.Middle,
                     showBackground = false,
-                    height = 84.dp,
-                    titleTextSize = 20f
+                    titleTextSize = 20f,
+                    modifier = Modifier
+                    	.padding(0.dp, 6.dp)
                 ) {
 
                 }
             }
 
-			item {
+            item {
                 PreferencesRow(
                     title = "Memory & Storage",
                     summary = "Performance and space options",
                     iconResID = R.drawable.privacy_policy,
                     position = RowPosition.Middle,
                     showBackground = false,
-                    height = 84.dp,
-                    titleTextSize = 20f
+                    titleTextSize = 20f,
+                    modifier = Modifier
+                    	.padding(0.dp, 6.dp)
                 ) {
-
+                    navController.navigate(MultiScreenViewType.SettingsMemoryAndStorageView.name)
                 }
             }
 
@@ -119,20 +119,21 @@ fun MainSettingsPage() {
                     iconResID = R.drawable.memory,
                     position = RowPosition.Bottom,
                     showBackground = false,
-                    height = 84.dp,
-                    titleTextSize = 20f
+                    titleTextSize = 20f,
+                    modifier = Modifier
+                    	.padding(0.dp, 6.dp)
                 ) {
-					navController.navigate(MultiScreenViewType.SettingsDebuggingView.name)
+                    navController.navigate(MultiScreenViewType.SettingsDebuggingView.name)
                 }
             }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MainSettingsTopBar() {
-	val navController = LocalNavController.current ?: return
+    val navController = LocalNavController.current ?: return
 
     val localConfig = LocalConfiguration.current
     var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
@@ -140,15 +141,8 @@ private fun MainSettingsTopBar() {
     LaunchedEffect(localConfig) {
         isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
     }
-    val topInsets by animateDpAsState(
-        targetValue = if (isLandscape) 0.dp else WindowInsets.statusBarsIgnoringVisibility.asPaddingValues().calculateTopPadding(),
-        animationSpec = tween(
-            durationMillis = 100
-        ),
-        label = "animate topbar padding on rotation change"
-    )
 
-	TopAppBar(
+    TopAppBar(
         title = {
             Text(
                 text = "Settings",
@@ -158,7 +152,7 @@ private fun MainSettingsTopBar() {
         navigationIcon = {
             IconButton(
                 onClick = {
-					navController.popBackStack()
+                    navController.popBackStack()
                 },
             ) {
                 Icon(
@@ -173,7 +167,6 @@ private fun MainSettingsTopBar() {
         scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(),
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = CustomMaterialTheme.colorScheme.background
-        ),
-        windowInsets = WindowInsets(0.dp, topInsets, 0.dp, 0.dp)
+        )
     )
 }

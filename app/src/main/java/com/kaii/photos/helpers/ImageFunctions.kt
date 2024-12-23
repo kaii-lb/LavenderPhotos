@@ -131,15 +131,13 @@ fun setTrashedOnPhotoList(context: Context, list: List<Pair<Uri, String>>, trash
     }
 }
 
-fun shareImage(uri: Uri, context: Context) {
+fun shareImage(uri: Uri, context: Context, mimeType: String? = null) {
     val contentResolver = context.contentResolver
 
     CoroutineScope(Dispatchers.IO).launch {
-        val mimeType = contentResolver.getType(uri)
-
         val shareIntent = Intent().apply {
             action = Intent.ACTION_SEND
-            type = mimeType
+            type = mimeType ?: contentResolver.getType(uri)
         }
 
         shareIntent.putExtra(Intent.EXTRA_STREAM, uri)

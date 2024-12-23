@@ -6,14 +6,13 @@ import android.content.pm.PackageManager
 import android.provider.MediaStore
 import android.os.Build
 import android.os.Environment
+import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kaii.photos.datastore
-import com.kaii.photos.datastore.SettingsLogs
-import com.kaii.photos.datastore.SettingsPermissions
+import com.kaii.photos.datastore.Settings
 import com.kaii.photos.mediastore.MediaStoreData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -24,6 +23,8 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+
+private const val TAG = "MAIN_VIEW_MODEL"
 
 class MainViewModel(context: Context) : ViewModel() {
 	private val _selectedMedia = MutableStateFlow<MediaStoreData?>(null)
@@ -37,8 +38,7 @@ class MainViewModel(context: Context) : ViewModel() {
 
     val permissionQueue = mutableStateListOf<String>()
 
-	val settingsLogs = SettingsLogs(viewModelScope, context)
-	val settingsPermissions = SettingsPermissions(viewModelScope, context)
+	val settings = Settings(context, viewModelScope)
 
     private val _singlePhotoPath = MutableStateFlow<String?>(null)
     val singlePhotoPath: Flow<String?> = _singlePhotoPath.asStateFlow()
@@ -55,7 +55,7 @@ class MainViewModel(context: Context) : ViewModel() {
         _groupedMedia.value = media
     }
 
-	fun setSinglePhotoPath(path: String) {
+	fun setSinglePhotoPath(path: String?) {
 		_singlePhotoPath.value = path
 	}
 
@@ -101,6 +101,12 @@ class MainViewModel(context: Context) : ViewModel() {
 
 			if (!granted && !permissionQueue.contains(perm)) permissionQueue.add(perm)
 			else permissionQueue.remove(perm)
+
+			Log.d(TAG, "Permission $perm has been granted $granted")
+		}
+
+		permissionQueue.forEach {
+			Log.d(TAG, "Permission queue has item $it")
 		}
     }
 
@@ -111,7 +117,7 @@ class MainViewModel(context: Context) : ViewModel() {
        	if (!isGranted && !permissionQueue.contains(permission)) permissionQueue.add(permission)
         else if (isGranted) permissionQueue.remove(permission)
 
-        permissionQueue.forEach { println("PERMISSION DENIED $it") }
+        permissionQueue.forEach { Log.d(TAG, "PERMISSION DENIED $it") }
     }
 
     fun checkCanPass() : Boolean {
@@ -119,6 +125,10 @@ class MainViewModel(context: Context) : ViewModel() {
 			permissionQueue.all { it == Manifest.permission.MANAGE_MEDIA }
 		} else {
 			false
+		}
+
+		permissionQueue.forEach {
+			Log.d(TAG, "Can pass permission queue has item $it")
 		}
 
     	return permissionQueue.isEmpty() || manageMedia

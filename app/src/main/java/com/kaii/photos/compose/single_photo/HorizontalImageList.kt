@@ -21,9 +21,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -76,16 +76,16 @@ fun HorizontalImageList(
         offset.value = Offset.Zero
     }
 
-	val localConfig = LocalConfiguration.current
+    val localConfig = LocalConfiguration.current
     var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
 
     LaunchedEffect(localConfig) {
-    	isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
+        isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
     }
 
-	val isTouchLocked = remember { mutableStateOf(false) }
+    val isTouchLocked = remember { mutableStateOf(false) }
 
-    HorizontalPager (
+    HorizontalPager(
         state = state,
         verticalAlignment = Alignment.CenterVertically,
         pageSpacing = 8.dp,
@@ -106,13 +106,12 @@ fun HorizontalImageList(
         val shouldPlay by remember(state) {
             derivedStateOf {
                 (abs(state.currentPageOffsetFraction) < .5 && state.currentPage == index)
-                	|| (abs(state.currentPageOffsetFraction) > .5 && state.targetPage == index)
+                        || (abs(state.currentPageOffsetFraction) > .5 && state.targetPage == index)
             }
         }
 
         val mediaStoreItem = groupedMedia[index]
 
-        val windowInsetsController = window.insetsController ?: return@HorizontalPager
         val path = if (isHidden) mediaStoreItem.uri.path else mediaStoreItem.uri
 
         if (mediaStoreItem.type == MediaType.Video) {
@@ -205,15 +204,13 @@ private fun Modifier.mediaModifier(
     item: MediaStoreData? = null,
     showVideoPlayerController: MutableState<Boolean>? = null,
 ): Modifier {
-	val localConfig = LocalConfiguration.current
+    val localConfig = LocalConfiguration.current
     var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
     val vibratorManager = rememberVibratorManager()
 
-	LaunchedEffect(localConfig) {
-		isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
-	}
-
-    println("IS LANDSCAPE $isLandscape")
+    LaunchedEffect(localConfig) {
+        isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
+    }
 
     return this.then(
         Modifier
@@ -228,43 +225,43 @@ private fun Modifier.mediaModifier(
             .pointerInput(Unit) {
                 detectTapGestures(
                     onTap = {
-                    	if (!isTouchLocked.value) {
-	           	        	if (item?.type == MediaType.Video && showVideoPlayerController != null && isLandscape) {
-	           	        		showVideoPlayerController.value = !showVideoPlayerController.value
-	               	        } else {
-	                            setBarVisibility(
-	                                visible = !appBarsVisible.value,
-	                                window = window
-	                            ) {
-	                                appBarsVisible.value = it
+                        if (!isTouchLocked.value) {
+                            if (item?.type == MediaType.Video && showVideoPlayerController != null && isLandscape) {
+                                showVideoPlayerController.value = !showVideoPlayerController.value
+                            } else {
+                                setBarVisibility(
+                                    visible = !appBarsVisible.value,
+                                    window = window
+                                ) {
+                                    appBarsVisible.value = it
 
-	                                if (!isLandscape) showVideoPlayerController?.value = it
-	                            }
-	               	        }
-                    	}
+                                    if (!isLandscape) showVideoPlayerController?.value = it
+                                }
+                            }
+                        }
                     },
 
                     onDoubleTap = { clickOffset ->
-                    	if (!isTouchLocked.value) {
-	                        if (item?.type == MediaType.Video && showVideoPlayerController != null && isLandscape) {
-	                            setBarVisibility(
-	                                visible = !appBarsVisible.value,
-	                                window = window
-	                            ) {
-	                                appBarsVisible.value = it
-	                            }
-	                        } else if (item?.type != MediaType.Video && showVideoPlayerController == null) {
-	                            if (scale.value == 1f && offset.value == Offset.Zero) {
-	                                scale.value = 2f
-	                                rotation.value = 0f
-	                                offset.value = clickOffset / scale.value
-	                            } else {
-	                                scale.value = 1f
-	                                rotation.value = 0f
-	                                offset.value = Offset.Zero
-	                            }
-	                        }
-                    	}
+                        if (!isTouchLocked.value) {
+                            if (item?.type == MediaType.Video && showVideoPlayerController != null && isLandscape) {
+                                setBarVisibility(
+                                    visible = !appBarsVisible.value,
+                                    window = window
+                                ) {
+                                    appBarsVisible.value = it
+                                }
+                            } else if (item?.type != MediaType.Video && showVideoPlayerController == null) {
+                                if (scale.value == 1f && offset.value == Offset.Zero) {
+                                    scale.value = 2f
+                                    rotation.value = 0f
+                                    offset.value = clickOffset / scale.value
+                                } else {
+                                    scale.value = 1f
+                                    rotation.value = 0f
+                                    offset.value = Offset.Zero
+                                }
+                            }
+                        }
                     }
                 )
             }

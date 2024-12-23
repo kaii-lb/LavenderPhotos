@@ -2,6 +2,7 @@ package com.kaii.photos.compose
 
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.view.Window
 import android.view.WindowInsetsController
 import androidx.compose.animation.AnimatedContent
@@ -575,7 +576,7 @@ fun IsSelectingTopBar(selectedItemsList: SnapshotStateList<MediaStoreData>) {
                         .background(CustomMaterialTheme.colorScheme.surfaceContainer)
                         .padding(12.dp, 0.dp, 16.dp, 0.dp)
                         .animateContentSize()
-                        .clickable (
+                        .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null
                         ) {
@@ -735,7 +736,8 @@ fun SingleAlbumViewTopBar(
                                 .size(24.dp)
                         )
                     }
-                }
+                },
+                scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
             )
         } else {
             IsSelectingTopBar(
@@ -930,18 +932,6 @@ fun TrashedPhotoGridViewTopBar(
                                 .size(24.dp)
                         )
                     }
-
-                    IconButton(
-                        onClick = { /* TODO */ },
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.settings),
-                            contentDescription = "show more options for the trash bin",
-                            tint = CustomMaterialTheme.colorScheme.onBackground,
-                            modifier = Modifier
-                                .size(24.dp)
-                        )
-                    }
                 }
             )
         } else {
@@ -1108,20 +1098,7 @@ fun SecureFolderViewTopAppBar(
                         modifier = Modifier
                             .width(160.dp)
                     )
-                },
-                actions = {
-                    IconButton(
-                        onClick = { /* TODO */ },
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.settings),
-                            contentDescription = "show more options for the locked folder",
-                            tint = CustomMaterialTheme.colorScheme.onBackground,
-                            modifier = Modifier
-                                .size(24.dp)
-                        )
-                    }
-                },
+                }
             )
         } else {
             IsSelectingTopBar(selectedItemsList = selectedItemsList)
@@ -1460,7 +1437,10 @@ fun setBarVisibility(
         } else {
             hide(WindowInsetsCompat.Type.systemBars())
             systemBarsBehavior =
-                WindowInsetsController.BEHAVIOR_DEFAULT
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+                    WindowInsetsController.BEHAVIOR_DEFAULT
+                else
+                    WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         }
     }
 

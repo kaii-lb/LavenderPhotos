@@ -6,6 +6,7 @@ import android.content.res.Configuration
 import android.net.Uri
 import android.view.ViewGroup
 import android.view.Window
+import android.view.WindowManager
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -14,10 +15,10 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -26,12 +27,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FilledTonalIconToggleButton
@@ -60,8 +60,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpSize
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
@@ -86,6 +86,7 @@ import com.kaii.photos.compose.setBarVisibility
 import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.mediastore.MediaStoreData
 import kotlinx.coroutines.delay
+import java.io.File
 import kotlin.math.roundToInt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
@@ -102,13 +103,12 @@ fun VideoPlayerControls(
     isMuted: MutableState<Boolean>,
     currentVideoPosition: MutableFloatState,
     duration: MutableFloatState,
-    isTouchLocked: MutableState<Boolean>,
     title: String,
     modifier: Modifier
 ) {
     val interactionSource = remember { MutableInteractionSource() }
 
-    Box(
+    BoxWithConstraints(
         modifier = Modifier
             .then(modifier)
             .background(Color.Transparent)
@@ -121,18 +121,19 @@ fun VideoPlayerControls(
         }
 
         if (isLandscape) {
-            Box (
+            Box(
                 modifier = Modifier
                     .wrapContentSize()
                     .align(Alignment.TopStart)
                     .padding(16.dp)
             ) {
                 Text(
-                    text = title,
+                    text = if (title == "") "Media" else title,
                     fontSize = TextUnit(12f, TextUnitType.Sp),
                     color = CustomMaterialTheme.colorScheme.onSecondaryContainer,
+                    overflow = TextOverflow.Ellipsis,
                     modifier = Modifier
-                        // TODO: .widthIn some width: 1/2 screen width?
+                        .widthIn(max = this@BoxWithConstraints.maxWidth / 2)
                         .wrapContentSize()
                         .clip(RoundedCornerShape(1000.dp))
                         .background(CustomMaterialTheme.colorScheme.secondaryContainer)
@@ -356,8 +357,8 @@ fun VideoPlayer(
     val currentVideoPosition = rememberSaveable { mutableFloatStateOf(0f) }
     val duration = rememberSaveable { mutableFloatStateOf(0f) }
 
-    var exoPlayer = rememberExoPlayerWithLifeCycle(item.uri, isPlaying, duration, currentVideoPosition)
-    var playerView = rememberPlayerView(exoPlayer)
+    val exoPlayer = rememberExoPlayerWithLifeCycle(item.uri, isPlaying, duration, currentVideoPosition)
+    val playerView = rememberPlayerView(exoPlayer)
 
     BackHandler {
         isPlaying.value = false
@@ -375,6 +376,7 @@ fun VideoPlayer(
     LaunchedEffect(key1 = isPlaying.value, localConfig.orientation) {
         if (!isPlaying.value) {
             controlsVisible.value = true
+            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
             if (localConfig.orientation != Configuration.ORIENTATION_LANDSCAPE) {
                 setBarVisibility(
@@ -384,6 +386,8 @@ fun VideoPlayer(
                     appBarsVisible.value = true
                 }
             }
+        } else {
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }
 
         lastIsPlaying.value = isPlaying.value
@@ -405,9 +409,9 @@ fun VideoPlayer(
     }
 
 
-	LaunchedEffect(controlsVisible.value) {
-		if (controlsVisible.value) canFadeControls.value = true
-	}
+    LaunchedEffect(controlsVisible.value) {
+        if (controlsVisible.value) canFadeControls.value = true
+    }
 
     Box(
         modifier = Modifier
@@ -428,6 +432,7 @@ fun VideoPlayer(
             )
         }
 
+        val title = remember { File(item.absolutePath).nameWithoutExtension }
         AnimatedVisibility(
             visible = controlsVisible.value,
             enter = expandIn(
@@ -458,49 +463,48 @@ fun VideoPlayer(
                 isMuted = isMuted,
                 currentVideoPosition = currentVideoPosition,
                 duration = duration,
-                isTouchLocked = isTouchLocked,
-                title = item.displayName ?: "Media",
+                title = title,
                 modifier = Modifier
                     .fillMaxSize(1f)
             )
         }
 
-		if ((isTouchLocked.value || controlsVisible.value) && localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-	        Box (
-	            modifier = Modifier
+        if ((isTouchLocked.value || controlsVisible.value) && localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            Box(
+                modifier = Modifier
                     .wrapContentSize()
                     .align(Alignment.TopEnd)
                     .padding(16.dp)
-	        ) {
-		        FilledTonalIconToggleButton(
-		        	checked = isTouchLocked.value,
-		            onCheckedChange = {
-		                isTouchLocked.value = it
-		                canFadeControls.value = true
-		            },
+            ) {
+                FilledTonalIconToggleButton(
+                    checked = isTouchLocked.value,
+                    onCheckedChange = {
+                        isTouchLocked.value = it
+                        canFadeControls.value = true
+                    },
                     colors = IconButtonDefaults.filledTonalIconToggleButtonColors().copy(
                         checkedContainerColor = CustomMaterialTheme.colorScheme.primary,
                         checkedContentColor = CustomMaterialTheme.colorScheme.onPrimary,
                         containerColor = CustomMaterialTheme.colorScheme.secondaryContainer,
                         contentColor = CustomMaterialTheme.colorScheme.onSecondaryContainer
                     ),
-		            modifier = Modifier
+                    modifier = Modifier
                         .size(32.dp)
                         .align(Alignment.Center)
-		        ) {
-		            Icon(
-		                painter = painterResource(id = if (isTouchLocked.value) R.drawable.locked_folder else R.drawable.unlock),
-		                contentDescription = "Lock the screen preventing miss-touch",
-		                modifier = Modifier
-		                    .size(20.dp)
-		            )
-		        }
-	        }
-		}
+                ) {
+                    Icon(
+                        painter = painterResource(id = if (isTouchLocked.value) R.drawable.locked_folder else R.drawable.unlock),
+                        contentDescription = "Lock the screen preventing miss-touch",
+                        modifier = Modifier
+                            .size(20.dp)
+                    )
+                }
+            }
+        }
     }
 }
 
-@UnstableApi
+@androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun rememberExoPlayerWithLifeCycle(
     videoSource: Uri,
@@ -511,119 +515,118 @@ fun rememberExoPlayerWithLifeCycle(
     val context = LocalContext.current
 
     var exoPlayer = remember(videoSource) {
-    	createExoPlayer(
-    		videoSource,
-    		context,
-    		isPlaying,
-    		currentVideoPosition,
-    		duration
-   		)
-   	}
+        createExoPlayer(
+            videoSource,
+            context,
+            isPlaying,
+            currentVideoPosition,
+            duration
+        )
+    }
 
-	val lifecycleOwner = LocalLifecycleOwner.current
+    val lifecycleOwner = LocalLifecycleOwner.current
 
     DisposableEffect(key1 = lifecycleOwner.lifecycle.currentState) {
         val lifecycleObserver = LifecycleEventObserver { _, event ->
-                when (event) {
-                    Lifecycle.Event.ON_START, Lifecycle.Event.ON_CREATE -> {
-						exoPlayer =
-							createExoPlayer(
-								videoSource,
-								context,
-								isPlaying,
-								currentVideoPosition,
-								duration
-	   						)
-                    }
-
-                    else -> {}
+            when (event) {
+                Lifecycle.Event.ON_START, Lifecycle.Event.ON_CREATE -> {
+                    exoPlayer =
+                        createExoPlayer(
+                            videoSource,
+                            context,
+                            isPlaying,
+                            currentVideoPosition,
+                            duration
+                        )
                 }
+
+                else -> {}
             }
+        }
 
         lifecycleOwner.lifecycle.addObserver(lifecycleObserver)
 
         onDispose {
-            // its insta-disposing for some reason (maybe not?)
             lifecycleOwner.lifecycle.removeObserver(lifecycleObserver)
         }
     }
 
     DisposableEffect(key1 = lifecycleOwner.lifecycle.currentState) {
-        val lifecycleObserver = getExoPlayerLifecycleObserver(exoPlayer, isPlaying, context as Activity, videoSource)
+        val lifecycleObserver = getExoPlayerLifecycleObserver(exoPlayer, isPlaying, context as Activity)
 
         lifecycleOwner.lifecycle.addObserver(lifecycleObserver)
 
         onDispose {
-            // its insta-disposing for some reason (maybe not?)
             lifecycleOwner.lifecycle.removeObserver(lifecycleObserver)
         }
     }
     return exoPlayer
 }
 
+@androidx.annotation.OptIn(UnstableApi::class)
 fun createExoPlayer(
-	videoSource: Uri,
-	context: Context,
-	isPlaying: MutableState<Boolean>,
-	currentVideoPosition: MutableFloatState,
-	duration: MutableFloatState
-) : ExoPlayer {
-	val exoPlayer = ExoPlayer.Builder(context).apply {
-            setLoadControl(
-                DefaultLoadControl.Builder().apply {
-                    setBufferDurationsMs(
-                        1000,
-                        5000,
-                        1000,
-                        1000
-                    )
-
-                    setBackBuffer(
-                        1000,
-                        false
-                    )
-
-                    setPrioritizeTimeOverSizeThresholds(false)
-                }.build()
-            )
-            setSeekBackIncrementMs(5000)
-            setSeekForwardIncrementMs(5000)
-
-            setPauseAtEndOfMediaItems(true)
-
-            setAudioAttributes(
-                AudioAttributes.Builder().apply {
-                    setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
-                    AudioAttributes.DEFAULT
-                    setAllowedCapturePolicy(C.ALLOW_CAPTURE_BY_ALL)
-                }.build(),
-                true
-            )
-        }
-            .build()
-            .apply {
-                videoScalingMode = VIDEO_SCALING_MODE_SCALE_TO_FIT
-                repeatMode = ExoPlayer.REPEAT_MODE_ONE
-
-                setHandleAudioBecomingNoisy(true)
-
-                val defaultDataSourceFactory = DefaultDataSource.Factory(context)
-                val dataSourceFactory = DefaultDataSource.Factory(
-                    context,
-                    defaultDataSourceFactory
+    videoSource: Uri,
+    context: Context,
+    isPlaying: MutableState<Boolean>,
+    currentVideoPosition: MutableFloatState,
+    duration: MutableFloatState
+): ExoPlayer {
+    val exoPlayer = ExoPlayer.Builder(context).apply {
+        setLoadControl(
+            DefaultLoadControl.Builder().apply {
+                setBufferDurationsMs(
+                    1000,
+                    5000,
+                    1000,
+                    1000
                 )
-                val source = ProgressiveMediaSource.Factory(dataSourceFactory)
-                    .createMediaSource(MediaItem.fromUri(videoSource))
 
-                setMediaSource(source)
-                prepare()
-            }
+                setBackBuffer(
+                    1000,
+                    false
+                )
+
+                setPrioritizeTimeOverSizeThresholds(false)
+            }.build()
+        )
+        setSeekBackIncrementMs(5000)
+        setSeekForwardIncrementMs(5000)
+
+        setPauseAtEndOfMediaItems(true)
+
+        setAudioAttributes(
+            AudioAttributes.Builder().apply {
+                setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
+                AudioAttributes.DEFAULT
+                setAllowedCapturePolicy(C.ALLOW_CAPTURE_BY_ALL)
+            }.build(),
+            true
+        )
+    }
+        .build()
+        .apply {
+            videoScalingMode = VIDEO_SCALING_MODE_SCALE_TO_FIT
+            repeatMode = ExoPlayer.REPEAT_MODE_ONE
+
+            setHandleAudioBecomingNoisy(true)
+
+            val defaultDataSourceFactory = DefaultDataSource.Factory(context)
+            val dataSourceFactory = DefaultDataSource.Factory(
+                context,
+                defaultDataSourceFactory
+            )
+            val source = ProgressiveMediaSource.Factory(dataSourceFactory)
+                .createMediaSource(MediaItem.fromUri(videoSource))
+
+            setMediaSource(source)
+            prepare()
+        }
 
     val listener = object : Player.Listener {
         override fun onPlaybackStateChanged(playbackState: Int) {
             super.onPlaybackStateChanged(playbackState)
 
-            if (playbackState == ExoPlayer.STATE_READY) { // TODO: fix issue where duration goes to 0 when exiting app while exoplayer is playing
+            if (playbackState == ExoPlayer.STATE_READY) {
                 duration.floatValue = exoPlayer.duration / 1000f
             }
         }
@@ -652,8 +655,7 @@ fun createExoPlayer(
 fun getExoPlayerLifecycleObserver(
     exoPlayer: ExoPlayer,
     isPlaying: MutableState<Boolean>,
-    activity: Activity,
-    videoSource: Uri,
+    activity: Activity
 ): LifecycleEventObserver =
     LifecycleEventObserver { _, event ->
         when (event) {

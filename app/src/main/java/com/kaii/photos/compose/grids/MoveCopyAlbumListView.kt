@@ -53,16 +53,17 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.kaii.photos.R
+import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.compose.FolderIsEmpty
 import com.kaii.photos.compose.SearchTextField
 import com.kaii.photos.compose.getDefaultShapeSpacerForPosition
-import com.kaii.photos.datastore
-import com.kaii.photos.datastore.getAlbumsList
+import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.copyImageListToPath
@@ -84,9 +85,9 @@ fun MoveCopyAlbumListView(
     insetsPadding: WindowInsets
 ) {
     val context = LocalContext.current
-    val originalAlbumsList = runBlocking {
-        context.datastore.getAlbumsList()
-    }
+    val originalAlbumsList by mainViewModel.settings.AlbumsList.getAlbumsList().collectAsStateWithLifecycle(initialValue = emptyList())
+
+    if (originalAlbumsList == emptyList<String>()) return
 
     val albumsViewModel: AlbumsViewModel = viewModel(
         factory = AlbumsViewModelFactory(context, originalAlbumsList)

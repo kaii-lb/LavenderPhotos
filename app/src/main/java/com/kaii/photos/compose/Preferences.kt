@@ -1,47 +1,36 @@
 package com.kaii.photos.compose
 
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.MarqueeAnimationMode
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.Icon
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
@@ -55,11 +44,11 @@ fun PreferencesRow(
     title: String,
     iconResID: Int,
     position: RowPosition,
+    modifier: Modifier = Modifier,
     summary: String? = null,
     goesToOtherPage: Boolean = false,
     showBackground: Boolean = true,
     titleTextSize: Float = 18f,
-    height: Dp = 72.dp,
     action: (() -> Unit)? = null
 ) {
     val (shape, _) = getDefaultShapeSpacerForPosition(position, 24.dp)
@@ -77,12 +66,13 @@ fun PreferencesRow(
     Row(
         modifier = Modifier
             .fillMaxWidth(1f)
-            .height(height)
+            .wrapContentHeight()
             .then(clip)
             .wrapContentHeight(align = Alignment.CenterVertically)
             .background(if (showBackground) CustomMaterialTheme.colorScheme.surfaceVariant else Color.Transparent)
             .then(clickable)
-            .padding(16.dp, 12.dp),
+            .padding(16.dp, 12.dp)
+            .then(modifier),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
@@ -90,14 +80,14 @@ fun PreferencesRow(
             contentDescription = "an icon describing: $title",
             tint = CustomMaterialTheme.colorScheme.onBackground,
             modifier = Modifier
-                .size(32.dp)
+                .size(28.dp)
         )
 
         Spacer(modifier = Modifier.width(16.dp))
 
         Column(
             modifier = Modifier
-                .height(height)
+                .wrapContentHeight()
                 .weight(1f),
             verticalArrangement = Arrangement.SpaceEvenly,
             horizontalAlignment = Alignment.Start
@@ -115,7 +105,7 @@ fun PreferencesRow(
                     fontSize = TextUnit(14f, TextUnitType.Sp),
                     textAlign = TextAlign.Start,
                     color = CustomMaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
-                    maxLines = 1,
+                    maxLines = 3,
                     overflow = TextOverflow.Ellipsis
                 )
             }
@@ -138,14 +128,14 @@ fun PreferencesSwitchRow(
     title: String,
     iconResID: Int,
     position: RowPosition,
-    checked: State<Boolean>,
+    checked: Boolean,
     summary: String? = null,
     enabled: Boolean = true,
     showBackground: Boolean = true,
-    height: Dp = 72.dp,
-    onSwitch: (checked: Boolean) -> Unit
+    onRowClick: ((checked: Boolean) -> Unit)? = null,
+    onSwitchClick: (checked: Boolean) -> Unit
 ) {
-    val (shape, spacerHeight) = getDefaultShapeSpacerForPosition(position, 24.dp)
+    val (shape, _) = getDefaultShapeSpacerForPosition(position, 24.dp)
 
     val backgroundColor = when {
         enabled && showBackground -> {
@@ -162,17 +152,16 @@ fun PreferencesSwitchRow(
     }
 
     val clickable = if (enabled) Modifier.clickable {
-        onSwitch(!checked.value)
+        if (onRowClick != null) onRowClick(!checked) else onSwitchClick(!checked)
     } else Modifier
 
-	val clip = if (showBackground) Modifier.clip(shape) else Modifier
+    val clip = if (showBackground) Modifier.clip(shape) else Modifier
 
     Row(
         modifier = Modifier
             .fillMaxWidth(1f)
-            .height(height)
+            .wrapContentHeight()
             .then(clip)
-            .wrapContentHeight(align = Alignment.CenterVertically)
             .background(backgroundColor)
             .then(clickable)
             .padding(16.dp, 12.dp),
@@ -183,14 +172,14 @@ fun PreferencesSwitchRow(
             contentDescription = "an icon describing: $title",
             tint = CustomMaterialTheme.colorScheme.onBackground,
             modifier = Modifier
-                .size(32.dp)
+                .size(28.dp)
         )
 
         Spacer(modifier = Modifier.width(16.dp))
 
         Column(
             modifier = Modifier
-                .height(height)
+                .wrapContentHeight()
                 .weight(1f),
             verticalArrangement = Arrangement.SpaceEvenly,
             horizontalAlignment = Alignment.Start
@@ -208,25 +197,86 @@ fun PreferencesSwitchRow(
                     fontSize = TextUnit(14f, TextUnitType.Sp),
                     textAlign = TextAlign.Start,
                     color = darkenColor(CustomMaterialTheme.colorScheme.onSurface, 0.15f),
-                    maxLines = 1,
-                    modifier = Modifier
-                    	.padding(0.dp, 0.dp, 8.dp, 0.dp)
-                        .basicMarquee(
-                        	iterations = 3,
-                            animationMode = MarqueeAnimationMode.Immediately,
-                            repeatDelayMillis = 3000,
-                            initialDelayMillis = 3000
-                        )
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }
 
-        Switch(
-            checked = checked.value,
-            onCheckedChange = {
-                onSwitch(it)
+
+        Row (
+        	modifier = Modifier
+        		.padding(12.dp, 0.dp, 0.dp, 0.dp),
+       		verticalAlignment = Alignment.CenterVertically,
+       		horizontalArrangement = Arrangement.Center
+        ) {
+	        if (onRowClick != onSwitchClick && onRowClick != null) {
+	            Box(
+	                modifier = Modifier
+	                    .width(1.dp)
+	                    .height(36.dp)
+	                    .background(CustomMaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
+	            )
+
+	            Spacer(modifier = Modifier.width(16.dp))
+	        }
+
+	        Switch(
+	            checked = checked,
+	            onCheckedChange = {
+	                onSwitchClick(it)
+	            },
+	            enabled = enabled
+	        )
+        }
+
+    }
+}
+
+@Composable
+fun PreferencesSeparatorText(text: String) {
+    Text(
+        text = text,
+        fontSize = TextUnit(16f, TextUnitType.Sp),
+        color = CustomMaterialTheme.colorScheme.primary,
+        modifier = Modifier
+            .padding(12.dp)
+    )
+}
+
+@Composable
+fun RadioButtonRow(
+    text: String,
+    checked: Boolean,
+    onClick: () -> Unit
+) {
+    Row (
+        modifier = Modifier
+            .fillMaxWidth(1f)
+            .height(40.dp)
+            .background(Color.Transparent)
+            .padding(12.dp, 4.dp)
+            .clickable {
+            	onClick()
             },
-            enabled = enabled
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Start
+    ) {
+        RadioButton(
+            selected = checked,
+            onClick = {
+                onClick()
+            }
+        )
+
+        Spacer (modifier = Modifier.width(16.dp))
+
+        Text (
+            text = text,
+            fontSize = TextUnit(14f, TextUnitType.Sp),
+            color = CustomMaterialTheme.colorScheme.onSurface,
+            modifier = Modifier
+                .wrapContentSize()
         )
     }
 }

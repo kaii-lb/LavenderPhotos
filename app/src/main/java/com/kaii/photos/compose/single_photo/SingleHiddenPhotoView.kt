@@ -65,8 +65,6 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.LifecycleObserver
-import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
 import com.kaii.photos.MainActivity
@@ -97,7 +95,6 @@ fun SingleHiddenPhotoView(
     window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
 
 	val lifecycleOwner = LocalLifecycleOwner.current
-	val context = LocalContext.current
 	var lastLifecycleState by rememberSaveable {
 		mutableStateOf(Lifecycle.State.STARTED)
 	}
@@ -118,7 +115,7 @@ fun SingleHiddenPhotoView(
 			LifecycleEventObserver { _, event ->
 
 			    when (event) {
-			    	Lifecycle.Event.ON_PAUSE, Lifecycle.Event.ON_STOP, Lifecycle.Event.ON_DESTROY -> {
+			    	Lifecycle.Event.ON_STOP, Lifecycle.Event.ON_DESTROY -> {
 			    		if (navController.currentBackStackEntry?.destination?.route != MultiScreenViewType.LockedFolderView.name
 			    			&& navController.currentBackStackEntry?.destination?.route != MultiScreenViewType.MainScreen.name
 		    			) {
@@ -141,7 +138,6 @@ fun SingleHiddenPhotoView(
         lifecycleOwner.lifecycle.addObserver(lifecycleObserver)
 
         onDispose {
-            // its insta-disposing for some reason (maybe not?)
             lifecycleOwner.lifecycle.removeObserver(lifecycleObserver)
         }
     }
@@ -285,7 +281,11 @@ private fun TopBar(navController: NavHostController, mediaItem: MediaStoreData, 
             actions = {
                 IconButton(
                     onClick = {
-                        shareImage(mediaItem.uri, context)
+                        shareImage(
+                            mediaItem.uri,
+                            context,
+                            mediaItem.mimeType
+                        )
                     }
                 ) {
                     Icon(

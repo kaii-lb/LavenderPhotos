@@ -50,10 +50,12 @@ import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.MainActivity.Companion.mainViewModel
+import com.kaii.photos.compose.PreferencesSeparatorText
+import com.kaii.photos.datastore.Permissions
 
 @Composable
 fun GeneralSettingsPage() {
-	val isMediaManager = mainViewModel.settingsPermissions.isMediaManager.collectAsStateWithLifecycle(initialValue = false)
+	val isMediaManager by mainViewModel.settings.Permissions.getIsMediaManager().collectAsStateWithLifecycle(initialValue = false)
 	val context = LocalContext.current
 
 	Scaffold (
@@ -68,17 +70,11 @@ fun GeneralSettingsPage() {
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.Start
         ) {
-        	item {
-        		Text(
-        			text = "Permissions",
-        			fontSize = TextUnit(16f, TextUnitType.Sp),
-        			color = CustomMaterialTheme.colorScheme.primary,
-        			modifier = Modifier
-        				.padding(12.dp)
-        		)
-        	}
-
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                item {
+                    PreferencesSeparatorText("Permissions")
+                }
+
                 item {
                     val manageMediaLauncher = rememberLauncherForActivityResult(
                         contract = ActivityResultContracts.StartActivityForResult()
@@ -90,7 +86,7 @@ fun GeneralSettingsPage() {
                             isGranted = granted
                         )
 
-                        mainViewModel.settingsPermissions.setIsMediaManager(granted)
+                        mainViewModel.settings.Permissions.setIsMediaManager(granted)
                     }
 
                     PreferencesSwitchRow(
@@ -99,8 +95,7 @@ fun GeneralSettingsPage() {
                         iconResID = R.drawable.movie_edit,
                         checked = isMediaManager,
                         position = RowPosition.Single,
-                        showBackground = false,
-                        height = 80.dp,
+                        showBackground = false
                     ) {
                         val intent = Intent(Settings.ACTION_REQUEST_MANAGE_MEDIA)
                         manageMediaLauncher.launch(intent)
@@ -111,24 +106,10 @@ fun GeneralSettingsPage() {
 	}
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun GeneralSettingsTopBar() {
 	val navController = LocalNavController.current ?: return
-
-    val localConfig = LocalConfiguration.current
-    var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
-
-    LaunchedEffect(localConfig) {
-        isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
-    }
-    val topInsets by animateDpAsState(
-        targetValue = if (isLandscape) 0.dp else WindowInsets.statusBarsIgnoringVisibility.asPaddingValues().calculateTopPadding(),
-        animationSpec = tween(
-            durationMillis = 100
-        ),
-        label = "animate topbar padding on rotation change"
-    )
 
 	TopAppBar(
         title = {
@@ -155,7 +136,6 @@ private fun GeneralSettingsTopBar() {
         scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(),
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = CustomMaterialTheme.colorScheme.background
-        ),
-        windowInsets = WindowInsets(0.dp, topInsets, 0.dp, 0.dp)
+        )
     )
 }

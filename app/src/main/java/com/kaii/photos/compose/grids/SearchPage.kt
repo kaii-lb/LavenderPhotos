@@ -251,7 +251,7 @@ fun SearchPage(
             PhotoGrid(
                 groupedMedia = groupedMedia,
                 navController = navController,
-                path = null,
+                path = "",
                 selectedItemsList = selectedItemsList,
                 viewProperties = if (searchedForText.value == "") ViewProperties.SearchLoading else ViewProperties.SearchNotFound,
                 state = gridState,

@@ -27,5 +27,5 @@ class SearchViewModel(context: Context, sortBy: MediaItemSortMode) : ViewModel()
 
     fun cancelMediaFlow() {
         cancellationSignal.cancel()
-    }    
+    }
 }

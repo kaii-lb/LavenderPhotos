@@ -31,7 +31,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -74,11 +73,11 @@ fun PermissionHandler(
 
         var onGrantPermissionClicked by remember { mutableStateOf({}) }
 
-		if (showDialog.value) {
-	        PermissionDeniedDialog(showDialog = showDialog) {
-	            onGrantPermissionClicked()
-	        }
-		}
+        if (showDialog.value) {
+            PermissionDeniedDialog(showDialog = showDialog) {
+                onGrantPermissionClicked()
+            }
+        }
 
         Text(
             text = "Permissions",
@@ -283,7 +282,7 @@ fun PermissionButton(
 ) {
     val (shape, _) = getDefaultShapeSpacerForPosition(position, 32.dp)
 
-    val clickModifier = if (!granted) Modifier.clickable { if (!granted) onClick() } else Modifier
+    val clickModifier = if (!granted) Modifier.clickable { onClick() } else Modifier
 
     Box(
         modifier = Modifier
@@ -364,15 +363,15 @@ fun PermissionDeniedDialog(
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-        	Text(
-        	    text = "Necessary Permission",
-        	    fontSize = TextUnit(18f, TextUnitType.Sp),
-        	    fontWeight = FontWeight.Bold,
-        	    color = CustomMaterialTheme.colorScheme.onBackground,
-        	    modifier = Modifier.wrapContentSize()
-        	)
+            Text(
+                text = "Necessary Permission",
+                fontSize = TextUnit(18f, TextUnitType.Sp),
+                fontWeight = FontWeight.Bold,
+                color = CustomMaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.wrapContentSize()
+            )
 
-			Spacer (modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             Text(
                 text = "This permission is necessary for app functionality",
@@ -381,7 +380,7 @@ fun PermissionDeniedDialog(
                 modifier = Modifier.wrapContentSize()
             )
 
-            Spacer (modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
             PermissionDeniedDialogButton(
                 text = "Grant Permission",

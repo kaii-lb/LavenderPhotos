@@ -1,6 +1,5 @@
 package com.kaii.photos.compose.grids
 
-import android.app.Activity
 import android.view.Window
 import android.view.WindowManager
 import androidx.activity.compose.BackHandler
@@ -8,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetValue
@@ -16,13 +16,12 @@ import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,14 +31,11 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.LifecycleObserver
-import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
 import com.kaii.photos.compose.SecureFolderViewBottomAppBar
 import com.kaii.photos.compose.SecureFolderViewTopAppBar
 import com.kaii.photos.compose.ViewProperties
-import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.getAppLockedFolderDirectory
@@ -66,59 +62,56 @@ fun LockedFolderView(
         navController.popBackStack()
     }
 
-    // TODO: exit secure folder when app state changes (go to homescreen, recent, etc while secure folder open)
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val context = LocalContext.current
+    var lastLifecycleState by rememberSaveable {
+        mutableStateOf(Lifecycle.State.STARTED)
+    }
+    var hideSecureFolder by rememberSaveable {
+        mutableStateOf(false)
+    }
 
-	val lifecycleOwner = LocalLifecycleOwner.current
-	val context = LocalContext.current
-	var lastLifecycleState by rememberSaveable {
-		mutableStateOf(Lifecycle.State.STARTED)
-	}
-	var hideSecureFolder by rememberSaveable {
-		mutableStateOf(false)
-	}
-
-	LaunchedEffect(hideSecureFolder) {
-		if (hideSecureFolder
-			&& navController.currentBackStackEntry?.destination?.route != MultiScreenViewType.SingleHiddenPhotoVew.name
-		) {
-			navController.navigate(MultiScreenViewType.MainScreen.name)
-		}
-	}
+    LaunchedEffect(hideSecureFolder) {
+        if (hideSecureFolder
+            && navController.currentBackStackEntry?.destination?.route != MultiScreenViewType.SingleHiddenPhotoVew.name
+        ) {
+            navController.navigate(MultiScreenViewType.MainScreen.name)
+        }
+    }
 
     DisposableEffect(key1 = lifecycleOwner.lifecycle.currentState) {
         val lifecycleObserver =
-			LifecycleEventObserver { _, event ->
+            LifecycleEventObserver { _, event ->
 
-			    when (event) {
-			    	Lifecycle.Event.ON_PAUSE, Lifecycle.Event.ON_STOP, Lifecycle.Event.ON_DESTROY -> {
-			    		if (navController.currentBackStackEntry?.destination?.route != MultiScreenViewType.SingleHiddenPhotoVew.name
-			    			&& navController.currentBackStackEntry?.destination?.route != MultiScreenViewType.MainScreen.name
-		    			) {
-			    			lastLifecycleState = Lifecycle.State.DESTROYED
-			    		}
-			    	}
+                when (event) {
+                    Lifecycle.Event.ON_STOP, Lifecycle.Event.ON_DESTROY -> {
+                        if (navController.currentBackStackEntry?.destination?.route != MultiScreenViewType.SingleHiddenPhotoVew.name
+                            && navController.currentBackStackEntry?.destination?.route != MultiScreenViewType.MainScreen.name
+                        ) {
+                            lastLifecycleState = Lifecycle.State.DESTROYED
+                        }
+                    }
 
-			        Lifecycle.Event.ON_RESUME, Lifecycle.Event.ON_START, Lifecycle.Event.ON_CREATE -> {
-			        	if (lastLifecycleState == Lifecycle.State.DESTROYED && navController.currentBackStackEntry != null) {
-			            	lastLifecycleState = Lifecycle.State.STARTED
+                    Lifecycle.Event.ON_RESUME, Lifecycle.Event.ON_START, Lifecycle.Event.ON_CREATE -> {
+                        if (lastLifecycleState == Lifecycle.State.DESTROYED && navController.currentBackStackEntry != null) {
+                            lastLifecycleState = Lifecycle.State.STARTED
 
-			        		hideSecureFolder = true
-		        		}
-			        }
+                            hideSecureFolder = true
+                        }
+                    }
 
-			        else -> {}
-			    }
-			}
+                    else -> {}
+                }
+            }
 
         lifecycleOwner.lifecycle.addObserver(lifecycleObserver)
 
         onDispose {
-            // its insta-disposing for some reason (maybe not?)
             lifecycleOwner.lifecycle.removeObserver(lifecycleObserver)
         }
     }
 
-	if (hideSecureFolder) return
+    if (hideSecureFolder) return
 
     val secureFolder = File(context.getAppLockedFolderDirectory())
     val fileList = secureFolder.listFiles() ?: return
@@ -127,10 +120,13 @@ fun LockedFolderView(
         val mimeType = Files.probeContentType(Path(file.absolutePath))
         val dateTaken = getDateTakenForMedia(file.absolutePath)
 
+        val type =
+            if (mimeType.lowercase().contains("image")) MediaType.Image
+            else if (mimeType.lowercase().contains("video")) MediaType.Video
+            else MediaType.Section
+
         val item = MediaStoreData(
-            type = if (mimeType.lowercase().contains("image")) MediaType.Image
-                    else if (mimeType.lowercase().contains("video")) MediaType.Video
-                    else MediaType.Section,
+            type = type,
             id = file.hashCode() * file.length() * file.lastModified(),
             uri = file.absolutePath.toUri(),
             mimeType = mimeType,
@@ -172,8 +168,6 @@ fun LockedFolderView(
         scaffoldState = scaffoldState,
         sheetDragHandle = {},
         sheetSwipeEnabled = false,
-        modifier = Modifier
-            .fillMaxSize(1f),
         topBar = {
             SecureFolderViewTopAppBar(selectedItemsList = selectedItemsList) {
                 navController.popBackStack()
@@ -186,11 +180,14 @@ fun LockedFolderView(
             )
         },
         sheetPeekHeight = 0.dp,
-        sheetShape = RectangleShape
+        sheetShape = RectangleShape,
+        modifier = Modifier
+            .fillMaxSize(1f),
     ) { padding ->
         Column(
             modifier = Modifier
                 .padding(padding)
+                .statusBarsPadding()
                 .fillMaxSize(1f),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally

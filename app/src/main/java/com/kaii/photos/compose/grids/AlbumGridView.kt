@@ -26,9 +26,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
@@ -43,6 +43,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
@@ -50,9 +51,8 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.kaii.photos.MainActivity
 import com.kaii.photos.R
-import com.kaii.photos.datastore
+import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.helpers.CustomMaterialTheme
-import com.kaii.photos.datastore.getAlbumsList
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.brightenColor
 import com.kaii.photos.helpers.getBaseInternalStorageDirectory
@@ -60,16 +60,12 @@ import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.signature
 import com.kaii.photos.models.album_grid.AlbumsViewModel
 import com.kaii.photos.models.album_grid.AlbumsViewModelFactory
-import kotlinx.coroutines.runBlocking
 import java.io.File
 
 @Composable
 fun AlbumsGridView(navController: NavHostController) {
 	val context = LocalContext.current
-	val listOfDirs = runBlocking {
-		val list = context.datastore.getAlbumsList()
-		list.toMutableList()
-	}
+	val listOfDirs = MainActivity.mainViewModel.settings.AlbumsList.getAlbumsList().collectAsStateWithLifecycle(initialValue = null).value?.toMutableList() ?: return
 
 	listOfDirs.sortByDescending {
 		File("${getBaseInternalStorageDirectory()}$it").lastModified()
@@ -83,8 +79,7 @@ fun AlbumsGridView(navController: NavHostController) {
 		factory = AlbumsViewModelFactory(context, listOfDirs.toList())
 	)
 
-	val mediaStoreData = albumsViewModel.mediaStoreData.collectAsState()
-	val actualData = mediaStoreData.value
+	val albumToThumbnailMapping by albumsViewModel.mediaStoreData.collectAsStateWithLifecycle()
 
 	Column (
         modifier = Modifier
@@ -131,17 +126,17 @@ fun AlbumsGridView(navController: NavHostController) {
                 count = listOfDirs.size,
 	            key = { key ->
 	                listOfDirs[key]
-	            },                
+	            },
             ) { index ->
-				val folder = File("${getBaseInternalStorageDirectory()}" + listOfDirs[index])
+				val folder = File(getBaseInternalStorageDirectory() + listOfDirs[index])
 				val neededDir = listOfDirs[index]
 
-				if (actualData.isNotEmpty()) {
-					val mediaItem = actualData[neededDir] ?: MediaStoreData()
+				if (albumToThumbnailMapping.isNotEmpty()) {
+					val mediaItem = albumToThumbnailMapping[neededDir] ?: MediaStoreData()
 
 					Row (
 						modifier = Modifier
-							.wrapContentSize()	
+							.wrapContentSize()
 							.animateItem(
 								fadeInSpec = tween(
 									durationMillis = 250

@@ -1,6 +1,7 @@
 package com.kaii.photos.helpers
 
 import android.graphics.BitmapFactory
+import android.media.MediaMetadataRetriever
 import android.util.Log
 import androidx.exifinterface.media.ExifInterface
 import com.kaii.photos.R
@@ -12,7 +13,7 @@ import java.time.format.DateTimeFormatter
 import java.util.EnumMap
 import kotlin.math.round
 
-private const val TAG = "EXIT_DATA_HANDLER"
+private const val TAG = "EXIF_DATA_HANDLER"
 
 fun getDateTakenForMedia(uri: String): Long {
     try {
@@ -39,17 +40,17 @@ fun getDateTakenForMedia(uri: String): Long {
     }
 }
 
-fun getExifDataForMedia(uri: String): Map<MediaData, Any> {
+fun getExifDataForMedia(absolutePath: String): Map<MediaData, Any> {
 	try {
-	    val exifInterface = ExifInterface(uri)
+	    val exifInterface = ExifInterface(absolutePath)
 
 	    val list = HashMap<MediaData, Any?>().toMutableMap()
-	    val file = File(uri)
+	    val file = File(absolutePath)
 
 	    list[MediaData.Name] = file.name
 	    list[MediaData.Path] = file.absolutePath
 
-	    val datetime = getDateTakenForMedia(uri)
+	    val datetime = getDateTakenForMedia(absolutePath)
 	    val formatter = DateTimeFormatter.ofPattern("d MMM yyyy - h:mm:ss a")
 	    val formattedDateTime =
 	        LocalDateTime.ofInstant(Instant.ofEpochSecond(datetime), ZoneId.systemDefault())
@@ -60,9 +61,19 @@ fun getExifDataForMedia(uri: String): Map<MediaData, Any> {
 
 	    val options = BitmapFactory.Options()
 	    options.inJustDecodeBounds = true
-	    BitmapFactory.decodeFile(uri, options)
+	    BitmapFactory.decodeFile(absolutePath, options)
 	    val resValue = run {
-	        "${options.outWidth}x${options.outHeight}"
+            if (options.outWidth == -1 && options.outHeight == -1) {
+                val metadataRetriever = MediaMetadataRetriever()
+                metadataRetriever.setDataSource(absolutePath)
+
+                val resX = metadataRetriever.frameAtTime?.width ?: -1
+                val resY = metadataRetriever.frameAtTime?.height ?: -1
+
+                "${resX}x${resY}"
+            } else {
+                "${options.outWidth}x${options.outHeight}"
+            }
 	    }
 	    list[MediaData.Resolution] = resValue
 

@@ -3,6 +3,7 @@ package com.kaii.photos.compose.single_photo
 import android.annotation.SuppressLint
 import android.content.res.Configuration
 import android.view.Window
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
@@ -101,17 +102,8 @@ fun SinglePhotoView(
     offset: MutableState<Offset>,
 ) {
     val mediaItem = mainViewModel.selectedMediaData.collectAsState(initial = null).value ?: return
-	val path = mainViewModel.singlePhotoPath.collectAsState(initial = null).value ?: return
+	val path = mainViewModel.singlePhotoPath.collectAsState(initial = null).value
 
-	val galleryViewModel: GalleryViewModel = viewModel(
-	    factory = GalleryViewModelFactory(
-	        LocalContext.current,
-	        path,
-	        MediaItemSortMode.DateTaken
-	    )
-	)
-
-	val holderGroupedMedia by galleryViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 	val fastLoadedGroupedMedia = mainViewModel.groupedMedia.collectAsState(initial = null).value ?: return
 
     val groupedMedia = remember {
@@ -122,14 +114,29 @@ fun SinglePhotoView(
         )
     }
 
-    LaunchedEffect(holderGroupedMedia) {
-    	if (holderGroupedMedia.isNotEmpty()) {
-	        groupedMedia.value =
-	            holderGroupedMedia.filter { item ->
-	                item.type != MediaType.Section
-	            }
-    	}
-    }
+	var galleryViewModel: GalleryViewModel? = null
+
+	if (path != null) {
+		println("IT HAS RUNNNNNNNNNNNNNNNNNNNNNNNNNNNNN") // TODO: remove
+		galleryViewModel = viewModel(
+		    factory = GalleryViewModelFactory(
+		        LocalContext.current,
+		        path,
+		        MediaItemSortMode.DateTaken
+		    )
+		)
+
+		val holderGroupedMedia by galleryViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+
+		LaunchedEffect(holderGroupedMedia) {
+	    	if (holderGroupedMedia.isNotEmpty()) {
+		        groupedMedia.value =
+		            holderGroupedMedia.filter { item ->
+		                item.type != MediaType.Section
+		            }
+	    	}
+	    }
+	}
 
     var currentMediaItemIndex by rememberSaveable {
         mutableIntStateOf(
@@ -167,7 +174,15 @@ fun SinglePhotoView(
             }
         }
     }
+
     val showInfoDialog = remember { mutableStateOf(false) }
+
+    BackHandler (
+        enabled = !showInfoDialog.value
+    ) {
+        galleryViewModel?.cancelMediaFlow()
+        navController.popBackStack()
+    }
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -190,6 +205,7 @@ fun SinglePhotoView(
                     }
                 },
                 onBackClick = {
+                	galleryViewModel?.cancelMediaFlow()
                     navController.popBackStack()
                 }
             )
