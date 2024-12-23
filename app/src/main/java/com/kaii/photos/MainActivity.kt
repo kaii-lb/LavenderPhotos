@@ -617,12 +617,6 @@ class MainActivity : ComponentActivity() {
             modifier = Modifier
                 .fillMaxSize(1f)
         ) { padding ->
-            BackHandler(
-                enabled = currentView.value != MainScreenViewType.PhotosGridView && currentView.value != MainScreenViewType.SearchPage && navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name && selectedItemsList.size == 0
-            ) {
-                currentView.value = MainScreenViewType.PhotosGridView
-            }
-
 			val localConfig = LocalConfiguration.current
 		    var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
 
@@ -666,13 +660,13 @@ class MainActivity : ComponentActivity() {
                     targetState = currentView.value,
                     transitionSpec = {
                         if (targetState.index > initialState.index) {
-                            (slideInHorizontally { height -> height } + fadeIn()).togetherWith(
-                                slideOutHorizontally { height -> -height } + fadeOut())
+                            (slideInHorizontally { width -> width } + fadeIn()).togetherWith(
+                                slideOutHorizontally { width -> -width } + fadeOut())
                         } else {
-                            (slideInHorizontally { height -> -height } + fadeIn()).togetherWith(
-                                slideOutHorizontally { height -> height } + fadeOut())
+                            (slideInHorizontally { width -> -width } + fadeIn()).togetherWith(
+                                slideOutHorizontally { width -> width } + fadeOut())
                         }.using(
-                            SizeTransform(clip = true)
+                            SizeTransform(clip = false)
                         )
                     },
                     label = "MainAnimatedContentView"
@@ -689,9 +683,9 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
-                        MainScreenViewType.SecureFolder -> LockedFolderEntryView(navController)
+                        MainScreenViewType.SecureFolder -> LockedFolderEntryView(navController, currentView)
                         MainScreenViewType.AlbumsGridView -> {
-                            AlbumsGridView(navController, listOfDirs)
+                            AlbumsGridView(navController, listOfDirs, currentView)
                         }
 
                         MainScreenViewType.SearchPage -> {

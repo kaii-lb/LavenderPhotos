@@ -4,6 +4,7 @@ import android.hardware.biometrics.BiometricManager
 import android.hardware.biometrics.BiometricPrompt
 import android.os.CancellationSignal
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -19,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -35,9 +37,16 @@ import androidx.navigation.NavHostController
 import com.kaii.photos.R
 import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.MainScreenViewType
 
 @Composable
-fun LockedFolderEntryView(navController: NavHostController) {
+fun LockedFolderEntryView(navController: NavHostController, currentView: MutableState<MainScreenViewType>) {
+    BackHandler(
+        enabled = currentView.value == MainScreenViewType.SecureFolder && navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name
+    ) {
+        currentView.value = MainScreenViewType.PhotosGridView
+    }
+
     Column (
         modifier = Modifier
             .fillMaxSize(1f)

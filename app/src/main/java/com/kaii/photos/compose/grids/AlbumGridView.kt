@@ -1,6 +1,7 @@
 package com.kaii.photos.compose.grids
 
 import android.content.res.Configuration
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -28,6 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -54,6 +56,7 @@ import com.kaii.photos.R
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.brightenColor
 import com.kaii.photos.helpers.getBaseInternalStorageDirectory
 import com.kaii.photos.mediastore.MediaStoreData
@@ -62,8 +65,9 @@ import com.kaii.photos.models.album_grid.AlbumsViewModel
 import com.kaii.photos.models.album_grid.AlbumsViewModelFactory
 import java.io.File
 
+
 @Composable
-fun AlbumsGridView(navController: NavHostController, listOfDirs: List<String>) {
+fun AlbumsGridView(navController: NavHostController, listOfDirs: List<String>, currentView: MutableState<MainScreenViewType>) {
 	val context = LocalContext.current
 
 	val albumsViewModel: AlbumsViewModel = viewModel(
@@ -71,6 +75,12 @@ fun AlbumsGridView(navController: NavHostController, listOfDirs: List<String>) {
 	)
 
 	val albumToThumbnailMapping by albumsViewModel.mediaStoreData.collectAsStateWithLifecycle()
+
+    BackHandler(
+        enabled = currentView.value == MainScreenViewType.AlbumsGridView && navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name
+    ) {
+        currentView.value = MainScreenViewType.PhotosGridView
+    }
 
 	Column (
         modifier = Modifier
