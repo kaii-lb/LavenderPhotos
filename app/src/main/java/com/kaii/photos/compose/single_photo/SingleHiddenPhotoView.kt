@@ -66,6 +66,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity
 import com.kaii.photos.R
@@ -76,6 +77,7 @@ import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.brightenColor
 import com.kaii.photos.helpers.getExifDataForMedia
 import com.kaii.photos.helpers.moveImageOutOfLockedFolder
+import com.kaii.photos.helpers.MediaData
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.permanentlyDeleteSecureFolderImageList
 import com.kaii.photos.helpers.shareImage
@@ -550,7 +552,17 @@ private fun SingleSecuredPhotoInfoDialog(
                         .padding(12.dp)
                         .wrapContentHeight()
 				) {
-					val mediaData = getExifDataForMedia(currentMediaItem.absolutePath)
+					var mediaData by remember {
+						mutableStateOf(
+	                    	emptyMap<MediaData, Any>()
+						)
+                   	}
+
+					LaunchedEffect(Unit) {
+						getExifDataForMedia(currentMediaItem.absolutePath).collect {
+							mediaData = it
+						}
+					}
 
 					Column (
 						modifier = Modifier
@@ -572,9 +584,9 @@ private fun SingleSecuredPhotoInfoDialog(
 						}
 
 						Spacer (modifier = Modifier.height(8.dp))
-					}				
-				}			
-			}			
+					}
+				}
+			}
 		}
 	}
 }

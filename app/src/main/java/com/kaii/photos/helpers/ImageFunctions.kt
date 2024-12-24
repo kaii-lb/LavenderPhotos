@@ -151,7 +151,9 @@ fun moveImageToLockedFolder(absolutePath: String, id: Long, context: Context) {
     val fileToBeHidden = File(absolutePath)
     val lockedFolderDir = context.getAppLockedFolderDirectory()
     val copyToPath = lockedFolderDir + fileToBeHidden.name
-    Files.move(Path(absolutePath), Path(copyToPath), StandardCopyOption.REPLACE_EXISTING)
+    Files.copy(Path(absolutePath), Path(copyToPath), StandardCopyOption.REPLACE_EXISTING)
+    copyExifDataToFile(absolutePath, copyToPath)
+	Files.delete(Path(absolutePath))
 
     val lastModified = System.currentTimeMillis()
     CoroutineScope(EmptyCoroutineContext + CoroutineName("hide_file_context")).launch {
@@ -177,7 +179,9 @@ fun moveImageOutOfLockedFolder(path: String) {
             applicationDatabase.securedItemEntityDao().getOriginalPathFromSecuredPath(path)
                 ?: (getAppRestoredFromLockedFolderDirectory() + fileToBeRevived.name)
 
-        Files.move(Path(absolutePath), Path(reverseCemetery), StandardCopyOption.REPLACE_EXISTING)
+        Files.copy(Path(absolutePath), Path(reverseCemetery), StandardCopyOption.REPLACE_EXISTING)
+		copyExifDataToFile(absolutePath, reverseCemetery)
+		Files.delete(Path(absolutePath))
 
         val lastModified = System.currentTimeMillis()
         File(reverseCemetery).setLastModified(lastModified)

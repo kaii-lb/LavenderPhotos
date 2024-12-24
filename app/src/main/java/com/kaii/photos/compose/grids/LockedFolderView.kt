@@ -187,7 +187,6 @@ fun LockedFolderView(
         Column(
             modifier = Modifier
                 .padding(padding)
-                .statusBarsPadding()
                 .fillMaxSize(1f),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally

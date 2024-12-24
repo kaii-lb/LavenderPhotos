@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
@@ -256,6 +257,7 @@ fun RadioButtonRow(
             .height(40.dp)
             .background(Color.Transparent)
             .padding(12.dp, 4.dp)
+			.clip(RoundedCornerShape(8.dp))
             .clickable {
             	onClick()
             },

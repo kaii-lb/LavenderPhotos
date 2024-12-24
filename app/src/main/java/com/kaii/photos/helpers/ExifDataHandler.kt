@@ -5,6 +5,10 @@ import android.media.MediaMetadataRetriever
 import android.util.Log
 import androidx.exifinterface.media.ExifInterface
 import com.kaii.photos.R
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import java.io.File
 import java.time.Instant
 import java.time.LocalDateTime
@@ -40,15 +44,20 @@ fun getDateTakenForMedia(uri: String): Long {
     }
 }
 
-fun getExifDataForMedia(absolutePath: String): Map<MediaData, Any> {
+fun getExifDataForMedia(absolutePath: String): Flow<Map<MediaData, Any>> = flow {
+    val list = emptyMap<MediaData, Any?>().toMutableMap()
+    val file = File(absolutePath)
+
+    list[MediaData.Name] = file.name
+    list[MediaData.Path] = file.absolutePath
+    list[MediaData.Resolution] = "Loading..."
+
+    emit(list.mapValues { (_, value) ->
+       	value!!
+	})
+
 	try {
-	    val exifInterface = ExifInterface(absolutePath)
-
-	    val list = HashMap<MediaData, Any?>().toMutableMap()
-	    val file = File(absolutePath)
-
-	    list[MediaData.Name] = file.name
-	    list[MediaData.Path] = file.absolutePath
+    	val exifInterface = ExifInterface(absolutePath)
 
 	    val datetime = getDateTakenForMedia(absolutePath)
 	    val formatter = DateTimeFormatter.ofPattern("d MMM yyyy - h:mm:ss a")
@@ -59,10 +68,31 @@ fun getExifDataForMedia(absolutePath: String): Map<MediaData, Any> {
 
 	    list[MediaData.LatLong] = exifInterface.latLong
 
-	    val options = BitmapFactory.Options()
-	    options.inJustDecodeBounds = true
-	    BitmapFactory.decodeFile(absolutePath, options)
-	    val resValue = run {
+	    list[MediaData.Device] = exifInterface.getAttribute(ExifInterface.TAG_MODEL)
+
+	    val fNumber = exifInterface.getAttribute(ExifInterface.TAG_F_NUMBER)
+	    list[MediaData.FNumber] = if (fNumber != null) {
+	        "f/$fNumber"
+	    } else null
+
+	    val shutterSpeed = exifInterface.getAttribute(ExifInterface.TAG_SHUTTER_SPEED_VALUE)
+	    list[MediaData.ShutterSpeed] = shutterSpeed
+
+	    list[MediaData.Size] = "${round(file.length() / 100000f) / 10} MB"
+
+	    emit(
+	    	list.filter { (_, value) ->
+	    			value != null
+    			}
+    			.mapValues { (_, value) ->
+	        		value!!
+	    		}
+	    )
+
+        val options = BitmapFactory.Options()
+        options.inJustDecodeBounds = true
+        BitmapFactory.decodeFile(absolutePath, options)
+        val resValue = run {
             if (options.outWidth == -1 && options.outHeight == -1) {
                 val metadataRetriever = MediaMetadataRetriever()
                 metadataRetriever.setDataSource(absolutePath)
@@ -74,40 +104,29 @@ fun getExifDataForMedia(absolutePath: String): Map<MediaData, Any> {
             } else {
                 "${options.outWidth}x${options.outHeight}"
             }
-	    }
-	    list[MediaData.Resolution] = resValue
+        }
 
-	    list[MediaData.Device] = exifInterface.getAttribute(ExifInterface.TAG_MODEL)
+        list[MediaData.Resolution] = resValue
 
-	    val fNumber = exifInterface.getAttribute(ExifInterface.TAG_F_NUMBER)
-	    list[MediaData.FNumber] = if (fNumber != null) {
-	        "f/$fNumber"
-	    } else null
+        list[MediaData.MegaPixels] = run {
+            val split = resValue.split("x")
+            val x = split[0].toInt()
+            val y = split[1].toInt()
 
-	    val shutterSpeed = exifInterface.getAttribute(ExifInterface.TAG_SHUTTER_SPEED_VALUE)
-	    list[MediaData.ShutterSpeed] =
-	        shutterSpeed
+            round((x * y) / 100000f) / 10f // divide by 1mil then multiply by 10, so divide by 100k
+        }
 
-	    list[MediaData.MegaPixels] = run {
-	        val split = resValue.split("x")
-	        val x = split[0].toInt()
-	        val y = split[1].toInt()
-
-	        round((x * y) / 100000f) / 10f // divide by 1mil then multiply by 10, so divide by 100k
-	    }
-
-	    list[MediaData.Size] = "${round(file.length() / 100000f) / 10} MB"
-
-	    val nonNullList = HashMap<MediaData, Any>().toMutableMap()
-
-	    list.forEach { (key, value) ->
-	        if (value != null) nonNullList[key] = value
-	    }
-
-	    return nonNullList
+	    emit(
+	    	list.filter { (_, value) ->
+	    			value != null
+    			}
+    			.mapValues { (_, value) ->
+	        		value!!
+	    		}
+	    )
 	} catch (e: Throwable) {
 		Log.e(TAG, e.toString())
-		return EnumMap(com.kaii.photos.helpers.MediaData::class.java)
+		emit(emptyMap())
 	}
 }
 
@@ -176,5 +195,5 @@ enum class MediaData(val iconResInt: Int) {
     ShutterSpeed(R.drawable.shutter_speed),
     MegaPixels(R.drawable.maybe_megapixel),
     Resolution(R.drawable.resolution),
-    Size(R.drawable.storage),
+    Size(R.drawable.storage)
 }

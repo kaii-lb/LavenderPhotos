@@ -54,6 +54,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
@@ -98,6 +99,7 @@ import com.kaii.photos.datastore.User
 import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.MediaData
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.brightenColor
 import com.kaii.photos.helpers.darkenColor
@@ -728,9 +730,20 @@ fun SinglePhotoInfoDialog(
                         fileName.value = originalFileName
                     }
 
-                    val mediaData = getExifDataForMedia(currentMediaItem.absolutePath)
+                    var mediaData by remember {
+                    	mutableStateOf(
+	                    	emptyMap<MediaData, Any>()
+                    	)
+                   	}
+
+					LaunchedEffect(Unit) {
+						getExifDataForMedia(currentMediaItem.absolutePath).collect {
+							mediaData = it
+						}
+					}
+
                     // should add a way to automatically calculate height needed for this
-                    val addedHeight by remember { mutableStateOf(36.dp * mediaData.keys.size) }
+                    val addedHeight by remember { derivedStateOf { 36.dp * mediaData.keys.size }}
                     val moveCopyHeight = if (showMoveCopyOptions) 82.dp else 0.dp // 40.dp is height of one single row
                     val height by animateDpAsState(
                         targetValue = if (!isEditingFileName.value && expanded.value) {
