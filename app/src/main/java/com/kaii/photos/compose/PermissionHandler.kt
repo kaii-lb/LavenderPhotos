@@ -234,7 +234,7 @@ fun PermissionHandler(
                     granted = !mainViewModel.permissionQueue.contains(Manifest.permission.MANAGE_EXTERNAL_STORAGE)
                 ) {
                     val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
-
+					manageExternalStorageLauncher.launch(intent)
 
                     onGrantPermissionClicked = {
                         manageExternalStorageLauncher.launch(intent)

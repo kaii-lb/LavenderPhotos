@@ -172,7 +172,7 @@ class MainActivity : ComponentActivity() {
                 factory = MainViewModelFactory(applicationContext)
             )
 
-            mainViewModel.startupPermissionCheck(applicationContext)
+            remember { mainViewModel.startupPermissionCheck(applicationContext) }
             val continueToApp = remember {
                 // Manifest.permission.MANAGE_MEDIA is optional
                 mutableStateOf(
