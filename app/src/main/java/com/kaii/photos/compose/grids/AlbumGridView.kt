@@ -27,19 +27,18 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
@@ -47,16 +46,15 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavHostController
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
+import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity
 import com.kaii.photos.R
-import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.helpers.CustomMaterialTheme
-import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.MainScreenViewType
+import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.brightenColor
 import com.kaii.photos.helpers.getBaseInternalStorageDirectory
 import com.kaii.photos.mediastore.MediaStoreData
@@ -67,8 +65,9 @@ import java.io.File
 
 
 @Composable
-fun AlbumsGridView(navController: NavHostController, listOfDirs: List<String>, currentView: MutableState<MainScreenViewType>) {
+fun AlbumsGridView(listOfDirs: List<String>, currentView: MutableState<MainScreenViewType>) {
 	val context = LocalContext.current
+	val navController = LocalNavController.current
 
 	val albumsViewModel: AlbumsViewModel = viewModel(
 		factory = AlbumsViewModelFactory(context, listOfDirs.toList())

@@ -107,7 +107,6 @@ import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
-import androidx.compose.ui.graphics.ColorMatrixColorFilter
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TransformOrigin
@@ -140,8 +139,7 @@ import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
-import androidx.core.graphics.ColorUtils
-import androidx.navigation.NavHostController
+import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.BottomAppBarItem
 import com.kaii.photos.compose.ConfirmationDialog
@@ -168,11 +166,11 @@ import kotlin.math.pow
 
 @Composable
 fun EditingView(
-    navController: NavHostController,
     absolutePath: String,
     dateTaken: Long,
     uri: Uri
 ) {
+    val navController = LocalNavController.current
     val showCloseDialog = remember { mutableStateOf(false) }
     val showBackClickCloseDialog = remember { mutableStateOf(false) }
     val changesSize = remember { mutableIntStateOf(0) }
@@ -2017,7 +2015,7 @@ fun AdjustTools(
     LaunchedEffect(brightnessMatrix, contrastMatrix, saturationMatrix, blackPointMatrix, warmthMatrix, whitePointMatrix) {
         val floatArray = emptyList<Float>().toMutableList()
 
-        for (i in 0..<contrastMatrix.size) {
+        for (i in contrastMatrix.indices) {
             val multiply = contrastMatrix[i] * saturationMatrix[i] * warmthMatrix[i] * whitePointMatrix[i]
             val add = brightnessMatrix[i] + blackPointMatrix[i]
 
@@ -2051,7 +2049,7 @@ fun AdjustTools(
                 if (sliderValue.floatValue == brightnessValue) return@run
 
                 val brightness = sliderValue.floatValue
-				val offset = brightness * 127f
+                val offset = brightness * 127f
 
                 val floatArray = floatArrayOf(
                     0f, 0f, 0f, 0f, offset,
@@ -2060,9 +2058,7 @@ fun AdjustTools(
                     0f, 0f, 0f, 0f, 0f
                 )
 
-                val newMatrix = floatArray
-
-                brightnessMatrix = newMatrix
+                brightnessMatrix = floatArray
 
                 brightnessValue = sliderValue.floatValue
             }

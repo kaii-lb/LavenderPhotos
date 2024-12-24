@@ -9,7 +9,6 @@ import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
@@ -39,12 +38,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.ProvidableCompositionLocal
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -117,8 +115,8 @@ import java.io.File
 
 private const val TAG = "MAIN_ACTIVITY"
 
-val LocalNavController: ProvidableCompositionLocal<NavHostController?> = compositionLocalOf {
-    null
+val LocalNavController = compositionLocalOf<NavHostController> {
+    throw IllegalStateException("CompositionLocal LocalNavController not present")
 }
 
 class MainActivity : ComponentActivity() {
@@ -172,9 +170,9 @@ class MainActivity : ComponentActivity() {
                 factory = MainViewModelFactory(applicationContext)
             )
 
-            remember { mainViewModel.startupPermissionCheck(applicationContext) }
             val continueToApp = remember {
                 // Manifest.permission.MANAGE_MEDIA is optional
+                mainViewModel.startupPermissionCheck(applicationContext)
                 mutableStateOf(
                     mainViewModel.checkCanPass()
                 )
@@ -195,6 +193,19 @@ class MainActivity : ComponentActivity() {
 	                label = "PermissionHandlerToMainViewAnimatedContent"
 	            ) { stateValue ->
 	                if (!stateValue) {
+	                	enableEdgeToEdge(
+	                	    navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
+	                	    statusBarStyle =
+	                	    if (!isSystemInDarkTheme()) {
+	                	        SystemBarStyle.light(
+	                	            CustomMaterialTheme.colorScheme.background.toArgb(),
+	                	            CustomMaterialTheme.colorScheme.background.toArgb()
+	                	        )
+	                	    } else {
+	                	        SystemBarStyle.dark(CustomMaterialTheme.colorScheme.background.toArgb())
+	                	    }
+	                	)
+
 	                    PermissionHandler(continueToApp)
 	                } else {
 	                    SetContentForActivity()
@@ -310,7 +321,7 @@ class MainActivity : ComponentActivity() {
                         window = window
                     )
 
-                    Content(currentView, navControllerLocal, showDialog, selectedItemsList, listOfDirs)
+                    Content(currentView, showDialog, selectedItemsList, listOfDirs)
                 }
 
                 composable(
@@ -370,7 +381,7 @@ class MainActivity : ComponentActivity() {
                         window
                     )
 
-                    SingleAlbumView(navControllerLocal, selectedItemsList)
+                    SingleAlbumView(selectedItemsList)
                 }
 
                 composable(MultiScreenViewType.SingleTrashedPhotoView.name) {
@@ -386,7 +397,7 @@ class MainActivity : ComponentActivity() {
                         window
                     )
 
-                    SingleTrashedPhotoView(navControllerLocal, window, scale, rotation, offset)
+                    SingleTrashedPhotoView(window, scale, rotation, offset)
                 }
 
                 composable(MultiScreenViewType.TrashedPhotoView.name) {
@@ -403,7 +414,7 @@ class MainActivity : ComponentActivity() {
                         window
                     )
 
-                    TrashedPhotoGridView(navControllerLocal, selectedItemsList)
+                    TrashedPhotoGridView(selectedItemsList)
                 }
 
                 composable(MultiScreenViewType.LockedFolderView.name) {
@@ -419,7 +430,7 @@ class MainActivity : ComponentActivity() {
                         window
                     )
 
-                    LockedFolderView(navControllerLocal, window)
+                    LockedFolderView(window)
                 }
 
                 composable(MultiScreenViewType.SingleHiddenPhotoVew.name) {
@@ -435,7 +446,7 @@ class MainActivity : ComponentActivity() {
                         window
                     )
 
-                    SingleHiddenPhotoView(navControllerLocal, window, scale, rotation, offset)
+                    SingleHiddenPhotoView(window, scale, rotation, offset)
                 }
 
                 composable(MultiScreenViewType.AboutAndUpdateView.name) {
@@ -451,7 +462,9 @@ class MainActivity : ComponentActivity() {
                         window
                     )
 
-                    AboutPage(navControllerLocal)
+                    AboutPage {
+                        navControllerLocal.popBackStack()
+                    }
                 }
 
                 composable(MultiScreenViewType.FavouritesGridView.name) {
@@ -468,7 +481,6 @@ class MainActivity : ComponentActivity() {
                     )
 
                     FavouritesGridView(
-                        navController = navControllerLocal,
                         selectedItemsList = selectedItemsList
                     )
                 }
@@ -533,7 +545,6 @@ class MainActivity : ComponentActivity() {
 
                     val screen: EditingScreen = it.toRoute()
                     EditingView(
-                        navController = navControllerLocal,
                         absolutePath = screen.absolutePath,
                         dateTaken = screen.dateTaken,
                         uri = screen.uri.toUri()
@@ -610,7 +621,6 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun Content(
         currentView: MutableState<MainScreenViewType>,
-        navController: NavHostController,
         showDialog: MutableState<Boolean>,
         selectedItemsList: SnapshotStateList<MediaStoreData>,
         listOfDirs: List<String>
@@ -634,10 +644,10 @@ class MainActivity : ComponentActivity() {
 
         Scaffold(
             topBar = {
-                TopBar(showDialog, selectedItemsList, navController)
+                TopBar(showDialog, selectedItemsList)
             },
             bottomBar = {
-                BottomBar(currentView, selectedItemsList, navController)
+                BottomBar(currentView, selectedItemsList)
             },
             modifier = Modifier
                 .fillMaxSize(1f)
@@ -670,7 +680,7 @@ class MainActivity : ComponentActivity() {
                         padding.calculateBottomPadding()
                     )
             ) {
-                MainAppDialog(showDialog, currentView, navController, selectedItemsList)
+                MainAppDialog(showDialog, currentView, selectedItemsList)
 
                 AnimatedContent(
                     targetState = currentView.value,
@@ -692,20 +702,19 @@ class MainActivity : ComponentActivity() {
                             selectedItemsList.clear()
                             PhotoGrid(
                                 groupedMedia = groupedMedia,
-                                navController = navController,
                                 path = stringResource(id = R.string.default_homepage_photogrid_dir),
                                 viewProperties = ViewProperties.Album,
                                 selectedItemsList = selectedItemsList,
                             )
                         }
 
-                        MainScreenViewType.SecureFolder -> LockedFolderEntryView(navController, currentView)
+                        MainScreenViewType.SecureFolder -> LockedFolderEntryView(currentView)
                         MainScreenViewType.AlbumsGridView -> {
-                            AlbumsGridView(navController, listOfDirs, currentView)
+                            AlbumsGridView(listOfDirs, currentView)
                         }
 
                         MainScreenViewType.SearchPage -> {
-                            SearchPage(navController, selectedItemsList, currentView)
+                            SearchPage(selectedItemsList, currentView)
                         }
                     }
                 }
@@ -716,14 +725,15 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun TopBar(
         showDialog: MutableState<Boolean>,
-        selectedItemsList: SnapshotStateList<MediaStoreData>,
-        navController: NavHostController
+        selectedItemsList: SnapshotStateList<MediaStoreData>
     ) {
+        val navController = LocalNavController.current
         val show by remember {
             derivedStateOf {
                 selectedItemsList.size > 0
             }
         }
+
         AnimatedContent(
             targetState = show && navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name,
             transitionSpec = {
@@ -742,14 +752,15 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun BottomBar(
         currentView: MutableState<MainScreenViewType>,
-        selectedItemsList: SnapshotStateList<MediaStoreData>,
-        navController: NavHostController
+        selectedItemsList: SnapshotStateList<MediaStoreData>
     ) {
+        val navController = LocalNavController.current
         val show by remember {
             derivedStateOf {
                 selectedItemsList.size > 0
             }
         }
+
         AnimatedContent(
             targetState = show && navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name,
             transitionSpec = {

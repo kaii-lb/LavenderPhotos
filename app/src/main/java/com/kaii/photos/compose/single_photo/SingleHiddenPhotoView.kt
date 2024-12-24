@@ -66,7 +66,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.navigation.NavHostController
+import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity
 import com.kaii.photos.R
 import com.kaii.photos.compose.ConfirmationDialog
@@ -86,7 +86,6 @@ import kotlinx.coroutines.launch
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun SingleHiddenPhotoView(
-    navController: NavHostController,
     window: Window,
     scale: MutableState<Float>,
     rotation: MutableState<Float>,
@@ -95,6 +94,8 @@ fun SingleHiddenPhotoView(
     window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
 
 	val lifecycleOwner = LocalLifecycleOwner.current
+    val navController = LocalNavController.current
+
 	var lastLifecycleState by rememberSaveable {
 		mutableStateOf(Lifecycle.State.STARTED)
 	}
@@ -179,15 +180,20 @@ fun SingleHiddenPhotoView(
     val showInfoDialog = remember { mutableStateOf(false) }
 
     Scaffold(
-        topBar = { TopBar(navController, currentMediaItem, appBarsVisible.value, showInfoDialog) },
+        topBar = {
+            TopBar(currentMediaItem, appBarsVisible.value, showInfoDialog) {
+                navController.popBackStack()
+            }
+        },
         bottomBar = {
             BottomBar(
-                navController,
                 appBarsVisible.value,
                 currentMediaItem,
                 groupedMedia,
                 state
-            )
+            ) {
+                navController.popBackStack()
+            }
         },
         containerColor = CustomMaterialTheme.colorScheme.background,
         contentColor = CustomMaterialTheme.colorScheme.onBackground
@@ -228,7 +234,12 @@ fun SingleHiddenPhotoView(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TopBar(navController: NavHostController, mediaItem: MediaStoreData, visible: Boolean, showInfoDialog: MutableState<Boolean>) {
+private fun TopBar(
+    mediaItem: MediaStoreData,
+    visible: Boolean,
+    showInfoDialog: MutableState<Boolean>,
+    popBackStack: () -> Unit
+) {
     AnimatedVisibility(
         visible = visible,
         enter =
@@ -252,7 +263,7 @@ private fun TopBar(navController: NavHostController, mediaItem: MediaStoreData, 
             ),
             navigationIcon = {
                 IconButton(
-                    onClick = { navController.popBackStack() },
+                    onClick = { popBackStack() },
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.back_arrow),
@@ -317,11 +328,11 @@ private fun TopBar(navController: NavHostController, mediaItem: MediaStoreData, 
 
 @Composable
 private fun BottomBar(
-    navController: NavHostController,
     visible: Boolean,
     item: MediaStoreData,
     groupedMedia: MutableState<List<MediaStoreData>>,
-    state: PagerState
+    state: PagerState,
+    popBackStack: () -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
 
@@ -341,7 +352,7 @@ private fun BottomBar(
             coroutineScope,
             state
         ) {
-            navController.popBackStack()
+            popBackStack()
         }
     }
 
@@ -359,7 +370,7 @@ private fun BottomBar(
             coroutineScope,
             state
         ) {
-            navController.popBackStack()
+            popBackStack()
         }
     }
 

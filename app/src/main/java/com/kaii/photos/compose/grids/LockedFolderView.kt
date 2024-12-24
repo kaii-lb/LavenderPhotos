@@ -32,7 +32,7 @@ import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.navigation.NavHostController
+import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.SecureFolderViewBottomAppBar
 import com.kaii.photos.compose.SecureFolderViewTopAppBar
 import com.kaii.photos.compose.ViewProperties
@@ -50,10 +50,10 @@ import kotlin.io.path.Path
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LockedFolderView(
-    navController: NavHostController,
     window: Window
 ) {
     val selectedItemsList = remember { SnapshotStateList<MediaStoreData>() }
+    val navController = LocalNavController.current
 
     window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
 
@@ -194,7 +194,6 @@ fun LockedFolderView(
         ) {
             PhotoGrid(
                 groupedMedia = groupedMedia,
-                navController = navController,
                 path = null,
                 selectedItemsList = selectedItemsList,
                 viewProperties = ViewProperties.SecureFolder,

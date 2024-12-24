@@ -60,7 +60,7 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavHostController
+import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.SinglePhotoInfoDialog
@@ -77,7 +77,6 @@ import kotlinx.coroutines.Dispatchers
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun SingleTrashedPhotoView(
-    navController: NavHostController,
     window: Window,
     scale: MutableState<Float>,
     rotation: MutableState<Float>,
@@ -192,8 +191,13 @@ fun SingleTrashedPhotoView(
         )
     }
 
+    val navController = LocalNavController.current
     Scaffold(
-        topBar = { TopBar(navController, currentMediaItem, appBarsVisible.value, showInfoDialog) },
+        topBar = {
+            TopBar(currentMediaItem, appBarsVisible.value, showInfoDialog) {
+                navController.popBackStack()
+            }
+        },
         bottomBar = {
             BottomBar(
                 appBarsVisible.value,
@@ -237,7 +241,12 @@ fun SingleTrashedPhotoView(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TopBar(navController: NavHostController, mediaItem: MediaStoreData?, visible: Boolean, showInfoDialog: MutableState<Boolean>) {
+private fun TopBar(
+    mediaItem: MediaStoreData?,
+    visible: Boolean,
+    showInfoDialog: MutableState<Boolean>,
+    popBackStack: () -> Unit
+) {
     AnimatedVisibility(
         visible = visible,
         enter =
@@ -254,13 +263,12 @@ private fun TopBar(navController: NavHostController, mediaItem: MediaStoreData?,
         ) { width -> -width } + fadeOut(),
     ) {
         TopAppBar(
-//            modifier = Modifier.alpha(alpha),
             colors = TopAppBarDefaults.topAppBarColors(
                 containerColor = CustomMaterialTheme.colorScheme.surfaceContainer
             ),
             navigationIcon = {
                 IconButton(
-                    onClick = { navController.popBackStack() },
+                    onClick = { popBackStack() },
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.back_arrow),

@@ -30,7 +30,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavHostController
+import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.compose.TrashedPhotoGridViewBottomBar
 import com.kaii.photos.compose.TrashedPhotoGridViewTopBar
@@ -47,7 +47,6 @@ import kotlin.time.Duration.Companion.days
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TrashedPhotoGridView(
-    navController: NavHostController,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
 ) {
     val context = LocalContext.current
@@ -96,6 +95,7 @@ fun TrashedPhotoGridView(
         selectedItemsList.clear()
     }
 
+    val navController = LocalNavController.current
     BackHandler(
         enabled = selectedItemsList.size == 0
     ) {
@@ -157,7 +157,6 @@ fun TrashedPhotoGridView(
         ) {
             PhotoGrid(
                 groupedMedia = groupedMedia,
-                navController = navController,
                 path = null,
                 selectedItemsList = selectedItemsList,
                 viewProperties = ViewProperties.Trash,

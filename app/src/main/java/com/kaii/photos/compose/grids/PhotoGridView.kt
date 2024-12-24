@@ -30,7 +30,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
@@ -62,7 +61,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TransformOrigin
@@ -70,7 +68,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -79,14 +76,11 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavHostController
-import com.bumptech.glide.Glide
-import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
-import com.bumptech.glide.request.RequestOptions
+import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity
 import com.kaii.photos.R
 import com.kaii.photos.compose.FolderDoesntExist
@@ -117,7 +111,6 @@ import kotlin.math.roundToInt
 @Composable
 fun PhotoGrid(
     groupedMedia: MutableState<List<MediaStoreData>>,
-    navController: NavHostController,
     path: String?,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     modifier: Modifier = Modifier,
@@ -149,7 +142,6 @@ fun PhotoGrid(
         ) {
             DeviceMedia(
                 groupedMedia,
-                navController,
                 selectedItemsList,
                 viewProperties,
                 shouldPadUp,
@@ -166,7 +158,6 @@ fun PhotoGrid(
 @Composable
 fun DeviceMedia(
     groupedMedia: MutableState<List<MediaStoreData>>,
-    navController: NavHostController,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     viewProperties: ViewProperties,
     shouldPadUp: Boolean,
@@ -264,6 +255,8 @@ fun DeviceMedia(
                                 fadeInSpec = null
                             )
                     ) {
+                        val navController = LocalNavController.current
+
                         MediaStoreItem(
                             item = mediaStoreItem,
                             groupedMedia = groupedMedia,
@@ -685,7 +678,6 @@ fun MediaStoreItem(
                     }
                 )
         ) {
-            val context = LocalContext.current
             GlideImage(
                 model = if (viewProperties == ViewProperties.SecureFolder) item.uri.path else item.uri,
                 contentDescription = item.displayName,

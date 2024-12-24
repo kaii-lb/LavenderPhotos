@@ -33,14 +33,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
+import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.MainScreenViewType
 
 @Composable
-fun LockedFolderEntryView(navController: NavHostController, currentView: MutableState<MainScreenViewType>) {
+fun LockedFolderEntryView(currentView: MutableState<MainScreenViewType>) {
+    val navController = LocalNavController.current
+
     BackHandler(
         enabled = currentView.value == MainScreenViewType.SecureFolder && navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name
     ) {

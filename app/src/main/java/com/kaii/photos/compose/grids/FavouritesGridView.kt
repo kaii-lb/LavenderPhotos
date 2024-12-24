@@ -25,7 +25,7 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavHostController
+import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.FavouritesViewBottomAppBar
 import com.kaii.photos.compose.FavouritesViewTopAppBar
 import com.kaii.photos.compose.ViewProperties
@@ -39,7 +39,6 @@ import kotlinx.coroutines.Dispatchers
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavouritesGridView(
-    navController: NavHostController,
     selectedItemsList: SnapshotStateList<MediaStoreData>
 ) {
     val favouritesViewModel: FavouritesViewModel = viewModel(
@@ -81,6 +80,7 @@ fun FavouritesGridView(
         }
     }
 
+    val navController = LocalNavController.current
     val scaffoldState = rememberBottomSheetScaffoldState(
         bottomSheetState = sheetState
     )
@@ -117,7 +117,6 @@ fun FavouritesGridView(
         ) {
             PhotoGrid(
                 groupedMedia = groupedMedia,
-                navController = navController,
                 path = null,
                 selectedItemsList = selectedItemsList,
                 viewProperties = ViewProperties.Favourites,

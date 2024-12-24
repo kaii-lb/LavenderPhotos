@@ -87,6 +87,7 @@ import androidx.navigation.NavHostController
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.MainActivity.Companion.startForResult
@@ -394,10 +395,10 @@ fun DialogInfoText(firstText: String, secondText: String, iconResId: Int) {
 fun MainAppDialog(
     showDialog: MutableState<Boolean>,
     currentView: MutableState<MainScreenViewType>,
-    navController: NavHostController,
     selectedItemsList: SnapshotStateList<MediaStoreData>
 ) {
     val vibratorManager = rememberVibratorManager()
+    val navController = LocalNavController.current
 
     if (showDialog.value) {
         Dialog(

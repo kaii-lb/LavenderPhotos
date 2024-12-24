@@ -35,7 +35,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavHostController
+import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.SearchTextField
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.helpers.CustomMaterialTheme
@@ -50,7 +50,6 @@ import com.kaii.photos.models.search_page.SearchViewModelFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.plus
 import java.text.SimpleDateFormat
@@ -60,7 +59,6 @@ import java.util.Locale
 
 @Composable
 fun SearchPage(
-    navController: NavHostController,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     currentView: MutableState<MainScreenViewType>
 ) {
@@ -75,6 +73,8 @@ fun SearchPage(
     val groupedMedia = remember { mutableStateOf(originalGroupedMedia.value) }
 
     val gridState = rememberLazyGridState()
+
+    val navController = LocalNavController.current
 
     BackHandler(
         enabled = currentView.value == MainScreenViewType.SearchPage && navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name
@@ -250,7 +250,6 @@ fun SearchPage(
         ) {
             PhotoGrid(
                 groupedMedia = groupedMedia,
-                navController = navController,
                 path = "",
                 selectedItemsList = selectedItemsList,
                 viewProperties = if (searchedForText.value == "") ViewProperties.SearchLoading else ViewProperties.SearchNotFound,

@@ -28,7 +28,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavHostController
+import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity
 import com.kaii.photos.compose.SingleAlbumDialog
 import com.kaii.photos.compose.SingleAlbumViewBottomBar
@@ -43,7 +43,6 @@ import kotlinx.coroutines.Dispatchers
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SingleAlbumView(
-    navController: NavHostController,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
 ) {
     val mainViewModel = MainActivity.mainViewModel
@@ -58,6 +57,7 @@ fun SingleAlbumView(
         )
     )
 
+    val navController = LocalNavController.current
     BackHandler (
         enabled = selectedItemsList.size == 0
     ) {
@@ -132,7 +132,6 @@ fun SingleAlbumView(
         ) {
             PhotoGrid(
                 groupedMedia = groupedMedia,
-                navController = navController,
                 path = albumDir,
                 selectedItemsList = selectedItemsList,
                 viewProperties = ViewProperties.Album,
