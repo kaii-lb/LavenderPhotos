@@ -181,11 +181,25 @@ class MainActivity : ComponentActivity() {
             }
 
             PhotosTheme {
-                if (!continueToApp.value) {
-                    PermissionHandler(continueToApp)
-                } else {
-                    SetContentForActivity()
-                }
+	            AnimatedContent(
+	                targetState = continueToApp.value,
+	                transitionSpec = {
+                        (slideInHorizontally { width -> width } + fadeIn())
+                        	.togetherWith(
+                            	slideOutHorizontally { width -> -width } + fadeOut()
+                        	)
+	                    .using(
+	                        SizeTransform(clip = false)
+	                    )
+	                },
+	                label = "PermissionHandlerToMainViewAnimatedContent"
+	            ) { stateValue ->
+	                if (!stateValue) {
+	                    PermissionHandler(continueToApp)
+	                } else {
+	                    SetContentForActivity()
+	                }
+	            }
             }
         }
     }
