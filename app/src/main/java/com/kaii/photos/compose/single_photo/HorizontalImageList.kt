@@ -79,11 +79,14 @@ fun HorizontalImageList(
     val localConfig = LocalConfiguration.current
     var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
 
+    val isTouchLocked = remember { mutableStateOf(false) }
+
     LaunchedEffect(localConfig) {
         isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
+
+        if (!isLandscape) isTouchLocked.value = false
     }
 
-    val isTouchLocked = remember { mutableStateOf(false) }
 
     HorizontalPager(
         state = state,
@@ -105,8 +108,8 @@ fun HorizontalImageList(
     ) { index ->
         val shouldPlay by remember(state) {
             derivedStateOf {
-                (abs(state.currentPageOffsetFraction) < .5 && state.currentPage == index)
-                        || (abs(state.currentPageOffsetFraction) > .5 && state.targetPage == index)
+                (abs(state.currentPageOffsetFraction) < 0.5f && state.currentPage == index)
+                        || (abs(state.currentPageOffsetFraction) > 0.5f && state.targetPage == index)
             }
         }
 
@@ -114,14 +117,28 @@ fun HorizontalImageList(
 
         val path = if (isHidden) mediaStoreItem.uri.path else mediaStoreItem.uri
 
-        if (mediaStoreItem.type == MediaType.Video) {
+        if (mediaStoreItem.type == MediaType.Video && shouldPlay) {
             val showVideoPlayerControls = remember { mutableStateOf(true) }
             val canFadeControls = remember { mutableStateOf(true) }
 
             LaunchedEffect(
                 key1 = showVideoPlayerControls.value,
-                key2 = canFadeControls.value
+                key2 = canFadeControls.value,
+                key3 = appBarsVisible.value
             ) {
+            	if (!appBarsVisible.value) {
+					setBarVisibility(
+            		    visible = false,
+            		    window = window
+            		) {
+            		    appBarsVisible.value = it
+
+            		    showVideoPlayerControls.value = it
+            		}
+
+            		canFadeControls.value = false
+            	}
+
                 if (canFadeControls.value && showVideoPlayerControls.value) {
                     delay(5000)
                     setBarVisibility(

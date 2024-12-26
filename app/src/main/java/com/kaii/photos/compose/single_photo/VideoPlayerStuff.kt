@@ -357,7 +357,7 @@ fun VideoPlayer(
     val currentVideoPosition = rememberSaveable { mutableFloatStateOf(0f) }
     val duration = rememberSaveable { mutableFloatStateOf(0f) }
 
-    val exoPlayer = rememberExoPlayerWithLifeCycle(item.uri, isPlaying, duration, currentVideoPosition)
+    var exoPlayer = rememberExoPlayerWithLifeCycle(item.uri, isPlaying, duration, currentVideoPosition)
     val playerView = rememberPlayerView(exoPlayer)
 
     BackHandler {
@@ -411,6 +411,14 @@ fun VideoPlayer(
 
     LaunchedEffect(controlsVisible.value) {
         if (controlsVisible.value) canFadeControls.value = true
+    }
+
+    LaunchedEffect(isMuted.value) {
+    	if (isMuted.value) {
+    		exoPlayer.setHandleAudioBecomingNoisy(false)
+    	} else {
+    		exoPlayer.setHandleAudioBecomingNoisy(true)
+    	}
     }
 
     Box(
@@ -525,31 +533,6 @@ fun rememberExoPlayerWithLifeCycle(
     }
 
     val lifecycleOwner = LocalLifecycleOwner.current
-
-    DisposableEffect(key1 = lifecycleOwner.lifecycle.currentState) {
-        val lifecycleObserver = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_START, Lifecycle.Event.ON_CREATE -> {
-                    exoPlayer =
-                        createExoPlayer(
-                            videoSource,
-                            context,
-                            isPlaying,
-                            currentVideoPosition,
-                            duration
-                        )
-                }
-
-                else -> {}
-            }
-        }
-
-        lifecycleOwner.lifecycle.addObserver(lifecycleObserver)
-
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(lifecycleObserver)
-        }
-    }
 
     DisposableEffect(key1 = lifecycleOwner.lifecycle.currentState) {
         val lifecycleObserver = getExoPlayerLifecycleObserver(exoPlayer, isPlaying, context as Activity)
@@ -700,6 +683,7 @@ fun rememberPlayerView(exoPlayer: ExoPlayer): PlayerView {
     DisposableEffect(key1 = true) {
         onDispose {
             playerView.player = null
+            exoPlayer.release()
         }
     }
     return playerView
