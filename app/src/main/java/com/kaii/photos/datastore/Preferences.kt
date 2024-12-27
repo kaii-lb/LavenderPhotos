@@ -28,3 +28,6 @@ val Settings.User: SettingsUserImpl
 
 val Settings.Storage: SettingsStorageImpl
     get() = SettingsStorageImpl(context, viewModelScope)
+
+val Settings.Video: SettingsVideoImpl
+    get() = SettingsVideoImpl(context, viewModelScope)

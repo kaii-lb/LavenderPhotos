@@ -52,10 +52,10 @@ import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.compose.PreferencesSeparatorText
 import com.kaii.photos.datastore.Permissions
+import com.kaii.photos.datastore.Video
 
 @Composable
 fun GeneralSettingsPage() {
-	val isMediaManager by mainViewModel.settings.Permissions.getIsMediaManager().collectAsStateWithLifecycle(initialValue = false)
 	val context = LocalContext.current
 
 	Scaffold (
@@ -76,6 +76,8 @@ fun GeneralSettingsPage() {
                 }
 
                 item {
+                	val isMediaManager by mainViewModel.settings.Permissions.getIsMediaManager().collectAsStateWithLifecycle(initialValue = false)
+
                     val manageMediaLauncher = rememberLauncherForActivityResult(
                         contract = ActivityResultContracts.StartActivityForResult()
                     ) { _ ->
@@ -101,6 +103,27 @@ fun GeneralSettingsPage() {
                         manageMediaLauncher.launch(intent)
                     }
                 }
+
+                item {
+                    PreferencesSeparatorText("Video")
+                }
+
+                item {
+                	val shouldAutoPlay by mainViewModel.settings.Video.getShouldAutoPlay().collectAsStateWithLifecycle(initialValue = false)
+
+                    PreferencesSwitchRow(
+                        title = "Auto Play Videos",
+                        summary = "Start playing videos as soon as they appear on screen",
+                        iconResID = R.drawable.file_is_selected_foreground,
+                        checked = shouldAutoPlay,
+                        position = RowPosition.Single,
+                        showBackground = false,
+                        onRowClick = null,
+                        onSwitchClick = { checked ->
+                        	mainViewModel.settings.Video.setShouldAutoPlay(checked)
+                        }
+                    )
+				}
             }
         }
 	}

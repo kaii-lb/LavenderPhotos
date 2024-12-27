@@ -33,6 +33,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavHostController
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
@@ -40,7 +41,9 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.kaii.photos.R
+import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.compose.setBarVisibility
+import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaStoreData
@@ -87,6 +90,7 @@ fun HorizontalImageList(
         if (!isLandscape) isTouchLocked.value = false
     }
 
+	val shouldAutoPlay by mainViewModel.settings.Video.getShouldAutoPlay().collectAsStateWithLifecycle(initialValue = true)
 
     HorizontalPager(
         state = state,
@@ -163,6 +167,7 @@ fun HorizontalImageList(
                     controlsVisible = showVideoPlayerControls,
                     appBarsVisible = appBarsVisible,
                     shouldPlay = shouldPlay,
+                    shouldAutoPlay = shouldAutoPlay,
                     navController = navController,
                     canFadeControls = canFadeControls,
                     isTouchLocked = isTouchLocked,

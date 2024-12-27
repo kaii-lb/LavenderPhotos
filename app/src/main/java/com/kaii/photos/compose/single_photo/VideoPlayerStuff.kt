@@ -69,6 +69,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.C.VIDEO_SCALING_MODE_SCALE_TO_FIT
@@ -82,7 +83,9 @@ import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.ui.PlayerView
 import androidx.navigation.NavHostController
 import com.kaii.photos.R
+import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.compose.setBarVisibility
+import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.mediastore.MediaStoreData
 import kotlinx.coroutines.delay
@@ -342,14 +345,15 @@ fun VideoPlayer(
     controlsVisible: MutableState<Boolean>,
     appBarsVisible: MutableState<Boolean>,
     shouldPlay: Boolean,
+    shouldAutoPlay: Boolean,
     navController: NavHostController,
     canFadeControls: MutableState<Boolean>,
     isTouchLocked: MutableState<Boolean>,
     window: Window,
     modifier: Modifier
 ) {
-    val isPlaying = rememberSaveable { mutableStateOf(true) }
-    val lastIsPlaying = rememberSaveable { mutableStateOf(true) }
+    val isPlaying = rememberSaveable { mutableStateOf(false) }
+    val lastIsPlaying = rememberSaveable { mutableStateOf(isPlaying.value) }
 
     val isMuted = rememberSaveable { mutableStateOf(false) }
 
@@ -386,14 +390,16 @@ fun VideoPlayer(
                     appBarsVisible.value = true
                 }
             }
+            exoPlayer.pause()
         } else {
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            exoPlayer.play()
         }
 
         lastIsPlaying.value = isPlaying.value
 
         currentVideoPosition.floatValue = exoPlayer.currentPosition / 1000f
-        if (kotlin.math.ceil(currentVideoPosition.floatValue) >= kotlin.math.ceil(duration.floatValue) && duration.floatValue != 0f) {
+        if (kotlin.math.ceil(currentVideoPosition.floatValue) >= kotlin.math.ceil(duration.floatValue) && duration.floatValue != 0f && !isPlaying.value) {
             delay(1000)
             exoPlayer.pause()
             exoPlayer.seekTo(0)
@@ -421,6 +427,10 @@ fun VideoPlayer(
     	}
     }
 
+    LaunchedEffect(shouldAutoPlay, shouldPlay) {
+    	exoPlayer.playWhenReady = shouldAutoPlay && shouldPlay
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize(1f)
@@ -435,8 +445,8 @@ fun VideoPlayer(
                 update = {
                     exoPlayer.volume = if (isMuted.value) 0f else 1f
 
-                    exoPlayer.playWhenReady = shouldPlay && isPlaying.value
-                },
+                    // exoPlayer.playWhenReady = shouldPlay && isPlaying.value
+                }
             )
         }
 

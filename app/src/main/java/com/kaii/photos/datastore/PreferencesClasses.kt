@@ -123,7 +123,7 @@ class SettingsLogsImpl(private val context: Context, private val viewModelScope:
 
     fun getRecordLogs(): Flow<Boolean> =
         context.datastore.data.map {
-            it[recordLogsKey] ?: false
+            it[recordLogsKey] ?: true
         }
 
     fun setRecordLogs(value: Boolean) = viewModelScope.launch {
@@ -193,5 +193,20 @@ class SettingsStorageImpl(private val context: Context, private val viewModelSco
     	withContext(Dispatchers.IO) {
    			Glide.get(context.applicationContext).clearDiskCache()
 		}
+    }
+}
+
+class SettingsVideoImpl(private val context: Context, private val viewModelScope: CoroutineScope) {
+    private val shouldAutoPlay = booleanPreferencesKey("video_should_autoplay")
+
+    fun getShouldAutoPlay(): Flow<Boolean> =
+        context.datastore.data.map {
+            it[shouldAutoPlay] ?: true
+        }
+
+    fun setShouldAutoPlay(value: Boolean) = viewModelScope.launch {
+        context.datastore.edit {
+            it[shouldAutoPlay] = value
+        }
     }
 }

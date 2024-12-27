@@ -170,6 +170,18 @@ class MainActivity : ComponentActivity() {
                 factory = MainViewModelFactory(applicationContext)
             )
 
+	        val logPath = "${getBaseInternalStorageDirectory()}LavenderPhotos/log.txt"
+	        try {
+	            File(logPath).delete()
+	        } catch (e: Throwable) {
+	            // ignore
+	        }
+
+	        val canRecordLogs by mainViewModel.settings.Debugging.getRecordLogs().collectAsStateWithLifecycle(initialValue = false)
+	        if (canRecordLogs) {
+	            Runtime.getRuntime().exec("logcat -d -f $logPath")
+	        }
+
             val continueToApp = remember {
                 // Manifest.permission.MANAGE_MEDIA is optional
                 mainViewModel.startupPermissionCheck(applicationContext)
@@ -231,18 +243,6 @@ class MainActivity : ComponentActivity() {
         val rotation = remember { mutableFloatStateOf(0f) }
         val offset = remember { mutableStateOf(Offset.Zero) }
         val selectedItemsList = remember { SnapshotStateList<MediaStoreData>() }
-
-        val logPath = "${getBaseInternalStorageDirectory()}LavenderPhotos/log.txt"
-        try {
-            File(logPath).delete()
-        } catch (e: Throwable) {
-            // ignore
-        }
-
-        val canRecordLogs by mainViewModel.settings.Debugging.getRecordLogs().collectAsStateWithLifecycle(initialValue = false)
-        if (canRecordLogs) {
-            Runtime.getRuntime().exec("logcat -d -f $logPath")
-        }
 
         val isV083FirstStart by mainViewModel.settings.Versions.getIsV083FirstStart(context).collectAsStateWithLifecycle(initialValue = false)
         if (isV083FirstStart) {
