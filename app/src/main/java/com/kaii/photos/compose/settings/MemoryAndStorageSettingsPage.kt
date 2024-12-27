@@ -86,7 +86,7 @@ fun MemoryAndStorageSettingsPage() {
 
                 PreferencesSwitchRow(
                     title = "Auto delete interval",
-                    iconResID = R.drawable.restore,
+                    iconResID = R.drawable.auto_delete,
                     summary = summary,
                     position = RowPosition.Single,
                     showBackground = false,

@@ -198,6 +198,7 @@ class SettingsStorageImpl(private val context: Context, private val viewModelSco
 
 class SettingsVideoImpl(private val context: Context, private val viewModelScope: CoroutineScope) {
     private val shouldAutoPlay = booleanPreferencesKey("video_should_autoplay")
+    private val muteOnStart = booleanPreferencesKey("video_mute_onstart")
 
     fun getShouldAutoPlay(): Flow<Boolean> =
         context.datastore.data.map {
@@ -207,6 +208,17 @@ class SettingsVideoImpl(private val context: Context, private val viewModelScope
     fun setShouldAutoPlay(value: Boolean) = viewModelScope.launch {
         context.datastore.edit {
             it[shouldAutoPlay] = value
+        }
+    }
+
+    fun getMuteOnStart(): Flow<Boolean> =
+        context.datastore.data.map {
+            it[muteOnStart] ?: false
+        }
+
+    fun setMuteOnStart(value: Boolean) = viewModelScope.launch {
+        context.datastore.edit {
+            it[muteOnStart] = value
         }
     }
 }

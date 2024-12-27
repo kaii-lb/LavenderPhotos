@@ -91,6 +91,8 @@ fun HorizontalImageList(
     }
 
 	val shouldAutoPlay by mainViewModel.settings.Video.getShouldAutoPlay().collectAsStateWithLifecycle(initialValue = true)
+	val muteVideoOnStart by mainViewModel.settings.Video.getMuteOnStart().collectAsStateWithLifecycle(initialValue = null)
+	val lastVideoWasMuted = remember { mutableStateOf(false) }
 
     HorizontalPager(
         state = state,
@@ -121,7 +123,9 @@ fun HorizontalImageList(
 
         val path = if (isHidden) mediaStoreItem.uri.path else mediaStoreItem.uri
 
-        if (mediaStoreItem.type == MediaType.Video && shouldPlay) {
+        if (mediaStoreItem.type == MediaType.Video && shouldPlay && muteVideoOnStart != null) {
+			lastVideoWasMuted.value = muteVideoOnStart!!
+
             val showVideoPlayerControls = remember { mutableStateOf(true) }
             val canFadeControls = remember { mutableStateOf(true) }
 
@@ -168,6 +172,7 @@ fun HorizontalImageList(
                     appBarsVisible = appBarsVisible,
                     shouldPlay = shouldPlay,
                     shouldAutoPlay = shouldAutoPlay,
+                    lastWasMuted = lastVideoWasMuted,
                     navController = navController,
                     canFadeControls = canFadeControls,
                     isTouchLocked = isTouchLocked,

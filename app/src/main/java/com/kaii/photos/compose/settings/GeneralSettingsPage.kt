@@ -109,18 +109,32 @@ fun GeneralSettingsPage() {
                 }
 
                 item {
-                	val shouldAutoPlay by mainViewModel.settings.Video.getShouldAutoPlay().collectAsStateWithLifecycle(initialValue = false)
+                	val shouldAutoPlay by mainViewModel.settings.Video.getShouldAutoPlay().collectAsStateWithLifecycle(initialValue = true)
+                	val muteOnStart by mainViewModel.settings.Video.getMuteOnStart().collectAsStateWithLifecycle(initialValue = false)
 
                     PreferencesSwitchRow(
                         title = "Auto Play Videos",
                         summary = "Start playing videos as soon as they appear on screen",
-                        iconResID = R.drawable.file_is_selected_foreground,
+                        iconResID = R.drawable.auto_play,
                         checked = shouldAutoPlay,
                         position = RowPosition.Single,
                         showBackground = false,
                         onRowClick = null,
                         onSwitchClick = { checked ->
                         	mainViewModel.settings.Video.setShouldAutoPlay(checked)
+                        }
+                    )
+
+                    PreferencesSwitchRow(
+                        title = "Videos Start Muted",
+                        summary = "Don't play audio when first starting video playback",
+                        iconResID = R.drawable.volume_mute,
+                        checked = muteOnStart,
+                        position = RowPosition.Single,
+                        showBackground = false,
+                        onRowClick = null,
+                        onSwitchClick = { checked ->
+                        	mainViewModel.settings.Video.setMuteOnStart(checked)
                         }
                     )
 				}

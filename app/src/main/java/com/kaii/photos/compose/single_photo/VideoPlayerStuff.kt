@@ -346,6 +346,7 @@ fun VideoPlayer(
     appBarsVisible: MutableState<Boolean>,
     shouldPlay: Boolean,
     shouldAutoPlay: Boolean,
+    lastWasMuted: MutableState<Boolean>,
     navController: NavHostController,
     canFadeControls: MutableState<Boolean>,
     isTouchLocked: MutableState<Boolean>,
@@ -355,7 +356,7 @@ fun VideoPlayer(
     val isPlaying = rememberSaveable { mutableStateOf(false) }
     val lastIsPlaying = rememberSaveable { mutableStateOf(isPlaying.value) }
 
-    val isMuted = rememberSaveable { mutableStateOf(false) }
+    val isMuted = rememberSaveable { mutableStateOf(lastWasMuted.value) }
 
     /** In Seconds */
     val currentVideoPosition = rememberSaveable { mutableFloatStateOf(0f) }
@@ -420,11 +421,10 @@ fun VideoPlayer(
     }
 
     LaunchedEffect(isMuted.value) {
-    	if (isMuted.value) {
-    		exoPlayer.setHandleAudioBecomingNoisy(false)
-    	} else {
-    		exoPlayer.setHandleAudioBecomingNoisy(true)
-    	}
+    	lastWasMuted.value = isMuted.value
+
+		exoPlayer.volume = if (isMuted.value) 0f else 1f
+   		exoPlayer.setHandleAudioBecomingNoisy(!isMuted.value)
     }
 
     LaunchedEffect(shouldAutoPlay, shouldPlay) {
@@ -441,11 +441,8 @@ fun VideoPlayer(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             AndroidView(
-                factory = { playerView },
-                update = {
-                    exoPlayer.volume = if (isMuted.value) 0f else 1f
-
-                    // exoPlayer.playWhenReady = shouldPlay && isPlaying.value
+                factory = {
+                	playerView
                 }
             )
         }
@@ -600,8 +597,6 @@ fun createExoPlayer(
         .apply {
             videoScalingMode = VIDEO_SCALING_MODE_SCALE_TO_FIT
             repeatMode = ExoPlayer.REPEAT_MODE_ONE
-
-            setHandleAudioBecomingNoisy(true)
 
             val defaultDataSourceFactory = DefaultDataSource.Factory(context)
             val dataSourceFactory = DefaultDataSource.Factory(

@@ -67,7 +67,7 @@ fun DebuggingSettingsPage() {
                 PreferencesSwitchRow(
                     title = "Record Logs",
                     summary = "Store logs in 'Internal Storage/LavenderPhotos/logs.txt'",
-                    iconResID = R.drawable.settings,
+                    iconResID = R.drawable.logs,
                     checked = shouldRecordLogs,
                     position = RowPosition.Single,
                     showBackground = false
