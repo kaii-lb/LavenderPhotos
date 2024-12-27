@@ -294,6 +294,7 @@ fun MainAppTopBar(showDialog: MutableState<Boolean>) {
                 )
             }
         },
+        scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(),
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = CustomMaterialTheme.colorScheme.background
         ),

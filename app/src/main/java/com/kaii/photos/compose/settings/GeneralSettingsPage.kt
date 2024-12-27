@@ -2,23 +2,15 @@ package com.kaii.photos.compose.settings
 
 import android.Manifest
 import android.content.Intent
-import android.content.res.Configuration
 import android.os.Build
 import android.provider.MediaStore
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsIgnoringVisibility
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBar
@@ -28,14 +20,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -44,11 +31,9 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.R
 import com.kaii.photos.LocalNavController
-import com.kaii.photos.compose.PreferencesRow
 import com.kaii.photos.compose.PreferencesSwitchRow
 import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.RowPosition
-import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.compose.PreferencesSeparatorText
 import com.kaii.photos.datastore.Permissions
@@ -146,7 +131,7 @@ fun GeneralSettingsPage() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun GeneralSettingsTopBar() {
-	val navController = LocalNavController.current ?: return
+	val navController = LocalNavController.current
 
 	TopAppBar(
         title = {
@@ -170,7 +155,6 @@ private fun GeneralSettingsTopBar() {
                 )
             }
         },
-        scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(),
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = CustomMaterialTheme.colorScheme.background
         )

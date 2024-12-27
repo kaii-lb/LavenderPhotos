@@ -1,6 +1,7 @@
 package com.kaii.photos.datastore
 
 import android.content.Context
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
@@ -12,7 +13,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
 
 const val separator = "|-SEPARATOR-|"
 
@@ -59,7 +59,7 @@ class SettingsAlbumsListImpl(private val context: Context, private val viewModel
 
     fun getAlbumsList(isPreV083: Boolean = false): Flow<List<String>> =
         context.datastore.data.map { data ->
-            val list = data[albumsListKey] ?: return@map emptyList<String>()
+            val list = data[albumsListKey] ?: return@map getDefaultAlbumsList()
 
             val splitBy = if (isPreV083) "," else separator
             val split = list.split(splitBy).distinct().toMutableList()
@@ -68,11 +68,6 @@ class SettingsAlbumsListImpl(private val context: Context, private val viewModel
 
             return@map split
         }
-
-    fun getRawAlbumsList() : Flow<String> = 
-    	context.datastore.data.map { data ->
-			return@map data[albumsListKey] ?: ""
-    	}
 
     fun setAlbumsList(list: List<String>) = viewModelScope.launch {
         context.datastore.edit {
@@ -84,6 +79,15 @@ class SettingsAlbumsListImpl(private val context: Context, private val viewModel
             it[albumsListKey] = stringList
         }
     }
+
+    private fun getDefaultAlbumsList() : List<String> =
+        listOf(
+            "DCIM/Camera",
+            "Pictures",
+            "Pictures/Screenshot",
+            "Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images",
+            "Download"
+        )
 }
 
 class SettingsVersionImpl(private val context: Context, private val viewModelScope: CoroutineScope) {
@@ -106,16 +110,16 @@ class SettingsVersionImpl(private val context: Context, private val viewModelSco
 class SettingsUserImpl(private val context: Context, private val viewModelScope: CoroutineScope) {
     private val usernameKey = stringPreferencesKey("username")
 
+    fun getUsername(): Flow<String?> =
+        context.datastore.data.map {
+            it[usernameKey] ?: "No Username Found"
+        }
+
     fun setUsername(name: String) = viewModelScope.launch {
         context.datastore.edit {
             it[usernameKey] = name
         }
     }
-
-    fun getUsername(): Flow<String> =
-        context.datastore.data.map {
-            it[usernameKey] ?: "No Username Found"
-        }
 }
 
 class SettingsLogsImpl(private val context: Context, private val viewModelScope: CoroutineScope) {
@@ -197,28 +201,58 @@ class SettingsStorageImpl(private val context: Context, private val viewModelSco
 }
 
 class SettingsVideoImpl(private val context: Context, private val viewModelScope: CoroutineScope) {
-    private val shouldAutoPlay = booleanPreferencesKey("video_should_autoplay")
-    private val muteOnStart = booleanPreferencesKey("video_mute_onstart")
+    private val shouldAutoPlayKey = booleanPreferencesKey("video_should_autoplay")
+    private val muteOnStartKey = booleanPreferencesKey("video_mute_on_start")
 
     fun getShouldAutoPlay(): Flow<Boolean> =
         context.datastore.data.map {
-            it[shouldAutoPlay] ?: true
+            it[shouldAutoPlayKey] ?: true
         }
 
     fun setShouldAutoPlay(value: Boolean) = viewModelScope.launch {
         context.datastore.edit {
-            it[shouldAutoPlay] = value
+            it[shouldAutoPlayKey] = value
         }
     }
 
     fun getMuteOnStart(): Flow<Boolean> =
         context.datastore.data.map {
-            it[muteOnStart] ?: false
+            it[muteOnStartKey] ?: false
         }
 
     fun setMuteOnStart(value: Boolean) = viewModelScope.launch {
         context.datastore.edit {
-            it[muteOnStart] = value
+            it[muteOnStartKey] = value
         }
+    }
+}
+
+class SettingsLookAndFeelImpl(private val context: Context, private val viewModelScope: CoroutineScope) {
+    private val followDarkModeKey = intPreferencesKey("look_and_feel_follow_dark_mode")
+
+    /** 0 is follow system
+     * 1 is dark
+     * 2 is light */
+    fun getFollowDarkMode(): Flow<Int> =
+        context.datastore.data.map {
+            it[followDarkModeKey] ?: 0
+        }
+
+    /** 0 is follow system
+     * 1 is dark
+     * 2 is light */
+    fun setFollowDarkMode(value: Int) = viewModelScope.launch {
+        context.datastore.edit {
+            it[followDarkModeKey] = value
+        }
+
+        AppCompatDelegate.setDefaultNightMode(
+        	when(value) {
+				1 -> AppCompatDelegate.MODE_NIGHT_YES
+				2 -> AppCompatDelegate.MODE_NIGHT_NO
+
+				else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+        	}
+        )
     }
 }

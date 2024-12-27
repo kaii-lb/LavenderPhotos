@@ -18,9 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -58,8 +56,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
-import com.kaii.photos.R
 import com.kaii.photos.MainActivity.Companion.mainViewModel
+import com.kaii.photos.R
 import com.kaii.photos.compose.FolderIsEmpty
 import com.kaii.photos.compose.SearchTextField
 import com.kaii.photos.compose.getDefaultShapeSpacerForPosition
@@ -73,7 +71,6 @@ import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.album_grid.AlbumsViewModel
 import com.kaii.photos.models.album_grid.AlbumsViewModelFactory
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -206,9 +203,9 @@ fun MoveCopyAlbumListView(
             }
         }
     } else {
-    	coroutineScope.launch {
-    		state.scrollToItem(0)
-    	}
+        LaunchedEffect(Unit) {
+            state.scrollToItem(0)
+        }
     }
 }
 

@@ -1,8 +1,13 @@
 package com.kaii.photos.compose
 
+import androidx.compose.animation.core.Easing
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.MarqueeAnimationMode
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,16 +22,24 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
@@ -39,6 +52,7 @@ import com.kaii.photos.R
 import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.darkenColor
+import kotlin.math.roundToInt
 
 @Composable
 fun PreferencesRow(
@@ -214,9 +228,9 @@ fun PreferencesSwitchRow(
 	        if (onRowClick != onSwitchClick && onRowClick != null) {
 	            Box(
 	                modifier = Modifier
-	                    .width(1.dp)
-	                    .height(36.dp)
-	                    .background(CustomMaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
+                        .width(1.dp)
+                        .height(36.dp)
+                        .background(CustomMaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
 	            )
 
 	            Spacer(modifier = Modifier.width(16.dp))
@@ -230,7 +244,6 @@ fun PreferencesSwitchRow(
 	            enabled = enabled
 	        )
         }
-
     }
 }
 
@@ -257,9 +270,9 @@ fun RadioButtonRow(
             .height(40.dp)
             .background(Color.Transparent)
             .padding(12.dp, 4.dp)
-			.clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(8.dp))
             .clickable {
-            	onClick()
+                onClick()
             },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Start
@@ -280,5 +293,197 @@ fun RadioButtonRow(
             modifier = Modifier
                 .wrapContentSize()
         )
+    }
+}
+
+/** @param trackIcons needs to be a list of 3 icon res ids */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PreferencesThreeStateSwitchRow(
+    title: String,
+    iconResID: Int,
+    position: RowPosition,
+    currentPosition: Int,
+    summary: String? = null,
+    enabled: Boolean = true,
+    showBackground: Boolean = true,
+    trackIcons: List<Int>,
+    onStateChange: (state: Int) -> Unit
+) {
+	val width = 104.dp
+    fun nextPosition() =
+        when(currentPosition) {
+            0 -> 1
+            1 -> 2
+            2 -> 0
+
+            else -> 0
+        }
+
+    val (shape, _) = getDefaultShapeSpacerForPosition(position, 24.dp)
+
+    val backgroundColor = when {
+        enabled && showBackground -> {
+            CustomMaterialTheme.colorScheme.surfaceVariant
+        }
+
+        !enabled && showBackground -> {
+            CustomMaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+        }
+
+        else -> {
+            Color.Transparent
+        }
+    }
+
+    val clickable = if (enabled) Modifier.clickable {
+        onStateChange(
+            nextPosition()
+        )
+    } else Modifier
+
+    val clip = if (showBackground) Modifier.clip(shape) else Modifier
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth(1f)
+            .wrapContentHeight()
+            .then(clip)
+            .background(backgroundColor)
+            .then(clickable)
+            .padding(16.dp, 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            painter = painterResource(id = iconResID),
+            contentDescription = "an icon describing: $title",
+            tint = CustomMaterialTheme.colorScheme.onBackground,
+            modifier = Modifier
+                .size(28.dp)
+        )
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        Column(
+            modifier = Modifier
+                .wrapContentHeight()
+                .weight(1f),
+            verticalArrangement = Arrangement.SpaceEvenly,
+            horizontalAlignment = Alignment.Start
+        ) {
+            Text(
+                text = title,
+                fontSize = TextUnit(18f, TextUnitType.Sp),
+                textAlign = TextAlign.Start,
+                color = CustomMaterialTheme.colorScheme.onSurface
+            )
+
+            if (summary != null) {
+                Text(
+                    text = summary,
+                    fontSize = TextUnit(14f, TextUnitType.Sp),
+                    textAlign = TextAlign.Start,
+                    color = darkenColor(CustomMaterialTheme.colorScheme.onSurface, 0.15f),
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+
+        Box (
+            modifier = Modifier
+                .padding(12.dp, 0.dp, 0.dp, 0.dp)
+        ) {
+            val animatedSliderVal by animateFloatAsState(
+                targetValue = currentPosition.toFloat(),
+                animationSpec = tween(
+                    durationMillis = 200
+                ),
+                label = "Animate look and feel dark theme slider value"
+            )
+
+			Box(
+                modifier = Modifier
+                    .height(40.dp)
+                    .width(width)
+                    .border(2.dp, SwitchDefaults.colors().uncheckedBorderColor, CircleShape)
+                    .background(SwitchDefaults.colors().uncheckedTrackColor, CircleShape)
+                    .padding(8.dp, 0.dp)
+                    .align(Alignment.Center)
+            ) {
+                if (trackIcons.size == 3) {
+                    Icon(
+                        painter = painterResource(id = trackIcons[0]),
+                        contentDescription = null,
+                        tint = SwitchDefaults.colors().uncheckedThumbColor,
+                        modifier = Modifier
+                            .size(24.dp)
+                            .align(Alignment.CenterStart)
+                    )
+
+                    Icon(
+                        painter = painterResource(id = trackIcons[1]),
+                        contentDescription = null,
+                        tint = SwitchDefaults.colors().uncheckedThumbColor,
+                        modifier = Modifier
+                            .size(24.dp)
+                            .align(Alignment.Center)
+                    )
+
+                    Icon(
+                        painter = painterResource(id = trackIcons[2]),
+                        contentDescription = null,
+                        tint = SwitchDefaults.colors().uncheckedThumbColor,
+                        modifier = Modifier
+                            .size(24.dp)
+                            .align(Alignment.CenterEnd)
+                    )
+                }
+            }
+
+            Slider(
+                value = animatedSliderVal,
+                valueRange = 0f..2f,
+                onValueChange = {
+                	val snapTo = if (it >= 1.4f) {
+                		2
+                	} else if (it <= 0.6f) {
+                		0
+                	} else {
+                		1
+                	}
+
+               		onStateChange(snapTo)
+                },
+                track = {
+					Box (
+						modifier = Modifier
+							.fillMaxWidth(1f)
+							.height(40.dp)
+					)
+                },
+                thumb = {
+                    Box(
+                       modifier = Modifier
+                            .size(28.dp)
+                            .background(SwitchDefaults.colors().checkedTrackColor, CircleShape)
+                    ) {
+	                    Icon(
+	                        painter = painterResource(id = trackIcons[currentPosition]),
+	                        contentDescription = null,
+	                        tint = SwitchDefaults.colors().checkedThumbColor,
+	                        modifier = Modifier
+	                            .size(24.dp)
+	                            .align(Alignment.Center)
+	                    )
+                    }
+                },
+                enabled = enabled,
+                modifier = Modifier
+                    .height(40.dp)
+                    .width(width - 12.dp)
+                    .align(Alignment.Center)
+            )
+        }
     }
 }

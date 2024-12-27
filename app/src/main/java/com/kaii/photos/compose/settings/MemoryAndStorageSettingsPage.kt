@@ -194,7 +194,7 @@ fun MemoryAndStorageSettingsPage() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MemoryAndStorageSettingsTopBar() {
-    val navController = LocalNavController.current ?: return
+    val navController = LocalNavController.current
 
     TopAppBar(
         title = {
@@ -218,7 +218,6 @@ private fun MemoryAndStorageSettingsTopBar() {
                 )
             }
         },
-        scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(),
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = CustomMaterialTheme.colorScheme.background
         )

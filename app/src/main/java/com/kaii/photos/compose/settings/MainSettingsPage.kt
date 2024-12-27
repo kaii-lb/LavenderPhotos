@@ -93,7 +93,7 @@ fun MainSettingsPage() {
                     modifier = Modifier
                     	.padding(0.dp, 6.dp)
                 ) {
-
+                    navController.navigate(MultiScreenViewType.SettingsLookAndFeelView.name)
                 }
             }
 

@@ -26,12 +26,14 @@ import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.PreferencesSeparatorText
 import com.kaii.photos.compose.PreferencesSwitchRow
+import com.kaii.photos.compose.PreferencesThreeStateSwitchRow
 import com.kaii.photos.datastore.Debugging
+import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.RowPosition
 
 @Composable
-fun DebuggingSettingsPage() {
+fun LookAndFeelSettingsPage() {
 	Scaffold (
 		topBar = {
 			DebuggingSettingsTopBar()
@@ -45,21 +47,26 @@ fun DebuggingSettingsPage() {
             horizontalAlignment = Alignment.Start
         ) {
         	item {
-        		PreferencesSeparatorText("Logs")
+        		PreferencesSeparatorText("Theme")
         	}
 
         	item {
-                val shouldRecordLogs by mainViewModel.settings.Debugging.getRecordLogs().collectAsStateWithLifecycle(initialValue = false)
+                val followDarkMode by mainViewModel.settings.LookAndFeel.getFollowDarkMode().collectAsStateWithLifecycle(initialValue = 0)
 
-                PreferencesSwitchRow(
-                    title = "Record Logs",
-                    summary = "Store logs in 'Internal Storage/LavenderPhotos/logs.txt'",
-                    iconResID = R.drawable.logs,
-                    checked = shouldRecordLogs,
+                PreferencesThreeStateSwitchRow(
+                    title = "Dark Theme",
+                    summary = DarkThemeSetting.entries[followDarkMode].description,
+                    iconResID = R.drawable.palette,
+                    currentPosition = followDarkMode,
+                    trackIcons = listOf(
+                        R.drawable.theme_auto,
+                        R.drawable.theme_dark,
+                        R.drawable.theme_light
+                    ),
                     position = RowPosition.Single,
                     showBackground = false
                 ) {
-					mainViewModel.settings.Debugging.setRecordLogs(it)
+					mainViewModel.settings.LookAndFeel.setFollowDarkMode(it)
                 }
         	}
         }
@@ -74,7 +81,7 @@ private fun DebuggingSettingsTopBar() {
 	TopAppBar(
         title = {
             Text(
-                text = "Debugging",
+                text = "Look & Feel",
                 fontSize = TextUnit(22f, TextUnitType.Sp)
             )
         },
@@ -97,4 +104,10 @@ private fun DebuggingSettingsTopBar() {
             containerColor = CustomMaterialTheme.colorScheme.background
         )
     )
+}
+
+enum class DarkThemeSetting(val description: String) {
+    FollowSystem("App follows the system theme"),
+    ForceDark("App is always in dark theme"),
+    ForceLight("App is always in light theme")
 }

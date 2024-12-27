@@ -46,8 +46,8 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -509,18 +509,19 @@ fun PermissionDeniedDialogButton(
 }
 
 private object Explanations {
-	const val READ_MEDIA = "This permission is needed to find photos and videos on the device. Lavender Photos is very strict with what files it reads, and never shares or exploits this info."
-	const val MANAGE_ALL_FILES = "This permission is needed to modify or delete photos and videos on this device. Lavender Photos will never touch your files without an explicit action being done (eg: clicking the delete button on an image)"
-	const val MANAGE_MEDIA = "This permission is optional, but is highly recommended. Manage Media permission allows Lavender Photos to use Android's Content Resolver API to trash/delete/move/copy media, which makes the process much smoother and more interoperable with other apps."
+    const val READ_MEDIA = "This permission is needed to find photos and videos on the device. Lavender Photos is very strict with what files it reads, and never shares or exploits this info."
+    const val MANAGE_ALL_FILES =
+        "This permission is needed to modify or delete photos and videos on this device, specifically moving them to secure folder and for some trash functionality. This might change in the future.\nLavender Photos will never touch your files without an explicit action being done (eg: clicking the delete button on an image)"
+    const val MANAGE_MEDIA = "This permission is optional, but is highly recommended. Manage Media permission allows Lavender Photos to use Android's Content Resolver API to trash/delete/move/copy media, which makes the process much smoother and more interoperable with other apps."
 }
 
 @Composable
 fun ExplanationDialog(
-	showDialog: MutableState<Boolean>,
-	showPreviousDialog: MutableState<Boolean>,
-	explanation: String
+    showDialog: MutableState<Boolean>,
+    showPreviousDialog: MutableState<Boolean>? = null,
+    explanation: String
 ) {
-	showPreviousDialog.value = false
+    showPreviousDialog?.value = false
 
     Dialog(
         onDismissRequest = {
@@ -557,7 +558,7 @@ fun ExplanationDialog(
                 modifier = Modifier.wrapContentSize()
             )
 
-			Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             PermissionDeniedDialogButton(
                 text = "Okay",
@@ -566,8 +567,8 @@ fun ExplanationDialog(
                 position = RowPosition.Single
             ) {
                 showDialog.value = false
-                showPreviousDialog.value = true
+                showPreviousDialog?.value = true
             }
-		}
-	}
+        }
+    }
 }

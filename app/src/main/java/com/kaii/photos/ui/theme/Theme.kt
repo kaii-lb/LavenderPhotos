@@ -1,5 +1,6 @@
 package com.kaii.photos.ui.theme
 
+import android.content.Context
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
@@ -33,19 +34,27 @@ private val LightColorScheme = lightColorScheme(
 
 @Composable
 fun PhotosTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
+    darkTheme: Int = 0,
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+    val context = LocalContext.current
+
+    val colorScheme = when(darkTheme) {
+        0 -> {
+        	val systemInDarkTheme = isSystemInDarkTheme()
+
+			if (dynamicColor) {
+				if (systemInDarkTheme) dynamicDarkColorScheme(context) else getDynamicLightTheme(context)
+			} else {
+				if (systemInDarkTheme) DarkColorScheme else LightColorScheme
+			}
         }
 
 
-        darkTheme -> DarkColorScheme
+        1 -> if (dynamicColor) dynamicDarkColorScheme(context) else DarkColorScheme
+        2 -> if (dynamicColor) getDynamicLightTheme(context) else LightColorScheme
+
         else -> LightColorScheme
     }
 
@@ -55,3 +64,14 @@ fun PhotosTheme(
         content = content
     )
 }
+
+@Composable
+private fun getDynamicLightTheme(context: Context) =
+	dynamicLightColorScheme(context).copy(
+	    background = MaterialTheme.colorScheme.surfaceContainer,
+	    surfaceContainer = MaterialTheme.colorScheme.primaryContainer,
+	    surface = MaterialTheme.colorScheme.surfaceContainer,
+	    onBackground = MaterialTheme.colorScheme.onSurface,
+	    onSurface = MaterialTheme.colorScheme.onPrimaryContainer,
+	    secondaryContainer = MaterialTheme.colorScheme.surface,
+	)

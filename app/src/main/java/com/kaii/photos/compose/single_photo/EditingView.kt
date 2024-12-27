@@ -111,6 +111,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.asAndroidColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
@@ -158,11 +159,14 @@ import com.kaii.photos.helpers.savePathListToBitmap
 import com.kaii.photos.helpers.toOffset
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.math.PI
 import kotlin.math.abs
+import kotlin.math.cos
 import kotlin.math.ln
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
+import kotlin.math.sin
 
 @Composable
 fun EditingView(
@@ -210,22 +214,7 @@ fun EditingView(
     val inputStream = remember { context.contentResolver.openInputStream(uri) }
 
     val originalImage = remember { BitmapFactory.decodeStream(inputStream) }
-    var image by remember {
-        mutableStateOf(
-//            run {
-//                val holder = Glide
-//                    .with(context)
-//                    .asBitmap()
-//                    .load(originalImage)
-//                    .fitCenter()
-//                    .submit()
-//
-//                holder.get().asImageBitmap()
-//            }
-
-            originalImage.asImageBitmap()
-        )
-    }
+    var image by remember { mutableStateOf(originalImage.asImageBitmap()) }
     inputStream?.close()
 
     val rotationMultiplier = remember { mutableIntStateOf(0) }
@@ -1959,7 +1948,8 @@ enum class SelectedImageProperties {
     WhitePoint,
     Shadows,
     Warmth,
-    ColorTint
+    ColorTint,
+    Highlights
 }
 
 @Composable
@@ -1975,6 +1965,8 @@ fun AdjustTools(
     var blackPointValue by rememberSaveable { mutableFloatStateOf(0f) }
     var whitePointValue by rememberSaveable { mutableFloatStateOf(0f) }
     var warmthValue by rememberSaveable { mutableFloatStateOf(0f) }
+    var colorTintValue by rememberSaveable { mutableFloatStateOf(0f) }
+    var highlightsValue by rememberSaveable { mutableFloatStateOf(0f) }
 
     val additiveEmptyArray = floatArrayOf(
         0f, 0f, 0f, 0f, 0f,
@@ -2007,17 +1999,20 @@ fun AdjustTools(
     var blackPointMatrix by rememberSaveable { mutableStateOf(additiveEmptyArray) }
     var whitePointMatrix by rememberSaveable { mutableStateOf(multiplicativeEmptyArray) }
     var warmthMatrix by rememberSaveable { mutableStateOf(multiplicativeEmptyArray) }
+    var highlightsMatrix by rememberSaveable { mutableStateOf(multiplicativeEmptyArray) }
+    var colorTintMatrix1 by rememberSaveable { mutableStateOf(multiplicativeEmptyArray) }
+    var colorTintMatrix2 by rememberSaveable { mutableStateOf(additiveEmptyArray) }
 
 	LaunchedEffect(Unit) {
 		if (selectedProperty == SelectedImageProperties.Contrast) sliderValue.floatValue = contrastValue
 	}
 
-    LaunchedEffect(brightnessMatrix, contrastMatrix, saturationMatrix, blackPointMatrix, warmthMatrix, whitePointMatrix) {
+    LaunchedEffect(brightnessMatrix, contrastMatrix, saturationMatrix, blackPointMatrix, warmthMatrix, whitePointMatrix, colorTintMatrix2, highlightsMatrix) {
         val floatArray = emptyList<Float>().toMutableList()
 
         for (i in contrastMatrix.indices) {
-            val multiply = contrastMatrix[i] * saturationMatrix[i] * warmthMatrix[i] * whitePointMatrix[i]
-            val add = brightnessMatrix[i] + blackPointMatrix[i]
+            val multiply = contrastMatrix[i] * saturationMatrix[i] * warmthMatrix[i] * whitePointMatrix[i] * highlightsMatrix[i] * colorTintMatrix1[i]
+            val add = brightnessMatrix[i] + blackPointMatrix[i] + colorTintMatrix2[i]
 
             floatArray.add(multiply + add)
         }
@@ -2170,6 +2165,66 @@ fun AdjustTools(
                 warmthValue = sliderValue.floatValue
             }
 
+            SelectedImageProperties.Highlights -> run {
+                if (sliderValue.floatValue == highlightsValue) return@run
+
+				val highlight = -sliderValue.floatValue
+
+                val floatArray = floatArrayOf(
+                    1 - highlight, 1f, 1f, 0f, 1f,
+                    1f, 1 - highlight, 1f, 0f, 1f,
+                    1f, 1f, 1 - highlight, 0f, 1f,
+                    0f, 0f, 0f, 1f, 0f
+                )
+
+                highlightsMatrix = floatArray
+
+                highlightsValue = sliderValue.floatValue
+            }
+
+            SelectedImageProperties.ColorTint -> run {
+                if (sliderValue.floatValue == colorTintValue) return@run
+
+				val tint = sliderValue.floatValue * 0.5f + 0.5f
+
+				val colorList = listOf(
+					Color.Blue,
+					Color.Red,
+					Color.Green,
+					Color.Yellow
+				)
+
+				val positionInList = (colorList.size - 1f) * tint
+				val lowerColor = colorList[kotlin.math.floor(positionInList).toInt()]
+				val upperColor = colorList[kotlin.math.ceil(positionInList).toInt()]
+				val mixRatio = positionInList - colorList.indexOf(lowerColor)
+
+				val resolvedColor = Color(
+					red = lowerColor.red * (1 - mixRatio) + upperColor.red * mixRatio,
+					green = lowerColor.green * (1 - mixRatio) + upperColor.green * mixRatio,
+					blue = lowerColor.blue * (1 - mixRatio) + upperColor.blue * mixRatio
+				)
+
+                val floatArray = floatArrayOf(
+                    0.6f, 1f, 1f, 0f, 1f,
+                    1f, 0.6f, 1f, 0f, 1f,
+                    1f, 1f, 0.6f, 0f, 1f,
+                    0f, 0f, 0f, 1f, 0f
+                )
+
+                val floatArray2 = floatArrayOf(
+                    0f, 0f, 0f, 0f, 0.2f * resolvedColor.red * 255f,
+                    0f, 0f, 0f, 0f, 0.2f * resolvedColor.green * 255f,
+                    0f, 0f, 0f, 0f, 0.2f * resolvedColor.blue * 255f,
+                    0f, 0f, 0f, 0f, 0f
+                )
+
+                colorTintMatrix1 = floatArray
+                colorTintMatrix2 = floatArray2
+
+                colorTintValue = sliderValue.floatValue
+            }
+
             else -> {}
         }
     }
@@ -2265,7 +2320,23 @@ fun AdjustTools(
                 text = "Color Tint",
                 iconResId = R.drawable.colors,
                 selected = selectedProperty == SelectedImageProperties.ColorTint
-            )
+            ) {
+                selectedProperty = SelectedImageProperties.ColorTint
+
+                sliderValue.floatValue = colorTintValue
+            }
+        }
+
+        item {
+            EditingViewBottomAppBarItem(
+                text = "Highlights",
+                iconResId = R.drawable.colors,
+                selected = selectedProperty == SelectedImageProperties.Highlights
+            ) {
+                selectedProperty = SelectedImageProperties.Highlights
+
+                sliderValue.floatValue = highlightsValue
+            }
         }
     }
 }

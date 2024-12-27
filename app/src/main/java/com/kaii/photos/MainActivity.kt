@@ -2,6 +2,7 @@ package com.kaii.photos
 
 import android.content.Intent
 import android.content.res.Configuration
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.Window
@@ -13,6 +14,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.tween
@@ -38,7 +40,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -88,6 +89,7 @@ import com.kaii.photos.compose.grids.TrashedPhotoGridView
 import com.kaii.photos.compose.settings.AboutPage
 import com.kaii.photos.compose.settings.DebuggingSettingsPage
 import com.kaii.photos.compose.settings.GeneralSettingsPage
+import com.kaii.photos.compose.settings.LookAndFeelSettingsPage
 import com.kaii.photos.compose.settings.MainSettingsPage
 import com.kaii.photos.compose.settings.MemoryAndStorageSettingsPage
 import com.kaii.photos.compose.single_photo.EditingView
@@ -98,6 +100,7 @@ import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.Debugging
 import com.kaii.photos.datastore.Versions
+import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.EditingScreen
 import com.kaii.photos.helpers.MainScreenViewType
@@ -171,14 +174,14 @@ class MainActivity : ComponentActivity() {
             )
 
 	        val logPath = "${getBaseInternalStorageDirectory()}LavenderPhotos/log.txt"
-	        try {
-	            File(logPath).delete()
-	        } catch (e: Throwable) {
-	            // ignore
-	        }
 
 	        val canRecordLogs by mainViewModel.settings.Debugging.getRecordLogs().collectAsStateWithLifecycle(initialValue = false)
 	        if (canRecordLogs) {
+	        	try {
+	        	    File(logPath).delete()
+	        	} catch (e: Throwable) {
+	        	    // ignore
+	        	}
 	            Runtime.getRuntime().exec("logcat -d -f $logPath")
 	        }
 
@@ -190,7 +193,20 @@ class MainActivity : ComponentActivity() {
                 )
             }
 
-            PhotosTheme {
+			val initial =
+				when (AppCompatDelegate.getDefaultNightMode()) {
+					AppCompatDelegate.MODE_NIGHT_YES -> 1
+					AppCompatDelegate.MODE_NIGHT_NO -> 2
+
+					else -> 0
+				}
+			val followDarkTheme by mainViewModel.settings.LookAndFeel.getFollowDarkMode().collectAsStateWithLifecycle(
+				initialValue = initial
+			)
+            PhotosTheme(
+            	darkTheme = followDarkTheme,
+            	dynamicColor = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+            ) {
 	            AnimatedContent(
 	                targetState = continueToApp.value,
 	                transitionSpec = {
@@ -613,6 +629,22 @@ class MainActivity : ComponentActivity() {
                     )
 
                     MemoryAndStorageSettingsPage()
+                }
+
+                composable(MultiScreenViewType.SettingsLookAndFeelView.name) {
+                    enableEdgeToEdge(
+                        navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.background.toArgb()),
+                        statusBarStyle = SystemBarStyle.auto(
+                            CustomMaterialTheme.colorScheme.background.toArgb(),
+                            CustomMaterialTheme.colorScheme.background.toArgb()
+                        )
+                    )
+                    setupNextScreen(
+                        selectedItemsList,
+                        window
+                    )
+
+                    LookAndFeelSettingsPage()
                 }
             }
         }

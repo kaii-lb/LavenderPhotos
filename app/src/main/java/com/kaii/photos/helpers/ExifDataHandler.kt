@@ -5,8 +5,6 @@ import android.media.MediaMetadataRetriever
 import android.util.Log
 import androidx.exifinterface.media.ExifInterface
 import com.kaii.photos.R
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import java.io.File
@@ -14,7 +12,6 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.util.EnumMap
 import kotlin.math.round
 
 private const val TAG = "EXIF_DATA_HANDLER"
@@ -53,41 +50,41 @@ fun getExifDataForMedia(absolutePath: String): Flow<Map<MediaData, Any>> = flow 
     list[MediaData.Resolution] = "Loading..."
 
     emit(list.mapValues { (_, value) ->
-       	value!!
-	})
+        value!!
+    })
 
-	try {
-    	val exifInterface = ExifInterface(absolutePath)
+    try {
+        val exifInterface = ExifInterface(absolutePath)
 
-	    val datetime = getDateTakenForMedia(absolutePath)
-	    val formatter = DateTimeFormatter.ofPattern("d MMM yyyy - h:mm:ss a")
-	    val formattedDateTime =
-	        LocalDateTime.ofInstant(Instant.ofEpochSecond(datetime), ZoneId.systemDefault())
-	            .format(formatter)
-	    list[MediaData.Date] = formattedDateTime
+        val datetime = getDateTakenForMedia(absolutePath)
+        val formatter = DateTimeFormatter.ofPattern("d MMM yyyy - h:mm:ss a")
+        val formattedDateTime =
+            LocalDateTime.ofInstant(Instant.ofEpochSecond(datetime), ZoneId.systemDefault())
+                .format(formatter)
+        list[MediaData.Date] = formattedDateTime
 
-	    list[MediaData.LatLong] = exifInterface.latLong
+        list[MediaData.LatLong] = exifInterface.latLong
 
-	    list[MediaData.Device] = exifInterface.getAttribute(ExifInterface.TAG_MODEL)
+        list[MediaData.Device] = exifInterface.getAttribute(ExifInterface.TAG_MODEL)
 
-	    val fNumber = exifInterface.getAttribute(ExifInterface.TAG_F_NUMBER)
-	    list[MediaData.FNumber] = if (fNumber != null) {
-	        "f/$fNumber"
-	    } else null
+        val fNumber = exifInterface.getAttribute(ExifInterface.TAG_F_NUMBER)
+        list[MediaData.FNumber] = if (fNumber != null) {
+            "f/$fNumber"
+        } else null
 
-	    val shutterSpeed = exifInterface.getAttribute(ExifInterface.TAG_SHUTTER_SPEED_VALUE)
-	    list[MediaData.ShutterSpeed] = shutterSpeed
+        val shutterSpeed = exifInterface.getAttribute(ExifInterface.TAG_SHUTTER_SPEED_VALUE)
+        list[MediaData.ShutterSpeed] = shutterSpeed
 
-	    list[MediaData.Size] = "${round(file.length() / 100000f) / 10} MB"
+        list[MediaData.Size] = "${round(file.length() / 100000f) / 10} MB"
 
-	    emit(
-	    	list.filter { (_, value) ->
-	    			value != null
-    			}
-    			.mapValues { (_, value) ->
-	        		value!!
-	    		}
-	    )
+        emit(
+            list.filter { (_, value) ->
+                value != null
+            }
+                .mapValues { (_, value) ->
+                    value!!
+                }
+        )
 
         val options = BitmapFactory.Options()
         options.inJustDecodeBounds = true
@@ -116,18 +113,18 @@ fun getExifDataForMedia(absolutePath: String): Flow<Map<MediaData, Any>> = flow 
             round((x * y) / 100000f) / 10f // divide by 1mil then multiply by 10, so divide by 100k
         }
 
-	    emit(
-	    	list.filter { (_, value) ->
-	    			value != null
-    			}
-    			.mapValues { (_, value) ->
-	        		value!!
-	    		}
-	    )
-	} catch (e: Throwable) {
-		Log.e(TAG, e.toString())
-		emit(emptyMap())
-	}
+        emit(
+            list.filter { (_, value) ->
+                value != null
+            }
+                .mapValues { (_, value) ->
+                    value!!
+                }
+        )
+    } catch (e: Throwable) {
+        Log.e(TAG, e.toString())
+        emit(emptyMap())
+    }
 }
 
 fun copyExifDataToFile(originalFilePath: String, targetFilePath: String) {

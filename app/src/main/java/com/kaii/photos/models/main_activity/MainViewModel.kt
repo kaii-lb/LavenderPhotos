@@ -3,26 +3,18 @@ package com.kaii.photos.models.main_activity
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
-import android.provider.MediaStore
 import android.os.Build
 import android.os.Environment
+import android.provider.MediaStore
 import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
-import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.datastore.Settings
 import com.kaii.photos.mediastore.MediaStoreData
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 
 private const val TAG = "MAIN_VIEW_MODEL"
 

@@ -40,6 +40,7 @@ import androidx.core.net.toUri
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.kaii.photos.R
+import com.kaii.photos.compose.ExplanationDialog
 import com.kaii.photos.compose.PreferencesRow
 import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.RowPosition
@@ -109,9 +110,6 @@ fun AboutPage(popBackStack: () -> Unit) {
                 style = LocalTextStyle.current.copy(
                     color = CustomMaterialTheme.colorScheme.onBackground
                 )
-                // style = LocalTextStyle.current.copy(
-                //     color = Color(context.resources.getColor(R.color.lavender, context.theme))
-                // )
             )
         }
 
@@ -119,9 +117,9 @@ fun AboutPage(popBackStack: () -> Unit) {
 
 	    Column (
 	        modifier = Modifier
-	            .fillMaxSize(1f)
-	            .padding(8.dp)
-	            .background(CustomMaterialTheme.colorScheme.background),
+                .fillMaxSize(1f)
+                .padding(8.dp)
+                .background(CustomMaterialTheme.colorScheme.background),
 	        verticalArrangement = Arrangement.Top,
 	        horizontalAlignment = Alignment.CenterHorizontally
 	    ) {
@@ -138,12 +136,22 @@ fun AboutPage(popBackStack: () -> Unit) {
 	            context.startActivity(intent)
 	        }
 
+            val showPrivacyPolicy = remember { mutableStateOf(false) }
 	        PreferencesRow(
 	            title = "Privacy Policy",
 	            summary = "we really don't use your data",
 	            iconResID = R.drawable.privacy_policy,
 	            position = RowPosition.Middle
-	        )
+	        ) {
+                showPrivacyPolicy.value = true
+            }
+
+			if (showPrivacyPolicy.value) {
+	            ExplanationDialog(
+	                showDialog = showPrivacyPolicy,
+	                explanation = "There isn't one! None of your data goes anywhere but this device. No AI is trained on it, no algorithms to harvest information, nothing. Lavender Photos has and always will be a privacy focused gallery app."
+	            )
+			}
 
 	        PreferencesRow(
 	            title = "Updates",
@@ -155,7 +163,7 @@ fun AboutPage(popBackStack: () -> Unit) {
 
 	        PreferencesRow(
 	            title = "Support & Donations",
-	            summary = "help us keep the app alive",
+	            summary = "help me keep the app alive",
 	            iconResID = R.drawable.donation,
 	            position = RowPosition.Middle
 	        )
