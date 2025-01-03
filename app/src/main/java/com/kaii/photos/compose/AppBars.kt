@@ -1436,10 +1436,7 @@ fun setBarVisibility(
         } else {
             hide(WindowInsetsCompat.Type.systemBars())
             systemBarsBehavior =
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
-                    WindowInsetsController.BEHAVIOR_DEFAULT
-                else
-                    WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         }
     }
 

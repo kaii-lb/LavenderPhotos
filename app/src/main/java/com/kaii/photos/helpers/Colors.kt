@@ -36,29 +36,27 @@ fun darkenColor(color: Color, percentage: Float) : Color {
 	return Color(newR, newG, newB)
 }
 
-class DrawingColors {
-	companion object {
-		/** white white */
-		val White = Color.White
+object DrawingColors {
+	/** white white */
+	val White = Color.White
 
-		/** black black */
-		val Black = Color.Black
+	/** black black */
+	val Black = Color.Black
 
-		/** poppy red */
-		val Red = Color(red = 227, green = 83, blue = 53)
+	/** poppy red */
+	val Red = Color(red = 227, green = 83, blue = 53)
 
-		/** lemon yellow */
-		val Yellow = Color(red = 250, green = 250, blue = 51)
+	/** lemon yellow */
+	val Yellow = Color(red = 250, green = 250, blue = 51)
 
-		/** emerald green */
-		val Green = Color(red = 80, green = 200, blue = 120)
+	/** emerald green */
+	val Green = Color(red = 80, green = 200, blue = 120)
 
-		/** bright blue */
-		val Blue = Color(red = 0, green = 150, blue = 255)
+	/** bright blue */
+	val Blue = Color(red = 0, green = 150, blue = 255)
 
-		/** lavender purple */
-		val Purple = Color(red = 204, green = 204, blue = 255)
-	}
+	/** lavender purple */
+	val Purple = Color(red = 204, green = 204, blue = 255)
 }
 
 @Composable
@@ -89,4 +87,29 @@ fun ColorIndicator(
 				.align(Alignment.Center)
 		)
 	}
+}
+
+val gradientColorList = listOf(
+	Color.Blue,
+	Color.Red,
+	Color.Green,
+	Color.Yellow
+)
+
+fun getColorFromLinearGradientList(
+	value: Float,
+	colorList: List<Color>
+) : Color {
+	val positionInList = (colorList.size - 1f) * value
+	val lowerColor = colorList[kotlin.math.floor(positionInList).toInt()]
+	val upperColor = colorList[kotlin.math.ceil(positionInList).toInt()]
+	val mixRatio = positionInList - colorList.indexOf(lowerColor)
+
+	val resolvedColor = Color(
+		red = lowerColor.red * (1 - mixRatio) + upperColor.red * mixRatio,
+		green = lowerColor.green * (1 - mixRatio) + upperColor.green * mixRatio,
+		blue = lowerColor.blue * (1 - mixRatio) + upperColor.blue * mixRatio
+	)
+
+	return resolvedColor
 }

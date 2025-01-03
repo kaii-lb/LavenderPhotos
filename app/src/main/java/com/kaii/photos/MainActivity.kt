@@ -563,7 +563,8 @@ class MainActivity : ComponentActivity() {
                     EditingView(
                         absolutePath = screen.absolutePath,
                         dateTaken = screen.dateTaken,
-                        uri = screen.uri.toUri()
+                        uri = screen.uri.toUri(),
+                        window = window
                     )
                 }
 

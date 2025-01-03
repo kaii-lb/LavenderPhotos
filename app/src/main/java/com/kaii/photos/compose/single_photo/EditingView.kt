@@ -4,6 +4,7 @@ import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.view.Window
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
@@ -70,6 +71,7 @@ import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.RippleConfiguration
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
@@ -142,9 +144,12 @@ import androidx.compose.ui.zIndex
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.BottomAppBarItem
+import com.kaii.photos.compose.ColorRangeSlider
 import com.kaii.photos.compose.ConfirmationDialog
 import com.kaii.photos.compose.CroppingRatioBottomSheet
+import com.kaii.photos.compose.PopupPillSlider
 import com.kaii.photos.compose.SetEditingViewDrawableTextBottomSheet
+import com.kaii.photos.compose.setBarVisibility
 import com.kaii.photos.helpers.ColorIndicator
 import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.DrawablePath
@@ -154,6 +159,8 @@ import com.kaii.photos.helpers.DrawingPaints
 import com.kaii.photos.helpers.ExtendedPaint
 import com.kaii.photos.helpers.Modification
 import com.kaii.photos.helpers.PaintType
+import com.kaii.photos.helpers.getColorFromLinearGradientList
+import com.kaii.photos.helpers.gradientColorList
 import com.kaii.photos.helpers.savePathListToBitmap
 import com.kaii.photos.helpers.toOffset
 import kotlinx.coroutines.delay
@@ -168,7 +175,8 @@ import kotlin.math.pow
 fun EditingView(
     absolutePath: String,
     dateTaken: Long,
-    uri: Uri
+    uri: Uri,
+    window: Window
 ) {
     val navController = LocalNavController.current
     val showCloseDialog = remember { mutableStateOf(false) }
@@ -268,6 +276,7 @@ fun EditingView(
                 originalImageRatio = image.width.toFloat() / image.height.toFloat(),
                 adjustSliderValue = adjustSliderValue,
                 colorMatrix = colorMatrix,
+                window = window,
                 resetCropping = {
                     rotationMultiplier.intValue = 0
                     image = originalImage.asImageBitmap()
@@ -1511,15 +1520,21 @@ private fun EditingViewBottomBar(
     originalImageRatio: Float,
     adjustSliderValue: MutableFloatState,
     colorMatrix: MutableState<ColorMatrix>,
+    window: Window,
     resetCropping: () -> Unit
 ) {
-    val localDensity = LocalDensity.current
-
     val localConfig = LocalConfiguration.current
     var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
 
     LaunchedEffect(localConfig) {
         isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
+
+        if (isLandscape) {
+            setBarVisibility(
+                visible = false,
+                window = window
+            ) { _ -> }
+        }
     }
 
     var showInLandscape by remember { mutableStateOf(false) }
@@ -1597,126 +1612,23 @@ private fun EditingViewBottomBar(
             label = "Animate editing view bottom bar slider height"
         )
 
+        val selectedProperty = remember { mutableStateOf(SelectedImageProperties.Contrast) }
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxWidth(1f)
                 .height(animatedSliderHeight)
+                .background(
+                    if (isLandscape) {
+                        CustomMaterialTheme.colorScheme.surfaceContainer
+                    } else {
+                        Color.Transparent
+                    }
+                )
         ) {
-            val interactionSource = remember { MutableInteractionSource() }
-            var isDraggingSlider by remember { mutableStateOf(false) }
-
-            LaunchedEffect(interactionSource.interactions) {
-                interactionSource.interactions.collect { interaction ->
-                    when (interaction) {
-                        is DragInteraction.Start -> {
-                            isDraggingSlider = true; changesSize.intValue += 1
-                        }
-
-                        is DragInteraction.Cancel -> {
-                            isDraggingSlider = false
-                        }
-
-                        is DragInteraction.Stop -> {
-                            isDraggingSlider = false
-                        }
-
-                        else -> {}
-                    }
-                }
-            }
-
-            val animatedPillHeight by animateDpAsState(
-                targetValue = if (isDraggingSlider) 32.dp else 0.dp,
-                animationSpec = tween(
-                    durationMillis = 150,
-                    delayMillis = if (isDraggingSlider) 0 else 100
-                ),
-                label = "Animate editing view bottom bar slider pill height"
-            )
-
-            val animatedPillHeightOffset by animateDpAsState(
-                targetValue = if (isDraggingSlider) 0.dp else 32.dp,
-                animationSpec = tween(
-                    durationMillis = 150,
-                    delayMillis = if (isDraggingSlider) 0 else 100
-                ),
-                label = "Animate editing view bottom bar slider pill height"
-            )
-
-            val animatedPillWidth by animateDpAsState(
-                targetValue = if (isDraggingSlider) 48.dp else 4.dp,
-                animationSpec = tween(
-                    durationMillis = 150,
-                    delayMillis = if (!isDraggingSlider) 0 else 100
-                ),
-                label = "Animate editing view bottom bar slider pill width"
-            )
-
-            val multiplier = adjustSliderValue.floatValue * 0.5f + 0.5f
-            val neededOffset = with(localDensity) {
-                val position = multiplier * maxWidth.toPx() - (24.dp.toPx() * adjustSliderValue.floatValue) - (animatedPillWidth / 2).toPx() // offset by the opposite of the movement so the pill stays in the same place, then subtract half the width to center it
-                position.coerceIn(16.dp.toPx(), (maxWidth - animatedPillWidth - 16.dp).toPx()) // -width - 16.dp because width of pill + padding
-            }
-
-            Box(
-                modifier = Modifier
-                    .offset {
-                        IntOffset(
-                            neededOffset.toInt(),
-                            with(localDensity) {
-                                ((-24).dp + animatedPillHeightOffset)
-                                    .toPx()
-                                    .toInt()
-                            })
-                    }
-                    .height(animatedPillHeight)
-                    .width(animatedPillWidth)
-                    .clip(CircleShape)
-                    .background(CustomMaterialTheme.colorScheme.primary)
-            ) {
-                Text(
-                    text = (adjustSliderValue.floatValue * 100).toInt().toString(),
-                    color = CustomMaterialTheme.colorScheme.onPrimary,
-                    fontSize = TextUnit(14f, TextUnitType.Sp),
-                    modifier = Modifier
-                        .wrapContentSize()
-                        .align(Alignment.Center)
-                )
-            }
-
-            Box(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .padding(16.dp, 0.dp)
-                    .clipToBounds()
-            ) {
-                Slider(
-                    value = adjustSliderValue.floatValue * 100f,
-                    onValueChange = {
-                        adjustSliderValue.floatValue = it / 100f
-                    },
-                    valueRange = -100f..100f,
-                    steps = 199,
-                    thumb = {
-                        Box(
-                            modifier = Modifier
-                                .width(16.dp)
-                                .height(24.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(16.dp)
-                                    .clip(CircleShape)
-                                    .background(CustomMaterialTheme.colorScheme.primary)
-                                    .align(Alignment.Center)
-                            )
-                        }
-                    },
-                    interactionSource = interactionSource,
-                    modifier = Modifier
-                        .fillMaxWidth(1f)
-                        .align(Alignment.Center)
-                )
+            if (selectedProperty.value != SelectedImageProperties.ColorTint) {
+                PopupPillSlider(sliderValue = adjustSliderValue, changesSize = changesSize)
+            } else {
+                ColorRangeSlider(sliderValue = adjustSliderValue)
             }
         }
 
@@ -1880,7 +1792,10 @@ private fun EditingViewBottomBar(
                             }
 
                             1 -> {
-                                AdjustTools(adjustSliderValue, colorMatrix)
+                                AdjustTools(
+                                    sliderValue = adjustSliderValue,
+                                    colorMatrix = colorMatrix,
+                                    selectedProperty = selectedProperty)
                             }
 
                             2 -> {
@@ -1951,17 +1866,16 @@ enum class SelectedImageProperties {
 @Composable
 fun AdjustTools(
     sliderValue: MutableFloatState,
-    colorMatrix: MutableState<ColorMatrix>
+    colorMatrix: MutableState<ColorMatrix>,
+    selectedProperty: MutableState<SelectedImageProperties>
 ) {
-    var selectedProperty by remember { mutableStateOf(SelectedImageProperties.Contrast) }
-
     var contrastValue by rememberSaveable { mutableFloatStateOf(0f) }
     var brightnessValue by rememberSaveable { mutableFloatStateOf(0f) }
     var saturationValue by rememberSaveable { mutableFloatStateOf(0f) }
     var blackPointValue by rememberSaveable { mutableFloatStateOf(0f) }
     var whitePointValue by rememberSaveable { mutableFloatStateOf(0f) }
     var warmthValue by rememberSaveable { mutableFloatStateOf(0f) }
-    var colorTintValue by rememberSaveable { mutableFloatStateOf(0f) }
+    var colorTintValue by rememberSaveable { mutableFloatStateOf(-1.2f) }
     var highlightsValue by rememberSaveable { mutableFloatStateOf(0f) }
 
     val additiveEmptyArray = floatArrayOf(
@@ -2000,7 +1914,7 @@ fun AdjustTools(
     var colorTintMatrix2 by rememberSaveable { mutableStateOf(additiveEmptyArray) }
 
     LaunchedEffect(Unit) {
-        if (selectedProperty == SelectedImageProperties.Contrast) sliderValue.floatValue = contrastValue
+        if (selectedProperty.value == SelectedImageProperties.Contrast) sliderValue.floatValue = contrastValue
     }
 
     LaunchedEffect(brightnessMatrix, contrastMatrix, saturationMatrix, blackPointMatrix, warmthMatrix, whitePointMatrix, colorTintMatrix2, highlightsMatrix) {
@@ -2017,7 +1931,7 @@ fun AdjustTools(
     }
 
     LaunchedEffect(sliderValue.floatValue) {
-        when (selectedProperty) {
+        when (selectedProperty.value) {
             SelectedImageProperties.Contrast -> run {
                 if (sliderValue.floatValue == contrastValue) return@run
 
@@ -2179,27 +2093,20 @@ fun AdjustTools(
             }
 
             SelectedImageProperties.ColorTint -> run {
-                if (sliderValue.floatValue == colorTintValue) return@run
+                if (sliderValue.floatValue == colorTintValue) {
+                	return@run
+               	}
+				else if (sliderValue.floatValue == -1.2f) {
+					colorTintMatrix1 = multiplicativeEmptyArray
+					colorTintMatrix2 = additiveEmptyArray
+					colorTintValue = sliderValue.floatValue
 
-                val tint = sliderValue.floatValue * 0.5f + 0.5f
+					return@run
+				}
 
-                val colorList = listOf(
-                    Color.Blue,
-                    Color.Red,
-                    Color.Green,
-                    Color.Yellow
-                )
+                val tint = (sliderValue.floatValue * 0.5f + 0.5f).coerceIn(0f, gradientColorList.size - 1f)
 
-                val positionInList = (colorList.size - 1f) * tint
-                val lowerColor = colorList[kotlin.math.floor(positionInList).toInt()]
-                val upperColor = colorList[kotlin.math.ceil(positionInList).toInt()]
-                val mixRatio = positionInList - colorList.indexOf(lowerColor)
-
-                val resolvedColor = Color(
-                    red = lowerColor.red * (1 - mixRatio) + upperColor.red * mixRatio,
-                    green = lowerColor.green * (1 - mixRatio) + upperColor.green * mixRatio,
-                    blue = lowerColor.blue * (1 - mixRatio) + upperColor.blue * mixRatio
-                )
+                val resolvedColor = getColorFromLinearGradientList(tint, gradientColorList)
 
                 val floatArray = floatArrayOf(
                     0.6f, 1f, 1f, 0f, 1f,
@@ -2235,9 +2142,9 @@ fun AdjustTools(
             EditingViewBottomAppBarItem(
                 text = "Contrast",
                 iconResId = R.drawable.contrast,
-                selected = selectedProperty == SelectedImageProperties.Contrast
+                selected = selectedProperty.value == SelectedImageProperties.Contrast
             ) {
-                selectedProperty = SelectedImageProperties.Contrast
+                selectedProperty.value = SelectedImageProperties.Contrast
 
                 sliderValue.floatValue = contrastValue
             }
@@ -2247,9 +2154,9 @@ fun AdjustTools(
             EditingViewBottomAppBarItem(
                 text = "Brightness",
                 iconResId = R.drawable.palette,
-                selected = selectedProperty == SelectedImageProperties.Brightness
+                selected = selectedProperty.value == SelectedImageProperties.Brightness
             ) {
-                selectedProperty = SelectedImageProperties.Brightness
+                selectedProperty.value = SelectedImageProperties.Brightness
 
                 sliderValue.floatValue = brightnessValue
             }
@@ -2259,9 +2166,9 @@ fun AdjustTools(
             EditingViewBottomAppBarItem(
                 text = "Saturation",
                 iconResId = R.drawable.resolution,
-                selected = selectedProperty == SelectedImageProperties.Saturation
+                selected = selectedProperty.value == SelectedImageProperties.Saturation
             ) {
-                selectedProperty = SelectedImageProperties.Saturation
+                selectedProperty.value = SelectedImageProperties.Saturation
 
                 sliderValue.floatValue = saturationValue
             }
@@ -2271,9 +2178,9 @@ fun AdjustTools(
             EditingViewBottomAppBarItem(
                 text = "Black Point",
                 iconResId = R.drawable.file_is_selected_background,
-                selected = selectedProperty == SelectedImageProperties.BlackPoint
+                selected = selectedProperty.value == SelectedImageProperties.BlackPoint
             ) {
-                selectedProperty = SelectedImageProperties.BlackPoint
+                selectedProperty.value = SelectedImageProperties.BlackPoint
 
                 sliderValue.floatValue = blackPointValue
             }
@@ -2283,9 +2190,9 @@ fun AdjustTools(
             EditingViewBottomAppBarItem(
                 text = "White Point",
                 iconResId = R.drawable.file_not_selected_background,
-                selected = selectedProperty == SelectedImageProperties.WhitePoint
+                selected = selectedProperty.value == SelectedImageProperties.WhitePoint
             ) {
-                selectedProperty = SelectedImageProperties.WhitePoint
+                selectedProperty.value = SelectedImageProperties.WhitePoint
 
                 sliderValue.floatValue = whitePointValue
             }
@@ -2295,7 +2202,7 @@ fun AdjustTools(
             EditingViewBottomAppBarItem(
                 text = "Shadows",
                 iconResId = R.drawable.shadow,
-                selected = selectedProperty == SelectedImageProperties.Shadows
+                selected = selectedProperty.value == SelectedImageProperties.Shadows
             )
         }
 
@@ -2303,9 +2210,9 @@ fun AdjustTools(
             EditingViewBottomAppBarItem(
                 text = "Warmth",
                 iconResId = R.drawable.skillet,
-                selected = selectedProperty == SelectedImageProperties.Warmth
+                selected = selectedProperty.value == SelectedImageProperties.Warmth
             ) {
-                selectedProperty = SelectedImageProperties.Warmth
+                selectedProperty.value = SelectedImageProperties.Warmth
 
                 sliderValue.floatValue = warmthValue
             }
@@ -2315,9 +2222,9 @@ fun AdjustTools(
             EditingViewBottomAppBarItem(
                 text = "Color Tint",
                 iconResId = R.drawable.colors,
-                selected = selectedProperty == SelectedImageProperties.ColorTint
+                selected = selectedProperty.value == SelectedImageProperties.ColorTint
             ) {
-                selectedProperty = SelectedImageProperties.ColorTint
+                selectedProperty.value = SelectedImageProperties.ColorTint
 
                 sliderValue.floatValue = colorTintValue
             }
@@ -2327,9 +2234,9 @@ fun AdjustTools(
             EditingViewBottomAppBarItem(
                 text = "Highlights",
                 iconResId = R.drawable.highlights,
-                selected = selectedProperty == SelectedImageProperties.Highlights
+                selected = selectedProperty.value == SelectedImageProperties.Highlights
             ) {
-                selectedProperty = SelectedImageProperties.Highlights
+                selectedProperty.value = SelectedImageProperties.Highlights
 
                 sliderValue.floatValue = highlightsValue
             }

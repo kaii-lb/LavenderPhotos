@@ -240,37 +240,6 @@ fun PermissionHandler(
                     }
                 }
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    item {
-                        val manageMediaLauncher = rememberLauncherForActivityResult(
-                            contract = ActivityResultContracts.StartActivityForResult()
-                        ) { _ ->
-                            val granted = MediaStore.canManageMedia(context)
-
-                            mainViewModel.onPermissionResult(
-                                permission = Manifest.permission.MANAGE_MEDIA,
-                                isGranted = granted
-                            )
-                        }
-
-                        PermissionButton(
-                            name = "Manage Media",
-                            description = "Optional permission. Is used for faster trash/delete functionality",
-                            position = RowPosition.Middle,
-                            granted = !mainViewModel.permissionQueue.contains(Manifest.permission.MANAGE_MEDIA)
-                        ) {
-                            val intent = Intent(Settings.ACTION_REQUEST_MANAGE_MEDIA)
-                            manageMediaLauncher.launch(intent)
-
-                            whyButtonExplanation = Explanations.MANAGE_MEDIA
-
-                            onGrantPermissionClicked = {
-                                manageMediaLauncher.launch(intent)
-                            }
-                        }
-                    }
-                }
-
                 item {
                     val manageExternalStorageLauncher = rememberLauncherForActivityResult(
                         contract = ActivityResultContracts.StartActivityForResult()
@@ -298,6 +267,37 @@ fun PermissionHandler(
 
                         onGrantPermissionClicked = {
                             manageExternalStorageLauncher.launch(intent)
+                        }
+                    }
+                }
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    item {
+                        val manageMediaLauncher = rememberLauncherForActivityResult(
+                            contract = ActivityResultContracts.StartActivityForResult()
+                        ) { _ ->
+                            val granted = MediaStore.canManageMedia(context)
+
+                            mainViewModel.onPermissionResult(
+                                permission = Manifest.permission.MANAGE_MEDIA,
+                                isGranted = granted
+                            )
+                        }
+
+                        PermissionButton(
+                            name = "Manage Media",
+                            description = "Optional permission. Is used for faster trash/delete functionality",
+                            position = RowPosition.Middle,
+                            granted = !mainViewModel.permissionQueue.contains(Manifest.permission.MANAGE_MEDIA)
+                        ) {
+                            val intent = Intent(Settings.ACTION_REQUEST_MANAGE_MEDIA)
+                            manageMediaLauncher.launch(intent)
+
+                            whyButtonExplanation = Explanations.MANAGE_MEDIA
+
+                            onGrantPermissionClicked = {
+                                manageMediaLauncher.launch(intent)
+                            }
                         }
                     }
                 }
