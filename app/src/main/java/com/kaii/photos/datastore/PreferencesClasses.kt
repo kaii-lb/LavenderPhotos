@@ -59,7 +59,13 @@ class SettingsAlbumsListImpl(private val context: Context, private val viewModel
 
     fun getAlbumsList(isPreV083: Boolean = false): Flow<List<String>> =
         context.datastore.data.map { data ->
-            val list = data[albumsListKey] ?: return@map getDefaultAlbumsList()
+            val list = data[albumsListKey]
+
+            if (list == null) {
+            	val defaultList = getDefaultAlbumsList()
+            	setAlbumsList(defaultList)
+            	return@map defaultList
+            }
 
             val splitBy = if (isPreV083) "," else separator
             val split = list.split(splitBy).distinct().toMutableList()
@@ -173,7 +179,7 @@ class SettingsStorageImpl(private val context: Context, private val viewModelSco
 
     fun getThumbnailSize(): Flow<Int> =
         context.datastore.data.map {
-            it[thumbnailSizeKey] ?: 30
+            it[thumbnailSizeKey] ?: 256
         }
 
     fun setThumbnailSize(value: Int) = viewModelScope.launch {

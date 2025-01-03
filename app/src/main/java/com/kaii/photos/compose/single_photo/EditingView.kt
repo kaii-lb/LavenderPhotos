@@ -111,7 +111,6 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.asAndroidBitmap
-import androidx.compose.ui.graphics.asAndroidColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
@@ -159,14 +158,11 @@ import com.kaii.photos.helpers.savePathListToBitmap
 import com.kaii.photos.helpers.toOffset
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.math.PI
 import kotlin.math.abs
-import kotlin.math.cos
 import kotlin.math.ln
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
-import kotlin.math.sin
 
 @Composable
 fun EditingView(
@@ -299,12 +295,12 @@ fun EditingView(
             textMeasurer
         )
 
-		val localConfig = LocalConfiguration.current
-	    var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
+        val localConfig = LocalConfiguration.current
+        var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
 
-	    LaunchedEffect(localConfig) {
-	    	isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
-	    }
+        LaunchedEffect(localConfig) {
+            isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
+        }
 
         BoxWithConstraints(
             modifier = Modifier
@@ -1241,11 +1237,11 @@ private fun EditingViewTopBar(
     saveImage: suspend () -> Unit,
     popBackStack: () -> Unit,
 ) {
-	val localConfig = LocalConfiguration.current
+    val localConfig = LocalConfiguration.current
     var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
 
     LaunchedEffect(localConfig) {
-    	isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
+        isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
     }
 
     var showInLandscape by remember { mutableStateOf(false) }
@@ -1519,11 +1515,11 @@ private fun EditingViewBottomBar(
 ) {
     val localDensity = LocalDensity.current
 
-	val localConfig = LocalConfiguration.current
+    val localConfig = LocalConfiguration.current
     var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
 
     LaunchedEffect(localConfig) {
-    	isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
+        isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
     }
 
     var showInLandscape by remember { mutableStateOf(false) }
@@ -2003,9 +1999,9 @@ fun AdjustTools(
     var colorTintMatrix1 by rememberSaveable { mutableStateOf(multiplicativeEmptyArray) }
     var colorTintMatrix2 by rememberSaveable { mutableStateOf(additiveEmptyArray) }
 
-	LaunchedEffect(Unit) {
-		if (selectedProperty == SelectedImageProperties.Contrast) sliderValue.floatValue = contrastValue
-	}
+    LaunchedEffect(Unit) {
+        if (selectedProperty == SelectedImageProperties.Contrast) sliderValue.floatValue = contrastValue
+    }
 
     LaunchedEffect(brightnessMatrix, contrastMatrix, saturationMatrix, blackPointMatrix, warmthMatrix, whitePointMatrix, colorTintMatrix2, highlightsMatrix) {
         val floatArray = emptyList<Float>().toMutableList()
@@ -2096,10 +2092,10 @@ fun AdjustTools(
                 val whitePoint = sliderValue.floatValue + 1f
 
                 val floatArray = floatArrayOf(
-			        whitePoint, 1f, 1f, 0f, 1f,
-			        1f, whitePoint, 1f, 0f, 1f,
-			        1f, 1f, whitePoint, 0f, 1f,
-			        0f, 0f, 0f, 1f, 0f
+                    whitePoint, 1f, 1f, 0f, 1f,
+                    1f, whitePoint, 1f, 0f, 1f,
+                    1f, 1f, whitePoint, 0f, 1f,
+                    0f, 0f, 0f, 1f, 0f
                 )
 
                 whitePointMatrix = floatArray
@@ -2110,8 +2106,8 @@ fun AdjustTools(
             SelectedImageProperties.Warmth -> run {
                 if (sliderValue.floatValue == warmthValue) return@run
 
-				// linear equation y = ax + b
-				// shifts input by 0.65f
+                // linear equation y = ax + b
+                // shifts input by 0.65f
                 val slider = (-sliderValue.floatValue * 0.4375f + 0.65f)
 
                 // taken from https://tannerhelland.com/2012/09/18/convert-temperature-rgb-algorithm-code.html and modified for brighter blues
@@ -2168,7 +2164,7 @@ fun AdjustTools(
             SelectedImageProperties.Highlights -> run {
                 if (sliderValue.floatValue == highlightsValue) return@run
 
-				val highlight = -sliderValue.floatValue
+                val highlight = -sliderValue.floatValue
 
                 val floatArray = floatArrayOf(
                     1 - highlight, 1f, 1f, 0f, 1f,
@@ -2185,25 +2181,25 @@ fun AdjustTools(
             SelectedImageProperties.ColorTint -> run {
                 if (sliderValue.floatValue == colorTintValue) return@run
 
-				val tint = sliderValue.floatValue * 0.5f + 0.5f
+                val tint = sliderValue.floatValue * 0.5f + 0.5f
 
-				val colorList = listOf(
-					Color.Blue,
-					Color.Red,
-					Color.Green,
-					Color.Yellow
-				)
+                val colorList = listOf(
+                    Color.Blue,
+                    Color.Red,
+                    Color.Green,
+                    Color.Yellow
+                )
 
-				val positionInList = (colorList.size - 1f) * tint
-				val lowerColor = colorList[kotlin.math.floor(positionInList).toInt()]
-				val upperColor = colorList[kotlin.math.ceil(positionInList).toInt()]
-				val mixRatio = positionInList - colorList.indexOf(lowerColor)
+                val positionInList = (colorList.size - 1f) * tint
+                val lowerColor = colorList[kotlin.math.floor(positionInList).toInt()]
+                val upperColor = colorList[kotlin.math.ceil(positionInList).toInt()]
+                val mixRatio = positionInList - colorList.indexOf(lowerColor)
 
-				val resolvedColor = Color(
-					red = lowerColor.red * (1 - mixRatio) + upperColor.red * mixRatio,
-					green = lowerColor.green * (1 - mixRatio) + upperColor.green * mixRatio,
-					blue = lowerColor.blue * (1 - mixRatio) + upperColor.blue * mixRatio
-				)
+                val resolvedColor = Color(
+                    red = lowerColor.red * (1 - mixRatio) + upperColor.red * mixRatio,
+                    green = lowerColor.green * (1 - mixRatio) + upperColor.green * mixRatio,
+                    blue = lowerColor.blue * (1 - mixRatio) + upperColor.blue * mixRatio
+                )
 
                 val floatArray = floatArrayOf(
                     0.6f, 1f, 1f, 0f, 1f,
@@ -2289,9 +2285,9 @@ fun AdjustTools(
                 iconResId = R.drawable.file_not_selected_background,
                 selected = selectedProperty == SelectedImageProperties.WhitePoint
             ) {
-            	selectedProperty = SelectedImageProperties.WhitePoint
+                selectedProperty = SelectedImageProperties.WhitePoint
 
-            	sliderValue.floatValue = whitePointValue
+                sliderValue.floatValue = whitePointValue
             }
         }
 
@@ -2330,7 +2326,7 @@ fun AdjustTools(
         item {
             EditingViewBottomAppBarItem(
                 text = "Highlights",
-                iconResId = R.drawable.colors,
+                iconResId = R.drawable.highlights,
                 selected = selectedProperty == SelectedImageProperties.Highlights
             ) {
                 selectedProperty = SelectedImageProperties.Highlights
@@ -2945,11 +2941,11 @@ fun BoxWithConstraintsScope.DrawingControls(
     modifications: SnapshotStateList<Modification>,
     changesSize: MutableIntState
 ) {
-	val localConfig = LocalConfiguration.current
+    val localConfig = LocalConfiguration.current
     var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
 
     LaunchedEffect(localConfig) {
-    	isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
+        isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
     }
 
     var shouldShowDrawOptions by remember { mutableStateOf(false) }
