@@ -134,19 +134,6 @@ fun HorizontalImageList(
                 key2 = canFadeControls.value,
                 key3 = appBarsVisible.value
             ) {
-            	if (!appBarsVisible.value) {
-					setBarVisibility(
-            		    visible = false,
-            		    window = window
-            		) {
-            		    appBarsVisible.value = it
-
-            		    showVideoPlayerControls.value = it
-            		}
-
-            		canFadeControls.value = false
-            	}
-
                 if (canFadeControls.value && showVideoPlayerControls.value) {
                     delay(5000)
                     setBarVisibility(
