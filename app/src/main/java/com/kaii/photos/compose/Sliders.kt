@@ -76,11 +76,10 @@ fun BoxWithConstraintsScope.ColorRangeSlider(
         }
     }
 
-	var isClearingTint by remember { mutableStateOf(false) }
     val sliderAnimatedValue by animateFloatAsState(
     	targetValue = sliderValue.floatValue,
     	animationSpec = tween(
-    		durationMillis = if (isClearingTint) 200 else 0
+    		durationMillis = if (sliderValue.floatValue == -1.2f) 200 else 0
     	),
     	label = "animate editing adjustment color tint value change"
     )
@@ -178,10 +177,8 @@ fun BoxWithConstraintsScope.ColorRangeSlider(
             onValueChange = {
                 sliderValue.floatValue =
                     if (it <= -1.1f) {
-                    	isClearingTint = true
                         -1.2f
                     } else {
-                    	isClearingTint = false
                         it.coerceAtLeast(-1f)
                     }
             },

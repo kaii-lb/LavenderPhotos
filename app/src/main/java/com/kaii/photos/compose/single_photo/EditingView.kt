@@ -161,7 +161,10 @@ import com.kaii.photos.helpers.Modification
 import com.kaii.photos.helpers.PaintType
 import com.kaii.photos.helpers.getColorFromLinearGradientList
 import com.kaii.photos.helpers.gradientColorList
+import com.kaii.photos.helpers.ColorFiltersMatrices
 import com.kaii.photos.helpers.savePathListToBitmap
+import com.kaii.photos.helpers.setOrMultiply
+import com.kaii.photos.helpers.concat
 import com.kaii.photos.helpers.toOffset
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -236,6 +239,7 @@ fun EditingView(
 
     val adjustSliderValue = remember { mutableFloatStateOf(0f) }
     val colorMatrix = remember { mutableStateOf(ColorMatrix()) }
+    val currentFilter = remember { mutableStateOf(ColorFiltersMatrices["None"]!!) }
 
     Scaffold(
         topBar = {
@@ -276,6 +280,7 @@ fun EditingView(
                 originalImageRatio = image.width.toFloat() / image.height.toFloat(),
                 adjustSliderValue = adjustSliderValue,
                 colorMatrix = colorMatrix,
+                currentFilter = currentFilter,
                 window = window,
                 resetCropping = {
                     rotationMultiplier.intValue = 0
@@ -1520,6 +1525,7 @@ private fun EditingViewBottomBar(
     originalImageRatio: Float,
     adjustSliderValue: MutableFloatState,
     colorMatrix: MutableState<ColorMatrix>,
+    currentFilter: MutableState<ColorMatrix>,
     window: Window,
     resetCropping: () -> Unit
 ) {
@@ -1774,6 +1780,30 @@ private fun EditingViewBottomBar(
                         }
                     }
 
+					var adjustmentsResult by remember { mutableStateOf(emptyList<Float>()) }
+
+					LaunchedEffect(currentFilter.value.values, adjustmentsResult) {
+						if (adjustmentsResult.isEmpty()) return@LaunchedEffect
+
+				        val floatArray = emptyList<Float>().toMutableList()
+
+						val filter = currentFilter.value.values
+				        for (i in filter.indices) {
+				            var item = adjustmentsResult[i]
+
+				            if (i == 4 || i == 9 || i == 14) {
+				            	item += filter[i]
+				            } else {
+				            	if (item == 0f) item = filter[i]
+				            	else item *= filter[i]
+				            }
+
+				            floatArray.add(item)
+				        }
+
+						colorMatrix.value = ColorMatrix(floatArray.toTypedArray().toFloatArray())
+					}
+
                     HorizontalPager(
                         state = pagerState,
                         userScrollEnabled = false,
@@ -1792,14 +1822,21 @@ private fun EditingViewBottomBar(
                             }
 
                             1 -> {
-                                AdjustTools(
-                                    sliderValue = adjustSliderValue,
-                                    colorMatrix = colorMatrix,
-                                    selectedProperty = selectedProperty)
+								AdjustTools(
+									sliderValue = adjustSliderValue,
+									colorMatrix = colorMatrix,
+									selectedProperty = selectedProperty
+								) {
+									adjustmentsResult = it
+								}
                             }
 
                             2 -> {
-                                FiltersTools()
+			                    FiltersTools(
+			                    	colorMatrix = colorMatrix,
+			                    	currentFilter = currentFilter,
+			                    	changesSize = changesSize
+			                    )
                             }
 
                             3 -> {
@@ -1867,7 +1904,8 @@ enum class SelectedImageProperties {
 fun AdjustTools(
     sliderValue: MutableFloatState,
     colorMatrix: MutableState<ColorMatrix>,
-    selectedProperty: MutableState<SelectedImageProperties>
+    selectedProperty: MutableState<SelectedImageProperties>,
+    onAdjustmentsDone: (List<Float>) -> Unit
 ) {
     var contrastValue by rememberSaveable { mutableFloatStateOf(0f) }
     var brightnessValue by rememberSaveable { mutableFloatStateOf(0f) }
@@ -1913,10 +1951,6 @@ fun AdjustTools(
     var colorTintMatrix1 by rememberSaveable { mutableStateOf(multiplicativeEmptyArray) }
     var colorTintMatrix2 by rememberSaveable { mutableStateOf(additiveEmptyArray) }
 
-    LaunchedEffect(Unit) {
-        if (selectedProperty.value == SelectedImageProperties.Contrast) sliderValue.floatValue = contrastValue
-    }
-
     LaunchedEffect(brightnessMatrix, contrastMatrix, saturationMatrix, blackPointMatrix, warmthMatrix, whitePointMatrix, colorTintMatrix2, highlightsMatrix) {
         val floatArray = emptyList<Float>().toMutableList()
 
@@ -1927,7 +1961,7 @@ fun AdjustTools(
             floatArray.add(multiply + add)
         }
 
-        colorMatrix.value = ColorMatrix(floatArray.toTypedArray().toFloatArray())
+        onAdjustmentsDone(floatArray)
     }
 
     LaunchedEffect(sliderValue.floatValue) {
@@ -2245,33 +2279,43 @@ fun AdjustTools(
 }
 
 @Composable
-fun FiltersTools() {
+fun FiltersTools(
+	colorMatrix: MutableState<ColorMatrix>,
+	currentFilter: MutableState<ColorMatrix>,
+	changesSize: MutableIntState
+) {
     LazyRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceEvenly,
         modifier = Modifier
             .fillMaxSize(1f)
     ) {
-        item {
-            EditingViewBottomAppBarItem(text = "Filter", iconResId = R.drawable.style)
-        }
+        items(
+        	count = ColorFiltersMatrices.keys.toList().size
+        ) { index ->
+        	val key = ColorFiltersMatrices.keys.toList()[index]
+        	val matrix = ColorFiltersMatrices[key]
 
-        item {
-            EditingViewBottomAppBarItem(text = "Filter", iconResId = R.drawable.style)
-        }
+        	if (matrix != null) {
+	            EditingViewBottomAppBarItem(text = key, iconResId = R.drawable.style, selected = currentFilter.value == matrix) {
+	            	currentFilter.value = matrix
 
-        item {
-            EditingViewBottomAppBarItem(text = "Filter", iconResId = R.drawable.style)
-        }
-
-        item {
-            EditingViewBottomAppBarItem(text = "Filter", iconResId = R.drawable.style)
-        }
-
-        item {
-            EditingViewBottomAppBarItem(text = "Filter", iconResId = R.drawable.style)
+	            	changesSize.intValue += 1
+	            }
+        	}
         }
     }
+}
+
+fun ColorMatrix.multiplyOrSet(row: Int, column: Int, value: Float) : ColorMatrix {
+	val local = this
+	if (local[row, column] != 0f) {
+		local[row, column] *= value
+	} else {
+		local[row, column] = value
+	}
+
+	return local
 }
 
 @Composable
