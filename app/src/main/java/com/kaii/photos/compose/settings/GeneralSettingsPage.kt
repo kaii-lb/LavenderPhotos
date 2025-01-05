@@ -38,6 +38,7 @@ import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.compose.PreferencesSeparatorText
 import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.datastore.Video
+import com.kaii.photos.datastore.Editing
 
 @Composable
 fun GeneralSettingsPage() {
@@ -123,6 +124,28 @@ fun GeneralSettingsPage() {
                         }
                     )
 				}
+
+
+                item {
+                    PreferencesSeparatorText("Editing")
+                }
+
+                item {
+                	val overwriteByDefault by mainViewModel.settings.Editing.getOverwriteByDefault().collectAsStateWithLifecycle(initialValue = false)
+
+                	PreferencesSwitchRow(
+                	    title = "Overwrite on save",
+                	    summary = "Default to overwriting instead of saving a copy when editing media.",
+                	    iconResID = R.drawable.storage,
+                	    checked = overwriteByDefault,
+                	    position = RowPosition.Single,
+                	    showBackground = false,
+                	    onRowClick = null,
+                	    onSwitchClick = { checked ->
+                	    	mainViewModel.settings.Editing.setOverwriteByDefault(checked)
+                	    }
+                	)
+                }
             }
         }
 	}

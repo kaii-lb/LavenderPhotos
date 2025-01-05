@@ -262,3 +262,18 @@ class SettingsLookAndFeelImpl(private val context: Context, private val viewMode
         )
     }
 }
+
+class SettingsEditingImpl(private val context: Context, private val viewModelScope: CoroutineScope) {
+    private val overwriteByDefaultKey = booleanPreferencesKey("editing_overwrite_by_default")
+
+    fun getOverwriteByDefault(): Flow<Boolean> =
+        context.datastore.data.map {
+            it[overwriteByDefaultKey] ?: false
+        }
+
+    fun setOverwriteByDefault(value: Boolean) = viewModelScope.launch {
+        context.datastore.edit {
+            it[overwriteByDefaultKey] = value
+        }
+    }
+}

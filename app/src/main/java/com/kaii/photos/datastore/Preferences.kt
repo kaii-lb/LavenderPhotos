@@ -34,3 +34,6 @@ val Settings.Video: SettingsVideoImpl
 
 val Settings.LookAndFeel: SettingsLookAndFeelImpl
     get() = SettingsLookAndFeelImpl(context, viewModelScope)
+
+val Settings.Editing: SettingsEditingImpl
+    get() = SettingsEditingImpl(context, viewModelScope)

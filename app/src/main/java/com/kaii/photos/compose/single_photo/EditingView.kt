@@ -139,8 +139,10 @@ import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
+import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.compose.BottomAppBarItem
 import com.kaii.photos.compose.ColorRangeSlider
 import com.kaii.photos.compose.ConfirmationDialog
@@ -151,6 +153,7 @@ import com.kaii.photos.compose.PopupPillSlider
 import com.kaii.photos.compose.SetEditingViewDrawableTextBottomSheet
 import com.kaii.photos.compose.SplitButton
 import com.kaii.photos.compose.setBarVisibility
+import com.kaii.photos.datastore.Editing
 import com.kaii.photos.helpers.ColorIndicator
 import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.DrawablePath
@@ -242,7 +245,12 @@ fun EditingView(
 
     Scaffold(
         topBar = {
-            val overwrite = remember { mutableStateOf(false) }
+        	val overwriteByDefault by mainViewModel.settings.Editing.getOverwriteByDefault().collectAsStateWithLifecycle(initialValue = false)
+            val overwrite = remember { mutableStateOf(overwriteByDefault) }
+
+            LaunchedEffect(overwriteByDefault) {
+            	overwrite.value = overwriteByDefault
+            }
 
             EditingViewTopBar(
                 showCloseDialog = showCloseDialog,
@@ -1344,7 +1352,13 @@ private fun EditingViewTopBar(
                         Spacer(modifier = Modifier.width(8.dp))
                     }
 
-                    var saveButtonTitle by remember { mutableStateOf("Save Copy") }
+                    val saveButtonTitle by remember { derivedStateOf {
+                    	if (overwrite.value) {
+                    		"Save"
+                    	} else {
+                    		"Save Copy"
+                    	}
+                    }}
                     val saveAction: () -> Unit = {
                         oldChangesSize.intValue = changesSize.intValue
 
@@ -1370,7 +1384,7 @@ private fun EditingViewTopBar(
                         },
                         primaryAction = saveAction,
                         secondaryAction = {
-                            dropDownExpanded = true
+                            dropDownExpanded = !dropDownExpanded
                         },
                         secondaryContent = {
                             Icon(
@@ -1402,7 +1416,6 @@ private fun EditingViewTopBar(
                         ) {
                             dropDownExpanded = false
                             overwrite.value = true
-                            saveButtonTitle = "Save"
                             saveAction()
                         }
 
@@ -1413,7 +1426,6 @@ private fun EditingViewTopBar(
                         ) {
                             dropDownExpanded = false
                             overwrite.value = false
-                            saveButtonTitle = "Save Copy"
                             saveAction()
                         }
                     }
