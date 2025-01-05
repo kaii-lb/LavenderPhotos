@@ -16,6 +16,8 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -48,9 +50,11 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -61,13 +65,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -75,6 +82,8 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.round
+import androidx.compose.ui.unit.toIntRect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
@@ -99,6 +108,7 @@ import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.signature
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.ZoneId
@@ -214,6 +224,19 @@ fun DeviceMedia(
             val cacheThumbnails by mainViewModel.settings.Storage.getCacheThumbnails().collectAsStateWithLifecycle(initialValue = false)
             val thumbnailSize by mainViewModel.settings.Storage.getThumbnailSize().collectAsStateWithLifecycle(initialValue = 0)
 
+            val scrollSpeed = remember { mutableFloatStateOf(0f) }
+            val isDragSelecting = remember { mutableStateOf(false) }
+            val localDensity = LocalDensity.current
+
+            LaunchedEffect(scrollSpeed.floatValue) {
+                if (scrollSpeed.floatValue != 0f) {
+                    while(selectedItemsList.isNotEmpty()) {
+                        gridState.scrollBy(scrollSpeed.floatValue)
+                        delay(10)
+                    }
+                }
+            }
+
             LazyVerticalGrid(
                 columns = GridCells.Fixed(
                     if (!isLandscape) {
@@ -222,9 +245,21 @@ fun DeviceMedia(
                         6
                     }
                 ),
+                userScrollEnabled = !isDragSelecting.value,
                 modifier = Modifier
                     .fillMaxSize(1f)
-                    .align(Alignment.TopCenter),
+                    .align(Alignment.TopCenter)
+                    .dragSelectionHandler(
+                        state = gridState,
+                        selectedItemsList = selectedItemsList,
+                        groupedMedia = groupedMedia.value,
+                        scrollSpeed = scrollSpeed,
+                        scrollThreshold = with(localDensity) {
+                            40.dp.toPx()
+                        },
+                        viewProperties = viewProperties,
+                        isDragSelecting = isDragSelecting
+                    ),
                 state = gridState
             ) {
                 items(
@@ -262,7 +297,8 @@ fun DeviceMedia(
                             groupedMedia = groupedMedia,
                             viewProperties = viewProperties,
                             selectedItemsList = selectedItemsList,
-                            thumbnailSettings = Pair(cacheThumbnails, thumbnailSize)
+                            thumbnailSettings = Pair(cacheThumbnails, thumbnailSize),
+                            isDragSelecting = isDragSelecting
                         ) {
                             when (viewProperties.operation) {
                                 ImageFunctions.LoadNormalImage -> {
@@ -521,6 +557,7 @@ fun MediaStoreItem(
     viewProperties: ViewProperties,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     thumbnailSettings: Pair<Boolean, Int>,
+    isDragSelecting: MutableState<Boolean>,
     onClick: () -> Unit
 ) {
     val vibratorManager = rememberVibratorManager()
@@ -598,84 +635,96 @@ fun MediaStoreItem(
             label = "animate scale of selected item"
         )
 
+		val onSingleClick: () -> Unit = {
+	        vibratorManager.vibrateShort()
+	        coroutineScope.launch {
+	            if (selectedItemsList.size > 0) {
+	                val sectionItems = groupedMedia.value.filter {
+	                    if (viewProperties.sortMode == MediaItemSortMode.LastModified) {
+	                        it.getLastModifiedDay() == item.getLastModifiedDay()
+	                    } else {
+	                        it.getDateTakenDay() == item.getDateTakenDay()
+	                    }
+	                }
+
+	                val section = sectionItems.first { it.type == MediaType.Section }
+
+	                if (isSelected) {
+	                    if (selectedItemsList.contains(section)) selectedItemsList.remove(
+	                        section
+	                    )
+	                    selectedItemsList.remove(item)
+	                } else {
+	                    if (selectedItemsList.size == 1 && selectedItemsList[0] == MediaStoreData()) selectedItemsList.clear()
+
+	                    selectedItemsList.add(item)
+
+	                    val allItems =
+	                        sectionItems.filter { it.type != MediaType.Section }
+	                    if (selectedItemsList.containsAll(allItems)) {
+	                        selectedItemsList.add(section)
+	                    } else {
+	                        selectedItemsList.remove(section)
+	                    }
+	                }
+
+	                return@launch
+	            }
+
+	            onClick()
+	        }
+		}
+
+		val onLongClick: () -> Unit = {
+			isDragSelecting.value = true
+
+	        val sectionItems = groupedMedia.value.filter {
+	            if (viewProperties.sortMode == MediaItemSortMode.LastModified) {
+	                it.getLastModifiedDay() == item.getLastModifiedDay()
+	            } else {
+	                it.getDateTakenDay() == item.getDateTakenDay()
+	            }
+	        }
+
+	        val section = sectionItems.first { it.type == MediaType.Section }
+
+	        vibratorManager.vibrateLong()
+	        if (isSelected) {
+	            if (selectedItemsList.contains(section)) selectedItemsList.remove(
+	                section
+	            )
+	            selectedItemsList.remove(item)
+	        } else {
+	            if (selectedItemsList.size == 1 && selectedItemsList[0] == MediaStoreData()) selectedItemsList.clear()
+	            selectedItemsList.add(item)
+
+	            val allItems = sectionItems.filter { it.type != MediaType.Section }
+	            if (selectedItemsList.containsAll(allItems)) {
+	                selectedItemsList.add(section)
+	            } else {
+	                selectedItemsList.remove(section)
+	            }
+	        }
+		}
+
         Box(
             modifier = Modifier
                 .aspectRatio(1f)
                 .padding(2.dp)
                 .clip(RoundedCornerShape(0.dp))
                 .background(CustomMaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
-                .combinedClickable(
-                    onClick = {
-                        vibratorManager.vibrateShort()
-                        coroutineScope.launch {
-                            if (selectedItemsList.size > 0) {
-                                val sectionItems = groupedMedia.value.filter {
-                                    if (viewProperties.sortMode == MediaItemSortMode.LastModified) {
-                                        it.getLastModifiedDay() == item.getLastModifiedDay()
-                                    } else {
-                                        it.getDateTakenDay() == item.getDateTakenDay()
-                                    }
-                                }
+                .then(
+                	if (selectedItemsList.size > 0) {
+                		Modifier.clickable {
+                			onSingleClick()
+                		}
+                	} else {
+                		Modifier.combinedClickable(
+                		    onClick = onSingleClick,
 
-                                val section = sectionItems.first { it.type == MediaType.Section }
-
-                                if (isSelected) {
-                                    if (selectedItemsList.contains(section)) selectedItemsList.remove(
-                                        section
-                                    )
-                                    selectedItemsList.remove(item)
-                                } else {
-                                    if (selectedItemsList.size == 1 && selectedItemsList[0] == MediaStoreData()) selectedItemsList.clear()
-
-                                    selectedItemsList.add(item)
-
-                                    val allItems =
-                                        sectionItems.filter { it.type != MediaType.Section }
-                                    if (selectedItemsList.containsAll(allItems)) {
-                                        selectedItemsList.add(section)
-                                    } else {
-                                        selectedItemsList.remove(section)
-                                    }
-                                }
-
-                                return@launch
-                            }
-
-                            onClick()
-                        }
-                    },
-
-                    onLongClick = {
-                        if (selectedItemsList.size > 0) return@combinedClickable
-
-                        val sectionItems = groupedMedia.value.filter {
-                            if (viewProperties.sortMode == MediaItemSortMode.LastModified) {
-                                it.getLastModifiedDay() == item.getLastModifiedDay()
-                            } else {
-                                it.getDateTakenDay() == item.getDateTakenDay()
-                            }
-                        }
-
-                        val section = sectionItems.first { it.type == MediaType.Section }
-
-                        vibratorManager.vibrateLong()
-                        if (isSelected) {
-                            if (selectedItemsList.contains(section)) selectedItemsList.remove(
-                                section
-                            )
-                            selectedItemsList.remove(item)
-                        } else {
-                            if (selectedItemsList.size == 1 && selectedItemsList[0] == MediaStoreData()) selectedItemsList.clear()
-                            selectedItemsList.add(item)
-
-                            val allItems = sectionItems.filter { it.type != MediaType.Section }
-                            if (selectedItemsList.containsAll(allItems)) {
-                                selectedItemsList.add(section)
-                            } else {
-                                selectedItemsList.remove(section)
-                            }
-                        }
-                    }
+                		    onLongClick = onLongClick
+                		)
+                	}
                 )
         ) {
             GlideImage(
@@ -796,3 +845,156 @@ fun ShowSelectedState(
         }
     }
 }
+
+fun Modifier.dragSelectionHandler(
+    state: LazyGridState,
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    groupedMedia: List<MediaStoreData>,
+    scrollSpeed: MutableFloatState,
+    scrollThreshold: Float,
+    viewProperties: ViewProperties,
+    isDragSelecting: MutableState<Boolean>
+) = pointerInput(Unit) {
+    var initialKey: String? = null
+    var currentKey: String? = null
+
+    detectDragGestures (
+        onDragStart = { offset ->
+        	isDragSelecting.value = true
+
+			if (selectedItemsList.isNotEmpty()) {
+				initialKey = selectedItemsList[0].uri.toString()
+			}
+
+            state.getGridItemAtOffset(offset)?.let { key ->
+                val item = groupedMedia.find {
+                	it.uri.toString() == key
+                }!!
+
+                if (item.type != MediaType.Section) {
+                    currentKey = key
+                    selectedItemsList.add(item)
+
+			        val sectionItems = groupedMedia.filter {
+			            if (viewProperties.sortMode == MediaItemSortMode.LastModified) {
+			                it.getLastModifiedDay() == item.getLastModifiedDay()
+			            } else {
+			                it.getDateTakenDay() == item.getDateTakenDay()
+			            }
+			        }
+
+			        val section = sectionItems.first { it.type == MediaType.Section }
+
+		            val allItems = sectionItems.filter { it.type != MediaType.Section }
+		            if (selectedItemsList.containsAll(allItems)) {
+		                selectedItemsList.add(section)
+		            } else {
+		                selectedItemsList.remove(section)
+		            }
+                }
+            }
+        },
+
+        onDragCancel = {
+            initialKey = null
+            scrollSpeed.floatValue = 0f
+            isDragSelecting.value = false
+        },
+
+        onDragEnd = {
+            initialKey = null
+            scrollSpeed.floatValue = 0f
+            isDragSelecting.value = false
+        },
+
+        onDrag = { change, _ ->
+            if (initialKey != null) {
+                val distanceFromBottom = state.layoutInfo.viewportSize.height - change.position.y
+                val distanceFromTop = change.position.y // for clarity
+
+                scrollSpeed.floatValue = when {
+                    distanceFromBottom < scrollThreshold -> scrollThreshold - distanceFromBottom
+                    distanceFromTop < scrollThreshold -> -scrollThreshold + distanceFromTop
+                    else -> 0f
+                }
+
+                state.getGridItemAtOffset(change.position)?.let { key ->
+                	if (currentKey != key) {
+                		val initialItem = groupedMedia.find { it.uri.toString() == initialKey!! }!!
+                		val currentItem = groupedMedia.find { it.uri.toString() == currentKey!! }!!
+                		val keyItem = groupedMedia.find { it.uri.toString() == key }!!
+
+                		val initial = groupedMedia.indexOf(initialItem)
+                		val current = groupedMedia.indexOf(currentItem)
+                		val keyIndex = groupedMedia.indexOf(keyItem)
+
+	                    selectedItemsList.apply {
+	                        groupedMedia.filter {
+	                            groupedMedia.indexOf(it) in initial..current
+	                        }.let { items ->
+	                            removeAll(items)
+	                        }
+
+	                        groupedMedia.filter {
+	                            groupedMedia.indexOf(it) in current..initial
+	                        }.let { items ->
+	                            removeAll(items)
+	                        }
+
+	                        groupedMedia.filter {
+	                            groupedMedia.indexOf(it) in initial..keyIndex
+	                        }.let { items ->
+	                            addAll(items)
+	                        }
+
+	                        groupedMedia.filter {
+	                            groupedMedia.indexOf(it) in keyIndex..initial
+	                        }.let { items ->
+	                            addAll(items)
+	                        }
+
+	                        val initialSectionAllItems = groupedMedia.filter {
+								if (viewProperties.sortMode == MediaItemSortMode.LastModified) {
+	                        	    it.getLastModifiedDay() == initialItem.getLastModifiedDay()
+	                        	} else {
+	                        	    it.getDateTakenDay() == initialItem.getDateTakenDay()
+	                        	}
+	                        }
+	                        val initialSection = initialSectionAllItems.first { it.type == MediaType.Section }
+	                        val initialSectionItems = initialSectionAllItems.filter { it.type != MediaType.Section }
+		                    if (selectedItemsList.containsAll(initialSectionItems)) {
+		                        selectedItemsList.add(initialSection)
+		                    } else {
+		                        selectedItemsList.remove(initialSection)
+		                    }
+
+			                val sectionAllItems = groupedMedia.filter {
+			                    if (viewProperties.sortMode == MediaItemSortMode.LastModified) {
+			                        it.getLastModifiedDay() == keyItem.getLastModifiedDay()
+			                    } else {
+			                        it.getDateTakenDay() == keyItem.getDateTakenDay()
+			                    }
+			                }
+
+			                val section = sectionAllItems.first { it.type == MediaType.Section }
+		                    val sectionItems = sectionAllItems.filter { it.type != MediaType.Section }
+
+		                    if (selectedItemsList.containsAll(sectionItems)) {
+		                        selectedItemsList.add(section)
+		                    } else {
+		                        selectedItemsList.remove(section)
+		                    }
+	                    }
+
+	                    currentKey = key
+                	}
+                }
+            }
+        }
+    )
+}
+
+fun LazyGridState.getGridItemAtOffset(offset: Offset) : String? =
+    layoutInfo.visibleItemsInfo.find { item ->
+        item.size.toIntRect().contains(offset.round() - item.offset)
+    }?.key as? String
