@@ -50,7 +50,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
@@ -62,7 +61,6 @@ import androidx.compose.material.ripple.RippleAlpha
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
@@ -107,6 +105,7 @@ import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TransformOrigin
@@ -141,19 +140,22 @@ import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalNavController
-import com.kaii.photos.R
 import com.kaii.photos.MainActivity.Companion.mainViewModel
+import com.kaii.photos.R
 import com.kaii.photos.compose.BottomAppBarItem
+import com.kaii.photos.compose.ColorFilterItem
 import com.kaii.photos.compose.ColorRangeSlider
 import com.kaii.photos.compose.ConfirmationDialog
 import com.kaii.photos.compose.CroppingRatioBottomSheet
-import com.kaii.photos.compose.getAppBarContentTransition
-import com.kaii.photos.compose.SelectableDropDownMenuItem
 import com.kaii.photos.compose.PopupPillSlider
+import com.kaii.photos.compose.SelectableDropDownMenuItem
 import com.kaii.photos.compose.SetEditingViewDrawableTextBottomSheet
+import com.kaii.photos.compose.SimpleTab
 import com.kaii.photos.compose.SplitButton
+import com.kaii.photos.compose.getAppBarContentTransition
 import com.kaii.photos.compose.setBarVisibility
 import com.kaii.photos.datastore.Editing
+import com.kaii.photos.helpers.ColorFiltersMatrices
 import com.kaii.photos.helpers.ColorIndicator
 import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.DrawablePath
@@ -165,7 +167,6 @@ import com.kaii.photos.helpers.Modification
 import com.kaii.photos.helpers.PaintType
 import com.kaii.photos.helpers.getColorFromLinearGradientList
 import com.kaii.photos.helpers.gradientColorList
-import com.kaii.photos.helpers.ColorFiltersMatrices
 import com.kaii.photos.helpers.savePathListToBitmap
 import com.kaii.photos.helpers.toOffset
 import kotlinx.coroutines.delay
@@ -245,11 +246,11 @@ fun EditingView(
 
     Scaffold(
         topBar = {
-        	val overwriteByDefault by mainViewModel.settings.Editing.getOverwriteByDefault().collectAsStateWithLifecycle(initialValue = false)
+            val overwriteByDefault by mainViewModel.settings.Editing.getOverwriteByDefault().collectAsStateWithLifecycle(initialValue = false)
             val overwrite = remember { mutableStateOf(overwriteByDefault) }
 
             LaunchedEffect(overwriteByDefault) {
-            	overwrite.value = overwriteByDefault
+                overwrite.value = overwriteByDefault
             }
 
             EditingViewTopBar(
@@ -288,6 +289,7 @@ fun EditingView(
                 adjustSliderValue = adjustSliderValue,
                 colorMatrix = colorMatrix,
                 currentFilter = currentFilter,
+                image = image,
                 window = window,
                 resetCropping = {
                     rotationMultiplier.intValue = 0
@@ -1352,13 +1354,15 @@ private fun EditingViewTopBar(
                         Spacer(modifier = Modifier.width(8.dp))
                     }
 
-                    val saveButtonTitle by remember { derivedStateOf {
-                    	if (overwrite.value) {
-                    		"Save"
-                    	} else {
-                    		"Save Copy"
-                    	}
-                    }}
+                    val saveButtonTitle by remember {
+                        derivedStateOf {
+                            if (overwrite.value) {
+                                "Save"
+                            } else {
+                                "Save Copy"
+                            }
+                        }
+                    }
                     val saveAction: () -> Unit = {
                         oldChangesSize.intValue = changesSize.intValue
 
@@ -1483,6 +1487,7 @@ private fun EditingViewBottomBar(
     adjustSliderValue: MutableFloatState,
     colorMatrix: MutableState<ColorMatrix>,
     currentFilter: MutableState<ColorMatrix>,
+    image: ImageBitmap,
     window: Window,
     resetCropping: () -> Unit
 ) {
@@ -1576,33 +1581,34 @@ private fun EditingViewBottomBar(
         )
 
         val selectedProperty = remember { mutableStateOf(SelectedImageProperties.Contrast) }
-		AnimatedContent(
-			targetState = selectedProperty.value != SelectedImageProperties.ColorTint,
-			transitionSpec = {
-				getAppBarContentTransition(selectedProperty.value != SelectedImageProperties.ColorTint)
-			},
-			modifier = Modifier
-				.fillMaxWidth(1f)
-				.height(animatedSliderHeight)
-		) { isNotColorSlider ->
-			BoxWithConstraints(
-			    modifier = Modifier
-			        .fillMaxWidth(1f)
-			        .height(animatedSliderHeight)
-			        .background(
-			            if (isLandscape) {
-			                CustomMaterialTheme.colorScheme.surfaceContainer
-			            } else {
-			                Color.Transparent
-			            }
-			        )
-			) {
-				if (isNotColorSlider) {
-					PopupPillSlider(sliderValue = adjustSliderValue, changesSize = changesSize)
-				} else {
-					ColorRangeSlider(sliderValue = adjustSliderValue)
-				}
-			}
+        AnimatedContent(
+            targetState = selectedProperty.value != SelectedImageProperties.ColorTint,
+            transitionSpec = {
+                getAppBarContentTransition(selectedProperty.value != SelectedImageProperties.ColorTint)
+            },
+            label = "Animate between normal slider and color slider",
+            modifier = Modifier
+                .fillMaxWidth(1f)
+                .height(animatedSliderHeight)
+        ) { isNotColorSlider ->
+            BoxWithConstraints(
+                modifier = Modifier
+                    .fillMaxWidth(1f)
+                    .height(animatedSliderHeight)
+                    .background(
+                        if (isLandscape) {
+                            CustomMaterialTheme.colorScheme.surfaceContainer
+                        } else {
+                            Color.Transparent
+                        }
+                    )
+            ) {
+                if (isNotColorSlider) {
+                    PopupPillSlider(sliderValue = adjustSliderValue, changesSize = changesSize)
+                } else {
+                    ColorRangeSlider(sliderValue = adjustSliderValue)
+                }
+            }
         }
 
         Column(
@@ -1669,107 +1675,55 @@ private fun EditingViewBottomBar(
                                     orientation = Orientation.Horizontal
                                 )
                         ) {
-                            Tab(
-                                selected = pagerState.currentPage == 0,
-                                onClick = {
-                                    coroutineScope.launch {
-                                        pagerState.animateScrollToPage(0)
-                                    }
-                                },
-                                modifier = Modifier
-                                    .height(40.dp)
-                                    .zIndex(2f)
-                                    .clip(RoundedCornerShape(100.dp))
-                            ) {
-                                Text(
-                                    text = "Crop",
-                                    color = if (pagerState.currentPage == 0) CustomMaterialTheme.colorScheme.onPrimary else CustomMaterialTheme.colorScheme.onSurface,
-                                    fontSize = TextUnit(14f, TextUnitType.Sp)
-                                )
+                            SimpleTab(text = "Crop", selected = pagerState.currentPage == 0) {
+                                coroutineScope.launch {
+                                    pagerState.animateScrollToPage(0)
+                                }
                             }
 
-                            Tab(
-                                selected = pagerState.currentPage == 1,
-                                onClick = {
-                                    coroutineScope.launch {
-                                        pagerState.animateScrollToPage(1)
-                                    }
-                                },
-                                modifier = Modifier
-                                    .height(40.dp)
-                                    .zIndex(2f)
-                                    .clip(RoundedCornerShape(100.dp))
-                            ) {
-                                Text(
-                                    text = "Adjust",
-                                    color = if (pagerState.currentPage == 1) CustomMaterialTheme.colorScheme.onPrimary else CustomMaterialTheme.colorScheme.onSurface,
-                                    fontSize = TextUnit(14f, TextUnitType.Sp)
-                                )
+                            SimpleTab(text = "Adjust", selected = pagerState.currentPage == 1) {
+                                coroutineScope.launch {
+                                    pagerState.animateScrollToPage(1)
+                                }
                             }
 
-                            Tab(
-                                selected = pagerState.currentPage == 2,
-                                onClick = {
-                                    coroutineScope.launch {
-                                        pagerState.animateScrollToPage(2)
-                                    }
-                                },
-                                modifier = Modifier
-                                    .height(40.dp)
-                                    .zIndex(2f)
-                                    .clip(RoundedCornerShape(100.dp))
-                            ) {
-                                Text(
-                                    text = "Filters",
-                                    color = if (pagerState.currentPage == 2) CustomMaterialTheme.colorScheme.onPrimary else CustomMaterialTheme.colorScheme.onSurface,
-                                    fontSize = TextUnit(14f, TextUnitType.Sp)
-                                )
+                            SimpleTab(text = "Filters", selected = pagerState.currentPage == 2) {
+                                coroutineScope.launch {
+                                    pagerState.animateScrollToPage(2)
+                                }
                             }
 
-                            Tab(
-                                selected = pagerState.currentPage == 3,
-                                onClick = {
-                                    coroutineScope.launch {
-                                        pagerState.animateScrollToPage(3)
-                                    }
-                                },
-                                modifier = Modifier
-                                    .height(40.dp)
-                                    .zIndex(2f)
-                                    .clip(RoundedCornerShape(100.dp))
-                            ) {
-                                Text(
-                                    text = "Draw",
-                                    color = if (pagerState.currentPage == 3) CustomMaterialTheme.colorScheme.onPrimary else CustomMaterialTheme.colorScheme.onSurface,
-                                    fontSize = TextUnit(14f, TextUnitType.Sp)
-                                )
+                            SimpleTab(text = "Draw", selected = pagerState.currentPage == 3) {
+                                coroutineScope.launch {
+                                    pagerState.animateScrollToPage(3)
+                                }
                             }
                         }
                     }
 
-					var adjustmentsResult by remember { mutableStateOf(emptyList<Float>()) }
+                    var adjustmentsResult by remember { mutableStateOf(emptyList<Float>()) }
 
-					LaunchedEffect(currentFilter.value.values, adjustmentsResult) {
-						if (adjustmentsResult.isEmpty()) return@LaunchedEffect
+                    LaunchedEffect(currentFilter.value.values, adjustmentsResult) {
+                        if (adjustmentsResult.isEmpty()) return@LaunchedEffect
 
-				        val floatArray = emptyList<Float>().toMutableList()
+                        val floatArray = emptyList<Float>().toMutableList()
 
-						val filter = currentFilter.value.values
-				        for (i in filter.indices) {
-				            var item = adjustmentsResult[i]
+                        val filter = currentFilter.value.values
+                        for (i in filter.indices) {
+                            var item = adjustmentsResult[i]
 
-				            if (i == 4 || i == 9 || i == 14) {
-				            	item += filter[i]
-				            } else {
-				            	if (item == 0f) item = filter[i]
-				            	else item *= filter[i]
-				            }
+                            if (i == 4 || i == 9 || i == 14) {
+                                item += filter[i]
+                            } else {
+                                if (item == 0f) item = filter[i]
+                                else item *= filter[i]
+                            }
 
-				            floatArray.add(item)
-				        }
+                            floatArray.add(item)
+                        }
 
-						colorMatrix.value = ColorMatrix(floatArray.toTypedArray().toFloatArray())
-					}
+                        colorMatrix.value = ColorMatrix(floatArray.toTypedArray().toFloatArray())
+                    }
 
                     HorizontalPager(
                         state = pagerState,
@@ -1789,21 +1743,20 @@ private fun EditingViewBottomBar(
                             }
 
                             1 -> {
-								AdjustTools(
-									sliderValue = adjustSliderValue,
-									colorMatrix = colorMatrix,
-									selectedProperty = selectedProperty
-								) {
-									adjustmentsResult = it
-								}
+                                AdjustTools(
+                                    sliderValue = adjustSliderValue,
+                                    selectedProperty = selectedProperty
+                                ) {
+                                    adjustmentsResult = it
+                                }
                             }
 
                             2 -> {
-			                    FiltersTools(
-			                    	colorMatrix = colorMatrix,
-			                    	currentFilter = currentFilter,
-			                    	changesSize = changesSize
-			                    )
+                                FiltersTools(
+                                    currentFilter = currentFilter,
+                                    image = image,
+                                    changesSize = changesSize
+                                )
                             }
 
                             3 -> {
@@ -1870,7 +1823,6 @@ enum class SelectedImageProperties {
 @Composable
 fun AdjustTools(
     sliderValue: MutableFloatState,
-    colorMatrix: MutableState<ColorMatrix>,
     selectedProperty: MutableState<SelectedImageProperties>,
     onAdjustmentsDone: (List<Float>) -> Unit
 ) {
@@ -2095,15 +2047,14 @@ fun AdjustTools(
 
             SelectedImageProperties.ColorTint -> run {
                 if (sliderValue.floatValue == colorTintValue) {
-                	return@run
-               	}
-				else if (sliderValue.floatValue == -1.2f) {
-					colorTintMatrix1 = multiplicativeEmptyArray
-					colorTintMatrix2 = additiveEmptyArray
-					colorTintValue = sliderValue.floatValue
+                    return@run
+                } else if (sliderValue.floatValue == -1.2f) {
+                    colorTintMatrix1 = multiplicativeEmptyArray
+                    colorTintMatrix2 = additiveEmptyArray
+                    colorTintValue = sliderValue.floatValue
 
-					return@run
-				}
+                    return@run
+                }
 
                 val tint = (sliderValue.floatValue * 0.5f + 0.5f).coerceIn(0f, gradientColorList.size - 1f)
 
@@ -2247,9 +2198,9 @@ fun AdjustTools(
 
 @Composable
 fun FiltersTools(
-	colorMatrix: MutableState<ColorMatrix>,
-	currentFilter: MutableState<ColorMatrix>,
-	changesSize: MutableIntState
+    currentFilter: MutableState<ColorMatrix>,
+    image: ImageBitmap,
+    changesSize: MutableIntState
 ) {
     LazyRow(
         verticalAlignment = Alignment.CenterVertically,
@@ -2258,31 +2209,25 @@ fun FiltersTools(
             .fillMaxSize(1f)
     ) {
         items(
-        	count = ColorFiltersMatrices.keys.toList().size
+            count = ColorFiltersMatrices.keys.toList().size
         ) { index ->
-        	val key = ColorFiltersMatrices.keys.toList()[index]
-        	val matrix = ColorFiltersMatrices[key]
+            val key = ColorFiltersMatrices.keys.toList()[index]
+            val matrix = ColorFiltersMatrices[key]
 
-        	if (matrix != null) {
-	            EditingViewBottomAppBarItem(text = key, iconResId = R.drawable.style, selected = currentFilter.value == matrix) {
-	            	currentFilter.value = matrix
+            if (matrix != null) {
+                ColorFilterItem(
+                    text = key,
+                    image = image,
+                    colorMatrix = matrix,
+                    selected = currentFilter.value == matrix
+                ) {
+                    currentFilter.value = matrix
 
-	            	changesSize.intValue += 1
-	            }
-        	}
+                    changesSize.intValue += 1
+                }
+            }
         }
     }
-}
-
-fun ColorMatrix.multiplyOrSet(row: Int, column: Int, value: Float) : ColorMatrix {
-	val local = this
-	if (local[row, column] != 0f) {
-		local[row, column] *= value
-	} else {
-		local[row, column] = value
-	}
-
-	return local
 }
 
 @Composable
