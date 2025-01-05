@@ -540,23 +540,11 @@ fun IsSelectingTopBar(selectedItemsList: SnapshotStateList<MediaStoreData>) {
 
     TopAppBar(
         title = {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                Row(
-                    modifier = Modifier
-                        .height(42.dp)
-                        .width(48.dp)
-                        .clip(RoundedCornerShape(100.dp, 6.dp, 6.dp, 100.dp))
-                        .background(CustomMaterialTheme.colorScheme.primary)
-                        .padding(4.dp, 0.dp, 0.dp, 0.dp)
-                        .clickable {
-                            selectedItemsList.clear()
-                        },
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
+            SplitButton(
+            	primaryContentPadding = PaddingValues(16.dp, 0.dp, 12.dp, 0.dp),
+            	secondaryContentPadding = PaddingValues(8.dp, 8.dp, 12.dp, 8.dp),
+                secondaryContainerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
+                primaryContent = {
                     Icon(
                         painter = painterResource(id = R.drawable.close),
                         contentDescription = "clear selection button",
@@ -564,36 +552,24 @@ fun IsSelectingTopBar(selectedItemsList: SnapshotStateList<MediaStoreData>) {
                         modifier = Modifier
                             .size(24.dp)
                     )
-                }
-
-                Spacer(modifier = Modifier.width(4.dp))
-
-                Row(
-                    modifier = Modifier
-                        .height(43.dp)
-                        .wrapContentWidth()
-                        .clip(RoundedCornerShape(6.dp, 100.dp, 100.dp, 6.dp))
-                        .background(CustomMaterialTheme.colorScheme.surfaceContainer)
-                        .padding(12.dp, 0.dp, 16.dp, 0.dp)
-                        .animateContentSize()
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) {
-                            selectedItemsList.clear()
-                        },
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
+                },
+                secondaryContent = {
                     Text(
                         text = selectedItemsWithoutSection.size.toString(),
                         color = CustomMaterialTheme.colorScheme.onSurface,
                         fontSize = TextUnit(18f, TextUnitType.Sp),
                         modifier = Modifier
                             .wrapContentSize()
+                            .animateContentSize()
                     )
+                },
+                primaryAction = {
+                    selectedItemsList.clear()
+                },
+                secondaryAction = {
+                    selectedItemsList.clear()
                 }
-            }
+            )
         },
         actions = {
             val allItemsList by remember { derivedStateOf { groupedMedia.value ?: emptyList() } }

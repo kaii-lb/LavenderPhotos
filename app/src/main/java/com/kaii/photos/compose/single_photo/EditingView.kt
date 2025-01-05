@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.view.Window
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -27,8 +28,6 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.gestures.snapping.SnapPosition
-import androidx.compose.foundation.interaction.DragInteraction
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -51,6 +50,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
@@ -60,7 +60,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ripple.RippleAlpha
 import androidx.compose.material3.BottomAppBar
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -71,7 +70,6 @@ import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.RippleConfiguration
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
@@ -147,8 +145,11 @@ import com.kaii.photos.compose.BottomAppBarItem
 import com.kaii.photos.compose.ColorRangeSlider
 import com.kaii.photos.compose.ConfirmationDialog
 import com.kaii.photos.compose.CroppingRatioBottomSheet
+import com.kaii.photos.compose.getAppBarContentTransition
+import com.kaii.photos.compose.SelectableDropDownMenuItem
 import com.kaii.photos.compose.PopupPillSlider
 import com.kaii.photos.compose.SetEditingViewDrawableTextBottomSheet
+import com.kaii.photos.compose.SplitButton
 import com.kaii.photos.compose.setBarVisibility
 import com.kaii.photos.helpers.ColorIndicator
 import com.kaii.photos.helpers.CustomMaterialTheme
@@ -163,8 +164,6 @@ import com.kaii.photos.helpers.getColorFromLinearGradientList
 import com.kaii.photos.helpers.gradientColorList
 import com.kaii.photos.helpers.ColorFiltersMatrices
 import com.kaii.photos.helpers.savePathListToBitmap
-import com.kaii.photos.helpers.setOrMultiply
-import com.kaii.photos.helpers.concat
 import com.kaii.photos.helpers.toOffset
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -1345,53 +1344,35 @@ private fun EditingViewTopBar(
                         Spacer(modifier = Modifier.width(8.dp))
                     }
 
-                    Row(
-                        modifier = Modifier
-                            .wrapContentSize(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        var saveButtonTitle by remember { mutableStateOf("Save Copy") }
-                        val saveAction = {
-                            oldChangesSize.intValue = changesSize.intValue
+                    var saveButtonTitle by remember { mutableStateOf("Save Copy") }
+                    val saveAction: () -> Unit = {
+                        oldChangesSize.intValue = changesSize.intValue
 
-                            coroutineScope.launch {
-                                canExit = false
-                                saveImage()
+                        coroutineScope.launch {
+                            canExit = false
+                            saveImage()
 
-                                delay(500)
-                                canExit = true
-                            }
+                            delay(500)
+                            canExit = true
                         }
+                    }
 
-                        Button(
-                            onClick = {
-                                saveAction()
-                            },
-                            shape = RoundedCornerShape(1000.dp, 4.dp, 4.dp, 1000.dp),
-                            enabled = changesSize.intValue != oldChangesSize.intValue,
-                            contentPadding = PaddingValues(11.dp)
-                        ) {
+                    var dropDownExpanded by remember { mutableStateOf(false) }
+                    SplitButton(
+                        enabled = changesSize.intValue != oldChangesSize.intValue,
+                        secondaryContentMaxWidth = 40.dp,
+                        primaryContent = {
                             Text(
                                 text = saveButtonTitle,
                                 fontSize = TextUnit(14f, TextUnitType.Sp),
                                 color = CustomMaterialTheme.colorScheme.onPrimary
                             )
-                        }
-
-                        var dropDownExpanded by remember { mutableStateOf(false) }
-
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Button(
-                            onClick = {
-                                dropDownExpanded = true
-                            },
-                            shape = RoundedCornerShape(4.dp, 1000.dp, 1000.dp, 4.dp),
-                            enabled = changesSize.intValue != oldChangesSize.intValue,
-                            contentPadding = PaddingValues(2.dp, 5.dp, 4.dp, 5.dp),
-                            modifier = Modifier
-                                .width(40.dp)
-                        ) {
+                        },
+                        primaryAction = saveAction,
+                        secondaryAction = {
+                            dropDownExpanded = true
+                        },
+                        secondaryContent = {
                             Icon(
                                 painter = painterResource(id = R.drawable.drop_down_arrow),
                                 contentDescription = "Show save options",
@@ -1399,77 +1380,41 @@ private fun EditingViewTopBar(
                                     .size(32.dp)
                             )
                         }
+                    )
 
-                        DropdownMenu(
-                            expanded = dropDownExpanded,
-                            onDismissRequest = {
-                                dropDownExpanded = false
-                            },
-                            shape = RoundedCornerShape(24.dp),
-                            properties = PopupProperties(
-                                dismissOnClickOutside = true,
-                                dismissOnBackPress = true
-                            ),
-                            containerColor = CustomMaterialTheme.colorScheme.primaryContainer,
-                            shadowElevation = 8.dp
+                    DropdownMenu(
+                        expanded = dropDownExpanded,
+                        onDismissRequest = {
+                            dropDownExpanded = false
+                        },
+                        shape = RoundedCornerShape(24.dp),
+                        properties = PopupProperties(
+                            dismissOnClickOutside = true,
+                            dismissOnBackPress = true
+                        ),
+                        containerColor = CustomMaterialTheme.colorScheme.primaryContainer,
+                        shadowElevation = 8.dp
+                    ) {
+                        SelectableDropDownMenuItem(
+                            text = "Overwrite Original",
+                            iconResId = R.drawable.file_is_selected_foreground,
+                            isSelected = overwrite.value
                         ) {
-                            DropdownMenuItem(
-                                text = {
-                                    Text(
-                                        text = "Overwrite Original",
-                                        fontSize = TextUnit(14f, TextUnitType.Sp),
-                                    )
+                            dropDownExpanded = false
+                            overwrite.value = true
+                            saveButtonTitle = "Save"
+                            saveAction()
+                        }
 
-                                    Spacer(
-                                        modifier = Modifier
-                                            .height(2.dp)
-                                            .background(CustomMaterialTheme.colorScheme.onPrimary)
-                                    )
-                                },
-                                onClick = {
-                                    dropDownExpanded = false
-                                    overwrite.value = true
-                                    saveButtonTitle = "Save"
-                                    saveAction()
-                                },
-                                trailingIcon = {
-                                    if (overwrite.value) {
-                                        Icon(
-                                            painter = painterResource(id = R.drawable.file_is_selected_foreground),
-                                            contentDescription = "This save option is selected",
-                                            tint = CustomMaterialTheme.colorScheme.onSurface,
-                                            modifier = Modifier
-                                                .size(24.dp)
-                                        )
-                                    }
-                                }
-                            )
-
-                            DropdownMenuItem(
-                                text = {
-                                    Text(
-                                        text = "Save Copy",
-                                        fontSize = TextUnit(14f, TextUnitType.Sp),
-                                    )
-                                },
-                                onClick = {
-                                    dropDownExpanded = false
-                                    overwrite.value = false
-                                    saveButtonTitle = "Save Copy"
-                                    saveAction()
-                                },
-                                trailingIcon = {
-                                    if (!overwrite.value) {
-                                        Icon(
-                                            painter = painterResource(id = R.drawable.file_is_selected_foreground),
-                                            contentDescription = "This save option is selected",
-                                            tint = CustomMaterialTheme.colorScheme.onSurface,
-                                            modifier = Modifier
-                                                .size(24.dp)
-                                        )
-                                    }
-                                }
-                            )
+                        SelectableDropDownMenuItem(
+                            text = "Save Copy",
+                            iconResId = R.drawable.file_is_selected_foreground,
+                            isSelected = !overwrite.value
+                        ) {
+                            dropDownExpanded = false
+                            overwrite.value = false
+                            saveButtonTitle = "Save Copy"
+                            saveAction()
                         }
                     }
                 }
@@ -1619,23 +1564,33 @@ private fun EditingViewBottomBar(
         )
 
         val selectedProperty = remember { mutableStateOf(SelectedImageProperties.Contrast) }
-        BoxWithConstraints(
-            modifier = Modifier
-                .fillMaxWidth(1f)
-                .height(animatedSliderHeight)
-                .background(
-                    if (isLandscape) {
-                        CustomMaterialTheme.colorScheme.surfaceContainer
-                    } else {
-                        Color.Transparent
-                    }
-                )
-        ) {
-            if (selectedProperty.value != SelectedImageProperties.ColorTint) {
-                PopupPillSlider(sliderValue = adjustSliderValue, changesSize = changesSize)
-            } else {
-                ColorRangeSlider(sliderValue = adjustSliderValue)
-            }
+		AnimatedContent(
+			targetState = selectedProperty.value != SelectedImageProperties.ColorTint,
+			transitionSpec = {
+				getAppBarContentTransition(selectedProperty.value != SelectedImageProperties.ColorTint)
+			},
+			modifier = Modifier
+				.fillMaxWidth(1f)
+				.height(animatedSliderHeight)
+		) { isNotColorSlider ->
+			BoxWithConstraints(
+			    modifier = Modifier
+			        .fillMaxWidth(1f)
+			        .height(animatedSliderHeight)
+			        .background(
+			            if (isLandscape) {
+			                CustomMaterialTheme.colorScheme.surfaceContainer
+			            } else {
+			                Color.Transparent
+			            }
+			        )
+			) {
+				if (isNotColorSlider) {
+					PopupPillSlider(sliderValue = adjustSliderValue, changesSize = changesSize)
+				} else {
+					ColorRangeSlider(sliderValue = adjustSliderValue)
+				}
+			}
         }
 
         Column(
