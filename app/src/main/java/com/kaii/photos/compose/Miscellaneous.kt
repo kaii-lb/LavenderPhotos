@@ -198,7 +198,7 @@ fun ColorFilterItem(
     Box(
         modifier = Modifier
             .width(96.dp)
-            .height(58.dp)
+            .height(62.dp)
             .clip(RoundedCornerShape(8.dp))
             .background(if (selected) CustomMaterialTheme.colorScheme.primary else Color.Transparent)
             .clickable(
@@ -207,7 +207,7 @@ fun ColorFilterItem(
             ) {
                 action()
             }
-            .padding(4.dp, 2.dp)
+            .padding(4.dp, 4.dp, 4.dp, 0.dp)
     ) {
         ColorFilterImagePreview(
         	image = image,
@@ -217,7 +217,6 @@ fun ColorFilterItem(
         		.align(Alignment.TopCenter)
        	)
 
-		val localDensity = LocalDensity.current
         Text(
             text = text,
             fontSize = TextUnit(14f, TextUnitType.Sp),
@@ -225,14 +224,6 @@ fun ColorFilterItem(
             modifier = Modifier
                 .wrapContentSize()
                 .align(Alignment.BottomCenter)
-                .offset {
-                	with(localDensity) {
-	                	IntOffset(
-	                		0,
-	                		4.dp.toPx().toInt()
-	                	)
-                	}
-                }
         )
     }
 }

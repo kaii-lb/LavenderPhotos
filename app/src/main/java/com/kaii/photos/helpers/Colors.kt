@@ -136,9 +136,9 @@ val ColorFiltersMatrices = mapOf(
 
 	"B&W" to ColorMatrix(
 		floatArrayOf(
-		    1.25f, 1.25f, 1.25f, 0f, -225f,
-		    1.25f, 1.25f, 1.25f, 0f, -225f,
-		    1.25f, 1.25f, 1.25f, 0f, -225f,
+		    1.25f, 1.25f, 1.25f, 0f, -160f,
+		    1.25f, 1.25f, 1.25f, 0f, -160f,
+		    1.25f, 1.25f, 1.25f, 0f, -160f,
 		    0f, 0f, 0f, 1f, 0f
 		)
 	),

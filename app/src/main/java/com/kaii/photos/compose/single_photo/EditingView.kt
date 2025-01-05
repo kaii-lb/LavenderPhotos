@@ -1584,7 +1584,7 @@ private fun EditingViewBottomBar(
         AnimatedContent(
             targetState = selectedProperty.value != SelectedImageProperties.ColorTint,
             transitionSpec = {
-                getAppBarContentTransition(selectedProperty.value != SelectedImageProperties.ColorTint)
+                getAppBarContentTransition(selectedProperty.value == SelectedImageProperties.ColorTint)
             },
             label = "Animate between normal slider and color slider",
             modifier = Modifier
