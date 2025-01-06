@@ -29,12 +29,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.calculateStartPadding
-import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -69,7 +69,6 @@ import androidx.navigation.toRoute
 import androidx.room.Room
 import com.bumptech.glide.Glide
 import com.bumptech.glide.MemoryCategory
-import com.kaii.photos.compose.setBarVisibility
 import com.kaii.photos.compose.IsSelectingTopBar
 import com.kaii.photos.compose.LockedFolderEntryView
 import com.kaii.photos.compose.MainAppBottomBar
@@ -86,6 +85,7 @@ import com.kaii.photos.compose.grids.PhotoGrid
 import com.kaii.photos.compose.grids.SearchPage
 import com.kaii.photos.compose.grids.SingleAlbumView
 import com.kaii.photos.compose.grids.TrashedPhotoGridView
+import com.kaii.photos.compose.setBarVisibility
 import com.kaii.photos.compose.settings.AboutPage
 import com.kaii.photos.compose.settings.DebuggingSettingsPage
 import com.kaii.photos.compose.settings.GeneralSettingsPage
@@ -99,8 +99,8 @@ import com.kaii.photos.compose.single_photo.SingleTrashedPhotoView
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.Debugging
-import com.kaii.photos.datastore.Versions
 import com.kaii.photos.datastore.LookAndFeel
+import com.kaii.photos.datastore.Versions
 import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.EditingScreen
 import com.kaii.photos.helpers.MainScreenViewType
@@ -173,17 +173,17 @@ class MainActivity : ComponentActivity() {
                 factory = MainViewModelFactory(applicationContext)
             )
 
-	        val logPath = "${getBaseInternalStorageDirectory()}LavenderPhotos/log.txt"
+            val logPath = "${getBaseInternalStorageDirectory()}LavenderPhotos/log.txt"
 
-	        val canRecordLogs by mainViewModel.settings.Debugging.getRecordLogs().collectAsStateWithLifecycle(initialValue = false)
-	        if (canRecordLogs) {
-	        	try {
-	        	    File(logPath).delete()
-	        	} catch (e: Throwable) {
-	        	    // ignore
-	        	}
-	            Runtime.getRuntime().exec("logcat -d -f $logPath")
-	        }
+            val canRecordLogs by mainViewModel.settings.Debugging.getRecordLogs().collectAsStateWithLifecycle(initialValue = false)
+            if (canRecordLogs) {
+                try {
+                    File(logPath).delete()
+                } catch (e: Throwable) {
+                    // ignore
+                }
+                Runtime.getRuntime().exec("logcat -d -f $logPath")
+            }
 
             val continueToApp = remember {
                 // Manifest.permission.MANAGE_MEDIA is optional
@@ -193,52 +193,52 @@ class MainActivity : ComponentActivity() {
                 )
             }
 
-			val initial =
-				when (AppCompatDelegate.getDefaultNightMode()) {
-					AppCompatDelegate.MODE_NIGHT_YES -> 1
-					AppCompatDelegate.MODE_NIGHT_NO -> 2
+            val initial =
+                when (AppCompatDelegate.getDefaultNightMode()) {
+                    AppCompatDelegate.MODE_NIGHT_YES -> 1
+                    AppCompatDelegate.MODE_NIGHT_NO -> 2
 
-					else -> 0
-				}
-			val followDarkTheme by mainViewModel.settings.LookAndFeel.getFollowDarkMode().collectAsStateWithLifecycle(
-				initialValue = initial
-			)
+                    else -> 0
+                }
+            val followDarkTheme by mainViewModel.settings.LookAndFeel.getFollowDarkMode().collectAsStateWithLifecycle(
+                initialValue = initial
+            )
             PhotosTheme(
-            	darkTheme = followDarkTheme,
-            	dynamicColor = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+                darkTheme = followDarkTheme,
+                dynamicColor = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
             ) {
-	            AnimatedContent(
-	                targetState = continueToApp.value,
-	                transitionSpec = {
+                AnimatedContent(
+                    targetState = continueToApp.value,
+                    transitionSpec = {
                         (slideInHorizontally { width -> width } + fadeIn())
-                        	.togetherWith(
-                            	slideOutHorizontally { width -> -width } + fadeOut()
-                        	)
-	                    .using(
-	                        SizeTransform(clip = false)
-	                    )
-	                },
-	                label = "PermissionHandlerToMainViewAnimatedContent"
-	            ) { stateValue ->
-	                if (!stateValue) {
-	                	enableEdgeToEdge(
-	                	    navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
-	                	    statusBarStyle =
-	                	    if (!isSystemInDarkTheme()) {
-	                	        SystemBarStyle.light(
-	                	            CustomMaterialTheme.colorScheme.background.toArgb(),
-	                	            CustomMaterialTheme.colorScheme.background.toArgb()
-	                	        )
-	                	    } else {
-	                	        SystemBarStyle.dark(CustomMaterialTheme.colorScheme.background.toArgb())
-	                	    }
-	                	)
+                            .togetherWith(
+                                slideOutHorizontally { width -> -width } + fadeOut()
+                            )
+                            .using(
+                                SizeTransform(clip = false)
+                            )
+                    },
+                    label = "PermissionHandlerToMainViewAnimatedContent"
+                ) { stateValue ->
+                    if (!stateValue) {
+                        enableEdgeToEdge(
+                            navigationBarStyle = SystemBarStyle.dark(CustomMaterialTheme.colorScheme.surfaceContainer.toArgb()),
+                            statusBarStyle =
+                            if (!isSystemInDarkTheme()) {
+                                SystemBarStyle.light(
+                                    CustomMaterialTheme.colorScheme.background.toArgb(),
+                                    CustomMaterialTheme.colorScheme.background.toArgb()
+                                )
+                            } else {
+                                SystemBarStyle.dark(CustomMaterialTheme.colorScheme.background.toArgb())
+                            }
+                        )
 
-	                    PermissionHandler(continueToApp)
-	                } else {
-	                    SetContentForActivity()
-	                }
-	            }
+                        PermissionHandler(continueToApp)
+                    } else {
+                        SetContentForActivity()
+                    }
+                }
             }
         }
     }
@@ -273,15 +273,15 @@ class MainActivity : ComponentActivity() {
 
         mainViewModel.settings.AlbumsList.addToAlbumsList("DCIM/Camera")
 
-		val listOfDirs = mainViewModel.settings.AlbumsList.getAlbumsList().collectAsStateWithLifecycle(initialValue = emptyList()).value.toMutableList()
+        val listOfDirs = mainViewModel.settings.AlbumsList.getAlbumsList().collectAsStateWithLifecycle(initialValue = emptyList()).value.toMutableList()
 
-		listOfDirs.sortByDescending {
-			File("${getBaseInternalStorageDirectory()}$it").lastModified()
-		}
-		listOfDirs.find { it == "DCIM/Camera" }?.let { cameraItem ->
-			listOfDirs.remove(cameraItem)
-			listOfDirs.add(0, cameraItem)
-		}
+        listOfDirs.sortByDescending {
+            File("${getBaseInternalStorageDirectory()}$it").lastModified()
+        }
+        listOfDirs.find { it == "DCIM/Camera" }?.let { cameraItem ->
+            listOfDirs.remove(cameraItem)
+            listOfDirs.add(0, cameraItem)
+        }
 
         CompositionLocalProvider(LocalNavController provides navControllerLocal) {
             NavHost(
@@ -685,28 +685,28 @@ class MainActivity : ComponentActivity() {
             modifier = Modifier
                 .fillMaxSize(1f)
         ) { padding ->
-			val localConfig = LocalConfiguration.current
-		    var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
+            val localConfig = LocalConfiguration.current
+            var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
 
-		    LaunchedEffect(localConfig) {
-		    	isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
-		    }
+            LaunchedEffect(localConfig) {
+                isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
+            }
 
-			val safeDrawingPadding = if (isLandscape) {
-				val safeDrawing = WindowInsets.safeDrawing.asPaddingValues()
+            val safeDrawingPadding = if (isLandscape) {
+                val safeDrawing = WindowInsets.safeDrawing.asPaddingValues()
 
-				val layoutDirection = LocalLayoutDirection.current
-				val left = safeDrawing.calculateStartPadding(layoutDirection)
-				val right = safeDrawing.calculateEndPadding(layoutDirection)
+                val layoutDirection = LocalLayoutDirection.current
+                val left = safeDrawing.calculateStartPadding(layoutDirection)
+                val right = safeDrawing.calculateEndPadding(layoutDirection)
 
-				Pair(left, right)
-			} else {
-				Pair(0.dp, 0.dp)
-			}
+                Pair(left, right)
+            } else {
+                Pair(0.dp, 0.dp)
+            }
 
             Column(
                 modifier = Modifier
-					.padding(
+                    .padding(
                         safeDrawingPadding.first,
                         padding.calculateTopPadding(),
                         safeDrawingPadding.second,
@@ -819,8 +819,8 @@ private fun setupNextScreen(
 
     window.setDecorFitsSystemWindows(false)
 
-	setBarVisibility (
-		visible = true,
-		window = window
-	) {}
+    setBarVisibility(
+        visible = true,
+        window = window
+    ) {}
 }

@@ -9,12 +9,16 @@ import android.view.Window
 import android.view.WindowManager
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandIn
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.DragInteraction
+import androidx.compose.foundation.interaction.Interaction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -69,7 +73,6 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.C.VIDEO_SCALING_MODE_SCALE_TO_FIT
@@ -83,10 +86,11 @@ import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.ui.PlayerView
 import androidx.navigation.NavHostController
 import com.kaii.photos.R
-import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.compose.setBarVisibility
-import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.CustomMaterialTheme
+import com.kaii.photos.helpers.moveImageToLockedFolder
+import com.kaii.photos.helpers.setTrashedOnPhotoList
+import com.kaii.photos.helpers.shareImage
 import com.kaii.photos.mediastore.MediaStoreData
 import kotlinx.coroutines.delay
 import java.io.File
@@ -107,10 +111,9 @@ fun VideoPlayerControls(
     currentVideoPosition: MutableFloatState,
     duration: MutableFloatState,
     title: String,
-    modifier: Modifier
+    modifier: Modifier,
+	onSwitchToLandscape: () -> Unit
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
-
     BoxWithConstraints(
         modifier = Modifier
             .then(modifier)
@@ -121,6 +124,10 @@ fun VideoPlayerControls(
 
         LaunchedEffect(localConfig) {
             isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
+
+            if (isLandscape) {
+				onSwitchToLandscape()
+            }
         }
 
         if (isLandscape) {
@@ -184,8 +191,19 @@ fun VideoPlayerControls(
 
                 Spacer(modifier = Modifier.width(8.dp))
 
-                duration.floatValue = duration.floatValue.coerceAtLeast(0f)
+                val interactionSource = remember { MutableInteractionSource() }
+                var isDraggingTimelineSlider by remember { mutableStateOf(false) }
 
+                LaunchedEffect(interactionSource) {
+                    interactionSource.interactions.collect { interaction ->
+                        when (interaction) {
+                            is DragInteraction.Start -> isDraggingTimelineSlider = true
+                            is DragInteraction.Stop, is DragInteraction.Cancel -> isDraggingTimelineSlider = false
+                        }
+                    }
+                }
+
+                duration.floatValue = duration.floatValue.coerceAtLeast(0f)
                 Slider(
                     value = currentVideoPosition.floatValue,
                     valueRange = 0f..duration.floatValue,
@@ -421,14 +439,14 @@ fun VideoPlayer(
     }
 
     LaunchedEffect(isMuted.value) {
-    	lastWasMuted.value = isMuted.value
+        lastWasMuted.value = isMuted.value
 
-		exoPlayer.volume = if (isMuted.value) 0f else 1f
-   		exoPlayer.setHandleAudioBecomingNoisy(!isMuted.value)
+        exoPlayer.volume = if (isMuted.value) 0f else 1f
+        exoPlayer.setHandleAudioBecomingNoisy(!isMuted.value)
     }
 
     LaunchedEffect(shouldAutoPlay, shouldPlay) {
-    	exoPlayer.playWhenReady = shouldAutoPlay && shouldPlay
+        exoPlayer.playWhenReady = shouldAutoPlay && shouldPlay
     }
 
     Box(
@@ -442,7 +460,7 @@ fun VideoPlayer(
         ) {
             AndroidView(
                 factory = {
-                	playerView
+                    playerView
                 }
             )
         }
@@ -481,15 +499,28 @@ fun VideoPlayer(
                 title = title,
                 modifier = Modifier
                     .fillMaxSize(1f)
-            )
+            ) {
+            	setBarVisibility(
+            		visible = false,
+            		window = window
+            	) {
+            		appBarsVisible.value = it
+            	}
+            }
         }
 
         if ((isTouchLocked.value || controlsVisible.value) && localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            Box(
+            Row (
                 modifier = Modifier
                     .wrapContentSize()
+                    .animateContentSize()
                     .align(Alignment.TopEnd)
-                    .padding(16.dp)
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(
+                	space = 4.dp,
+                	alignment = Alignment.CenterHorizontally
+                )
             ) {
                 FilledTonalIconToggleButton(
                     checked = isTouchLocked.value,
@@ -505,7 +536,7 @@ fun VideoPlayer(
                     ),
                     modifier = Modifier
                         .size(32.dp)
-                        .align(Alignment.Center)
+                        .align(Alignment.Top)
                 ) {
                     Icon(
                         painter = painterResource(id = if (isTouchLocked.value) R.drawable.locked_folder else R.drawable.unlock),
@@ -513,6 +544,42 @@ fun VideoPlayer(
                         modifier = Modifier
                             .size(20.dp)
                     )
+                }
+
+                if (controlsVisible.value) {
+                    Column (
+                        modifier = Modifier
+                            .wrapContentSize(),
+                        verticalArrangement = Arrangement.spacedBy(
+                        	space = 4.dp,
+                        	alignment = Alignment.Top
+                        ),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        FilledTonalIconButton(
+                            onClick = {
+                                setBarVisibility(
+                                    visible = !appBarsVisible.value,
+                                    window = window
+                                ) {
+                                    appBarsVisible.value = it
+                                }
+                            },
+                            colors = IconButtonDefaults.filledTonalIconButtonColors().copy(
+                                containerColor = CustomMaterialTheme.colorScheme.secondaryContainer,
+                                contentColor = CustomMaterialTheme.colorScheme.onSecondaryContainer
+                            ),
+                            modifier = Modifier
+                                .size(32.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.more_options),
+                                contentDescription = "Show more video player options",
+                                modifier = Modifier
+                                    .size(20.dp)
+                            )
+                        }
+                    }
                 }
             }
         }

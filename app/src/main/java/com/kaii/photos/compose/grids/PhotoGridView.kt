@@ -1,6 +1,7 @@
 package com.kaii.photos.compose.grids
 
 import android.content.res.Configuration
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
@@ -17,6 +18,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -79,6 +81,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
@@ -109,6 +112,7 @@ import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.signature
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.ZoneId
@@ -116,7 +120,7 @@ import java.time.format.DateTimeFormatter
 import kotlin.io.path.Path
 import kotlin.math.roundToInt
 
-// private const val TAG = "PHOTO_GRID_VIEW"
+private const val TAG = "PHOTO_GRID_VIEW"
 
 @Composable
 fun PhotoGrid(
@@ -230,7 +234,7 @@ fun DeviceMedia(
 
             LaunchedEffect(scrollSpeed.floatValue) {
                 if (scrollSpeed.floatValue != 0f) {
-                    while(selectedItemsList.isNotEmpty()) {
+                    while (isActive) {
                         gridState.scrollBy(scrollSpeed.floatValue)
                         delay(10)
                     }
@@ -257,7 +261,6 @@ fun DeviceMedia(
                         scrollThreshold = with(localDensity) {
                             40.dp.toPx()
                         },
-                        viewProperties = viewProperties,
                         isDragSelecting = isDragSelecting
                     ),
                 state = gridState
@@ -387,7 +390,7 @@ fun DeviceMedia(
                     if (gridState.isScrollInProgress || isScrollingByHandle) {
                         showHandle = true
                     } else {
-                        kotlinx.coroutines.delay(
+                        delay(
                             if (selectedItemsList.isNotEmpty()) 1000 else 3000
                         )
                         showHandle = false
@@ -561,12 +564,22 @@ fun MediaStoreItem(
     onClick: () -> Unit
 ) {
     val vibratorManager = rememberVibratorManager()
-    val coroutineScope = rememberCoroutineScope()
 
     if (item.type == MediaType.Section) {
+        val sectionItems by remember {
+            derivedStateOf {
+                groupedMedia.value.filter {
+                    if (viewProperties.sortMode == MediaItemSortMode.LastModified) {
+                        it.getLastModifiedDay() == item.getLastModifiedDay() && it.type != MediaType.Section
+                    } else {
+                        it.getDateTakenDay() == item.getDateTakenDay() && it.type != MediaType.Section
+                    }
+                }
+            }
+        }
         val isSectionSelected by remember {
             derivedStateOf {
-                selectedItemsList.contains(item)
+                selectedItemsList.containsAll(sectionItems)
             }
         }
 
@@ -579,25 +592,17 @@ fun MediaStoreItem(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
                 ) {
-                    coroutineScope.launch {
-                        val datedMedia = groupedMedia.value.filter {
-                            if (viewProperties.sortMode == MediaItemSortMode.LastModified) {
-                                it.getLastModifiedDay() == item.getLastModifiedDay() && it.type != MediaType.Section
-                            } else {
-                                it.getDateTakenDay() == item.getDateTakenDay() && it.type != MediaType.Section
-                            }
-                        }
+                    if (isSectionSelected) {
+                        selectedItemsList.removeAll(sectionItems)
+                        selectedItemsList.remove(item)
+                    } else {
+                        if (selectedItemsList.size == 1 && selectedItemsList[0] == MediaStoreData()) selectedItemsList.clear()
 
-                        if (selectedItemsList.containsAll(datedMedia)) {
-                            selectedItemsList.removeAll(datedMedia.toSet())
-                            selectedItemsList.remove(item)
-                        } else {
-                            if (selectedItemsList.size == 1 && selectedItemsList[0] == MediaStoreData()) selectedItemsList.clear()
-                            selectedItemsList.addAll(datedMedia)
-                            selectedItemsList.add(item)
-                        }
-                        vibratorManager.vibrateLong()
+                        selectedItemsList.addAll(sectionItems)
+                        selectedItemsList.add(item)
                     }
+
+                    vibratorManager.vibrateLong()
                 }
                 .padding(16.dp, 8.dp),
         ) {
@@ -618,7 +623,7 @@ fun MediaStoreItem(
             )
         }
     } else {
-        val isSelected by remember(selectedItemsList.size) { derivedStateOf { selectedItemsList.contains(item) } }
+        val isSelected by remember/*(selectedItemsList.size)*/ { derivedStateOf { selectedItemsList.contains(item) } }
 
         val animatedItemCornerRadius by animateDpAsState(
             targetValue = if (isSelected) 16.dp else 0.dp,
@@ -635,77 +640,33 @@ fun MediaStoreItem(
             label = "animate scale of selected item"
         )
 
-		val onSingleClick: () -> Unit = {
-	        vibratorManager.vibrateShort()
-	        coroutineScope.launch {
-	            if (selectedItemsList.size > 0) {
-	                val sectionItems = groupedMedia.value.filter {
-	                    if (viewProperties.sortMode == MediaItemSortMode.LastModified) {
-	                        it.getLastModifiedDay() == item.getLastModifiedDay()
-	                    } else {
-	                        it.getDateTakenDay() == item.getDateTakenDay()
-	                    }
-	                }
+        val onSingleClick: () -> Unit = {
+            vibratorManager.vibrateShort()
+            if (selectedItemsList.isNotEmpty()) {
+                if (isSelected) {
+                    selectedItemsList.remove(item)
+                } else {
+                    if (selectedItemsList.size == 1 && selectedItemsList[0] == MediaStoreData()) selectedItemsList.clear()
 
-	                val section = sectionItems.first { it.type == MediaType.Section }
+                    selectedItemsList.add(item)
+                }
+            } else {
+                onClick()
+            }
+        }
 
-	                if (isSelected) {
-	                    if (selectedItemsList.contains(section)) selectedItemsList.remove(
-	                        section
-	                    )
-	                    selectedItemsList.remove(item)
-	                } else {
-	                    if (selectedItemsList.size == 1 && selectedItemsList[0] == MediaStoreData()) selectedItemsList.clear()
+        val onLongClick: () -> Unit = {
+            isDragSelecting.value = true
 
-	                    selectedItemsList.add(item)
+            vibratorManager.vibrateLong()
+            if (isSelected) {
+                selectedItemsList.remove(item)
+            } else {
+                if (selectedItemsList.size == 1 && selectedItemsList[0] == MediaStoreData()) selectedItemsList.clear()
 
-	                    val allItems =
-	                        sectionItems.filter { it.type != MediaType.Section }
-	                    if (selectedItemsList.containsAll(allItems)) {
-	                        selectedItemsList.add(section)
-	                    } else {
-	                        selectedItemsList.remove(section)
-	                    }
-	                }
-
-	                return@launch
-	            }
-
-	            onClick()
-	        }
-		}
-
-		val onLongClick: () -> Unit = {
-			isDragSelecting.value = true
-
-	        val sectionItems = groupedMedia.value.filter {
-	            if (viewProperties.sortMode == MediaItemSortMode.LastModified) {
-	                it.getLastModifiedDay() == item.getLastModifiedDay()
-	            } else {
-	                it.getDateTakenDay() == item.getDateTakenDay()
-	            }
-	        }
-
-	        val section = sectionItems.first { it.type == MediaType.Section }
-
-	        vibratorManager.vibrateLong()
-	        if (isSelected) {
-	            if (selectedItemsList.contains(section)) selectedItemsList.remove(
-	                section
-	            )
-	            selectedItemsList.remove(item)
-	        } else {
-	            if (selectedItemsList.size == 1 && selectedItemsList[0] == MediaStoreData()) selectedItemsList.clear()
-	            selectedItemsList.add(item)
-
-	            val allItems = sectionItems.filter { it.type != MediaType.Section }
-	            if (selectedItemsList.containsAll(allItems)) {
-	                selectedItemsList.add(section)
-	            } else {
-	                selectedItemsList.remove(section)
-	            }
-	        }
-		}
+                selectedItemsList.add(item)
+            }
+        }
 
         Box(
             modifier = Modifier
@@ -714,17 +675,17 @@ fun MediaStoreItem(
                 .clip(RoundedCornerShape(0.dp))
                 .background(CustomMaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
                 .then(
-                	if (selectedItemsList.size > 0) {
-                		Modifier.clickable {
-                			onSingleClick()
-                		}
-                	} else {
-                		Modifier.combinedClickable(
-                		    onClick = onSingleClick,
+                    if (selectedItemsList.isNotEmpty()) {
+                        Modifier.clickable {
+                            onSingleClick()
+                        }
+                    } else {
+                        Modifier.combinedClickable(
+                            onClick = onSingleClick,
 
-                		    onLongClick = onLongClick
-                		)
-                	}
+                            onLongClick = onLongClick
+                        )
+                    }
                 )
         ) {
             GlideImage(
@@ -788,33 +749,31 @@ fun ShowSelectedState(
     modifier: Modifier
 ) {
     AnimatedVisibility(
-        visible = selectedItemsList.size > 0,
+        visible = selectedItemsList.isNotEmpty(),
         enter =
-        scaleIn(
-            animationSpec = tween(
-                durationMillis = 150
-            )
-        ) + fadeIn(
-            animationSpec = tween(
-                durationMillis = 150
-            )
-        ),
+            scaleIn(
+                animationSpec = tween(
+                    durationMillis = 150
+                )
+            ) + fadeIn(
+                animationSpec = tween(
+                    durationMillis = 150
+                )
+            ),
         exit =
-        scaleOut(
-            animationSpec = tween(
-                durationMillis = 150
-            )
-        ) + fadeOut(
-            animationSpec = tween(
-                durationMillis = 150
-            )
-        ),
-        modifier = Modifier
-            .then(modifier)
+            scaleOut(
+                animationSpec = tween(
+                    durationMillis = 150
+                )
+            ) + fadeOut(
+                animationSpec = tween(
+                    durationMillis = 150
+                )
+            ),
+        modifier = modifier
     ) {
         Box(
-            modifier = Modifier
-                .then(modifier)
+            modifier = modifier
                 .padding(2.dp)
         ) {
             Icon(
@@ -832,7 +791,31 @@ fun ShowSelectedState(
                     .align(Alignment.Center)
             )
 
-            if (isSelected) {
+            AnimatedVisibility(
+                visible = isSelected,
+                enter =
+                    scaleIn(
+                        animationSpec = tween(
+                            durationMillis = 150
+                        )
+                    ) + fadeIn(
+                        animationSpec = tween(
+                            durationMillis = 150
+                        )
+                    ),
+                exit =
+                    scaleOut(
+                        animationSpec = tween(
+                            durationMillis = 150
+                        )
+                    ) + fadeOut(
+                        animationSpec = tween(
+                            durationMillis = 150
+                        )
+                    ),
+            	modifier = Modifier
+            		.align(Alignment.Center)
+            ) {
                 Icon(
                     painter = painterResource(id = R.drawable.file_is_selected_foreground),
                     contentDescription = "file is selected indicator",
@@ -852,45 +835,29 @@ fun Modifier.dragSelectionHandler(
     groupedMedia: List<MediaStoreData>,
     scrollSpeed: MutableFloatState,
     scrollThreshold: Float,
-    viewProperties: ViewProperties,
     isDragSelecting: MutableState<Boolean>
 ) = pointerInput(Unit) {
-    var initialKey: String? = null
-    var currentKey: String? = null
+    var initialKey: Int? = null
+    var currentKey: Int? = null
 
-    detectDragGestures (
+    val numberOfHorizontalItems = state.layoutInfo.viewportSize.width / state.layoutInfo.visibleItemsInfo[0].size.width
+
+    detectDragGestures(
         onDragStart = { offset ->
-        	isDragSelecting.value = true
+            isDragSelecting.value = true
 
-			if (selectedItemsList.isNotEmpty()) {
-				initialKey = selectedItemsList[0].uri.toString()
-			}
+            if (selectedItemsList.size == 1 && selectedItemsList[0] != MediaStoreData()) {
+                initialKey = groupedMedia.indexOf(selectedItemsList[0])
+                currentKey = initialKey
+            } else {
+                state.getGridItemAtOffset(offset, groupedMedia, numberOfHorizontalItems)?.let { key ->
+                    val item = groupedMedia[key]
 
-            state.getGridItemAtOffset(offset)?.let { key ->
-                val item = groupedMedia.find {
-                	it.uri.toString() == key
-                }!!
-
-                if (item.type != MediaType.Section) {
-                    currentKey = key
-                    selectedItemsList.add(item)
-
-			        val sectionItems = groupedMedia.filter {
-			            if (viewProperties.sortMode == MediaItemSortMode.LastModified) {
-			                it.getLastModifiedDay() == item.getLastModifiedDay()
-			            } else {
-			                it.getDateTakenDay() == item.getDateTakenDay()
-			            }
-			        }
-
-			        val section = sectionItems.first { it.type == MediaType.Section }
-
-		            val allItems = sectionItems.filter { it.type != MediaType.Section }
-		            if (selectedItemsList.containsAll(allItems)) {
-		                selectedItemsList.add(section)
-		            } else {
-		                selectedItemsList.remove(section)
-		            }
+                    if (item.type != MediaType.Section) {
+                        initialKey = key
+                        currentKey = key
+                        if (!selectedItemsList.contains(item)) selectedItemsList.add(item)
+                    }
                 }
             }
         },
@@ -918,83 +885,60 @@ fun Modifier.dragSelectionHandler(
                     else -> 0f
                 }
 
-                state.getGridItemAtOffset(change.position)?.let { key ->
-                	if (currentKey != key) {
-                		val initialItem = groupedMedia.find { it.uri.toString() == initialKey!! }!!
-                		val currentItem = groupedMedia.find { it.uri.toString() == currentKey!! }!!
-                		val keyItem = groupedMedia.find { it.uri.toString() == key }!!
+                state.getGridItemAtOffset(change.position, groupedMedia, numberOfHorizontalItems)?.let { key ->
+                    if (currentKey != key) {
+                        selectedItemsList.apply {
+                            val toBeRemoved =
+                                if (initialKey!! <= currentKey!!) groupedMedia.subList(initialKey!!, currentKey!! + 1)
+                                else groupedMedia.subList(currentKey!!, initialKey!! + 1)
 
-                		val initial = groupedMedia.indexOf(initialItem)
-                		val current = groupedMedia.indexOf(currentItem)
-                		val keyIndex = groupedMedia.indexOf(keyItem)
+                            removeAll(toBeRemoved)
 
-	                    selectedItemsList.apply {
-	                        groupedMedia.filter {
-	                            groupedMedia.indexOf(it) in initial..current
-	                        }.let { items ->
-	                            removeAll(items)
-	                        }
+                            val toBeAdded =
+                                if (initialKey!! <= key) groupedMedia.subList(initialKey!!, key + 1)
+                                else groupedMedia.subList(key, initialKey!! + 1)
 
-	                        groupedMedia.filter {
-	                            groupedMedia.indexOf(it) in current..initial
-	                        }.let { items ->
-	                            removeAll(items)
-	                        }
+                            addAll(toBeAdded.filter { it.type != MediaType.Section })
+                        }
 
-	                        groupedMedia.filter {
-	                            groupedMedia.indexOf(it) in initial..keyIndex
-	                        }.let { items ->
-	                            addAll(items)
-	                        }
-
-	                        groupedMedia.filter {
-	                            groupedMedia.indexOf(it) in keyIndex..initial
-	                        }.let { items ->
-	                            addAll(items)
-	                        }
-
-	                        val initialSectionAllItems = groupedMedia.filter {
-								if (viewProperties.sortMode == MediaItemSortMode.LastModified) {
-	                        	    it.getLastModifiedDay() == initialItem.getLastModifiedDay()
-	                        	} else {
-	                        	    it.getDateTakenDay() == initialItem.getDateTakenDay()
-	                        	}
-	                        }
-	                        val initialSection = initialSectionAllItems.first { it.type == MediaType.Section }
-	                        val initialSectionItems = initialSectionAllItems.filter { it.type != MediaType.Section }
-		                    if (selectedItemsList.containsAll(initialSectionItems)) {
-		                        selectedItemsList.add(initialSection)
-		                    } else {
-		                        selectedItemsList.remove(initialSection)
-		                    }
-
-			                val sectionAllItems = groupedMedia.filter {
-			                    if (viewProperties.sortMode == MediaItemSortMode.LastModified) {
-			                        it.getLastModifiedDay() == keyItem.getLastModifiedDay()
-			                    } else {
-			                        it.getDateTakenDay() == keyItem.getDateTakenDay()
-			                    }
-			                }
-
-			                val section = sectionAllItems.first { it.type == MediaType.Section }
-		                    val sectionItems = sectionAllItems.filter { it.type != MediaType.Section }
-
-		                    if (selectedItemsList.containsAll(sectionItems)) {
-		                        selectedItemsList.add(section)
-		                    } else {
-		                        selectedItemsList.remove(section)
-		                    }
-	                    }
-
-	                    currentKey = key
-                	}
+                        currentKey = key
+                    }
                 }
             }
         }
     )
 }
 
-fun LazyGridState.getGridItemAtOffset(offset: Offset) : String? =
-    layoutInfo.visibleItemsInfo.find { item ->
-        item.size.toIntRect().contains(offset.round() - item.offset)
-    }?.key as? String
+fun LazyGridState.getGridItemAtOffset(offset: Offset, groupedMedia: List<MediaStoreData>, numberOfHorizontalItems: Int): Int? {
+    var key: String? = null
+
+    Log.d(TAG, "grid displays $numberOfHorizontalItems horizontal items")
+
+    // scan the entire row for this item
+    // if theres only one or two items on a row and user drag selects to the empty space they get selected
+    for (i in 1..numberOfHorizontalItems) {
+        val possibleItem = layoutInfo.visibleItemsInfo.find { item ->
+            val stretched = item.size.toIntRect().let {
+                IntRect(
+                    top = it.top,
+                    bottom = it.bottom,
+                    left = it.left,
+                    right = it.right * i
+                )
+            }
+            stretched.contains(offset.round() - item.offset)
+        }
+
+        if (possibleItem != null) {
+            key = possibleItem.key as String
+            break
+        }
+    }
+
+    val found = groupedMedia.find {
+        it.uri.toString() == key
+    } ?: return null
+
+    return groupedMedia.indexOf(found)
+}
+

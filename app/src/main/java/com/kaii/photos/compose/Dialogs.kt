@@ -20,6 +20,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -110,6 +111,7 @@ import com.kaii.photos.helpers.renameDirectory
 import com.kaii.photos.helpers.renameImage
 import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaStoreData
+import com.kaii.photos.mediastore.MediaType
 import kotlinx.coroutines.delay
 
 @Composable
@@ -534,7 +536,7 @@ fun MainAppDialog(
                                 modifier = Modifier
                                     .clickable(
                                         indication = null,
-                                        interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                                        interactionSource = remember { MutableInteractionSource() },
                                     ) {
                                         focusManager.clearFocus()
                                         changeName = false
@@ -745,11 +747,13 @@ fun SinglePhotoInfoDialog(
                     // should add a way to automatically calculate height needed for this
                     val addedHeight by remember { derivedStateOf { 36.dp * mediaData.keys.size }}
                     val moveCopyHeight = if (showMoveCopyOptions) 82.dp else 0.dp // 40.dp is height of one single row
+                    val setAsHeight = if (currentMediaItem.type != MediaType.Video) 40.dp else 0.dp
+
                     val height by animateDpAsState(
                         targetValue = if (!isEditingFileName.value && expanded.value) {
-                            42.dp + addedHeight + moveCopyHeight
+                            42.dp + addedHeight + moveCopyHeight + setAsHeight
                         } else if (!isEditingFileName.value && !expanded.value) {
-                            42.dp + moveCopyHeight
+                            42.dp + moveCopyHeight + setAsHeight
                         } else {
                             0.dp
                         },
@@ -819,6 +823,23 @@ fun SinglePhotoInfoDialog(
                                         )
                                     }
                                 }
+                            }
+                        }
+
+                        if (currentMediaItem.type == MediaType.Image) {
+                            DialogClickableItem(
+                                text = "Set As",
+                                iconResId = R.drawable.paintbrush,
+                                position = RowPosition.Middle
+                            ) {
+                                val intent = Intent().apply {
+                                    action = Intent.ACTION_ATTACH_DATA
+                                    data = currentMediaItem.uri
+                                    addCategory(Intent.CATEGORY_DEFAULT)
+                                    putExtra("mimeType", currentMediaItem.mimeType)
+                                }
+
+                                context.startActivity(Intent.createChooser(intent, "Set as wallpaper"))
                             }
                         }
 

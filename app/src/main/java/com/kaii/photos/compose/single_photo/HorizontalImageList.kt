@@ -241,7 +241,16 @@ private fun Modifier.mediaModifier(
                     onTap = {
                         if (!isTouchLocked.value) {
                             if (item?.type == MediaType.Video && showVideoPlayerController != null && isLandscape) {
-                                showVideoPlayerController.value = !showVideoPlayerController.value
+                            	if (appBarsVisible.value) {
+	                                setBarVisibility(
+	                                    visible = false,
+	                                    window = window
+	                                ) {
+	                                    appBarsVisible.value = it
+	                                }
+                            	} else {
+                            		showVideoPlayerController.value = !showVideoPlayerController.value
+                            	}
                             } else {
                                 setBarVisibility(
                                     visible = !appBarsVisible.value,
@@ -257,14 +266,7 @@ private fun Modifier.mediaModifier(
 
                     onDoubleTap = { clickOffset ->
                         if (!isTouchLocked.value) {
-                            if (item?.type == MediaType.Video && showVideoPlayerController != null && isLandscape) {
-                                setBarVisibility(
-                                    visible = !appBarsVisible.value,
-                                    window = window
-                                ) {
-                                    appBarsVisible.value = it
-                                }
-                            } else if (item?.type != MediaType.Video && showVideoPlayerController == null) {
+                        	if (item?.type != MediaType.Video && showVideoPlayerController == null) {
                                 if (scale.value == 1f && offset.value == Offset.Zero) {
                                     scale.value = 2f
                                     rotation.value = 0f
