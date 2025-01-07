@@ -97,6 +97,7 @@ import com.kaii.photos.MainActivity
 import com.kaii.photos.R
 import com.kaii.photos.compose.FolderDoesntExist
 import com.kaii.photos.compose.FolderIsEmpty
+import com.kaii.photos.compose.ShowSelectedState
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.datastore.Storage
 import com.kaii.photos.helpers.CustomMaterialTheme
@@ -617,7 +618,7 @@ fun MediaStoreItem(
 
             ShowSelectedState(
                 isSelected = isSectionSelected,
-                selectedItemsList = selectedItemsList,
+                showIcon = selectedItemsList.isNotEmpty(),
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
             )
@@ -734,97 +735,10 @@ fun MediaStoreItem(
 
             ShowSelectedState(
                 isSelected = isSelected,
-                selectedItemsList = selectedItemsList,
+                showIcon = selectedItemsList.isNotEmpty(),
                 modifier = Modifier
                     .align(Alignment.TopEnd)
             )
-        }
-    }
-}
-
-@Composable
-fun ShowSelectedState(
-    isSelected: Boolean,
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
-    modifier: Modifier
-) {
-    AnimatedVisibility(
-        visible = selectedItemsList.isNotEmpty(),
-        enter =
-            scaleIn(
-                animationSpec = tween(
-                    durationMillis = 150
-                )
-            ) + fadeIn(
-                animationSpec = tween(
-                    durationMillis = 150
-                )
-            ),
-        exit =
-            scaleOut(
-                animationSpec = tween(
-                    durationMillis = 150
-                )
-            ) + fadeOut(
-                animationSpec = tween(
-                    durationMillis = 150
-                )
-            ),
-        modifier = modifier
-    ) {
-        Box(
-            modifier = modifier
-                .padding(2.dp)
-        ) {
-            Icon(
-                painter = painterResource(id = if (isSelected) R.drawable.file_is_selected_background else R.drawable.file_not_selected_background),
-                contentDescription = "file is selected indicator",
-                tint =
-                if (isSelected)
-                    CustomMaterialTheme.colorScheme.primary
-                else {
-                    if (isSystemInDarkTheme()) CustomMaterialTheme.colorScheme.onBackground else CustomMaterialTheme.colorScheme.background
-                },
-                modifier = Modifier
-                    .size(24.dp)
-                    .clip(CircleShape)
-                    .align(Alignment.Center)
-            )
-
-            AnimatedVisibility(
-                visible = isSelected,
-                enter =
-                    scaleIn(
-                        animationSpec = tween(
-                            durationMillis = 150
-                        )
-                    ) + fadeIn(
-                        animationSpec = tween(
-                            durationMillis = 150
-                        )
-                    ),
-                exit =
-                    scaleOut(
-                        animationSpec = tween(
-                            durationMillis = 150
-                        )
-                    ) + fadeOut(
-                        animationSpec = tween(
-                            durationMillis = 150
-                        )
-                    ),
-            	modifier = Modifier
-            		.align(Alignment.Center)
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.file_is_selected_foreground),
-                    contentDescription = "file is selected indicator",
-                    tint = CustomMaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier
-                        .size(16.dp)
-                        .align(Alignment.Center)
-                )
-            }
         }
     }
 }

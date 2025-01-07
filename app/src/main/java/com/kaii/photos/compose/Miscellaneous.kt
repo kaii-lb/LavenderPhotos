@@ -1,20 +1,29 @@
 package com.kaii.photos.compose
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -23,7 +32,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -214,3 +226,129 @@ fun ColorFilterItem(
         )
     }
 }
+
+@Composable
+fun ShowSelectedState(
+    isSelected: Boolean,
+    modifier: Modifier = Modifier,
+    showIcon: Boolean = true
+) {
+    AnimatedVisibility(
+        visible = showIcon,
+        enter =
+        scaleIn(
+            animationSpec = tween(
+                durationMillis = 150
+            )
+        ) + fadeIn(
+            animationSpec = tween(
+                durationMillis = 150
+            )
+        ),
+        exit =
+        scaleOut(
+            animationSpec = tween(
+                durationMillis = 150
+            )
+        ) + fadeOut(
+            animationSpec = tween(
+                durationMillis = 150
+            )
+        ),
+        modifier = modifier
+    ) {
+        Box(
+            modifier = modifier
+                .padding(2.dp)
+        ) {
+            Icon(
+                painter = painterResource(id = if (isSelected) R.drawable.file_is_selected_background else R.drawable.file_not_selected_background),
+                contentDescription = "file is selected indicator",
+                tint =
+                if (isSelected)
+                    CustomMaterialTheme.colorScheme.primary
+                else {
+                    if (isSystemInDarkTheme()) CustomMaterialTheme.colorScheme.onBackground else CustomMaterialTheme.colorScheme.background
+                },
+                modifier = Modifier
+                    .size(24.dp)
+                    .clip(CircleShape)
+                    .align(Alignment.Center)
+            )
+
+            AnimatedVisibility(
+                visible = isSelected,
+                enter =
+                scaleIn(
+                    animationSpec = tween(
+                        durationMillis = 150
+                    )
+                ) + fadeIn(
+                    animationSpec = tween(
+                        durationMillis = 150
+                    )
+                ),
+                exit =
+                scaleOut(
+                    animationSpec = tween(
+                        durationMillis = 150
+                    )
+                ) + fadeOut(
+                    animationSpec = tween(
+                        durationMillis = 150
+                    )
+                ),
+                modifier = Modifier
+                    .align(Alignment.Center)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.file_is_selected_foreground),
+                    contentDescription = "file is selected indicator",
+                    tint = CustomMaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier
+                        .size(16.dp)
+                        .align(Alignment.Center)
+                )
+            }
+        }
+    }
+}
+
+// @Composable
+// fun DirectoryTreeItem(
+// 	path: String,
+// 	tree: SnapshotStateList<String>
+// ) {
+// 	val isSelected by remember { derivedStateOf {
+// 		tree.contains(path)
+// 	}}
+//
+// 	Box (
+// 		modifier = Modifier
+// 			.fillMaxWidth(1f)
+// 			.clip(RoundedCornerShape(16.dp))
+// 			.background(CustomMaterialTheme.colorScheme.surfaceContainer)
+// 			.clickable {
+// 				if (isSelected) {
+// 					tree.remove(path)
+// 				} else {
+// 					tree.add(path)
+// 				}
+// 			}
+// 	) {
+// 		Text(
+// 			text = path.removeSuffix("/").substringAfter("/"),
+// 			fontSize = TextUnit(14f, TextUnitType.Sp),
+//             color = if (isSelected) CustomMaterialTheme.colorScheme.onPrimary else CustomMaterialTheme.colorScheme.onSurface,
+//             modifier = Modifier
+//                 .wrapContentSize()
+//                 .align(Alignment.CenterStart)
+// 		)
+//
+// 	    ShowSelectedState(
+// 	        isSelected = isSelected,
+// 	        modifier = Modifier
+// 	            .align(Alignment.CenterEnd)
+// 	    )
+// 	}
+// }

@@ -257,7 +257,7 @@ fun PermissionHandler(
                     PermissionButton(
                         name = "Manage All Files",
                         description = "Allow read/write access to all files, used to trash, delete and edit media",
-                        position = RowPosition.Bottom,
+                        position = RowPosition.Middle,
                         granted = !mainViewModel.permissionQueue.contains(Manifest.permission.MANAGE_EXTERNAL_STORAGE)
                     ) {
                         val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
@@ -287,7 +287,7 @@ fun PermissionHandler(
                         PermissionButton(
                             name = "Manage Media",
                             description = "Optional permission. Is used for faster trash/delete functionality",
-                            position = RowPosition.Middle,
+                            position = RowPosition.Bottom,
                             granted = !mainViewModel.permissionQueue.contains(Manifest.permission.MANAGE_MEDIA)
                         ) {
                             val intent = Intent(Settings.ACTION_REQUEST_MANAGE_MEDIA)

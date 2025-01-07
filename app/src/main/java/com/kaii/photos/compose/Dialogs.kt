@@ -5,7 +5,12 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
+import android.net.Uri
 import android.provider.DocumentsContract
+import android.util.Log
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
@@ -83,6 +88,7 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.net.toFile
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
@@ -92,7 +98,6 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity
 import com.kaii.photos.MainActivity.Companion.mainViewModel
-import com.kaii.photos.MainActivity.Companion.startForResult
 import com.kaii.photos.R
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.datastore.AlbumsList
@@ -113,6 +118,8 @@ import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import kotlinx.coroutines.delay
+
+private const val TAG = "DIALOGS"
 
 @Composable
 fun DialogClickableItem(text: String, iconResId: Int, position: RowPosition, action: (() -> Unit)? = null) {
@@ -572,17 +579,27 @@ fun MainAppDialog(
                     }
 
                     if (currentView.value == MainScreenViewType.AlbumsGridView) {
+                        val context = LocalContext.current
+                        val activityLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenDocumentTree()) { uri ->
+                            if (uri != null) {
+                                val dir = uri.toFile()
+
+                                val path = dir.absolutePath.replace(getBaseInternalStorageDirectory(), "")
+
+                                Log.d(TAG, "Added album path $path")
+
+                                mainViewModel.settings.AlbumsList.addToAlbumsList(path)
+                            } else {
+                                Toast.makeText(context, "Failed to add album :<", Toast.LENGTH_LONG).show()
+                            }
+                        }
+
                         DialogClickableItem(
                             text = "Add an album",
                             iconResId = R.drawable.add,
                             position = RowPosition.Top,
                         ) {
-                            showDialog.value = false
-                            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
-                                putExtra(DocumentsContract.EXTRA_INITIAL_URI, "".toUri())
-                            }
-
-                            startForResult.launch(intent)
+                            activityLauncher.launch(null)
                         }
                     }
 

@@ -2,6 +2,7 @@ package com.kaii.photos
 
 import android.content.Intent
 import android.content.res.Configuration
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -126,8 +127,6 @@ class MainActivity : ComponentActivity() {
     companion object {
         lateinit var applicationDatabase: MediaDatabase
         lateinit var mainViewModel: MainViewModel
-
-        lateinit var startForResult: ActivityResultLauncher<Intent>
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -143,30 +142,6 @@ class MainActivity : ComponentActivity() {
         applicationDatabase = mediaDatabase
 
         Glide.get(this).setMemoryCategory(MemoryCategory.HIGH)
-
-        startForResult =
-            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-                if (result.resultCode == RESULT_OK) {
-                    result.data?.data?.also { uri ->
-                        val path = uri.path ?: ""
-
-                        Log.d(TAG, "Added album path ${path.replace("/tree/primary:", "")}")
-
-                        val runnable = Runnable {
-                            mainViewModel.settings.AlbumsList.addToAlbumsList(
-                                path.replace(
-                                    "/tree/primary:",
-                                    ""
-                                )
-                            )
-                        }
-                        Thread(runnable).start()
-                    }
-                } else {
-                    Toast.makeText(applicationContext, "Failed to add album", Toast.LENGTH_LONG)
-                        .show()
-                }
-            }
 
         setContent {
             mainViewModel = viewModel(
