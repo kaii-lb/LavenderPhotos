@@ -179,10 +179,11 @@ class MainActivity : ComponentActivity() {
             if (canRecordLogs) {
                 try {
                     File(logPath).delete()
+	                Runtime.getRuntime().exec("logcat -c --pid=$(pidof com.kaii.photos)")
+	                Runtime.getRuntime().exec("logcat -f $logPath --pid=$(pidof com.kaii.photos)")
                 } catch (e: Throwable) {
-                    // ignore
+                    Log.e(TAG, e.toString())
                 }
-                Runtime.getRuntime().exec("logcat -d -f $logPath")
             }
 
             val continueToApp = remember {
