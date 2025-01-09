@@ -40,6 +40,7 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CornerSize
@@ -75,6 +76,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -102,6 +104,7 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.User
+import com.kaii.photos.datastore.Debugging
 import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MultiScreenViewType
@@ -118,6 +121,7 @@ import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import kotlinx.coroutines.delay
+import java.io.File
 
 private const val TAG = "DIALOGS"
 
@@ -580,26 +584,63 @@ fun MainAppDialog(
 
                     if (currentView.value == MainScreenViewType.AlbumsGridView) {
                         val context = LocalContext.current
-                        val activityLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenDocumentTree()) { uri ->
-                            if (uri != null) {
-                                val dir = uri.toFile()
+                        val alternativePickAlbums by mainViewModel.settings.Debugging.getAlternativePickAlbums().collectAsStateWithLifecycle(initialValue = false)
 
-                                val path = dir.absolutePath.replace(getBaseInternalStorageDirectory(), "")
+						var openAction: () -> Unit
 
-                                Log.d(TAG, "Added album path $path")
+                       	if (!alternativePickAlbums) {
+	                        val activityLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenDocumentTree()) { uri ->
+	                        		val uriPath = uri?.path
+	                            	if (uri != null && uriPath != null) {
+		                                val dir = File(uriPath)
 
-                                mainViewModel.settings.AlbumsList.addToAlbumsList(path)
-                            } else {
-                                Toast.makeText(context, "Failed to add album :<", Toast.LENGTH_LONG).show()
-                            }
-                        }
+		                                val path = dir.absolutePath.replace(getBaseInternalStorageDirectory(), "")
+
+		                                Log.d(TAG, "Added album path $path")
+
+		                                mainViewModel.settings.AlbumsList.addToAlbumsList(path)
+		                            } else {
+		                                Toast.makeText(context, "Failed to add album :<", Toast.LENGTH_LONG).show()
+		                            }
+                            	}
+
+                            	openAction = {
+                            		activityLauncher.launch(null)
+                            	}
+                       	} else {
+	                        val activityLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenDocument()) { uri ->
+	                        	val uriPath = uri?.path
+                            	if (uri != null && uriPath != null) {
+	                                val dir = File(uriPath).absolutePath
+
+									dir?.let { dir ->
+		                                val path = dir.replace(getBaseInternalStorageDirectory(), "").replace(dir.substringAfterLast("/"), "")
+
+		                                Log.d(TAG, "Added album path $path")
+
+		                                mainViewModel.settings.AlbumsList.addToAlbumsList(path)
+									}
+	                            } else {
+	                                Toast.makeText(context, "Failed to add album :<", Toast.LENGTH_LONG).show()
+	                            }
+
+                           	}
+
+                            openAction = {
+                        		activityLauncher.launch(
+                        			arrayOf(
+                        				"image/*"
+                        			)
+                        		)
+                       		}
+                       	}
 
                         DialogClickableItem(
                             text = "Add an album",
                             iconResId = R.drawable.add,
                             position = RowPosition.Top,
                         ) {
-                            activityLauncher.launch(null)
+                        	openAction()
                         }
                     }
 
@@ -1143,6 +1184,122 @@ fun SingleAlbumDialog(
                         navController.popBackStack()
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun TextEntryDialog(
+    title: String,
+    placeholder: String? = null,
+    onConfirm: (text: String) -> Boolean,
+    onDismiss: () -> Unit
+) {
+    Dialog(
+        onDismissRequest = {
+            onDismiss()
+        },
+        properties = DialogProperties(
+            dismissOnClickOutside = true,
+            dismissOnBackPress = true
+        ),
+    ) {
+        Column(
+            modifier = Modifier
+                .wrapContentSize()
+                .clip(RoundedCornerShape(32.dp))
+                .background(CustomMaterialTheme.colorScheme.background)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = title,
+                fontSize = TextUnit(18f, TextUnitType.Sp),
+                fontWeight = FontWeight.Bold,
+                color = CustomMaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.wrapContentSize()
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+			val keyboardController = LocalSoftwareKeyboardController.current
+			var text by remember { mutableStateOf("") }
+			var showError by remember { mutableStateOf(false) }
+
+	        TextField(
+	            value = text,
+	            onValueChange = {
+	                text = it
+	            },
+	            maxLines = 1,
+	            singleLine = true,
+	            placeholder = {
+	            	if (placeholder != null) {
+		                Text(
+		                    text = placeholder,
+		                    fontSize = TextUnit(16f, TextUnitType.Sp)
+		                )
+	            	}
+	            },
+	            suffix = {
+	            	if (showError) {
+		                Row {
+		                    Icon(
+		                        painter = painterResource(id = R.drawable.edit), // TODO: change to error icon and color to be a theme specific red
+		                        contentDescription = "Error",
+		                        tint = CustomMaterialTheme.colorScheme.primary,
+		                        modifier = Modifier
+		                            .size(24.dp)
+		                            .clickable {
+		                            	// TODO: show help tip
+		                            }
+		                    )
+
+		                    Spacer(modifier = Modifier.width(8.dp))
+		                }
+	            	}
+	            },
+	            colors = TextFieldDefaults.colors(
+	                focusedContainerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
+	                unfocusedContainerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
+	                cursorColor = CustomMaterialTheme.colorScheme.primary,
+	                focusedTextColor = CustomMaterialTheme.colorScheme.onSurface,
+	                unfocusedTextColor = CustomMaterialTheme.colorScheme.onSurface,
+	                focusedPlaceholderColor = CustomMaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+	                unfocusedPlaceholderColor = CustomMaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+	                unfocusedIndicatorColor = Color.Transparent,
+	                focusedIndicatorColor = Color.Transparent
+	            ),
+	            keyboardOptions = KeyboardOptions(
+	                autoCorrectEnabled = false,
+	                keyboardType = KeyboardType.Text,
+	                imeAction = ImeAction.Done
+	            ),
+	            keyboardActions = KeyboardActions(
+	                onSearch = {
+	                    keyboardController?.hide()
+	                }
+	            ),
+	            shape = RoundedCornerShape(24.dp),
+	            modifier = Modifier
+	                .fillMaxWidth(1f)
+	        )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            PermissionDeniedDialogButton(
+                text = "Confirm",
+                color = CustomMaterialTheme.colorScheme.primary,
+                textColor = CustomMaterialTheme.colorScheme.onPrimary,
+                position = RowPosition.Single
+            ) {
+            	if (onConfirm(text)) {
+            		showError = false
+            	} else {
+            		showError = true
+            	}
             }
         }
     }

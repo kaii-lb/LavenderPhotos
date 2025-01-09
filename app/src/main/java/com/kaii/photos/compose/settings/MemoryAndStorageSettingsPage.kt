@@ -182,7 +182,7 @@ fun MemoryAndStorageSettingsPage() {
                     showDialog = showConfirmationDialog,
                     confirmButtonLabel = "Clear",
                     dialogTitle = "Clear Thumbnail Caches?",
-                    dialogBody = "This will erase all the thumbnail caches on this device, freeing up storage. Thumbnail loading will take longer on the next startup"
+                    dialogBody = "This will erase all the thumbnail caches on this device, freeing up storage. Thumbnail loading will take longer on the next startup."
                 ) {
                     mainViewModel.settings.Storage.clearThumbnailCache()
                 }

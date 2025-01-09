@@ -337,7 +337,7 @@ fun ShowSelectedState(
 // 			}
 // 	) {
 // 		Text(
-// 			text = path.removeSuffix("/").substringAfter("/"),
+// 			text = path.removeSuffix("/").substringAfterLast("/"),
 // 			fontSize = TextUnit(14f, TextUnitType.Sp),
 //             color = if (isSelected) CustomMaterialTheme.colorScheme.onPrimary else CustomMaterialTheme.colorScheme.onSurface,
 //             modifier = Modifier

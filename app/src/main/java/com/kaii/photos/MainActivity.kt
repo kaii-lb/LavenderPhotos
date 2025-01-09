@@ -148,7 +148,16 @@ class MainActivity : ComponentActivity() {
                 factory = MainViewModelFactory(applicationContext)
             )
 
-            val logPath = "${getBaseInternalStorageDirectory()}LavenderPhotos/log.txt"
+			val appDataDir = "${getBaseInternalStorageDirectory()}LavenderPhotos"
+			appDataDir.let {
+				val file = File(it)
+
+				if (!file.exists()) {
+					file.mkdirs()
+				}
+			}
+
+            val logPath = "$appDataDir/log.txt"
 
             val canRecordLogs by mainViewModel.settings.Debugging.getRecordLogs().collectAsStateWithLifecycle(initialValue = false)
             if (canRecordLogs) {

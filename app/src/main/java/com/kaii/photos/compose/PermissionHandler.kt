@@ -536,7 +536,7 @@ fun ExplanationDialog(
             modifier = Modifier
                 .wrapContentSize()
                 .clip(RoundedCornerShape(32.dp))
-                .background(CustomMaterialTheme.colorScheme.background)
+                .background(CustomMaterialTheme.colorScheme.surfaceContainer)
                 .padding(16.dp),
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
@@ -545,7 +545,7 @@ fun ExplanationDialog(
                 text = "Permission Explanation",
                 fontSize = TextUnit(18f, TextUnitType.Sp),
                 fontWeight = FontWeight.Bold,
-                color = CustomMaterialTheme.colorScheme.onBackground,
+                color = CustomMaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.wrapContentSize()
             )
 
@@ -554,7 +554,7 @@ fun ExplanationDialog(
             Text(
                 text = explanation,
                 fontSize = TextUnit(14f, TextUnitType.Sp),
-                color = CustomMaterialTheme.colorScheme.onBackground,
+                color = CustomMaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.wrapContentSize()
             )
 

@@ -754,6 +754,8 @@ fun Modifier.dragSelectionHandler(
     var initialKey: Int? = null
     var currentKey: Int? = null
 
+	if (groupedMedia.isEmpty()) return@pointerInput
+
     val numberOfHorizontalItems = state.layoutInfo.viewportSize.width / state.layoutInfo.visibleItemsInfo[0].size.width
 
     detectDragGestures(

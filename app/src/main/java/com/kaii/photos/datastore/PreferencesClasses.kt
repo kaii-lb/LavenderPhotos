@@ -22,6 +22,8 @@ class SettingsAlbumsListImpl(private val context: Context, private val viewModel
     private val albumsListKey = stringPreferencesKey("album_folder_path_list")
 
     fun addToAlbumsList(path: String) = viewModelScope.launch {
+    	if (path == "") return@launch
+
         context.datastore.edit {
             val stringList = it[albumsListKey]
 
@@ -128,8 +130,9 @@ class SettingsUserImpl(private val context: Context, private val viewModelScope:
     }
 }
 
-class SettingsLogsImpl(private val context: Context, private val viewModelScope: CoroutineScope) {
-    private val recordLogsKey = booleanPreferencesKey("record_logs")
+class SettingsDebuggingImpl(private val context: Context, private val viewModelScope: CoroutineScope) {
+    private val recordLogsKey = booleanPreferencesKey("debugging_record_logs")
+    private val alternativePickAlbumsKey = booleanPreferencesKey("debugging_alternative_pick_albums")
 
     fun getRecordLogs(): Flow<Boolean> =
         context.datastore.data.map {
@@ -139,6 +142,17 @@ class SettingsLogsImpl(private val context: Context, private val viewModelScope:
     fun setRecordLogs(value: Boolean) = viewModelScope.launch {
         context.datastore.edit {
             it[recordLogsKey] = value
+        }
+    }
+
+    fun getAlternativePickAlbums(): Flow<Boolean> =
+        context.datastore.data.map {
+            it[alternativePickAlbumsKey] ?: false
+        }
+
+    fun setAlternativePickAlbums(value: Boolean) = viewModelScope.launch {
+        context.datastore.edit {
+            it[alternativePickAlbumsKey] = value
         }
     }
 }

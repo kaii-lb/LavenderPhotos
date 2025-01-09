@@ -7,12 +7,11 @@ import androidx.datastore.preferences.preferencesDataStore
 
 val Context.datastore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
-val Settings.Debugging: SettingsLogsImpl
-    get() = SettingsLogsImpl(context, viewModelScope)
+val Settings.Debugging: SettingsDebuggingImpl
+    get() = SettingsDebuggingImpl(context, viewModelScope)
 
 val Settings.Permissions: SettingsPermissionsImpl
     get() = SettingsPermissionsImpl(context, viewModelScope)
-
 
 val Settings.TrashBin: SettingsTrashBinImpl
     get() = SettingsTrashBinImpl(context, viewModelScope)

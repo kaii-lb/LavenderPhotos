@@ -14,6 +14,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -25,10 +28,15 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.PreferencesSeparatorText
+import com.kaii.photos.compose.PreferencesRow
 import com.kaii.photos.compose.PreferencesSwitchRow
+import com.kaii.photos.compose.TextEntryDialog
 import com.kaii.photos.datastore.Debugging
+import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.helpers.CustomMaterialTheme
+import com.kaii.photos.helpers.getBaseInternalStorageDirectory
 import com.kaii.photos.helpers.RowPosition
+import java.io.File
 
 @Composable
 fun DebuggingSettingsPage() {
@@ -61,6 +69,59 @@ fun DebuggingSettingsPage() {
                 ) {
 					mainViewModel.settings.Debugging.setRecordLogs(it)
                 }
+        	}
+
+        	item {
+                val alternativePickAlbums by mainViewModel.settings.Debugging.getAlternativePickAlbums().collectAsStateWithLifecycle(initialValue = false)
+
+                PreferencesSwitchRow(
+                    title = "Alternative Choose Albums",
+                    summary = "In case add an album only shows empty folders, use this",
+                    iconResID = R.drawable.albums,
+                    checked = alternativePickAlbums,
+                    position = RowPosition.Single,
+                    showBackground = false
+                ) {
+					mainViewModel.settings.Debugging.setAlternativePickAlbums(it)
+                }
+        	}
+
+        	item {
+               	var showAddAlbumsDialog by remember { mutableStateOf(false) }
+
+               	PreferencesRow(
+               	    title = "Add an album",
+               	    summary = "Use a direct path to add an album",
+               	    iconResID = R.drawable.albums,
+               	    position = RowPosition.Single,
+               	    showBackground = false
+               	) {
+               		showAddAlbumsDialog = true
+               	}
+
+				if (showAddAlbumsDialog) {
+	               	TextEntryDialog(
+	               		title = "Add Albums Path",
+	               		placeholder = "Download/Movies",
+	               		onDismiss = {
+	               			showAddAlbumsDialog = false
+	               		},
+	               		onConfirm = { path ->
+							val relativePath = path.trim().replace(getBaseInternalStorageDirectory(), "")
+							val absolutePath = getBaseInternalStorageDirectory() + relativePath
+
+							if (!File(absolutePath).exists() || relativePath == "") {
+								false
+							} else {
+								mainViewModel.settings.AlbumsList.addToAlbumsList(relativePath)
+
+								showAddAlbumsDialog = false
+								true
+							}
+
+	               		}
+	               	)
+				}
         	}
         }
 	}
