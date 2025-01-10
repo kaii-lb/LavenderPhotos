@@ -160,14 +160,17 @@ class MainActivity : ComponentActivity() {
             val logPath = "$appDataDir/log.txt"
 
             val canRecordLogs by mainViewModel.settings.Debugging.getRecordLogs().collectAsStateWithLifecycle(initialValue = false)
-            if (canRecordLogs) {
-                try {
-                    File(logPath).delete()
-	                Runtime.getRuntime().exec("logcat -c --pid=$(pidof com.kaii.photos)")
-	                Runtime.getRuntime().exec("logcat -f $logPath --pid=$(pidof com.kaii.photos)")
-                } catch (e: Throwable) {
-                    Log.e(TAG, e.toString())
-                }
+
+            LaunchedEffect(canRecordLogs) {
+	            if (canRecordLogs) {
+	                try {
+	                    File(logPath).delete()
+		                Runtime.getRuntime().exec("logcat -c")
+		                Runtime.getRuntime().exec("logcat -f $logPath")
+	                } catch (e: Throwable) {
+	                    Log.e(TAG, e.toString())
+	                }
+	            }
             }
 
             val continueToApp = remember {
