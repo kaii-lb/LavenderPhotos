@@ -32,3 +32,6 @@ output.json
 obj/
 .externalNativeBuild
 keys/
+photos_signed_debug.apk.idsig
+photos_signed_release.apk.idsig
+photos_signed_universal.apk.idsig
