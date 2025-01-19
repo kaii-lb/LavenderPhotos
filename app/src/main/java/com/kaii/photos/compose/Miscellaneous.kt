@@ -23,12 +23,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -56,6 +58,8 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.kaii.photos.R
 import com.kaii.photos.helpers.CustomMaterialTheme
+import com.kaii.photos.mediastore.MediaStoreData
+import com.kaii.photos.mediastore.MediaType
 
 @Composable
 fun SplitButton(
@@ -352,3 +356,103 @@ fun ShowSelectedState(
 // 	    )
 // 	}
 // }
+
+
+@Composable
+fun SelectViewTopBarLeftButtons(
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
+) {
+	SplitButton(
+		primaryContentPadding = PaddingValues(16.dp, 0.dp, 12.dp, 0.dp),
+		secondaryContentPadding = PaddingValues(8.dp, 8.dp, 12.dp, 8.dp),
+	    secondaryContainerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
+	    primaryContent = {
+	        Icon(
+	            painter = painterResource(id = R.drawable.close),
+	            contentDescription = "clear selection button",
+	            tint = CustomMaterialTheme.colorScheme.onPrimary,
+	            modifier = Modifier
+	                .size(24.dp)
+	        )
+	    },
+	    secondaryContent = {
+	        Text(
+	            text = selectedItemsList.filter { it != MediaStoreData()  }.size.toString(),
+	            color = CustomMaterialTheme.colorScheme.onSurface,
+	            fontSize = TextUnit(18f, TextUnitType.Sp),
+	            modifier = Modifier
+	                .wrapContentSize()
+	                .animateContentSize()
+	        )
+	    },
+	    primaryAction = {
+	        selectedItemsList.clear()
+	    },
+	    secondaryAction = {
+	        selectedItemsList.clear()
+	    }
+	)
+}
+
+@Composable
+fun SelectViewTopBarRightButtons(
+	selectedItemsList: SnapshotStateList<MediaStoreData>,
+	groupedMedia: List<MediaStoreData>
+) {
+	val nonSectionedGroupedMedia by remember { derivedStateOf {
+		groupedMedia.filter {
+			it.type != MediaType.Section
+		}
+	}}
+	val isTicked by remember {
+	    derivedStateOf {
+	        selectedItemsList.size == nonSectionedGroupedMedia.size
+	    }
+	}
+
+    Row (
+        modifier = Modifier
+            .wrapContentWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
+    ) {
+        IconButton(
+            onClick = {
+                if (isTicked) {
+                    selectedItemsList.clear()
+                    selectedItemsList.add(MediaStoreData())
+                } else {
+                    selectedItemsList.clear()
+
+                    selectedItemsList.addAll(nonSectionedGroupedMedia)
+                }
+            },
+            modifier = Modifier
+                .clip(RoundedCornerShape(1000.dp))
+                .size(42.dp)
+                .background(if (isTicked) CustomMaterialTheme.colorScheme.primary else Color.Transparent)
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.checklist),
+                contentDescription = "select all items",
+                tint = if (isTicked) CustomMaterialTheme.colorScheme.onPrimary else CustomMaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier
+                    .size(24.dp)
+            )
+        }
+
+        IconButton(
+            onClick = {
+                // showDialog.value = true
+            },
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.more_options),
+                contentDescription = "show more options for selected items",
+                tint = CustomMaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier
+                    .size(24.dp)
+            )
+        }
+    }
+}

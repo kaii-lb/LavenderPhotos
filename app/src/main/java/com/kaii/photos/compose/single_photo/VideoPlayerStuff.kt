@@ -88,7 +88,6 @@ import androidx.navigation.NavHostController
 import com.kaii.photos.R
 import com.kaii.photos.compose.setBarVisibility
 import com.kaii.photos.helpers.CustomMaterialTheme
-import com.kaii.photos.helpers.moveImageToLockedFolder
 import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareImage
 import com.kaii.photos.mediastore.MediaStoreData

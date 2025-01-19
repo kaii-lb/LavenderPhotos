@@ -57,19 +57,18 @@ class MainViewModel(context: Context) : ViewModel() {
     		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
     			listOf(
 		    		Manifest.permission.READ_MEDIA_IMAGES,
-		    		Manifest.permission.MANAGE_EXTERNAL_STORAGE,
+		    		Manifest.permission.READ_MEDIA_VIDEO,
 		    		Manifest.permission.MANAGE_MEDIA
     			)
     		} else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
     			listOf(
 		    		Manifest.permission.READ_EXTERNAL_STORAGE,
-		    		Manifest.permission.MANAGE_EXTERNAL_STORAGE,
 		    		Manifest.permission.MANAGE_MEDIA
     			)
     		} else {
     			listOf(
 		    		Manifest.permission.READ_EXTERNAL_STORAGE,
-		    		Manifest.permission.MANAGE_EXTERNAL_STORAGE
+		    		Manifest.permission.WRITE_EXTERNAL_STORAGE
     			)
     		}
 

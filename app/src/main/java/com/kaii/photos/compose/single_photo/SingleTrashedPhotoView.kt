@@ -65,7 +65,9 @@ import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.SinglePhotoInfoDialog
 import com.kaii.photos.helpers.CustomMaterialTheme
+import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
+import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.trash_bin.TrashViewModel
@@ -144,9 +146,18 @@ fun SingleTrashedPhotoView(
     val showDialog = remember { mutableStateOf(false) }
     val showInfoDialog = remember { mutableStateOf(false) }
 
-    if (showDialog.value) {
-        val context = LocalContext.current
+    val context = LocalContext.current
+    val runPermaDeleteAction = remember { mutableStateOf(false) }
 
+    LaunchedEffect(runPermaDeleteAction.value) {
+        if (runPermaDeleteAction.value) {
+            permanentlyDeletePhotoList(context, listOf(currentMediaItem.uri))
+
+            runPermaDeleteAction.value = false
+        }
+    }
+
+    if (showDialog.value) {
         AlertDialog(
             onDismissRequest = {
                 showDialog.value = false
@@ -156,7 +167,7 @@ fun SingleTrashedPhotoView(
                     onClick = {
                         showDialog.value = false
 
-                        permanentlyDeletePhotoList(context, listOf(currentMediaItem.uri))
+                        runPermaDeleteAction.value = true
                     }
                 ) {
                     Text(
@@ -353,12 +364,22 @@ private fun BottomBar(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
+                	val runRestoreAction = remember { mutableStateOf(false) }
+			        GetPermissionAndRun(
+			            uris = listOf(item.uri),
+			            shouldRun = runRestoreAction,
+			            onGranted = {
+			                setTrashedOnPhotoList(
+			                    context = context,
+			                    list = listOf(item.uri),
+			                    trashed = false
+			                )
+			            }
+			        )
+
                     OutlinedButton(
                         onClick = {
-                            val untrashValues = ContentValues().apply {
-                                put(MediaColumns.IS_TRASHED, false)
-                            }
-                            context.contentResolver.update(item.uri, untrashValues, null)
+                            runRestoreAction.value = true
                         },
                         modifier = Modifier
                             .weight(1f)

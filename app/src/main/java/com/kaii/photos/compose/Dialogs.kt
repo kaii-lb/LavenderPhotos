@@ -5,8 +5,6 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
-import android.net.Uri
-import android.provider.DocumentsContract
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -39,8 +37,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CornerSize
@@ -59,9 +57,9 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
@@ -90,8 +88,6 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.core.net.toFile
-import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
@@ -103,14 +99,17 @@ import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.datastore.AlbumsList
-import com.kaii.photos.datastore.User
 import com.kaii.photos.datastore.Debugging
+import com.kaii.photos.datastore.User
 import com.kaii.photos.helpers.CustomMaterialTheme
+import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
+import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.MainScreenViewType
-import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.MediaData
+import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.brightenColor
+import com.kaii.photos.helpers.createPersistablePermissionLauncher
 import com.kaii.photos.helpers.darkenColor
 import com.kaii.photos.helpers.getBaseInternalStorageDirectory
 import com.kaii.photos.helpers.getExifDataForMedia
@@ -126,19 +125,28 @@ import java.io.File
 private const val TAG = "DIALOGS"
 
 @Composable
-fun DialogClickableItem(text: String, iconResId: Int, position: RowPosition, action: (() -> Unit)? = null) {
+fun DialogClickableItem(
+    text: String,
+    iconResId: Int,
+    position: RowPosition,
+    enabled: Boolean = true,
+    action: (() -> Unit)? = null
+) {
     val buttonHeight = 40.dp
 
     val (shape, spacerHeight) = getDefaultShapeSpacerForPosition(position)
 
-    val clickableModifier = if (action != null) Modifier.clickable { action() } else Modifier
+    val clickableModifier = if (action != null && enabled) Modifier.clickable { action() } else Modifier
 
     Row(
         modifier = Modifier
             .fillMaxWidth(1f)
             .height(buttonHeight)
             .clip(shape)
-            .background(CustomMaterialTheme.colorScheme.surfaceVariant)
+            .background(
+                if (enabled) CustomMaterialTheme.colorScheme.surfaceVariant
+                else darkenColor(CustomMaterialTheme.colorScheme.surfaceVariant, 0.1f)
+            )
             .wrapContentHeight(align = Alignment.CenterVertically)
             .then(clickableModifier)
             .padding(8.dp),
@@ -465,7 +473,7 @@ fun MainAppDialog(
                 ) {
                     val storedName = mainViewModel.settings.User.getUsername().collectAsStateWithLifecycle(initialValue = null).value ?: return@Row
 
-					var originalName by remember { mutableStateOf(storedName) }
+                    var originalName by remember { mutableStateOf(storedName) }
 
                     var username by remember {
                         mutableStateOf(
@@ -586,61 +594,58 @@ fun MainAppDialog(
                         val context = LocalContext.current
                         val alternativePickAlbums by mainViewModel.settings.Debugging.getAlternativePickAlbums().collectAsStateWithLifecycle(initialValue = false)
 
-						var openAction: () -> Unit
+                        val openAction: () -> Unit
 
-                       	if (!alternativePickAlbums) {
-	                        val activityLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenDocumentTree()) { uri ->
-	                        		val uriPath = uri?.path
-	                            	if (uri != null && uriPath != null) {
-		                                val dir = File(uriPath)
+                        if (!alternativePickAlbums) {
+                            val activityLauncher = createPersistablePermissionLauncher { uri ->
+                                uri.path?.let {
+                                    val dir = File(it)
 
-		                                val path = dir.absolutePath.replace(getBaseInternalStorageDirectory(), "")
+                                    val pathSections = dir.absolutePath.replace(getBaseInternalStorageDirectory(), "").split(":")
+                                    val path = pathSections[pathSections.size - 1]
 
-		                                Log.d(TAG, "Added album path $path")
+                                    Log.d(TAG, "Added album path $path")
 
-		                                mainViewModel.settings.AlbumsList.addToAlbumsList(path)
-		                            } else {
-		                                Toast.makeText(context, "Failed to add album :<", Toast.LENGTH_LONG).show()
-		                            }
-                            	}
-
-                            	openAction = {
-                            		activityLauncher.launch(null)
-                            	}
-                       	} else {
-	                        val activityLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenDocument()) { uri ->
-	                        	val uriPath = uri?.path
-                            	if (uri != null && uriPath != null) {
-	                                val dir = File(uriPath).absolutePath
-
-									dir?.let { dir ->
-		                                val path = dir.replace(getBaseInternalStorageDirectory(), "").replace(dir.substringAfterLast("/"), "")
-
-		                                Log.d(TAG, "Added album path $path")
-
-		                                mainViewModel.settings.AlbumsList.addToAlbumsList(path)
-									}
-	                            } else {
-	                                Toast.makeText(context, "Failed to add album :<", Toast.LENGTH_LONG).show()
-	                            }
-
-                           	}
+                                    mainViewModel.settings.AlbumsList.addToAlbumsList(path)
+                                }
+                            }
 
                             openAction = {
-                        		activityLauncher.launch(
-                        			arrayOf(
-                        				"image/*"
-                        			)
-                        		)
-                       		}
-                       	}
+                                activityLauncher.launch(null)
+                            }
+                        } else {
+                        	// TODO: fix this
+                            val activityLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenDocument()) { uri ->
+                                val uriPath = uri?.path
+                                if (uri != null && uriPath != null) {
+                                    val dir = File(uriPath).absolutePath
+
+                                    val path = dir.replace(getBaseInternalStorageDirectory(), "")
+
+                                    Log.d(TAG, "Added album path $path")
+
+                                    mainViewModel.settings.AlbumsList.addToAlbumsList(path)
+                                } else {
+                                    Toast.makeText(context, "Failed to add album :<", Toast.LENGTH_LONG).show()
+                                }
+
+                            }
+
+                            openAction = {
+                                activityLauncher.launch(
+                                    arrayOf(
+                                        "image/*"
+                                    )
+                                )
+                            }
+                        }
 
                         DialogClickableItem(
                             text = "Add an album",
                             iconResId = R.drawable.add,
                             position = RowPosition.Top,
                         ) {
-                        	openAction()
+                            openAction()
                         }
                     }
 
@@ -755,30 +760,28 @@ fun SinglePhotoInfoDialog(
 
                     val expanded = remember { mutableStateOf(false) }
 
-                    LaunchedEffect(key1 = saveFileName.value) {
-                        if (!saveFileName.value) {
-                            return@LaunchedEffect
+                    GetPermissionAndRun(
+                        uris = listOf(currentMediaItem.uri),
+                        shouldRun = saveFileName,
+                        onGranted = {
+                            val oldName = currentMediaItem.displayName ?: "Broken File"
+                            val path = currentMediaItem.absolutePath
+
+                            renameImage(context, currentMediaItem.uri, fileName.value)
+
+                            originalFileName = fileName.value
+                            val newGroupedMedia = groupedMedia.value.toMutableList()
+                            // set currentMediaItem to new one with new name
+                            val newMedia = currentMediaItem.copy(
+                                displayName = fileName.value,
+                                absolutePath = path.replace(oldName, fileName.value)
+                            )
+
+                            val index = groupedMedia.value.indexOf(currentMediaItem)
+                            newGroupedMedia[index] = newMedia
+                            groupedMedia.value = newGroupedMedia
                         }
-
-                        val oldName = currentMediaItem.displayName ?: "Broken File"
-                        val path = currentMediaItem.absolutePath
-
-                        renameImage(context, currentMediaItem.uri, fileName.value)
-
-                        originalFileName = fileName.value
-                        val newGroupedMedia = groupedMedia.value.toMutableList()
-                        // set currentMediaItem to new one with new name
-                        val newMedia = currentMediaItem.copy(
-                            displayName = fileName.value,
-                            absolutePath = path.replace(oldName, fileName.value)
-                        )
-
-                        val index = groupedMedia.value.indexOf(currentMediaItem)
-                        newGroupedMedia[index] = newMedia
-                        groupedMedia.value = newGroupedMedia
-
-                        saveFileName.value = false
-                    }
+                    )
 
                     AnimatableTextField(
                         state = isEditingFileName,
@@ -787,23 +790,23 @@ fun SinglePhotoInfoDialog(
                         extraAction = expanded,
                         rowPosition = RowPosition.Top
                     ) {
-                        fileName.value = originalFileName
+                        // fileName.value = originalFileName // TODO: fix so it doesn't reset while trying to allow by user
                     }
 
                     var mediaData by remember {
-                    	mutableStateOf(
-	                    	emptyMap<MediaData, Any>()
-                    	)
-                   	}
+                        mutableStateOf(
+                            emptyMap<MediaData, Any>()
+                        )
+                    }
 
-					LaunchedEffect(Unit) {
-						getExifDataForMedia(currentMediaItem.absolutePath).collect {
-							mediaData = it
-						}
-					}
+                    LaunchedEffect(Unit) {
+                        getExifDataForMedia(currentMediaItem.absolutePath).collect {
+                            mediaData = it
+                        }
+                    }
 
                     // should add a way to automatically calculate height needed for this
-                    val addedHeight by remember { derivedStateOf { 36.dp * mediaData.keys.size }}
+                    val addedHeight by remember { derivedStateOf { 36.dp * mediaData.keys.size } }
                     val moveCopyHeight = if (showMoveCopyOptions) 82.dp else 0.dp // 40.dp is height of one single row
                     val setAsHeight = if (currentMediaItem.type != MediaType.Video) 40.dp else 0.dp
 
@@ -1138,24 +1141,26 @@ fun SingleAlbumDialog(
                 val fileName = remember { mutableStateOf(title) }
                 val saveFileName = remember { mutableStateOf(false) }
 
-                LaunchedEffect(key1 = saveFileName.value) {
-                    if (!saveFileName.value) {
-                        return@LaunchedEffect
+                val directoryFullPath = "${getBaseInternalStorageDirectory()}$dir"
+                GetDirectoryPermissionAndRun(
+                    absolutePath = directoryFullPath,
+                    shouldRun = saveFileName
+                ) {
+                    if (saveFileName.value) {
+                        renameDirectory(directoryFullPath, fileName.value)
+
+                        val mainViewModel = MainActivity.mainViewModel
+                        val newDir = dir.replace(title, fileName.value)
+                        mainViewModel.setSelectedAlbumDir(newDir)
+
+                        mainViewModel.settings.AlbumsList.editInAlbumsList(dir, fileName.value)
+                        showDialog.value = false
+
+                        navController.popBackStack()
+                        navController.navigate(MultiScreenViewType.SingleAlbumView.name)
+
+                        saveFileName.value = false
                     }
-
-                    renameDirectory("${getBaseInternalStorageDirectory()}$dir", fileName.value)
-
-                    val mainViewModel = MainActivity.mainViewModel
-                    val newDir = dir.replace(title, fileName.value)
-                    mainViewModel.setSelectedAlbumDir(newDir)
-
-                    mainViewModel.settings.AlbumsList.editInAlbumsList(dir, fileName.value)
-                    showDialog.value = false
-
-                    navController.popBackStack()
-                    navController.navigate(MultiScreenViewType.SingleAlbumView.name)
-
-                    saveFileName.value = false
                 }
 
                 AnimatableTextField(
@@ -1163,6 +1168,7 @@ fun SingleAlbumDialog(
                     string = fileName,
                     doAction = saveFileName,
                     rowPosition = RowPosition.Middle,
+                    enabled = false,
                     modifier = Modifier
                         .padding(8.dp, 0.dp)
                 ) {
@@ -1224,68 +1230,68 @@ fun TextEntryDialog(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-			val keyboardController = LocalSoftwareKeyboardController.current
-			var text by remember { mutableStateOf("") }
-			var showError by remember { mutableStateOf(false) }
+            val keyboardController = LocalSoftwareKeyboardController.current
+            var text by remember { mutableStateOf("") }
+            var showError by remember { mutableStateOf(false) }
 
-	        TextField(
-	            value = text,
-	            onValueChange = {
-	                text = it
-	            },
-	            maxLines = 1,
-	            singleLine = true,
-	            placeholder = {
-	            	if (placeholder != null) {
-		                Text(
-		                    text = placeholder,
-		                    fontSize = TextUnit(16f, TextUnitType.Sp)
-		                )
-	            	}
-	            },
-	            suffix = {
-	            	if (showError) {
-		                Row {
-		                    Icon(
-		                        painter = painterResource(id = R.drawable.edit), // TODO: change to error icon and color to be a theme specific red
-		                        contentDescription = "Error",
-		                        tint = CustomMaterialTheme.colorScheme.primary,
-		                        modifier = Modifier
-		                            .size(24.dp)
-		                            .clickable {
-		                            	// TODO: show help tip
-		                            }
-		                    )
+            TextField(
+                value = text,
+                onValueChange = {
+                    text = it
+                },
+                maxLines = 1,
+                singleLine = true,
+                placeholder = {
+                    if (placeholder != null) {
+                        Text(
+                            text = placeholder,
+                            fontSize = TextUnit(16f, TextUnitType.Sp)
+                        )
+                    }
+                },
+                suffix = {
+                    if (showError) {
+                        Row {
+                            Icon(
+                                painter = painterResource(id = R.drawable.edit), // TODO: change to error icon and color to be a theme specific red
+                                contentDescription = "Error",
+                                tint = CustomMaterialTheme.colorScheme.primary,
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .clickable {
+                                        // TODO: show help tip
+                                    }
+                            )
 
-		                    Spacer(modifier = Modifier.width(8.dp))
-		                }
-	            	}
-	            },
-	            colors = TextFieldDefaults.colors(
-	                focusedContainerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
-	                unfocusedContainerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
-	                cursorColor = CustomMaterialTheme.colorScheme.primary,
-	                focusedTextColor = CustomMaterialTheme.colorScheme.onSurface,
-	                unfocusedTextColor = CustomMaterialTheme.colorScheme.onSurface,
-	                focusedPlaceholderColor = CustomMaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-	                unfocusedPlaceholderColor = CustomMaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-	                unfocusedIndicatorColor = Color.Transparent,
-	                focusedIndicatorColor = Color.Transparent
-	            ),
-	            keyboardOptions = KeyboardOptions(
-	                autoCorrectEnabled = false,
-	                keyboardType = KeyboardType.Text,
-	                imeAction = ImeAction.Done
-	            ),
-	            keyboardActions = KeyboardActions(
-	                onSearch = {
-	                    keyboardController?.hide()
-	                }
-	            ),
-	            shape = RoundedCornerShape(24.dp),
-	            modifier = Modifier
-	                .fillMaxWidth(1f)
-	        )
+                            Spacer(modifier = Modifier.width(8.dp))
+                        }
+                    }
+                },
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
+                    unfocusedContainerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
+                    cursorColor = CustomMaterialTheme.colorScheme.primary,
+                    focusedTextColor = CustomMaterialTheme.colorScheme.onSurface,
+                    unfocusedTextColor = CustomMaterialTheme.colorScheme.onSurface,
+                    focusedPlaceholderColor = CustomMaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                    unfocusedPlaceholderColor = CustomMaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                    unfocusedIndicatorColor = Color.Transparent,
+                    focusedIndicatorColor = Color.Transparent
+                ),
+                keyboardOptions = KeyboardOptions(
+                    autoCorrectEnabled = false,
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onSearch = {
+                        keyboardController?.hide()
+                    }
+                ),
+                shape = RoundedCornerShape(24.dp),
+                modifier = Modifier
+                    .fillMaxWidth(1f)
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -1295,11 +1301,7 @@ fun TextEntryDialog(
                 textColor = CustomMaterialTheme.colorScheme.onPrimary,
                 position = RowPosition.Single
             ) {
-            	if (onConfirm(text)) {
-            		showError = false
-            	} else {
-            		showError = true
-            	}
+                showError = !onConfirm(text)
             }
         }
     }

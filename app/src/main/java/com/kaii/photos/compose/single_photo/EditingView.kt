@@ -162,6 +162,7 @@ import com.kaii.photos.helpers.DrawableText
 import com.kaii.photos.helpers.DrawingColors
 import com.kaii.photos.helpers.DrawingPaints
 import com.kaii.photos.helpers.ExtendedPaint
+import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.Modification
 import com.kaii.photos.helpers.PaintType
 import com.kaii.photos.helpers.getColorFromLinearGradientList
@@ -252,25 +253,45 @@ fun EditingView(
                 overwrite.value = overwriteByDefault
             }
 
+            val runSaveEditsAction = remember { mutableStateOf(false) }
+            val canExit = remember { mutableStateOf(true) }
+            val coroutineScope = rememberCoroutineScope()
+
+            GetPermissionAndRun(
+                uris = listOf(uri),
+                shouldRun = runSaveEditsAction,
+                onGranted = {
+                    coroutineScope.launch {
+                        canExit.value = false
+
+                        savePathListToBitmap(
+                            modifications = modifications,
+                            adjustmentColorMatrix = colorMatrix.value,
+                            absolutePath = absolutePath,
+                            dateTaken = dateTaken,
+                            uri = uri,
+                            image = image,
+                            maxSize = maxSize,
+                            rotation = rotation,
+                            textMeasurer = textMeasurer,
+                            overwrite = overwrite.value,
+                            context = context
+                        )
+
+                        delay(500)
+                        canExit.value = true
+                    }
+                }
+            )
+
             EditingViewTopBar(
                 showCloseDialog = showCloseDialog,
                 changesSize = changesSize,
                 oldChangesSize = oldChangesSize,
                 overwrite = overwrite,
-                saveImage = suspend {
-                    savePathListToBitmap(
-                        modifications = modifications,
-                        adjustmentColorMatrix = colorMatrix.value,
-                        absolutePath = absolutePath,
-                        dateTaken = dateTaken,
-                        uri = uri,
-                        image = image,
-                        maxSize = maxSize,
-                        rotation = rotation,
-                        textMeasurer = textMeasurer,
-                        overwrite = overwrite.value,
-                        context = context
-                    )
+                canExit = canExit,
+                saveImage = {
+                    runSaveEditsAction.value = true
                 },
                 popBackStack = {
                     navController.popBackStack()
@@ -1256,7 +1277,8 @@ private fun EditingViewTopBar(
     changesSize: MutableIntState,
     oldChangesSize: MutableIntState,
     overwrite: MutableState<Boolean>,
-    saveImage: suspend () -> Unit,
+    canExit: MutableState<Boolean>,
+    saveImage: () -> Unit,
     popBackStack: () -> Unit,
 ) {
     val localConfig = LocalConfiguration.current
@@ -1267,8 +1289,6 @@ private fun EditingViewTopBar(
     }
 
     var showInLandscape by remember { mutableStateOf(false) }
-
-    var canExit by remember { mutableStateOf(true) }
 
     val animatedHeight by animateDpAsState(
         targetValue = if (isLandscape && !showInLandscape) (-64).dp else 0.dp,
@@ -1285,8 +1305,6 @@ private fun EditingViewTopBar(
         ),
         label = "Animate editing view top bar icon rotation"
     )
-
-    val coroutineScope = rememberCoroutineScope()
 
     Column(
         modifier = Modifier
@@ -1317,7 +1335,7 @@ private fun EditingViewTopBar(
                                 popBackStack()
                             }
                         },
-                        enabled = canExit,
+                        enabled = canExit.value,
                         modifier = Modifier
                             .height(40.dp)
                             .width(56.dp)
@@ -1340,7 +1358,7 @@ private fun EditingViewTopBar(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    if (!canExit) {
+                    if (!canExit.value) {
                         CircularProgressIndicator(
                             color = CustomMaterialTheme.colorScheme.secondary,
                             strokeWidth = 4.dp,
@@ -1364,14 +1382,7 @@ private fun EditingViewTopBar(
                     }
                     val saveAction: () -> Unit = {
                         oldChangesSize.intValue = changesSize.intValue
-
-                        coroutineScope.launch {
-                            canExit = false
-                            saveImage()
-
-                            delay(500)
-                            canExit = true
-                        }
+                        saveImage()
                     }
 
                     var dropDownExpanded by remember { mutableStateOf(false) }

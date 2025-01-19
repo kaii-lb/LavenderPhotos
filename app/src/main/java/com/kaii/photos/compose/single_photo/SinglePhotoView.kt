@@ -5,7 +5,6 @@ import android.content.res.Configuration
 import android.view.Window
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -21,11 +20,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.statusBarsIgnoringVisibility
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.PagerState
@@ -55,14 +50,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
@@ -75,6 +68,7 @@ import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.compose.SinglePhotoInfoDialog
 import com.kaii.photos.compose.setBarVisibility
 import com.kaii.photos.helpers.EditingScreen
+import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.moveImageToLockedFolder
 import com.kaii.photos.helpers.rememberVibratorManager
@@ -471,6 +465,29 @@ private fun BottomBar(
                     )
 
                     val showDeleteDialog = remember { mutableStateOf(false) }
+                    val runTrashAction = remember { mutableStateOf(false) }
+
+                    GetPermissionAndRun(
+                        uris = listOf(currentItem.uri),
+                        shouldRun = runTrashAction,
+                        onGranted = {
+                            setTrashedOnPhotoList(
+                                context,
+                                listOf(currentItem.uri),
+                                true
+                            )
+
+                            sortOutMediaMods(
+                                currentItem,
+                                groupedMedia,
+                                coroutineScope,
+                                state
+                            ) {
+                                onZeroItemsLeft()
+                            }
+                        }
+                    )
+
                     BottomAppBarItem(
                         text = "Delete",
                         iconResId = R.drawable.trash,
@@ -481,16 +498,7 @@ private fun BottomBar(
                                 dialogTitle = "Delete this ${currentItem.type}?",
                                 confirmButtonLabel = "Delete"
                             ) {
-                                setTrashedOnPhotoList(context, listOf(Pair(currentItem.uri, currentItem.absolutePath)), true)
-
-                                sortOutMediaMods(
-                                    currentItem,
-                                    groupedMedia,
-                                    coroutineScope,
-                                    state
-                                ) {
-                                    onZeroItemsLeft()
-                                }
+                                runTrashAction.value = true
                             }
                         },
                         action = {
@@ -499,6 +507,28 @@ private fun BottomBar(
                     )
 
                     val showMoveToSecureFolderDialog = remember { mutableStateOf(false) }
+                    val moveToSecureFolder = remember { mutableStateOf(false) }
+
+                    GetPermissionAndRun(
+                        uris = listOf(currentItem.uri),
+                        shouldRun = moveToSecureFolder,
+                        onGranted = {
+                            moveImageToLockedFolder(
+                                currentItem,
+                                context
+                            )
+
+                            sortOutMediaMods(
+                                currentItem,
+                                groupedMedia,
+                                coroutineScope,
+                                state
+                            ) {
+                                onZeroItemsLeft()
+                            }
+                        }
+                    )
+
                     BottomAppBarItem(
                         text = "Secure",
                         iconResId = R.drawable.locked_folder,
@@ -509,20 +539,7 @@ private fun BottomBar(
                                 dialogTitle = "Move this ${currentItem.type} to Secure Folder?",
                                 confirmButtonLabel = "Secure"
                             ) {
-                                moveImageToLockedFolder(
-                                    currentItem.absolutePath,
-                                    currentItem.id,
-                                    context
-                                )
-
-                                sortOutMediaMods(
-                                    currentItem,
-                                    groupedMedia,
-                                    coroutineScope,
-                                    state
-                                ) {
-                                    onZeroItemsLeft()
-                                }
+                                moveToSecureFolder.value = true
                             }
                         },
                         action = {

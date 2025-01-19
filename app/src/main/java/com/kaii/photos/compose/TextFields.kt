@@ -262,6 +262,7 @@ fun AnimatableTextField(
     rowPosition: RowPosition,
     modifier: Modifier = Modifier,
     extraAction: MutableState<Boolean>? = null,
+    enabled: Boolean = true,
     resetAction: () -> Unit
 ) {
     var waitForKB by remember { mutableStateOf(false) }
@@ -269,7 +270,7 @@ fun AnimatableTextField(
     val focusManager = LocalFocusManager.current
 
     AnimatedContent (
-        targetState = state.value,
+        targetState = state.value && enabled,
         label = string.value,
         modifier = Modifier
             .then(modifier),
@@ -374,6 +375,7 @@ fun AnimatableTextField(
                     text = "Rename",
                     iconResId = R.drawable.edit,
                     position = rowPosition,
+                    enabled = enabled
                 ) {
                     state.value = true
                     extraAction?.value = false

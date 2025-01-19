@@ -16,15 +16,16 @@ import kotlin.math.round
 
 private const val TAG = "EXIF_DATA_HANDLER"
 
-fun getDateTakenForMedia(uri: String): Long {
+fun getDateTakenForMedia(absolutePath: String): Long {
     try {
-        val exifInterface = ExifInterface(uri)
+        val exifInterface = ExifInterface(absolutePath)
         val exifDateTimeFormat = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss")
 
         val lastModified = LocalDateTime.ofInstant(
-            Instant.ofEpochMilli(File(uri).lastModified()),
+            Instant.ofEpochMilli(File(absolutePath).lastModified()),
             ZoneId.systemDefault()
         ).format(exifDateTimeFormat)
+
         val datetime = exifInterface.getAttribute(ExifInterface.TAG_DATETIME_ORIGINAL)
             ?: (exifInterface.getAttribute(ExifInterface.TAG_DATETIME)
                 ?: lastModified) // this really should not get to last modified
@@ -33,11 +34,36 @@ fun getDateTakenForMedia(uri: String): Long {
         val dateTimeSinceEpoch =
             LocalDateTime.parse(parsedDateTime, exifDateTimeFormat).atZone(ZoneId.systemDefault())
                 .toEpochSecond()
-        // println("DATE TIME IS $parsedDateTime and since epoch $dateTimeSinceEpoch")
+
         return dateTimeSinceEpoch
     } catch (e: Throwable) {
         Log.e(TAG, e.toString())
         return 0L
+    }
+}
+
+fun setDateTakenForMedia(absolutePath: String, dateTaken: Long) {
+    try {
+        val exifInterface = ExifInterface(absolutePath)
+        val exifDateTimeFormat = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss")
+
+		val localDateTime = Instant.ofEpochSecond(dateTaken).atZone(ZoneId.systemDefault()).toLocalDateTime()
+		val datetime = localDateTime.format(exifDateTimeFormat)
+
+	    exifInterface.setAttribute(
+	        ExifInterface.TAG_DATETIME,
+	        datetime
+	    )
+
+	    exifInterface.setAttribute(
+	        ExifInterface.TAG_DATETIME_ORIGINAL,
+	        datetime
+	    )
+
+	    exifInterface.saveAttributes()
+    } catch (e: Throwable) {
+        Log.e(TAG, e.toString())
+        e.printStackTrace()
     }
 }
 

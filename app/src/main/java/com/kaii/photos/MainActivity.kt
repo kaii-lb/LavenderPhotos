@@ -1,20 +1,15 @@
 package com.kaii.photos
 
-import android.content.Intent
 import android.content.res.Configuration
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.Window
 import android.view.WindowManager
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
@@ -77,6 +72,7 @@ import com.kaii.photos.compose.MainAppDialog
 import com.kaii.photos.compose.MainAppSelectingBottomBar
 import com.kaii.photos.compose.MainAppTopBar
 import com.kaii.photos.compose.PermissionHandler
+import com.kaii.photos.compose.PrototypeMainTopBar
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.getAppBarContentTransition
 import com.kaii.photos.compose.grids.AlbumsGridView
@@ -107,6 +103,7 @@ import com.kaii.photos.helpers.EditingScreen
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.getAppStorageDir
 import com.kaii.photos.helpers.getBaseInternalStorageDirectory
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.models.gallery_model.GalleryViewModel
@@ -115,6 +112,7 @@ import com.kaii.photos.models.main_activity.MainViewModel
 import com.kaii.photos.models.main_activity.MainViewModelFactory
 import com.kaii.photos.ui.theme.PhotosTheme
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
 import java.io.File
 
 private const val TAG = "MAIN_ACTIVITY"
@@ -148,15 +146,7 @@ class MainActivity : ComponentActivity() {
                 factory = MainViewModelFactory(applicationContext)
             )
 
-			val appDataDir = "${getBaseInternalStorageDirectory()}LavenderPhotos"
-			appDataDir.let {
-				val file = File(it)
-
-				if (!file.exists()) {
-					file.mkdirs()
-				}
-			}
-
+			val appDataDir = getAppStorageDir()
             val logPath = "$appDataDir/log.txt"
 
             val canRecordLogs by mainViewModel.settings.Debugging.getRecordLogs().collectAsStateWithLifecycle(initialValue = false)
@@ -249,14 +239,14 @@ class MainActivity : ComponentActivity() {
         val selectedItemsList = remember { SnapshotStateList<MediaStoreData>() }
 
         val isV083FirstStart by mainViewModel.settings.Versions.getIsV083FirstStart(context).collectAsStateWithLifecycle(initialValue = false)
-        if (isV083FirstStart) {
-            mainViewModel.settings.Versions.setIsV083FirstStart(false)
+        LaunchedEffect(isV083FirstStart) {
+	        if (isV083FirstStart) {
+	            mainViewModel.settings.Versions.setIsV083FirstStart(false)
 
-            val list by mainViewModel.settings.AlbumsList.getAlbumsList(true).collectAsStateWithLifecycle(initialValue = null)
-
-            if (list != null) {
-                mainViewModel.settings.AlbumsList.setAlbumsList(list!!)
-            }
+                mainViewModel.settings.AlbumsList.getAlbumsList(true).collectLatest {
+                    mainViewModel.settings.AlbumsList.setAlbumsList(it)
+                }
+	        }
         }
 
         mainViewModel.settings.AlbumsList.addToAlbumsList("DCIM/Camera")
@@ -270,6 +260,13 @@ class MainActivity : ComponentActivity() {
             listOfDirs.remove(cameraItem)
             listOfDirs.add(0, cameraItem)
         }
+
+
+		// TODO: make absolute path to uri function and take permission here
+		// also check if already in persistable uris
+   //      listOfDirs.forEach { dir ->
+			// context.contentResolver.takePersistableUriPermission(dir)
+   //      }
 
         CompositionLocalProvider(LocalNavController provides navControllerLocal) {
             NavHost(
@@ -665,7 +662,7 @@ class MainActivity : ComponentActivity() {
 
         Scaffold(
             topBar = {
-                TopBar(showDialog, selectedItemsList)
+                TopBar(showDialog, selectedItemsList, groupedMedia.value)
             },
             bottomBar = {
                 BottomBar(currentView, selectedItemsList)
@@ -746,28 +743,36 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun TopBar(
         showDialog: MutableState<Boolean>,
-        selectedItemsList: SnapshotStateList<MediaStoreData>
+        selectedItemsList: SnapshotStateList<MediaStoreData>,
+        groupedMedia: List<MediaStoreData>
     ) {
-        val navController = LocalNavController.current
-        val show by remember {
-            derivedStateOf {
-                selectedItemsList.size > 0
-            }
-        }
+		val navController = LocalNavController.current
+		val show by remember {
+		    derivedStateOf {
+		        selectedItemsList.size > 0
+		    }
+		}
 
-        AnimatedContent(
-            targetState = show && navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name,
-            transitionSpec = {
-                getAppBarContentTransition(show)
-            },
-            label = "MainTopBarAnimatedContentView"
-        ) { target ->
-            if (!target) {
-                MainAppTopBar(showDialog = showDialog)
-            } else {
-                IsSelectingTopBar(selectedItemsList = selectedItemsList)
-            }
-        }
+        PrototypeMainTopBar(
+            alternate = show,
+            showDialog = showDialog,
+            selectedItemsList = selectedItemsList,
+            groupedMedia = groupedMedia
+        )
+
+        // AnimatedContent(
+        //     targetState = show && navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name,
+        //     transitionSpec = {
+        //         getAppBarContentTransition(show)
+        //     },
+        //     label = "MainTopBarAnimatedContentView"
+        // ) { target ->
+        //     if (!target) {
+        //         MainAppTopBar(showDialog = showDialog)
+        //     } else {
+        //         IsSelectingTopBar(selectedItemsList = selectedItemsList)
+        //     }
+        // }
     }
 
     @Composable

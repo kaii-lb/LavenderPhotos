@@ -66,16 +66,17 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalNavController
-import com.kaii.photos.MainActivity
 import com.kaii.photos.R
+import com.kaii.photos.MainActivity
+import com.kaii.photos.MainActivity.Companion.applicationDatabase
 import com.kaii.photos.compose.ConfirmationDialog
 import com.kaii.photos.compose.ConfirmationDialogWithBody
 import com.kaii.photos.compose.DialogInfoText
 import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.brightenColor
 import com.kaii.photos.helpers.getExifDataForMedia
+import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.moveImageOutOfLockedFolder
 import com.kaii.photos.helpers.MediaData
 import com.kaii.photos.helpers.MultiScreenViewType
@@ -84,6 +85,8 @@ import com.kaii.photos.helpers.shareImage
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -337,16 +340,24 @@ private fun BottomBar(
     popBackStack: () -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     val showRestoreDialog = remember { mutableStateOf(false) }
     val showDeleteDialog = remember { mutableStateOf(false) }
+    val runRestoreAction = remember { mutableStateOf(false) }
+	var originalPath by remember { mutableStateOf("") }
 
-    ConfirmationDialog(
-        showDialog = showRestoreDialog,
-        dialogTitle = "Move item out of Secure Folder?",
-        confirmButtonLabel = "Move"
+    LaunchedEffect(Unit) {
+        withContext(Dispatchers.IO) {
+            originalPath = applicationDatabase.securedItemEntityDao().getOriginalPathFromSecuredPath(item.absolutePath)?.replace(item.displayName ?: "", "") ?: ""
+        }
+    }
+
+    GetDirectoryPermissionAndRun(
+    	absolutePath = originalPath,
+    	shouldRun = runRestoreAction,
     ) {
-        moveImageOutOfLockedFolder(item.absolutePath)
+        moveImageOutOfLockedFolder(listOf(item.absolutePath), context)
 
         sortOutMediaMods(
             item,
@@ -356,6 +367,14 @@ private fun BottomBar(
         ) {
             popBackStack()
         }
+    }
+
+    ConfirmationDialog(
+        showDialog = showRestoreDialog,
+        dialogTitle = "Move item out of Secure Folder?",
+        confirmButtonLabel = "Move"
+    ) {
+    	runRestoreAction.value = true
     }
 
     ConfirmationDialogWithBody(

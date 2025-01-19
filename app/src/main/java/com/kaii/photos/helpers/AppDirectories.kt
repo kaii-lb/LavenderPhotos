@@ -5,7 +5,7 @@ import android.os.Environment
 import java.io.File
 
 private enum class AppDirectories(val path: String) {
-    TrashBin("trash_bin"),
+    MainDir("LavenderPhotos"),
     LockedFolder("locked_folder")
 }
 
@@ -14,18 +14,6 @@ fun getBaseInternalStorageDirectory() : String {
     val absolutePath = Environment.getExternalStorageDirectory().absolutePath
 
     return absolutePath.removeSuffix("/") + "/"
-}
-
-/** ends with a "/" */
-fun getAppTrashBinDirectory() : String {
-    val dir = "${getBaseInternalStorageDirectory()}LavenderPhotos/" + AppDirectories.TrashBin.path + "/" // TODO: switch to Environment.getExternalStoragePublicDir
-
-    val folder = File(dir)
-    if (!folder.exists()) {
-        folder.mkdirs()
-    }
-
-    return dir
 }
 
 /** ends with a "/" */
@@ -42,8 +30,20 @@ fun Context.getAppLockedFolderDirectory() : String {
 }
 
 /** ends with a "/" */
-fun getAppRestoredFromLockedFolderDirectory(): String {
-    val dir = "${getBaseInternalStorageDirectory()}LavenderPhotos/Restored Files/"
+fun getAppRestoredFromLockedFolderDirectory() : String {
+    val dir = getBaseInternalStorageDirectory() + AppDirectories.MainDir + "/Restored Files/"
+
+    val folder = File(dir)
+    if (!folder.exists()) {
+        folder.mkdirs()
+    }
+
+    return dir
+}
+
+/** ends with a "/" */
+fun getAppStorageDir() : String {
+    val dir = getBaseInternalStorageDirectory() + AppDirectories.MainDir + "/"
 
     val folder = File(dir)
     if (!folder.exists()) {

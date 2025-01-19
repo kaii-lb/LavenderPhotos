@@ -1,6 +1,9 @@
 package com.kaii.photos.datastore
 
 import android.content.Context
+import android.os.Build
+import android.provider.MediaStore
+import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
@@ -15,6 +18,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 const val separator = "|-SEPARATOR-|"
+private const val TAG = "PREFERENCES_CLASSES"
 
 class Settings(val context: Context, val viewModelScope: CoroutineScope)
 
@@ -63,14 +67,13 @@ class SettingsAlbumsListImpl(private val context: Context, private val viewModel
         context.datastore.data.map { data ->
             val list = data[albumsListKey]
 
-            if (list == null) {
+            if (list == null || isPreV083) {
             	val defaultList = getDefaultAlbumsList()
             	setAlbumsList(defaultList)
             	return@map defaultList
             }
 
-            val splitBy = if (isPreV083) "," else separator
-            val split = list.split(splitBy).distinct().toMutableList()
+            val split = list.split(separator).distinct().toMutableList()
 
             split.remove("")
 
@@ -105,7 +108,11 @@ class SettingsVersionImpl(private val context: Context, private val viewModelSco
         context.datastore.data.map {
             val currentVersion = context.packageManager.getPackageInfo(context.packageName, 0).versionName
 
-            (it[v083firstStartKey] ?: true) && currentVersion == "v0.8.3-beta"
+            val isPrev083 = (it[v083firstStartKey] ?: true) && currentVersion == "v0.8.3-beta"
+
+            Log.e(TAG, "App version ${currentVersion}. Is pre v0.8.3? $isPrev083")
+
+            isPrev083
         }
 
     fun setIsV083FirstStart(value: Boolean) = viewModelScope.launch {

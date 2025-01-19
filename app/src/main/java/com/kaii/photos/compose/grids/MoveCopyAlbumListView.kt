@@ -63,8 +63,11 @@ import com.kaii.photos.compose.SearchTextField
 import com.kaii.photos.compose.getDefaultShapeSpacerForPosition
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.helpers.CustomMaterialTheme
+import com.kaii.photos.helpers.GetPermissionAndRun
+import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.copyImageListToPath
+import com.kaii.photos.helpers.getBaseInternalStorageDirectory
 import com.kaii.photos.helpers.moveImageListToPath
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
@@ -125,7 +128,7 @@ fun MoveCopyAlbumListView(
             onDismissRequest = { show.value = false },
             modifier = Modifier
                 .windowInsetsPadding(
-                     insetsPadding
+                    insetsPadding
                 ),
         ) {
             BackHandler(
@@ -232,6 +235,45 @@ fun AlbumsListItem(
         }
     }
 
+    val runOnUriGranted = remember { mutableStateOf(false) }
+    val runOnDirGranted = remember { mutableStateOf(false) }
+
+    GetDirectoryPermissionAndRun(
+    	absolutePath = getBaseInternalStorageDirectory() + album,
+    	shouldRun = runOnDirGranted,
+    ) {
+    	runOnUriGranted.value = true
+    }
+
+    GetPermissionAndRun(
+        uris = selectedItemsWithoutSection.map { it.uri },
+        shouldRun = runOnUriGranted,
+        onGranted = {
+            show.value = false
+
+	        if (isMoving) {
+	            moveImageListToPath(
+	                context,
+	                selectedItemsWithoutSection,
+	                album
+	            )
+
+	            if (groupedMedia != null) {
+	                val newList = groupedMedia.value.toMutableList()
+	                newList.removeAll(selectedItemsWithoutSection.toSet())
+	                groupedMedia.value = newList
+	            }
+	        } else {
+	            copyImageListToPath(
+	                context,
+	                selectedItemsWithoutSection,
+	                album
+	            )
+	        }
+
+	        selectedItemsList.clear()
+        }
+    )
 
     Row(
         modifier = modifier
@@ -239,28 +281,7 @@ fun AlbumsListItem(
             .clip(shape)
             .background(CustomMaterialTheme.colorScheme.surfaceContainer)
             .clickable {
-                show.value = false
-                if (isMoving) {
-                    moveImageListToPath(
-                        context,
-                        selectedItemsWithoutSection,
-                        album
-                    )
-
-                    if (groupedMedia != null) {
-                        val newList = groupedMedia.value.toMutableList()
-                        newList.removeAll(selectedItemsWithoutSection.toSet())
-                        groupedMedia.value = newList
-                    }
-                } else {
-                    copyImageListToPath(
-                        context,
-                        selectedItemsWithoutSection,
-                        album
-                    )
-                }
-
-                selectedItemsList.clear()
+                runOnDirGranted.value = true
             },
         verticalAlignment = Alignment.CenterVertically
     ) {

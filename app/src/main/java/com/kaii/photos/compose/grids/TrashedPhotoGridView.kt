@@ -36,6 +36,7 @@ import com.kaii.photos.compose.TrashedPhotoGridViewBottomBar
 import com.kaii.photos.compose.TrashedPhotoGridViewTopBar
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.datastore.TrashBin
+import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
@@ -68,25 +69,34 @@ fun TrashedPhotoGridView(
     var triedDeletingAlready by rememberSaveable { mutableStateOf(false) }
     val autoDeleteInterval by mainViewModel.settings.TrashBin.getAutoDeleteInterval().collectAsStateWithLifecycle(initialValue = 0)
 
+    val runAutoDeleteAction = remember { mutableStateOf(false) }
+    var mediaToBeAutoDeleted by remember { mutableStateOf(emptyList<Uri>()) }
+
+    LaunchedEffect (runAutoDeleteAction.value) {
+        permanentlyDeletePhotoList(context, mediaToBeAutoDeleted)
+
+        triedDeletingAlready = true
+        runAutoDeleteAction.value = false
+    }
+
     LaunchedEffect(groupedMedia.value, autoDeleteInterval) {
         if (groupedMedia.value.isEmpty() || triedDeletingAlready || autoDeleteInterval == 0) return@LaunchedEffect
 
-        triedDeletingAlready = true
         val currentDate = System.currentTimeMillis()
-        val toBeDeleted = emptyList<Uri>().toMutableList()
 
-        groupedMedia.value
+        mediaToBeAutoDeleted = groupedMedia.value
             .filter { it.type != MediaType.Section }
-            .forEach { media ->
+            .filter { media ->
                 val dateDeletedMillis = currentDate - (media.dateModified * 1000) // dateModified is in seconds
                 val dateDeletedDays = (dateDeletedMillis / (1000 * 60 * 60 * 24)).days
 
-                if (dateDeletedDays > autoDeleteInterval.days) {
-                    toBeDeleted.add(media.uri)
-                }
+                dateDeletedDays > autoDeleteInterval.days
+            }
+            .map {
+                it.uri
             }
 
-        permanentlyDeletePhotoList(context, toBeDeleted)
+        runAutoDeleteAction.value = true
     }
 
     BackHandler(

@@ -9,7 +9,8 @@ import kotlinx.parcelize.Parcelize
 import java.util.Calendar
 import java.util.Locale
 
-/** A data model containing data for a single media item. */
+/** A data model containing data for a single media item. 
+ @param date* is in seconds */
 @Immutable
 @Parcelize
 data class MediaStoreData(

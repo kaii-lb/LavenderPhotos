@@ -27,7 +27,7 @@ class DefaultMediaStoreDataSource(
         private val PROJECTION =
             arrayOf(
                 MediaColumns._ID,
-                MediaStore.Images.Media.DATA,
+                MediaColumns.DATA,
                 MediaColumns.DATE_MODIFIED,
                 MediaColumns.MIME_TYPE,
                 MediaColumns.DISPLAY_NAME,
@@ -50,17 +50,17 @@ class DefaultMediaStoreDataSource(
                 PROJECTION,
                 "((${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_IMAGE}) OR (${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_VIDEO})) AND ${FileColumns.RELATIVE_PATH} LIKE ? AND ${FileColumns.RELATIVE_PATH} NOT LIKE ?",
                 arrayOf("%$neededPath%", "%$neededPath/%/%"),
-                ""
+                null
             ) ?: return data
 
-        mediaCursor.use { cursor ->
-            val idColNum = cursor.getColumnIndexOrThrow(MediaColumns._ID)
-            val absolutePathColNum = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA)
-            val mimeTypeColNum = cursor.getColumnIndexOrThrow(MediaColumns.MIME_TYPE)
-            val mediaTypeColumnIndex = cursor.getColumnIndexOrThrow(FileColumns.MEDIA_TYPE)
-            val displayNameIndex = cursor.getColumnIndexOrThrow(FileColumns.DISPLAY_NAME)
-            val dateModifiedColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATE_MODIFIED)
+        val idColNum = mediaCursor.getColumnIndexOrThrow(MediaColumns._ID)
+        val absolutePathColNum = mediaCursor.getColumnIndexOrThrow(MediaColumns.DATA)
+        val mimeTypeColNum = mediaCursor.getColumnIndexOrThrow(MediaColumns.MIME_TYPE)
+        val mediaTypeColumnIndex = mediaCursor.getColumnIndexOrThrow(FileColumns.MEDIA_TYPE)
+        val displayNameIndex = mediaCursor.getColumnIndexOrThrow(FileColumns.DISPLAY_NAME)
+        val dateModifiedColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.DATE_MODIFIED)
 
+        mediaCursor.use { cursor ->
             while (cursor.moveToNext()) {
                 val id = cursor.getLong(idColNum)
                 val mimeType = cursor.getString(mimeTypeColNum)

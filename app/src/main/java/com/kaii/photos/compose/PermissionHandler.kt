@@ -64,6 +64,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
+import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.RowPosition
 
@@ -147,7 +148,6 @@ fun PermissionHandler(
             ) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     item {
-                        // we can ignore READ_MEDIA_VIDEO since requesting both shows a single dialog
                         val readMediaImageLauncher = rememberLauncherForActivityResult(
                             contract = ActivityResultContracts.RequestPermission()
                         ) { granted ->
@@ -173,12 +173,58 @@ fun PermissionHandler(
                         }
 
                         PermissionButton(
-                            name = "Read Media",
-                            description = "Allow Lavender Photos to discover photos and videos on the device",
+                            name = "Read Images",
+                            description = "Allow Lavender Photos to discover photos on the device",
                             position = RowPosition.Top,
                             granted = !mainViewModel.permissionQueue.contains(Manifest.permission.READ_MEDIA_IMAGES)
                         ) {
                             readMediaImageLauncher.launch(Manifest.permission.READ_MEDIA_IMAGES)
+
+                            whyButtonExplanation = Explanations.READ_MEDIA
+
+                            onGrantPermissionClicked = {
+                                val intent = Intent(
+                                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                    Uri.fromParts("package", context.packageName, null)
+                                )
+
+                                appDetailsLauncher.launch(intent)
+                            }
+                        }
+                    }
+
+                    item {
+                        val readMediaVideoLauncher = rememberLauncherForActivityResult(
+                            contract = ActivityResultContracts.RequestPermission()
+                        ) { granted ->
+                            mainViewModel.onPermissionResult(
+                                permission = Manifest.permission.READ_MEDIA_VIDEO,
+                                isGranted = granted
+                            )
+
+                            showPermDeniedDialog.value = !granted
+                        }
+
+                        val appDetailsLauncher = rememberLauncherForActivityResult(
+                            contract = ActivityResultContracts.StartActivityForResult()
+                        ) { _ ->
+                            val granted = context.checkSelfPermission(Manifest.permission.READ_MEDIA_VIDEO) == PackageManager.PERMISSION_GRANTED
+
+                            mainViewModel.onPermissionResult(
+                                permission = Manifest.permission.READ_MEDIA_VIDEO,
+                                isGranted = granted
+                            )
+
+                            showPermDeniedDialog.value = !granted
+                        }
+
+                        PermissionButton(
+                            name = "Read Videos",
+                            description = "Allow Lavender Photos to discover videos on the device",
+                            position = RowPosition.Middle,
+                            granted = !mainViewModel.permissionQueue.contains(Manifest.permission.READ_MEDIA_VIDEO)
+                        ) {
+                            readMediaVideoLauncher.launch(Manifest.permission.READ_MEDIA_VIDEO)
 
                             whyButtonExplanation = Explanations.READ_MEDIA
 
@@ -240,37 +286,6 @@ fun PermissionHandler(
                     }
                 }
 
-                item {
-                    val manageExternalStorageLauncher = rememberLauncherForActivityResult(
-                        contract = ActivityResultContracts.StartActivityForResult()
-                    ) { _ ->
-                        val granted = Environment.isExternalStorageManager()
-
-                        mainViewModel.onPermissionResult(
-                            permission = Manifest.permission.MANAGE_EXTERNAL_STORAGE,
-                            isGranted = granted
-                        )
-
-                        showPermDeniedDialog.value = !granted
-                    }
-
-                    PermissionButton(
-                        name = "Manage All Files",
-                        description = "Allow read/write access to all files, used to trash, delete and edit media",
-                        position = RowPosition.Middle,
-                        granted = !mainViewModel.permissionQueue.contains(Manifest.permission.MANAGE_EXTERNAL_STORAGE)
-                    ) {
-                        val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
-                        manageExternalStorageLauncher.launch(intent)
-
-                        whyButtonExplanation = Explanations.MANAGE_ALL_FILES
-
-                        onGrantPermissionClicked = {
-                            manageExternalStorageLauncher.launch(intent)
-                        }
-                    }
-                }
-
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     item {
                         val manageMediaLauncher = rememberLauncherForActivityResult(
@@ -282,6 +297,8 @@ fun PermissionHandler(
                                 permission = Manifest.permission.MANAGE_MEDIA,
                                 isGranted = granted
                             )
+
+                            mainViewModel.settings.Permissions.setIsMediaManager(granted)
                         }
 
                         PermissionButton(

@@ -51,7 +51,7 @@ class FavouritesViewModel : ViewModel() {
                     id = mediaItem.id,
                     dateTaken = mediaItem.dateTaken,
                     dateModified = dateModified,
-                    mimeType = mediaItem.mimeType ?: "image/*",
+                    mimeType = mediaItem.mimeType ?: "image/*", // TODO: context.contentResolver.getType(mediaItem.uri),
                     type = mediaItem.type,
                     absolutePath = mediaItem.absolutePath,
                     displayName = mediaItem.displayName ?: "Media"
