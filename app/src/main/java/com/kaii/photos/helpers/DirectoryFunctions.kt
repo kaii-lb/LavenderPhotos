@@ -5,7 +5,6 @@ import android.net.Uri
 import android.os.Environment
 import android.provider.DocumentsContract
 import android.util.Log
-import com.kaii.photos.helpers.getBaseInternalStorageDirectory
 import kotlin.io.path.isRegularFile
 import java.io.IOException
 import java.nio.file.FileVisitOption
@@ -30,8 +29,8 @@ fun Path.checkHasFiles(flipDotFileMatch: Boolean = false): Boolean? {
     val folder = try {
         Files.walkFileTree(this, object: FileVisitor<Path> {
             override fun preVisitDirectory(dir: Path?, attrs: BasicFileAttributes?): FileVisitResult {
-               	val dataPath = getBaseInternalStorageDirectory() + "Android/data"
-               	val obbPath = getBaseInternalStorageDirectory() + "Android/obb"
+               	val dataPath = baseInternalStorageDirectory + "Android/data"
+               	val obbPath = baseInternalStorageDirectory + "Android/obb"
 
                 return if (dir?.startsWith(dataPath) == true || dir?.startsWith(obbPath) == true) {
                 	if (this@checkHasFiles.startsWith(dataPath) || this@checkHasFiles.startsWith(obbPath)) {

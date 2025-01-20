@@ -5,6 +5,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
+import android.os.Environment
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -108,10 +109,10 @@ import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MediaData
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.brightenColor
 import com.kaii.photos.helpers.createPersistablePermissionLauncher
 import com.kaii.photos.helpers.darkenColor
-import com.kaii.photos.helpers.getBaseInternalStorageDirectory
 import com.kaii.photos.helpers.getExifDataForMedia
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.renameDirectory
@@ -119,6 +120,8 @@ import com.kaii.photos.helpers.renameImage
 import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.mediastore.getExternalStorageContentUriFromAbsolutePath
+import com.kaii.photos.mediastore.getHighestLevelParentFromAbsolutePath
 import kotlinx.coroutines.delay
 import java.io.File
 
@@ -145,7 +148,7 @@ fun DialogClickableItem(
             .clip(shape)
             .background(
                 if (enabled) CustomMaterialTheme.colorScheme.surfaceVariant
-                else darkenColor(CustomMaterialTheme.colorScheme.surfaceVariant, 0.1f)
+                else darkenColor(CustomMaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f), 0.1f)
             )
             .wrapContentHeight(align = Alignment.CenterVertically)
             .then(clickableModifier)
@@ -601,7 +604,7 @@ fun MainAppDialog(
                                 uri.path?.let {
                                     val dir = File(it)
 
-                                    val pathSections = dir.absolutePath.replace(getBaseInternalStorageDirectory(), "").split(":")
+                                    val pathSections = dir.absolutePath.replace(baseInternalStorageDirectory, "").split(":")
                                     val path = pathSections[pathSections.size - 1]
 
                                     Log.d(TAG, "Added album path $path")
@@ -620,7 +623,7 @@ fun MainAppDialog(
                                 if (uri != null && uriPath != null) {
                                     val dir = File(uriPath).absolutePath
 
-                                    val path = dir.replace(getBaseInternalStorageDirectory(), "")
+                                    val path = dir.replace(baseInternalStorageDirectory, "")
 
                                     Log.d(TAG, "Added album path $path")
 
@@ -1141,13 +1144,15 @@ fun SingleAlbumDialog(
                 val fileName = remember { mutableStateOf(title) }
                 val saveFileName = remember { mutableStateOf(false) }
 
-                val directoryFullPath = "${getBaseInternalStorageDirectory()}$dir"
+				val absoluteDirPath = "$baseInternalStorageDirectory$dir"
+                val context = LocalContext.current
+
                 GetDirectoryPermissionAndRun(
-                    absolutePath = directoryFullPath,
+                    absolutePath = absoluteDirPath,
                     shouldRun = saveFileName
                 ) {
-                    if (saveFileName.value) {
-                        renameDirectory(directoryFullPath, fileName.value)
+                    if (saveFileName.value && fileName.value != dir.split("/").last()) {
+                        renameDirectory(context, absoluteDirPath, fileName.value)
 
                         val mainViewModel = MainActivity.mainViewModel
                         val newDir = dir.replace(title, fileName.value)
@@ -1155,6 +1160,16 @@ fun SingleAlbumDialog(
 
                         mainViewModel.settings.AlbumsList.editInAlbumsList(dir, fileName.value)
                         showDialog.value = false
+
+						try {
+	                        context.contentResolver.releasePersistableUriPermission(
+	                        	getExternalStorageContentUriFromAbsolutePath(absoluteDirPath, true),
+	                        	Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+	                       	)
+						} catch (e: Throwable) {
+							Log.d(TAG, "Couldn't release permission for $absoluteDirPath")
+							e.printStackTrace()
+						}
 
                         navController.popBackStack()
                         navController.navigate(MultiScreenViewType.SingleAlbumView.name)
@@ -1168,7 +1183,7 @@ fun SingleAlbumDialog(
                     string = fileName,
                     doAction = saveFileName,
                     rowPosition = RowPosition.Middle,
-                    enabled = false,
+                    enabled = !(dir.startsWith(Environment.DIRECTORY_DOWNLOADS) && dir.removeSuffix("/").endsWith(Environment.DIRECTORY_DOWNLOADS)),
                     modifier = Modifier
                         .padding(8.dp, 0.dp)
                 ) {
@@ -1187,6 +1202,17 @@ fun SingleAlbumDialog(
                     ) {
                         mainViewModel.settings.AlbumsList.removeFromAlbumsList(dir)
                         showDialog.value = false
+
+						try {
+	                        context.contentResolver.releasePersistableUriPermission(
+	                        	getExternalStorageContentUriFromAbsolutePath(absoluteDirPath, true),
+	                        	Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+	                       	)
+						} catch (e: Throwable) {
+							Log.d(TAG, "Couldn't release permission for $absoluteDirPath")
+							e.printStackTrace()
+						}
+
                         navController.popBackStack()
                     }
                 }

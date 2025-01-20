@@ -43,11 +43,11 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -67,25 +67,25 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.kaii.photos.LocalNavController
-import com.kaii.photos.R
 import com.kaii.photos.MainActivity
 import com.kaii.photos.MainActivity.Companion.applicationDatabase
+import com.kaii.photos.R
 import com.kaii.photos.compose.ConfirmationDialog
 import com.kaii.photos.compose.ConfirmationDialogWithBody
 import com.kaii.photos.compose.DialogInfoText
 import com.kaii.photos.helpers.CustomMaterialTheme
-import com.kaii.photos.helpers.brightenColor
-import com.kaii.photos.helpers.getExifDataForMedia
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
-import com.kaii.photos.helpers.moveImageOutOfLockedFolder
 import com.kaii.photos.helpers.MediaData
 import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.brightenColor
+import com.kaii.photos.helpers.getExifDataForMedia
+import com.kaii.photos.helpers.moveImageOutOfLockedFolder
 import com.kaii.photos.helpers.permanentlyDeleteSecureFolderImageList
 import com.kaii.photos.helpers.shareImage
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -98,48 +98,48 @@ fun SingleHiddenPhotoView(
 ) {
     window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
 
-	val lifecycleOwner = LocalLifecycleOwner.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     val navController = LocalNavController.current
 
-	var lastLifecycleState by rememberSaveable {
-		mutableStateOf(Lifecycle.State.STARTED)
-	}
-	var hideSecureFolder by rememberSaveable {
-		mutableStateOf(false)
-	}
+    var lastLifecycleState by rememberSaveable {
+        mutableStateOf(Lifecycle.State.STARTED)
+    }
+    var hideSecureFolder by rememberSaveable {
+        mutableStateOf(false)
+    }
 
-	LaunchedEffect(hideSecureFolder) {
-		if (hideSecureFolder
-			&& navController.currentBackStackEntry?.destination?.route != MultiScreenViewType.LockedFolderView.name
-		) {
-			navController.navigate(MultiScreenViewType.MainScreen.name)
-		}
-	}
+    LaunchedEffect(hideSecureFolder) {
+        if (hideSecureFolder
+            && navController.currentBackStackEntry?.destination?.route != MultiScreenViewType.LockedFolderView.name
+        ) {
+            navController.navigate(MultiScreenViewType.MainScreen.name)
+        }
+    }
 
     DisposableEffect(key1 = lifecycleOwner.lifecycle.currentState) {
         val lifecycleObserver =
-			LifecycleEventObserver { _, event ->
+            LifecycleEventObserver { _, event ->
 
-			    when (event) {
-			    	Lifecycle.Event.ON_STOP, Lifecycle.Event.ON_DESTROY -> {
-			    		if (navController.currentBackStackEntry?.destination?.route != MultiScreenViewType.LockedFolderView.name
-			    			&& navController.currentBackStackEntry?.destination?.route != MultiScreenViewType.MainScreen.name
-		    			) {
-			    			lastLifecycleState = Lifecycle.State.DESTROYED
-			    		}
-			    	}
+                when (event) {
+                    Lifecycle.Event.ON_STOP, Lifecycle.Event.ON_DESTROY -> {
+                        if (navController.currentBackStackEntry?.destination?.route != MultiScreenViewType.LockedFolderView.name
+                            && navController.currentBackStackEntry?.destination?.route != MultiScreenViewType.MainScreen.name
+                        ) {
+                            lastLifecycleState = Lifecycle.State.DESTROYED
+                        }
+                    }
 
-			        Lifecycle.Event.ON_RESUME, Lifecycle.Event.ON_START, Lifecycle.Event.ON_CREATE -> {
-			        	if (lastLifecycleState == Lifecycle.State.DESTROYED && navController.currentBackStackEntry != null) {
-			            	lastLifecycleState = Lifecycle.State.STARTED
+                    Lifecycle.Event.ON_RESUME, Lifecycle.Event.ON_START, Lifecycle.Event.ON_CREATE -> {
+                        if (lastLifecycleState == Lifecycle.State.DESTROYED && navController.currentBackStackEntry != null) {
+                            lastLifecycleState = Lifecycle.State.STARTED
 
-			        		hideSecureFolder = true
-		        		}
-			        }
+                            hideSecureFolder = true
+                        }
+                    }
 
-			        else -> {}
-			    }
-			}
+                    else -> {}
+                }
+            }
 
         lifecycleOwner.lifecycle.addObserver(lifecycleObserver)
 
@@ -148,7 +148,7 @@ fun SingleHiddenPhotoView(
         }
     }
 
-	if (hideSecureFolder) return
+    if (hideSecureFolder) return
 
     val mainViewModel = MainActivity.mainViewModel
 
@@ -345,7 +345,7 @@ private fun BottomBar(
     val showRestoreDialog = remember { mutableStateOf(false) }
     val showDeleteDialog = remember { mutableStateOf(false) }
     val runRestoreAction = remember { mutableStateOf(false) }
-	var originalPath by remember { mutableStateOf("") }
+    var originalPath by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
@@ -354,10 +354,10 @@ private fun BottomBar(
     }
 
     GetDirectoryPermissionAndRun(
-    	absolutePath = originalPath,
-    	shouldRun = runRestoreAction,
+        absolutePath = originalPath,
+        shouldRun = runRestoreAction,
     ) {
-        moveImageOutOfLockedFolder(listOf(item.absolutePath), context)
+        moveImageOutOfLockedFolder(listOf(item), context)
 
         sortOutMediaMods(
             item,
@@ -374,7 +374,7 @@ private fun BottomBar(
         dialogTitle = "Move item out of Secure Folder?",
         confirmButtonLabel = "Move"
     ) {
-    	runRestoreAction.value = true
+        runRestoreAction.value = true
     }
 
     ConfirmationDialogWithBody(
@@ -506,106 +506,106 @@ private fun BottomBar(
 
 @Composable
 private fun SingleSecuredPhotoInfoDialog(
-	showDialog: MutableState<Boolean>,
-	currentMediaItem: MediaStoreData
+    showDialog: MutableState<Boolean>,
+    currentMediaItem: MediaStoreData
 ) {
-	val localConfig = LocalConfiguration.current
+    val localConfig = LocalConfiguration.current
     var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
 
     LaunchedEffect(localConfig) {
-    	isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
+        isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
     }
 
-	val modifier = if (isLandscape)
-		Modifier.width(256.dp)
-	else
-		Modifier.fillMaxWidth(0.85f)
+    val modifier = if (isLandscape)
+        Modifier.width(256.dp)
+    else
+        Modifier.fillMaxWidth(0.85f)
 
-	if (showDialog.value) {
-		Dialog (
-			onDismissRequest = {
-				showDialog.value = false
-			},
-			properties = DialogProperties(
-				usePlatformDefaultWidth = false
-			),
-		) {
-			Column (
-				modifier = Modifier
+    if (showDialog.value) {
+        Dialog(
+            onDismissRequest = {
+                showDialog.value = false
+            },
+            properties = DialogProperties(
+                usePlatformDefaultWidth = false
+            ),
+        ) {
+            Column(
+                modifier = Modifier
                     .then(modifier)
                     .wrapContentHeight()
                     .clip(RoundedCornerShape(32.dp))
                     .background(brightenColor(CustomMaterialTheme.colorScheme.surface, 0.1f))
                     .padding(4.dp),
-			) {
-				Box (
-					modifier = Modifier
-						.fillMaxWidth(1f),
-				) {
-					IconButton(
-						onClick = {
-							showDialog.value = false
-						},
-						modifier = Modifier
-							.align(Alignment.CenterStart)
-					) {
-						Icon(
-							painter = painterResource(id = R.drawable.close),
-							contentDescription = "Close dialog button",
-							modifier = Modifier
-								.size(24.dp)
-						)
-					}
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(1f),
+                ) {
+                    IconButton(
+                        onClick = {
+                            showDialog.value = false
+                        },
+                        modifier = Modifier
+                            .align(Alignment.CenterStart)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.close),
+                            contentDescription = "Close dialog button",
+                            modifier = Modifier
+                                .size(24.dp)
+                        )
+                    }
 
-					Text (
-						text = "Info",
-						fontWeight = FontWeight.Bold,
-						fontSize = TextUnit(18f, TextUnitType.Sp),
-						modifier = Modifier
-							.align(Alignment.Center)
-					)
-				}
+                    Text(
+                        text = "Info",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = TextUnit(18f, TextUnitType.Sp),
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                    )
+                }
 
-				Column (
-					modifier = Modifier
+                Column(
+                    modifier = Modifier
                         .padding(12.dp)
                         .wrapContentHeight()
-				) {
-					var mediaData by remember {
-						mutableStateOf(
-	                    	emptyMap<MediaData, Any>()
-						)
-                   	}
+                ) {
+                    var mediaData by remember {
+                        mutableStateOf(
+                            emptyMap<MediaData, Any>()
+                        )
+                    }
 
-					LaunchedEffect(Unit) {
-						getExifDataForMedia(currentMediaItem.absolutePath).collect {
-							mediaData = it
-						}
-					}
+                    LaunchedEffect(Unit) {
+                        getExifDataForMedia(currentMediaItem.absolutePath).collect {
+                            mediaData = it
+                        }
+                    }
 
-					Column (
-						modifier = Modifier
-							.wrapContentHeight()
-					) {
-						for (key in mediaData.keys) {
-							val value = mediaData[key]
+                    Column(
+                        modifier = Modifier
+                            .wrapContentHeight()
+                    ) {
+                        for (key in mediaData.keys) {
+                            val value = mediaData[key]
 
-							val splitBy = Regex("(?=[A-Z])")
-							val split = key.toString().split(splitBy)
-							// println("SPLIT IS $split")
-							val name = if (split.size >= 3) "${split[1]} ${split[2]}" else key.toString()
+                            val splitBy = Regex("(?=[A-Z])")
+                            val split = key.toString().split(splitBy)
+                            // println("SPLIT IS $split")
+                            val name = if (split.size >= 3) "${split[1]} ${split[2]}" else key.toString()
 
-							DialogInfoText(
-								firstText = name,
-								secondText = value.toString(),
-								iconResId = key.iconResInt,
-							)
-						}
+                            DialogInfoText(
+                                firstText = name,
+                                secondText = value.toString(),
+                                iconResId = key.iconResInt,
+                            )
+                        }
 
-						Spacer (modifier = Modifier.height(8.dp))
-					}
-				}
-			}
-		}
-	}
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
+            }
+        }
+    }
 }

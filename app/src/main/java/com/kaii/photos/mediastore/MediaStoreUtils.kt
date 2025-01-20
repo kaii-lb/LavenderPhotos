@@ -13,7 +13,7 @@ import android.provider.MediaStore.MediaColumns
 import android.util.Log
 import androidx.documentfile.provider.DocumentFile
 import com.kaii.photos.helpers.EXTERNAL_DOCUMENTS_AUTHORITY
-import com.kaii.photos.helpers.getBaseInternalStorageDirectory
+import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.setDateTakenForMedia
 import com.kaii.photos.mediastore.MediaStoreDataSource.Companion.MEDIA_STORE_FILE_URI
 import kotlinx.coroutines.Dispatchers
@@ -113,46 +113,11 @@ fun ContentResolver.copyUriToUri(from: Uri, to: Uri) {
     }
 }
 
-fun ContentResolver.getContentUriForAbsolutePath(absolutePath: String): Uri? {
-    val mediaCursor = query(
-        MEDIA_STORE_FILE_URI,
-        arrayOf(
-            MediaColumns._ID,
-            MediaColumns.DATA,
-            MediaColumns.MIME_TYPE
-        ),
-        "${MediaColumns.DATA} = ?",
-        arrayOf("%$absolutePath%"),
-        null
-    )
-
-    mediaCursor?.let { cursor ->
-        cursor.moveToFirst()
-
-        val idColNum = cursor.getColumnIndexOrThrow(MediaColumns._ID)
-        val mimeTypeColNum = cursor.getColumnIndexOrThrow(MediaColumns.MIME_TYPE)
-
-        val id = cursor.getLong(idColNum)
-        val mimeType = cursor.getString(mimeTypeColNum)
-
-        val uriParentPath =
-            if (mimeType.contains("image")) MediaStore.Images.Media.EXTERNAL_CONTENT_URI else MediaStore.Video.Media.EXTERNAL_CONTENT_URI
-        val uri = ContentUris.withAppendedId(uriParentPath, id)
-
-        cursor.close()
-
-        return uri
-    }
-
-    return null
-}
-
 fun getExternalStorageContentUriFromAbsolutePath(absolutePath: String, trimDoc: Boolean): Uri {
-    val relative = absolutePath.replace(getBaseInternalStorageDirectory(), "").removeSuffix("/")
+    val relative = absolutePath.replace(baseInternalStorageDirectory, "").removeSuffix("/")
 
     val treeUri = DocumentsContract.buildTreeDocumentUri(EXTERNAL_DOCUMENTS_AUTHORITY, "primary:")
     val pathId = "primary:$relative"
-
 
     val documentUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, pathId).toString().let {
         if (trimDoc) it.replace("/document/primary%3A", "")
@@ -161,4 +126,29 @@ fun getExternalStorageContentUriFromAbsolutePath(absolutePath: String, trimDoc: 
     Log.d(TAG, "Path ID for $absolutePath is $pathId, with document id $documentUri")
 
     return Uri.parse(documentUri)
+}
+
+fun getHighestLevelParentFromAbsolutePath(absolutePath: String) : String {
+    val relative = absolutePath.replace(baseInternalStorageDirectory, "")
+    val depth =
+        if (relative.startsWith("Android") || relative.startsWith(Environment.DIRECTORY_DOWNLOADS)) 1
+        else 0
+
+    val highestParent = getHighestParentPath(absolutePath, depth)
+
+	Log.d(TAG, "Highest parent for $absolutePath is $highestParent")
+
+    return baseInternalStorageDirectory + highestParent.toString()
+}
+
+fun getHighestParentPath(absolutePath: String, depth: Int) : String? {
+   	val relative = absolutePath.replace(baseInternalStorageDirectory, "")
+
+    return if (absolutePath.length > baseInternalStorageDirectory.length + 1
+    	&& !(relative.startsWith(Environment.DIRECTORY_DOWNLOADS) && relative.removeSuffix("/").endsWith(Environment.DIRECTORY_DOWNLOADS))
+   	) {
+        baseInternalStorageDirectory + relative.split("/").subList(fromIndex = 0, toIndex = depth + 1).joinToString("/")
+    } else {
+        null
+    }
 }

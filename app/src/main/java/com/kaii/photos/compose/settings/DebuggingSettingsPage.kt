@@ -34,8 +34,8 @@ import com.kaii.photos.compose.TextEntryDialog
 import com.kaii.photos.datastore.Debugging
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.helpers.CustomMaterialTheme
-import com.kaii.photos.helpers.getBaseInternalStorageDirectory
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.helpers.baseInternalStorageDirectory
 import java.io.File
 
 @Composable
@@ -107,8 +107,8 @@ fun DebuggingSettingsPage() {
 	               			showAddAlbumsDialog = false
 	               		},
 	               		onConfirm = { path ->
-							val relativePath = path.trim().replace(getBaseInternalStorageDirectory(), "")
-							val absolutePath = getBaseInternalStorageDirectory() + relativePath
+							val relativePath = path.trim().replace(baseInternalStorageDirectory, "")
+							val absolutePath = baseInternalStorageDirectory + relativePath
 
 							if (!File(absolutePath).exists() || relativePath == "") {
 								false

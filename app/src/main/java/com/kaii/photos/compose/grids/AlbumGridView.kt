@@ -55,8 +55,8 @@ import com.kaii.photos.R
 import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.brightenColor
-import com.kaii.photos.helpers.getBaseInternalStorageDirectory
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.signature
 import com.kaii.photos.models.album_grid.AlbumsViewModel
@@ -128,7 +128,7 @@ fun AlbumsGridView(listOfDirs: List<String>, currentView: MutableState<MainScree
 	                listOfDirs[key]
 	            },
             ) { index ->
-				val folder = File(getBaseInternalStorageDirectory() + listOfDirs[index])
+				val folder = File(baseInternalStorageDirectory + listOfDirs[index])
 				val neededDir = listOfDirs[index]
 
 				if (albumToThumbnailMapping.isNotEmpty()) {

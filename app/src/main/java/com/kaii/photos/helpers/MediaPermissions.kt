@@ -87,14 +87,15 @@ fun GetDirectoryPermissionAndRun(
     val showNoPermissionForDirDialog = remember { mutableStateOf(false) }
     val context = LocalContext.current
 
-    val launcher = createPersistablePermissionLauncher {
-        onGranted()
+    val launcher = createPersistablePermissionLauncher { _ ->
+        shouldRun.value = true
+    	onGranted()
     }
 
     ConfirmationDialogWithBody(
         showDialog = showNoPermissionForDirDialog,
         dialogTitle = "Permission Needed",
-        dialogBody = "Lavender Photos needs permission to copy files to this album. Please grant it the permission by selecting \"Use This Folder\" on the next screen.\n This is a one-time permission.",
+        dialogBody = "Lavender Photos needs permission to access this album. Please grant it the permission by selecting \"Use This Folder\" on the next screen.\n This is a one-time permission.",
         confirmButtonLabel = "Grant"
     ) {
         val uri = getExternalStorageContentUriFromAbsolutePath(absolutePath, false)
@@ -113,85 +114,10 @@ fun GetDirectoryPermissionAndRun(
                     it.uri == externalContentUri && it.isReadPermission && it.isWritePermission
                 }
 
-            if (
-				!alreadyPersisted && !absolutePath.replace(getBaseInternalStorageDirectory(), "").startsWith(Environment.DIRECTORY_DOWNLOADS)
-            ) {
-                showNoPermissionForDirDialog.value = true
-            } else {
-                onGranted()
-            }
-
-            shouldRun.value = false
-        }
-    }
-}
-
-@Composable
-fun GetMultiDirectoryPermissionAndRun(
-    absolutePaths: List<String>,
-    shouldRun: MutableState<Boolean>,
-    onGranted: () -> Unit,
-    onConflict: () -> Unit
-) {
-    if (absolutePaths.isEmpty()) return
-
-	absolutePaths.forEach {
-		Log.d(TAG, "list item $it")
-	}
-
-    val showNoPermissionForDirDialog = remember { mutableStateOf(false) }
-    val showExplanationDialog = remember { mutableStateOf(false) }
-    val context = LocalContext.current
-
-    val launcher = createPersistablePermissionLauncher {
-        onGranted()
-    }
-
-    ConfirmationDialogWithBody(
-        showDialog = showExplanationDialog,
-        dialogTitle = "Unsupported Operation",
-        dialogBody = "These items are from different albums that Lavender Photos doesn't have access to. Please restore the items one by one (or by items belonging to the same album).\n Sorry for the inconvenience.",
-        confirmButtonLabel = "Okay"
-    ) {}
-
-    ConfirmationDialogWithBody(
-        showDialog = showNoPermissionForDirDialog,
-        dialogTitle = "Permission Needed",
-        dialogBody = "Lavender Photos needs permission to copy files to this album. Please grant it the permission by selecting \"Use This Folder\" on the next screen.\n This is a one-time permission.",
-        confirmButtonLabel = "Grant"
-    ) {
-        val uri = getExternalStorageContentUriFromAbsolutePath(absolutePaths.first(), false)
-        Log.d(TAG, "Content URI for directory ${absolutePaths.first()} is $uri")
-
-        launcher.launch(uri)
-    }
-
-    LaunchedEffect(shouldRun.value) {
-        if (shouldRun.value) {
-        	val allHavePerms = run {
-	        	val permList = context.contentResolver.persistedUriPermissions.map { it.uri }
-
-	        	absolutePaths.all { path ->
-					val externalContentUri = getExternalStorageContentUriFromAbsolutePath(path, true)
-
-					permList.contains(externalContentUri)
-	        	}
-			}
-
-        	if (!absolutePaths.all { it == absolutePaths.first() } && !allHavePerms) {
-        		showExplanationDialog.value = true
-        		onConflict()
-        		return@LaunchedEffect
-       		}
-
-            if (
-                !context.contentResolver.persistedUriPermissions.any {
-                    val externalContentUri = getExternalStorageContentUriFromAbsolutePath(absolutePaths.first(), true)
-                    Log.d(TAG, "External document URI is $externalContentUri, in persisted permissions is ${it.uri}")
-
-                    it.uri == externalContentUri && it.isReadPermission && it.isWritePermission
-                }
-            ) {
+			val relative = absolutePath.replace(baseInternalStorageDirectory, "")
+            if (!alreadyPersisted &&
+            	!(relative.startsWith(Environment.DIRECTORY_DOWNLOADS) && relative.removeSuffix("/").endsWith(Environment.DIRECTORY_DOWNLOADS))
+           	) {
                 showNoPermissionForDirDialog.value = true
             } else {
                 onGranted()
@@ -204,7 +130,7 @@ fun GetMultiDirectoryPermissionAndRun(
 
 @Composable
 fun createPersistablePermissionLauncher(
-    extraAction: ((uri: Uri) -> Unit)? = null
+    onGranted: (uri: Uri) -> Unit
 ): ManagedActivityResultLauncher<Uri?, Uri?> {
     val context = LocalContext.current
 
@@ -218,7 +144,7 @@ fun createPersistablePermissionLauncher(
 
                 Log.d(TAG, "Got persistent permission to access parent and child directory with uri $uri and path $uriPath")
 
-                if (extraAction != null) extraAction(uri)
+                onGranted(uri)
             } catch (e: Throwable) {
                 Log.e(TAG, "Could not get album path.")
                 e.printStackTrace()

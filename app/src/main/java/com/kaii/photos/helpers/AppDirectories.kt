@@ -10,10 +10,10 @@ private enum class AppDirectories(val path: String) {
 }
 
 /** ends with a "/" */
-fun getBaseInternalStorageDirectory() : String {
+val baseInternalStorageDirectory = run {
     val absolutePath = Environment.getExternalStorageDirectory().absolutePath
 
-    return absolutePath.removeSuffix("/") + "/"
+    absolutePath.removeSuffix("/") + "/"
 }
 
 /** ends with a "/" */
@@ -31,7 +31,7 @@ fun Context.getAppLockedFolderDirectory() : String {
 
 /** ends with a "/" */
 fun getAppRestoredFromLockedFolderDirectory() : String {
-    val dir = getBaseInternalStorageDirectory() + AppDirectories.MainDir + "/Restored Files/"
+    val dir = baseInternalStorageDirectory + AppDirectories.MainDir + "/Restored Files/"
 
     val folder = File(dir)
     if (!folder.exists()) {
@@ -43,7 +43,7 @@ fun getAppRestoredFromLockedFolderDirectory() : String {
 
 /** ends with a "/" */
 fun getAppStorageDir() : String {
-    val dir = getBaseInternalStorageDirectory() + AppDirectories.MainDir + "/"
+    val dir = baseInternalStorageDirectory + AppDirectories.MainDir + "/"
 
     val folder = File(dir)
     if (!folder.exists()) {

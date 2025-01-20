@@ -100,12 +100,12 @@ import com.kaii.photos.compose.FolderIsEmpty
 import com.kaii.photos.compose.ShowSelectedState
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.datastore.Storage
+import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.ImageFunctions
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.checkHasFiles
-import com.kaii.photos.helpers.getBaseInternalStorageDirectory
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.vibrateLong
 import com.kaii.photos.helpers.vibrateShort
@@ -136,7 +136,7 @@ fun PhotoGrid(
     val hasFiles = if (path == null) {
         groupedMedia.value.isNotEmpty()
     } else {
-        val basePath = getBaseInternalStorageDirectory()
+        val basePath = baseInternalStorageDirectory
         if (viewProperties == ViewProperties.Trash) {
             Path("$basePath$path").checkHasFiles(true)
         } else {

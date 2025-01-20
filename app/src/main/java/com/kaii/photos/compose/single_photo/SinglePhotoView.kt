@@ -68,6 +68,7 @@ import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.compose.SinglePhotoInfoDialog
 import com.kaii.photos.compose.setBarVisibility
 import com.kaii.photos.helpers.EditingScreen
+import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.moveImageToLockedFolder
@@ -76,6 +77,7 @@ import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareImage
 import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.helpers.MediaItemSortMode
+import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.favourites_grid.FavouritesViewModel
@@ -508,6 +510,18 @@ private fun BottomBar(
 
                     val showMoveToSecureFolderDialog = remember { mutableStateOf(false) }
                     val moveToSecureFolder = remember { mutableStateOf(false) }
+                    val tryGetDirPermission = remember { mutableStateOf(false) }
+
+                    GetDirectoryPermissionAndRun(
+                        absolutePath = groupedMedia.value.firstOrNull()?.let { media ->
+                            media.absolutePath
+                                .replace(baseInternalStorageDirectory, "")
+                                .replace(media.displayName ?: "", "")
+                        } ?: "",
+                        shouldRun = tryGetDirPermission
+                    ) {
+                        moveToSecureFolder.value = true
+                    }
 
                     GetPermissionAndRun(
                         uris = listOf(currentItem.uri),
@@ -539,7 +553,7 @@ private fun BottomBar(
                                 dialogTitle = "Move this ${currentItem.type} to Secure Folder?",
                                 confirmButtonLabel = "Secure"
                             ) {
-                                moveToSecureFolder.value = true
+                                tryGetDirPermission.value = true
                             }
                         },
                         action = {

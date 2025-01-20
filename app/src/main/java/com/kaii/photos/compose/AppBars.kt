@@ -69,7 +69,6 @@ import com.kaii.photos.MainActivity
 import com.kaii.photos.R
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.helpers.CustomMaterialTheme
-import com.kaii.photos.helpers.GetMultiDirectoryPermissionAndRun
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.moveImageOutOfLockedFolder
@@ -265,44 +264,44 @@ fun getAppBarContentTransition(slideLeft: Boolean) = run {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun MainAppTopBar(showDialog: MutableState<Boolean>) {
-    TopAppBar(
-        title = {
-            Row {
-                Text(
-                    text = "Lavender ",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = TextUnit(22f, TextUnitType.Sp)
-                )
-                Text(
-                    text = "Photos",
-                    fontWeight = FontWeight.Normal,
-                    fontSize = TextUnit(22f, TextUnitType.Sp)
-                )
-            }
-        },
-        actions = {
-            IconButton(
-                onClick = {
-                    showDialog.value = true
-                },
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.settings),
-                    contentDescription = "Settings Button",
-                    tint = CustomMaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-        },
-        scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(),
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = CustomMaterialTheme.colorScheme.background
-        ),
-    )
-}
+// @OptIn(ExperimentalMaterial3Api::class)
+// @Composable
+// fun MainAppTopBar(showDialog: MutableState<Boolean>) {
+//     TopAppBar(
+//         title = {
+//             Row {
+//                 Text(
+//                     text = "Lavender ",
+//                     fontWeight = FontWeight.Bold,
+//                     fontSize = TextUnit(22f, TextUnitType.Sp)
+//                 )
+//                 Text(
+//                     text = "Photos",
+//                     fontWeight = FontWeight.Normal,
+//                     fontSize = TextUnit(22f, TextUnitType.Sp)
+//                 )
+//             }
+//         },
+//         actions = {
+//             IconButton(
+//                 onClick = {
+//                     showDialog.value = true
+//                 },
+//             ) {
+//                 Icon(
+//                     painter = painterResource(R.drawable.settings),
+//                     contentDescription = "Settings Button",
+//                     tint = CustomMaterialTheme.colorScheme.onPrimaryContainer,
+//                     modifier = Modifier.size(24.dp)
+//                 )
+//             }
+//         },
+//         scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(),
+//         colors = TopAppBarDefaults.topAppBarColors(
+//             containerColor = CustomMaterialTheme.colorScheme.background
+//         ),
+//     )
+// }
 
 @Composable
 fun MainAppBottomBar(
@@ -1148,51 +1147,6 @@ fun SecureFolderViewBottomAppBar(
         )
 
         val showRestoreDialog = remember { mutableStateOf(false) }
-        val runRestoreMultipleAction = remember { mutableStateOf(false) }
-
-        val originalPathsList = remember { mutableListOf<String>() }
-        LaunchedEffect(Unit, selectedItemsWithoutSection) {
-            withContext(Dispatchers.IO) {
-                val dao = MainActivity.applicationDatabase.securedItemEntityDao()
-
-                selectedItemsWithoutSection.forEach { media ->
-                    dao.getOriginalPathFromSecuredPath(media.absolutePath)?.let {
-                        originalPathsList.add(it.replace(media.displayName ?: "", ""))
-                    }
-                }
-            }
-        }
-
-        GetMultiDirectoryPermissionAndRun(
-            absolutePaths = originalPathsList,
-            shouldRun = runRestoreMultipleAction,
-            onConflict = {
-            	originalPathsList.clear()
-            },
-            onGranted = {
-	            coroutineScope.launch {
-	                withContext(Dispatchers.IO) {
-	                    val newList = groupedMedia.value.toMutableList()
-
-	                    moveImageOutOfLockedFolder(selectedItemsWithoutSection.map { it.absolutePath }, context)
-	                    newList.removeAll(selectedItemsWithoutSection)
-
-	                    groupedMedia.value.filter {
-	                        it.type == MediaType.Section
-	                    }.forEach {
-	                        val filtered = newList.filter { new ->
-	                            new.getLastModifiedDay() == it.getLastModifiedDay()
-	                        }
-
-	                        if (filtered.size == 1) newList.remove(it)
-	                    }
-
-	                    selectedItemsList.clear()
-	                    groupedMedia.value = newList
-	                }
-	            }
-            }
-        )
 
         BottomAppBarItem(
             text = "Restore",
@@ -1204,7 +1158,27 @@ fun SecureFolderViewBottomAppBar(
                     dialogTitle = "Restore these items?",
                     confirmButtonLabel = "Restore"
                 ) {
-                    runRestoreMultipleAction.value = true
+                    coroutineScope.launch {
+                        withContext(Dispatchers.IO) {
+                            val newList = groupedMedia.value.toMutableList()
+
+                            moveImageOutOfLockedFolder(selectedItemsWithoutSection, context)
+                            newList.removeAll(selectedItemsWithoutSection)
+
+                            groupedMedia.value.filter {
+                                it.type == MediaType.Section
+                            }.forEach {
+                                val filtered = newList.filter { new ->
+                                    new.getLastModifiedDay() == it.getLastModifiedDay()
+                                }
+
+                                if (filtered.size == 1) newList.remove(it)
+                            }
+
+                            selectedItemsList.clear()
+                            groupedMedia.value = newList
+                        }
+                    }
                 }
             },
             action = {

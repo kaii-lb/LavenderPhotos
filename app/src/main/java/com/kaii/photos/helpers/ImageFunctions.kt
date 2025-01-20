@@ -6,6 +6,8 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
+import android.os.Environment
+import android.provider.DocumentsContract
 import android.provider.MediaStore
 import android.provider.MediaStore.MediaColumns
 import android.util.Log
@@ -31,6 +33,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.toSize
+import androidx.core.net.toFile
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.kaii.photos.MainActivity.Companion.applicationDatabase
@@ -45,10 +48,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
-import java.nio.file.Files
 import kotlin.io.path.Path
 import kotlin.math.min
+import java.io.File
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 
 private const val TAG = "IMAGE_FUNCTIONS"
 
@@ -150,35 +154,45 @@ fun moveImageToLockedFolder(mediaItem: MediaStoreData, context: Context) {
 }
 
 /** @param list is the secured folder paths (/data/ path) to these items */
-fun moveImageOutOfLockedFolder(list: List<String>, context: Context) {
+fun moveImageOutOfLockedFolder(list: List<MediaStoreData>, context: Context) {
     val contentResolver = context.contentResolver
 
     CoroutineScope(Dispatchers.IO).launch {
         async {
-            list.forEach { absolutePath ->
-                val originalPath = applicationDatabase.securedItemEntityDao().getOriginalPathFromSecuredPath(absolutePath) ?: return@async
-                val fileToBeRestored = File(absolutePath)
+            list.forEach { media ->
+                val originalPath = applicationDatabase.securedItemEntityDao().getOriginalPathFromSecuredPath(media.absolutePath) ?: return@async
+                val fileToBeRestored = File(media.absolutePath)
 
-                val fullUriPath = getExternalStorageContentUriFromAbsolutePath(
-                	originalPath.replace(fileToBeRestored.name, "").removeSuffix("/"),
-                	true
-               	)
-
-                val directory = DocumentFile.fromTreeUri(context, fullUriPath)
-                val fileToBeSavedTo = directory?.createFile(
-                    Files.probeContentType(Path(absolutePath)),
-                    fileToBeRestored.nameWithoutExtension
-                )
-
-                fileToBeSavedTo?.let { savedToFile ->
-                    contentResolver.copyUriToUri(
-                        from = fileToBeRestored.toUri(),
-                        to = savedToFile.uri
-                    )
-
+                contentResolver.copyMedia(
+                    context = context,
+                    media = media.copy(
+                        uri = fileToBeRestored.toUri()
+                    ),
+                    destination = originalPath.replace(fileToBeRestored.name, "").removeSuffix("/")
+                )?.let {
                     fileToBeRestored.delete()
-                    applicationDatabase.securedItemEntityDao().deleteEntityBySecuredPath(absolutePath)
+                    applicationDatabase.securedItemEntityDao().deleteEntityBySecuredPath(media.absolutePath)
                 }
+                // val fullUriPath = getExternalStorageContentUriFromAbsolutePath(
+                // 	,
+                // 	true
+               	// )
+                //
+                // val directory = DocumentFile.fromTreeUri(context, fullUriPath)
+                // val fileToBeSavedTo = directory?.createFile(
+                //     Files.probeContentType(Path(absolutePath)),
+                //     fileToBeRestored.nameWithoutExtension
+                // )
+                //
+                // fileToBeSavedTo?.let { savedToFile ->
+                //     contentResolver.copyUriToUri(
+                //         from = fileToBeRestored.toUri(),
+                //         to = savedToFile.uri
+                //     )
+                //
+                //     fileToBeRestored.delete()
+                //     applicationDatabase.securedItemEntityDao().deleteEntityBySecuredPath(absolutePath)
+                // }
             }
         }.await()
     }
@@ -214,13 +228,16 @@ fun renameImage(context: Context, uri: Uri, newName: String) {
     }
 }
 
-// TODO: broken, need to research this
-fun renameDirectory(absolutePath: String, newName: String) {
+fun renameDirectory(context: Context, absolutePath: String, newName: String) {
     try {
-        val originalDir = File(absolutePath)
-        val newDir = File(absolutePath.replace(originalDir.name, newName))
+    	val originalFile = File(absolutePath)
+        val newFile = File(absolutePath.replace(originalFile.name, newName))
 
-        originalDir.renameTo(newDir)
+        val dir = DocumentsContract.buildTreeDocumentUri(EXTERNAL_DOCUMENTS_AUTHORITY, "primary:${absolutePath.replace(baseInternalStorageDirectory, "")}")
+        val newDir = DocumentsContract.buildTreeDocumentUri(EXTERNAL_DOCUMENTS_AUTHORITY, "primary:${absolutePath.replace(originalFile.name, newName)}")
+
+        val newDirectory = DocumentFile.fromTreeUri(context, dir)
+        newDirectory?.renameTo(newName)
     } catch (e: Throwable) {
         Log.e(TAG, "Couldn't rename directory $absolutePath to $newName")
         e.printStackTrace()
@@ -401,7 +418,7 @@ suspend fun savePathListToBitmap(
                     displayName = displayName,
                     id = 0L
                 ),
-                destination = original.absolutePath.replace(original.name, "").replace(getBaseInternalStorageDirectory(), ""),
+                destination = original.absolutePath.replace(original.name, "").replace(baseInternalStorageDirectory, ""),
                 overrideDisplayName = displayName
             )
 

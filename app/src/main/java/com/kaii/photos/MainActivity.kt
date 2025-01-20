@@ -70,7 +70,6 @@ import com.kaii.photos.compose.LockedFolderEntryView
 import com.kaii.photos.compose.MainAppBottomBar
 import com.kaii.photos.compose.MainAppDialog
 import com.kaii.photos.compose.MainAppSelectingBottomBar
-import com.kaii.photos.compose.MainAppTopBar
 import com.kaii.photos.compose.PermissionHandler
 import com.kaii.photos.compose.PrototypeMainTopBar
 import com.kaii.photos.compose.ViewProperties
@@ -103,8 +102,8 @@ import com.kaii.photos.helpers.EditingScreen
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.getAppStorageDir
-import com.kaii.photos.helpers.getBaseInternalStorageDirectory
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.models.gallery_model.GalleryViewModel
 import com.kaii.photos.models.gallery_model.GalleryViewModelFactory
@@ -254,7 +253,7 @@ class MainActivity : ComponentActivity() {
         val listOfDirs = mainViewModel.settings.AlbumsList.getAlbumsList().collectAsStateWithLifecycle(initialValue = emptyList()).value.toMutableList()
 
         listOfDirs.sortByDescending {
-            File("${getBaseInternalStorageDirectory()}$it").lastModified()
+            File("$baseInternalStorageDirectory$it").lastModified()
         }
         listOfDirs.find { it == "DCIM/Camera" }?.let { cameraItem ->
             listOfDirs.remove(cameraItem)

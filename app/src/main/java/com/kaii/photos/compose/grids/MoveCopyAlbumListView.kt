@@ -66,8 +66,8 @@ import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.copyImageListToPath
-import com.kaii.photos.helpers.getBaseInternalStorageDirectory
 import com.kaii.photos.helpers.moveImageListToPath
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
@@ -239,7 +239,7 @@ fun AlbumsListItem(
     val runOnDirGranted = remember { mutableStateOf(false) }
 
     GetDirectoryPermissionAndRun(
-    	absolutePath = getBaseInternalStorageDirectory() + album,
+    	absolutePath = baseInternalStorageDirectory + album,
     	shouldRun = runOnDirGranted,
     ) {
     	runOnUriGranted.value = true
