@@ -1,6 +1,8 @@
 package com.kaii.photos.models.favourites_grid
 
 import android.net.Uri
+import android.content.Context
+import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.MainActivity
@@ -17,7 +19,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.io.File
 
-class FavouritesViewModel : ViewModel() {
+class FavouritesViewModel() : ViewModel() {
     private val dao = MainActivity.applicationDatabase.favouritedItemEntityDao()
 
     val mediaFlow by lazy {
@@ -32,7 +34,7 @@ class FavouritesViewModel : ViewModel() {
                     dateTaken = entity.dateTaken,
                     absolutePath = entity.absolutePath,
                     mimeType = entity.mimeType,
-                    uri = Uri.fromFile(File(entity.absolutePath)),
+                    uri = Uri.parse(entity.uri),
                     type = entity.type,
                     id = entity.id,
                     dateModified = entity.dateModified,
@@ -54,7 +56,8 @@ class FavouritesViewModel : ViewModel() {
                     mimeType = mediaItem.mimeType ?: "image/*", // TODO: context.contentResolver.getType(mediaItem.uri),
                     type = mediaItem.type,
                     absolutePath = mediaItem.absolutePath,
-                    displayName = mediaItem.displayName ?: "Media"
+                    displayName = mediaItem.displayName ?: "Media",
+                    uri = mediaItem.uri.toString()
                 )
             )
         }

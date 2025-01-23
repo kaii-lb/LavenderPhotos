@@ -1,0 +1,72 @@
+package com.kaii.photos.database
+
+import android.content.ContentValues
+import android.content.Context
+import androidx.core.content.FileProvider
+import androidx.room.OnConflictStrategy
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
+import com.kaii.photos.database.entities.FavouritedItemEntity
+import com.kaii.photos.mediastore.toMediaType
+import com.kaii.photos.mediastore.getUriFromAbsoltuePath
+import java.io.File
+
+class Migration3to4(val context: Context) : Migration(startVersion = 3, endVersion = 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        val favItems = db.query("SELECT * FROM favouriteditementity")
+        val newFavItems = emptyList<FavouritedItemEntity>().toMutableList()
+
+        val idNum = favItems.getColumnIndexOrThrow("id")
+        val dateTakenNum = favItems.getColumnIndexOrThrow("date_taken")
+        val mimeTypeNum = favItems.getColumnIndexOrThrow("mime_type")
+        val displayNameNum = favItems.getColumnIndexOrThrow("display_name")
+        val absolutePathNum = favItems.getColumnIndexOrThrow("absolute_path")
+        val typeNum = favItems.getColumnIndexOrThrow("type")
+        val dateModifiedNum = favItems.getColumnIndexOrThrow("date_modified")
+
+        while(favItems.moveToNext()) {
+            val id = favItems.getLong(idNum)
+            val dateTaken = favItems.getLong(dateTakenNum)
+            val mimeType = favItems.getString(mimeTypeNum)
+            val displayName = favItems.getString(displayNameNum)
+            val absolutePath = favItems.getString(absolutePathNum)
+            val type = favItems.getString(typeNum).toMediaType()
+            val dateModified = favItems.getLong(dateModifiedNum)
+
+            val uri = context.contentResolver.getUriFromAbsoltuePath(absolutePath = absolutePath, type = type).toString() ?: ""
+
+            newFavItems.add(
+                FavouritedItemEntity(
+                    id = id,
+                    dateTaken = dateTaken,
+                    mimeType = mimeType,
+                    displayName = displayName,
+                    absolutePath = absolutePath,
+                    type = type,
+                    dateModified = dateModified,
+                    uri = uri
+                )
+            )
+        }
+
+        db.execSQL("DROP TABLE favouriteditementity")
+        db.execSQL("CREATE TABLE `favouriteditementity` (`id` INTEGER NOT NULL, `date_taken` INTEGER NOT NULL, `mime_type` TEXT NOT NULL, `display_name` TEXT NOT NULL, `absolute_path` TEXT NOT NULL, `type` TEXT NOT NULL, `date_modified` INTEGER NOT NULL, `uri` TEXT NOT NULL, PRIMARY KEY(`id`))")
+
+        newFavItems.forEach { item ->
+            db.insert(
+                "favouriteditementity",
+                OnConflictStrategy.REPLACE,
+                ContentValues().apply {
+                    put("id", item.id)
+                    put("date_taken", item.dateTaken)
+                    put("mime_type", item.mimeType)
+                    put("display_name", item.displayName)
+                    put("absolute_path", item.absolutePath)
+                    put("type", item.type.toString())
+                    put("date_modified", item.dateModified)
+                    put("uri", item.uri)
+                }
+            )
+        }
+    }
+}

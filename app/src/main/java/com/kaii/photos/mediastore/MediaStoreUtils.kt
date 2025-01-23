@@ -152,3 +152,32 @@ fun getHighestParentPath(absolutePath: String, depth: Int) : String? {
         null
     }
 }
+
+fun ContentResolver.getUriFromAbsoltuePath(absolutePath: String, type: MediaType) : Uri? {
+	val contentUri = if (type == MediaType.Image) MediaStore.Images.Media.EXTERNAL_CONTENT_URI else MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+	val data = if (type == MediaType.Image) MediaStore.Images.Media.DATA else MediaStore.Video.Media.DATA
+
+	val mediaCursor = query(
+		contentUri,
+        arrayOf(
+            MediaColumns._ID,
+            MediaColumns.DATA
+        ),
+       "$data = ?",
+        arrayOf(absolutePath),
+        null
+	)
+
+
+	mediaCursor?.let { cursor ->
+	    val idColNum = cursor.getColumnIndexOrThrow(MediaColumns._ID)
+
+		while (cursor.moveToFirst()) {
+			val id = cursor.getLong(idColNum)
+
+			return ContentUris.withAppendedId(contentUri, id)
+		}
+	}
+
+	return null
+}

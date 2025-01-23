@@ -14,4 +14,5 @@ data class FavouritedItemEntity (
     @ColumnInfo(name = "absolute_path") val absolutePath: String,
     @ColumnInfo(name = "type") val type: MediaType,
     @ColumnInfo(name = "date_modified") val dateModified: Long,
+	@ColumnInfo(name = "uri") val uri: String
 )

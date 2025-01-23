@@ -86,3 +86,10 @@ enum class MediaType {
     Image,
     Section
 }
+
+fun String.toMediaType() = when (this) {
+    "Image" -> MediaType.Image
+    "Video" -> MediaType.Video
+    "Section" -> MediaType.Section
+    else -> MediaType.Section
+}

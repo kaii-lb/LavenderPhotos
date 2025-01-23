@@ -44,7 +44,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.toArgb
@@ -92,6 +91,7 @@ import com.kaii.photos.compose.single_photo.SingleHiddenPhotoView
 import com.kaii.photos.compose.single_photo.SinglePhotoView
 import com.kaii.photos.compose.single_photo.SingleTrashedPhotoView
 import com.kaii.photos.database.MediaDatabase
+import com.kaii.photos.database.Migration3to4
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.Debugging
 import com.kaii.photos.datastore.LookAndFeel
@@ -136,7 +136,9 @@ class MainActivity : ComponentActivity() {
             applicationContext,
             MediaDatabase::class.java,
             "media-database"
-        ).build()
+        ).apply {
+            addMigrations(Migration3to4(applicationContext))
+        }.build()
         applicationDatabase = mediaDatabase
 
         Glide.get(this).setMemoryCategory(MemoryCategory.HIGH)

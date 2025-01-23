@@ -469,6 +469,7 @@ private fun BottomBar(
                     val showDeleteDialog = remember { mutableStateOf(false) }
                     val runTrashAction = remember { mutableStateOf(false) }
 
+					println("CURRENT ITEM URI ${currentItem.uri}")
                     GetPermissionAndRun(
                         uris = listOf(currentItem.uri),
                         shouldRun = runTrashAction,
