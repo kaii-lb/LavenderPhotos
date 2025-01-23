@@ -69,6 +69,7 @@ import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.copyImageListToPath
 import com.kaii.photos.helpers.moveImageListToPath
+import com.kaii.photos.helpers.SelectionState
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.album_grid.AlbumsViewModel
@@ -79,9 +80,9 @@ import kotlinx.coroutines.launch
 @Composable
 fun MoveCopyAlbumListView(
     show: MutableState<Boolean>,
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    selectionState: SelectionState,
     isMoving: Boolean,
-    groupedMedia: MutableState<List<MediaStoreData>>? = null,
+    groupedMedia: MutableState<List<MediaStoreData>>,
     insetsPadding: WindowInsets
 ) {
     val context = LocalContext.current
@@ -193,7 +194,7 @@ fun MoveCopyAlbumListView(
                             album = album,
                             data = dataList.value[album] ?: MediaStoreData(),
                             position = if (it == albumsList.size - 1 && albumsList.size != 1) RowPosition.Bottom else if (albumsList.size == 1) RowPosition.Single else if (it == 0) RowPosition.Top else RowPosition.Middle,
-                            selectedItemsList = selectedItemsList,
+                            selectionState = selectionState,
                             isMoving = isMoving,
                             show = show,
                             groupedMedia = groupedMedia,
@@ -218,20 +219,18 @@ fun AlbumsListItem(
     album: String,
     data: MediaStoreData,
     position: RowPosition,
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    selectionState: SelectionState,
     isMoving: Boolean,
     show: MutableState<Boolean>,
     modifier: Modifier,
-    groupedMedia: MutableState<List<MediaStoreData>>? = null
+    groupedMedia: MutableState<List<MediaStoreData>>
 ) {
     val (shape, spacerHeight) = getDefaultShapeSpacerForPosition(position, 24.dp)
     val context = LocalContext.current
 
     val selectedItemsWithoutSection by remember {
         derivedStateOf {
-            selectedItemsList.filter {
-                it.type != MediaType.Section && it != MediaStoreData()
-            }
+            selectionState.mapTo(groupedMedia.value)
         }
     }
 
@@ -258,11 +257,9 @@ fun AlbumsListItem(
 	                album
 	            )
 
-	            if (groupedMedia != null) {
-	                val newList = groupedMedia.value.toMutableList()
-	                newList.removeAll(selectedItemsWithoutSection.toSet())
-	                groupedMedia.value = newList
-	            }
+                val newList = groupedMedia.value.toMutableList()
+                newList.removeAll(selectedItemsWithoutSection.toSet())
+                groupedMedia.value = newList
 	        } else {
 	            copyImageListToPath(
 	                context,
@@ -271,7 +268,7 @@ fun AlbumsListItem(
 	            )
 	        }
 
-	        selectedItemsList.clear()
+	        selectionState.clear()
         }
     )
 

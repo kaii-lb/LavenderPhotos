@@ -9,8 +9,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -18,11 +16,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -42,7 +38,6 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -61,7 +56,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -103,15 +97,17 @@ import com.kaii.photos.datastore.Storage
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.ImageFunctions
-import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.SectionChild
 import com.kaii.photos.helpers.checkHasFiles
 import com.kaii.photos.helpers.rememberVibratorManager
+import com.kaii.photos.helpers.SelectionState
 import com.kaii.photos.helpers.vibrateLong
 import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.signature
+import com.kaii.photos.mediastore.toSectionChild
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -127,8 +123,8 @@ private const val TAG = "PHOTO_GRID_VIEW"
 fun PhotoGrid(
     groupedMedia: MutableState<List<MediaStoreData>>,
     path: String?,
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
     modifier: Modifier = Modifier,
+    selectionState: SelectionState,
     viewProperties: ViewProperties,
     shouldPadUp: Boolean = false,
     state: LazyGridState = rememberLazyGridState()
@@ -157,9 +153,9 @@ fun PhotoGrid(
         ) {
             DeviceMedia(
                 groupedMedia,
-                selectedItemsList,
                 viewProperties,
                 shouldPadUp,
+                selectionState,
                 state,
                 path
             )
@@ -173,20 +169,19 @@ fun PhotoGrid(
 @Composable
 fun DeviceMedia(
     groupedMedia: MutableState<List<MediaStoreData>>,
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
     viewProperties: ViewProperties,
     shouldPadUp: Boolean,
+    selectionState: SelectionState,
     gridState: LazyGridState,
     path: String?
 ) {
     var showLoadingSpinner by remember { mutableStateOf(true) }
-
     val coroutineScope = rememberCoroutineScope()
 
     BackHandler(
-        enabled = selectedItemsList.size > 0
+        enabled = selectionState.atLeastOneSelected
     ) {
-        selectedItemsList.clear()
+        selectionState.clear()
     }
 
     if (groupedMedia.value.isNotEmpty()) {
@@ -200,10 +195,10 @@ fun DeviceMedia(
     val mainViewModel = MainActivity.mainViewModel
 
     val spacerHeight by animateDpAsState(
-        targetValue = if (selectedItemsList.size > 0 && shouldPadUp) 80.dp else 0.dp,
+        targetValue = if (selectionState.atLeastOneSelected && shouldPadUp) 80.dp else 0.dp,
         animationSpec = tween(
             durationMillis = 350,
-            delayMillis = if (selectedItemsList.size > 0 && shouldPadUp) 350 else 0
+            delayMillis = if (selectionState.atLeastOneSelected && shouldPadUp) 350 else 0
         ),
         label = "animate spacer on bottom of photo grid"
     )
@@ -256,7 +251,7 @@ fun DeviceMedia(
                     .align(Alignment.TopCenter)
                     .dragSelectionHandler(
                         state = gridState,
-                        selectedItemsList = selectedItemsList,
+                        selectionState = selectionState,
                         groupedMedia = groupedMedia.value,
                         scrollSpeed = scrollSpeed,
                         scrollThreshold = with(localDensity) {
@@ -298,9 +293,8 @@ fun DeviceMedia(
 
                         MediaStoreItem(
                             item = mediaStoreItem,
-                            groupedMedia = groupedMedia,
                             viewProperties = viewProperties,
-                            selectedItemsList = selectedItemsList,
+                            selectionState = selectionState,
                             thumbnailSettings = Pair(cacheThumbnails, thumbnailSize),
                             isDragSelecting = isDragSelecting
                         ) {
@@ -392,7 +386,7 @@ fun DeviceMedia(
                         showHandle = true
                     } else {
                         delay(
-                            if (selectedItemsList.isNotEmpty()) 1000 else 3000
+                            if (selectionState.atLeastOneSelected) 1000 else 3000
                         )
                         showHandle = false
                     }
@@ -557,9 +551,8 @@ fun DeviceMedia(
 @Composable
 fun MediaStoreItem(
     item: MediaStoreData,
-    groupedMedia: MutableState<List<MediaStoreData>>,
     viewProperties: ViewProperties,
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    selectionState: SelectionState,
     thumbnailSettings: Pair<Boolean, Int>,
     isDragSelecting: MutableState<Boolean>,
     onClick: () -> Unit
@@ -567,21 +560,8 @@ fun MediaStoreItem(
     val vibratorManager = rememberVibratorManager()
 
     if (item.type == MediaType.Section) {
-        val sectionItems by remember {
-            derivedStateOf {
-                groupedMedia.value.filter {
-                    if (viewProperties.sortMode == MediaItemSortMode.LastModified) {
-                        it.getLastModifiedDay() == item.getLastModifiedDay() && it.type != MediaType.Section
-                    } else {
-                        it.getDateTakenDay() == item.getDateTakenDay() && it.type != MediaType.Section
-                    }
-                }
-            }
-        }
         val isSectionSelected by remember {
-            derivedStateOf {
-                selectedItemsList.containsAll(sectionItems)
-            }
+            selectionState.isSectionSelected(item.section)
         }
 
         Box(
@@ -594,13 +574,9 @@ fun MediaStoreItem(
                     indication = null,
                 ) {
                     if (isSectionSelected) {
-                        selectedItemsList.removeAll(sectionItems)
-                        selectedItemsList.remove(item)
+                    	selectionState.unselectEntireSection(item.section)
                     } else {
-                        if (selectedItemsList.size == 1 && selectedItemsList[0] == MediaStoreData()) selectedItemsList.clear()
-
-                        selectedItemsList.addAll(sectionItems)
-                        selectedItemsList.add(item)
+                        selectionState.selectEntireSection(item.section)
                     }
 
                     vibratorManager.vibrateLong()
@@ -618,13 +594,15 @@ fun MediaStoreItem(
 
             ShowSelectedState(
                 isSelected = isSectionSelected,
-                showIcon = selectedItemsList.isNotEmpty(),
+                showIcon = selectionState.atLeastOneSelected,
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
             )
         }
     } else {
-        val isSelected by remember/*(selectedItemsList.size)*/ { derivedStateOf { selectedItemsList.contains(item) } }
+        val isSelected by remember {
+        	selectionState.isItemSelected(item.toSectionChild())
+       	}
 
         val animatedItemCornerRadius by animateDpAsState(
             targetValue = if (isSelected) 16.dp else 0.dp,
@@ -643,13 +621,13 @@ fun MediaStoreItem(
 
         val onSingleClick: () -> Unit = {
             vibratorManager.vibrateShort()
-            if (selectedItemsList.isNotEmpty()) {
+            if (selectionState.atLeastOneSelected) {
                 if (isSelected) {
-                    selectedItemsList.remove(item)
+		        	selectionState.remove(item.toSectionChild())
                 } else {
-                    if (selectedItemsList.size == 1 && selectedItemsList[0] == MediaStoreData()) selectedItemsList.clear()
+                    if (selectionState.size == 1 && selectionState[0, 0] == SectionChild.dummyChild) selectionState.clear()
 
-                    selectedItemsList.add(item)
+		        	selectionState.add(item.toSectionChild())
                 }
             } else {
                 onClick()
@@ -661,11 +639,11 @@ fun MediaStoreItem(
 
             vibratorManager.vibrateLong()
             if (isSelected) {
-                selectedItemsList.remove(item)
+	        	selectionState.remove(item.toSectionChild())
             } else {
-                if (selectedItemsList.size == 1 && selectedItemsList[0] == MediaStoreData()) selectedItemsList.clear()
+                if (selectionState.size == 1 && selectionState[0, 0] == SectionChild.dummyChild) selectionState.clear()
 
-                selectedItemsList.add(item)
+	        	selectionState.add(item.toSectionChild())
             }
         }
 
@@ -676,7 +654,7 @@ fun MediaStoreItem(
                 .clip(RoundedCornerShape(0.dp))
                 .background(CustomMaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
                 .then(
-                    if (selectedItemsList.isNotEmpty()) {
+                    if (selectionState.atLeastOneSelected) {
                         Modifier.clickable {
                             onSingleClick()
                         }
@@ -735,7 +713,7 @@ fun MediaStoreItem(
 
             ShowSelectedState(
                 isSelected = isSelected,
-                showIcon = selectedItemsList.isNotEmpty(),
+                showIcon = selectionState.atLeastOneSelected,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
             )
@@ -745,8 +723,8 @@ fun MediaStoreItem(
 
 fun Modifier.dragSelectionHandler(
     state: LazyGridState,
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
     groupedMedia: List<MediaStoreData>,
+    selectionState: SelectionState,
     scrollSpeed: MutableFloatState,
     scrollThreshold: Float,
     isDragSelecting: MutableState<Boolean>
@@ -762,20 +740,27 @@ fun Modifier.dragSelectionHandler(
         onDragStart = { offset ->
             isDragSelecting.value = true
 
-            if (selectedItemsList.size == 1 && selectedItemsList[0] != MediaStoreData()) {
-                initialKey = groupedMedia.indexOf(selectedItemsList[0])
-                currentKey = initialKey
-            } else {
-                state.getGridItemAtOffset(offset, groupedMedia, numberOfHorizontalItems)?.let { key ->
-                    val item = groupedMedia[key]
+			if (selectionState.atLeastOneSelected) {
+	            if (selectionState.size == 1) {
+	                initialKey = groupedMedia.indexOf(
+                        groupedMedia.find {
+                            it.dateTaken == selectionState[0, 0].date
+                        }
+                    )
+	                currentKey = initialKey
+	            } else {
+	                state.getGridItemAtOffset(offset, groupedMedia, numberOfHorizontalItems)?.let { key ->
+	                    val item = groupedMedia[key]
 
-                    if (item.type != MediaType.Section) {
-                        initialKey = key
-                        currentKey = key
-                        if (!selectedItemsList.contains(item)) selectedItemsList.add(item)
-                    }
-                }
-            }
+	                    if (item.type != MediaType.Section) {
+	                        initialKey = key
+	                        currentKey = key
+	                        if (!selectionState.isItemSelected(item.toSectionChild()).value) selectionState.add(item.toSectionChild())
+	                    }
+	                }
+	            }
+			}
+
         },
 
         onDragCancel = {
@@ -803,18 +788,28 @@ fun Modifier.dragSelectionHandler(
 
                 state.getGridItemAtOffset(change.position, groupedMedia, numberOfHorizontalItems)?.let { key ->
                     if (currentKey != key) {
-                        selectedItemsList.apply {
+                        selectionState.apply {
                             val toBeRemoved =
                                 if (initialKey!! <= currentKey!!) groupedMedia.subList(initialKey!!, currentKey!! + 1)
                                 else groupedMedia.subList(currentKey!!, initialKey!! + 1)
 
-                            removeAll(toBeRemoved)
+                            removeAll(
+                                toBeRemoved.map {
+                                    it.toSectionChild()
+                                }
+                            )
 
                             val toBeAdded =
                                 if (initialKey!! <= key) groupedMedia.subList(initialKey!!, key + 1)
                                 else groupedMedia.subList(key, initialKey!! + 1)
 
-                            addAll(toBeAdded.filter { it.type != MediaType.Section })
+                            addAll(
+                                toBeAdded.filter {
+                                    it.type != MediaType.Section
+                                }.map {
+                                    it.toSectionChild()
+                                }
+                            )
                         }
 
                         currentKey = key

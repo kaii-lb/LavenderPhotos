@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -37,7 +36,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -58,8 +56,11 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.kaii.photos.R
 import com.kaii.photos.helpers.CustomMaterialTheme
+import com.kaii.photos.helpers.SectionChild
+import com.kaii.photos.helpers.SelectionState
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.mediastore.toSectionChild
 
 @Composable
 fun SplitButton(
@@ -242,21 +243,21 @@ fun ShowSelectedState(
         enter =
         scaleIn(
             animationSpec = tween(
-                durationMillis = 150
+                durationMillis = 200
             )
         ) + fadeIn(
             animationSpec = tween(
-                durationMillis = 150
+                durationMillis = 200
             )
         ),
         exit =
         scaleOut(
             animationSpec = tween(
-                durationMillis = 150
+                durationMillis = 200
             )
         ) + fadeOut(
             animationSpec = tween(
-                durationMillis = 150
+                durationMillis = 200
             )
         ),
         modifier = modifier
@@ -360,7 +361,7 @@ fun ShowSelectedState(
 
 @Composable
 fun SelectViewTopBarLeftButtons(
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    selectionState: SelectionState,
 ) {
 	SplitButton(
 		primaryContentPadding = PaddingValues(16.dp, 0.dp, 12.dp, 0.dp),
@@ -377,7 +378,7 @@ fun SelectViewTopBarLeftButtons(
 	    },
 	    secondaryContent = {
 	        Text(
-	            text = selectedItemsList.filter { it != MediaStoreData()  }.size.toString(),
+	            text = selectionState.size.toString(),
 	            color = CustomMaterialTheme.colorScheme.onSurface,
 	            fontSize = TextUnit(18f, TextUnitType.Sp),
 	            modifier = Modifier
@@ -386,17 +387,17 @@ fun SelectViewTopBarLeftButtons(
 	        )
 	    },
 	    primaryAction = {
-	        selectedItemsList.clear()
+            selectionState.clear()
 	    },
 	    secondaryAction = {
-	        selectedItemsList.clear()
+            selectionState.clear()
 	    }
 	)
 }
 
 @Composable
 fun SelectViewTopBarRightButtons(
-	selectedItemsList: SnapshotStateList<MediaStoreData>,
+    selectionState: SelectionState,
 	groupedMedia: List<MediaStoreData>
 ) {
 	val nonSectionedGroupedMedia by remember { derivedStateOf {
@@ -406,7 +407,7 @@ fun SelectViewTopBarRightButtons(
 	}}
 	val isTicked by remember {
 	    derivedStateOf {
-	        selectedItemsList.size == nonSectionedGroupedMedia.size
+            selectionState.size == nonSectionedGroupedMedia.size
 	    }
 	}
 
@@ -419,12 +420,16 @@ fun SelectViewTopBarRightButtons(
         IconButton(
             onClick = {
                 if (isTicked) {
-                    selectedItemsList.clear()
-                    selectedItemsList.add(MediaStoreData())
+                    selectionState.clear()
+                    selectionState.add(SectionChild.dummyChild)
                 } else {
-                    selectedItemsList.clear()
+                    selectionState.clear()
 
-                    selectedItemsList.addAll(nonSectionedGroupedMedia)
+                    selectionState.addAll(
+                        nonSectionedGroupedMedia.map {
+                            it.toSectionChild()
+                        }
+                    )
                 }
             },
             modifier = Modifier

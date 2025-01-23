@@ -42,6 +42,7 @@ import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.SelectionState
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.gallery_model.groupPhotosBy
@@ -59,7 +60,7 @@ import java.util.Locale
 
 @Composable
 fun SearchPage(
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    selectionState: SelectionState,
     currentView: MutableState<MainScreenViewType>
 ) {
     val searchViewModel: SearchViewModel = viewModel(
@@ -251,7 +252,7 @@ fun SearchPage(
             PhotoGrid(
                 groupedMedia = groupedMedia,
                 path = null,
-                selectedItemsList = selectedItemsList,
+                selectionState = selectionState,
                 viewProperties = if (searchedForText.value == "") ViewProperties.SearchLoading else ViewProperties.SearchNotFound,
                 state = gridState,
                 modifier = Modifier

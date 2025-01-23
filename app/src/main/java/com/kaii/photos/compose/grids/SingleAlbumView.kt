@@ -35,6 +35,7 @@ import com.kaii.photos.compose.SingleAlbumViewBottomBar
 import com.kaii.photos.compose.SingleAlbumViewTopBar
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.helpers.MediaItemSortMode
+import com.kaii.photos.helpers.SelectionState
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.models.gallery_model.GalleryViewModel
 import com.kaii.photos.models.gallery_model.GalleryViewModelFactory
@@ -43,7 +44,7 @@ import kotlinx.coroutines.Dispatchers
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SingleAlbumView(
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    selectionState: SelectionState,
 ) {
     val mainViewModel = MainActivity.mainViewModel
 
@@ -59,7 +60,7 @@ fun SingleAlbumView(
 
     val navController = LocalNavController.current
     BackHandler (
-        enabled = selectedItemsList.size == 0
+        enabled = !selectionState.atLeastOneSelected
     ) {
         galleryViewModel.cancelMediaFlow()
         navController.popBackStack()
@@ -76,7 +77,7 @@ fun SingleAlbumView(
     val showDialog = remember { mutableStateOf(false) }
     val showBottomSheet by remember {
         derivedStateOf {
-            selectedItemsList.size > 0
+            selectionState.atLeastOneSelected
         }
     }
 
@@ -106,7 +107,7 @@ fun SingleAlbumView(
         topBar = {
             SingleAlbumViewTopBar(
                 dir = albumDir,
-                selectedItemsList = selectedItemsList,
+                selectionState = selectionState,
                 showDialog = showDialog
             ) {
                 navController.popBackStack()
@@ -114,7 +115,8 @@ fun SingleAlbumView(
         },
         sheetContent = {
             SingleAlbumViewBottomBar(
-                selectedItemsList = selectedItemsList
+                selectionState = selectionState,
+                groupedMedia = groupedMedia
             )
         },
         sheetPeekHeight = 0.dp,
@@ -133,12 +135,12 @@ fun SingleAlbumView(
             PhotoGrid(
                 groupedMedia = groupedMedia,
                 path = albumDir,
-                selectedItemsList = selectedItemsList,
+                selectionState = selectionState,
                 viewProperties = ViewProperties.Album,
                 shouldPadUp = true
             )
 
-            SingleAlbumDialog(showDialog, albumDir, navController, selectedItemsList)
+            SingleAlbumDialog(showDialog, albumDir, navController, selectionState)
         }
     }
 }

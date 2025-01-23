@@ -22,7 +22,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
@@ -36,9 +35,8 @@ import com.kaii.photos.compose.TrashedPhotoGridViewBottomBar
 import com.kaii.photos.compose.TrashedPhotoGridViewTopBar
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.datastore.TrashBin
-import com.kaii.photos.helpers.GetPermissionAndRun
+import com.kaii.photos.helpers.SelectionState
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
-import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.trash_bin.TrashViewModel
 import com.kaii.photos.models.trash_bin.TrashViewModelFactory
@@ -48,7 +46,7 @@ import kotlin.time.Duration.Companion.days
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TrashedPhotoGridView(
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    selectionState: SelectionState,
 ) {
     val context = LocalContext.current
     val trashViewModel: TrashViewModel = viewModel(
@@ -100,14 +98,14 @@ fun TrashedPhotoGridView(
     }
 
     BackHandler(
-        enabled = selectedItemsList.size > 0
+        enabled = selectionState.atLeastOneSelected
     ) {
-        selectedItemsList.clear()
+        selectionState.clear()
     }
 
     val navController = LocalNavController.current
     BackHandler(
-        enabled = selectedItemsList.size == 0
+        enabled = !selectionState.atLeastOneSelected
     ) {
         trashViewModel.cancelMediaSource()
         navController.popBackStack()
@@ -115,7 +113,7 @@ fun TrashedPhotoGridView(
 
     val showBottomSheet by remember {
         derivedStateOf {
-            selectedItemsList.size > 0
+            selectionState.atLeastOneSelected
         }
     }
 
@@ -142,7 +140,7 @@ fun TrashedPhotoGridView(
             .fillMaxSize(1f),
         topBar = {
             TrashedPhotoGridViewTopBar(
-                selectedItemsList = selectedItemsList,
+                selectionState = selectionState,
                 groupedMedia = groupedMedia.value,
             ) {
                 trashViewModel.cancelMediaSource()
@@ -150,7 +148,10 @@ fun TrashedPhotoGridView(
             }
         },
         sheetContent = {
-            TrashedPhotoGridViewBottomBar(selectedItemsList = selectedItemsList)
+            TrashedPhotoGridViewBottomBar(
+                selectionState = selectionState,
+                groupedMedia = groupedMedia.value
+            )
         },
         sheetPeekHeight = 0.dp,
         sheetShape = RectangleShape
@@ -168,7 +169,7 @@ fun TrashedPhotoGridView(
             PhotoGrid(
                 groupedMedia = groupedMedia,
                 path = null,
-                selectedItemsList = selectedItemsList,
+                selectionState = selectionState,
                 viewProperties = ViewProperties.Trash,
                 shouldPadUp = true
             )
