@@ -33,8 +33,8 @@ class SettingsAlbumsListImpl(private val context: Context, private val viewModel
 
             if (stringList == null) it[albumsListKey] = ""
 
-            println("ALBUMS STRING LIST $stringList")
-            println("ALBUMS KEYS PATH $path ${stringList?.contains("$separator$path") == false}")
+            Log.d(TAG, "ALBUMS STRING LIST $stringList")
+            Log.d(TAG, "ALBUMS KEYS PATH $path ${stringList?.contains("$separator$path") == false}")
 
             if (stringList?.contains("$separator$path") == false || stringList?.contains("$path$separator") == false) {
                 it[albumsListKey] += "$separator$path"
@@ -67,10 +67,16 @@ class SettingsAlbumsListImpl(private val context: Context, private val viewModel
         context.datastore.data.map { data ->
             val list = data[albumsListKey]
 
-            if (list == null || isPreV083) {
+            if (list == null) {
             	val defaultList = getDefaultAlbumsList()
             	setAlbumsList(defaultList)
             	return@map defaultList
+            } else if (isPreV083) {
+            	val split = list.split(",").distinct().toMutableList()
+            	split.remove("")
+            	split.remove("/storage/emulated/0")
+
+            	return@map split
             }
 
             val split = list.split(separator).distinct().toMutableList()
@@ -84,7 +90,7 @@ class SettingsAlbumsListImpl(private val context: Context, private val viewModel
         context.datastore.edit {
             var stringList = ""
             list.distinct().forEach { album ->
-                if (!stringList.contains("$separator$it") || !stringList.contains("$it$separator")) stringList += "$separator$album"
+                if (!stringList.contains("$separator$it") && !stringList.contains("$it$separator")) stringList += "$separator$album"
             }
 
             it[albumsListKey] = stringList
@@ -108,7 +114,7 @@ class SettingsVersionImpl(private val context: Context, private val viewModelSco
         context.datastore.data.map {
             val currentVersion = context.packageManager.getPackageInfo(context.packageName, 0).versionName
 
-            val isPrev083 = (it[v083firstStartKey] ?: true) && currentVersion == "v0.8.3-beta"
+            val isPrev083 = (it[v083firstStartKey] ?: true) && com.kaii.photos.BuildConfig.VERSION_CODE >= 83
 
             Log.e(TAG, "App version ${currentVersion}. Is pre v0.8.3? $isPrev083")
 
