@@ -63,6 +63,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -108,14 +109,11 @@ import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MediaData
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.RowPosition
-import com.kaii.photos.helpers.SectionChild
-import com.kaii.photos.helpers.SelectionState
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.brightenColor
 import com.kaii.photos.helpers.createPersistablePermissionLauncher
 import com.kaii.photos.helpers.darkenColor
 import com.kaii.photos.helpers.getExifDataForMedia
-import com.kaii.photos.helpers.rememberSelectionState
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.renameDirectory
 import com.kaii.photos.helpers.renameImage
@@ -123,7 +121,7 @@ import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getExternalStorageContentUriFromAbsolutePath
-import com.kaii.photos.mediastore.toSectionChild
+import com.kaii.photos.mediastore.getHighestLevelParentFromAbsolutePath
 import kotlinx.coroutines.delay
 import java.io.File
 
@@ -423,7 +421,7 @@ fun DialogInfoText(firstText: String, secondText: String, iconResId: Int) {
 fun MainAppDialog(
     showDialog: MutableState<Boolean>,
     currentView: MutableState<MainScreenViewType>,
-    selectionState: SelectionState
+    selectedItemsList: SnapshotStateList<MediaStoreData>
 ) {
     val vibratorManager = rememberVibratorManager()
     val navController = LocalNavController.current
@@ -589,9 +587,8 @@ fun MainAppDialog(
                             position = RowPosition.Top,
                         ) {
                             showDialog.value = false
-                            selectionState.clear()
-                            selectionState.add(SectionChild.dummyChild)
-
+                            selectedItemsList.clear()
+                            selectedItemsList.add(MediaStoreData())
                             vibratorManager.vibrateShort()
                         }
                     }
@@ -839,14 +836,14 @@ fun SinglePhotoInfoDialog(
                             val show = remember { mutableStateOf(false) }
                             var isMoving by remember { mutableStateOf(false) }
 
-                            val selectionState = rememberSelectionState(allItems = groupedMedia)
-                            selectionState.add(currentMediaItem.toSectionChild())
+                            val stateList = SnapshotStateList<MediaStoreData>()
+                            stateList.add(currentMediaItem)
 
                             MoveCopyAlbumListView(
                                 show = show,
-                                selectionState = selectionState,
+                                selectedItemsList = stateList,
                                 isMoving = isMoving,
-                                groupedMedia = groupedMedia,
+                                groupedMedia = null,
                                 insetsPadding = moveCopyInsetsPadding
                             )
 
@@ -1070,7 +1067,7 @@ fun SingleAlbumDialog(
     showDialog: MutableState<Boolean>,
     dir: String,
     navController: NavHostController,
-    selectionState: SelectionState
+    selectedItemsList: SnapshotStateList<MediaStoreData>
 ) {
     if (showDialog.value) {
         val title = dir.split("/").last()
@@ -1140,8 +1137,8 @@ fun SingleAlbumDialog(
                         position = RowPosition.Top,
                     ) {
                         showDialog.value = false
-                        selectionState.clear()
-                        selectionState.add(SectionChild.dummyChild)
+                        selectedItemsList.clear()
+                        selectedItemsList.add(MediaStoreData())
                     }
                 }
                 val fileName = remember { mutableStateOf(title) }

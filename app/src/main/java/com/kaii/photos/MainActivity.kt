@@ -64,6 +64,7 @@ import androidx.navigation.toRoute
 import androidx.room.Room
 import com.bumptech.glide.Glide
 import com.bumptech.glide.MemoryCategory
+import com.kaii.photos.compose.IsSelectingTopBar
 import com.kaii.photos.compose.LockedFolderEntryView
 import com.kaii.photos.compose.MainAppBottomBar
 import com.kaii.photos.compose.MainAppDialog
@@ -101,10 +102,8 @@ import com.kaii.photos.helpers.EditingScreen
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
-import com.kaii.photos.helpers.SelectionState
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.getAppStorageDir
-import com.kaii.photos.helpers.rememberSelectionState
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.models.gallery_model.GalleryViewModel
 import com.kaii.photos.models.gallery_model.GalleryViewModelFactory
@@ -238,8 +237,7 @@ class MainActivity : ComponentActivity() {
         val scale = remember { mutableFloatStateOf(1f) }
         val rotation = remember { mutableFloatStateOf(0f) }
         val offset = remember { mutableStateOf(Offset.Zero) }
-        val groupedMedia = remember { mutableStateOf(emptyList<MediaStoreData>()) }
-        val selectionState = rememberSelectionState(groupedMedia)
+        val selectedItemsList = remember { SnapshotStateList<MediaStoreData>() }
 
         val isV083FirstStart by mainViewModel.settings.Versions.getIsV083FirstStart(context).collectAsStateWithLifecycle(initialValue = false)
         LaunchedEffect(isV083FirstStart) {
@@ -248,15 +246,6 @@ class MainActivity : ComponentActivity() {
 
                 mainViewModel.settings.AlbumsList.getAlbumsList(true).collectLatest {
                     mainViewModel.settings.AlbumsList.setAlbumsList(it)
-                }
-
-                mainViewModel.settings.AlbumsList.getAlbumsList(true).collectLatest {
-                    mainViewModel.settings.AlbumsList.setAlbumsList(it)
-                }
-
-				// set again to remove duplicates
-                mainViewModel.settings.AlbumsList.getAlbumsList(false).collectLatest {
-                	mainViewModel.settings.AlbumsList.setAlbumsList(it)
                 }
 	        }
         }
@@ -330,11 +319,11 @@ class MainActivity : ComponentActivity() {
                         }
                     )
                     setupNextScreen(
-                        selectionState = selectionState,
+                        selectedItemsList = selectedItemsList,
                         window = window
                     )
 
-                    Content(currentView, showDialog, selectionState, listOfDirs, groupedMedia)
+                    Content(currentView, showDialog, selectedItemsList, listOfDirs)
                 }
 
                 composable(
@@ -374,7 +363,7 @@ class MainActivity : ComponentActivity() {
                         )
                     )
                     setupNextScreen(
-                        selectionState,
+                        selectedItemsList,
                         window
                     )
 
@@ -390,11 +379,11 @@ class MainActivity : ComponentActivity() {
                         )
                     )
                     setupNextScreen(
-                        selectionState,
+                        selectedItemsList,
                         window
                     )
 
-                    SingleAlbumView(selectionState)
+                    SingleAlbumView(selectedItemsList)
                 }
 
                 composable(MultiScreenViewType.SingleTrashedPhotoView.name) {
@@ -406,7 +395,7 @@ class MainActivity : ComponentActivity() {
                         )
                     )
                     setupNextScreen(
-                        selectionState,
+                        selectedItemsList,
                         window
                     )
 
@@ -423,11 +412,11 @@ class MainActivity : ComponentActivity() {
                     )
 
                     setupNextScreen(
-                        selectionState,
+                        selectedItemsList,
                         window
                     )
 
-                    TrashedPhotoGridView(selectionState)
+                    TrashedPhotoGridView(selectedItemsList)
                 }
 
                 composable(MultiScreenViewType.LockedFolderView.name) {
@@ -439,7 +428,7 @@ class MainActivity : ComponentActivity() {
                         )
                     )
                     setupNextScreen(
-                        selectionState,
+                        selectedItemsList,
                         window
                     )
 
@@ -455,7 +444,7 @@ class MainActivity : ComponentActivity() {
                         )
                     )
                     setupNextScreen(
-                        selectionState,
+                        selectedItemsList,
                         window
                     )
 
@@ -471,7 +460,7 @@ class MainActivity : ComponentActivity() {
                         )
                     )
                     setupNextScreen(
-                        selectionState,
+                        selectedItemsList,
                         window
                     )
 
@@ -489,12 +478,12 @@ class MainActivity : ComponentActivity() {
                         )
                     )
                     setupNextScreen(
-                        selectionState,
+                        selectedItemsList,
                         window
                     )
 
                     FavouritesGridView(
-                        selectionState = selectionState
+                        selectedItemsList = selectedItemsList
                     )
                 }
 
@@ -552,7 +541,7 @@ class MainActivity : ComponentActivity() {
                         )
                     )
                     setupNextScreen(
-                        selectionState,
+                        selectedItemsList,
                         window
                     )
 
@@ -574,7 +563,7 @@ class MainActivity : ComponentActivity() {
                         )
                     )
                     setupNextScreen(
-                        selectionState,
+                        selectedItemsList,
                         window
                     )
 
@@ -590,7 +579,7 @@ class MainActivity : ComponentActivity() {
                         )
                     )
                     setupNextScreen(
-                        selectionState,
+                        selectedItemsList,
                         window
                     )
 
@@ -606,7 +595,7 @@ class MainActivity : ComponentActivity() {
                         )
                     )
                     setupNextScreen(
-                        selectionState,
+                        selectedItemsList,
                         window
                     )
 
@@ -622,7 +611,7 @@ class MainActivity : ComponentActivity() {
                         )
                     )
                     setupNextScreen(
-                        selectionState,
+                        selectedItemsList,
                         window
                     )
 
@@ -638,7 +627,7 @@ class MainActivity : ComponentActivity() {
                         )
                     )
                     setupNextScreen(
-                        selectionState,
+                        selectedItemsList,
                         window
                     )
 
@@ -652,9 +641,8 @@ class MainActivity : ComponentActivity() {
     private fun Content(
         currentView: MutableState<MainScreenViewType>,
         showDialog: MutableState<Boolean>,
-        selectionState: SelectionState,
-        listOfDirs: List<String>,
-        groupedMedia: MutableState<List<MediaStoreData>>
+        selectedItemsList: SnapshotStateList<MediaStoreData>,
+        listOfDirs: List<String>
     ) {
         val galleryViewModel: GalleryViewModel = viewModel(
             factory = GalleryViewModelFactory(
@@ -667,16 +655,18 @@ class MainActivity : ComponentActivity() {
         val mediaStoreData =
             galleryViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
+        val groupedMedia = remember { mutableStateOf(mediaStoreData.value) }
+
         LaunchedEffect(mediaStoreData.value) {
             groupedMedia.value = mediaStoreData.value
         }
 
         Scaffold(
             topBar = {
-                TopBar(showDialog, selectionState, groupedMedia.value)
+                TopBar(showDialog, selectedItemsList, groupedMedia.value)
             },
             bottomBar = {
-                BottomBar(currentView, selectionState, groupedMedia)
+                BottomBar(currentView, selectedItemsList)
             },
             modifier = Modifier
                 .fillMaxSize(1f)
@@ -709,7 +699,7 @@ class MainActivity : ComponentActivity() {
                         padding.calculateBottomPadding()
                     )
             ) {
-                MainAppDialog(showDialog, currentView, selectionState)
+                MainAppDialog(showDialog, currentView, selectedItemsList)
 
                 AnimatedContent(
                     targetState = currentView.value,
@@ -728,12 +718,12 @@ class MainActivity : ComponentActivity() {
                 ) { stateValue ->
                     when (stateValue) {
                         MainScreenViewType.PhotosGridView -> {
-                            selectionState.clear()
+                            selectedItemsList.clear()
                             PhotoGrid(
                                 groupedMedia = groupedMedia,
                                 path = stringResource(id = R.string.default_homepage_photogrid_dir),
                                 viewProperties = ViewProperties.Album,
-                                selectionState = selectionState
+                                selectedItemsList = selectedItemsList,
                             )
                         }
 
@@ -743,7 +733,7 @@ class MainActivity : ComponentActivity() {
                         }
 
                         MainScreenViewType.SearchPage -> {
-                            SearchPage(selectionState, currentView)
+                            SearchPage(selectedItemsList, currentView)
                         }
                     }
                 }
@@ -754,33 +744,47 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun TopBar(
         showDialog: MutableState<Boolean>,
-        selectionState: SelectionState,
+        selectedItemsList: SnapshotStateList<MediaStoreData>,
         groupedMedia: List<MediaStoreData>
     ) {
+		val navController = LocalNavController.current
 		val show by remember {
 		    derivedStateOf {
-		        selectionState.atLeastOneSelected
+		        selectedItemsList.size > 0
 		    }
 		}
 
         PrototypeMainTopBar(
             alternate = show,
             showDialog = showDialog,
-            selectionState = selectionState,
+            selectedItemsList = selectedItemsList,
             groupedMedia = groupedMedia
         )
+
+        // AnimatedContent(
+        //     targetState = show && navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name,
+        //     transitionSpec = {
+        //         getAppBarContentTransition(show)
+        //     },
+        //     label = "MainTopBarAnimatedContentView"
+        // ) { target ->
+        //     if (!target) {
+        //         MainAppTopBar(showDialog = showDialog)
+        //     } else {
+        //         IsSelectingTopBar(selectedItemsList = selectedItemsList)
+        //     }
+        // }
     }
 
     @Composable
     private fun BottomBar(
         currentView: MutableState<MainScreenViewType>,
-        selectionState: SelectionState,
-        groupedMedia: MutableState<List<MediaStoreData>>
+        selectedItemsList: SnapshotStateList<MediaStoreData>
     ) {
         val navController = LocalNavController.current
         val show by remember {
             derivedStateOf {
-                selectionState.atLeastOneSelected
+                selectedItemsList.size > 0
             }
         }
 
@@ -792,19 +796,19 @@ class MainActivity : ComponentActivity() {
             label = "MainBottomBarAnimatedContentView"
         ) { state ->
             if (!state) {
-                MainAppBottomBar(currentView, selectionState)
+                MainAppBottomBar(currentView, selectedItemsList)
             } else {
-                MainAppSelectingBottomBar(selectionState, groupedMedia)
+                MainAppSelectingBottomBar(selectedItemsList)
             }
         }
     }
 }
 
 private fun setupNextScreen(
-    selectionState: SelectionState,
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
     window: Window
 ) {
-    selectionState.clear()
+    selectedItemsList.clear()
     window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
 
     window.setDecorFitsSystemWindows(false)

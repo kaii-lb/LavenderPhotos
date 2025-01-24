@@ -51,6 +51,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -70,15 +71,12 @@ import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.MainScreenViewType
-import com.kaii.photos.helpers.SectionChild
-import com.kaii.photos.helpers.SelectionState
 import com.kaii.photos.helpers.moveImageOutOfLockedFolder
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.permanentlyDeleteSecureFolderImageList
 import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.mediastore.toSectionChild
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -308,7 +306,7 @@ fun getAppBarContentTransition(slideLeft: Boolean) = run {
 @Composable
 fun MainAppBottomBar(
     currentView: MutableState<MainScreenViewType>,
-    selectionState: SelectionState
+    selectedItemsList: SnapshotStateList<MediaStoreData>
 ) {
     BottomAppBar(
         containerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
@@ -400,7 +398,7 @@ fun MainAppBottomBar(
                 selected = currentView.value == MainScreenViewType.SearchPage,
                 action = {
                     if (currentView.value != MainScreenViewType.SearchPage) {
-                        selectionState.clear()
+                        selectedItemsList.clear()
                         currentView.value = MainScreenViewType.SearchPage
                     }
                 },
@@ -427,8 +425,7 @@ fun MainAppBottomBar(
 
 @Composable
 fun MainAppSelectingBottomBar(
-    selectionState: SelectionState,
-    groupedMedia: MutableState<List<MediaStoreData>>
+    selectedItemsList: SnapshotStateList<MediaStoreData>
 ) {
     IsSelectingBottomAppBar {
         val context = LocalContext.current
@@ -436,7 +433,9 @@ fun MainAppSelectingBottomBar(
 
         val selectedItemsWithoutSection by remember {
             derivedStateOf {
-                selectionState.mapTo(groupedMedia.value)
+                selectedItemsList.filter {
+                    it.type != MediaType.Section && it != MediaStoreData()
+                }
             }
         }
 
@@ -470,9 +469,9 @@ fun MainAppSelectingBottomBar(
         var isMoving by remember { mutableStateOf(false) }
         MoveCopyAlbumListView(
             show = show,
-            selectionState = selectionState,
+            selectedItemsList = selectedItemsList,
             isMoving = isMoving,
-            groupedMedia = groupedMedia,
+            groupedMedia = null,
             insetsPadding = WindowInsets.statusBars
         )
 
@@ -507,7 +506,7 @@ fun MainAppSelectingBottomBar(
                     trashed = true
                 )
 
-                selectionState.clear()
+                selectedItemsList.clear()
             }
         )
 
@@ -533,12 +532,14 @@ fun MainAppSelectingBottomBar(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun IsSelectingTopBar(selectionState: SelectionState) {
+fun IsSelectingTopBar(selectedItemsList: SnapshotStateList<MediaStoreData>) {
     val groupedMedia = MainActivity.mainViewModel.groupedMedia.collectAsState(initial = emptyList())
 
     val selectedItemsWithoutSection by remember {
         derivedStateOf {
-            selectionState.mapTo(groupedMedia.value ?: emptyList())
+            selectedItemsList.filter {
+                it.type != MediaType.Section && it != MediaStoreData()
+            }
         }
     }
 
@@ -568,10 +569,10 @@ fun IsSelectingTopBar(selectionState: SelectionState) {
                     )
                 },
                 primaryAction = {
-                    selectionState.clear()
+                    selectedItemsList.clear()
                 },
                 secondaryAction = {
-                    selectionState.clear()
+                    selectedItemsList.clear()
                 }
             )
         },
@@ -579,7 +580,7 @@ fun IsSelectingTopBar(selectionState: SelectionState) {
             val allItemsList by remember { derivedStateOf { groupedMedia.value ?: emptyList() } }
             val isTicked by remember {
                 derivedStateOf {
-                    selectedItemsWithoutSection.size == allItemsList.filter { it.type != MediaType.Section }.size
+                    selectedItemsList.size == allItemsList.size
                 }
             }
 
@@ -587,18 +588,12 @@ fun IsSelectingTopBar(selectionState: SelectionState) {
                 onClick = {
                     if (groupedMedia.value != null) {
                         if (isTicked) {
-                            selectionState.clear()
-                            selectionState.add(SectionChild.dummyChild)
+                            selectedItemsList.clear()
+                            selectedItemsList.add(MediaStoreData())
                         } else {
-                            selectionState.clear()
+                            selectedItemsList.clear()
 
-                            selectionState.addAll(
-                                allItemsList.filter {
-                                    it.type != MediaType.Section && it != MediaStoreData.dummyMediaStoreData
-                                }.map {
-                                    it.toSectionChild()
-                                }
-                            )
+                            selectedItemsList.addAll(allItemsList)
                         }
                     }
                 },
@@ -660,14 +655,14 @@ fun IsSelectingBottomAppBar(
 @Composable
 fun SingleAlbumViewTopBar(
     dir: String,
-    selectionState: SelectionState,
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
     showDialog: MutableState<Boolean>,
     onBackClick: () -> Unit
 ) {
     val title = dir.split("/").last()
     val show by remember {
         derivedStateOf {
-            selectionState.atLeastOneSelected
+            selectedItemsList.size > 0
         }
     }
 
@@ -726,7 +721,7 @@ fun SingleAlbumViewTopBar(
             )
         } else {
             IsSelectingTopBar(
-                selectionState = selectionState
+                selectedItemsList = selectedItemsList
             )
         }
     }
@@ -734,8 +729,7 @@ fun SingleAlbumViewTopBar(
 
 @Composable
 fun SingleAlbumViewBottomBar(
-    selectionState: SelectionState,
-    groupedMedia: MutableState<List<MediaStoreData>>
+    selectedItemsList: SnapshotStateList<MediaStoreData>
 ) {
     IsSelectingBottomAppBar {
         val context = LocalContext.current
@@ -743,7 +737,9 @@ fun SingleAlbumViewBottomBar(
 
         val selectedItemsWithoutSection by remember {
             derivedStateOf {
-                selectionState.mapTo(groupedMedia.value)
+                selectedItemsList.filter {
+                    it.type != MediaType.Section && it != MediaStoreData()
+                }
             }
         }
 
@@ -777,9 +773,9 @@ fun SingleAlbumViewBottomBar(
         var isMoving by remember { mutableStateOf(false) }
         MoveCopyAlbumListView(
             show = show,
-            selectionState = selectionState,
+            selectedItemsList = selectedItemsList,
             isMoving = isMoving,
-            groupedMedia = groupedMedia,
+            groupedMedia = null,
             insetsPadding = WindowInsets.statusBars
         )
 
@@ -814,7 +810,7 @@ fun SingleAlbumViewBottomBar(
                     trashed = true
                 )
 
-                selectionState.clear()
+                selectedItemsList.clear()
             }
         )
 
@@ -841,7 +837,7 @@ fun SingleAlbumViewBottomBar(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TrashedPhotoGridViewTopBar(
-    selectionState: SelectionState,
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
     groupedMedia: List<MediaStoreData>,
     onBackClick: () -> Unit
 ) {
@@ -872,7 +868,7 @@ fun TrashedPhotoGridViewTopBar(
 
     val show by remember {
         derivedStateOf {
-            selectionState.atLeastOneSelected
+            selectedItemsList.size > 0
         }
     }
 
@@ -929,15 +925,14 @@ fun TrashedPhotoGridViewTopBar(
                 }
             )
         } else {
-            IsSelectingTopBar(selectionState = selectionState)
+            IsSelectingTopBar(selectedItemsList = selectedItemsList)
         }
     }
 }
 
 @Composable
 fun TrashedPhotoGridViewBottomBar(
-    selectionState: SelectionState,
-    groupedMedia: List<MediaStoreData>
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
 ) {
     IsSelectingBottomAppBar {
 
@@ -946,7 +941,9 @@ fun TrashedPhotoGridViewBottomBar(
 
         val selectedItemsWithoutSection by remember {
             derivedStateOf {
-                selectionState.mapTo(groupedMedia)
+                selectedItemsList.filter {
+                    it.type != MediaType.Section && it != MediaStoreData()
+                }
             }
         }
 
@@ -989,7 +986,7 @@ fun TrashedPhotoGridViewBottomBar(
                     trashed = false
                 )
 
-                selectionState.clear()
+                selectedItemsList.clear()
             }
         )
 
@@ -1021,7 +1018,7 @@ fun TrashedPhotoGridViewBottomBar(
                     selectedItemsWithoutSection.map { it.uri }
                 )
 
-                selectionState.clear()
+                selectedItemsList.clear()
 
                 runPermaDeleteAction.value = false
             }
@@ -1053,12 +1050,12 @@ fun TrashedPhotoGridViewBottomBar(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SecureFolderViewTopAppBar(
-    selectionState: SelectionState,
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
     onBackClicked: () -> Unit
 ) {
     val show by remember {
         derivedStateOf {
-            selectionState.atLeastOneSelected
+            selectedItemsList.size > 0
         }
     }
 
@@ -1100,14 +1097,14 @@ fun SecureFolderViewTopAppBar(
                 }
             )
         } else {
-            IsSelectingTopBar(selectionState = selectionState)
+            IsSelectingTopBar(selectedItemsList = selectedItemsList)
         }
     }
 }
 
 @Composable
 fun SecureFolderViewBottomAppBar(
-    selectionState: SelectionState,
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
     groupedMedia: MutableState<List<MediaStoreData>>
 ) {
     IsSelectingBottomAppBar {
@@ -1116,7 +1113,9 @@ fun SecureFolderViewBottomAppBar(
 
         val selectedItemsWithoutSection by remember {
             derivedStateOf {
-                selectionState.mapTo(groupedMedia.value)
+                selectedItemsList.filter {
+                    it.type != MediaType.Section
+                }
             }
         }
 
@@ -1176,7 +1175,7 @@ fun SecureFolderViewBottomAppBar(
                                 if (filtered.size == 1) newList.remove(it)
                             }
 
-                            selectionState.clear()
+                            selectedItemsList.clear()
                             groupedMedia.value = newList
                         }
                     }
@@ -1215,7 +1214,7 @@ fun SecureFolderViewBottomAppBar(
                         if (filtered.size == 1) newList.remove(item)
                     }
 
-                    selectionState.clear()
+                    selectedItemsList.clear()
                     groupedMedia.value = newList
 
                     runPermaDeleteAction.value = false
@@ -1247,12 +1246,12 @@ fun SecureFolderViewBottomAppBar(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavouritesViewTopAppBar(
-    selectionState: SelectionState,
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
     onBackClick: () -> Unit
 ) {
     val show by remember {
         derivedStateOf {
-            selectionState.atLeastOneSelected
+            selectedItemsList.size > 0
         }
     }
 
@@ -1291,14 +1290,14 @@ fun FavouritesViewTopAppBar(
                 }
             )
         } else {
-            IsSelectingTopBar(selectionState = selectionState)
+            IsSelectingTopBar(selectedItemsList = selectedItemsList)
         }
     }
 }
 
 @Composable
 fun FavouritesViewBottomAppBar(
-    selectionState: SelectionState,
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
     groupedMedia: MutableState<List<MediaStoreData>>
 ) {
     IsSelectingBottomAppBar {
@@ -1308,10 +1307,8 @@ fun FavouritesViewBottomAppBar(
 
         val selectedItemsWithoutSection by remember {
             derivedStateOf {
-                selectionState.children.map { child ->
-                    groupedMedia.value.first { media ->
-                        media.id == child.id
-                    }
+                selectedItemsList.filter {
+                    it.type != MediaType.Section
                 }
             }
         }
@@ -1345,9 +1342,9 @@ fun FavouritesViewBottomAppBar(
         val show = remember { mutableStateOf(false) }
         MoveCopyAlbumListView(
             show = show,
-            selectionState = selectionState,
+            selectedItemsList = selectedItemsList,
             isMoving = false,
-            groupedMedia = groupedMedia,
+            groupedMedia = null,
             insetsPadding = WindowInsets.statusBars
         )
 
@@ -1388,7 +1385,7 @@ fun FavouritesViewBottomAppBar(
                                 if (filtered.size == 1) newList.remove(it)
                             }
 
-                            selectionState.clear()
+                            selectedItemsList.clear()
                             groupedMedia.value = newList
                         }
                     }
@@ -1412,7 +1409,7 @@ fun FavouritesViewBottomAppBar(
                     trashed = true
                 )
 
-                selectionState.clear()
+                selectedItemsList.clear()
             }
         )
 
@@ -1427,10 +1424,9 @@ fun FavouritesViewBottomAppBar(
                     confirmButtonLabel = "Delete"
                 ) {
                     coroutineScope.launch {
-                        selectionState.children.forEach {
+                        selectedItemsList.forEach {
                             dao.deleteEntityById(it.id)
                         }
-
                         runTrashAction.value = true
                     }
                 }
@@ -1527,7 +1523,7 @@ fun DualFunctionTopAppBar(
 fun PrototypeMainTopBar(
     alternate: Boolean,
     showDialog: MutableState<Boolean>,
-    selectionState: SelectionState,
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
     groupedMedia: List<MediaStoreData>
 ) {
     DualFunctionTopAppBar(
@@ -1561,10 +1557,10 @@ fun PrototypeMainTopBar(
             }
         },
         alternateTitle = {
-            SelectViewTopBarLeftButtons(selectionState = selectionState)
+            SelectViewTopBarLeftButtons(selectedItemsList = selectedItemsList)
         },
         alternateActions = {
-            SelectViewTopBarRightButtons(selectionState = selectionState, groupedMedia = groupedMedia)
+            SelectViewTopBarRightButtons(selectedItemsList = selectedItemsList, groupedMedia = groupedMedia)
         },
     )
 }

@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -36,6 +37,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -56,11 +58,8 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.kaii.photos.R
 import com.kaii.photos.helpers.CustomMaterialTheme
-import com.kaii.photos.helpers.SectionChild
-import com.kaii.photos.helpers.SelectionState
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.mediastore.toSectionChild
 
 @Composable
 fun SplitButton(
@@ -243,21 +242,21 @@ fun ShowSelectedState(
         enter =
         scaleIn(
             animationSpec = tween(
-                durationMillis = 200
+                durationMillis = 150
             )
         ) + fadeIn(
             animationSpec = tween(
-                durationMillis = 200
+                durationMillis = 150
             )
         ),
         exit =
         scaleOut(
             animationSpec = tween(
-                durationMillis = 200
+                durationMillis = 150
             )
         ) + fadeOut(
             animationSpec = tween(
-                durationMillis = 200
+                durationMillis = 150
             )
         ),
         modifier = modifier
@@ -361,7 +360,7 @@ fun ShowSelectedState(
 
 @Composable
 fun SelectViewTopBarLeftButtons(
-    selectionState: SelectionState,
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
 ) {
 	SplitButton(
 		primaryContentPadding = PaddingValues(16.dp, 0.dp, 12.dp, 0.dp),
@@ -378,7 +377,7 @@ fun SelectViewTopBarLeftButtons(
 	    },
 	    secondaryContent = {
 	        Text(
-	            text = selectionState.size.toString(),
+	            text = selectedItemsList.filter { it != MediaStoreData()  }.size.toString(),
 	            color = CustomMaterialTheme.colorScheme.onSurface,
 	            fontSize = TextUnit(18f, TextUnitType.Sp),
 	            modifier = Modifier
@@ -387,17 +386,17 @@ fun SelectViewTopBarLeftButtons(
 	        )
 	    },
 	    primaryAction = {
-            selectionState.clear()
+	        selectedItemsList.clear()
 	    },
 	    secondaryAction = {
-            selectionState.clear()
+	        selectedItemsList.clear()
 	    }
 	)
 }
 
 @Composable
 fun SelectViewTopBarRightButtons(
-    selectionState: SelectionState,
+	selectedItemsList: SnapshotStateList<MediaStoreData>,
 	groupedMedia: List<MediaStoreData>
 ) {
 	val nonSectionedGroupedMedia by remember { derivedStateOf {
@@ -407,7 +406,7 @@ fun SelectViewTopBarRightButtons(
 	}}
 	val isTicked by remember {
 	    derivedStateOf {
-            selectionState.size == nonSectionedGroupedMedia.size
+	        selectedItemsList.size == nonSectionedGroupedMedia.size
 	    }
 	}
 
@@ -420,16 +419,12 @@ fun SelectViewTopBarRightButtons(
         IconButton(
             onClick = {
                 if (isTicked) {
-                    selectionState.clear()
-                    selectionState.add(SectionChild.dummyChild)
+                    selectedItemsList.clear()
+                    selectedItemsList.add(MediaStoreData())
                 } else {
-                    selectionState.clear()
+                    selectedItemsList.clear()
 
-                    selectionState.addAll(
-                        nonSectionedGroupedMedia.map {
-                            it.toSectionChild()
-                        }
-                    )
+                    selectedItemsList.addAll(nonSectionedGroupedMedia)
                 }
             },
             modifier = Modifier

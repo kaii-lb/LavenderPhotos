@@ -40,7 +40,6 @@ import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.getAppLockedFolderDirectory
 import com.kaii.photos.helpers.getDateTakenForMedia
-import com.kaii.photos.helpers.rememberSelectionState
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.gallery_model.groupPhotosBy
@@ -53,6 +52,7 @@ import kotlin.io.path.Path
 fun LockedFolderView(
     window: Window
 ) {
+    val selectedItemsList = remember { SnapshotStateList<MediaStoreData>() }
     val navController = LocalNavController.current
 
     window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
@@ -141,11 +141,9 @@ fun LockedFolderView(
     val groupedMedia =
         remember { mutableStateOf(groupPhotosBy(mediaStoreData, MediaItemSortMode.LastModified)) }
 
-	val selectionState = rememberSelectionState(groupedMedia)
-
     val showBottomSheet by remember {
         derivedStateOf {
-            selectionState.atLeastOneSelected
+            selectedItemsList.size > 0
         }
     }
 
@@ -166,20 +164,18 @@ fun LockedFolderView(
         bottomSheetState = sheetState
     )
 
-	println("AJDJAKSJDHASKJDHASKJDHASKJD")
-
     BottomSheetScaffold(
         scaffoldState = scaffoldState,
         sheetDragHandle = {},
         sheetSwipeEnabled = false,
         topBar = {
-            SecureFolderViewTopAppBar(selectionState = selectionState) {
+            SecureFolderViewTopAppBar(selectedItemsList = selectedItemsList) {
                 navController.popBackStack()
             }
         },
         sheetContent = {
             SecureFolderViewBottomAppBar(
-                selectionState = selectionState,
+                selectedItemsList = selectedItemsList,
                 groupedMedia = groupedMedia
             )
         },
@@ -198,7 +194,7 @@ fun LockedFolderView(
             PhotoGrid(
                 groupedMedia = groupedMedia,
                 path = null,
-                selectionState = selectionState,
+                selectedItemsList = selectedItemsList,
                 viewProperties = ViewProperties.SecureFolder,
                 shouldPadUp = true
             )

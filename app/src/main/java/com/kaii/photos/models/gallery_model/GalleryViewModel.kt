@@ -6,7 +6,6 @@ import android.os.CancellationSignal
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.helpers.MediaItemSortMode
-import com.kaii.photos.helpers.SectionItem
 import com.kaii.photos.mediastore.DefaultMediaStoreDataSource
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
@@ -83,7 +82,7 @@ fun groupPhotosBy(media: List<MediaStoreData>, sortBy: MediaItemSortMode = Media
     }
 
 	val today = calendar.timeInMillis / 1000
-    val daySeconds= 60 * 60 * 24
+    val daySeconds= 86400
     val yesterday = today - daySeconds
     for ((key, value) in mediaDataGroups) {
         val sectionKey = when (key) {
@@ -97,13 +96,7 @@ fun groupPhotosBy(media: List<MediaStoreData>, sortBy: MediaItemSortMode = Media
                 formatDate(key)
             }
         }
-        mediaItems.add(
-        	listSection(
-        		title = sectionKey,
-        		key = key,
-        		childCount = value.size
-       		)
-       	)
+        mediaItems.add(listSection(sectionKey, key))
 
 		if (sortDescending) {
 			if (sortBy == MediaItemSortMode.DateTaken) {
@@ -120,14 +113,7 @@ fun groupPhotosBy(media: List<MediaStoreData>, sortBy: MediaItemSortMode = Media
 		}
 
         mediaItems.addAll(
-        	value.map {
-	        	it.copy(
-	        		section = SectionItem(
-	        			date = key,
-	        			childCount = value.size
-	        		)
-	        	)
-        	}
+        	value
        	)
     }
 
@@ -145,23 +131,15 @@ private fun formatDate(timestamp: Long): String {
     }
 }
 
-private fun listSection(
-	title: String,
-	key: Long,
-	childCount: Int
-): MediaStoreData {
+private fun listSection(title: String, key: Long): MediaStoreData {
     val mediaSection = MediaStoreData(
         type = MediaType.Section,
         dateModified = key,
         dateTaken = key,
         uri = Uri.parse("$title $key"),
         displayName = title,
-        id = childCount.toLong(),
+        id = 0L,
         mimeType = null,
-        section = SectionItem(
-        	date = key,
-        	childCount = childCount
-        )
     )
     return mediaSection
 }

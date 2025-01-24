@@ -18,6 +18,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
@@ -29,7 +30,7 @@ import com.kaii.photos.compose.FavouritesViewBottomAppBar
 import com.kaii.photos.compose.FavouritesViewTopAppBar
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.helpers.MediaItemSortMode
-import com.kaii.photos.helpers.SelectionState
+import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.models.gallery_model.groupPhotosBy
 import com.kaii.photos.models.favourites_grid.FavouritesViewModel
 import com.kaii.photos.models.favourites_grid.FavouritesViewModelFactory
@@ -38,7 +39,7 @@ import kotlinx.coroutines.Dispatchers
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavouritesGridView(
-    selectionState: SelectionState
+    selectedItemsList: SnapshotStateList<MediaStoreData>
 ) {
     val favouritesViewModel: FavouritesViewModel = viewModel(
         factory = FavouritesViewModelFactory()
@@ -62,7 +63,7 @@ fun FavouritesGridView(
 
     val showBottomSheet by remember {
         derivedStateOf {
-            selectionState.atLeastOneSelected
+            selectedItemsList.size > 0
         }
     }
 
@@ -94,13 +95,13 @@ fun FavouritesGridView(
                 WindowInsets.navigationBars
             ),
         topBar = {
-            FavouritesViewTopAppBar(selectionState = selectionState) {
+            FavouritesViewTopAppBar(selectedItemsList = selectedItemsList) {
                 navController.popBackStack()
             }
         },
         sheetContent = {
             FavouritesViewBottomAppBar(
-                selectionState = selectionState,
+                selectedItemsList = selectedItemsList,
                 groupedMedia = groupedMedia
             )
         },
@@ -117,7 +118,7 @@ fun FavouritesGridView(
             PhotoGrid(
                 groupedMedia = groupedMedia,
                 path = null,
-                selectionState = selectionState,
+                selectedItemsList = selectedItemsList,
                 viewProperties = ViewProperties.Favourites,
                 shouldPadUp = true
             )
