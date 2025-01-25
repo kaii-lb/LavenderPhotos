@@ -135,7 +135,7 @@ fun PhotoGrid(
 ) {
     var hasFiles: Boolean? by remember { mutableStateOf(null) }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(groupedMedia.value) {
         hasFiles = if (path == null) {
             groupedMedia.value.isNotEmpty()
         } else {
@@ -149,11 +149,12 @@ fun PhotoGrid(
     }
 
     if (hasFiles == null) {
-        FolderDoesntExist()
-        return
-    }
-
-    if (hasFiles == true) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize(1f)
+                .then(modifier)
+        ) {}
+    } else if (hasFiles == true) {
         Row(
             modifier = Modifier
                 .fillMaxSize(1f)
