@@ -24,6 +24,8 @@ import kotlin.io.path.Path
 
 private const val TAG = "MEDIA_STORE_UTILS"
 
+const val LAVENDER_FILE_PROVIDER_AUTHORITY = "com.kaii.photos.LavenderPhotos.fileprovider"
+
 /** @param media the [MediaStoreData] to copy
  * @param destination the relative path to copy [media] to */
 suspend fun ContentResolver.copyMedia(

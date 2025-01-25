@@ -65,7 +65,6 @@ import androidx.navigation.toRoute
 import androidx.room.Room
 import com.bumptech.glide.Glide
 import com.bumptech.glide.MemoryCategory
-import com.kaii.photos.compose.IsSelectingTopBar
 import com.kaii.photos.compose.LockedFolderEntryView
 import com.kaii.photos.compose.MainAppBottomBar
 import com.kaii.photos.compose.MainAppDialog
@@ -103,8 +102,9 @@ import com.kaii.photos.helpers.EditingScreen
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.appStorageDir
+import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.baseInternalStorageDirectory
-import com.kaii.photos.helpers.getAppStorageDir
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.models.gallery_model.GalleryViewModel
 import com.kaii.photos.models.gallery_model.GalleryViewModelFactory
@@ -147,23 +147,6 @@ class MainActivity : ComponentActivity() {
             mainViewModel = viewModel(
                 factory = MainViewModelFactory(applicationContext)
             )
-
-			val appDataDir = getAppStorageDir()
-            val logPath = "$appDataDir/log.txt"
-
-            val canRecordLogs by mainViewModel.settings.Debugging.getRecordLogs().collectAsStateWithLifecycle(initialValue = false)
-
-            LaunchedEffect(canRecordLogs) {
-	            if (canRecordLogs) {
-	                try {
-	                    File(logPath).delete()
-		                Runtime.getRuntime().exec("logcat -c")
-		                Runtime.getRuntime().exec("logcat -f $logPath")
-	                } catch (e: Throwable) {
-	                    Log.e(TAG, e.toString())
-	                }
-	            }
-            }
 
             val continueToApp = remember {
                 // Manifest.permission.MANAGE_MEDIA is optional
@@ -239,6 +222,23 @@ class MainActivity : ComponentActivity() {
         val rotation = remember { mutableFloatStateOf(0f) }
         val offset = remember { mutableStateOf(Offset.Zero) }
         val selectedItemsList = remember { SnapshotStateList<MediaStoreData>() }
+
+        val logPath = "${context.appStorageDir}/log.txt"
+        Log.d(TAG, "Log save path is $logPath")
+
+        val canRecordLogs by mainViewModel.settings.Debugging.getRecordLogs().collectAsStateWithLifecycle(initialValue = false)
+
+        LaunchedEffect(canRecordLogs) {
+			if (canRecordLogs) {
+				try {
+					File(logPath).delete()
+					Runtime.getRuntime().exec("logcat -c")
+					Runtime.getRuntime().exec("logcat -f $logPath")
+				} catch (e: Throwable) {
+					Log.e(TAG, e.toString())
+				}
+			}
+        }
 
         val isV083FirstStart by mainViewModel.settings.Versions.getIsV083FirstStart(context).collectAsStateWithLifecycle(initialValue = false)
         LaunchedEffect(isV083FirstStart) {
@@ -748,7 +748,6 @@ class MainActivity : ComponentActivity() {
         selectedItemsList: SnapshotStateList<MediaStoreData>,
         groupedMedia: List<MediaStoreData>
     ) {
-		val navController = LocalNavController.current
 		val show by remember {
 		    derivedStateOf {
 		        selectedItemsList.size > 0

@@ -75,6 +75,7 @@ import com.kaii.photos.helpers.moveImageOutOfLockedFolder
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.permanentlyDeleteSecureFolderImageList
 import com.kaii.photos.helpers.setTrashedOnPhotoList
+import com.kaii.photos.helpers.shareMultipleSecuredImages
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import kotlinx.coroutines.Dispatchers
@@ -1123,26 +1124,7 @@ fun SecureFolderViewBottomAppBar(
             text = "Share",
             iconResId = R.drawable.share,
             action = {
-                coroutineScope.launch {
-                    val hasVideos = selectedItemsWithoutSection.any {
-                        it.type == MediaType.Video
-                    }
-
-                    val intent = Intent().apply {
-                        action = Intent.ACTION_SEND_MULTIPLE
-                        type = if (hasVideos) "video/*" else "images/*"
-                    }
-
-                    val fileUris = ArrayList(
-                        selectedItemsWithoutSection.map {
-                            it.uri
-                        }
-                    )
-
-                    intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, fileUris)
-
-                    context.startActivity(Intent.createChooser(intent, null))
-                }
+				shareMultipleSecuredImages(paths = selectedItemsWithoutSection, context = context)
             }
         )
 

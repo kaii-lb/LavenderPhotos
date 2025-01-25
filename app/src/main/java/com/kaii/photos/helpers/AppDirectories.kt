@@ -6,7 +6,8 @@ import java.io.File
 
 private enum class AppDirectories(val path: String) {
     MainDir("LavenderPhotos"),
-    LockedFolder("locked_folder")
+    LockedFolder("secure_folder"),
+    RestoredFolder("Restored Files")
 }
 
 /** ends with a "/" */
@@ -16,39 +17,37 @@ val baseInternalStorageDirectory = run {
     absolutePath.removeSuffix("/") + "/"
 }
 
-/** ends with a "/" */
-fun Context.getAppLockedFolderDirectory() : String {
-    var dir = this.getDir(AppDirectories.LockedFolder.path, Context.MODE_PRIVATE)?.absolutePath ?: throw Exception("cannot get absolute path of null object")
-    if (!dir.endsWith("/")) dir += "/"
+/** doesn't end with a "/" */
+val Context.appSecureFolderDir: String
+    get() {
+        val path = this.getFilesDir().absolutePath.removeSuffix("/") + "/" + AppDirectories.LockedFolder.path ?: throw Exception("Cannot get path of null object: Secure Folder doesn't exist.")
 
-    val folder = File(dir)
-    if (!folder.exists()) {
-        folder.mkdirs()
+		val dir = File(path)
+        if (!dir.exists()) dir.mkdirs()
+
+        return dir.absolutePath.removeSuffix("/") + "/"
     }
 
-    return dir
-}
+/** doesn't end with a "/" */
+val Context.appRestoredFilesDir: String
+    get() {
+        val dataPath = getExternalFilesDir(AppDirectories.MainDir.path + "/" + AppDirectories.RestoredFolder.path)?.absolutePath ?: throw Exception("Cannot get path of null object: Restored Files doesn't exist.")
 
-/** ends with a "/" */
-fun getAppRestoredFromLockedFolderDirectory() : String {
-    val dir = baseInternalStorageDirectory + AppDirectories.MainDir + "/Restored Files/"
+		val path = dataPath.replace("data", "media").replace("files", "")
+		val dir = File(path)
+        if (!dir.exists()) dir.mkdirs()
 
-    val folder = File(dir)
-    if (!folder.exists()) {
-        folder.mkdirs()
+        return dir.absolutePath.removeSuffix("/") + "/"
     }
 
-    return dir
-}
+/** doesn't end with a "/" */
+val Context.appStorageDir: String
+    get() {
+        val dataPath = getExternalFilesDir(AppDirectories.MainDir.path)?.absolutePath ?: throw Exception("Cannot get path of null object: Main Dir doesn't exist.")
 
-/** ends with a "/" */
-fun getAppStorageDir() : String {
-    val dir = baseInternalStorageDirectory + AppDirectories.MainDir + "/"
+		val path = dataPath.replace("data", "media").replace("files", "")
+		val dir = File(path)
+        if (!dir.exists()) dir.mkdirs()
 
-    val folder = File(dir)
-    if (!folder.exists()) {
-        folder.mkdirs()
+        return dir.absolutePath.removeSuffix("/")
     }
-
-    return dir
-}

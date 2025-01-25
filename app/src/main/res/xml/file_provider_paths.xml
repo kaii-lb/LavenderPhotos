@@ -1,0 +1,4 @@
+<paths xmlns:android="https://schemas.android.com/apk/res/android">
+	<external-path name="files" path ="/Android/media/com.kaii.photos" />
+	<files-path name="secure" path="/secure_folder" />
+</paths>

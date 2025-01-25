@@ -1,5 +1,6 @@
 package com.kaii.photos.compose.grids
 
+import android.content.Context
 import android.view.Window
 import android.view.WindowManager
 import androidx.activity.compose.BackHandler
@@ -38,8 +39,9 @@ import com.kaii.photos.compose.SecureFolderViewTopAppBar
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
-import com.kaii.photos.helpers.getAppLockedFolderDirectory
+import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.getDateTakenForMedia
+import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.gallery_model.groupPhotosBy
@@ -52,6 +54,22 @@ import kotlin.io.path.Path
 fun LockedFolderView(
     window: Window
 ) {
+	val context = LocalContext.current
+
+	val oldDir = context.getDir("locked_folder", Context.MODE_PRIVATE)
+	oldDir?.let { oldFilesDir ->
+		val subFiles = oldFilesDir.listFiles()
+
+		if (subFiles?.isNotEmpty() == true) {
+			val newDir = context.appSecureFolderDir
+			subFiles?.forEach { file ->
+				val newPath = newDir + "/" + file.name
+				file.copyTo(File(newPath))
+				file.delete()
+			}
+		}
+	}
+
     val selectedItemsList = remember { SnapshotStateList<MediaStoreData>() }
     val navController = LocalNavController.current
 
@@ -63,7 +81,6 @@ fun LockedFolderView(
     }
 
     val lifecycleOwner = LocalLifecycleOwner.current
-    val context = LocalContext.current
     var lastLifecycleState by rememberSaveable {
         mutableStateOf(Lifecycle.State.STARTED)
     }
@@ -113,7 +130,7 @@ fun LockedFolderView(
 
     if (hideSecureFolder) return
 
-    val secureFolder = File(context.getAppLockedFolderDirectory())
+    val secureFolder = File(context.appSecureFolderDir)
     val fileList = secureFolder.listFiles() ?: return
     val mediaStoreData = emptyList<MediaStoreData>().toMutableList()
     fileList.forEachIndexed { _, file ->

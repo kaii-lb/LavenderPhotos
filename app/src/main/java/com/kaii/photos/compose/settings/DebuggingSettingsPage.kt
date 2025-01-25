@@ -1,5 +1,8 @@
 package com.kaii.photos.compose.settings
 
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.padding
@@ -23,6 +26,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.FileProvider
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.mainViewModel
@@ -33,9 +39,12 @@ import com.kaii.photos.compose.PreferencesSwitchRow
 import com.kaii.photos.compose.TextEntryDialog
 import com.kaii.photos.datastore.Debugging
 import com.kaii.photos.datastore.AlbumsList
+import com.kaii.photos.helpers.appStorageDir
 import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.baseInternalStorageDirectory
+import com.kaii.photos.helpers.shareSecuredImage
+import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import java.io.File
 
 @Composable
@@ -57,18 +66,29 @@ fun DebuggingSettingsPage() {
         	}
 
         	item {
+        		val context = LocalContext.current
+        		val logPath = "${context.appStorageDir}/log.txt"
                 val shouldRecordLogs by mainViewModel.settings.Debugging.getRecordLogs().collectAsStateWithLifecycle(initialValue = false)
 
                 PreferencesSwitchRow(
                     title = "Record Logs",
-                    summary = "Store logs in 'Internal Storage/LavenderPhotos/logs.txt'",
+                    summary = "Store logs for debugging. Tap to view.",
                     iconResID = R.drawable.logs,
                     checked = shouldRecordLogs,
                     position = RowPosition.Single,
-                    showBackground = false
-                ) {
-					mainViewModel.settings.Debugging.setRecordLogs(it)
-                }
+                    showBackground = false,
+                    onRowClick = {
+                    	val file = File(logPath)
+                    	if (file?.exists() == true) {
+                    		shareSecuredImage(logPath, context)
+                    	} else {
+                    		Toast.makeText(context, "No log file is recorded as of yet.", Toast.LENGTH_LONG).show()
+                    	}
+                    },
+                    onSwitchClick = {
+                    	mainViewModel.settings.Debugging.setRecordLogs(it)
+                    }
+                )
         	}
 
         	item {

@@ -82,6 +82,7 @@ import com.kaii.photos.helpers.getExifDataForMedia
 import com.kaii.photos.helpers.moveImageOutOfLockedFolder
 import com.kaii.photos.helpers.permanentlyDeleteSecureFolderImageList
 import com.kaii.photos.helpers.shareImage
+import com.kaii.photos.helpers.shareSecuredImage
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import kotlinx.coroutines.Dispatchers
@@ -297,8 +298,8 @@ private fun TopBar(
             actions = {
                 IconButton(
                     onClick = {
-                        shareImage(
-                            mediaItem.uri,
+                        shareSecuredImage(
+                            mediaItem.absolutePath,
                             context,
                             mediaItem.mimeType
                         )

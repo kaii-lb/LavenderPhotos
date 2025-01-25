@@ -33,11 +33,13 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.toSize
+import androidx.core.content.FileProvider
 import androidx.core.net.toFile
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.kaii.photos.MainActivity.Companion.applicationDatabase
 import com.kaii.photos.database.entities.SecuredItemEntity
+import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.copyMedia
@@ -98,17 +100,52 @@ fun setTrashedOnPhotoList(context: Context, list: List<Uri>, trashed: Boolean) {
 fun shareImage(uri: Uri, context: Context, mimeType: String? = null) {
     val contentResolver = context.contentResolver
 
-    CoroutineScope(Dispatchers.IO).launch {
-        val shareIntent = Intent().apply {
-            action = Intent.ACTION_SEND
-            type = mimeType ?: contentResolver.getType(uri)
-        }
-
-        shareIntent.putExtra(Intent.EXTRA_STREAM, uri)
-
-        val chooserIntent = Intent.createChooser(shareIntent, null)
-        context.startActivity(chooserIntent)
+    val shareIntent = Intent().apply {
+        action = Intent.ACTION_SEND
+        type = mimeType ?: contentResolver.getType(uri)
+        putExtra(Intent.EXTRA_STREAM, uri)
     }
+
+    val chooserIntent = Intent.createChooser(shareIntent, null)
+    context.startActivity(chooserIntent)
+}
+
+fun shareSecuredImage(absolutePath: String, context: Context, mimeType: String? = null) {
+	val uri = FileProvider.getUriForFile(context, LAVENDER_FILE_PROVIDER_AUTHORITY, File(absolutePath))
+
+	val intent = Intent().apply {
+		action = Intent.ACTION_SEND
+		type = context.contentResolver.getType(uri)
+		addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+		putExtra(Intent.EXTRA_STREAM, uri)
+	}
+
+	context.startActivity(intent)
+}
+
+fun shareMultipleSecuredImages(
+	paths: List<MediaStoreData>,
+	context: Context
+) {
+	val hasVideos = paths.any {
+	    it.type == MediaType.Video
+	}
+
+	val intent = Intent().apply {
+	    action = Intent.ACTION_SEND_MULTIPLE
+	    type = if (hasVideos) "video/*" else "images/*"
+	    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+	}
+
+	val fileUris = ArrayList(
+	    paths.map {
+	        FileProvider.getUriForFile(context, LAVENDER_FILE_PROVIDER_AUTHORITY, File(it.absolutePath))
+	    }
+	)
+
+	intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, fileUris)
+
+	context.startActivity(Intent.createChooser(intent, null))
 }
 
 fun moveImageToLockedFolder(mediaItem: MediaStoreData, context: Context) {
@@ -126,8 +163,7 @@ fun moveImageToLockedFolder(mediaItem: MediaStoreData, context: Context) {
             )
 
             val fileToBeHidden = File(mediaItem.absolutePath)
-            val lockedFolderDir = context.getAppLockedFolderDirectory()
-            val copyToPath = lockedFolderDir + fileToBeHidden.name
+            val copyToPath = context.appSecureFolderDir + "/" + fileToBeHidden.name
 
             setDateTakenForMedia(
                 mediaItem.absolutePath,
@@ -160,8 +196,10 @@ fun moveImageOutOfLockedFolder(list: List<MediaStoreData>, context: Context) {
     CoroutineScope(Dispatchers.IO).launch {
         async {
             list.forEach { media ->
-                val originalPath = applicationDatabase.securedItemEntityDao().getOriginalPathFromSecuredPath(media.absolutePath) ?: return@async
+                val originalPath = applicationDatabase.securedItemEntityDao().getOriginalPathFromSecuredPath(media.absolutePath) ?: context.appRestoredFilesDir
                 val fileToBeRestored = File(media.absolutePath)
+
+                Log.d(TAG, "ORIGINAL PATH $originalPath")
 
                 contentResolver.copyMedia(
                     context = context,
@@ -173,26 +211,6 @@ fun moveImageOutOfLockedFolder(list: List<MediaStoreData>, context: Context) {
                     fileToBeRestored.delete()
                     applicationDatabase.securedItemEntityDao().deleteEntityBySecuredPath(media.absolutePath)
                 }
-                // val fullUriPath = getExternalStorageContentUriFromAbsolutePath(
-                // 	,
-                // 	true
-               	// )
-                //
-                // val directory = DocumentFile.fromTreeUri(context, fullUriPath)
-                // val fileToBeSavedTo = directory?.createFile(
-                //     Files.probeContentType(Path(absolutePath)),
-                //     fileToBeRestored.nameWithoutExtension
-                // )
-                //
-                // fileToBeSavedTo?.let { savedToFile ->
-                //     contentResolver.copyUriToUri(
-                //         from = fileToBeRestored.toUri(),
-                //         to = savedToFile.uri
-                //     )
-                //
-                //     fileToBeRestored.delete()
-                //     applicationDatabase.securedItemEntityDao().deleteEntityBySecuredPath(absolutePath)
-                // }
             }
         }.await()
     }
