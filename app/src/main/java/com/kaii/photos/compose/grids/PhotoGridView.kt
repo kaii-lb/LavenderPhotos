@@ -107,6 +107,12 @@ import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.checkHasFiles
 import com.kaii.photos.helpers.rememberVibratorManager
+import com.kaii.photos.helpers.selectAll
+import com.kaii.photos.helpers.selectItem
+import com.kaii.photos.helpers.selectSection
+import com.kaii.photos.helpers.unselectAll
+import com.kaii.photos.helpers.unselectItem
+import com.kaii.photos.helpers.unselectSection
 import com.kaii.photos.helpers.vibrateLong
 import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaStoreData
@@ -254,15 +260,20 @@ fun DeviceMedia(
                 modifier = Modifier
                     .fillMaxSize(1f)
                     .align(Alignment.TopCenter)
-                    .dragSelectionHandler(
-                        state = gridState,
-                        selectedItemsList = selectedItemsList,
-                        groupedMedia = groupedMedia.value,
-                        scrollSpeed = scrollSpeed,
-                        scrollThreshold = with(localDensity) {
-                            40.dp.toPx()
-                        },
-                        isDragSelecting = isDragSelecting
+                    .then (
+                    	if (isDragSelecting.value || selectedItemsList.isNotEmpty()) {
+                    		Modifier
+			                    .dragSelectionHandler(
+			                        state = gridState,
+			                        selectedItemsList = selectedItemsList,
+			                        groupedMedia = groupedMedia.value,
+			                        scrollSpeed = scrollSpeed,
+			                        scrollThreshold = with(localDensity) {
+			                            40.dp.toPx()
+			                        },
+			                        isDragSelecting = isDragSelecting
+			                    )
+                    	} else Modifier
                     ),
                 state = gridState
             ) {
@@ -567,20 +578,9 @@ fun MediaStoreItem(
     val vibratorManager = rememberVibratorManager()
 
     if (item.type == MediaType.Section) {
-        val sectionItems by remember {
-            derivedStateOf {
-                groupedMedia.value.filter {
-                    if (viewProperties.sortMode == MediaItemSortMode.LastModified) {
-                        it.getLastModifiedDay() == item.getLastModifiedDay() && it.type != MediaType.Section
-                    } else {
-                        it.getDateTakenDay() == item.getDateTakenDay() && it.type != MediaType.Section
-                    }
-                }
-            }
-        }
         val isSectionSelected by remember {
             derivedStateOf {
-                selectedItemsList.containsAll(sectionItems)
+                selectedItemsList.contains(item)
             }
         }
 
@@ -594,13 +594,11 @@ fun MediaStoreItem(
                     indication = null,
                 ) {
                     if (isSectionSelected) {
-                        selectedItemsList.removeAll(sectionItems)
-                        selectedItemsList.remove(item)
+                        selectedItemsList.unselectSection(section = item.section, groupedMedia = groupedMedia.value)
                     } else {
-                        if (selectedItemsList.size == 1 && selectedItemsList[0] == MediaStoreData()) selectedItemsList.clear()
+                        if (selectedItemsList.size == 1 && selectedItemsList[0] == MediaStoreData.dummyItem) selectedItemsList.clear()
 
-                        selectedItemsList.addAll(sectionItems)
-                        selectedItemsList.add(item)
+                        selectedItemsList.selectSection(section = item.section, groupedMedia = groupedMedia.value)
                     }
 
                     vibratorManager.vibrateLong()
@@ -624,7 +622,9 @@ fun MediaStoreItem(
             )
         }
     } else {
-        val isSelected by remember/*(selectedItemsList.size)*/ { derivedStateOf { selectedItemsList.contains(item) } }
+        val isSelected by remember { derivedStateOf {
+        	selectedItemsList.contains(item)
+       	}}
 
         val animatedItemCornerRadius by animateDpAsState(
             targetValue = if (isSelected) 16.dp else 0.dp,
@@ -645,11 +645,11 @@ fun MediaStoreItem(
             vibratorManager.vibrateShort()
             if (selectedItemsList.isNotEmpty()) {
                 if (isSelected) {
-                    selectedItemsList.remove(item)
+                    selectedItemsList.unselectItem(item, groupedMedia.value)
                 } else {
-                    if (selectedItemsList.size == 1 && selectedItemsList[0] == MediaStoreData()) selectedItemsList.clear()
+                    if (selectedItemsList.size == 1 && selectedItemsList[0] == MediaStoreData.dummyItem) selectedItemsList.clear()
 
-                    selectedItemsList.add(item)
+                    selectedItemsList.selectItem(item, groupedMedia.value)
                 }
             } else {
                 onClick()
@@ -661,11 +661,11 @@ fun MediaStoreItem(
 
             vibratorManager.vibrateLong()
             if (isSelected) {
-                selectedItemsList.remove(item)
+                selectedItemsList.unselectItem(item, groupedMedia.value)
             } else {
                 if (selectedItemsList.size == 1 && selectedItemsList[0] == MediaStoreData()) selectedItemsList.clear()
 
-                selectedItemsList.add(item)
+                selectedItemsList.selectItem(item, groupedMedia.value)
             }
         }
 
@@ -772,7 +772,7 @@ fun Modifier.dragSelectionHandler(
                     if (item.type != MediaType.Section) {
                         initialKey = key
                         currentKey = key
-                        if (!selectedItemsList.contains(item)) selectedItemsList.add(item)
+                        if (!selectedItemsList.contains(item)) selectedItemsList.selectItem(item, groupedMedia)
                     }
                 }
             }
@@ -808,13 +808,23 @@ fun Modifier.dragSelectionHandler(
                                 if (initialKey!! <= currentKey!!) groupedMedia.subList(initialKey!!, currentKey!! + 1)
                                 else groupedMedia.subList(currentKey!!, initialKey!! + 1)
 
-                            removeAll(toBeRemoved)
+                            unselectAll(
+                            	toBeRemoved.filter {
+                            		it.type != MediaType.Section
+                            	},
+                            	groupedMedia
+                            )
 
                             val toBeAdded =
                                 if (initialKey!! <= key) groupedMedia.subList(initialKey!!, key + 1)
                                 else groupedMedia.subList(key, initialKey!! + 1)
 
-                            addAll(toBeAdded.filter { it.type != MediaType.Section })
+                            selectAll(
+	                            toBeAdded.filter {
+	                            	it.type != MediaType.Section
+	                           	},
+	                            groupedMedia
+                            )
                         }
 
                         currentKey = key

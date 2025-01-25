@@ -6,6 +6,7 @@ import android.os.CancellationSignal
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.helpers.MediaItemSortMode
+import com.kaii.photos.helpers.SectionItem
 import com.kaii.photos.mediastore.DefaultMediaStoreDataSource
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
@@ -96,7 +97,9 @@ fun groupPhotosBy(media: List<MediaStoreData>, sortBy: MediaItemSortMode = Media
                 formatDate(key)
             }
         }
-        mediaItems.add(listSection(sectionKey, key))
+
+        val section = SectionItem(date = key, childCount = value.size)
+        mediaItems.add(listSection(sectionKey, key, value.size))
 
 		if (sortDescending) {
 			if (sortBy == MediaItemSortMode.DateTaken) {
@@ -113,7 +116,11 @@ fun groupPhotosBy(media: List<MediaStoreData>, sortBy: MediaItemSortMode = Media
 		}
 
         mediaItems.addAll(
-        	value
+        	value.map {
+                it.copy(
+                    section = section
+                )
+            }
        	)
     }
 
@@ -131,7 +138,7 @@ private fun formatDate(timestamp: Long): String {
     }
 }
 
-private fun listSection(title: String, key: Long): MediaStoreData {
+private fun listSection(title: String, key: Long, childCount: Int): MediaStoreData {
     val mediaSection = MediaStoreData(
         type = MediaType.Section,
         dateModified = key,
@@ -140,6 +147,10 @@ private fun listSection(title: String, key: Long): MediaStoreData {
         displayName = title,
         id = 0L,
         mimeType = null,
+        section = SectionItem(
+        	date = key,
+        	childCount = childCount
+        )
     )
     return mediaSection
 }

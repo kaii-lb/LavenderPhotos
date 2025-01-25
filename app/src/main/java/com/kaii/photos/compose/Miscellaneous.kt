@@ -1,5 +1,6 @@
 package com.kaii.photos.compose
 
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
@@ -53,13 +54,17 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.kaii.photos.R
+import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
+
+private const val TAG = "MISCELLANEOUS"
 
 @Composable
 fun SplitButton(
@@ -377,7 +382,7 @@ fun SelectViewTopBarLeftButtons(
 	    },
 	    secondaryContent = {
 	        Text(
-	            text = selectedItemsList.filter { it != MediaStoreData()  }.size.toString(),
+	            text = selectedItemsList.filter { it.type != MediaType.Section && it != MediaStoreData.dummyItem }.size.toString(),
 	            color = CustomMaterialTheme.colorScheme.onSurface,
 	            fontSize = TextUnit(18f, TextUnitType.Sp),
 	            modifier = Modifier
@@ -396,17 +401,14 @@ fun SelectViewTopBarLeftButtons(
 
 @Composable
 fun SelectViewTopBarRightButtons(
-	selectedItemsList: SnapshotStateList<MediaStoreData>,
-	groupedMedia: List<MediaStoreData>
+	selectedItemsList: SnapshotStateList<MediaStoreData>
 ) {
-	val nonSectionedGroupedMedia by remember { derivedStateOf {
-		groupedMedia.filter {
-			it.type != MediaType.Section
-		}
-	}}
+	val groupedMedia = mainViewModel.groupedMedia.collectAsStateWithLifecycle(initialValue = emptyList())
+
 	val isTicked by remember {
 	    derivedStateOf {
-	        selectedItemsList.size == nonSectionedGroupedMedia.size
+	    	Log.d(TAG, "SELECTED ${selectedItemsList.size} GROUPED ${groupedMedia?.value?.size}")
+	        selectedItemsList.size == groupedMedia?.value?.size
 	    }
 	}
 
@@ -424,7 +426,9 @@ fun SelectViewTopBarRightButtons(
                 } else {
                     selectedItemsList.clear()
 
-                    selectedItemsList.addAll(nonSectionedGroupedMedia)
+					groupedMedia?.value?.let {
+						selectedItemsList.addAll(it)
+					}
                 }
             },
             modifier = Modifier

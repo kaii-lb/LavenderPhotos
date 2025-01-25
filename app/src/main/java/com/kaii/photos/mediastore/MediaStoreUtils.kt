@@ -177,6 +177,8 @@ fun ContentResolver.getUriFromAbsoltuePath(absolutePath: String, type: MediaType
 
 			return ContentUris.withAppendedId(contentUri, id)
 		}
+
+        cursor.close()
 	}
 
 	return null

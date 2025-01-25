@@ -1560,7 +1560,7 @@ fun PrototypeMainTopBar(
             SelectViewTopBarLeftButtons(selectedItemsList = selectedItemsList)
         },
         alternateActions = {
-            SelectViewTopBarRightButtons(selectedItemsList = selectedItemsList, groupedMedia = groupedMedia)
+            SelectViewTopBarRightButtons(selectedItemsList = selectedItemsList)
         },
     )
 }

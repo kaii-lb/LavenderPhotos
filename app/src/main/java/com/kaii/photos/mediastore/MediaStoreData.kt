@@ -3,8 +3,8 @@ package com.kaii.photos.mediastore
 import android.net.Uri
 import android.os.Parcelable
 import androidx.compose.runtime.Immutable
-import com.bumptech.glide.signature.MediaStoreSignature
 import com.bumptech.glide.signature.ObjectKey
+import com.kaii.photos.helpers.SectionItem
 import kotlinx.parcelize.Parcelize
 import java.util.Calendar
 import java.util.Locale
@@ -22,7 +22,12 @@ data class MediaStoreData(
     val dateTaken: Long = 0L,
     val displayName: String? = "",
     val absolutePath: String = "",
+    val section: SectionItem = SectionItem(0L, 0)
 ) : Parcelable {
+    companion object {
+        val dummyItem = MediaStoreData()
+    }
+
 	/** gets the date taken in days (no hours/minutes/seconds/milliseconds) */
     /** its returned in unix epoch seconds*/
     fun getDateTakenDay() : Long {
@@ -79,3 +84,4 @@ fun String.toMediaType() = when (this) {
     "Section" -> MediaType.Section
     else -> MediaType.Section
 }
+
