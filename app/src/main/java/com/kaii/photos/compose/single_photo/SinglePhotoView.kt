@@ -59,11 +59,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import com.kaii.photos.BuildConfig
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.BottomAppBarItem
 import com.kaii.photos.compose.ConfirmationDialog
-import com.kaii.photos.compose.ConfirmationDialogWithBody
+import com.kaii.photos.compose.ExplanationDialog
 import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.compose.SinglePhotoInfoDialog
 import com.kaii.photos.compose.setBarVisibility
@@ -450,20 +451,24 @@ private fun BottomBar(
                     )
 
 					val showNotImplementedDialog = remember { mutableStateOf(false) }
-                    ConfirmationDialogWithBody(
-                    	showDialog = showNotImplementedDialog,
-                    	dialogTitle = "Unimplemented",
-                    	dialogBody = "Editing videos has not been implemented yet.",
-                    	confirmButtonLabel = "Okay",
-                    	showCancelButton = false,
-                    	action = {}
-                    )
+
+                    if (showNotImplementedDialog.value) {
+                        ExplanationDialog(
+                            title = "Unimplemented",
+                            explanation = "Editing videos has not been implemented yet as of version ${BuildConfig.VERSION_NAME} of Lavender Photos. This feature will be added as soon as possible, thank you for your patience.",
+                            showDialog = showNotImplementedDialog
+                        )
+                    }
 
                     BottomAppBarItem(
                         text = "Edit",
                         iconResId = R.drawable.paintbrush,
                         cornerRadius = 32.dp,
-                        action = if (currentItem.type == MediaType.Image) showEditingView else { { showNotImplementedDialog.value = true } }
+                        action = if (currentItem.type == MediaType.Image) {
+                            showEditingView
+                        } else {
+                            { showNotImplementedDialog.value = true }
+                        }
                     )
 
                     val showDeleteDialog = remember { mutableStateOf(false) }

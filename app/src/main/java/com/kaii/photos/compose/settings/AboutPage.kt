@@ -41,6 +41,7 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.kaii.photos.R
 import com.kaii.photos.compose.ExplanationDialog
+import com.kaii.photos.compose.FeatureNotAvailableDialog
 import com.kaii.photos.compose.PreferencesRow
 import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.RowPosition
@@ -148,10 +149,16 @@ fun AboutPage(popBackStack: () -> Unit) {
 
 			if (showPrivacyPolicy.value) {
 	            ExplanationDialog(
+                    title = "Privacy Policy",
+	                explanation = "There isn't one! None of your data goes anywhere but this device. No AI is trained on it, no algorithms to harvest information, nothing. Lavender Photos has and always will be a privacy focused gallery app.",
 	                showDialog = showPrivacyPolicy,
-	                explanation = "There isn't one! None of your data goes anywhere but this device. No AI is trained on it, no algorithms to harvest information, nothing. Lavender Photos has and always will be a privacy focused gallery app."
 	            )
 			}
+
+            val showNotImplDialog = remember { mutableStateOf(false) }
+            if (showNotImplDialog.value) {
+                FeatureNotAvailableDialog(showDialog = showNotImplDialog)
+            }
 
 	        PreferencesRow(
 	            title = "Updates",
@@ -159,14 +166,18 @@ fun AboutPage(popBackStack: () -> Unit) {
 	            iconResID = R.drawable.update,
 	            position = RowPosition.Middle,
 	            goesToOtherPage = true
-	        )
+	        ) {
+                showNotImplDialog.value = true
+            }
 
 	        PreferencesRow(
 	            title = "Support & Donations",
 	            summary = "help me keep the app alive",
 	            iconResID = R.drawable.donation,
 	            position = RowPosition.Middle
-	        )
+	        ) {
+                showNotImplDialog.value = true
+            }
 
 	        val versionName = try {
 	            context.packageManager.getPackageInfo(context.packageName,0).versionName

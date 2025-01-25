@@ -9,8 +9,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -18,11 +16,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -42,7 +38,6 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -103,7 +98,6 @@ import com.kaii.photos.datastore.Storage
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.ImageFunctions
-import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.checkHasFiles
 import com.kaii.photos.helpers.rememberVibratorManager
@@ -139,14 +133,18 @@ fun PhotoGrid(
     shouldPadUp: Boolean = false,
     state: LazyGridState = rememberLazyGridState()
 ) {
-    val hasFiles = if (path == null) {
-        groupedMedia.value.isNotEmpty()
-    } else {
-        val basePath = baseInternalStorageDirectory
-        if (viewProperties == ViewProperties.Trash) {
-            Path("$basePath$path").checkHasFiles(true)
+    var hasFiles: Boolean? by remember { mutableStateOf(null) }
+
+    LaunchedEffect(Unit) {
+        hasFiles = if (path == null) {
+            groupedMedia.value.isNotEmpty()
         } else {
-            Path("$basePath$path").checkHasFiles()
+            val basePath = baseInternalStorageDirectory
+            if (viewProperties == ViewProperties.Trash) {
+                Path("$basePath$path").checkHasFiles(true)
+            } else {
+                Path("$basePath$path").checkHasFiles()
+            }
         }
     }
 
@@ -155,7 +153,7 @@ fun PhotoGrid(
         return
     }
 
-    if (hasFiles) {
+    if (hasFiles == true) {
         Row(
             modifier = Modifier
                 .fillMaxSize(1f)

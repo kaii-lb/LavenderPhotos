@@ -121,7 +121,6 @@ import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getExternalStorageContentUriFromAbsolutePath
-import com.kaii.photos.mediastore.getHighestLevelParentFromAbsolutePath
 import kotlinx.coroutines.delay
 import java.io.File
 
@@ -1321,7 +1320,7 @@ fun TextEntryDialog(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            PermissionDeniedDialogButton(
+            FullWidthDialogButton(
                 text = "Confirm",
                 color = CustomMaterialTheme.colorScheme.primary,
                 textColor = CustomMaterialTheme.colorScheme.onPrimary,
@@ -1331,4 +1330,72 @@ fun TextEntryDialog(
             }
         }
     }
+}
+
+@Composable
+fun ExplanationDialog(
+    title: String,
+    explanation: String,
+    showDialog: MutableState<Boolean>,
+    showPreviousDialog: MutableState<Boolean>? = null
+) {
+    showPreviousDialog?.value = false
+
+    Dialog(
+        onDismissRequest = {
+            showDialog.value = false
+        },
+        properties = DialogProperties(
+            dismissOnClickOutside = true,
+            dismissOnBackPress = true
+        ),
+    ) {
+        Column(
+            modifier = Modifier
+                .wrapContentSize()
+                .clip(RoundedCornerShape(32.dp))
+                .background(CustomMaterialTheme.colorScheme.surfaceContainer)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = title,
+                fontSize = TextUnit(18f, TextUnitType.Sp),
+                fontWeight = FontWeight.Bold,
+                color = CustomMaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.wrapContentSize()
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = explanation,
+                fontSize = TextUnit(14f, TextUnitType.Sp),
+                color = CustomMaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.wrapContentSize()
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            FullWidthDialogButton(
+                text = "Okay",
+                color = CustomMaterialTheme.colorScheme.primary,
+                textColor = CustomMaterialTheme.colorScheme.onPrimary,
+                position = RowPosition.Single
+            ) {
+                showDialog.value = false
+                showPreviousDialog?.value = true
+            }
+        }
+    }
+}
+
+@Composable
+fun FeatureNotAvailableDialog(showDialog: MutableState<Boolean>) {
+    ExplanationDialog(
+        title = "Not Available",
+        explanation = "This feature is not available yet as the app is in Beta, please wait for a future release.",
+        showDialog = showDialog
+    )
 }

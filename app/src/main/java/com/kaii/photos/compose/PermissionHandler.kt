@@ -7,7 +7,6 @@ import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.net.Uri
 import android.os.Build
-import android.os.Environment
 import android.provider.MediaStore
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -122,9 +121,10 @@ fun PermissionHandler(
 
             if (showExplanationDialog.value) {
                 ExplanationDialog(
+                    title = "Permission Explanation",
+                    explanation = whyButtonExplanation,
                     showDialog = showExplanationDialog,
-                    showPreviousDialog = showPermDeniedDialog,
-                    explanation = whyButtonExplanation
+                    showPreviousDialog = showPermDeniedDialog
                 )
             }
 
@@ -461,7 +461,7 @@ fun PermissionDeniedDialog(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            PermissionDeniedDialogButton(
+            FullWidthDialogButton(
                 text = "Grant Permission",
                 color = CustomMaterialTheme.colorScheme.primary,
                 textColor = CustomMaterialTheme.colorScheme.onPrimary,
@@ -471,7 +471,7 @@ fun PermissionDeniedDialog(
                 onGrantPermissionClicked()
             }
 
-            PermissionDeniedDialogButton(
+            FullWidthDialogButton(
                 text = "Why?",
                 color = CustomMaterialTheme.colorScheme.surfaceContainer,
                 textColor = CustomMaterialTheme.colorScheme.onSurface,
@@ -480,7 +480,7 @@ fun PermissionDeniedDialog(
                 showExplanationDialog.value = true
             }
 
-            PermissionDeniedDialogButton(
+            FullWidthDialogButton(
                 text = "Dismiss",
                 color = CustomMaterialTheme.colorScheme.surfaceContainer,
                 textColor = CustomMaterialTheme.colorScheme.onSurface,
@@ -493,7 +493,7 @@ fun PermissionDeniedDialog(
 }
 
 @Composable
-fun PermissionDeniedDialogButton(
+fun FullWidthDialogButton(
     text: String,
     color: Color,
     textColor: Color,
@@ -527,65 +527,5 @@ fun PermissionDeniedDialogButton(
 
 private object Explanations {
     const val READ_MEDIA = "This permission is needed to find photos and videos on the device. Lavender Photos is very strict with what files it reads, and never shares or exploits this info."
-    const val MANAGE_ALL_FILES =
-        "This permission is needed to modify or delete photos and videos on this device, specifically moving them to secure folder and for some trash functionality. This might change in the future.\nLavender Photos will never touch your files without an explicit action being done (eg: clicking the delete button on an image)"
     const val MANAGE_MEDIA = "This permission is optional, but is highly recommended. Manage Media permission allows Lavender Photos to use Android's Content Resolver API to trash/delete/move/copy media, which makes the process much smoother and more interoperable with other apps."
-}
-
-@Composable
-fun ExplanationDialog(
-    showDialog: MutableState<Boolean>,
-    showPreviousDialog: MutableState<Boolean>? = null,
-    explanation: String
-) {
-    showPreviousDialog?.value = false
-
-    Dialog(
-        onDismissRequest = {
-            showDialog.value = false
-        },
-        properties = DialogProperties(
-            dismissOnClickOutside = true,
-            dismissOnBackPress = true
-        ),
-    ) {
-        Column(
-            modifier = Modifier
-                .wrapContentSize()
-                .clip(RoundedCornerShape(32.dp))
-                .background(CustomMaterialTheme.colorScheme.surfaceContainer)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "Permission Explanation",
-                fontSize = TextUnit(18f, TextUnitType.Sp),
-                fontWeight = FontWeight.Bold,
-                color = CustomMaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.wrapContentSize()
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text(
-                text = explanation,
-                fontSize = TextUnit(14f, TextUnitType.Sp),
-                color = CustomMaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.wrapContentSize()
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            PermissionDeniedDialogButton(
-                text = "Okay",
-                color = CustomMaterialTheme.colorScheme.primary,
-                textColor = CustomMaterialTheme.colorScheme.onPrimary,
-                position = RowPosition.Single
-            ) {
-                showDialog.value = false
-                showPreviousDialog?.value = true
-            }
-        }
-    }
 }

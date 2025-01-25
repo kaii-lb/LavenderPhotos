@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
+import com.kaii.photos.compose.FeatureNotAvailableDialog
 import com.kaii.photos.compose.PreferencesRow
 import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.MultiScreenViewType
@@ -43,7 +44,7 @@ fun MainSettingsPage() {
         },
         contentWindowInsets = WindowInsets.systemBars
     ) { innerPadding ->
-        val navController = LocalNavController.current ?: return@Scaffold
+        val navController = LocalNavController.current
 
         LazyColumn(
             modifier = Modifier
@@ -68,6 +69,11 @@ fun MainSettingsPage() {
             }
 
             item {
+                val showNotImplDialog = remember { mutableStateOf(false) }
+                if (showNotImplDialog.value) {
+                    FeatureNotAvailableDialog(showDialog = showNotImplDialog)
+                }
+
                 PreferencesRow(
                     title = "Privacy & Security",
                     summary = "Fine grained control over your data",
@@ -78,7 +84,7 @@ fun MainSettingsPage() {
                     modifier = Modifier
                     	.padding(0.dp, 6.dp)
                 ) {
-
+                    showNotImplDialog.value = true
                 }
             }
 
@@ -133,7 +139,7 @@ fun MainSettingsPage() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MainSettingsTopBar() {
-    val navController = LocalNavController.current ?: return
+    val navController = LocalNavController.current
 
     val localConfig = LocalConfiguration.current
     var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
