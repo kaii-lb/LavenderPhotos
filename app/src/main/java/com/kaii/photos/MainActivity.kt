@@ -70,7 +70,7 @@ import com.kaii.photos.compose.MainAppBottomBar
 import com.kaii.photos.compose.MainAppDialog
 import com.kaii.photos.compose.MainAppSelectingBottomBar
 import com.kaii.photos.compose.PermissionHandler
-import com.kaii.photos.compose.PrototypeMainTopBar
+import com.kaii.photos.compose.MainAppTopBar
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.getAppBarContentTransition
 import com.kaii.photos.compose.grids.AlbumsGridView
@@ -114,6 +114,7 @@ import com.kaii.photos.ui.theme.PhotosTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import java.io.File
+import javax.crypto.Cipher
 
 private const val TAG = "MAIN_ACTIVITY"
 
@@ -263,13 +264,6 @@ class MainActivity : ComponentActivity() {
             listOfDirs.add(0, cameraItem)
         }
 
-
-		// TODO: make absolute path to uri function and take permission here
-		// also check if already in persistable uris
-   //      listOfDirs.forEach { dir ->
-			// context.contentResolver.takePersistableUriPermission(dir)
-   //      }
-
         CompositionLocalProvider(LocalNavController provides navControllerLocal) {
             NavHost(
                 navController = navControllerLocal,
@@ -384,7 +378,7 @@ class MainActivity : ComponentActivity() {
                         window
                     )
 
-                    SingleAlbumView(selectedItemsList)
+                    SingleAlbumView(selectedItemsList, currentView)
                 }
 
                 composable(MultiScreenViewType.SingleTrashedPhotoView.name) {
@@ -417,7 +411,7 @@ class MainActivity : ComponentActivity() {
                         window
                     )
 
-                    TrashedPhotoGridView(selectedItemsList)
+                    TrashedPhotoGridView(selectedItemsList = selectedItemsList, currentView = currentView)
                 }
 
                 composable(MultiScreenViewType.LockedFolderView.name) {
@@ -433,7 +427,7 @@ class MainActivity : ComponentActivity() {
                         window
                     )
 
-                    LockedFolderView(window)
+                    LockedFolderView(window = window, currentView = currentView)
                 }
 
                 composable(MultiScreenViewType.SingleHiddenPhotoVew.name) {
@@ -483,9 +477,7 @@ class MainActivity : ComponentActivity() {
                         window
                     )
 
-                    FavouritesGridView(
-                        selectedItemsList = selectedItemsList
-                    )
+                    FavouritesGridView(selectedItemsList = selectedItemsList, currentView = currentView)
                 }
 
                 composable<EditingScreen>(
@@ -664,10 +656,10 @@ class MainActivity : ComponentActivity() {
 
         Scaffold(
             topBar = {
-                TopBar(showDialog, selectedItemsList, groupedMedia.value)
+                TopBar(showDialog = showDialog, selectedItemsList = selectedItemsList)
             },
             bottomBar = {
-                BottomBar(currentView, selectedItemsList)
+                BottomBar(currentView = currentView, selectedItemsList = selectedItemsList)
             },
             modifier = Modifier
                 .fillMaxSize(1f)
@@ -745,8 +737,7 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun TopBar(
         showDialog: MutableState<Boolean>,
-        selectedItemsList: SnapshotStateList<MediaStoreData>,
-        groupedMedia: List<MediaStoreData>
+        selectedItemsList: SnapshotStateList<MediaStoreData>
     ) {
 		val show by remember {
 		    derivedStateOf {
@@ -754,26 +745,11 @@ class MainActivity : ComponentActivity() {
 		    }
 		}
 
-        PrototypeMainTopBar(
+        MainAppTopBar(
             alternate = show,
             showDialog = showDialog,
-            selectedItemsList = selectedItemsList,
-            groupedMedia = groupedMedia
+            selectedItemsList = selectedItemsList
         )
-
-        // AnimatedContent(
-        //     targetState = show && navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name,
-        //     transitionSpec = {
-        //         getAppBarContentTransition(show)
-        //     },
-        //     label = "MainTopBarAnimatedContentView"
-        // ) { target ->
-        //     if (!target) {
-        //         MainAppTopBar(showDialog = showDialog)
-        //     } else {
-        //         IsSelectingTopBar(selectedItemsList = selectedItemsList)
-        //     }
-        // }
     }
 
     @Composable

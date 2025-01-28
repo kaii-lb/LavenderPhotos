@@ -77,17 +77,18 @@ import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.MediaData
 import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.brightenColor
 import com.kaii.photos.helpers.getExifDataForMedia
 import com.kaii.photos.helpers.moveImageOutOfLockedFolder
 import com.kaii.photos.helpers.permanentlyDeleteSecureFolderImageList
-import com.kaii.photos.helpers.shareImage
 import com.kaii.photos.helpers.shareSecuredImage
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -261,8 +262,6 @@ private fun TopBar(
             )
         ) { width -> -width } + fadeOut(),
     ) {
-        val context = LocalContext.current
-
         TopAppBar(
             colors = TopAppBarDefaults.topAppBarColors(
                 containerColor = CustomMaterialTheme.colorScheme.surfaceContainer
@@ -296,13 +295,24 @@ private fun TopBar(
                 )
             },
             actions = {
+                val coroutineScope = rememberCoroutineScope()
+                val context = LocalContext.current
+
                 IconButton(
                     onClick = {
-                        shareSecuredImage(
-                            mediaItem.absolutePath,
-                            context,
-                            mediaItem.mimeType
-                        )
+                        coroutineScope.launch(Dispatchers.IO) {
+                            val cachedFile = File(context.cacheDir, mediaItem.displayName ?: mediaItem.id.toString())
+                            cachedFile.outputStream().apply {
+                                write(mediaItem.bytes!!)
+                                close()
+                            }
+
+                            shareSecuredImage(
+                                cachedFile.absolutePath,
+                                context,
+                                mediaItem.mimeType
+                            )
+                        }
                     }
                 ) {
                     Icon(
@@ -348,9 +358,9 @@ private fun BottomBar(
     val runRestoreAction = remember { mutableStateOf(false) }
     var originalPath by remember { mutableStateOf("") }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(item) {
         withContext(Dispatchers.IO) {
-            originalPath = applicationDatabase.securedItemEntityDao().getOriginalPathFromSecuredPath(item.absolutePath)?.replace(item.displayName ?: "", "") ?: ""
+            originalPath = applicationDatabase.securedItemEntityDao().getOriginalPathFromSecuredPath(item.absolutePath)?.replace(item.displayName ?: "", "") ?: context.appRestoredFilesDir
         }
     }
 

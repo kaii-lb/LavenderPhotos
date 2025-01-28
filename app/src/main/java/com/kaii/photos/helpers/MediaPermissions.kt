@@ -24,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
 import com.kaii.photos.compose.ConfirmationDialogWithBody
+import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.mediastore.getExternalStorageContentUriFromAbsolutePath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -98,7 +99,7 @@ fun GetDirectoryPermissionAndRun(
         dialogBody = "Lavender Photos needs permission to access this album. Please grant it the permission by selecting \"Use This Folder\" on the next screen.\n This is a one-time permission.",
         confirmButtonLabel = "Grant"
     ) {
-        val uri = getExternalStorageContentUriFromAbsolutePath(absolutePath, false)
+        val uri = context.getExternalStorageContentUriFromAbsolutePath(absolutePath, false)
         Log.d(TAG, "Content URI for directory $absolutePath is $uri")
 
         launcher.launch(uri)
@@ -108,8 +109,7 @@ fun GetDirectoryPermissionAndRun(
         if (shouldRun.value) {
         	val alreadyPersisted =
                 context.contentResolver.persistedUriPermissions.any {
-                    val externalContentUri = getExternalStorageContentUriFromAbsolutePath(absolutePath, true)
-                    Log.d(TAG, "External document URI is $externalContentUri, in persisted permissions is ${it.uri}")
+                    val externalContentUri = context.getExternalStorageContentUriFromAbsolutePath(absolutePath, true)
 
                     it.uri == externalContentUri && it.isReadPermission && it.isWritePermission
                 }
@@ -117,6 +117,7 @@ fun GetDirectoryPermissionAndRun(
 			val relative = absolutePath.replace(baseInternalStorageDirectory, "")
             if (!alreadyPersisted &&
             	!(relative.startsWith(Environment.DIRECTORY_DOWNLOADS) && relative.removeSuffix("/").endsWith(Environment.DIRECTORY_DOWNLOADS))
+            	// !relative.startsWith("Android/media/com.kaii.photos/LavenderPhotos/Restored Files") // TODO: make this not need permissions somehow
            	) {
                 showNoPermissionForDirDialog.value = true
             } else {

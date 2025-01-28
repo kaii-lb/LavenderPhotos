@@ -121,8 +121,6 @@ fun HorizontalImageList(
 
         val mediaStoreItem = groupedMedia[index]
 
-        val path = if (isHidden) mediaStoreItem.uri.path else mediaStoreItem.uri
-
         if (mediaStoreItem.type == MediaType.Video && shouldPlay && muteVideoOnStart != null) {
 			lastVideoWasMuted.value = muteVideoOnStart!!
 
@@ -184,7 +182,7 @@ fun HorizontalImageList(
                     .fillMaxSize(1f)
             ) {
                 GlideImage(
-                    model = path,
+                    model = if (isHidden) mediaStoreItem.bytes ?: mediaStoreItem.uri.path else mediaStoreItem.uri,
                     contentDescription = "selected image",
                     contentScale = ContentScale.Fit,
                     failure = placeholder(R.drawable.broken_image),

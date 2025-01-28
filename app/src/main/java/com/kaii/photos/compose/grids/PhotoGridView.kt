@@ -137,7 +137,8 @@ fun PhotoGrid(
 
     LaunchedEffect(groupedMedia.value) {
         hasFiles = if (path == null) {
-            groupedMedia.value.isNotEmpty()
+        	// TODO: make it a timer for 5 seconds loading or something and then hide spinner
+            groupedMedia.value.isNotEmpty() || viewProperties == ViewProperties.SecureFolder
         } else {
             val basePath = baseInternalStorageDirectory
             if (viewProperties == ViewProperties.Trash) {
@@ -689,7 +690,7 @@ fun MediaStoreItem(
                 )
         ) {
             GlideImage(
-                model = if (viewProperties == ViewProperties.SecureFolder) item.uri.path else item.uri,
+                model = if (viewProperties == ViewProperties.SecureFolder) item.bytes ?: item.uri.path else item.uri,
                 contentDescription = item.displayName,
                 contentScale = ContentScale.Crop,
                 failure = placeholder(R.drawable.broken_image),

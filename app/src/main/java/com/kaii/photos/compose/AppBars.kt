@@ -78,9 +78,11 @@ import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareMultipleSecuredImages
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
+import kotlinx.coroutines.async
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 
 /** please only use dialogComposable for its intended purpose */
 @Composable
@@ -533,7 +535,10 @@ fun MainAppSelectingBottomBar(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun IsSelectingTopBar(selectedItemsList: SnapshotStateList<MediaStoreData>) {
+fun IsSelectingTopBar(
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    currentView: MutableState<MainScreenViewType>
+) {
     val groupedMedia = MainActivity.mainViewModel.groupedMedia.collectAsState(initial = emptyList())
 
     val selectedItemsWithoutSection by remember {
@@ -612,9 +617,19 @@ fun IsSelectingTopBar(selectedItemsList: SnapshotStateList<MediaStoreData>) {
                 )
             }
 
+            val showMoreOptionsDialog = remember { mutableStateOf(false)}
+
+            if (showMoreOptionsDialog.value) {
+                SelectingMoreOptionsDialog(
+                    showDialog = showMoreOptionsDialog,
+                    selectedItems = selectedItemsWithoutSection,
+                    currentView = currentView
+                )
+            }
+
             IconButton(
                 onClick = {
-                    // showDialog.value = true
+                    showMoreOptionsDialog.value = true
                 },
             ) {
                 Icon(
@@ -658,6 +673,7 @@ fun SingleAlbumViewTopBar(
     dir: String,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     showDialog: MutableState<Boolean>,
+    currentView: MutableState<MainScreenViewType>,
     onBackClick: () -> Unit
 ) {
     val title = dir.split("/").last()
@@ -722,7 +738,8 @@ fun SingleAlbumViewTopBar(
             )
         } else {
             IsSelectingTopBar(
-                selectedItemsList = selectedItemsList
+                selectedItemsList = selectedItemsList,
+                currentView = currentView
             )
         }
     }
@@ -840,6 +857,7 @@ fun SingleAlbumViewBottomBar(
 fun TrashedPhotoGridViewTopBar(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     groupedMedia: List<MediaStoreData>,
+    currentView: MutableState<MainScreenViewType>,
     onBackClick: () -> Unit
 ) {
     val showDialog = remember { mutableStateOf(false) }
@@ -926,7 +944,7 @@ fun TrashedPhotoGridViewTopBar(
                 }
             )
         } else {
-            IsSelectingTopBar(selectedItemsList = selectedItemsList)
+            IsSelectingTopBar(selectedItemsList = selectedItemsList, currentView = currentView)
         }
     }
 }
@@ -1052,6 +1070,7 @@ fun TrashedPhotoGridViewBottomBar(
 @Composable
 fun SecureFolderViewTopAppBar(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
+    currentView: MutableState<MainScreenViewType>,
     onBackClicked: () -> Unit
 ) {
     val show by remember {
@@ -1098,7 +1117,7 @@ fun SecureFolderViewTopAppBar(
                 }
             )
         } else {
-            IsSelectingTopBar(selectedItemsList = selectedItemsList)
+            IsSelectingTopBar(selectedItemsList = selectedItemsList, currentView = currentView)
         }
     }
 }
@@ -1124,7 +1143,22 @@ fun SecureFolderViewBottomAppBar(
             text = "Share",
             iconResId = R.drawable.share,
             action = {
-				shareMultipleSecuredImages(paths = selectedItemsWithoutSection, context = context)
+            	coroutineScope.launch(Dispatchers.IO) {
+            		async {
+	            		val cachedPaths = emptyList<Pair<String, MediaType>>().toMutableList()
+
+	            		selectedItemsWithoutSection.forEach { item ->
+	                   		val cachedFile = File(context.cacheDir, item.displayName ?: item.id.toString())
+	                   		cachedFile.outputStream().apply {
+	                   			write(item.bytes!!)
+	                   			close()
+	                   		}
+
+	                   		cachedPaths.add(Pair(cachedFile.absolutePath, item.type))
+	            		}
+						shareMultipleSecuredImages(paths = cachedPaths, context = context)
+            		}.await()
+            	}
             }
         )
 
@@ -1229,6 +1263,7 @@ fun SecureFolderViewBottomAppBar(
 @Composable
 fun FavouritesViewTopAppBar(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
+    currentView: MutableState<MainScreenViewType>,
     onBackClick: () -> Unit
 ) {
     val show by remember {
@@ -1272,7 +1307,7 @@ fun FavouritesViewTopAppBar(
                 }
             )
         } else {
-            IsSelectingTopBar(selectedItemsList = selectedItemsList)
+            IsSelectingTopBar(selectedItemsList = selectedItemsList, currentView = currentView)
         }
     }
 }
@@ -1502,11 +1537,10 @@ fun DualFunctionTopAppBar(
 }
 
 @Composable
-fun PrototypeMainTopBar(
+fun MainAppTopBar(
     alternate: Boolean,
     showDialog: MutableState<Boolean>,
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
-    groupedMedia: List<MediaStoreData>
+    selectedItemsList: SnapshotStateList<MediaStoreData>
 ) {
     DualFunctionTopAppBar(
         alternated = alternate,

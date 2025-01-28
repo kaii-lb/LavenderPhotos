@@ -15,6 +15,7 @@ import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -34,6 +35,7 @@ import com.kaii.photos.compose.SingleAlbumDialog
 import com.kaii.photos.compose.SingleAlbumViewBottomBar
 import com.kaii.photos.compose.SingleAlbumViewTopBar
 import com.kaii.photos.compose.ViewProperties
+import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.models.gallery_model.GalleryViewModel
@@ -44,6 +46,7 @@ import kotlinx.coroutines.Dispatchers
 @Composable
 fun SingleAlbumView(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
+    currentView: MutableState<MainScreenViewType>
 ) {
     val mainViewModel = MainActivity.mainViewModel
 
@@ -107,7 +110,8 @@ fun SingleAlbumView(
             SingleAlbumViewTopBar(
                 dir = albumDir,
                 selectedItemsList = selectedItemsList,
-                showDialog = showDialog
+                showDialog = showDialog,
+                currentView = currentView
             ) {
                 navController.popBackStack()
             }

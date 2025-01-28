@@ -16,12 +16,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
@@ -56,8 +56,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.kaii.photos.BuildConfig
 import com.kaii.photos.MainActivity.Companion.mainViewModel
@@ -65,20 +65,20 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.BottomAppBarItem
 import com.kaii.photos.compose.ConfirmationDialog
 import com.kaii.photos.compose.ExplanationDialog
-import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.compose.SinglePhotoInfoDialog
 import com.kaii.photos.compose.setBarVisibility
+import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.EditingScreen
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.GetPermissionAndRun
+import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.moveImageToLockedFolder
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareImage
 import com.kaii.photos.helpers.vibrateShort
-import com.kaii.photos.helpers.MediaItemSortMode
-import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.favourites_grid.FavouritesViewModel
@@ -87,7 +87,7 @@ import com.kaii.photos.models.gallery_model.GalleryViewModel
 import com.kaii.photos.models.gallery_model.GalleryViewModelFactory
 import kotlinx.coroutines.Dispatchers
 
-//private const val TAG = "SINGLE_PHOTO_VIEW"
+// private const val TAG = "SINGLE_PHOTO_VIEW"
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -99,9 +99,9 @@ fun SinglePhotoView(
     offset: MutableState<Offset>,
 ) {
     val mediaItem = mainViewModel.selectedMediaData.collectAsState(initial = null).value ?: return
-	val path = mainViewModel.singlePhotoPath.collectAsState(initial = null).value
+    val path = mainViewModel.singlePhotoPath.collectAsState(initial = null).value
 
-	val fastLoadedGroupedMedia = mainViewModel.groupedMedia.collectAsState(initial = null).value ?: return
+    val fastLoadedGroupedMedia = mainViewModel.groupedMedia.collectAsState(initial = null).value ?: return
 
     val groupedMedia = remember {
         mutableStateOf(
@@ -111,28 +111,28 @@ fun SinglePhotoView(
         )
     }
 
-	var galleryViewModel: GalleryViewModel? = null
+    var galleryViewModel: GalleryViewModel? = null
 
-	if (path != null) {
-		galleryViewModel = viewModel(
-		    factory = GalleryViewModelFactory(
-		        LocalContext.current,
-		        path,
-		        MediaItemSortMode.DateTaken
-		    )
-		)
+    if (path != null) {
+        galleryViewModel = viewModel(
+            factory = GalleryViewModelFactory(
+                LocalContext.current,
+                path,
+                MediaItemSortMode.DateTaken
+            )
+        )
 
-		val holderGroupedMedia by galleryViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+        val holderGroupedMedia by galleryViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
-		LaunchedEffect(holderGroupedMedia) {
-	    	if (holderGroupedMedia.isNotEmpty()) {
-		        groupedMedia.value =
-		            holderGroupedMedia.filter { item ->
-		                item.type != MediaType.Section
-		            }
-	    	}
-	    }
-	}
+        LaunchedEffect(holderGroupedMedia) {
+            if (holderGroupedMedia.isNotEmpty()) {
+                groupedMedia.value =
+                    holderGroupedMedia.filter { item ->
+                        item.type != MediaType.Section
+                    }
+            }
+        }
+    }
 
     var currentMediaItemIndex by rememberSaveable {
         mutableIntStateOf(
@@ -144,11 +144,11 @@ fun SinglePhotoView(
 
     val state = rememberPagerState(
         initialPage = currentMediaItemIndex
-        	.coerceIn(
-        		0,
-        		(groupedMedia.value.size - 1)
-        			.coerceAtLeast(0)
-   			)
+            .coerceIn(
+                0,
+                (groupedMedia.value.size - 1)
+                    .coerceAtLeast(0)
+            )
     ) {
         groupedMedia.value.size
     }
@@ -173,7 +173,7 @@ fun SinglePhotoView(
 
     val showInfoDialog = remember { mutableStateOf(false) }
 
-    BackHandler (
+    BackHandler(
         enabled = !showInfoDialog.value
     ) {
         galleryViewModel?.cancelMediaFlow()
@@ -201,7 +201,7 @@ fun SinglePhotoView(
                     }
                 },
                 onBackClick = {
-                	galleryViewModel?.cancelMediaFlow()
+                    galleryViewModel?.cancelMediaFlow()
                     navController.popBackStack()
                 }
             )
@@ -221,11 +221,11 @@ fun SinglePhotoView(
                     }
 
                     navController.navigate(
-                    	EditingScreen(
-                    		absolutePath = currentMediaItem.value.absolutePath,
-                    		uri = currentMediaItem.value.uri.toString(),
-                    		dateTaken = currentMediaItem.value.dateTaken
-                   		)
+                        EditingScreen(
+                            absolutePath = currentMediaItem.value.absolutePath,
+                            uri = currentMediaItem.value.uri.toString(),
+                            dateTaken = currentMediaItem.value.dateTaken
+                        )
                     )
                 },
                 onZeroItemsLeft = {
@@ -276,11 +276,11 @@ private fun TopBar(
     removeIfInFavGrid: () -> Unit,
     onBackClick: () -> Unit
 ) {
-	val localConfig = LocalConfiguration.current
+    val localConfig = LocalConfiguration.current
     var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
 
     LaunchedEffect(localConfig) {
-    	isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
+        isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
     }
 
     val color = if (isLandscape)
@@ -343,13 +343,14 @@ private fun TopBar(
             },
             actions = {
                 val isSelected by favouritesViewModel.isInFavourites(mediaItem.id).collectAsState()
+                val context = LocalContext.current
 
                 IconButton(
                     onClick = {
                         vibratorManager.vibrateShort()
 
                         if (!isSelected) {
-                            favouritesViewModel.addToFavourites(mediaItem)
+                            favouritesViewModel.addToFavourites(mediaItem, context)
                         } else {
                             favouritesViewModel.removeFromFavourites(mediaItem.id)
                             removeIfInFavGrid()
@@ -393,11 +394,11 @@ private fun BottomBar(
     showEditingView: () -> Unit,
     onZeroItemsLeft: () -> Unit
 ) {
-	val localConfig = LocalConfiguration.current
+    val localConfig = LocalConfiguration.current
     var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
 
     LaunchedEffect(localConfig) {
-    	isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
+        isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
     }
 
     val color = if (isLandscape)
@@ -434,12 +435,12 @@ private fun BottomBar(
                         .padding(12.dp, 0.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement =
-	                    if (isLandscape)
-		                    Arrangement.spacedBy(
-		                        space = 48.dp,
-		                        alignment = Alignment.CenterHorizontally
-		                    )
-	                    else Arrangement.SpaceEvenly
+                    if (isLandscape)
+                        Arrangement.spacedBy(
+                            space = 48.dp,
+                            alignment = Alignment.CenterHorizontally
+                        )
+                    else Arrangement.SpaceEvenly
                 ) {
                     BottomAppBarItem(
                         text = "Share",
@@ -450,7 +451,7 @@ private fun BottomBar(
                         }
                     )
 
-					val showNotImplementedDialog = remember { mutableStateOf(false) }
+                    val showNotImplementedDialog = remember { mutableStateOf(false) }
 
                     if (showNotImplementedDialog.value) {
                         ExplanationDialog(
@@ -474,7 +475,7 @@ private fun BottomBar(
                     val showDeleteDialog = remember { mutableStateOf(false) }
                     val runTrashAction = remember { mutableStateOf(false) }
 
-					println("CURRENT ITEM URI ${currentItem.uri}")
+                    println("CURRENT ITEM URI ${currentItem.uri}")
                     GetPermissionAndRun(
                         uris = listOf(currentItem.uri),
                         shouldRun = runTrashAction,
@@ -534,7 +535,7 @@ private fun BottomBar(
                         shouldRun = moveToSecureFolder,
                         onGranted = {
                             moveImageToLockedFolder(
-                                currentItem,
+                                listOf(currentItem),
                                 context
                             )
 

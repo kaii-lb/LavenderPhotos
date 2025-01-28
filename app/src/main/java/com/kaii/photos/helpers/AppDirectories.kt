@@ -20,12 +20,12 @@ val baseInternalStorageDirectory = run {
 /** doesn't end with a "/" */
 val Context.appSecureFolderDir: String
     get() {
-        val path = this.getFilesDir().absolutePath.removeSuffix("/") + "/" + AppDirectories.LockedFolder.path ?: throw Exception("Cannot get path of null object: Secure Folder doesn't exist.")
+        val path = filesDir.absolutePath.removeSuffix("/") + "/" + AppDirectories.LockedFolder.path // TODO: switch to external files dir for extra storage space
 
 		val dir = File(path)
         if (!dir.exists()) dir.mkdirs()
 
-        return dir.absolutePath.removeSuffix("/") + "/"
+        return dir.absolutePath.removeSuffix("/")
     }
 
 /** doesn't end with a "/" */
@@ -37,7 +37,7 @@ val Context.appRestoredFilesDir: String
 		val dir = File(path)
         if (!dir.exists()) dir.mkdirs()
 
-        return dir.absolutePath.removeSuffix("/") + "/"
+        return dir.absolutePath.removeSuffix("/")
     }
 
 /** doesn't end with a "/" */

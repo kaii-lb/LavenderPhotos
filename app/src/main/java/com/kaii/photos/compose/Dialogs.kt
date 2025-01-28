@@ -114,6 +114,7 @@ import com.kaii.photos.helpers.brightenColor
 import com.kaii.photos.helpers.createPersistablePermissionLauncher
 import com.kaii.photos.helpers.darkenColor
 import com.kaii.photos.helpers.getExifDataForMedia
+import com.kaii.photos.helpers.moveImageToLockedFolder
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.renameDirectory
 import com.kaii.photos.helpers.renameImage
@@ -1162,7 +1163,7 @@ fun SingleAlbumDialog(
 
 						try {
 	                        context.contentResolver.releasePersistableUriPermission(
-	                        	getExternalStorageContentUriFromAbsolutePath(absoluteDirPath, true),
+	                        	context.getExternalStorageContentUriFromAbsolutePath(absoluteDirPath, true),
 	                        	Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
 	                       	)
 						} catch (e: Throwable) {
@@ -1204,7 +1205,7 @@ fun SingleAlbumDialog(
 
 						try {
 	                        context.contentResolver.releasePersistableUriPermission(
-	                        	getExternalStorageContentUriFromAbsolutePath(absoluteDirPath, true),
+	                        	context.getExternalStorageContentUriFromAbsolutePath(absoluteDirPath, true),
 	                        	Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
 	                       	)
 						} catch (e: Throwable) {
@@ -1398,4 +1399,110 @@ fun FeatureNotAvailableDialog(showDialog: MutableState<Boolean>) {
         explanation = "This feature is not available yet as the app is in Beta, please wait for a future release.",
         showDialog = showDialog
     )
+}
+
+/** always pass selected items without sections */
+@Composable
+fun SelectingMoreOptionsDialog(
+    showDialog: MutableState<Boolean>,
+    selectedItems: List<MediaStoreData>,
+    currentView: MutableState<MainScreenViewType>,
+) {
+    val context = LocalContext.current
+    val isEditingFileName = remember { mutableStateOf(false) }
+
+    val isLandscape by rememberDeviceOrientation()
+
+    val modifier = if (isLandscape)
+        Modifier.width(328.dp)
+    else
+        Modifier.fillMaxWidth(0.85f)
+
+	val moveToSecureFolder = remember { mutableStateOf(false) }
+	val tryGetDirPermission = remember { mutableStateOf(false) }
+
+	GetDirectoryPermissionAndRun(
+	    absolutePath = selectedItems.firstOrNull()?.let { media ->
+	        media.absolutePath
+	            .replace(baseInternalStorageDirectory, "")
+	            .replace(media.displayName ?: "", "")
+	    } ?: "",
+	    shouldRun = tryGetDirPermission
+	) {
+	    moveToSecureFolder.value = true
+	}
+
+	GetPermissionAndRun(
+	    uris = selectedItems.map { it.uri },
+	    shouldRun = moveToSecureFolder,
+	    onGranted = {
+	        moveImageToLockedFolder(
+	            selectedItems,
+	            context
+	        )
+	    }
+	)
+
+    Dialog(
+        onDismissRequest = {
+            showDialog.value = false
+            isEditingFileName.value = false
+        },
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false
+        ),
+    ) {
+        Column(
+            modifier = Modifier
+                .then(modifier)
+                .wrapContentHeight()
+                .clip(RoundedCornerShape(32.dp))
+                .background(brightenColor(CustomMaterialTheme.colorScheme.surface, 0.1f))
+                .padding(4.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(1f),
+            ) {
+                IconButton(
+                    onClick = {
+                        showDialog.value = false
+                        isEditingFileName.value = false
+                    },
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.close),
+                        contentDescription = "Close dialog button",
+                        modifier = Modifier
+                            .size(24.dp)
+                    )
+                }
+
+                Text(
+                    text = "More Options",
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                )
+            }
+
+            Column(
+                modifier = Modifier
+                    .padding(12.dp)
+                    .wrapContentHeight()
+            ) {
+                // TODO: group by path and then get permission for each path in search page
+                if (currentView.value != MainScreenViewType.SearchPage) {
+                    DialogClickableItem(
+                        text = "Move to Secure Folder",
+                        iconResId = R.drawable.locked_folder,
+                        position = RowPosition.Single
+                    ) {
+                        tryGetDirPermission.value = true
+                    }
+                }
+            }
+        }
+    }
 }

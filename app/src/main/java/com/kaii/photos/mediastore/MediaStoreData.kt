@@ -15,14 +15,15 @@ import java.util.Locale
 @Parcelize
 data class MediaStoreData(
     val type: MediaType = MediaType.Image,
-    var id: Long = 0L,
+    val id: Long = 0L,
     val uri: Uri = Uri.parse(""),
     val mimeType: String? = "image",
-    var dateModified: Long = 0L,
+    val dateModified: Long = 0L,
     val dateTaken: Long = 0L,
     val displayName: String? = "",
     val absolutePath: String = "",
-    val section: SectionItem = SectionItem(0L, 0)
+    val section: SectionItem = SectionItem(0L, 0),
+    val bytes: ByteArray? = null
 ) : Parcelable {
     companion object {
         val dummyItem = MediaStoreData()
@@ -66,6 +67,38 @@ data class MediaStoreData(
         }
 
         return calendar.timeInMillis / 1000
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as MediaStoreData
+
+        if (type != other.type) return false
+        if (id != other.id) return false
+        if (uri != other.uri) return false
+        if (mimeType != other.mimeType) return false
+        if (dateModified != other.dateModified) return false
+        if (dateTaken != other.dateTaken) return false
+        if (displayName != other.displayName) return false
+        if (absolutePath != other.absolutePath) return false
+        if (section != other.section) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = type.hashCode()
+        result = 31 * result + id.hashCode()
+        result = 31 * result + uri.hashCode()
+        result = 31 * result + (mimeType?.hashCode() ?: 0)
+        result = 31 * result + dateModified.hashCode()
+        result = 31 * result + dateTaken.hashCode()
+        result = 31 * result + (displayName?.hashCode() ?: 0)
+        result = 31 * result + absolutePath.hashCode()
+        result = 31 * result + section.hashCode()
+        return result
     }
 }
 

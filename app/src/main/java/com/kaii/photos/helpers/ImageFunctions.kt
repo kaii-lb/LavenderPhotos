@@ -39,12 +39,12 @@ import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.kaii.photos.MainActivity.Companion.applicationDatabase
 import com.kaii.photos.database.entities.SecuredItemEntity
+import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.copyMedia
 import com.kaii.photos.mediastore.copyUriToUri
-import com.kaii.photos.mediastore.getExternalStorageContentUriFromAbsolutePath
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -120,15 +120,16 @@ fun shareSecuredImage(absolutePath: String, context: Context, mimeType: String? 
 		putExtra(Intent.EXTRA_STREAM, uri)
 	}
 
-	context.startActivity(intent)
+	context.startActivity(Intent.createChooser(intent, "Share secured image"))
 }
 
+/** @param paths is a list of absolute paths and [MediaType]s of items */
 fun shareMultipleSecuredImages(
-	paths: List<MediaStoreData>,
+	paths: List<Pair<String, MediaType>>,
 	context: Context
 ) {
 	val hasVideos = paths.any {
-	    it.type == MediaType.Video
+	    it.second == MediaType.Video
 	}
 
 	val intent = Intent().apply {
@@ -139,7 +140,7 @@ fun shareMultipleSecuredImages(
 
 	val fileUris = ArrayList(
 	    paths.map {
-	        FileProvider.getUriForFile(context, LAVENDER_FILE_PROVIDER_AUTHORITY, File(it.absolutePath))
+	        FileProvider.getUriForFile(context, LAVENDER_FILE_PROVIDER_AUTHORITY, File(it.first))
 	    }
 	)
 
@@ -148,67 +149,83 @@ fun shareMultipleSecuredImages(
 	context.startActivity(Intent.createChooser(intent, null))
 }
 
-fun moveImageToLockedFolder(mediaItem: MediaStoreData, context: Context) {
-    val lastModified = System.currentTimeMillis()
+fun moveImageToLockedFolder(list: List<MediaStoreData>, context: Context) {
     val contentResolver = context.contentResolver
+    val lastModified = System.currentTimeMillis()
+	val encryptionManager = EncryptionManager()
 
     CoroutineScope(Dispatchers.IO).launch {
         async {
-            contentResolver.update(
-                mediaItem.uri,
-                ContentValues().apply {
-                    put(MediaColumns.DATE_MODIFIED, lastModified)
-                },
-                null
-            )
+        	list.forEach { mediaItem ->
+        		// set last modified so item shows up in correct place in locked folder
+	            contentResolver.update(
+	                mediaItem.uri,
+	                ContentValues().apply {
+	                    put(MediaColumns.DATE_MODIFIED, lastModified)
+	                },
+	                null
+	            )
 
-            val fileToBeHidden = File(mediaItem.absolutePath)
-            val copyToPath = context.appSecureFolderDir + "/" + fileToBeHidden.name
+	            val fileToBeHidden = File(mediaItem.absolutePath)
+	            val copyToPath = context.appSecureFolderDir + "/" + fileToBeHidden.name
+	            val destinationFile = File(copyToPath)
 
-            setDateTakenForMedia(
-                mediaItem.absolutePath,
-                mediaItem.dateTaken
-            )
+	            setDateTakenForMedia(
+	                mediaItem.absolutePath,
+	                mediaItem.dateTaken
+	            )
 
-            contentResolver.copyUriToUri(
-                mediaItem.uri,
-                File(copyToPath).toUri()
-            )
+				// encrypt file data and write to secure folder path
+		        val encryptedBytes = encryptionManager.encryptFile(fileToBeHidden.readBytes())
 
-            contentResolver.delete(mediaItem.uri, null)
+		        destinationFile.outputStream().apply {
+		        	write(encryptedBytes)
+		        	close()
+		       	}
 
-            applicationDatabase.securedItemEntityDao().insertEntity(
-                SecuredItemEntity(
-                    originalPath = mediaItem.absolutePath,
-                    securedPath = copyToPath
-                )
-            )
+	            applicationDatabase.securedItemEntityDao().insertEntity(
+	                SecuredItemEntity(
+	                    originalPath = mediaItem.absolutePath,
+	                    securedPath = copyToPath
+	                )
+	            )
 
-            applicationDatabase.mediaEntityDao().deleteEntityById(mediaItem.id)
+				// cleanup
+	            contentResolver.delete(mediaItem.uri, null)
+	            applicationDatabase.mediaEntityDao().deleteEntityById(mediaItem.id)
+        	}
         }.await()
     }
 }
 
-/** @param list is the secured folder paths (/data/ path) to these items */
 fun moveImageOutOfLockedFolder(list: List<MediaStoreData>, context: Context) {
     val contentResolver = context.contentResolver
+
+	val encryptionManager = EncryptionManager()
 
     CoroutineScope(Dispatchers.IO).launch {
         async {
             list.forEach { media ->
-                val originalPath = applicationDatabase.securedItemEntityDao().getOriginalPathFromSecuredPath(media.absolutePath) ?: context.appRestoredFilesDir
                 val fileToBeRestored = File(media.absolutePath)
+                val originalPath = applicationDatabase.securedItemEntityDao().getOriginalPathFromSecuredPath(media.absolutePath)?.replace(fileToBeRestored.name, "") ?: context.appRestoredFilesDir
 
                 Log.d(TAG, "ORIGINAL PATH $originalPath")
+
+				val tempFile = File(context.cacheDir, fileToBeRestored.name)
+				tempFile.outputStream().apply {
+					write(encryptionManager.decryptBytes(fileToBeRestored.readBytes()))
+					close()
+				}
 
                 contentResolver.copyMedia(
                     context = context,
                     media = media.copy(
-                        uri = fileToBeRestored.toUri()
+                        uri = tempFile.toUri()
                     ),
-                    destination = originalPath.replace(fileToBeRestored.name, "").removeSuffix("/")
+                    destination = originalPath.replace(baseInternalStorageDirectory, "")
                 )?.let {
                     fileToBeRestored.delete()
+                    tempFile.delete()
                     applicationDatabase.securedItemEntityDao().deleteEntityBySecuredPath(media.absolutePath)
                 }
             }

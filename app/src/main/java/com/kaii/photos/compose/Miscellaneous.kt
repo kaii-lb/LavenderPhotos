@@ -1,5 +1,6 @@
 package com.kaii.photos.compose
 
+import android.content.res.Configuration
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
@@ -17,7 +18,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -35,8 +35,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
@@ -48,6 +51,7 @@ import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
@@ -323,46 +327,6 @@ fun ShowSelectedState(
     }
 }
 
-// @Composable
-// fun DirectoryTreeItem(
-// 	path: String,
-// 	tree: SnapshotStateList<String>
-// ) {
-// 	val isSelected by remember { derivedStateOf {
-// 		tree.contains(path)
-// 	}}
-//
-// 	Box (
-// 		modifier = Modifier
-// 			.fillMaxWidth(1f)
-// 			.clip(RoundedCornerShape(16.dp))
-// 			.background(CustomMaterialTheme.colorScheme.surfaceContainer)
-// 			.clickable {
-// 				if (isSelected) {
-// 					tree.remove(path)
-// 				} else {
-// 					tree.add(path)
-// 				}
-// 			}
-// 	) {
-// 		Text(
-// 			text = path.removeSuffix("/").substringAfterLast("/"),
-// 			fontSize = TextUnit(14f, TextUnitType.Sp),
-//             color = if (isSelected) CustomMaterialTheme.colorScheme.onPrimary else CustomMaterialTheme.colorScheme.onSurface,
-//             modifier = Modifier
-//                 .wrapContentSize()
-//                 .align(Alignment.CenterStart)
-// 		)
-//
-// 	    ShowSelectedState(
-// 	        isSelected = isSelected,
-// 	        modifier = Modifier
-// 	            .align(Alignment.CenterEnd)
-// 	    )
-// 	}
-// }
-
-
 @Composable
 fun SelectViewTopBarLeftButtons(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
@@ -407,8 +371,8 @@ fun SelectViewTopBarRightButtons(
 
 	val isTicked by remember {
 	    derivedStateOf {
-	    	Log.d(TAG, "SELECTED ${selectedItemsList.size} GROUPED ${groupedMedia?.value?.size}")
-	        selectedItemsList.size == groupedMedia?.value?.size
+	    	Log.d(TAG, "SELECTED ${selectedItemsList.size} GROUPED ${groupedMedia.value?.size}")
+	        selectedItemsList.size == groupedMedia.value?.size
 	    }
 	}
 
@@ -426,7 +390,7 @@ fun SelectViewTopBarRightButtons(
                 } else {
                     selectedItemsList.clear()
 
-					groupedMedia?.value?.let {
+					groupedMedia.value?.let {
 						selectedItemsList.addAll(it)
 					}
                 }
@@ -459,4 +423,17 @@ fun SelectViewTopBarRightButtons(
             )
         }
     }
+}
+
+/** return true if the device is in landscape mode, false otherwise */
+@Composable
+fun rememberDeviceOrientation() : MutableState<Boolean> {
+    val localConfig = LocalConfiguration.current
+    val isLandscape = remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
+
+    LaunchedEffect(localConfig) {
+        isLandscape.value = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
+    }
+
+    return isLandscape
 }

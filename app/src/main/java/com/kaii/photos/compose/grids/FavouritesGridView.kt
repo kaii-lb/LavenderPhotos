@@ -14,6 +14,7 @@ import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,6 +30,7 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.FavouritesViewBottomAppBar
 import com.kaii.photos.compose.FavouritesViewTopAppBar
 import com.kaii.photos.compose.ViewProperties
+import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.models.gallery_model.groupPhotosBy
@@ -39,7 +41,8 @@ import kotlinx.coroutines.Dispatchers
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavouritesGridView(
-    selectedItemsList: SnapshotStateList<MediaStoreData>
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    currentView: MutableState<MainScreenViewType>
 ) {
     val favouritesViewModel: FavouritesViewModel = viewModel(
         factory = FavouritesViewModelFactory()
@@ -95,7 +98,7 @@ fun FavouritesGridView(
                 WindowInsets.navigationBars
             ),
         topBar = {
-            FavouritesViewTopAppBar(selectedItemsList = selectedItemsList) {
+            FavouritesViewTopAppBar(selectedItemsList = selectedItemsList, currentView = currentView) {
                 navController.popBackStack()
             }
         },

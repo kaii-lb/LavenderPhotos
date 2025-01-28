@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -19,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,9 +35,12 @@ import com.kaii.photos.R
 import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.MainScreenViewType
+import javax.crypto.Cipher
 
 @Composable
-fun LockedFolderEntryView(currentView: MutableState<MainScreenViewType>) {
+fun LockedFolderEntryView(
+    currentView: MutableState<MainScreenViewType>
+) {
     val navController = LocalNavController.current
 
     BackHandler(
@@ -44,84 +49,143 @@ fun LockedFolderEntryView(currentView: MutableState<MainScreenViewType>) {
         currentView.value = MainScreenViewType.PhotosGridView
     }
 
-    Column (
-        modifier = Modifier
-            .fillMaxSize(1f)
-            .padding(8.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        val context = LocalContext.current
-        val cancellationSignal = CancellationSignal()
+    val context = LocalContext.current
+    val cancellationSignal = CancellationSignal()
 
-        val prompt = BiometricPrompt.Builder(LocalContext.current)
-            .setTitle("Unlock Secure Folder")
-            .setSubtitle("Use your biometric credentials to unlock")
-            .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL)
-            .build()
+    val prompt = BiometricPrompt.Builder(LocalContext.current)
+        .setTitle("Unlock Secure Folder")
+        .setSubtitle("Use your biometric credentials to unlock")
+        .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL)
+        .build()
 
-        val promptCallback = object : BiometricPrompt.AuthenticationCallback() {
-            override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult?) {
-                super.onAuthenticationSucceeded(result)
-
-                navController.navigate(MultiScreenViewType.LockedFolderView.name)
-            }
-
-            override fun onAuthenticationError(errorCode: Int, errString: CharSequence?) {
-                super.onAuthenticationError(errorCode, errString)
-
-                Toast.makeText(context, "Failed to authenticate :<", Toast.LENGTH_LONG).show()
-            }
+    val promptCallback = object : BiometricPrompt.AuthenticationCallback() {
+        override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult?) {
+            super.onAuthenticationSucceeded(result)
+            navController.navigate(MultiScreenViewType.LockedFolderView.name)
         }
 
-        val showHelpDialog = remember { mutableStateOf(false) }
-        if(showHelpDialog.value) {
-            ExplanationDialog(
-                title = "Secure Folder",
-                explanation = stringResource(id = R.string.locked_folder_help_top) +
-                        "\n\n" +
-                        stringResource(id = R.string.locked_folder_help_bottom),
-                showDialog = showHelpDialog
-            )
+        override fun onAuthenticationError(errorCode: Int, errString: CharSequence?) {
+            super.onAuthenticationError(errorCode, errString)
+
+            Toast.makeText(context, "Failed to authenticate :<", Toast.LENGTH_LONG).show()
         }
+    }
 
-
-        Icon(
-            painter = painterResource(id = R.drawable.locked_folder),
-            contentDescription = "Locked Folder Icon",
-            modifier = Modifier.size(72.dp)
+    val showHelpDialog = remember { mutableStateOf(false) }
+    if(showHelpDialog.value) {
+        ExplanationDialog(
+            title = "Secure Folder",
+            explanation = stringResource(id = R.string.locked_folder_help_top) +
+                    "\n" +
+                    stringResource(id = R.string.locked_folder_help_bottom),
+            showDialog = showHelpDialog
         )
+    }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(
-            onClick = {
-                prompt.authenticate(
-                    cancellationSignal,
-                    context.mainExecutor,
-                    promptCallback
+    val orientation by rememberDeviceOrientation()
+    if (orientation) {
+        Row (
+            modifier = Modifier
+                .fillMaxSize(1f)
+                .padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Column (
+                modifier = Modifier
+                    .weight(1f),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.locked_folder),
+                    contentDescription = "Secure Folder Icon",
+                    modifier = Modifier.size(72.dp)
                 )
-            },
-        ) {
-            Text(
-                text = "Unlock Folder",
-                fontSize = TextUnit(16f, TextUnitType.Sp)
-            )
-        }
+            }
 
-        Button(
-            onClick = {
-                showHelpDialog.value = true
-            },
-            colors = ButtonDefaults.buttonColors(
-                containerColor = CustomMaterialTheme.colorScheme.surfaceVariant,
-                contentColor = CustomMaterialTheme.colorScheme.onSurface
-            )
+            Column (
+                modifier = Modifier
+                    .weight(1f),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Button(
+                    onClick = {
+                        prompt.authenticate(
+                            cancellationSignal,
+                            context.mainExecutor,
+                            promptCallback
+                        )
+                    },
+                ) {
+                    Text(
+                        text = "Unlock Folder",
+                        fontSize = TextUnit(16f, TextUnitType.Sp)
+                    )
+                }
+
+                Button(
+                    onClick = {
+                        showHelpDialog.value = true
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = CustomMaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = CustomMaterialTheme.colorScheme.onSurface
+                    )
+                ) {
+                    Text(
+                        text = "More Info",
+                        fontSize = TextUnit(16f, TextUnitType.Sp)
+                    )
+                }
+            }
+        }
+    } else {
+        Column (
+            modifier = Modifier
+                .fillMaxSize(1f)
+                .padding(8.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = "More Info",
-                fontSize = TextUnit(16f, TextUnitType.Sp)
+            Icon(
+                painter = painterResource(id = R.drawable.locked_folder),
+                contentDescription = "Locked Folder Icon",
+                modifier = Modifier.size(72.dp)
             )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(
+                onClick = {
+                    prompt.authenticate(
+                        cancellationSignal,
+                        context.mainExecutor,
+                        promptCallback
+                    )
+                },
+            ) {
+                Text(
+                    text = "Unlock Folder",
+                    fontSize = TextUnit(16f, TextUnitType.Sp)
+                )
+            }
+
+            Button(
+                onClick = {
+                    showHelpDialog.value = true
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = CustomMaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = CustomMaterialTheme.colorScheme.onSurface
+                )
+            ) {
+                Text(
+                    text = "More Info",
+                    fontSize = TextUnit(16f, TextUnitType.Sp)
+                )
+            }
         }
     }
 }

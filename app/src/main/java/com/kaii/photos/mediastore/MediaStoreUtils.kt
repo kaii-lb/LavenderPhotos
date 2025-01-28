@@ -79,7 +79,7 @@ suspend fun ContentResolver.copyMedia(
     }
 
     val fileName = overrideDisplayName ?: file.nameWithoutExtension
-    val fullUriPath = getExternalStorageContentUriFromAbsolutePath(destination, true)
+    val fullUriPath = context.getExternalStorageContentUriFromAbsolutePath(destination, true)
 
     try {
         val directory = DocumentFile.fromTreeUri(context, fullUriPath)
@@ -115,11 +115,16 @@ fun ContentResolver.copyUriToUri(from: Uri, to: Uri) {
     }
 }
 
-fun getExternalStorageContentUriFromAbsolutePath(absolutePath: String, trimDoc: Boolean): Uri {
+
+fun Context.getExternalStorageContentUriFromAbsolutePath(absolutePath: String, trimDoc: Boolean): Uri {
     val relative = absolutePath.replace(baseInternalStorageDirectory, "").removeSuffix("/")
 
+	val needed = if (relative.trim() == "") {
+		appRestoredFilesDir.replace(baseInternalStorageDirectory, "")
+	} else relative
+
     val treeUri = DocumentsContract.buildTreeDocumentUri(EXTERNAL_DOCUMENTS_AUTHORITY, "primary:")
-    val pathId = "primary:$relative"
+    val pathId = "primary:$needed"
 
     val documentUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, pathId).toString().let {
         if (trimDoc) it.replace("/document/primary%3A", "")

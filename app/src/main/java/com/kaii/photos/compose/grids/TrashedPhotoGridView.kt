@@ -16,6 +16,7 @@ import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,6 +38,7 @@ import com.kaii.photos.compose.TrashedPhotoGridViewTopBar
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.datastore.TrashBin
 import com.kaii.photos.helpers.GetPermissionAndRun
+import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
@@ -49,6 +51,7 @@ import kotlin.time.Duration.Companion.days
 @Composable
 fun TrashedPhotoGridView(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
+    currentView: MutableState<MainScreenViewType>
 ) {
     val context = LocalContext.current
     val trashViewModel: TrashViewModel = viewModel(
@@ -144,6 +147,7 @@ fun TrashedPhotoGridView(
             TrashedPhotoGridViewTopBar(
                 selectedItemsList = selectedItemsList,
                 groupedMedia = groupedMedia.value,
+                currentView = currentView
             ) {
                 trashViewModel.cancelMediaSource()
                 navController.popBackStack()

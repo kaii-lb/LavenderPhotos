@@ -26,6 +26,7 @@ class FavouritesViewModel() : ViewModel() {
         getMediaDataFlow().stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
     }
 
+	// TODO: switch to content resolver's favouriting system
     private fun getMediaDataFlow(): Flow<List<MediaStoreData>> {
         val list = dao.getAll().flowOn(Dispatchers.IO).map { list ->
             list.map { entity ->
@@ -45,7 +46,7 @@ class FavouritesViewModel() : ViewModel() {
         return list
     }
 
-    fun addToFavourites(mediaItem: MediaStoreData) {
+    fun addToFavourites(mediaItem: MediaStoreData, context: Context) {
         val dateModified = System.currentTimeMillis() / 1000
         viewModelScope.launch {
             dao.insertEntity(
@@ -53,7 +54,7 @@ class FavouritesViewModel() : ViewModel() {
                     id = mediaItem.id,
                     dateTaken = mediaItem.dateTaken,
                     dateModified = dateModified,
-                    mimeType = mediaItem.mimeType ?: "image/*", // TODO: context.contentResolver.getType(mediaItem.uri),
+                    mimeType = mediaItem.mimeType ?: context.contentResolver.getType(mediaItem.uri),
                     type = mediaItem.type,
                     absolutePath = mediaItem.absolutePath,
                     displayName = mediaItem.displayName ?: "Media",
