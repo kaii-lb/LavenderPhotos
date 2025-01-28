@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.kaii.photos.MainActivity
 import com.kaii.photos.database.entities.FavouritedItemEntity
 import com.kaii.photos.mediastore.MediaStoreData
+import kotlin.io.path.Path
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.io.File
+import java.nio.file.Files
 
 class FavouritesViewModel() : ViewModel() {
     private val dao = MainActivity.applicationDatabase.favouritedItemEntityDao()
@@ -54,7 +56,7 @@ class FavouritesViewModel() : ViewModel() {
                     id = mediaItem.id,
                     dateTaken = mediaItem.dateTaken,
                     dateModified = dateModified,
-                    mimeType = mediaItem.mimeType ?: context.contentResolver.getType(mediaItem.uri),
+                    mimeType = mediaItem.mimeType ?: context.contentResolver.getType(mediaItem.uri) ?: Files.probeContentType(Path(mediaItem.absolutePath)),
                     type = mediaItem.type,
                     absolutePath = mediaItem.absolutePath,
                     displayName = mediaItem.displayName ?: "Media",

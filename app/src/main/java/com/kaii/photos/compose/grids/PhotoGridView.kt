@@ -137,8 +137,7 @@ fun PhotoGrid(
 
     LaunchedEffect(groupedMedia.value) {
         hasFiles = if (path == null) {
-        	// TODO: make it a timer for 5 seconds loading or something and then hide spinner
-            groupedMedia.value.isNotEmpty() || viewProperties == ViewProperties.SecureFolder
+            groupedMedia.value.isNotEmpty() || (viewProperties == ViewProperties.SecureFolder && !viewProperties.isListEmpty)
         } else {
             val basePath = baseInternalStorageDirectory
             if (viewProperties == ViewProperties.Trash) {

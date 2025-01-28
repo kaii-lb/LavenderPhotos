@@ -12,6 +12,7 @@ import android.provider.MediaStore
 import android.provider.MediaStore.MediaColumns
 import android.util.Log
 import androidx.documentfile.provider.DocumentFile
+import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.EXTERNAL_DOCUMENTS_AUTHORITY
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.setDateTakenForMedia

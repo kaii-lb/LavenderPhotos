@@ -138,7 +138,12 @@ fun DebuggingSettingsPage() {
 								showAddAlbumsDialog = false
 								true
 							}
+	               		},
+	               		onValueChange = { path ->
+							val relativePath = path.trim().replace(baseInternalStorageDirectory, "")
+							val absolutePath = baseInternalStorageDirectory + relativePath
 
+							!File(absolutePath).exists() || relativePath == ""
 	               		}
 	               	)
 				}

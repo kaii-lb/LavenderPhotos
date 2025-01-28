@@ -150,6 +150,7 @@ fun LockedFolderView(
 	}
 
 	// TODO: USE APP CONTENT RESOLVER!!!!
+	var viewProperties by remember { mutableStateOf(ViewProperties.SecureFolder)}
 	LaunchedEffect(fileList) {
 		withContext(Dispatchers.IO) {
 		    fileList.forEach { file ->
@@ -179,6 +180,10 @@ fun LockedFolderView(
 		    }
 
 		    groupedMedia.value = groupPhotosBy(mediaStoreData, MediaItemSortMode.LastModified)
+
+		    if (groupedMedia.value.isEmpty()) viewProperties = ViewProperties.SecureFolder.apply {
+		    	isListEmpty = true
+		    }
 		}
 	}
 
@@ -236,7 +241,7 @@ fun LockedFolderView(
                 groupedMedia = groupedMedia,
                 path = null,
                 selectedItemsList = selectedItemsList,
-                viewProperties = ViewProperties.SecureFolder,
+                viewProperties = viewProperties,
                 shouldPadUp = true
             )
         }

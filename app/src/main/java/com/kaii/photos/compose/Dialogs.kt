@@ -1226,6 +1226,7 @@ fun TextEntryDialog(
     title: String,
     placeholder: String? = null,
     onConfirm: (text: String) -> Boolean,
+    onValueChange: (text: String) -> Boolean,
     onDismiss: () -> Unit
 ) {
     Dialog(
@@ -1264,6 +1265,7 @@ fun TextEntryDialog(
                 value = text,
                 onValueChange = {
                     text = it
+                    showError = onValueChange(it)
                 },
                 maxLines = 1,
                 singleLine = true,
@@ -1279,7 +1281,7 @@ fun TextEntryDialog(
                     if (showError) {
                         Row {
                             Icon(
-                                painter = painterResource(id = R.drawable.edit), // TODO: change to error icon and color to be a theme specific red
+                                painter = painterResource(id = R.drawable.error_2),
                                 contentDescription = "Error",
                                 tint = CustomMaterialTheme.colorScheme.primary,
                                 modifier = Modifier
@@ -1288,8 +1290,6 @@ fun TextEntryDialog(
                                         // TODO: show help tip
                                     }
                             )
-
-                            Spacer(modifier = Modifier.width(8.dp))
                         }
                     }
                 },
@@ -1500,6 +1500,7 @@ fun SelectingMoreOptionsDialog(
                         position = RowPosition.Single
                     ) {
                         tryGetDirPermission.value = true
+                        showDialog.value = false
                     }
                 }
             }
