@@ -219,6 +219,7 @@ class MainActivity : ComponentActivity() {
 						val moveToSinglePhoto = absolutePath?.let { path ->
 							val uri = contentResolver.getUriFromAbsolutePath(path, MediaType.Image)?.let { contentUri ->
 					            val mediaStoreData = contentResolver.getMediaStoreDataFromUri(contentUri)
+					            val parentPath = File(path).parentFile?.absolutePath
 
 					            mediaStoreData?.let { media ->
 						            mainViewModel.apply {
@@ -226,11 +227,13 @@ class MainActivity : ComponentActivity() {
 
 						                setGroupedMedia(listOf(media))
 
-						                setSinglePhotoPath(null)
+						                setSinglePhotoPath(parentPath)
 						            }
 						            true
 					            }
+					            false
 							}
+							false
 						} ?: false
 
                         SetContentForActivity(moveToSinglePhoto)
