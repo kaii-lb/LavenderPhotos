@@ -82,8 +82,8 @@ fun LockedFolderEntryView(
         )
     }
 
-    val orientation by rememberDeviceOrientation()
-    if (orientation) {
+    val isLandscape by rememberDeviceOrientation()
+    if (isLandscape) {
         Row (
             modifier = Modifier
                 .fillMaxSize(1f)
@@ -101,6 +101,11 @@ fun LockedFolderEntryView(
                     painter = painterResource(id = R.drawable.locked_folder),
                     contentDescription = "Secure Folder Icon",
                     modifier = Modifier.size(72.dp)
+                )
+
+                Text(
+                    text = "Secure Folder",
+                    fontSize = TextUnit(16f, TextUnitType.Sp)
                 )
             }
 
