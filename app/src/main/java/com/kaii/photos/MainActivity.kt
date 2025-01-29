@@ -1,11 +1,13 @@
 package com.kaii.photos
 
 import android.content.res.Configuration
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.Window
 import android.view.WindowManager
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
@@ -106,6 +108,9 @@ import com.kaii.photos.helpers.appStorageDir
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.mediastore.MediaStoreData
+import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.mediastore.getMediaStoreDataFromUri
+import com.kaii.photos.mediastore.getUriFromAbsolutePath
 import com.kaii.photos.models.gallery_model.GalleryViewModel
 import com.kaii.photos.models.gallery_model.GalleryViewModelFactory
 import com.kaii.photos.models.main_activity.MainViewModel
@@ -167,6 +172,7 @@ class MainActivity : ComponentActivity() {
             val followDarkTheme by mainViewModel.settings.LookAndFeel.getFollowDarkMode().collectAsStateWithLifecycle(
                 initialValue = initial
             )
+
             PhotosTheme(
                 darkTheme = followDarkTheme,
                 dynamicColor = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
@@ -200,7 +206,34 @@ class MainActivity : ComponentActivity() {
 
                         PermissionHandler(continueToApp)
                     } else {
-                        SetContentForActivity()
+				        val absolutePath =
+				            if (intent?.data?.path != null) {
+				                intent!!.data!!.path!!.removePrefix("/").replace("%20", " ").let {
+				                	File(Uri.decode(it).toUri().path!!).absolutePath
+				                }
+				            } else {
+				                Toast.makeText(applicationContext, "Selected media doesn't exist", Toast.LENGTH_LONG).show()
+				                null
+				            }
+
+						val moveToSinglePhoto = absolutePath?.let { path ->
+							val uri = contentResolver.getUriFromAbsolutePath(path, MediaType.Image)?.let { contentUri ->
+					            val mediaStoreData = contentResolver.getMediaStoreDataFromUri(contentUri)
+
+					            mediaStoreData?.let { media ->
+						            mainViewModel.apply {
+						                setSelectedMediaData(media)
+
+						                setGroupedMedia(listOf(media))
+
+						                setSinglePhotoPath(null)
+						            }
+						            true
+					            }
+							}
+						} ?: false
+
+                        SetContentForActivity(moveToSinglePhoto)
                     }
                 }
             }
@@ -208,7 +241,7 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun SetContentForActivity() {
+    private fun SetContentForActivity(moveToSinglePhoto: Boolean) {
         window.decorView.setBackgroundColor(MaterialTheme.colorScheme.background.toArgb())
 
         val navControllerLocal = rememberNavController()
@@ -628,6 +661,8 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+
+        if (moveToSinglePhoto) navControllerLocal.navigate(MultiScreenViewType.SinglePhotoView.name)
     }
 
     @Composable

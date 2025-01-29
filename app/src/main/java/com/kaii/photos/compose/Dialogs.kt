@@ -112,6 +112,7 @@ import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.brightenColor
 import com.kaii.photos.helpers.createPersistablePermissionLauncher
+import com.kaii.photos.helpers.checkDirIsDownloads
 import com.kaii.photos.helpers.darkenColor
 import com.kaii.photos.helpers.getExifDataForMedia
 import com.kaii.photos.helpers.moveImageToLockedFolder
@@ -1183,7 +1184,7 @@ fun SingleAlbumDialog(
                     string = fileName,
                     doAction = saveFileName,
                     rowPosition = RowPosition.Middle,
-                    enabled = !(dir.startsWith(Environment.DIRECTORY_DOWNLOADS) && dir.removeSuffix("/").endsWith(Environment.DIRECTORY_DOWNLOADS)),
+                    enabled = !checkDirIsDownloads(dir),
                     modifier = Modifier
                         .padding(8.dp, 0.dp)
                 ) {
@@ -1199,6 +1200,7 @@ fun SingleAlbumDialog(
                         text = "Remove album from list",
                         iconResId = R.drawable.delete,
                         position = RowPosition.Bottom,
+                        enabled = !checkDirIsDownloads(dir)
                     ) {
                         mainViewModel.settings.AlbumsList.removeFromAlbumsList(dir)
                         showDialog.value = false
@@ -1325,7 +1327,8 @@ fun TextEntryDialog(
                 text = "Confirm",
                 color = MaterialTheme.colorScheme.primary,
                 textColor = MaterialTheme.colorScheme.onPrimary,
-                position = RowPosition.Single
+                position = RowPosition.Single,
+                enabled = !showError
             ) {
                 showError = !onConfirm(text)
             }

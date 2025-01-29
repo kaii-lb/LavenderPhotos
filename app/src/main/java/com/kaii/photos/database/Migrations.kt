@@ -2,14 +2,12 @@ package com.kaii.photos.database
 
 import android.content.ContentValues
 import android.content.Context
-import androidx.core.content.FileProvider
 import androidx.room.OnConflictStrategy
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.kaii.photos.database.entities.FavouritedItemEntity
 import com.kaii.photos.mediastore.toMediaType
-import com.kaii.photos.mediastore.getUriFromAbsoltuePath
-import java.io.File
+import com.kaii.photos.mediastore.getUriFromAbsolutePath
 
 class Migration3to4(val context: Context) : Migration(startVersion = 3, endVersion = 4) {
     override fun migrate(db: SupportSQLiteDatabase) {
@@ -33,7 +31,7 @@ class Migration3to4(val context: Context) : Migration(startVersion = 3, endVersi
             val type = favItems.getString(typeNum).toMediaType()
             val dateModified = favItems.getLong(dateModifiedNum)
 
-            val uri = context.contentResolver.getUriFromAbsoltuePath(absolutePath = absolutePath, type = type).toString() ?: ""
+            val uri = context.contentResolver.getUriFromAbsolutePath(absolutePath = absolutePath, type = type).toString() ?: ""
 
             newFavItems.add(
                 FavouritedItemEntity(

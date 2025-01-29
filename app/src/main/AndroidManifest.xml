@@ -13,7 +13,8 @@
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"
     	android:minSdkVersion="33"/>
 	<uses-permission android:name="android.permission.MANAGE_MEDIA"
-		android:minSdkVersion="31"/>
+		android:minSdkVersion="31"
+        tools:ignore="ProtectedPermissions" />
 
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
     	android:maxSdkVersion="32"/>
@@ -49,6 +50,17 @@
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <intent-filter android:label="Open with Lavender Photos">
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <action android:name="android.intent.action.VIEW" />
+                <action android:name="android.intent.action.EDIT" />
+
+                <data android:mimeType="image/*" />
+                <data android:mimeType="video/*" />
+                <data android:scheme="content" />
             </intent-filter>
         </activity>
 

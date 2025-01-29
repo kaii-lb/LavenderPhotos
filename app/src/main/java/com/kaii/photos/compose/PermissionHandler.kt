@@ -538,6 +538,7 @@ fun FullWidthDialogButton(
     color: Color,
     textColor: Color,
     position: RowPosition,
+    enabled: Boolean = true,
     onClick: () -> Unit
 ) {
     val (shape, spacerHeight) = getDefaultShapeSpacerForPosition(position, cornerRadius = 24.dp, innerCornerRadius = 4.dp)
@@ -547,10 +548,16 @@ fun FullWidthDialogButton(
             .fillMaxWidth(1f)
             .height(48.dp)
             .clip(shape)
-            .background(color)
-            .clickable {
-                onClick()
-            }
+            .background(
+            	if (enabled) color else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
+           	)
+            .then(
+            	if (enabled) {
+            		Modifier.clickable {
+            			onClick()
+            		}
+            	} else Modifier
+            )
             .padding(8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center

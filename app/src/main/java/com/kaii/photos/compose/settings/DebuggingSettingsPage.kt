@@ -127,13 +127,15 @@ fun DebuggingSettingsPage() {
 	               			showAddAlbumsDialog = false
 	               		},
 	               		onConfirm = { path ->
-							val relativePath = path.trim().replace(baseInternalStorageDirectory, "")
-							val absolutePath = baseInternalStorageDirectory + relativePath
+							val absolutePath = path.trim()
+							val file = File(absolutePath)
 
-							if (!File(absolutePath).exists() || relativePath == "") {
+							if (!file.exists() || absolutePath.replace(baseInternalStorageDirectory, "") == "") {
 								false
 							} else {
-								mainViewModel.settings.AlbumsList.addToAlbumsList(relativePath)
+								mainViewModel.settings.AlbumsList.addToAlbumsList(
+									file.absolutePath.replace(baseInternalStorageDirectory, "")
+								)
 
 								showAddAlbumsDialog = false
 								true

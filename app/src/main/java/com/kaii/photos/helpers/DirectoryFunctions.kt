@@ -94,3 +94,9 @@ fun Path.checkHasFiles(flipDotFileMatch: Boolean = false): Boolean? {
 
     return hasFiles
 }
+
+fun checkDirIsDownloads(dir: String) : Boolean = run {
+	val relative = dir.trim().replace(baseInternalStorageDirectory, "")
+
+	relative.startsWith(Environment.DIRECTORY_DOWNLOADS) && relative.removeSuffix("/").endsWith(Environment.DIRECTORY_DOWNLOADS)
+}
