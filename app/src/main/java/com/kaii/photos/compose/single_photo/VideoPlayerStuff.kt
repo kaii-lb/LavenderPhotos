@@ -73,6 +73,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
@@ -87,7 +88,9 @@ import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.ui.PlayerView
 import androidx.navigation.NavHostController
 import com.kaii.photos.R
+import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.compose.setBarVisibility
+import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareImage
 import com.kaii.photos.mediastore.MediaStoreData
@@ -382,10 +385,13 @@ fun VideoPlayer(
     var exoPlayer = rememberExoPlayerWithLifeCycle(item.uri, isPlaying, duration, currentVideoPosition)
     val playerView = rememberPlayerView(exoPlayer, LocalContext.current as Activity)
 
+	val muteVideoOnStart by mainViewModel.settings.Video.getMuteOnStart().collectAsStateWithLifecycle(initialValue = true)
+
     BackHandler {
         isPlaying.value = false
         currentVideoPosition.floatValue = 0f
         duration.floatValue = 0f
+        lastWasMuted.value = muteVideoOnStart
 
         exoPlayer.stop()
         exoPlayer.release()
