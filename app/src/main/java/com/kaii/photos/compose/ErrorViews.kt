@@ -18,10 +18,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.MaterialTheme
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.kaii.photos.R
-import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.ImageFunctions
 import com.kaii.photos.helpers.MediaItemSortMode
 
@@ -82,7 +82,7 @@ fun FolderDoesntExist() {
     Column(
         modifier = Modifier
             .fillMaxSize(1f)
-            .background(CustomMaterialTheme.colorScheme.background),
+            .background(MaterialTheme.colorScheme.background),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -102,7 +102,7 @@ fun FolderDoesntExist() {
 fun FolderIsEmpty(
     emptyText: String,
     emptyIconResId: Int,
-    backgroundColor: Color = CustomMaterialTheme.colorScheme.background
+    backgroundColor: Color = MaterialTheme.colorScheme.background
 ) {
     Column(
         modifier = Modifier
@@ -114,7 +114,7 @@ fun FolderIsEmpty(
         GlideImage(
             model = emptyIconResId,
             contentDescription = "folder doesn't exist icon",
-            colorFilter = ColorFilter.tint(CustomMaterialTheme.colorScheme.onBackground),
+            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onBackground),
             contentScale = ContentScale.Fit,
             modifier = Modifier
                 .size(56.dp)
@@ -125,7 +125,7 @@ fun FolderIsEmpty(
         Text(
             text = emptyText,
             fontSize = TextUnit(16f, TextUnitType.Sp),
-            color = CustomMaterialTheme.colorScheme.onBackground,
+            color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier
                 .wrapContentSize()
         )

@@ -24,6 +24,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -51,7 +52,6 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import com.kaii.photos.R
-import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.RowPosition
 import kotlinx.coroutines.delay
 
@@ -95,13 +95,13 @@ fun TextFieldWithConfirm(
                 }
             },
             colors = TextFieldDefaults.colors(
-                focusedContainerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
-                unfocusedContainerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
-                cursorColor = CustomMaterialTheme.colorScheme.primary,
-                focusedTextColor = CustomMaterialTheme.colorScheme.onSurface,
-                unfocusedTextColor = CustomMaterialTheme.colorScheme.onSurface,
-                focusedPlaceholderColor = CustomMaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                unfocusedPlaceholderColor = CustomMaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                cursorColor = MaterialTheme.colorScheme.primary,
+                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                focusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
                 unfocusedIndicatorColor = Color.Transparent,
                 focusedIndicatorColor = Color.Transparent
             ),
@@ -126,7 +126,7 @@ fun TextFieldWithConfirm(
                 .height(56.dp)
                 .width(32.dp)
                 .clip(RoundedCornerShape(0.dp, 1000.dp, 1000.dp, 0.dp))
-                .background(CustomMaterialTheme.colorScheme.surfaceContainer)
+                .background(MaterialTheme.colorScheme.surfaceContainer)
                 .weight(0.2f),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
@@ -145,7 +145,7 @@ fun TextFieldWithConfirm(
                 Icon(
                     painter = painterResource(id = R.drawable.file_is_selected_foreground),
                     contentDescription = "Confirm text change",
-                    tint = CustomMaterialTheme.colorScheme.onSurface,
+                    tint = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier
                         .size(24.dp)
                 )
@@ -195,13 +195,13 @@ fun SearchTextField(
                 }
             },
             colors = TextFieldDefaults.colors(
-                focusedContainerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
-                unfocusedContainerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
-                cursorColor = CustomMaterialTheme.colorScheme.primary,
-                focusedTextColor = CustomMaterialTheme.colorScheme.onSurface,
-                unfocusedTextColor = CustomMaterialTheme.colorScheme.onSurface,
-                focusedPlaceholderColor = CustomMaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                unfocusedPlaceholderColor = CustomMaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                cursorColor = MaterialTheme.colorScheme.primary,
+                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                focusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
                 unfocusedIndicatorColor = Color.Transparent,
                 focusedIndicatorColor = Color.Transparent
             ),
@@ -226,7 +226,7 @@ fun SearchTextField(
                 .height(56.dp)
                 .width(32.dp)
                 .clip(RoundedCornerShape(0.dp, 1000.dp, 1000.dp, 0.dp))
-                .background(CustomMaterialTheme.colorScheme.surfaceContainer)
+                .background(MaterialTheme.colorScheme.surfaceContainer)
                 .weight(0.2f),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
@@ -244,7 +244,7 @@ fun SearchTextField(
                 Icon(
                     painter = painterResource(id = R.drawable.close),
                     contentDescription = "Clear search query",
-                    tint = CustomMaterialTheme.colorScheme.onSurface,
+                    tint = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier
                         .size(24.dp)
                 )
@@ -314,7 +314,7 @@ fun AnimatableTextField(
                 textStyle = LocalTextStyle.current.copy(
                     fontSize = TextUnit(16f, TextUnitType.Sp),
                     textAlign = TextAlign.Start,
-                    color = CustomMaterialTheme.colorScheme.onSurface,
+                    color = MaterialTheme.colorScheme.onSurface,
                 ),
                 keyboardOptions = KeyboardOptions(
                     capitalization = KeyboardCapitalization.None,
@@ -339,12 +339,12 @@ fun AnimatableTextField(
                 },
                 shape = RoundedCornerShape(16.dp),
                 colors = TextFieldDefaults.colors().copy(
-                    unfocusedContainerColor = CustomMaterialTheme.colorScheme.surfaceVariant,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
                     unfocusedIndicatorColor = Color.Transparent,
-                    unfocusedTextColor = CustomMaterialTheme.colorScheme.onSurface,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
                     focusedIndicatorColor = Color.Transparent,
-                    focusedTextColor = CustomMaterialTheme.colorScheme.onSurface,
-                    focusedContainerColor = CustomMaterialTheme.colorScheme.surfaceVariant
+                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant
                 ),
                 modifier = Modifier
                     .focusRequester(focus)

@@ -66,6 +66,7 @@ import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RippleConfiguration
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
@@ -156,7 +157,6 @@ import com.kaii.photos.compose.setBarVisibility
 import com.kaii.photos.datastore.Editing
 import com.kaii.photos.helpers.ColorFiltersMatrices
 import com.kaii.photos.helpers.ColorIndicator
-import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.DrawablePath
 import com.kaii.photos.helpers.DrawableText
 import com.kaii.photos.helpers.DrawingColors
@@ -615,7 +615,7 @@ fun EditingView(
                             .width(80.dp)
                             .clip(CircleShape)
                             .background(
-                                CustomMaterialTheme.colorScheme.surfaceVariant
+                                MaterialTheme.colorScheme.surfaceVariant
                             )
                             .align(Alignment.BottomCenter)
                             .clickable {
@@ -668,7 +668,7 @@ fun EditingView(
                         Text(
                             text = "Confirm",
                             fontSize = TextUnit(14f, TextUnitType.Sp),
-                            color = CustomMaterialTheme.colorScheme.onSurface,
+                            color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier
                                 .wrapContentSize()
                         )
@@ -1344,7 +1344,7 @@ private fun EditingViewTopBar(
                         Icon(
                             painter = painterResource(id = R.drawable.close),
                             contentDescription = "Close editing view",
-                            tint = CustomMaterialTheme.colorScheme.onSurface,
+                            tint = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier
                                 .size(24.dp)
                         )
@@ -1360,7 +1360,7 @@ private fun EditingViewTopBar(
                 ) {
                     if (!canExit.value) {
                         CircularProgressIndicator(
-                            color = CustomMaterialTheme.colorScheme.secondary,
+                            color = MaterialTheme.colorScheme.secondary,
                             strokeWidth = 4.dp,
                             strokeCap = StrokeCap.Round,
                             trackColor = Color.Transparent,
@@ -1393,7 +1393,7 @@ private fun EditingViewTopBar(
                             Text(
                                 text = saveButtonTitle,
                                 fontSize = TextUnit(14f, TextUnitType.Sp),
-                                color = CustomMaterialTheme.colorScheme.onPrimary
+                                color = MaterialTheme.colorScheme.onPrimary
                             )
                         },
                         primaryAction = saveAction,
@@ -1420,7 +1420,7 @@ private fun EditingViewTopBar(
                             dismissOnClickOutside = true,
                             dismissOnBackPress = true
                         ),
-                        containerColor = CustomMaterialTheme.colorScheme.primaryContainer,
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
                         shadowElevation = 8.dp
                     ) {
                         SelectableDropDownMenuItem(
@@ -1466,14 +1466,14 @@ private fun EditingViewTopBar(
                     .height(28.dp)
                     .width(32.dp)
                     .clip(RoundedCornerShape(0.dp, 0.dp, 1000.dp, 1000.dp))
-                    .background(CustomMaterialTheme.colorScheme.surfaceContainer)
+                    .background(MaterialTheme.colorScheme.surfaceContainer)
                     .clickable {
                         showInLandscape = !showInLandscape
                     }
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.other_page_indicator),
-                    tint = CustomMaterialTheme.colorScheme.onSurface,
+                    tint = MaterialTheme.colorScheme.onSurface,
                     contentDescription = "Show editing top bar",
                     modifier = Modifier
                         .padding(0.dp, 0.dp, 0.dp, 4.dp)
@@ -1565,14 +1565,14 @@ private fun EditingViewBottomBar(
                     .height(28.dp)
                     .width(32.dp)
                     .clip(RoundedCornerShape(1000.dp, 1000.dp, 0.dp, 0.dp))
-                    .background(CustomMaterialTheme.colorScheme.surfaceContainer)
+                    .background(MaterialTheme.colorScheme.surfaceContainer)
                     .clickable {
                         showInLandscape = !showInLandscape
                     }
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.other_page_indicator),
-                    tint = CustomMaterialTheme.colorScheme.onSurface,
+                    tint = MaterialTheme.colorScheme.onSurface,
                     contentDescription = "Show editing tools",
                     modifier = Modifier
                         .padding(0.dp, 4.dp, 0.dp, 0.dp)
@@ -1607,7 +1607,7 @@ private fun EditingViewBottomBar(
                     .height(animatedSliderHeight)
                     .background(
                         if (isLandscape) {
-                            CustomMaterialTheme.colorScheme.surfaceContainer
+                            MaterialTheme.colorScheme.surfaceContainer
                         } else {
                             Color.Transparent
                         }
@@ -1629,8 +1629,8 @@ private fun EditingViewBottomBar(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             BottomAppBar(
-                containerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
-                contentColor = CustomMaterialTheme.colorScheme.onSurface,
+                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                contentColor = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier
                     .fillMaxWidth(1f)
                     .height(160.dp)
@@ -1654,12 +1654,12 @@ private fun EditingViewBottomBar(
                                         .padding(4.dp)
                                         .fillMaxHeight(1f)
                                         .clip(RoundedCornerShape(100.dp))
-                                        .background(CustomMaterialTheme.colorScheme.primary)
+                                        .background(MaterialTheme.colorScheme.primary)
                                         .zIndex(1f)
                                 )
                             },
-                            containerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
-                            contentColor = CustomMaterialTheme.colorScheme.onSurface,
+                            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                            contentColor = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier
                                 .clip(RoundedCornerShape(1000.dp))
                                 .draggable(
@@ -2298,8 +2298,8 @@ fun EditingViewBottomAppBarItem(
         buttonWidth = 84.dp,
         buttonHeight = 56.dp,
         cornerRadius = 8.dp,
-        color = if (selected) CustomMaterialTheme.colorScheme.primary else Color.Transparent,
-        contentColor = if (selected) CustomMaterialTheme.colorScheme.onPrimary else CustomMaterialTheme.colorScheme.onBackground,
+        color = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent,
+        contentColor = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onBackground,
         action = onClick
     )
 }
@@ -2638,7 +2638,7 @@ private fun BoxWithConstraintsScope.DrawActionsAndColors(
                             .width(64.dp)
                             .clip(CircleShape)
                             .background(
-                                CustomMaterialTheme.colorScheme.surfaceVariant.copy(
+                                MaterialTheme.colorScheme.surfaceVariant.copy(
                                     alpha = 0.8f
                                 )
                             )
@@ -2653,7 +2653,7 @@ private fun BoxWithConstraintsScope.DrawActionsAndColors(
                         Text(
                             text = "Clear",
                             fontSize = TextUnit(14f, TextUnitType.Sp),
-                            color = CustomMaterialTheme.colorScheme.onSurface,
+                            color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier
                                 .wrapContentSize()
                         )
@@ -2664,7 +2664,7 @@ private fun BoxWithConstraintsScope.DrawActionsAndColors(
                             .size(40.dp)
                             .clip(CircleShape)
                             .background(
-                                CustomMaterialTheme.colorScheme.surfaceVariant.copy(
+                                MaterialTheme.colorScheme.surfaceVariant.copy(
                                     alpha = 0.8f
                                 )
                             )
@@ -2679,7 +2679,7 @@ private fun BoxWithConstraintsScope.DrawActionsAndColors(
                         Icon(
                             painter = painterResource(id = R.drawable.close),
                             contentDescription = "undo all actions",
-                            tint = CustomMaterialTheme.colorScheme.onSurface
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 }
@@ -2689,7 +2689,7 @@ private fun BoxWithConstraintsScope.DrawActionsAndColors(
                         .size(40.dp)
                         .clip(CircleShape)
                         .background(
-                            CustomMaterialTheme.colorScheme.surfaceVariant.copy(
+                            MaterialTheme.colorScheme.surfaceVariant.copy(
                                 alpha = 0.8f
                             )
                         )
@@ -2704,7 +2704,7 @@ private fun BoxWithConstraintsScope.DrawActionsAndColors(
                     Icon(
                         painter = painterResource(id = R.drawable.back_arrow),
                         contentDescription = "undo last action",
-                        tint = CustomMaterialTheme.colorScheme.onSurface
+                        tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
 
@@ -2865,7 +2865,7 @@ fun BoxWithConstraintsScope.DrawingControls(
                         .height(16.dp)
                         .width(8.dp)
                         .clip(CircleShape)
-                        .background(CustomMaterialTheme.colorScheme.primary)
+                        .background(MaterialTheme.colorScheme.primary)
                 )
             },
             modifier = Modifier

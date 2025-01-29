@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
@@ -53,7 +54,6 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import com.kaii.photos.R
-import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.getColorFromLinearGradientList
 import com.kaii.photos.helpers.gradientColorList
 
@@ -102,12 +102,12 @@ fun BoxWithConstraintsScope.ColorRangeSlider(
             modifier = Modifier
                 .width(clearAreaWidth)
                 .height(18.dp)
-                .background(CustomMaterialTheme.colorScheme.secondary)
+                .background(MaterialTheme.colorScheme.secondary)
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.trash),
                 contentDescription = "Clear current color tint",
-                tint = CustomMaterialTheme.colorScheme.onSecondary,
+                tint = MaterialTheme.colorScheme.onSecondary,
                 modifier = Modifier
                     .size(clearAreaWidth - 4.dp)
                     .align(Alignment.Center)
@@ -300,11 +300,11 @@ fun BoxWithConstraintsScope.PopupPillSlider(
             .height(animatedPillHeight)
             .width(animatedPillWidth)
             .clip(CircleShape)
-            .background(CustomMaterialTheme.colorScheme.primary)
+            .background(MaterialTheme.colorScheme.primary)
     ) {
         Text(
             text = (sliderValue.floatValue * 100).toInt().toString(),
-            color = CustomMaterialTheme.colorScheme.onPrimary,
+            color = MaterialTheme.colorScheme.onPrimary,
             fontSize = TextUnit(14f, TextUnitType.Sp),
             modifier = Modifier
                 .wrapContentSize()
@@ -337,7 +337,7 @@ fun BoxWithConstraintsScope.PopupPillSlider(
                         modifier = Modifier
                             .size(16.dp)
                             .clip(CircleShape)
-                            .background(CustomMaterialTheme.colorScheme.primary)
+                            .background(MaterialTheme.colorScheme.primary)
                             .align(Alignment.Center)
                     )
                 }

@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -42,7 +43,6 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import com.kaii.photos.R
-import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.Modification
 import com.kaii.photos.helpers.DrawableText
 import com.kaii.photos.helpers.RowPosition
@@ -76,7 +76,7 @@ fun SetEditingViewDrawableTextBottomSheet(
                 showBottomSheet.value = false
             },
             sheetState = sheetState,
-            containerColor = CustomMaterialTheme.colorScheme.background,
+            containerColor = MaterialTheme.colorScheme.background,
             contentWindowInsets = { WindowInsets.ime.add(WindowInsets.navigationBars) },
         ) {
             val text = remember { mutableStateOf(drawableText.text) }
@@ -149,7 +149,7 @@ fun CroppingRatioBottomSheet(
                 showBottomSheet.value = false
             },
             sheetState = sheetState,
-            containerColor = CustomMaterialTheme.colorScheme.background,
+            containerColor = MaterialTheme.colorScheme.background,
             contentWindowInsets = { WindowInsets.navigationBars },
         ) {
             Column(
@@ -302,7 +302,7 @@ fun ClickableRow(
             .height(64.dp)
             .fillMaxWidth(1f)
             .clip(shape)
-            .background(CustomMaterialTheme.colorScheme.surfaceContainer)
+            .background(MaterialTheme.colorScheme.surfaceContainer)
             .clickable {
                 action()
             }
@@ -311,7 +311,7 @@ fun ClickableRow(
         Text(
             text = title,
             fontSize = TextUnit(18f, TextUnitType.Sp),
-            color = CustomMaterialTheme.colorScheme.onSurface,
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier
             	.wrapContentSize()
             	.align(Alignment.CenterStart)
@@ -321,7 +321,7 @@ fun ClickableRow(
             Icon(
                 painter = painterResource(id = R.drawable.file_is_selected_foreground),
                 contentDescription = "this cropping ratio is selected",
-                tint = CustomMaterialTheme.colorScheme.onSurface,
+                tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier
                     .size(24.dp)
                     .align(Alignment.CenterEnd)
@@ -332,6 +332,6 @@ fun ClickableRow(
     Spacer(
         modifier = Modifier
             .height(spacerHeight)
-            .background(CustomMaterialTheme.colorScheme.background)
+            .background(MaterialTheme.colorScheme.background)
     )
 }

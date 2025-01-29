@@ -24,6 +24,7 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -52,7 +53,6 @@ import com.bumptech.glide.integration.compose.placeholder
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity
 import com.kaii.photos.R
-import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.baseInternalStorageDirectory
@@ -84,7 +84,7 @@ fun AlbumsGridView(listOfDirs: List<String>, currentView: MutableState<MainScree
 	Column (
         modifier = Modifier
 			.fillMaxSize(1f)
-			.background(CustomMaterialTheme.colorScheme.background)
+			.background(MaterialTheme.colorScheme.background)
 			.padding(8.dp, 0.dp),
         verticalArrangement = Arrangement.SpaceEvenly,
         horizontalAlignment = Alignment.CenterHorizontally
@@ -173,7 +173,7 @@ private fun AlbumGridItem(
 			.fillMaxWidth(1f)
 			.padding(6.dp)
 			.clip(RoundedCornerShape(24.dp))
-			.background(CustomMaterialTheme.colorScheme.surfaceContainer)
+			.background(MaterialTheme.colorScheme.surfaceContainer)
 			.combinedClickable(
 				onClick = {
 					onClick()
@@ -200,7 +200,7 @@ private fun AlbumGridItem(
 					.clip(RoundedCornerShape(16.dp))
 					.background(
 						brightenColor(
-							CustomMaterialTheme.colorScheme.surfaceContainer,
+							MaterialTheme.colorScheme.surfaceContainer,
 							0.1f
 						)
 					),
@@ -212,7 +212,7 @@ private fun AlbumGridItem(
 				text = " $title",
 				fontSize = TextUnit(14f, TextUnitType.Sp),
 				textAlign = TextAlign.Start,
-				color = CustomMaterialTheme.colorScheme.onSurface,
+				color = MaterialTheme.colorScheme.onSurface,
 				maxLines = 1,
 				modifier = Modifier
 					.fillMaxWidth(1f)
@@ -232,7 +232,7 @@ private fun CategoryList(
 			.fillMaxWidth(1f)
 			.wrapContentHeight()
 			.padding(8.dp)
-			.background(CustomMaterialTheme.colorScheme.background),
+			.background(MaterialTheme.colorScheme.background),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
@@ -252,7 +252,7 @@ private fun CategoryList(
 				Icon (
         			painter = painterResource(id = R.drawable.favourite),
 					contentDescription = "Favourites Button",
-                    tint = CustomMaterialTheme.colorScheme.primary,
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier
 						.size(22.dp)
 						.padding(0.dp, 2.dp, 0.dp, 0.dp)
@@ -267,7 +267,7 @@ private fun CategoryList(
 	            	text = "Favourites",
 		         	fontSize = TextUnit(16f, TextUnitType.Sp),
 		          	textAlign = TextAlign.Center,
-		         	color = CustomMaterialTheme.colorScheme.onBackground,
+		         	color = MaterialTheme.colorScheme.onBackground,
 		         	modifier = Modifier
 		         		.fillMaxWidth(1f)
 	           	)
@@ -292,7 +292,7 @@ private fun CategoryList(
         		Icon (
         			painter = painterResource(id = R.drawable.trash),
 					contentDescription = "Trash Button",
-                    tint = CustomMaterialTheme.colorScheme.primary,
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier
                     	.size(20.dp)
         		)
@@ -301,7 +301,7 @@ private fun CategoryList(
 	            	text = "Trash ",
 		         	fontSize = TextUnit(16f, TextUnitType.Sp),
 		          	textAlign = TextAlign.Center,
-		         	color = CustomMaterialTheme.colorScheme.onBackground,
+		         	color = MaterialTheme.colorScheme.onBackground,
 		         	modifier = Modifier
 		         		.fillMaxWidth(1f)
 	           	)

@@ -31,6 +31,7 @@ import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -73,7 +74,6 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.ConfirmationDialog
 import com.kaii.photos.compose.ConfirmationDialogWithBody
 import com.kaii.photos.compose.DialogInfoText
-import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.MediaData
 import com.kaii.photos.helpers.MultiScreenViewType
@@ -202,13 +202,13 @@ fun SingleHiddenPhotoView(
                 navController.popBackStack()
             }
         },
-        containerColor = CustomMaterialTheme.colorScheme.background,
-        contentColor = CustomMaterialTheme.colorScheme.onBackground
+        containerColor = MaterialTheme.colorScheme.background,
+        contentColor = MaterialTheme.colorScheme.onBackground
     ) { _ ->
         Column(
             modifier = Modifier
                 .padding(0.dp)
-                .background(CustomMaterialTheme.colorScheme.background)
+                .background(MaterialTheme.colorScheme.background)
                 .fillMaxSize(1f),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
@@ -264,7 +264,7 @@ private fun TopBar(
     ) {
         TopAppBar(
             colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = CustomMaterialTheme.colorScheme.surfaceContainer
+                containerColor = MaterialTheme.colorScheme.surfaceContainer
             ),
             navigationIcon = {
                 IconButton(
@@ -273,7 +273,7 @@ private fun TopBar(
                     Icon(
                         painter = painterResource(id = R.drawable.back_arrow),
                         contentDescription = "Go back to previous page",
-                        tint = CustomMaterialTheme.colorScheme.onBackground,
+                        tint = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier
                             .size(24.dp)
                     )
@@ -318,7 +318,7 @@ private fun TopBar(
                     Icon(
                         painter = painterResource(id = R.drawable.share),
                         contentDescription = "share this secured photo",
-                        tint = CustomMaterialTheme.colorScheme.onBackground,
+                        tint = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier
                             .size(24.dp)
                     )
@@ -332,7 +332,7 @@ private fun TopBar(
                     Icon(
                         painter = painterResource(id = R.drawable.more_options),
                         contentDescription = "show more options",
-                        tint = CustomMaterialTheme.colorScheme.onBackground,
+                        tint = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier
                             .size(24.dp)
                     )
@@ -423,8 +423,8 @@ private fun BottomBar(
     ) {
 
         BottomAppBar(
-            containerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
-            contentColor = CustomMaterialTheme.colorScheme.onBackground,
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            contentColor = MaterialTheme.colorScheme.onBackground,
             contentPadding = PaddingValues(0.dp),
             actions = {
                 Row(
@@ -450,7 +450,7 @@ private fun BottomBar(
                             Icon(
                                 painter = painterResource(id = R.drawable.unlock),
                                 contentDescription = "Restore Image Button",
-                                tint = CustomMaterialTheme.colorScheme.primary,
+                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier
                                     .size(22.dp)
                             )
@@ -464,7 +464,7 @@ private fun BottomBar(
                                 text = "Restore",
                                 fontSize = TextUnit(16f, TextUnitType.Sp),
                                 textAlign = TextAlign.Center,
-                                color = CustomMaterialTheme.colorScheme.onBackground,
+                                color = MaterialTheme.colorScheme.onBackground,
                                 modifier = Modifier
                                     .fillMaxWidth(1f)
                             )
@@ -489,7 +489,7 @@ private fun BottomBar(
                             Icon(
                                 painter = painterResource(id = R.drawable.trash),
                                 contentDescription = "Permanently Delete Image Button",
-                                tint = CustomMaterialTheme.colorScheme.primary,
+                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier
                                     .size(22.dp)
                             )
@@ -503,7 +503,7 @@ private fun BottomBar(
                                 text = "Delete",
                                 fontSize = TextUnit(16f, TextUnitType.Sp),
                                 textAlign = TextAlign.Center,
-                                color = CustomMaterialTheme.colorScheme.onBackground,
+                                color = MaterialTheme.colorScheme.onBackground,
                                 modifier = Modifier
                                     .fillMaxWidth(1f)
                             )
@@ -546,7 +546,7 @@ private fun SingleSecuredPhotoInfoDialog(
                     .then(modifier)
                     .wrapContentHeight()
                     .clip(RoundedCornerShape(32.dp))
-                    .background(brightenColor(CustomMaterialTheme.colorScheme.surface, 0.1f))
+                    .background(brightenColor(MaterialTheme.colorScheme.surface, 0.1f))
                     .padding(4.dp),
             ) {
                 Box(

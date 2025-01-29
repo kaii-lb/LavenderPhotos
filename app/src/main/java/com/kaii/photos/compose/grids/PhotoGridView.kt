@@ -42,6 +42,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
@@ -96,7 +97,6 @@ import com.kaii.photos.compose.ShowSelectedState
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.datastore.Storage
 import com.kaii.photos.helpers.baseInternalStorageDirectory
-import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.ImageFunctions
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.checkHasFiles
@@ -223,7 +223,7 @@ fun DeviceMedia(
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize(1f)
-            .background(CustomMaterialTheme.colorScheme.background)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Box(
             modifier = Modifier
@@ -352,14 +352,14 @@ fun DeviceMedia(
                         modifier = Modifier
                             .size(40.dp)
                             .clip(RoundedCornerShape(1000.dp))
-                            .background(CustomMaterialTheme.colorScheme.surfaceContainer),
+                            .background(MaterialTheme.colorScheme.surfaceContainer),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
                     ) {
                         CircularProgressIndicator(
                             modifier = Modifier
                                 .size(22.dp),
-                            color = CustomMaterialTheme.colorScheme.primary,
+                            color = MaterialTheme.colorScheme.primary,
                             strokeWidth = 4.dp,
                             strokeCap = StrokeCap.Round
                         )
@@ -456,13 +456,13 @@ fun DeviceMedia(
                                     modifier = Modifier
                                         .size(48.dp)
                                         .clip(RoundedCornerShape(0.dp, 0.dp, 1000.dp, 1000.dp))
-                                        .background(CustomMaterialTheme.colorScheme.secondaryContainer)
+                                        .background(MaterialTheme.colorScheme.secondaryContainer)
                                         .align(Alignment.Center)
                                 ) {
                                     Icon(
                                         painter = painterResource(id = R.drawable.code),
                                         contentDescription = "scrollbar handle",
-                                        tint = CustomMaterialTheme.colorScheme.onSecondaryContainer,
+                                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
                                         modifier = Modifier
                                             .size(24.dp)
                                             .align(Alignment.Center)
@@ -494,7 +494,7 @@ fun DeviceMedia(
                                                 .height(32.dp)
                                                 .wrapContentWidth()
                                                 .clip(RoundedCornerShape(1000.dp))
-                                                .background(CustomMaterialTheme.colorScheme.secondaryContainer)
+                                                .background(MaterialTheme.colorScheme.secondaryContainer)
                                                 .padding(8.dp, 4.dp)
                                         ) {
                                             val item = groupedMedia.value[(state.value * listSize).roundToInt()]
@@ -505,7 +505,7 @@ fun DeviceMedia(
                                                 text = formatted,
                                                 fontSize = TextUnit(14f, TextUnitType.Sp),
                                                 textAlign = TextAlign.Center,
-                                                color = CustomMaterialTheme.colorScheme.onSecondaryContainer,
+                                                color = MaterialTheme.colorScheme.onSecondaryContainer,
                                                 modifier = Modifier
                                                     .align(Alignment.CenterStart)
                                             )
@@ -608,7 +608,7 @@ fun MediaStoreItem(
                 text = "${viewProperties.prefix}${item.displayName}",
                 fontSize = TextUnit(16f, TextUnitType.Sp),
                 fontWeight = FontWeight.Bold,
-                color = CustomMaterialTheme.colorScheme.onBackground,
+                color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier
                     .align(Alignment.CenterStart)
             )
@@ -673,7 +673,7 @@ fun MediaStoreItem(
                 .aspectRatio(1f)
                 .padding(2.dp)
                 .clip(RoundedCornerShape(0.dp))
-                .background(CustomMaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
                 .then(
                     if (selectedItemsList.isNotEmpty()) {
                         Modifier.clickable {

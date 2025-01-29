@@ -19,6 +19,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -43,7 +44,6 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.ExplanationDialog
 import com.kaii.photos.compose.FeatureNotAvailableDialog
 import com.kaii.photos.compose.PreferencesRow
-import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.RowPosition
 
 private const val TAG = "ABOUT_PAGE"
@@ -60,7 +60,7 @@ fun AboutPage(popBackStack: () -> Unit) {
         modifier = Modifier
             .fillMaxSize(1f)
             .padding(8.dp)
-            .background(CustomMaterialTheme.colorScheme.background),
+            .background(MaterialTheme.colorScheme.background),
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -87,7 +87,7 @@ fun AboutPage(popBackStack: () -> Unit) {
                     Icon(
                         painter = painterResource(id = R.drawable.back_arrow),
                         contentDescription = "return to previous page",
-                        tint = CustomMaterialTheme.colorScheme.onBackground,
+                        tint = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier
                             .size(24.dp)
                     )
@@ -97,7 +97,7 @@ fun AboutPage(popBackStack: () -> Unit) {
             GlideImage(
                 model = R.drawable.lavender,
                 contentDescription = "app icon",
-                colorFilter = ColorFilter.tint(CustomMaterialTheme.colorScheme.onBackground),
+                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onBackground),
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
                     .size(128.dp)
@@ -109,7 +109,7 @@ fun AboutPage(popBackStack: () -> Unit) {
                 fontSize = TextUnit(22f, TextUnitType.Sp),
                 fontWeight = FontWeight.Bold,
                 style = LocalTextStyle.current.copy(
-                    color = CustomMaterialTheme.colorScheme.onBackground
+                    color = MaterialTheme.colorScheme.onBackground
                 )
             )
         }
@@ -120,7 +120,7 @@ fun AboutPage(popBackStack: () -> Unit) {
 	        modifier = Modifier
                 .fillMaxSize(1f)
                 .padding(8.dp)
-                .background(CustomMaterialTheme.colorScheme.background),
+                .background(MaterialTheme.colorScheme.background),
 	        verticalArrangement = Arrangement.Top,
 	        horizontalAlignment = Alignment.CenterHorizontally
 	    ) {

@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -38,7 +39,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.SearchTextField
 import com.kaii.photos.compose.ViewProperties
-import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
@@ -86,7 +86,7 @@ fun SearchPage(
     Column(
         modifier = Modifier
             .fillMaxSize(1f)
-            .background(CustomMaterialTheme.colorScheme.background)
+            .background(MaterialTheme.colorScheme.background)
     ) {
     	val coroutineScope = rememberCoroutineScope()
 		val scrollBackToTop = {
@@ -109,7 +109,7 @@ fun SearchPage(
             modifier = Modifier
                 .fillMaxWidth(1f)
                 .height(56.dp)
-                .background(CustomMaterialTheme.colorScheme.background),
+                .background(MaterialTheme.colorScheme.background),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -271,14 +271,14 @@ fun SearchPage(
                         modifier = Modifier
                             .size(40.dp)
                             .clip(RoundedCornerShape(1000.dp))
-                            .background(CustomMaterialTheme.colorScheme.surfaceContainer),
+                            .background(MaterialTheme.colorScheme.surfaceContainer),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
                     ) {
                         CircularProgressIndicator(
                             modifier = Modifier
                                 .size(22.dp),
-                            color = CustomMaterialTheme.colorScheme.primary,
+                            color = MaterialTheme.colorScheme.primary,
                             strokeWidth = 4.dp,
                             strokeCap = StrokeCap.Round
                         )

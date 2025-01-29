@@ -37,6 +37,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -64,7 +65,6 @@ import androidx.compose.ui.window.DialogProperties
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.datastore.Permissions
-import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.RowPosition
 
 @Composable
@@ -100,7 +100,7 @@ fun PermissionHandler(
                     innerPadding.calculateBottomPadding()
                 )
                 .fillMaxSize()
-                .background(CustomMaterialTheme.colorScheme.background)
+                .background(MaterialTheme.colorScheme.background)
                 .padding(16.dp, 8.dp),
             verticalArrangement = Arrangement.SpaceEvenly,
             horizontalAlignment = Alignment.CenterHorizontally
@@ -132,7 +132,7 @@ fun PermissionHandler(
                 text = "Permissions",
                 fontSize = TextUnit(22f, TextUnitType.Sp),
                 fontWeight = FontWeight.Bold,
-                color = CustomMaterialTheme.colorScheme.onBackground
+                color = MaterialTheme.colorScheme.onBackground
             )
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -367,7 +367,7 @@ fun PermissionButton(
             .fillMaxWidth(1f)
             .height(104.dp)
             .clip(shape)
-            .background(if (!granted) CustomMaterialTheme.colorScheme.surfaceContainer else CustomMaterialTheme.colorScheme.primary)
+            .background(if (!granted) MaterialTheme.colorScheme.surfaceContainer else MaterialTheme.colorScheme.primary)
             .then(clickModifier)
             .padding(16.dp, 12.dp)
     ) {
@@ -381,7 +381,7 @@ fun PermissionButton(
         ) {
             Text(
                 text = name,
-                color = if (!granted) CustomMaterialTheme.colorScheme.onSurface else CustomMaterialTheme.colorScheme.onPrimary,
+                color = if (!granted) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onPrimary,
                 fontSize = TextUnit(18f, TextUnitType.Sp),
                 fontWeight = FontWeight.Bold
             )
@@ -390,7 +390,7 @@ fun PermissionButton(
 
             Text(
                 text = description,
-                color = if (!granted) CustomMaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f) else CustomMaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f),
+                color = if (!granted) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f) else MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f),
                 fontSize = TextUnit(14f, TextUnitType.Sp),
                 fontWeight = FontWeight.Bold
             )
@@ -401,7 +401,7 @@ fun PermissionButton(
                 modifier = Modifier
                     .fillMaxHeight(1f)
                     .width(32.dp)
-                    .background(CustomMaterialTheme.colorScheme.primary)
+                    .background(MaterialTheme.colorScheme.primary)
                     .align(Alignment.CenterEnd),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -409,7 +409,7 @@ fun PermissionButton(
                 Icon(
                     painter = painterResource(id = R.drawable.file_is_selected_foreground),
                     contentDescription = name,
-                    tint = CustomMaterialTheme.colorScheme.onPrimary,
+                    tint = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier
                         .size(28.dp)
                 )
@@ -437,7 +437,7 @@ fun PermissionDeniedDialog(
             modifier = Modifier
                 .wrapContentSize()
                 .clip(RoundedCornerShape(32.dp))
-                .background(CustomMaterialTheme.colorScheme.background)
+                .background(MaterialTheme.colorScheme.background)
                 .padding(16.dp),
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
@@ -446,7 +446,7 @@ fun PermissionDeniedDialog(
                 text = "Necessary Permission",
                 fontSize = TextUnit(18f, TextUnitType.Sp),
                 fontWeight = FontWeight.Bold,
-                color = CustomMaterialTheme.colorScheme.onBackground,
+                color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.wrapContentSize()
             )
 
@@ -455,7 +455,7 @@ fun PermissionDeniedDialog(
             Text(
                 text = "This permission is necessary for app functionality",
                 fontSize = TextUnit(14f, TextUnitType.Sp),
-                color = CustomMaterialTheme.colorScheme.onBackground,
+                color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.wrapContentSize()
             )
 
@@ -463,8 +463,8 @@ fun PermissionDeniedDialog(
 
             FullWidthDialogButton(
                 text = "Grant Permission",
-                color = CustomMaterialTheme.colorScheme.primary,
-                textColor = CustomMaterialTheme.colorScheme.onPrimary,
+                color = MaterialTheme.colorScheme.primary,
+                textColor = MaterialTheme.colorScheme.onPrimary,
                 position = RowPosition.Top
             ) {
                 showDialog.value = false
@@ -473,8 +473,8 @@ fun PermissionDeniedDialog(
 
             FullWidthDialogButton(
                 text = "Why?",
-                color = CustomMaterialTheme.colorScheme.surfaceContainer,
-                textColor = CustomMaterialTheme.colorScheme.onSurface,
+                color = MaterialTheme.colorScheme.surfaceContainer,
+                textColor = MaterialTheme.colorScheme.onSurface,
                 position = RowPosition.Middle
             ) {
                 showExplanationDialog.value = true
@@ -482,8 +482,8 @@ fun PermissionDeniedDialog(
 
             FullWidthDialogButton(
                 text = "Dismiss",
-                color = CustomMaterialTheme.colorScheme.surfaceContainer,
-                textColor = CustomMaterialTheme.colorScheme.onSurface,
+                color = MaterialTheme.colorScheme.surfaceContainer,
+                textColor = MaterialTheme.colorScheme.onSurface,
                 position = RowPosition.Bottom
             ) {
                 showDialog.value = false

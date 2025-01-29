@@ -41,6 +41,7 @@ import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FilledTonalIconToggleButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
@@ -87,7 +88,6 @@ import androidx.media3.ui.PlayerView
 import androidx.navigation.NavHostController
 import com.kaii.photos.R
 import com.kaii.photos.compose.setBarVisibility
-import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareImage
 import com.kaii.photos.mediastore.MediaStoreData
@@ -139,13 +139,13 @@ fun VideoPlayerControls(
                 Text(
                     text = if (title == "") "Media" else title,
                     fontSize = TextUnit(12f, TextUnitType.Sp),
-                    color = CustomMaterialTheme.colorScheme.onSecondaryContainer,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier
                         .widthIn(max = this@BoxWithConstraints.maxWidth / 2)
                         .wrapContentSize()
                         .clip(RoundedCornerShape(1000.dp))
-                        .background(CustomMaterialTheme.colorScheme.secondaryContainer)
+                        .background(MaterialTheme.colorScheme.secondaryContainer)
                         .padding(8.dp, 4.dp)
                         .align(Alignment.CenterStart)
                 )
@@ -173,7 +173,7 @@ fun VideoPlayerControls(
                         .height(32.dp)
                         .width(if (currentDurationFormatted.second) 72.dp else 48.dp)
                         .clip(RoundedCornerShape(1000.dp))
-                        .background(CustomMaterialTheme.colorScheme.secondaryContainer)
+                        .background(MaterialTheme.colorScheme.secondaryContainer)
                         .padding(4.dp, 0.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
@@ -182,7 +182,7 @@ fun VideoPlayerControls(
                         text = currentDurationFormatted.first,
                         style = TextStyle(
                             fontSize = TextUnit(12f, TextUnitType.Sp),
-                            color = CustomMaterialTheme.colorScheme.onBackground,
+                            color = MaterialTheme.colorScheme.onBackground,
                             textAlign = TextAlign.Center,
                         ),
                     )
@@ -259,7 +259,7 @@ fun VideoPlayerControls(
                         .height(32.dp)
                         .width(if (formattedDuration.second) 72.dp else 48.dp)
                         .clip(RoundedCornerShape(1000.dp))
-                        .background(CustomMaterialTheme.colorScheme.secondaryContainer)
+                        .background(MaterialTheme.colorScheme.secondaryContainer)
                         .padding(4.dp, 0.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
@@ -268,7 +268,7 @@ fun VideoPlayerControls(
                         text = formattedDuration.first,
                         style = TextStyle(
                             fontSize = TextUnit(12f, TextUnitType.Sp),
-                            color = CustomMaterialTheme.colorScheme.onBackground,
+                            color = MaterialTheme.colorScheme.onBackground,
                             textAlign = TextAlign.Center,
                         ),
                     )
@@ -528,10 +528,10 @@ fun VideoPlayer(
                         canFadeControls.value = true
                     },
                     colors = IconButtonDefaults.filledTonalIconToggleButtonColors().copy(
-                        checkedContainerColor = CustomMaterialTheme.colorScheme.primary,
-                        checkedContentColor = CustomMaterialTheme.colorScheme.onPrimary,
-                        containerColor = CustomMaterialTheme.colorScheme.secondaryContainer,
-                        contentColor = CustomMaterialTheme.colorScheme.onSecondaryContainer
+                        checkedContainerColor = MaterialTheme.colorScheme.primary,
+                        checkedContentColor = MaterialTheme.colorScheme.onPrimary,
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                     ),
                     modifier = Modifier
                         .size(32.dp)
@@ -565,8 +565,8 @@ fun VideoPlayer(
                                 }
                             },
                             colors = IconButtonDefaults.filledTonalIconButtonColors().copy(
-                                containerColor = CustomMaterialTheme.colorScheme.secondaryContainer,
-                                contentColor = CustomMaterialTheme.colorScheme.onSecondaryContainer
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                             ),
                             modifier = Modifier
                                 .size(32.dp)

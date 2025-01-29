@@ -32,6 +32,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -64,7 +65,6 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.kaii.photos.R
 import com.kaii.photos.MainActivity.Companion.mainViewModel
-import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 
@@ -76,8 +76,8 @@ fun SplitButton(
     secondaryContentMaxWidth: Dp = 1000.dp,
     primaryContentPadding: PaddingValues = PaddingValues(11.dp),
     secondaryContentPadding: PaddingValues = PaddingValues(0.dp, 5.dp, 4.dp, 5.dp),
-    primaryContainerColor: Color = CustomMaterialTheme.colorScheme.primary,
-    secondaryContainerColor: Color = CustomMaterialTheme.colorScheme.primary,
+    primaryContainerColor: Color = MaterialTheme.colorScheme.primary,
+    secondaryContainerColor: Color = MaterialTheme.colorScheme.primary,
     primaryContent: @Composable () -> Unit,
     secondaryContent: @Composable () -> Unit,
     primaryAction: () -> Unit,
@@ -145,7 +145,7 @@ fun SelectableDropDownMenuItem(
                 Icon(
                     painter = painterResource(id = iconResId),
                     contentDescription = "This save option is selected",
-                    tint = CustomMaterialTheme.colorScheme.onSurface,
+                    tint = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier
                         .size(24.dp)
                 )
@@ -170,7 +170,7 @@ fun SimpleTab(
     ) {
         Text(
             text = text,
-            color = if (selected) CustomMaterialTheme.colorScheme.onPrimary else CustomMaterialTheme.colorScheme.onSurface,
+            color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
             fontSize = TextUnit(14f, TextUnitType.Sp)
         )
     }
@@ -212,7 +212,7 @@ fun ColorFilterItem(
             .width(96.dp)
             .height(62.dp)
             .clip(RoundedCornerShape(8.dp))
-            .background(if (selected) CustomMaterialTheme.colorScheme.primary else Color.Transparent)
+            .background(if (selected) MaterialTheme.colorScheme.primary else Color.Transparent)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
@@ -232,7 +232,7 @@ fun ColorFilterItem(
         Text(
             text = text,
             fontSize = TextUnit(14f, TextUnitType.Sp),
-            color = if (selected) CustomMaterialTheme.colorScheme.onPrimary else CustomMaterialTheme.colorScheme.onBackground,
+            color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onBackground,
             modifier = Modifier
                 .wrapContentSize()
                 .align(Alignment.BottomCenter)
@@ -279,9 +279,9 @@ fun ShowSelectedState(
                 contentDescription = "file is selected indicator",
                 tint =
                 if (isSelected)
-                    CustomMaterialTheme.colorScheme.primary
+                    MaterialTheme.colorScheme.primary
                 else {
-                    if (isSystemInDarkTheme()) CustomMaterialTheme.colorScheme.onBackground else CustomMaterialTheme.colorScheme.background
+                    if (isSystemInDarkTheme()) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.background
                 },
                 modifier = Modifier
                     .size(24.dp)
@@ -317,7 +317,7 @@ fun ShowSelectedState(
                 Icon(
                     painter = painterResource(id = R.drawable.file_is_selected_foreground),
                     contentDescription = "file is selected indicator",
-                    tint = CustomMaterialTheme.colorScheme.onPrimary,
+                    tint = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier
                         .size(16.dp)
                         .align(Alignment.Center)
@@ -334,12 +334,12 @@ fun SelectViewTopBarLeftButtons(
 	SplitButton(
 		primaryContentPadding = PaddingValues(16.dp, 0.dp, 12.dp, 0.dp),
 		secondaryContentPadding = PaddingValues(8.dp, 8.dp, 12.dp, 8.dp),
-	    secondaryContainerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
+	    secondaryContainerColor = MaterialTheme.colorScheme.surfaceContainer,
 	    primaryContent = {
 	        Icon(
 	            painter = painterResource(id = R.drawable.close),
 	            contentDescription = "clear selection button",
-	            tint = CustomMaterialTheme.colorScheme.onPrimary,
+	            tint = MaterialTheme.colorScheme.onPrimary,
 	            modifier = Modifier
 	                .size(24.dp)
 	        )
@@ -347,7 +347,7 @@ fun SelectViewTopBarLeftButtons(
 	    secondaryContent = {
 	        Text(
 	            text = selectedItemsList.filter { it.type != MediaType.Section && it != MediaStoreData.dummyItem }.size.toString(),
-	            color = CustomMaterialTheme.colorScheme.onSurface,
+	            color = MaterialTheme.colorScheme.onSurface,
 	            fontSize = TextUnit(18f, TextUnitType.Sp),
 	            modifier = Modifier
 	                .wrapContentSize()
@@ -398,12 +398,12 @@ fun SelectViewTopBarRightButtons(
             modifier = Modifier
                 .clip(RoundedCornerShape(1000.dp))
                 .size(42.dp)
-                .background(if (isTicked) CustomMaterialTheme.colorScheme.primary else Color.Transparent)
+                .background(if (isTicked) MaterialTheme.colorScheme.primary else Color.Transparent)
         ) {
             Icon(
                 painter = painterResource(R.drawable.checklist),
                 contentDescription = "select all items",
-                tint = if (isTicked) CustomMaterialTheme.colorScheme.onPrimary else CustomMaterialTheme.colorScheme.onPrimaryContainer,
+                tint = if (isTicked) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimaryContainer,
                 modifier = Modifier
                     .size(24.dp)
             )
@@ -417,7 +417,7 @@ fun SelectViewTopBarRightButtons(
             Icon(
                 painter = painterResource(R.drawable.more_options),
                 contentDescription = "show more options for selected items",
-                tint = CustomMaterialTheme.colorScheme.onPrimaryContainer,
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
                 modifier = Modifier
                     .size(24.dp)
             )

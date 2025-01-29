@@ -45,7 +45,7 @@ fun PhotosTheme(
         	val systemInDarkTheme = isSystemInDarkTheme()
 
 			if (dynamicColor) {
-				if (systemInDarkTheme) dynamicDarkColorScheme(context) else getDynamicLightTheme(context)
+				if (systemInDarkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
 			} else {
 				if (systemInDarkTheme) DarkColorScheme else LightColorScheme
 			}
@@ -53,7 +53,7 @@ fun PhotosTheme(
 
 
         1 -> if (dynamicColor) dynamicDarkColorScheme(context) else DarkColorScheme
-        2 -> if (dynamicColor) getDynamicLightTheme(context) else LightColorScheme
+        2 -> if (dynamicColor) dynamicLightColorScheme(context) else LightColorScheme
 
         else -> LightColorScheme
     }
@@ -64,14 +64,3 @@ fun PhotosTheme(
         content = content
     )
 }
-
-@Composable
-private fun getDynamicLightTheme(context: Context) =
-	dynamicLightColorScheme(context).copy(
-	    background = MaterialTheme.colorScheme.surfaceContainer,
-	    surfaceContainer = MaterialTheme.colorScheme.primaryContainer,
-	    surface = MaterialTheme.colorScheme.surfaceContainer,
-	    onBackground = MaterialTheme.colorScheme.onSurface,
-	    onSurface = MaterialTheme.colorScheme.onPrimaryContainer,
-	    secondaryContainer = MaterialTheme.colorScheme.surface,
-	)

@@ -25,6 +25,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ModalBottomSheetProperties
 import androidx.compose.material3.SheetValue
@@ -62,7 +63,6 @@ import com.kaii.photos.compose.FolderIsEmpty
 import com.kaii.photos.compose.SearchTextField
 import com.kaii.photos.compose.getDefaultShapeSpacerForPosition
 import com.kaii.photos.datastore.AlbumsList
-import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.RowPosition
@@ -124,7 +124,7 @@ fun MoveCopyAlbumListView(
             properties = ModalBottomSheetProperties(
                 shouldDismissOnBackPress = false
             ),
-            containerColor = CustomMaterialTheme.colorScheme.background,
+            containerColor = MaterialTheme.colorScheme.background,
             onDismissRequest = { show.value = false },
             modifier = Modifier
                 .windowInsetsPadding(
@@ -279,7 +279,7 @@ fun AlbumsListItem(
         modifier = modifier
             .height(88.dp)
             .clip(shape)
-            .background(CustomMaterialTheme.colorScheme.surfaceContainer)
+            .background(MaterialTheme.colorScheme.surfaceContainer)
             .clickable {
                 runOnDirGranted.value = true
             },
@@ -303,7 +303,7 @@ fun AlbumsListItem(
             text = album.split("/").last(),
             fontSize = TextUnit(16f, TextUnitType.Sp),
             textAlign = TextAlign.Start,
-            color = CustomMaterialTheme.colorScheme.onSurface,
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier
                 .weight(1f)
         )
@@ -312,6 +312,6 @@ fun AlbumsListItem(
     Spacer(
         modifier = Modifier
             .height(spacerHeight)
-            .background(CustomMaterialTheme.colorScheme.surface)
+            .background(MaterialTheme.colorScheme.surface)
     )
 }

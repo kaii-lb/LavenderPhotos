@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -32,7 +33,6 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.FeatureNotAvailableDialog
 import com.kaii.photos.compose.PreferencesRow
-import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.RowPosition
 
@@ -49,7 +49,7 @@ fun MainSettingsPage() {
         LazyColumn(
             modifier = Modifier
                 .padding(innerPadding)
-                .background(CustomMaterialTheme.colorScheme.background),
+                .background(MaterialTheme.colorScheme.background),
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -164,7 +164,7 @@ private fun MainSettingsTopBar() {
                 Icon(
                     painter = painterResource(id = R.drawable.back_arrow),
                     contentDescription = "Go back to previous page",
-                    tint = CustomMaterialTheme.colorScheme.onBackground,
+                    tint = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier
                         .size(24.dp)
                 )
@@ -172,7 +172,7 @@ private fun MainSettingsTopBar() {
         },
         scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(),
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = CustomMaterialTheme.colorScheme.background
+            containerColor = MaterialTheme.colorScheme.background
         )
     )
 }

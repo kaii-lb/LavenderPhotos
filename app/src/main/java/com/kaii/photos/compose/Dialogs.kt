@@ -52,6 +52,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -102,7 +103,6 @@ import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.Debugging
 import com.kaii.photos.datastore.User
-import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.MainScreenViewType
@@ -147,8 +147,8 @@ fun DialogClickableItem(
             .height(buttonHeight)
             .clip(shape)
             .background(
-                if (enabled) CustomMaterialTheme.colorScheme.surfaceVariant
-                else darkenColor(CustomMaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f), 0.1f)
+                if (enabled) MaterialTheme.colorScheme.surfaceVariant
+                else darkenColor(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f), 0.1f)
             )
             .wrapContentHeight(align = Alignment.CenterVertically)
             .then(clickableModifier)
@@ -175,7 +175,7 @@ fun DialogClickableItem(
     Spacer(
         modifier = Modifier
             .height(spacerHeight)
-            .background(CustomMaterialTheme.colorScheme.surface)
+            .background(MaterialTheme.colorScheme.surface)
     )
 }
 
@@ -194,7 +194,7 @@ fun DialogExpandableItem(text: String, iconResId: Int, position: RowPosition, ex
             .fillMaxWidth(1f)
             .height(buttonHeight)
             .clip(shape)
-            .background(CustomMaterialTheme.colorScheme.surfaceVariant)
+            .background(MaterialTheme.colorScheme.surfaceVariant)
             .wrapContentHeight(align = Alignment.CenterVertically)
             .clickable {
                 expanded.value = !expanded.value
@@ -262,7 +262,7 @@ fun DialogExpandableItem(text: String, iconResId: Int, position: RowPosition, ex
             modifier = Modifier
                 .wrapContentHeight()
                 .clip(RoundedCornerShape(0.dp, 0.dp, 16.dp, 16.dp))
-                .background(darkenColor(CustomMaterialTheme.colorScheme.surfaceVariant, 0.2f))
+                .background(darkenColor(MaterialTheme.colorScheme.surfaceVariant, 0.2f))
         ) {
             content()
         }
@@ -271,7 +271,7 @@ fun DialogExpandableItem(text: String, iconResId: Int, position: RowPosition, ex
     Spacer(
         modifier = Modifier
             .height(spacerHeight)
-            .background(CustomMaterialTheme.colorScheme.surface)
+            .background(MaterialTheme.colorScheme.surface)
     )
 }
 
@@ -379,7 +379,7 @@ fun DialogInfoText(firstText: String, secondText: String, iconResId: Int) {
         Icon(
             painter = painterResource(id = iconResId),
             contentDescription = "$firstText: $secondText",
-            tint = CustomMaterialTheme.colorScheme.onSurface,
+            tint = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier
                 .size(16.dp)
         )
@@ -389,7 +389,7 @@ fun DialogInfoText(firstText: String, secondText: String, iconResId: Int) {
         val state = rememberScrollState()
         Text(
             text = "$firstText: ",
-            color = CustomMaterialTheme.colorScheme.onSurface,
+            color = MaterialTheme.colorScheme.onSurface,
             style = TextStyle(
                 textAlign = TextAlign.Start,
                 fontSize = TextUnit(14f, TextUnitType.Sp),
@@ -402,7 +402,7 @@ fun DialogInfoText(firstText: String, secondText: String, iconResId: Int) {
 
         Text(
             text = secondText,
-            color = CustomMaterialTheme.colorScheme.onSurface,
+            color = MaterialTheme.colorScheme.onSurface,
             style = TextStyle(
                 textAlign = TextAlign.Start,
                 fontSize = TextUnit(14f, TextUnitType.Sp),
@@ -435,7 +435,7 @@ fun MainAppDialog(
             Column(
                 modifier = Modifier
                     .clip(RoundedCornerShape(32.dp))
-                    .background(brightenColor(CustomMaterialTheme.colorScheme.surface, 0.1f))
+                    .background(brightenColor(MaterialTheme.colorScheme.surface, 0.1f))
                     .padding(8.dp)
             ) {
                 Box(
@@ -524,18 +524,18 @@ fun MainAppDialog(
                         textStyle = LocalTextStyle.current.copy(
                             fontSize = TextUnit(16f, TextUnitType.Sp),
                             textAlign = TextAlign.Start,
-                            color = CustomMaterialTheme.colorScheme.onSurface,
+                            color = MaterialTheme.colorScheme.onSurface,
                         ),
                         maxLines = 1,
                         colors = TextFieldDefaults.colors().copy(
                             unfocusedContainerColor = Color.Transparent,
                             unfocusedIndicatorColor = Color.Transparent,
-                            unfocusedTextColor = CustomMaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
                             unfocusedTrailingIconColor = Color.Transparent,
                             focusedIndicatorColor = Color.Transparent,
-                            focusedTextColor = CustomMaterialTheme.colorScheme.onSurface,
-                            focusedContainerColor = CustomMaterialTheme.colorScheme.surfaceVariant,
-                            focusedTrailingIconColor = CustomMaterialTheme.colorScheme.onSurface,
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            focusedTrailingIconColor = MaterialTheme.colorScheme.onSurface,
                         ),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(
@@ -720,7 +720,7 @@ fun SinglePhotoInfoDialog(
                     .then(modifier)
                     .wrapContentHeight()
                     .clip(RoundedCornerShape(32.dp))
-                    .background(brightenColor(CustomMaterialTheme.colorScheme.surface, 0.1f))
+                    .background(brightenColor(MaterialTheme.colorScheme.surface, 0.1f))
                     .padding(4.dp),
             ) {
                 Box(
@@ -972,8 +972,8 @@ fun ConfirmationDialog(
                         showDialog.value = false
                     },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = CustomMaterialTheme.colorScheme.tertiaryContainer,
-                        contentColor = CustomMaterialTheme.colorScheme.onTertiaryContainer
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer
                     )
                 ) {
                     Text(
@@ -1046,8 +1046,8 @@ fun ConfirmationDialogWithBody(
                             showDialog.value = false
                         },
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = CustomMaterialTheme.colorScheme.tertiaryContainer,
-                            contentColor = CustomMaterialTheme.colorScheme.onTertiaryContainer
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer
                         )
                     ) {
                         Text(
@@ -1085,7 +1085,7 @@ fun SingleAlbumDialog(
                     .fillMaxWidth(0.85f)
                     .wrapContentHeight()
                     .clip(RoundedCornerShape(32.dp))
-                    .background(brightenColor(CustomMaterialTheme.colorScheme.surface, 0.1f))
+                    .background(brightenColor(MaterialTheme.colorScheme.surface, 0.1f))
                     .padding(8.dp)
             ) {
                 val isEditingFileName = remember { mutableStateOf(false) }
@@ -1242,7 +1242,7 @@ fun TextEntryDialog(
             modifier = Modifier
                 .wrapContentSize()
                 .clip(RoundedCornerShape(32.dp))
-                .background(CustomMaterialTheme.colorScheme.background)
+                .background(MaterialTheme.colorScheme.background)
                 .padding(16.dp),
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
@@ -1251,7 +1251,7 @@ fun TextEntryDialog(
                 text = title,
                 fontSize = TextUnit(18f, TextUnitType.Sp),
                 fontWeight = FontWeight.Bold,
-                color = CustomMaterialTheme.colorScheme.onSurface,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.wrapContentSize()
             )
 
@@ -1283,7 +1283,7 @@ fun TextEntryDialog(
                             Icon(
                                 painter = painterResource(id = R.drawable.error_2),
                                 contentDescription = "Error",
-                                tint = CustomMaterialTheme.colorScheme.primary,
+                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier
                                     .size(24.dp)
                                     .clickable {
@@ -1294,13 +1294,13 @@ fun TextEntryDialog(
                     }
                 },
                 colors = TextFieldDefaults.colors(
-                    focusedContainerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
-                    unfocusedContainerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
-                    cursorColor = CustomMaterialTheme.colorScheme.primary,
-                    focusedTextColor = CustomMaterialTheme.colorScheme.onSurface,
-                    unfocusedTextColor = CustomMaterialTheme.colorScheme.onSurface,
-                    focusedPlaceholderColor = CustomMaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                    unfocusedPlaceholderColor = CustomMaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    cursorColor = MaterialTheme.colorScheme.primary,
+                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    focusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                    unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
                     unfocusedIndicatorColor = Color.Transparent,
                     focusedIndicatorColor = Color.Transparent
                 ),
@@ -1323,8 +1323,8 @@ fun TextEntryDialog(
 
             FullWidthDialogButton(
                 text = "Confirm",
-                color = CustomMaterialTheme.colorScheme.primary,
-                textColor = CustomMaterialTheme.colorScheme.onPrimary,
+                color = MaterialTheme.colorScheme.primary,
+                textColor = MaterialTheme.colorScheme.onPrimary,
                 position = RowPosition.Single
             ) {
                 showError = !onConfirm(text)
@@ -1355,7 +1355,7 @@ fun ExplanationDialog(
             modifier = Modifier
                 .wrapContentSize()
                 .clip(RoundedCornerShape(32.dp))
-                .background(CustomMaterialTheme.colorScheme.surfaceContainer)
+                .background(MaterialTheme.colorScheme.surfaceContainer)
                 .padding(16.dp),
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
@@ -1364,7 +1364,7 @@ fun ExplanationDialog(
                 text = title,
                 fontSize = TextUnit(18f, TextUnitType.Sp),
                 fontWeight = FontWeight.Bold,
-                color = CustomMaterialTheme.colorScheme.onSurface,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.wrapContentSize()
             )
 
@@ -1373,7 +1373,7 @@ fun ExplanationDialog(
             Text(
                 text = explanation,
                 fontSize = TextUnit(14f, TextUnitType.Sp),
-                color = CustomMaterialTheme.colorScheme.onSurface,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.wrapContentSize()
             )
 
@@ -1381,8 +1381,8 @@ fun ExplanationDialog(
 
             FullWidthDialogButton(
                 text = "Okay",
-                color = CustomMaterialTheme.colorScheme.primary,
-                textColor = CustomMaterialTheme.colorScheme.onPrimary,
+                color = MaterialTheme.colorScheme.primary,
+                textColor = MaterialTheme.colorScheme.onPrimary,
                 position = RowPosition.Single
             ) {
                 showDialog.value = false
@@ -1457,7 +1457,7 @@ fun SelectingMoreOptionsDialog(
                 .then(modifier)
                 .wrapContentHeight()
                 .clip(RoundedCornerShape(32.dp))
-                .background(brightenColor(CustomMaterialTheme.colorScheme.surface, 0.1f))
+                .background(brightenColor(MaterialTheme.colorScheme.surface, 0.1f))
                 .padding(4.dp),
         ) {
             Box(

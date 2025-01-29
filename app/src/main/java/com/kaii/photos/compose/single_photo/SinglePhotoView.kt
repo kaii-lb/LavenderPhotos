@@ -29,6 +29,7 @@ import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -67,7 +68,6 @@ import com.kaii.photos.compose.ConfirmationDialog
 import com.kaii.photos.compose.ExplanationDialog
 import com.kaii.photos.compose.SinglePhotoInfoDialog
 import com.kaii.photos.compose.setBarVisibility
-import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.EditingScreen
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.GetPermissionAndRun
@@ -233,8 +233,8 @@ fun SinglePhotoView(
                 }
             )
         },
-        containerColor = CustomMaterialTheme.colorScheme.background,
-        contentColor = CustomMaterialTheme.colorScheme.onBackground
+        containerColor = MaterialTheme.colorScheme.background,
+        contentColor = MaterialTheme.colorScheme.onBackground
     ) { _ ->
         SinglePhotoInfoDialog(
             showDialog = showInfoDialog,
@@ -247,7 +247,7 @@ fun SinglePhotoView(
         Column(
             modifier = Modifier
                 .padding(0.dp)
-                .background(CustomMaterialTheme.colorScheme.background)
+                .background(MaterialTheme.colorScheme.background)
                 .fillMaxSize(1f),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
@@ -284,9 +284,9 @@ private fun TopBar(
     }
 
     val color = if (isLandscape)
-        CustomMaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.4f)
+        MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.4f)
     else
-        CustomMaterialTheme.colorScheme.surfaceContainer
+        MaterialTheme.colorScheme.surfaceContainer
 
     val vibratorManager = rememberVibratorManager()
 
@@ -320,7 +320,7 @@ private fun TopBar(
                     Icon(
                         painter = painterResource(id = R.drawable.back_arrow),
                         contentDescription = "Go back to previous page",
-                        tint = CustomMaterialTheme.colorScheme.onBackground,
+                        tint = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier
                             .size(24.dp)
                     )
@@ -360,7 +360,7 @@ private fun TopBar(
                     Icon(
                         painter = painterResource(id = if (isSelected) R.drawable.favourite_filled else R.drawable.favourite),
                         contentDescription = "favorite this media item",
-                        tint = if (isSelected) CustomMaterialTheme.colorScheme.primary else CustomMaterialTheme.colorScheme.onBackground,
+                        tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier
                             .size(24.dp)
                             .padding(0.dp, 1.dp, 0.dp, 0.dp)
@@ -375,7 +375,7 @@ private fun TopBar(
                     Icon(
                         painter = painterResource(id = R.drawable.more_options),
                         contentDescription = "show more options",
-                        tint = CustomMaterialTheme.colorScheme.onBackground,
+                        tint = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier
                             .size(24.dp)
                     )
@@ -402,9 +402,9 @@ private fun BottomBar(
     }
 
     val color = if (isLandscape)
-        CustomMaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.4f)
+        MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.4f)
     else
-        CustomMaterialTheme.colorScheme.surfaceContainer
+        MaterialTheme.colorScheme.surfaceContainer
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -426,7 +426,7 @@ private fun BottomBar(
         val context = LocalContext.current
         BottomAppBar(
             containerColor = color,
-            contentColor = CustomMaterialTheme.colorScheme.onBackground,
+            contentColor = MaterialTheme.colorScheme.onBackground,
             contentPadding = PaddingValues(0.dp),
             actions = {
                 Row(

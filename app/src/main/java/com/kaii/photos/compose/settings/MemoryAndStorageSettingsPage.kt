@@ -18,6 +18,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -50,7 +51,6 @@ import com.kaii.photos.compose.PreferencesSwitchRow
 import com.kaii.photos.compose.RadioButtonRow
 import com.kaii.photos.datastore.Storage
 import com.kaii.photos.datastore.TrashBin
-import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.brightenColor
 
@@ -64,7 +64,7 @@ fun MemoryAndStorageSettingsPage() {
         LazyColumn(
             modifier = Modifier
                 .padding(innerPadding)
-                .background(CustomMaterialTheme.colorScheme.background),
+                .background(MaterialTheme.colorScheme.background),
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.Start
         ) {
@@ -212,14 +212,14 @@ private fun MemoryAndStorageSettingsTopBar() {
                 Icon(
                     painter = painterResource(id = R.drawable.back_arrow),
                     contentDescription = "Go back to previous page",
-                    tint = CustomMaterialTheme.colorScheme.onBackground,
+                    tint = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier
                         .size(24.dp)
                 )
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = CustomMaterialTheme.colorScheme.background
+            containerColor = MaterialTheme.colorScheme.background
         )
     )
 }
@@ -244,7 +244,7 @@ fun RadioButtonListDialog(
                 .fillMaxWidth(1f)
                 .wrapContentHeight()
                 .clip(RoundedCornerShape(32.dp))
-                .background(brightenColor(CustomMaterialTheme.colorScheme.surface, 0.1f))
+                .background(brightenColor(MaterialTheme.colorScheme.surface, 0.1f))
                 .padding(8.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
@@ -254,7 +254,7 @@ fun RadioButtonListDialog(
             Text(
                 text = "Delete Interval",
                 fontSize = TextUnit(18f, TextUnitType.Sp),
-                color = CustomMaterialTheme.colorScheme.onSurface,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier
                     .wrapContentSize()
             )
@@ -264,7 +264,7 @@ fun RadioButtonListDialog(
             Text(
                 text = "Photos in the trash bin older than this date will be permanently deleted",
                 fontSize = TextUnit(14f, TextUnitType.Sp),
-                color = CustomMaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
                 modifier = Modifier
                     .wrapContentSize()
                     .padding(12.dp, 0.dp)

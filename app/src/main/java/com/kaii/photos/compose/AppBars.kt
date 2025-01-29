@@ -38,6 +38,7 @@ import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -68,7 +69,6 @@ import androidx.core.view.WindowInsetsCompat
 import com.kaii.photos.MainActivity
 import com.kaii.photos.R
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
-import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.moveImageOutOfLockedFolder
@@ -95,7 +95,7 @@ fun BottomAppBarItem(
     iconSize: Dp = 24.dp,
     textSize: Float = 14f,
     color: Color = Color.Transparent,
-    contentColor: Color = CustomMaterialTheme.colorScheme.onBackground,
+    contentColor: Color = MaterialTheme.colorScheme.onBackground,
     showRipple: Boolean = true,
     cornerRadius: Dp = 1000.dp,
     action: (() -> Unit)? = null,
@@ -144,7 +144,7 @@ fun BottomAppBarItem(
         Text(
             text = text,
             fontSize = TextUnit(textSize, TextUnitType.Sp),
-            color = CustomMaterialTheme.colorScheme.onBackground,
+            color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier
                 .wrapContentSize()
                 .align(Alignment.BottomCenter)
@@ -195,7 +195,7 @@ fun SelectableBottomAppBarItem(
                     .width(64.dp)
                     .clip(RoundedCornerShape(1000.dp))
                     .align(Alignment.TopCenter)
-                    .background(CustomMaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {}
@@ -267,53 +267,14 @@ fun getAppBarContentTransition(slideLeft: Boolean) = run {
     }
 }
 
-// @OptIn(ExperimentalMaterial3Api::class)
-// @Composable
-// fun MainAppTopBar(showDialog: MutableState<Boolean>) {
-//     TopAppBar(
-//         title = {
-//             Row {
-//                 Text(
-//                     text = "Lavender ",
-//                     fontWeight = FontWeight.Bold,
-//                     fontSize = TextUnit(22f, TextUnitType.Sp)
-//                 )
-//                 Text(
-//                     text = "Photos",
-//                     fontWeight = FontWeight.Normal,
-//                     fontSize = TextUnit(22f, TextUnitType.Sp)
-//                 )
-//             }
-//         },
-//         actions = {
-//             IconButton(
-//                 onClick = {
-//                     showDialog.value = true
-//                 },
-//             ) {
-//                 Icon(
-//                     painter = painterResource(R.drawable.settings),
-//                     contentDescription = "Settings Button",
-//                     tint = CustomMaterialTheme.colorScheme.onPrimaryContainer,
-//                     modifier = Modifier.size(24.dp)
-//                 )
-//             }
-//         },
-//         scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(),
-//         colors = TopAppBarDefaults.topAppBarColors(
-//             containerColor = CustomMaterialTheme.colorScheme.background
-//         ),
-//     )
-// }
-
 @Composable
 fun MainAppBottomBar(
     currentView: MutableState<MainScreenViewType>,
     selectedItemsList: SnapshotStateList<MediaStoreData>
 ) {
     BottomAppBar(
-        containerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
-        contentColor = CustomMaterialTheme.colorScheme.onPrimaryContainer,
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
         contentPadding = PaddingValues(0.dp),
     ) {
         Row(
@@ -554,12 +515,12 @@ fun IsSelectingTopBar(
             SplitButton(
                 primaryContentPadding = PaddingValues(16.dp, 0.dp, 12.dp, 0.dp),
                 secondaryContentPadding = PaddingValues(8.dp, 8.dp, 12.dp, 8.dp),
-                secondaryContainerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
+                secondaryContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                 primaryContent = {
                     Icon(
                         painter = painterResource(id = R.drawable.close),
                         contentDescription = "clear selection button",
-                        tint = CustomMaterialTheme.colorScheme.onPrimary,
+                        tint = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier
                             .size(24.dp)
                     )
@@ -567,7 +528,7 @@ fun IsSelectingTopBar(
                 secondaryContent = {
                     Text(
                         text = selectedItemsWithoutSection.size.toString(),
-                        color = CustomMaterialTheme.colorScheme.onSurface,
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontSize = TextUnit(18f, TextUnitType.Sp),
                         modifier = Modifier
                             .wrapContentSize()
@@ -606,12 +567,12 @@ fun IsSelectingTopBar(
                 modifier = Modifier
                     .clip(RoundedCornerShape(1000.dp))
                     .size(42.dp)
-                    .background(if (isTicked) CustomMaterialTheme.colorScheme.primary else Color.Transparent)
+                    .background(if (isTicked) MaterialTheme.colorScheme.primary else Color.Transparent)
             ) {
                 Icon(
                     painter = painterResource(R.drawable.checklist),
                     contentDescription = "select all items",
-                    tint = if (isTicked) CustomMaterialTheme.colorScheme.onPrimary else CustomMaterialTheme.colorScheme.onPrimaryContainer,
+                    tint = if (isTicked) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier
                         .size(24.dp)
                 )
@@ -635,14 +596,14 @@ fun IsSelectingTopBar(
                 Icon(
                     painter = painterResource(R.drawable.more_options),
                     contentDescription = "show more options for selected items",
-                    tint = CustomMaterialTheme.colorScheme.onPrimaryContainer,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier
                         .size(24.dp)
                 )
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = CustomMaterialTheme.colorScheme.background
+            containerColor = MaterialTheme.colorScheme.background
         ),
     )
 }
@@ -652,8 +613,8 @@ fun IsSelectingBottomAppBar(
     items: @Composable (RowScope.() -> Unit)
 ) {
     BottomAppBar(
-        containerColor = CustomMaterialTheme.colorScheme.surfaceContainer,
-        contentColor = CustomMaterialTheme.colorScheme.onPrimaryContainer,
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
         contentPadding = PaddingValues(0.dp)
     ) {
         Row(
@@ -693,7 +654,7 @@ fun SingleAlbumViewTopBar(
         if (!target) {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = CustomMaterialTheme.colorScheme.surfaceContainer
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer
                 ),
                 navigationIcon = {
                     IconButton(
@@ -702,7 +663,7 @@ fun SingleAlbumViewTopBar(
                         Icon(
                             painter = painterResource(id = R.drawable.back_arrow),
                             contentDescription = "Go back to previous page",
-                            tint = CustomMaterialTheme.colorScheme.onBackground,
+                            tint = MaterialTheme.colorScheme.onBackground,
                             modifier = Modifier
                                 .size(24.dp)
                         )
@@ -728,7 +689,7 @@ fun SingleAlbumViewTopBar(
                         Icon(
                             painter = painterResource(id = R.drawable.settings),
                             contentDescription = "show more options for the album view",
-                            tint = CustomMaterialTheme.colorScheme.onBackground,
+                            tint = MaterialTheme.colorScheme.onBackground,
                             modifier = Modifier
                                 .size(24.dp)
                         )
@@ -901,7 +862,7 @@ fun TrashedPhotoGridViewTopBar(
         if (!target) {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = CustomMaterialTheme.colorScheme.surfaceContainer
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer
                 ),
                 navigationIcon = {
                     IconButton(
@@ -910,7 +871,7 @@ fun TrashedPhotoGridViewTopBar(
                         Icon(
                             painter = painterResource(id = R.drawable.back_arrow),
                             contentDescription = "Go back to previous page",
-                            tint = CustomMaterialTheme.colorScheme.onBackground,
+                            tint = MaterialTheme.colorScheme.onBackground,
                             modifier = Modifier
                                 .size(24.dp)
                         )
@@ -936,7 +897,7 @@ fun TrashedPhotoGridViewTopBar(
                         Icon(
                             painter = painterResource(id = R.drawable.trash),
                             contentDescription = "empty out the trash bin",
-                            tint = CustomMaterialTheme.colorScheme.onBackground,
+                            tint = MaterialTheme.colorScheme.onBackground,
                             modifier = Modifier
                                 .size(24.dp)
                         )
@@ -1089,7 +1050,7 @@ fun SecureFolderViewTopAppBar(
         if (!target) {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = CustomMaterialTheme.colorScheme.surfaceContainer
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer
                 ),
                 navigationIcon = {
                     IconButton(
@@ -1098,7 +1059,7 @@ fun SecureFolderViewTopAppBar(
                         Icon(
                             painter = painterResource(id = R.drawable.back_arrow),
                             contentDescription = "Go back to previous page",
-                            tint = CustomMaterialTheme.colorScheme.onBackground,
+                            tint = MaterialTheme.colorScheme.onBackground,
                             modifier = Modifier
                                 .size(24.dp)
                         )
@@ -1288,7 +1249,7 @@ fun FavouritesViewTopAppBar(
                         Icon(
                             painter = painterResource(id = R.drawable.back_arrow),
                             contentDescription = "Go back to previous page",
-                            tint = CustomMaterialTheme.colorScheme.onBackground,
+                            tint = MaterialTheme.colorScheme.onBackground,
                             modifier = Modifier
                                 .size(24.dp)
                         )
@@ -1567,7 +1528,7 @@ fun MainAppTopBar(
                 Icon(
                     painter = painterResource(R.drawable.settings),
                     contentDescription = "Settings Button",
-                    tint = CustomMaterialTheme.colorScheme.onPrimaryContainer,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.size(24.dp)
                 )
             }

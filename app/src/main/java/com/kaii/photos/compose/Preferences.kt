@@ -26,6 +26,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -49,7 +50,6 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import com.kaii.photos.R
-import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.darkenColor
 import kotlin.math.roundToInt
@@ -84,7 +84,7 @@ fun PreferencesRow(
             .wrapContentHeight()
             .then(clip)
             .wrapContentHeight(align = Alignment.CenterVertically)
-            .background(if (showBackground) CustomMaterialTheme.colorScheme.surfaceVariant else Color.Transparent)
+            .background(if (showBackground) MaterialTheme.colorScheme.surfaceVariant else Color.Transparent)
             .then(clickable)
             .padding(16.dp, 12.dp)
             .then(modifier),
@@ -93,7 +93,7 @@ fun PreferencesRow(
         Icon(
             painter = painterResource(id = iconResID),
             contentDescription = "an icon describing: $title",
-            tint = CustomMaterialTheme.colorScheme.onBackground,
+            tint = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier
                 .size(28.dp)
         )
@@ -111,7 +111,7 @@ fun PreferencesRow(
                 text = title,
                 fontSize = TextUnit(titleTextSize, TextUnitType.Sp),
                 textAlign = TextAlign.Start,
-                color = CustomMaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface
             )
 
             if (summary != null) {
@@ -119,7 +119,7 @@ fun PreferencesRow(
                     text = summary,
                     fontSize = TextUnit(14f, TextUnitType.Sp),
                     textAlign = TextAlign.Start,
-                    color = CustomMaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -130,7 +130,7 @@ fun PreferencesRow(
             Icon(
                 painter = painterResource(id = R.drawable.other_page_indicator),
                 contentDescription = "this preference row leads to another page",
-                tint = CustomMaterialTheme.colorScheme.onBackground,
+                tint = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier
                     .size(28.dp)
             )
@@ -154,11 +154,11 @@ fun PreferencesSwitchRow(
 
     val backgroundColor = when {
         enabled && showBackground -> {
-            CustomMaterialTheme.colorScheme.surfaceVariant
+            MaterialTheme.colorScheme.surfaceVariant
         }
 
         !enabled && showBackground -> {
-            CustomMaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
         }
 
         else -> {
@@ -185,7 +185,7 @@ fun PreferencesSwitchRow(
         Icon(
             painter = painterResource(id = iconResID),
             contentDescription = "an icon describing: $title",
-            tint = CustomMaterialTheme.colorScheme.onBackground,
+            tint = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier
                 .size(28.dp)
         )
@@ -203,7 +203,7 @@ fun PreferencesSwitchRow(
                 text = title,
                 fontSize = TextUnit(18f, TextUnitType.Sp),
                 textAlign = TextAlign.Start,
-                color = CustomMaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface
             )
 
             if (summary != null) {
@@ -211,7 +211,7 @@ fun PreferencesSwitchRow(
                     text = summary,
                     fontSize = TextUnit(14f, TextUnitType.Sp),
                     textAlign = TextAlign.Start,
-                    color = darkenColor(CustomMaterialTheme.colorScheme.onSurface, 0.15f),
+                    color = darkenColor(MaterialTheme.colorScheme.onSurface, 0.15f),
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -230,7 +230,7 @@ fun PreferencesSwitchRow(
 	                modifier = Modifier
                         .width(1.dp)
                         .height(36.dp)
-                        .background(CustomMaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
+                        .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
 	            )
 
 	            Spacer(modifier = Modifier.width(16.dp))
@@ -252,7 +252,7 @@ fun PreferencesSeparatorText(text: String) {
     Text(
         text = text,
         fontSize = TextUnit(16f, TextUnitType.Sp),
-        color = CustomMaterialTheme.colorScheme.primary,
+        color = MaterialTheme.colorScheme.primary,
         modifier = Modifier
             .padding(12.dp)
     )
@@ -289,7 +289,7 @@ fun RadioButtonRow(
         Text (
             text = text,
             fontSize = TextUnit(14f, TextUnitType.Sp),
-            color = CustomMaterialTheme.colorScheme.onSurface,
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier
                 .wrapContentSize()
         )
@@ -324,11 +324,11 @@ fun PreferencesThreeStateSwitchRow(
 
     val backgroundColor = when {
         enabled && showBackground -> {
-            CustomMaterialTheme.colorScheme.surfaceVariant
+            MaterialTheme.colorScheme.surfaceVariant
         }
 
         !enabled && showBackground -> {
-            CustomMaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
         }
 
         else -> {
@@ -357,7 +357,7 @@ fun PreferencesThreeStateSwitchRow(
         Icon(
             painter = painterResource(id = iconResID),
             contentDescription = "an icon describing: $title",
-            tint = CustomMaterialTheme.colorScheme.onBackground,
+            tint = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier
                 .size(28.dp)
         )
@@ -375,7 +375,7 @@ fun PreferencesThreeStateSwitchRow(
                 text = title,
                 fontSize = TextUnit(18f, TextUnitType.Sp),
                 textAlign = TextAlign.Start,
-                color = CustomMaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface
             )
 
             if (summary != null) {
@@ -383,7 +383,7 @@ fun PreferencesThreeStateSwitchRow(
                     text = summary,
                     fontSize = TextUnit(14f, TextUnitType.Sp),
                     textAlign = TextAlign.Start,
-                    color = darkenColor(CustomMaterialTheme.colorScheme.onSurface, 0.15f),
+                    color = darkenColor(MaterialTheme.colorScheme.onSurface, 0.15f),
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis
                 )

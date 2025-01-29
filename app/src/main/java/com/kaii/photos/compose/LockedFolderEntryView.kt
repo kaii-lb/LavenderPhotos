@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -32,7 +33,6 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
-import com.kaii.photos.helpers.CustomMaterialTheme
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.MainScreenViewType
 import javax.crypto.Cipher
@@ -130,8 +130,8 @@ fun LockedFolderEntryView(
                         showHelpDialog.value = true
                     },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = CustomMaterialTheme.colorScheme.surfaceVariant,
-                        contentColor = CustomMaterialTheme.colorScheme.onSurface
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onSurface
                     )
                 ) {
                     Text(
@@ -177,8 +177,8 @@ fun LockedFolderEntryView(
                     showHelpDialog.value = true
                 },
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = CustomMaterialTheme.colorScheme.surfaceVariant,
-                    contentColor = CustomMaterialTheme.colorScheme.onSurface
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = MaterialTheme.colorScheme.onSurface
                 )
             ) {
                 Text(
