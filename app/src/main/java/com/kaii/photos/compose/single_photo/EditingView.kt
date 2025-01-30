@@ -138,9 +138,7 @@ import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalNavController
-import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.BottomAppBarItem
 import com.kaii.photos.compose.ColorFilterItem
@@ -154,7 +152,6 @@ import com.kaii.photos.compose.SimpleTab
 import com.kaii.photos.compose.SplitButton
 import com.kaii.photos.compose.getAppBarContentTransition
 import com.kaii.photos.compose.setBarVisibility
-import com.kaii.photos.datastore.Editing
 import com.kaii.photos.helpers.ColorFiltersMatrices
 import com.kaii.photos.helpers.ColorIndicator
 import com.kaii.photos.helpers.DrawablePath
@@ -182,7 +179,8 @@ fun EditingView(
     absolutePath: String,
     dateTaken: Long,
     uri: Uri,
-    window: Window
+    window: Window,
+    overwriteByDefault: Boolean
 ) {
     val navController = LocalNavController.current
     val showCloseDialog = remember { mutableStateOf(false) }
@@ -246,7 +244,6 @@ fun EditingView(
 
     Scaffold(
         topBar = {
-            val overwriteByDefault by mainViewModel.settings.Editing.getOverwriteByDefault().collectAsStateWithLifecycle(initialValue = false)
             val overwrite = remember { mutableStateOf(overwriteByDefault) }
 
             LaunchedEffect(overwriteByDefault) {

@@ -71,7 +71,8 @@ fun HorizontalImageList(
     offset: MutableState<Offset>,
     window: Window,
     appBarsVisible: MutableState<Boolean>,
-    isHidden: Boolean = false
+    isHidden: Boolean = false,
+    isOpenWithView: Boolean = false
 ) {
     LaunchedEffect(key1 = currentMediaItem) {
         scale.value = 1f
@@ -90,8 +91,14 @@ fun HorizontalImageList(
         if (!isLandscape) isTouchLocked.value = false
     }
 
-	val shouldAutoPlay by mainViewModel.settings.Video.getShouldAutoPlay().collectAsStateWithLifecycle(initialValue = true)
-	val muteVideoOnStart by mainViewModel.settings.Video.getMuteOnStart().collectAsStateWithLifecycle(initialValue = true)
+	val shouldAutoPlay =
+        if (isOpenWithView) true
+        else mainViewModel.settings.Video.getShouldAutoPlay().collectAsStateWithLifecycle(initialValue = true).value
+
+	val muteVideoOnStart =
+        if (isOpenWithView) false
+        else mainViewModel.settings.Video.getMuteOnStart().collectAsStateWithLifecycle(initialValue = true).value
+
 	val lastVideoWasMuted = remember { mutableStateOf(muteVideoOnStart) }
 
 	LaunchedEffect(muteVideoOnStart) {

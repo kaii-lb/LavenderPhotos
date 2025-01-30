@@ -98,6 +98,7 @@ import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.Migration3to4
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.Debugging
+import com.kaii.photos.datastore.Editing
 import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.datastore.Versions
 import com.kaii.photos.helpers.EditingScreen
@@ -206,37 +207,7 @@ class MainActivity : ComponentActivity() {
 
                         PermissionHandler(continueToApp)
                     } else {
-				        val absolutePath =
-				            if (intent?.data?.path != null) {
-				                intent!!.data!!.path!!.removePrefix("/").replace("%20", " ").let {
-				                	File(Uri.decode(it).toUri().path!!).absolutePath
-				                }
-				            } else {
-				                Toast.makeText(applicationContext, "Selected media doesn't exist", Toast.LENGTH_LONG).show()
-				                null
-				            }
-
-						val moveToSinglePhoto = absolutePath?.let { path ->
-							val uri = contentResolver.getUriFromAbsolutePath(path, MediaType.Image)?.let { contentUri ->
-					            val mediaStoreData = contentResolver.getMediaStoreDataFromUri(contentUri)
-					            val parentPath = File(path).parentFile?.absolutePath
-
-					            mediaStoreData?.let { media ->
-						            mainViewModel.apply {
-						                setSelectedMediaData(media)
-
-						                setGroupedMedia(listOf(media))
-
-						                setSinglePhotoPath(parentPath)
-						            }
-						            true
-					            }
-					            false
-							}
-							false
-						} ?: false
-
-                        SetContentForActivity(moveToSinglePhoto)
+                        SetContentForActivity()
                     }
                 }
             }
@@ -244,7 +215,7 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun SetContentForActivity(moveToSinglePhoto: Boolean) {
+    private fun SetContentForActivity() {
         window.decorView.setBackgroundColor(MaterialTheme.colorScheme.background.toArgb())
 
         val navControllerLocal = rememberNavController()
@@ -575,11 +546,14 @@ class MainActivity : ComponentActivity() {
                     )
 
                     val screen: EditingScreen = it.toRoute()
+                    val overwriteByDefault by mainViewModel.settings.Editing.getOverwriteByDefault().collectAsStateWithLifecycle(initialValue = false)
+
                     EditingView(
                         absolutePath = screen.absolutePath,
                         dateTaken = screen.dateTaken,
                         uri = screen.uri.toUri(),
-                        window = window
+                        window = window,
+                        overwriteByDefault = overwriteByDefault
                     )
                 }
 
@@ -664,8 +638,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-
-        if (moveToSinglePhoto) navControllerLocal.navigate(MultiScreenViewType.SinglePhotoView.name)
     }
 
     @Composable

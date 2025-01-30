@@ -17,7 +17,8 @@ enum class MultiScreenViewType {
     SettingsDebuggingView,
     SettingsGeneralView,
     SettingsMemoryAndStorageView,
-    SettingsLookAndFeelView
+    SettingsLookAndFeelView,
+    OpenWithView
 }
 
 @Serializable

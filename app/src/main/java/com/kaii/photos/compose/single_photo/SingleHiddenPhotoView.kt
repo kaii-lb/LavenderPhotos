@@ -516,7 +516,7 @@ private fun BottomBar(
 }
 
 @Composable
-private fun SingleSecuredPhotoInfoDialog(
+fun SingleSecuredPhotoInfoDialog(
     showDialog: MutableState<Boolean>,
     currentMediaItem: MediaStoreData
 ) {

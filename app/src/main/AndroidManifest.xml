@@ -46,11 +46,19 @@
             android:exported="true"
             android:theme="@style/Theme.Photos"
             android:configChanges="orientation|screenSize|density|screenLayout">
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".compose.single_photo.OpenWithView"
+            android:exported="true"
+            android:theme="@style/Theme.Photos"
+            android:configChanges="orientation|screenSize|density|screenLayout">
 
             <intent-filter android:label="Open with Lavender Photos">
                 <category android:name="android.intent.category.DEFAULT" />
