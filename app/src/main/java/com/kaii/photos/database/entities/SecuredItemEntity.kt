@@ -8,4 +8,5 @@ import androidx.room.PrimaryKey
 data class SecuredItemEntity (
 	@PrimaryKey val originalPath: String,
     @ColumnInfo(name = "secured_path") val securedPath: String,
+    @ColumnInfo(name = "iv") val iv: ByteArray
 )

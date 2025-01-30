@@ -19,9 +19,10 @@ import com.kaii.photos.database.entities.TrashedItemEntity
         FavouritedItemEntity::class,
         SecuredItemEntity::class
     ],
-    version = 4,
+    version = 5,
     autoMigrations = [
-        AutoMigration(from = 2, to = 3)
+        AutoMigration(from = 2, to = 3),
+        // AutoMigration(from = 4, to = 5)
     ]
 )
 abstract class MediaDatabase : RoomDatabase() {

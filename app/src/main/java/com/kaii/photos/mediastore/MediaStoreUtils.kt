@@ -52,7 +52,9 @@ suspend fun ContentResolver.copyMedia(
     val file = File(media.absolutePath)
 
     val storageContentUri = when {
-        destination.startsWith(Environment.DIRECTORY_DCIM) || destination.startsWith(Environment.DIRECTORY_PICTURES) || destination.startsWith(Environment.DIRECTORY_MOVIES) -> MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+        destination.startsWith(Environment.DIRECTORY_DCIM) || destination.startsWith(Environment.DIRECTORY_PICTURES) || destination.startsWith(Environment.DIRECTORY_MOVIES) -> {
+        	if (media.type == MediaType.Image) MediaStore.Images.Media.EXTERNAL_CONTENT_URI else MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+   		}
         destination.startsWith(Environment.DIRECTORY_DOCUMENTS) || destination.startsWith(Environment.DIRECTORY_DOWNLOADS) -> MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL)
         else -> null
     }

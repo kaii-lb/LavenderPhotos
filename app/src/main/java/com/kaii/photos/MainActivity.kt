@@ -96,6 +96,7 @@ import com.kaii.photos.compose.single_photo.SinglePhotoView
 import com.kaii.photos.compose.single_photo.SingleTrashedPhotoView
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.Migration3to4
+import com.kaii.photos.database.Migration4to5
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.Debugging
 import com.kaii.photos.datastore.Editing
@@ -144,7 +145,7 @@ class MainActivity : ComponentActivity() {
             MediaDatabase::class.java,
             "media-database"
         ).apply {
-            addMigrations(Migration3to4(applicationContext))
+            addMigrations(Migration3to4(applicationContext), Migration4to5(applicationContext))
         }.build()
         applicationDatabase = mediaDatabase
 

@@ -68,3 +68,10 @@ class Migration3to4(val context: Context) : Migration(startVersion = 3, endVersi
         }
     }
 }
+
+class Migration4to5(val context: Context) : Migration(startVersion = 4, endVersion = 5) {
+	override fun migrate(db: SupportSQLiteDatabase) {
+		db.execSQL("DROP TABLE secureditementity")
+		db.execSQL("CREATE TABLE IF NOT EXISTS `secureditementity` (`originalPath` TEXT NOT NULL, `secured_path` TEXT NOT NULL, `iv` BLOB NOT NULL, PRIMARY KEY(`originalPath`))")
+	}
+}

@@ -34,6 +34,7 @@ import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.kaii.photos.MainActivity.Companion.applicationDatabase
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.SecureFolderViewBottomAppBar
 import com.kaii.photos.compose.SecureFolderViewTopAppBar
@@ -162,7 +163,8 @@ fun LockedFolderView(
 		            else if (mimeType.lowercase().contains("video")) MediaType.Video
 		            else MediaType.Section
 
-				val decryptedBytes = encryptionManager.decryptBytes(file.readBytes())
+				val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(file.absolutePath)
+				val decryptedBytes = encryptionManager.decryptBytes(file.readBytes(), iv)
 
 		        val item = MediaStoreData(
 		            type = type,
@@ -173,7 +175,7 @@ fun LockedFolderView(
 		            dateTaken = dateTaken,
 		            displayName = file.name,
 		            absolutePath = file.absolutePath,
-		            bytes = decryptedBytes
+		            bytes = if (type == MediaType.Image) decryptedBytes else null
 		        )
 
 		        mediaStoreData.add(item)

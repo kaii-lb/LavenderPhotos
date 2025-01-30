@@ -85,16 +85,23 @@ import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
+import androidx.media3.extractor.DefaultExtractorsFactory
+import androidx.media3.extractor.Extractor
 import androidx.media3.ui.PlayerView
 import androidx.navigation.NavHostController
 import com.kaii.photos.R
+import com.kaii.photos.MainActivity.Companion.applicationDatabase
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.compose.setBarVisibility
 import com.kaii.photos.datastore.Video
+import com.kaii.photos.helpers.EncryptedDataSourceFactory
 import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareImage
 import com.kaii.photos.mediastore.MediaStoreData
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.math.roundToInt
 import kotlin.time.Duration
@@ -382,7 +389,7 @@ fun VideoPlayer(
     val currentVideoPosition = rememberSaveable { mutableFloatStateOf(0f) }
     val duration = rememberSaveable { mutableFloatStateOf(0f) }
 
-    var exoPlayer = rememberExoPlayerWithLifeCycle(item.uri, isPlaying, duration, currentVideoPosition)
+    var exoPlayer = rememberExoPlayerWithLifeCycle(item.uri, item.absolutePath, isPlaying, duration, currentVideoPosition, item.absolutePath.startsWith("/data"))
     val playerView = rememberPlayerView(exoPlayer, LocalContext.current as Activity)
 
 	val muteVideoOnStart by mainViewModel.settings.Video.getMuteOnStart().collectAsStateWithLifecycle(initialValue = true)
@@ -595,19 +602,23 @@ fun VideoPlayer(
 @Composable
 fun rememberExoPlayerWithLifeCycle(
     videoSource: Uri,
+    absolutePath: String,
     isPlaying: MutableState<Boolean>,
     duration: MutableFloatState,
-    currentVideoPosition: MutableFloatState
+    currentVideoPosition: MutableFloatState,
+    isSecuredMedia: Boolean = false
 ): ExoPlayer {
     val context = LocalContext.current
 
-    var exoPlayer = remember(videoSource) {
+    val exoPlayer = remember(videoSource) {
         createExoPlayer(
             videoSource,
+            absolutePath,
             context,
             isPlaying,
             currentVideoPosition,
-            duration
+            duration,
+            isSecuredMedia
         )
     }
 
@@ -628,10 +639,12 @@ fun rememberExoPlayerWithLifeCycle(
 @androidx.annotation.OptIn(UnstableApi::class)
 fun createExoPlayer(
     videoSource: Uri,
+    absolutePath: String,
     context: Context,
     isPlaying: MutableState<Boolean>,
     currentVideoPosition: MutableFloatState,
-    duration: MutableFloatState
+    duration: MutableFloatState,
+    isSecuredMedia: Boolean = false
 ): ExoPlayer {
     val exoPlayer = ExoPlayer.Builder(context).apply {
         setLoadControl(
@@ -670,13 +683,26 @@ fun createExoPlayer(
             videoScalingMode = VIDEO_SCALING_MODE_SCALE_TO_FIT
             repeatMode = ExoPlayer.REPEAT_MODE_ONE
 
-            val defaultDataSourceFactory = DefaultDataSource.Factory(context)
-            val dataSourceFactory = DefaultDataSource.Factory(
-                context,
-                defaultDataSourceFactory
-            )
-            val source = ProgressiveMediaSource.Factory(dataSourceFactory)
-                .createMediaSource(MediaItem.fromUri(videoSource))
+            val source = if (isSecuredMedia) {
+            	val iv = runBlocking {
+            		withContext(Dispatchers.IO) {
+            			applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(absolutePath)
+            		}
+            	}
+                val dataSourceFactory = EncryptedDataSourceFactory(iv)
+
+                ProgressiveMediaSource.Factory(dataSourceFactory)
+                    .createMediaSource(MediaItem.fromUri(videoSource))
+            } else {
+                val defaultDataSourceFactory = DefaultDataSource.Factory(context)
+                val dataSourceFactory = DefaultDataSource.Factory(
+                    context,
+                    defaultDataSourceFactory
+                )
+
+                ProgressiveMediaSource.Factory(dataSourceFactory)
+                    .createMediaSource(MediaItem.fromUri(videoSource))
+            }
 
             setMediaSource(source)
             prepare()
