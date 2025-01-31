@@ -7,6 +7,7 @@ import android.net.Uri
 import android.view.ViewGroup
 import android.view.Window
 import android.view.WindowManager
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
@@ -53,6 +54,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -71,6 +73,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -97,6 +100,9 @@ import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.EncryptedDataSourceFactory
 import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareImage
+import com.kaii.photos.helpers.EncryptionManager
+import com.kaii.photos.helpers.appSecureVideoCacheDir
+import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.mediastore.MediaStoreData
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -110,6 +116,8 @@ import kotlin.time.Duration.Companion.seconds
 
 // special thanks to @bedirhansaricayir on github, helped with a LOT of performance stuff
 // https://github.com/bedirhansaricayir/Instagram-Reels-Jetpack-Compose/blob/master/app/src/main/java/com/reels/example/presentation/components/ExploreVideoPlayer.kt
+
+private const val TAG = "VIDEO_PLAYER_STUFF"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -380,6 +388,42 @@ fun VideoPlayer(
     window: Window,
     modifier: Modifier
 ) {
+	val context = LocalContext.current
+	val isSecuredMedia = item.absolutePath.startsWith(context.appSecureFolderDir)
+	var continueToVideo by remember { mutableStateOf(!isSecuredMedia) }
+	var videoSource by remember { mutableStateOf(item.uri) }
+
+    LaunchedEffect(isSecuredMedia) {
+    	if (isSecuredMedia) {
+	        withContext(Dispatchers.IO) {
+	            val encryptionManager = EncryptionManager()
+
+	            val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(item.absolutePath)
+
+	            val output = encryptionManager.decryptVideo(
+	                absolutePath = item.absolutePath,
+	                iv = iv,
+	                context = context
+	            )
+
+	            videoSource = output.toUri()
+	            continueToVideo = true
+	        }
+    	}
+    }
+
+    if (!continueToVideo) {
+    	Column (
+    		modifier = Modifier
+    			.fillMaxSize(1f),
+   			verticalArrangement = Arrangement.Center,
+   			horizontalAlignment = Alignment.CenterHorizontally
+    	) {
+    		Text(text = "Loading...")
+    	}
+    	return
+    }
+
     val isPlaying = rememberSaveable { mutableStateOf(false) }
     val lastIsPlaying = rememberSaveable { mutableStateOf(isPlaying.value) }
 
@@ -389,10 +433,11 @@ fun VideoPlayer(
     val currentVideoPosition = rememberSaveable { mutableFloatStateOf(0f) }
     val duration = rememberSaveable { mutableFloatStateOf(0f) }
 
-    var exoPlayer = rememberExoPlayerWithLifeCycle(item.uri, item.absolutePath, isPlaying, duration, currentVideoPosition, item.absolutePath.startsWith("/data"))
-    val playerView = rememberPlayerView(exoPlayer, LocalContext.current as Activity)
+    val exoPlayer = rememberExoPlayerWithLifeCycle(videoSource, item.absolutePath, isPlaying, duration, currentVideoPosition, isSecuredMedia)
+    val playerView = rememberPlayerView(exoPlayer, context as Activity, item.absolutePath)
 
 	val muteVideoOnStart by mainViewModel.settings.Video.getMuteOnStart().collectAsStateWithLifecycle(initialValue = true)
+
 
     BackHandler {
         isPlaying.value = false
@@ -606,11 +651,11 @@ fun rememberExoPlayerWithLifeCycle(
     isPlaying: MutableState<Boolean>,
     duration: MutableFloatState,
     currentVideoPosition: MutableFloatState,
-    isSecuredMedia: Boolean = false
+    isSecuredMedia: Boolean
 ): ExoPlayer {
     val context = LocalContext.current
 
-    val exoPlayer = remember(videoSource) {
+    val exoPlayer = remember {
         createExoPlayer(
             videoSource,
             absolutePath,
@@ -625,7 +670,7 @@ fun rememberExoPlayerWithLifeCycle(
     val lifecycleOwner = LocalLifecycleOwner.current
 
     DisposableEffect(lifecycleOwner.lifecycle.currentState) {
-        val lifecycleObserver = getExoPlayerLifecycleObserver(exoPlayer, isPlaying, context as Activity)
+        val lifecycleObserver = getExoPlayerLifecycleObserver(exoPlayer, isPlaying, context as Activity, absolutePath)
 
         lifecycleOwner.lifecycle.addObserver(lifecycleObserver)
 
@@ -644,7 +689,7 @@ fun createExoPlayer(
     isPlaying: MutableState<Boolean>,
     currentVideoPosition: MutableFloatState,
     duration: MutableFloatState,
-    isSecuredMedia: Boolean = false
+    isSecuredMedia: Boolean
 ): ExoPlayer {
     val exoPlayer = ExoPlayer.Builder(context).apply {
         setLoadControl(
@@ -683,26 +728,31 @@ fun createExoPlayer(
             videoScalingMode = VIDEO_SCALING_MODE_SCALE_TO_FIT
             repeatMode = ExoPlayer.REPEAT_MODE_ONE
 
-            val source = if (isSecuredMedia) {
-            	val iv = runBlocking {
-            		withContext(Dispatchers.IO) {
-            			applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(absolutePath)
-            		}
-            	}
-                val dataSourceFactory = EncryptedDataSourceFactory(iv)
+//            val dataSourceFactory =
+//                 if (isSecuredMedia) {
+//                     val iv =
+//                         runBlocking {
+//                             withContext(Dispatchers.IO) {
+//                                 applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(absolutePath)
+//                             }
+//                         }
+// 
+//                     EncryptedDataSourceFactory(
+//                         absolutePath = absolutePath,
+//                         iv = iv
+//                     )
+//                 } else {
+//
+//                 }
 
-                ProgressiveMediaSource.Factory(dataSourceFactory)
-                    .createMediaSource(MediaItem.fromUri(videoSource))
-            } else {
-                val defaultDataSourceFactory = DefaultDataSource.Factory(context)
-                val dataSourceFactory = DefaultDataSource.Factory(
-                    context,
-                    defaultDataSourceFactory
-                )
+            val defaultDataSourceFactory = DefaultDataSource.Factory(context)
+            val dataSourceFactory = DefaultDataSource.Factory(
+                context,
+                defaultDataSourceFactory
+            )
 
-                ProgressiveMediaSource.Factory(dataSourceFactory)
-                    .createMediaSource(MediaItem.fromUri(videoSource))
-            }
+            val source = ProgressiveMediaSource.Factory(dataSourceFactory)
+                .createMediaSource(MediaItem.fromUri(videoSource))
 
             setMediaSource(source)
             prepare()
@@ -741,7 +791,8 @@ fun createExoPlayer(
 fun getExoPlayerLifecycleObserver(
     exoPlayer: ExoPlayer,
     isPlaying: MutableState<Boolean>,
-    activity: Activity
+    activity: Activity,
+    absolutePath: String
 ): LifecycleEventObserver =
     LifecycleEventObserver { _, event ->
         when (event) {
@@ -756,6 +807,11 @@ fun getExoPlayerLifecycleObserver(
                 if (!activity.isChangingConfigurations) {
                     exoPlayer.stop()
                     exoPlayer.release()
+
+					// delete decrypted video if exists
+			        File(activity.applicationContext.appSecureVideoCacheDir, File(absolutePath).name).apply {
+			        	if (exists()) delete()
+			        }
                 }
             }
 
@@ -766,7 +822,11 @@ fun getExoPlayerLifecycleObserver(
 
 @UnstableApi
 @Composable
-fun rememberPlayerView(exoPlayer: ExoPlayer, activity: Activity): PlayerView {
+fun rememberPlayerView(
+	exoPlayer: ExoPlayer,
+	activity: Activity,
+	absolutePath: String
+): PlayerView {
     val context = LocalContext.current
 
     val playerView = remember {
@@ -782,14 +842,21 @@ fun rememberPlayerView(exoPlayer: ExoPlayer, activity: Activity): PlayerView {
             setShowBuffering(PlayerView.SHOW_BUFFERING_ALWAYS)
         }
     }
-    DisposableEffect(key1 = true) {
+
+    DisposableEffect(Unit) {
         onDispose {
         	if (!activity.isChangingConfigurations) {
 	            playerView.player = null
 	            exoPlayer.release()
+
+				// delete decrypted video if exists
+		        File(context.appSecureVideoCacheDir, File(absolutePath).name).apply {
+		        	if (exists()) delete()
+		        }
         	}
         }
     }
+
     return playerView
 }
 

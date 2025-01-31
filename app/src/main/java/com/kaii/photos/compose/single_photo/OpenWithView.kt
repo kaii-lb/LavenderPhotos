@@ -109,6 +109,7 @@ class OpenWithView : ComponentActivity() {
 
         if (mediaItem == null) {
             Toast.makeText(applicationContext, "This media doesn't exist", Toast.LENGTH_LONG).show()
+            finish()
             return
         }
 

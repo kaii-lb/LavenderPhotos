@@ -48,6 +48,7 @@ import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.getDateTakenForMedia
 import com.kaii.photos.helpers.appSecureFolderDir
+import com.kaii.photos.helpers.appSecureVideoCacheDir
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.gallery_model.groupPhotosBy
@@ -65,6 +66,7 @@ fun LockedFolderView(
 ) {
 	val context = LocalContext.current
 
+	// TODO: move again to Android/data for space purposes
 	val oldDir = context.getDir("locked_folder", Context.MODE_PRIVATE)
 	oldDir?.let { oldFilesDir ->
 		val subFiles = oldFilesDir.listFiles()
@@ -97,11 +99,19 @@ fun LockedFolderView(
         mutableStateOf(false)
     }
 
-    LaunchedEffect(hideSecureFolder) {
+    LaunchedEffect(hideSecureFolder, lastLifecycleState) {
         if (hideSecureFolder
             && navController.currentBackStackEntry?.destination?.route != MultiScreenViewType.SingleHiddenPhotoVew.name
         ) {
             navController.navigate(MultiScreenViewType.MainScreen.name)
+        }
+
+        if (lastLifecycleState == Lifecycle.State.DESTROYED) {
+        	withContext(Dispatchers.IO) {
+        		File(context.appSecureVideoCacheDir)?.listFiles()?.forEach {
+        			it?.delete()
+        		}
+        	}
         }
     }
 
@@ -163,8 +173,12 @@ fun LockedFolderView(
 		            else if (mimeType.lowercase().contains("video")) MediaType.Video
 		            else MediaType.Section
 
-				val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(file.absolutePath)
-				val decryptedBytes = encryptionManager.decryptBytes(file.readBytes(), iv)
+				// TODO: stop storing insane amounts of data in memory
+				val decryptedBytes =
+					if (type == MediaType.Image) {
+						val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(file.absolutePath)
+						encryptionManager.decryptBytes(file.inputStream(), iv)
+					} else null
 
 		        val item = MediaStoreData(
 		            type = type,
@@ -175,7 +189,7 @@ fun LockedFolderView(
 		            dateTaken = dateTaken,
 		            displayName = file.name,
 		            absolutePath = file.absolutePath,
-		            bytes = if (type == MediaType.Image) decryptedBytes else null
+		            bytes = decryptedBytes
 		        )
 
 		        mediaStoreData.add(item)

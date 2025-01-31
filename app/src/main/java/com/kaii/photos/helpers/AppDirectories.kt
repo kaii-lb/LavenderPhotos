@@ -7,7 +7,8 @@ import java.io.File
 private enum class AppDirectories(val path: String) {
     MainDir("LavenderPhotos"),
     LockedFolder("secure_folder"),
-    RestoredFolder("Restored Files")
+    RestoredFolder("Restored Files"),
+    SecureVideoCacheDir("secure_video_cache_dir")
 }
 
 /** ends with a "/" */
@@ -46,6 +47,17 @@ val Context.appStorageDir: String
         val dataPath = getExternalFilesDir(AppDirectories.MainDir.path)?.absolutePath ?: throw Exception("Cannot get path of null object: Main Dir doesn't exist.")
 
 		val path = dataPath.replace("data", "media").replace("files", "")
+		val dir = File(path)
+        if (!dir.exists()) dir.mkdirs()
+
+        return dir.absolutePath.removeSuffix("/")
+    }
+
+/** doesn't end with a "/" */
+val Context.appSecureVideoCacheDir: String
+    get() {
+		val path = cacheDir.absolutePath.removeSuffix("/") + "/" + AppDirectories.SecureVideoCacheDir.path
+
 		val dir = File(path)
         if (!dir.exists()) dir.mkdirs()
 

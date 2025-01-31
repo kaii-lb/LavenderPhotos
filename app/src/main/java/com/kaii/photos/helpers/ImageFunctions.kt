@@ -176,18 +176,13 @@ fun moveImageToLockedFolder(list: List<MediaStoreData>, context: Context) {
 	            )
 
 				// encrypt file data and write to secure folder path
-		        val encryptedBytesAndIv = encryptionManager.encryptBytes(fileToBeHidden.readBytes())
-
-		        destinationFile.outputStream().apply {
-		        	write(encryptedBytesAndIv.first)
-		        	close()
-		       	}
+		        val iv = encryptionManager.encryptInputStream(fileToBeHidden.inputStream(), destinationFile.outputStream())
 
 	            applicationDatabase.securedItemEntityDao().insertEntity(
 	                SecuredItemEntity(
 	                    originalPath = mediaItem.absolutePath,
 	                    securedPath = copyToPath,
-	                    iv = encryptedBytesAndIv.second
+	                    iv = iv
 	                )
 	            )
 
@@ -215,10 +210,7 @@ fun moveImageOutOfLockedFolder(list: List<MediaStoreData>, context: Context) {
 				val tempFile = File(context.cacheDir, fileToBeRestored.name)
 
 				val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(media.absolutePath)
-				tempFile.outputStream().apply {
-					write(encryptionManager.decryptBytes(fileToBeRestored.readBytes(), iv))
-					close()
-				}
+				encryptionManager.decryptInputStream(fileToBeRestored.inputStream(), tempFile.outputStream(), iv)
 
                 contentResolver.copyMedia(
                     context = context,

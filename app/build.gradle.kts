@@ -92,7 +92,8 @@ dependencies {
     implementation("androidx.core:core-splashscreen:1.0.0")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
-    implementation("com.ashampoo:kim:0.20")
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
+
 
     val roomVersion = "2.6.1"
     implementation("androidx.room:room-runtime:$roomVersion")
