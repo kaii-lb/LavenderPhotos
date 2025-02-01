@@ -44,14 +44,18 @@ import com.kaii.photos.R
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.compose.setBarVisibility
 import com.kaii.photos.datastore.Video
+import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.signature
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.cos
@@ -104,6 +108,10 @@ fun HorizontalImageList(
 	LaunchedEffect(muteVideoOnStart) {
 		lastVideoWasMuted.value = muteVideoOnStart
 	}
+
+    val encryptionManager = remember {
+        EncryptionManager()
+    }
 
     HorizontalPager(
         state = state,
@@ -190,8 +198,23 @@ fun HorizontalImageList(
                 modifier = Modifier
                     .fillMaxSize(1f)
             ) {
+                var model by remember { mutableStateOf<Any?>(null) }
+
+                LaunchedEffect(Unit) {
+                    model =
+                        if (isHidden) {
+                            withContext(Dispatchers.IO) {
+                                val iv = mediaStoreItem.bytes!!
+                                encryptionManager.decryptBytes(
+                                    bytes = File(mediaStoreItem.absolutePath).readBytes(),
+                                    iv = iv
+                                )
+                            }
+                        } else mediaStoreItem.uri
+                }
+
                 GlideImage(
-                    model = if (isHidden) mediaStoreItem.bytes ?: mediaStoreItem.uri.path else mediaStoreItem.uri,
+                    model = model,
                     contentDescription = "selected image",
                     contentScale = ContentScale.Fit,
                     failure = placeholder(R.drawable.broken_image),

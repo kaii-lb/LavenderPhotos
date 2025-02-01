@@ -79,7 +79,8 @@ fun DebuggingSettingsPage() {
                     showBackground = false,
                     onRowClick = {
                     	val file = File(logPath)
-                    	if (file?.exists() == true) {
+
+                    	if (file.exists()) {
                     		shareSecuredImage(logPath, context)
                     	} else {
                     		Toast.makeText(context, "No log file is recorded as of yet.", Toast.LENGTH_LONG).show()

@@ -97,7 +97,6 @@ import com.kaii.photos.MainActivity.Companion.applicationDatabase
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.compose.setBarVisibility
 import com.kaii.photos.datastore.Video
-import com.kaii.photos.helpers.EncryptedDataSourceFactory
 import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareImage
 import com.kaii.photos.helpers.EncryptionManager

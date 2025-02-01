@@ -72,6 +72,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -91,14 +92,15 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity
 import com.kaii.photos.R
-import com.kaii.photos.compose.FolderDoesntExist
 import com.kaii.photos.compose.FolderIsEmpty
 import com.kaii.photos.compose.ShowSelectedState
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.datastore.Storage
+import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.ImageFunctions
 import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.appSecureVideoCacheDir
 import com.kaii.photos.helpers.checkHasFiles
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.selectAll
@@ -112,9 +114,12 @@ import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.signature
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -148,29 +153,35 @@ fun PhotoGrid(
         }
     }
 
-    if (hasFiles == null) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize(1f)
-                .then(modifier)
-        ) {}
-    } else if (hasFiles == true) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize(1f)
-                .then(modifier)
-        ) {
-            DeviceMedia(
-                groupedMedia,
-                selectedItemsList,
-                viewProperties,
-                shouldPadUp,
-                state,
-                path
-            )
+    when (hasFiles) {
+        null -> {
+            Row(
+                modifier = Modifier
+                    .fillMaxSize(1f)
+                    .then(modifier)
+            ) {}
         }
-    } else {
-        FolderIsEmpty(viewProperties.emptyText, viewProperties.emptyIconResId)
+
+        true -> {
+            Row(
+                modifier = Modifier
+                    .fillMaxSize(1f)
+                    .then(modifier)
+            ) {
+                DeviceMedia(
+                    groupedMedia,
+                    selectedItemsList,
+                    viewProperties,
+                    shouldPadUp,
+                    state,
+                    path
+                )
+            }
+        }
+
+        false -> {
+            FolderIsEmpty(viewProperties.emptyText, viewProperties.emptyIconResId)
+        }
     }
 }
 
@@ -247,6 +258,10 @@ fun DeviceMedia(
                 }
             }
 
+            val encryptionManager = remember {
+            	EncryptionManager()
+            }
+
             LazyVerticalGrid(
                 columns = GridCells.Fixed(
                     if (!isLandscape) {
@@ -312,7 +327,8 @@ fun DeviceMedia(
                             viewProperties = viewProperties,
                             selectedItemsList = selectedItemsList,
                             thumbnailSettings = Pair(cacheThumbnails, thumbnailSize),
-                            isDragSelecting = isDragSelecting
+                            isDragSelecting = isDragSelecting,
+                            encryptionManager = encryptionManager
                         ) {
                             when (viewProperties.operation) {
                                 ImageFunctions.LoadNormalImage -> {
@@ -572,6 +588,7 @@ fun MediaStoreItem(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     thumbnailSettings: Pair<Boolean, Int>,
     isDragSelecting: MutableState<Boolean>,
+    encryptionManager: EncryptionManager,
     onClick: () -> Unit
 ) {
     val vibratorManager = rememberVibratorManager()
@@ -688,8 +705,35 @@ fun MediaStoreItem(
                     }
                 )
         ) {
+            val appSecureVideoCacheDir = LocalContext.current.appSecureVideoCacheDir
+
+            var model by remember { mutableStateOf<Any?>(null) }
+            var isSecureMedia = viewProperties == ViewProperties.SecureFolder
+
+            LaunchedEffect(isSecureMedia) {
+            	if (!isSecureMedia) return@LaunchedEffect
+
+                model =
+                    withContext(Dispatchers.IO) {
+	                    if (item.type == MediaType.Image) {
+	                        val iv = item.bytes!!
+	                        encryptionManager.decryptBytes(
+	                            bytes = File(item.absolutePath).readBytes(),
+	                            iv = iv
+	                        )
+	                    } else {
+	                        val thumbnailIv = item.bytes!!.copyOfRange(16, 32) // get thumbnail iv from video
+
+	                        encryptionManager.decryptBytes(
+	                            bytes = File(appSecureVideoCacheDir + "/" + item.displayName  + ".png").readBytes(),
+	                            iv = thumbnailIv
+	                        )
+	                    }
+                    }
+            }
+
             GlideImage(
-                model = if (viewProperties == ViewProperties.SecureFolder) item.bytes ?: item.uri.path else item.uri,
+                model = if (isSecureMedia) model else item.uri,
                 contentDescription = item.displayName,
                 contentScale = ContentScale.Crop,
                 failure = placeholder(R.drawable.broken_image),

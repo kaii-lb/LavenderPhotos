@@ -74,6 +74,7 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.ConfirmationDialog
 import com.kaii.photos.compose.ConfirmationDialogWithBody
 import com.kaii.photos.compose.DialogInfoText
+import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.MediaData
 import com.kaii.photos.helpers.MultiScreenViewType
@@ -301,16 +302,19 @@ private fun TopBar(
                 IconButton(
                     onClick = {
                         coroutineScope.launch(Dispatchers.IO) {
+                            val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(mediaItem.absolutePath)
+                            val originalFile = File(mediaItem.absolutePath)
                             val cachedFile = File(context.cacheDir, mediaItem.displayName ?: mediaItem.id.toString())
-                            cachedFile.outputStream().apply {
-                                write(mediaItem.bytes!!)
-                                close()
-                            }
+
+                            EncryptionManager().decryptInputStream(
+                                inputStream = originalFile.inputStream(),
+                                outputStream = cachedFile.outputStream(),
+                                iv = iv
+                            )
 
                             shareSecuredImage(
-                                cachedFile.absolutePath,
-                                context,
-                                mediaItem.mimeType
+                                absolutePath = cachedFile.absolutePath,
+                                context = context
                             )
                         }
                     }

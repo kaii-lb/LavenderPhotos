@@ -176,9 +176,15 @@ fun LockedFolderView(
 				// TODO: stop storing insane amounts of data in memory
 				val decryptedBytes =
 					if (type == MediaType.Image) {
-						val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(file.absolutePath)
-						encryptionManager.decryptBytes(file.inputStream(), iv)
-					} else null
+						applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(file.absolutePath)
+					} else {
+                        val videoIv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(file.absolutePath)
+                        val thumbnailIv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(
+                            context.appSecureVideoCacheDir + "/" + file.name + ".png"
+                        )
+
+                        videoIv + thumbnailIv
+                    }
 
 		        val item = MediaStoreData(
 		            type = type,

@@ -67,8 +67,10 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowInsetsCompat
 import com.kaii.photos.MainActivity
+import com.kaii.photos.MainActivity.Companion.applicationDatabase
 import com.kaii.photos.R
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
+import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.moveImageOutOfLockedFolder
@@ -1107,13 +1109,18 @@ fun SecureFolderViewBottomAppBar(
             	coroutineScope.launch(Dispatchers.IO) {
             		async {
 	            		val cachedPaths = emptyList<Pair<String, MediaType>>().toMutableList()
+                        val encryptionManager = EncryptionManager()
 
 	            		selectedItemsWithoutSection.forEach { item ->
-	                   		val cachedFile = File(context.cacheDir, item.displayName ?: item.id.toString())
-	                   		cachedFile.outputStream().apply {
-	                   			write(item.bytes!!)
-	                   			close()
-	                   		}
+                            val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(item.absolutePath)
+                            val originalFile = File(item.absolutePath)
+                            val cachedFile = File(context.cacheDir, item.displayName ?: item.id.toString())
+
+                            encryptionManager.decryptInputStream(
+                                inputStream = originalFile.inputStream(),
+                                outputStream = cachedFile.outputStream(),
+                                iv = iv
+                            )
 
 	                   		cachedPaths.add(Pair(cachedFile.absolutePath, item.type))
 	            		}
@@ -1281,7 +1288,7 @@ fun FavouritesViewBottomAppBar(
     IsSelectingBottomAppBar {
         val context = LocalContext.current
         val coroutineScope = rememberCoroutineScope()
-        val dao = MainActivity.applicationDatabase.favouritedItemEntityDao()
+        val dao = applicationDatabase.favouritedItemEntityDao()
 
         val selectedItemsWithoutSection by remember {
             derivedStateOf {

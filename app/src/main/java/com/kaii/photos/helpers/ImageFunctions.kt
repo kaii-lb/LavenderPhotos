@@ -5,8 +5,9 @@ import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.media.MediaMetadataRetriever
 import android.net.Uri
-import android.os.Environment
 import android.provider.DocumentsContract
 import android.provider.MediaStore
 import android.provider.MediaStore.MediaColumns
@@ -34,27 +35,23 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.toSize
 import androidx.core.content.FileProvider
-import androidx.core.net.toFile
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.kaii.photos.MainActivity.Companion.applicationDatabase
+import com.kaii.photos.R
 import com.kaii.photos.database.entities.SecuredItemEntity
-import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.copyMedia
-import com.kaii.photos.mediastore.copyUriToUri
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.io.path.Path
+import java.io.ByteArrayOutputStream
 import kotlin.math.min
 import java.io.File
-import java.nio.file.Files
-import java.nio.file.StandardCopyOption
 
 private const val TAG = "IMAGE_FUNCTIONS"
 
@@ -110,7 +107,7 @@ fun shareImage(uri: Uri, context: Context, mimeType: String? = null) {
     context.startActivity(chooserIntent)
 }
 
-fun shareSecuredImage(absolutePath: String, context: Context, mimeType: String? = null) {
+fun shareSecuredImage(absolutePath: String, context: Context) {
 	val uri = FileProvider.getUriForFile(context, LAVENDER_FILE_PROVIDER_AUTHORITY, File(absolutePath))
 
 	val intent = Intent().apply {
@@ -153,6 +150,7 @@ fun moveImageToLockedFolder(list: List<MediaStoreData>, context: Context) {
     val contentResolver = context.contentResolver
     val lastModified = System.currentTimeMillis()
 	val encryptionManager = EncryptionManager()
+    val metadataRetriever = MediaMetadataRetriever()
 
     CoroutineScope(Dispatchers.IO).launch {
         async {
@@ -174,6 +172,45 @@ fun moveImageToLockedFolder(list: List<MediaStoreData>, context: Context) {
 	                mediaItem.absolutePath,
 	                mediaItem.dateTaken
 	            )
+
+                if (mediaItem.type == MediaType.Video) {
+                    val thumbnailFile = File(context.appSecureVideoCacheDir + "/" + fileToBeHidden.name + ".png")
+
+                    metadataRetriever.setDataSource(context, mediaItem.uri)
+                    val thumbnail = metadataRetriever.getScaledFrameAtTime(
+                        1000000L,
+                        MediaMetadataRetriever.OPTION_PREVIOUS_SYNC,
+                        1024,
+                        1024
+                    )
+
+                    val actual =
+                        if (thumbnail != null) {
+                            val bytes = ByteArrayOutputStream()
+                            thumbnail.compress(Bitmap.CompressFormat.PNG, 100, bytes)
+
+                            bytes.toByteArray()
+                        } else {
+                            val image = BitmapFactory.decodeResource(context.resources, R.drawable.broken_image)
+                            val bytes = ByteArrayOutputStream()
+                            image.compress(Bitmap.CompressFormat.PNG, 100, bytes)
+
+                            bytes.toByteArray()
+                        }
+
+                    val iv = encryptionManager.encryptInputStream(
+                        actual.inputStream(),
+                        thumbnailFile.outputStream(),
+                    )
+
+                    applicationDatabase.securedItemEntityDao().insertEntity(
+                        SecuredItemEntity(
+                            originalPath = thumbnailFile.absolutePath,
+                            securedPath = thumbnailFile.absolutePath,
+                            iv = iv
+                        )
+                    )
+                }
 
 				// encrypt file data and write to secure folder path
 		        val iv = encryptionManager.encryptInputStream(fileToBeHidden.inputStream(), destinationFile.outputStream())
@@ -260,11 +297,11 @@ fun renameImage(context: Context, uri: Uri, newName: String) {
 
 fun renameDirectory(context: Context, absolutePath: String, newName: String) {
     try {
-    	val originalFile = File(absolutePath)
-        val newFile = File(absolutePath.replace(originalFile.name, newName))
+    	// val originalFile = File(absolutePath)
+        // val newFile = File(absolutePath.replace(originalFile.name, newName))
 
         val dir = DocumentsContract.buildTreeDocumentUri(EXTERNAL_DOCUMENTS_AUTHORITY, "primary:${absolutePath.replace(baseInternalStorageDirectory, "")}")
-        val newDir = DocumentsContract.buildTreeDocumentUri(EXTERNAL_DOCUMENTS_AUTHORITY, "primary:${absolutePath.replace(originalFile.name, newName)}")
+        // val newDir = DocumentsContract.buildTreeDocumentUri(EXTERNAL_DOCUMENTS_AUTHORITY, "primary:${absolutePath.replace(originalFile.name, newName)}")
 
         val newDirectory = DocumentFile.fromTreeUri(context, dir)
         newDirectory?.renameTo(newName)
