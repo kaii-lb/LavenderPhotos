@@ -10,6 +10,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.bumptech.glide.Glide
+import com.kaii.photos.BuildConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -109,12 +110,13 @@ class SettingsAlbumsListImpl(private val context: Context, private val viewModel
 
 class SettingsVersionImpl(private val context: Context, private val viewModelScope: CoroutineScope) {
     private val v083firstStartKey = booleanPreferencesKey("v0.8.3-beta_first_start")
+    private val migrateToEncryptedSecurePhotos = booleanPreferencesKey("migrate_to_encrypted_secure_photos")
 
     fun getIsV083FirstStart(context: Context): Flow<Boolean> =
         context.datastore.data.map {
             val currentVersion = context.packageManager.getPackageInfo(context.packageName, 0).versionName
 
-            val isPrev083 = (it[v083firstStartKey] ?: true) && com.kaii.photos.BuildConfig.VERSION_CODE >= 83
+            val isPrev083 = (it[v083firstStartKey] ?: true) && BuildConfig.VERSION_CODE >= 83
 
             Log.e(TAG, "App version ${currentVersion}. Is pre v0.8.3? $isPrev083")
 
@@ -126,6 +128,17 @@ class SettingsVersionImpl(private val context: Context, private val viewModelSco
             it[v083firstStartKey] = value
         }
     }
+
+    fun getShouldMigrateToEncryptedSecurePhotos(context: Context): Flow<Boolean> =
+    	context.datastore.data.map {
+    		it[migrateToEncryptedSecurePhotos] ?: true
+    	}
+
+   	fun setShouldMigrateToEncryptedSecurePhotos(value: Boolean) = viewModelScope.launch {
+   		context.datastore.edit {
+   			it[migrateToEncryptedSecurePhotos] = value
+   		}
+   	}
 }
 
 class SettingsUserImpl(private val context: Context, private val viewModelScope: CoroutineScope) {

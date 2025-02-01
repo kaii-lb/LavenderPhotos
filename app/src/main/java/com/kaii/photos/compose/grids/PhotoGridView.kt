@@ -717,9 +717,10 @@ fun MediaStoreItem(
                     withContext(Dispatchers.IO) {
                     	try {
 		                    if (item.type == MediaType.Image) {
-		                        val iv = item.bytes!!
+		                    	val iv = item.bytes!!.copyOfRange(16, 32)
+
 		                        encryptionManager.decryptBytes(
-		                            bytes = File(item.absolutePath).readBytes(),
+		                            bytes = File(appSecureVideoCacheDir + "/" + item.displayName  + ".png").readBytes(),
 		                            iv = iv
 		                        )
 		                    } else {

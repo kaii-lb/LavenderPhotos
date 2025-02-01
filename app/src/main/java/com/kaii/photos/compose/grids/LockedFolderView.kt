@@ -14,6 +14,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberStandardBottomSheetState
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -35,7 +36,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.kaii.photos.MainActivity.Companion.applicationDatabase
+import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.LocalNavController
+import com.kaii.photos.datastore.Versions
 import com.kaii.photos.compose.SecureFolderViewBottomAppBar
 import com.kaii.photos.compose.SecureFolderViewTopAppBar
 import com.kaii.photos.compose.ViewProperties
@@ -57,6 +60,7 @@ import java.nio.file.Files
 import kotlin.io.path.Path
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,21 +69,6 @@ fun LockedFolderView(
     currentView: MutableState<MainScreenViewType>
 ) {
 	val context = LocalContext.current
-
-	// TODO: move again to Android/data for space purposes
-	val oldDir = context.getDir("locked_folder", Context.MODE_PRIVATE)
-	oldDir?.let { oldFilesDir ->
-		val subFiles = oldFilesDir.listFiles()
-
-		if (subFiles?.isNotEmpty() == true) {
-			val newDir = context.appSecureFolderDir
-			subFiles.forEach { file ->
-				val newPath = newDir + "/" + file.name
-				file.copyTo(File(newPath))
-				file.delete()
-			}
-		}
-	}
 
     val selectedItemsList = remember { SnapshotStateList<MediaStoreData>() }
     val navController = LocalNavController.current
@@ -174,15 +163,13 @@ fun LockedFolderView(
 		            else MediaType.Section
 
 				val decryptedBytes =
-					if (type == MediaType.Image) {
-						applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(file.absolutePath)
-					} else {
-                        val videoIv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(file.absolutePath)
+					run {
+                        val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(file.absolutePath)
                         val thumbnailIv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(
                             context.appSecureVideoCacheDir + "/" + file.name + ".png"
                         )
 
-                        videoIv + thumbnailIv
+                        iv + thumbnailIv
                     }
 
 		        val item = MediaStoreData(

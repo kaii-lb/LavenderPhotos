@@ -1,5 +1,6 @@
 package com.kaii.photos.compose
 
+import android.content.Context
 import android.hardware.biometrics.BiometricManager
 import android.hardware.biometrics.BiometricPrompt
 import android.os.CancellationSignal
@@ -21,7 +22,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,10 +34,19 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
+import com.kaii.photos.MainActivity.Companion.mainViewModel
+import com.kaii.photos.datastore.Versions
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.MainScreenViewType
+import com.kaii.photos.helpers.appRestoredFilesDir
+import com.kaii.photos.helpers.appSecureFolderDir
+import com.kaii.photos.helpers.appSecureVideoCacheDir
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.io.File
 import javax.crypto.Cipher
 
 @Composable
@@ -52,6 +64,66 @@ fun LockedFolderEntryView(
     val context = LocalContext.current
     val cancellationSignal = CancellationSignal()
 
+	// TODO: move again to Android/data for space purposes
+	// moves media from old dir to new dir for secure folder
+	val shouldMigrate by mainViewModel.settings.Versions.getShouldMigrateToEncryptedSecurePhotos(context).collectAsStateWithLifecycle(initialValue = false)
+	var launchSecureFolder by remember { mutableStateOf(false) }
+
+	LaunchedEffect(launchSecureFolder) {
+		if (launchSecureFolder) navController.navigate(MultiScreenViewType.LockedFolderView.name)
+	}
+
+	LaunchedEffect(shouldMigrate) {
+		withContext(Dispatchers.IO) {
+			val oldDir = context.getDir("locked_folder", Context.MODE_PRIVATE)
+			oldDir?.let { oldFilesDir ->
+				val subFiles = oldFilesDir.listFiles()
+
+				if (subFiles?.isNotEmpty() == true) {
+					val newDir = context.appSecureFolderDir
+					subFiles.forEach { file ->
+						val newPath = newDir + "/" + file.name
+						file.copyTo(File(newPath))
+						file.delete()
+					}
+				}
+			}
+
+			// move unencrypted files to restored files dir
+			if (shouldMigrate) {
+				val restoredFilesDir = context.appRestoredFilesDir
+
+				val unencryptedDir = File(context.appSecureFolderDir)
+				val subFiles = unencryptedDir.listFiles()
+
+				if (subFiles?.isNotEmpty() == true) {
+					subFiles.forEach { file ->
+						val newPath = restoredFilesDir + "/" + file.name
+						file.copyTo(File(newPath))
+						file.delete()
+					}
+				}
+
+				mainViewModel.settings.Versions.setShouldMigrateToEncryptedSecurePhotos(false)
+			}
+		}
+	}
+
+	// TODO: switch to loading dialog
+	if (shouldMigrate) {
+		Column(
+			modifier = Modifier
+				.fillMaxSize(1f),
+			verticalArrangement = Arrangement.Center,
+			horizontalAlignment = Alignment.CenterHorizontally
+		) {
+			Text(text = "Migrating from unencrypted secure photos to encrypted secure photos")
+			Text(text = "Please wait...")
+		}
+
+		return
+	}
+
     val prompt = BiometricPrompt.Builder(LocalContext.current)
         .setTitle("Unlock Secure Folder")
         .setSubtitle("Use your biometric credentials to unlock")
@@ -61,7 +133,7 @@ fun LockedFolderEntryView(
     val promptCallback = object : BiometricPrompt.AuthenticationCallback() {
         override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult?) {
             super.onAuthenticationSucceeded(result)
-            navController.navigate(MultiScreenViewType.LockedFolderView.name)
+            launchSecureFolder = true
         }
 
         override fun onAuthenticationError(errorCode: Int, errString: CharSequence?) {

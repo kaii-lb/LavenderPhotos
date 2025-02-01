@@ -1444,7 +1444,6 @@ fun SelectingMoreOptionsDialog(
 	            context
 	        )
 
-			selectedItems.clear()
 	        showDialog.value = false
 	    }
 	)

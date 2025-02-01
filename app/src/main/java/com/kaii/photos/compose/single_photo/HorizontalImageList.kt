@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
@@ -48,6 +49,7 @@ import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.vibrateShort
+import com.kaii.photos.helpers.appSecureVideoCacheDir
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.signature
@@ -202,29 +204,36 @@ fun HorizontalImageList(
                     .fillMaxSize(1f)
             ) {
                 var model by remember { mutableStateOf<Any?>(null) }
+                val appSecureVideoCacheDir = LocalContext.current.appSecureVideoCacheDir
 
                 LaunchedEffect(Unit) {
-                    model =
-                        if (isHidden) {
-                            withContext(Dispatchers.IO) {
-                            	try {
-	                                val iv = mediaStoreItem.bytes!!
-	                                encryptionManager.decryptBytes(
-	                                    bytes = File(mediaStoreItem.absolutePath).readBytes(),
-	                                    iv = iv
-	                                )
-                            	} catch (e: Throwable) {
-                            		Log.d(TAG, e.toString())
-                            		e.printStackTrace()
+                   	if (isHidden) {
+	                    withContext(Dispatchers.IO) {
+	                    	try {
+								val iv = mediaStoreItem.bytes!!.copyOfRange(0, 16)
+								val thumbnailIv = mediaStoreItem.bytes!!.copyOfRange(16, 32)
 
-                            		mediaStoreItem.uri.path
-                            	}
-                            }
-                        } else mediaStoreItem.uri
+								model = encryptionManager.decryptBytes(
+									bytes = File(appSecureVideoCacheDir + "/" + mediaStoreItem.displayName  + ".png").readBytes(),
+									iv = thumbnailIv
+								)
+
+								model = encryptionManager.decryptBytes(
+									bytes = File(mediaStoreItem.absolutePath).readBytes(),
+									iv = iv
+								)
+	                    	} catch (e: Throwable) {
+	                    		Log.d(TAG, e.toString())
+	                    		e.printStackTrace()
+
+	                    		mediaStoreItem.uri.path
+	                    	}
+	                    }
+                    }
                 }
 
                 GlideImage(
-                    model = model,
+                    model = if (isHidden) model else mediaStoreItem.uri,
                     contentDescription = "selected image",
                     contentScale = ContentScale.Fit,
                     failure = placeholder(R.drawable.broken_image),

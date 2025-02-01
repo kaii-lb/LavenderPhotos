@@ -173,16 +173,30 @@ fun moveImageToLockedFolder(list: List<MediaStoreData>, context: Context) {
 	                mediaItem.dateTaken
 	            )
 
-                if (mediaItem.type == MediaType.Video) {
+                run {
                     val thumbnailFile = File(context.appSecureVideoCacheDir + "/" + fileToBeHidden.name + ".png")
 
-                    metadataRetriever.setDataSource(context, mediaItem.uri)
-                    val thumbnail = metadataRetriever.getScaledFrameAtTime(
-                        1000000L,
-                        MediaMetadataRetriever.OPTION_PREVIOUS_SYNC,
-                        1024,
-                        1024
-                    )
+                    val thumbnail =
+                    	if (mediaItem.type == MediaType.Video) {
+                    		metadataRetriever.setDataSource(context, mediaItem.uri)
+
+	                    	metadataRetriever.getScaledFrameAtTime(
+		                        1000000L,
+		                        MediaMetadataRetriever.OPTION_PREVIOUS_SYNC,
+		                        1024,
+		                        1024
+		                    )
+                    	} else {
+                    		val image = BitmapFactory.decodeFile(mediaItem.absolutePath)
+							val ratio = image.width.toFloat() / image.height.toFloat()
+
+               				Bitmap.createScaledBitmap(
+               					image,
+               					(1024 * ratio).toInt(),
+               					1024,
+               					false
+           					)
+                    	}
 
                     val actual =
                         if (thumbnail != null) {
@@ -242,6 +256,8 @@ fun moveImageOutOfLockedFolder(list: List<MediaStoreData>, context: Context) {
                 val fileToBeRestored = File(media.absolutePath)
                 val originalPath = applicationDatabase.securedItemEntityDao().getOriginalPathFromSecuredPath(media.absolutePath)?.replace(fileToBeRestored.name, "") ?: context.appRestoredFilesDir
 
+				val thumbnailFile = File(context.appSecureVideoCacheDir + "/" + fileToBeRestored.name + ".png")
+
                 Log.d(TAG, "ORIGINAL PATH $originalPath")
 
 				val tempFile = File(context.cacheDir, fileToBeRestored.name)
@@ -258,7 +274,9 @@ fun moveImageOutOfLockedFolder(list: List<MediaStoreData>, context: Context) {
                 )?.let {
                     fileToBeRestored.delete()
                     tempFile.delete()
+                    thumbnailFile.delete()
                     applicationDatabase.securedItemEntityDao().deleteEntityBySecuredPath(media.absolutePath)
+                    applicationDatabase.securedItemEntityDao().deleteEntityBySecuredPath(thumbnailFile.absolutePath)
                 }
             }
         }.await()
