@@ -1143,25 +1143,16 @@ fun SecureFolderViewBottomAppBar(
                     confirmButtonLabel = "Restore"
                 ) {
                     coroutineScope.launch {
+                        val newList = groupedMedia.value.toMutableList()
+
                         withContext(Dispatchers.IO) {
-                            val newList = groupedMedia.value.toMutableList()
-
                             moveImageOutOfLockedFolder(selectedItemsWithoutSection, context)
-                            newList.removeAll(selectedItemsWithoutSection)
-
-                            groupedMedia.value.filter {
-                                it.type == MediaType.Section
-                            }.forEach {
-                                val filtered = newList.filter { new ->
-                                    new.getLastModifiedDay() == it.getLastModifiedDay()
-                                }
-
-                                if (filtered.size == 1) newList.remove(it)
-                            }
-
-                            selectedItemsList.clear()
-                            groupedMedia.value = newList
                         }
+
+                        newList.removeAll(selectedItemsList)
+
+                        groupedMedia.value = newList
+                        selectedItemsList.clear()
                     }
                 }
             },

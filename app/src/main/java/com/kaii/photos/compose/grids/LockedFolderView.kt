@@ -162,7 +162,7 @@ fun LockedFolderView(
 
 	// TODO: USE APP CONTENT RESOLVER!!!!
 	var viewProperties by remember { mutableStateOf(ViewProperties.SecureFolder)}
-	LaunchedEffect(fileList) {
+	LaunchedEffect(fileList, groupedMedia.value) {
 		withContext(Dispatchers.IO) {
 		    fileList.forEach { file ->
 		        val mimeType = Files.probeContentType(Path(file.absolutePath))
@@ -173,7 +173,6 @@ fun LockedFolderView(
 		            else if (mimeType.lowercase().contains("video")) MediaType.Video
 		            else MediaType.Section
 
-				// TODO: stop storing insane amounts of data in memory
 				val decryptedBytes =
 					if (type == MediaType.Image) {
 						applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(file.absolutePath)

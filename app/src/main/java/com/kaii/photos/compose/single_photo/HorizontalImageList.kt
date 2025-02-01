@@ -1,5 +1,6 @@
 package com.kaii.photos.compose.single_photo
 
+import android.util.Log
 import android.content.res.Configuration
 import android.view.Window
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -61,6 +62,8 @@ import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.roundToInt
 import kotlin.math.sin
+
+private const val TAG = "HORIZONTAL_IMAGE_LIST"
 
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalGlideComposeApi::class)
@@ -204,11 +207,18 @@ fun HorizontalImageList(
                     model =
                         if (isHidden) {
                             withContext(Dispatchers.IO) {
-                                val iv = mediaStoreItem.bytes!!
-                                encryptionManager.decryptBytes(
-                                    bytes = File(mediaStoreItem.absolutePath).readBytes(),
-                                    iv = iv
-                                )
+                            	try {
+	                                val iv = mediaStoreItem.bytes!!
+	                                encryptionManager.decryptBytes(
+	                                    bytes = File(mediaStoreItem.absolutePath).readBytes(),
+	                                    iv = iv
+	                                )
+                            	} catch (e: Throwable) {
+                            		Log.d(TAG, e.toString())
+                            		e.printStackTrace()
+
+                            		mediaStoreItem.uri.path
+                            	}
                             }
                         } else mediaStoreItem.uri
                 }

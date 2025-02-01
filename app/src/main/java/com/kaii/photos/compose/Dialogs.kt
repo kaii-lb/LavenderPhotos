@@ -1425,11 +1425,11 @@ fun SelectingMoreOptionsDialog(
 	val tryGetDirPermission = remember { mutableStateOf(false) }
 
 	GetDirectoryPermissionAndRun(
-	    absolutePath = selectedItems.firstOrNull()?.let { media ->
-	        media.absolutePath
-	            .replace(baseInternalStorageDirectory, "")
-	            .replace(media.displayName ?: "", "")
-	    } ?: "",
+        absolutePath = selectedItems.firstOrNull()?.let { media ->
+            media.absolutePath
+                .replace(baseInternalStorageDirectory, "")
+                .replace(media.displayName ?: "", "")
+        } ?: "",
 	    shouldRun = tryGetDirPermission
 	) {
 	    moveToSecureFolder.value = true
@@ -1443,6 +1443,9 @@ fun SelectingMoreOptionsDialog(
 	            selectedItems,
 	            context
 	        )
+
+			selectedItems.clear()
+	        showDialog.value = false
 	    }
 	)
 
@@ -1503,7 +1506,6 @@ fun SelectingMoreOptionsDialog(
                         position = RowPosition.Single
                     ) {
                         tryGetDirPermission.value = true
-                        showDialog.value = false
                     }
                 }
             }

@@ -715,19 +715,26 @@ fun MediaStoreItem(
 
                 model =
                     withContext(Dispatchers.IO) {
-	                    if (item.type == MediaType.Image) {
-	                        val iv = item.bytes!!
-	                        encryptionManager.decryptBytes(
-	                            bytes = File(item.absolutePath).readBytes(),
-	                            iv = iv
-	                        )
-	                    } else {
-	                        val thumbnailIv = item.bytes!!.copyOfRange(16, 32) // get thumbnail iv from video
+                    	try {
+		                    if (item.type == MediaType.Image) {
+		                        val iv = item.bytes!!
+		                        encryptionManager.decryptBytes(
+		                            bytes = File(item.absolutePath).readBytes(),
+		                            iv = iv
+		                        )
+		                    } else {
+		                        val thumbnailIv = item.bytes!!.copyOfRange(16, 32) // get thumbnail iv from video
 
-	                        encryptionManager.decryptBytes(
-	                            bytes = File(appSecureVideoCacheDir + "/" + item.displayName  + ".png").readBytes(),
-	                            iv = thumbnailIv
-	                        )
+		                        encryptionManager.decryptBytes(
+		                            bytes = File(appSecureVideoCacheDir + "/" + item.displayName  + ".png").readBytes(),
+		                            iv = thumbnailIv
+		                        )
+		                    }
+	                    } catch (e: Throwable) {
+	                    	Log.d(TAG, e.toString())
+	                    	e.printStackTrace()
+
+	                    	item.uri.path
 	                    }
                     }
             }
