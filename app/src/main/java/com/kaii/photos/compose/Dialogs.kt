@@ -51,6 +51,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -72,6 +73,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -595,52 +597,16 @@ fun MainAppDialog(
                     }
 
                     if (currentView.value == MainScreenViewType.AlbumsGridView) {
-                        val context = LocalContext.current
-                        val alternativePickAlbums by mainViewModel.settings.Debugging.getAlternativePickAlbums().collectAsStateWithLifecycle(initialValue = false)
+                        val activityLauncher = createPersistablePermissionLauncher { uri ->
+                            uri.path?.let {
+                                val dir = File(it)
 
-                        val openAction: () -> Unit
+                                val pathSections = dir.absolutePath.replace(baseInternalStorageDirectory, "").split(":")
+                                val path = pathSections[pathSections.size - 1]
 
-                        if (!alternativePickAlbums) {
-                            val activityLauncher = createPersistablePermissionLauncher { uri ->
-                                uri.path?.let {
-                                    val dir = File(it)
+                                Log.d(TAG, "Added album path $path")
 
-                                    val pathSections = dir.absolutePath.replace(baseInternalStorageDirectory, "").split(":")
-                                    val path = pathSections[pathSections.size - 1]
-
-                                    Log.d(TAG, "Added album path $path")
-
-                                    mainViewModel.settings.AlbumsList.addToAlbumsList(path)
-                                }
-                            }
-
-                            openAction = {
-                                activityLauncher.launch(null)
-                            }
-                        } else {
-                        	// TODO: fix this
-                            val activityLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenDocument()) { uri ->
-                                val uriPath = uri?.path
-                                if (uri != null && uriPath != null) {
-                                    val dir = File(uriPath).absolutePath
-
-                                    val path = dir.replace(baseInternalStorageDirectory, "")
-
-                                    Log.d(TAG, "Added album path $path")
-
-                                    mainViewModel.settings.AlbumsList.addToAlbumsList(path)
-                                } else {
-                                    Toast.makeText(context, "Failed to add album :<", Toast.LENGTH_LONG).show()
-                                }
-
-                            }
-
-                            openAction = {
-                                activityLauncher.launch(
-                                    arrayOf(
-                                        "image/*"
-                                    )
-                                )
+                                mainViewModel.settings.AlbumsList.addToAlbumsList(path)
                             }
                         }
 
@@ -649,7 +615,7 @@ fun MainAppDialog(
                             iconResId = R.drawable.add,
                             position = RowPosition.Top,
                         ) {
-                            openAction()
+                            activityLauncher.launch(null)
                         }
                     }
 
@@ -1410,6 +1376,7 @@ fun SelectingMoreOptionsDialog(
     showDialog: MutableState<Boolean>,
     selectedItems: List<MediaStoreData>,
     currentView: MutableState<MainScreenViewType>,
+    onDone: () -> Unit
 ) {
     val context = LocalContext.current
     val isEditingFileName = remember { mutableStateOf(false) }
@@ -1424,6 +1391,8 @@ fun SelectingMoreOptionsDialog(
 	val moveToSecureFolder = remember { mutableStateOf(false) }
 	val tryGetDirPermission = remember { mutableStateOf(false) }
 
+	var showLoadingDialog by remember { mutableStateOf(false) }
+
 	GetDirectoryPermissionAndRun(
         absolutePath = selectedItems.firstOrNull()?.let { media ->
             media.absolutePath
@@ -1432,8 +1401,13 @@ fun SelectingMoreOptionsDialog(
         } ?: "",
 	    shouldRun = tryGetDirPermission
 	) {
+	    showLoadingDialog = true
 	    moveToSecureFolder.value = true
 	}
+
+    if (showLoadingDialog) {
+        LoadingDialog(title = "Encrypting Files", body = "Please wait while the media is processed")
+    }
 
 	GetPermissionAndRun(
 	    uris = selectedItems.map { it.uri },
@@ -1444,7 +1418,9 @@ fun SelectingMoreOptionsDialog(
 	            context
 	        )
 
-	        showDialog.value = false
+			onDone()
+            showLoadingDialog = false
+            showDialog.value = false
 	    }
 	)
 
@@ -1462,7 +1438,7 @@ fun SelectingMoreOptionsDialog(
                 .then(modifier)
                 .wrapContentHeight()
                 .clip(RoundedCornerShape(32.dp))
-                .background(brightenColor(MaterialTheme.colorScheme.surface, 0.1f))
+                .background(MaterialTheme.colorScheme.surfaceContainer)
                 .padding(4.dp),
         ) {
             Box(
@@ -1508,6 +1484,57 @@ fun SelectingMoreOptionsDialog(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun LoadingDialog(
+    title: String,
+    body: String
+) {
+    Dialog(
+        onDismissRequest = {},
+    ) {
+        Column(
+            modifier = Modifier
+                .wrapContentSize()
+                .clip(RoundedCornerShape(32.dp))
+                .background(MaterialTheme.colorScheme.surfaceContainer)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.SpaceEvenly,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = title,
+                fontSize = TextUnit(18f, TextUnitType.Sp),
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                modifier = Modifier.wrapContentSize()
+            )
+
+            Spacer (modifier =  Modifier.height(8.dp))
+
+            Text(
+                text = body,
+                fontSize = TextUnit(14f, TextUnitType.Sp),
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.wrapContentSize()
+            )
+
+            Spacer (modifier =  Modifier.height(16.dp))
+
+            LinearProgressIndicator(
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.surfaceDim,
+                strokeCap = StrokeCap.Round,
+                gapSize = 2.dp,
+                modifier = Modifier
+                	.padding(8.dp)
+                    .fillMaxWidth(1f)
+            )
         }
     }
 }

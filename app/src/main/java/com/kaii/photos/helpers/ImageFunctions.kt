@@ -50,8 +50,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
-import kotlin.math.min
 import java.io.File
+import kotlin.math.min
 
 private const val TAG = "IMAGE_FUNCTIONS"
 
@@ -62,14 +62,14 @@ enum class ImageFunctions {
 }
 
 fun permanentlyDeletePhotoList(context: Context, list: List<Uri>) {
-	if (list.isNotEmpty()) {
-	    val deleteRequest = MediaStore.createDeleteRequest(
-	        context.contentResolver,
-	        list
-	    )
+    if (list.isNotEmpty()) {
+        val deleteRequest = MediaStore.createDeleteRequest(
+            context.contentResolver,
+            list
+        )
 
-	    (context as Activity).startIntentSenderForResult(deleteRequest.intentSender, 9997, null, 0, 0, 0)
-	}
+        (context as Activity).startIntentSenderForResult(deleteRequest.intentSender, 9997, null, 0, 0, 0)
+    }
 }
 
 fun setTrashedOnPhotoList(context: Context, list: List<Uri>, trashed: Boolean) {
@@ -108,139 +108,94 @@ fun shareImage(uri: Uri, context: Context, mimeType: String? = null) {
 }
 
 fun shareSecuredImage(absolutePath: String, context: Context) {
-	val uri = FileProvider.getUriForFile(context, LAVENDER_FILE_PROVIDER_AUTHORITY, File(absolutePath))
+    val uri = FileProvider.getUriForFile(context, LAVENDER_FILE_PROVIDER_AUTHORITY, File(absolutePath))
 
-	val intent = Intent().apply {
-		action = Intent.ACTION_SEND
-		type = context.contentResolver.getType(uri)
-		addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-		putExtra(Intent.EXTRA_STREAM, uri)
-	}
+    val intent = Intent().apply {
+        action = Intent.ACTION_SEND
+        type = context.contentResolver.getType(uri)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        putExtra(Intent.EXTRA_STREAM, uri)
+    }
 
-	context.startActivity(Intent.createChooser(intent, "Share secured image"))
+    context.startActivity(Intent.createChooser(intent, "Share secured image"))
 }
 
 /** @param paths is a list of absolute paths and [MediaType]s of items */
 fun shareMultipleSecuredImages(
-	paths: List<Pair<String, MediaType>>,
-	context: Context
+    paths: List<Pair<String, MediaType>>,
+    context: Context
 ) {
-	val hasVideos = paths.any {
-	    it.second == MediaType.Video
-	}
+    val hasVideos = paths.any {
+        it.second == MediaType.Video
+    }
 
-	val intent = Intent().apply {
-	    action = Intent.ACTION_SEND_MULTIPLE
-	    type = if (hasVideos) "video/*" else "images/*"
-	    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-	}
+    val intent = Intent().apply {
+        action = Intent.ACTION_SEND_MULTIPLE
+        type = if (hasVideos) "video/*" else "images/*"
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
 
-	val fileUris = ArrayList(
-	    paths.map {
-	        FileProvider.getUriForFile(context, LAVENDER_FILE_PROVIDER_AUTHORITY, File(it.first))
-	    }
-	)
+    val fileUris = ArrayList(
+        paths.map {
+            FileProvider.getUriForFile(context, LAVENDER_FILE_PROVIDER_AUTHORITY, File(it.first))
+        }
+    )
 
-	intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, fileUris)
+    intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, fileUris)
 
-	context.startActivity(Intent.createChooser(intent, null))
+    context.startActivity(Intent.createChooser(intent, null))
 }
 
 fun moveImageToLockedFolder(list: List<MediaStoreData>, context: Context) {
     val contentResolver = context.contentResolver
     val lastModified = System.currentTimeMillis()
-	val encryptionManager = EncryptionManager()
+    val encryptionManager = EncryptionManager()
     val metadataRetriever = MediaMetadataRetriever()
 
     CoroutineScope(Dispatchers.IO).launch {
         async {
-        	list.forEach { mediaItem ->
-        		// set last modified so item shows up in correct place in locked folder
-	            contentResolver.update(
-	                mediaItem.uri,
-	                ContentValues().apply {
-	                    put(MediaColumns.DATE_MODIFIED, lastModified)
-	                },
-	                null
-	            )
+            list.forEach { mediaItem ->
+                // set last modified so item shows up in correct place in locked folder
+                contentResolver.update(
+                    mediaItem.uri,
+                    ContentValues().apply {
+                        put(MediaColumns.DATE_MODIFIED, lastModified)
+                    },
+                    null
+                )
 
-	            val fileToBeHidden = File(mediaItem.absolutePath)
-	            val copyToPath = context.appSecureFolderDir + "/" + fileToBeHidden.name
-	            val destinationFile = File(copyToPath)
+                val fileToBeHidden = File(mediaItem.absolutePath)
+                val copyToPath = context.appSecureFolderDir + "/" + fileToBeHidden.name
+                val destinationFile = File(copyToPath)
 
-	            setDateTakenForMedia(
-	                mediaItem.absolutePath,
-	                mediaItem.dateTaken
-	            )
+                setDateTakenForMedia(
+                    mediaItem.absolutePath,
+                    mediaItem.dateTaken
+                )
 
-                run {
-                    val thumbnailFile = File(context.appSecureVideoCacheDir + "/" + fileToBeHidden.name + ".png")
+                addSecuredCachedImage(
+                    context = context,
+                    mediaItem = mediaItem,
+                    file = fileToBeHidden,
+                    encryptionManager = encryptionManager,
+                    metadataRetriever = metadataRetriever
+                )
 
-                    val thumbnail =
-                    	if (mediaItem.type == MediaType.Video) {
-                    		metadataRetriever.setDataSource(context, mediaItem.uri)
+                // encrypt file data and write to secure folder path
+                val iv = encryptionManager.encryptInputStream(fileToBeHidden.inputStream(), destinationFile.outputStream())
 
-	                    	metadataRetriever.getScaledFrameAtTime(
-		                        1000000L,
-		                        MediaMetadataRetriever.OPTION_PREVIOUS_SYNC,
-		                        1024,
-		                        1024
-		                    )
-                    	} else {
-                    		val image = BitmapFactory.decodeFile(mediaItem.absolutePath)
-							val ratio = image.width.toFloat() / image.height.toFloat()
-
-               				Bitmap.createScaledBitmap(
-               					image,
-               					(1024 * ratio).toInt(),
-               					1024,
-               					false
-           					)
-                    	}
-
-                    val actual =
-                        if (thumbnail != null) {
-                            val bytes = ByteArrayOutputStream()
-                            thumbnail.compress(Bitmap.CompressFormat.PNG, 100, bytes)
-
-                            bytes.toByteArray()
-                        } else {
-                            val image = BitmapFactory.decodeResource(context.resources, R.drawable.broken_image)
-                            val bytes = ByteArrayOutputStream()
-                            image.compress(Bitmap.CompressFormat.PNG, 100, bytes)
-
-                            bytes.toByteArray()
-                        }
-
-                    val iv = encryptionManager.encryptInputStream(
-                        actual.inputStream(),
-                        thumbnailFile.outputStream(),
+                applicationDatabase.securedItemEntityDao().insertEntity(
+                    SecuredItemEntity(
+                        originalPath = mediaItem.absolutePath,
+                        securedPath = copyToPath,
+                        iv = iv
                     )
+                )
 
-                    applicationDatabase.securedItemEntityDao().insertEntity(
-                        SecuredItemEntity(
-                            originalPath = thumbnailFile.absolutePath,
-                            securedPath = thumbnailFile.absolutePath,
-                            iv = iv
-                        )
-                    )
-                }
-
-				// encrypt file data and write to secure folder path
-		        val iv = encryptionManager.encryptInputStream(fileToBeHidden.inputStream(), destinationFile.outputStream())
-
-	            applicationDatabase.securedItemEntityDao().insertEntity(
-	                SecuredItemEntity(
-	                    originalPath = mediaItem.absolutePath,
-	                    securedPath = copyToPath,
-	                    iv = iv
-	                )
-	            )
-
-				// cleanup
-	            contentResolver.delete(mediaItem.uri, null)
-	            applicationDatabase.mediaEntityDao().deleteEntityById(mediaItem.id)
-        	}
+                // cleanup
+                contentResolver.delete(mediaItem.uri, null)
+                applicationDatabase.mediaEntityDao().deleteEntityById(mediaItem.id)
+            }
         }.await()
     }
 }
@@ -248,7 +203,7 @@ fun moveImageToLockedFolder(list: List<MediaStoreData>, context: Context) {
 fun moveImageOutOfLockedFolder(list: List<MediaStoreData>, context: Context) {
     val contentResolver = context.contentResolver
 
-	val encryptionManager = EncryptionManager()
+    val encryptionManager = EncryptionManager()
 
     CoroutineScope(Dispatchers.IO).launch {
         async {
@@ -256,14 +211,14 @@ fun moveImageOutOfLockedFolder(list: List<MediaStoreData>, context: Context) {
                 val fileToBeRestored = File(media.absolutePath)
                 val originalPath = applicationDatabase.securedItemEntityDao().getOriginalPathFromSecuredPath(media.absolutePath)?.replace(fileToBeRestored.name, "") ?: context.appRestoredFilesDir
 
-				val thumbnailFile = File(context.appSecureVideoCacheDir + "/" + fileToBeRestored.name + ".png")
+                val thumbnailFile = getSecuredCacheImageForFile(file = fileToBeRestored, context = context)
 
                 Log.d(TAG, "ORIGINAL PATH $originalPath")
 
-				val tempFile = File(context.cacheDir, fileToBeRestored.name)
+                val tempFile = File(context.cacheDir, fileToBeRestored.name)
 
-				val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(media.absolutePath)
-				encryptionManager.decryptInputStream(fileToBeRestored.inputStream(), tempFile.outputStream(), iv)
+                val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(media.absolutePath)
+                encryptionManager.decryptInputStream(fileToBeRestored.inputStream(), tempFile.outputStream(), iv)
 
                 contentResolver.copyMedia(
                     context = context,
@@ -284,12 +239,15 @@ fun moveImageOutOfLockedFolder(list: List<MediaStoreData>, context: Context) {
 }
 
 /** @param list is a list of the absolute path of every image to be deleted */
-fun permanentlyDeleteSecureFolderImageList(list: List<String>) {
+fun permanentlyDeleteSecureFolderImageList(list: List<String>, context: Context) {
     CoroutineScope(Dispatchers.IO).launch {
         async {
             try {
                 list.forEach { path ->
-                    File(path).delete()
+                    File(path).let { file ->
+                        file.delete()
+                        getSecuredCacheImageForFile(file = file, context = context).delete()
+                    }
                 }
             } catch (e: Throwable) {
                 Log.e(TAG, e.toString())
@@ -315,7 +273,7 @@ fun renameImage(context: Context, uri: Uri, newName: String) {
 
 fun renameDirectory(context: Context, absolutePath: String, newName: String) {
     try {
-    	// val originalFile = File(absolutePath)
+        // val originalFile = File(absolutePath)
         // val newFile = File(absolutePath.replace(originalFile.name, newName))
 
         val dir = DocumentsContract.buildTreeDocumentUri(EXTERNAL_DOCUMENTS_AUTHORITY, "primary:${absolutePath.replace(baseInternalStorageDirectory, "")}")

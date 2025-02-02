@@ -38,16 +38,16 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.MainActivity.Companion.mainViewModel
+import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.Versions
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.appSecureFolderDir
-import com.kaii.photos.helpers.appSecureVideoCacheDir
+import com.kaii.photos.helpers.baseInternalStorageDirectory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
-import javax.crypto.Cipher
 
 @Composable
 fun LockedFolderEntryView(
@@ -105,21 +105,18 @@ fun LockedFolderEntryView(
 				}
 
 				mainViewModel.settings.Versions.setShouldMigrateToEncryptedSecurePhotos(false)
+                mainViewModel.settings.AlbumsList.addToAlbumsList(
+                    restoredFilesDir.replace(baseInternalStorageDirectory, "")
+                )
 			}
 		}
 	}
 
-	// TODO: switch to loading dialog
 	if (shouldMigrate) {
-		Column(
-			modifier = Modifier
-				.fillMaxSize(1f),
-			verticalArrangement = Arrangement.Center,
-			horizontalAlignment = Alignment.CenterHorizontally
-		) {
-			Text(text = "Migrating from unencrypted secure photos to encrypted secure photos")
-			Text(text = "Please wait...")
-		}
+        LoadingDialog(
+            title = "Migrating",
+            body = "Moving photos out of secure folder, they can be found in \"Restored Files\" album"
+        )
 
 		return
 	}

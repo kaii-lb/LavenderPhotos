@@ -398,7 +398,10 @@ private fun BottomBar(
         dialogBody = "This action cannot be undone!",
         confirmButtonLabel = "Delete"
     ) {
-        permanentlyDeleteSecureFolderImageList(listOf(item.absolutePath))
+        permanentlyDeleteSecureFolderImageList(
+            list = listOf(item.absolutePath),
+            context = context
+        )
 
         sortOutMediaMods(
             item,

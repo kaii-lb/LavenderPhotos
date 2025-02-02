@@ -8,7 +8,8 @@ private enum class AppDirectories(val path: String) {
     MainDir("LavenderPhotos"),
     LockedFolder("secure_folder"),
     RestoredFolder("Restored Files"),
-    SecureVideoCacheDir("secure_video_cache_dir")
+    SecureVideoCacheDir("secure_video_cache_dir"),
+    SecureThumbnailCacheDir("secure_thumbnail_cache_dir")
 }
 
 /** ends with a "/" */
@@ -59,6 +60,17 @@ val Context.appSecureVideoCacheDir: String
 		val path = cacheDir.absolutePath.removeSuffix("/") + "/" + AppDirectories.SecureVideoCacheDir.path
 
 		val dir = File(path)
+        if (!dir.exists()) dir.mkdirs()
+
+        return dir.absolutePath.removeSuffix("/")
+    }
+
+/** doesn't end with a "/" */
+val Context.appSecureThumbnailCacheDir: String
+    get() {
+        val path = cacheDir.absolutePath.removeSuffix("/") + "/" + AppDirectories.SecureThumbnailCacheDir.path
+
+        val dir = File(path)
         if (!dir.exists()) dir.mkdirs()
 
         return dir.absolutePath.removeSuffix("/")

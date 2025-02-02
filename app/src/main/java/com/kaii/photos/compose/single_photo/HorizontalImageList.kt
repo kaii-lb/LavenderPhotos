@@ -50,6 +50,7 @@ import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.helpers.appSecureVideoCacheDir
+import com.kaii.photos.helpers.getSecuredCacheImageForFile
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.signature
@@ -205,16 +206,17 @@ fun HorizontalImageList(
             ) {
                 var model by remember { mutableStateOf<Any?>(null) }
                 val appSecureVideoCacheDir = LocalContext.current.appSecureVideoCacheDir
+                val context = LocalContext.current
 
                 LaunchedEffect(Unit) {
                    	if (isHidden) {
 	                    withContext(Dispatchers.IO) {
 	                    	try {
 								val iv = mediaStoreItem.bytes!!.copyOfRange(0, 16)
-								val thumbnailIv = mediaStoreItem.bytes!!.copyOfRange(16, 32)
+								val thumbnailIv = mediaStoreItem.bytes.copyOfRange(16, 32)
 
 								model = encryptionManager.decryptBytes(
-									bytes = File(appSecureVideoCacheDir + "/" + mediaStoreItem.displayName  + ".png").readBytes(),
+									bytes = getSecuredCacheImageForFile(fileName = mediaStoreItem.displayName!!, context = context).readBytes(),
 									iv = thumbnailIv
 								)
 

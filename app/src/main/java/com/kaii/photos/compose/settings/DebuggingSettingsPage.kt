@@ -93,21 +93,6 @@ fun DebuggingSettingsPage() {
         	}
 
         	item {
-                val alternativePickAlbums by mainViewModel.settings.Debugging.getAlternativePickAlbums().collectAsStateWithLifecycle(initialValue = false)
-
-                PreferencesSwitchRow(
-                    title = "Alternative Choose Albums",
-                    summary = "In case add an album only shows empty folders, use this",
-                    iconResID = R.drawable.albums,
-                    checked = alternativePickAlbums,
-                    position = RowPosition.Single,
-                    showBackground = false
-                ) {
-					mainViewModel.settings.Debugging.setAlternativePickAlbums(it)
-                }
-        	}
-
-        	item {
                	var showAddAlbumsDialog by remember { mutableStateOf(false) }
 
                	PreferencesRow(

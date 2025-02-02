@@ -1,6 +1,5 @@
 package com.kaii.photos.compose.grids
 
-import android.content.Context
 import android.view.Window
 import android.view.WindowManager
 import androidx.activity.compose.BackHandler
@@ -8,13 +7,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberStandardBottomSheetState
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -36,21 +33,16 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.kaii.photos.MainActivity.Companion.applicationDatabase
-import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.LocalNavController
-import com.kaii.photos.datastore.Versions
 import com.kaii.photos.compose.SecureFolderViewBottomAppBar
 import com.kaii.photos.compose.SecureFolderViewTopAppBar
 import com.kaii.photos.compose.ViewProperties
-import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
-import com.kaii.photos.helpers.SectionItem
-import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.getDateTakenForMedia
-import com.kaii.photos.helpers.appSecureFolderDir
+import com.kaii.photos.helpers.getSecuredCacheImageForFile
 import com.kaii.photos.helpers.appSecureVideoCacheDir
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
@@ -60,7 +52,6 @@ import java.nio.file.Files
 import kotlin.io.path.Path
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -97,8 +88,8 @@ fun LockedFolderView(
 
         if (lastLifecycleState == Lifecycle.State.DESTROYED) {
         	withContext(Dispatchers.IO) {
-        		File(context.appSecureVideoCacheDir)?.listFiles()?.forEach {
-        			it?.delete()
+        		File(context.appSecureVideoCacheDir).listFiles()?.forEach {
+        			it.delete()
         		}
         	}
         }
@@ -145,10 +136,6 @@ fun LockedFolderView(
     val groupedMedia =
         remember { mutableStateOf(mediaStoreData.toList()) }
 
-	val encryptionManager = remember {
-		EncryptionManager()
-	}
-
 	// TODO: USE APP CONTENT RESOLVER!!!!
 	var viewProperties by remember { mutableStateOf(ViewProperties.SecureFolder)}
 	LaunchedEffect(fileList, groupedMedia.value) {
@@ -166,7 +153,7 @@ fun LockedFolderView(
 					run {
                         val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(file.absolutePath)
                         val thumbnailIv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(
-                            context.appSecureVideoCacheDir + "/" + file.name + ".png"
+                            getSecuredCacheImageForFile(file = file, context = context).absolutePath
                         )
 
                         iv + thumbnailIv

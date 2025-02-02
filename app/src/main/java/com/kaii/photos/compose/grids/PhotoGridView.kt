@@ -97,10 +97,10 @@ import com.kaii.photos.compose.ShowSelectedState
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.datastore.Storage
 import com.kaii.photos.helpers.EncryptionManager
-import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.ImageFunctions
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.appSecureVideoCacheDir
+import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.checkHasFiles
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.selectAll
@@ -111,6 +111,7 @@ import com.kaii.photos.helpers.unselectItem
 import com.kaii.photos.helpers.unselectSection
 import com.kaii.photos.helpers.vibrateLong
 import com.kaii.photos.helpers.vibrateShort
+import com.kaii.photos.helpers.getSecuredCacheImageForFile
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.signature
@@ -259,7 +260,7 @@ fun DeviceMedia(
             }
 
             val encryptionManager = remember {
-            	EncryptionManager()
+                EncryptionManager()
             }
 
             LazyVerticalGrid(
@@ -274,20 +275,20 @@ fun DeviceMedia(
                 modifier = Modifier
                     .fillMaxSize(1f)
                     .align(Alignment.TopCenter)
-                    .then (
-                    	if (isDragSelecting.value || selectedItemsList.isNotEmpty()) {
-                    		Modifier
-			                    .dragSelectionHandler(
-			                        state = gridState,
-			                        selectedItemsList = selectedItemsList,
-			                        groupedMedia = groupedMedia.value,
-			                        scrollSpeed = scrollSpeed,
-			                        scrollThreshold = with(localDensity) {
-			                            40.dp.toPx()
-			                        },
-			                        isDragSelecting = isDragSelecting
-			                    )
-                    	} else Modifier
+                    .then(
+                        if (isDragSelecting.value || selectedItemsList.isNotEmpty()) {
+                            Modifier
+                                .dragSelectionHandler(
+                                    state = gridState,
+                                    selectedItemsList = selectedItemsList,
+                                    groupedMedia = groupedMedia.value,
+                                    scrollSpeed = scrollSpeed,
+                                    scrollThreshold = with(localDensity) {
+                                        40.dp.toPx()
+                                    },
+                                    isDragSelecting = isDragSelecting
+                                )
+                        } else Modifier
                     ),
                 state = gridState
             ) {
@@ -638,9 +639,11 @@ fun MediaStoreItem(
             )
         }
     } else {
-        val isSelected by remember { derivedStateOf {
-        	selectedItemsList.contains(item)
-       	}}
+        val isSelected by remember {
+            derivedStateOf {
+                selectedItemsList.contains(item)
+            }
+        }
 
         val animatedItemCornerRadius by animateDpAsState(
             targetValue = if (isSelected) 16.dp else 0.dp,
@@ -705,38 +708,39 @@ fun MediaStoreItem(
                     }
                 )
         ) {
-            val appSecureVideoCacheDir = LocalContext.current.appSecureVideoCacheDir
+        	val context = LocalContext.current
+            val appSecureVideoCacheDir = context.appSecureVideoCacheDir
 
             var model by remember { mutableStateOf<Any?>(null) }
-            var isSecureMedia = viewProperties == ViewProperties.SecureFolder
+            val isSecureMedia = viewProperties == ViewProperties.SecureFolder
 
             LaunchedEffect(isSecureMedia) {
-            	if (!isSecureMedia) return@LaunchedEffect
+                if (!isSecureMedia) return@LaunchedEffect
 
                 model =
                     withContext(Dispatchers.IO) {
-                    	try {
-		                    if (item.type == MediaType.Image) {
-		                    	val iv = item.bytes!!.copyOfRange(16, 32)
+                        try {
+                            if (item.type == MediaType.Image) {
+                                val iv = item.bytes!!.copyOfRange(16, 32)
 
-		                        encryptionManager.decryptBytes(
-		                            bytes = File(appSecureVideoCacheDir + "/" + item.displayName  + ".png").readBytes(),
-		                            iv = iv
-		                        )
-		                    } else {
-		                        val thumbnailIv = item.bytes!!.copyOfRange(16, 32) // get thumbnail iv from video
+                                encryptionManager.decryptBytes(
+                                    bytes = getSecuredCacheImageForFile(fileName = item.displayName!!, context = context).readBytes(),
+                                    iv = iv
+                                )
+                            } else {
+                                val thumbnailIv = item.bytes!!.copyOfRange(16, 32) // get thumbnail iv from video
 
-		                        encryptionManager.decryptBytes(
-		                            bytes = File(appSecureVideoCacheDir + "/" + item.displayName  + ".png").readBytes(),
-		                            iv = thumbnailIv
-		                        )
-		                    }
-	                    } catch (e: Throwable) {
-	                    	Log.d(TAG, e.toString())
-	                    	e.printStackTrace()
+                                encryptionManager.decryptBytes(
+                                    bytes = File(appSecureVideoCacheDir + "/" + item.displayName + ".png").readBytes(),
+                                    iv = thumbnailIv
+                                )
+                            }
+                        } catch (e: Throwable) {
+                            Log.d(TAG, e.toString())
+                            e.printStackTrace()
 
-	                    	item.uri.path
-	                    }
+                            item.uri.path
+                        }
                     }
             }
 
@@ -805,7 +809,7 @@ fun Modifier.dragSelectionHandler(
     var initialKey: Int? = null
     var currentKey: Int? = null
 
-	if (groupedMedia.isEmpty()) return@pointerInput
+    if (groupedMedia.isEmpty()) return@pointerInput
 
     val numberOfHorizontalItems = state.layoutInfo.viewportSize.width / state.layoutInfo.visibleItemsInfo[0].size.width
 
@@ -860,10 +864,10 @@ fun Modifier.dragSelectionHandler(
                                 else groupedMedia.subList(currentKey!!, initialKey!! + 1)
 
                             unselectAll(
-                            	toBeRemoved.filter {
-                            		it.type != MediaType.Section
-                            	},
-                            	groupedMedia
+                                toBeRemoved.filter {
+                                    it.type != MediaType.Section
+                                },
+                                groupedMedia
                             )
 
                             val toBeAdded =
@@ -871,10 +875,10 @@ fun Modifier.dragSelectionHandler(
                                 else groupedMedia.subList(key, initialKey!! + 1)
 
                             selectAll(
-	                            toBeAdded.filter {
-	                            	it.type != MediaType.Section
-	                           	},
-	                            groupedMedia
+                                toBeAdded.filter {
+                                    it.type != MediaType.Section
+                                },
+                                groupedMedia
                             )
                         }
 

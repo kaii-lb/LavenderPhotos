@@ -587,7 +587,9 @@ fun IsSelectingTopBar(
                     showDialog = showMoreOptionsDialog,
                     selectedItems = selectedItemsWithoutSection,
                     currentView = currentView
-                )
+                ) {
+                	selectedItemsList.clear()
+                }
             }
 
             IconButton(
@@ -1102,12 +1104,22 @@ fun SecureFolderViewBottomAppBar(
             }
         }
 
+        var showLoadingDialog by remember { mutableStateOf(false) }
+        var loadingDialogTitle by remember { mutableStateOf("Decrypting Files") }
+
+        if (showLoadingDialog) {
+            LoadingDialog(title = loadingDialogTitle, body = "Please wait while the media is processed")
+        }
+
         BottomAppBarItem(
             text = "Share",
             iconResId = R.drawable.share,
             action = {
             	coroutineScope.launch(Dispatchers.IO) {
             		async {
+            			loadingDialogTitle = "Decrypting Files"
+                        showLoadingDialog = true
+
 	            		val cachedPaths = emptyList<Pair<String, MediaType>>().toMutableList()
                         val encryptionManager = EncryptionManager()
 
@@ -1122,8 +1134,12 @@ fun SecureFolderViewBottomAppBar(
                                 iv = iv
                             )
 
+                            cachedFile.deleteOnExit()
 	                   		cachedPaths.add(Pair(cachedFile.absolutePath, item.type))
 	            		}
+
+                        showLoadingDialog = false
+
 						shareMultipleSecuredImages(paths = cachedPaths, context = context)
             		}.await()
             	}
@@ -1142,17 +1158,24 @@ fun SecureFolderViewBottomAppBar(
                     dialogTitle = "Restore these items?",
                     confirmButtonLabel = "Restore"
                 ) {
+                  	loadingDialogTitle = "Restoring Files"
+                    showLoadingDialog = true
+
                     coroutineScope.launch {
-                        val newList = groupedMedia.value.toMutableList()
+                        async {
+                            val newList = groupedMedia.value.toMutableList()
 
-                        withContext(Dispatchers.IO) {
-                            moveImageOutOfLockedFolder(selectedItemsWithoutSection, context)
-                        }
+                            withContext(Dispatchers.IO) {
+                                moveImageOutOfLockedFolder(selectedItemsWithoutSection, context)
+                            }
 
-                        newList.removeAll(selectedItemsList)
+                            newList.removeAll(selectedItemsList)
 
-                        groupedMedia.value = newList
-                        selectedItemsList.clear()
+                            groupedMedia.value = newList
+                            selectedItemsList.clear()
+
+                            showLoadingDialog = false
+                        }.await()
                     }
                 }
             },
@@ -1166,33 +1189,41 @@ fun SecureFolderViewBottomAppBar(
 
         LaunchedEffect(runPermaDeleteAction.value) {
             if (runPermaDeleteAction.value) {
+            	loadingDialogTitle = "Deleting Files"
+                showLoadingDialog = true
+
                 withContext(Dispatchers.IO) {
-                    val newList = groupedMedia.value.toMutableList()
+                    async {
 
-                    permanentlyDeleteSecureFolderImageList(
-                        list = selectedItemsWithoutSection.map { it.absolutePath }
-                    )
+                        val newList = groupedMedia.value.toMutableList()
+
+                        permanentlyDeleteSecureFolderImageList(
+                            list = selectedItemsWithoutSection.map { it.absolutePath },
+                            context = context
+                        )
 
 
-                    selectedItemsWithoutSection.forEach {
-                        newList.remove(it)
-                    }
-
-                    newList.filter {
-                        it.type == MediaType.Section
-                    }.forEach { item ->
-                        // remove sections which no longer have any children
-                        val filtered = newList.filter { newItem ->
-                            newItem.getLastModifiedDay() == item.getLastModifiedDay()
+                        selectedItemsWithoutSection.forEach {
+                            newList.remove(it)
                         }
 
-                        if (filtered.size == 1) newList.remove(item)
-                    }
+                        newList.filter {
+                            it.type == MediaType.Section
+                        }.forEach { item ->
+                            // remove sections which no longer have any children
+                            val filtered = newList.filter { newItem ->
+                                newItem.getLastModifiedDay() == item.getLastModifiedDay()
+                            }
 
-                    selectedItemsList.clear()
-                    groupedMedia.value = newList
+                            if (filtered.size == 1) newList.remove(item)
+                        }
 
-                    runPermaDeleteAction.value = false
+                        selectedItemsList.clear()
+                        groupedMedia.value = newList
+
+                        showLoadingDialog = false
+                        runPermaDeleteAction.value = false
+                    }.await()
                 }
             }
         }
