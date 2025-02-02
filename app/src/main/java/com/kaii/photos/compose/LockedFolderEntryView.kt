@@ -68,6 +68,7 @@ fun LockedFolderEntryView(
 	// moves media from old dir to new dir for secure folder
 	val shouldMigrate by mainViewModel.settings.Versions.getShouldMigrateToEncryptedSecurePhotos(context).collectAsStateWithLifecycle(initialValue = false)
 	var launchSecureFolder by remember { mutableStateOf(false) }
+	val showExplanationForMigration = remember { mutableStateOf(false) }
 
 	LaunchedEffect(launchSecureFolder) {
 		if (launchSecureFolder) navController.navigate(MultiScreenViewType.LockedFolderView.name)
@@ -104,6 +105,7 @@ fun LockedFolderEntryView(
 					}
 				}
 
+				showExplanationForMigration.value = true
 				mainViewModel.settings.Versions.setShouldMigrateToEncryptedSecurePhotos(false)
                 mainViewModel.settings.AlbumsList.addToAlbumsList(
                     restoredFilesDir.replace(baseInternalStorageDirectory, "")
@@ -119,6 +121,14 @@ fun LockedFolderEntryView(
         )
 
 		return
+	}
+
+	if (showExplanationForMigration.value) {
+		ExplanationDialog(
+			title = "Migration Notice",
+			explanation = "Due to AES encryption being added in version v0.8.9-beta, all photos in secure folder have been moved to \"Restored Files\" album. You can re-add them by selecting them, clicking the 3 dots at the top right, and selecting \"Move to secure folder\". Sorry for the inconvenience.",
+			showDialog = showExplanationForMigration
+		)
 	}
 
     val prompt = BiometricPrompt.Builder(LocalContext.current)
