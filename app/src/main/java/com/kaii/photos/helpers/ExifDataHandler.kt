@@ -104,9 +104,10 @@ fun getExifDataForMedia(absolutePath: String): Flow<Map<MediaData, Any>> = flow 
         list[MediaData.Size] = "${round(file.length() / 100000f) / 10} MB"
 
         emit(
-            list.filter { (_, value) ->
-                value != null
-            }
+            list
+	            .filter { (_, value) ->
+	                value != null
+	            }
                 .mapValues { (_, value) ->
                     value!!
                 }
@@ -140,9 +141,10 @@ fun getExifDataForMedia(absolutePath: String): Flow<Map<MediaData, Any>> = flow 
         }
 
         emit(
-            list.filter { (_, value) ->
-                value != null
-            }
+            list
+	            .filter { (_, value) ->
+	                value != null
+	            }
                 .mapValues { (_, value) ->
                     value!!
                 }

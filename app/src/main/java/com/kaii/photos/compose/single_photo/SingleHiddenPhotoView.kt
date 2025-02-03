@@ -84,6 +84,8 @@ import com.kaii.photos.helpers.getExifDataForMedia
 import com.kaii.photos.helpers.moveImageOutOfLockedFolder
 import com.kaii.photos.helpers.permanentlyDeleteSecureFolderImageList
 import com.kaii.photos.helpers.shareSecuredImage
+import com.kaii.photos.helpers.getSecuredCacheImageForFile
+import com.kaii.photos.helpers.getSecureDecryptedVideoFile
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import kotlinx.coroutines.Dispatchers
@@ -227,7 +229,11 @@ fun SingleHiddenPhotoView(
                 true
             )
         }
-        SingleSecuredPhotoInfoDialog(showDialog = showInfoDialog, currentMediaItem = currentMediaItem)
+
+        SingleSecuredPhotoInfoDialog(
+        	showDialog = showInfoDialog,
+        	currentMediaItem = currentMediaItem
+       	)
     }
 
     val coroutineScope = rememberCoroutineScope()
@@ -595,10 +601,49 @@ fun SingleSecuredPhotoInfoDialog(
                         )
                     }
 
+					val showLoadingDialog by remember { mutableStateOf(false) }
+					if (showLoadingDialog) {
+						LoadingDialog(
+							title = "Decrypting File",
+							body = "Please wait..."
+						)
+					}
+
                     LaunchedEffect(Unit) {
-                        getExifDataForMedia(currentMediaItem.absolutePath).collect {
+                    	showLoadingDialog = true
+
+						// TODO: find better solution than doing THIS everytime
+                    	val absolutePath =
+	                    	if (currentMediaItem.type == MediaType.Video) {
+	                    		val originalFile = File(currentMediaItem.absolutePath)
+	                    		var newFile = getSecureDecryptedVideoFile(currentMediaItem.displayName!!)
+
+	                    		while(file.size < originalFile.size) {
+	                    			delay(100)
+	                    			newFile = getSecureDecryptedVideoFile(currentMediaItem.displayName!!)
+	                    		}
+
+	                    		newFile.absolutePath
+	                    	} else {
+								val originalFile = File(currentMediaItem.absolutePath)
+								val newFile = File(context.appThumbnailCacheDir + "/" + originalFile.nameWithoutExtention + ".temp" + "." + originalFile.extension)
+								val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(currentMediaItem.absolutePath)
+
+								EncryptionManager().decryptInputStream(
+									inputStream = originalFile.inputStream(),
+									outputStream = newFile.outputStream(),
+									iv = iv
+								)
+
+								newFile.absolutePath
+							}
+
+                        getExifDataForMedia(absolutePath).collect {
                             mediaData = it
                         }
+
+                        showLoadingDialog = false
+                        File(absolutePath).delete()
                     }
 
                     Column(
