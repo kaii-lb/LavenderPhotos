@@ -40,10 +40,12 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
+import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.ExplanationDialog
 import com.kaii.photos.compose.FeatureNotAvailableDialog
 import com.kaii.photos.compose.PreferencesRow
+import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.RowPosition
 
 private const val TAG = "ABOUT_PAGE"
@@ -54,7 +56,10 @@ fun AboutPage(popBackStack: () -> Unit) {
     val context = LocalContext.current
     val showVersionInfoDialog = remember { mutableStateOf(false) }
 
-    VersionInfoDialog(showVersionInfoDialog)
+    VersionInfoDialog(
+    	showDialog = showVersionInfoDialog,
+    	changelog = stringResource(id = R.string.changelog)
+   	)
 
     Column (
         modifier = Modifier
@@ -138,6 +143,14 @@ fun AboutPage(popBackStack: () -> Unit) {
 	        }
 
             val showPrivacyPolicy = remember { mutableStateOf(false) }
+            if (showPrivacyPolicy.value) {
+                ExplanationDialog(
+                    title = "Privacy Policy",
+                    explanation = "There isn't one! None of your data goes anywhere but this device. No AI is trained on it, no algorithms to harvest information, nothing. Lavender Photos has and always will be a privacy focused gallery app.",
+                    showDialog = showPrivacyPolicy,
+                )
+            }
+
 	        PreferencesRow(
 	            title = "Privacy Policy",
 	            summary = "we really don't use your data",
@@ -147,19 +160,12 @@ fun AboutPage(popBackStack: () -> Unit) {
                 showPrivacyPolicy.value = true
             }
 
-			if (showPrivacyPolicy.value) {
-	            ExplanationDialog(
-                    title = "Privacy Policy",
-	                explanation = "There isn't one! None of your data goes anywhere but this device. No AI is trained on it, no algorithms to harvest information, nothing. Lavender Photos has and always will be a privacy focused gallery app.",
-	                showDialog = showPrivacyPolicy,
-	            )
-			}
-
             val showNotImplDialog = remember { mutableStateOf(false) }
             if (showNotImplDialog.value) {
                 FeatureNotAvailableDialog(showDialog = showNotImplDialog)
             }
 
+            val navController = LocalNavController.current
 	        PreferencesRow(
 	            title = "Updates",
 	            summary = "keep the app up to date",
@@ -167,7 +173,7 @@ fun AboutPage(popBackStack: () -> Unit) {
 	            position = RowPosition.Middle,
 	            goesToOtherPage = true
 	        ) {
-                showNotImplDialog.value = true
+                navController.navigate(MultiScreenViewType.UpdatesPage.name)
             }
 
 	        PreferencesRow(
@@ -198,7 +204,10 @@ fun AboutPage(popBackStack: () -> Unit) {
 }
 
 @Composable
-private fun VersionInfoDialog(showDialog: MutableState<Boolean>) {
+fun VersionInfoDialog(
+	showDialog: MutableState<Boolean>,
+	changelog: String
+) {
     if (showDialog.value) {
         AlertDialog(
             onDismissRequest = {
@@ -238,7 +247,7 @@ private fun VersionInfoDialog(showDialog: MutableState<Boolean>) {
 	                ) {
 	                	item {
 		                    Text(
-		                        text = stringResource(id = R.string.changelog),
+		                        text = changelog,
 		                        fontSize = TextUnit(14f, TextUnitType.Sp),
 		                    )
 	                	}

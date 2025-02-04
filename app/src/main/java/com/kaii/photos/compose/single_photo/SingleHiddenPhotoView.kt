@@ -74,11 +74,13 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.ConfirmationDialog
 import com.kaii.photos.compose.ConfirmationDialogWithBody
 import com.kaii.photos.compose.DialogInfoText
+import com.kaii.photos.compose.LoadingDialog
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.MediaData
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.appRestoredFilesDir
+import com.kaii.photos.helpers.appSecureThumbnailCacheDir
 import com.kaii.photos.helpers.brightenColor
 import com.kaii.photos.helpers.getExifDataForMedia
 import com.kaii.photos.helpers.moveImageOutOfLockedFolder
@@ -88,6 +90,7 @@ import com.kaii.photos.helpers.getSecuredCacheImageForFile
 import com.kaii.photos.helpers.getSecureDecryptedVideoFile
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -601,7 +604,7 @@ fun SingleSecuredPhotoInfoDialog(
                         )
                     }
 
-					val showLoadingDialog by remember { mutableStateOf(false) }
+					var showLoadingDialog by remember { mutableStateOf(false) }
 					if (showLoadingDialog) {
 						LoadingDialog(
 							title = "Decrypting File",
@@ -609,6 +612,7 @@ fun SingleSecuredPhotoInfoDialog(
 						)
 					}
 
+					val context = LocalContext.current
                     LaunchedEffect(Unit) {
                     	showLoadingDialog = true
 
@@ -616,17 +620,19 @@ fun SingleSecuredPhotoInfoDialog(
                     	val absolutePath =
 	                    	if (currentMediaItem.type == MediaType.Video) {
 	                    		val originalFile = File(currentMediaItem.absolutePath)
-	                    		var newFile = getSecureDecryptedVideoFile(currentMediaItem.displayName!!)
+	                    		var newFile = getSecureDecryptedVideoFile(
+	                    			name = currentMediaItem.displayName!!,
+	                    			context = context
+                    			)
 
-	                    		while(file.size < originalFile.size) {
+	                    		while(newFile.length() < originalFile.length()) {
 	                    			delay(100)
-	                    			newFile = getSecureDecryptedVideoFile(currentMediaItem.displayName!!)
 	                    		}
 
 	                    		newFile.absolutePath
 	                    	} else {
 								val originalFile = File(currentMediaItem.absolutePath)
-								val newFile = File(context.appThumbnailCacheDir + "/" + originalFile.nameWithoutExtention + ".temp" + "." + originalFile.extension)
+								val newFile = File(context.appSecureThumbnailCacheDir + "/" + originalFile.nameWithoutExtension + ".temp" + "." + originalFile.extension)
 								val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(currentMediaItem.absolutePath)
 
 								EncryptionManager().decryptInputStream(

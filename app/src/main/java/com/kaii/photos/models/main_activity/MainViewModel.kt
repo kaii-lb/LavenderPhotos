@@ -11,6 +11,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.datastore.Settings
+import com.kaii.photos.helpers.Updater
 import com.kaii.photos.mediastore.MediaStoreData
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,6 +35,8 @@ class MainViewModel(context: Context) : ViewModel() {
 
     private val _singlePhotoPath = MutableStateFlow<String?>(null)
     val singlePhotoPath: Flow<String?> = _singlePhotoPath.asStateFlow()
+
+	val updater = Updater(context = context, coroutineScope = viewModelScope)
 
     fun setSelectedMediaData(newMediaStoreData: MediaStoreData?) {
         _selectedMedia.value = newMediaStoreData

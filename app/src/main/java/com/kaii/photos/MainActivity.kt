@@ -90,6 +90,7 @@ import com.kaii.photos.compose.settings.GeneralSettingsPage
 import com.kaii.photos.compose.settings.LookAndFeelSettingsPage
 import com.kaii.photos.compose.settings.MainSettingsPage
 import com.kaii.photos.compose.settings.MemoryAndStorageSettingsPage
+import com.kaii.photos.compose.settings.UpdatesPage
 import com.kaii.photos.compose.single_photo.EditingView
 import com.kaii.photos.compose.single_photo.SingleHiddenPhotoView
 import com.kaii.photos.compose.single_photo.SinglePhotoView
@@ -636,6 +637,22 @@ class MainActivity : ComponentActivity() {
                     )
 
                     LookAndFeelSettingsPage()
+                }
+
+                composable(MultiScreenViewType.UpdatesPage.name) {
+                    enableEdgeToEdge(
+                        navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.background.toArgb()),
+                        statusBarStyle = SystemBarStyle.auto(
+                            MaterialTheme.colorScheme.background.toArgb(),
+                            MaterialTheme.colorScheme.background.toArgb()
+                        )
+                    )
+                    setupNextScreen(
+                        selectedItemsList,
+                        window
+                    )
+
+                    UpdatesPage()
                 }
             }
         }

@@ -5,11 +5,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
-import android.os.Environment
 import android.util.Log
-import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
@@ -103,7 +99,6 @@ import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.datastore.AlbumsList
-import com.kaii.photos.datastore.Debugging
 import com.kaii.photos.datastore.User
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.GetPermissionAndRun
@@ -113,8 +108,8 @@ import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.brightenColor
-import com.kaii.photos.helpers.createPersistablePermissionLauncher
 import com.kaii.photos.helpers.checkDirIsDownloads
+import com.kaii.photos.helpers.createPersistablePermissionLauncher
 import com.kaii.photos.helpers.darkenColor
 import com.kaii.photos.helpers.getExifDataForMedia
 import com.kaii.photos.helpers.moveImageToLockedFolder
@@ -1111,7 +1106,7 @@ fun SingleAlbumDialog(
                 val fileName = remember { mutableStateOf(title) }
                 val saveFileName = remember { mutableStateOf(false) }
 
-				val absoluteDirPath = "$baseInternalStorageDirectory$dir"
+                val absoluteDirPath = "$baseInternalStorageDirectory$dir"
                 val context = LocalContext.current
 
                 GetDirectoryPermissionAndRun(
@@ -1128,15 +1123,15 @@ fun SingleAlbumDialog(
                         mainViewModel.settings.AlbumsList.editInAlbumsList(dir, fileName.value)
                         showDialog.value = false
 
-						try {
-	                        context.contentResolver.releasePersistableUriPermission(
-	                        	context.getExternalStorageContentUriFromAbsolutePath(absoluteDirPath, true),
-	                        	Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-	                       	)
-						} catch (e: Throwable) {
-							Log.d(TAG, "Couldn't release permission for $absoluteDirPath")
-							e.printStackTrace()
-						}
+                        try {
+                            context.contentResolver.releasePersistableUriPermission(
+                                context.getExternalStorageContentUriFromAbsolutePath(absoluteDirPath, true),
+                                Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                            )
+                        } catch (e: Throwable) {
+                            Log.d(TAG, "Couldn't release permission for $absoluteDirPath")
+                            e.printStackTrace()
+                        }
 
                         navController.popBackStack()
                         navController.navigate(MultiScreenViewType.SingleAlbumView.name)
@@ -1171,15 +1166,15 @@ fun SingleAlbumDialog(
                         mainViewModel.settings.AlbumsList.removeFromAlbumsList(dir)
                         showDialog.value = false
 
-						try {
-	                        context.contentResolver.releasePersistableUriPermission(
-	                        	context.getExternalStorageContentUriFromAbsolutePath(absoluteDirPath, true),
-	                        	Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-	                       	)
-						} catch (e: Throwable) {
-							Log.d(TAG, "Couldn't release permission for $absoluteDirPath")
-							e.printStackTrace()
-						}
+                        try {
+                            context.contentResolver.releasePersistableUriPermission(
+                                context.getExternalStorageContentUriFromAbsolutePath(absoluteDirPath, true),
+                                Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                            )
+                        } catch (e: Throwable) {
+                            Log.d(TAG, "Couldn't release permission for $absoluteDirPath")
+                            e.printStackTrace()
+                        }
 
                         navController.popBackStack()
                     }
@@ -1388,41 +1383,41 @@ fun SelectingMoreOptionsDialog(
     else
         Modifier.fillMaxWidth(0.85f)
 
-	val moveToSecureFolder = remember { mutableStateOf(false) }
-	val tryGetDirPermission = remember { mutableStateOf(false) }
+    val moveToSecureFolder = remember { mutableStateOf(false) }
+    val tryGetDirPermission = remember { mutableStateOf(false) }
 
-	var showLoadingDialog by remember { mutableStateOf(false) }
+    var showLoadingDialog by remember { mutableStateOf(false) }
 
-	GetDirectoryPermissionAndRun(
+    GetDirectoryPermissionAndRun(
         absolutePath = selectedItems.firstOrNull()?.let { media ->
             media.absolutePath
                 .replace(baseInternalStorageDirectory, "")
                 .replace(media.displayName ?: "", "")
         } ?: "",
-	    shouldRun = tryGetDirPermission
-	) {
-	    showLoadingDialog = true
-	    moveToSecureFolder.value = true
-	}
+        shouldRun = tryGetDirPermission
+    ) {
+        showLoadingDialog = true
+        moveToSecureFolder.value = true
+    }
 
     if (showLoadingDialog) {
         LoadingDialog(title = "Encrypting Files", body = "Please wait while the media is processed")
     }
 
-	GetPermissionAndRun(
-	    uris = selectedItems.map { it.uri },
-	    shouldRun = moveToSecureFolder,
-	    onGranted = {
-	        moveImageToLockedFolder(
-	            selectedItems,
-	            context
-	        )
+    GetPermissionAndRun(
+        uris = selectedItems.map { it.uri },
+        shouldRun = moveToSecureFolder,
+        onGranted = {
+            moveImageToLockedFolder(
+                selectedItems,
+                context
+            )
 
-			onDone()
+            onDone()
             showLoadingDialog = false
             showDialog.value = false
-	    }
-	)
+        }
+    )
 
     Dialog(
         onDismissRequest = {
@@ -1514,7 +1509,7 @@ fun LoadingDialog(
                 modifier = Modifier.wrapContentSize()
             )
 
-            Spacer (modifier =  Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             Text(
                 text = body,
@@ -1524,7 +1519,7 @@ fun LoadingDialog(
                 modifier = Modifier.wrapContentSize()
             )
 
-            Spacer (modifier =  Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             LinearProgressIndicator(
                 color = MaterialTheme.colorScheme.primary,
@@ -1532,7 +1527,7 @@ fun LoadingDialog(
                 strokeCap = StrokeCap.Round,
                 gapSize = 2.dp,
                 modifier = Modifier
-                	.padding(8.dp)
+                    .padding(8.dp)
                     .fillMaxWidth(1f)
             )
         }

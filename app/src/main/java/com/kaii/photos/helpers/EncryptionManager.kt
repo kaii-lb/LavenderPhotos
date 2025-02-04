@@ -171,7 +171,10 @@ class EncryptionManager {
 
     fun decryptVideo(absolutePath: String, iv: ByteArray, context: Context): File {
         val original = File(absolutePath)
-        val destination = getSecureDecryptedVideoFileFile(original.name)
+        val destination = getSecureDecryptedVideoFile(
+        	name = original.name,
+        	context = context
+       	)
 
         val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.DECRYPT_MODE, getOrCreateSecretKey(), IvParameterSpec(iv))

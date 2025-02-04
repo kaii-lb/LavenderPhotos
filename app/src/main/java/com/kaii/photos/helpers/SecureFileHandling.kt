@@ -23,7 +23,8 @@ fun getSecuredCacheImageForFile(
 ) : File = File(context.appSecureThumbnailCacheDir + "/" + fileName + ".png")
 
 fun getSecureDecryptedVideoFile(
-	name: String
+	name: String,
+	context: Context
 ) : File = File(context.appSecureVideoCacheDir, name)
 
 fun addSecuredCachedImage(
