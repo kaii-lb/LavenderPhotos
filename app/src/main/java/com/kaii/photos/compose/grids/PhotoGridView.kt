@@ -146,24 +146,26 @@ fun PhotoGrid(
     var hasFiles: Boolean? by remember { mutableStateOf(null) }
 
     LaunchedEffect(groupedMedia.value) {
-        hasFiles = run {
-        	if (viewProperties == ViewProperties.SecureFolder) {
-        		val basePath = context.appSecureFolderDir
+    	withContext(Dispatchers.IO) {
+	        hasFiles = run {
+	        	if (viewProperties == ViewProperties.SecureFolder) {
+	        		val basePath = context.appSecureFolderDir
 
-	            File(basePath).listFiles()?.isNotEmpty() == true
-        	} else if (viewProperties == ViewProperties.Album) {
-        		var result: Boolean? = null
+		            File(basePath).listFiles()?.isNotEmpty() == true
+	        	} else if (viewProperties == ViewProperties.Album) {
+	        		var result: Boolean? = null
 
-        		albums.any { path ->
-					result = Path("$baseInternalStorageDirectory$path").checkHasFiles()
-					result == true
-        		}
+	        		albums.any { path ->
+						result = Path("$baseInternalStorageDirectory$path").checkHasFiles()
+						result == true
+	        		}
 
-        		result
-        	} else {
-        		groupedMedia.value.isNotEmpty()
-        	}
-        }
+	        		result
+	        	} else {
+	        		groupedMedia.value.isNotEmpty()
+	        	}
+	        }
+    	}
     }
 
     when (hasFiles) {
@@ -451,6 +453,7 @@ fun DeviceMedia(
                         (listSize - gridState.layoutInfo.visibleItemsInfo.size).toFloat()
                     }
                 }
+
                 AnimatedVisibility(
                     visible = showHandle && !showLoadingSpinner && totalLeftOverItems > 50f,
                     modifier = Modifier.fillMaxHeight(1f),

@@ -41,6 +41,7 @@ import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModelFactory
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,7 +75,7 @@ fun SingleAlbumView(
     val groupedMedia = remember { mutableStateOf(mediaStoreData.value) }
 
     LaunchedEffect(mediaStoreData.value) {
-        groupedMedia.value = mediaStoreData.value
+   		groupedMedia.value = mediaStoreData.value
     }
 
     val showDialog = remember { mutableStateOf(false) }
