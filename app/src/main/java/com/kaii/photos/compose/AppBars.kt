@@ -2,16 +2,21 @@ package com.kaii.photos.compose
 
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import android.view.Window
 import android.view.WindowInsetsController
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
@@ -68,11 +73,15 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowInsetsCompat
 import com.kaii.photos.MainActivity
 import com.kaii.photos.MainActivity.Companion.applicationDatabase
+import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
+import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.MainScreenViewType
+import com.kaii.photos.helpers.baseInternalStorageDirectory
+import com.kaii.photos.helpers.createPersistablePermissionLauncher
 import com.kaii.photos.helpers.moveImageOutOfLockedFolder
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.permanentlyDeleteSecureFolderImageList
@@ -85,6 +94,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+
+private const val TAG = "APP_BARS"
 
 /** please only use dialogComposable for its intended purpose */
 @Composable
@@ -1470,7 +1481,7 @@ fun setBarVisibility(
 fun DualFunctionTopAppBar(
     alternated: Boolean,
     title: @Composable () -> Unit,
-    actions: @Composable () -> Unit,
+    actions: @Composable RowScope.() -> Unit,
     alternateTitle: @Composable () -> Unit,
     alternateActions: @Composable () -> Unit,
     navigationIcon: @Composable () -> Unit = @Composable {}
@@ -1519,7 +1530,12 @@ fun DualFunctionTopAppBar(
                 if (alternate) {
                     alternateActions()
                 } else {
-                    actions()
+                	Row(
+               			verticalAlignment = Alignment.CenterVertically,
+               			horizontalArrangement = Arrangement.SpaceEvenly
+                	) {
+                		actions()
+                	}
                 }
             }
         },
@@ -1530,7 +1546,8 @@ fun DualFunctionTopAppBar(
 fun MainAppTopBar(
     alternate: Boolean,
     showDialog: MutableState<Boolean>,
-    selectedItemsList: SnapshotStateList<MediaStoreData>
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    currentView: MutableState<MainScreenViewType>
 ) {
     DualFunctionTopAppBar(
         alternated = alternate,
@@ -1549,6 +1566,48 @@ fun MainAppTopBar(
             }
         },
         actions = {
+            AnimatedVisibility(
+                visible = currentView.value == MainScreenViewType.AlbumsGridView,
+                enter = scaleIn(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    )
+                ),
+                exit = scaleOut(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    )
+                )
+            ) {
+                val activityLauncher = createPersistablePermissionLauncher { uri ->
+                    uri.path?.let {
+                        val dir = File(it)
+
+                        val pathSections = dir.absolutePath.replace(baseInternalStorageDirectory, "").split(":")
+                        val path = pathSections[pathSections.size - 1]
+
+                        Log.d(TAG, "Added album path $path")
+
+                        mainViewModel.settings.AlbumsList.addToAlbumsList(path)
+                    }
+                }
+
+                IconButton(
+                    onClick = {
+                        activityLauncher.launch(null)
+                    },
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.add),
+                        contentDescription = "Add album",
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
+
             IconButton(
                 onClick = {
                     showDialog.value = true

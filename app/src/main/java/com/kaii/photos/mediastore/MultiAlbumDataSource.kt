@@ -28,6 +28,7 @@ class MultiAlbumDataSource(
             arrayOf(
                 MediaColumns._ID,
                 MediaColumns.DATA,
+                MediaColumns.DATE_TAKEN,
                 MediaColumns.DATE_MODIFIED,
                 MediaColumns.MIME_TYPE,
                 MediaColumns.DISPLAY_NAME,
@@ -59,6 +60,7 @@ class MultiAlbumDataSource(
         val mediaTypeColumnIndex = mediaCursor.getColumnIndexOrThrow(FileColumns.MEDIA_TYPE)
         val displayNameIndex = mediaCursor.getColumnIndexOrThrow(FileColumns.DISPLAY_NAME)
         val dateModifiedColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.DATE_MODIFIED)
+        val dateTakenColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.DATE_TAKEN)
 
         mediaCursor.use { cursor ->
             while (cursor.moveToNext()) {
@@ -68,22 +70,33 @@ class MultiAlbumDataSource(
                 val dateModified = cursor.getLong(dateModifiedColumn)
                 val displayName = cursor.getString(displayNameIndex)
 
-                val possibleDateTaken = mediaEntityDao.getDateTaken(id)
-                val dateTaken = if (possibleDateTaken != 0L) {
-                    possibleDateTaken
-                } else {
-                    val taken = getDateTakenForMedia(absolutePath)
+				val mediaStoreDateTaken = cursor.getLong(dateTakenColumn) / 1000
+                val dateTaken =
+	                if (mediaStoreDateTaken == 0L) {
+	                	if (dateModified != 0L) {
+	                		dateModified
+	                	} else {
+	                		val possibleDateTaken = mediaEntityDao.getDateTaken(id)
 
-                    mediaEntityDao.insertEntity(
-                        MediaEntity(
-                            id = id,
-                            mimeType = mimeType,
-                            dateTaken = taken,
-                            displayName = displayName
-                        )
-                    )
-                    taken
-                }
+	                		if (possibleDateTaken != 0L) {
+	                			possibleDateTaken
+                   			} else {
+			                    val taken = getDateTakenForMedia(absolutePath)
+
+			                    mediaEntityDao.insertEntity(
+			                        MediaEntity(
+			                            id = id,
+			                            mimeType = mimeType,
+			                            dateTaken = taken,
+			                            displayName = displayName
+			                        )
+			                    )
+		                    	taken
+	                    	}
+	                	}
+	                } else {
+	                	mediaStoreDateTaken
+	                }
 
                 val type =
                     if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) MediaType.Image

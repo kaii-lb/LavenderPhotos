@@ -702,7 +702,7 @@ class MainActivity : ComponentActivity() {
 
         Scaffold(
             topBar = {
-                TopBar(showDialog = showDialog, selectedItemsList = selectedItemsList)
+                TopBar(showDialog = showDialog, selectedItemsList = selectedItemsList, currentView = currentView)
             },
             bottomBar = {
                 BottomBar(currentView = currentView, selectedItemsList = selectedItemsList)
@@ -783,7 +783,8 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun TopBar(
         showDialog: MutableState<Boolean>,
-        selectedItemsList: SnapshotStateList<MediaStoreData>
+        selectedItemsList: SnapshotStateList<MediaStoreData>,
+        currentView: MutableState<MainScreenViewType>
     ) {
 		val show by remember {
 		    derivedStateOf {
@@ -794,7 +795,8 @@ class MainActivity : ComponentActivity() {
         MainAppTopBar(
             alternate = show,
             showDialog = showDialog,
-            selectedItemsList = selectedItemsList
+            selectedItemsList = selectedItemsList,
+            currentView = currentView
         )
     }
 
