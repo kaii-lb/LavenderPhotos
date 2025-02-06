@@ -9,47 +9,57 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.kaii.photos.R
 import com.kaii.photos.LocalNavController
-import com.kaii.photos.compose.PreferencesSwitchRow
-import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.MainActivity.Companion.mainViewModel
+import com.kaii.photos.R
+import com.kaii.photos.compose.CheckBoxButtonRow
+import com.kaii.photos.compose.PreferencesRow
 import com.kaii.photos.compose.PreferencesSeparatorText
+import com.kaii.photos.compose.PreferencesSwitchRow
+import com.kaii.photos.datastore.AlbumsList
+import com.kaii.photos.datastore.Editing
+import com.kaii.photos.datastore.MainPhotosList
 import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.datastore.Video
-import com.kaii.photos.datastore.Editing
+import com.kaii.photos.helpers.RowPosition
 
 @Composable
 fun GeneralSettingsPage() {
-	val context = LocalContext.current
+    val context = LocalContext.current
 
-	Scaffold (
-		topBar = {
-			GeneralSettingsTopBar()
-		}
-	) { innerPadding ->
-        LazyColumn (
+    Scaffold(
+        topBar = {
+            GeneralSettingsTopBar()
+        }
+    ) { innerPadding ->
+        LazyColumn(
             modifier = Modifier
                 .padding(innerPadding)
                 .background(MaterialTheme.colorScheme.background),
@@ -62,7 +72,7 @@ fun GeneralSettingsPage() {
                 }
 
                 item {
-                	val isMediaManager by mainViewModel.settings.Permissions.getIsMediaManager().collectAsStateWithLifecycle(initialValue = false)
+                    val isMediaManager by mainViewModel.settings.Permissions.getIsMediaManager().collectAsStateWithLifecycle(initialValue = false)
 
                     val manageMediaLauncher = rememberLauncherForActivityResult(
                         contract = ActivityResultContracts.StartActivityForResult()
@@ -77,7 +87,7 @@ fun GeneralSettingsPage() {
                         mainViewModel.settings.Permissions.setIsMediaManager(granted)
                     }
 
-                    PreferencesSwitchRow(
+                   PreferencesSwitchRow(
                         title = "Media Manager",
                         summary = "Better and faster trash/delete/copy/move",
                         iconResID = R.drawable.movie_edit,
@@ -95,8 +105,8 @@ fun GeneralSettingsPage() {
                 }
 
                 item {
-                	val shouldAutoPlay by mainViewModel.settings.Video.getShouldAutoPlay().collectAsStateWithLifecycle(initialValue = true)
-                	val muteOnStart by mainViewModel.settings.Video.getMuteOnStart().collectAsStateWithLifecycle(initialValue = false)
+                    val shouldAutoPlay by mainViewModel.settings.Video.getShouldAutoPlay().collectAsStateWithLifecycle(initialValue = true)
+                    val muteOnStart by mainViewModel.settings.Video.getMuteOnStart().collectAsStateWithLifecycle(initialValue = false)
 
                     PreferencesSwitchRow(
                         title = "Auto Play Videos",
@@ -107,7 +117,7 @@ fun GeneralSettingsPage() {
                         showBackground = false,
                         onRowClick = null,
                         onSwitchClick = { checked ->
-                        	mainViewModel.settings.Video.setShouldAutoPlay(checked)
+                            mainViewModel.settings.Video.setShouldAutoPlay(checked)
                         }
                     )
 
@@ -120,10 +130,10 @@ fun GeneralSettingsPage() {
                         showBackground = false,
                         onRowClick = null,
                         onSwitchClick = { checked ->
-                        	mainViewModel.settings.Video.setMuteOnStart(checked)
+                            mainViewModel.settings.Video.setMuteOnStart(checked)
                         }
                     )
-				}
+                }
 
 
                 item {
@@ -131,32 +141,102 @@ fun GeneralSettingsPage() {
                 }
 
                 item {
-                	val overwriteByDefault by mainViewModel.settings.Editing.getOverwriteByDefault().collectAsStateWithLifecycle(initialValue = false)
+                    val overwriteByDefault by mainViewModel.settings.Editing.getOverwriteByDefault().collectAsStateWithLifecycle(initialValue = false)
 
-                	PreferencesSwitchRow(
-                	    title = "Overwrite on save",
-                	    summary = "Default to overwriting instead of saving a copy when editing media.",
-                	    iconResID = R.drawable.storage,
-                	    checked = overwriteByDefault,
-                	    position = RowPosition.Single,
-                	    showBackground = false,
-                	    onRowClick = null,
-                	    onSwitchClick = { checked ->
-                	    	mainViewModel.settings.Editing.setOverwriteByDefault(checked)
-                	    }
-                	)
+                    PreferencesSwitchRow(
+                        title = "Overwrite on save",
+                        summary = "Default to overwriting instead of saving a copy when editing media.",
+                        iconResID = R.drawable.storage,
+                        checked = overwriteByDefault,
+                        position = RowPosition.Single,
+                        showBackground = false,
+                        onRowClick = null,
+                        onSwitchClick = { checked ->
+                            mainViewModel.settings.Editing.setOverwriteByDefault(checked)
+                        }
+                    )
+                }
+
+                item {
+                    PreferencesSeparatorText("Main Photos View")
+                }
+
+                item {
+                    val mainPhotosAlbums by mainViewModel.settings.MainPhotosList.getAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
+                    val allAlbums by mainViewModel.settings.AlbumsList.getAlbumsList().collectAsStateWithLifecycle(initialValue = emptyList())
+
+                    val showAlbumsSelectionDialog = remember { mutableStateOf(false) }
+                    val selectedAlbums = remember { mutableStateListOf<String>() }
+
+                    PreferencesRow(
+                        title = "Main Albums List",
+                        iconResID = R.drawable.close,
+                        position = RowPosition.Single,
+                        showBackground = false,
+                        summary = "Select albums that will have their photos displayed in the main photo view"
+                    ) {
+                        selectedAlbums.clear()
+                        selectedAlbums.addAll(
+                        	mainPhotosAlbums.map {
+                        		it.apply {
+                        			removeSuffix("/")
+                        		}
+                        	}
+                       	)
+
+                        showAlbumsSelectionDialog.value = true
+                    }
+
+                    if (showAlbumsSelectionDialog.value) {
+                        SelectableButtonListDialog(
+                            title = "Selected Albums",
+                            body = "Albums selected here will show up in the main photo view",
+                            showDialog = showAlbumsSelectionDialog,
+                            onConfirm = {
+                                mainViewModel.settings.MainPhotosList.clear()
+
+                                selectedAlbums.forEach { album ->
+                                    mainViewModel.settings.MainPhotosList.addAlbum(album.removeSuffix("/"))
+                                }
+                            },
+                            buttons = {
+                                LazyColumn(
+                                    modifier = Modifier
+                                        .fillMaxWidth(1f)
+                                        .height(384.dp)
+                                ) {
+                                    items(
+                                        count = allAlbums.size
+                                    ) { index ->
+                                        val associatedAlbum = allAlbums[index]
+
+                                        CheckBoxButtonRow(
+                                            text = associatedAlbum,
+                                            checked = selectedAlbums.contains(associatedAlbum)
+                                        ) {
+                                            if (selectedAlbums.contains(associatedAlbum)) {
+                                                selectedAlbums.remove(associatedAlbum)
+                                            } else {
+                                                selectedAlbums.add(associatedAlbum)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        )
+                    }
                 }
             }
         }
-	}
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun GeneralSettingsTopBar() {
-	val navController = LocalNavController.current
+    val navController = LocalNavController.current
 
-	TopAppBar(
+    TopAppBar(
         title = {
             Text(
                 text = "General",
@@ -166,7 +246,7 @@ private fun GeneralSettingsTopBar() {
         navigationIcon = {
             IconButton(
                 onClick = {
-					navController.popBackStack()
+                    navController.popBackStack()
                 },
             ) {
                 Icon(

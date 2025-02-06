@@ -21,7 +21,11 @@ import java.time.format.DateTimeFormatter
 import java.util.Calendar
 import java.util.Locale
 
-class GalleryViewModel(context: Context, path: String, sortBy: MediaItemSortMode) : ViewModel() {
+class GalleryViewModel(
+	context: Context,
+	path: String,
+	sortBy: MediaItemSortMode
+) : ViewModel() {
 	private val cancellationSignal = CancellationSignal()
     private val mediaStoreDataSource = DefaultMediaStoreDataSource(context, path, sortBy, cancellationSignal)
 

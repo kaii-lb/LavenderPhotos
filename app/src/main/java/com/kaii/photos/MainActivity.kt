@@ -1,13 +1,11 @@
 package com.kaii.photos
 
 import android.content.res.Configuration
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.Window
 import android.view.WindowManager
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
@@ -102,27 +100,23 @@ import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.Debugging
 import com.kaii.photos.datastore.Editing
 import com.kaii.photos.datastore.LookAndFeel
+import com.kaii.photos.datastore.MainPhotosList
 import com.kaii.photos.datastore.Versions
 import com.kaii.photos.helpers.EditingScreen
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.appStorageDir
-import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.mediastore.MediaStoreData
-import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.mediastore.getMediaStoreDataFromUri
-import com.kaii.photos.mediastore.getUriFromAbsolutePath
-import com.kaii.photos.models.gallery_model.GalleryViewModel
-import com.kaii.photos.models.gallery_model.GalleryViewModelFactory
 import com.kaii.photos.models.main_activity.MainViewModel
 import com.kaii.photos.models.main_activity.MainViewModelFactory
+import com.kaii.photos.models.multi_album.MultiAlbumViewModel
+import com.kaii.photos.models.multi_album.MultiAlbumViewModelFactory
 import com.kaii.photos.ui.theme.PhotosTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import java.io.File
-import javax.crypto.Cipher
 
 private const val TAG = "MAIN_ACTIVITY"
 
@@ -665,21 +659,34 @@ class MainActivity : ComponentActivity() {
         selectedItemsList: SnapshotStateList<MediaStoreData>,
         listOfDirs: List<String>
     ) {
-        val galleryViewModel: GalleryViewModel = viewModel(
-            factory = GalleryViewModelFactory(
+    	val context = LocalContext.current
+    	val albumsList by mainViewModel.settings.MainPhotosList.getAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
+
+        val multiAlbumViewModel: MultiAlbumViewModel = viewModel(
+            factory = MultiAlbumViewModelFactory(
                 LocalContext.current,
-                stringResource(id = R.string.default_homepage_photogrid_dir),
+               	albumsList,
                 MediaItemSortMode.DateTaken
             )
         )
 
+        LaunchedEffect(albumsList) {
+        	multiAlbumViewModel.reinitDataSource(
+        		context = context,
+        		albums = albumsList,
+        		sortBy = MediaItemSortMode.DateTaken
+        	)
+        }
+
         val mediaStoreData =
-            galleryViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+            multiAlbumViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
         val groupedMedia = remember { mutableStateOf(mediaStoreData.value) }
 
         LaunchedEffect(mediaStoreData.value) {
             groupedMedia.value = mediaStoreData.value
+
+            Log.d(TAG, "GROUPED MEDIA ${groupedMedia.value.size} ${groupedMedia.value.firstOrNull()}")
         }
 
         Scaffold(
@@ -742,7 +749,7 @@ class MainActivity : ComponentActivity() {
                             selectedItemsList.clear()
                             PhotoGrid(
                                 groupedMedia = groupedMedia,
-                                path = stringResource(id = R.string.default_homepage_photogrid_dir),
+                                path = null, // stringResource(id = R.string.default_homepage_photogrid_dir),
                                 viewProperties = ViewProperties.Album,
                                 selectedItemsList = selectedItemsList,
                             )

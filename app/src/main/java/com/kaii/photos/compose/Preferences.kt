@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -296,6 +297,45 @@ fun RadioButtonRow(
     }
 }
 
+@Composable
+fun CheckBoxButtonRow(
+    text: String,
+    checked: Boolean,
+    onCheckedChange: () -> Unit
+) {
+    Row (
+        modifier = Modifier
+            .fillMaxWidth(1f)
+            .height(40.dp)
+            .background(Color.Transparent)
+            .padding(12.dp, 4.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .clickable {
+                onCheckedChange()
+            },
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Start
+    ) {
+        Checkbox(
+            checked = checked,
+            onCheckedChange = {
+                onCheckedChange()
+            }
+        )
+
+        Spacer (modifier = Modifier.width(16.dp))
+
+        Text (
+            text = text,
+            fontSize = TextUnit(14f, TextUnitType.Sp),
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            modifier = Modifier
+                .wrapContentSize()
+        )
+    }
+}
+
 /** @param trackIcons needs to be a list of 3 icon res ids */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -458,23 +498,23 @@ fun PreferencesThreeStateSwitchRow(
                 track = {
 					Box (
 						modifier = Modifier
-							.fillMaxWidth(1f)
-							.height(40.dp)
+                            .fillMaxWidth(1f)
+                            .height(40.dp)
 					)
                 },
                 thumb = {
                     Box(
                        modifier = Modifier
-                            .size(28.dp)
-                            .background(SwitchDefaults.colors().checkedTrackColor, CircleShape)
+                           .size(28.dp)
+                           .background(SwitchDefaults.colors().checkedTrackColor, CircleShape)
                     ) {
 	                    Icon(
 	                        painter = painterResource(id = trackIcons[currentPosition]),
 	                        contentDescription = null,
 	                        tint = SwitchDefaults.colors().checkedThumbColor,
 	                        modifier = Modifier
-	                            .size(24.dp)
-	                            .align(Alignment.Center)
+                                .size(24.dp)
+                                .align(Alignment.Center)
 	                    )
                     }
                 },

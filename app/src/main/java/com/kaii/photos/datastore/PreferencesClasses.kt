@@ -1,8 +1,8 @@
 package com.kaii.photos.datastore
 
 import android.content.Context
-import android.os.Build
 import android.provider.MediaStore
+import android.provider.MediaStore.Files.FileColumns
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -106,6 +106,10 @@ class SettingsAlbumsListImpl(private val context: Context, private val viewModel
             "Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images",
             "Download"
         )
+
+	private suspend fun getAllAlbumsOnDevice() : List<String> = withContext(Dispatchers.IO) {
+		getAllAlbumsOnDevice()
+	}
 }
 
 class SettingsVersionImpl(private val context: Context, private val viewModelScope: CoroutineScope) {
@@ -116,7 +120,7 @@ class SettingsVersionImpl(private val context: Context, private val viewModelSco
         context.datastore.data.map {
             val currentVersion = context.packageManager.getPackageInfo(context.packageName, 0).versionName
 
-            val isPrev083 = (it[v083firstStartKey] ?: true) && BuildConfig.VERSION_CODE >= 83
+            val isPrev083 = it[v083firstStartKey] ?: true
 
             Log.e(TAG, "App version ${currentVersion}. Is pre v0.8.3? $isPrev083")
 
@@ -304,4 +308,77 @@ class SettingsEditingImpl(private val context: Context, private val viewModelSco
             it[overwriteByDefaultKey] = value
         }
     }
+}
+
+class SettingsMainPhotosListImpl(private val context: Context, private val viewModelScope: CoroutineScope) {
+	private val mainPhotosAlbumsList = stringPreferencesKey("main_photos_albums_list")
+
+	fun getAlbums() : Flow<List<String>> =
+		context.datastore.data.map {
+			val string = it[mainPhotosAlbumsList] ?: defaultAlbumsList
+
+            val list = mutableListOf<String>()
+            string.split(separator).forEach { album ->
+                if (!list.contains(album) && album != "") list.add(album.removeSuffix("/"))
+            }
+
+            list
+		}
+
+	fun addAlbum(relativePath: String) = viewModelScope.launch {
+		context.datastore.edit {
+			var list = it[mainPhotosAlbumsList] ?: defaultAlbumsList
+
+			val addedPath = relativePath.removeSuffix("/") + separator
+
+			if (!list.contains(addedPath)) list += addedPath
+
+			it[mainPhotosAlbumsList] = list
+		}
+	}
+
+	fun clear() = viewModelScope.launch {
+		context.datastore.edit {
+			it[mainPhotosAlbumsList] = ""
+		}
+	}
+
+	/** first item is the match paths
+	    second item is the non match paths
+	    non match means subAlbums */
+	fun getSQLiteQuery(albums: List<String>) : Pair<String, List<String>> {
+		if (albums.isEmpty()) return Pair("", emptyList())
+
+		albums.forEach {
+			println("ALBUM SI $it")
+		}
+
+		val colName = FileColumns.RELATIVE_PATH
+		val base = "($colName LIKE ? AND $colName NOT LIKE ?)"
+
+		val list = mutableListOf<String>()
+		var string = base
+		val firstAlbum = albums.first().apply {
+			removeSuffix("/")
+		}
+		list.add("$firstAlbum%")
+		list.add("$firstAlbum/%/%")
+
+		for (i in 1..<albums.size) {
+			val album = albums[i].apply {
+				removeSuffix("/")
+			}
+
+			string += " OR $base"
+			list.add("$album%")
+			list.add("$album/%/%")
+		}
+
+		return Pair(string, list)
+	}
+
+	private val defaultAlbumsList =
+		"DCIM/Camera" + separator +
+		"Pictures" + separator +
+		"Pictures/Screenshot" + separator
 }

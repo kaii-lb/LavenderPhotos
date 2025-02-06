@@ -225,9 +225,11 @@ private fun MemoryAndStorageSettingsTopBar() {
 }
 
 @Composable
-fun RadioButtonListDialog(
+fun SelectableButtonListDialog(
+	title: String,
+	body: String,
     showDialog: MutableState<Boolean>,
-    radioButtons: @Composable ColumnScope.() -> Unit,
+    buttons: @Composable ColumnScope.() -> Unit,
     onConfirm: () -> Unit
 ) {
     Dialog(
@@ -252,7 +254,7 @@ fun RadioButtonListDialog(
         	Spacer (modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Delete Interval",
+                text = title,
                 fontSize = TextUnit(18f, TextUnitType.Sp),
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier
@@ -262,7 +264,7 @@ fun RadioButtonListDialog(
 			Spacer (modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Photos in the trash bin older than this date will be permanently deleted",
+                text = body,
                 fontSize = TextUnit(14f, TextUnitType.Sp),
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
                 modifier = Modifier
@@ -278,7 +280,7 @@ fun RadioButtonListDialog(
                 verticalArrangement = Arrangement.Top,
                 horizontalAlignment = Alignment.Start
             ) {
-                radioButtons()
+                buttons()
             }
 
             Row(
@@ -309,9 +311,11 @@ fun DeleteIntervalDialog(
 ) {
     var deleteInterval by remember { mutableIntStateOf(initialValue) }
 
-    RadioButtonListDialog(
+    SelectableButtonListDialog(
+    	title = "Delete Interval",
+    	body = "Photos in the trash bin older than this date will be permanently deleted",
         showDialog = showDialog,
-        radioButtons = {
+        buttons = {
             RadioButtonRow(
                 text = "3 Days",
                 checked = deleteInterval == 3
@@ -360,9 +364,11 @@ fun ThumbnailSizeDialog(
 ) {
     var thumbnailSize by remember { mutableIntStateOf(initialValue) }
 
-    RadioButtonListDialog(
+    SelectableButtonListDialog(
+        title = "Thumbnail Size",
+        body = "Higher resolutions use more storage space",
         showDialog = showDialog,
-        radioButtons = {
+        buttons = {
             RadioButtonRow(
                 text = "32x32 Pixels",
                 checked = thumbnailSize == 32
