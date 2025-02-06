@@ -37,7 +37,6 @@ import com.kaii.photos.compose.TrashedPhotoGridViewBottomBar
 import com.kaii.photos.compose.TrashedPhotoGridViewTopBar
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.datastore.TrashBin
-import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.mediastore.MediaStoreData
@@ -171,7 +170,7 @@ fun TrashedPhotoGridView(
         ) {
             PhotoGrid(
                 groupedMedia = groupedMedia,
-                path = null,
+                albums = emptyList(),
                 selectedItemsList = selectedItemsList,
                 viewProperties = ViewProperties.Trash,
                 shouldPadUp = true

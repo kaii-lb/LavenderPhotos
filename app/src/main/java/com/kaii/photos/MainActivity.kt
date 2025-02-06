@@ -102,10 +102,10 @@ import com.kaii.photos.datastore.Editing
 import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.datastore.MainPhotosList
 import com.kaii.photos.datastore.Versions
-import com.kaii.photos.helpers.EditingScreen
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.appStorageDir
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.mediastore.MediaStoreData
@@ -324,8 +324,7 @@ class MainActivity : ComponentActivity() {
                     Content(currentView, showDialog, selectedItemsList, listOfDirs)
                 }
 
-                composable(
-                    route = MultiScreenViewType.SinglePhotoView.name,
+                composable<Screens.SinglePhotoView>(
                     popEnterTransition = {
                         slideInHorizontally(
                             animationSpec = tween(
@@ -365,7 +364,16 @@ class MainActivity : ComponentActivity() {
                         window
                     )
 
-                    SinglePhotoView(navControllerLocal, window, scale, rotation, offset)
+                    val screen: Screens.SinglePhotoView = it.toRoute()
+                    SinglePhotoView(
+                        navController = navControllerLocal,
+                        window = window,
+                        scale = scale,
+                        rotation = rotation,
+                        offset = offset,
+                        albums = screen.albums,
+                        mediaItemId = screen.mediaItemId
+                    )
                 }
 
                 composable(MultiScreenViewType.SingleAlbumView.name) {
@@ -483,7 +491,7 @@ class MainActivity : ComponentActivity() {
                     FavouritesGridView(selectedItemsList = selectedItemsList, currentView = currentView)
                 }
 
-                composable<EditingScreen>(
+                composable<Screens.EditingScreen>(
                     enterTransition = {
                         slideInVertically(
                             animationSpec = tween(
@@ -541,7 +549,7 @@ class MainActivity : ComponentActivity() {
                         window
                     )
 
-                    val screen: EditingScreen = it.toRoute()
+                    val screen: Screens.EditingScreen = it.toRoute()
                     val overwriteByDefault by mainViewModel.settings.Editing.getOverwriteByDefault().collectAsStateWithLifecycle(initialValue = false)
 
                     EditingView(
@@ -659,21 +667,26 @@ class MainActivity : ComponentActivity() {
         selectedItemsList: SnapshotStateList<MediaStoreData>,
         listOfDirs: List<String>
     ) {
+    	val albumsList = mainViewModel.settings.MainPhotosList.getAlbums().collectAsStateWithLifecycle(initialValue = null).value ?: return
+
     	val context = LocalContext.current
-    	val albumsList by mainViewModel.settings.MainPhotosList.getAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
 
         val multiAlbumViewModel: MultiAlbumViewModel = viewModel(
             factory = MultiAlbumViewModelFactory(
-                LocalContext.current,
-               	albumsList,
-                MediaItemSortMode.DateTaken
+                context = LocalContext.current,
+               	albums = albumsList,
+                sortBy = MediaItemSortMode.DateTaken
             )
         )
 
         LaunchedEffect(albumsList) {
+        	if (multiAlbumViewModel.albums == albumsList || albumsList.isEmpty()) return@LaunchedEffect
+
+			Log.d(TAG, "Refreshing main photos view")
+			Log.d(TAG, "In view model: ${multiAlbumViewModel.albums} new: $albumsList")
         	multiAlbumViewModel.reinitDataSource(
         		context = context,
-        		albums = albumsList,
+        		albumsList = albumsList,
         		sortBy = MediaItemSortMode.DateTaken
         	)
         }
@@ -685,8 +698,6 @@ class MainActivity : ComponentActivity() {
 
         LaunchedEffect(mediaStoreData.value) {
             groupedMedia.value = mediaStoreData.value
-
-            Log.d(TAG, "GROUPED MEDIA ${groupedMedia.value.size} ${groupedMedia.value.firstOrNull()}")
         }
 
         Scaffold(
@@ -749,7 +760,7 @@ class MainActivity : ComponentActivity() {
                             selectedItemsList.clear()
                             PhotoGrid(
                                 groupedMedia = groupedMedia,
-                                path = null, // stringResource(id = R.string.default_homepage_photogrid_dir),
+                                albums = albumsList,
                                 viewProperties = ViewProperties.Album,
                                 selectedItemsList = selectedItemsList,
                             )

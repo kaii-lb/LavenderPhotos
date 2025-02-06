@@ -44,7 +44,7 @@ import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.models.gallery_model.groupPhotosBy
+import com.kaii.photos.models.multi_album.groupPhotosBy
 import com.kaii.photos.models.search_page.SearchViewModel
 import com.kaii.photos.models.search_page.SearchViewModelFactory
 import kotlinx.coroutines.Dispatchers
@@ -250,7 +250,7 @@ fun SearchPage(
         ) {
             PhotoGrid(
                 groupedMedia = groupedMedia,
-                path = null,
+                albums = emptyList(),
                 selectedItemsList = selectedItemsList,
                 viewProperties = if (searchedForText.value == "") ViewProperties.SearchLoading else ViewProperties.SearchNotFound,
                 state = gridState,

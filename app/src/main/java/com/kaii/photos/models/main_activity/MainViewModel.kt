@@ -33,8 +33,8 @@ class MainViewModel(context: Context) : ViewModel() {
 
 	val settings = Settings(context, viewModelScope)
 
-    private val _singlePhotoPath = MutableStateFlow<String?>(null)
-    val singlePhotoPath: Flow<String?> = _singlePhotoPath.asStateFlow()
+    private val _singlePhotoPath = MutableStateFlow<List<String>>(emptyList())
+    val singlePhotoPath: Flow<List<String>> = _singlePhotoPath.asStateFlow()
 
 	val updater = Updater(context = context, coroutineScope = viewModelScope)
 
@@ -50,8 +50,8 @@ class MainViewModel(context: Context) : ViewModel() {
         _groupedMedia.value = media
     }
 
-	fun setSinglePhotoPath(path: String?) {
-		_singlePhotoPath.value = path
+	fun setSinglePhotoPath(paths: List<String>) {
+		_singlePhotoPath.value = paths
 	}
 
     fun startupPermissionCheck(context: Context) {

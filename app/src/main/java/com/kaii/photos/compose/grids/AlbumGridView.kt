@@ -75,7 +75,7 @@ fun AlbumsGridView(listOfDirs: List<String>, currentView: MutableState<MainScree
 
 	val albumToThumbnailMapping by albumsViewModel.mediaStoreData.collectAsStateWithLifecycle()
 
-    BackHandler(
+	BackHandler(
         enabled = currentView.value == MainScreenViewType.AlbumsGridView && navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name
     ) {
         currentView.value = MainScreenViewType.PhotosGridView

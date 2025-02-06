@@ -90,8 +90,9 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.kaii.photos.LocalNavController
-import com.kaii.photos.MainActivity
 import com.kaii.photos.R
+import com.kaii.photos.MainActivity
+import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.compose.FolderIsEmpty
 import com.kaii.photos.compose.ShowSelectedState
 import com.kaii.photos.compose.ViewProperties
@@ -99,6 +100,7 @@ import com.kaii.photos.datastore.Storage
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.ImageFunctions
 import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.appSecureVideoCacheDir
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.checkHasFiles
@@ -112,6 +114,7 @@ import com.kaii.photos.helpers.unselectSection
 import com.kaii.photos.helpers.vibrateLong
 import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.helpers.getSecuredCacheImageForFile
+import com.kaii.photos.helpers.Screens
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.signature
@@ -132,25 +135,34 @@ private const val TAG = "PHOTO_GRID_VIEW"
 @Composable
 fun PhotoGrid(
     groupedMedia: MutableState<List<MediaStoreData>>,
-    path: String?,
+    albums: List<String>,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     modifier: Modifier = Modifier,
     viewProperties: ViewProperties,
     shouldPadUp: Boolean = false,
     state: LazyGridState = rememberLazyGridState()
 ) {
+    val context = LocalContext.current
     var hasFiles: Boolean? by remember { mutableStateOf(null) }
 
     LaunchedEffect(groupedMedia.value) {
-        hasFiles = if (path == null) {
-            groupedMedia.value.isNotEmpty() || (viewProperties == ViewProperties.SecureFolder && !viewProperties.isListEmpty)
-        } else {
-            val basePath = baseInternalStorageDirectory
-            if (viewProperties == ViewProperties.Trash) {
-                Path("$basePath$path").checkHasFiles(true)
-            } else {
-                Path("$basePath$path").checkHasFiles()
-            }
+        hasFiles = run {
+        	if (viewProperties == ViewProperties.SecureFolder) {
+        		val basePath = context.appSecureFolderDir
+
+	            File(basePath).listFiles()?.isNotEmpty() == true
+        	} else if (viewProperties == ViewProperties.Album) {
+        		var result: Boolean? = null
+
+        		albums.any { path ->
+					result = Path("$baseInternalStorageDirectory$path").checkHasFiles()
+					result == true
+        		}
+
+        		result
+        	} else {
+        		groupedMedia.value.isNotEmpty()
+        	}
         }
     }
 
@@ -170,12 +182,12 @@ fun PhotoGrid(
                     .then(modifier)
             ) {
                 DeviceMedia(
-                    groupedMedia,
-                    selectedItemsList,
-                    viewProperties,
-                    shouldPadUp,
-                    state,
-                    path
+                    groupedMedia = groupedMedia,
+                    selectedItemsList = selectedItemsList,
+                    viewProperties = viewProperties,
+                    shouldPadUp = shouldPadUp,
+                    gridState = state,
+                    albums = albums
                 )
             }
         }
@@ -194,7 +206,7 @@ fun DeviceMedia(
     viewProperties: ViewProperties,
     shouldPadUp: Boolean,
     gridState: LazyGridState,
-    path: String?
+    albums: List<String>
 ) {
     var showLoadingSpinner by remember { mutableStateOf(true) }
 
@@ -213,8 +225,6 @@ fun DeviceMedia(
     LaunchedEffect(groupedMedia.value) {
         MainActivity.mainViewModel.setGroupedMedia(groupedMedia.value)
     }
-
-    val mainViewModel = MainActivity.mainViewModel
 
     val spacerHeight by animateDpAsState(
         targetValue = if (selectedItemsList.size > 0 && shouldPadUp) 80.dp else 0.dp,
@@ -333,10 +343,16 @@ fun DeviceMedia(
                         ) {
                             when (viewProperties.operation) {
                                 ImageFunctions.LoadNormalImage -> {
-                                    mainViewModel.setSinglePhotoPath(path)
+                                    mainViewModel.setSinglePhotoPath(albums)
                                     mainViewModel.setSelectedMediaData(mediaStoreItem)
                                     mainViewModel.setGroupedMedia(groupedMedia.value)
-                                    navController.navigate(MultiScreenViewType.SinglePhotoView.name)
+
+                                    navController.navigate(
+                                        Screens.SinglePhotoView(
+                                            albums = albums,
+                                            mediaItemId = mediaStoreItem.id
+                                        )
+                                    )
                                 }
 
                                 ImageFunctions.LoadTrashedImage -> {

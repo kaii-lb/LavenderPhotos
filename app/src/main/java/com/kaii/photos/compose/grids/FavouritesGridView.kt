@@ -33,7 +33,7 @@ import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.mediastore.MediaStoreData
-import com.kaii.photos.models.gallery_model.groupPhotosBy
+import com.kaii.photos.models.multi_album.groupPhotosBy
 import com.kaii.photos.models.favourites_grid.FavouritesViewModel
 import com.kaii.photos.models.favourites_grid.FavouritesViewModelFactory
 import kotlinx.coroutines.Dispatchers
@@ -120,7 +120,7 @@ fun FavouritesGridView(
         ) {
             PhotoGrid(
                 groupedMedia = groupedMedia,
-                path = null,
+                albums = emptyList(),
                 selectedItemsList = selectedItemsList,
                 viewProperties = ViewProperties.Favourites,
                 shouldPadUp = true

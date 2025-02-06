@@ -22,9 +22,18 @@ enum class MultiScreenViewType {
     UpdatesPage
 }
 
-@Serializable
-data class EditingScreen(
-    val absolutePath: String,
-    val uri: String,
-    val dateTaken: Long
-)
+
+object Screens {
+	@Serializable
+	data class SinglePhotoView(
+	    val albums: List<String>,
+	    val mediaItemId: Long
+	)
+
+	@Serializable
+	data class EditingScreen(
+	    val absolutePath: String,
+	    val uri: String,
+	    val dateTaken: Long
+	)
+}

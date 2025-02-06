@@ -46,7 +46,7 @@ import com.kaii.photos.helpers.getSecuredCacheImageForFile
 import com.kaii.photos.helpers.appSecureVideoCacheDir
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.models.gallery_model.groupPhotosBy
+import com.kaii.photos.models.multi_album.groupPhotosBy
 import java.io.File
 import java.nio.file.Files
 import kotlin.io.path.Path
@@ -137,7 +137,6 @@ fun LockedFolderView(
         remember { mutableStateOf(mediaStoreData.toList()) }
 
 	// TODO: USE APP CONTENT RESOLVER!!!!
-	var viewProperties by remember { mutableStateOf(ViewProperties.SecureFolder)}
 	LaunchedEffect(fileList, groupedMedia.value) {
 		withContext(Dispatchers.IO) {
 		    fileList.forEach { file ->
@@ -175,10 +174,6 @@ fun LockedFolderView(
 		    }
 
 		    groupedMedia.value = groupPhotosBy(mediaStoreData, MediaItemSortMode.LastModified)
-
-		    if (groupedMedia.value.isEmpty()) viewProperties = ViewProperties.SecureFolder.apply {
-		    	isListEmpty = true
-		    }
 		}
 	}
 
@@ -234,9 +229,9 @@ fun LockedFolderView(
         ) {
             PhotoGrid(
                 groupedMedia = groupedMedia,
-                path = null,
+                albums = emptyList(),
                 selectedItemsList = selectedItemsList,
-                viewProperties = viewProperties,
+                viewProperties = ViewProperties.SecureFolder,
                 shouldPadUp = true
             )
         }

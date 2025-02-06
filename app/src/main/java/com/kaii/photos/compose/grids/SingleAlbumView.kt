@@ -38,8 +38,8 @@ import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.mediastore.MediaStoreData
-import com.kaii.photos.models.gallery_model.GalleryViewModel
-import com.kaii.photos.models.gallery_model.GalleryViewModelFactory
+import com.kaii.photos.models.multi_album.MultiAlbumViewModel
+import com.kaii.photos.models.multi_album.MultiAlbumViewModelFactory
 import kotlinx.coroutines.Dispatchers
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -50,12 +50,13 @@ fun SingleAlbumView(
 ) {
     val mainViewModel = MainActivity.mainViewModel
 
-    val albumDir = mainViewModel.selectedAlbumDir.collectAsState(initial = null).value ?: return
+    // TODO: move to data class nav thingy
+    val albumDir = mainViewModel.selectedAlbumDir.collectAsStateWithLifecycle(initialValue = null).value ?: return
 
-    val galleryViewModel: GalleryViewModel = viewModel(
-        factory = GalleryViewModelFactory(
+    val multiAlbumViewModel: MultiAlbumViewModel = viewModel(
+        factory = MultiAlbumViewModelFactory(
             LocalContext.current,
-            albumDir,
+            listOf(albumDir),
             MediaItemSortMode.DateTaken
         )
     )
@@ -64,11 +65,11 @@ fun SingleAlbumView(
     BackHandler (
         enabled = selectedItemsList.size == 0
     ) {
-        galleryViewModel.cancelMediaFlow()
+        multiAlbumViewModel.cancelMediaFlow()
         navController.popBackStack()
     }
 
-    val mediaStoreData = galleryViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+    val mediaStoreData = multiAlbumViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
     val groupedMedia = remember { mutableStateOf(mediaStoreData.value) }
 
@@ -136,7 +137,7 @@ fun SingleAlbumView(
         ) {
             PhotoGrid(
                 groupedMedia = groupedMedia,
-                path = albumDir,
+                albums = listOf(albumDir),
                 selectedItemsList = selectedItemsList,
                 viewProperties = ViewProperties.Album,
                 shouldPadUp = true

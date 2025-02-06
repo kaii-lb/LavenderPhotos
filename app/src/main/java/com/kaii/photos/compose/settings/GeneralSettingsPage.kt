@@ -170,7 +170,7 @@ fun GeneralSettingsPage() {
 
                     PreferencesRow(
                         title = "Main Albums List",
-                        iconResID = R.drawable.close,
+                        iconResID = R.drawable.photogrid,
                         position = RowPosition.Single,
                         showBackground = false,
                         summary = "Select albums that will have their photos displayed in the main photo view"
@@ -214,7 +214,7 @@ fun GeneralSettingsPage() {
                                             text = associatedAlbum,
                                             checked = selectedAlbums.contains(associatedAlbum)
                                         ) {
-                                            if (selectedAlbums.contains(associatedAlbum)) {
+                                            if (selectedAlbums.contains(associatedAlbum) && selectedAlbums.size > 1) {
                                                 selectedAlbums.remove(associatedAlbum)
                                             } else {
                                                 selectedAlbums.add(associatedAlbum)

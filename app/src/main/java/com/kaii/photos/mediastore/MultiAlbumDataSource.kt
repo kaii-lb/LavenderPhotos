@@ -12,7 +12,7 @@ import com.kaii.photos.MainActivity
 import com.kaii.photos.database.entities.MediaEntity
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.getDateTakenForMedia
-import com.kaii.photos.models.gallery_model.groupPhotosBy
+import com.kaii.photos.models.multi_album.groupPhotosBy
 
 /** Loads metadata from the media store for images and videos. */
 class MultiAlbumDataSource(

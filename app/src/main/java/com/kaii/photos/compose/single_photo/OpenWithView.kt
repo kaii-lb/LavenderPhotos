@@ -76,7 +76,7 @@ import com.kaii.photos.compose.setBarVisibility
 import com.kaii.photos.compose.rememberDeviceOrientation
 import com.kaii.photos.datastore.Editing
 import com.kaii.photos.datastore.LookAndFeel
-import com.kaii.photos.helpers.EditingScreen
+import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.setTrashedOnPhotoList
@@ -197,7 +197,7 @@ class OpenWithView : ComponentActivity() {
 	                        )
 	                    }
 
-	                    composable<EditingScreen> {
+	                    composable<Screens.EditingScreen> {
 	                        enableEdgeToEdge(
 	                            navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
 	                            statusBarStyle = SystemBarStyle.auto(
@@ -206,7 +206,7 @@ class OpenWithView : ComponentActivity() {
 	                            )
 	                        )
 
-	                        val screen: EditingScreen = it.toRoute()
+	                        val screen: Screens.EditingScreen = it.toRoute()
 
 	                        EditingView(
 	                            absolutePath = screen.absolutePath,
@@ -428,7 +428,7 @@ private fun BottomBar(
 		                        }
 
 		                        navController.navigate(
-		                            EditingScreen(
+		                            Screens.EditingScreen(
 		                                absolutePath = mediaItem.absolutePath,
 		                                uri = mediaItem.uri.toString(),
 		                                dateTaken = mediaItem.dateTaken

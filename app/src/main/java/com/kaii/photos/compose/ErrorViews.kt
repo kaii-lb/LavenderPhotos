@@ -30,8 +30,7 @@ enum class ViewProperties(
     val emptyIconResId: Int,
     val prefix: String,
     val operation: ImageFunctions,
-    val sortMode: MediaItemSortMode,
-    var isListEmpty: Boolean = false
+    val sortMode: MediaItemSortMode
 ) {
     Trash(
         emptyText = "Trashed items show up here",

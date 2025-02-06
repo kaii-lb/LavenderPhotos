@@ -37,7 +37,6 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -68,7 +67,7 @@ import com.kaii.photos.compose.ConfirmationDialog
 import com.kaii.photos.compose.ExplanationDialog
 import com.kaii.photos.compose.SinglePhotoInfoDialog
 import com.kaii.photos.compose.setBarVisibility
-import com.kaii.photos.helpers.EditingScreen
+import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.MediaItemSortMode
@@ -83,8 +82,8 @@ import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.favourites_grid.FavouritesViewModel
 import com.kaii.photos.models.favourites_grid.FavouritesViewModelFactory
-import com.kaii.photos.models.gallery_model.GalleryViewModel
-import com.kaii.photos.models.gallery_model.GalleryViewModelFactory
+import com.kaii.photos.models.multi_album.MultiAlbumViewModel
+import com.kaii.photos.models.multi_album.MultiAlbumViewModelFactory
 import kotlinx.coroutines.Dispatchers
 
 // private const val TAG = "SINGLE_PHOTO_VIEW"
@@ -97,11 +96,10 @@ fun SinglePhotoView(
     scale: MutableState<Float>,
     rotation: MutableState<Float>,
     offset: MutableState<Offset>,
+    albums: List<String>,
+    mediaItemId: Long
 ) {
-    val mediaItem = mainViewModel.selectedMediaData.collectAsState(initial = null).value ?: return
-    val path = mainViewModel.singlePhotoPath.collectAsState(initial = null).value
-
-    val fastLoadedGroupedMedia = mainViewModel.groupedMedia.collectAsState(initial = null).value ?: return
+    val fastLoadedGroupedMedia = mainViewModel.groupedMedia.collectAsStateWithLifecycle(initialValue = null).value ?: return
 
     val groupedMedia = remember {
         mutableStateOf(
@@ -111,18 +109,18 @@ fun SinglePhotoView(
         )
     }
 
-    var galleryViewModel: GalleryViewModel? = null
+    var multiAlbumViewModel: MultiAlbumViewModel? = null
 
-    if (path != null) {
-        galleryViewModel = viewModel(
-            factory = GalleryViewModelFactory(
-                LocalContext.current,
-                path,
-                MediaItemSortMode.DateTaken
+    if (albums.isNotEmpty()) {
+        multiAlbumViewModel = viewModel(
+            factory = MultiAlbumViewModelFactory(
+                context = LocalContext.current,
+                albums = albums,
+                sortBy = MediaItemSortMode.DateTaken
             )
         )
 
-        val holderGroupedMedia by galleryViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+        val holderGroupedMedia by multiAlbumViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
         LaunchedEffect(holderGroupedMedia) {
             if (holderGroupedMedia.isNotEmpty()) {
@@ -137,7 +135,9 @@ fun SinglePhotoView(
     var currentMediaItemIndex by rememberSaveable {
         mutableIntStateOf(
             groupedMedia.value.indexOf(
-                mediaItem
+                groupedMedia.value.first {
+                	it.id == mediaItemId
+                }
             )
         )
     }
@@ -176,7 +176,7 @@ fun SinglePhotoView(
     BackHandler(
         enabled = !showInfoDialog.value
     ) {
-        galleryViewModel?.cancelMediaFlow()
+        multiAlbumViewModel?.cancelMediaFlow()
         navController.popBackStack()
     }
 
@@ -201,7 +201,7 @@ fun SinglePhotoView(
                     }
                 },
                 onBackClick = {
-                    galleryViewModel?.cancelMediaFlow()
+                    multiAlbumViewModel?.cancelMediaFlow()
                     navController.popBackStack()
                 }
             )
@@ -221,7 +221,7 @@ fun SinglePhotoView(
                     }
 
                     navController.navigate(
-                        EditingScreen(
+                        Screens.EditingScreen(
                             absolutePath = currentMediaItem.value.absolutePath,
                             uri = currentMediaItem.value.uri.toString(),
                             dateTaken = currentMediaItem.value.dateTaken
@@ -342,7 +342,7 @@ private fun TopBar(
                 )
             },
             actions = {
-                val isSelected by favouritesViewModel.isInFavourites(mediaItem.id).collectAsState()
+                val isSelected by favouritesViewModel.isInFavourites(mediaItem.id).collectAsStateWithLifecycle()
                 val context = LocalContext.current
 
                 IconButton(
