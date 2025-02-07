@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kaii.photos.LocalNavController
+import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.compose.SearchTextField
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.helpers.MainScreenViewType
@@ -68,12 +69,15 @@ fun SearchPage(
     val mediaStoreDataHolder =
         searchViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
-    val originalGroupedMedia = remember { mutableStateOf(mediaStoreDataHolder.value) }
+    val originalGroupedMedia = remember { derivedStateOf { mediaStoreDataHolder.value }}
 
     val groupedMedia = remember { mutableStateOf(originalGroupedMedia.value) }
 
-    val gridState = rememberLazyGridState()
+    LaunchedEffect(groupedMedia.value) {
+        mainViewModel.setGroupedMedia(groupedMedia.value)
+    }
 
+    val gridState = rememberLazyGridState()
     val navController = LocalNavController.current
 
     BackHandler(
@@ -158,15 +162,6 @@ fun SearchPage(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        LaunchedEffect(key1 = mediaStoreDataHolder.value) {
-            originalGroupedMedia.value = mediaStoreDataHolder.value
-
-            if (searchedForText.value == "") {
-                groupedMedia.value = originalGroupedMedia.value
-                hideLoadingSpinner = true
-            }
-        }
-
         LaunchedEffect(hideLoadingSpinner) {
             if (!hideLoadingSpinner) {
                 delay(10000)
@@ -174,9 +169,11 @@ fun SearchPage(
             }
         }
 
-        LaunchedEffect(key1 = searchedForText.value) {
+        LaunchedEffect(searchedForText.value, originalGroupedMedia.value) {
+        	println("ORIGINAL CHANGED REFRESHING")
             if (searchedForText.value == "") {
                 groupedMedia.value = originalGroupedMedia.value
+                hideLoadingSpinner = true
                 return@LaunchedEffect
             }
 

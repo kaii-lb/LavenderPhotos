@@ -91,7 +91,6 @@ import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
-import com.kaii.photos.MainActivity
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.compose.FolderIsEmpty
 import com.kaii.photos.compose.ShowSelectedState
@@ -100,10 +99,12 @@ import com.kaii.photos.datastore.Storage
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.ImageFunctions
 import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.appSecureVideoCacheDir
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.checkHasFiles
+import com.kaii.photos.helpers.getSecuredCacheImageForFile
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.selectAll
 import com.kaii.photos.helpers.selectItem
@@ -113,8 +114,6 @@ import com.kaii.photos.helpers.unselectItem
 import com.kaii.photos.helpers.unselectSection
 import com.kaii.photos.helpers.vibrateLong
 import com.kaii.photos.helpers.vibrateShort
-import com.kaii.photos.helpers.getSecuredCacheImageForFile
-import com.kaii.photos.helpers.Screens
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.signature
@@ -146,26 +145,30 @@ fun PhotoGrid(
     var hasFiles: Boolean? by remember { mutableStateOf(null) }
 
     LaunchedEffect(groupedMedia.value) {
-    	withContext(Dispatchers.IO) {
-	        hasFiles = run {
-	        	if (viewProperties == ViewProperties.SecureFolder) {
-	        		val basePath = context.appSecureFolderDir
+        withContext(Dispatchers.IO) {
+            hasFiles = when (viewProperties) {
+                ViewProperties.SecureFolder -> {
+                    val basePath = context.appSecureFolderDir
 
-		            File(basePath).listFiles()?.isNotEmpty() == true
-	        	} else if (viewProperties == ViewProperties.Album) {
-	        		var result: Boolean? = null
+                    File(basePath).listFiles()?.isNotEmpty() == true
+                }
 
-	        		albums.any { path ->
-						result = Path("$baseInternalStorageDirectory$path").checkHasFiles()
-						result == true
-	        		}
+                ViewProperties.Album -> {
+                    var result: Boolean? = null
 
-	        		result
-	        	} else {
-	        		groupedMedia.value.isNotEmpty()
-	        	}
-	        }
-    	}
+                    albums.any { path ->
+                        result = Path("$baseInternalStorageDirectory$path").checkHasFiles()
+                        result == true
+                    }
+
+                    result
+                }
+
+                else -> {
+                    groupedMedia.value.isNotEmpty()
+                }
+            }
+        }
     }
 
     when (hasFiles) {
@@ -225,7 +228,7 @@ fun DeviceMedia(
     }
 
     LaunchedEffect(groupedMedia.value) {
-        MainActivity.mainViewModel.setGroupedMedia(groupedMedia.value)
+        mainViewModel.setGroupedMedia(groupedMedia.value)
     }
 
     val spacerHeight by animateDpAsState(
@@ -347,20 +350,25 @@ fun DeviceMedia(
                                 ImageFunctions.LoadNormalImage -> {
                                     mainViewModel.setSinglePhotoPath(albums)
                                     mainViewModel.setSelectedMediaData(mediaStoreItem)
-                                    mainViewModel.setGroupedMedia(groupedMedia.value)
+                                    // mainViewModel.setGroupedMedia(groupedMedia.value)
 
                                     navController.navigate(
                                         Screens.SinglePhotoView(
                                             albums = albums,
-                                            mediaItemId = mediaStoreItem.id
+                                            mediaItemId = mediaStoreItem.id,
+                                            viewProperties = viewProperties
                                         )
                                     )
                                 }
 
                                 ImageFunctions.LoadTrashedImage -> {
                                     mainViewModel.setSelectedMediaData(mediaStoreItem)
-                                    mainViewModel.setGroupedMedia(groupedMedia.value)
-                                    navController.navigate(MultiScreenViewType.SingleTrashedPhotoView.name)
+                                    // mainViewModel.setGroupedMedia(groupedMedia.value)
+                                    navController.navigate(
+                                        Screens.SingleTrashedPhotoView(
+                                            mediaItemId = mediaStoreItem.id
+                                        )
+                                    )
                                 }
 
                                 ImageFunctions.LoadSecuredImage -> {
@@ -727,7 +735,7 @@ fun MediaStoreItem(
                     }
                 )
         ) {
-        	val context = LocalContext.current
+            val context = LocalContext.current
             val appSecureVideoCacheDir = context.appSecureVideoCacheDir
 
             var model by remember { mutableStateOf<Any?>(null) }

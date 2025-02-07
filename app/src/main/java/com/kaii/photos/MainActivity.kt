@@ -113,6 +113,8 @@ import com.kaii.photos.models.main_activity.MainViewModel
 import com.kaii.photos.models.main_activity.MainViewModelFactory
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModelFactory
+import com.kaii.photos.models.trash_bin.TrashViewModel
+import com.kaii.photos.models.trash_bin.TrashViewModelFactory
 import com.kaii.photos.ui.theme.PhotosTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
@@ -267,6 +269,27 @@ class MainActivity : ComponentActivity() {
             listOfDirs.add(0, cameraItem)
         }
 
+        val albumsList by mainViewModel.settings.MainPhotosList.getAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
+        val multiAlbumViewModel: MultiAlbumViewModel = viewModel(
+            factory = MultiAlbumViewModelFactory(
+                context = context,
+               	albums = albumsList,
+                sortBy = MediaItemSortMode.DateTaken
+            )
+        )
+
+        LaunchedEffect(albumsList) {
+        	if (navControllerLocal.currentBackStackEntry?.destination?.route != MultiScreenViewType.MainScreen.name) return@LaunchedEffect
+
+			Log.d(TAG, "Refreshing main photos view")
+			Log.d(TAG, "In view model: ${multiAlbumViewModel.albums} new: $albumsList")
+        	multiAlbumViewModel.reinitDataSource(
+        		context = context,
+        		albumsList = albumsList,
+        		sortBy = MediaItemSortMode.DateTaken
+        	)
+        }
+
         CompositionLocalProvider(LocalNavController provides navControllerLocal) {
             NavHost(
                 navController = navControllerLocal,
@@ -321,33 +344,18 @@ class MainActivity : ComponentActivity() {
                         window = window
                     )
 
-                    Content(currentView, showDialog, selectedItemsList, listOfDirs)
+					if (albumsList != multiAlbumViewModel.albums) {
+					    multiAlbumViewModel.reinitDataSource(
+					        context = context,
+					        albumsList = albumsList,
+					        sortBy = multiAlbumViewModel.sortBy
+					    )
+					}
+
+                    Content(currentView, showDialog, selectedItemsList, listOfDirs, multiAlbumViewModel)
                 }
 
-                composable<Screens.SinglePhotoView>(
-                    popEnterTransition = {
-                        slideInHorizontally(
-                            animationSpec = tween(
-                                durationMillis = 350
-                            )
-                        ) { height -> -height } + fadeIn(
-                            animationSpec = tween(
-                                durationMillis = 350
-                            )
-                        )
-                    },
-                    popExitTransition = {
-                        slideOutHorizontally(
-                            animationSpec = tween(
-                                durationMillis = 350
-                            )
-                        ) { height -> height } + fadeOut(
-                            animationSpec = tween(
-                                durationMillis = 350
-                            )
-                        )
-                    }
-                ) {
+                composable<Screens.SinglePhotoView> {
                     enableEdgeToEdge(
                         navigationBarStyle = SystemBarStyle.dark(
                             MaterialTheme.colorScheme.surfaceContainer.copy(
@@ -365,47 +373,79 @@ class MainActivity : ComponentActivity() {
                     )
 
                     val screen: Screens.SinglePhotoView = it.toRoute()
+
+                    if (screen.albums != multiAlbumViewModel.albums) {
+                        multiAlbumViewModel.reinitDataSource(
+                            context = context,
+                            albumsList = screen.albums,
+                            sortBy = multiAlbumViewModel.sortBy
+                        )
+                    }
+
                     SinglePhotoView(
                         navController = navControllerLocal,
                         window = window,
                         scale = scale,
                         rotation = rotation,
                         offset = offset,
-                        albums = screen.albums,
+                        viewModel = multiAlbumViewModel,
+                        mediaItemId = screen.mediaItemId,
+                        viewProperties = screen.viewProperties
+                    )
+                }
+
+                composable<Screens.SingleAlbumView> {
+                    enableEdgeToEdge(
+                        navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
+                        statusBarStyle = SystemBarStyle.auto(
+                            MaterialTheme.colorScheme.surface.toArgb(),
+                            MaterialTheme.colorScheme.surface.toArgb()
+                        )
+                    )
+                    setupNextScreen(
+                        selectedItemsList,
+                        window
+                    )
+
+                    val screen: Screens.SingleAlbumView = it.toRoute()
+
+                    if (screen.albums != multiAlbumViewModel.albums) {
+                        multiAlbumViewModel.reinitDataSource(
+                            context = context,
+                            albumsList = screen.albums,
+                            sortBy = multiAlbumViewModel.sortBy
+                        )
+                    }
+
+                    SingleAlbumView(
+                    	selectedItemsList = selectedItemsList,
+                    	currentView = currentView,
+                    	viewModel = multiAlbumViewModel
+                   	)
+                }
+
+                composable<Screens.SingleTrashedPhotoView> {
+                    enableEdgeToEdge(
+                        navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
+                        statusBarStyle = SystemBarStyle.auto(
+                            MaterialTheme.colorScheme.surface.toArgb(),
+                            MaterialTheme.colorScheme.surface.toArgb()
+                        )
+                    )
+                    setupNextScreen(
+                        selectedItemsList,
+                        window
+                    )
+
+                    val screen: Screens.SingleTrashedPhotoView = it.toRoute()
+
+                    SingleTrashedPhotoView(
+                    	window = window,
+                    	scale = scale,
+                    	rotation = rotation,
+                    	offset = offset,
                         mediaItemId = screen.mediaItemId
-                    )
-                }
-
-                composable(MultiScreenViewType.SingleAlbumView.name) {
-                    enableEdgeToEdge(
-                        navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
-                        statusBarStyle = SystemBarStyle.auto(
-                            MaterialTheme.colorScheme.surface.toArgb(),
-                            MaterialTheme.colorScheme.surface.toArgb()
-                        )
-                    )
-                    setupNextScreen(
-                        selectedItemsList,
-                        window
-                    )
-
-                    SingleAlbumView(selectedItemsList, currentView)
-                }
-
-                composable(MultiScreenViewType.SingleTrashedPhotoView.name) {
-                    enableEdgeToEdge(
-                        navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
-                        statusBarStyle = SystemBarStyle.auto(
-                            MaterialTheme.colorScheme.surface.toArgb(),
-                            MaterialTheme.colorScheme.surface.toArgb()
-                        )
-                    )
-                    setupNextScreen(
-                        selectedItemsList,
-                        window
-                    )
-
-                    SingleTrashedPhotoView(window, scale, rotation, offset)
+                   	)
                 }
 
                 composable(MultiScreenViewType.TrashedPhotoView.name) {
@@ -422,7 +462,10 @@ class MainActivity : ComponentActivity() {
                         window
                     )
 
-                    TrashedPhotoGridView(selectedItemsList = selectedItemsList, currentView = currentView)
+                    TrashedPhotoGridView(
+                        selectedItemsList = selectedItemsList,
+                        currentView = currentView
+                    )
                 }
 
                 composable(MultiScreenViewType.LockedFolderView.name) {
@@ -488,7 +531,10 @@ class MainActivity : ComponentActivity() {
                         window
                     )
 
-                    FavouritesGridView(selectedItemsList = selectedItemsList, currentView = currentView)
+                    FavouritesGridView(
+                        selectedItemsList = selectedItemsList,
+                        currentView = currentView
+                    )
                 }
 
                 composable<Screens.EditingScreen>(
@@ -665,32 +711,9 @@ class MainActivity : ComponentActivity() {
         currentView: MutableState<MainScreenViewType>,
         showDialog: MutableState<Boolean>,
         selectedItemsList: SnapshotStateList<MediaStoreData>,
-        listOfDirs: List<String>
+        listOfDirs: List<String>,
+        multiAlbumViewModel: MultiAlbumViewModel,
     ) {
-    	val albumsList = mainViewModel.settings.MainPhotosList.getAlbums().collectAsStateWithLifecycle(initialValue = null).value ?: return
-
-    	val context = LocalContext.current
-
-        val multiAlbumViewModel: MultiAlbumViewModel = viewModel(
-            factory = MultiAlbumViewModelFactory(
-                context = LocalContext.current,
-               	albums = albumsList,
-                sortBy = MediaItemSortMode.DateTaken
-            )
-        )
-
-        LaunchedEffect(albumsList) {
-        	if (multiAlbumViewModel.albums == albumsList || albumsList.isEmpty()) return@LaunchedEffect
-
-			Log.d(TAG, "Refreshing main photos view")
-			Log.d(TAG, "In view model: ${multiAlbumViewModel.albums} new: $albumsList")
-        	multiAlbumViewModel.reinitDataSource(
-        		context = context,
-        		albumsList = albumsList,
-        		sortBy = MediaItemSortMode.DateTaken
-        	)
-        }
-
         val mediaStoreData =
             multiAlbumViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
@@ -740,6 +763,7 @@ class MainActivity : ComponentActivity() {
             ) {
                 MainAppDialog(showDialog, currentView, selectedItemsList)
 
+				val context = LocalContext.current
                 AnimatedContent(
                     targetState = currentView.value,
                     transitionSpec = {
@@ -758,9 +782,10 @@ class MainActivity : ComponentActivity() {
                     when (stateValue) {
                         MainScreenViewType.PhotosGridView -> {
                             selectedItemsList.clear()
+
                             PhotoGrid(
                                 groupedMedia = groupedMedia,
-                                albums = albumsList,
+                                albums = multiAlbumViewModel.albums,
                                 viewProperties = ViewProperties.Album,
                                 selectedItemsList = selectedItemsList,
                             )
@@ -772,6 +797,8 @@ class MainActivity : ComponentActivity() {
                         }
 
                         MainScreenViewType.SearchPage -> {
+                        	selectedItemsList.clear()
+
                             SearchPage(selectedItemsList, currentView)
                         }
                     }

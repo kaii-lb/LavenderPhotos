@@ -230,6 +230,7 @@ fun moveImageOutOfLockedFolder(list: List<MediaStoreData>, context: Context) {
                     fileToBeRestored.delete()
                     tempFile.delete()
                     thumbnailFile.delete()
+                    getSecuredCacheImageForFile(file = fileToBeRestored, context = context).delete()
                     applicationDatabase.securedItemEntityDao().deleteEntityBySecuredPath(media.absolutePath)
                     applicationDatabase.securedItemEntityDao().deleteEntityBySecuredPath(thumbnailFile.absolutePath)
                 }

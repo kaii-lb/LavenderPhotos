@@ -22,7 +22,7 @@ data class MediaStoreData(
     val dateTaken: Long = 0L,
     val displayName: String? = "",
     val absolutePath: String = "",
-    val section: SectionItem = SectionItem(0L, 0),
+    var section: SectionItem = SectionItem(0L, 0),
     val bytes: ByteArray? = null
 ) : Parcelable {
     companion object {

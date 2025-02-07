@@ -41,6 +41,7 @@ import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import com.kaii.photos.models.trash_bin.TrashViewModel
 import com.kaii.photos.models.trash_bin.TrashViewModelFactory
 import kotlinx.coroutines.Dispatchers
@@ -54,9 +55,7 @@ fun TrashedPhotoGridView(
 ) {
     val context = LocalContext.current
     val trashViewModel: TrashViewModel = viewModel(
-        factory = TrashViewModelFactory(
-            context
-        )
+    	factory = TrashViewModelFactory(context = context)
     )
 
     val mediaStoreData = trashViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
@@ -65,7 +64,6 @@ fun TrashedPhotoGridView(
 
     LaunchedEffect(mediaStoreData.value) {
         groupedMedia.value = mediaStoreData.value
-        mainViewModel.setGroupedMedia(mediaStoreData.value)
     }
 
     var triedDeletingAlready by rememberSaveable { mutableStateOf(false) }
@@ -111,7 +109,6 @@ fun TrashedPhotoGridView(
     BackHandler(
         enabled = selectedItemsList.size == 0
     ) {
-        trashViewModel.cancelMediaSource()
         navController.popBackStack()
     }
 
@@ -148,7 +145,6 @@ fun TrashedPhotoGridView(
                 groupedMedia = groupedMedia.value,
                 currentView = currentView
             ) {
-                trashViewModel.cancelMediaSource()
                 navController.popBackStack()
             }
         },

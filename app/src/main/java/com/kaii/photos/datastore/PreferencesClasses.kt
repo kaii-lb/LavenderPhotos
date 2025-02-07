@@ -3,6 +3,7 @@ package com.kaii.photos.datastore
 import android.content.Context
 import android.provider.MediaStore
 import android.provider.MediaStore.Files.FileColumns
+import android.provider.MediaStore.MediaColumns
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -346,8 +347,10 @@ class SettingsMainPhotosListImpl(private val context: Context, private val viewM
 	/** first item is the match paths
 	    second item is the non match paths
 	    non match means subAlbums */
-	fun getSQLiteQuery(albums: List<String>) : Pair<String, List<String>> {
-		if (albums.isEmpty()) return Pair("", emptyList())
+	fun getSQLiteQuery(albums: List<String>) : Pair<String, List<String>?> {
+		if (albums.isEmpty()) {
+            return Pair("AND false", null)
+        }
 
 		albums.forEach {
 			println("ALBUM SI $it")
@@ -374,7 +377,8 @@ class SettingsMainPhotosListImpl(private val context: Context, private val viewM
 			list.add("$album/%/%")
 		}
 
-		return Pair(string, list)
+		val query = "AND ($string)"
+		return Pair(query, list)
 	}
 
 	private val defaultAlbumsList =

@@ -8,7 +8,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.MutableState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.MainActivity.Companion.mainViewModel
@@ -33,8 +32,8 @@ private const val TAG = "MULTI_ALBUM_VIEW_MODEL"
 
 class MultiAlbumViewModel(
 	context: Context,
-	val albums: List<String>,
-	val sortBy: MediaItemSortMode
+	var albums: List<String>,
+	var sortBy: MediaItemSortMode
 ) : ViewModel() {
 	private var cancellationSignal = CancellationSignal()
     private val mediaStoreDataSource = mutableStateOf(initDataSource(context, albums, sortBy))
@@ -69,6 +68,8 @@ class MultiAlbumViewModel(
     	val query = mainViewModel.settings.MainPhotosList.getSQLiteQuery(albumsList)
     	Log.d(TAG, "query is $query")
 
+		albums = albumsList
+
 		MultiAlbumDataSource(
 			context = context,
 			queryString = query,
@@ -82,38 +83,28 @@ class MultiAlbumViewModel(
 fun groupPhotosBy(media: List<MediaStoreData>, sortBy: MediaItemSortMode = MediaItemSortMode.DateTaken, sortDescending: Boolean = true): List<MediaStoreData> {
 	if (media.isEmpty()) return emptyList()
 
-	val mediaItems = emptyList<MediaStoreData>().toMutableList()
-
-	val mediaDataGroups = LinkedHashMap<Long, MutableList<MediaStoreData>>()
-	media.forEach { data ->
-		val key = when (sortBy) {
-			MediaItemSortMode.DateTaken -> {
-				data.getDateTakenDay()
+	val sortedList =
+		if (sortDescending) {
+			media.sortedByDescending { item ->
+				if (sortBy == MediaItemSortMode.DateTaken) item.dateTaken else item.dateModified
 			}
-
-			MediaItemSortMode.LastModified -> {
-				data.getLastModifiedDay()
+		} else {
+			media.sortedBy { item ->
+				if (sortBy == MediaItemSortMode.DateTaken) item.dateTaken else item.dateModified
 			}
 		}
 
-		if (!mediaDataGroups.containsKey(key)) {
-			mediaDataGroups[key] = emptyList<MediaStoreData>().toMutableList()
-		}
-		mediaDataGroups[key]?.add(data)
+	val grouped = sortedList.groupBy { item ->
+		if (sortBy == MediaItemSortMode.DateTaken) item.getDateTakenDay() else item.getLastModifiedDay()
 	}
 
-	val sorted = mediaDataGroups.toSortedMap(
+	val sortedMap = grouped.toSortedMap (
 		if (sortDescending) compareByDescending { time ->
 			time
 		} else compareBy { time ->
 			time
 		}
 	)
-
-	mediaDataGroups.clear()
-	for ((key, value) in sorted) {
-		mediaDataGroups[key] = value
-	}
 
 	val calendar = Calendar.getInstance(Locale.ENGLISH).apply {
 		timeInMillis = System.currentTimeMillis()
@@ -124,10 +115,12 @@ fun groupPhotosBy(media: List<MediaStoreData>, sortBy: MediaItemSortMode = Media
 	}
 
 	val today = calendar.timeInMillis / 1000
-	val daySeconds = 86400
+	val daySeconds = 60 * 60 * 24
 	val yesterday = today - daySeconds
-	for ((key, value) in mediaDataGroups) {
-		val sectionKey = when (key) {
+
+	val mediaItems = mutableListOf<MediaStoreData>()
+	sortedMap.forEach { (sectionTime, children) ->
+		val sectionKey = when (sectionTime) {
 			today -> {
 				"Today"
 			}
@@ -137,37 +130,21 @@ fun groupPhotosBy(media: List<MediaStoreData>, sortBy: MediaItemSortMode = Media
 			}
 
 			else -> {
-				formatDate(key)
+				formatDate(sectionTime)
 			}
 		}
 
-		val section = SectionItem(date = key, childCount = value.size)
-		mediaItems.add(listSection(sectionKey, key, value.size))
-
-		if (sortDescending) {
-			if (sortBy == MediaItemSortMode.DateTaken) {
-				value.sortByDescending { it.dateTaken }
-			} else {
-				value.sortByDescending { it.dateModified }
-			}
-		} else {
-			if (sortBy == MediaItemSortMode.DateTaken) {
-				value.sortBy { it.dateTaken }
-			} else {
-				value.sortBy { it.dateModified }
-			}
-		}
+		val section = SectionItem(date = sectionTime, childCount = children.size)
+		mediaItems.add(listSection(sectionKey, sectionTime, children.size))
 
 		mediaItems.addAll(
-			value.map {
-				it.copy(
-					section = section
-				)
+			children.onEach {
+				it.section = section
 			}
 		)
 	}
 
-	return mediaItems.distinct()
+	return mediaItems
 }
 
 private fun formatDate(timestamp: Long): String {

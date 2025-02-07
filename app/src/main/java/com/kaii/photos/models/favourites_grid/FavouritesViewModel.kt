@@ -21,7 +21,7 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.nio.file.Files
 
-class FavouritesViewModel : ViewModel() {
+class FavouritesViewModel() : ViewModel() {
     private val dao = MainActivity.applicationDatabase.favouritedItemEntityDao()
 
     val mediaFlow by lazy {

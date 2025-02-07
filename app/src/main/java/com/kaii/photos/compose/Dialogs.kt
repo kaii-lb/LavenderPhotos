@@ -98,6 +98,7 @@ import com.kaii.photos.MainActivity
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
+import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.User
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
@@ -105,6 +106,7 @@ import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MediaData
 import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.brightenColor
@@ -649,6 +651,7 @@ fun SinglePhotoInfoDialog(
     showDialog: MutableState<Boolean>,
     currentMediaItem: MediaStoreData,
     groupedMedia: MutableState<List<MediaStoreData>>,
+    viewProperties: ViewProperties,
     showMoveCopyOptions: Boolean = true,
     moveCopyInsetsPadding: WindowInsets? = WindowInsets.statusBars
 ) {
@@ -729,22 +732,29 @@ fun SinglePhotoInfoDialog(
                         uris = listOf(currentMediaItem.uri),
                         shouldRun = saveFileName,
                         onGranted = {
-                            val oldName = currentMediaItem.displayName ?: "Broken File"
-                            val path = currentMediaItem.absolutePath
+							renameImage(context, currentMediaItem.uri, fileName.value)
 
-                            renameImage(context, currentMediaItem.uri, fileName.value)
+							originalFileName = fileName.value
 
-                            originalFileName = fileName.value
-                            val newGroupedMedia = groupedMedia.value.toMutableList()
-                            // set currentMediaItem to new one with new name
-                            val newMedia = currentMediaItem.copy(
-                                displayName = fileName.value,
-                                absolutePath = path.replace(oldName, fileName.value)
-                            )
+							if (viewProperties == ViewProperties.SearchLoading
+								|| viewProperties == ViewProperties.SearchNotFound
+								|| viewProperties == ViewProperties.Favourites
+							) {
+								val oldName = currentMediaItem.displayName ?: "Broken File"
+								val path = currentMediaItem.absolutePath
 
-                            val index = groupedMedia.value.indexOf(currentMediaItem)
-                            newGroupedMedia[index] = newMedia
-                            groupedMedia.value = newGroupedMedia
+								val newGroupedMedia = groupedMedia.value.toMutableList()
+
+								// set currentMediaItem to new one with new name
+								val newMedia = currentMediaItem.copy(
+									displayName = fileName.value,
+									absolutePath = path.replace(oldName, fileName.value)
+								)
+
+								val index = groupedMedia.value.indexOf(currentMediaItem)
+								newGroupedMedia[index] = newMedia
+								groupedMedia.value = newGroupedMedia
+							}
                         }
                     )
 
@@ -1134,7 +1144,11 @@ fun SingleAlbumDialog(
                         }
 
                         navController.popBackStack()
-                        navController.navigate(MultiScreenViewType.SingleAlbumView.name)
+                        navController.navigate(
+	                        Screens.SingleAlbumView(
+	                        	albums = listOf(newDir)
+	                        )
+                        )
 
                         saveFileName.value = false
                     }

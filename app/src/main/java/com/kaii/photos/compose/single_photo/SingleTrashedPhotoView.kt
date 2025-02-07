@@ -65,11 +65,13 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.SinglePhotoInfoDialog
+import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import com.kaii.photos.models.trash_bin.TrashViewModel
 import com.kaii.photos.models.trash_bin.TrashViewModelFactory
 import kotlinx.coroutines.Dispatchers
@@ -83,15 +85,12 @@ fun SingleTrashedPhotoView(
     scale: MutableState<Float>,
     rotation: MutableState<Float>,
     offset: MutableState<Offset>,
+    mediaItemId: Long,
 ) {
-    val mediaItem = mainViewModel.selectedMediaData.collectAsState(initial = null).value ?: return
-
-    val trashViewModel: TrashViewModel = viewModel(
-        factory = TrashViewModelFactory(
-            LocalContext.current
-        )
-    )
-
+	val context = LocalContext.current
+	val trashViewModel: TrashViewModel = viewModel(
+		factory = TrashViewModelFactory(context = context)
+	)
     val holderGroupedMedia by trashViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
     if (holderGroupedMedia.isEmpty()) return
@@ -115,7 +114,9 @@ fun SingleTrashedPhotoView(
     var currentMediaItemIndex by rememberSaveable {
         mutableIntStateOf(
             groupedMedia.value.indexOf(
-                mediaItem
+                groupedMedia.value.first {
+                    it.id == mediaItemId
+                }
             )
         )
     }
@@ -146,7 +147,6 @@ fun SingleTrashedPhotoView(
     val showDialog = remember { mutableStateOf(false) }
     val showInfoDialog = remember { mutableStateOf(false) }
 
-    val context = LocalContext.current
     val runPermaDeleteAction = remember { mutableStateOf(false) }
 
     LaunchedEffect(runPermaDeleteAction.value) {
@@ -244,6 +244,7 @@ fun SingleTrashedPhotoView(
             showDialog = showInfoDialog,
             currentMediaItem = currentMediaItem,
             groupedMedia = groupedMedia,
+            viewProperties = ViewProperties.Trash,
             showMoveCopyOptions = false,
             moveCopyInsetsPadding = null
         )

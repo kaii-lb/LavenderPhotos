@@ -1,13 +1,10 @@
 package com.kaii.photos.helpers
 
-import android.net.Uri
+import com.kaii.photos.compose.ViewProperties
 import kotlinx.serialization.Serializable
 
 enum class MultiScreenViewType {
     MainScreen,
-    SinglePhotoView,
-    SingleAlbumView,
-    SingleTrashedPhotoView,
     TrashedPhotoView,
     LockedFolderView,
     SingleHiddenPhotoVew,
@@ -27,7 +24,18 @@ object Screens {
 	@Serializable
 	data class SinglePhotoView(
 	    val albums: List<String>,
-	    val mediaItemId: Long
+	    val mediaItemId: Long,
+		val viewProperties: ViewProperties
+	)
+
+	@Serializable
+	data class SingleAlbumView(
+		val albums: List<String>
+	)
+
+	@Serializable
+	data class SingleTrashedPhotoView(
+		val mediaItemId: Long
 	)
 
 	@Serializable

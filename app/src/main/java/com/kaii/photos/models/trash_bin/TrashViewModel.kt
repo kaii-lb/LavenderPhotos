@@ -2,6 +2,7 @@ package com.kaii.photos.models.trash_bin
 
 import android.content.Context
 import android.os.CancellationSignal
+import android.provider.MediaStore.MediaColumns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.helpers.MediaItemSortMode
@@ -15,7 +16,12 @@ import kotlinx.coroutines.flow.stateIn
 
 class TrashViewModel(context: Context) : ViewModel() {
     private val cancellationSignal = CancellationSignal()
-    private val mediaStoreDataSource = TrashStoreDataSource(context, MediaItemSortMode.LastModified, cancellationSignal)
+    private val mediaStoreDataSource =
+        TrashStoreDataSource(
+            context = context,
+            sortBy = MediaItemSortMode.LastModified,
+            cancellationSignal = cancellationSignal
+        )
 
     val mediaFlow by lazy {
         getMediaDataFlow().stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())

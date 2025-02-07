@@ -17,7 +17,7 @@ import com.kaii.photos.models.multi_album.groupPhotosBy
 /** Loads metadata from the media store for images and videos. */
 class MultiAlbumDataSource(
     context: Context,
-    private val queryString: Pair<String, List<String>>,
+    private val queryString: Pair<String, List<String>?>,
     sortBy: MediaItemSortMode,
     cancellationSignal: CancellationSignal
 ) : MediaStoreDataSource(
@@ -32,7 +32,8 @@ class MultiAlbumDataSource(
                 MediaColumns.DATE_MODIFIED,
                 MediaColumns.MIME_TYPE,
                 MediaColumns.DISPLAY_NAME,
-                FileColumns.MEDIA_TYPE
+                FileColumns.MEDIA_TYPE,
+                MediaColumns.IS_FAVORITE
             )
     }
 
@@ -49,8 +50,8 @@ class MultiAlbumDataSource(
             context.contentResolver.query(
                 MEDIA_STORE_FILE_URI,
                 PROJECTION,
-                "((${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_IMAGE}) OR (${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_VIDEO})) AND (${queryString.first})",
-                queryString.second.toTypedArray(),
+                "((${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_IMAGE}) OR (${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_VIDEO})) ${queryString.first}",
+                queryString.second?.toTypedArray(),
                 null
             ) ?: return data
 

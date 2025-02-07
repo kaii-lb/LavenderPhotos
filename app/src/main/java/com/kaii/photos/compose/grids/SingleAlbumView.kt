@@ -30,7 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kaii.photos.LocalNavController
-import com.kaii.photos.MainActivity
+import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.compose.SingleAlbumDialog
 import com.kaii.photos.compose.SingleAlbumViewBottomBar
 import com.kaii.photos.compose.SingleAlbumViewTopBar
@@ -47,35 +47,23 @@ import kotlinx.coroutines.delay
 @Composable
 fun SingleAlbumView(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
-    currentView: MutableState<MainScreenViewType>
+    currentView: MutableState<MainScreenViewType>,
+    viewModel: MultiAlbumViewModel
 ) {
-    val mainViewModel = MainActivity.mainViewModel
-
-    // TODO: move to data class nav thingy
-    val albumDir = mainViewModel.selectedAlbumDir.collectAsStateWithLifecycle(initialValue = null).value ?: return
-
-    val multiAlbumViewModel: MultiAlbumViewModel = viewModel(
-        factory = MultiAlbumViewModelFactory(
-            LocalContext.current,
-            listOf(albumDir),
-            MediaItemSortMode.DateTaken
-        )
-    )
-
     val navController = LocalNavController.current
     BackHandler (
         enabled = selectedItemsList.size == 0
     ) {
-        multiAlbumViewModel.cancelMediaFlow()
+        viewModel.cancelMediaFlow()
         navController.popBackStack()
     }
 
-    val mediaStoreData = multiAlbumViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+    val mediaStoreData by viewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
-    val groupedMedia = remember { mutableStateOf(mediaStoreData.value) }
+    val groupedMedia = remember { mutableStateOf(mediaStoreData) }
 
-    LaunchedEffect(mediaStoreData.value) {
-   		groupedMedia.value = mediaStoreData.value
+    LaunchedEffect(mediaStoreData) {
+   		groupedMedia.value = mediaStoreData
     }
 
     val showDialog = remember { mutableStateOf(false) }
@@ -110,7 +98,7 @@ fun SingleAlbumView(
             .fillMaxSize(1f),
         topBar = {
             SingleAlbumViewTopBar(
-                dir = albumDir,
+                dir = viewModel.albums.first(), // TODO: make it handle multiple dirs
                 selectedItemsList = selectedItemsList,
                 showDialog = showDialog,
                 currentView = currentView
@@ -138,13 +126,13 @@ fun SingleAlbumView(
         ) {
             PhotoGrid(
                 groupedMedia = groupedMedia,
-                albums = listOf(albumDir),
+                albums = viewModel.albums,
                 selectedItemsList = selectedItemsList,
                 viewProperties = ViewProperties.Album,
                 shouldPadUp = true
             )
 
-            SingleAlbumDialog(showDialog, albumDir, navController, selectedItemsList)
+            SingleAlbumDialog(showDialog, viewModel.albums.first(), navController, selectedItemsList) // TODO: make it handle multiple albums
         }
     }
 }

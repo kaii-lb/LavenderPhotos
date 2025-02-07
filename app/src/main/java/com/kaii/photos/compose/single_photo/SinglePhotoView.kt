@@ -56,6 +56,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -66,14 +67,14 @@ import com.kaii.photos.compose.BottomAppBarItem
 import com.kaii.photos.compose.ConfirmationDialog
 import com.kaii.photos.compose.ExplanationDialog
 import com.kaii.photos.compose.SinglePhotoInfoDialog
+import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.setBarVisibility
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.GetPermissionAndRun
-import com.kaii.photos.helpers.MediaItemSortMode
-import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.moveImageToLockedFolder
+import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareImage
@@ -83,7 +84,7 @@ import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.favourites_grid.FavouritesViewModel
 import com.kaii.photos.models.favourites_grid.FavouritesViewModelFactory
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
-import com.kaii.photos.models.multi_album.MultiAlbumViewModelFactory
+import com.kaii.photos.models.trash_bin.TrashViewModel
 import kotlinx.coroutines.Dispatchers
 
 // private const val TAG = "SINGLE_PHOTO_VIEW"
@@ -96,40 +97,32 @@ fun SinglePhotoView(
     scale: MutableState<Float>,
     rotation: MutableState<Float>,
     offset: MutableState<Offset>,
-    albums: List<String>,
-    mediaItemId: Long
+    viewModel: MultiAlbumViewModel,
+    mediaItemId: Long,
+    viewProperties: ViewProperties
 ) {
-    val fastLoadedGroupedMedia = mainViewModel.groupedMedia.collectAsStateWithLifecycle(initialValue = null).value ?: return
+    val holderGroupedMedia =
+	    if (viewProperties != ViewProperties.SearchLoading && viewProperties != ViewProperties.SearchNotFound && viewProperties != ViewProperties.Favourites) {
+            viewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+	    } else {
+	        mainViewModel.groupedMedia.collectAsStateWithLifecycle(initialValue = null)
+	    }
+
+	if (holderGroupedMedia.value == null) return
 
     val groupedMedia = remember {
         mutableStateOf(
-            fastLoadedGroupedMedia.filter { item ->
+            holderGroupedMedia.value!!.filter { item ->
                 item.type != MediaType.Section
             }
         )
     }
 
-    var multiAlbumViewModel: MultiAlbumViewModel? = null
-
-    if (albums.isNotEmpty()) {
-        multiAlbumViewModel = viewModel(
-            factory = MultiAlbumViewModelFactory(
-                context = LocalContext.current,
-                albums = albums,
-                sortBy = MediaItemSortMode.DateTaken
-            )
-        )
-
-        val holderGroupedMedia by multiAlbumViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
-
-        LaunchedEffect(holderGroupedMedia) {
-            if (holderGroupedMedia.isNotEmpty()) {
-                groupedMedia.value =
-                    holderGroupedMedia.filter { item ->
-                        item.type != MediaType.Section
-                    }
-            }
-        }
+    LaunchedEffect(holderGroupedMedia.value) {
+    	groupedMedia.value =
+	    	holderGroupedMedia.value!!.filter { item ->
+	    	    item.type != MediaType.Section
+	    	}
     }
 
     var currentMediaItemIndex by rememberSaveable {
@@ -176,14 +169,13 @@ fun SinglePhotoView(
     BackHandler(
         enabled = !showInfoDialog.value
     ) {
-        multiAlbumViewModel?.cancelMediaFlow()
         navController.popBackStack()
     }
 
-    val coroutineScope = rememberCoroutineScope()
-
     Scaffold(
         topBar = {
+        	val coroutineScope = rememberCoroutineScope()
+
             TopBar(
                 mediaItem = currentMediaItem.value,
                 visible = appBarsVisible.value,
@@ -201,17 +193,17 @@ fun SinglePhotoView(
                     }
                 },
                 onBackClick = {
-                    multiAlbumViewModel?.cancelMediaFlow()
                     navController.popBackStack()
                 }
             )
         },
         bottomBar = {
             BottomBar(
-                appBarsVisible.value,
-                currentMediaItem.value,
-                state = state,
+                visible = appBarsVisible.value,
+                currentItem = currentMediaItem.value,
                 groupedMedia = groupedMedia,
+                viewProperties = viewProperties,
+                state = state,
                 showEditingView = {
                     setBarVisibility(
                         visible = true,
@@ -240,6 +232,7 @@ fun SinglePhotoView(
             showDialog = showInfoDialog,
             currentMediaItem = currentMediaItem.value,
             groupedMedia = groupedMedia,
+            viewProperties = viewProperties,
             showMoveCopyOptions = true,
             moveCopyInsetsPadding = WindowInsets.statusBars
         )
@@ -276,6 +269,7 @@ private fun TopBar(
     removeIfInFavGrid: () -> Unit,
     onBackClick: () -> Unit
 ) {
+	val context = LocalContext.current
     val localConfig = LocalConfiguration.current
     var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
 
@@ -343,18 +337,17 @@ private fun TopBar(
             },
             actions = {
                 val isSelected by favouritesViewModel.isInFavourites(mediaItem.id).collectAsStateWithLifecycle()
-                val context = LocalContext.current
 
                 IconButton(
                     onClick = {
                         vibratorManager.vibrateShort()
 
-                        if (!isSelected) {
-                            favouritesViewModel.addToFavourites(mediaItem, context)
-                        } else {
-                            favouritesViewModel.removeFromFavourites(mediaItem.id)
-                            removeIfInFavGrid()
-                        }
+						if (!isSelected) {
+						    favouritesViewModel.addToFavourites(mediaItem, context)
+						} else {
+						    favouritesViewModel.removeFromFavourites(mediaItem.id)
+						    removeIfInFavGrid()
+						}
                     },
                 ) {
                     Icon(
@@ -389,8 +382,9 @@ private fun TopBar(
 private fun BottomBar(
     visible: Boolean,
     currentItem: MediaStoreData,
-    state: PagerState,
     groupedMedia: MutableState<List<MediaStoreData>>,
+    viewProperties: ViewProperties,
+    state: PagerState,
     showEditingView: () -> Unit,
     onZeroItemsLeft: () -> Unit
 ) {
@@ -405,8 +399,6 @@ private fun BottomBar(
         MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.4f)
     else
         MaterialTheme.colorScheme.surfaceContainer
-
-    val coroutineScope = rememberCoroutineScope()
 
     AnimatedVisibility(
         visible = visible,
@@ -476,6 +468,8 @@ private fun BottomBar(
                     val runTrashAction = remember { mutableStateOf(false) }
 
                     println("CURRENT ITEM URI ${currentItem.uri}")
+
+                    val coroutineScope = rememberCoroutineScope()
                     GetPermissionAndRun(
                         uris = listOf(currentItem.uri),
                         shouldRun = runTrashAction,
@@ -486,14 +480,21 @@ private fun BottomBar(
                                 true
                             )
 
-                            sortOutMediaMods(
-                                currentItem,
-                                groupedMedia,
-                                coroutineScope,
-                                state
-                            ) {
-                                onZeroItemsLeft()
-                            }
+                            if (groupedMedia.value.isEmpty()) onZeroItemsLeft()
+
+							if (viewProperties == ViewProperties.SearchLoading
+								|| viewProperties == ViewProperties.SearchNotFound
+								|| viewProperties == ViewProperties.Favourites
+							) {
+	                            sortOutMediaMods(
+	                                currentItem,
+	                                groupedMedia,
+	                                coroutineScope,
+	                                state
+	                            ) {
+	                                onZeroItemsLeft()
+	                            }
+							}
                         }
                     )
 
@@ -539,14 +540,21 @@ private fun BottomBar(
                                 context
                             )
 
-                            sortOutMediaMods(
-                                currentItem,
-                                groupedMedia,
-                                coroutineScope,
-                                state
-                            ) {
-                                onZeroItemsLeft()
-                            }
+                            if (groupedMedia.value.isEmpty()) onZeroItemsLeft()
+
+							if (viewProperties == ViewProperties.SearchLoading
+								|| viewProperties == ViewProperties.SearchNotFound
+								|| viewProperties == ViewProperties.Favourites
+							) {
+	                            sortOutMediaMods(
+	                                currentItem,
+	                                groupedMedia,
+	                                coroutineScope,
+	                                state
+	                            ) {
+	                                onZeroItemsLeft()
+	                            }
+							}
                         }
                     )
 
@@ -561,6 +569,8 @@ private fun BottomBar(
                                 confirmButtonLabel = "Secure"
                             ) {
                                 tryGetDirPermission.value = true
+
+                                if (groupedMedia.value.isEmpty()) onZeroItemsLeft()
                             }
                         },
                         action = {

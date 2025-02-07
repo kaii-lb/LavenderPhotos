@@ -55,6 +55,7 @@ import com.kaii.photos.MainActivity
 import com.kaii.photos.R
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.brightenColor
 import com.kaii.photos.mediastore.MediaStoreData
@@ -151,7 +152,11 @@ fun AlbumsGridView(listOfDirs: List<String>, currentView: MutableState<MainScree
 							item = mediaItem
 						) {
 							MainActivity.mainViewModel.setSelectedAlbumDir(neededDir)
-							navController.navigate(MultiScreenViewType.SingleAlbumView.name)
+							navController.navigate(
+								Screens.SingleAlbumView(
+									albums = listOf(neededDir)
+								)
+							)
 						}
 					}
 				}
