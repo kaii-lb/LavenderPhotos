@@ -179,7 +179,7 @@ fun moveImageToLockedFolder(
 	                )
 				}
 
-                addSecuredCachedMedia(
+                addSecuredCachedMediaThumbnail(
                     context = context,
                     mediaItem = mediaItem,
                     file = fileToBeHidden,

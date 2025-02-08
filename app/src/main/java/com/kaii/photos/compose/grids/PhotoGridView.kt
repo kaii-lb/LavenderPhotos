@@ -101,7 +101,6 @@ import com.kaii.photos.helpers.ImageFunctions
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.appSecureFolderDir
-import com.kaii.photos.helpers.appSecureVideoCacheDir
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.checkHasFiles
 import com.kaii.photos.helpers.getSecuredCacheImageForFile
@@ -736,7 +735,6 @@ fun MediaStoreItem(
                 )
         ) {
             val context = LocalContext.current
-            val appSecureVideoCacheDir = context.appSecureVideoCacheDir
 
             var model by remember { mutableStateOf<Any?>(null) }
             val isSecureMedia = viewProperties == ViewProperties.SecureFolder
@@ -747,21 +745,12 @@ fun MediaStoreItem(
                 model =
                     withContext(Dispatchers.IO) {
                         try {
-                            if (item.type == MediaType.Image) {
-                                val iv = item.bytes!!.copyOfRange(16, 32)
+							val thumbnailIv = item.bytes!!.copyOfRange(16, 32) // get thumbnail iv from video
 
-                                encryptionManager.decryptBytes(
-                                    bytes = getSecuredCacheImageForFile(fileName = item.displayName!!, context = context).readBytes(),
-                                    iv = iv
-                                )
-                            } else {
-                                val thumbnailIv = item.bytes!!.copyOfRange(16, 32) // get thumbnail iv from video
-
-                                encryptionManager.decryptBytes(
-                                    bytes = File(appSecureVideoCacheDir + "/" + item.displayName + ".png").readBytes(),
-                                    iv = thumbnailIv
-                                )
-                            }
+                            encryptionManager.decryptBytes(
+                                bytes = getSecuredCacheImageForFile(fileName = item.displayName!!, context = context).readBytes(),
+                                iv = thumbnailIv
+                            )
                         } catch (e: Throwable) {
                             Log.d(TAG, e.toString())
                             e.printStackTrace()
@@ -782,7 +771,11 @@ fun MediaStoreItem(
                     .scale(animatedItemScale)
                     .clip(RoundedCornerShape(animatedItemCornerRadius))
             ) {
-                if (thumbnailSettings.second == 0) {
+				if (isSecureMedia) {
+					it.signature(item.signature())
+                        .diskCacheStrategy(DiskCacheStrategy.NONE)
+				}
+                else if (thumbnailSettings.second == 0) {
                     it.signature(item.signature())
                         .diskCacheStrategy(
                             if (thumbnailSettings.first) DiskCacheStrategy.ALL
