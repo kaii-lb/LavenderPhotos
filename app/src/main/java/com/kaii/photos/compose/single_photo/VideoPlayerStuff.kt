@@ -677,7 +677,7 @@ fun VideoPlayer(
 @Composable
 fun rememberExoPlayerWithLifeCycle(
     videoSource: Uri,
-    absolutePath: String,
+    absolutePath: String?,
     isPlaying: MutableState<Boolean>,
     duration: MutableFloatState,
     currentVideoPosition: MutableFloatState
@@ -801,7 +801,7 @@ fun getExoPlayerLifecycleObserver(
     exoPlayer: ExoPlayer,
     isPlaying: MutableState<Boolean>,
     activity: Activity,
-    absolutePath: String
+    absolutePath: String?
 ): LifecycleEventObserver =
     LifecycleEventObserver { _, event ->
         when (event) {
@@ -817,10 +817,12 @@ fun getExoPlayerLifecycleObserver(
                     exoPlayer.stop()
                     exoPlayer.release()
 
-					// delete decrypted video if exists
-			        File(activity.applicationContext.appSecureVideoCacheDir, File(absolutePath).name).apply {
-			        	if (exists()) delete()
-			        }
+                    if (absolutePath != null) {
+                        // delete decrypted video if exists
+                        File(activity.applicationContext.appSecureVideoCacheDir, File(absolutePath).name).apply {
+                            if (exists()) delete()
+                        }
+                    }
                 }
             }
 
@@ -829,12 +831,12 @@ fun getExoPlayerLifecycleObserver(
     }
 
 
-@UnstableApi
+@androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun rememberPlayerView(
 	exoPlayer: ExoPlayer,
 	activity: Activity,
-	absolutePath: String
+	absolutePath: String?
 ): PlayerView {
     val context = LocalContext.current
 
@@ -858,10 +860,12 @@ fun rememberPlayerView(
 	            playerView.player = null
 	            exoPlayer.release()
 
-				// delete decrypted video if exists
-		        File(context.appSecureVideoCacheDir, File(absolutePath).name).apply {
-		        	if (exists()) delete()
-		        }
+                if (absolutePath != null) {
+                    // delete decrypted video if exists
+                    File(context.appSecureVideoCacheDir, File(absolutePath).name).apply {
+                        if (exists()) delete()
+                    }
+                }
         	}
         }
     }

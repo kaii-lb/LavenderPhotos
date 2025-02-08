@@ -205,7 +205,6 @@ fun HorizontalImageList(
                     .fillMaxSize(1f)
             ) {
                 var model by remember { mutableStateOf<Any?>(null) }
-                val appSecureVideoCacheDir = LocalContext.current.appSecureVideoCacheDir
                 val context = LocalContext.current
 
                 LaunchedEffect(Unit) {
@@ -259,7 +258,7 @@ fun HorizontalImageList(
 }
 
 @Composable
-private fun Modifier.mediaModifier(
+fun Modifier.mediaModifier(
     scale: MutableState<Float>,
     rotation: MutableState<Float>,
     offset: MutableState<Offset>,

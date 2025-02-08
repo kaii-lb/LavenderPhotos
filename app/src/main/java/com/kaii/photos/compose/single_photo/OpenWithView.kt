@@ -1,22 +1,31 @@
 package com.kaii.photos.compose.single_photo
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.ContentValues
+import android.content.res.Configuration
 import android.net.Uri
+import android.provider.MediaStore
 import android.provider.MediaStore.MediaColumns
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.view.Window
+import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandIn
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
@@ -24,6 +33,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -31,84 +41,83 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.FilledTonalIconToggleButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.net.toUri
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavHostController
+import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideImage
+import com.bumptech.glide.integration.compose.placeholder
+import com.bumptech.glide.signature.ObjectKey
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.kaii.photos.BuildConfig
 import com.kaii.photos.LocalNavController
-import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.BottomAppBarItem
 import com.kaii.photos.compose.ConfirmationDialog
 import com.kaii.photos.compose.ExplanationDialog
 import com.kaii.photos.compose.setBarVisibility
 import com.kaii.photos.compose.rememberDeviceOrientation
-import com.kaii.photos.datastore.Editing
-import com.kaii.photos.datastore.LookAndFeel
+import com.kaii.photos.helpers.appStorageDir
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.MultiScreenViewType
-import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareImage
-import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.mediastore.getMediaStoreDataFromUri
+import com.kaii.photos.mediastore.MediaStoreData
+import com.kaii.photos.mediastore.copyUriToUri
 import com.kaii.photos.mediastore.getUriFromAbsolutePath
+import com.kaii.photos.models.multi_album.formatDate
 import com.kaii.photos.ui.theme.PhotosTheme
+import kotlinx.coroutines.delay
 import java.io.File
 
 class OpenWithView : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val absolutePath =
-            intent.data?.path?.removePrefix("/")?.replace("%20", " ")?.let {
-                File(Uri.decode(it).toUri().path!!).absolutePath
-            }
+        val uri = intent.data
 
-        val mediaItem = absolutePath?.let { path ->
-            val uri = contentResolver.getUriFromAbsolutePath(path, MediaType.Image)
-
-            uri?.let { contentUri ->
-                val mediaStoreData = contentResolver.getMediaStoreDataFromUri(contentUri)
-
-                mediaStoreData
-            }
-        }
-
-        if (mediaItem == null) {
-            Toast.makeText(applicationContext, "This media doesn't exist", Toast.LENGTH_LONG).show()
+        if (uri == null) {
+            Toast.makeText(applicationContext, "This media doesn't exist!", Toast.LENGTH_LONG).show()
             finish()
             return
         }
@@ -192,7 +201,7 @@ class OpenWithView : ComponentActivity() {
 		                    )
 
 	                        Content(
-	                            mediaItem = mediaItem,
+	                            uri = uri,
 	                            window = window
 	                        )
 	                    }
@@ -213,7 +222,8 @@ class OpenWithView : ComponentActivity() {
 	                            dateTaken = screen.dateTaken,
 	                            uri = screen.uri.toUri(),
 	                            window = window,
-	                            overwriteByDefault = false
+	                            overwriteByDefault = false,
+	                            isOpenWith = true
 	                        )
 	                    }
 	                }
@@ -223,35 +233,43 @@ class OpenWithView : ComponentActivity() {
     }
 }
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 private fun Content(
-    mediaItem: MediaStoreData,
-    window: Window,
+    uri: Uri,
+    window: Window
 ) {
-    val navController = LocalNavController.current
-    val showInfoDialog = remember { mutableStateOf(false) }
     val appBarsVisible = remember { mutableStateOf(true) }
+    val context = LocalContext.current
+
+    val releaseExoPlayer: MutableState<() -> Unit> = remember { mutableStateOf({}) }
+
+    val mimeType = context.contentResolver.getType(uri) ?: "image/*"
+    val type =
+        if (mimeType.contains("image")) MediaType.Image
+        else MediaType.Video
 
     Scaffold(
         topBar = {
             TopBar(
-                showInfoDialog = showInfoDialog,
-                appBarsVisible = appBarsVisible,
-                mediaItem = mediaItem
-            )
+                appBarsVisible = appBarsVisible
+            ) {
+                releaseExoPlayer.value()
+            }
         },
         bottomBar = {
             BottomBar(
-                mediaItem = mediaItem,
+                uri = uri,
                 appBarsVisible = appBarsVisible,
-                window = window
+                window = window,
+                mediaType = type,
+                mimeType = mimeType
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
         contentColor = MaterialTheme.colorScheme.onBackground
     ) { _ ->
-        SingleSecuredPhotoInfoDialog(showDialog = showInfoDialog, currentMediaItem = mediaItem)
-
         Column(
             modifier = Modifier
                 .padding(0.dp)
@@ -260,24 +278,288 @@ private fun Content(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            val scale = remember { mutableStateOf(0f) }
-            val rotation = remember { mutableStateOf(0f) }
+            val scale = rememberSaveable { mutableStateOf(1f) }
+            val rotation = rememberSaveable { mutableStateOf(0f) }
             val offset = remember { mutableStateOf(Offset.Zero) }
 
-            HorizontalImageList(
-                navController = navController,
-                currentMediaItem = mediaItem,
-                groupedMedia = listOf(mediaItem),
-                state = rememberPagerState {
-                    1
-                },
-                scale = scale,
-                rotation = rotation,
-                offset = offset,
-                window = window,
-                appBarsVisible = appBarsVisible,
-                isOpenWithView = true
+            val isTouchLocked = remember { mutableStateOf(false) }
+            val controlsVisible = remember { mutableStateOf(false) }
+
+            if (type == MediaType.Video) {
+                OpenWithVideoPlayer(
+                    uri = uri,
+                    controlsVisible = controlsVisible,
+                    appBarsVisible = appBarsVisible,
+                    window = window,
+                    releaseExoPlayer = releaseExoPlayer,
+                    isTouchLocked = isTouchLocked,
+                    modifier = Modifier
+                        .mediaModifier(
+                            scale = scale,
+                            rotation = rotation,
+                            offset = offset,
+                            window = window,
+                            appBarsVisible = appBarsVisible,
+                            isTouchLocked = isTouchLocked,
+                            showVideoPlayerController = controlsVisible,
+                            item = MediaStoreData(
+                            	type = MediaType.Video
+                            )
+                        )
+                )
+            } else {
+                GlideImage(
+                    model = uri,
+                    contentDescription = "opened image",
+                    contentScale = ContentScale.Fit,
+                    failure = placeholder(R.drawable.broken_image),
+                    modifier = Modifier
+                        .fillMaxSize(1f)
+                        .mediaModifier(
+                            scale = scale,
+                            rotation = rotation,
+                            offset = offset,
+                            window = window,
+                            appBarsVisible = appBarsVisible,
+                            isTouchLocked = isTouchLocked
+                        )
+                ) {
+                    it.signature(ObjectKey(uri.toString().hashCode() + mimeType.hashCode()))
+                        .diskCacheStrategy(DiskCacheStrategy.ALL)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun OpenWithVideoPlayer(
+    uri: Uri,
+    controlsVisible: MutableState<Boolean>,
+    appBarsVisible: MutableState<Boolean>,
+    isTouchLocked: MutableState<Boolean>,
+    window: Window,
+    releaseExoPlayer: MutableState<() -> Unit>,
+    modifier: Modifier
+) {
+    val isPlaying = remember { mutableStateOf(false) }
+    val lastIsPlaying = rememberSaveable { mutableStateOf(isPlaying.value) }
+
+    val isMuted = remember { mutableStateOf(false) }
+
+    val currentVideoPosition = remember { mutableFloatStateOf(0f) }
+    val duration = remember { mutableFloatStateOf(0f) }
+
+    val exoPlayer = rememberExoPlayerWithLifeCycle(
+        videoSource = uri,
+        absolutePath = null,
+        isPlaying = isPlaying,
+        currentVideoPosition = currentVideoPosition,
+        duration = duration
+    )
+
+    releaseExoPlayer.value = {
+        exoPlayer.stop()
+        exoPlayer.release()
+    }
+
+    val context = LocalContext.current
+    BackHandler {
+        isPlaying.value = false
+        currentVideoPosition.floatValue = 0f
+        duration.floatValue = 0f
+
+        releaseExoPlayer.value()
+
+        (context as Activity).finish()
+    }
+
+    LaunchedEffect(isMuted.value) {
+        exoPlayer.volume = if (isMuted.value) 0f else 1f
+
+        exoPlayer.setAudioAttributes(
+            AudioAttributes.Builder().apply {
+                setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
+                AudioAttributes.DEFAULT
+                setAllowedCapturePolicy(C.ALLOW_CAPTURE_BY_ALL)
+            }.build(),
+            !isMuted.value
+        )
+    }
+
+	val localConfig = LocalConfiguration.current
+    LaunchedEffect(isPlaying.value, localConfig.orientation) {
+        if (!isPlaying.value) {
+            controlsVisible.value = true
+            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
+            if (localConfig.orientation != Configuration.ORIENTATION_LANDSCAPE) {
+                setBarVisibility(
+                    visible = true,
+                    window = window
+                ) {
+                    appBarsVisible.value = true
+                }
+            }
+            exoPlayer.pause()
+        } else {
+        	exoPlayer.playWhenReady = true
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            exoPlayer.play()
+        }
+
+        lastIsPlaying.value = isPlaying.value
+
+        currentVideoPosition.floatValue = exoPlayer.currentPosition / 1000f
+        if (kotlin.math.ceil(currentVideoPosition.floatValue) >= kotlin.math.ceil(duration.floatValue) && duration.floatValue != 0f && !isPlaying.value) {
+            delay(1000)
+            exoPlayer.pause()
+            exoPlayer.seekTo(0)
+            currentVideoPosition.floatValue = 0f
+            isPlaying.value = false
+        }
+
+        while (isPlaying.value) {
+            currentVideoPosition.floatValue = exoPlayer.currentPosition / 1000f
+
+            delay(1000)
+        }
+    }
+
+    Box (
+        modifier = Modifier
+            .fillMaxSize(1f)
+    ) {
+        Column(
+            modifier = modifier.then(Modifier.align(Alignment.Center)),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            val playerView = rememberPlayerView(exoPlayer, context as Activity, null)
+            AndroidView(
+                factory = {
+                    playerView
+                }
             )
+        }
+
+        AnimatedVisibility(
+            visible = controlsVisible.value,
+            enter = expandIn(
+                animationSpec = tween(
+                    durationMillis = 350
+                )
+            ) + fadeIn(
+                animationSpec = tween(
+                    durationMillis = 350
+                )
+            ),
+            exit = shrinkOut(
+                animationSpec = tween(
+                    durationMillis = 350
+                )
+            ) + fadeOut(
+                animationSpec = tween(
+                    durationMillis = 350
+                )
+            ),
+            modifier = Modifier
+                .fillMaxSize(1f)
+                .align(Alignment.Center)
+        ) {
+            VideoPlayerControls(
+                exoPlayer = exoPlayer,
+                isPlaying = isPlaying,
+                isMuted = isMuted,
+                currentVideoPosition = currentVideoPosition,
+                duration = duration,
+                title = "Media",
+                modifier = Modifier
+                    .fillMaxSize(1f)
+            ) {
+                setBarVisibility(
+                    visible = false,
+                    window = window
+                ) {
+                    appBarsVisible.value = it
+                }
+            }
+        }
+
+		if ((isTouchLocked.value || controlsVisible.value) && localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            Row (
+                modifier = Modifier
+                    .wrapContentSize()
+                    .animateContentSize()
+                    .align(Alignment.TopEnd)
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(
+                	space = 4.dp,
+                	alignment = Alignment.CenterHorizontally
+                )
+            ) {
+                FilledTonalIconToggleButton(
+                    checked = isTouchLocked.value,
+                    onCheckedChange = {
+                        isTouchLocked.value = it
+
+                        controlsVisible.value = !it
+                    },
+                    colors = IconButtonDefaults.filledTonalIconToggleButtonColors().copy(
+                        checkedContainerColor = MaterialTheme.colorScheme.primary,
+                        checkedContentColor = MaterialTheme.colorScheme.onPrimary,
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    ),
+                    modifier = Modifier
+                        .size(32.dp)
+                        .align(Alignment.Top)
+                ) {
+                    Icon(
+                        painter = painterResource(id = if (isTouchLocked.value) R.drawable.locked_folder else R.drawable.unlock),
+                        contentDescription = "Lock the screen preventing miss-touch",
+                        modifier = Modifier
+                            .size(20.dp)
+                    )
+                }
+
+                if (controlsVisible.value) {
+                    Column (
+                        modifier = Modifier
+                            .wrapContentSize(),
+                        verticalArrangement = Arrangement.spacedBy(
+                        	space = 4.dp,
+                        	alignment = Alignment.Top
+                        ),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        FilledTonalIconButton(
+                            onClick = {
+                                setBarVisibility(
+                                    visible = !appBarsVisible.value,
+                                    window = window
+                                ) {
+                                    appBarsVisible.value = it
+                                }
+                            },
+                            colors = IconButtonDefaults.filledTonalIconButtonColors().copy(
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                            ),
+                            modifier = Modifier
+                                .size(32.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.more_options),
+                                contentDescription = "Show more video player options",
+                                modifier = Modifier
+                                    .size(20.dp)
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -285,9 +567,8 @@ private fun Content(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TopBar(
-    showInfoDialog: MutableState<Boolean>,
     appBarsVisible: MutableState<Boolean>,
-    mediaItem: MediaStoreData
+    releaseExoPlayer: () -> Unit
 ) {
     AnimatedVisibility(
         visible = appBarsVisible.value,
@@ -306,10 +587,8 @@ private fun TopBar(
     ) {
         TopAppBar(
             title = {
-                val mediaTitle = mediaItem.displayName ?: mediaItem.type.name
-
                 Text(
-                    text = mediaTitle,
+                    text = "Media",
                     fontSize = TextUnit(18f, TextUnitType.Sp),
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
@@ -323,27 +602,13 @@ private fun TopBar(
 
                 IconButton(
                     onClick = {
+                        releaseExoPlayer()
 						(context as Activity).finish()
                     },
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.back_arrow),
                         contentDescription = "Go back to previous page",
-                        tint = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier
-                            .size(24.dp)
-                    )
-                }
-            },
-            actions = {
-                IconButton(
-                    onClick = {
-                        showInfoDialog.value = true
-                    },
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.more_options),
-                        contentDescription = "show more options",
                         tint = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier
                             .size(24.dp)
@@ -356,9 +621,11 @@ private fun TopBar(
 
 @Composable
 private fun BottomBar(
-    mediaItem: MediaStoreData,
+    uri: Uri,
     appBarsVisible: MutableState<Boolean>,
-    window: Window
+    window: Window,
+    mediaType: MediaType,
+    mimeType: String
 ) {
     val context = LocalContext.current
     val navController = LocalNavController.current
@@ -400,7 +667,7 @@ private fun BottomBar(
 		                iconResId = R.drawable.share,
 		                cornerRadius = 32.dp,
 		                action = {
-		                    shareImage(mediaItem.uri, context)
+		                    shareImage(uri, context)
 		                }
 		            )
 
@@ -418,66 +685,53 @@ private fun BottomBar(
 		                text = "Edit",
 		                iconResId = R.drawable.paintbrush,
 		                cornerRadius = 32.dp,
-		                action = if (mediaItem.type == MediaType.Image) {
-		                    {
-		                        setBarVisibility(
-		                            visible = true,
-		                            window = window
-		                        ) {
-		                            appBarsVisible.value = it
-		                        }
+		                action =
+                            if (mediaType == MediaType.Image) {
+                                {
+                                    val extension = mimeType.split("/")[1]
+                                    val currentTime = System.currentTimeMillis()
+                                    val date = formatDate(currentTime / 1000)
+                                    val name = "Lavender Photos edited file at $date.$extension"
+                                    val destination = File(Environment.DIRECTORY_PICTURES, name) // TODO: maybe move into subdir?
 
-		                        navController.navigate(
-		                            Screens.EditingScreen(
-		                                absolutePath = mediaItem.absolutePath,
-		                                uri = mediaItem.uri.toString(),
-		                                dateTaken = mediaItem.dateTaken
-		                            )
-		                        )
-		                    }
-		                } else {
-		                    { showNotImplementedDialog.value = true }
-		                }
+                                    val contentValues = ContentValues().apply {
+                                        put(MediaColumns.DISPLAY_NAME, name)
+                                        put(MediaColumns.DATE_MODIFIED, currentTime)
+                                        put(MediaColumns.DATE_TAKEN, currentTime)
+                                        put(MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES)
+                                        put(MediaColumns.MIME_TYPE, mimeType)
+                                    }
+
+                                    val contentUri = context.contentResolver.insert(
+                                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                                        contentValues
+                                    ) ?: return@BottomAppBarItem
+
+                                    context.contentResolver.copyUriToUri(
+                                        from = uri,
+                                        to = contentUri
+                                    )
+
+                                    setBarVisibility(
+                                        visible = true,
+                                        window = window
+                                    ) {
+                                        appBarsVisible.value = it
+                                    }
+
+                                    navController.navigate(
+                                        Screens.EditingScreen(
+                                            absolutePath = destination.absolutePath,
+                                            uri = contentUri.toString(),
+                                            dateTaken = currentTime / 1000
+                                        )
+                                    )
+                                }
+                            } else {
+                                { showNotImplementedDialog.value = true }
+                            }
 		            )
-
-		            val showDeleteDialog = remember { mutableStateOf(false) }
-		            val runTrashAction = remember { mutableStateOf(false) }
-
-		            GetPermissionAndRun(
-		                uris = listOf(mediaItem.uri),
-		                shouldRun = runTrashAction,
-		                onGranted = {
-						    val contentResolver = context.contentResolver
-
-						    val trashedValues = ContentValues().apply {
-						        put(MediaColumns.IS_TRASHED, true)
-						        put(MediaColumns.DATE_MODIFIED, System.currentTimeMillis())
-						    }
-
-						    contentResolver.update(mediaItem.uri, trashedValues, null)
-
-		                    (context as Activity).finish()
-		                }
-		            )
-
-		            BottomAppBarItem(
-		                text = "Delete",
-		                iconResId = R.drawable.trash,
-		                cornerRadius = 32.dp,
-		                dialogComposable = {
-		                    ConfirmationDialog(
-		                        showDialog = showDeleteDialog,
-		                        dialogTitle = "Delete this ${mediaItem.type}?",
-		                        confirmButtonLabel = "Delete"
-		                    ) {
-		                        runTrashAction.value = true
-		                    }
-		                },
-		                action = {
-		                    showDeleteDialog.value = true
-		                }
-		            )
-	        	}
+				}
 	        }
 	    )
     }

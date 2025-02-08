@@ -147,7 +147,7 @@ fun groupPhotosBy(media: List<MediaStoreData>, sortBy: MediaItemSortMode = Media
 	return mediaItems
 }
 
-private fun formatDate(timestamp: Long): String {
+fun formatDate(timestamp: Long): String {
 	return if (timestamp != 0L) {
 		val dateTimeFormat = DateTimeFormatter.ofPattern("EEE d - MMMM yyyy")
 		val localDateTime = Instant.ofEpochSecond(timestamp).atZone(ZoneId.systemDefault()).toLocalDateTime()

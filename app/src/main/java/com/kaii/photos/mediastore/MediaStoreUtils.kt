@@ -109,7 +109,7 @@ suspend fun ContentResolver.copyMedia(
 
 fun ContentResolver.copyUriToUri(from: Uri, to: Uri) {
     openFileDescriptor(to, "rw")?.let { toFd ->
-        openFileDescriptor(from, "rw")?.let { fromFd ->
+        openFileDescriptor(from, "r")?.let { fromFd ->
             FileUtils.copy(fromFd.fileDescriptor, toFd.fileDescriptor)
 
             fromFd.close()

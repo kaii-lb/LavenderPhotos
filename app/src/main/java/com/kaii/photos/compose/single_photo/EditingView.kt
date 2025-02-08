@@ -180,7 +180,8 @@ fun EditingView(
     dateTaken: Long,
     uri: Uri,
     window: Window,
-    overwriteByDefault: Boolean
+    overwriteByDefault: Boolean,
+    isOpenWith: Boolean = false,
 ) {
     val navController = LocalNavController.current
     val showCloseDialog = remember { mutableStateOf(false) }
@@ -244,10 +245,12 @@ fun EditingView(
 
     Scaffold(
         topBar = {
-            val overwrite = remember { mutableStateOf(overwriteByDefault) }
+            val overwrite = remember { mutableStateOf(
+            	if (isOpenWith) true else overwriteByDefault
+            )}
 
             LaunchedEffect(overwriteByDefault) {
-                overwrite.value = overwriteByDefault
+                overwrite.value = if (isOpenWith) true else overwriteByDefault
             }
 
             val runSaveEditsAction = remember { mutableStateOf(false) }
@@ -287,6 +290,7 @@ fun EditingView(
                 oldChangesSize = oldChangesSize,
                 overwrite = overwrite,
                 canExit = canExit,
+                isOpenWith = isOpenWith,
                 saveImage = {
                     runSaveEditsAction.value = true
                 },
@@ -1275,6 +1279,7 @@ private fun EditingViewTopBar(
     oldChangesSize: MutableIntState,
     overwrite: MutableState<Boolean>,
     canExit: MutableState<Boolean>,
+    isOpenWith: Boolean,
     saveImage: () -> Unit,
     popBackStack: () -> Unit,
 ) {
@@ -1386,6 +1391,9 @@ private fun EditingViewTopBar(
                     SplitButton(
                         enabled = changesSize.intValue != oldChangesSize.intValue,
                         secondaryContentMaxWidth = 40.dp,
+                        secondaryContainerColor =
+                        	if (!isOpenWith) MaterialTheme.colorScheme.primary
+                        	else MaterialTheme.colorScheme.surfaceContainer,
                         primaryContent = {
                             Text(
                                 text = saveButtonTitle,
@@ -1395,7 +1403,7 @@ private fun EditingViewTopBar(
                         },
                         primaryAction = saveAction,
                         secondaryAction = {
-                            dropDownExpanded = !dropDownExpanded
+                            if (!isOpenWith) dropDownExpanded = !dropDownExpanded
                         },
                         secondaryContent = {
                             Icon(
