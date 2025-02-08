@@ -98,7 +98,6 @@ import com.kaii.photos.MainActivity
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
-import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.User
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
@@ -651,7 +650,7 @@ fun SinglePhotoInfoDialog(
     showDialog: MutableState<Boolean>,
     currentMediaItem: MediaStoreData,
     groupedMedia: MutableState<List<MediaStoreData>>,
-    viewProperties: ViewProperties,
+    loadsFromMainViewModel: Boolean,
     showMoveCopyOptions: Boolean = true,
     moveCopyInsetsPadding: WindowInsets? = WindowInsets.statusBars
 ) {
@@ -736,10 +735,7 @@ fun SinglePhotoInfoDialog(
 
 							originalFileName = fileName.value
 
-							if (viewProperties == ViewProperties.SearchLoading
-								|| viewProperties == ViewProperties.SearchNotFound
-								|| viewProperties == ViewProperties.Favourites
-							) {
+							if (loadsFromMainViewModel) {
 								val oldName = currentMediaItem.displayName ?: "Broken File"
 								val path = currentMediaItem.absolutePath
 

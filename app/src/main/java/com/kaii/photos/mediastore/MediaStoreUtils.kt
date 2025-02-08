@@ -37,7 +37,7 @@ suspend fun ContentResolver.copyMedia(
     overrideDisplayName: String? = null,
     setExifDateBeforeCopy: Boolean = false
 ): Uri? = withContext(Dispatchers.IO) {
-    if (setExifDateBeforeCopy) {
+    if (setExifDateBeforeCopy && media.type == MediaType.Image) {
         try {
             setDateTakenForMedia(
                 media.absolutePath,

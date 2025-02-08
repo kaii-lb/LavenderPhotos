@@ -27,7 +27,7 @@ fun getSecureDecryptedVideoFile(
 	context: Context
 ) : File = File(context.appSecureVideoCacheDir, name)
 
-fun addSecuredCachedImage(
+fun addSecuredCachedMedia(
     context: Context,
     mediaItem: MediaStoreData,
     metadataRetriever: MediaMetadataRetriever,

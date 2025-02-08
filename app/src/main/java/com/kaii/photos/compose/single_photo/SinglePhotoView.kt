@@ -67,7 +67,6 @@ import com.kaii.photos.compose.BottomAppBarItem
 import com.kaii.photos.compose.ConfirmationDialog
 import com.kaii.photos.compose.ExplanationDialog
 import com.kaii.photos.compose.SinglePhotoInfoDialog
-import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.setBarVisibility
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
@@ -99,10 +98,10 @@ fun SinglePhotoView(
     offset: MutableState<Offset>,
     viewModel: MultiAlbumViewModel,
     mediaItemId: Long,
-    viewProperties: ViewProperties
+    loadsFromMainViewModel: Boolean
 ) {
     val holderGroupedMedia =
-	    if (viewProperties != ViewProperties.SearchLoading && viewProperties != ViewProperties.SearchNotFound && viewProperties != ViewProperties.Favourites) {
+	    if (!loadsFromMainViewModel) {
             viewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 	    } else {
 	        mainViewModel.groupedMedia.collectAsStateWithLifecycle(initialValue = null)
@@ -202,7 +201,7 @@ fun SinglePhotoView(
                 visible = appBarsVisible.value,
                 currentItem = currentMediaItem.value,
                 groupedMedia = groupedMedia,
-                viewProperties = viewProperties,
+                loadsFromMainViewModel = loadsFromMainViewModel,
                 state = state,
                 showEditingView = {
                     setBarVisibility(
@@ -232,7 +231,7 @@ fun SinglePhotoView(
             showDialog = showInfoDialog,
             currentMediaItem = currentMediaItem.value,
             groupedMedia = groupedMedia,
-            viewProperties = viewProperties,
+            loadsFromMainViewModel = loadsFromMainViewModel,
             showMoveCopyOptions = true,
             moveCopyInsetsPadding = WindowInsets.statusBars
         )
@@ -383,7 +382,7 @@ private fun BottomBar(
     visible: Boolean,
     currentItem: MediaStoreData,
     groupedMedia: MutableState<List<MediaStoreData>>,
-    viewProperties: ViewProperties,
+    loadsFromMainViewModel: Boolean,
     state: PagerState,
     showEditingView: () -> Unit,
     onZeroItemsLeft: () -> Unit
@@ -482,10 +481,7 @@ private fun BottomBar(
 
                             if (groupedMedia.value.isEmpty()) onZeroItemsLeft()
 
-							if (viewProperties == ViewProperties.SearchLoading
-								|| viewProperties == ViewProperties.SearchNotFound
-								|| viewProperties == ViewProperties.Favourites
-							) {
+							if (loadsFromMainViewModel) {
 	                            sortOutMediaMods(
 	                                currentItem,
 	                                groupedMedia,
@@ -542,10 +538,7 @@ private fun BottomBar(
 
                             if (groupedMedia.value.isEmpty()) onZeroItemsLeft()
 
-							if (viewProperties == ViewProperties.SearchLoading
-								|| viewProperties == ViewProperties.SearchNotFound
-								|| viewProperties == ViewProperties.Favourites
-							) {
+							if (loadsFromMainViewModel) {
 	                            sortOutMediaMods(
 	                                currentItem,
 	                                groupedMedia,

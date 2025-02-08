@@ -25,7 +25,7 @@ object Screens {
 	data class SinglePhotoView(
 	    val albums: List<String>,
 	    val mediaItemId: Long,
-		val viewProperties: ViewProperties
+		val loadsFromMainViewModel: Boolean
 	)
 
 	@Serializable

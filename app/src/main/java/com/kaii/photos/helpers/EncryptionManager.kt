@@ -170,6 +170,8 @@ class EncryptionManager {
     }
 
     fun decryptVideo(absolutePath: String, iv: ByteArray, context: Context): File {
+    	Log.d(TAG, "trying to decrypt video $absolutePath")
+
         val original = File(absolutePath)
         val destination = getSecureDecryptedVideoFile(
         	name = original.name,

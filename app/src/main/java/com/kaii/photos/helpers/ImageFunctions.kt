@@ -168,12 +168,14 @@ fun moveImageToLockedFolder(list: List<MediaStoreData>, context: Context) {
                 val copyToPath = context.appSecureFolderDir + "/" + fileToBeHidden.name
                 val destinationFile = File(copyToPath)
 
-                setDateTakenForMedia(
-                    mediaItem.absolutePath,
-                    mediaItem.dateTaken
-                )
+				if (mediaItem.type == MediaType.Image) {
+	                setDateTakenForMedia(
+	                    mediaItem.absolutePath,
+	                    mediaItem.dateTaken
+	                )
+				}
 
-                addSecuredCachedImage(
+                addSecuredCachedMedia(
                     context = context,
                     mediaItem = mediaItem,
                     file = fileToBeHidden,

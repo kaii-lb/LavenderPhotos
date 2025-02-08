@@ -390,7 +390,7 @@ class MainActivity : ComponentActivity() {
                         offset = offset,
                         viewModel = multiAlbumViewModel,
                         mediaItemId = screen.mediaItemId,
-                        viewProperties = screen.viewProperties
+                        loadsFromMainViewModel = screen.loadsFromMainViewModel
                     )
                 }
 

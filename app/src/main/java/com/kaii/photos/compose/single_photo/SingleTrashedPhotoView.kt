@@ -65,7 +65,6 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.SinglePhotoInfoDialog
-import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.setTrashedOnPhotoList
@@ -244,7 +243,7 @@ fun SingleTrashedPhotoView(
             showDialog = showInfoDialog,
             currentMediaItem = currentMediaItem,
             groupedMedia = groupedMedia,
-            viewProperties = ViewProperties.Trash,
+            loadsFromMainViewModel = true,
             showMoveCopyOptions = false,
             moveCopyInsetsPadding = null
         )
