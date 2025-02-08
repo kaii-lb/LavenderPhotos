@@ -1421,17 +1421,18 @@ fun SelectingMoreOptionsDialog(
             moveImageToLockedFolder(
                 selectedItems,
                 context
-            )
+            ) {
+	            onDone()
+	            showLoadingDialog = false
+	            showDialog.value = false
+            }
 
-            onDone()
-            showLoadingDialog = false
-            showDialog.value = false
         }
     )
 
     Dialog(
         onDismissRequest = {
-            showDialog.value = false
+            if (!showLoadingDialog) showDialog.value = false
             isEditingFileName.value = false
         },
         properties = DialogProperties(
@@ -1452,7 +1453,7 @@ fun SelectingMoreOptionsDialog(
             ) {
                 IconButton(
                     onClick = {
-                        showDialog.value = false
+                        if (!showLoadingDialog) showDialog.value = false
                         isEditingFileName.value = false
                     },
                     modifier = Modifier

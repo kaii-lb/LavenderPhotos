@@ -65,13 +65,13 @@ fun GetPermissionAndRun(
         if (shouldRun.value) {
             withContext(Dispatchers.IO) {
                 val allGranted = uris.all { context.checkUriPermission(it, Process.myPid(), Process.myUid(), Intent.FLAG_GRANT_WRITE_URI_PERMISSION) == PackageManager.PERMISSION_GRANTED }
+                Log.d(TAG, "Gotten permissions for all items? $allGranted")
+
                 if (allGranted) {
                     onGranted()
                 } else {
                     launcher.launch(senderRequest)
                 }
-
-                Log.d(TAG, "Gotten permissions for all items? $allGranted")
 
                 shouldRun.value = false
             }

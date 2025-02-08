@@ -66,6 +66,7 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.BottomAppBarItem
 import com.kaii.photos.compose.ConfirmationDialog
 import com.kaii.photos.compose.ExplanationDialog
+import com.kaii.photos.compose.LoadingDialog
 import com.kaii.photos.compose.SinglePhotoInfoDialog
 import com.kaii.photos.compose.setBarVisibility
 import com.kaii.photos.helpers.Screens
@@ -512,9 +513,15 @@ private fun BottomBar(
                         }
                     )
 
+					// TODO: maybe restructure this
                     val showMoveToSecureFolderDialog = remember { mutableStateOf(false) }
                     val moveToSecureFolder = remember { mutableStateOf(false) }
                     val tryGetDirPermission = remember { mutableStateOf(false) }
+                    var showLoadingDialog by remember { mutableStateOf(false) }
+
+					if (showLoadingDialog) {
+					    LoadingDialog(title = "Encrypting Files", body = "Please wait while the media is processed")
+					}
 
                     GetDirectoryPermissionAndRun(
                         absolutePath = groupedMedia.value.firstOrNull()?.let { media ->
@@ -525,6 +532,7 @@ private fun BottomBar(
                         shouldRun = tryGetDirPermission
                     ) {
                         moveToSecureFolder.value = true
+                        showLoadingDialog = true
                     }
 
                     GetPermissionAndRun(
@@ -534,20 +542,23 @@ private fun BottomBar(
                             moveImageToLockedFolder(
                                 listOf(currentItem),
                                 context
-                            )
+                            ) {
+	                            if (groupedMedia.value.isEmpty()) onZeroItemsLeft()
 
-                            if (groupedMedia.value.isEmpty()) onZeroItemsLeft()
+								if (loadsFromMainViewModel) {
+		                            sortOutMediaMods(
+		                                currentItem,
+		                                groupedMedia,
+		                                coroutineScope,
+		                                state
+		                            ) {
+		                                onZeroItemsLeft()
+		                            }
+								}
 
-							if (loadsFromMainViewModel) {
-	                            sortOutMediaMods(
-	                                currentItem,
-	                                groupedMedia,
-	                                coroutineScope,
-	                                state
-	                            ) {
-	                                onZeroItemsLeft()
-	                            }
-							}
+								showLoadingDialog = false
+                            }
+
                         }
                     )
 

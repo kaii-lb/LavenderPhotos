@@ -146,7 +146,11 @@ fun shareMultipleSecuredImages(
     context.startActivity(Intent.createChooser(intent, null))
 }
 
-fun moveImageToLockedFolder(list: List<MediaStoreData>, context: Context) {
+fun moveImageToLockedFolder(
+	list: List<MediaStoreData>,
+	context: Context,
+	onDone: () -> Unit
+) {
     val contentResolver = context.contentResolver
     val lastModified = System.currentTimeMillis()
     val encryptionManager = EncryptionManager()
@@ -198,11 +202,17 @@ fun moveImageToLockedFolder(list: List<MediaStoreData>, context: Context) {
                 contentResolver.delete(mediaItem.uri, null)
                 applicationDatabase.mediaEntityDao().deleteEntityById(mediaItem.id)
             }
+
+            onDone()
         }.await()
     }
 }
 
-fun moveImageOutOfLockedFolder(list: List<MediaStoreData>, context: Context) {
+fun moveImageOutOfLockedFolder(
+	list: List<MediaStoreData>,
+	context: Context,
+	onDone: () -> Unit
+) {
     val contentResolver = context.contentResolver
 
     val encryptionManager = EncryptionManager()
@@ -237,6 +247,8 @@ fun moveImageOutOfLockedFolder(list: List<MediaStoreData>, context: Context) {
                     applicationDatabase.securedItemEntityDao().deleteEntityBySecuredPath(thumbnailFile.absolutePath)
                 }
             }
+
+            onDone()
         }.await()
     }
 }

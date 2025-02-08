@@ -371,6 +371,12 @@ private fun BottomBar(
     val runRestoreAction = remember { mutableStateOf(false) }
     var originalPath by remember { mutableStateOf("") }
 
+	var showLoadingDialog by remember { mutableStateOf(false) }
+
+	if (showLoadingDialog) {
+	    LoadingDialog(title = "Restoring Files", body = "Please wait while the media is processed")
+	}
+
     LaunchedEffect(item) {
         withContext(Dispatchers.IO) {
             originalPath = applicationDatabase.securedItemEntityDao().getOriginalPathFromSecuredPath(item.absolutePath)?.replace(item.displayName ?: "", "") ?: context.appRestoredFilesDir
@@ -381,7 +387,12 @@ private fun BottomBar(
         absolutePath = originalPath,
         shouldRun = runRestoreAction,
     ) {
-        moveImageOutOfLockedFolder(listOf(item), context)
+        moveImageOutOfLockedFolder(
+        	list = listOf(item),
+        	context = context
+       	) {
+        	showLoadingDialog = false
+        }
 
         sortOutMediaMods(
             item,
@@ -399,6 +410,7 @@ private fun BottomBar(
         confirmButtonLabel = "Move"
     ) {
         runRestoreAction.value = true
+        showLoadingDialog = true
     }
 
     ConfirmationDialogWithBody(

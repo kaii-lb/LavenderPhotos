@@ -1176,16 +1176,17 @@ fun SecureFolderViewBottomAppBar(
                         async {
                             val newList = groupedMedia.value.toMutableList()
 
-                            withContext(Dispatchers.IO) {
-                                moveImageOutOfLockedFolder(selectedItemsWithoutSection, context)
-                            }
+                            moveImageOutOfLockedFolder(
+                            	list = selectedItemsWithoutSection,
+                            	context = context
+                           	) {
+                           		showLoadingDialog = false
+                           	}
 
                             newList.removeAll(selectedItemsList)
 
-                            groupedMedia.value = newList
                             selectedItemsList.clear()
-
-                            showLoadingDialog = false
+                            groupedMedia.value = newList
                         }.await()
                     }
                 }
@@ -1205,7 +1206,6 @@ fun SecureFolderViewBottomAppBar(
 
                 withContext(Dispatchers.IO) {
                     async {
-
                         val newList = groupedMedia.value.toMutableList()
 
                         permanentlyDeleteSecureFolderImageList(
