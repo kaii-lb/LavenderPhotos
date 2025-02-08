@@ -176,7 +176,10 @@ fun PhotoGrid(
                 modifier = Modifier
                     .fillMaxSize(1f)
                     .then(modifier)
-            ) {}
+            ) {
+            	// TODO: show loading spinner for 5 seconds 
+            	// if no change after 5 seconds hide and show album doesn't exist
+            }
         }
 
         true -> {
@@ -745,7 +748,7 @@ fun MediaStoreItem(
                 model =
                     withContext(Dispatchers.IO) {
                         try {
-							val thumbnailIv = item.bytes!!.copyOfRange(16, 32) // get thumbnail iv from video
+                            val thumbnailIv = item.bytes!!.copyOfRange(16, 32) // get thumbnail iv from video
 
                             encryptionManager.decryptBytes(
                                 bytes = getSecuredCacheImageForFile(fileName = item.displayName!!, context = context).readBytes(),

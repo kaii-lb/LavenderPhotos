@@ -246,17 +246,6 @@ class MainActivity : ComponentActivity() {
 			}
         }
 
-        val isV083FirstStart by mainViewModel.settings.Versions.getIsV083FirstStart(context).collectAsStateWithLifecycle(initialValue = false)
-        LaunchedEffect(isV083FirstStart) {
-	        if (isV083FirstStart) {
-	            mainViewModel.settings.Versions.setIsV083FirstStart(false)
-
-                mainViewModel.settings.AlbumsList.getAlbumsList(true).collectLatest {
-                    mainViewModel.settings.AlbumsList.setAlbumsList(it)
-                }
-	        }
-        }
-
         mainViewModel.settings.AlbumsList.addToAlbumsList("DCIM/Camera")
 
         val listOfDirs = mainViewModel.settings.AlbumsList.getAlbumsList().collectAsStateWithLifecycle(initialValue = emptyList()).value.toMutableList()

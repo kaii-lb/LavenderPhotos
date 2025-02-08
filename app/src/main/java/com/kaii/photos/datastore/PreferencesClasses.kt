@@ -1,9 +1,7 @@
 package com.kaii.photos.datastore
 
 import android.content.Context
-import android.provider.MediaStore
 import android.provider.MediaStore.Files.FileColumns
-import android.provider.MediaStore.MediaColumns
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -11,13 +9,15 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.bumptech.glide.Glide
-import com.kaii.photos.BuildConfig
+import com.kaii.photos.helpers.baseInternalStorageDirectory
+import com.kaii.photos.helpers.getAllAlbumsOnDevice
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.io.path.Path
 
 const val separator = "|-SEPARATOR-|"
 private const val TAG = "PREFERENCES_CLASSES"
@@ -65,9 +65,10 @@ class SettingsAlbumsListImpl(private val context: Context, private val viewModel
         }
     }
 
-    fun getAlbumsList(isPreV083: Boolean = false): Flow<List<String>> =
+    fun getAlbumsList(): Flow<List<String>> =
         context.datastore.data.map { data ->
             val list = data[albumsListKey]
+            val isPreV083 = list?.startsWith(",") == true// if list starts with a , then its using an old version of list storing system, move to new version
 
             if (list == null) {
             	val defaultList = getDefaultAlbumsList()
@@ -88,7 +89,7 @@ class SettingsAlbumsListImpl(private val context: Context, private val viewModel
             return@map split
         }
 
-    fun setAlbumsList(list: List<String>) = viewModelScope.launch {
+    private fun setAlbumsList(list: List<String>) = viewModelScope.launch {
         context.datastore.edit {
             var stringList = ""
             list.distinct().forEach { album ->
@@ -109,30 +110,12 @@ class SettingsAlbumsListImpl(private val context: Context, private val viewModel
         )
 
 	private suspend fun getAllAlbumsOnDevice() : List<String> = withContext(Dispatchers.IO) {
-		getAllAlbumsOnDevice()
+		Path(baseInternalStorageDirectory).getAllAlbumsOnDevice()
 	}
 }
 
 class SettingsVersionImpl(private val context: Context, private val viewModelScope: CoroutineScope) {
-    private val v083firstStartKey = booleanPreferencesKey("v0.8.3-beta_first_start")
     private val migrateToEncryptedSecurePhotos = booleanPreferencesKey("migrate_to_encrypted_secure_photos")
-
-    fun getIsV083FirstStart(context: Context): Flow<Boolean> =
-        context.datastore.data.map {
-            val currentVersion = context.packageManager.getPackageInfo(context.packageName, 0).versionName
-
-            val isPrev083 = it[v083firstStartKey] ?: true
-
-            Log.e(TAG, "App version ${currentVersion}. Is pre v0.8.3? $isPrev083")
-
-            isPrev083
-        }
-
-    fun setIsV083FirstStart(value: Boolean) = viewModelScope.launch {
-        context.datastore.edit {
-            it[v083firstStartKey] = value
-        }
-    }
 
     fun getShouldMigrateToEncryptedSecurePhotos(context: Context): Flow<Boolean> =
     	context.datastore.data.map {
@@ -353,28 +336,26 @@ class SettingsMainPhotosListImpl(private val context: Context, private val viewM
         }
 
 		albums.forEach {
-			println("ALBUM SI $it")
+			Log.d(TAG, "Trying to get query for album: $it")
 		}
 
 		val colName = FileColumns.RELATIVE_PATH
-		val base = "($colName LIKE ? AND $colName NOT LIKE ?)"
+		val base = "($colName = ?)"
 
 		val list = mutableListOf<String>()
 		var string = base
 		val firstAlbum = albums.first().apply {
 			removeSuffix("/")
 		}
-		list.add("$firstAlbum%")
-		list.add("$firstAlbum/%/%")
+		list.add("$firstAlbum/")
 
 		for (i in 1..<albums.size) {
 			val album = albums[i].apply {
-				removeSuffix("/")
+				removeSuffix("")
 			}
 
 			string += " OR $base"
-			list.add("$album%")
-			list.add("$album/%/%")
+			list.add("$album/")
 		}
 
 		val query = "AND ($string)"

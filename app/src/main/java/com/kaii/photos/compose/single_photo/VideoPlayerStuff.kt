@@ -7,11 +7,9 @@ import android.net.Uri
 import android.view.ViewGroup
 import android.view.Window
 import android.view.WindowManager
-import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandIn
 import androidx.compose.animation.fadeIn
@@ -19,7 +17,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.DragInteraction
-import androidx.compose.foundation.interaction.Interaction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -42,6 +39,7 @@ import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FilledTonalIconToggleButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -54,7 +52,6 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -62,6 +59,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -88,8 +86,6 @@ import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
-import androidx.media3.extractor.DefaultExtractorsFactory
-import androidx.media3.extractor.Extractor
 import androidx.media3.ui.PlayerView
 import androidx.navigation.NavHostController
 import com.kaii.photos.R
@@ -97,14 +93,11 @@ import com.kaii.photos.MainActivity.Companion.applicationDatabase
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.compose.setBarVisibility
 import com.kaii.photos.datastore.Video
-import com.kaii.photos.helpers.setTrashedOnPhotoList
-import com.kaii.photos.helpers.shareImage
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.appSecureVideoCacheDir
 import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.mediastore.MediaStoreData
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -116,7 +109,7 @@ import kotlin.time.Duration.Companion.seconds
 // special thanks to @bedirhansaricayir on github, helped with a LOT of performance stuff
 // https://github.com/bedirhansaricayir/Instagram-Reels-Jetpack-Compose/blob/master/app/src/main/java/com/reels/example/presentation/components/ExploreVideoPlayer.kt
 
-private const val TAG = "VIDEO_PLAYER_STUFF"
+// private const val TAG = "VIDEO_PLAYER_STUFF"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -389,38 +382,69 @@ fun VideoPlayer(
 ) {
 	val context = LocalContext.current
 	val isSecuredMedia = item.absolutePath.startsWith(context.appSecureFolderDir)
-	var continueToVideo by remember { mutableStateOf(!isSecuredMedia) }
-	var videoSource by remember { mutableStateOf(item.uri) }
+    var videoSource by remember { mutableStateOf(item.uri) }
 
-    LaunchedEffect(isSecuredMedia) {
-    	if (isSecuredMedia) {
-	        withContext(Dispatchers.IO) {
-	            val encryptionManager = EncryptionManager()
+    if (isSecuredMedia) {
+        var securedMediaProgress by remember { mutableFloatStateOf(0f) }
+        var continueToVideo by remember { mutableStateOf(!isSecuredMedia) }
 
-	            val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(item.absolutePath)
+        LaunchedEffect(Unit) {
+            withContext(Dispatchers.IO) {
+                val encryptionManager = EncryptionManager()
 
-	            val output = encryptionManager.decryptVideo(
-	                absolutePath = item.absolutePath,
-	                iv = iv,
-	                context = context
-	            )
+                val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(item.absolutePath)
 
-	            videoSource = output.toUri()
-	            continueToVideo = true
-	        }
-    	}
-    }
+                val output =
+                    encryptionManager.decryptVideo(
+                        absolutePath = item.absolutePath,
+                        iv = iv,
+                        context = context
+                    ) {
+                        securedMediaProgress = it
+                    }
 
-    if (!continueToVideo) {
-    	Column (
-    		modifier = Modifier
-    			.fillMaxSize(1f),
-   			verticalArrangement = Arrangement.Center,
-   			horizontalAlignment = Alignment.CenterHorizontally
-    	) {
-    		Text(text = "Loading...")
-    	}
-    	return
+                videoSource = output.toUri()
+                continueToVideo = true
+            }
+        }
+
+        if (!continueToVideo) {
+            Column (
+                modifier = Modifier
+                    .fillMaxSize(1f),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Decrypting video, please wait",
+                    fontSize = TextUnit(16f, TextUnitType.Sp)
+                )
+
+                Spacer (modifier =  Modifier.height(16.dp))
+
+                Text(
+                    text = "Progress:",
+                    fontSize = TextUnit(16f, TextUnitType.Sp)
+                )
+
+                Spacer (modifier = Modifier.height(8.dp))
+
+                LinearProgressIndicator(
+                    progress = {
+                        securedMediaProgress
+                    },
+                    color = MaterialTheme.colorScheme.primary,
+                    trackColor = MaterialTheme.colorScheme.surfaceContainer,
+                    gapSize = 0.dp,
+                    strokeCap = StrokeCap.Round,
+                    drawStopIndicator = {},
+                    modifier = Modifier
+                        .fillMaxWidth(0.6f),
+                )
+            }
+
+            return
+        }
     }
 
     val isPlaying = rememberSaveable { mutableStateOf(false) }
@@ -432,11 +456,10 @@ fun VideoPlayer(
     val currentVideoPosition = rememberSaveable { mutableFloatStateOf(0f) }
     val duration = rememberSaveable { mutableFloatStateOf(0f) }
 
-    val exoPlayer = rememberExoPlayerWithLifeCycle(videoSource, item.absolutePath, isPlaying, duration, currentVideoPosition, isSecuredMedia)
+    val exoPlayer = rememberExoPlayerWithLifeCycle(videoSource, item.absolutePath, isPlaying, duration, currentVideoPosition)
     val playerView = rememberPlayerView(exoPlayer, context as Activity, item.absolutePath)
 
 	val muteVideoOnStart by mainViewModel.settings.Video.getMuteOnStart().collectAsStateWithLifecycle(initialValue = true)
-
 
     BackHandler {
         isPlaying.value = false
@@ -498,7 +521,15 @@ fun VideoPlayer(
         lastWasMuted.value = isMuted.value
 
         exoPlayer.volume = if (isMuted.value) 0f else 1f
-        exoPlayer.setHandleAudioBecomingNoisy(!isMuted.value)
+
+        exoPlayer.setAudioAttributes(
+            AudioAttributes.Builder().apply {
+                setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
+                AudioAttributes.DEFAULT
+                setAllowedCapturePolicy(C.ALLOW_CAPTURE_BY_ALL)
+            }.build(),
+            !isMuted.value
+        )
     }
 
     LaunchedEffect(shouldAutoPlay, shouldPlay) {
@@ -649,20 +680,17 @@ fun rememberExoPlayerWithLifeCycle(
     absolutePath: String,
     isPlaying: MutableState<Boolean>,
     duration: MutableFloatState,
-    currentVideoPosition: MutableFloatState,
-    isSecuredMedia: Boolean
+    currentVideoPosition: MutableFloatState
 ): ExoPlayer {
     val context = LocalContext.current
 
     val exoPlayer = remember {
         createExoPlayer(
             videoSource,
-            absolutePath,
             context,
             isPlaying,
             currentVideoPosition,
-            duration,
-            isSecuredMedia
+            duration
         )
     }
 
@@ -683,12 +711,10 @@ fun rememberExoPlayerWithLifeCycle(
 @androidx.annotation.OptIn(UnstableApi::class)
 fun createExoPlayer(
     videoSource: Uri,
-    absolutePath: String,
     context: Context,
     isPlaying: MutableState<Boolean>,
     currentVideoPosition: MutableFloatState,
-    duration: MutableFloatState,
-    isSecuredMedia: Boolean
+    duration: MutableFloatState
 ): ExoPlayer {
     val exoPlayer = ExoPlayer.Builder(context).apply {
         setLoadControl(
@@ -719,30 +745,14 @@ fun createExoPlayer(
                 AudioAttributes.DEFAULT
                 setAllowedCapturePolicy(C.ALLOW_CAPTURE_BY_ALL)
             }.build(),
-            true
+            false
         )
-    }
-        .build()
+
+        setHandleAudioBecomingNoisy(true)
+    }.build()
         .apply {
             videoScalingMode = VIDEO_SCALING_MODE_SCALE_TO_FIT
             repeatMode = ExoPlayer.REPEAT_MODE_ONE
-
-//            val dataSourceFactory =
-//                 if (isSecuredMedia) {
-//                     val iv =
-//                         runBlocking {
-//                             withContext(Dispatchers.IO) {
-//                                 applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(absolutePath)
-//                             }
-//                         }
-// 
-//                     EncryptedDataSourceFactory(
-//                         absolutePath = absolutePath,
-//                         iv = iv
-//                     )
-//                 } else {
-//
-//                 }
 
             val defaultDataSourceFactory = DefaultDataSource.Factory(context)
             val dataSourceFactory = DefaultDataSource.Factory(

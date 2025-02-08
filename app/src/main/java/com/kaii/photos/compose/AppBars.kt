@@ -8,7 +8,6 @@ import android.view.WindowInsetsController
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SizeTransform
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -50,7 +49,6 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -71,7 +69,6 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowInsetsCompat
-import com.kaii.photos.MainActivity
 import com.kaii.photos.MainActivity.Companion.applicationDatabase
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
@@ -278,6 +275,97 @@ fun getAppBarContentTransition(slideLeft: Boolean) = run {
             )
         )
     }
+}
+
+@Composable
+fun MainAppTopBar(
+    alternate: Boolean,
+    showDialog: MutableState<Boolean>,
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    currentView: MutableState<MainScreenViewType>
+) {
+    DualFunctionTopAppBar(
+        alternated = alternate,
+        title = {
+            Row {
+                Text(
+                    text = "Lavender ",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = TextUnit(22f, TextUnitType.Sp)
+                )
+                Text(
+                    text = "Photos",
+                    fontWeight = FontWeight.Normal,
+                    fontSize = TextUnit(22f, TextUnitType.Sp)
+                )
+            }
+        },
+        actions = {
+            AnimatedVisibility(
+                visible = currentView.value == MainScreenViewType.AlbumsGridView,
+                enter = scaleIn(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    )
+                ),
+                exit = scaleOut(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    )
+                )
+            ) {
+                val activityLauncher = createPersistablePermissionLauncher { uri ->
+                    uri.path?.let {
+                        val dir = File(it)
+
+                        val pathSections = dir.absolutePath.replace(baseInternalStorageDirectory, "").split(":")
+                        val path = pathSections[pathSections.size - 1]
+
+                        Log.d(TAG, "Added album path $path")
+
+                        mainViewModel.settings.AlbumsList.addToAlbumsList(path)
+                    }
+                }
+
+                IconButton(
+                    onClick = {
+                        activityLauncher.launch(null)
+                    },
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.add),
+                        contentDescription = "Add album",
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
+
+            IconButton(
+                onClick = {
+                    showDialog.value = true
+                },
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.settings),
+                    contentDescription = "Settings Button",
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        },
+        alternateTitle = {
+            SelectViewTopBarLeftButtons(selectedItemsList = selectedItemsList)
+        },
+        alternateActions = {
+            SelectViewTopBarRightButtons(
+                selectedItemsList = selectedItemsList,
+                currentView = currentView
+            )
+        },
+    )
 }
 
 @Composable
@@ -513,109 +601,15 @@ fun IsSelectingTopBar(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     currentView: MutableState<MainScreenViewType>
 ) {
-    val groupedMedia = MainActivity.mainViewModel.groupedMedia.collectAsState(initial = emptyList())
-
-    val selectedItemsWithoutSection by remember {
-        derivedStateOf {
-            selectedItemsList.filter {
-                it.type != MediaType.Section && it != MediaStoreData()
-            }
-        }
-    }
-
     TopAppBar(
         title = {
-            SplitButton(
-                primaryContentPadding = PaddingValues(16.dp, 0.dp, 12.dp, 0.dp),
-                secondaryContentPadding = PaddingValues(8.dp, 8.dp, 12.dp, 8.dp),
-                secondaryContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                primaryContent = {
-                    Icon(
-                        painter = painterResource(id = R.drawable.close),
-                        contentDescription = "clear selection button",
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier
-                            .size(24.dp)
-                    )
-                },
-                secondaryContent = {
-                    Text(
-                        text = selectedItemsWithoutSection.size.toString(),
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontSize = TextUnit(18f, TextUnitType.Sp),
-                        modifier = Modifier
-                            .wrapContentSize()
-                            .animateContentSize()
-                    )
-                },
-                primaryAction = {
-                    selectedItemsList.clear()
-                },
-                secondaryAction = {
-                    selectedItemsList.clear()
-                }
-            )
+            SelectViewTopBarLeftButtons(selectedItemsList = selectedItemsList)
         },
         actions = {
-            val allItemsList by remember { derivedStateOf { groupedMedia.value ?: emptyList() } }
-            val isTicked by remember {
-                derivedStateOf {
-                    selectedItemsList.size == allItemsList.size
-                }
-            }
-
-            IconButton(
-                onClick = {
-                    if (groupedMedia.value != null) {
-                        if (isTicked) {
-                            selectedItemsList.clear()
-                            selectedItemsList.add(MediaStoreData())
-                        } else {
-                            selectedItemsList.clear()
-
-                            selectedItemsList.addAll(allItemsList)
-                        }
-                    }
-                },
-                modifier = Modifier
-                    .clip(RoundedCornerShape(1000.dp))
-                    .size(42.dp)
-                    .background(if (isTicked) MaterialTheme.colorScheme.primary else Color.Transparent)
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.checklist),
-                    contentDescription = "select all items",
-                    tint = if (isTicked) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier
-                        .size(24.dp)
-                )
-            }
-
-            val showMoreOptionsDialog = remember { mutableStateOf(false)}
-
-            if (showMoreOptionsDialog.value) {
-                SelectingMoreOptionsDialog(
-                    showDialog = showMoreOptionsDialog,
-                    selectedItems = selectedItemsWithoutSection,
-                    currentView = currentView
-                ) {
-                	selectedItemsList.clear()
-                }
-            }
-
-            IconButton(
-                onClick = {
-                    showMoreOptionsDialog.value = true
-                },
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.more_options),
-                    contentDescription = "show more options for selected items",
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier
-                        .size(24.dp)
-                )
-            }
+            SelectViewTopBarRightButtons(
+                selectedItemsList = selectedItemsList,
+                currentView = currentView
+            )
         },
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.background
@@ -1538,94 +1532,6 @@ fun DualFunctionTopAppBar(
                 	}
                 }
             }
-        },
-    )
-}
-
-@Composable
-fun MainAppTopBar(
-    alternate: Boolean,
-    showDialog: MutableState<Boolean>,
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
-    currentView: MutableState<MainScreenViewType>
-) {
-    DualFunctionTopAppBar(
-        alternated = alternate,
-        title = {
-            Row {
-                Text(
-                    text = "Lavender ",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = TextUnit(22f, TextUnitType.Sp)
-                )
-                Text(
-                    text = "Photos",
-                    fontWeight = FontWeight.Normal,
-                    fontSize = TextUnit(22f, TextUnitType.Sp)
-                )
-            }
-        },
-        actions = {
-            AnimatedVisibility(
-                visible = currentView.value == MainScreenViewType.AlbumsGridView,
-                enter = scaleIn(
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness = Spring.StiffnessMedium
-                    )
-                ),
-                exit = scaleOut(
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness = Spring.StiffnessMedium
-                    )
-                )
-            ) {
-                val activityLauncher = createPersistablePermissionLauncher { uri ->
-                    uri.path?.let {
-                        val dir = File(it)
-
-                        val pathSections = dir.absolutePath.replace(baseInternalStorageDirectory, "").split(":")
-                        val path = pathSections[pathSections.size - 1]
-
-                        Log.d(TAG, "Added album path $path")
-
-                        mainViewModel.settings.AlbumsList.addToAlbumsList(path)
-                    }
-                }
-
-                IconButton(
-                    onClick = {
-                        activityLauncher.launch(null)
-                    },
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.add),
-                        contentDescription = "Add album",
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-            }
-
-            IconButton(
-                onClick = {
-                    showDialog.value = true
-                },
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.settings),
-                    contentDescription = "Settings Button",
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-        },
-        alternateTitle = {
-            SelectViewTopBarLeftButtons(selectedItemsList = selectedItemsList)
-        },
-        alternateActions = {
-            SelectViewTopBarRightButtons(selectedItemsList = selectedItemsList)
         },
     )
 }

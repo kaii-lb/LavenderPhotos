@@ -62,8 +62,12 @@ class EncryptionManager {
     private fun writeToOutputStream(
         inputStream: InputStream,
         outputStream: OutputStream,
-        cipher: Cipher
+        cipher: Cipher,
+        progress: (progress: Float) -> Unit
     ) {
+        val totalLength = if (inputStream.available() != 0) inputStream.available().toFloat() else 1f
+        var currentProgress = 0f
+
         val buffer = ByteArray(cipher.blockSize * 1024 * 32)
 
         var read = 0
@@ -71,8 +75,11 @@ class EncryptionManager {
             read = inputStream.read(buffer)
 
             cipher.update(buffer)?.let {
+            	currentProgress += it.size / totalLength
+                progress(currentProgress)
+
                 outputStream.write(it)
-                Log.d(TAG, "WRITING DATA $read >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+                Log.d(TAG, "Progress: $currentProgress, writing data of size $read bytes >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
             }
         }
 
@@ -97,7 +104,7 @@ class EncryptionManager {
             inputStream = inputStream,
             outputStream = outputStream,
             cipher = cipher
-        )
+        ) {}
 
         return cipher.iv
     }
@@ -114,7 +121,7 @@ class EncryptionManager {
             inputStream = inputStream,
             outputStream = outputStream,
             cipher = cipher
-        )
+        ) {}
     }
 
     private fun writeToByteArray(
@@ -169,7 +176,12 @@ class EncryptionManager {
         return Pair(encrypted, cipher.iv)
     }
 
-    fun decryptVideo(absolutePath: String, iv: ByteArray, context: Context): File {
+    fun decryptVideo(
+        absolutePath: String,
+        iv: ByteArray,
+        context: Context,
+        progress: (progress: Float) -> Unit
+    ): File {
     	Log.d(TAG, "trying to decrypt video $absolutePath")
 
         val original = File(absolutePath)
@@ -188,7 +200,9 @@ class EncryptionManager {
             inputStream = inputStream,
             outputStream = outputStream,
             cipher = cipher
-        )
+        ) {
+            progress(it)
+        }
 
         return destination
     }

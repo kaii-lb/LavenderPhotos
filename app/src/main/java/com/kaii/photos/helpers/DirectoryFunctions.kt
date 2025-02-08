@@ -28,20 +28,20 @@ fun Path.checkHasFiles(
         Files.walkFileTree(this, object : FileVisitor<Path> {
             override fun preVisitDirectory(dir: Path?, attrs: BasicFileAttributes?): FileVisitResult {
                 if (dir?.startsWith(this@checkHasFiles) == true && !dir.endsWith(this@checkHasFiles) && matchSubDirs) {
-					throw IOException("won't search path that's a subdir of ${this@checkHasFiles}")
+                    throw IOException("won't search path that's a subdir of ${this@checkHasFiles}")
                 }
 
                 val dataPath = baseInternalStorageDirectory + "Android/data"
                 val obbPath = baseInternalStorageDirectory + "Android/obb"
-				return if (dir?.startsWith(dataPath) == true || dir?.startsWith(obbPath) == true) {
-					if (this@checkHasFiles.startsWith(dataPath) || this@checkHasFiles.startsWith(obbPath)) {
-						throw IOException("Can't access file with path $this")
-					} else {
-						FileVisitResult.SKIP_SUBTREE
-					}
-				} else {
-					FileVisitResult.CONTINUE
-				}
+                return if (dir?.startsWith(dataPath) == true || dir?.startsWith(obbPath) == true) {
+                    if (this@checkHasFiles.startsWith(dataPath) || this@checkHasFiles.startsWith(obbPath)) {
+                        throw IOException("Can't access file with path $this")
+                    } else {
+                        FileVisitResult.SKIP_SUBTREE
+                    }
+                } else {
+                    FileVisitResult.CONTINUE
+                }
             }
 
             override fun visitFile(path: Path?, attrs: BasicFileAttributes?): FileVisitResult {
@@ -111,15 +111,15 @@ fun Path.getAllAlbumsOnDevice(): List<String> {
                 val dataPath = baseInternalStorageDirectory + "Android/data"
                 val obbPath = baseInternalStorageDirectory + "Android/obb"
 
-				return if (dir?.startsWith(dataPath) == true || dir?.startsWith(obbPath) == true) {
-					if (this@getAllAlbumsOnDevice.startsWith(dataPath) || this@getAllAlbumsOnDevice.startsWith(obbPath)) {
-						throw IOException("Can't access file with path $this")
-					} else {
-						FileVisitResult.SKIP_SUBTREE
-					}
-				} else {
-					FileVisitResult.CONTINUE
-				}
+                return if (dir?.startsWith(dataPath) == true || dir?.startsWith(obbPath) == true) {
+                    if (this@getAllAlbumsOnDevice.startsWith(dataPath) || this@getAllAlbumsOnDevice.startsWith(obbPath)) {
+                        throw IOException("Can't access file with path $this")
+                    } else {
+                        FileVisitResult.SKIP_SUBTREE
+                    }
+                } else {
+                    FileVisitResult.CONTINUE
+                }
             }
 
             override fun visitFile(path: Path?, attrs: BasicFileAttributes?): FileVisitResult {

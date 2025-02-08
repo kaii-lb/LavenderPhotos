@@ -1,7 +1,6 @@
 package com.kaii.photos.compose
 
 import android.content.res.Configuration
-import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
@@ -65,10 +64,11 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.kaii.photos.R
 import com.kaii.photos.MainActivity.Companion.mainViewModel
+import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 
-private const val TAG = "MISCELLANEOUS"
+// private const val TAG = "MISCELLANEOUS"
 
 @Composable
 fun SplitButton(
@@ -365,16 +365,18 @@ fun SelectViewTopBarLeftButtons(
 
 @Composable
 fun SelectViewTopBarRightButtons(
-	selectedItemsList: SnapshotStateList<MediaStoreData>
+	selectedItemsList: SnapshotStateList<MediaStoreData>,
+    currentView: MutableState<MainScreenViewType>
 ) {
 	val groupedMedia = mainViewModel.groupedMedia.collectAsStateWithLifecycle(initialValue = emptyList())
 
-	val isTicked by remember {
-	    derivedStateOf {
-	    	Log.d(TAG, "SELECTED ${selectedItemsList.size} GROUPED ${groupedMedia.value?.size}")
-	        selectedItemsList.size == groupedMedia.value?.size
-	    }
-	}
+    val selectedItemsWithoutSection by remember {
+        derivedStateOf {
+            selectedItemsList.filter {
+                it.type != MediaType.Section && it != MediaStoreData()
+            }
+        }
+    }
 
     Row (
         modifier = Modifier
@@ -382,17 +384,24 @@ fun SelectViewTopBarRightButtons(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {
+        val allItemsList by remember { derivedStateOf { groupedMedia.value ?: emptyList() } }
+        val isTicked by remember {
+            derivedStateOf {
+                selectedItemsList.size == allItemsList.size
+            }
+        }
+
         IconButton(
             onClick = {
-                if (isTicked) {
-                    selectedItemsList.clear()
-                    selectedItemsList.add(MediaStoreData())
-                } else {
-                    selectedItemsList.clear()
+                if (groupedMedia.value != null) {
+                    if (isTicked) {
+                        selectedItemsList.clear()
+                        selectedItemsList.add(MediaStoreData())
+                    } else {
+                        selectedItemsList.clear()
 
-					groupedMedia.value?.let {
-						selectedItemsList.addAll(it)
-					}
+                        selectedItemsList.addAll(allItemsList)
+                    }
                 }
             },
             modifier = Modifier
@@ -409,18 +418,32 @@ fun SelectViewTopBarRightButtons(
             )
         }
 
-        IconButton(
-            onClick = {
-                // showDialog.value = true
-            },
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.more_options),
-                contentDescription = "show more options for selected items",
-                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier
-                    .size(24.dp)
-            )
+        if (currentView.value != MainScreenViewType.SecureFolder) {
+            val showMoreOptionsDialog = remember { mutableStateOf(false)}
+
+            if (showMoreOptionsDialog.value) {
+                SelectingMoreOptionsDialog(
+                    showDialog = showMoreOptionsDialog,
+                    selectedItems = selectedItemsWithoutSection,
+                    currentView = currentView
+                ) {
+                    selectedItemsList.clear()
+                }
+            }
+
+            IconButton(
+                onClick = {
+                    showMoreOptionsDialog.value = true
+                },
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.more_options),
+                    contentDescription = "show more options for selected items",
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier
+                        .size(24.dp)
+                )
+            }
         }
     }
 }

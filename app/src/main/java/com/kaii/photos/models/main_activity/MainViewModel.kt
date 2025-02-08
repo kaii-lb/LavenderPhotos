@@ -70,8 +70,7 @@ class MainViewModel(context: Context) : ViewModel() {
     			)
     		} else {
     			listOf(
-		    		Manifest.permission.READ_EXTERNAL_STORAGE,
-		    		Manifest.permission.WRITE_EXTERNAL_STORAGE
+		    		Manifest.permission.READ_EXTERNAL_STORAGE
     			)
     		}
 
