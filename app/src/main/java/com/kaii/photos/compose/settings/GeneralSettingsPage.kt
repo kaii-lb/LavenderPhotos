@@ -99,132 +99,132 @@ fun GeneralSettingsPage() {
                         manageMediaLauncher.launch(intent)
                     }
                 }
+            }
 
-                item {
-                    PreferencesSeparatorText("Video")
-                }
+            item {
+                PreferencesSeparatorText("Video")
+            }
 
-                item {
-                    val shouldAutoPlay by mainViewModel.settings.Video.getShouldAutoPlay().collectAsStateWithLifecycle(initialValue = true)
-                    val muteOnStart by mainViewModel.settings.Video.getMuteOnStart().collectAsStateWithLifecycle(initialValue = false)
+            item {
+                val shouldAutoPlay by mainViewModel.settings.Video.getShouldAutoPlay().collectAsStateWithLifecycle(initialValue = true)
+                val muteOnStart by mainViewModel.settings.Video.getMuteOnStart().collectAsStateWithLifecycle(initialValue = false)
 
-                    PreferencesSwitchRow(
-                        title = "Auto Play Videos",
-                        summary = "Start playing videos as soon as they appear on screen",
-                        iconResID = R.drawable.auto_play,
-                        checked = shouldAutoPlay,
-                        position = RowPosition.Single,
-                        showBackground = false,
-                        onRowClick = null,
-                        onSwitchClick = { checked ->
-                            mainViewModel.settings.Video.setShouldAutoPlay(checked)
-                        }
-                    )
-
-                    PreferencesSwitchRow(
-                        title = "Videos Start Muted",
-                        summary = "Don't play audio when first starting video playback",
-                        iconResID = R.drawable.volume_mute,
-                        checked = muteOnStart,
-                        position = RowPosition.Single,
-                        showBackground = false,
-                        onRowClick = null,
-                        onSwitchClick = { checked ->
-                            mainViewModel.settings.Video.setMuteOnStart(checked)
-                        }
-                    )
-                }
-
-
-                item {
-                    PreferencesSeparatorText("Editing")
-                }
-
-                item {
-                    val overwriteByDefault by mainViewModel.settings.Editing.getOverwriteByDefault().collectAsStateWithLifecycle(initialValue = false)
-
-                    PreferencesSwitchRow(
-                        title = "Overwrite on save",
-                        summary = "Default to overwriting instead of saving a copy when editing media.",
-                        iconResID = R.drawable.storage,
-                        checked = overwriteByDefault,
-                        position = RowPosition.Single,
-                        showBackground = false,
-                        onRowClick = null,
-                        onSwitchClick = { checked ->
-                            mainViewModel.settings.Editing.setOverwriteByDefault(checked)
-                        }
-                    )
-                }
-
-                item {
-                    PreferencesSeparatorText("Main Photos View")
-                }
-
-                item {
-                    val mainPhotosAlbums by mainViewModel.settings.MainPhotosList.getAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
-                    val allAlbums by mainViewModel.settings.AlbumsList.getAlbumsList().collectAsStateWithLifecycle(initialValue = emptyList())
-
-                    val showAlbumsSelectionDialog = remember { mutableStateOf(false) }
-                    val selectedAlbums = remember { mutableStateListOf<String>() }
-
-                    PreferencesRow(
-                        title = "Main Albums List",
-                        iconResID = R.drawable.photogrid,
-                        position = RowPosition.Single,
-                        showBackground = false,
-                        summary = "Select albums that will have their photos displayed in the main photo view"
-                    ) {
-                        selectedAlbums.clear()
-                        selectedAlbums.addAll(
-                        	mainPhotosAlbums.map {
-                        		it.apply {
-                        			removeSuffix("/")
-                        		}
-                        	}
-                       	)
-
-                        showAlbumsSelectionDialog.value = true
+                PreferencesSwitchRow(
+                    title = "Auto Play Videos",
+                    summary = "Start playing videos as soon as they appear on screen",
+                    iconResID = R.drawable.auto_play,
+                    checked = shouldAutoPlay,
+                    position = RowPosition.Single,
+                    showBackground = false,
+                    onRowClick = null,
+                    onSwitchClick = { checked ->
+                        mainViewModel.settings.Video.setShouldAutoPlay(checked)
                     }
+                )
 
-                    if (showAlbumsSelectionDialog.value) {
-                        SelectableButtonListDialog(
-                            title = "Selected Albums",
-                            body = "Albums selected here will show up in the main photo view",
-                            showDialog = showAlbumsSelectionDialog,
-                            onConfirm = {
-                                mainViewModel.settings.MainPhotosList.clear()
+                PreferencesSwitchRow(
+                    title = "Videos Start Muted",
+                    summary = "Don't play audio when first starting video playback",
+                    iconResID = R.drawable.volume_mute,
+                    checked = muteOnStart,
+                    position = RowPosition.Single,
+                    showBackground = false,
+                    onRowClick = null,
+                    onSwitchClick = { checked ->
+                        mainViewModel.settings.Video.setMuteOnStart(checked)
+                    }
+                )
+            }
 
-                                selectedAlbums.forEach { album ->
-                                    mainViewModel.settings.MainPhotosList.addAlbum(album.removeSuffix("/"))
-                                }
-                            },
-                            buttons = {
-                                LazyColumn(
-                                    modifier = Modifier
-                                        .fillMaxWidth(1f)
-                                        .height(384.dp)
-                                ) {
-                                    items(
-                                        count = allAlbums.size
-                                    ) { index ->
-                                        val associatedAlbum = allAlbums[index]
 
-                                        CheckBoxButtonRow(
-                                            text = associatedAlbum,
-                                            checked = selectedAlbums.contains(associatedAlbum)
-                                        ) {
-                                            if (selectedAlbums.contains(associatedAlbum) && selectedAlbums.size > 1) {
-                                                selectedAlbums.remove(associatedAlbum)
-                                            } else {
-                                                selectedAlbums.add(associatedAlbum)
-                                            }
+            item {
+                PreferencesSeparatorText("Editing")
+            }
+
+            item {
+                val overwriteByDefault by mainViewModel.settings.Editing.getOverwriteByDefault().collectAsStateWithLifecycle(initialValue = false)
+
+                PreferencesSwitchRow(
+                    title = "Overwrite on save",
+                    summary = "Default to overwriting instead of saving a copy when editing media.",
+                    iconResID = R.drawable.storage,
+                    checked = overwriteByDefault,
+                    position = RowPosition.Single,
+                    showBackground = false,
+                    onRowClick = null,
+                    onSwitchClick = { checked ->
+                        mainViewModel.settings.Editing.setOverwriteByDefault(checked)
+                    }
+                )
+            }
+
+            item {
+                PreferencesSeparatorText("Main Photos View")
+            }
+
+            item {
+                val mainPhotosAlbums by mainViewModel.settings.MainPhotosList.getAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
+                val allAlbums by mainViewModel.settings.AlbumsList.getAlbumsList().collectAsStateWithLifecycle(initialValue = emptyList())
+
+                val showAlbumsSelectionDialog = remember { mutableStateOf(false) }
+                val selectedAlbums = remember { mutableStateListOf<String>() }
+
+                PreferencesRow(
+                    title = "Main Albums List",
+                    iconResID = R.drawable.photogrid,
+                    position = RowPosition.Single,
+                    showBackground = false,
+                    summary = "Select albums that will have their photos displayed in the main photo view"
+                ) {
+                    selectedAlbums.clear()
+                    selectedAlbums.addAll(
+                    	mainPhotosAlbums.map {
+                    		it.apply {
+                    			removeSuffix("/")
+                    		}
+                    	}
+                   	)
+
+                    showAlbumsSelectionDialog.value = true
+                }
+
+                if (showAlbumsSelectionDialog.value) {
+                    SelectableButtonListDialog(
+                        title = "Selected Albums",
+                        body = "Albums selected here will show up in the main photo view",
+                        showDialog = showAlbumsSelectionDialog,
+                        onConfirm = {
+                            mainViewModel.settings.MainPhotosList.clear()
+
+                            selectedAlbums.forEach { album ->
+                                mainViewModel.settings.MainPhotosList.addAlbum(album.removeSuffix("/"))
+                            }
+                        },
+                        buttons = {
+                            LazyColumn(
+                                modifier = Modifier
+                                    .fillMaxWidth(1f)
+                                    .height(384.dp)
+                            ) {
+                                items(
+                                    count = allAlbums.size
+                                ) { index ->
+                                    val associatedAlbum = allAlbums[index]
+
+                                    CheckBoxButtonRow(
+                                        text = associatedAlbum,
+                                        checked = selectedAlbums.contains(associatedAlbum)
+                                    ) {
+                                        if (selectedAlbums.contains(associatedAlbum) && selectedAlbums.size > 1) {
+                                            selectedAlbums.remove(associatedAlbum)
+                                        } else {
+                                            selectedAlbums.add(associatedAlbum)
                                         }
                                     }
                                 }
                             }
-                        )
-                    }
+                        }
+                    )
                 }
             }
         }

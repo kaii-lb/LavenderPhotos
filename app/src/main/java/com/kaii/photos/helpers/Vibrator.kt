@@ -1,29 +1,34 @@
 package com.kaii.photos.helpers
 
 import android.content.Context
+import android.os.Build
 import android.os.CombinedVibration
 import android.os.VibrationEffect
 import android.os.VibratorManager
+import android.os.Vibrator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 
+@Suppress("DEPRECATION")
 @Composable
-fun rememberVibratorManager() : VibratorManager {
-    val vibrator = LocalContext.current.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
-    return remember {
-        vibrator
-    }
+fun rememberVibratorManager() : Vibrator {
+	val context = LocalContext.current
+
+	return remember {
+	   	if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) (context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
+	   	else context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+	}
 }
 
-fun VibratorManager.vibrateShort() {
-    this.defaultVibrator.vibrate(
+fun Vibrator.vibrateShort() {
+    vibrate(
         VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
     )
 }
 
-fun VibratorManager.vibrateLong() {
-    this.defaultVibrator.vibrate(
+fun Vibrator.vibrateLong() {
+    vibrate(
         VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK)
     )
 }
