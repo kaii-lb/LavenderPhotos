@@ -625,43 +625,46 @@ fun SingleSecuredPhotoInfoDialog(
 					}
 
 					val context = LocalContext.current
+					val coroutineScope = rememberCoroutineScope()
+
                     LaunchedEffect(Unit) {
                     	showLoadingDialog = true
 
-						// TODO: find better solution than doing THIS everytime
-                    	val absolutePath =
-	                    	if (currentMediaItem.type == MediaType.Video) {
-	                    		val originalFile = File(currentMediaItem.absolutePath)
-	                    		var newFile = getSecureDecryptedVideoFile(
-	                    			name = currentMediaItem.displayName!!,
-	                    			context = context
-                    			)
+						coroutineScope.launch(Dispatchers.IO) {
+	                    	val absolutePath =
+		                    	if (currentMediaItem.type == MediaType.Video) {
+		                    		val originalFile = File(currentMediaItem.absolutePath)
+		                    		var newFile = getSecureDecryptedVideoFile(
+		                    			name = currentMediaItem.displayName!!,
+		                    			context = context
+	                    			)
 
-	                    		while(newFile.length() < originalFile.length()) {
-	                    			delay(100)
-	                    		}
+		                    		while(newFile.length() < originalFile.length()) {
+		                    			delay(100)
+		                    		}
 
-	                    		newFile.absolutePath
-	                    	} else {
-								val originalFile = File(currentMediaItem.absolutePath)
-								val newFile = File(context.appSecureThumbnailCacheDir + "/" + originalFile.nameWithoutExtension + ".temp" + "." + originalFile.extension)
-								val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(currentMediaItem.absolutePath)
+		                    		newFile.absolutePath
+		                    	} else {
+									val originalFile = File(currentMediaItem.absolutePath)
+									val newFile = getSecuredCacheImageForFile(fileName = originalFile.nameWithoutExtension + ".temp" + "." + originalFile.extension, context = context)
+									val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(currentMediaItem.absolutePath)
 
-								EncryptionManager().decryptInputStream(
-									inputStream = originalFile.inputStream(),
-									outputStream = newFile.outputStream(),
-									iv = iv
-								)
+									EncryptionManager().decryptInputStream(
+										inputStream = originalFile.inputStream(),
+										outputStream = newFile.outputStream(),
+										iv = iv
+									)
 
-								newFile.absolutePath
-							}
+									newFile.absolutePath
+								}
 
-                        getExifDataForMedia(absolutePath).collect {
-                            mediaData = it
-                        }
+	                        getExifDataForMedia(absolutePath).collect {
+	                            mediaData = it
+	                        }
 
-                        showLoadingDialog = false
-                        File(absolutePath).delete()
+	                        showLoadingDialog = false
+	                        File(absolutePath).delete()
+						}
                     }
 
                     Column(
