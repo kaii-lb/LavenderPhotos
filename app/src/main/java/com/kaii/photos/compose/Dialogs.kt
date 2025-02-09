@@ -1486,7 +1486,7 @@ fun SelectingMoreOptionsDialog(
                         iconResId = R.drawable.locked_folder,
                         position = RowPosition.Single
                     ) {
-                        tryGetDirPermission.value = true
+                    	if (selectedItems.isNotEmpty()) tryGetDirPermission.value = true
                     }
                 }
             }
