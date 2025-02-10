@@ -281,6 +281,7 @@ fun DeviceMedia(
             }
 
             LazyVerticalGrid(
+            	state = gridState,
                 columns = GridCells.Fixed(
                     if (!isLandscape) {
                         3
@@ -292,22 +293,16 @@ fun DeviceMedia(
                 modifier = Modifier
                     .fillMaxSize(1f)
                     .align(Alignment.TopCenter)
-                    .then(
-                        if (isDragSelecting.value || selectedItemsList.isNotEmpty()) {
-                            Modifier
-                                .dragSelectionHandler(
-                                    state = gridState,
-                                    selectedItemsList = selectedItemsList,
-                                    groupedMedia = groupedMedia.value,
-                                    scrollSpeed = scrollSpeed,
-                                    scrollThreshold = with(localDensity) {
-                                        40.dp.toPx()
-                                    },
-                                    isDragSelecting = isDragSelecting
-                                )
-                        } else Modifier
-                    ),
-                state = gridState
+	                .dragSelectionHandler(
+	                    state = gridState,
+	                    selectedItemsList = selectedItemsList,
+	                    groupedMedia = groupedMedia.value,
+	                    scrollSpeed = scrollSpeed,
+	                    scrollThreshold = with(localDensity) {
+	                        40.dp.toPx()
+	                    },
+	                    isDragSelecting = isDragSelecting
+	                )
             ) {
                 items(
                     count = groupedMedia.value.size,
@@ -333,9 +328,7 @@ fun DeviceMedia(
                     Row(
                         modifier = Modifier
                             .wrapContentSize()
-                            .animateItem(
-                                fadeInSpec = null
-                            )
+                            .animateItem()
                     ) {
                         val navController = LocalNavController.current
 
@@ -834,26 +827,30 @@ fun Modifier.dragSelectionHandler(
 
     if (groupedMedia.isEmpty()) return@pointerInput
 
-    val numberOfHorizontalItems = state.layoutInfo.viewportSize.width / state.layoutInfo.visibleItemsInfo[0].size.width
+	// 1 instead of 0 since 0 is always a date seperator with full width
+    val numberOfHorizontalItems = state.layoutInfo.viewportSize.width / state.layoutInfo.visibleItemsInfo[1].size.width
 
     detectDragGestures(
         onDragStart = { offset ->
-            isDragSelecting.value = true
+        	if (selectedItemsList.isNotEmpty()) {
+	            isDragSelecting.value = true
 
-            if (selectedItemsList.size == 1 && selectedItemsList[0] != MediaStoreData()) {
-                initialKey = groupedMedia.indexOf(selectedItemsList[0])
-                currentKey = initialKey
-            } else {
-                state.getGridItemAtOffset(offset, groupedMedia, numberOfHorizontalItems)?.let { key ->
-                    val item = groupedMedia[key]
+	            if (selectedItemsList.size == 1 && selectedItemsList[0] != MediaStoreData()) {
+	                initialKey = groupedMedia.indexOf(selectedItemsList[0])
+	                currentKey = initialKey
+	            } else {
+	                state.getGridItemAtOffset<String>(offset, groupedMedia.map { it.uri.toString() }, numberOfHorizontalItems)?.let { key ->
+	                    val item = groupedMedia[key]
 
-                    if (item.type != MediaType.Section) {
-                        initialKey = key
-                        currentKey = key
-                        if (!selectedItemsList.contains(item)) selectedItemsList.selectItem(item, groupedMedia)
-                    }
-                }
-            }
+	                    if (item.type != MediaType.Section) {
+	                        initialKey = key
+	                        currentKey = key
+	                        if (!selectedItemsList.contains(item)) selectedItemsList.selectItem(item, groupedMedia)
+	                    }
+	                }
+	            }
+        	}
+
         },
 
         onDragCancel = {
@@ -879,7 +876,7 @@ fun Modifier.dragSelectionHandler(
                     else -> 0f
                 }
 
-                state.getGridItemAtOffset(change.position, groupedMedia, numberOfHorizontalItems)?.let { key ->
+                state.getGridItemAtOffset<String>(change.position, groupedMedia.map { it.uri.toString() }, numberOfHorizontalItems)?.let { key ->
                     if (currentKey != key) {
                         selectedItemsList.apply {
                             val toBeRemoved =
@@ -913,8 +910,10 @@ fun Modifier.dragSelectionHandler(
     )
 }
 
-fun LazyGridState.getGridItemAtOffset(offset: Offset, groupedMedia: List<MediaStoreData>, numberOfHorizontalItems: Int): Int? {
-    var key: String? = null
+@Suppress("UNCHECKED_CAST")
+/** make sure [T] is the same type as state keys */
+fun <T: Any>LazyGridState.getGridItemAtOffset(offset: Offset, keys: List<T>, numberOfHorizontalItems: Int): Int? {
+    var key: T? = null
 
     Log.d(TAG, "grid displays $numberOfHorizontalItems horizontal items")
 
@@ -930,19 +929,20 @@ fun LazyGridState.getGridItemAtOffset(offset: Offset, groupedMedia: List<MediaSt
                     right = it.right * i
                 )
             }
+
             stretched.contains(offset.round() - item.offset)
         }
 
         if (possibleItem != null) {
-            key = possibleItem.key as String
+            key = possibleItem.key as T
             break
         }
     }
 
-    val found = groupedMedia.find {
-        it.uri.toString() == key
+    val found = keys.find {
+        it == key
     } ?: return null
 
-    return groupedMedia.indexOf(found)
+    return keys.indexOf(found)
 }
 
