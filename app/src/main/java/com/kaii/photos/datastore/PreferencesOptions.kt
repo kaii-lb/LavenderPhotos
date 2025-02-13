@@ -1,4 +1,8 @@
 package com.kaii.photos.datastore
 
-class PreferencesOptions {
+// order is important
+enum class AlbumSortMode {
+    LastModified,
+    Alphabetically,
+    Custom
 }

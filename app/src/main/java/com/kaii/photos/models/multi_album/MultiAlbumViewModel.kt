@@ -11,7 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.MainActivity.Companion.mainViewModel
-import com.kaii.photos.datastore.MainPhotosList
+import com.kaii.photos.datastore.MainPhotosView
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.SectionItem
 import com.kaii.photos.mediastore.MediaStoreData
@@ -65,7 +65,7 @@ class MultiAlbumViewModel(
     	albumsList: List<String>,
     	sortBy: MediaItemSortMode
    	) = run {
-    	val query = mainViewModel.settings.MainPhotosList.getSQLiteQuery(albumsList)
+    	val query = mainViewModel.settings.MainPhotosView.getSQLiteQuery(albumsList)
     	Log.d(TAG, "query is $query")
 
 		albums = albumsList

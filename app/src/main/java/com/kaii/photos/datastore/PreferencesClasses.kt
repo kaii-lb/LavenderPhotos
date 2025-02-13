@@ -4,6 +4,7 @@ import android.content.Context
 import android.provider.MediaStore.Files.FileColumns
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.io.path.Path
+import kotlin.reflect.KProperty
 
 const val separator = "|-SEPARATOR-|"
 private const val TAG = "PREFERENCES_CLASSES"
@@ -26,6 +28,8 @@ class Settings(val context: Context, val viewModelScope: CoroutineScope)
 
 class SettingsAlbumsListImpl(private val context: Context, private val viewModelScope: CoroutineScope) {
     private val albumsListKey = stringPreferencesKey("album_folder_path_list")
+    private val sortModeKey = intPreferencesKey("album_sort_mode")
+    private val sortModeOrderKey = booleanPreferencesKey("album_sort_mode_order")
 
     fun addToAlbumsList(path: String) = viewModelScope.launch {
     	if (path == "") return@launch
@@ -89,7 +93,27 @@ class SettingsAlbumsListImpl(private val context: Context, private val viewModel
             return@map split
         }
 
-    private fun setAlbumsList(list: List<String>) = viewModelScope.launch {
+    fun setAlbumSortMode(sortMode: AlbumSortMode) = viewModelScope.launch {
+        context.datastore.edit {
+            it[sortModeKey] = sortMode.ordinal
+        }
+    }
+
+    fun getAlbumSortMode() : Flow<AlbumSortMode> = context.datastore.data.map {
+        AlbumSortMode.entries[it[sortModeKey] ?: AlbumSortMode.LastModified.ordinal]
+    }
+
+    fun setSortByDescending(descending: Boolean) = viewModelScope.launch {
+        context.datastore.edit {
+            it[sortModeOrderKey] = descending
+        }
+    }
+
+    fun getSortByDescending() = context.datastore.data.map {
+        it[sortModeOrderKey] ?: true
+    }
+
+    fun setAlbumsList(list: List<String>) = viewModelScope.launch {
         context.datastore.edit {
             var stringList = ""
             list.distinct().forEach { album ->
@@ -100,7 +124,7 @@ class SettingsAlbumsListImpl(private val context: Context, private val viewModel
         }
     }
 
-    private fun getDefaultAlbumsList() : List<String> =
+    private fun getDefaultAlbumsList() =
         listOf(
             "DCIM/Camera",
             "Pictures",
@@ -294,7 +318,7 @@ class SettingsEditingImpl(private val context: Context, private val viewModelSco
     }
 }
 
-class SettingsMainPhotosListImpl(private val context: Context, private val viewModelScope: CoroutineScope) {
+class SettingMainPhotosViewImpl(private val context: Context, private val viewModelScope: CoroutineScope) {
 	private val mainPhotosAlbumsList = stringPreferencesKey("main_photos_albums_list")
 
 	fun getAlbums() : Flow<List<String>> =

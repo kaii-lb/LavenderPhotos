@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -51,9 +52,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.material3.MaterialTheme
 import androidx.core.net.toUri
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -70,8 +69,8 @@ import com.kaii.photos.compose.LockedFolderEntryView
 import com.kaii.photos.compose.MainAppBottomBar
 import com.kaii.photos.compose.MainAppDialog
 import com.kaii.photos.compose.MainAppSelectingBottomBar
-import com.kaii.photos.compose.PermissionHandler
 import com.kaii.photos.compose.MainAppTopBar
+import com.kaii.photos.compose.PermissionHandler
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.getAppBarContentTransition
 import com.kaii.photos.compose.grids.AlbumsGridView
@@ -100,24 +99,19 @@ import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.Debugging
 import com.kaii.photos.datastore.Editing
 import com.kaii.photos.datastore.LookAndFeel
-import com.kaii.photos.datastore.MainPhotosList
-import com.kaii.photos.datastore.Versions
+import com.kaii.photos.datastore.MainPhotosView
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.appStorageDir
-import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.models.main_activity.MainViewModel
 import com.kaii.photos.models.main_activity.MainViewModelFactory
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModelFactory
-import com.kaii.photos.models.trash_bin.TrashViewModel
-import com.kaii.photos.models.trash_bin.TrashViewModelFactory
 import com.kaii.photos.ui.theme.PhotosTheme
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collectLatest
 import java.io.File
 
 private const val TAG = "MAIN_ACTIVITY"
@@ -235,48 +229,38 @@ class MainActivity : ComponentActivity() {
         val canRecordLogs by mainViewModel.settings.Debugging.getRecordLogs().collectAsStateWithLifecycle(initialValue = false)
 
         LaunchedEffect(canRecordLogs) {
-			if (canRecordLogs) {
-				try {
-					File(logPath).delete()
-					Runtime.getRuntime().exec("logcat -c")
-					Runtime.getRuntime().exec("logcat -f $logPath")
-				} catch (e: Throwable) {
-					Log.e(TAG, e.toString())
-				}
-			}
+            if (canRecordLogs) {
+                try {
+                    File(logPath).delete()
+                    Runtime.getRuntime().exec("logcat -c")
+                    Runtime.getRuntime().exec("logcat -f $logPath")
+                } catch (e: Throwable) {
+                    Log.e(TAG, e.toString())
+                }
+            }
         }
 
         mainViewModel.settings.AlbumsList.addToAlbumsList("DCIM/Camera")
 
-        val listOfDirs = mainViewModel.settings.AlbumsList.getAlbumsList().collectAsStateWithLifecycle(initialValue = emptyList()).value.toMutableList()
-
-        listOfDirs.sortByDescending {
-            File("$baseInternalStorageDirectory$it").lastModified()
-        }
-        listOfDirs.find { it == "DCIM/Camera" }?.let { cameraItem ->
-            listOfDirs.remove(cameraItem)
-            listOfDirs.add(0, cameraItem)
-        }
-
-        val albumsList by mainViewModel.settings.MainPhotosList.getAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
+        val albumsList by mainViewModel.settings.MainPhotosView.getAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
         val multiAlbumViewModel: MultiAlbumViewModel = viewModel(
             factory = MultiAlbumViewModelFactory(
                 context = context,
-               	albums = albumsList,
+                albums = albumsList,
                 sortBy = MediaItemSortMode.DateTaken
             )
         )
 
         LaunchedEffect(albumsList) {
-        	if (navControllerLocal.currentBackStackEntry?.destination?.route != MultiScreenViewType.MainScreen.name) return@LaunchedEffect
+            if (navControllerLocal.currentBackStackEntry?.destination?.route != MultiScreenViewType.MainScreen.name) return@LaunchedEffect
 
-			Log.d(TAG, "Refreshing main photos view")
-			Log.d(TAG, "In view model: ${multiAlbumViewModel.albums} new: $albumsList")
-        	multiAlbumViewModel.reinitDataSource(
-        		context = context,
-        		albumsList = albumsList,
-        		sortBy = MediaItemSortMode.DateTaken
-        	)
+            Log.d(TAG, "Refreshing main photos view")
+            Log.d(TAG, "In view model: ${multiAlbumViewModel.albums} new: $albumsList")
+            multiAlbumViewModel.reinitDataSource(
+                context = context,
+                albumsList = albumsList,
+                sortBy = MediaItemSortMode.DateTaken
+            )
         }
 
         CompositionLocalProvider(LocalNavController provides navControllerLocal) {
@@ -333,15 +317,15 @@ class MainActivity : ComponentActivity() {
                         window = window
                     )
 
-					if (albumsList != multiAlbumViewModel.albums) {
-					    multiAlbumViewModel.reinitDataSource(
-					        context = context,
-					        albumsList = albumsList,
-					        sortBy = multiAlbumViewModel.sortBy
-					    )
-					}
+                    if (albumsList != multiAlbumViewModel.albums) {
+                        multiAlbumViewModel.reinitDataSource(
+                            context = context,
+                            albumsList = albumsList,
+                            sortBy = multiAlbumViewModel.sortBy
+                        )
+                    }
 
-                    Content(currentView, showDialog, selectedItemsList, listOfDirs, multiAlbumViewModel)
+                    Content(currentView, showDialog, selectedItemsList, multiAlbumViewModel)
                 }
 
                 composable<Screens.SinglePhotoView> {
@@ -407,10 +391,10 @@ class MainActivity : ComponentActivity() {
                     }
 
                     SingleAlbumView(
-                    	selectedItemsList = selectedItemsList,
-                    	currentView = currentView,
-                    	viewModel = multiAlbumViewModel
-                   	)
+                        selectedItemsList = selectedItemsList,
+                        currentView = currentView,
+                        viewModel = multiAlbumViewModel
+                    )
                 }
 
                 composable<Screens.SingleTrashedPhotoView> {
@@ -429,12 +413,12 @@ class MainActivity : ComponentActivity() {
                     val screen: Screens.SingleTrashedPhotoView = it.toRoute()
 
                     SingleTrashedPhotoView(
-                    	window = window,
-                    	scale = scale,
-                    	rotation = rotation,
-                    	offset = offset,
+                        window = window,
+                        scale = scale,
+                        rotation = rotation,
+                        offset = offset,
                         mediaItemId = screen.mediaItemId
-                   	)
+                    )
                 }
 
                 composable(MultiScreenViewType.TrashedPhotoView.name) {
@@ -700,7 +684,6 @@ class MainActivity : ComponentActivity() {
         currentView: MutableState<MainScreenViewType>,
         showDialog: MutableState<Boolean>,
         selectedItemsList: SnapshotStateList<MediaStoreData>,
-        listOfDirs: List<String>,
         multiAlbumViewModel: MultiAlbumViewModel,
     ) {
         val mediaStoreData =
@@ -752,7 +735,7 @@ class MainActivity : ComponentActivity() {
             ) {
                 MainAppDialog(showDialog, currentView, selectedItemsList)
 
-				val context = LocalContext.current
+                val context = LocalContext.current
                 AnimatedContent(
                     targetState = currentView.value,
                     transitionSpec = {
@@ -782,11 +765,11 @@ class MainActivity : ComponentActivity() {
 
                         MainScreenViewType.SecureFolder -> LockedFolderEntryView(currentView)
                         MainScreenViewType.AlbumsGridView -> {
-                            AlbumsGridView(listOfDirs, currentView)
+                            AlbumsGridView(currentView)
                         }
 
                         MainScreenViewType.SearchPage -> {
-                        	selectedItemsList.clear()
+                            selectedItemsList.clear()
 
                             SearchPage(selectedItemsList, currentView)
                         }
@@ -802,11 +785,11 @@ class MainActivity : ComponentActivity() {
         selectedItemsList: SnapshotStateList<MediaStoreData>,
         currentView: MutableState<MainScreenViewType>
     ) {
-		val show by remember {
-		    derivedStateOf {
-		        selectedItemsList.size > 0
-		    }
-		}
+        val show by remember {
+            derivedStateOf {
+                selectedItemsList.size > 0
+            }
+        }
 
         MainAppTopBar(
             alternate = show,

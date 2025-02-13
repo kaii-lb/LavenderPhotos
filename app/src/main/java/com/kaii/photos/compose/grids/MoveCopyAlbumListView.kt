@@ -74,6 +74,7 @@ import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.album_grid.AlbumsViewModel
 import com.kaii.photos.models.album_grid.AlbumsViewModelFactory
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -92,7 +93,7 @@ fun MoveCopyAlbumListView(
     val albumsViewModel: AlbumsViewModel = viewModel(
         factory = AlbumsViewModelFactory(context, originalAlbumsList)
     )
-    val dataList = albumsViewModel.mediaStoreData.collectAsState()
+    val dataList = albumsViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
     var albumsList by remember { mutableStateOf(originalAlbumsList) }
 

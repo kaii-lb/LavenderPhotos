@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -28,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -43,9 +43,11 @@ import com.kaii.photos.compose.CheckBoxButtonRow
 import com.kaii.photos.compose.PreferencesRow
 import com.kaii.photos.compose.PreferencesSeparatorText
 import com.kaii.photos.compose.PreferencesSwitchRow
+import com.kaii.photos.compose.RadioButtonRow
+import com.kaii.photos.datastore.AlbumSortMode
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.Editing
-import com.kaii.photos.datastore.MainPhotosList
+import com.kaii.photos.datastore.MainPhotosView
 import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.RowPosition
@@ -146,7 +148,7 @@ fun GeneralSettingsPage() {
 
                 PreferencesSwitchRow(
                     title = "Overwrite on save",
-                    summary = "Default to overwriting instead of saving a copy when editing media.",
+                    summary = "Default to overwriting instead of saving a copy when editing media",
                     iconResID = R.drawable.storage,
                     checked = overwriteByDefault,
                     position = RowPosition.Single,
@@ -159,11 +161,11 @@ fun GeneralSettingsPage() {
             }
 
             item {
-                PreferencesSeparatorText("Main Photos View")
+                PreferencesSeparatorText("Albums")
             }
 
             item {
-                val mainPhotosAlbums by mainViewModel.settings.MainPhotosList.getAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
+                val mainPhotosAlbums by mainViewModel.settings.MainPhotosView.getAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
                 val allAlbums by mainViewModel.settings.AlbumsList.getAlbumsList().collectAsStateWithLifecycle(initialValue = emptyList())
 
                 val showAlbumsSelectionDialog = remember { mutableStateOf(false) }
@@ -194,10 +196,10 @@ fun GeneralSettingsPage() {
                         body = "Albums selected here will show up in the main photo view",
                         showDialog = showAlbumsSelectionDialog,
                         onConfirm = {
-                            mainViewModel.settings.MainPhotosList.clear()
+                            mainViewModel.settings.MainPhotosView.clear()
 
                             selectedAlbums.forEach { album ->
-                                mainViewModel.settings.MainPhotosList.addAlbum(album.removeSuffix("/"))
+                                mainViewModel.settings.MainPhotosView.addAlbum(album.removeSuffix("/"))
                             }
                         },
                         buttons = {

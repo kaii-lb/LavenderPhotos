@@ -9,9 +9,11 @@ import android.os.Looper
 import android.provider.MediaStore
 import android.provider.MediaStore.Files.FileColumns
 import android.provider.MediaStore.MediaColumns
+import android.util.Log
 import com.bumptech.glide.util.Preconditions
 import com.bumptech.glide.util.Util
 import com.kaii.photos.helpers.getDateTakenForMedia
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -20,11 +22,14 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
+private const val TAG = "ALBUM_STORE_DATA_SOURCE"
+
 /** Loads metadata from the media store for images and videos. */
 class AlbumStoreDataSource
 internal constructor(
     private val context: Context,
     private val multiplePaths: List<String>,
+    private val cancellationSignal: CancellationSignal
 ) {
     companion object {
         private val MEDIA_STORE_FILE_URI = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL)
@@ -40,7 +45,7 @@ internal constructor(
     }
 
     fun loadMediaStoreData(): Flow<LinkedHashMap<String, MediaStoreData>> = callbackFlow {
-        var cancellationSignal = CancellationSignal()
+        var localCancellationSignal = CancellationSignal()
         val mutex = Mutex()
 
         val contentObserver =
@@ -49,8 +54,8 @@ internal constructor(
                     super.onChange(selfChange)
                     launch(Dispatchers.IO) {
                         mutex.withLock {
-                            cancellationSignal.cancel()
-                            cancellationSignal = CancellationSignal()
+                            localCancellationSignal.cancel()
+                            localCancellationSignal = CancellationSignal()
                         }
 
                         runCatching {
@@ -80,8 +85,16 @@ internal constructor(
             }
         }
 
+        cancellationSignal.setOnCancelListener {
+            try {
+                cancel("Cancelling AlbumStoreDataSource because of exit signal...")
+            } catch (e: Throwable) {
+                Log.e(TAG, e.toString())
+            }
+        }
+
         awaitClose {
-            cancellationSignal.cancel()
+            localCancellationSignal.cancel()
             context.contentResolver.unregisterContentObserver(contentObserver)
         }
     }

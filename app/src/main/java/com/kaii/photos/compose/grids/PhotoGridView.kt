@@ -827,30 +827,29 @@ fun Modifier.dragSelectionHandler(
 
     if (groupedMedia.isEmpty()) return@pointerInput
 
-	// 1 instead of 0 since 0 is always a date seperator with full width
+	// 1 instead of 0 since 0 is always a date separator with full width
     val numberOfHorizontalItems = state.layoutInfo.viewportSize.width / state.layoutInfo.visibleItemsInfo[1].size.width
+
+    Log.d(TAG, "grid displays $numberOfHorizontalItems horizontal items")
 
     detectDragGestures(
         onDragStart = { offset ->
-        	if (selectedItemsList.isNotEmpty()) {
-	            isDragSelecting.value = true
+            isDragSelecting.value = true
 
-	            if (selectedItemsList.size == 1 && selectedItemsList[0] != MediaStoreData()) {
-	                initialKey = groupedMedia.indexOf(selectedItemsList[0])
-	                currentKey = initialKey
-	            } else {
-	                state.getGridItemAtOffset<String>(offset, groupedMedia.map { it.uri.toString() }, numberOfHorizontalItems)?.let { key ->
-	                    val item = groupedMedia[key]
+            if (selectedItemsList.size == 1 && selectedItemsList[0] != MediaStoreData()) {
+                initialKey = groupedMedia.indexOf(selectedItemsList[0])
+                currentKey = initialKey
+            } else {
+                state.getGridItemAtOffset(offset, groupedMedia.map { it.uri.toString() }, numberOfHorizontalItems)?.let { key ->
+                    val item = groupedMedia[key]
 
-	                    if (item.type != MediaType.Section) {
-	                        initialKey = key
-	                        currentKey = key
-	                        if (!selectedItemsList.contains(item)) selectedItemsList.selectItem(item, groupedMedia)
-	                    }
-	                }
-	            }
-        	}
-
+                    if (item.type != MediaType.Section) {
+                        initialKey = key
+                        currentKey = key
+                        if (!selectedItemsList.contains(item)) selectedItemsList.selectItem(item, groupedMedia)
+                    }
+                }
+            }
         },
 
         onDragCancel = {
@@ -876,7 +875,7 @@ fun Modifier.dragSelectionHandler(
                     else -> 0f
                 }
 
-                state.getGridItemAtOffset<String>(change.position, groupedMedia.map { it.uri.toString() }, numberOfHorizontalItems)?.let { key ->
+                state.getGridItemAtOffset(change.position, groupedMedia.map { it.uri.toString() }, numberOfHorizontalItems)?.let { key ->
                     if (currentKey != key) {
                         selectedItemsList.apply {
                             val toBeRemoved =
@@ -914,8 +913,6 @@ fun Modifier.dragSelectionHandler(
 /** make sure [T] is the same type as state keys */
 fun <T: Any>LazyGridState.getGridItemAtOffset(offset: Offset, keys: List<T>, numberOfHorizontalItems: Int): Int? {
     var key: T? = null
-
-    Log.d(TAG, "grid displays $numberOfHorizontalItems horizontal items")
 
     // scan the entire row for this item
     // if theres only one or two items on a row and user drag selects to the empty space they get selected

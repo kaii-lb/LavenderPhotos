@@ -227,7 +227,7 @@ private fun MemoryAndStorageSettingsTopBar() {
 @Composable
 fun SelectableButtonListDialog(
 	title: String,
-	body: String,
+	body: String? = null,
     showDialog: MutableState<Boolean>,
     buttons: @Composable ColumnScope.() -> Unit,
     onConfirm: () -> Unit
@@ -261,16 +261,18 @@ fun SelectableButtonListDialog(
                     .wrapContentSize()
             )
 
-			Spacer (modifier = Modifier.height(8.dp))
+			if (body != null) {
+				Spacer (modifier = Modifier.height(8.dp))
 
-            Text(
-                text = body,
-                fontSize = TextUnit(14f, TextUnitType.Sp),
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                modifier = Modifier
-                    .wrapContentSize()
-                    .padding(12.dp, 0.dp)
-            )
+	            Text(
+	                text = body,
+	                fontSize = TextUnit(14f, TextUnitType.Sp),
+	                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+	                modifier = Modifier
+	                    .wrapContentSize()
+	                    .padding(12.dp, 0.dp)
+	            )
+			}
 
 			Spacer (modifier = Modifier.height(8.dp))
 
