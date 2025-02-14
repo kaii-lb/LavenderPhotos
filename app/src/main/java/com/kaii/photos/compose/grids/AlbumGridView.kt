@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateIntOffsetAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -162,7 +164,7 @@ fun AlbumsGridView(
                 }
             }
 
-			// if the albums didn't change, just the order then don't refresh
+			// if the albums actually changed, not just the order then refresh
             if (albums.value.toSet() != newList.toSet()) {
             	albumsViewModel.refresh(
             		context = context,
@@ -177,6 +179,7 @@ fun AlbumsGridView(
         }
     }
 
+    // update the list to reflect custom order (doesn't matter for other sorting modes)
     LaunchedEffect(albums.value) {
     	if (albums.value.isNotEmpty()) mainViewModel.settings.AlbumsList.setAlbumsList(albums.value)
     }
@@ -277,12 +280,12 @@ fun AlbumsGridView(
                                     it.key == targetItem
                                 }
 
-                                if (selectedItem != targetItem && currentLazyItem != null && targetLazyItem != null) {
+                                if (currentLazyItem != targetLazyItem && currentLazyItem != null && targetLazyItem != null) {
                                     val newList = albums.value.toMutableList()
                                     newList.remove(selectedItem)
                                     newList.add(targetItemIndex, selectedItem!!)
 
-                                    itemOffset += currentLazyItem.offset - targetLazyItem.offset
+                                    itemOffset = change.position.round() - (targetLazyItem.offset + IntOffset(targetLazyItem.size.width / 2, targetLazyItem.size.height / 2))
                                     albums.value = newList.distinct()
 
                                     if (sortMode != AlbumSortMode.Custom) mainViewModel.settings.AlbumsList.setAlbumSortMode(AlbumSortMode.Custom)
@@ -323,9 +326,8 @@ fun AlbumsGridView(
                     albums.value[key]
                 },
             ) { index ->
-                val neededDir = albums.value[index]
-
                 if (albumToThumbnailMapping.isNotEmpty()) {
+                	val neededDir = albums.value[index]	
                     val mediaItem = albumToThumbnailMapping[neededDir] ?: MediaStoreData()
 
                     AlbumGridItem(
@@ -337,9 +339,8 @@ fun AlbumsGridView(
                                 if (selectedItem == neededDir) 1f
                                 else 0f
                             )
-                            .graphicsLayer {
-                                translationX = if (selectedItem == neededDir) itemOffset.x.toFloat() else 0f
-                                translationY = if (selectedItem == neededDir) itemOffset.y.toFloat() else 0f
+                            .offset {
+                                if (selectedItem == neededDir) itemOffset else IntOffset.Zero
                             }
                             .wrapContentSize()
                             .animateItem(
@@ -350,11 +351,10 @@ fun AlbumsGridView(
                                     durationMillis = 250
                                 ),
                                 placementSpec =
-	                                if (selectedItem == neededDir) null
-	                                else tween(durationMillis = 250)
+                                    if (selectedItem == neededDir) null // if is selected don't animate so no weird snapping back and forth happens
+                                    else tween(durationMillis = 250)
                             )
                     ) {
-                        mainViewModel.setSelectedAlbumDir(neededDir)
                         navController.navigate(
                             Screens.SingleAlbumView(
                                 albums = listOf(neededDir)
