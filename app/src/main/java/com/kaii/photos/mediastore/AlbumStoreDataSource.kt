@@ -124,9 +124,6 @@ internal constructor(
 
             if (cursor.moveToFirst()) {
                 val id = cursor.getLong(idColNum)
-                val dateTaken = getDateTakenForMedia(
-                    cursor.getString(absolutePathColNum)
-                )
                 val mimeType = cursor.getString(mimeTypeColNum)
                 val dateModified = cursor.getLong(dateModifiedColNum)
                 val displayName = cursor.getString(displayNameIndex)
@@ -139,7 +136,7 @@ internal constructor(
                         uri = Uri.withAppendedPath(MEDIA_STORE_FILE_URI, id.toString()),
                         mimeType = mimeType,
                         dateModified = dateModified,
-                        dateTaken = dateTaken,
+                        dateTaken = dateModified,
                         displayName = displayName,
                     )
                 )
