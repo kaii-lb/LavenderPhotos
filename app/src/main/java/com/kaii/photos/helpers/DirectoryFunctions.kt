@@ -2,6 +2,7 @@ package com.kaii.photos.helpers
 
 import android.os.Environment
 import android.util.Log
+import kotlinx.coroutines.flow.flow
 import java.io.IOException
 import java.nio.file.FileVisitResult
 import java.nio.file.FileVisitor
@@ -111,12 +112,10 @@ fun Path.getAllAlbumsOnDevice(): List<String> {
                 val dataPath = baseInternalStorageDirectory + "Android/data"
                 val obbPath = baseInternalStorageDirectory + "Android/obb"
 
-                return if (dir?.startsWith(dataPath) == true || dir?.startsWith(obbPath) == true) {
-                    if (this@getAllAlbumsOnDevice.startsWith(dataPath) || this@getAllAlbumsOnDevice.startsWith(obbPath)) {
-                        throw IOException("Can't access file with path $this")
-                    } else {
-                        FileVisitResult.SKIP_SUBTREE
-                    }
+				return if (dir?.toString()?.replace(baseInternalStorageDirectory, "") in albums) {
+					FileVisitResult.SKIP_SUBTREE
+				} else if (dir?.startsWith(dataPath) == true || dir?.startsWith(obbPath) == true) {
+                    FileVisitResult.SKIP_SUBTREE
                 } else {
                     FileVisitResult.CONTINUE
                 }
@@ -126,6 +125,10 @@ fun Path.getAllAlbumsOnDevice(): List<String> {
                 if (path != null) {
                     val matchForDotFiles = Regex("\\.[A-z]")
                     val file = path.toFile()
+
+					val fileParentPath = file.absolutePath.replace(baseInternalStorageDirectory, "").replace(file.name, "")
+                    if (fileParentPath in albums) return FileVisitResult.SKIP_SUBTREE
+
                     val isDotFile = file.absolutePath.contains(matchForDotFiles) && file.name.startsWith(".")
 
                     Log.d(TAG, "Trying to scan file ${file.absolutePath}.")
@@ -138,9 +141,10 @@ fun Path.getAllAlbumsOnDevice(): List<String> {
                             val isMedia = mimeType.contains("image") || mimeType.contains("video")
 
                             if (isNormal && isMedia) {
-                                Log.d(TAG, "Scanned file ${file.absolutePath} matches all prerequisites, exiting....")
+                                Log.d(TAG, "Scanned file ${file.absolutePath} matches all prerequisites, moving on....")
 
-                                albums.add(file.absolutePath.replace(baseInternalStorageDirectory, ""))
+                                if (!albums.contains(fileParentPath)) albums.add(fileParentPath)
+
                                 return FileVisitResult.SKIP_SUBTREE
                             }
                         }
@@ -163,5 +167,9 @@ fun Path.getAllAlbumsOnDevice(): List<String> {
         e.printStackTrace()
     }
 
-    return albums
+	Log.d(TAG, "Got all albums on device.")
+
+    return albums.map {
+    	it.removeSuffix("/")
+    }
 }

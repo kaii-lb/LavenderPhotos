@@ -15,6 +15,8 @@ import com.kaii.photos.helpers.getAllAlbumsOnDevice
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -30,6 +32,7 @@ class SettingsAlbumsListImpl(private val context: Context, private val viewModel
     private val albumsListKey = stringPreferencesKey("album_folder_path_list")
     private val sortModeKey = intPreferencesKey("album_sort_mode")
     private val sortModeOrderKey = booleanPreferencesKey("album_sort_mode_order")
+    private val autoDetectAlbums = booleanPreferencesKey("album_auto_detect")
 
     fun addToAlbumsList(path: String) = viewModelScope.launch {
     	if (path == "") return@launch
@@ -69,21 +72,21 @@ class SettingsAlbumsListImpl(private val context: Context, private val viewModel
         }
     }
 
-    fun getAlbumsList(): Flow<List<String>> =
-        context.datastore.data.map { data ->
+    fun getAlbumsList(): Flow<List<String>> = channelFlow {
+        val prevList = context.datastore.data.map { data ->
             val list = data[albumsListKey]
             val isPreV083 = list?.startsWith(",") == true// if list starts with a , then its using an old version of list storing system, move to new version
 
             if (list == null) {
-            	val defaultList = getDefaultAlbumsList()
-            	setAlbumsList(defaultList)
-            	return@map defaultList
+                val defaultList = getDefaultAlbumsList()
+                setAlbumsList(defaultList)
+                return@map defaultList
             } else if (isPreV083) {
-            	val split = list.split(",").distinct().toMutableList()
-            	split.remove("")
-            	split.remove("/storage/emulated/0")
+                val split = list.split(",").distinct().toMutableList()
+                split.remove("")
+                split.remove("/storage/emulated/0")
 
-            	return@map split
+                return@map split
             }
 
             val split = list.split(separator).distinct().toMutableList()
@@ -92,6 +95,17 @@ class SettingsAlbumsListImpl(private val context: Context, private val viewModel
 
             return@map split
         }
+
+        prevList.collectLatest { send(it) }
+
+        val autoDetectAlbums = getAutoDetect()
+
+        autoDetectAlbums.collectLatest {
+            if (it) {
+                send(getAllAlbumsOnDevice())
+            }
+        }
+    }
 
     fun setAlbumSortMode(sortMode: AlbumSortMode) = viewModelScope.launch {
         context.datastore.edit {
@@ -124,6 +138,16 @@ class SettingsAlbumsListImpl(private val context: Context, private val viewModel
         }
     }
 
+    fun getAutoDetect() = context.datastore.data.map {
+        it[autoDetectAlbums] ?: true
+    }
+
+    fun setAutoDetect(value: Boolean) = viewModelScope.launch {
+        context.datastore.edit {
+            it[autoDetectAlbums] = value
+        }
+    }
+
     private fun getDefaultAlbumsList() =
         listOf(
             "DCIM/Camera",
@@ -133,7 +157,7 @@ class SettingsAlbumsListImpl(private val context: Context, private val viewModel
             "Download"
         )
 
-	private suspend fun getAllAlbumsOnDevice() : List<String> = withContext(Dispatchers.IO) {
+	suspend fun getAllAlbumsOnDevice() : List<String> = withContext(Dispatchers.IO) {
 		Path(baseInternalStorageDirectory).getAllAlbumsOnDevice()
 	}
 }

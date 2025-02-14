@@ -63,11 +63,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
+import androidx.compose.ui.unit.center
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -280,14 +282,15 @@ fun AlbumsGridView(
                                     it.key == targetItem
                                 }
 
-                                if (currentLazyItem != targetLazyItem && currentLazyItem != null && targetLazyItem != null) {
+                                if (currentLazyItem != null && targetLazyItem != null) {
                                     val newList = albums.value.toMutableList()
                                     newList.remove(selectedItem)
                                     newList.add(targetItemIndex, selectedItem!!)
 
-                                    itemOffset = change.position.round() - (targetLazyItem.offset + IntOffset(targetLazyItem.size.width / 2, targetLazyItem.size.height / 2))
-                                    albums.value = newList.distinct()
+                                    itemOffset =
+                                    	change.position.round() - (targetLazyItem.offset + targetLazyItem.size.center)
 
+                                    albums.value = newList.distinct()
                                     if (sortMode != AlbumSortMode.Custom) mainViewModel.settings.AlbumsList.setAlbumSortMode(AlbumSortMode.Custom)
                                 }
                             }
@@ -431,6 +434,7 @@ private fun AlbumGridItem(
                 textAlign = TextAlign.Start,
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 modifier = Modifier
                     .fillMaxWidth(1f)
                     .padding(2.dp)

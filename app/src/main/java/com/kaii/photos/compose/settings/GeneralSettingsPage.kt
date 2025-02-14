@@ -27,6 +27,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,6 +53,7 @@ import com.kaii.photos.datastore.MainPhotosView
 import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.RowPosition
+import kotlinx.coroutines.launch
 
 @Composable
 fun GeneralSettingsPage() {
@@ -228,6 +231,47 @@ fun GeneralSettingsPage() {
                         }
                     )
                 }
+            }
+
+            item {
+                val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect().collectAsStateWithLifecycle(initialValue = false)
+                val coroutineScope = rememberCoroutineScope()
+                var isAlreadyLoading by remember { mutableStateOf(false) }
+
+                // TODO: maybe show loading dialog
+
+                PreferencesSwitchRow(
+                    title = "Automatically detect albums",
+                    summary = "Detects all the folders with media on the device and adds them to the album list",
+                    iconResID = R.drawable.theme_auto,
+                    position = RowPosition.Single,
+                    showBackground = false,
+                    checked = autoDetectAlbums
+                ) { checked ->
+                    coroutineScope.launch {
+                        if (!isAlreadyLoading) {
+                            isAlreadyLoading = true
+
+							if (checked) {
+	                            val albums = mainViewModel.settings.AlbumsList.getAllAlbumsOnDevice()
+	                            mainViewModel.settings.AlbumsList.setAlbumsList(albums)
+							}
+                            mainViewModel.settings.AlbumsList.setAutoDetect(checked)
+
+                            isAlreadyLoading = false
+                        }
+                    }
+                }
+
+                PreferencesRow(
+	                title = "Clear albums list",
+	                summary = "Select albums that will have their photos displayed in the main photo view",
+	                iconResID = R.drawable.photogrid,
+	                position = RowPosition.Single,
+	                showBackground = false
+	            ) {
+	            	mainViewModel.settings.AlbumsList.setAlbumsList(listOf("DCIM/Camera", "Download"))
+	            }
             }
         }
     }
