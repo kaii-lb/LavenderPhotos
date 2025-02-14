@@ -343,8 +343,6 @@ fun DeviceMedia(
                         ) {
                             when (viewProperties.operation) {
                                 ImageFunctions.LoadNormalImage -> {
-                                    mainViewModel.setSinglePhotoPath(albums)
-                                    mainViewModel.setSelectedMediaData(mediaStoreItem)
                                     // mainViewModel.setGroupedMedia(groupedMedia.value)
 
                                     navController.navigate(
@@ -357,7 +355,6 @@ fun DeviceMedia(
                                 }
 
                                 ImageFunctions.LoadTrashedImage -> {
-                                    mainViewModel.setSelectedMediaData(mediaStoreItem)
                                     // mainViewModel.setGroupedMedia(groupedMedia.value)
                                     navController.navigate(
                                         Screens.SingleTrashedPhotoView(
@@ -367,9 +364,13 @@ fun DeviceMedia(
                                 }
 
                                 ImageFunctions.LoadSecuredImage -> {
-                                    mainViewModel.setSelectedMediaData(mediaStoreItem)
                                     mainViewModel.setGroupedMedia(groupedMedia.value)
-                                    navController.navigate(MultiScreenViewType.SingleHiddenPhotoVew.name)
+
+                                    navController.navigate(
+                                        Screens.SingleHiddenPhotoView(
+                                            mediaItemId = mediaStoreItem.id
+                                        )
+                                    )
                                 }
                             }
                         }

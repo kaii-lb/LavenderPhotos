@@ -1124,7 +1124,6 @@ fun SingleAlbumDialog(
 
                         val mainViewModel = MainActivity.mainViewModel
                         val newDir = dir.replace(title, fileName.value)
-                        mainViewModel.setSelectedAlbumDir(newDir)
 
                         mainViewModel.settings.AlbumsList.editInAlbumsList(dir, fileName.value)
                         showDialog.value = false

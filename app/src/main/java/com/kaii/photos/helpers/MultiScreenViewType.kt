@@ -7,7 +7,6 @@ enum class MultiScreenViewType {
     MainScreen,
     TrashedPhotoView,
     LockedFolderView,
-    SingleHiddenPhotoVew,
     AboutAndUpdateView,
     FavouritesGridView,
     SettingsMainView,
@@ -35,6 +34,11 @@ object Screens {
 
 	@Serializable
 	data class SingleTrashedPhotoView(
+		val mediaItemId: Long
+	)
+
+	@Serializable
+	data class SingleHiddenPhotoView(
 		val mediaItemId: Long
 	)
 

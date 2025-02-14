@@ -32,6 +32,9 @@ import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.toRoute
 import com.kaii.photos.MainActivity.Companion.applicationDatabase
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.SecureFolderViewBottomAppBar
@@ -40,6 +43,7 @@ import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.getDateTakenForMedia
 import com.kaii.photos.helpers.getSecuredCacheImageForFile
@@ -81,7 +85,7 @@ fun LockedFolderView(
 
     LaunchedEffect(hideSecureFolder, lastLifecycleState) {
         if (hideSecureFolder
-            && navController.currentBackStackEntry?.destination?.route != MultiScreenViewType.SingleHiddenPhotoVew.name
+            && navController.currentBackStackEntry?.destination?.hasRoute(Screens.SingleHiddenPhotoView::class) == false
         ) {
             navController.navigate(MultiScreenViewType.MainScreen.name)
         }
@@ -101,7 +105,7 @@ fun LockedFolderView(
 
                 when (event) {
                     Lifecycle.Event.ON_STOP, Lifecycle.Event.ON_DESTROY -> {
-                        if (navController.currentBackStackEntry?.destination?.route != MultiScreenViewType.SingleHiddenPhotoVew.name
+                        if (navController.currentBackStackEntry?.destination?.hasRoute(Screens.SingleHiddenPhotoView::class) == false
                             && navController.currentBackStackEntry?.destination?.route != MultiScreenViewType.MainScreen.name
                         ) {
                             lastLifecycleState = Lifecycle.State.DESTROYED

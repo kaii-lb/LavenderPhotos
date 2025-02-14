@@ -20,12 +20,6 @@ import kotlinx.coroutines.flow.asStateFlow
 private const val TAG = "MAIN_VIEW_MODEL"
 
 class MainViewModel(context: Context) : ViewModel() {
-	private val _selectedMedia = MutableStateFlow<MediaStoreData?>(null)
-    val selectedMediaData: Flow<MediaStoreData?> = _selectedMedia.asStateFlow()
-
-    private val _selectedAlbumDir = MutableStateFlow<String?>(null)
-    val selectedAlbumDir: Flow<String?> = _selectedAlbumDir.asStateFlow()
-
     private val _groupedMedia = MutableStateFlow<List<MediaStoreData>?>(null)
     val groupedMedia: Flow<List<MediaStoreData>?> = _groupedMedia.asStateFlow()
 
@@ -33,26 +27,11 @@ class MainViewModel(context: Context) : ViewModel() {
 
 	val settings = Settings(context, viewModelScope)
 
-    private val _singlePhotoPath = MutableStateFlow<List<String>>(emptyList())
-    val singlePhotoPath: Flow<List<String>> = _singlePhotoPath.asStateFlow()
-
 	val updater = Updater(context = context, coroutineScope = viewModelScope)
-
-    fun setSelectedMediaData(newMediaStoreData: MediaStoreData?) {
-        _selectedMedia.value = newMediaStoreData
-    }
-
-    fun setSelectedAlbumDir(newAlbumDir: String?) {
-        _selectedAlbumDir.value = newAlbumDir
-    }
 
     fun setGroupedMedia(media: List<MediaStoreData>?) {
         _groupedMedia.value = media
     }
-
-	fun setSinglePhotoPath(paths: List<String>) {
-		_singlePhotoPath.value = paths
-	}
 
     fun startupPermissionCheck(context: Context) {
     	// READ_MEDIA_VIDEO isn't necessary as its bundled with READ_MEDIA_IMAGES

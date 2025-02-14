@@ -1,8 +1,6 @@
 package com.kaii.photos.compose.single_photo
 
 import android.annotation.SuppressLint
-import android.content.ContentValues
-import android.provider.MediaStore.MediaColumns
 import android.view.Window
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -40,7 +38,6 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -62,7 +59,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kaii.photos.LocalNavController
-import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.SinglePhotoInfoDialog
 import com.kaii.photos.helpers.GetPermissionAndRun
@@ -70,7 +66,6 @@ import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import com.kaii.photos.models.trash_bin.TrashViewModel
 import com.kaii.photos.models.trash_bin.TrashViewModelFactory
 import kotlinx.coroutines.Dispatchers
@@ -86,10 +81,10 @@ fun SingleTrashedPhotoView(
     offset: MutableState<Offset>,
     mediaItemId: Long,
 ) {
-	val context = LocalContext.current
-	val trashViewModel: TrashViewModel = viewModel(
-		factory = TrashViewModelFactory(context = context)
-	)
+    val context = LocalContext.current
+    val trashViewModel: TrashViewModel = viewModel(
+        factory = TrashViewModelFactory(context = context)
+    )
     val holderGroupedMedia by trashViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
     if (holderGroupedMedia.isEmpty()) return
@@ -364,18 +359,18 @@ private fun BottomBar(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                	val runRestoreAction = remember { mutableStateOf(false) }
-			        GetPermissionAndRun(
-			            uris = listOf(item.uri),
-			            shouldRun = runRestoreAction,
-			            onGranted = {
-			                setTrashedOnPhotoList(
-			                    context = context,
-			                    list = listOf(item.uri),
-			                    trashed = false
-			                )
-			            }
-			        )
+                    val runRestoreAction = remember { mutableStateOf(false) }
+                    GetPermissionAndRun(
+                        uris = listOf(item.uri),
+                        shouldRun = runRestoreAction,
+                        onGranted = {
+                            setTrashedOnPhotoList(
+                                context = context,
+                                list = listOf(item.uri),
+                                trashed = false
+                            )
+                        }
+                    )
 
                     OutlinedButton(
                         onClick = {

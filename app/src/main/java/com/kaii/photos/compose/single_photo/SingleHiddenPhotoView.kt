@@ -99,6 +99,7 @@ import java.io.File
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun SingleHiddenPhotoView(
+    mediaItemId: Long,
     window: Window,
     scale: MutableState<Float>,
     rotation: MutableState<Float>,
@@ -160,10 +161,18 @@ fun SingleHiddenPhotoView(
 
     val mainViewModel = MainActivity.mainViewModel
 
-    val mediaItem = mainViewModel.selectedMediaData.collectAsState(initial = null).value ?: return
+    // val mediaItem = mainViewModel.selectedMediaData.collectAsState(initial = null).value ?: return
 
     val holderGroupedMedia =
         mainViewModel.groupedMedia.collectAsState(initial = null).value ?: return
+
+    val mediaItem by remember { derivedStateOf {
+        holderGroupedMedia.find {
+            it.id == mediaItemId
+        }
+    }}
+
+    if (mediaItem == null) return
 
     val groupedMedia = remember {
         mutableStateOf(

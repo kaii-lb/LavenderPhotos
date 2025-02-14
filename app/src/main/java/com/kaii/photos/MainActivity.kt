@@ -457,7 +457,7 @@ class MainActivity : ComponentActivity() {
                     LockedFolderView(window = window, currentView = currentView)
                 }
 
-                composable(MultiScreenViewType.SingleHiddenPhotoVew.name) {
+                composable<Screens.SingleHiddenPhotoView> {
                     enableEdgeToEdge(
                         navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
                         statusBarStyle = SystemBarStyle.auto(
@@ -470,7 +470,15 @@ class MainActivity : ComponentActivity() {
                         window
                     )
 
-                    SingleHiddenPhotoView(window, scale, rotation, offset)
+                    val screen: Screens.SingleHiddenPhotoView = it.toRoute()
+
+                    SingleHiddenPhotoView(
+                        mediaItemId = screen.mediaItemId,
+                        window = window,
+                        scale = scale,
+                        rotation = rotation,
+                        offset = offset
+                    )
                 }
 
                 composable(MultiScreenViewType.AboutAndUpdateView.name) {
