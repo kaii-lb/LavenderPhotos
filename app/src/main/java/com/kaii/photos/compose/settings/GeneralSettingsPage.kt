@@ -19,6 +19,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -27,9 +28,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -39,14 +41,15 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalNavController
-import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
+import com.kaii.photos.MainActivity.Companion.mainViewModel
+import com.kaii.photos.compose.LavenderSnackbarController
 import com.kaii.photos.compose.CheckBoxButtonRow
 import com.kaii.photos.compose.PreferencesRow
 import com.kaii.photos.compose.PreferencesSeparatorText
 import com.kaii.photos.compose.PreferencesSwitchRow
-import com.kaii.photos.compose.RadioButtonRow
-import com.kaii.photos.datastore.AlbumSortMode
+import com.kaii.photos.compose.LavenderSnackbarLoadingEvent
+import com.kaii.photos.compose.LavenderSnackbarMessageEvent
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.Editing
 import com.kaii.photos.datastore.MainPhotosView
@@ -54,6 +57,9 @@ import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.RowPosition
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @Composable
 fun GeneralSettingsPage() {
@@ -235,42 +241,58 @@ fun GeneralSettingsPage() {
 
             item {
                 val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect().collectAsStateWithLifecycle(initialValue = false)
+                val isAlreadyLoading = remember { mutableStateOf(false) }
                 val coroutineScope = rememberCoroutineScope()
-                var isAlreadyLoading by remember { mutableStateOf(false) }
-
-                // TODO: maybe show loading dialog
 
                 PreferencesSwitchRow(
                     title = "Automatically detect albums",
                     summary = "Detects all the folders with media on the device and adds them to the album list",
-                    iconResID = R.drawable.theme_auto,
+                    iconResID = R.drawable.albums_search,
                     position = RowPosition.Single,
                     showBackground = false,
                     checked = autoDetectAlbums
                 ) { checked ->
-                    coroutineScope.launch {
-                        if (!isAlreadyLoading) {
-                            isAlreadyLoading = true
+                    mainViewModel.launch {
+                        if (!isAlreadyLoading.value) {
+                            isAlreadyLoading.value = true
 
 							if (checked) {
+		                        LavenderSnackbarController.pushEvent(
+		                        	LavenderSnackbarLoadingEvent(
+		                        		message = "Finding albums...",
+		                        		iconResId = R.drawable.albums_search,
+		                        		isLoading = isAlreadyLoading
+		                        	)
+		                        )
 	                            val albums = mainViewModel.settings.AlbumsList.getAllAlbumsOnDevice()
 	                            mainViewModel.settings.AlbumsList.setAlbumsList(albums)
 							}
                             mainViewModel.settings.AlbumsList.setAutoDetect(checked)
 
-                            isAlreadyLoading = false
+                            isAlreadyLoading.value = false
                         }
                     }
                 }
 
                 PreferencesRow(
-	                title = "Clear albums list",
-	                summary = "Select albums that will have their photos displayed in the main photo view",
-	                iconResID = R.drawable.photogrid,
+	                title = "Clear album list",
+	                summary = "Remove all albums except for Camera and Download",
+	                iconResID = R.drawable.albums_clear,
 	                position = RowPosition.Single,
 	                showBackground = false
 	            ) {
-	            	mainViewModel.settings.AlbumsList.setAlbumsList(listOf("DCIM/Camera", "Download"))
+	            	coroutineScope.launch {
+	            		// TODO: don't hard code camera and download dirs
+	            		mainViewModel.settings.AlbumsList.setAlbumsList(listOf("DCIM/Camera", "Download"))
+
+	            		LavenderSnackbarController.pushEvent(
+	            		    LavenderSnackbarMessageEvent(
+	            		        message = "Cleared album list",
+                                duration = SnackbarDuration.Short,
+	            		        iconResId = R.drawable.albums
+	            		    )
+	            		)
+	            	}
 	            }
             }
         }

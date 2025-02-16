@@ -13,6 +13,7 @@ import androidx.lifecycle.viewModelScope
 import com.kaii.photos.datastore.Settings
 import com.kaii.photos.helpers.Updater
 import com.kaii.photos.mediastore.MediaStoreData
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -104,5 +105,9 @@ class MainViewModel(context: Context) : ViewModel() {
 		}
 
     	return permissionQueue.isEmpty() || manageMedia
+    }
+
+    fun launch(block: suspend () -> Unit) = viewModelScope.launch {
+    	block()
     }
 }
