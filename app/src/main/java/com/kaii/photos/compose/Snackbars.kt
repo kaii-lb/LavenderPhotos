@@ -4,6 +4,8 @@ import android.util.Log
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.expandHorizontally
@@ -59,7 +61,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.compose.NavHost
 import com.kaii.photos.R
+import kotlin.random.Random
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -71,6 +75,7 @@ private const val TAG = "SNACK_BARS"
 interface LavenderSnackbarEvent {
     val message: String
     val duration: SnackbarDuration
+    val id: Int
 }
 
 interface LavenderSnackbarData {
@@ -80,35 +85,59 @@ interface LavenderSnackbarData {
     fun dismiss() {}
 }
 
-data class LavenderSnackbarLoadingEvent(
-    override val message: String,
-    @DrawableRes val iconResId: Int,
-    val isLoading: MutableState<Boolean>
-) : LavenderSnackbarEvent {
-    override val duration: SnackbarDuration = SnackbarDuration.Indefinite
+object LavenderSnackbarEvents {
+    /** Shows a [SnackbarWithLoadingIndicator] */
+    data class LoadingEvent(
+        override val message: String,
+        @DrawableRes val iconResId: Int,
+        val isLoading: MutableState<Boolean>,
+        override val id: Int = Random.nextInt()
+    ) : LavenderSnackbarEvent {
+        override val duration: SnackbarDuration = SnackbarDuration.Indefinite
+    }
+
+    /** Shows a [SnackBarWithMessage] */
+    data class MessageEvent(
+        override val message: String,
+        override val duration: SnackbarDuration,
+        @DrawableRes val iconResId: Int,
+        override val id: Int = Random.nextInt()
+    ) : LavenderSnackbarEvent
+
+    /** Shows a [SnackBarWithAction] */
+    data class ActionEvent(
+        override val message: String,
+        override val duration: SnackbarDuration = SnackbarDuration.Indefinite,
+        @DrawableRes val iconResId: Int,
+        @DrawableRes val actionIconResId: Int,
+        val action: () -> Unit,
+        override val id: Int = Random.nextInt()
+    ) : LavenderSnackbarEvent
 }
 
-data class LavenderSnackbarMessageEvent(
-    override val message: String,
-    override val duration: SnackbarDuration,
-    @DrawableRes val iconResId: Int,
-) : LavenderSnackbarEvent
-
+/** Allows sending event to the snackbar controller from any place, composable or not */
 object LavenderSnackbarController {
     private val _events = Channel<LavenderSnackbarEvent>(1)
     val events = _events.receiveAsFlow()
 
+	private var currentId = 0
+
+    /** queue a snackbar event to be displayed */
     suspend fun pushEvent(event: LavenderSnackbarEvent) {
         _events.send(event)
     }
 }
 
+/** Takes events from [LavenderSnackbarController.events] and displays them
+ * latest added event removes whatever is before it, and shows it self
+ * there is a 300ms delay between each event*/
 @Composable
 fun LavenderSnackbarHost(snackbarHostState: LavenderSnackbarHostState) {
     val lifecycleOwner = LocalLifecycleOwner.current
 
 	val inChannel by LavenderSnackbarController.events.collectAsStateWithLifecycle(initialValue = null)
 
+	Log.d(TAG, "in channel $inChannel")
 	// LaunchedEffect cancels whenever the keys change, meaning the suspendCancellableCoroutine is also canceled
 	// this way we don't have to deal with stupid dismissal rules to make sure latest snackbar is always shown
 	// even though this might by hacky
@@ -120,17 +149,7 @@ fun LavenderSnackbarHost(snackbarHostState: LavenderSnackbarHostState) {
 	    	Log.d(TAG, "Trying to show snackbar $inChannel")
 	        snackbarHostState.currentSnackbarEvent?.dismiss()
 	        delay(300)
-	        val result = snackbarHostState.showSnackbar(inChannel!!)
-
-	        when (result) {
-	            SnackbarResult.Dismissed -> {
-	                Log.d(TAG, "snackbar was dismissed")
-	            }
-
-	            SnackbarResult.ActionPerformed -> {
-	                Log.d(TAG, "snackbar had its action performed")
-	            }
-	        }
+	        snackbarHostState.showSnackbar(inChannel!!)
         }
     }
 
@@ -144,12 +163,18 @@ fun LavenderSnackbarHost(snackbarHostState: LavenderSnackbarHostState) {
     }
 }
 
+/** copy paste from composes default private function */
 fun SnackbarDuration.toMillis() = when (this) {
     SnackbarDuration.Indefinite -> Long.MAX_VALUE
     SnackbarDuration.Long -> 10000L
     SnackbarDuration.Short -> 4000L
 }
 
+/** Sets the currently visible snackbar
+ *
+ * Handles the [LavenderSnackbarData.dismiss] and [LavenderSnackbarData.performAction] calls when displaying a snackbar
+ *
+ * Should be remembered, use in conjunction with [LavenderSnackbarHost] */
 class LavenderSnackbarHostState {
     var currentSnackbarEvent: LavenderSnackbarData? by mutableStateOf(null)
         private set
@@ -177,6 +202,7 @@ class LavenderSnackbarHostState {
         return@run result
     }
 
+    // implements the actual dismiss() and performAction()
     private class LavenderSnackbarDataImpl(
         override val event: LavenderSnackbarEvent,
         private val continuation: CancellableContinuation<SnackbarResult>
@@ -189,7 +215,6 @@ class LavenderSnackbarHostState {
             if (continuation.isActive) {
                 continuation.resumeWith(Result.success(SnackbarResult.Dismissed))
             } else {
-                // continuation.cancel()
                 Log.d(TAG, "Dismiss ignored because continuation is not active")
             }
         }
@@ -214,13 +239,18 @@ class LavenderSnackbarHostState {
     }
 }
 
+/** Wrapper for easy displaying of [LavenderSnackbarEvent]s.
+ * wrap around the top-most component of your UI, usually a [NavHost]*/
 @Composable
 fun LavenderSnackbarBox(
     snackbarHostState: LavenderSnackbarHostState,
+    modifier: Modifier = Modifier,
+    enterTransition: EnterTransition = slideInVertically { height -> height } + expandHorizontally { width -> (width * 0.2f).toInt() },
+    exitTransition: ExitTransition = slideOutVertically { height -> height } + shrinkHorizontally { width -> (width * 0.2f).toInt() },
     content: @Composable () -> Unit
 ) {
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize(1f),
         contentAlignment = Alignment.Center
     ) {
@@ -230,8 +260,8 @@ fun LavenderSnackbarBox(
 
         AnimatedVisibility(
             visible = snackbarHostState.currentSnackbarEvent != null,
-            enter = slideInVertically { height -> height } + expandHorizontally { width -> (width * 0.2f).toInt() },
-            exit = slideOutVertically { height -> height } + shrinkHorizontally { width -> (width * 0.2f).toInt() },
+            enter = enterTransition,
+            exit = exitTransition,
             modifier = Modifier
                 .systemBarsPadding()
                 .align(Alignment.BottomCenter)
@@ -239,6 +269,8 @@ fun LavenderSnackbarBox(
                 .wrapContentHeight()
                 .padding(12.dp)
         ) {
+            // keep last event in memory so the exit animation actually works
+            // not proud of this but oh well it works
             var lastEvent by remember { mutableStateOf(snackbarHostState.currentSnackbarEvent!!) }
             val currentEvent = remember(snackbarHostState.currentSnackbarEvent) {
                 if (snackbarHostState.currentSnackbarEvent == null) {
@@ -250,8 +282,8 @@ fun LavenderSnackbarBox(
             }
 
             when (currentEvent.event) {
-                is LavenderSnackbarLoadingEvent -> {
-                    val event = currentEvent.event as LavenderSnackbarLoadingEvent
+                is LavenderSnackbarEvents.LoadingEvent -> {
+                    val event = currentEvent.event as LavenderSnackbarEvents.LoadingEvent
 
                     SnackbarWithLoadingIndicator(
                         message = event.message,
@@ -262,8 +294,8 @@ fun LavenderSnackbarBox(
                     }
                 }
 
-                is LavenderSnackbarMessageEvent -> {
-                    val event = currentEvent.event as LavenderSnackbarMessageEvent
+                is LavenderSnackbarEvents.MessageEvent -> {
+                    val event = currentEvent.event as LavenderSnackbarEvents.MessageEvent
 
                     SnackBarWithMessage(
                         message = event.message,
@@ -271,6 +303,17 @@ fun LavenderSnackbarBox(
                     ) {
                         snackbarHostState.currentSnackbarEvent?.dismiss()
                     }
+                }
+
+                is LavenderSnackbarEvents.ActionEvent -> {
+                    val event = currentEvent.event as LavenderSnackbarEvents.ActionEvent
+
+                    SnackBarWithAction(
+                        message = event.message,
+                        iconResId = event.iconResId,
+                        actionIconResId = event.actionIconResId,
+                        action = event.action
+                    )
                 }
 
                 else -> {
@@ -288,8 +331,9 @@ fun LavenderSnackbarBox(
     }
 }
 
+/** Base snackbar with an icon and a message */
 @Composable
-fun LavenderSnackbar(
+private fun LavenderSnackbar(
     message: String,
     @DrawableRes iconResId: Int,
     containerColor: Color = MaterialTheme.colorScheme.primary,
@@ -336,8 +380,9 @@ fun LavenderSnackbar(
     }
 }
 
+/** A snackbar displaying an icon, a message and its dismiss button*/
 @Composable
-fun SnackBarWithMessage(
+private fun SnackBarWithMessage(
     message: String,
     @DrawableRes iconResId: Int,
     onDismiss: () -> Unit
@@ -361,8 +406,36 @@ fun SnackBarWithMessage(
     }
 }
 
+/** A snackbar displaying an icon, a message and an action */
 @Composable
-fun SnackbarWithLoadingIndicator(
+fun SnackBarWithAction(
+    message: String,
+    @DrawableRes iconResId: Int,
+    @DrawableRes actionIconResId: Int,
+    action: () -> Unit
+) {
+    LavenderSnackbar(
+        message = message,
+        iconResId = iconResId
+    ) {
+        IconButton(
+            onClick = {
+                action()
+            }
+        ) {
+            Icon(
+                painter = painterResource(id = actionIconResId),
+                contentDescription = "Run this snackbar's action",
+                modifier = Modifier
+                    .size(32.dp)
+            )
+        }
+    }
+}
+
+/** A snackbar showing an infinite loading indicator along with a message and an icon */
+@Composable
+private fun SnackbarWithLoadingIndicator(
     message: String,
     @DrawableRes iconResId: Int,
     isLoading: Boolean,

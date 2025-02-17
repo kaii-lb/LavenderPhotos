@@ -3,6 +3,7 @@ package com.kaii.photos.compose.settings
 import android.Manifest
 import android.content.Intent
 import android.os.Build
+import android.os.Environment
 import android.provider.MediaStore
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -28,10 +29,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -48,8 +46,7 @@ import com.kaii.photos.compose.CheckBoxButtonRow
 import com.kaii.photos.compose.PreferencesRow
 import com.kaii.photos.compose.PreferencesSeparatorText
 import com.kaii.photos.compose.PreferencesSwitchRow
-import com.kaii.photos.compose.LavenderSnackbarLoadingEvent
-import com.kaii.photos.compose.LavenderSnackbarMessageEvent
+import com.kaii.photos.compose.LavenderSnackbarEvents
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.Editing
 import com.kaii.photos.datastore.MainPhotosView
@@ -57,9 +54,6 @@ import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.RowPosition
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 @Composable
 fun GeneralSettingsPage() {
@@ -258,8 +252,8 @@ fun GeneralSettingsPage() {
 
 							if (checked) {
 		                        LavenderSnackbarController.pushEvent(
-		                        	LavenderSnackbarLoadingEvent(
-		                        		message = "Finding albums...",
+                                    LavenderSnackbarEvents.LoadingEvent(
+		                        		message = if (isAlreadyLoading.value) "Finding albums..." else "Found all albums!",
 		                        		iconResId = R.drawable.albums_search,
 		                        		isLoading = isAlreadyLoading
 		                        	)
@@ -282,11 +276,15 @@ fun GeneralSettingsPage() {
 	                showBackground = false
 	            ) {
 	            	coroutineScope.launch {
-	            		// TODO: don't hard code camera and download dirs
-	            		mainViewModel.settings.AlbumsList.setAlbumsList(listOf("DCIM/Camera", "Download"))
+	            		mainViewModel.settings.AlbumsList.setAlbumsList(
+                            listOf(
+                                Environment.DIRECTORY_DCIM + "/Camera",
+                                Environment.DIRECTORY_DOWNLOADS
+                            )
+                        )
 
 	            		LavenderSnackbarController.pushEvent(
-	            		    LavenderSnackbarMessageEvent(
+                            LavenderSnackbarEvents.MessageEvent(
 	            		        message = "Cleared album list",
                                 duration = SnackbarDuration.Short,
 	            		        iconResId = R.drawable.albums

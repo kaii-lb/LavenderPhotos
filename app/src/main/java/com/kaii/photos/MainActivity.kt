@@ -275,9 +275,7 @@ class MainActivity : ComponentActivity() {
         }
 
         CompositionLocalProvider(LocalNavController provides navControllerLocal) {
-            LavenderSnackbarBox(
-                snackbarHostState = snackbarHostState
-            ) {
+            LavenderSnackbarBox(snackbarHostState = snackbarHostState) {
                 NavHost(
                     navController = navControllerLocal,
                     startDestination = MultiScreenViewType.MainScreen.name,
