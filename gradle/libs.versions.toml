@@ -1,11 +1,8 @@
 [versions]
-agp = "8.5.2"
+agp = "8.8.1"
 kotlin = "2.0.0"
-pagingComposeAndroid = "3.3.2"
-
-[libraries]
-androidx-paging-compose-android = { group = "androidx.paging", name = "paging-compose-android", version.ref = "pagingComposeAndroid" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin"}

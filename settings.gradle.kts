@@ -16,11 +16,18 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven {
-        	url = uri("https://jitpack.io")
-        }
+        // maven {
+        // 	url = uri("https://jitpack.io")
+        // }
     }
 }
 
 rootProject.name = "Photos"
 include(":app")
+include(":lavender_snackbars")
+
+includeBuild("../LavenderSnackbars") {
+	dependencySubstitution {
+		substitute(module("com.kaii.lavender_snackbars:Lavender-Snackbars")).using(project(":lavender_snackbars"))
+	}
+}

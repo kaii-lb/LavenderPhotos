@@ -41,18 +41,18 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.MainActivity.Companion.mainViewModel
-import com.kaii.photos.compose.LavenderSnackbarController
 import com.kaii.photos.compose.CheckBoxButtonRow
 import com.kaii.photos.compose.PreferencesRow
 import com.kaii.photos.compose.PreferencesSeparatorText
 import com.kaii.photos.compose.PreferencesSwitchRow
-import com.kaii.photos.compose.LavenderSnackbarEvents
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.Editing
 import com.kaii.photos.datastore.MainPhotosView
 import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.lavender_snackbars.LavenderSnackbarController
+import com.kaii.lavender_snackbars.LavenderSnackbarEvents
 import kotlinx.coroutines.launch
 
 @Composable
@@ -286,7 +286,7 @@ fun GeneralSettingsPage() {
 	            		LavenderSnackbarController.pushEvent(
                             LavenderSnackbarEvents.MessageEvent(
 	            		        message = "Cleared album list",
-                                duration = SnackbarDuration.Short,
+                                duration = SnackbarDuration.Indefinite,
 	            		        iconResId = R.drawable.albums
 	            		    )
 	            		)

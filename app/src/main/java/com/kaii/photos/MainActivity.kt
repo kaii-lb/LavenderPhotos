@@ -69,14 +69,12 @@ import androidx.navigation.toRoute
 import androidx.room.Room
 import com.bumptech.glide.Glide
 import com.bumptech.glide.MemoryCategory
-import com.kaii.photos.compose.LavenderSnackbarHostState
 import com.kaii.photos.compose.LockedFolderEntryView
 import com.kaii.photos.compose.MainAppBottomBar
 import com.kaii.photos.compose.MainAppDialog
 import com.kaii.photos.compose.MainAppSelectingBottomBar
 import com.kaii.photos.compose.MainAppTopBar
 import com.kaii.photos.compose.PermissionHandler
-import com.kaii.photos.compose.LavenderSnackbarBox
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.getAppBarContentTransition
 import com.kaii.photos.compose.grids.AlbumsGridView
@@ -117,6 +115,8 @@ import com.kaii.photos.models.main_activity.MainViewModelFactory
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModelFactory
 import com.kaii.photos.ui.theme.PhotosTheme
+import com.kaii.lavender_snackbars.LavenderSnackbarHostState
+import com.kaii.lavender_snackbars.LavenderSnackbarBox
 import kotlinx.coroutines.Dispatchers
 import java.io.File
 
