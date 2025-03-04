@@ -35,3 +35,6 @@ keys/
 photos_signed_debug.apk.idsig
 photos_signed_release.apk.idsig
 photos_signed_universal.apk.idsig
+gradle/wrapper/gradle-wrapper.jar
+gradlew
+gradlew.bat

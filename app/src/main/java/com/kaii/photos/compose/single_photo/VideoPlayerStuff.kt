@@ -41,8 +41,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FilledTonalIconToggleButton
@@ -90,8 +90,8 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.C.VIDEO_SCALING_MODE_SCALE_TO_FIT
@@ -104,18 +104,17 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.ui.PlayerView
 import androidx.navigation.NavHostController
-import com.kaii.photos.R
 import com.kaii.photos.MainActivity.Companion.applicationDatabase
 import com.kaii.photos.MainActivity.Companion.mainViewModel
+import com.kaii.photos.R
 import com.kaii.photos.compose.setBarVisibility
 import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.EncryptionManager
-import com.kaii.photos.helpers.appSecureVideoCacheDir
 import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.getSecureDecryptedVideoFile
 import com.kaii.photos.mediastore.MediaStoreData
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -139,7 +138,7 @@ fun VideoPlayerControls(
     duration: MutableFloatState,
     title: String,
     modifier: Modifier,
-	onSwitchToLandscape: () -> Unit
+    onSwitchToLandscape: () -> Unit
 ) {
     BoxWithConstraints(
         modifier = modifier
@@ -152,7 +151,7 @@ fun VideoPlayerControls(
             isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
 
             if (isLandscape) {
-				onSwitchToLandscape()
+                onSwitchToLandscape()
             }
         }
 
@@ -402,8 +401,8 @@ fun VideoPlayer(
     window: Window,
     modifier: Modifier
 ) {
-	val context = LocalContext.current
-	val isSecuredMedia = item.absolutePath.startsWith(context.appSecureFolderDir)
+    val context = LocalContext.current
+    val isSecuredMedia = item.absolutePath.startsWith(context.appSecureFolderDir)
     var videoSource by remember { mutableStateOf(item.uri) }
 
     if (isSecuredMedia) {
@@ -431,7 +430,7 @@ fun VideoPlayer(
         }
 
         if (!continueToVideo) {
-            Column (
+            Column(
                 modifier = Modifier
                     .fillMaxSize(1f),
                 verticalArrangement = Arrangement.Center,
@@ -442,14 +441,14 @@ fun VideoPlayer(
                     fontSize = TextUnit(16f, TextUnitType.Sp)
                 )
 
-                Spacer (modifier =  Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
                     text = "Progress:",
                     fontSize = TextUnit(16f, TextUnitType.Sp)
                 )
 
-                Spacer (modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
                 LinearProgressIndicator(
                     progress = {
@@ -481,7 +480,7 @@ fun VideoPlayer(
     val exoPlayer = rememberExoPlayerWithLifeCycle(videoSource, item.absolutePath, isPlaying, duration, currentVideoPosition)
     val playerView = rememberPlayerView(exoPlayer, context as Activity, item.absolutePath)
 
-	val muteVideoOnStart by mainViewModel.settings.Video.getMuteOnStart().collectAsStateWithLifecycle(initialValue = true)
+    val muteVideoOnStart by mainViewModel.settings.Video.getMuteOnStart().collectAsStateWithLifecycle(initialValue = true)
 
     BackHandler {
         isPlaying.value = false
@@ -562,8 +561,8 @@ fun VideoPlayer(
         modifier = Modifier
             .fillMaxSize(1f)
     ) {
-	    val localDensity = LocalDensity.current
-	    var clickCenter by remember { mutableStateOf(DpOffset.Zero)}
+        val localDensity = LocalDensity.current
+        var clickCenter by remember { mutableStateOf(DpOffset.Zero) }
         val coroutineScope = rememberCoroutineScope()
 
         AndroidView(
@@ -571,11 +570,11 @@ fun VideoPlayer(
                 playerView
             },
             modifier = modifier
-            	.align(Alignment.Center)
-            	.pointerInput(Unit) { // double tap to skip
-	   			    val centerPadding = with(localDensity) { 52.dp.toPx() }
-	   			    val leftPosition = size.width / 2f
-	   			    var taps = 0
+                .align(Alignment.Center)
+                .pointerInput(Unit) { // double tap to skip
+                    val centerPadding = with(localDensity) { 52.dp.toPx() }
+                    val leftPosition = size.width / 2f
+                    var taps = 0
 
                     awaitEachGesture {
                         val firstDown = awaitFirstDown()
@@ -626,7 +625,7 @@ fun VideoPlayer(
                             if (taps == 0) clickCenter = DpOffset.Zero
                         }
                     }
-	   			},
+                },
         )
 
         val title = remember { File(item.absolutePath).nameWithoutExtension }
@@ -664,52 +663,52 @@ fun VideoPlayer(
                 modifier = Modifier
                     .fillMaxSize(1f)
             ) {
-            	setBarVisibility(
-            		visible = false,
-            		window = window
-            	) {
-            		appBarsVisible.value = it
-            	}
+                setBarVisibility(
+                    visible = false,
+                    window = window
+                ) {
+                    appBarsVisible.value = it
+                }
             }
         }
 
         AnimatedVisibility(
             visible = clickCenter != DpOffset.Zero,
             enter =
-                fadeIn(
-                    animationSpec = tween(
-                        durationMillis = 300
-                    )
-                ) + scaleIn(
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness = Spring.StiffnessMedium,
-                    )
-                ),
+            fadeIn(
+                animationSpec = tween(
+                    durationMillis = 300
+                )
+            ) + scaleIn(
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessMedium,
+                )
+            ),
             exit =
-                fadeOut(
-                    animationSpec = tween(
-                        durationMillis = 300
-                    )
-                ) + scaleOut(
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness = Spring.StiffnessMedium,
-                    )
-                ),
-	            modifier = Modifier
-					.align(Alignment.Center)
-					.fillMaxSize(1f)
+            fadeOut(
+                animationSpec = tween(
+                    durationMillis = 300
+                )
+            ) + scaleOut(
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessMedium,
+                )
+            ),
+            modifier = Modifier
+                .align(Alignment.Center)
+                .fillMaxSize(1f)
         ) {
-        	BoxWithConstraints(
-        		modifier = Modifier
-        			.fillMaxSize(1f)
-        	) {
-                Box (
+            BoxWithConstraints(
+                modifier = Modifier
+                    .fillMaxSize(1f)
+            ) {
+                Box(
                     modifier = Modifier
                         .size(maxWidth / 2)
                         .offset {
-                            with (localDensity) {
+                            with(localDensity) {
                                 IntOffset(
                                     x = clickCenter.x.roundToPx() - maxWidth.roundToPx() / 4, // width / 2 is the diameter and we need half of that
                                     y = clickCenter.y.roundToPx() - maxWidth.roundToPx() / 4
@@ -719,27 +718,29 @@ fun VideoPlayer(
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.4f))
                 ) {
-                    val icon by remember { derivedStateOf {
-                        if (clickCenter.x < this@BoxWithConstraints.maxWidth / 2) {
-                            R.drawable.fast_rewind
-                        } else {
-                            R.drawable.fast_forward
+                    val icon by remember {
+                        derivedStateOf {
+                            if (clickCenter.x < this@BoxWithConstraints.maxWidth / 2) {
+                                R.drawable.fast_rewind
+                            } else {
+                                R.drawable.fast_forward
+                            }
                         }
-                    }}
+                    }
 
                     Icon(
                         painter = painterResource(id = icon),
                         contentDescription = "Shows which way the user is seeking",
                         modifier = Modifier
-                        	.size(48.dp)
+                            .size(48.dp)
                             .align(Alignment.Center)
                     )
                 }
-        	}
+            }
         }
 
         if ((isTouchLocked.value || controlsVisible.value) && localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            Row (
+            Row(
                 modifier = Modifier
                     .wrapContentSize()
                     .animateContentSize()
@@ -747,8 +748,8 @@ fun VideoPlayer(
                     .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(
-                	space = 4.dp,
-                	alignment = Alignment.CenterHorizontally
+                    space = 4.dp,
+                    alignment = Alignment.CenterHorizontally
                 )
             ) {
                 FilledTonalIconToggleButton(
@@ -776,12 +777,12 @@ fun VideoPlayer(
                 }
 
                 if (controlsVisible.value) {
-                    Column (
+                    Column(
                         modifier = Modifier
                             .wrapContentSize(),
                         verticalArrangement = Arrangement.spacedBy(
-                        	space = 4.dp,
-                        	alignment = Alignment.Top
+                            space = 4.dp,
+                            alignment = Alignment.Top
                         ),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
@@ -962,7 +963,7 @@ fun getExoPlayerLifecycleObserver(
                     if (absolutePath != null) {
                         // delete decrypted video if exists
                         getSecureDecryptedVideoFile(name = File(absolutePath).name, context = activity.applicationContext).apply {
-                        	if (exists()) delete()
+                            if (exists()) delete()
                         }
                     }
                 }
@@ -976,9 +977,9 @@ fun getExoPlayerLifecycleObserver(
 @androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun rememberPlayerView(
-	exoPlayer: ExoPlayer,
-	activity: Activity,
-	absolutePath: String?
+    exoPlayer: ExoPlayer,
+    activity: Activity,
+    absolutePath: String?
 ): PlayerView {
     val context = LocalContext.current
 
@@ -998,17 +999,17 @@ fun rememberPlayerView(
 
     DisposableEffect(Unit) {
         onDispose {
-        	if (!activity.isChangingConfigurations) {
-	            playerView.player = null
-	            exoPlayer.release()
+            if (!activity.isChangingConfigurations) {
+                playerView.player = null
+                exoPlayer.release()
 
                 if (absolutePath != null) {
                     // delete decrypted video if exists
                     getSecureDecryptedVideoFile(name = File(absolutePath).name, context = activity.applicationContext).apply {
-                    	if (exists()) delete()
+                        if (exists()) delete()
                     }
                 }
-        	}
+            }
         }
     }
 
