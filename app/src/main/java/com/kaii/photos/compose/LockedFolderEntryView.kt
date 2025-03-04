@@ -4,6 +4,7 @@ import android.content.Context
 import android.hardware.biometrics.BiometricManager
 import android.hardware.biometrics.BiometricPrompt
 import android.os.CancellationSignal
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
@@ -40,6 +41,7 @@ import com.kaii.photos.R
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.Versions
+import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.appRestoredFilesDir
@@ -48,6 +50,8 @@ import com.kaii.photos.helpers.baseInternalStorageDirectory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
+
+private const val TAG = "LOCKED_FOLDER_ENTRY_VIEW"
 
 @Composable
 fun LockedFolderEntryView(
@@ -76,32 +80,46 @@ fun LockedFolderEntryView(
 
 	LaunchedEffect(shouldMigrate) {
 		withContext(Dispatchers.IO) {
-			val oldDir = context.getDir("locked_folder", Context.MODE_PRIVATE)
-			oldDir?.let { oldFilesDir ->
-				val subFiles = oldFilesDir.listFiles()
+            val oldDir = context.getDir("locked_folder", Context.MODE_PRIVATE)
+            val children = oldDir.listFiles()
 
-				if (subFiles?.isNotEmpty() == true) {
-					val newDir = context.appSecureFolderDir
-					subFiles.forEach { file ->
-						val newPath = newDir + "/" + file.name
-						file.copyTo(File(newPath))
-						file.delete()
-					}
-				}
-			}
+            // migrate from old secure folder dir
+            if (children?.isNotEmpty() == true) {
+                val newDir = context.appSecureFolderDir
 
-			// move unencrypted files to restored files dir
-			if (shouldMigrate) {
+                Log.d(TAG, "migrating from $oldDir to $newDir")
+                children.forEach { file ->
+                    val newPath = newDir + "/" + file.name
+                    val destination = File(newPath)
+
+                    if (!destination.exists()) {
+                        file.copyTo(destination)
+                        file.delete()
+                    }
+                }
+            }
+
+            if (shouldMigrate) {
+    			// move unencrypted files to restored files dir
 				val restoredFilesDir = context.appRestoredFilesDir
-
 				val unencryptedDir = File(context.appSecureFolderDir)
-				val subFiles = unencryptedDir.listFiles()
+				val unencryptedDirChildren = unencryptedDir.listFiles()
 
-				if (subFiles?.isNotEmpty() == true) {
-					subFiles.forEach { file ->
+				if (unencryptedDirChildren?.isNotEmpty() == true) {
+                    unencryptedDirChildren.forEach { file ->
 						val newPath = restoredFilesDir + "/" + file.name
-						file.copyTo(File(newPath))
-						file.delete()
+                        val destination = File(newPath)
+
+                        if (!destination.exists()) {
+                            file.copyTo(destination)
+                            file.delete()
+                        }
+
+                        val encryptionManager = EncryptionManager()
+                        encryptionManager.encryptInputStream(
+                            inputStream = destination.inputStream(),
+                            outputStream = file.outputStream()
+                        )
 					}
 				}
 
@@ -126,7 +144,7 @@ fun LockedFolderEntryView(
 	if (showExplanationForMigration.value) {
 		ExplanationDialog(
 			title = "Migration Notice",
-			explanation = "Due to AES encryption being added in version v0.8.9-beta, all photos in secure folder have been moved to \"Restored Files\" album. You can re-add them by selecting them, clicking the 3 dots at the top right, and selecting \"Move to secure folder\". Sorry for the inconvenience.",
+			explanation = "Secure folder is now encrypted! All your photos are now fully safe and untouchable by anyone. For safety reasons, a copy of your secured photos is now present in \"Restored Files\".",
 			showDialog = showExplanationForMigration
 		)
 	}

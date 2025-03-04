@@ -75,7 +75,7 @@ class EncryptionManager {
             read = inputStream.read(buffer)
 
             cipher.update(buffer)?.let {
-            	currentProgress += it.size / totalLength
+                currentProgress += it.size / totalLength
                 progress(currentProgress)
 
                 outputStream.write(it)
@@ -147,6 +147,7 @@ class EncryptionManager {
             val lastChunk = cipher.doFinal(remaining)
             output.addAll(lastChunk.toList())
         }
+        inputStream.close()
 
         return output.toTypedArray().toByteArray()
     }

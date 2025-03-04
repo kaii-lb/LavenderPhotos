@@ -192,7 +192,9 @@ fun MoveCopyAlbumListView(
                         val album = albumsList[it]
                         AlbumsListItem(
                             album = album,
-                            data = dataList.value[album] ?: MediaStoreData(),
+                            data = dataList.value.find {
+                            	it.absolutePath.replace(baseInternalStorageDirectory, "") == album
+                            } ?: MediaStoreData(),
                             position = if (it == albumsList.size - 1 && albumsList.size != 1) RowPosition.Bottom else if (albumsList.size == 1) RowPosition.Single else if (it == 0) RowPosition.Top else RowPosition.Middle,
                             selectedItemsList = selectedItemsList,
                             isMoving = isMoving,

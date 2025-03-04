@@ -3,6 +3,7 @@ package com.kaii.photos.compose.grids
 import android.content.res.Configuration
 import android.util.Log
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -11,6 +12,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -98,7 +100,6 @@ import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.datastore.Storage
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.ImageFunctions
-import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.baseInternalStorageDirectory
@@ -177,8 +178,8 @@ fun PhotoGrid(
                     .fillMaxSize(1f)
                     .then(modifier)
             ) {
-            	// TODO: show loading spinner for 5 seconds 
-            	// if no change after 5 seconds hide and show album doesn't exist
+                // TODO: show loading spinner for 5 seconds
+                // if no change after 5 seconds hide and show album doesn't exist
             }
         }
 
@@ -734,10 +735,10 @@ fun MediaStoreItem(
             val context = LocalContext.current
 
             var model by remember { mutableStateOf<Any?>(null) }
-            val isSecureMedia = viewProperties == ViewProperties.SecureFolder
+            val isSecureMedia = remember(viewProperties) { viewProperties == ViewProperties.SecureFolder }
 
             LaunchedEffect(isSecureMedia) {
-                if (!isSecureMedia) return@LaunchedEffect
+                if (!isSecureMedia || model != null) return@LaunchedEffect
 
                 model =
                     withContext(Dispatchers.IO) {

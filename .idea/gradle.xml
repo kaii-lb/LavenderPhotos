@@ -4,13 +4,28 @@
   <component name="GradleSettings">
     <option name="linkedExternalProjectsSettings">
       <GradleProjectSettings>
+        <compositeConfiguration>
+          <compositeBuild compositeDefinitionSource="SCRIPT">
+            <builds>
+              <build path="$PROJECT_DIR$/../LavenderSnackbars" name="Lavender Snackbars">
+                <projects>
+                  <project path="$PROJECT_DIR$/../LavenderSnackbars" />
+                  <project path="$PROJECT_DIR$/../LavenderSnackbars/lavender_snackbars" />
+                </projects>
+              </build>
+            </builds>
+          </compositeBuild>
+        </compositeConfiguration>
         <option name="testRunner" value="CHOOSE_PER_TEST" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
         <option name="gradleJvm" value="#GRADLE_LOCAL_JAVA_HOME" />
         <option name="modules">
           <set>
+            <option value="$PROJECT_DIR$/../LavenderSnackbars" />
+            <option value="$PROJECT_DIR$/../LavenderSnackbars/lavender_snackbars" />
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/app" />
+            <option value="$PROJECT_DIR$/lavender_snackbars" />
           </set>
         </option>
         <option name="resolveExternalAnnotations" value="false" />

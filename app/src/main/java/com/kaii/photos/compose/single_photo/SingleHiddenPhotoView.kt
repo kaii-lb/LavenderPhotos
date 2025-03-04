@@ -80,13 +80,12 @@ import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.MediaData
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.appRestoredFilesDir
-import com.kaii.photos.helpers.appSecureThumbnailCacheDir
 import com.kaii.photos.helpers.brightenColor
+import com.kaii.photos.helpers.getDecryptCacheForFile
 import com.kaii.photos.helpers.getExifDataForMedia
 import com.kaii.photos.helpers.moveImageOutOfLockedFolder
 import com.kaii.photos.helpers.permanentlyDeleteSecureFolderImageList
 import com.kaii.photos.helpers.shareSecuredImage
-import com.kaii.photos.helpers.getSecuredCacheImageForFile
 import com.kaii.photos.helpers.getSecureDecryptedVideoFile
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
@@ -317,18 +316,48 @@ private fun TopBar(
                 val coroutineScope = rememberCoroutineScope()
                 val context = LocalContext.current
 
+                var showLoadingDialog by remember { mutableStateOf(false)}
+
+                if (showLoadingDialog) {
+                    LoadingDialog(
+                        title = "Sharing Image",
+                        body = "Hold on while this image is processed"
+                    )
+                }
+
                 IconButton(
                     onClick = {
                         coroutineScope.launch(Dispatchers.IO) {
+                            showLoadingDialog = true
+
                             val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(mediaItem.absolutePath)
                             val originalFile = File(mediaItem.absolutePath)
-                            val cachedFile = File(context.cacheDir, mediaItem.displayName ?: mediaItem.id.toString())
 
-                            EncryptionManager().decryptInputStream(
-                                inputStream = originalFile.inputStream(),
-                                outputStream = cachedFile.outputStream(),
-                                iv = iv
-                            )
+                            val cachedFile =
+                                if (mediaItem.type == MediaType.Video) {
+                                    getSecureDecryptedVideoFile(originalFile.name, context)
+                                } else {
+                                    getDecryptCacheForFile(originalFile, context)
+                                }
+
+                            if (!cachedFile.exists()) {
+                                if (mediaItem.type == MediaType.Video) {
+                                    EncryptionManager().decryptVideo(
+                                        absolutePath = originalFile.absolutePath,
+                                        context = context,
+                                        iv = iv,
+                                        progress = {}
+                                    )
+                                } else {
+                                    EncryptionManager().decryptInputStream(
+                                        inputStream = originalFile.inputStream(),
+                                        outputStream = cachedFile.outputStream(),
+                                        iv = iv
+                                    )
+                                }
+                            }
+
+                            showLoadingDialog = false
 
                             shareSecuredImage(
                                 absolutePath = cachedFile.absolutePath,
@@ -628,52 +657,49 @@ fun SingleSecuredPhotoInfoDialog(
 					var showLoadingDialog by remember { mutableStateOf(false) }
 					if (showLoadingDialog) {
 						LoadingDialog(
-							title = "Decrypting File",
+							title = "Getting file info",
 							body = "Please wait..."
 						)
 					}
 
 					val context = LocalContext.current
-					val coroutineScope = rememberCoroutineScope()
-
                     LaunchedEffect(Unit) {
-                    	showLoadingDialog = true
+                        withContext(Dispatchers.IO) {
+                            showLoadingDialog = true
 
-						coroutineScope.launch(Dispatchers.IO) {
-	                    	val absolutePath =
-		                    	if (currentMediaItem.type == MediaType.Video) {
-		                    		val originalFile = File(currentMediaItem.absolutePath)
-		                    		var newFile = getSecureDecryptedVideoFile(
-		                    			name = currentMediaItem.displayName!!,
-		                    			context = context
-	                    			)
+                            if (currentMediaItem.type == MediaType.Video) {
+                                val originalFile = File(currentMediaItem.absolutePath)
+                                val cachedFile = getSecureDecryptedVideoFile(
+                                    name = currentMediaItem.displayName!!,
+                                    context = context
+                                )
 
-		                    		while(newFile.length() < originalFile.length()) {
-		                    			delay(100)
-		                    		}
+                                val file =
+                                    if (!cachedFile.exists()) {
+                                        val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(currentMediaItem.absolutePath)
+                                        EncryptionManager().decryptVideo(
+                                            absolutePath = originalFile.absolutePath,
+                                            iv = iv,
+                                            context = context,
+                                            progress = {}
+                                        )
+                                    } else if (cachedFile.length() < originalFile.length()) {
+                                        while(cachedFile.length() < originalFile.length()) {
+                                            delay(100)
+                                        }
 
-		                    		newFile.absolutePath
-		                    	} else {
-									val originalFile = File(currentMediaItem.absolutePath)
-									val newFile = getSecuredCacheImageForFile(fileName = originalFile.nameWithoutExtension + ".temp" + "." + originalFile.extension, context = context)
-									val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(currentMediaItem.absolutePath)
+                                        cachedFile
+                                    } else {
+                                        cachedFile
+                                    }
 
-									EncryptionManager().decryptInputStream(
-										inputStream = originalFile.inputStream(),
-										outputStream = newFile.outputStream(),
-										iv = iv
-									)
+                                getExifDataForMedia(file.absolutePath).collect {
+                                    mediaData = it
+                                }
 
-									newFile.absolutePath
-								}
-
-	                        getExifDataForMedia(absolutePath).collect {
-	                            mediaData = it
-	                        }
-
-	                        showLoadingDialog = false
-	                        File(absolutePath).delete()
-						}
+                                showLoadingDialog = false
+                            }
+                        }
                     }
 
                     Column(

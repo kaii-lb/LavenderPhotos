@@ -1,8 +1,10 @@
 package com.kaii.photos.mediastore
 
 import android.content.Context
+import android.content.ContentResolver
 import android.database.ContentObserver
 import android.net.Uri
+import android.os.Bundle
 import android.os.CancellationSignal
 import android.os.Handler
 import android.os.Looper
@@ -28,7 +30,7 @@ private const val TAG = "ALBUM_STORE_DATA_SOURCE"
 class AlbumStoreDataSource
 internal constructor(
     private val context: Context,
-    private val multiplePaths: List<String>,
+    private val albumPaths: List<String>,
     private val cancellationSignal: CancellationSignal
 ) {
     companion object {
@@ -44,7 +46,7 @@ internal constructor(
             )
     }
 
-    fun loadMediaStoreData(): Flow<LinkedHashMap<String, MediaStoreData>> = callbackFlow {
+    fun loadMediaStoreData(): Flow<List<MediaStoreData>> = callbackFlow {
         var localCancellationSignal = CancellationSignal()
         val mutex = Mutex()
 
@@ -59,11 +61,12 @@ internal constructor(
                         }
 
                         runCatching {
-                            val returnVal = LinkedHashMap<String, MediaStoreData>()
-                            for (directory in multiplePaths) {
-                                returnVal[directory] = if (query(directory).isNotEmpty()) query(directory)[0] else MediaStoreData()
-                            }
-                            trySend(returnVal)
+			            	val list = mutableListOf<MediaStoreData>()
+			            	for (path in albumPaths) {
+			            		list.add(query(path))
+			            	}
+
+                            trySend(list)
                         }
                     }
                 }
@@ -77,11 +80,12 @@ internal constructor(
 
         launch(Dispatchers.IO) {
             runCatching {
-                val returnVal = LinkedHashMap<String, MediaStoreData>()
-                for (directory in multiplePaths) {
-                    returnVal[directory] = if (query(directory).isNotEmpty()) query(directory)[0] else MediaStoreData()
-                }
-                trySend(returnVal)
+            	val list = mutableListOf<MediaStoreData>()
+            	for (path in albumPaths) {
+            		list.add(query(path))
+            	}
+
+                trySend(list)
             }
         }
 
@@ -99,19 +103,27 @@ internal constructor(
         }
     }
 
-    private fun query(neededPath: String): List<MediaStoreData> {
+    private fun query(path: String): MediaStoreData {
         Preconditions.checkArgument(
             Util.isOnBackgroundThread(),
             "Can only query from a background thread"
         )
-        val data: MutableList<MediaStoreData> = emptyList<MediaStoreData>().toMutableList()
+
+        var data: MediaStoreData = MediaStoreData()
+        val queryArgs = Bundle().apply {
+        	putStringArray(ContentResolver.QUERY_ARG_SORT_COLUMNS, arrayOf(MediaColumns.DATE_MODIFIED))
+        	putInt(ContentResolver.QUERY_ARG_SORT_DIRECTION, ContentResolver.QUERY_SORT_DIRECTION_DESCENDING)
+        	putInt(ContentResolver.QUERY_ARG_LIMIT, 1)
+        	putString(ContentResolver.QUERY_ARG_SQL_SELECTION, "((${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_IMAGE}) OR (${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_VIDEO})) AND ${FileColumns.RELATIVE_PATH} = ?")
+        	putStringArray(ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS, arrayOf(path.removeSuffix("/") + "/"))
+        }
+
         val mediaCursor =
             context.contentResolver.query(
                 MEDIA_STORE_FILE_URI,
                 PROJECTION,
-                "(${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_IMAGE} AND ${FileColumns.RELATIVE_PATH} LIKE ? AND ${FileColumns.RELATIVE_PATH} NOT LIKE ?) OR (${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_VIDEO} AND ${FileColumns.RELATIVE_PATH} LIKE ? AND ${FileColumns.RELATIVE_PATH} NOT LIKE ?)",
-                arrayOf("%$neededPath%", "%$neededPath/%/%",  "%$neededPath%", "%$neededPath/%/%"),
-                "${MediaColumns.DATE_MODIFIED} DESC"
+                queryArgs,
+                null
             ) ?: return data
 
         mediaCursor.use { cursor ->
@@ -124,12 +136,16 @@ internal constructor(
 
             if (cursor.moveToFirst()) {
                 val id = cursor.getLong(idColNum)
+                val absolutePath = cursor.getString(absolutePathColNum)
                 val mimeType = cursor.getString(mimeTypeColNum)
                 val dateModified = cursor.getLong(dateModifiedColNum)
                 val displayName = cursor.getString(displayNameIndex)
-                val type = if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) MediaType.Image
-                else MediaType.Video
-                data.add(
+                val type =
+                	if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) MediaType.Image
+                	else MediaType.Video
+
+				Log.d(TAG, "Album $path latest media is $absolutePath")
+                data =
                     MediaStoreData(
                         type = type,
                         id = id,
@@ -138,15 +154,13 @@ internal constructor(
                         dateModified = dateModified,
                         dateTaken = dateModified,
                         displayName = displayName,
+                        absolutePath = absolutePath
                     )
-                )
             }
         }
+
         mediaCursor.close()
 
-        data.sortByDescending {
-			it.dateTaken
-		}
         return data
     }
 }

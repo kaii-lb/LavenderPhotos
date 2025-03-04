@@ -13,10 +13,10 @@ import androidx.lifecycle.viewModelScope
 import com.kaii.photos.datastore.Settings
 import com.kaii.photos.helpers.Updater
 import com.kaii.photos.mediastore.MediaStoreData
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 private const val TAG = "MAIN_VIEW_MODEL"
 
@@ -26,88 +26,88 @@ class MainViewModel(context: Context) : ViewModel() {
 
     val permissionQueue = mutableStateListOf<String>()
 
-	val settings = Settings(context, viewModelScope)
+    val settings = Settings(context, viewModelScope)
 
-	val updater = Updater(context = context, coroutineScope = viewModelScope)
+    val updater = Updater(context = context, coroutineScope = viewModelScope)
 
     fun setGroupedMedia(media: List<MediaStoreData>?) {
         _groupedMedia.value = media
     }
 
     fun startupPermissionCheck(context: Context) {
-    	// READ_MEDIA_VIDEO isn't necessary as its bundled with READ_MEDIA_IMAGES
-    	val permList =
-    		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-    			listOf(
-		    		Manifest.permission.READ_MEDIA_IMAGES,
-		    		Manifest.permission.READ_MEDIA_VIDEO,
-		    		Manifest.permission.MANAGE_MEDIA
-    			)
-    		} else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-    			listOf(
-		    		Manifest.permission.READ_EXTERNAL_STORAGE,
-		    		Manifest.permission.MANAGE_MEDIA
-    			)
-    		} else {
-    			listOf(
-		    		Manifest.permission.READ_EXTERNAL_STORAGE
-    			)
-    		}
+        // READ_MEDIA_VIDEO isn't necessary as its bundled with READ_MEDIA_IMAGES
+        val permList =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                listOf(
+                    Manifest.permission.READ_MEDIA_IMAGES,
+                    Manifest.permission.READ_MEDIA_VIDEO,
+                    Manifest.permission.MANAGE_MEDIA
+                )
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                listOf(
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    Manifest.permission.MANAGE_MEDIA
+                )
+            } else {
+                listOf(
+                    Manifest.permission.READ_EXTERNAL_STORAGE
+                )
+            }
 
-		permList.forEach { perm ->
-			val granted = when (perm) {
-				Manifest.permission.MANAGE_EXTERNAL_STORAGE -> {
-					Environment.isExternalStorageManager()
-				}
+        permList.forEach { perm ->
+            val granted = when (perm) {
+                Manifest.permission.MANAGE_EXTERNAL_STORAGE -> {
+                    Environment.isExternalStorageManager()
+                }
 
-				Manifest.permission.MANAGE_MEDIA -> {
-					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) MediaStore.canManageMedia(context)
-					else false
-				}
+                Manifest.permission.MANAGE_MEDIA -> {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) MediaStore.canManageMedia(context)
+                    else false
+                }
 
-				else -> {
-					context.checkSelfPermission(
-						perm
-					) == PackageManager.PERMISSION_GRANTED
-				}
-			}
+                else -> {
+                    context.checkSelfPermission(
+                        perm
+                    ) == PackageManager.PERMISSION_GRANTED
+                }
+            }
 
-			if (!granted && !permissionQueue.contains(perm)) permissionQueue.add(perm)
-			else permissionQueue.remove(perm)
+            if (!granted && !permissionQueue.contains(perm)) permissionQueue.add(perm)
+            else permissionQueue.remove(perm)
 
-			Log.d(TAG, "Permission $perm has been granted $granted")
-		}
+            Log.d(TAG, "Permission $perm has been granted $granted")
+        }
 
-		permissionQueue.forEach {
-			Log.d(TAG, "Permission queue has item $it")
-		}
+        permissionQueue.forEach {
+            Log.d(TAG, "Permission queue has item $it")
+        }
     }
 
     fun onPermissionResult(
         permission: String,
         isGranted: Boolean
     ) {
-       	if (!isGranted && !permissionQueue.contains(permission)) permissionQueue.add(permission)
+        if (!isGranted && !permissionQueue.contains(permission)) permissionQueue.add(permission)
         else if (isGranted) permissionQueue.remove(permission)
 
         permissionQueue.forEach { Log.d(TAG, "PERMISSION DENIED $it") }
     }
 
-    fun checkCanPass() : Boolean {
-		val manageMedia = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-			permissionQueue.all { it == Manifest.permission.MANAGE_MEDIA }
-		} else {
-			false
-		}
+    fun checkCanPass(): Boolean {
+        val manageMedia = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            permissionQueue.all { it == Manifest.permission.MANAGE_MEDIA }
+        } else {
+            false
+        }
 
-		permissionQueue.forEach {
-			Log.d(TAG, "Can pass permission queue has item $it")
-		}
+        permissionQueue.forEach {
+            Log.d(TAG, "Can pass permission queue has item $it")
+        }
 
-    	return permissionQueue.isEmpty() || manageMedia
+        return permissionQueue.isEmpty() || manageMedia
     }
 
     fun launch(block: suspend () -> Unit) = viewModelScope.launch {
-    	block()
+        block()
     }
 }

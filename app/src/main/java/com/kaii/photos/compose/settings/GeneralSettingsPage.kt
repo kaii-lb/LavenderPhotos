@@ -246,11 +246,12 @@ fun GeneralSettingsPage() {
                     showBackground = false,
                     checked = autoDetectAlbums
                 ) { checked ->
+                    // as to keep the MutableState alive even if the user leaves the screen
                     mainViewModel.launch {
                         if (!isAlreadyLoading.value) {
                             isAlreadyLoading.value = true
 
-							if (checked) {
+                            if (checked) {
 		                        LavenderSnackbarController.pushEvent(
                                     LavenderSnackbarEvents.LoadingEvent(
 		                        		message = if (isAlreadyLoading.value) "Finding albums..." else "Found all albums!",
@@ -286,7 +287,7 @@ fun GeneralSettingsPage() {
 	            		LavenderSnackbarController.pushEvent(
                             LavenderSnackbarEvents.MessageEvent(
 	            		        message = "Cleared album list",
-                                duration = SnackbarDuration.Indefinite,
+                                duration = SnackbarDuration.Short,
 	            		        iconResId = R.drawable.albums
 	            		    )
 	            		)

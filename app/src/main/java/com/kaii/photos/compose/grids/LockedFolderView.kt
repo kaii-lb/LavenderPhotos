@@ -33,10 +33,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavDestination.Companion.hasRoute
-import androidx.navigation.NavDestination.Companion.hierarchy
-import androidx.navigation.toRoute
-import com.kaii.photos.MainActivity.Companion.applicationDatabase
 import com.kaii.photos.LocalNavController
+import com.kaii.photos.MainActivity.Companion.applicationDatabase
 import com.kaii.photos.compose.SecureFolderViewBottomAppBar
 import com.kaii.photos.compose.SecureFolderViewTopAppBar
 import com.kaii.photos.compose.ViewProperties
@@ -45,17 +43,17 @@ import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.appSecureFolderDir
+import com.kaii.photos.helpers.appSecureVideoCacheDir
 import com.kaii.photos.helpers.getDateTakenForMedia
 import com.kaii.photos.helpers.getSecuredCacheImageForFile
-import com.kaii.photos.helpers.appSecureVideoCacheDir
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.multi_album.groupPhotosBy
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.file.Files
 import kotlin.io.path.Path
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,7 +61,7 @@ fun LockedFolderView(
     window: Window,
     currentView: MutableState<MainScreenViewType>
 ) {
-	val context = LocalContext.current
+    val context = LocalContext.current
 
     val selectedItemsList = remember { SnapshotStateList<MediaStoreData>() }
     val navController = LocalNavController.current
@@ -91,11 +89,11 @@ fun LockedFolderView(
         }
 
         if (lastLifecycleState == Lifecycle.State.DESTROYED) {
-        	withContext(Dispatchers.IO) {
-        		File(context.appSecureVideoCacheDir).listFiles()?.forEach {
-        			it.delete()
-        		}
-        	}
+            withContext(Dispatchers.IO) {
+                File(context.appSecureVideoCacheDir).listFiles()?.forEach {
+                    it.delete()
+                }
+            }
         }
     }
 
@@ -140,20 +138,20 @@ fun LockedFolderView(
     val groupedMedia =
         remember { mutableStateOf(mediaStoreData.toList()) }
 
-	// TODO: USE APP CONTENT RESOLVER!!!!
-	LaunchedEffect(fileList, groupedMedia.value) {
-		withContext(Dispatchers.IO) {
-		    fileList.forEach { file ->
-		        val mimeType = Files.probeContentType(Path(file.absolutePath))
-		        val dateTaken = getDateTakenForMedia(file.absolutePath)
+    // TODO: USE APP CONTENT RESOLVER!!!!
+    LaunchedEffect(fileList, groupedMedia.value) {
+        withContext(Dispatchers.IO) {
+            fileList.forEach { file ->
+                val mimeType = Files.probeContentType(Path(file.absolutePath))
+                val dateTaken = getDateTakenForMedia(file.absolutePath)
 
-		        val type =
-		            if (mimeType.lowercase().contains("image")) MediaType.Image
-		            else if (mimeType.lowercase().contains("video")) MediaType.Video
-		            else MediaType.Section
+                val type =
+                    if (mimeType.lowercase().contains("image")) MediaType.Image
+                    else if (mimeType.lowercase().contains("video")) MediaType.Video
+                    else MediaType.Section
 
-				val decryptedBytes =
-					run {
+                val decryptedBytes =
+                    run {
                         val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(file.absolutePath)
                         val thumbnailIv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(
                             getSecuredCacheImageForFile(file = file, context = context).absolutePath
@@ -162,24 +160,24 @@ fun LockedFolderView(
                         iv + thumbnailIv
                     }
 
-		        val item = MediaStoreData(
-		            type = type,
-		            id = file.hashCode() * file.length() * file.lastModified(),
-		            uri = file.absolutePath.toUri(),
-		            mimeType = mimeType,
-		            dateModified = file.lastModified() / 1000,
-		            dateTaken = dateTaken,
-		            displayName = file.name,
-		            absolutePath = file.absolutePath,
-		            bytes = decryptedBytes
-		        )
+                val item = MediaStoreData(
+                    type = type,
+                    id = file.hashCode() * file.length() * file.lastModified(),
+                    uri = file.absolutePath.toUri(),
+                    mimeType = mimeType,
+                    dateModified = file.lastModified() / 1000,
+                    dateTaken = dateTaken,
+                    displayName = file.name,
+                    absolutePath = file.absolutePath,
+                    bytes = decryptedBytes
+                )
 
-		        mediaStoreData.add(item)
-		    }
+                mediaStoreData.add(item)
+            }
 
-		    groupedMedia.value = groupPhotosBy(mediaStoreData, MediaItemSortMode.LastModified)
-		}
-	}
+            groupedMedia.value = groupPhotosBy(mediaStoreData, MediaItemSortMode.LastModified)
+        }
+    }
 
     val showBottomSheet by remember {
         derivedStateOf {

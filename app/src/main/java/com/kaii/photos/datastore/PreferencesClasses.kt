@@ -399,7 +399,7 @@ class SettingMainPhotosViewImpl(private val context: Context, private val viewMo
 
 		for (i in 1..<albums.size) {
 			val album = albums[i].apply {
-				removeSuffix("")
+				removeSuffix("/")
 			}
 
 			string += " OR $base"

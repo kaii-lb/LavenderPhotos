@@ -52,7 +52,7 @@ class MultiAlbumDataSource(
                 PROJECTION,
                 "((${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_IMAGE}) OR (${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_VIDEO})) ${queryString.first}",
                 queryString.second?.toTypedArray(),
-                null
+                null,
             ) ?: return data
 
         val idColNum = mediaCursor.getColumnIndexOrThrow(MediaColumns._ID)

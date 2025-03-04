@@ -1,7 +1,7 @@
 package com.kaii.photos.compose.single_photo
 
-import android.util.Log
 import android.content.res.Configuration
+import android.util.Log
 import android.view.Window
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -42,15 +42,14 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
-import com.kaii.photos.R
 import com.kaii.photos.MainActivity.Companion.mainViewModel
+import com.kaii.photos.R
 import com.kaii.photos.compose.setBarVisibility
 import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.EncryptionManager
+import com.kaii.photos.helpers.getSecuredCacheImageForFile
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.vibrateShort
-import com.kaii.photos.helpers.appSecureVideoCacheDir
-import com.kaii.photos.helpers.getSecuredCacheImageForFile
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.signature
@@ -101,19 +100,19 @@ fun HorizontalImageList(
         if (!isLandscape) isTouchLocked.value = false
     }
 
-	val shouldAutoPlay =
+    val shouldAutoPlay =
         if (isOpenWithView) true
         else mainViewModel.settings.Video.getShouldAutoPlay().collectAsStateWithLifecycle(initialValue = true).value
 
-	val muteVideoOnStart =
+    val muteVideoOnStart =
         if (isOpenWithView) false
         else mainViewModel.settings.Video.getMuteOnStart().collectAsStateWithLifecycle(initialValue = true).value
 
-	val lastVideoWasMuted = remember { mutableStateOf(muteVideoOnStart) }
+    val lastVideoWasMuted = remember { mutableStateOf(muteVideoOnStart) }
 
-	LaunchedEffect(muteVideoOnStart) {
-		lastVideoWasMuted.value = muteVideoOnStart
-	}
+    LaunchedEffect(muteVideoOnStart) {
+        lastVideoWasMuted.value = muteVideoOnStart
+    }
 
     val encryptionManager = remember {
         EncryptionManager()
@@ -139,8 +138,7 @@ fun HorizontalImageList(
     ) { index ->
         val shouldPlay by remember(state) {
             derivedStateOf {
-                (abs(state.currentPageOffsetFraction) < 0.5f && state.currentPage == index)
-                        || (abs(state.currentPageOffsetFraction) > 0.5f && state.targetPage == index)
+                !state.isScrollInProgress
             }
         }
 
@@ -178,7 +176,6 @@ fun HorizontalImageList(
                     item = mediaStoreItem,
                     controlsVisible = showVideoPlayerControls,
                     appBarsVisible = appBarsVisible,
-                    shouldPlay = shouldPlay,
                     shouldAutoPlay = shouldAutoPlay,
                     lastWasMuted = lastVideoWasMuted,
                     navController = navController,
@@ -207,29 +204,29 @@ fun HorizontalImageList(
                 var model by remember { mutableStateOf<Any?>(null) }
                 val context = LocalContext.current
 
-                LaunchedEffect(Unit) {
-                   	if (isHidden) {
-	                    withContext(Dispatchers.IO) {
-	                    	try {
-								val iv = mediaStoreItem.bytes!!.copyOfRange(0, 16)
-								val thumbnailIv = mediaStoreItem.bytes.copyOfRange(16, 32)
+                LaunchedEffect(isHidden) {
+                    if (!isHidden || model != null) return@LaunchedEffect
 
-								model = encryptionManager.decryptBytes(
-									bytes = getSecuredCacheImageForFile(fileName = mediaStoreItem.displayName!!, context = context).readBytes(),
-									iv = thumbnailIv
-								)
+                    withContext(Dispatchers.IO) {
+                        try {
+                            val iv = mediaStoreItem.bytes!!.copyOfRange(0, 16)
+                            val thumbnailIv = mediaStoreItem.bytes.copyOfRange(16, 32)
 
-								model = encryptionManager.decryptBytes(
-									bytes = File(mediaStoreItem.absolutePath).readBytes(),
-									iv = iv
-								)
-	                    	} catch (e: Throwable) {
-	                    		Log.d(TAG, e.toString())
-	                    		e.printStackTrace()
+                            model = encryptionManager.decryptBytes(
+                                bytes = getSecuredCacheImageForFile(fileName = mediaStoreItem.displayName!!, context = context).readBytes(),
+                                iv = thumbnailIv
+                            )
 
-	                    		mediaStoreItem.uri.path
-	                    	}
-	                    }
+                            model = encryptionManager.decryptBytes(
+                                bytes = File(mediaStoreItem.absolutePath).readBytes(),
+                                iv = iv
+                            )
+                        } catch (e: Throwable) {
+                            Log.d(TAG, e.toString())
+                            e.printStackTrace()
+
+                            mediaStoreItem.uri.path
+                        }
                     }
                 }
 
@@ -291,16 +288,16 @@ fun Modifier.mediaModifier(
                     onTap = {
                         if (!isTouchLocked.value) {
                             if (item?.type == MediaType.Video && showVideoPlayerController != null && isLandscape) {
-                            	if (appBarsVisible.value) {
-	                                setBarVisibility(
-	                                    visible = false,
-	                                    window = window
-	                                ) {
-	                                    appBarsVisible.value = it
-	                                }
-                            	} else {
-                            		showVideoPlayerController.value = !showVideoPlayerController.value
-                            	}
+                                if (appBarsVisible.value) {
+                                    setBarVisibility(
+                                        visible = false,
+                                        window = window
+                                    ) {
+                                        appBarsVisible.value = it
+                                    }
+                                } else {
+                                    showVideoPlayerController.value = !showVideoPlayerController.value
+                                }
                             } else {
                                 setBarVisibility(
                                     visible = !appBarsVisible.value,
@@ -316,7 +313,7 @@ fun Modifier.mediaModifier(
 
                     onDoubleTap = { clickOffset ->
                         if (!isTouchLocked.value) {
-                        	if (item?.type != MediaType.Video && showVideoPlayerController == null) {
+                            if (item?.type != MediaType.Video && showVideoPlayerController == null) {
                                 if (scale.value == 1f && offset.value == Offset.Zero) {
                                     scale.value = 2f
                                     rotation.value = 0f

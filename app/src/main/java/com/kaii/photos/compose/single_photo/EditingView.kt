@@ -70,6 +70,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RippleConfiguration
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
@@ -138,6 +139,8 @@ import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
+import com.kaii.lavender_snackbars.LavenderSnackbarController
+import com.kaii.lavender_snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.BottomAppBarItem
@@ -601,6 +604,8 @@ fun EditingView(
                         )
                 }
 
+                val coroutineScope = rememberCoroutineScope()
+
                 AnimatedVisibility(
                     visible = topRightOffset.x - topLeftOffset.x != size.width || bottomLeftOffset.y - topLeftOffset.y != size.height,
                     enter = slideInVertically { height -> height } + fadeIn(),
@@ -660,7 +665,15 @@ fun EditingView(
 
                                     changesSize.intValue += 1
                                 } else {
-                                    // TODO: show can't crop snackbar
+                                    coroutineScope.launch {
+                                        LavenderSnackbarController.pushEvent(
+                                            LavenderSnackbarEvents.MessageEvent(
+                                                message = "Can't crop anymore D:",
+                                                iconResId = R.drawable.error_2,
+                                                duration = SnackbarDuration.Short
+                                            )
+                                        )
+                                    }
                                 }
                             },
                         verticalArrangement = Arrangement.Center,

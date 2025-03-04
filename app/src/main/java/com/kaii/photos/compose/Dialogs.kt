@@ -50,6 +50,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -60,6 +61,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
@@ -93,6 +95,8 @@ import androidx.navigation.NavHostController
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.kaii.lavender_snackbars.LavenderSnackbarController
+import com.kaii.lavender_snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity
 import com.kaii.photos.MainActivity.Companion.mainViewModel
@@ -122,6 +126,7 @@ import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getExternalStorageContentUriFromAbsolutePath
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.io.File
 
 private const val TAG = "DIALOGS"
@@ -1252,6 +1257,8 @@ fun TextEntryDialog(
                 suffix = {
                     if (showError) {
                         Row {
+                            val coroutineScope = rememberCoroutineScope()
+
                             Icon(
                                 painter = painterResource(id = R.drawable.error_2),
                                 contentDescription = "Error",
@@ -1259,7 +1266,15 @@ fun TextEntryDialog(
                                 modifier = Modifier
                                     .size(24.dp)
                                     .clickable {
-                                        // TODO: show help tip
+                                        coroutineScope.launch {
+                                            LavenderSnackbarController.pushEvent(
+                                                LavenderSnackbarEvents.MessageEvent(
+                                                    message = "Paths need to be relative",
+                                                    iconResId = R.drawable.error_2,
+                                                    duration = SnackbarDuration.Short
+                                                )
+                                            )
+                                        }
                                     }
                             )
                         }

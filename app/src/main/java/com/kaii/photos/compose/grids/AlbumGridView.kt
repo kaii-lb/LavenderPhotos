@@ -3,26 +3,25 @@ package com.kaii.photos.compose.grids
 import android.content.res.Configuration
 import android.util.Log
 import androidx.activity.compose.BackHandler
+import androidx.annotation.FloatRange
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.animateIntOffsetAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -55,7 +54,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
@@ -67,9 +65,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
+import androidx.compose.ui.unit.center
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
-import androidx.compose.ui.unit.center
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -116,46 +114,50 @@ fun AlbumsGridView(
 
     val albumToThumbnailMapping by albumsViewModel.mediaFlow.collectAsStateWithLifecycle()
 
-    LaunchedEffect(listOfDirs, sortMode, sortByDescending) {
+    LaunchedEffect(listOfDirs, sortMode, sortByDescending, albumToThumbnailMapping) {
         withContext(Dispatchers.IO) {
             val newList = mutableListOf<String>()
 
             when (sortMode) {
                 AlbumSortMode.LastModified -> {
                     newList.addAll(
-                    		if (sortByDescending) {
-                    			listOfDirs.sortedByDescending {
-		                            File("$baseInternalStorageDirectory$it").lastModified()
-		                        }.toMutableList().apply {
-   		                            find { item -> item == "DCIM/Camera" }?.let { cameraItem ->
-   		                                remove(cameraItem)
-   		                                add(0, cameraItem)
-   		                            }
-   		                        }
-                    		} else {
-                    			listOfDirs.sortedBy {
-		                            File("$baseInternalStorageDirectory$it").lastModified()
-		                        }.toMutableList().apply {
-		                            find { item -> item == "DCIM/Camera" }?.let { cameraItem ->
-		                                remove(cameraItem)
-		                                add(0, cameraItem)
-		                            }
-		                        }
-                    		}
+                        if (sortByDescending) {
+                            listOfDirs.sortedByDescending { dir ->
+                            	albumToThumbnailMapping.find {
+                            		it.absolutePath.replace(it.displayName!!, "") == "$baseInternalStorageDirectory$dir"
+                            	}?.dateModified ?: File("$baseInternalStorageDirectory$dir").lastModified()
+                            }.toMutableList().apply {
+                                find { item -> item == "DCIM/Camera" }?.let { cameraItem ->
+                                    remove(cameraItem)
+                                    add(0, cameraItem)
+                                }
+                            }
+                        } else {
+                            listOfDirs.sortedBy { dir ->
+                                albumToThumbnailMapping.find {
+                                	it.absolutePath.replace(it.displayName!!, "") == "$baseInternalStorageDirectory$dir"
+                                }?.dateModified ?: File("$baseInternalStorageDirectory$dir").lastModified()
+                            }.toMutableList().apply {
+                                find { item -> item == "DCIM/Camera" }?.let { cameraItem ->
+                                    remove(cameraItem)
+                                    add(0, cameraItem)
+                                }
+                            }
+                        }
                     )
                 }
 
                 AlbumSortMode.Alphabetically -> {
                     newList.addAll(
-                    	if (!sortByDescending) {
-	                        listOfDirs.sortedBy {
-	                            it.split("/").last()
-	                        }
-                    	} else {
-                    		listOfDirs.sortedByDescending {
-	                            it.split("/").last()
-	                        }
-                    	}
+                        if (!sortByDescending) {
+                            listOfDirs.sortedBy {
+                                it.split("/").last()
+                            }
+                        } else {
+                            listOfDirs.sortedByDescending {
+                                it.split("/").last()
+                            }
+                        }
                     )
                 }
 
@@ -166,16 +168,15 @@ fun AlbumsGridView(
                 }
             }
 
-			// if the albums actually changed, not just the order then refresh
+            // if the albums actually changed, not just the order then refresh
             if (albums.value.toSet() != newList.toSet()) {
-            	albumsViewModel.refresh(
-            		context = context,
-            		albumsList = newList
-            	)
+                albumsViewModel.refresh(
+                    context = context,
+                    albumsList = newList
+                )
             }
 
             albums.value = newList
-
 
             Log.d(TAG, "sort mode: $sortMode and new list: $newList")
         }
@@ -183,7 +184,7 @@ fun AlbumsGridView(
 
     // update the list to reflect custom order (doesn't matter for other sorting modes)
     LaunchedEffect(albums.value) {
-    	if (albums.value.isNotEmpty()) mainViewModel.settings.AlbumsList.setAlbumsList(albums.value)
+        if (albums.value.isNotEmpty()) mainViewModel.settings.AlbumsList.setAlbumsList(albums.value)
     }
 
     BackHandler(
@@ -222,12 +223,13 @@ fun AlbumsGridView(
             }
         }
 
-		LaunchedEffect(lazyGridState.isScrollInProgress) {
-			if (lazyGridState.isScrollInProgress && lazyGridState.canScrollBackward) lockHeader = false
-		}
+        LaunchedEffect(lazyGridState.isScrollInProgress) {
+            if (lazyGridState.isScrollInProgress && lazyGridState.canScrollBackward) lockHeader = false
+        }
 
         SortModeHeader(
             sortMode = sortMode,
+            progress = pullToRefreshState.distanceFraction.coerceAtMost(1f),
             modifier = Modifier
                 .height(with(localDensity) { headerHeight.toDp() })
                 .zIndex(1f)
@@ -288,7 +290,7 @@ fun AlbumsGridView(
                                     newList.add(targetItemIndex, selectedItem!!)
 
                                     itemOffset =
-                                    	change.position.round() - (targetLazyItem.offset + targetLazyItem.size.center)
+                                        change.position.round() - (targetLazyItem.offset + targetLazyItem.size.center)
 
                                     albums.value = newList.distinct()
                                     if (sortMode != AlbumSortMode.Custom) mainViewModel.settings.AlbumsList.setAlbumSortMode(AlbumSortMode.Custom)
@@ -330,8 +332,10 @@ fun AlbumsGridView(
                 },
             ) { index ->
                 if (albumToThumbnailMapping.isNotEmpty()) {
-                	val neededDir = albums.value[index]	
-                    val mediaItem = albumToThumbnailMapping[neededDir] ?: MediaStoreData()
+                    val neededDir = albums.value[index]
+                    val mediaItem = albumToThumbnailMapping.find {
+                        it.absolutePath.replace(baseInternalStorageDirectory, "").replace(it.displayName!!, "").removeSuffix("/") == neededDir
+                    } ?: MediaStoreData()
 
                     AlbumGridItem(
                         album = neededDir,
@@ -354,8 +358,8 @@ fun AlbumsGridView(
                                     durationMillis = 250
                                 ),
                                 placementSpec =
-                                    if (selectedItem == neededDir) null // if is selected don't animate so no weird snapping back and forth happens
-                                    else tween(durationMillis = 250)
+                                if (selectedItem == neededDir) null // if is selected don't animate so no weird snapping back and forth happens
+                                else tween(durationMillis = 250)
                             )
                     ) {
                         navController.navigate(
@@ -388,6 +392,14 @@ private fun AlbumGridItem(
         label = "animate album grid item scale"
     )
 
+    val backgroundColor by animateColorAsState(
+        targetValue = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainer,
+        animationSpec = tween(
+            durationMillis = 200
+        ),
+        label = "animate selected album grid item background color"
+    )
+
     Column(
         modifier = modifier
             .wrapContentHeight()
@@ -395,7 +407,7 @@ private fun AlbumGridItem(
             .scale(animatedScale)
             .padding(6.dp)
             .clip(RoundedCornerShape(24.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .background(backgroundColor)
             .clickable {
                 if (!isSelected) onClick()
             },
@@ -534,6 +546,7 @@ private fun CategoryList(
 @Composable
 private fun SortModeHeader(
     sortMode: AlbumSortMode,
+    @FloatRange(0.0, 1.0) progress: Float,
     modifier: Modifier = Modifier
 ) {
     LazyRow(
@@ -583,7 +596,9 @@ private fun SortModeHeader(
                 else ButtonDefaults.outlinedButtonColors()
             ) {
                 Text(
-                    text = "Date"
+                    text = "Date",
+                    modifier = Modifier
+                        .scale(progress)
                 )
             }
         }
@@ -598,7 +613,9 @@ private fun SortModeHeader(
                 else ButtonDefaults.outlinedButtonColors()
             ) {
                 Text(
-                    text = "Name"
+                    text = "Name",
+                    modifier = Modifier
+                        .scale(progress)
                 )
             }
         }
@@ -613,7 +630,9 @@ private fun SortModeHeader(
                 else ButtonDefaults.outlinedButtonColors()
             ) {
                 Text(
-                    text = "Custom"
+                    text = "Custom",
+                    modifier = Modifier
+                        .scale(progress)
                 )
             }
         }
