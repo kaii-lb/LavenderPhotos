@@ -65,6 +65,8 @@ fun PreferencesRow(
     goesToOtherPage: Boolean = false,
     showBackground: Boolean = true,
     titleTextSize: Float = 18f,
+    backgroundColor: Color = MaterialTheme.colorScheme.surfaceVariant,
+    contentColor: Color = MaterialTheme.colorScheme.onSurface,
     action: (() -> Unit)? = null
 ) {
     val (shape, _) = getDefaultShapeSpacerForPosition(position, 24.dp)
@@ -85,7 +87,7 @@ fun PreferencesRow(
             .wrapContentHeight()
             .then(clip)
             .wrapContentHeight(align = Alignment.CenterVertically)
-            .background(if (showBackground) MaterialTheme.colorScheme.surfaceVariant else Color.Transparent)
+            .background(if (showBackground) backgroundColor else Color.Transparent)
             .then(clickable)
             .padding(16.dp, 12.dp)
             .then(modifier),
@@ -112,7 +114,7 @@ fun PreferencesRow(
                 text = title,
                 fontSize = TextUnit(titleTextSize, TextUnitType.Sp),
                 textAlign = TextAlign.Start,
-                color = MaterialTheme.colorScheme.onSurface
+                color = contentColor
             )
 
             if (summary != null) {
@@ -120,7 +122,7 @@ fun PreferencesRow(
                     text = summary,
                     fontSize = TextUnit(14f, TextUnitType.Sp),
                     textAlign = TextAlign.Start,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
+                    color = contentColor.copy(alpha = 0.75f),
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -131,7 +133,7 @@ fun PreferencesRow(
             Icon(
                 painter = painterResource(id = R.drawable.other_page_indicator),
                 contentDescription = "this preference row leads to another page",
-                tint = MaterialTheme.colorScheme.onBackground,
+                tint = contentColor,
                 modifier = Modifier
                     .size(28.dp)
             )

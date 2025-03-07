@@ -1,5 +1,6 @@
 package com.kaii.photos.compose.settings
 
+import android.util.Log
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
@@ -60,6 +61,8 @@ import com.kaii.photos.R
 import com.kaii.photos.helpers.CheckUpdateState
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
+
+private const val TAG = "UPDATE_PAGE"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -300,18 +303,26 @@ private fun BottomBar(
 					if (newVersionExists) {
 						Button (
 							onClick = {
-								isDownloading = true
-								mainViewModel.updater.startUpdate(
-									progress = { percent ->
-										progress = percent / 100f
-									},
+								if (!isDownloading) {
+									mainViewModel.updater.startUpdate(
+										progress = { percent ->
+											isDownloading = true
+											progress = percent / 100f
+										},
 
-									onDownloadStopped = { success ->
-										isDownloading = false
-										if (success) mainViewModel.updater.installUpdate()
-										else updateStatusText = "Couldn't download update"
-									}
-								)
+										onDownloadStopped = { success ->
+											isDownloading = false
+
+											if (success) {
+												Log.d(TAG, "Download succeeded, installing...")
+												mainViewModel.updater.installUpdate()
+											} else {
+												Log.d(TAG, "Download failed")
+												updateStatusText = "Couldn't download update"
+											}
+										}
+									)
+								}
 							}
 						) {
 							Text(

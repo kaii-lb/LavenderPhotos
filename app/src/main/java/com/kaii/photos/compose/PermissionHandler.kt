@@ -154,6 +154,12 @@ fun PermissionHandler(
 	                modifier = Modifier
 	                    .weight(1f)
 	            ) {
+	            	item {
+	            		PreferencesSeparatorText(
+	            			text = "Permissions"
+	            		)
+	            	}
+
 	                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
 	                    item {
 	                        val readMediaImageLauncher = rememberLauncherForActivityResult(
@@ -325,6 +331,23 @@ fun PermissionHandler(
 	                            }
 	                        }
 	                    }
+	                }
+
+					item {
+						PreferencesSeparatorText(
+							text = "Other Info"
+						)
+					}
+
+	                item {
+	                	PreferencesRow(
+	                		title = "Install Packages",
+	                		summary = "If you use the in-app updater, Lavender Photos will request the Install Packages permission.",
+	                		iconResID = R.drawable.error_2,
+	                		position = RowPosition.Single,
+	                		backgroundColor = MaterialTheme.colorScheme.surfaceContainer,
+	                		contentColor = MaterialTheme.colorScheme.onSurface
+	                	)
 	                }
 	            }
 

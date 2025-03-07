@@ -2,9 +2,11 @@ package com.kaii.photos.helpers
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageInstaller.SessionParams
 import android.util.Log
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.MutableState
 import androidx.core.content.FileProvider
 import com.kaii.photos.BuildConfig
@@ -41,7 +43,7 @@ class Updater(
             .toInt()
     }
 
-    private val updateFile = run {
+    private val updateFile by derivedStateOf {
         val file = File(context.appStorageDir, "photos_signed_release_${githubVersionName.value}.apk")
         file.parentFile?.mkdirs()
         file
@@ -127,8 +129,8 @@ class Updater(
 					.response { result -> // TODO: parse result output | failure, success, etc
                         result.fold(
                             success = {
+                            	Log.d(TAG, "Download succeeded")
                                 onDownloadStopped(true)
-                            	Log.d(TAG, "Download succeeded, installing...")
                             },
 
                             failure = {
@@ -151,6 +153,7 @@ class Updater(
             data = FileProvider.getUriForFile(context, LAVENDER_FILE_PROVIDER_AUTHORITY, updateFile)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
 
         context.startActivity(intent)
