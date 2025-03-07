@@ -300,6 +300,7 @@ private fun BottomBar(
 					if (newVersionExists) {
 						Button (
 							onClick = {
+								isDownloading = true
 								mainViewModel.updater.startUpdate(
 									progress = { percent ->
 										progress = percent / 100f

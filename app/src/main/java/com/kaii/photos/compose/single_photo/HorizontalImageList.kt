@@ -132,6 +132,8 @@ fun HorizontalImageList(
         modifier = Modifier
             .fillMaxHeight(1f)
     ) { index ->
+		if (groupedMedia.isEmpty()) return@HorizontalPager
+
         val shouldPlay by remember(state) {
             derivedStateOf {
                 (abs(state.currentPageOffsetFraction) < 0.5f && state.currentPage == index)
