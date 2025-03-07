@@ -228,7 +228,6 @@ fun SingleHiddenPhotoView(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             HorizontalImageList(
-                navController,
                 currentMediaItem,
                 groupedMedia.value,
                 state,
@@ -342,14 +341,14 @@ private fun TopBar(
 
                             if (!cachedFile.exists()) {
                                 if (mediaItem.type == MediaType.Video) {
-                                    EncryptionManager().decryptVideo(
+                                    EncryptionManager.decryptVideo(
                                         absolutePath = originalFile.absolutePath,
                                         context = context,
                                         iv = iv,
                                         progress = {}
                                     )
                                 } else {
-                                    EncryptionManager().decryptInputStream(
+                                    EncryptionManager.decryptInputStream(
                                         inputStream = originalFile.inputStream(),
                                         outputStream = cachedFile.outputStream(),
                                         iv = iv
@@ -677,7 +676,7 @@ fun SingleSecuredPhotoInfoDialog(
                                 val file =
                                     if (!cachedFile.exists()) {
                                         val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(currentMediaItem.absolutePath)
-                                        EncryptionManager().decryptVideo(
+                                        EncryptionManager.decryptVideo(
                                             absolutePath = originalFile.absolutePath,
                                             iv = iv,
                                             context = context,

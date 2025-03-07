@@ -9,24 +9,23 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.security.KeyStore
 import javax.crypto.Cipher
+import javax.crypto.CipherInputStream
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.IvParameterSpec
 
 private const val TAG = "ENCRYPTION_MANAGER"
 
-class EncryptionManager {
-    companion object {
-        private const val KEY_SIZE = 256
-        private const val KEYSTORE = "AndroidKeyStore"
+object EncryptionManager {
+    private const val KEY_SIZE = 256
+    private const val KEYSTORE = "AndroidKeyStore"
 
-        const val ENCRYPTION_ALGORITHM = KeyProperties.KEY_ALGORITHM_AES
-        const val ENCRYPTION_BLOCK_MODE = KeyProperties.BLOCK_MODE_CBC
-        const val ENCRYPTION_PADDING = KeyProperties.ENCRYPTION_PADDING_PKCS7
-        const val KEY_NAME = "LavenderPhotosSecureFolderKey"
+    private const val ENCRYPTION_ALGORITHM = KeyProperties.KEY_ALGORITHM_AES
+    private const val ENCRYPTION_BLOCK_MODE = KeyProperties.BLOCK_MODE_CBC
+    private const val ENCRYPTION_PADDING = KeyProperties.ENCRYPTION_PADDING_PKCS7
+    private const val KEY_NAME = "LavenderPhotosSecureFolderKey"
 
-        const val TRANSFORMATION = "$ENCRYPTION_ALGORITHM/$ENCRYPTION_BLOCK_MODE/$ENCRYPTION_PADDING"
-    }
+    private const val TRANSFORMATION = "$ENCRYPTION_ALGORITHM/$ENCRYPTION_BLOCK_MODE/$ENCRYPTION_PADDING"
 
     private fun getOrCreateSecretKey(): SecretKey {
         val keystore = KeyStore.getInstance(KEYSTORE)
@@ -97,7 +96,7 @@ class EncryptionManager {
         inputStream: InputStream,
         outputStream: OutputStream
     ): ByteArray {
-        val cipher = Cipher.getInstance(TRANSFORMATION)
+    	val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.ENCRYPT_MODE, getOrCreateSecretKey())
 
         writeToOutputStream(
@@ -114,7 +113,7 @@ class EncryptionManager {
         outputStream: OutputStream,
         iv: ByteArray
     ) {
-        val cipher = Cipher.getInstance(TRANSFORMATION)
+    	val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.DECRYPT_MODE, getOrCreateSecretKey(), IvParameterSpec(iv))
 
         writeToOutputStream(
@@ -125,8 +124,8 @@ class EncryptionManager {
     }
 
     private fun writeToByteArray(
-        cipher: Cipher,
-        bytes: ByteArray
+        bytes: ByteArray,
+        cipher: Cipher
     ): ByteArray {
         val buffer = ByteArray(cipher.blockSize * 1024 * 32)
 
@@ -153,26 +152,26 @@ class EncryptionManager {
     }
 
     fun decryptBytes(bytes: ByteArray, iv: ByteArray): ByteArray {
-        val cipher = Cipher.getInstance(TRANSFORMATION)
+    	val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.DECRYPT_MODE, getOrCreateSecretKey(), IvParameterSpec(iv))
 
         val decrypted = writeToByteArray(
-            cipher = cipher,
-            bytes = bytes
-        )
+        	bytes = bytes,
+        	cipher = cipher
+       	)
 
         return decrypted
     }
 
     /** return the encrypted byte array and an iv as the second param */
     fun encryptBytes(bytes: ByteArray): Pair<ByteArray, ByteArray> {
-        val cipher = Cipher.getInstance(TRANSFORMATION)
+    	val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.ENCRYPT_MODE, getOrCreateSecretKey())
 
         val encrypted = writeToByteArray(
-            cipher = cipher,
-            bytes = bytes
-        )
+        	bytes = bytes,
+        	cipher = cipher
+       	)
 
         return Pair(encrypted, cipher.iv)
     }
@@ -191,7 +190,7 @@ class EncryptionManager {
         	context = context
        	)
 
-        val cipher = Cipher.getInstance(TRANSFORMATION)
+		val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.DECRYPT_MODE, getOrCreateSecretKey(), IvParameterSpec(iv))
 
         val inputStream = original.inputStream()

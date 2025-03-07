@@ -106,6 +106,7 @@ fun LockedFolderEntryView(
 				val unencryptedDirChildren = unencryptedDir.listFiles()
 
 				if (unencryptedDirChildren?.isNotEmpty() == true) {
+                    Log.d(TAG, "encrypting previously unencrypted photos")
                     unencryptedDirChildren.forEach { file ->
 						val newPath = restoredFilesDir + "/" + file.name
                         val destination = File(newPath)
@@ -115,8 +116,7 @@ fun LockedFolderEntryView(
                             file.delete()
                         }
 
-                        val encryptionManager = EncryptionManager()
-                        encryptionManager.encryptInputStream(
+                        EncryptionManager.encryptInputStream(
                             inputStream = destination.inputStream(),
                             outputStream = file.outputStream()
                         )

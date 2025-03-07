@@ -246,7 +246,6 @@ fun SinglePhotoView(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             HorizontalImageList(
-                navController,
                 currentMediaItem.value,
                 groupedMedia.value,
                 state,

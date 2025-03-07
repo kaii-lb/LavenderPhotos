@@ -20,17 +20,23 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandIn
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -41,7 +47,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
@@ -59,13 +67,18 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
@@ -76,6 +89,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.zIndex
 import androidx.core.net.toUri
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
@@ -92,19 +106,14 @@ import com.kaii.photos.BuildConfig
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.BottomAppBarItem
-import com.kaii.photos.compose.ConfirmationDialog
 import com.kaii.photos.compose.ExplanationDialog
 import com.kaii.photos.compose.setBarVisibility
 import com.kaii.photos.compose.rememberDeviceOrientation
-import com.kaii.photos.helpers.appStorageDir
 import com.kaii.photos.helpers.Screens
-import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.shareImage
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.copyUriToUri
-import com.kaii.photos.mediastore.getUriFromAbsolutePath
 import com.kaii.photos.models.multi_album.formatDate
 import com.kaii.photos.ui.theme.PhotosTheme
 import kotlinx.coroutines.delay
@@ -294,18 +303,6 @@ private fun Content(
                     releaseExoPlayer = releaseExoPlayer,
                     isTouchLocked = isTouchLocked,
                     modifier = Modifier
-                        .mediaModifier(
-                            scale = scale,
-                            rotation = rotation,
-                            offset = offset,
-                            window = window,
-                            appBarsVisible = appBarsVisible,
-                            isTouchLocked = isTouchLocked,
-                            showVideoPlayerController = controlsVisible,
-                            item = MediaStoreData(
-                            	type = MediaType.Video
-                            )
-                        )
                 )
             } else {
                 GlideImage(
@@ -320,8 +317,7 @@ private fun Content(
                             rotation = rotation,
                             offset = offset,
                             window = window,
-                            appBarsVisible = appBarsVisible,
-                            isTouchLocked = isTouchLocked
+                            appBarsVisible = appBarsVisible
                         )
                 ) {
                     it.signature(ObjectKey(uri.toString().hashCode() + mimeType.hashCode()))
@@ -443,6 +439,188 @@ private fun OpenWithVideoPlayer(
             )
         }
 
+        var doubleTapDisplayTimeMillis by remember { mutableIntStateOf(0) }
+        val seekBackBackgroundColor by animateColorAsState(
+            targetValue = if (doubleTapDisplayTimeMillis < 0) MaterialTheme.colorScheme.primary.copy(alpha = 0.4f) else Color.Transparent,
+            animationSpec = tween(
+                durationMillis = 350
+            ),
+            label = "Animate double tap to skip background color"
+        )
+        val seekForwardBackgroundColor by animateColorAsState(
+            targetValue = if (doubleTapDisplayTimeMillis > 0) MaterialTheme.colorScheme.primary.copy(alpha = 0.4f) else Color.Transparent,
+            animationSpec = tween(
+                durationMillis = 350
+            ),
+            label = "Animate double tap to skip background color"
+        )
+
+        LaunchedEffect(doubleTapDisplayTimeMillis) {
+            delay(1000)
+            doubleTapDisplayTimeMillis = 0
+        }
+
+        var showVideoPlayerControlsTimeout by remember { mutableIntStateOf(0) }
+        val isLandscape by rememberDeviceOrientation()
+
+        LaunchedEffect(showVideoPlayerControlsTimeout) {
+            delay(5000)
+            setBarVisibility(
+                visible = false,
+                window = window
+            ) {
+                appBarsVisible.value = it
+
+                controlsVisible.value = it
+            }
+
+            showVideoPlayerControlsTimeout = 0
+        }
+
+        LaunchedEffect(controlsVisible.value) {
+            if (controlsVisible.value) showVideoPlayerControlsTimeout += 1
+        }
+
+        LaunchedEffect(isLandscape) {
+       		setBarVisibility(
+       			visible = !isLandscape,
+       			window = window
+       		) {
+       			appBarsVisible.value = it
+       			if (!isLandscape) controlsVisible.value = it
+       		}
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize(1f)
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onTap = {
+                            if (!isTouchLocked.value && doubleTapDisplayTimeMillis == 0) {
+                                setBarVisibility(
+                                    visible = if (isLandscape) false else !controlsVisible.value,
+                                    window = window
+                                ) {
+                                    appBarsVisible.value = it
+                                }
+                                controlsVisible.value = !controlsVisible.value
+                            }
+                        },
+
+                        onDoubleTap = { position ->
+                            if (!isTouchLocked.value && position.x < size.width / 2) {
+                                doubleTapDisplayTimeMillis -= 1000
+
+                                val prev = isPlaying.value
+                                exoPlayer.seekBack()
+                                isPlaying.value = prev
+                            } else if (!isTouchLocked.value && position.x >= size.width / 2) {
+                                doubleTapDisplayTimeMillis += 1000
+
+                                val prev = isPlaying.value
+                                exoPlayer.seekForward()
+                                isPlaying.value = prev
+                            }
+
+                            showVideoPlayerControlsTimeout += 1
+                        }
+                    )
+                }
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight(1f)
+                    .fillMaxWidth(0.45f)
+                    .align(Alignment.CenterStart)
+                    .clip(RoundedCornerShape(0, 100, 100, 0))
+                    .background(seekBackBackgroundColor)
+                    .zIndex(2f)
+            ) {
+                AnimatedVisibility(
+                    visible = doubleTapDisplayTimeMillis < 0,
+                    enter =
+                    fadeIn(
+                        animationSpec = tween(
+                            durationMillis = 300
+                        )
+                    ) + scaleIn(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMedium,
+                        )
+                    ),
+                    exit =
+                    fadeOut(
+                        animationSpec = tween(
+                            durationMillis = 300
+                        )
+                    ) + scaleOut(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMedium,
+                        )
+                    ),
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.fast_rewind),
+                        contentDescription = "Shows which way the user is seeking",
+                        modifier = Modifier
+                            .size(48.dp)
+                            .align(Alignment.Center)
+                    )
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight(1f)
+                    .fillMaxWidth(0.45f)
+                    .align(Alignment.CenterEnd)
+                    .clip(RoundedCornerShape(100, 0, 0, 100))
+                    .background(seekForwardBackgroundColor)
+                    .zIndex(2f)
+            ) {
+                AnimatedVisibility(
+                    visible = doubleTapDisplayTimeMillis > 0,
+                    enter =
+                    fadeIn(
+                        animationSpec = tween(
+                            durationMillis = 300
+                        )
+                    ) + scaleIn(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMedium,
+                        )
+                    ),
+                    exit =
+                    fadeOut(
+                        animationSpec = tween(
+                            durationMillis = 300
+                        )
+                    ) + scaleOut(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMedium,
+                        )
+                    ),
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.fast_forward),
+                        contentDescription = "Shows which way the user is seeking",
+                        modifier = Modifier
+                            .size(48.dp)
+                            .align(Alignment.Center)
+                    )
+                }
+            }
+        }
+
         AnimatedVisibility(
             visible = controlsVisible.value,
             enter = expandIn(
@@ -474,6 +652,9 @@ private fun OpenWithVideoPlayer(
                 currentVideoPosition = currentVideoPosition,
                 duration = duration,
                 title = "Media",
+                onAnyTap = {
+                    showVideoPlayerControlsTimeout += 1
+                },
                 modifier = Modifier
                     .fillMaxSize(1f)
             ) {
@@ -503,8 +684,7 @@ private fun OpenWithVideoPlayer(
                     checked = isTouchLocked.value,
                     onCheckedChange = {
                         isTouchLocked.value = it
-
-                        controlsVisible.value = !it
+                        showVideoPlayerControlsTimeout += 1
                     },
                     colors = IconButtonDefaults.filledTonalIconToggleButtonColors().copy(
                         checkedContainerColor = MaterialTheme.colorScheme.primary,
@@ -542,6 +722,9 @@ private fun OpenWithVideoPlayer(
                                 ) {
                                     appBarsVisible.value = it
                                 }
+
+                                showVideoPlayerControlsTimeout += 1
+                                isTouchLocked.value = false
                             },
                             colors = IconButtonDefaults.filledTonalIconButtonColors().copy(
                                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
@@ -705,27 +888,29 @@ private fun BottomBar(
                                     val contentUri = context.contentResolver.insert(
                                         MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                                         contentValues
-                                    ) ?: return@BottomAppBarItem
-
-                                    context.contentResolver.copyUriToUri(
-                                        from = uri,
-                                        to = contentUri
                                     )
 
-                                    setBarVisibility(
-                                        visible = true,
-                                        window = window
-                                    ) {
-                                        appBarsVisible.value = it
-                                    }
-
-                                    navController.navigate(
-                                        Screens.EditingScreen(
-                                            absolutePath = destination.absolutePath,
-                                            uri = contentUri.toString(),
-                                            dateTaken = currentTime / 1000
+                                    if (contentUri != null) {
+                                        context.contentResolver.copyUriToUri(
+                                            from = uri,
+                                            to = contentUri
                                         )
-                                    )
+
+                                        setBarVisibility(
+                                            visible = true,
+                                            window = window
+                                        ) {
+                                            appBarsVisible.value = it
+                                        }
+
+                                        navController.navigate(
+                                            Screens.EditingScreen(
+                                                absolutePath = destination.absolutePath,
+                                                uri = contentUri.toString(),
+                                                dateTaken = currentTime / 1000
+                                            )
+                                        )
+                                    }
                                 }
                             } else {
                                 { showNotImplementedDialog.value = true }

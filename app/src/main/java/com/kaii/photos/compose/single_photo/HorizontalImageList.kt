@@ -22,6 +22,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -71,7 +72,6 @@ private const val TAG = "HORIZONTAL_IMAGE_LIST"
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun HorizontalImageList(
-    navController: NavHostController,
     currentMediaItem: MediaStoreData,
     groupedMedia: List<MediaStoreData>,
     state: PagerState,
@@ -114,10 +114,6 @@ fun HorizontalImageList(
         lastVideoWasMuted.value = muteVideoOnStart
     }
 
-    val encryptionManager = remember {
-        EncryptionManager()
-    }
-
     HorizontalPager(
         state = state,
         verticalAlignment = Alignment.CenterVertically,
@@ -138,62 +134,25 @@ fun HorizontalImageList(
     ) { index ->
         val shouldPlay by remember(state) {
             derivedStateOf {
-                !state.isScrollInProgress
+                (abs(state.currentPageOffsetFraction) < 0.5f && state.currentPage == index)
+                	|| (abs(state.currentPageOffsetFraction) > 0.5f && state.currentPage == index)
             }
         }
 
         val mediaStoreItem = groupedMedia[index]
 
         if (mediaStoreItem.type == MediaType.Video && shouldPlay) {
-            val showVideoPlayerControls = remember { mutableStateOf(true) }
-            val canFadeControls = remember { mutableStateOf(true) }
-
-            LaunchedEffect(
-                key1 = showVideoPlayerControls.value,
-                key2 = canFadeControls.value,
-                key3 = appBarsVisible.value
-            ) {
-                if (canFadeControls.value && showVideoPlayerControls.value) {
-                    delay(5000)
-                    setBarVisibility(
-                        visible = false,
-                        window = window
-                    ) {
-                        appBarsVisible.value = it
-
-                        showVideoPlayerControls.value = it
-                    }
-
-                    canFadeControls.value = false
-                }
-            }
-
             Box(
                 modifier = Modifier
                     .fillMaxSize(1f)
             ) {
                 VideoPlayer(
                     item = mediaStoreItem,
-                    controlsVisible = showVideoPlayerControls,
                     appBarsVisible = appBarsVisible,
                     shouldAutoPlay = shouldAutoPlay,
                     lastWasMuted = lastVideoWasMuted,
-                    navController = navController,
-                    canFadeControls = canFadeControls,
                     isTouchLocked = isTouchLocked,
-                    window = window,
-                    modifier = Modifier
-                        .fillMaxSize(1f)
-                        .mediaModifier(
-                            scale = scale,
-                            rotation = rotation,
-                            offset = offset,
-                            window = window,
-                            appBarsVisible = appBarsVisible,
-                            item = mediaStoreItem,
-                            showVideoPlayerController = showVideoPlayerControls,
-                            isTouchLocked = isTouchLocked
-                        )
+                    window = window
                 )
             }
         } else {
@@ -212,12 +171,12 @@ fun HorizontalImageList(
                             val iv = mediaStoreItem.bytes!!.copyOfRange(0, 16)
                             val thumbnailIv = mediaStoreItem.bytes.copyOfRange(16, 32)
 
-                            model = encryptionManager.decryptBytes(
+                            model = EncryptionManager.decryptBytes(
                                 bytes = getSecuredCacheImageForFile(fileName = mediaStoreItem.displayName!!, context = context).readBytes(),
                                 iv = thumbnailIv
                             )
 
-                            model = encryptionManager.decryptBytes(
+                            model = EncryptionManager.decryptBytes(
                                 bytes = File(mediaStoreItem.absolutePath).readBytes(),
                                 iv = iv
                             )
@@ -242,8 +201,7 @@ fun HorizontalImageList(
                             rotation = rotation,
                             offset = offset,
                             window = window,
-                            appBarsVisible = appBarsVisible,
-                            isTouchLocked = isTouchLocked
+                            appBarsVisible = appBarsVisible
                         )
                 ) {
                     it.signature(mediaStoreItem.signature())
@@ -261,9 +219,7 @@ fun Modifier.mediaModifier(
     offset: MutableState<Offset>,
     window: Window,
     appBarsVisible: MutableState<Boolean>,
-    isTouchLocked: MutableState<Boolean>,
     item: MediaStoreData? = null,
-    showVideoPlayerController: MutableState<Boolean>? = null,
 ): Modifier {
     val localConfig = LocalConfiguration.current
     var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
@@ -286,43 +242,26 @@ fun Modifier.mediaModifier(
             .pointerInput(Unit) {
                 detectTapGestures(
                     onTap = {
-                        if (!isTouchLocked.value) {
-                            if (item?.type == MediaType.Video && showVideoPlayerController != null && isLandscape) {
-                                if (appBarsVisible.value) {
-                                    setBarVisibility(
-                                        visible = false,
-                                        window = window
-                                    ) {
-                                        appBarsVisible.value = it
-                                    }
-                                } else {
-                                    showVideoPlayerController.value = !showVideoPlayerController.value
-                                }
-                            } else {
-                                setBarVisibility(
-                                    visible = !appBarsVisible.value,
-                                    window = window
-                                ) {
-                                    appBarsVisible.value = it
-
-                                    if (!isLandscape) showVideoPlayerController?.value = it
-                                }
+                        if (item?.type != MediaType.Video) {
+                            setBarVisibility(
+                                visible = !appBarsVisible.value,
+                                window = window
+                            ) {
+                                appBarsVisible.value = it
                             }
                         }
                     },
 
                     onDoubleTap = { clickOffset ->
-                        if (!isTouchLocked.value) {
-                            if (item?.type != MediaType.Video && showVideoPlayerController == null) {
-                                if (scale.value == 1f && offset.value == Offset.Zero) {
-                                    scale.value = 2f
-                                    rotation.value = 0f
-                                    offset.value = clickOffset / scale.value
-                                } else {
-                                    scale.value = 1f
-                                    rotation.value = 0f
-                                    offset.value = Offset.Zero
-                                }
+                        if (item?.type != MediaType.Video) {
+                            if (scale.value == 1f && offset.value == Offset.Zero) {
+                                scale.value = 2f
+                                rotation.value = 0f
+                                offset.value = clickOffset / scale.value
+                            } else {
+                                scale.value = 1f
+                                rotation.value = 0f
+                                offset.value = Offset.Zero
                             }
                         }
                     }
@@ -422,7 +361,7 @@ fun Modifier.mediaModifier(
                                 }
                             }
                         }
-                    } while (!canceled && event.changes.any { it.pressed } && showVideoPlayerController == null)
+                    } while (!canceled && event.changes.any { it.pressed } && item?.type != MediaType.Video)
                 }
             })
 }

@@ -331,44 +331,44 @@ fun ShowSelectedState(
 fun SelectViewTopBarLeftButtons(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
 ) {
-	SplitButton(
-		primaryContentPadding = PaddingValues(16.dp, 0.dp, 12.dp, 0.dp),
-		secondaryContentPadding = PaddingValues(8.dp, 8.dp, 12.dp, 8.dp),
-	    secondaryContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-	    primaryContent = {
-	        Icon(
-	            painter = painterResource(id = R.drawable.close),
-	            contentDescription = "clear selection button",
-	            tint = MaterialTheme.colorScheme.onPrimary,
-	            modifier = Modifier
-	                .size(24.dp)
-	        )
-	    },
-	    secondaryContent = {
-	        Text(
-	            text = selectedItemsList.filter { it.type != MediaType.Section && it != MediaStoreData.dummyItem }.size.toString(),
-	            color = MaterialTheme.colorScheme.onSurface,
-	            fontSize = TextUnit(18f, TextUnitType.Sp),
-	            modifier = Modifier
-	                .wrapContentSize()
-	                .animateContentSize()
-	        )
-	    },
-	    primaryAction = {
-	        selectedItemsList.clear()
-	    },
-	    secondaryAction = {
-	        selectedItemsList.clear()
-	    }
-	)
+    SplitButton(
+        primaryContentPadding = PaddingValues(16.dp, 0.dp, 12.dp, 0.dp),
+        secondaryContentPadding = PaddingValues(8.dp, 8.dp, 12.dp, 8.dp),
+        secondaryContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+        primaryContent = {
+            Icon(
+                painter = painterResource(id = R.drawable.close),
+                contentDescription = "clear selection button",
+                tint = MaterialTheme.colorScheme.onPrimary,
+                modifier = Modifier
+                    .size(24.dp)
+            )
+        },
+        secondaryContent = {
+            Text(
+                text = selectedItemsList.filter { it.type != MediaType.Section && it != MediaStoreData.dummyItem }.size.toString(),
+                color = MaterialTheme.colorScheme.onSurface,
+                fontSize = TextUnit(18f, TextUnitType.Sp),
+                modifier = Modifier
+                    .wrapContentSize()
+                    .animateContentSize()
+            )
+        },
+        primaryAction = {
+            selectedItemsList.clear()
+        },
+        secondaryAction = {
+            selectedItemsList.clear()
+        }
+    )
 }
 
 @Composable
 fun SelectViewTopBarRightButtons(
-	selectedItemsList: SnapshotStateList<MediaStoreData>,
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
     currentView: MutableState<MainScreenViewType>
 ) {
-	val groupedMedia = mainViewModel.groupedMedia.collectAsStateWithLifecycle(initialValue = emptyList())
+    val groupedMedia = mainViewModel.groupedMedia.collectAsStateWithLifecycle(initialValue = emptyList())
 
     val selectedItemsWithoutSection by remember {
         derivedStateOf {
@@ -378,7 +378,7 @@ fun SelectViewTopBarRightButtons(
         }
     }
 
-    Row (
+    Row(
         modifier = Modifier
             .wrapContentWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -419,7 +419,7 @@ fun SelectViewTopBarRightButtons(
         }
 
         if (currentView.value != MainScreenViewType.SecureFolder) {
-            val showMoreOptionsDialog = remember { mutableStateOf(false)}
+            val showMoreOptionsDialog = remember { mutableStateOf(false) }
 
             if (showMoreOptionsDialog.value) {
                 SelectingMoreOptionsDialog(
@@ -450,7 +450,7 @@ fun SelectViewTopBarRightButtons(
 
 /** return true if the device is in landscape mode, false otherwise */
 @Composable
-fun rememberDeviceOrientation() : MutableState<Boolean> {
+fun rememberDeviceOrientation(): MutableState<Boolean> {
     val localConfig = LocalConfiguration.current
     val isLandscape = remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
 
@@ -460,3 +460,4 @@ fun rememberDeviceOrientation() : MutableState<Boolean> {
 
     return isLandscape
 }
+

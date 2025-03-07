@@ -222,7 +222,6 @@ fun SingleTrashedPhotoView(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             HorizontalImageList(
-                navController,
                 currentMediaItem,
                 groupedMedia.value,
                 state,

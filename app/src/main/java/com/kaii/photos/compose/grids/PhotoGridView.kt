@@ -277,10 +277,6 @@ fun DeviceMedia(
                 }
             }
 
-            val encryptionManager = remember {
-                EncryptionManager()
-            }
-
             LazyVerticalGrid(
             	state = gridState,
                 columns = GridCells.Fixed(
@@ -339,8 +335,7 @@ fun DeviceMedia(
                             viewProperties = viewProperties,
                             selectedItemsList = selectedItemsList,
                             thumbnailSettings = Pair(cacheThumbnails, thumbnailSize),
-                            isDragSelecting = isDragSelecting,
-                            encryptionManager = encryptionManager
+                            isDragSelecting = isDragSelecting
                         ) {
                             when (viewProperties.operation) {
                                 ImageFunctions.LoadNormalImage -> {
@@ -613,7 +608,6 @@ fun MediaStoreItem(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     thumbnailSettings: Pair<Boolean, Int>,
     isDragSelecting: MutableState<Boolean>,
-    encryptionManager: EncryptionManager,
     onClick: () -> Unit
 ) {
     val vibratorManager = rememberVibratorManager()
@@ -745,7 +739,7 @@ fun MediaStoreItem(
                         try {
                             val thumbnailIv = item.bytes!!.copyOfRange(16, 32) // get thumbnail iv from video
 
-                            encryptionManager.decryptBytes(
+                            EncryptionManager.decryptBytes(
                                 bytes = getSecuredCacheImageForFile(fileName = item.displayName!!, context = context).readBytes(),
                                 iv = thumbnailIv
                             )

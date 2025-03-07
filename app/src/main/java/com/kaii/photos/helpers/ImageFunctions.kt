@@ -153,7 +153,6 @@ fun moveImageToLockedFolder(
 ) {
     val contentResolver = context.contentResolver
     val lastModified = System.currentTimeMillis()
-    val encryptionManager = EncryptionManager()
     val metadataRetriever = MediaMetadataRetriever()
 
     CoroutineScope(Dispatchers.IO).launch {
@@ -183,12 +182,11 @@ fun moveImageToLockedFolder(
                     context = context,
                     mediaItem = mediaItem,
                     file = fileToBeHidden,
-                    encryptionManager = encryptionManager,
                     metadataRetriever = metadataRetriever
                 )
 
                 // encrypt file data and write to secure folder path
-                val iv = encryptionManager.encryptInputStream(fileToBeHidden.inputStream(), destinationFile.outputStream())
+                val iv = EncryptionManager.encryptInputStream(fileToBeHidden.inputStream(), destinationFile.outputStream())
 
                 applicationDatabase.securedItemEntityDao().insertEntity(
                     SecuredItemEntity(
@@ -215,8 +213,6 @@ fun moveImageOutOfLockedFolder(
 ) {
     val contentResolver = context.contentResolver
 
-    val encryptionManager = EncryptionManager()
-
     CoroutineScope(Dispatchers.IO).launch {
         async {
             list.forEach { media ->
@@ -230,7 +226,7 @@ fun moveImageOutOfLockedFolder(
                 val tempFile = File(context.cacheDir, fileToBeRestored.name)
 
                 val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(media.absolutePath)
-                encryptionManager.decryptInputStream(fileToBeRestored.inputStream(), tempFile.outputStream(), iv)
+                EncryptionManager.decryptInputStream(fileToBeRestored.inputStream(), tempFile.outputStream(), iv)
 
                 contentResolver.copyMedia(
                     context = context,

@@ -9,6 +9,7 @@ import android.view.Window
 import android.view.WindowManager
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -20,9 +21,7 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.waitForUpOrCancellation
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -31,17 +30,16 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
@@ -58,12 +56,11 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -71,22 +68,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.DpSize
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.zIndex
 import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -103,10 +97,11 @@ import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.ui.PlayerView
-import androidx.navigation.NavHostController
+import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.applicationDatabase
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
+import com.kaii.photos.compose.rememberDeviceOrientation
 import com.kaii.photos.compose.setBarVisibility
 import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.EncryptionManager
@@ -115,7 +110,6 @@ import com.kaii.photos.helpers.getSecureDecryptedVideoFile
 import com.kaii.photos.mediastore.MediaStoreData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.math.roundToInt
@@ -138,22 +132,14 @@ fun VideoPlayerControls(
     duration: MutableFloatState,
     title: String,
     modifier: Modifier,
+    onAnyTap: () -> Unit,
     onSwitchToLandscape: () -> Unit
 ) {
     BoxWithConstraints(
         modifier = modifier
             .background(Color.Transparent)
     ) {
-        val localConfig = LocalConfiguration.current
-        var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
-
-        LaunchedEffect(localConfig) {
-            isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
-
-            if (isLandscape) {
-                onSwitchToLandscape()
-            }
-        }
+        val isLandscape by rememberDeviceOrientation()
 
         if (isLandscape) {
             // title box
@@ -237,6 +223,8 @@ fun VideoPlayerControls(
                     value = currentVideoPosition.floatValue,
                     valueRange = 0f..duration.floatValue,
                     onValueChange = { pos ->
+                        onAnyTap()
+
                         val prev = isPlaying.value
                         exoPlayer.seekTo(
                             (pos * 1000f).coerceAtMost(duration.floatValue * 1000f).toLong()
@@ -311,6 +299,8 @@ fun VideoPlayerControls(
                 FilledTonalIconButton(
                     onClick = {
                         isMuted.value = !isMuted.value
+
+                        onAnyTap()
                     },
                     modifier = Modifier
                         .size(32.dp)
@@ -338,6 +328,8 @@ fun VideoPlayerControls(
                     val prev = isPlaying.value
                     exoPlayer.seekBack()
                     isPlaying.value = prev
+
+                    onAnyTap()
                 },
                 modifier = Modifier
                     .size(48.dp)
@@ -355,6 +347,8 @@ fun VideoPlayerControls(
             FilledTonalIconButton(
                 onClick = {
                     isPlaying.value = !isPlaying.value
+
+                    onAnyTap()
                 },
                 modifier = Modifier
                     .size(48.dp)
@@ -372,6 +366,8 @@ fun VideoPlayerControls(
                     val prev = isPlaying.value
                     exoPlayer.seekForward()
                     isPlaying.value = prev
+
+                    onAnyTap()
                 },
                 modifier = Modifier
                     .size(48.dp)
@@ -391,17 +387,14 @@ fun VideoPlayerControls(
 @Composable
 fun VideoPlayer(
     item: MediaStoreData,
-    controlsVisible: MutableState<Boolean>,
     appBarsVisible: MutableState<Boolean>,
     shouldAutoPlay: Boolean,
     lastWasMuted: MutableState<Boolean>,
-    navController: NavHostController,
-    canFadeControls: MutableState<Boolean>,
     isTouchLocked: MutableState<Boolean>,
     window: Window,
-    modifier: Modifier
 ) {
     val context = LocalContext.current
+    val navController = LocalNavController.current
     val isSecuredMedia = item.absolutePath.startsWith(context.appSecureFolderDir)
     var videoSource by remember { mutableStateOf(item.uri) }
 
@@ -411,12 +404,10 @@ fun VideoPlayer(
 
         LaunchedEffect(Unit) {
             withContext(Dispatchers.IO) {
-                val encryptionManager = EncryptionManager()
-
                 val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(item.absolutePath)
 
                 val output =
-                    encryptionManager.decryptVideo(
+                    EncryptionManager.decryptVideo(
                         absolutePath = item.absolutePath,
                         iv = iv,
                         context = context
@@ -482,6 +473,23 @@ fun VideoPlayer(
 
     val muteVideoOnStart by mainViewModel.settings.Video.getMuteOnStart().collectAsStateWithLifecycle(initialValue = true)
 
+    val controlsVisible = remember { mutableStateOf(true) }
+    var showVideoPlayerControlsTimeout by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(showVideoPlayerControlsTimeout) {
+        delay(5000)
+        setBarVisibility(
+            visible = false,
+            window = window
+        ) {
+            appBarsVisible.value = it
+
+            controlsVisible.value = it
+        }
+
+        showVideoPlayerControlsTimeout = 0
+    }
+
     BackHandler {
         isPlaying.value = false
         currentVideoPosition.floatValue = 0f
@@ -535,7 +543,7 @@ fun VideoPlayer(
 
 
     LaunchedEffect(controlsVisible.value) {
-        if (controlsVisible.value) canFadeControls.value = true
+        if (controlsVisible.value) showVideoPlayerControlsTimeout += 1
     }
 
     LaunchedEffect(isMuted.value) {
@@ -561,72 +569,174 @@ fun VideoPlayer(
         modifier = Modifier
             .fillMaxSize(1f)
     ) {
-        val localDensity = LocalDensity.current
-        var clickCenter by remember { mutableStateOf(DpOffset.Zero) }
-        val coroutineScope = rememberCoroutineScope()
-
         AndroidView(
             factory = {
                 playerView
             },
-            modifier = modifier
+            modifier = Modifier
                 .align(Alignment.Center)
-                .pointerInput(Unit) { // double tap to skip
-                    val centerPadding = with(localDensity) { 52.dp.toPx() }
-                    val leftPosition = size.width / 2f
-                    var taps = 0
-
-                    awaitEachGesture {
-                        val firstDown = awaitFirstDown()
-                        val firstUp = waitForUpOrCancellation() ?: return@awaitEachGesture
-
-                        val secondDown = withTimeoutOrNull(viewConfiguration.doubleTapTimeoutMillis) {
-                            val minUptime = firstUp.uptimeMillis + viewConfiguration.doubleTapMinTimeMillis
-                            var change: PointerInputChange
-                            do {
-                                change = awaitFirstDown()
-                            } while (change.uptimeMillis < minUptime)
-
-                            change
-                        } ?: return@awaitEachGesture
-
-                        firstUp.consume()
-                        firstDown.consume()
-                        secondDown.consume()
-
-                        taps += 1
-                        if (secondDown.position.x in 0f..leftPosition - centerPadding) { // left double tap
-                            clickCenter = with(localDensity) {
-                                DpOffset(
-                                    x = (size.width / 4f).toDp(),
-                                    y = (size.height / 2f).toDp()
-                                )
-                            }
-
-                            val prev = isPlaying.value
-                            exoPlayer.seekBack()
-                            isPlaying.value = prev
-                        } else if (secondDown.position.x in size.width / 2f + centerPadding..size.width.toFloat()) { // right double tap
-                            clickCenter = with(localDensity) {
-                                DpOffset(
-                                    x = (size.width * 0.75f).toDp(),
-                                    y = (size.height / 2f).toDp()
-                                )
-                            }
-
-                            val prev = isPlaying.value
-                            exoPlayer.seekForward()
-                            isPlaying.value = prev
-                        }
-
-                        coroutineScope.launch {
-                            delay(500)
-                            taps -= 1
-                            if (taps == 0) clickCenter = DpOffset.Zero
-                        }
-                    }
-                },
         )
+
+        var doubleTapDisplayTimeMillis by remember { mutableIntStateOf(0) }
+        val isLandscape by rememberDeviceOrientation()
+        val seekBackBackgroundColor by animateColorAsState(
+            targetValue = if (doubleTapDisplayTimeMillis < 0) MaterialTheme.colorScheme.primary.copy(alpha = 0.4f) else Color.Transparent,
+            animationSpec = tween(
+                durationMillis = 350
+            ),
+            label = "Animate double tap to skip background color"
+        )
+        val seekForwardBackgroundColor by animateColorAsState(
+            targetValue = if (doubleTapDisplayTimeMillis > 0) MaterialTheme.colorScheme.primary.copy(alpha = 0.4f) else Color.Transparent,
+            animationSpec = tween(
+                durationMillis = 350
+            ),
+            label = "Animate double tap to skip background color"
+        )
+
+        LaunchedEffect(doubleTapDisplayTimeMillis) {
+            delay(1000)
+            doubleTapDisplayTimeMillis = 0
+        }
+        LaunchedEffect(isLandscape) {
+       		setBarVisibility(
+       			visible = !isLandscape,
+       			window = window
+       		) {
+       			appBarsVisible.value = it
+       			if (!isLandscape) controlsVisible.value = it
+       		}
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize(1f)
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onTap = {
+                            if (!isTouchLocked.value && doubleTapDisplayTimeMillis == 0) {
+                                setBarVisibility(
+                                    visible = if (isLandscape) false else !controlsVisible.value,
+                                    window = window
+                                ) {
+                                    appBarsVisible.value = it
+                                }
+                                controlsVisible.value = !controlsVisible.value
+                            }
+                        },
+
+                        onDoubleTap = { position ->
+                            if (!isTouchLocked.value && position.x < size.width / 2) {
+                                doubleTapDisplayTimeMillis -= 1000
+
+                                val prev = isPlaying.value
+                                exoPlayer.seekBack()
+                                isPlaying.value = prev
+                            } else if (!isTouchLocked.value && position.x >= size.width / 2) {
+                                doubleTapDisplayTimeMillis += 1000
+
+                                val prev = isPlaying.value
+                                exoPlayer.seekForward()
+                                isPlaying.value = prev
+                            }
+
+                            showVideoPlayerControlsTimeout += 1
+                        }
+                    )
+                }
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight(1f)
+                    .fillMaxWidth(0.45f)
+                    .align(Alignment.CenterStart)
+                    .clip(RoundedCornerShape(0, 100, 100, 0))
+                    .background(seekBackBackgroundColor)
+                    .zIndex(2f)
+            ) {
+                AnimatedVisibility(
+                    visible = doubleTapDisplayTimeMillis < 0,
+                    enter =
+                    fadeIn(
+                        animationSpec = tween(
+                            durationMillis = 300
+                        )
+                    ) + scaleIn(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMedium,
+                        )
+                    ),
+                    exit =
+                    fadeOut(
+                        animationSpec = tween(
+                            durationMillis = 300
+                        )
+                    ) + scaleOut(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMedium,
+                        )
+                    ),
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.fast_rewind),
+                        contentDescription = "Shows which way the user is seeking",
+                        modifier = Modifier
+                            .size(48.dp)
+                            .align(Alignment.Center)
+                    )
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight(1f)
+                    .fillMaxWidth(0.45f)
+                    .align(Alignment.CenterEnd)
+                    .clip(RoundedCornerShape(100, 0, 0, 100))
+                    .background(seekForwardBackgroundColor)
+                    .zIndex(2f)
+            ) {
+                AnimatedVisibility(
+                    visible = doubleTapDisplayTimeMillis > 0,
+                    enter =
+                    fadeIn(
+                        animationSpec = tween(
+                            durationMillis = 300
+                        )
+                    ) + scaleIn(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMedium,
+                        )
+                    ),
+                    exit =
+                    fadeOut(
+                        animationSpec = tween(
+                            durationMillis = 300
+                        )
+                    ) + scaleOut(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMedium,
+                        )
+                    ),
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.fast_forward),
+                        contentDescription = "Shows which way the user is seeking",
+                        modifier = Modifier
+                            .size(48.dp)
+                            .align(Alignment.Center)
+                    )
+                }
+            }
+        }
 
         val title = remember { File(item.absolutePath).nameWithoutExtension }
         AnimatedVisibility(
@@ -660,6 +770,9 @@ fun VideoPlayer(
                 currentVideoPosition = currentVideoPosition,
                 duration = duration,
                 title = title,
+                onAnyTap = {
+                    showVideoPlayerControlsTimeout += 1
+                },
                 modifier = Modifier
                     .fillMaxSize(1f)
             ) {
@@ -668,73 +781,6 @@ fun VideoPlayer(
                     window = window
                 ) {
                     appBarsVisible.value = it
-                }
-            }
-        }
-
-        AnimatedVisibility(
-            visible = clickCenter != DpOffset.Zero,
-            enter =
-            fadeIn(
-                animationSpec = tween(
-                    durationMillis = 300
-                )
-            ) + scaleIn(
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessMedium,
-                )
-            ),
-            exit =
-            fadeOut(
-                animationSpec = tween(
-                    durationMillis = 300
-                )
-            ) + scaleOut(
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessMedium,
-                )
-            ),
-            modifier = Modifier
-                .align(Alignment.Center)
-                .fillMaxSize(1f)
-        ) {
-            BoxWithConstraints(
-                modifier = Modifier
-                    .fillMaxSize(1f)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(maxWidth / 2)
-                        .offset {
-                            with(localDensity) {
-                                IntOffset(
-                                    x = clickCenter.x.roundToPx() - maxWidth.roundToPx() / 4, // width / 2 is the diameter and we need half of that
-                                    y = clickCenter.y.roundToPx() - maxWidth.roundToPx() / 4
-                                )
-                            }
-                        }
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.4f))
-                ) {
-                    val icon by remember {
-                        derivedStateOf {
-                            if (clickCenter.x < this@BoxWithConstraints.maxWidth / 2) {
-                                R.drawable.fast_rewind
-                            } else {
-                                R.drawable.fast_forward
-                            }
-                        }
-                    }
-
-                    Icon(
-                        painter = painterResource(id = icon),
-                        contentDescription = "Shows which way the user is seeking",
-                        modifier = Modifier
-                            .size(48.dp)
-                            .align(Alignment.Center)
-                    )
                 }
             }
         }
@@ -756,7 +802,7 @@ fun VideoPlayer(
                     checked = isTouchLocked.value,
                     onCheckedChange = {
                         isTouchLocked.value = it
-                        canFadeControls.value = true
+                        showVideoPlayerControlsTimeout += 1
                     },
                     colors = IconButtonDefaults.filledTonalIconToggleButtonColors().copy(
                         checkedContainerColor = MaterialTheme.colorScheme.primary,
@@ -794,6 +840,9 @@ fun VideoPlayer(
                                 ) {
                                     appBarsVisible.value = it
                                 }
+
+                                showVideoPlayerControlsTimeout += 1
+                                isTouchLocked.value = false
                             },
                             colors = IconButtonDefaults.filledTonalIconButtonColors().copy(
                                 containerColor = MaterialTheme.colorScheme.secondaryContainer,

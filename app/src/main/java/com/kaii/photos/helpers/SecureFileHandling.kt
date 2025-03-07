@@ -36,8 +36,7 @@ fun addSecuredCachedMediaThumbnail(
     context: Context,
     mediaItem: MediaStoreData,
     metadataRetriever: MediaMetadataRetriever,
-    file: File,
-    encryptionManager: EncryptionManager
+    file: File
 ) {
     val thumbnailFile = getSecuredCacheImageForFile(file = file, context = context)
 
@@ -77,7 +76,7 @@ fun addSecuredCachedMediaThumbnail(
             bytes.toByteArray()
         }
 
-    val iv = encryptionManager.encryptInputStream(
+    val iv = EncryptionManager.encryptInputStream(
         actual.inputStream(),
         thumbnailFile.outputStream(),
     )

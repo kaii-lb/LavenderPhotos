@@ -1126,14 +1126,13 @@ fun SecureFolderViewBottomAppBar(
                         showLoadingDialog = true
 
 	            		val cachedPaths = emptyList<Pair<String, MediaType>>().toMutableList()
-                        val encryptionManager = EncryptionManager()
 
 	            		selectedItemsWithoutSection.forEach { item ->
                             val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(item.absolutePath)
                             val originalFile = File(item.absolutePath)
                             val cachedFile = File(context.cacheDir, item.displayName ?: item.id.toString())
 
-                            encryptionManager.decryptInputStream(
+                            EncryptionManager.decryptInputStream(
                                 inputStream = originalFile.inputStream(),
                                 outputStream = cachedFile.outputStream(),
                                 iv = iv
