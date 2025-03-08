@@ -23,6 +23,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -33,6 +34,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
@@ -314,7 +316,12 @@ fun getDefaultShapeSpacerForPosition(
 }
 
 @Composable
-fun AnimatableText(first: String, second: String, state: Boolean, modifier: Modifier) {
+fun AnimatableText(
+	first: String,
+	second: String,
+	state: Boolean,
+	modifier: Modifier,
+) {
     AnimatedContent(
         targetState = state,
         label = "Dialog name animated content",
@@ -341,24 +348,24 @@ fun AnimatableText(first: String, second: String, state: Boolean, modifier: Modi
                 )
             )
         },
-        modifier = Modifier
-            .then(modifier)
+        modifier = modifier
+        	.wrapContentHeight()
     ) { showFirst ->
         if (showFirst) {
             Text(
                 text = first,
                 fontWeight = FontWeight.Bold,
                 fontSize = TextUnit(18f, TextUnitType.Sp),
-                modifier = Modifier
-                    .then(modifier)
+                modifier = modifier
+                    .wrapContentSize()
             )
         } else {
             Text(
                 text = second,
                 fontWeight = FontWeight.Bold,
                 fontSize = TextUnit(18f, TextUnitType.Sp),
-                modifier = Modifier
-                    .then(modifier)
+                modifier = modifier
+                    .wrapContentSize()
             )
         }
     }
@@ -624,7 +631,10 @@ fun MainAppDialog(
                         text = "Data & Backup",
                         iconResId = R.drawable.data,
                         position = if (currentView.value == MainScreenViewType.SecureFolder) RowPosition.Top else RowPosition.Middle,
-                    )
+                    ) {
+                        showDialog.value = false
+                        navController.navigate(MultiScreenViewType.DataAndBackup.name)
+                    }
 
                     DialogClickableItem(
                         text = "Settings",
@@ -1063,7 +1073,7 @@ fun SingleAlbumDialog(
             ) {
                 val isEditingFileName = remember { mutableStateOf(false) }
 
-                Box(
+                BoxWithConstraints(
                     modifier = Modifier
                         .fillMaxWidth(1f),
                 ) {
@@ -1073,6 +1083,7 @@ fun SingleAlbumDialog(
                         },
                         modifier = Modifier
                             .align(Alignment.CenterStart)
+                            .padding(0.dp, 0.dp, 0.dp, 4.dp)
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.close),
@@ -1088,6 +1099,8 @@ fun SingleAlbumDialog(
                         state = isEditingFileName.value,
                         modifier = Modifier
                             .align(Alignment.Center)
+                            .widthIn(max = maxWidth - 48.dp - 24.dp) // for button and right side
+                            .padding(0.dp, 0.dp, 0.dp, 4.dp)
                     )
                 }
 
