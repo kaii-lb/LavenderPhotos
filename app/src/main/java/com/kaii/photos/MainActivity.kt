@@ -24,7 +24,6 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -35,8 +34,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -117,6 +114,7 @@ import com.kaii.photos.models.multi_album.MultiAlbumViewModelFactory
 import com.kaii.photos.ui.theme.PhotosTheme
 import com.kaii.lavender_snackbars.LavenderSnackbarHostState
 import com.kaii.lavender_snackbars.LavenderSnackbarBox
+import com.kaii.photos.compose.settings.DataAndBackupPage
 import kotlinx.coroutines.Dispatchers
 import java.io.File
 
@@ -694,6 +692,22 @@ class MainActivity : ComponentActivity() {
                         )
 
                         UpdatesPage()
+                    }
+
+                    composable(MultiScreenViewType.DataAndBackup.name) {
+                        enableEdgeToEdge(
+                            navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.background.toArgb()),
+                            statusBarStyle = SystemBarStyle.auto(
+                                MaterialTheme.colorScheme.background.toArgb(),
+                                MaterialTheme.colorScheme.background.toArgb()
+                            )
+                        )
+                        setupNextScreen(
+                            selectedItemsList,
+                            window
+                        )
+
+                        DataAndBackupPage()
                     }
                 }
             }

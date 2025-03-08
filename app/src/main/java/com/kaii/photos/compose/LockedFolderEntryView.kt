@@ -21,12 +21,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -37,13 +37,14 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalNavController
-import com.kaii.photos.R
+import com.kaii.photos.MainActivity.Companion.applicationDatabase
 import com.kaii.photos.MainActivity.Companion.mainViewModel
+import com.kaii.photos.R
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.Versions
 import com.kaii.photos.helpers.EncryptionManager
-import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.MainScreenViewType
+import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.baseInternalStorageDirectory
@@ -68,23 +69,24 @@ fun LockedFolderEntryView(
     val context = LocalContext.current
     val cancellationSignal = CancellationSignal()
 
-	// TODO: move again to Android/data for space purposes
-	// moves media from old dir to new dir for secure folder
-	val shouldMigrate by mainViewModel.settings.Versions.getShouldMigrateToEncryptedSecurePhotos(context).collectAsStateWithLifecycle(initialValue = false)
-	var launchSecureFolder by remember { mutableStateOf(false) }
-	val showExplanationForMigration = remember { mutableStateOf(false) }
+    // TODO: move again to Android/data for space purposes
+    // moves media from old dir to new dir for secure folder
+    var migrating by remember { mutableStateOf(false) }
+    var launchSecureFolder by remember { mutableStateOf(false) }
+    val showExplanationForMigration = remember { mutableStateOf(false) }
 
-	LaunchedEffect(launchSecureFolder) {
-		if (launchSecureFolder) navController.navigate(MultiScreenViewType.LockedFolderView.name)
-	}
+    LaunchedEffect(launchSecureFolder) {
+        if (launchSecureFolder) navController.navigate(MultiScreenViewType.LockedFolderView.name)
+    }
 
-	LaunchedEffect(shouldMigrate) {
-		withContext(Dispatchers.IO) {
+    LaunchedEffect(Unit) {
+        withContext(Dispatchers.IO) {
             val oldDir = context.getDir("locked_folder", Context.MODE_PRIVATE)
             val children = oldDir.listFiles()
 
             // migrate from old secure folder dir
             if (children?.isNotEmpty() == true) {
+                migrating = true
                 val newDir = context.appSecureFolderDir
 
                 Log.d(TAG, "migrating from $oldDir to $newDir")
@@ -97,57 +99,71 @@ fun LockedFolderEntryView(
                         file.delete()
                     }
                 }
+
+                migrating = false
+                showExplanationForMigration.value = true
             }
 
-            if (shouldMigrate) {
-    			// move unencrypted files to restored files dir
-				val restoredFilesDir = context.appRestoredFilesDir
-				val unencryptedDir = File(context.appSecureFolderDir)
-				val unencryptedDirChildren = unencryptedDir.listFiles()
+            // move unencrypted files to restored files dir
+            val restoredFilesDir = context.appRestoredFilesDir
+            val maybeUnencryptedDir = File(context.appSecureFolderDir)
+            val maybeUnencryptedDirChildren = maybeUnencryptedDir.listFiles()
 
-				if (unencryptedDirChildren?.isNotEmpty() == true) {
-                    Log.d(TAG, "encrypting previously unencrypted photos")
-                    unencryptedDirChildren.forEach { file ->
-						val newPath = restoredFilesDir + "/" + file.name
-                        val destination = File(newPath)
+            val unencryptedDirChildren = maybeUnencryptedDirChildren?.filter {
+                try {
+                    applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(it.absolutePath)
+                    false
+                } catch (e: Throwable) {
+                    Log.e(TAG, "${it.name} has no IV")
+                    true
+                }
+            }
 
-                        if (!destination.exists()) {
-                            file.copyTo(destination)
-                            file.delete()
-                        }
+            if (unencryptedDirChildren?.isNotEmpty() == true) {
+                Log.d(TAG, "encrypting previously unencrypted photos")
+                migrating = true
 
-                        EncryptionManager.encryptInputStream(
-                            inputStream = destination.inputStream(),
-                            outputStream = file.outputStream()
-                        )
-					}
-				}
+                unencryptedDirChildren.forEach { file ->
+                    val newPath = restoredFilesDir + "/" + file.name
+                    val destination = File(newPath)
 
-				showExplanationForMigration.value = true
-				mainViewModel.settings.Versions.setShouldMigrateToEncryptedSecurePhotos(false)
-                mainViewModel.settings.AlbumsList.addToAlbumsList(
-                    restoredFilesDir.replace(baseInternalStorageDirectory, "")
-                )
-			}
-		}
-	}
+                    if (!destination.exists()) {
+                        file.copyTo(destination)
+                        file.delete()
+                    }
 
-	if (shouldMigrate) {
+                    EncryptionManager.encryptInputStream(
+                        inputStream = destination.inputStream(),
+                        outputStream = file.outputStream()
+                    )
+                }
+
+                migrating = false
+                showExplanationForMigration.value = true
+            }
+
+            mainViewModel.settings.AlbumsList.addToAlbumsList(
+                restoredFilesDir.replace(baseInternalStorageDirectory, "")
+            )
+        }
+    }
+
+    if (migrating) {
         LoadingDialog(
             title = "Migrating",
-            body = "Moving photos out of secure folder, they can be found in \"Restored Files\" album"
+            body = "Migrating to encrypted photos, a copy can be found in \"Restored Files\" album"
         )
 
-		return
-	}
+        return
+    }
 
-	if (showExplanationForMigration.value) {
-		ExplanationDialog(
-			title = "Migration Notice",
-			explanation = "Secure folder is now encrypted! All your photos are now fully safe and untouchable by anyone. For safety reasons, a copy of your secured photos is now present in \"Restored Files\".",
-			showDialog = showExplanationForMigration
-		)
-	}
+    if (showExplanationForMigration.value) {
+        ExplanationDialog(
+            title = "Migration Notice",
+            explanation = "Secure folder is now encrypted! All your photos are now fully safe and untouchable by anyone. For safety reasons, a copy of your secured photos is now present in \"Restored Files\".",
+            showDialog = showExplanationForMigration
+        )
+    }
 
     val prompt = BiometricPrompt.Builder(LocalContext.current)
         .setTitle("Unlock Secure Folder")
@@ -169,7 +185,7 @@ fun LockedFolderEntryView(
     }
 
     val showHelpDialog = remember { mutableStateOf(false) }
-    if(showHelpDialog.value) {
+    if (showHelpDialog.value) {
         ExplanationDialog(
             title = "Secure Folder",
             explanation = stringResource(id = R.string.locked_folder_help_top) +
@@ -181,14 +197,14 @@ fun LockedFolderEntryView(
 
     val isLandscape by rememberDeviceOrientation()
     if (isLandscape) {
-        Row (
+        Row(
             modifier = Modifier
                 .fillMaxSize(1f)
                 .padding(8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
-            Column (
+            Column(
                 modifier = Modifier
                     .weight(1f),
                 verticalArrangement = Arrangement.Center,
@@ -206,7 +222,7 @@ fun LockedFolderEntryView(
                 )
             }
 
-            Column (
+            Column(
                 modifier = Modifier
                     .weight(1f),
                 verticalArrangement = Arrangement.Center,
@@ -244,7 +260,7 @@ fun LockedFolderEntryView(
             }
         }
     } else {
-        Column (
+        Column(
             modifier = Modifier
                 .fillMaxSize(1f)
                 .padding(8.dp),
