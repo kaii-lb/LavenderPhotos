@@ -95,7 +95,7 @@ dependencies {
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
     implementation("com.github.kittinunf.fuel:fuel:2.3.1")
     implementation("com.github.kittinunf.fuel:fuel-json:2.3.1")
-	implementation("com.kaii.lavender_snackbars:Lavender-Snackbars")
+	implementation("com.github.kaii-lb:Lavender-Snackbars:0.1.4")
 
     val roomVersion = "2.6.1"
     implementation("androidx.room:room-runtime:$roomVersion")
