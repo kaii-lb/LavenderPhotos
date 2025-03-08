@@ -40,6 +40,7 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.applicationDatabase
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
+import com.kaii.photos.database.entities.SecuredItemEntity
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.Versions
 import com.kaii.photos.helpers.EncryptionManager
@@ -48,9 +49,15 @@ import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.baseInternalStorageDirectory
+import com.kaii.photos.helpers.moveImageToLockedFolder
+import com.kaii.photos.mediastore.getUriFromAbsolutePath
+import com.kaii.photos.mediastore.getMediaStoreDataFromUri
+import com.kaii.photos.mediastore.MediaType
+import kotlin.io.path.Path
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.nio.file.Files
 
 private const val TAG = "LOCKED_FOLDER_ENTRY_VIEW"
 
@@ -81,6 +88,7 @@ fun LockedFolderEntryView(
 
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
+        	val restoredFilesDir = context.appRestoredFilesDir
             val oldDir = context.getDir("locked_folder", Context.MODE_PRIVATE)
             val children = oldDir.listFiles()
 
@@ -93,6 +101,12 @@ fun LockedFolderEntryView(
                 children.forEach { file ->
                     val newPath = newDir + "/" + file.name
                     val destination = File(newPath)
+                    val restoredPath = restoredFilesDir + "/" + file.name
+                    val restoredFile = File(restoredPath)
+
+                    if (!restoredFile.exists()) {
+                    	file.copyTo(restoredFile)
+                    }
 
                     if (!destination.exists()) {
                         file.copyTo(destination)
@@ -104,15 +118,12 @@ fun LockedFolderEntryView(
                 showExplanationForMigration.value = true
             }
 
-            // move unencrypted files to restored files dir
-            val restoredFilesDir = context.appRestoredFilesDir
             val maybeUnencryptedDir = File(context.appSecureFolderDir)
             val maybeUnencryptedDirChildren = maybeUnencryptedDir.listFiles()
 
             val unencryptedDirChildren = maybeUnencryptedDirChildren?.filter {
                 try {
-                    applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(it.absolutePath)
-                    false
+                    applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(it.absolutePath) == null
                 } catch (e: Throwable) {
                     Log.e(TAG, "${it.name} has no IV")
                     true
@@ -132,10 +143,26 @@ fun LockedFolderEntryView(
                         file.delete()
                     }
 
-                    EncryptionManager.encryptInputStream(
-                        inputStream = destination.inputStream(),
-                        outputStream = file.outputStream()
-                    )
+					val uri = context.contentResolver.getUriFromAbsolutePath(
+						absolutePath = destination.absolutePath,
+						type =
+							if (Files.probeContentType(Path(destination.absolutePath)).startsWith("image")) MediaType.Image
+							else MediaType.Video
+					)
+
+					uri?.let {
+						context.contentResolver.getMediaStoreDataFromUri(it)?.let { mediaItem ->
+		                    moveImageToLockedFolder(
+		                    	list = listOf(
+		                    		mediaItem
+		                    	),
+		                    	context = context,
+		                    	onDone = {
+		                    		migrating = false
+		                    	}
+		                    )
+						}
+					}
                 }
 
                 migrating = false

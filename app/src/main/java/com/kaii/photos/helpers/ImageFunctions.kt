@@ -226,7 +226,11 @@ fun moveImageOutOfLockedFolder(
                 val tempFile = File(context.cacheDir, fileToBeRestored.name)
 
                 val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(media.absolutePath)
-                EncryptionManager.decryptInputStream(fileToBeRestored.inputStream(), tempFile.outputStream(), iv)
+                if (iv != null) {
+                	EncryptionManager.decryptInputStream(fileToBeRestored.inputStream(), tempFile.outputStream(), iv)
+                } else {
+                	fileToBeRestored.inputStream().copyTo(tempFile.outputStream())
+                }
 
                 contentResolver.copyMedia(
                     context = context,

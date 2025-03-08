@@ -4,13 +4,16 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
+import androidx.core.net.toUri
 import com.kaii.photos.MainActivity.Companion.applicationDatabase
 import com.kaii.photos.R
 import com.kaii.photos.database.entities.SecuredItemEntity
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
+import kotlin.io.path.Path
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.nio.file.Files
 
 fun getSecuredCacheImageForFile(
     file: File,

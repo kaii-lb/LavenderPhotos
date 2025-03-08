@@ -18,6 +18,7 @@ class DataAndBackupHelper {
     companion object {
         private const val EXPORT_DIR = "Exports"
         private const val UNENCRYPTED_DIR = "Lavender_Photos_Export"
+        private const val RAW_DIR = "Lavender_Photos_Export_Raw"
     }
 
     private fun getCurrentDate() = Instant.fromEpochMilliseconds(System.currentTimeMillis())
@@ -36,12 +37,15 @@ class DataAndBackupHelper {
             UNENCRYPTED_DIR + "_taken_" + getCurrentDate()
         )
 
+    fun getRawExportDir(context: Context) =
+    	File(
+    	    File(context.appStorageDir, EXPORT_DIR),
+    	    RAW_DIR + "_taken_" + getCurrentDate()
+    	)
+
     fun exportUnencryptedSecureFolderItems(context: Context) : Boolean {
         val secureFolder = File(context.appSecureFolderDir)
-        val exportDir = File(
-            File(context.appStorageDir, EXPORT_DIR),
-            UNENCRYPTED_DIR + "_taken_" + getCurrentDate()
-        )
+        val exportDir = getUnencryptedExportDir(context)
 
         if (!exportDir.exists()) exportDir.mkdirs()
 
@@ -61,7 +65,9 @@ class DataAndBackupHelper {
 
             try {
                 val decryptedFile = File(exportDir, secureFile.name)
+                decryptedFile.createNewFile()
                 val iv = database.getIvFromSecuredPath(secureFile.absolutePath)
+                if (iv == null) throw Exception("IV for ${secureFile.name} was null, cannot decrypt.")
 
                 EncryptionManager.decryptInputStream(
                     inputStream = secureFile.inputStream(),
@@ -76,5 +82,26 @@ class DataAndBackupHelper {
         }
 
         return true
+    }
+
+    fun exportRawSecureFolderItems(context: Context) {
+    	val secureFolder = File(context.appSecureFolderDir)
+    	val exportDir = getRawExportDir(context)
+
+    	if (!exportDir.exists()) exportDir.mkdirs()
+
+    	val securedItems = secureFolder.listFiles { dir, name ->
+    	    val file = File(dir, name)
+    	    val mimeType = Files.probeContentType(file.toPath())
+
+    	    mimeType.startsWith("image") || mimeType.startsWith("video")
+    	}
+
+    	if (securedItems == null) return
+
+    	securedItems.forEach { secureFile ->
+			val decryptedFile = File(exportDir, secureFile.name)
+			if (!decryptedFile.exists())  secureFile.copyTo(decryptedFile)
+    	}
     }
 }

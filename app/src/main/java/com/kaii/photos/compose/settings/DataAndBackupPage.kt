@@ -67,7 +67,7 @@ fun DataAndBackupPage() {
                 PreferencesRow(
                     title = "Export Unencrypted Backup",
                     iconResID = R.drawable.folder_export,
-                    summary = "Exports a zip file of all your secured items, unencrypted",
+                    summary = "Exports a folder of all your secured items, unencrypted",
                     position = RowPosition.Middle,
                     showBackground = false
                 ) {
@@ -93,6 +93,37 @@ fun DataAndBackupPage() {
 
                         isLoading.value = false
                     }
+                }
+
+                PreferencesRow(
+                    title = "Export Raw Backup",
+                    iconResID = R.drawable.folder_export,
+                    summary = "Exports a folder of all your secured items, raw (encrypted or not)",
+                    position = RowPosition.Middle,
+                    showBackground = false
+                ) {
+                	mainViewModel.launch(Dispatchers.IO) {
+                		val backupHelper = DataAndBackupHelper()
+
+                        isLoading.value = true
+                        LavenderSnackbarController.pushEvent(
+                            LavenderSnackbarEvents.LoadingEvent(
+                                message = "Exporting backup...",
+                                iconResId = R.drawable.folder_export,
+                                isLoading = isLoading
+                            )
+                        )
+
+                		backupHelper.exportRawSecureFolderItems(context = context)
+
+                        mainViewModel.settings.AlbumsList.addToAlbumsList(
+                            backupHelper.getRawExportDir(context = context)
+                                .absolutePath
+                                .replace(baseInternalStorageDirectory, "")
+                        )
+
+                        isLoading.value = false
+                	}
                 }
             }
         }

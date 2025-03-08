@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.res.Configuration
 import android.view.Window
 import android.view.WindowManager
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -94,6 +95,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+
+private const val TAG = "SINGLE_HIDDEN_PHOTO_VIEW"
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -330,6 +333,11 @@ private fun TopBar(
                             showLoadingDialog = true
 
                             val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(mediaItem.absolutePath)
+                            if (iv == null) {
+                            	Log.e(TAG, "IV for ${mediaItem.displayName} was null, aborting")
+                            	return@launch
+                            }
+
                             val originalFile = File(mediaItem.absolutePath)
 
                             val cachedFile =
@@ -676,6 +684,11 @@ fun SingleSecuredPhotoInfoDialog(
                                 val file =
                                     if (!cachedFile.exists()) {
                                         val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(currentMediaItem.absolutePath)
+
+                                        if (iv == null) {
+                                        	Log.e(TAG, "IV for ${currentMediaItem.displayName} was null, aborting")
+                                        	return@withContext
+                                        }
                                         EncryptionManager.decryptVideo(
                                             absolutePath = originalFile.absolutePath,
                                             iv = iv,

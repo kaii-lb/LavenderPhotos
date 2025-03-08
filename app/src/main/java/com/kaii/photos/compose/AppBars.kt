@@ -1129,6 +1129,11 @@ fun SecureFolderViewBottomAppBar(
 
 	            		selectedItemsWithoutSection.forEach { item ->
                             val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(item.absolutePath)
+                            if (iv == null) {
+                            	Log.e(TAG, "IV for ${item.displayName} was null, aborting decrypt")
+                            	return@async
+                            }
+
                             val originalFile = File(item.absolutePath)
                             val cachedFile = File(context.cacheDir, item.displayName ?: item.id.toString())
 

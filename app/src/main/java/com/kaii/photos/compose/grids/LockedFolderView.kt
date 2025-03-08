@@ -157,7 +157,7 @@ fun LockedFolderView(
                             getSecuredCacheImageForFile(file = file, context = context).absolutePath
                         )
 
-                        iv + thumbnailIv
+                        if (iv != null && thumbnailIv != null) iv + thumbnailIv else ByteArray(32)
                     }
 
                 val item = MediaStoreData(

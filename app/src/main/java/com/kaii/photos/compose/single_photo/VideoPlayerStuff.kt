@@ -7,6 +7,7 @@ import android.net.Uri
 import android.view.ViewGroup
 import android.view.Window
 import android.view.WindowManager
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -120,7 +121,7 @@ import kotlin.time.Duration.Companion.seconds
 // special thanks to @bedirhansaricayir on github, helped with a LOT of performance stuff
 // https://github.com/bedirhansaricayir/Instagram-Reels-Jetpack-Compose/blob/master/app/src/main/java/com/reels/example/presentation/components/ExploreVideoPlayer.kt
 
-// private const val TAG = "VIDEO_PLAYER_STUFF"
+private const val TAG = "VIDEO_PLAYER_STUFF"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -405,6 +406,11 @@ fun VideoPlayer(
         LaunchedEffect(Unit) {
             withContext(Dispatchers.IO) {
                 val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(item.absolutePath)
+
+				if (iv == null) {
+					Log.e(TAG, "IV for ${item.displayName} was null, aborting")
+					return@withContext
+				}
 
                 val output =
                     EncryptionManager.decryptVideo(
