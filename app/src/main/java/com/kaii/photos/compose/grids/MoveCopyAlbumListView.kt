@@ -93,7 +93,7 @@ fun MoveCopyAlbumListView(
     val albumsViewModel: AlbumsViewModel = viewModel(
         factory = AlbumsViewModelFactory(context, originalAlbumsList)
     )
-    val dataList = albumsViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+    val dataList by albumsViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
     var albumsList by remember { mutableStateOf(originalAlbumsList) }
 
@@ -188,14 +188,15 @@ fun MoveCopyAlbumListView(
                         key = {
                             albumsList[it]
                         }
-                    ) {
-                        val album = albumsList[it]
+                    ) { index ->
+                        val album = albumsList[index]
+
                         AlbumsListItem(
                             album = album,
-                            data = dataList.value.find {
-                            	it.absolutePath.replace(baseInternalStorageDirectory, "") == album
+                            data = dataList.find { item ->
+                                item.absolutePath.replace(baseInternalStorageDirectory, "").replace(item.displayName!!, "").removeSuffix("/") == album
                             } ?: MediaStoreData(),
-                            position = if (it == albumsList.size - 1 && albumsList.size != 1) RowPosition.Bottom else if (albumsList.size == 1) RowPosition.Single else if (it == 0) RowPosition.Top else RowPosition.Middle,
+                            position = if (index == albumsList.size - 1 && albumsList.size != 1) RowPosition.Bottom else if (albumsList.size == 1) RowPosition.Single else if (index == 0) RowPosition.Top else RowPosition.Middle,
                             selectedItemsList = selectedItemsList,
                             isMoving = isMoving,
                             show = show,
