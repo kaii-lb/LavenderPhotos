@@ -14,6 +14,13 @@ object DefaultTabs {
         val albums = BottomBarTab(name = "Albums", index = 2)
         val search = BottomBarTab(name = "Search", index = 3)
     }
+
+    val defaultList = listOf(
+        TabTypes.photos,
+        TabTypes.secure,
+        TabTypes.albums,
+        TabTypes.search
+    )
 }
 
 data class BottomBarTab(

@@ -732,14 +732,7 @@ class MainActivity : ComponentActivity() {
             groupedMedia.value = mediaStoreData.value
         }
 
-        val tabList by mainViewModel.settings.DefaultTabs.getTabList().collectAsStateWithLifecycle(
-            initialValue = listOf(
-                DefaultTabs.TabTypes.photos,
-                DefaultTabs.TabTypes.secure,
-                DefaultTabs.TabTypes.albums,
-                DefaultTabs.TabTypes.search
-            )
-        )
+        val tabList by mainViewModel.settings.DefaultTabs.getTabList().collectAsStateWithLifecycle(initialValue = DefaultTabs.defaultList)
 
         Scaffold(
             topBar = {

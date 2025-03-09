@@ -26,8 +26,10 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -45,11 +47,13 @@ import com.kaii.photos.compose.CheckBoxButtonRow
 import com.kaii.photos.compose.PreferencesRow
 import com.kaii.photos.compose.PreferencesSeparatorText
 import com.kaii.photos.compose.PreferencesSwitchRow
+import com.kaii.photos.compose.RadioButtonRow
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.Editing
 import com.kaii.photos.datastore.MainPhotosView
 import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.datastore.Video
+import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.lavender_snackbars.LavenderSnackbarController
 import com.kaii.lavender_snackbars.LavenderSnackbarEvents
@@ -294,6 +298,32 @@ fun GeneralSettingsPage() {
 	            	}
 	            }
             }
+
+            item {
+            	PreferencesSeparatorText(
+            		text = "Tabs"
+            	)
+            }
+
+            item {
+            	val showDefaultTabAlbumDialog = remember { mutableStateOf(false) }
+
+				if (showDefaultTabAlbumDialog.value) {
+	           		DefaultTabSelectorDialog(
+	           			showDialog = showDefaultTabAlbumDialog
+	           		)
+				}
+
+            	PreferencesRow(
+            		title = "Default Tab",
+            		summary = "Lavender Photos will auto-open this tab at startup",
+            		iconResID = R.drawable.folder_open,
+            		position = RowPosition.Single,
+            		showBackground = false
+            	) {
+            		showDefaultTabAlbumDialog.value = true
+            	}
+            }
         }
     }
 }
@@ -329,4 +359,32 @@ private fun GeneralSettingsTopBar() {
             containerColor = MaterialTheme.colorScheme.background
         )
     )
+}
+
+@Composable
+private fun DefaultTabSelectorDialog(
+	showDialog: MutableState<Boolean>
+) {
+	val tabList by mainViewModel.settings.DefaultTabs.getTabList().collectAsStateWithLifecycle(initialValue = DefaultTabs.defaultList)
+	val defaultTab by mainViewModel.settings.DefaultTabs.getDefaultTab().collectAsStateWithLifecycle(initialValue = DefaultTabs.TabTypes.photos)
+	var selectedTab by remember(defaultTab) { mutableStateOf(defaultTab) }
+
+	SelectableButtonListDialog(
+        title = "Default Tab",
+        body = "Lavender Photos will auto-open this tab at startup",
+        showDialog = showDialog,
+        buttons = {
+        	tabList.forEach { tab ->
+	            RadioButtonRow(
+	                text = tab.name,
+	                checked = selectedTab == tab
+	            ) {
+	                selectedTab = tab
+	            }
+        	}
+        },
+        onConfirm = {
+        	mainViewModel.settings.DefaultTabs.setDefaultTab(selectedTab)
+        }
+	)
 }

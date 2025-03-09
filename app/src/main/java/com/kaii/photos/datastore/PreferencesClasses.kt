@@ -430,13 +430,15 @@ class SettingsDefaultTabsImpl(private val context: Context, private val viewMode
 	        		item == ""
 	        	}
 			}
-        	.chunked(2)
-        	.map { nameAndIndex ->
-	            val name = nameAndIndex[0]
-	            val index = nameAndIndex[1].toInt()
+        	.chunked(3)
+        	.map { tab ->
+	            val name = tab[0]
+	            val albumPath = tab[1]
+	            val index = tab[2].toInt()
 
 	            BottomBarTab(
 	                name = name,
+	                albumPath = if (albumPath == "null") null else albumPath,
 	                index = index
 	            )
 	        }
@@ -458,7 +460,7 @@ class SettingsDefaultTabsImpl(private val context: Context, private val viewMode
             var stringList = ""
 
             list.forEach { tab ->
-                stringList += "$separator${tab.name}$separator${tab.index}"
+                stringList += "$separator${tab.name}$separator${tab.albumPath}$separator${tab.index}"
             }
 
             it[tabList] = stringList
@@ -466,26 +468,27 @@ class SettingsDefaultTabsImpl(private val context: Context, private val viewMode
     }
 
     fun getDefaultTab() = context.datastore.data.map {
-        val default = it[defaultTab] ?: (DefaultTabs.TabTypes.photos.name + separator + DefaultTabs.TabTypes.photos.index)
+        val default = it[defaultTab] ?: (DefaultTabs.TabTypes.photos.name + separator + DefaultTabs.TabTypes.photos.albumPath + separator + DefaultTabs.TabTypes.photos.index)
 
-        val pair = default.split(separator)
+        val triple = default.split(separator)
 
         BottomBarTab(
-            name = pair[0],
-            index = pair[1].toInt()
+            name = triple[0],
+            albumPath = if (triple[1] == "null") null else triple[1],
+            index = triple[2].toInt()
         )
     }
 
-    fun setDefaultTab(tabName: String, tabIndex: Int) = viewModelScope.launch {
+    fun setDefaultTab(tab: BottomBarTab) = viewModelScope.launch {
         context.datastore.edit {
-            it[defaultTab] = tabName + separator + tabIndex
+            it[defaultTab] = tab.name + separator + tab.albumPath + separator + tab.index
         }
     }
 
     private fun getDefaultTabList() = run {
-        separator + DefaultTabs.TabTypes.photos.name + "${separator}${DefaultTabs.TabTypes.photos.index}" +
-                separator + DefaultTabs.TabTypes.secure.name + "${separator}${DefaultTabs.TabTypes.secure.index}" +
-                separator + DefaultTabs.TabTypes.albums.name + "${separator}${DefaultTabs.TabTypes.albums.index}" +
-                separator + DefaultTabs.TabTypes.search.name + "${separator}${DefaultTabs.TabTypes.search.index}"
+    	separator + DefaultTabs.TabTypes.photos.name + separator + DefaultTabs.TabTypes.photos.albumPath + separator + DefaultTabs.TabTypes.photos.index +
+        		separator + DefaultTabs.TabTypes.secure.name + separator + DefaultTabs.TabTypes.secure.albumPath + separator + DefaultTabs.TabTypes.secure.index +
+        		separator + DefaultTabs.TabTypes.albums.name + separator + DefaultTabs.TabTypes.albums.albumPath + separator + DefaultTabs.TabTypes.albums.index +
+        		separator + DefaultTabs.TabTypes.search.name + separator + DefaultTabs.TabTypes.search.albumPath + separator + DefaultTabs.TabTypes.search.index
     }
 }
