@@ -11,7 +11,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -255,7 +255,7 @@ fun AlbumsGridView(
                     }
                 )
                 .pointerInput(Unit) {
-                    detectDragGesturesAfterLongPress(
+                    detectDragGestures(
                         onDragStart = { offset ->
                             val selectedItemIndex = lazyGridState.getGridItemAtOffset(
                                 offset = offset,
@@ -359,8 +359,8 @@ fun AlbumsGridView(
                                     durationMillis = 250
                                 ),
                                 placementSpec =
-                                if (selectedItem == neededDir) null // if is selected don't animate so no weird snapping back and forth happens
-                                else tween(durationMillis = 250)
+	                                if (selectedItem == neededDir) null // if is selected don't animate so no weird snapping back and forth happens
+	                                else tween(durationMillis = 250)
                             )
                     ) {
                         navController.navigate(

@@ -8,17 +8,30 @@ import android.provider.MediaStore
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Text
@@ -30,15 +43,23 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.zIndex
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
@@ -47,7 +68,6 @@ import com.kaii.photos.compose.CheckBoxButtonRow
 import com.kaii.photos.compose.PreferencesRow
 import com.kaii.photos.compose.PreferencesSeparatorText
 import com.kaii.photos.compose.PreferencesSwitchRow
-import com.kaii.photos.compose.RadioButtonRow
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.Editing
 import com.kaii.photos.datastore.MainPhotosView
@@ -57,6 +77,9 @@ import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.lavender_snackbars.LavenderSnackbarController
 import com.kaii.lavender_snackbars.LavenderSnackbarEvents
+import com.kaii.photos.datastore.BottomBarTab
+import com.kaii.photos.helpers.brightenColor
+import com.kaii.photos.helpers.dragReorderable
 import kotlinx.coroutines.launch
 
 @Composable
@@ -369,22 +392,166 @@ private fun DefaultTabSelectorDialog(
 	val defaultTab by mainViewModel.settings.DefaultTabs.getDefaultTab().collectAsStateWithLifecycle(initialValue = DefaultTabs.TabTypes.photos)
 	var selectedTab by remember(defaultTab) { mutableStateOf(defaultTab) }
 
-	SelectableButtonListDialog(
-        title = "Default Tab",
-        body = "Lavender Photos will auto-open this tab at startup",
-        showDialog = showDialog,
-        buttons = {
-        	tabList.forEach { tab ->
-	            RadioButtonRow(
-	                text = tab.name,
-	                checked = selectedTab == tab
-	            ) {
-	                selectedTab = tab
-	            }
-        	}
+    Dialog(
+        onDismissRequest = {
+            showDialog.value = false
         },
-        onConfirm = {
-        	mainViewModel.settings.DefaultTabs.setDefaultTab(selectedTab)
+        properties = DialogProperties(
+            dismissOnClickOutside = true,
+            dismissOnBackPress = true
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth(1f)
+                .wrapContentHeight()
+                .clip(RoundedCornerShape(32.dp))
+                .background(brightenColor(MaterialTheme.colorScheme.surface, 0.1f))
+                .padding(8.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "Default Tab",
+                fontSize = TextUnit(18f, TextUnitType.Sp),
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier
+                    .wrapContentSize()
+            )
+
+            Spacer (modifier = Modifier.height(8.dp))
+
+            val state = rememberLazyListState()
+            val itemOffset = remember { mutableFloatStateOf(0f) }
+            var selectedItem: BottomBarTab? by remember { mutableStateOf(null) }
+
+            LazyColumn(
+                state = state,
+                modifier = Modifier
+                    .wrapContentSize()
+                    .dragReorderable(
+                        state = state,
+                        itemOffset = itemOffset,
+                        onItemSelected = { index ->
+                            selectedItem =
+                                if (index != null) tabList[index]
+                                else null
+                        },
+                        onMove = { currentIndex, targetIndex ->
+                            val list = tabList.toMutableList()
+                            val item = list[currentIndex]
+                            list.remove(item)
+                            list.add(targetIndex, item)
+
+                            val mapped = list.mapIndexed { index, item ->
+								item.copy(
+									index = index
+								)
+                            }
+
+                            mainViewModel.settings.DefaultTabs.setTabList(mapped)
+                        }
+                    ),
+                verticalArrangement = Arrangement.Top,
+                horizontalAlignment = Alignment.Start
+            ) {
+                items(
+                	count = tabList.size,
+                	key = { key ->
+                	    tabList[key].name
+                	},
+               	) { index ->
+                    val tab = tabList[index]
+
+                    ReorderableRadioButtonRow(
+                        text = tab.name,
+                        checked = selectedTab == tab,
+                        modifier =
+                        	Modifier
+                        		.zIndex(
+                        		    if (selectedItem == tab) 1f
+                        		    else 0f
+                        		)
+                        		.offset {
+	                            	IntOffset(x = 0, y = if (selectedItem == tab) itemOffset.floatValue.toInt() else 0)
+	                          	}
+                        		.animateItem(placementSpec = if (selectedItem == tab) null else tween(durationMillis = 250))
+                    ) {
+                        selectedTab = tab
+                    }
+                }
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(1f)
+                    .height(56.dp)
+                    .padding(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.End
+            ) {
+                FilledTonalButton(
+                    onClick = {
+                        mainViewModel.settings.DefaultTabs.setDefaultTab(selectedTab)
+                        showDialog.value = false
+                    }
+                ) {
+                    Text(text = "Confirm")
+                }
+            }
         }
-	)
+    }
+}
+
+@Composable
+private fun ReorderableRadioButtonRow(
+    text: String,
+    checked: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Row (
+        modifier = modifier
+            .fillMaxWidth(1f)
+            .height(40.dp)
+            .background(Color.Transparent)
+            .padding(12.dp, 4.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .clickable {
+                onClick()
+            },
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Start
+    ) {
+        RadioButton(
+            selected = checked,
+            onClick = {
+                onClick()
+            }
+        )
+
+        Spacer (modifier = Modifier.width(16.dp))
+
+        Text (
+            text = text,
+            fontSize = TextUnit(14f, TextUnitType.Sp),
+            color = MaterialTheme.colorScheme.onSurface,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier
+                .weight(1f)
+        )
+
+        Spacer (modifier = Modifier.width(16.dp))
+
+        Icon(
+            painter = painterResource(id = R.drawable.reorderable),
+            contentDescription = "this item can be dragged and reordered",
+            modifier = Modifier
+                .size(24.dp)
+        )
+
+        Spacer (modifier = Modifier.width(8.dp))
+    }
 }

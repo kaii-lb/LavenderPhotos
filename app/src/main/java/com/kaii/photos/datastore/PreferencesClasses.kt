@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
 import kotlin.io.path.Path
 
 const val separator = "|-SEPARATOR-|"
@@ -430,17 +431,8 @@ class SettingsDefaultTabsImpl(private val context: Context, private val viewMode
 	        		item == ""
 	        	}
 			}
-        	.chunked(3)
-        	.map { tab ->
-	            val name = tab[0]
-	            val albumPath = tab[1]
-	            val index = tab[2].toInt()
-
-	            BottomBarTab(
-	                name = name,
-	                albumPath = if (albumPath == "null") null else albumPath,
-	                index = index
-	            )
+        	.map { serialized ->
+	            Json.decodeFromString<BottomBarTab>(serialized)
 	        }
 
         typedList.forEach { item ->
@@ -460,7 +452,7 @@ class SettingsDefaultTabsImpl(private val context: Context, private val viewMode
             var stringList = ""
 
             list.forEach { tab ->
-                stringList += "$separator${tab.name}$separator${tab.albumPath}$separator${tab.index}"
+                stringList += Json.encodeToString(tab) + separator
             }
 
             it[tabList] = stringList
@@ -468,27 +460,24 @@ class SettingsDefaultTabsImpl(private val context: Context, private val viewMode
     }
 
     fun getDefaultTab() = context.datastore.data.map {
-        val default = it[defaultTab] ?: (DefaultTabs.TabTypes.photos.name + separator + DefaultTabs.TabTypes.photos.albumPath + separator + DefaultTabs.TabTypes.photos.index)
+        val default = it[defaultTab] ?: Json.encodeToString(DefaultTabs.TabTypes.photos)
 
-        val triple = default.split(separator)
-
-        BottomBarTab(
-            name = triple[0],
-            albumPath = if (triple[1] == "null") null else triple[1],
-            index = triple[2].toInt()
-        )
+        Json.decodeFromString<BottomBarTab>(default)
     }
 
     fun setDefaultTab(tab: BottomBarTab) = viewModelScope.launch {
         context.datastore.edit {
-            it[defaultTab] = tab.name + separator + tab.albumPath + separator + tab.index
+            val serialized = Json.encodeToString(tab)
+            it[defaultTab] = serialized
         }
     }
 
     private fun getDefaultTabList() = run {
-    	separator + DefaultTabs.TabTypes.photos.name + separator + DefaultTabs.TabTypes.photos.albumPath + separator + DefaultTabs.TabTypes.photos.index +
-        		separator + DefaultTabs.TabTypes.secure.name + separator + DefaultTabs.TabTypes.secure.albumPath + separator + DefaultTabs.TabTypes.secure.index +
-        		separator + DefaultTabs.TabTypes.albums.name + separator + DefaultTabs.TabTypes.albums.albumPath + separator + DefaultTabs.TabTypes.albums.index +
-        		separator + DefaultTabs.TabTypes.search.name + separator + DefaultTabs.TabTypes.search.albumPath + separator + DefaultTabs.TabTypes.search.index
+        val photos = Json.encodeToString(DefaultTabs.TabTypes.photos)
+        val secure = Json.encodeToString(DefaultTabs.TabTypes.secure)
+        val albums = Json.encodeToString(DefaultTabs.TabTypes.albums)
+        val search = Json.encodeToString(DefaultTabs.TabTypes.search)
+
+        photos + separator + secure + separator + albums + separator + search
     }
 }

@@ -117,6 +117,7 @@ import com.kaii.photos.compose.ErrorPage
 import com.kaii.photos.compose.settings.DataAndBackupPage
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
+import com.kaii.photos.helpers.BottomBarTabSaver
 import kotlinx.coroutines.Dispatchers
 import java.io.File
 
@@ -220,7 +221,7 @@ class MainActivity : ComponentActivity() {
         val navControllerLocal = rememberNavController()
 
         val defaultTab by mainViewModel.settings.DefaultTabs.getDefaultTab().collectAsStateWithLifecycle(initialValue = DefaultTabs.TabTypes.photos)
-        val currentView = remember(defaultTab) { mutableStateOf(defaultTab) }
+        val currentView = rememberSaveable(inputs = arrayOf(defaultTab), stateSaver = BottomBarTabSaver) { mutableStateOf(defaultTab) }
 
         val context = LocalContext.current
         val showDialog = remember { mutableStateOf(false) }
@@ -739,7 +740,7 @@ class MainActivity : ComponentActivity() {
                 TopBar(showDialog = showDialog, selectedItemsList = selectedItemsList, currentView = currentView)
             },
             bottomBar = {
-                BottomBar(currentView = currentView, selectedItemsList = selectedItemsList)
+                BottomBar(currentView = currentView, selectedItemsList = selectedItemsList, tabs = tabList)
             },
             modifier = Modifier
                 .fillMaxSize(1f)
@@ -855,6 +856,7 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun BottomBar(
         currentView: MutableState<BottomBarTab>,
+        tabs: List<BottomBarTab>,
         selectedItemsList: SnapshotStateList<MediaStoreData>
     ) {
         val navController = LocalNavController.current
@@ -872,7 +874,11 @@ class MainActivity : ComponentActivity() {
             label = "MainBottomBarAnimatedContentView"
         ) { state ->
             if (!state) {
-                MainAppBottomBar(currentView, selectedItemsList)
+                MainAppBottomBar(
+                    currentView = currentView,
+                    tabs = tabs,
+                    selectedItemsList = selectedItemsList
+                )
             } else {
                 MainAppSelectingBottomBar(selectedItemsList)
             }

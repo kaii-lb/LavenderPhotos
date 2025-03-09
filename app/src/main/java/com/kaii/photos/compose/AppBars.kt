@@ -372,6 +372,7 @@ fun MainAppTopBar(
 @Composable
 fun MainAppBottomBar(
     currentView: MutableState<BottomBarTab>,
+    tabs: List<BottomBarTab>,
     selectedItemsList: SnapshotStateList<MediaStoreData>
 ) {
     BottomAppBar(
@@ -385,106 +386,33 @@ fun MainAppBottomBar(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            SelectableBottomAppBarItem(
-                selected = currentView.value == DefaultTabs.TabTypes.photos,
-                action = {
-                    if (currentView.value != DefaultTabs.TabTypes.photos) {
-                        currentView.value = DefaultTabs.TabTypes.photos
+            tabs.forEach { tab ->
+                SelectableBottomAppBarItem(
+                    selected = currentView.value == tab,
+                    action = {
+                        if (currentView.value != tab) {
+                            selectedItemsList.clear()
+                            currentView.value = tab
+                        }
+                    },
+                    icon = {
+                        Icon(
+                            painter = painterResource(id = if (currentView.value == tab) tab.selectedIcon else tab.unselectedIcon),
+                            contentDescription = "Navigate to ${tab.name} page",
+                            modifier = Modifier
+                                .size(24.dp)
+                        )
+                    },
+                    label = {
+                        Text(
+                            text = tab.name,
+                            fontSize = TextUnit(14f, TextUnitType.Sp),
+                            modifier = Modifier
+                                .wrapContentSize()
+                        )
                     }
-                },
-                icon = {
-                    Icon(
-                        painter = painterResource(id = if (currentView.value == DefaultTabs.TabTypes.photos) R.drawable.photogrid_filled else R.drawable.photogrid),
-                        contentDescription = "Navigate to photos page",
-                        modifier = Modifier
-                            .size(24.dp)
-                    )
-                },
-                label = {
-                    Text(
-                        text = "Photos",
-                        fontSize = TextUnit(14f, TextUnitType.Sp),
-                        modifier = Modifier
-                            .wrapContentSize()
-                    )
-                }
-            )
-
-            SelectableBottomAppBarItem(
-                selected = currentView.value == DefaultTabs.TabTypes.secure,
-                action = {
-                    if (currentView.value != DefaultTabs.TabTypes.secure) {
-                        currentView.value = DefaultTabs.TabTypes.secure
-                    }
-                },
-                icon = {
-                    Icon(
-                        painter = painterResource(id = if (currentView.value == DefaultTabs.TabTypes.secure) R.drawable.locked_folder_filled else R.drawable.locked_folder),
-                        contentDescription = "Navigate to secure folder page",
-                        modifier = Modifier
-                            .size(24.dp)
-                    )
-                },
-                label = {
-                    Text(
-                        text = "Secure",
-                        fontSize = TextUnit(14f, TextUnitType.Sp),
-                        modifier = Modifier
-                            .wrapContentSize()
-                    )
-                }
-            )
-
-            SelectableBottomAppBarItem(
-                selected = currentView.value == DefaultTabs.TabTypes.albums,
-                action = {
-                    if (currentView.value != DefaultTabs.TabTypes.albums) {
-                        currentView.value = DefaultTabs.TabTypes.albums
-                    }
-                },
-                icon = {
-                    Icon(
-                        painter = painterResource(id = if (currentView.value == DefaultTabs.TabTypes.albums) R.drawable.albums_filled else R.drawable.albums),
-                        contentDescription = "Navigate to albums page",
-                        modifier = Modifier
-                            .size(24.dp)
-                    )
-                },
-                label = {
-                    Text(
-                        text = "Albums",
-                        fontSize = TextUnit(14f, TextUnitType.Sp),
-                        modifier = Modifier
-                            .wrapContentSize()
-                    )
-                }
-            )
-
-            SelectableBottomAppBarItem(
-                selected = currentView.value == DefaultTabs.TabTypes.search,
-                action = {
-                    if (currentView.value != DefaultTabs.TabTypes.search) {
-                        selectedItemsList.clear()
-                        currentView.value = DefaultTabs.TabTypes.search
-                    }
-                },
-                icon = {
-                    Icon(
-                        painter = painterResource(id = R.drawable.search),
-                        contentDescription = "Navigate to search page",
-                        modifier = Modifier
-                            .size(24.dp)
-                    )
-                },
-                label = {
-                    Text(
-                        text = "Search",
-                        fontSize = TextUnit(14f, TextUnitType.Sp),
-                        modifier = Modifier
-                            .wrapContentSize()
-                    )
-                }
-            )
+                )
+            }
         }
     }
 }
@@ -1126,7 +1054,7 @@ fun SecureFolderViewBottomAppBar(
             			loadingDialogTitle = "Decrypting Files"
                         showLoadingDialog = true
 
-	            		val cachedPaths = emptyList<Pair<String, MediaType>>().toMutableList()
+                        val cachedPaths = emptyList<Pair<String, MediaType>>().toMutableList()
 
 	            		selectedItemsWithoutSection.forEach { item ->
                             val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(item.absolutePath)
