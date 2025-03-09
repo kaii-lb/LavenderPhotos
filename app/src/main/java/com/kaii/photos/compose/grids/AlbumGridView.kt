@@ -79,7 +79,8 @@ import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.datastore.AlbumSortMode
 import com.kaii.photos.datastore.AlbumsList
-import com.kaii.photos.helpers.MainScreenViewType
+import com.kaii.photos.datastore.BottomBarTab
+import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.baseInternalStorageDirectory
@@ -97,7 +98,7 @@ private const val TAG = "ALBUMS_GRID_VIEW"
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AlbumsGridView(
-    currentView: MutableState<MainScreenViewType>
+    currentView: MutableState<BottomBarTab>
 ) {
     val context = LocalContext.current
     val navController = LocalNavController.current
@@ -188,9 +189,9 @@ fun AlbumsGridView(
     }
 
     BackHandler(
-        enabled = currentView.value == MainScreenViewType.AlbumsGridView && navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name
+        enabled = currentView.value == DefaultTabs.TabTypes.albums && navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name
     ) {
-        currentView.value = MainScreenViewType.PhotosGridView
+        currentView.value = DefaultTabs.TabTypes.photos
     }
 
     Column(

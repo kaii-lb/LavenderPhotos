@@ -40,7 +40,8 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.compose.SearchTextField
 import com.kaii.photos.compose.ViewProperties
-import com.kaii.photos.helpers.MainScreenViewType
+import com.kaii.photos.datastore.BottomBarTab
+import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.mediastore.MediaStoreData
@@ -61,7 +62,7 @@ import java.util.Locale
 @Composable
 fun SearchPage(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
-    currentView: MutableState<MainScreenViewType>
+    currentView: MutableState<BottomBarTab>
 ) {
     val searchViewModel: SearchViewModel = viewModel(
         factory = SearchViewModelFactory(LocalContext.current, MediaItemSortMode.DateTaken)
@@ -81,10 +82,10 @@ fun SearchPage(
     val navController = LocalNavController.current
 
     BackHandler(
-        enabled = currentView.value == MainScreenViewType.SearchPage && navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name
+        enabled = currentView.value == DefaultTabs.TabTypes.search && navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name
     ) {
         searchViewModel.cancelMediaFlow()
-        currentView.value = MainScreenViewType.PhotosGridView
+        currentView.value = DefaultTabs.TabTypes.photos
     }
 
     Column(

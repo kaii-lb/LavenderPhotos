@@ -39,3 +39,6 @@ val Settings.Editing: SettingsEditingImpl
 
 val Settings.MainPhotosView: SettingMainPhotosViewImpl
 	get() = SettingMainPhotosViewImpl(context, viewModelScope)
+
+val Settings.DefaultTabs: SettingsDefaultTabsImpl
+    get() = SettingsDefaultTabsImpl(context, viewModelScope)

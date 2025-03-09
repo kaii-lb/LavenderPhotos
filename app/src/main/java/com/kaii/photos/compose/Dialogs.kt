@@ -105,10 +105,11 @@ import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.datastore.AlbumsList
+import com.kaii.photos.datastore.BottomBarTab
+import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.User
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.GetPermissionAndRun
-import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MediaData
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
@@ -431,7 +432,7 @@ fun DialogInfoText(firstText: String, secondText: String, iconResId: Int) {
 @Composable
 fun MainAppDialog(
     showDialog: MutableState<Boolean>,
-    currentView: MutableState<MainScreenViewType>,
+    currentView: MutableState<BottomBarTab>,
     selectedItemsList: SnapshotStateList<MediaStoreData>
 ) {
     val vibratorManager = rememberVibratorManager()
@@ -591,7 +592,7 @@ fun MainAppDialog(
                         .padding(12.dp)
                         .wrapContentHeight()
                 ) {
-                    if (currentView.value != MainScreenViewType.AlbumsGridView && currentView.value != MainScreenViewType.SecureFolder) {
+                    if (currentView.value != DefaultTabs.TabTypes.albums && currentView.value != DefaultTabs.TabTypes.secure) {
                         DialogClickableItem(
                             text = "Select",
                             iconResId = R.drawable.check_item,
@@ -604,7 +605,7 @@ fun MainAppDialog(
                         }
                     }
 
-                    if (currentView.value == MainScreenViewType.AlbumsGridView) {
+                    if (currentView.value == DefaultTabs.TabTypes.albums) {
                         val activityLauncher = createPersistablePermissionLauncher { uri ->
                             uri.path?.let {
                                 val dir = File(it)
@@ -630,7 +631,7 @@ fun MainAppDialog(
                     DialogClickableItem(
                         text = "Data & Backup",
                         iconResId = R.drawable.data,
-                        position = if (currentView.value == MainScreenViewType.SecureFolder) RowPosition.Top else RowPosition.Middle,
+                        position = if (currentView.value == DefaultTabs.TabTypes.secure) RowPosition.Top else RowPosition.Middle,
                     ) {
                         showDialog.value = false
                         navController.navigate(MultiScreenViewType.DataAndBackup.name)
@@ -1407,7 +1408,7 @@ fun FeatureNotAvailableDialog(showDialog: MutableState<Boolean>) {
 fun SelectingMoreOptionsDialog(
     showDialog: MutableState<Boolean>,
     selectedItems: List<MediaStoreData>,
-    currentView: MutableState<MainScreenViewType>,
+    currentView: MutableState<BottomBarTab>,
     onDone: () -> Unit
 ) {
     val context = LocalContext.current
@@ -1507,7 +1508,7 @@ fun SelectingMoreOptionsDialog(
                     .wrapContentHeight()
             ) {
                 // TODO: group by path and then get permission for each path in search page
-                if (currentView.value != MainScreenViewType.SearchPage) {
+                if (currentView.value != DefaultTabs.TabTypes.search) {
                     DialogClickableItem(
                         text = "Move to Secure Folder",
                         iconResId = R.drawable.locked_folder,

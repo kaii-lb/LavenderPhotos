@@ -19,6 +19,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -26,6 +27,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,15 +38,16 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kaii.lavender_snackbars.LavenderSnackbarController
+import com.kaii.lavender_snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.applicationDatabase
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
-import com.kaii.photos.database.entities.SecuredItemEntity
 import com.kaii.photos.datastore.AlbumsList
+import com.kaii.photos.datastore.BottomBarTab
+import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.Versions
-import com.kaii.photos.helpers.EncryptionManager
-import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.appSecureFolderDir
@@ -55,6 +58,7 @@ import com.kaii.photos.mediastore.getMediaStoreDataFromUri
 import com.kaii.photos.mediastore.MediaType
 import kotlin.io.path.Path
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.file.Files
@@ -63,14 +67,14 @@ private const val TAG = "LOCKED_FOLDER_ENTRY_VIEW"
 
 @Composable
 fun LockedFolderEntryView(
-    currentView: MutableState<MainScreenViewType>
+    currentView: MutableState<BottomBarTab>
 ) {
     val navController = LocalNavController.current
 
     BackHandler(
-        enabled = currentView.value == MainScreenViewType.SecureFolder && navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name
+        enabled = currentView.value == DefaultTabs.TabTypes.secure && navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name
     ) {
-        currentView.value = MainScreenViewType.PhotosGridView
+        currentView.value = DefaultTabs.TabTypes.photos
     }
 
     val context = LocalContext.current
@@ -81,13 +85,16 @@ fun LockedFolderEntryView(
     var migrating by remember { mutableStateOf(false) }
     var launchSecureFolder by remember { mutableStateOf(false) }
     val showExplanationForMigration = remember { mutableStateOf(false) }
+    val shouldMigrate by mainViewModel.settings.Versions.getShouldMigrateToEncryptedSecurePhotos().collectAsStateWithLifecycle(initialValue = false)
 
     LaunchedEffect(launchSecureFolder) {
         if (launchSecureFolder) navController.navigate(MultiScreenViewType.LockedFolderView.name)
     }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(shouldMigrate) {
         withContext(Dispatchers.IO) {
+            if (!shouldMigrate) return@withContext
+
         	val restoredFilesDir = context.appRestoredFilesDir
             val oldDir = context.getDir("locked_folder", Context.MODE_PRIVATE)
             val children = oldDir.listFiles()
@@ -169,6 +176,7 @@ fun LockedFolderEntryView(
                 showExplanationForMigration.value = true
             }
 
+            mainViewModel.settings.Versions.setShouldMigrateToEncryptedSecurePhotos(false)
             mainViewModel.settings.AlbumsList.addToAlbumsList(
                 restoredFilesDir.replace(baseInternalStorageDirectory, "")
             )
@@ -255,13 +263,27 @@ fun LockedFolderEntryView(
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                val coroutineScope = rememberCoroutineScope()
+
                 Button(
                     onClick = {
-                        prompt.authenticate(
-                            cancellationSignal,
-                            context.mainExecutor,
-                            promptCallback
-                        )
+                        if (!shouldMigrate) {
+                            prompt.authenticate(
+                                cancellationSignal,
+                                context.mainExecutor,
+                                promptCallback
+                            )
+                        } else {
+                            coroutineScope.launch {
+                                LavenderSnackbarController.pushEvent(
+                                    LavenderSnackbarEvents.MessageEvent(
+                                        message = "Migrating to encrypted photos, please wait",
+                                        iconResId = R.drawable.locked_folder,
+                                        duration = SnackbarDuration.Short
+                                    )
+                                )
+                            }
+                        }
                     },
                 ) {
                     Text(

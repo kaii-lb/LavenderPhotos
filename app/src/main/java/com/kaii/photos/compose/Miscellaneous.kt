@@ -64,7 +64,8 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.kaii.photos.R
 import com.kaii.photos.MainActivity.Companion.mainViewModel
-import com.kaii.photos.helpers.MainScreenViewType
+import com.kaii.photos.datastore.BottomBarTab
+import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 
@@ -366,7 +367,7 @@ fun SelectViewTopBarLeftButtons(
 @Composable
 fun SelectViewTopBarRightButtons(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
-    currentView: MutableState<MainScreenViewType>
+    currentView: MutableState<BottomBarTab>
 ) {
     val groupedMedia = mainViewModel.groupedMedia.collectAsStateWithLifecycle(initialValue = emptyList())
 
@@ -418,7 +419,7 @@ fun SelectViewTopBarRightButtons(
             )
         }
 
-        if (currentView.value != MainScreenViewType.SecureFolder) {
+        if (currentView.value != DefaultTabs.TabTypes.secure) {
             val showMoreOptionsDialog = remember { mutableStateOf(false) }
 
             if (showMoreOptionsDialog.value) {

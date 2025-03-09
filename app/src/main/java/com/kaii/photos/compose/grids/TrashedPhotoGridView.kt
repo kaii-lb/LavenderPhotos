@@ -36,12 +36,11 @@ import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.compose.TrashedPhotoGridViewBottomBar
 import com.kaii.photos.compose.TrashedPhotoGridViewTopBar
 import com.kaii.photos.compose.ViewProperties
+import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.TrashBin
-import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import com.kaii.photos.models.trash_bin.TrashViewModel
 import com.kaii.photos.models.trash_bin.TrashViewModelFactory
 import kotlinx.coroutines.Dispatchers
@@ -51,7 +50,7 @@ import kotlin.time.Duration.Companion.days
 @Composable
 fun TrashedPhotoGridView(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
-    currentView: MutableState<MainScreenViewType>
+    currentView: MutableState<BottomBarTab>
 ) {
     val context = LocalContext.current
     val trashViewModel: TrashViewModel = viewModel(

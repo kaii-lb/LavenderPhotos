@@ -74,9 +74,10 @@ import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.datastore.AlbumsList
+import com.kaii.photos.datastore.BottomBarTab
+import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.GetPermissionAndRun
-import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.createPersistablePermissionLauncher
 import com.kaii.photos.helpers.moveImageOutOfLockedFolder
@@ -282,7 +283,7 @@ fun MainAppTopBar(
     alternate: Boolean,
     showDialog: MutableState<Boolean>,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
-    currentView: MutableState<MainScreenViewType>
+    currentView: MutableState<BottomBarTab>
 ) {
     DualFunctionTopAppBar(
         alternated = alternate,
@@ -302,7 +303,7 @@ fun MainAppTopBar(
         },
         actions = {
             AnimatedVisibility(
-                visible = currentView.value == MainScreenViewType.AlbumsGridView,
+                visible = currentView.value == DefaultTabs.TabTypes.albums,
                 enter = scaleIn(
                     animationSpec = spring(
                         dampingRatio = Spring.DampingRatioMediumBouncy,
@@ -370,7 +371,7 @@ fun MainAppTopBar(
 
 @Composable
 fun MainAppBottomBar(
-    currentView: MutableState<MainScreenViewType>,
+    currentView: MutableState<BottomBarTab>,
     selectedItemsList: SnapshotStateList<MediaStoreData>
 ) {
     BottomAppBar(
@@ -385,15 +386,15 @@ fun MainAppBottomBar(
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             SelectableBottomAppBarItem(
-                selected = currentView.value == MainScreenViewType.PhotosGridView,
+                selected = currentView.value == DefaultTabs.TabTypes.photos,
                 action = {
-                    if (currentView.value != MainScreenViewType.PhotosGridView) {
-                        currentView.value = MainScreenViewType.PhotosGridView
+                    if (currentView.value != DefaultTabs.TabTypes.photos) {
+                        currentView.value = DefaultTabs.TabTypes.photos
                     }
                 },
                 icon = {
                     Icon(
-                        painter = painterResource(id = if (currentView.value == MainScreenViewType.PhotosGridView) R.drawable.photogrid_filled else R.drawable.photogrid),
+                        painter = painterResource(id = if (currentView.value == DefaultTabs.TabTypes.photos) R.drawable.photogrid_filled else R.drawable.photogrid),
                         contentDescription = "Navigate to photos page",
                         modifier = Modifier
                             .size(24.dp)
@@ -410,15 +411,15 @@ fun MainAppBottomBar(
             )
 
             SelectableBottomAppBarItem(
-                selected = currentView.value == MainScreenViewType.SecureFolder,
+                selected = currentView.value == DefaultTabs.TabTypes.secure,
                 action = {
-                    if (currentView.value != MainScreenViewType.SecureFolder) {
-                        currentView.value = MainScreenViewType.SecureFolder
+                    if (currentView.value != DefaultTabs.TabTypes.secure) {
+                        currentView.value = DefaultTabs.TabTypes.secure
                     }
                 },
                 icon = {
                     Icon(
-                        painter = painterResource(id = if (currentView.value == MainScreenViewType.SecureFolder) R.drawable.locked_folder_filled else R.drawable.locked_folder),
+                        painter = painterResource(id = if (currentView.value == DefaultTabs.TabTypes.secure) R.drawable.locked_folder_filled else R.drawable.locked_folder),
                         contentDescription = "Navigate to secure folder page",
                         modifier = Modifier
                             .size(24.dp)
@@ -435,15 +436,15 @@ fun MainAppBottomBar(
             )
 
             SelectableBottomAppBarItem(
-                selected = currentView.value == MainScreenViewType.AlbumsGridView,
+                selected = currentView.value == DefaultTabs.TabTypes.albums,
                 action = {
-                    if (currentView.value != MainScreenViewType.AlbumsGridView) {
-                        currentView.value = MainScreenViewType.AlbumsGridView
+                    if (currentView.value != DefaultTabs.TabTypes.albums) {
+                        currentView.value = DefaultTabs.TabTypes.albums
                     }
                 },
                 icon = {
                     Icon(
-                        painter = painterResource(id = if (currentView.value == MainScreenViewType.AlbumsGridView) R.drawable.albums_filled else R.drawable.albums),
+                        painter = painterResource(id = if (currentView.value == DefaultTabs.TabTypes.albums) R.drawable.albums_filled else R.drawable.albums),
                         contentDescription = "Navigate to albums page",
                         modifier = Modifier
                             .size(24.dp)
@@ -460,11 +461,11 @@ fun MainAppBottomBar(
             )
 
             SelectableBottomAppBarItem(
-                selected = currentView.value == MainScreenViewType.SearchPage,
+                selected = currentView.value == DefaultTabs.TabTypes.search,
                 action = {
-                    if (currentView.value != MainScreenViewType.SearchPage) {
+                    if (currentView.value != DefaultTabs.TabTypes.search) {
                         selectedItemsList.clear()
-                        currentView.value = MainScreenViewType.SearchPage
+                        currentView.value = DefaultTabs.TabTypes.search
                     }
                 },
                 icon = {
@@ -599,7 +600,7 @@ fun MainAppSelectingBottomBar(
 @Composable
 fun IsSelectingTopBar(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
-    currentView: MutableState<MainScreenViewType>
+    currentView: MutableState<BottomBarTab>
 ) {
     TopAppBar(
         title = {
@@ -643,7 +644,7 @@ fun SingleAlbumViewTopBar(
     dir: String,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     showDialog: MutableState<Boolean>,
-    currentView: MutableState<MainScreenViewType>,
+    currentView: MutableState<BottomBarTab>,
     onBackClick: () -> Unit
 ) {
     val title = dir.split("/").last()
@@ -827,7 +828,7 @@ fun SingleAlbumViewBottomBar(
 fun TrashedPhotoGridViewTopBar(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     groupedMedia: List<MediaStoreData>,
-    currentView: MutableState<MainScreenViewType>,
+    currentView: MutableState<BottomBarTab>,
     onBackClick: () -> Unit
 ) {
     val showDialog = remember { mutableStateOf(false) }
@@ -1040,7 +1041,7 @@ fun TrashedPhotoGridViewBottomBar(
 @Composable
 fun SecureFolderViewTopAppBar(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
-    currentView: MutableState<MainScreenViewType>,
+    currentView: MutableState<BottomBarTab>,
     onBackClicked: () -> Unit
 ) {
     val show by remember {
@@ -1262,7 +1263,7 @@ fun SecureFolderViewBottomAppBar(
 @Composable
 fun FavouritesViewTopAppBar(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
-    currentView: MutableState<MainScreenViewType>,
+    currentView: MutableState<BottomBarTab>,
     onBackClick: () -> Unit
 ) {
     val show by remember {

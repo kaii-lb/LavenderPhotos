@@ -101,7 +101,6 @@ import com.kaii.photos.datastore.Debugging
 import com.kaii.photos.datastore.Editing
 import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.datastore.MainPhotosView
-import com.kaii.photos.helpers.MainScreenViewType
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
@@ -114,7 +113,10 @@ import com.kaii.photos.models.multi_album.MultiAlbumViewModelFactory
 import com.kaii.photos.ui.theme.PhotosTheme
 import com.kaii.lavender_snackbars.LavenderSnackbarHostState
 import com.kaii.lavender_snackbars.LavenderSnackbarBox
+import com.kaii.photos.compose.ErrorPage
 import com.kaii.photos.compose.settings.DataAndBackupPage
+import com.kaii.photos.datastore.BottomBarTab
+import com.kaii.photos.datastore.DefaultTabs
 import kotlinx.coroutines.Dispatchers
 import java.io.File
 
@@ -217,8 +219,8 @@ class MainActivity : ComponentActivity() {
 
         val navControllerLocal = rememberNavController()
 
-        val currentView =
-            rememberSaveable { mutableStateOf(MainScreenViewType.PhotosGridView) }
+        val defaultTab by mainViewModel.settings.DefaultTabs.getDefaultTab().collectAsStateWithLifecycle(initialValue = DefaultTabs.TabTypes.photos)
+        val currentView = remember(defaultTab) { mutableStateOf(defaultTab) }
 
         val context = LocalContext.current
         val showDialog = remember { mutableStateOf(false) }
@@ -716,7 +718,7 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     private fun Content(
-        currentView: MutableState<MainScreenViewType>,
+        currentView: MutableState<BottomBarTab>,
         showDialog: MutableState<Boolean>,
         selectedItemsList: SnapshotStateList<MediaStoreData>,
         multiAlbumViewModel: MultiAlbumViewModel,
@@ -729,6 +731,15 @@ class MainActivity : ComponentActivity() {
         LaunchedEffect(mediaStoreData.value) {
             groupedMedia.value = mediaStoreData.value
         }
+
+        val tabList by mainViewModel.settings.DefaultTabs.getTabList().collectAsStateWithLifecycle(
+            initialValue = listOf(
+                DefaultTabs.TabTypes.photos,
+                DefaultTabs.TabTypes.secure,
+                DefaultTabs.TabTypes.albums,
+                DefaultTabs.TabTypes.search
+            )
+        )
 
         Scaffold(
             topBar = {
@@ -785,28 +796,43 @@ class MainActivity : ComponentActivity() {
                     },
                     label = "MainAnimatedContentView"
                 ) { stateValue ->
-                    when (stateValue) {
-                        MainScreenViewType.PhotosGridView -> {
-                            selectedItemsList.clear()
+                    if (stateValue in tabList) {
+                        when {
+                            stateValue.isCustom -> {
+                                ErrorPage(
+                                    message = "Not implemented yet!",
+                                    iconResId = R.drawable.error
+                                )
+                            }
 
-                            PhotoGrid(
-                                groupedMedia = groupedMedia,
-                                albums = multiAlbumViewModel.albums,
-                                viewProperties = ViewProperties.Album,
-                                selectedItemsList = selectedItemsList,
-                            )
+                            stateValue == DefaultTabs.TabTypes.photos -> {
+                                selectedItemsList.clear()
+
+                                PhotoGrid(
+                                    groupedMedia = groupedMedia,
+                                    albums = multiAlbumViewModel.albums,
+                                    viewProperties = ViewProperties.Album,
+                                    selectedItemsList = selectedItemsList,
+                                )
+                            }
+
+                            stateValue == DefaultTabs.TabTypes.secure -> LockedFolderEntryView(currentView)
+
+                            stateValue == DefaultTabs.TabTypes.albums -> {
+                                AlbumsGridView(currentView)
+                            }
+
+                            stateValue == DefaultTabs.TabTypes.search -> {
+                                selectedItemsList.clear()
+
+                                SearchPage(selectedItemsList, currentView)
+                            }
                         }
-
-                        MainScreenViewType.SecureFolder -> LockedFolderEntryView(currentView)
-                        MainScreenViewType.AlbumsGridView -> {
-                            AlbumsGridView(currentView)
-                        }
-
-                        MainScreenViewType.SearchPage -> {
-                            selectedItemsList.clear()
-
-                            SearchPage(selectedItemsList, currentView)
-                        }
+                    } else {
+                        ErrorPage(
+                            message = "This tab doesn't exist!",
+                            iconResId = R.drawable.error
+                        )
                     }
                 }
             }
@@ -817,7 +843,7 @@ class MainActivity : ComponentActivity() {
     private fun TopBar(
         showDialog: MutableState<Boolean>,
         selectedItemsList: SnapshotStateList<MediaStoreData>,
-        currentView: MutableState<MainScreenViewType>
+        currentView: MutableState<BottomBarTab>
     ) {
         val show by remember {
             derivedStateOf {
@@ -835,7 +861,7 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     private fun BottomBar(
-        currentView: MutableState<MainScreenViewType>,
+        currentView: MutableState<BottomBarTab>,
         selectedItemsList: SnapshotStateList<MediaStoreData>
     ) {
         val navController = LocalNavController.current

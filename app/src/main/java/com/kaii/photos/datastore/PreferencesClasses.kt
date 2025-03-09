@@ -4,7 +4,6 @@ import android.content.Context
 import android.provider.MediaStore.Files.FileColumns
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
@@ -21,7 +20,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.io.path.Path
-import kotlin.reflect.KProperty
 
 const val separator = "|-SEPARATOR-|"
 private const val TAG = "PREFERENCES_CLASSES"
@@ -163,9 +161,9 @@ class SettingsAlbumsListImpl(private val context: Context, private val viewModel
 }
 
 class SettingsVersionImpl(private val context: Context, private val viewModelScope: CoroutineScope) {
-    private val migrateToEncryptedSecurePhotos = booleanPreferencesKey("migrate_to_encrypted_secure_photos")
+    private val migrateToEncryptedSecurePhotos = booleanPreferencesKey("migrate_to_encrypted_secure_media")
 
-    fun getShouldMigrateToEncryptedSecurePhotos(context: Context): Flow<Boolean> =
+    fun getShouldMigrateToEncryptedSecurePhotos(): Flow<Boolean> =
     	context.datastore.data.map {
     		it[migrateToEncryptedSecurePhotos] ?: true
     	}
@@ -414,4 +412,80 @@ class SettingMainPhotosViewImpl(private val context: Context, private val viewMo
 		"DCIM/Camera" + separator +
 		"Pictures" + separator +
 		"Pictures/Screenshot" + separator
+}
+
+class SettingsDefaultTabsImpl(private val context: Context, private val viewModelScope: CoroutineScope) {
+    private val defaultTab = stringPreferencesKey("default_open_tab")
+    private val tabList = stringPreferencesKey("tab_list")
+
+    fun getTabList() = context.datastore.data.map {
+        val list = it[tabList] ?: getDefaultTabList()
+
+        val separatedList = list.split(separator)
+
+        val typedList = separatedList
+        	.toMutableList()
+        	.apply {
+	        	removeAll { item ->
+	        		item == ""
+	        	}
+			}
+        	.chunked(2)
+        	.map { nameAndIndex ->
+	            val name = nameAndIndex[0]
+	            val index = nameAndIndex[1].toInt()
+
+	            BottomBarTab(
+	                name = name,
+	                index = index
+	            )
+	        }
+
+        typedList.forEach { item ->
+            Log.d(TAG, "Typed List item $item")
+        }
+
+        typedList
+    }
+
+    fun setTabList(list: List<BottomBarTab>) = viewModelScope.launch {
+        context.datastore.edit {
+            if (list.isEmpty()) {
+                it[tabList] = getDefaultTabList()
+                return@edit
+            }
+
+            var stringList = ""
+
+            list.forEach { tab ->
+                stringList += "$separator${tab.name}$separator${tab.index}"
+            }
+
+            it[tabList] = stringList
+        }
+    }
+
+    fun getDefaultTab() = context.datastore.data.map {
+        val default = it[defaultTab] ?: (DefaultTabs.TabTypes.photos.name + separator + DefaultTabs.TabTypes.photos.index)
+
+        val pair = default.split(separator)
+
+        BottomBarTab(
+            name = pair[0],
+            index = pair[1].toInt()
+        )
+    }
+
+    fun setDefaultTab(tabName: String, tabIndex: Int) = viewModelScope.launch {
+        context.datastore.edit {
+            it[defaultTab] = tabName + separator + tabIndex
+        }
+    }
+
+    private fun getDefaultTabList() = run {
+        separator + DefaultTabs.TabTypes.photos.name + "${separator}${DefaultTabs.TabTypes.photos.index}" +
+                separator + DefaultTabs.TabTypes.secure.name + "${separator}${DefaultTabs.TabTypes.secure.index}" +
+                separator + DefaultTabs.TabTypes.albums.name + "${separator}${DefaultTabs.TabTypes.albums.index}" +
+                separator + DefaultTabs.TabTypes.search.name + "${separator}${DefaultTabs.TabTypes.search.index}"
+    }
 }

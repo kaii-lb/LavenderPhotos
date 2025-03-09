@@ -30,7 +30,7 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.FavouritesViewBottomAppBar
 import com.kaii.photos.compose.FavouritesViewTopAppBar
 import com.kaii.photos.compose.ViewProperties
-import com.kaii.photos.helpers.MainScreenViewType
+import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.models.multi_album.groupPhotosBy
@@ -43,7 +43,7 @@ import kotlinx.coroutines.Dispatchers
 @Composable
 fun FavouritesGridView(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
-    currentView: MutableState<MainScreenViewType>
+    currentView: MutableState<BottomBarTab>
 ) {
     val favouritesViewModel: FavouritesViewModel = viewModel(
         factory = FavouritesViewModelFactory()

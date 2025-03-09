@@ -38,7 +38,7 @@ import com.kaii.photos.MainActivity.Companion.applicationDatabase
 import com.kaii.photos.compose.SecureFolderViewBottomAppBar
 import com.kaii.photos.compose.SecureFolderViewTopAppBar
 import com.kaii.photos.compose.ViewProperties
-import com.kaii.photos.helpers.MainScreenViewType
+import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
@@ -59,7 +59,7 @@ import kotlin.io.path.Path
 @Composable
 fun LockedFolderView(
     window: Window,
-    currentView: MutableState<MainScreenViewType>
+    currentView: MutableState<BottomBarTab>
 ) {
     val context = LocalContext.current
 
