@@ -95,7 +95,7 @@ class Updater(
 		        Log.d(TAG, "body of https response is $body")
 		        Log.d(TAG, "github version name is ${githubVersionName.value}")
 		        Log.d(TAG, "github version code is ${githubVersionCode.value}")
-		        Log.d(TAG, "app has updates? $hasUpdates")
+		        Log.d(TAG, "app has updates? ${hasUpdates.value}")
 
 		        onRefresh(CheckUpdateState.Succeeded)
     		}.await()

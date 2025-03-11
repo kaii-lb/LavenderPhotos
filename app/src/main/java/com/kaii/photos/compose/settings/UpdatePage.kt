@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.LazyColumn
@@ -26,7 +25,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -35,7 +33,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -51,13 +48,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.fromHtml
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
+import com.kaii.photos.compose.AnnotatedExplanationDialog
+import com.kaii.photos.datastore.Versions
 import com.kaii.photos.helpers.CheckUpdateState
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
@@ -72,7 +78,7 @@ fun UpdatesPage() {
 
 	Scaffold(
 		topBar = {
-			TopBar (runRefreshAction = runRefreshAction)
+			TopBar()
 		},
 		bottomBar = {
 			BottomBar(
@@ -83,7 +89,6 @@ fun UpdatesPage() {
 		contentWindowInsets = WindowInsets.systemBars
 	) { innerPadding ->
 		val coroutineScope = rememberCoroutineScope()
-		val state = rememberPullToRefreshState()
 
 		PullToRefreshBox (
 			isRefreshing = showLoadingSpinner.value,
@@ -159,9 +164,7 @@ fun UpdatesPage() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TopBar(
-	runRefreshAction: MutableState<Boolean>,
-) {
+private fun TopBar() {
 	TopAppBar(
 		title = {
 			Text(
@@ -186,24 +189,64 @@ private fun TopBar(
 				)
 			}
 		},
-		// actions = {
-		// 	val coroutineScope = rememberCoroutineScope()
-		//
-		// 	IconButton(
-		// 		onClick = {
-		// 			coroutineScope.launch {
-		// 				runRefreshAction.value = false
-		// 				delay(100)
-		// 				runRefreshAction.value = true
-		// 			}
-		// 		}
-		// 	) {
-		// 		Icon(
-		// 			painter = painterResource(id = R.drawable.restore),
-		// 			contentDescription = "check if there is an update"
-		// 		)
-		// 	}
-		// }
+		actions = {
+			val showUpdateNotice by mainViewModel.settings.Versions.getShowUpdateNotice().collectAsStateWithLifecycle(false)
+			val showDialog = remember { mutableStateOf(false) }
+
+			LaunchedEffect(showUpdateNotice) {
+				if (showUpdateNotice) {
+					showDialog.value = true
+
+					mainViewModel.settings.Versions.setShowUpdateNotice(false)
+				}
+			}
+
+			val htmlString = remember {
+				"""
+					<p>This updater downloads apks from <a href="https://github.com/kaii-lb/LavenderPhotos/releases">GitHub Releases</a> which
+						means that they don't go through the additional screening and testing performed at IzzyOnDroid, F-Droid or elsewhere.
+
+						<br><br>The builds hosted on GitHub are always signed, checked, and verified by the developer (kaii-lb), but it is up to you whether you want to use them or not.
+
+						<br><br>Lavender Photos never does auto-updates, and only ever updates with explicit user consent.
+					</p>
+				""".trimIndent()
+			}
+
+			if (showDialog.value) {
+				AnnotatedExplanationDialog(
+					title = "Download Notice",
+					annotatedExplanation = AnnotatedString.fromHtml(
+						htmlString = htmlString,
+						linkStyles = TextLinkStyles(
+							style = SpanStyle(
+								textDecoration = TextDecoration.Underline,
+								fontStyle = FontStyle.Normal,
+								color = MaterialTheme.colorScheme.primary
+							),
+							pressedStyle = SpanStyle(
+								textDecoration = TextDecoration.Underline,
+								fontStyle = FontStyle.Normal,
+								fontWeight = FontWeight.Bold,
+								color = MaterialTheme.colorScheme.primary
+							)
+						)
+					),
+					showDialog = showDialog
+				)
+			}
+
+			IconButton(
+				onClick = {
+					showDialog.value = true
+				}
+			) {
+				Icon(
+					painter = painterResource(id = R.drawable.info),
+					contentDescription = "check if there is an update"
+				)
+			}
+		}
 	)
 }
 

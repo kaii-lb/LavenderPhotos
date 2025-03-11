@@ -397,7 +397,7 @@ fun MainAppBottomBar(
                     },
                     icon = {
                         Icon(
-                            painter = painterResource(id = if (currentView.value == tab) tab.selectedIcon else tab.unselectedIcon),
+                            painter = painterResource(id = if (currentView.value == tab) tab.selectedIcon.resId else tab.unselectedIcon.resId),
                             contentDescription = "Navigate to ${tab.name} page",
                             modifier = Modifier
                                 .size(24.dp)

@@ -80,6 +80,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -1342,6 +1343,50 @@ fun ExplanationDialog(
     showDialog: MutableState<Boolean>,
     showPreviousDialog: MutableState<Boolean>? = null
 ) {
+    ExplanationDialogBase(
+        title = title,
+        body = {
+            Text(
+                text = explanation,
+                fontSize = TextUnit(14f, TextUnitType.Sp),
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.wrapContentSize()
+            )
+        },
+        showDialog = showDialog,
+        showPreviousDialog = showPreviousDialog
+    )
+}
+
+@Composable
+fun AnnotatedExplanationDialog(
+    title: String,
+    annotatedExplanation: AnnotatedString,
+    showDialog: MutableState<Boolean>,
+    showPreviousDialog: MutableState<Boolean>? = null
+) {
+    ExplanationDialogBase(
+        title = title,
+        body = {
+            Text(
+                text = annotatedExplanation,
+                fontSize = TextUnit(14f, TextUnitType.Sp),
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.wrapContentSize()
+            )
+        },
+        showDialog = showDialog,
+        showPreviousDialog = showPreviousDialog
+    )
+}
+
+@Composable
+private fun ExplanationDialogBase(
+    title: String,
+    body: @Composable () -> Unit,
+    showDialog: MutableState<Boolean>,
+    showPreviousDialog: MutableState<Boolean>? = null
+) {
     showPreviousDialog?.value = false
 
     Dialog(
@@ -1372,12 +1417,7 @@ fun ExplanationDialog(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Text(
-                text = explanation,
-                fontSize = TextUnit(14f, TextUnitType.Sp),
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.wrapContentSize()
-            )
+            body()
 
             Spacer(modifier = Modifier.height(24.dp))
 

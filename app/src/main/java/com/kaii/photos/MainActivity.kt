@@ -34,6 +34,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -44,6 +45,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
@@ -113,12 +115,16 @@ import com.kaii.photos.models.multi_album.MultiAlbumViewModelFactory
 import com.kaii.photos.ui.theme.PhotosTheme
 import com.kaii.lavender_snackbars.LavenderSnackbarHostState
 import com.kaii.lavender_snackbars.LavenderSnackbarBox
+import com.kaii.lavender_snackbars.LavenderSnackbarController
+import com.kaii.lavender_snackbars.LavenderSnackbarEvents
 import com.kaii.photos.compose.ErrorPage
 import com.kaii.photos.compose.settings.DataAndBackupPage
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.helpers.BottomBarTabSaver
+import com.kaii.photos.helpers.CheckUpdateState
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.io.File
 
 private const val TAG = "MAIN_ACTIVITY"
@@ -715,6 +721,35 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+
+        val coroutineScope = rememberCoroutineScope()
+        mainViewModel.updater.refresh { state ->
+            Log.d(TAG, "Checking for app updates...")
+
+            when (state) {
+                CheckUpdateState.Succeeded -> {
+                    if (mainViewModel.updater.hasUpdates.value) {
+                        Log.d(TAG, "Update found! Notifying user...")
+
+                        coroutineScope.launch {
+                            LavenderSnackbarController.pushEvent(
+                                LavenderSnackbarEvents.ActionEvent(
+                                    message = "New app version available!",
+                                    iconResId = R.drawable.error_2,
+                                    duration = SnackbarDuration.Short,
+                                    actionIconResId = R.drawable.download,
+                                    action = {
+                                        navControllerLocal.navigate(MultiScreenViewType.UpdatesPage.name)
+                                    }
+                                )
+                            )
+                        }
+                    }
+                }
+
+                else -> {}
+            }
+        }
     }
 
     @Composable
@@ -893,7 +928,7 @@ private fun setupNextScreen(
     selectedItemsList.clear()
     window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
 
-    window.setDecorFitsSystemWindows(false)
+    // window.setDecorFitsSystemWindows(false)
 
     setBarVisibility(
         visible = true,

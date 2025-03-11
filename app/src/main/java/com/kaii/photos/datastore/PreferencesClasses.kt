@@ -163,6 +163,7 @@ class SettingsAlbumsListImpl(private val context: Context, private val viewModel
 
 class SettingsVersionImpl(private val context: Context, private val viewModelScope: CoroutineScope) {
     private val migrateToEncryptedSecurePhotos = booleanPreferencesKey("migrate_to_encrypted_secure_media")
+    private val showUpdateNotice = booleanPreferencesKey("show_update_notice")
 
     fun getShouldMigrateToEncryptedSecurePhotos(): Flow<Boolean> =
     	context.datastore.data.map {
@@ -174,6 +175,17 @@ class SettingsVersionImpl(private val context: Context, private val viewModelSco
    			it[migrateToEncryptedSecurePhotos] = value
    		}
    	}
+
+    fun getShowUpdateNotice(): Flow<Boolean> =
+        context.datastore.data.map {
+            it[showUpdateNotice] ?: true
+        }
+
+    fun setShowUpdateNotice(value: Boolean) = viewModelScope.launch {
+        context.datastore.edit {
+            it[showUpdateNotice] = value
+        }
+    }
 }
 
 class SettingsUserImpl(private val context: Context, private val viewModelScope: CoroutineScope) {
@@ -416,8 +428,8 @@ class SettingMainPhotosViewImpl(private val context: Context, private val viewMo
 }
 
 class SettingsDefaultTabsImpl(private val context: Context, private val viewModelScope: CoroutineScope) {
-    private val defaultTab = stringPreferencesKey("default_open_tab")
-    private val tabList = stringPreferencesKey("tab_list")
+    private val defaultTab = stringPreferencesKey("default_bottom_tab")
+    private val tabList = stringPreferencesKey("bottom_tab_list")
 
     fun getTabList() = context.datastore.data.map {
         val list = it[tabList] ?: getDefaultTabList()
