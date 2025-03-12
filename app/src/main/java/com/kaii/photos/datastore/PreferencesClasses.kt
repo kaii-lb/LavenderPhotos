@@ -164,6 +164,7 @@ class SettingsAlbumsListImpl(private val context: Context, private val viewModel
 class SettingsVersionImpl(private val context: Context, private val viewModelScope: CoroutineScope) {
     private val migrateToEncryptedSecurePhotos = booleanPreferencesKey("migrate_to_encrypted_secure_media")
     private val showUpdateNotice = booleanPreferencesKey("show_update_notice")
+    private val checkForUpdatesOnStartup = booleanPreferencesKey("check_for_updates_on_startup")
 
     fun getShouldMigrateToEncryptedSecurePhotos(): Flow<Boolean> =
     	context.datastore.data.map {
@@ -186,6 +187,17 @@ class SettingsVersionImpl(private val context: Context, private val viewModelSco
             it[showUpdateNotice] = value
         }
     }
+
+    fun getCheckUpdatesOnStartup(): Flow<Boolean> =
+    	context.datastore.data.map {
+    		it[checkForUpdatesOnStartup] ?: false
+    	}
+
+   	fun setCheckUpdatesOnStartup(value: Boolean) = viewModelScope.launch {
+   		context.datastore.edit {
+   			it[checkForUpdatesOnStartup] = value
+   		}
+   	}
 }
 
 class SettingsUserImpl(private val context: Context, private val viewModelScope: CoroutineScope) {

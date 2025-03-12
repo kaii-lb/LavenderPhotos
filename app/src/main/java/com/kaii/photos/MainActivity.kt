@@ -103,6 +103,7 @@ import com.kaii.photos.datastore.Debugging
 import com.kaii.photos.datastore.Editing
 import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.datastore.MainPhotosView
+import com.kaii.photos.datastore.Versions
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
@@ -723,32 +724,36 @@ class MainActivity : ComponentActivity() {
         }
 
         val coroutineScope = rememberCoroutineScope()
-        mainViewModel.updater.refresh { state ->
-            Log.d(TAG, "Checking for app updates...")
+        val checkForUpdatesOnStartup by mainViewModel.settings.Versions.getCheckUpdatesOnStartup().collectAsStateWithLifecycle(initialValue = false)
 
-            when (state) {
-                CheckUpdateState.Succeeded -> {
-                    if (mainViewModel.updater.hasUpdates.value) {
-                        Log.d(TAG, "Update found! Notifying user...")
+        if (checkForUpdatesOnStartup) {
+	        mainViewModel.updater.refresh { state ->
+	            Log.d(TAG, "Checking for app updates...")
 
-                        coroutineScope.launch {
-                            LavenderSnackbarController.pushEvent(
-                                LavenderSnackbarEvents.ActionEvent(
-                                    message = "New app version available!",
-                                    iconResId = R.drawable.error_2,
-                                    duration = SnackbarDuration.Short,
-                                    actionIconResId = R.drawable.download,
-                                    action = {
-                                        navControllerLocal.navigate(MultiScreenViewType.UpdatesPage.name)
-                                    }
-                                )
-                            )
-                        }
-                    }
-                }
+	            when (state) {
+	                CheckUpdateState.Succeeded -> {
+	                    if (mainViewModel.updater.hasUpdates.value) {
+	                        Log.d(TAG, "Update found! Notifying user...")
 
-                else -> {}
-            }
+	                        coroutineScope.launch {
+	                            LavenderSnackbarController.pushEvent(
+	                                LavenderSnackbarEvents.ActionEvent(
+	                                    message = "New app version available!",
+	                                    iconResId = R.drawable.error_2,
+	                                    duration = SnackbarDuration.Short,
+	                                    actionIconResId = R.drawable.download,
+	                                    action = {
+	                                        navControllerLocal.navigate(MultiScreenViewType.UpdatesPage.name)
+	                                    }
+	                                )
+	                            )
+	                        }
+	                    }
+	                }
+
+	                else -> {}
+	            }
+	        }
         }
     }
 
@@ -827,7 +832,7 @@ class MainActivity : ComponentActivity() {
                 ) { stateValue ->
                     if (stateValue in tabList) {
                         when {
-                            stateValue.isCustom -> {
+                            stateValue.isCustom() -> {
                                 ErrorPage(
                                     message = "Not implemented yet!",
                                     iconResId = R.drawable.error

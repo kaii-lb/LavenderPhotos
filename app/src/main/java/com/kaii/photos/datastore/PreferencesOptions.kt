@@ -55,7 +55,7 @@ object DefaultTabs {
 }
 
 @Serializable
-enum class StoredDrawable (
+enum class StoredDrawable(
     @DrawableRes val resId: Int,
     val storedId: Int
 ) {
@@ -104,7 +104,7 @@ data class BottomBarTab(
     val selectedIcon: StoredDrawable,
     val unselectedIcon: StoredDrawable,
 ) {
-    val isCustom = false // albumPath !in DefaultTabs.defaultList.map { it.albumPath }
+    fun isCustom() = DefaultTabs.defaultList.map { it.albumPath }.contains(albumPath)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -112,21 +112,21 @@ data class BottomBarTab(
 
         other as BottomBarTab
 
-		// ignore index since it changes often and doesn't affect the tab itself
+        // ignore index since it changes often and doesn't affect the tab itself
         if (name != other.name) return false
         if (albumPath != other.albumPath) return false
         if (selectedIcon != other.selectedIcon) return false
         if (unselectedIcon != other.unselectedIcon) return false
 
-    	return true
+        return true
     }
 
     override fun hashCode(): Int {
         var result = name.hashCode()
-        result = 31 * result + (albumPath?.hashCode() ?: 0)
+        result = 31 * result + albumPath.hashCode()
         result = 31 * result + selectedIcon.hashCode()
         result = 31 * result + unselectedIcon.hashCode()
-        result = 31 * result + isCustom.hashCode()
+        result = 31 * result + isCustom().hashCode()
         return result
     }
 }
