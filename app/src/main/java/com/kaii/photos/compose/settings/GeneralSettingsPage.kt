@@ -399,7 +399,7 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
                     summary = "Change what tabs are available in the bottom bar",
                     iconResID = R.drawable.edit,
                     position = RowPosition.Single,
-                    showBackground = true
+                    showBackground = false
                 ) {
                     showDialog = true
                 }
@@ -848,7 +848,14 @@ private fun AddTabDialog(
             StoredDrawable.Albums,
             StoredDrawable.PhotoGrid,
             StoredDrawable.SecureFolder,
-            StoredDrawable.Search
+            StoredDrawable.Search,
+            StoredDrawable.Favourite,
+            StoredDrawable.Star,
+            StoredDrawable.Bolt,
+            StoredDrawable.Face,
+            StoredDrawable.Pets,
+            StoredDrawable.Motorcycle,
+            StoredDrawable.Motorsports
         )
 
         val state = rememberLazyListState()
