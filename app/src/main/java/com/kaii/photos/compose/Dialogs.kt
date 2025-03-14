@@ -671,16 +671,14 @@ fun SinglePhotoInfoDialog(
     val isEditingFileName = remember { mutableStateOf(false) }
 
     val localConfig = LocalConfiguration.current
-    var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
+    val isLandscape by rememberDeviceOrientation()
 
-    LaunchedEffect(localConfig) {
-        isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
-    }
-
-    val modifier = if (isLandscape)
-        Modifier.width(328.dp)
-    else
-        Modifier.fillMaxWidth(0.85f)
+    val modifier = remember(isLandscape) {
+	    if (isLandscape)
+	        Modifier.width(328.dp)
+	    else
+	        Modifier.fillMaxWidth(1f)
+	}
 
     if (showDialog.value) {
         LavenderDialogBase(
@@ -1401,7 +1399,7 @@ fun SelectingMoreOptionsDialog(
     val modifier = if (isLandscape)
         Modifier.width(328.dp)
     else
-        Modifier.fillMaxWidth(0.85f)
+        Modifier.fillMaxWidth(1f)
 
     val moveToSecureFolder = remember { mutableStateOf(false) }
     val tryGetDirPermission = remember { mutableStateOf(false) }

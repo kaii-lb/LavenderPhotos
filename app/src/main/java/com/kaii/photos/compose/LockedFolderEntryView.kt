@@ -3,6 +3,7 @@ package com.kaii.photos.compose
 import android.content.Context
 import android.hardware.biometrics.BiometricManager
 import android.hardware.biometrics.BiometricPrompt
+import android.net.Uri
 import android.os.CancellationSignal
 import android.util.Log
 import android.widget.Toast
@@ -26,6 +27,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -53,7 +55,9 @@ import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
+import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.moveImageToLockedFolder
+import com.kaii.photos.mediastore.copyMedia
 import com.kaii.photos.mediastore.getUriFromAbsolutePath
 import com.kaii.photos.mediastore.getMediaStoreDataFromUri
 import com.kaii.photos.mediastore.MediaType
@@ -80,6 +84,7 @@ fun LockedFolderEntryView(
 
     val context = LocalContext.current
     val cancellationSignal = CancellationSignal()
+    val coroutineScope = rememberCoroutineScope()
 
     // TODO: move again to Android/data for space purposes
     // moves media from old dir to new dir for secure folder
@@ -89,6 +94,9 @@ fun LockedFolderEntryView(
     val shouldMigrate by mainViewModel.settings.Versions.getShouldMigrateToEncryptedSecurePhotos().collectAsStateWithLifecycle(initialValue = false)
     var continueToEncryption by remember { mutableStateOf(false) }
     val getDirPermission = remember { mutableStateOf(false) }
+
+    val runEncryptAction = remember { mutableStateOf(false) }
+    val uriList = remember { mutableStateListOf<Uri>() }
 
     LaunchedEffect(launchSecureFolder) {
         if (launchSecureFolder) navController.navigate(MultiScreenViewType.LockedFolderView.name)
@@ -101,9 +109,61 @@ fun LockedFolderEntryView(
    		continueToEncryption = true
    	}
 
+   	GetPermissionAndRun(
+   		uris = uriList,
+   		shouldRun = runEncryptAction,
+   		onGranted = {
+	   		uriList.forEach { uri ->
+				uri?.let {
+					context.contentResolver.getMediaStoreDataFromUri(it)?.let { mediaItem ->
+						coroutineScope.launch(Dispatchers.IO) {
+							try {
+								context.contentResolver.copyMedia(
+									context = context,
+									media = mediaItem,
+									destination = context.appRestoredFilesDir,
+									overrideDisplayName = mediaItem.displayName!! + ".backup" + mediaItem.displayName!!.split(".").last()
+								)
+							} catch (e: Throwable) {
+								Log.e(TAG, "Failed making a backup of ${mediaItem.displayName}")
+								Log.e(TAG, e.toString())
+								e.printStackTrace()
+							}
+						}
+
+	                    moveImageToLockedFolder(
+	                    	list = listOf(
+	                    		mediaItem
+	                    	),
+	                    	context = context,
+	                    	onDone = {
+	                    		migrating = false
+	                    	}
+	                    )
+					}
+				}
+
+               migrating = false
+               showExplanationForMigration.value = true
+               mainViewModel.settings.Versions.setShouldMigrateToEncryptedSecurePhotos(false)
+	   		}
+   		},
+   		onRejected = {
+   			coroutineScope.launch {
+	   			LavenderSnackbarController.pushEvent(
+	   				LavenderSnackbarEvents.MessageEvent(
+	   					message = "Can't encrypt photos without permission",
+	   					iconResId = R.drawable.error_2,
+	   					duration = SnackbarDuration.Long
+	   				)
+	   			)
+   			}
+   		}
+   	)
+
     LaunchedEffect(shouldMigrate, continueToEncryption) {
         withContext(Dispatchers.IO) {
-            if (!shouldMigrate) return@withContext
+            // if (!shouldMigrate) return@withContext
 
         	val restoredFilesDir = context.appRestoredFilesDir
             val oldDir = context.getDir("locked_folder", Context.MODE_PRIVATE)
@@ -144,7 +204,9 @@ fun LockedFolderEntryView(
 
             val unencryptedDirChildren = maybeUnencryptedDirChildren?.filter {
                 try {
-                    applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(it.absolutePath) == null
+                    val hasNoIv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(it.absolutePath) == null
+                    Log.e(TAG, "${it.name} has IV? $hasNoIv")
+                    hasNoIv
                 } catch (e: Throwable) {
                     Log.e(TAG, "${it.name} has no IV")
                     true
@@ -158,14 +220,10 @@ fun LockedFolderEntryView(
 	                Log.d(TAG, "encrypting previously unencrypted photos")
 	                migrating = true
 
-	                unencryptedDirChildren.forEach { file ->
-	                    val newPath = restoredFilesDir + "/" + file.name
-	                    val destination = File(newPath)
-
-	                    if (!destination.exists()) {
-	                        file.copyTo(destination)
-	                        file.delete()
-	                    }
+					uriList.clear()
+	                uriList.addAll(unencryptedDirChildren.mapNotNull { file ->
+						val newPath = context.appRestoredFilesDir + "/" + file.name
+						val destination = File(newPath)
 
 						val uri = context.contentResolver.getUriFromAbsolutePath(
 							absolutePath = destination.absolutePath,
@@ -174,27 +232,13 @@ fun LockedFolderEntryView(
 								else MediaType.Video
 						)
 
-						uri?.let {
-							context.contentResolver.getMediaStoreDataFromUri(it)?.let { mediaItem ->
-			                    moveImageToLockedFolder(
-			                    	list = listOf(
-			                    		mediaItem
-			                    	),
-			                    	context = context,
-			                    	onDone = {
-			                    		migrating = false
-			                    	}
-			                    )
-							}
-						}
+						uri
+	                })
 
-		                migrating = false
-		                showExplanationForMigration.value = true
-	                }
+	                runEncryptAction.value = true
 	            }
 			}
 
-            mainViewModel.settings.Versions.setShouldMigrateToEncryptedSecurePhotos(false)
             mainViewModel.settings.AlbumsList.addToAlbumsList(
                 restoredFilesDir.replace(baseInternalStorageDirectory, "")
             )
@@ -281,8 +325,6 @@ fun LockedFolderEntryView(
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                val coroutineScope = rememberCoroutineScope()
-
                 Button(
                     onClick = {
                         if (!shouldMigrate) {
