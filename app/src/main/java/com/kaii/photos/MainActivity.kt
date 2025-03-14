@@ -337,14 +337,6 @@ class MainActivity : ComponentActivity() {
                             window = window
                         )
 
-                        if (albumsList != multiAlbumViewModel.albums) {
-                            multiAlbumViewModel.reinitDataSource(
-                                context = context,
-                                albumsList = albumsList,
-                                sortBy = multiAlbumViewModel.sortBy
-                            )
-                        }
-
                         Content(currentView, showDialog, selectedItemsList, multiAlbumViewModel)
                     }
 
@@ -653,7 +645,7 @@ class MainActivity : ComponentActivity() {
                             window
                         )
 
-                        GeneralSettingsPage()
+                        GeneralSettingsPage(currentTab = currentView)
                     }
 
                     composable(MultiScreenViewType.SettingsMemoryAndStorageView.name) {
@@ -764,14 +756,10 @@ class MainActivity : ComponentActivity() {
         selectedItemsList: SnapshotStateList<MediaStoreData>,
         multiAlbumViewModel: MultiAlbumViewModel,
     ) {
+    	val context = LocalContext.current
+    	val albumsList by mainViewModel.settings.MainPhotosView.getAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
         val mediaStoreData =
             multiAlbumViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
-
-        val groupedMedia = remember { mutableStateOf(mediaStoreData.value) }
-
-        LaunchedEffect(mediaStoreData.value) {
-            groupedMedia.value = mediaStoreData.value
-        }
 
         val tabList by mainViewModel.settings.DefaultTabs.getTabList().collectAsStateWithLifecycle(initialValue = DefaultTabs.defaultList)
 
@@ -833,14 +821,44 @@ class MainActivity : ComponentActivity() {
                     if (stateValue in tabList) {
                         when {
                             stateValue.isCustom() -> {
-                                ErrorPage(
-                                    message = "Not implemented yet!",
-                                    iconResId = R.drawable.error
-                                )
+                            	if (stateValue.albumPaths.toSet() != multiAlbumViewModel.albums.toSet()) {
+                            	    multiAlbumViewModel.reinitDataSource(
+                            	        context = context,
+                            	        albumsList = stateValue.albumPaths,
+                            	        sortBy = multiAlbumViewModel.sortBy
+                            	    )
+                            	}
+
+                            	val groupedMedia = remember { mutableStateOf(mediaStoreData.value) }
+
+                            	LaunchedEffect(mediaStoreData.value) {
+                            	    groupedMedia.value = mediaStoreData.value
+                            	}
+
+                            	PhotoGrid(
+                            	    groupedMedia = groupedMedia,
+                            	    albums = stateValue.albumPaths,
+                            	    viewProperties = ViewProperties.Album,
+                            	    selectedItemsList = selectedItemsList,
+                            	)
                             }
 
                             stateValue == DefaultTabs.TabTypes.photos -> {
+		                        if (albumsList.toSet() != multiAlbumViewModel.albums.toSet()) {
+		                            multiAlbumViewModel.reinitDataSource(
+		                                context = context,
+		                                albumsList = albumsList,
+		                                sortBy = multiAlbumViewModel.sortBy
+		                            )
+		                        }
+
                                 selectedItemsList.clear()
+
+                                val groupedMedia = remember { mutableStateOf(mediaStoreData.value) }
+
+                                LaunchedEffect(mediaStoreData.value) {
+                                    groupedMedia.value = mediaStoreData.value
+                                }
 
                                 PhotoGrid(
                                     groupedMedia = groupedMedia,
@@ -863,10 +881,10 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     } else {
-                        ErrorPage(
-                            message = "This tab doesn't exist!",
-                            iconResId = R.drawable.error
-                        )
+	                    ErrorPage(
+	                        message = "This tab doesn't exist!",
+	                        iconResId = R.drawable.error
+	                    )
                     }
                 }
             }

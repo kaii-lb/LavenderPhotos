@@ -448,22 +448,38 @@ class SettingsDefaultTabsImpl(private val context: Context, private val viewMode
 
         val separatedList = list.split(separator)
 
-        val typedList = separatedList
-        	.toMutableList()
-        	.apply {
-	        	removeAll { item ->
-	        		item == ""
-	        	}
-			}
-        	.map { serialized ->
-	            Json.decodeFromString<BottomBarTab>(serialized)
+		try {
+	        val typedList = separatedList
+	        	.toMutableList()
+	        	.apply {
+		        	removeAll { item ->
+		        		item == ""
+		        	}
+				}
+	        	.map { serialized ->
+		            Json.decodeFromString<BottomBarTab>(serialized)
+		        }
+
+	        typedList.forEach { item ->
+	            Log.d(TAG, "Typed List item $item")
 	        }
 
-        typedList.forEach { item ->
-            Log.d(TAG, "Typed List item $item")
-        }
+	        typedList
+		} catch (e: Throwable) {
+			Log.e(TAG, "BottomBarTab Impl has been changed, resetting tabs...")
+			Log.e(TAG, e.toString())
+			e.printStackTrace()
 
-        typedList
+			val tabs = getDefaultTabList()
+				.split(separator)
+				.toMutableList()
+				.apply { removeAll { it == "" } }
+				.map { Json.decodeFromString<BottomBarTab>(it) }
+
+			setTabList(tabs)
+
+			tabs
+		}
     }
 
     fun setTabList(list: List<BottomBarTab>) = viewModelScope.launch {
@@ -486,7 +502,16 @@ class SettingsDefaultTabsImpl(private val context: Context, private val viewMode
     fun getDefaultTab() = context.datastore.data.map {
         val default = it[defaultTab] ?: Json.encodeToString(DefaultTabs.TabTypes.photos)
 
-        Json.decodeFromString<BottomBarTab>(default)
+		try {
+			Json.decodeFromString<BottomBarTab>(default)
+		} catch (e: Throwable) {
+			Log.e(TAG, "BottomBarTab Impl has been changed, resetting default tab...")
+			Log.e(TAG, e.toString())
+			e.printStackTrace()
+
+			setDefaultTab(DefaultTabs.TabTypes.photos)
+			DefaultTabs.TabTypes.photos
+		}
     }
 
     fun setDefaultTab(tab: BottomBarTab) = viewModelScope.launch {

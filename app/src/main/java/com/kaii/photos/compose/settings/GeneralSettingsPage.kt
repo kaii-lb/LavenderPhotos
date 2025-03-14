@@ -8,30 +8,30 @@ import android.provider.MediaStore
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.DrawableRes
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.rememberSplineBasedDecay
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.AnchoredDraggableState
-import androidx.compose.foundation.gestures.DraggableAnchors
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.anchoredDraggable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.gestures.snapping.SnapPosition
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -52,26 +52,25 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.zIndex
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
@@ -83,35 +82,37 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kaii.lavender_snackbars.LavenderSnackbarController
+import com.kaii.lavender_snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalNavController
-import com.kaii.photos.R
 import com.kaii.photos.MainActivity.Companion.mainViewModel
+import com.kaii.photos.R
 import com.kaii.photos.compose.CheckBoxButtonRow
+import com.kaii.photos.compose.FullWidthDialogButton
+import com.kaii.photos.compose.LavenderDialogBase
 import com.kaii.photos.compose.PreferencesRow
 import com.kaii.photos.compose.PreferencesSeparatorText
 import com.kaii.photos.compose.PreferencesSwitchRow
 import com.kaii.photos.datastore.AlbumsList
+import com.kaii.photos.datastore.BottomBarTab
+import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.Editing
 import com.kaii.photos.datastore.MainPhotosView
 import com.kaii.photos.datastore.Permissions
-import com.kaii.photos.datastore.Video
+import com.kaii.photos.datastore.StoredDrawable
+import com.kaii.photos.datastore.separator
 import com.kaii.photos.datastore.Versions
-import com.kaii.photos.datastore.DefaultTabs
+import com.kaii.photos.datastore.Video
+import com.kaii.photos.helpers.ExtendedMaterialTheme
 import com.kaii.photos.helpers.RowPosition
-import com.kaii.lavender_snackbars.LavenderSnackbarController
-import com.kaii.lavender_snackbars.LavenderSnackbarEvents
-import com.kaii.photos.compose.FullWidthDialogButton
-import com.kaii.photos.compose.LavenderDialogBase
-import com.kaii.photos.datastore.BottomBarTab
-import com.kaii.photos.helpers.brightenColor
+import com.kaii.photos.helpers.createDirectoryPicker
 import com.kaii.photos.helpers.dragReorderable
 import kotlinx.coroutines.launch
 
 @Composable
-fun GeneralSettingsPage() {
+fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
     val context = LocalContext.current
 
     Scaffold(
@@ -147,7 +148,7 @@ fun GeneralSettingsPage() {
                         mainViewModel.settings.Permissions.setIsMediaManager(granted)
                     }
 
-                   PreferencesSwitchRow(
+                    PreferencesSwitchRow(
                         title = "Media Manager",
                         summary = "Better and faster trash/delete/copy/move",
                         iconResID = R.drawable.movie_edit,
@@ -238,12 +239,12 @@ fun GeneralSettingsPage() {
                 ) {
                     selectedAlbums.clear()
                     selectedAlbums.addAll(
-                    	mainPhotosAlbums.map {
-                    		it.apply {
-                    			removeSuffix("/")
-                    		}
-                    	}
-                   	)
+                        mainPhotosAlbums.map {
+                            it.apply {
+                                removeSuffix("/")
+                            }
+                        }
+                    )
 
                     showAlbumsSelectionDialog.value = true
                 }
@@ -307,16 +308,16 @@ fun GeneralSettingsPage() {
                             isAlreadyLoading.value = true
 
                             if (checked) {
-		                        LavenderSnackbarController.pushEvent(
+                                LavenderSnackbarController.pushEvent(
                                     LavenderSnackbarEvents.LoadingEvent(
-		                        		message = if (isAlreadyLoading.value) "Finding albums..." else "Found all albums!",
-		                        		iconResId = R.drawable.albums_search,
-		                        		isLoading = isAlreadyLoading
-		                        	)
-		                        )
-	                            val albums = mainViewModel.settings.AlbumsList.getAllAlbumsOnDevice()
-	                            mainViewModel.settings.AlbumsList.setAlbumsList(albums)
-							}
+                                        message = if (isAlreadyLoading.value) "Finding albums..." else "Found all albums!",
+                                        iconResId = R.drawable.albums_search,
+                                        isLoading = isAlreadyLoading
+                                    )
+                                )
+                                val albums = mainViewModel.settings.AlbumsList.getAllAlbumsOnDevice()
+                                mainViewModel.settings.AlbumsList.setAlbumsList(albums)
+                            }
                             mainViewModel.settings.AlbumsList.setAutoDetect(checked)
 
                             isAlreadyLoading.value = false
@@ -325,60 +326,60 @@ fun GeneralSettingsPage() {
                 }
 
                 PreferencesRow(
-	                title = "Clear album list",
-	                summary = "Remove all albums except for Camera and Download",
-	                iconResID = R.drawable.albums_clear,
-	                position = RowPosition.Single,
-	                showBackground = false
-	            ) {
-	            	coroutineScope.launch {
-	            		mainViewModel.settings.AlbumsList.setAlbumsList(
+                    title = "Clear album list",
+                    summary = "Remove all albums except for Camera and Download",
+                    iconResID = R.drawable.albums_clear,
+                    position = RowPosition.Single,
+                    showBackground = false
+                ) {
+                    coroutineScope.launch {
+                        mainViewModel.settings.AlbumsList.setAlbumsList(
                             listOf(
                                 Environment.DIRECTORY_DCIM + "/Camera",
                                 Environment.DIRECTORY_DOWNLOADS
                             )
                         )
 
-	            		LavenderSnackbarController.pushEvent(
+                        LavenderSnackbarController.pushEvent(
                             LavenderSnackbarEvents.MessageEvent(
-	            		        message = "Cleared album list",
+                                message = "Cleared album list",
                                 duration = SnackbarDuration.Short,
-	            		        iconResId = R.drawable.albums
-	            		    )
-	            		)
-	            	}
-	            }
+                                iconResId = R.drawable.albums
+                            )
+                        )
+                    }
+                }
             }
 
             item {
-            	PreferencesSeparatorText(
-            		text = "Tabs"
-            	)
+                PreferencesSeparatorText(
+                    text = "Tabs"
+                )
             }
 
             item {
-            	var showDefaultTabAlbumDialog by remember { mutableStateOf(false) }
+                var showDefaultTabAlbumDialog by remember { mutableStateOf(false) }
                 val tabList by mainViewModel.settings.DefaultTabs.getTabList().collectAsStateWithLifecycle(initialValue = emptyList())
                 val defaultTab by mainViewModel.settings.DefaultTabs.getDefaultTab().collectAsStateWithLifecycle(initialValue = DefaultTabs.TabTypes.photos)
 
-				if (showDefaultTabAlbumDialog) {
-	           		DefaultTabSelectorDialog(
+                if (showDefaultTabAlbumDialog) {
+                    DefaultTabSelectorDialog(
                         tabList = tabList,
                         defaultTab = defaultTab
-	           		) {
-                       showDefaultTabAlbumDialog = false
+                    ) {
+                        showDefaultTabAlbumDialog = false
                     }
-				}
+                }
 
-            	PreferencesRow(
-            		title = "Default Tab",
-            		summary = "Lavender Photos will auto-open this tab at startup",
-            		iconResID = R.drawable.folder_open,
-            		position = RowPosition.Single,
-            		showBackground = false
-            	) {
-            		showDefaultTabAlbumDialog = true
-            	}
+                PreferencesRow(
+                    title = "Default Tab",
+                    summary = "Lavender Photos will auto-open this tab at startup",
+                    iconResID = R.drawable.folder_open,
+                    position = RowPosition.Single,
+                    showBackground = false
+                ) {
+                    showDefaultTabAlbumDialog = true
+                }
             }
 
             item {
@@ -386,6 +387,7 @@ fun GeneralSettingsPage() {
 
                 if (showDialog) {
                     TabCustomizationDialog(
+                    	currentTab = currentTab,
                         closeDialog = {
                             showDialog = false
                         }
@@ -404,13 +406,13 @@ fun GeneralSettingsPage() {
             }
 
             item {
-            	PreferencesSeparatorText(
-            		text = "Updates"
-            	)
+                PreferencesSeparatorText(
+                    text = "Updates"
+                )
             }
 
             item {
-            	val checkForUpdatesOnStartup by mainViewModel.settings.Versions.getCheckUpdatesOnStartup().collectAsStateWithLifecycle(initialValue = false)
+                val checkForUpdatesOnStartup by mainViewModel.settings.Versions.getCheckUpdatesOnStartup().collectAsStateWithLifecycle(initialValue = false)
 
                 PreferencesSwitchRow(
                     title = "Check for Updates",
@@ -420,7 +422,7 @@ fun GeneralSettingsPage() {
                     showBackground = false,
                     checked = checkForUpdatesOnStartup
                 ) {
-                	mainViewModel.settings.Versions.setCheckUpdatesOnStartup(it)
+                    mainViewModel.settings.Versions.setCheckUpdatesOnStartup(it)
                 }
             }
         }
@@ -464,9 +466,9 @@ private fun GeneralSettingsTopBar() {
 private fun DefaultTabSelectorDialog(
     tabList: List<BottomBarTab>,
     defaultTab: BottomBarTab,
-	dismissDialog: () -> Unit
+    dismissDialog: () -> Unit
 ) {
-	var selectedTab by remember(defaultTab) { mutableStateOf(defaultTab) }
+    var selectedTab by remember(defaultTab) { mutableStateOf(defaultTab) }
 
     LavenderDialogBase(
         onDismiss = dismissDialog
@@ -480,7 +482,7 @@ private fun DefaultTabSelectorDialog(
                 .wrapContentSize()
         )
 
-        Spacer (modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         val state = rememberLazyListState()
         val itemOffset = remember { mutableFloatStateOf(0f) }
@@ -528,17 +530,17 @@ private fun DefaultTabSelectorDialog(
                     text = tab.name,
                     checked = selectedTab == tab,
                     modifier =
-                        Modifier
-                            .zIndex(
-                                if (selectedItem == tab) 1f
-                                else 0f
-                            )
-                            .graphicsLayer {
-                                if (selectedTab == tab) {
-                                    translationY = itemOffset.floatValue
-                                }
+                    Modifier
+                        .zIndex(
+                            if (selectedItem == tab) 1f
+                            else 0f
+                        )
+                        .graphicsLayer {
+                            if (selectedTab == tab) {
+                                translationY = itemOffset.floatValue
                             }
-                            .animateItem(placementSpec = if (selectedItem == tab) null else tween(durationMillis = 250))
+                        }
+                        .animateItem(placementSpec = if (selectedItem == tab) null else tween(durationMillis = 250))
                 ) {
                     selectedTab = tab
                 }
@@ -572,7 +574,7 @@ private fun ReorderableRadioButtonRow(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
-    Row (
+    Row(
         modifier = modifier
             .fillMaxWidth(1f)
             .height(40.dp)
@@ -592,9 +594,9 @@ private fun ReorderableRadioButtonRow(
             }
         )
 
-        Spacer (modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(16.dp))
 
-        Text (
+        Text(
             text = text,
             fontSize = TextUnit(14f, TextUnitType.Sp),
             color = MaterialTheme.colorScheme.onSurface,
@@ -603,7 +605,7 @@ private fun ReorderableRadioButtonRow(
                 .weight(1f)
         )
 
-        Spacer (modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(16.dp))
 
         Icon(
             painter = painterResource(id = R.drawable.reorderable),
@@ -612,39 +614,40 @@ private fun ReorderableRadioButtonRow(
                 .size(24.dp)
         )
 
-        Spacer (modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(8.dp))
     }
 }
 
 @Composable
 fun TabCustomizationDialog(
+	currentTab: MutableState<BottomBarTab>,
     closeDialog: () -> Unit
 ) {
     val tabList by mainViewModel.settings.DefaultTabs.getTabList().collectAsStateWithLifecycle(initialValue = emptyList())
+    val coroutineScope = rememberCoroutineScope()
 
     LavenderDialogBase(
         onDismiss = closeDialog
     ) {
-        Row (
+        Box (
             modifier = Modifier
                 .fillMaxWidth(1f)
                 .padding(8.dp, 0.dp),
-            verticalAlignment = Alignment.CenterVertically,
-
         ) {
             Text(
                 text = "Customize Tabs",
                 fontSize = TextUnit(18f, TextUnitType.Sp),
                 color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center,
                 modifier = Modifier
-                    .weight(1f)
+                    .wrapContentSize()
+                    .align(Alignment.Center)
             )
 
             var showDialog by remember { mutableStateOf(false) }
 
             if (showDialog) {
                 AddTabDialog(
+                	tabList = tabList,
                     dismissDialog = {
                         showDialog = false
                     }
@@ -653,12 +656,26 @@ fun TabCustomizationDialog(
 
             IconButton(
                 onClick = {
-                    showDialog = true
-                }
+                    if (tabList.size < 5) {
+                    	showDialog = true
+                    } else {
+                    	coroutineScope.launch {
+                    		LavenderSnackbarController.pushEvent(
+                    			LavenderSnackbarEvents.MessageEvent(
+                    				message = "Maximum of 5 tabs allowed",
+                    				iconResId = R.drawable.error_2,
+                    				duration = SnackbarDuration.Short
+                    			)
+                    		)
+                    	}
+                   	}
+                },
+                modifier = Modifier
+                	.align(Alignment.CenterEnd)
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.close),
-                    contentDescription = "Remove this tab",
+                    painter = painterResource(id = R.drawable.add),
+                    contentDescription = "Add a new tab",
                     tint = MaterialTheme.colorScheme.onSurface
                 )
             }
@@ -672,72 +689,273 @@ fun TabCustomizationDialog(
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.Start
         ) {
+        	DefaultTabs.defaultList.forEach { tab ->
+        		InfoRow(
+        			text = tab.name,
+        			iconResId = if (tab in tabList) R.drawable.close else R.drawable.add,
+        			opacity = if (tab in tabList) 1f else 0.5f
+        		) {
+        			mainViewModel.settings.DefaultTabs.setTabList(
+        			    tabList.toMutableList().apply {
+        			    	if (tab in tabList && tabList.size > 1) {
+        			    		remove(tab)
+        			    		if (currentTab.value == tab) currentTab.value = tabList[0] // handle tab removal
+        			    	} else if (tab in tabList) {
+        			    		coroutineScope.launch {
+        			    			LavenderSnackbarController.pushEvent(
+        			    				LavenderSnackbarEvents.MessageEvent(
+        			    					message = "Atleast one tab needs to exist",
+        			    					iconResId = R.drawable.error_2,
+        			    					duration = SnackbarDuration.Short
+        			    				)
+        			    			)
+        			    		}
+        			    	}
+
+        			    	if (tab !in tabList && tabList.size < 5) {
+        			    		add(tab)
+        			    	} else if (tab !in tabList) {
+        			    		coroutineScope.launch {
+        			    			LavenderSnackbarController.pushEvent(
+        			    				LavenderSnackbarEvents.MessageEvent(
+        			    					message = "Maximum of 5 tabs allowed",
+        			    					iconResId = R.drawable.error_2,
+        			    					duration = SnackbarDuration.Short
+        			    				)
+        			    			)
+        			    		}
+        			    	}
+        			    }
+        			)
+        		}
+        	}
+
             tabList.forEach { tab ->
-                Row (
-                    modifier = Modifier
-                        .fillMaxWidth(1f)
-                        .height(40.dp)
-                        .padding(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Start
-                ) {
-                    Text(
-                        text = tab.name,
-                        fontSize = TextUnit(14f, TextUnitType.Sp),
-                        color = MaterialTheme.colorScheme.onSurface,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier
-                            .weight(1f)
-                    )
-
-                    Spacer (modifier = Modifier.width(16.dp))
-
-                    IconButton(
-                        onClick = {
-                            mainViewModel.settings.DefaultTabs.setTabList(
-                                tabList.toMutableList().apply {
-                                    remove(tab)
-                                }
-                            )
-                        }
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.close),
-                            contentDescription = "Remove this tab",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                }
+            	if (tab !in DefaultTabs.defaultList) {
+	                InfoRow(
+						text = tab.name,
+						iconResId = R.drawable.close
+					) {
+						if (tabList.size > 1) {
+							mainViewModel.settings.DefaultTabs.setTabList(
+							    tabList.toMutableList().apply {
+							        remove(tab)
+							        if (currentTab.value == tab) currentTab.value = tabList[0] // handle tab removal
+							    }
+							)
+						} else {
+							coroutineScope.launch {
+								LavenderSnackbarController.pushEvent(
+									LavenderSnackbarEvents.MessageEvent(
+										message = "Atleast one tab needs to exist",
+										iconResId = R.drawable.error_2,
+										duration = SnackbarDuration.Short
+									)
+								)
+							}
+						}
+					}
+            	}
             }
         }
     }
 }
 
 @Composable
-fun AddTabDialog(
+private fun InfoRow(
+	text: String,
+	@DrawableRes iconResId: Int,
+	opacity: Float = 1f,
+	onRemove: () -> Unit
+) {
+	Row(
+	    modifier = Modifier
+	        .fillMaxWidth(1f)
+	        .height(40.dp)
+	        .padding(16.dp, 8.dp, 8.dp, 8.dp)
+	        .alpha(opacity),
+	    verticalAlignment = Alignment.CenterVertically,
+	    horizontalArrangement = Arrangement.Start
+	) {
+	    Text(
+	        text = text,
+	        fontSize = TextUnit(14f, TextUnitType.Sp),
+	        color = MaterialTheme.colorScheme.onSurface,
+	        overflow = TextOverflow.Ellipsis,
+	        modifier = Modifier
+	            .weight(1f)
+	    )
+
+	    Spacer(modifier = Modifier.width(16.dp))
+
+	    IconButton(
+	        onClick = {
+				onRemove()
+	        }
+	    ) {
+	        Icon(
+	            painter = painterResource(id = iconResId),
+	            contentDescription = "Remove this tab",
+	            tint = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier
+                    .size(20.dp)
+	        )
+	    }
+	}
+}
+
+@Composable
+private fun AddTabDialog(
+	tabList: List<BottomBarTab>,
     dismissDialog: () -> Unit
 ) {
     LavenderDialogBase(
         onDismiss = dismissDialog
     ) {
-        Text(
-            text = "Add a Tab",
-            fontSize = TextUnit(18f, TextUnitType.Sp),
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier
-                .wrapContentSize()
+    	Box (
+    		modifier = Modifier
+    			.fillMaxWidth(1f)
+    	) {
+    		Text(
+    		    text = "Add a Tab",
+    		    fontSize = TextUnit(18f, TextUnitType.Sp),
+    		    color = MaterialTheme.colorScheme.onSurface,
+    		    modifier = Modifier
+    		        .wrapContentSize()
+    		        .align(Alignment.Center)
+    		)
+
+            IconButton(
+                onClick = {
+                    dismissDialog()
+                },
+                modifier = Modifier
+                	.align(Alignment.CenterEnd)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.close),
+                    contentDescription = "close this dialog",
+                    tint = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier
+                        .size(24.dp)
+                )
+            }
+    	}
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        val iconList = listOf(
+            StoredDrawable.Albums,
+            StoredDrawable.PhotoGrid,
+            StoredDrawable.SecureFolder,
+            StoredDrawable.Search
         )
 
-        Spacer (modifier = Modifier.height(16.dp))
+        val state = rememberLazyListState()
 
-        // TODO: add slide to select album icon in horizontal list
-        // left    center    end
-        // []        []        []
-        //         selected
+        val selectedItem by remember {
+            derivedStateOf {
+            	if (state.layoutInfo.visibleItemsInfo.isNotEmpty()) {
+	                val width = state.layoutInfo.viewportSize.width
+	                val itemHalfWidth = state.layoutInfo.visibleItemsInfo[0].size / 2
+	                val center = width / 2
 
-        Spacer (modifier = Modifier.height(16.dp))
+	                val itemIndex = state.layoutInfo.visibleItemsInfo.find {
+	                	println("CENTER $center OFFSET ${it.offset} HALF $itemHalfWidth")
+	                	it.offset == 0 || it.offset in (center - itemHalfWidth)..(center + itemHalfWidth)
+	                }?.index
 
-        var albumName by remember { mutableStateOf("") }
+	                if (itemIndex != null) iconList[itemIndex] else null
+            	} else null
+            }
+        }
+
+        BoxWithConstraints(
+            modifier = Modifier
+                .fillMaxWidth(1f)
+                .wrapContentHeight()
+        ) {
+            LazyRow(
+                state = state,
+                modifier = Modifier
+                    .fillMaxWidth(1f)
+                    .height(48.dp),
+                flingBehavior = rememberSnapFlingBehavior(
+                    lazyListState = state,
+                    snapPosition = SnapPosition.Center
+                ),
+                contentPadding = PaddingValues(
+                    start = maxWidth / 2 - 56.dp / 2,
+                    end = maxWidth / 2 - 56.dp / 2
+                ),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(
+                    space = 16.dp,
+                    alignment = Alignment.CenterHorizontally
+                )
+            ) {
+                items(
+                    count = iconList.size
+                ) { index ->
+                    Box(
+                        modifier = Modifier
+                            .size(56.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                            .border(
+                                width = 2.dp,
+                                color = if (selectedItem == iconList[index]) MaterialTheme.colorScheme.primary else Color.Transparent,
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                    ) {
+                        Icon(
+                            painter = painterResource(id = iconList[index].nonFilled),
+                            contentDescription = "Custom icon for custom tab",
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier
+                                .size(36.dp)
+                                .align(Alignment.Center)
+                        )
+                    }
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .width(48.dp * 2.5f)
+                    .height(56.dp)
+                    .background(
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(
+                                ExtendedMaterialTheme.colorScheme.dialogSurface,
+                                ExtendedMaterialTheme.colorScheme.dialogSurface,
+                                Color.Transparent
+                            )
+                        )
+                    )
+            )
+
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .width(48.dp * 2.5f)
+                    .height(56.dp)
+                    .background(
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                ExtendedMaterialTheme.colorScheme.dialogSurface,
+                                ExtendedMaterialTheme.colorScheme.dialogSurface
+                            )
+                        )
+                    )
+            )
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        var tabName by remember { mutableStateOf("") }
         val focusManager = LocalFocusManager.current
         val focus = remember { FocusRequester() }
 
@@ -750,9 +968,15 @@ fun AddTabDialog(
         }
 
         TextField(
-            value = albumName,
+            value = tabName,
             onValueChange = {
-                albumName = it
+                tabName = it
+            },
+            placeholder = {
+                Text(
+                    text = "Tab name",
+                    fontSize = TextUnit(14f, TextUnitType.Sp)
+                )
             },
             singleLine = true,
             textStyle = LocalTextStyle.current.copy(
@@ -786,7 +1010,7 @@ fun AddTabDialog(
             trailingIcon = {
                 Icon(
                     painter = painterResource(id = R.drawable.file_is_selected_foreground),
-                    contentDescription = "Apply album name",
+                    contentDescription = "Apply tab name",
                     modifier = Modifier
                         .clickable {
                             focusManager.clearFocus()
@@ -799,15 +1023,143 @@ fun AddTabDialog(
                 .focusRequester(focus)
         )
 
+        Spacer(modifier = Modifier.height(16.dp))
+
+        val selectedAlbums = remember { mutableStateListOf<String>() }
+
+        Row (
+			modifier = Modifier
+				.fillMaxWidth(1f)
+                .padding(16.dp, 0.dp, 8.dp, 0.dp),
+			verticalAlignment = Alignment.CenterVertically,
+			horizontalArrangement = Arrangement.Start
+		) {
+			Text(
+				text = "Albums included",
+				fontSize = TextUnit(14f, TextUnitType.Sp),
+				color = MaterialTheme.colorScheme.onSurface,
+				modifier = Modifier
+					.weight(1f)
+			)
+
+            val activityLauncher = createDirectoryPicker { path ->
+                if (path != null) selectedAlbums.add(path)
+            }
+
+			IconButton(
+			    onClick = {
+                    activityLauncher.launch(null)
+			    }
+			) {
+			    Icon(
+			        painter = painterResource(id = R.drawable.add),
+			        contentDescription = "Add a new album to this tab",
+			        tint = MaterialTheme.colorScheme.onSurface
+			    )
+			}
+		}
+
+		Spacer (modifier = Modifier.height(4.dp))
+
+		Box (
+			modifier = Modifier
+				.height(1.dp)
+				.padding(16.dp, 0.dp)
+				.fillMaxWidth(1f)
+				.background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
+				.clip(RoundedCornerShape(1000.dp))
+		)
+
+		Spacer (modifier = Modifier.height(2.dp))
+
+        LazyColumn(
+        	modifier = Modifier
+        		.fillMaxWidth(1f)
+        		.heightIn(max = 160.dp)
+        		.wrapContentHeight(),
+        	verticalArrangement = Arrangement.Top,
+        	horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+        	items(
+        		count = selectedAlbums.size
+        	) { index ->
+        		InfoRow(
+        			text = selectedAlbums[index].split("/").last(),
+        			iconResId = R.drawable.close
+        		) {
+        			selectedAlbums.removeAt(index)
+        		}
+        	}
+
+        	if (selectedAlbums.isEmpty()) {
+        		item {
+        			Row(
+        			    modifier = Modifier
+        			        .fillMaxWidth(1f)
+        			        .height(40.dp)
+        			        .padding(16.dp, 8.dp, 8.dp, 8.dp),
+        			    verticalAlignment = Alignment.CenterVertically,
+        			    horizontalArrangement = Arrangement.Start
+        			) {
+        			    Text(
+        			        text = "None",
+        			        fontSize = TextUnit(14f, TextUnitType.Sp),
+        			        color = MaterialTheme.colorScheme.onSurface,
+        			        overflow = TextOverflow.Ellipsis
+        			    )
+       			    }
+        		}
+        	}
+        }
+
         Spacer (modifier = Modifier.height(16.dp))
 
+		val coroutineScope = rememberCoroutineScope()
+
         FullWidthDialogButton(
-            text = "Add Album",
+            text = "Add Tab",
             color = MaterialTheme.colorScheme.primary,
             textColor = MaterialTheme.colorScheme.onPrimary,
             position = RowPosition.Single
         ) {
-            dismissDialog()
+        	if (tabList.size < 5) {
+	        	if (selectedItem != null && selectedAlbums.isNotEmpty() && tabName != "") {
+		        	mainViewModel.settings.DefaultTabs.setTabList(
+		        	    tabList.toMutableList().apply {
+		        	    	add(
+		        	    		BottomBarTab(
+		        	    			name = tabName,
+		        	    			albumPaths = selectedAlbums,
+		        	    			index = tabList.size,
+		        	    			icon = selectedItem!!,
+		        	    		)
+		        	    	)
+		        	    }
+		        	)
+
+		            dismissDialog()
+	        	} else {
+	        		coroutineScope.launch {
+		        		LavenderSnackbarController.pushEvent(
+		        			LavenderSnackbarEvents.MessageEvent(
+		        				message = "Tab parameters cannot be empty",
+		        				iconResId = R.drawable.error_2,
+		        				duration = SnackbarDuration.Short
+		        			)
+		        		)
+	        		}
+	        	}
+        	} else {
+        		coroutineScope.launch {
+	        		LavenderSnackbarController.pushEvent(
+	        			LavenderSnackbarEvents.MessageEvent(
+	        				message = "Can't add more than 5 tabs",
+	        				iconResId = R.drawable.error_2,
+	        				duration = SnackbarDuration.Short
+	        			)
+	        		)
+        		}
+        	}
         }
     }
 }

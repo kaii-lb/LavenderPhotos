@@ -8,26 +8,23 @@ val BottomBarTabSaver = run {
     val nameKey = "Name"
     val albumPathKey = "AlbumPath"
     val indexKey = "Index"
-    val selectedIconKey = "SelectedIcon"
-    val unselectedIconKey = "UnselectedIcon"
+    val iconKey = "Icon"
 
     mapSaver(
         save = {
             mapOf(
                 nameKey to it.name,
-                albumPathKey to it.albumPath,
+                albumPathKey to it.albumPaths,
                 indexKey to it.index,
-                selectedIconKey to it.selectedIcon.storedId,
-                unselectedIconKey to it.unselectedIcon.storedId,
+                iconKey to it.icon.storedId,
             )
         },
         restore = {
             BottomBarTab(
                 name = it[nameKey] as String,
-                albumPath = it[albumPathKey] as String,
+                albumPaths = it[albumPathKey] as List<String>,
                 index = it[indexKey] as Int,
-                selectedIcon = StoredDrawable.toResId(storedId = it[selectedIconKey] as Int),
-                unselectedIcon = StoredDrawable.toResId(storedId = it[unselectedIconKey] as Int)
+                icon = StoredDrawable.toResId(storedId = it[iconKey] as Int),
             )
         }
     )

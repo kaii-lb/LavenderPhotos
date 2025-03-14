@@ -19,12 +19,14 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -109,6 +111,7 @@ import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.User
+import com.kaii.photos.helpers.ExtendedMaterialTheme
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.MediaData
@@ -440,221 +443,214 @@ fun MainAppDialog(
     val navController = LocalNavController.current
 
     if (showDialog.value) {
-        Dialog(
-            onDismissRequest = {
+        LavenderDialogBase(
+            onDismiss = {
                 showDialog.value = false
             }
         ) {
-            Column(
+            Box(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(32.dp))
-                    .background(brightenColor(MaterialTheme.colorScheme.surface, 0.1f))
-                    .padding(8.dp)
+                    .fillMaxWidth(1f),
             ) {
-                Box(
+                IconButton(
+                    onClick = {
+                        showDialog.value = false
+                    },
                     modifier = Modifier
-                        .fillMaxWidth(1f),
+                        .align(Alignment.CenterStart)
                 ) {
-                    IconButton(
-                        onClick = {
-                            showDialog.value = false
-                        },
+                    Icon(
+                        painter = painterResource(id = R.drawable.close),
+                        contentDescription = "Close dialog button",
                         modifier = Modifier
-                            .align(Alignment.CenterStart)
-                    ) {
+                            .size(24.dp)
+                    )
+                }
+
+                // val splitBy = Regex("(?=[A-Z])")
+                Text(
+                    text = currentView.value.name, // .split(splitBy)[1],
+                    fontWeight = FontWeight.Bold,
+                    fontSize = TextUnit(18f, TextUnitType.Sp),
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                )
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(1f)
+                    .padding(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Start
+            ) {
+                val storedName = mainViewModel.settings.User.getUsername().collectAsStateWithLifecycle(initialValue = null).value ?: return@Row
+
+                var originalName by remember { mutableStateOf(storedName) }
+
+                var username by remember {
+                    mutableStateOf(
+                        originalName
+                    )
+                }
+
+                GlideImage(
+                    model = R.drawable.cat_picture,
+                    contentDescription = "User profile picture",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(RoundedCornerShape(1000.dp))
+                ) {
+                    it.override(256)
+                        .diskCacheStrategy(DiskCacheStrategy.ALL)
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                val focus = remember { FocusRequester() }
+                val focusManager = LocalFocusManager.current
+                var changeName by remember { mutableStateOf(false) }
+                var backPressedCallbackEnabled by remember { mutableStateOf(false) }
+
+                LaunchedEffect(key1 = changeName) {
+                    focusManager.clearFocus()
+
+                    if (!changeName && username != originalName) {
+                        username = originalName
+                        return@LaunchedEffect
+                    }
+
+                    mainViewModel.settings.User.setUsername(username)
+                    originalName = username
+                    changeName = false
+                }
+
+                TextField(
+                    value = username,
+                    onValueChange = { newVal ->
+                        username = newVal
+                    },
+                    textStyle = LocalTextStyle.current.copy(
+                        fontSize = TextUnit(16f, TextUnitType.Sp),
+                        textAlign = TextAlign.Start,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    ),
+                    maxLines = 1,
+                    colors = TextFieldDefaults.colors().copy(
+                        unfocusedContainerColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        unfocusedTrailingIconColor = Color.Transparent,
+                        focusedIndicatorColor = Color.Transparent,
+                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        focusedTrailingIconColor = MaterialTheme.colorScheme.onSurface,
+                    ),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = KeyboardCapitalization.None,
+                        autoCorrectEnabled = false,
+                        keyboardType = KeyboardType.Ascii,
+                        imeAction = ImeAction.Done,
+                        showKeyboardOnFocus = true
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            focusManager.clearFocus()
+                            changeName = true
+                        },
+                    ),
+                    trailingIcon = {
                         Icon(
                             painter = painterResource(id = R.drawable.close),
-                            contentDescription = "Close dialog button",
+                            contentDescription = "Cancel filename change button",
                             modifier = Modifier
-                                .size(24.dp)
+                                .clickable(
+                                    indication = null,
+                                    interactionSource = remember { MutableInteractionSource() },
+                                ) {
+                                    focusManager.clearFocus()
+                                    changeName = false
+                                    username = originalName
+                                }
                         )
-                    }
+                    },
+                    shape = RoundedCornerShape(1000.dp),
+                    modifier = Modifier
+                        .focusRequester(focus)
+                        .onFocusChanged {
+                            backPressedCallbackEnabled = it.isFocused
+                        }
+                )
+            }
 
-                    val splitBy = Regex("(?=[A-Z])")
-                    Text(
-                        text = currentView.value.name.split(splitBy)[1],
-                        fontWeight = FontWeight.Bold,
-                        fontSize = TextUnit(18f, TextUnitType.Sp),
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                    )
+            Column(
+                modifier = Modifier
+                    .padding(12.dp)
+                    .wrapContentHeight()
+            ) {
+                if (currentView.value != DefaultTabs.TabTypes.albums && currentView.value != DefaultTabs.TabTypes.secure) {
+                    DialogClickableItem(
+                        text = "Select",
+                        iconResId = R.drawable.check_item,
+                        position = RowPosition.Top,
+                    ) {
+                        showDialog.value = false
+                        selectedItemsList.clear()
+                        selectedItemsList.add(MediaStoreData())
+                        vibratorManager.vibrateShort()
+                    }
                 }
 
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth(1f)
-                        .padding(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Start
-                ) {
-                    val storedName = mainViewModel.settings.User.getUsername().collectAsStateWithLifecycle(initialValue = null).value ?: return@Row
+                if (currentView.value == DefaultTabs.TabTypes.albums) {
+                    val activityLauncher = createPersistablePermissionLauncher { uri ->
+                        uri.path?.let {
+                            val dir = File(it)
 
-                    var originalName by remember { mutableStateOf(storedName) }
+                            val pathSections = dir.absolutePath.replace(baseInternalStorageDirectory, "").split(":")
+                            val path = pathSections[pathSections.size - 1]
 
-                    var username by remember {
-                        mutableStateOf(
-                            originalName
-                        )
-                    }
+                            Log.d(TAG, "Added album path $path")
 
-                    GlideImage(
-                        model = R.drawable.cat_picture,
-                        contentDescription = "User profile picture",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .size(56.dp)
-                            .clip(RoundedCornerShape(1000.dp))
-                    ) {
-                        it.override(256)
-                            .diskCacheStrategy(DiskCacheStrategy.ALL)
-                    }
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    val focus = remember { FocusRequester() }
-                    val focusManager = LocalFocusManager.current
-                    var changeName by remember { mutableStateOf(false) }
-                    var backPressedCallbackEnabled by remember { mutableStateOf(false) }
-
-                    LaunchedEffect(key1 = changeName) {
-                        focusManager.clearFocus()
-
-                        if (!changeName && username != originalName) {
-                            username = originalName
-                            return@LaunchedEffect
+                            mainViewModel.settings.AlbumsList.addToAlbumsList(path)
                         }
-
-                        mainViewModel.settings.User.setUsername(username)
-                        originalName = username
-                        changeName = false
                     }
 
-                    TextField(
-                        value = username,
-                        onValueChange = { newVal ->
-                            username = newVal
-                        },
-                        textStyle = LocalTextStyle.current.copy(
-                            fontSize = TextUnit(16f, TextUnitType.Sp),
-                            textAlign = TextAlign.Start,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        ),
-                        maxLines = 1,
-                        colors = TextFieldDefaults.colors().copy(
-                            unfocusedContainerColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                            unfocusedTrailingIconColor = Color.Transparent,
-                            focusedIndicatorColor = Color.Transparent,
-                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            focusedTrailingIconColor = MaterialTheme.colorScheme.onSurface,
-                        ),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(
-                            capitalization = KeyboardCapitalization.None,
-                            autoCorrectEnabled = false,
-                            keyboardType = KeyboardType.Ascii,
-                            imeAction = ImeAction.Done,
-                            showKeyboardOnFocus = true
-                        ),
-                        keyboardActions = KeyboardActions(
-                            onDone = {
-                                focusManager.clearFocus()
-                                changeName = true
-                            },
-                        ),
-                        trailingIcon = {
-                            Icon(
-                                painter = painterResource(id = R.drawable.close),
-                                contentDescription = "Cancel filename change button",
-                                modifier = Modifier
-                                    .clickable(
-                                        indication = null,
-                                        interactionSource = remember { MutableInteractionSource() },
-                                    ) {
-                                        focusManager.clearFocus()
-                                        changeName = false
-                                        username = originalName
-                                    }
-                            )
-                        },
-                        shape = RoundedCornerShape(1000.dp),
-                        modifier = Modifier
-                            .focusRequester(focus)
-                            .onFocusChanged {
-                                backPressedCallbackEnabled = it.isFocused
-                            }
-                    )
+                    DialogClickableItem(
+                        text = "Add an album",
+                        iconResId = R.drawable.add,
+                        position = RowPosition.Top,
+                    ) {
+                        activityLauncher.launch(null)
+                    }
                 }
 
-                Column(
-                    modifier = Modifier
-                        .padding(12.dp)
-                        .wrapContentHeight()
+                DialogClickableItem(
+                    text = "Data & Backup",
+                    iconResId = R.drawable.data,
+                    position = if (currentView.value == DefaultTabs.TabTypes.secure) RowPosition.Top else RowPosition.Middle,
                 ) {
-                    if (currentView.value != DefaultTabs.TabTypes.albums && currentView.value != DefaultTabs.TabTypes.secure) {
-                        DialogClickableItem(
-                            text = "Select",
-                            iconResId = R.drawable.check_item,
-                            position = RowPosition.Top,
-                        ) {
-                            showDialog.value = false
-                            selectedItemsList.clear()
-                            selectedItemsList.add(MediaStoreData())
-                            vibratorManager.vibrateShort()
-                        }
-                    }
+                    showDialog.value = false
+                    navController.navigate(MultiScreenViewType.DataAndBackup.name)
+                }
 
-                    if (currentView.value == DefaultTabs.TabTypes.albums) {
-                        val activityLauncher = createPersistablePermissionLauncher { uri ->
-                            uri.path?.let {
-                                val dir = File(it)
+                DialogClickableItem(
+                    text = "Settings",
+                    iconResId = R.drawable.settings,
+                    position = RowPosition.Middle,
+                ) {
+                    showDialog.value = false
+                    navController.navigate(MultiScreenViewType.SettingsMainView.name)
+                }
 
-                                val pathSections = dir.absolutePath.replace(baseInternalStorageDirectory, "").split(":")
-                                val path = pathSections[pathSections.size - 1]
-
-                                Log.d(TAG, "Added album path $path")
-
-                                mainViewModel.settings.AlbumsList.addToAlbumsList(path)
-                            }
-                        }
-
-                        DialogClickableItem(
-                            text = "Add an album",
-                            iconResId = R.drawable.add,
-                            position = RowPosition.Top,
-                        ) {
-                            activityLauncher.launch(null)
-                        }
-                    }
-
-                    DialogClickableItem(
-                        text = "Data & Backup",
-                        iconResId = R.drawable.data,
-                        position = if (currentView.value == DefaultTabs.TabTypes.secure) RowPosition.Top else RowPosition.Middle,
-                    ) {
-                        showDialog.value = false
-                        navController.navigate(MultiScreenViewType.DataAndBackup.name)
-                    }
-
-                    DialogClickableItem(
-                        text = "Settings",
-                        iconResId = R.drawable.settings,
-                        position = RowPosition.Middle,
-                    ) {
-                        showDialog.value = false
-                        navController.navigate(MultiScreenViewType.SettingsMainView.name)
-                    }
-
-                    DialogClickableItem(
-                        text = "About & Updates",
-                        iconResId = R.drawable.info,
-                        position = RowPosition.Bottom,
-                    ) {
-                        showDialog.value = false
-                        navController.navigate(MultiScreenViewType.AboutAndUpdateView.name)
-                    }
+                DialogClickableItem(
+                    text = "About & Updates",
+                    iconResId = R.drawable.info,
+                    position = RowPosition.Bottom,
+                ) {
+                    showDialog.value = false
+                    navController.navigate(MultiScreenViewType.AboutAndUpdateView.name)
                 }
             }
         }
@@ -687,219 +683,207 @@ fun SinglePhotoInfoDialog(
         Modifier.fillMaxWidth(0.85f)
 
     if (showDialog.value) {
-        Dialog(
-            onDismissRequest = {
+        LavenderDialogBase(
+            modifier = modifier,
+            onDismiss = {
                 showDialog.value = false
-                isEditingFileName.value = false
-            },
-            properties = DialogProperties(
-                usePlatformDefaultWidth = false
-            ),
+            }
         ) {
-            Column(
+            Box(
                 modifier = Modifier
-                    .then(modifier)
-                    .wrapContentHeight()
-                    .clip(RoundedCornerShape(32.dp))
-                    .background(brightenColor(MaterialTheme.colorScheme.surface, 0.1f))
-                    .padding(4.dp),
+                    .fillMaxWidth(1f),
             ) {
-                Box(
+                IconButton(
+                    onClick = {
+                        showDialog.value = false
+                        isEditingFileName.value = false
+                    },
                     modifier = Modifier
-                        .fillMaxWidth(1f),
+                        .align(Alignment.CenterStart)
                 ) {
-                    IconButton(
-                        onClick = {
-                            showDialog.value = false
-                            isEditingFileName.value = false
-                        },
+                    Icon(
+                        painter = painterResource(id = R.drawable.close),
+                        contentDescription = "Close dialog button",
                         modifier = Modifier
-                            .align(Alignment.CenterStart)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.close),
-                            contentDescription = "Close dialog button",
-                            modifier = Modifier
-                                .size(24.dp)
-                        )
-                    }
-
-                    AnimatableText(
-                        first = "Rename",
-                        second = "More Options",
-                        state = isEditingFileName.value,
-                        modifier = Modifier
-                            .align(Alignment.Center)
+                            .size(24.dp)
                     )
                 }
 
-                Column(
+                AnimatableText(
+                    first = "Rename",
+                    second = "More Options",
+                    state = isEditingFileName.value,
                     modifier = Modifier
-                        .padding(12.dp)
-                        .wrapContentHeight()
-                ) {
-                    var originalFileName = currentMediaItem.displayName ?: "Broken File"
-                    val fileName = remember { mutableStateOf(originalFileName) }
-                    val saveFileName = remember { mutableStateOf(false) }
+                        .align(Alignment.Center)
+                )
+            }
 
-                    val expanded = remember { mutableStateOf(false) }
+            Column(
+                modifier = Modifier
+                    .padding(12.dp)
+                    .wrapContentHeight()
+            ) {
+                var originalFileName = currentMediaItem.displayName ?: "Broken File"
+                val fileName = remember { mutableStateOf(originalFileName) }
+                val saveFileName = remember { mutableStateOf(false) }
 
-                    GetPermissionAndRun(
-                        uris = listOf(currentMediaItem.uri),
-                        shouldRun = saveFileName,
-                        onGranted = {
-							renameImage(context, currentMediaItem.uri, fileName.value)
+                val expanded = remember { mutableStateOf(false) }
 
-							originalFileName = fileName.value
+                GetPermissionAndRun(
+                    uris = listOf(currentMediaItem.uri),
+                    shouldRun = saveFileName,
+                    onGranted = {
+                        renameImage(context, currentMediaItem.uri, fileName.value)
 
-							if (loadsFromMainViewModel) {
-								val oldName = currentMediaItem.displayName ?: "Broken File"
-								val path = currentMediaItem.absolutePath
+                        originalFileName = fileName.value
 
-								val newGroupedMedia = groupedMedia.value.toMutableList()
+                        if (loadsFromMainViewModel) {
+                            val oldName = currentMediaItem.displayName ?: "Broken File"
+                            val path = currentMediaItem.absolutePath
 
-								// set currentMediaItem to new one with new name
-								val newMedia = currentMediaItem.copy(
-									displayName = fileName.value,
-									absolutePath = path.replace(oldName, fileName.value)
-								)
+                            val newGroupedMedia = groupedMedia.value.toMutableList()
 
-								val index = groupedMedia.value.indexOf(currentMediaItem)
-								newGroupedMedia[index] = newMedia
-								groupedMedia.value = newGroupedMedia
-							}
-                        }
-                    )
-
-                    AnimatableTextField(
-                        state = isEditingFileName,
-                        string = fileName,
-                        doAction = saveFileName,
-                        extraAction = expanded,
-                        rowPosition = RowPosition.Top
-                    ) {
-                        // fileName.value = originalFileName // TODO: fix so it doesn't reset while trying to allow by user
-                    }
-
-                    var mediaData by remember {
-                        mutableStateOf(
-                            emptyMap<MediaData, Any>()
-                        )
-                    }
-
-                    LaunchedEffect(Unit) {
-                        getExifDataForMedia(currentMediaItem.absolutePath).collect {
-                            mediaData = it
-                        }
-                    }
-
-                    // should add a way to automatically calculate height needed for this
-                    val addedHeight by remember { derivedStateOf { 36.dp * mediaData.keys.size } }
-                    val moveCopyHeight = if (showMoveCopyOptions) 82.dp else 0.dp // 40.dp is height of one single row
-                    val setAsHeight = if (currentMediaItem.type != MediaType.Video) 40.dp else 0.dp
-
-                    val height by animateDpAsState(
-                        targetValue = if (!isEditingFileName.value && expanded.value) {
-                            42.dp + addedHeight + moveCopyHeight + setAsHeight
-                        } else if (!isEditingFileName.value && !expanded.value) {
-                            42.dp + moveCopyHeight + setAsHeight
-                        } else {
-                            0.dp
-                        },
-                        label = "height of other options",
-                        animationSpec = tween(
-                            durationMillis = 350
-                        )
-                    )
-
-                    Column(
-                        modifier = Modifier
-                            .height(height)
-                            .fillMaxWidth(1f)
-                    ) {
-                        if (showMoveCopyOptions && moveCopyInsetsPadding != null) {
-                            val show = remember { mutableStateOf(false) }
-                            var isMoving by remember { mutableStateOf(false) }
-
-                            val stateList = SnapshotStateList<MediaStoreData>()
-                            stateList.add(currentMediaItem)
-
-                            MoveCopyAlbumListView(
-                                show = show,
-                                selectedItemsList = stateList,
-                                isMoving = isMoving,
-                                groupedMedia = null,
-                                insetsPadding = moveCopyInsetsPadding
+                            // set currentMediaItem to new one with new name
+                            val newMedia = currentMediaItem.copy(
+                                displayName = fileName.value,
+                                absolutePath = path.replace(oldName, fileName.value)
                             )
 
-                            DialogClickableItem(
-                                text = "Copy to Album",
-                                iconResId = R.drawable.copy,
-                                position = RowPosition.Middle,
-                            ) {
-                                isMoving = false
-                                show.value = true
-                            }
-
-                            DialogClickableItem(
-                                text = "Move to Album",
-                                iconResId = R.drawable.cut,
-                                position = RowPosition.Middle,
-                            ) {
-                                isMoving = true
-                                show.value = true
-                            }
+                            val index = groupedMedia.value.indexOf(currentMediaItem)
+                            newGroupedMedia[index] = newMedia
+                            groupedMedia.value = newGroupedMedia
                         }
+                    }
+                )
 
-                        val infoComposable = @Composable {
-                            LazyColumn(
-                                modifier = Modifier
-                                    .wrapContentHeight()
-                            ) {
-                                for (key in mediaData.keys) {
-                                    item {
-                                        val value = mediaData[key]
+                AnimatableTextField(
+                    state = isEditingFileName,
+                    string = fileName,
+                    doAction = saveFileName,
+                    extraAction = expanded,
+                    rowPosition = RowPosition.Top
+                ) {
+                    // fileName.value = originalFileName // TODO: fix so it doesn't reset while trying to allow by user
+                }
 
-                                        val splitBy = Regex("(?=[A-Z])")
-                                        val split = key.toString().split(splitBy)
-                                        // println("SPLIT IS $split")
-                                        val name = if (split.size >= 3) "${split[1]} ${split[2]}" else key.toString()
+                var mediaData by remember {
+                    mutableStateOf(
+                        emptyMap<MediaData, Any>()
+                    )
+                }
 
-                                        DialogInfoText(
-                                            firstText = name,
-                                            secondText = value.toString(),
-                                            iconResId = key.iconResInt,
-                                        )
-                                    }
-                                }
-                            }
-                        }
+                LaunchedEffect(Unit) {
+                    getExifDataForMedia(currentMediaItem.absolutePath).collect {
+                        mediaData = it
+                    }
+                }
 
-                        if (currentMediaItem.type == MediaType.Image) {
-                            DialogClickableItem(
-                                text = "Set As",
-                                iconResId = R.drawable.paintbrush,
-                                position = RowPosition.Middle
-                            ) {
-                                val intent = Intent().apply {
-                                    action = Intent.ACTION_ATTACH_DATA
-                                    data = currentMediaItem.uri
-                                    addCategory(Intent.CATEGORY_DEFAULT)
-                                    putExtra("mimeType", currentMediaItem.mimeType)
-                                }
+                // should add a way to automatically calculate height needed for this
+                val addedHeight by remember { derivedStateOf { 36.dp * mediaData.keys.size } }
+                val moveCopyHeight = if (showMoveCopyOptions) 82.dp else 0.dp // 40.dp is height of one single row
+                val setAsHeight = if (currentMediaItem.type != MediaType.Video) 40.dp else 0.dp
 
-                                context.startActivity(Intent.createChooser(intent, "Set as wallpaper"))
-                            }
-                        }
+                val height by animateDpAsState(
+                    targetValue = if (!isEditingFileName.value && expanded.value) {
+                        42.dp + addedHeight + moveCopyHeight + setAsHeight
+                    } else if (!isEditingFileName.value && !expanded.value) {
+                        42.dp + moveCopyHeight + setAsHeight
+                    } else {
+                        0.dp
+                    },
+                    label = "height of other options",
+                    animationSpec = tween(
+                        durationMillis = 350
+                    )
+                )
 
-                        DialogExpandableItem(
-                            text = "More Info",
-                            iconResId = R.drawable.info,
-                            position = RowPosition.Bottom,
-                            expanded = expanded
+                Column(
+                    modifier = Modifier
+                        .height(height)
+                        .fillMaxWidth(1f)
+                ) {
+                    if (showMoveCopyOptions && moveCopyInsetsPadding != null) {
+                        val show = remember { mutableStateOf(false) }
+                        var isMoving by remember { mutableStateOf(false) }
+
+                        val stateList = SnapshotStateList<MediaStoreData>()
+                        stateList.add(currentMediaItem)
+
+                        MoveCopyAlbumListView(
+                            show = show,
+                            selectedItemsList = stateList,
+                            isMoving = isMoving,
+                            groupedMedia = null,
+                            insetsPadding = moveCopyInsetsPadding
+                        )
+
+                        DialogClickableItem(
+                            text = "Copy to Album",
+                            iconResId = R.drawable.copy,
+                            position = RowPosition.Middle,
                         ) {
-                            infoComposable()
+                            isMoving = false
+                            show.value = true
                         }
+
+                        DialogClickableItem(
+                            text = "Move to Album",
+                            iconResId = R.drawable.cut,
+                            position = RowPosition.Middle,
+                        ) {
+                            isMoving = true
+                            show.value = true
+                        }
+                    }
+
+                    val infoComposable = @Composable {
+                        LazyColumn(
+                            modifier = Modifier
+                                .wrapContentHeight()
+                        ) {
+                            for (key in mediaData.keys) {
+                                item {
+                                    val value = mediaData[key]
+
+                                    val splitBy = Regex("(?=[A-Z])")
+                                    val split = key.toString().split(splitBy)
+                                    // println("SPLIT IS $split")
+                                    val name = if (split.size >= 3) "${split[1]} ${split[2]}" else key.toString()
+
+                                    DialogInfoText(
+                                        firstText = name,
+                                        secondText = value.toString(),
+                                        iconResId = key.iconResInt,
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    if (currentMediaItem.type == MediaType.Image) {
+                        DialogClickableItem(
+                            text = "Set As",
+                            iconResId = R.drawable.paintbrush,
+                            position = RowPosition.Middle
+                        ) {
+                            val intent = Intent().apply {
+                                action = Intent.ACTION_ATTACH_DATA
+                                data = currentMediaItem.uri
+                                addCategory(Intent.CATEGORY_DEFAULT)
+                                putExtra("mimeType", currentMediaItem.mimeType)
+                            }
+
+                            context.startActivity(Intent.createChooser(intent, "Set as wallpaper"))
+                        }
+                    }
+
+                    DialogExpandableItem(
+                        text = "More Info",
+                        iconResId = R.drawable.info,
+                        position = RowPosition.Bottom,
+                        expanded = expanded
+                    ) {
+                        infoComposable()
                     }
                 }
             }
@@ -1057,156 +1041,144 @@ fun SingleAlbumDialog(
     if (showDialog.value) {
         val title = dir.split("/").last()
 
-        Dialog(
-            onDismissRequest = {
+        LavenderDialogBase(
+            onDismiss = {
                 showDialog.value = false
-            },
-            properties = DialogProperties(
-                usePlatformDefaultWidth = false
-            ),
+            }
         ) {
+            val isEditingFileName = remember { mutableStateOf(false) }
+
+            BoxWithConstraints(
+                modifier = Modifier
+                    .fillMaxWidth(1f),
+            ) {
+                IconButton(
+                    onClick = {
+                        showDialog.value = false
+                    },
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .padding(0.dp, 0.dp, 0.dp, 4.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.close),
+                        contentDescription = "Close dialog button",
+                        modifier = Modifier
+                            .size(24.dp)
+                    )
+                }
+
+                AnimatableText(
+                    first = "Rename",
+                    second = title,
+                    state = isEditingFileName.value,
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .widthIn(max = maxWidth - 48.dp - 24.dp) // for button and right side
+                        .padding(0.dp, 0.dp, 0.dp, 4.dp)
+                )
+            }
+
+            val reverseHeight by animateDpAsState(
+                targetValue = if (isEditingFileName.value) 0.dp else 42.dp,
+                label = "height of other options",
+                animationSpec = tween(
+                    durationMillis = 500
+                )
+            )
+
             Column(
                 modifier = Modifier
-                    .fillMaxWidth(0.85f)
-                    .wrapContentHeight()
-                    .clip(RoundedCornerShape(32.dp))
-                    .background(brightenColor(MaterialTheme.colorScheme.surface, 0.1f))
-                    .padding(8.dp)
+                    .height(reverseHeight)
+                    .padding(8.dp, 0.dp)
             ) {
-                val isEditingFileName = remember { mutableStateOf(false) }
-
-                BoxWithConstraints(
-                    modifier = Modifier
-                        .fillMaxWidth(1f),
+                DialogClickableItem(
+                    text = "Select",
+                    iconResId = R.drawable.check_item,
+                    position = RowPosition.Top,
                 ) {
-                    IconButton(
-                        onClick = {
-                            showDialog.value = false
-                        },
-                        modifier = Modifier
-                            .align(Alignment.CenterStart)
-                            .padding(0.dp, 0.dp, 0.dp, 4.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.close),
-                            contentDescription = "Close dialog button",
-                            modifier = Modifier
-                                .size(24.dp)
+                    showDialog.value = false
+                    selectedItemsList.clear()
+                    selectedItemsList.add(MediaStoreData())
+                }
+            }
+            val fileName = remember { mutableStateOf(title) }
+            val saveFileName = remember { mutableStateOf(false) }
+
+            val absoluteDirPath = "$baseInternalStorageDirectory$dir"
+            val context = LocalContext.current
+
+            GetDirectoryPermissionAndRun(
+                absolutePath = absoluteDirPath,
+                shouldRun = saveFileName
+            ) {
+                if (saveFileName.value && fileName.value != dir.split("/").last()) {
+                    renameDirectory(context, absoluteDirPath, fileName.value)
+
+                    val mainViewModel = MainActivity.mainViewModel
+                    val newDir = dir.replace(title, fileName.value)
+
+                    mainViewModel.settings.AlbumsList.editInAlbumsList(dir, fileName.value)
+                    showDialog.value = false
+
+                    try {
+                        context.contentResolver.releasePersistableUriPermission(
+                            context.getExternalStorageContentUriFromAbsolutePath(absoluteDirPath, true),
+                            Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                         )
+                    } catch (e: Throwable) {
+                        Log.d(TAG, "Couldn't release permission for $absoluteDirPath")
+                        e.printStackTrace()
                     }
 
-                    AnimatableText(
-                        first = "Rename",
-                        second = title,
-                        state = isEditingFileName.value,
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .widthIn(max = maxWidth - 48.dp - 24.dp) // for button and right side
-                            .padding(0.dp, 0.dp, 0.dp, 4.dp)
-                    )
-                }
-
-                val reverseHeight by animateDpAsState(
-                    targetValue = if (isEditingFileName.value) 0.dp else 42.dp,
-                    label = "height of other options",
-                    animationSpec = tween(
-                        durationMillis = 500
-                    )
-                )
-
-                Column(
-                    modifier = Modifier
-                        .height(reverseHeight)
-                        .padding(8.dp, 0.dp)
-                ) {
-                    DialogClickableItem(
-                        text = "Select",
-                        iconResId = R.drawable.check_item,
-                        position = RowPosition.Top,
-                    ) {
-                        showDialog.value = false
-                        selectedItemsList.clear()
-                        selectedItemsList.add(MediaStoreData())
-                    }
-                }
-                val fileName = remember { mutableStateOf(title) }
-                val saveFileName = remember { mutableStateOf(false) }
-
-                val absoluteDirPath = "$baseInternalStorageDirectory$dir"
-                val context = LocalContext.current
-
-                GetDirectoryPermissionAndRun(
-                    absolutePath = absoluteDirPath,
-                    shouldRun = saveFileName
-                ) {
-                    if (saveFileName.value && fileName.value != dir.split("/").last()) {
-                        renameDirectory(context, absoluteDirPath, fileName.value)
-
-                        val mainViewModel = MainActivity.mainViewModel
-                        val newDir = dir.replace(title, fileName.value)
-
-                        mainViewModel.settings.AlbumsList.editInAlbumsList(dir, fileName.value)
-                        showDialog.value = false
-
-                        try {
-                            context.contentResolver.releasePersistableUriPermission(
-                                context.getExternalStorageContentUriFromAbsolutePath(absoluteDirPath, true),
-                                Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                            )
-                        } catch (e: Throwable) {
-                            Log.d(TAG, "Couldn't release permission for $absoluteDirPath")
-                            e.printStackTrace()
-                        }
-
-                        navController.popBackStack()
-                        navController.navigate(
-	                        Screens.SingleAlbumView(
-	                        	albums = listOf(newDir)
-	                        )
+                    navController.popBackStack()
+                    navController.navigate(
+                        Screens.SingleAlbumView(
+                            albums = listOf(newDir)
                         )
+                    )
 
-                        saveFileName.value = false
-                    }
+                    saveFileName.value = false
                 }
+            }
 
-                AnimatableTextField(
-                    state = isEditingFileName,
-                    string = fileName,
-                    doAction = saveFileName,
-                    rowPosition = RowPosition.Middle,
-                    enabled = !checkDirIsDownloads(dir),
-                    modifier = Modifier
-                        .padding(8.dp, 0.dp)
+            AnimatableTextField(
+                state = isEditingFileName,
+                string = fileName,
+                doAction = saveFileName,
+                rowPosition = RowPosition.Middle,
+                enabled = !checkDirIsDownloads(dir),
+                modifier = Modifier
+                    .padding(8.dp, 0.dp)
+            ) {
+                fileName.value = title
+            }
+
+            Column(
+                modifier = Modifier
+                    .height(reverseHeight + 6.dp)
+                    .padding(8.dp, 0.dp, 8.dp, 6.dp)
+            ) {
+                DialogClickableItem(
+                    text = "Remove album from list",
+                    iconResId = R.drawable.delete,
+                    position = RowPosition.Bottom,
+                    enabled = !checkDirIsDownloads(dir)
                 ) {
-                    fileName.value = title
-                }
+                    mainViewModel.settings.AlbumsList.removeFromAlbumsList(dir)
+                    showDialog.value = false
 
-                Column(
-                    modifier = Modifier
-                        .height(reverseHeight + 6.dp)
-                        .padding(8.dp, 0.dp, 8.dp, 6.dp)
-                ) {
-                    DialogClickableItem(
-                        text = "Remove album from list",
-                        iconResId = R.drawable.delete,
-                        position = RowPosition.Bottom,
-                        enabled = !checkDirIsDownloads(dir)
-                    ) {
-                        mainViewModel.settings.AlbumsList.removeFromAlbumsList(dir)
-                        showDialog.value = false
-
-                        try {
-                            context.contentResolver.releasePersistableUriPermission(
-                                context.getExternalStorageContentUriFromAbsolutePath(absoluteDirPath, true),
-                                Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                            )
-                        } catch (e: Throwable) {
-                            Log.d(TAG, "Couldn't release permission for $absoluteDirPath")
-                            e.printStackTrace()
-                        }
-
-                        navController.popBackStack()
+                    try {
+                        context.contentResolver.releasePersistableUriPermission(
+                            context.getExternalStorageContentUriFromAbsolutePath(absoluteDirPath, true),
+                            Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                        )
+                    } catch (e: Throwable) {
+                        Log.d(TAG, "Couldn't release permission for $absoluteDirPath")
+                        e.printStackTrace()
                     }
+
+                    navController.popBackStack()
                 }
             }
         }
@@ -1221,117 +1193,101 @@ fun TextEntryDialog(
     onValueChange: (text: String) -> Boolean,
     onDismiss: () -> Unit
 ) {
-    Dialog(
-        onDismissRequest = {
-            onDismiss()
-        },
-        properties = DialogProperties(
-            dismissOnClickOutside = true,
-            dismissOnBackPress = true
-        ),
+    LavenderDialogBase(
+        onDismiss = onDismiss
     ) {
-        Column(
-            modifier = Modifier
-                .wrapContentSize()
-                .clip(RoundedCornerShape(32.dp))
-                .background(MaterialTheme.colorScheme.background)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = title,
-                fontSize = TextUnit(18f, TextUnitType.Sp),
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.wrapContentSize()
-            )
+        Text(
+            text = title,
+            fontSize = TextUnit(18f, TextUnitType.Sp),
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.wrapContentSize()
+        )
 
-            Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
-            val keyboardController = LocalSoftwareKeyboardController.current
-            var text by remember { mutableStateOf("") }
-            var showError by remember { mutableStateOf(false) }
+        val keyboardController = LocalSoftwareKeyboardController.current
+        var text by remember { mutableStateOf("") }
+        var showError by remember { mutableStateOf(false) }
 
-            TextField(
-                value = text,
-                onValueChange = {
-                    text = it
-                    showError = onValueChange(it)
-                },
-                maxLines = 1,
-                singleLine = true,
-                placeholder = {
-                    if (placeholder != null) {
-                        Text(
-                            text = placeholder,
-                            fontSize = TextUnit(16f, TextUnitType.Sp)
+        TextField(
+            value = text,
+            onValueChange = {
+                text = it
+                showError = onValueChange(it)
+            },
+            maxLines = 1,
+            singleLine = true,
+            placeholder = {
+                if (placeholder != null) {
+                    Text(
+                        text = placeholder,
+                        fontSize = TextUnit(16f, TextUnitType.Sp)
+                    )
+                }
+            },
+            suffix = {
+                if (showError) {
+                    Row {
+                        val coroutineScope = rememberCoroutineScope()
+
+                        Icon(
+                            painter = painterResource(id = R.drawable.error_2),
+                            contentDescription = "Error",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier
+                                .size(24.dp)
+                                .clickable {
+                                    coroutineScope.launch {
+                                        LavenderSnackbarController.pushEvent(
+                                            LavenderSnackbarEvents.MessageEvent(
+                                                message = "Paths need to be relative",
+                                                iconResId = R.drawable.error_2,
+                                                duration = SnackbarDuration.Short
+                                            )
+                                        )
+                                    }
+                                }
                         )
                     }
-                },
-                suffix = {
-                    if (showError) {
-                        Row {
-                            val coroutineScope = rememberCoroutineScope()
+                }
+            },
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                cursorColor = MaterialTheme.colorScheme.primary,
+                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                focusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                unfocusedIndicatorColor = Color.Transparent,
+                focusedIndicatorColor = Color.Transparent
+            ),
+            keyboardOptions = KeyboardOptions(
+                autoCorrectEnabled = false,
+                keyboardType = KeyboardType.Text,
+                imeAction = ImeAction.Done
+            ),
+            keyboardActions = KeyboardActions(
+                onSearch = {
+                    keyboardController?.hide()
+                }
+            ),
+            shape = RoundedCornerShape(24.dp),
+            modifier = Modifier
+                .fillMaxWidth(1f)
+        )
 
-                            Icon(
-                                painter = painterResource(id = R.drawable.error_2),
-                                contentDescription = "Error",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier
-                                    .size(24.dp)
-                                    .clickable {
-                                        coroutineScope.launch {
-                                            LavenderSnackbarController.pushEvent(
-                                                LavenderSnackbarEvents.MessageEvent(
-                                                    message = "Paths need to be relative",
-                                                    iconResId = R.drawable.error_2,
-                                                    duration = SnackbarDuration.Short
-                                                )
-                                            )
-                                        }
-                                    }
-                            )
-                        }
-                    }
-                },
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    cursorColor = MaterialTheme.colorScheme.primary,
-                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                    focusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                    unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                    unfocusedIndicatorColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent
-                ),
-                keyboardOptions = KeyboardOptions(
-                    autoCorrectEnabled = false,
-                    keyboardType = KeyboardType.Text,
-                    imeAction = ImeAction.Done
-                ),
-                keyboardActions = KeyboardActions(
-                    onSearch = {
-                        keyboardController?.hide()
-                    }
-                ),
-                shape = RoundedCornerShape(24.dp),
-                modifier = Modifier
-                    .fillMaxWidth(1f)
-            )
+        Spacer(modifier = Modifier.height(24.dp))
 
-            Spacer(modifier = Modifier.height(24.dp))
-
-            FullWidthDialogButton(
-                text = "Confirm",
-                color = MaterialTheme.colorScheme.primary,
-                textColor = MaterialTheme.colorScheme.onPrimary,
-                position = RowPosition.Single,
-                enabled = !showError
-            ) {
-                showError = !onConfirm(text)
-            }
+        FullWidthDialogButton(
+            text = "Confirm",
+            color = MaterialTheme.colorScheme.primary,
+            textColor = MaterialTheme.colorScheme.onPrimary,
+            position = RowPosition.Single,
+            enabled = !showError
+        ) {
+            showError = !onConfirm(text)
         }
     }
 }
@@ -1389,47 +1345,33 @@ private fun ExplanationDialogBase(
 ) {
     showPreviousDialog?.value = false
 
-    Dialog(
-        onDismissRequest = {
+    LavenderDialogBase(
+        onDismiss = {
             showDialog.value = false
-        },
-        properties = DialogProperties(
-            dismissOnClickOutside = true,
-            dismissOnBackPress = true
-        ),
+        }
     ) {
-        Column(
-            modifier = Modifier
-                .wrapContentSize()
-                .clip(RoundedCornerShape(32.dp))
-                .background(MaterialTheme.colorScheme.surfaceContainer)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.CenterHorizontally
+        Text(
+            text = title,
+            fontSize = TextUnit(18f, TextUnitType.Sp),
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.wrapContentSize()
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        body()
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        FullWidthDialogButton(
+            text = "Okay",
+            color = MaterialTheme.colorScheme.primary,
+            textColor = MaterialTheme.colorScheme.onPrimary,
+            position = RowPosition.Single
         ) {
-            Text(
-                text = title,
-                fontSize = TextUnit(18f, TextUnitType.Sp),
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.wrapContentSize()
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            body()
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            FullWidthDialogButton(
-                text = "Okay",
-                color = MaterialTheme.colorScheme.primary,
-                textColor = MaterialTheme.colorScheme.onPrimary,
-                position = RowPosition.Single
-            ) {
-                showDialog.value = false
-                showPreviousDialog?.value = true
-            }
+            showDialog.value = false
+            showPreviousDialog?.value = true
         }
     }
 }
@@ -1498,64 +1440,53 @@ fun SelectingMoreOptionsDialog(
         }
     )
 
-    Dialog(
-        onDismissRequest = {
+    LavenderDialogBase(
+        modifier = modifier,
+        onDismiss = {
             if (!showLoadingDialog) showDialog.value = false
             isEditingFileName.value = false
-        },
-        properties = DialogProperties(
-            usePlatformDefaultWidth = false
-        ),
+        }
     ) {
-        Column(
+        Box(
             modifier = Modifier
-                .then(modifier)
-                .wrapContentHeight()
-                .clip(RoundedCornerShape(32.dp))
-                .background(MaterialTheme.colorScheme.surfaceContainer)
-                .padding(4.dp),
+                .fillMaxWidth(1f),
         ) {
-            Box(
+            IconButton(
+                onClick = {
+                    if (!showLoadingDialog) showDialog.value = false
+                    isEditingFileName.value = false
+                },
                 modifier = Modifier
-                    .fillMaxWidth(1f),
+                    .align(Alignment.CenterStart)
             ) {
-                IconButton(
-                    onClick = {
-                        if (!showLoadingDialog) showDialog.value = false
-                        isEditingFileName.value = false
-                    },
+                Icon(
+                    painter = painterResource(id = R.drawable.close),
+                    contentDescription = "Close dialog button",
                     modifier = Modifier
-                        .align(Alignment.CenterStart)
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.close),
-                        contentDescription = "Close dialog button",
-                        modifier = Modifier
-                            .size(24.dp)
-                    )
-                }
-
-                Text(
-                    text = "More Options",
-                    modifier = Modifier
-                        .align(Alignment.Center)
+                        .size(24.dp)
                 )
             }
 
-            Column(
+            Text(
+                text = "More Options",
                 modifier = Modifier
-                    .padding(12.dp)
-                    .wrapContentHeight()
-            ) {
-                // TODO: group by path and then get permission for each path in search page
-                if (currentView.value != DefaultTabs.TabTypes.search) {
-                    DialogClickableItem(
-                        text = "Move to Secure Folder",
-                        iconResId = R.drawable.locked_folder,
-                        position = RowPosition.Single
-                    ) {
-                    	if (selectedItems.isNotEmpty()) tryGetDirPermission.value = true
-                    }
+                    .align(Alignment.Center)
+            )
+        }
+
+        Column(
+            modifier = Modifier
+                .padding(12.dp)
+                .wrapContentHeight()
+        ) {
+            // TODO: group by path and then get permission for each path in search page
+            if (currentView.value != DefaultTabs.TabTypes.search) {
+                DialogClickableItem(
+                    text = "Move to Secure Folder",
+                    iconResId = R.drawable.locked_folder,
+                    position = RowPosition.Single
+                ) {
+                    if (selectedItems.isNotEmpty()) tryGetDirPermission.value = true
                 }
             }
         }
@@ -1567,48 +1498,68 @@ fun LoadingDialog(
     title: String,
     body: String
 ) {
+    LavenderDialogBase(
+        onDismiss = {} // never allow dismissal
+    ) {
+        Text(
+            text = title,
+            fontSize = TextUnit(18f, TextUnitType.Sp),
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            modifier = Modifier.wrapContentSize()
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = body,
+            fontSize = TextUnit(14f, TextUnitType.Sp),
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.wrapContentSize()
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        LinearProgressIndicator(
+            color = MaterialTheme.colorScheme.primary,
+            trackColor = MaterialTheme.colorScheme.surfaceDim,
+            strokeCap = StrokeCap.Round,
+            gapSize = 2.dp,
+            modifier = Modifier
+                .padding(8.dp)
+                .fillMaxWidth(1f)
+        )
+    }
+}
+
+@Composable
+fun LavenderDialogBase(
+    modifier: Modifier = Modifier,
+    onDismiss: () -> Unit,
+    content: @Composable ColumnScope.() -> Unit
+) {
     Dialog(
-        onDismissRequest = {},
+        onDismissRequest = {
+            onDismiss()
+        },
+        properties = DialogProperties(
+            dismissOnClickOutside = true,
+            dismissOnBackPress = true
+        )
     ) {
         Column(
-            modifier = Modifier
-                .wrapContentSize()
+            modifier = modifier
+                .fillMaxWidth(1f)
+                .wrapContentHeight()
                 .clip(RoundedCornerShape(32.dp))
-                .background(MaterialTheme.colorScheme.surfaceContainer)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.SpaceEvenly,
+                .background(ExtendedMaterialTheme.colorScheme.dialogSurface) // brightenColor(MaterialTheme.colorScheme.surface, 0.1f)
+                .padding(8.dp),
+            verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = title,
-                fontSize = TextUnit(18f, TextUnitType.Sp),
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                modifier = Modifier.wrapContentSize()
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = body,
-                fontSize = TextUnit(14f, TextUnitType.Sp),
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.wrapContentSize()
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            LinearProgressIndicator(
-                color = MaterialTheme.colorScheme.primary,
-                trackColor = MaterialTheme.colorScheme.surfaceDim,
-                strokeCap = StrokeCap.Round,
-                gapSize = 2.dp,
-                modifier = Modifier
-                    .padding(8.dp)
-                    .fillMaxWidth(1f)
-            )
+            content()
         }
     }
 }

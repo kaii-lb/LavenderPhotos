@@ -2,6 +2,7 @@ package com.kaii.photos.helpers
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -13,6 +14,19 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.unit.dp
+
+
+object ExtendedMaterialTheme {
+	val colorScheme: ExtendedColorScheme
+		@Composable
+		get() = ExtendedColorScheme(
+			dialogSurface = brightenColor(MaterialTheme.colorScheme.surface, 0.05f)
+		)
+}
+
+data class ExtendedColorScheme(
+	val dialogSurface: Color
+)
 
 fun brightenColor(color: Color, percentage: Float) : Color {
 	val r = (color.red * 255).toInt()

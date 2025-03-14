@@ -78,8 +78,7 @@ import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.GetPermissionAndRun
-import com.kaii.photos.helpers.baseInternalStorageDirectory
-import com.kaii.photos.helpers.createPersistablePermissionLauncher
+import com.kaii.photos.helpers.createDirectoryPicker
 import com.kaii.photos.helpers.moveImageOutOfLockedFolder
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.permanentlyDeleteSecureFolderImageList
@@ -200,16 +199,14 @@ fun SelectableBottomAppBarItem(
                 .clip(RoundedCornerShape(1000.dp))
                 .align(Alignment.TopCenter)
         ) {
-            Row(
+            Box (
                 modifier = Modifier
                     .height(32.dp)
                     .width(64.dp)
                     .clip(RoundedCornerShape(1000.dp))
                     .align(Alignment.TopCenter)
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {}
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
+            )
         }
 
         Row(
@@ -317,18 +314,21 @@ fun MainAppTopBar(
                     )
                 )
             ) {
-                val activityLauncher = createPersistablePermissionLauncher { uri ->
-                    uri.path?.let {
-                        val dir = File(it)
-
-                        val pathSections = dir.absolutePath.replace(baseInternalStorageDirectory, "").split(":")
-                        val path = pathSections[pathSections.size - 1]
-
-                        Log.d(TAG, "Added album path $path")
-
-                        mainViewModel.settings.AlbumsList.addToAlbumsList(path)
-                    }
+                val activityLauncher = createDirectoryPicker { path ->
+                    if (path != null) mainViewModel.settings.AlbumsList.addToAlbumsList(path)
                 }
+                    // createPersistablePermissionLauncher { uri ->
+                    //     uri.path?.let {
+                    //         val dir = File(it)
+                    //
+                    //         val pathSections = dir.absolutePath.replace(baseInternalStorageDirectory, "").split(":")
+                    //         val path = pathSections[pathSections.size - 1]
+                    //
+                    //         Log.d(TAG, "Added album path $path")
+                    //
+                    //         mainViewModel.settings.AlbumsList.addToAlbumsList(path)
+                    //     }
+                    // }
 
                 IconButton(
                     onClick = {
@@ -397,8 +397,9 @@ fun MainAppBottomBar(
                     },
                     icon = {
                         Icon(
-                            painter = painterResource(id = if (currentView.value == tab) tab.selectedIcon.resId else tab.unselectedIcon.resId),
+                            painter = painterResource(id = if (currentView.value == tab) tab.icon.filled else tab.icon.nonFilled),
                             contentDescription = "Navigate to ${tab.name} page",
+                            tint = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier
                                 .size(24.dp)
                         )
@@ -768,7 +769,7 @@ fun TrashedPhotoGridViewTopBar(
         if (runEmptyTrashAction.value) {
             permanentlyDeletePhotoList(
                 context = context,
-                list = groupedMedia.map { it.uri }
+                list = groupedMedia.filter { it.type != MediaType.Section }.map { it.uri }
             )
 
             runEmptyTrashAction.value = false
@@ -1056,7 +1057,7 @@ fun SecureFolderViewBottomAppBar(
 
                         val cachedPaths = emptyList<Pair<String, MediaType>>().toMutableList()
 
-	            		selectedItemsWithoutSection.forEach { item ->
+                        selectedItemsWithoutSection.forEach { item ->
                             val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(item.absolutePath)
                             if (iv == null) {
                             	Log.e(TAG, "IV for ${item.displayName} was null, aborting decrypt")
@@ -1400,7 +1401,7 @@ fun setBarVisibility(
         }
     }
 
-    window.setDecorFitsSystemWindows(false)
+    // window.setDecorFitsSystemWindows(false)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

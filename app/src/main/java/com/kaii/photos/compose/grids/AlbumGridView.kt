@@ -12,6 +12,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -49,11 +50,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
@@ -68,6 +72,7 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.center
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
+import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -85,12 +90,14 @@ import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.brightenColor
+import com.kaii.photos.helpers.toOffset
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.signature
 import com.kaii.photos.models.album_grid.AlbumsViewModel
 import com.kaii.photos.models.album_grid.AlbumsViewModelFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
 import java.io.File
 
 private const val TAG = "ALBUMS_GRID_VIEW"
@@ -211,7 +218,7 @@ fun AlbumsGridView(
         }
 
         val lazyGridState = rememberLazyGridState()
-        var itemOffset by remember { mutableStateOf(IntOffset.Zero) }
+        var itemOffset by remember { mutableStateOf(Offset.Zero) }
         var selectedItem: String? by remember { mutableStateOf(null) }
 
         val pullToRefreshState = rememberPullToRefreshState()
@@ -236,6 +243,7 @@ fun AlbumsGridView(
                 .zIndex(1f)
         )
 
+		val coroutineScope = rememberCoroutineScope()
         LazyVerticalGrid(
             state = lazyGridState,
             columns = GridCells.Fixed(
@@ -268,7 +276,7 @@ fun AlbumsGridView(
 
                         onDrag = { change, offset ->
                             change.consume()
-                            itemOffset += offset.round()
+                            itemOffset += offset
 
                             val targetItemIndex = lazyGridState.getGridItemAtOffset(
                                 offset = change.position,
@@ -291,22 +299,38 @@ fun AlbumsGridView(
                                     newList.add(targetItemIndex, selectedItem!!)
 
                                     itemOffset =
-                                        change.position.round() - (targetLazyItem.offset + targetLazyItem.size.center)
+                                        change.position - (targetLazyItem.offset + targetLazyItem.size.center).toOffset()
 
                                     albums.value = newList.distinct()
                                     if (sortMode != AlbumSortMode.Custom) mainViewModel.settings.AlbumsList.setAlbumSortMode(AlbumSortMode.Custom)
+                                } else if (currentLazyItem != null) {
+                                	val startOffset = currentLazyItem.offset.y + itemOffset.y
+									val endOffset = currentLazyItem.offset.y + currentLazyItem.size.height + itemOffset.y
+
+                                    val offsetToTop = startOffset - lazyGridState.layoutInfo.viewportStartOffset
+                                    val offsetToBottom = endOffset - lazyGridState.layoutInfo.viewportEndOffset
+
+                                    val scroll = when {
+                                        offsetToTop < 0 -> offsetToTop.coerceAtMost(0f)
+                                        offsetToBottom > 0 -> offsetToBottom.coerceAtLeast(0f)
+                                        else -> 0f
+                                    }
+
+                                    if (scroll != 0f && (lazyGridState.canScrollBackward || lazyGridState.canScrollForward)) coroutineScope.launch {
+                                        lazyGridState.scrollBy(scroll.toFloat())
+                                    }
                                 }
                             }
                         },
 
                         onDragCancel = {
                             selectedItem = null
-                            itemOffset = IntOffset.Zero
+                            itemOffset = Offset.Zero
                         },
 
                         onDragEnd = {
                             selectedItem = null
-                            itemOffset = IntOffset.Zero
+                            itemOffset = Offset.Zero
                         }
                     )
                 },
@@ -347,8 +371,11 @@ fun AlbumsGridView(
                                 if (selectedItem == neededDir) 1f
                                 else 0f
                             )
-                            .offset {
-                                if (selectedItem == neededDir) itemOffset else IntOffset.Zero
+                            .graphicsLayer {
+                                if (selectedItem == neededDir) {
+                                    translationX = itemOffset.x
+                                    translationY = itemOffset.y
+                                }
                             }
                             .wrapContentSize()
                             .animateItem(

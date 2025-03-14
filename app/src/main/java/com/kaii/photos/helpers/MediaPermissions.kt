@@ -1,6 +1,5 @@
 package com.kaii.photos.helpers
 
-import android.app.Activity
 import android.app.Activity.RESULT_OK
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -9,27 +8,28 @@ import android.os.Environment
 import android.os.Process
 import android.provider.MediaStore
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
+import com.kaii.lavender_snackbars.LavenderSnackbarController
+import com.kaii.lavender_snackbars.LavenderSnackbarEvents
+import com.kaii.photos.R
 import com.kaii.photos.compose.ConfirmationDialogWithBody
-import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.mediastore.getExternalStorageContentUriFromAbsolutePath
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.math.abs
+import java.io.File
 
 private const val TAG = "MEDIA_PERMISSIONS"
 
@@ -117,7 +117,6 @@ fun GetDirectoryPermissionAndRun(
 			val relative = absolutePath.replace(baseInternalStorageDirectory, "")
             if (!alreadyPersisted &&
             	!(relative.startsWith(Environment.DIRECTORY_DOWNLOADS) && relative.removeSuffix("/").endsWith(Environment.DIRECTORY_DOWNLOADS))
-            	// !relative.startsWith("Android/media/com.kaii.photos/LavenderPhotos/Restored Files") // TODO: make this not need permissions somehow
            	) {
                 showNoPermissionForDirDialog.value = true
             } else {
@@ -129,11 +128,13 @@ fun GetDirectoryPermissionAndRun(
     }
 }
 
+/** notifies user via a snackbar if adding the directory fails */
 @Composable
 fun createPersistablePermissionLauncher(
     onGranted: (uri: Uri) -> Unit
 ): ManagedActivityResultLauncher<Uri?, Uri?> {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
     return rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocumentTree()
@@ -151,7 +152,39 @@ fun createPersistablePermissionLauncher(
                 e.printStackTrace()
             }
         } else {
-            Toast.makeText(context, "Failed to add album :<", Toast.LENGTH_LONG).show()
+            coroutineScope.launch {
+                LavenderSnackbarController.pushEvent(
+                    LavenderSnackbarEvents.MessageEvent(
+                        message = "Failed to add album :<",
+                        iconResId = R.drawable.error_2,
+                        duration = SnackbarDuration.Short
+                    )
+                )
+            }
+
+            // Toast.makeText(context, "Failed to add album :<", Toast.LENGTH_LONG).show()
+        }
+    }
+}
+
+/** notifies user via a snackbar if adding the directory fails */
+@Composable
+fun createDirectoryPicker(
+    onGetDir: (albumPath: String?) -> Unit
+): ManagedActivityResultLauncher<Uri?, Uri?> {
+    return createPersistablePermissionLauncher { uri ->
+        uri.path?.let {
+            val dir = File(it)
+
+            val pathSections = dir.absolutePath.replace(baseInternalStorageDirectory, "").split(":")
+            val path = pathSections[pathSections.size - 1]
+
+            Log.d(TAG, "Chosen directory is $path")
+
+            onGetDir(path)
+        } ?: run {
+            Log.e(TAG, "Path for $uri does not exist, cannot add!")
+            onGetDir(null)
         }
     }
 }

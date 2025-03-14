@@ -461,4 +461,3 @@ fun rememberDeviceOrientation(): MutableState<Boolean> {
 
     return isLandscape
 }
-

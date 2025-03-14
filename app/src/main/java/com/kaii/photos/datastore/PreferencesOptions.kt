@@ -15,34 +15,30 @@ object DefaultTabs {
     object TabTypes {
         val photos = BottomBarTab(
             name = "Photos",
-            albumPath = "main_photos",
+            albumPaths = listOf("main_photos"),
             index = 0,
-            selectedIcon = StoredDrawable.PhotoGridFilled,
-            unselectedIcon = StoredDrawable.PhotoGrid
+            icon = StoredDrawable.PhotoGrid
         )
 
         val secure = BottomBarTab(
             name = "Secure",
-            albumPath = "secure_folder",
+            albumPaths = listOf("secure_folder"),
             index = 1,
-            selectedIcon = StoredDrawable.SecureFolderFilled,
-            unselectedIcon = StoredDrawable.SecureFolder
+            icon = StoredDrawable.SecureFolder
         )
 
         val albums = BottomBarTab(
             name = "Albums",
-            albumPath = "albums_page",
+            albumPaths = listOf("albums_page"),
             index = 2,
-            selectedIcon = StoredDrawable.AlbumsFilled,
-            unselectedIcon = StoredDrawable.Albums
+            icon = StoredDrawable.Albums
         )
 
         val search = BottomBarTab(
             name = "Search",
-            albumPath = "search_page",
+            albumPaths = listOf("search_page"),
             index = 3,
-            selectedIcon = StoredDrawable.Search,
-            unselectedIcon = StoredDrawable.Search
+            icon = StoredDrawable.Search
         )
     }
 
@@ -56,38 +52,31 @@ object DefaultTabs {
 
 @Serializable
 enum class StoredDrawable(
-    @DrawableRes val resId: Int,
+    @DrawableRes val filled: Int,
+    @DrawableRes val nonFilled: Int,
     val storedId: Int
 ) {
     PhotoGrid(
-        resId = R.drawable.photogrid,
+        filled = R.drawable.photogrid_filled,
+        nonFilled = R.drawable.photogrid,
         storedId = 0
-    ),
-    PhotoGridFilled(
-        resId = R.drawable.photogrid_filled,
-        storedId = 1
     ),
 
     SecureFolder(
-        resId = R.drawable.locked_folder,
+    	filled = R.drawable.locked_folder_filled,
+        nonFilled = R.drawable.locked_folder,
         storedId = 2
-    ),
-    SecureFolderFilled(
-        resId = R.drawable.locked_folder_filled,
-        storedId = 3
     ),
 
     Albums(
-        resId = R.drawable.albums,
+    	filled = R.drawable.albums_filled,
+        nonFilled = R.drawable.albums,
         storedId = 4
-    ),
-    AlbumsFilled(
-        resId = R.drawable.albums_filled,
-        storedId = 5
     ),
 
     Search(
-        resId = R.drawable.search,
+        filled = R.drawable.search,
+        nonFilled = R.drawable.search,
         storedId = 6
     );
 
@@ -99,12 +88,11 @@ enum class StoredDrawable(
 @Serializable
 data class BottomBarTab(
     val name: String,
-    val albumPath: String,
+    val albumPaths: List<String>,
     val index: Int,
-    val selectedIcon: StoredDrawable,
-    val unselectedIcon: StoredDrawable,
+    val icon: StoredDrawable,
 ) {
-    fun isCustom() = DefaultTabs.defaultList.map { it.albumPath }.contains(albumPath)
+    fun isCustom() = DefaultTabs.defaultList.all { it.albumPaths != albumPaths }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -114,18 +102,16 @@ data class BottomBarTab(
 
         // ignore index since it changes often and doesn't affect the tab itself
         if (name != other.name) return false
-        if (albumPath != other.albumPath) return false
-        if (selectedIcon != other.selectedIcon) return false
-        if (unselectedIcon != other.unselectedIcon) return false
+        if (albumPaths != other.albumPaths) return false
+        if (icon != other.icon) return false
 
         return true
     }
 
     override fun hashCode(): Int {
         var result = name.hashCode()
-        result = 31 * result + albumPath.hashCode()
-        result = 31 * result + selectedIcon.hashCode()
-        result = 31 * result + unselectedIcon.hashCode()
+        result = 31 * result + albumPaths.hashCode()
+        result = 31 * result + icon.hashCode()
         result = 31 * result + isCustom().hashCode()
         return result
     }
