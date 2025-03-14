@@ -52,6 +52,7 @@ import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.baseInternalStorageDirectory
+import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.moveImageToLockedFolder
 import com.kaii.photos.mediastore.getUriFromAbsolutePath
 import com.kaii.photos.mediastore.getMediaStoreDataFromUri
@@ -86,12 +87,21 @@ fun LockedFolderEntryView(
     var launchSecureFolder by remember { mutableStateOf(false) }
     val showExplanationForMigration = remember { mutableStateOf(false) }
     val shouldMigrate by mainViewModel.settings.Versions.getShouldMigrateToEncryptedSecurePhotos().collectAsStateWithLifecycle(initialValue = false)
+    var continueToEncryption by remember { mutableStateOf(false) }
+    val getDirPermission = remember { mutableStateOf(false) }
 
     LaunchedEffect(launchSecureFolder) {
         if (launchSecureFolder) navController.navigate(MultiScreenViewType.LockedFolderView.name)
     }
 
-    LaunchedEffect(shouldMigrate) {
+   	GetDirectoryPermissionAndRun(
+   		absolutePath = context.appRestoredFilesDir,
+   		shouldRun = getDirPermission
+   	) {
+   		continueToEncryption = true
+   	}
+
+    LaunchedEffect(shouldMigrate, continueToEncryption) {
         withContext(Dispatchers.IO) {
             if (!shouldMigrate) return@withContext
 
@@ -101,28 +111,32 @@ fun LockedFolderEntryView(
 
             // migrate from old secure folder dir
             if (children?.isNotEmpty() == true) {
-                migrating = true
-                val newDir = context.appSecureFolderDir
+            	getDirPermission.value = true
 
-                Log.d(TAG, "migrating from $oldDir to $newDir")
-                children.forEach { file ->
-                    val newPath = newDir + "/" + file.name
-                    val destination = File(newPath)
-                    val restoredPath = restoredFilesDir + "/" + file.name
-                    val restoredFile = File(restoredPath)
+            	if (continueToEncryption) {
+	                migrating = true
+	                val newDir = context.appSecureFolderDir
 
-                    if (!restoredFile.exists()) {
-                    	file.copyTo(restoredFile)
-                    }
+	                Log.d(TAG, "migrating from $oldDir to $newDir")
+	                children.forEach { file ->
+	                    val newPath = newDir + "/" + file.name
+	                    val destination = File(newPath)
+	                    val restoredPath = restoredFilesDir + "/" + file.name
+	                    val restoredFile = File(restoredPath)
 
-                    if (!destination.exists()) {
-                        file.copyTo(destination)
-                        file.delete()
-                    }
-                }
+	                    if (!restoredFile.exists()) {
+	                    	file.copyTo(restoredFile)
+	                    }
 
-                migrating = false
-                showExplanationForMigration.value = true
+	                    if (!destination.exists()) {
+	                        file.copyTo(destination)
+	                        file.delete()
+	                    }
+	                }
+
+	                migrating = false
+	                showExplanationForMigration.value = true
+            	}
             }
 
             val maybeUnencryptedDir = File(context.appSecureFolderDir)
@@ -137,44 +151,48 @@ fun LockedFolderEntryView(
                 }
             }
 
-            if (unencryptedDirChildren?.isNotEmpty() == true) {
-                Log.d(TAG, "encrypting previously unencrypted photos")
-                migrating = true
+			if (unencryptedDirChildren?.isNotEmpty() == true) {
+				getDirPermission.value = true
 
-                unencryptedDirChildren.forEach { file ->
-                    val newPath = restoredFilesDir + "/" + file.name
-                    val destination = File(newPath)
+	            if (continueToEncryption) {
+	                Log.d(TAG, "encrypting previously unencrypted photos")
+	                migrating = true
 
-                    if (!destination.exists()) {
-                        file.copyTo(destination)
-                        file.delete()
-                    }
+	                unencryptedDirChildren.forEach { file ->
+	                    val newPath = restoredFilesDir + "/" + file.name
+	                    val destination = File(newPath)
 
-					val uri = context.contentResolver.getUriFromAbsolutePath(
-						absolutePath = destination.absolutePath,
-						type =
-							if (Files.probeContentType(Path(destination.absolutePath)).startsWith("image")) MediaType.Image
-							else MediaType.Video
-					)
+	                    if (!destination.exists()) {
+	                        file.copyTo(destination)
+	                        file.delete()
+	                    }
 
-					uri?.let {
-						context.contentResolver.getMediaStoreDataFromUri(it)?.let { mediaItem ->
-		                    moveImageToLockedFolder(
-		                    	list = listOf(
-		                    		mediaItem
-		                    	),
-		                    	context = context,
-		                    	onDone = {
-		                    		migrating = false
-		                    	}
-		                    )
+						val uri = context.contentResolver.getUriFromAbsolutePath(
+							absolutePath = destination.absolutePath,
+							type =
+								if (Files.probeContentType(Path(destination.absolutePath)).startsWith("image")) MediaType.Image
+								else MediaType.Video
+						)
+
+						uri?.let {
+							context.contentResolver.getMediaStoreDataFromUri(it)?.let { mediaItem ->
+			                    moveImageToLockedFolder(
+			                    	list = listOf(
+			                    		mediaItem
+			                    	),
+			                    	context = context,
+			                    	onDone = {
+			                    		migrating = false
+			                    	}
+			                    )
+							}
 						}
-					}
-                }
 
-                migrating = false
-                showExplanationForMigration.value = true
-            }
+		                migrating = false
+		                showExplanationForMigration.value = true
+	                }
+	            }
+			}
 
             mainViewModel.settings.Versions.setShouldMigrateToEncryptedSecurePhotos(false)
             mainViewModel.settings.AlbumsList.addToAlbumsList(
