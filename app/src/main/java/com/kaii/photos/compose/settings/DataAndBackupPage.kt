@@ -1,5 +1,6 @@
 package com.kaii.photos.compose.settings
 
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.padding
@@ -23,6 +24,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import com.kaii.lavender_snackbars.LavenderSnackbarController
 import com.kaii.lavender_snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalNavController
@@ -34,6 +36,7 @@ import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.helpers.DataAndBackupHelper
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.baseInternalStorageDirectory
+import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import kotlinx.coroutines.Dispatchers
 
 @Composable
@@ -62,7 +65,7 @@ fun DataAndBackupPage() {
 
                 PreferencesRow(
                     title = "Export Unencrypted Backup",
-                    iconResID = R.drawable.folder_export,
+                    iconResID = R.drawable.key_remove,
                     summary = "Exports a folder of all your secured items, unencrypted",
                     position = RowPosition.Middle,
                     showBackground = false
@@ -120,6 +123,45 @@ fun DataAndBackupPage() {
 
                         isLoading.value = false
                 	}
+                }
+
+                PreferencesRow(
+                    title = "Export Backup To Zip",
+                    iconResID = R.drawable.folder_zip,
+                    summary = "Exports a zip file of all your secured items",
+                    position = RowPosition.Middle,
+                    showBackground = false
+                ) {
+                    mainViewModel.launch(Dispatchers.IO) {
+                        val backupHelper = DataAndBackupHelper()
+
+                        isLoading.value = true
+                        LavenderSnackbarController.pushEvent(
+                            LavenderSnackbarEvents.LoadingEvent(
+                                message = "Exporting backup...",
+                                iconResId = R.drawable.folder_export,
+                                isLoading = isLoading
+                            )
+                        )
+
+                        backupHelper.exportSecureFolderToZipFile(context = context)
+
+                        val intent = Intent().apply {
+                            action = Intent.ACTION_VIEW
+                            data = FileProvider.getUriForFile(
+                                context,
+                                LAVENDER_FILE_PROVIDER_AUTHORITY,
+                                backupHelper.getZipFile(context = context)
+                            )
+
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                        }
+
+                        context.startActivity(intent)
+
+                        isLoading.value = false
+                    }
                 }
             }
         }

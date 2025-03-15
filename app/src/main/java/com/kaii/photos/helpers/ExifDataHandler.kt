@@ -47,7 +47,7 @@ fun setDateTakenForMedia(absolutePath: String, dateTaken: Long) {
         val exifInterface = ExifInterface(absolutePath)
         val exifDateTimeFormat = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss")
 
-		val localDateTime = Instant.ofEpochSecond(dateTaken).atZone(ZoneId.systemDefault()).toLocalDateTime()
+        val localDateTime = Instant.ofEpochSecond(dateTaken).atZone(ZoneId.systemDefault()).toLocalDateTime()
 		val datetime = localDateTime.format(exifDateTimeFormat)
 
 	    exifInterface.setAttribute(
@@ -101,7 +101,16 @@ fun getExifDataForMedia(absolutePath: String): Flow<Map<MediaData, Any>> = flow 
         val shutterSpeed = exifInterface.getAttribute(ExifInterface.TAG_SHUTTER_SPEED_VALUE)
         list[MediaData.ShutterSpeed] = shutterSpeed
 
-        list[MediaData.Size] = "${round(file.length() / 100000f) / 10} MB"
+        val size = file.length().let { bytes ->
+            if (bytes < 1000000) { // less than a mb display in kb
+                val kb = round(bytes * 10 / 1000f) / 10
+                "$kb KB"
+            } else {
+                val mb = round(bytes / 100000f) / 10
+                "$mb MB"
+            }
+        }
+        list[MediaData.Size] = size
 
         emit(
             list

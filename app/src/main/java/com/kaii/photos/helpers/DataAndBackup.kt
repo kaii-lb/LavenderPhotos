@@ -11,6 +11,8 @@ import kotlinx.datetime.format.char
 import kotlinx.datetime.toLocalDateTime
 import java.io.File
 import java.nio.file.Files
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 
 private const val TAG = "DATA_AND_BACKUP"
 
@@ -19,6 +21,7 @@ class DataAndBackupHelper {
         private const val EXPORT_DIR = "Exports"
         private const val UNENCRYPTED_DIR = "Lavender_Photos_Export"
         private const val RAW_DIR = "Lavender_Photos_Export_Raw"
+        private const val ZIP_NAME = "Lavender_Photos_Backup"
     }
 
     private fun getCurrentDate() = Instant.fromEpochMilliseconds(System.currentTimeMillis())
@@ -47,6 +50,12 @@ class DataAndBackupHelper {
     	    RAW_DIR + "_taken_" + getCurrentDate()
     	)
 
+    fun getZipFile(context: Context) =
+        File(
+            File(context.appStorageDir, EXPORT_DIR),
+            ZIP_NAME + "_taken_" + getCurrentDate() + ".zip"
+        )
+
     /** takes items in [AppDirectories.SecureFolder], decrypts them, and copies them to [getUnencryptedExportDir] */
     fun exportUnencryptedSecureFolderItems(context: Context) : Boolean {
         val secureFolder = File(context.appSecureFolderDir)
@@ -54,14 +63,12 @@ class DataAndBackupHelper {
 
         if (!exportDir.exists()) exportDir.mkdirs()
 
-        val securedItems = secureFolder.listFiles { dir, name ->
-            val file = File(dir, name)
-            val mimeType = Files.probeContentType(file.toPath())
+        val securedItems = secureFolder.listMediaFiles()
 
-            mimeType.startsWith("image") || mimeType.startsWith("video")
+        if (securedItems == null) {
+            Log.d(TAG, "Secured items was null, nothing to export.")
+            return false
         }
-
-        if (securedItems == null) return false
 
         val database = applicationDatabase.securedItemEntityDao()
 
@@ -71,8 +78,7 @@ class DataAndBackupHelper {
             try {
                 val decryptedFile = File(exportDir, secureFile.name)
                 decryptedFile.createNewFile()
-                val iv = database.getIvFromSecuredPath(secureFile.absolutePath)
-                if (iv == null) throw Exception("IV for ${secureFile.name} was null, cannot decrypt.")
+                val iv = database.getIvFromSecuredPath(secureFile.absolutePath) ?: throw Exception("IV for ${secureFile.name} was null, cannot decrypt.")
 
                 EncryptionManager.decryptInputStream(
                     inputStream = secureFile.inputStream(),
@@ -99,12 +105,7 @@ class DataAndBackupHelper {
 
     	if (!exportDir.exists()) exportDir.mkdirs()
 
-    	val securedItems = secureFolder.listFiles { dir, name ->
-    	    val file = File(dir, name)
-    	    val mimeType = Files.probeContentType(file.toPath())
-
-    	    mimeType.startsWith("image") || mimeType.startsWith("video")
-    	}
+    	val securedItems = secureFolder.listMediaFiles()
 
     	if (securedItems == null) {
             Log.d(TAG, "Secured items was null, nothing to export.")
@@ -118,4 +119,60 @@ class DataAndBackupHelper {
 
         return true
     }
+
+    fun exportSecureFolderToZipFile(
+        context: Context,
+    ) : Boolean {
+        val secureFolder = File(context.appSecureFolderDir)
+
+        val securedItems = secureFolder.listFiles()
+
+        if (securedItems == null) {
+            Log.d(TAG, "Secured items was null, nothing to export.")
+            return false
+        }
+
+        val fileOutputStream = getZipFile(context = context)
+        val zipOutputStream = ZipOutputStream(fileOutputStream.outputStream())
+
+        val database = applicationDatabase.securedItemEntityDao()
+
+        try {
+            securedItems.forEach { secureFile ->
+                Log.d(TAG, "Trying to decrypt ${secureFile.name}...")
+
+                val iv = database.getIvFromSecuredPath(secureFile.absolutePath)
+
+                val bytes =
+                    if (iv != null) {
+                        EncryptionManager.decryptBytes(
+                            bytes = secureFile.readBytes(),
+                            iv = iv
+                        )
+                    } else {
+                        secureFile.readBytes()
+                    }
+
+                val entry = ZipEntry(secureFile.name)
+                zipOutputStream.putNextEntry(entry)
+                zipOutputStream.write(bytes)
+                zipOutputStream.closeEntry()
+            }
+        } catch (e: Throwable) {
+            Log.e(TAG, "Couldn't decrypt files")
+            Log.e(TAG, e.toString())
+            e.printStackTrace()
+        } finally {
+            zipOutputStream.close()
+        }
+
+        return true
+    }
+}
+
+private fun File.listMediaFiles() = listFiles { dir, name ->
+    val file = File(dir, name)
+    val mimeType = Files.probeContentType(file.toPath())
+
+    mimeType.startsWith("image") || mimeType.startsWith("video")
 }
