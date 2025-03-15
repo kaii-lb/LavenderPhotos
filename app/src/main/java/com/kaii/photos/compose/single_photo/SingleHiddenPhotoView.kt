@@ -674,43 +674,72 @@ fun SingleSecuredPhotoInfoDialog(
                         withContext(Dispatchers.IO) {
                             showLoadingDialog = true
 
-                            if (currentMediaItem.type == MediaType.Video) {
+                            val file = if (currentMediaItem.type == MediaType.Video) {
                                 val originalFile = File(currentMediaItem.absolutePath)
                                 val cachedFile = getSecureDecryptedVideoFile(
                                     name = currentMediaItem.displayName!!,
                                     context = context
                                 )
 
-                                val file =
-                                    if (!cachedFile.exists()) {
-                                        val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(currentMediaItem.absolutePath)
+                                if (!cachedFile.exists()) {
+                                    val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(currentMediaItem.absolutePath)
 
-                                        if (iv == null) {
-                                        	Log.e(TAG, "IV for ${currentMediaItem.displayName} was null, aborting")
-                                        	return@withContext
-                                        }
-                                        EncryptionManager.decryptVideo(
-                                            absolutePath = originalFile.absolutePath,
-                                            iv = iv,
-                                            context = context,
-                                            progress = {}
-                                        )
-                                    } else if (cachedFile.length() < originalFile.length()) {
-                                        while(cachedFile.length() < originalFile.length()) {
-                                            delay(100)
-                                        }
-
-                                        cachedFile
-                                    } else {
-                                        cachedFile
+                                    if (iv == null) {
+                                    	Log.e(TAG, "IV for ${currentMediaItem.displayName} was null, aborting")
+                                    	return@withContext
+                                    }
+                                    EncryptionManager.decryptVideo(
+                                        absolutePath = originalFile.absolutePath,
+                                        iv = iv,
+                                        context = context,
+                                        progress = {}
+                                    )
+                                } else if (cachedFile.length() < originalFile.length()) {
+                                    while(cachedFile.length() < originalFile.length()) {
+                                        delay(100)
                                     }
 
-                                getExifDataForMedia(file.absolutePath).collect {
-                                    mediaData = it
+                                    cachedFile
+                                } else {
+                                    cachedFile
                                 }
+                            } else {
+                            	val originalFile = File(currentMediaItem.absolutePath)
+                            	val cachedFile = getDecryptCacheForFile(
+                            	    file = originalFile,
+                            	    context = context
+                            	)
 
-                                showLoadingDialog = false
+                            	if (!cachedFile.exists()) {
+                            	    val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(currentMediaItem.absolutePath)
+
+                            	    if (iv == null) {
+                            	    	Log.e(TAG, "IV for ${currentMediaItem.displayName} was null, aborting")
+                            	    	return@withContext
+                            	    }
+                            	    EncryptionManager.decryptInputStream(
+                            	        inputStream = originalFile.inputStream(),
+                            	        outputStream = cachedFile.outputStream(),
+                            	        iv = iv
+                            	    )
+
+                            	    cachedFile
+                            	} else if (cachedFile.length() < originalFile.length()) {
+                            	    while(cachedFile.length() < originalFile.length()) {
+                            	        delay(100)
+                            	    }
+
+                            	    cachedFile
+                            	} else {
+                            	    cachedFile
+                            	}
                             }
+
+
+                            getExifDataForMedia(file.absolutePath).collect {
+                                mediaData = it
+                            }
+                            showLoadingDialog = false
                         }
                     }
 

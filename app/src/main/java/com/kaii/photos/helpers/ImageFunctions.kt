@@ -321,8 +321,14 @@ fun moveImageListToPath(context: Context, list: List<MediaStoreData>, destinatio
     }
 }
 
-/** @param destination where to copy said files to, should be relative */
-fun copyImageListToPath(context: Context, list: List<MediaStoreData>, destination: String) {
+/** @param destination where to copy said files to, should be relative 
+	@param overrideDisplayName should not contain file extension */
+fun copyImageListToPath(
+    context: Context,
+    list: List<MediaStoreData>,
+    destination: String,
+    overrideDisplayName: ((displayName: String) -> String)? = null
+) {
     CoroutineScope(Dispatchers.IO).launch {
         val contentResolver = context.contentResolver
 
@@ -331,7 +337,8 @@ fun copyImageListToPath(context: Context, list: List<MediaStoreData>, destinatio
                 contentResolver.copyMedia(
                     context = context,
                     media = media,
-                    destination = destination
+                    destination = destination,
+                    overrideDisplayName = if (overrideDisplayName != null) overrideDisplayName(media.displayName!!) else null
                 )
             }
         }.await()

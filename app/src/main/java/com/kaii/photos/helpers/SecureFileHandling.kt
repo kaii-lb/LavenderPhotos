@@ -28,7 +28,7 @@ fun getSecuredCacheImageForFile(
 fun getDecryptCacheForFile(
     file: File,
     context: Context
-) : File = File(context.appSecureThumbnailCacheDir + "/" + "${file.nameWithoutExtension}-decrypt-${file.extension}")
+) : File = File(context.appSecureThumbnailCacheDir + "/" + "${file.nameWithoutExtension}-decrypt.${file.extension}")
 
 fun getSecureDecryptedVideoFile(
 	name: String,

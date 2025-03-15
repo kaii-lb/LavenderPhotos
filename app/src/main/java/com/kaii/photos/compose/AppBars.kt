@@ -317,18 +317,6 @@ fun MainAppTopBar(
                 val activityLauncher = createDirectoryPicker { path ->
                     if (path != null) mainViewModel.settings.AlbumsList.addToAlbumsList(path)
                 }
-                    // createPersistablePermissionLauncher { uri ->
-                    //     uri.path?.let {
-                    //         val dir = File(it)
-                    //
-                    //         val pathSections = dir.absolutePath.replace(baseInternalStorageDirectory, "").split(":")
-                    //         val path = pathSections[pathSections.size - 1]
-                    //
-                    //         Log.d(TAG, "Added album path $path")
-                    //
-                    //         mainViewModel.settings.AlbumsList.addToAlbumsList(path)
-                    //     }
-                    // }
 
                 IconButton(
                     onClick = {

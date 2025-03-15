@@ -91,6 +91,7 @@ import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.CheckBoxButtonRow
 import com.kaii.photos.compose.FullWidthDialogButton
+import com.kaii.photos.compose.HorizontalSeparator
 import com.kaii.photos.compose.LavenderDialogBase
 import com.kaii.photos.compose.PreferencesRow
 import com.kaii.photos.compose.PreferencesSeparatorText
@@ -102,7 +103,6 @@ import com.kaii.photos.datastore.Editing
 import com.kaii.photos.datastore.MainPhotosView
 import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.datastore.StoredDrawable
-import com.kaii.photos.datastore.separator
 import com.kaii.photos.datastore.Versions
 import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.ExtendedMaterialTheme
@@ -643,39 +643,17 @@ fun TabCustomizationDialog(
                     .align(Alignment.Center)
             )
 
-            var showDialog by remember { mutableStateOf(false) }
-
-            if (showDialog) {
-                AddTabDialog(
-                	tabList = tabList,
-                    dismissDialog = {
-                        showDialog = false
-                    }
-                )
-            }
 
             IconButton(
                 onClick = {
-                    if (tabList.size < 5) {
-                    	showDialog = true
-                    } else {
-                    	coroutineScope.launch {
-                    		LavenderSnackbarController.pushEvent(
-                    			LavenderSnackbarEvents.MessageEvent(
-                    				message = "Maximum of 5 tabs allowed",
-                    				iconResId = R.drawable.error_2,
-                    				duration = SnackbarDuration.Short
-                    			)
-                    		)
-                    	}
-                   	}
+                    closeDialog()
                 },
                 modifier = Modifier
                 	.align(Alignment.CenterEnd)
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.add),
-                    contentDescription = "Add a new tab",
+                    painter = painterResource(id = R.drawable.close),
+                    contentDescription = "Close this dialog",
                     tint = MaterialTheme.colorScheme.onSurface
                 )
             }
@@ -704,7 +682,7 @@ fun TabCustomizationDialog(
         			    		coroutineScope.launch {
         			    			LavenderSnackbarController.pushEvent(
         			    				LavenderSnackbarEvents.MessageEvent(
-        			    					message = "Atleast one tab needs to exist",
+        			    					message = "At least one tab needs to exist",
         			    					iconResId = R.drawable.error_2,
         			    					duration = SnackbarDuration.Short
         			    				)
@@ -747,7 +725,7 @@ fun TabCustomizationDialog(
 							coroutineScope.launch {
 								LavenderSnackbarController.pushEvent(
 									LavenderSnackbarEvents.MessageEvent(
-										message = "Atleast one tab needs to exist",
+										message = "At least one tab needs to exist",
 										iconResId = R.drawable.error_2,
 										duration = SnackbarDuration.Short
 									)
@@ -756,6 +734,39 @@ fun TabCustomizationDialog(
 						}
 					}
             	}
+            }
+        }
+
+        HorizontalSeparator()
+
+        var showDialog by remember { mutableStateOf(false) }
+        if (showDialog) {
+            AddTabDialog(
+                tabList = tabList,
+                dismissDialog = {
+                    showDialog = false
+                }
+            )
+        }
+
+        FullWidthDialogButton(
+            text = "Add a tab",
+            color = MaterialTheme.colorScheme.primary,
+            position = RowPosition.Single,
+            textColor = MaterialTheme.colorScheme.onPrimary
+        ) {
+            if (tabList.size < 5) {
+                showDialog = true
+            } else {
+                coroutineScope.launch {
+                    LavenderSnackbarController.pushEvent(
+                        LavenderSnackbarEvents.MessageEvent(
+                            message = "Maximum of 5 tabs allowed",
+                            iconResId = R.drawable.error_2,
+                            duration = SnackbarDuration.Short
+                        )
+                    )
+                }
             }
         }
     }
@@ -1068,14 +1079,7 @@ private fun AddTabDialog(
 
 		Spacer (modifier = Modifier.height(4.dp))
 
-		Box (
-			modifier = Modifier
-				.height(1.dp)
-				.padding(16.dp, 0.dp)
-				.fillMaxWidth(1f)
-				.background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
-				.clip(RoundedCornerShape(1000.dp))
-		)
+        HorizontalSeparator()
 
 		Spacer (modifier = Modifier.height(2.dp))
 

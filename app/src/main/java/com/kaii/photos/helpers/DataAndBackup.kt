@@ -24,6 +24,10 @@ class DataAndBackupHelper {
     private fun getCurrentDate() = Instant.fromEpochMilliseconds(System.currentTimeMillis())
             .toLocalDateTime(TimeZone.currentSystemDefault())
             .format(LocalDateTime.Format {
+            	minute()
+            	char('_')
+            	hour()
+            	char('_')
                 dayOfMonth()
                 char('_')
                 monthNumber()
@@ -43,6 +47,7 @@ class DataAndBackupHelper {
     	    RAW_DIR + "_taken_" + getCurrentDate()
     	)
 
+    /** takes items in [AppDirectories.SecureFolder], decrypts them, and copies them to [getUnencryptedExportDir] */
     fun exportUnencryptedSecureFolderItems(context: Context) : Boolean {
         val secureFolder = File(context.appSecureFolderDir)
         val exportDir = getUnencryptedExportDir(context)
@@ -84,8 +89,12 @@ class DataAndBackupHelper {
         return true
     }
 
-    fun exportRawSecureFolderItems(context: Context) {
-    	val secureFolder = File(context.appSecureFolderDir)
+    /** Takes item in [secureFolder] and copies them as is to [getRawExportDir]
+     * return true if it succeeded, false otherwise */
+    fun exportRawSecureFolderItems(
+        context: Context,
+        secureFolder: File = File(context.appSecureFolderDir)
+    ) : Boolean {
     	val exportDir = getRawExportDir(context)
 
     	if (!exportDir.exists()) exportDir.mkdirs()
@@ -97,11 +106,16 @@ class DataAndBackupHelper {
     	    mimeType.startsWith("image") || mimeType.startsWith("video")
     	}
 
-    	if (securedItems == null) return
+    	if (securedItems == null) {
+            Log.d(TAG, "Secured items was null, nothing to export.")
+            return false
+        }
 
     	securedItems.forEach { secureFile ->
 			val decryptedFile = File(exportDir, secureFile.name)
-			if (!decryptedFile.exists())  secureFile.copyTo(decryptedFile)
+			if (!decryptedFile.exists()) secureFile.copyTo(decryptedFile)
     	}
+
+        return true
     }
 }

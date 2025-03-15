@@ -4,12 +4,13 @@ import android.content.Context
 import android.os.Environment
 import java.io.File
 
-private enum class AppDirectories(val path: String) {
+enum class AppDirectories(val path: String) {
     MainDir("LavenderPhotos"),
-    LockedFolder("secure_folder"),
+    SecureFolder("secure_folder"),
     RestoredFolder("Restored Files"),
     SecureVideoCacheDir("secure_video_cache_dir"),
-    SecureThumbnailCacheDir("secure_thumbnail_cache_dir")
+    SecureThumbnailCacheDir("secure_thumbnail_cache_dir"),
+    OldSecureFolder("locked_folder")
 }
 
 /** ends with a "/" */
@@ -22,7 +23,7 @@ val baseInternalStorageDirectory = run {
 /** doesn't end with a "/" */
 val Context.appSecureFolderDir: String
     get() {
-        val path = filesDir.absolutePath.removeSuffix("/") + "/" + AppDirectories.LockedFolder.path // TODO: switch to external files dir for extra storage space
+        val path = filesDir.absolutePath.removeSuffix("/") + "/" + AppDirectories.SecureFolder.path // TODO: switch to external files dir for extra storage space
 
         val dir = File(path)
         if (!dir.exists()) dir.mkdirs()
@@ -75,3 +76,8 @@ val Context.appSecureThumbnailCacheDir: String
 
         return dir.absolutePath.removeSuffix("/")
     }
+
+val File.relativePath: String
+    get() = this.absolutePath.replace(baseInternalStorageDirectory, "")
+
+fun String.toRelativePath() = replace(baseInternalStorageDirectory, "")

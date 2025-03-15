@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -460,4 +461,16 @@ fun rememberDeviceOrientation(): MutableState<Boolean> {
     }
 
     return isLandscape
+}
+
+@Composable
+fun HorizontalSeparator() {
+    Box (
+        modifier = Modifier
+            .height(1.dp)
+            .padding(16.dp, 0.dp)
+            .fillMaxWidth(1f)
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
+            .clip(RoundedCornerShape(1000.dp))
+    )
 }
