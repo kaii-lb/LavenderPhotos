@@ -32,19 +32,11 @@ internal constructor(
     }
 
     open fun loadMediaStoreData(): Flow<List<MediaStoreData>> = callbackFlow {
-        var localCancellationSignal = CancellationSignal()
-        val mutex = Mutex()
-
         val contentObserver =
             object : ContentObserver(Handler(Looper.getMainLooper())) {
                 override fun onChange(selfChange: Boolean) {
                     super.onChange(selfChange)
                     launch(Dispatchers.IO) {
-                        mutex.withLock {
-                            localCancellationSignal.cancel()
-                            localCancellationSignal = CancellationSignal()
-                        }
-
                         runCatching {
                             trySend(query())
                         }
@@ -73,7 +65,6 @@ internal constructor(
         }
 
         awaitClose {
-            localCancellationSignal.cancel()
             context.contentResolver.unregisterContentObserver(contentObserver)
         }
     }.conflate()
