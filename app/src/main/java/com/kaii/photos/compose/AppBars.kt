@@ -326,7 +326,7 @@ fun MainAppTopBar(
                     Icon(
                         painter = painterResource(R.drawable.add),
                         contentDescription = "Add album",
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        tint = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -340,7 +340,7 @@ fun MainAppTopBar(
                 Icon(
                     painter = painterResource(R.drawable.settings),
                     contentDescription = "Settings Button",
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    tint = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -396,6 +396,7 @@ fun MainAppBottomBar(
                         Text(
                             text = tab.name,
                             fontSize = TextUnit(14f, TextUnitType.Sp),
+                            color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier
                                 .wrapContentSize()
                         )
@@ -1402,6 +1403,7 @@ fun DualFunctionTopAppBar(
     alternateActions: @Composable () -> Unit,
     navigationIcon: @Composable () -> Unit = @Composable {}
 ) {
+    TopAppBarDefaults.topAppBarColors()
     TopAppBar(
         navigationIcon = navigationIcon,
         title = {
