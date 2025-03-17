@@ -4,6 +4,7 @@ import androidx.compose.runtime.saveable.mapSaver
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.StoredDrawable
 
+@Suppress("UNCHECKED_CAST") // if the type changes and this doesn't then something always went really bad
 val BottomBarTabSaver = run {
     val nameKey = "Name"
     val albumPathKey = "AlbumPath"

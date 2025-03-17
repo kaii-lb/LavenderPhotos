@@ -1,6 +1,7 @@
 package com.kaii.photos.compose.settings
 
 import android.content.Intent
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.padding
@@ -39,6 +40,8 @@ import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.relativePath
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import kotlinx.coroutines.Dispatchers
+
+private const val TAG = "DATA_AND_BACKUP_PAGE"
 
 @Composable
 fun DataAndBackupPage() {
@@ -139,7 +142,7 @@ fun DataAndBackupPage() {
                         isLoading.value = true
                         LavenderSnackbarController.pushEvent(
                             LavenderSnackbarEvents.LoadingEvent(
-                                message = "Exporting backup...",
+                                message = "Compressing backup...",
                                 iconResId = R.drawable.folder_export,
                                 isLoading = isLoading
                             )
@@ -177,9 +180,9 @@ fun DataAndBackupPage() {
                 val isLoading = remember { mutableStateOf(false) }
 
                 PreferencesRow(
-                    title = "Export Backup To Zip",
-                    iconResID = R.drawable.folder_zip,
-                    summary = "Exports a zip file of all your favourited items",
+                    title = "Export Backup To Folder",
+                    iconResID = R.drawable.folder_favourites,
+                    summary = "Exports of all your favourited items to a folder",
                     position = RowPosition.Middle,
                     showBackground = false
                 ) {
@@ -218,13 +221,15 @@ fun DataAndBackupPage() {
                         isLoading.value = true
                         LavenderSnackbarController.pushEvent(
                             LavenderSnackbarEvents.LoadingEvent(
-                                message = "Exporting backup...",
+                                message = "Compressing backup...",
                                 iconResId = R.drawable.folder_export,
                                 isLoading = isLoading
                             )
                         )
 
-                        helper.exportFavouritesToZipFile(context = context)
+                        helper.exportFavouritesToZipFile(context = context) { progress ->
+                        	Log.d(TAG, "Progress ${progress * 100}")
+                        }
 
                         val intent = Intent().apply {
                             action = Intent.ACTION_VIEW

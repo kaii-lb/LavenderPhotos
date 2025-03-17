@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import com.kaii.photos.MainActivity.Companion.applicationDatabase
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -13,6 +14,7 @@ import kotlinx.datetime.toLocalDateTime
 import java.io.File
 import java.nio.file.Files
 import java.util.zip.ZipEntry
+import java.util.zip.Deflater
 import java.util.zip.ZipOutputStream
 
 private const val TAG = "DATA_AND_BACKUP"
@@ -150,6 +152,8 @@ class DataAndBackupHelper {
         val fileOutputStream = getZipFile(context = context).outputStream()
         val zipOutputStream = ZipOutputStream(fileOutputStream)
 
+        zipOutputStream.setLevel(Deflater.BEST_COMPRESSION)
+
         val database = applicationDatabase.securedItemEntityDao()
 
         try {
@@ -186,43 +190,61 @@ class DataAndBackupHelper {
 
     suspend fun exportFavourites(context: Context) {
         val database = applicationDatabase.favouritedItemEntityDao()
+        val exportDir = getFavExportDir(context = context)
 
-        database.getAll().collectLatest { items ->
-            val exportDir = getFavExportDir(context = context)
+        val items = database.getAll().first()
 
-            items.forEach { favItem ->
-                val favFile = File(favItem.absolutePath)
+		items.forEach { favItem ->
+		    val favFile = File(favItem.absolutePath)
 
-                val destination = File(exportDir, favFile.name)
-                if (!destination.exists()) favFile.copyTo(destination)
-            }
-        }
+		    val destination = File(exportDir, favFile.name)
+		    if (!destination.exists()) favFile.copyTo(destination)
+		}
     }
 
-    suspend fun exportFavouritesToZipFile(context: Context) {
+    suspend fun exportFavouritesToZipFile(
+    	context: Context,
+    	progress: (percentage: Float) -> Unit
+   	) {
         val database = applicationDatabase.favouritedItemEntityDao()
 
         val fileOutputStream = getZipFile(context = context).outputStream()
         val zipOutputStream = ZipOutputStream(fileOutputStream)
 
-        database.getAll().collectLatest { items ->
-            items.forEach { favItem ->
-                try {
-                    val favFile = File(favItem.absolutePath)
+        zipOutputStream.setLevel(Deflater.BEST_COMPRESSION)
 
-                    val entry = ZipEntry(favFile.name)
-                    zipOutputStream.putNextEntry(entry)
-                    zipOutputStream.write(favFile.readBytes())
-                    zipOutputStream.closeEntry()
-                } catch (e: Throwable) {
-                    Log.e(TAG, "Failed exporting ${favItem.displayName} to favourites zip file")
-                    Log.e(TAG, e.toString())
-                    e.printStackTrace()
-                } finally {
-                    zipOutputStream.close()
+        val items = database.getAll().first().map { File(it.absolutePath) }
+
+		val totalSize = items.map { it.length() }.sum().toFloat()
+		var currentProgress = 0f
+
+        items.forEach { favFile ->
+            try {
+                val entry = ZipEntry(favFile.name)
+                zipOutputStream.putNextEntry(entry)
+
+                val buffer = ByteArray(1024 * 32)
+                var read = 0
+                val inputStream = favFile.inputStream()
+
+                while (read > -1) {
+                	read = inputStream.read(buffer)
+
+					zipOutputStream.write(buffer)
+                	currentProgress += buffer.size / totalSize
+                	progress(currentProgress)
                 }
+
+                zipOutputStream.closeEntry()
+            } catch (e: Throwable) {
+                Log.e(TAG, "Failed exporting ${favFile.name} to favourites zip file")
+                Log.e(TAG, e.toString())
+                e.printStackTrace()
             }
         }
+
+        zipOutputStream.close()
+		fileOutputStream.close()
     }
 }
 
