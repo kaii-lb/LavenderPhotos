@@ -3,6 +3,7 @@ package com.kaii.photos.helpers
 import android.content.Context
 import android.util.Log
 import com.kaii.photos.MainActivity.Companion.applicationDatabase
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -19,9 +20,11 @@ private const val TAG = "DATA_AND_BACKUP"
 class DataAndBackupHelper {
     companion object {
         private const val EXPORT_DIR = "Exports"
-        private const val UNENCRYPTED_DIR = "Lavender_Photos_Export"
-        private const val RAW_DIR = "Lavender_Photos_Export_Raw"
-        private const val ZIP_NAME = "Lavender_Photos_Backup"
+        private const val UNENCRYPTED_DIR = "Lavender_Photos_Secure_Folder_Export"
+        private const val RAW_DIR = "Lavender_Photos_Secure_Folder_Export_Raw"
+        private const val ZIP_NAME = "Lavender_Photos_Secure_Folder_Backup"
+        private const val FAV_DIR = "Lavender_Photos_Favourites_Export"
+        private const val FAV_ZIP = "Lavender_Photos_Favourites_Backup"
     }
 
     private fun getCurrentDate() = Instant.fromEpochMilliseconds(System.currentTimeMillis())
@@ -54,6 +57,18 @@ class DataAndBackupHelper {
         File(
             File(context.appStorageDir, EXPORT_DIR),
             ZIP_NAME + "_taken_" + getCurrentDate() + ".zip"
+        )
+
+    fun getFavExportDir(context: Context) =
+        File(
+            File(context.appStorageDir, EXPORT_DIR),
+            FAV_DIR + "_taken_" + getCurrentDate() + ".zip"
+        )
+
+    fun getFavZipFile(context: Context) =
+        File(
+            File(context.appStorageDir, EXPORT_DIR),
+            FAV_ZIP + "_taken_" + getCurrentDate() + ".zip"
         )
 
     /** takes items in [AppDirectories.SecureFolder], decrypts them, and copies them to [getUnencryptedExportDir] */
@@ -132,8 +147,8 @@ class DataAndBackupHelper {
             return false
         }
 
-        val fileOutputStream = getZipFile(context = context)
-        val zipOutputStream = ZipOutputStream(fileOutputStream.outputStream())
+        val fileOutputStream = getZipFile(context = context).outputStream()
+        val zipOutputStream = ZipOutputStream(fileOutputStream)
 
         val database = applicationDatabase.securedItemEntityDao()
 
@@ -167,6 +182,47 @@ class DataAndBackupHelper {
         }
 
         return true
+    }
+
+    suspend fun exportFavourites(context: Context) {
+        val database = applicationDatabase.favouritedItemEntityDao()
+
+        database.getAll().collectLatest { items ->
+            val exportDir = getFavExportDir(context = context)
+
+            items.forEach { favItem ->
+                val favFile = File(favItem.absolutePath)
+
+                val destination = File(exportDir, favFile.name)
+                if (!destination.exists()) favFile.copyTo(destination)
+            }
+        }
+    }
+
+    suspend fun exportFavouritesToZipFile(context: Context) {
+        val database = applicationDatabase.favouritedItemEntityDao()
+
+        val fileOutputStream = getZipFile(context = context).outputStream()
+        val zipOutputStream = ZipOutputStream(fileOutputStream)
+
+        database.getAll().collectLatest { items ->
+            items.forEach { favItem ->
+                try {
+                    val favFile = File(favItem.absolutePath)
+
+                    val entry = ZipEntry(favFile.name)
+                    zipOutputStream.putNextEntry(entry)
+                    zipOutputStream.write(favFile.readBytes())
+                    zipOutputStream.closeEntry()
+                } catch (e: Throwable) {
+                    Log.e(TAG, "Failed exporting ${favItem.displayName} to favourites zip file")
+                    Log.e(TAG, e.toString())
+                    e.printStackTrace()
+                } finally {
+                    zipOutputStream.close()
+                }
+            }
+        }
     }
 }
 

@@ -36,6 +36,7 @@ import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.helpers.DataAndBackupHelper
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.baseInternalStorageDirectory
+import com.kaii.photos.helpers.relativePath
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import kotlinx.coroutines.Dispatchers
 
@@ -160,6 +161,84 @@ fun DataAndBackupPage() {
 
                         context.startActivity(intent)
 
+                        isLoading.value = false
+                    }
+                }
+            }
+
+            item {
+                PreferencesSeparatorText(
+                    text = "Favourites"
+                )
+            }
+
+            item {
+                val context = LocalContext.current
+                val isLoading = remember { mutableStateOf(false) }
+
+                PreferencesRow(
+                    title = "Export Backup To Zip",
+                    iconResID = R.drawable.folder_zip,
+                    summary = "Exports a zip file of all your favourited items",
+                    position = RowPosition.Middle,
+                    showBackground = false
+                ) {
+                    mainViewModel.launch(Dispatchers.IO) {
+                        val helper = DataAndBackupHelper()
+
+                        isLoading.value = true
+                        LavenderSnackbarController.pushEvent(
+                            LavenderSnackbarEvents.LoadingEvent(
+                                message = "Exporting backup...",
+                                iconResId = R.drawable.folder_export,
+                                isLoading = isLoading
+                            )
+                        )
+
+                        helper.exportFavourites(context = context)
+
+                        val favExportDir = helper.getFavExportDir(context = context)
+
+                        mainViewModel.settings.AlbumsList.addToAlbumsList(favExportDir.relativePath)
+
+                        isLoading.value = false
+                    }
+                }
+
+                PreferencesRow(
+                    title = "Export Backup To Zip",
+                    iconResID = R.drawable.folder_zip,
+                    summary = "Exports a zip file of all your favourited items",
+                    position = RowPosition.Middle,
+                    showBackground = false
+                ) {
+                    mainViewModel.launch(Dispatchers.IO) {
+                        val helper = DataAndBackupHelper()
+
+                        isLoading.value = true
+                        LavenderSnackbarController.pushEvent(
+                            LavenderSnackbarEvents.LoadingEvent(
+                                message = "Exporting backup...",
+                                iconResId = R.drawable.folder_export,
+                                isLoading = isLoading
+                            )
+                        )
+
+                        helper.exportFavouritesToZipFile(context = context)
+
+                        val intent = Intent().apply {
+                            action = Intent.ACTION_VIEW
+                            data = FileProvider.getUriForFile(
+                                context,
+                                LAVENDER_FILE_PROVIDER_AUTHORITY,
+                                helper.getFavZipFile(context = context)
+                            )
+
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                        }
+
+                        context.startActivity(intent)
                         isLoading.value = false
                     }
                 }
