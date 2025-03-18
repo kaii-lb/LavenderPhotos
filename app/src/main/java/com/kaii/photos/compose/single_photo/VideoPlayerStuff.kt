@@ -633,12 +633,14 @@ fun VideoPlayer(
 
                         onDoubleTap = { position ->
                             if (!isTouchLocked.value && position.x < size.width / 2) {
+                            	if (doubleTapDisplayTimeMillis > 0) doubleTapDisplayTimeMillis = 0
                                 doubleTapDisplayTimeMillis -= 1000
 
                                 val prev = isPlaying.value
                                 exoPlayer.seekBack()
                                 isPlaying.value = prev
                             } else if (!isTouchLocked.value && position.x >= size.width / 2) {
+                            	if (doubleTapDisplayTimeMillis < 0) doubleTapDisplayTimeMillis = 0
                                 doubleTapDisplayTimeMillis += 1000
 
                                 val prev = isPlaying.value
