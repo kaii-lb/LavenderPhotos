@@ -162,13 +162,7 @@ suspend fun moveImageToLockedFolder(
 
     list.forEach { mediaItem ->
         // set last modified so item shows up in correct place in locked folder
-        contentResolver.update(
-            mediaItem.uri,
-            ContentValues().apply {
-                put(MediaColumns.DATE_MODIFIED, lastModified)
-            },
-            null
-        )
+        File(mediaItem.absolutePath).setLastModified(lastModified)
 
         val fileToBeHidden = File(mediaItem.absolutePath)
         val copyToPath = context.appSecureFolderDir + "/" + fileToBeHidden.name
@@ -480,7 +474,6 @@ suspend fun savePathListToBitmap(
             )
 
             val contentValues = ContentValues().apply {
-                put(MediaStore.Images.Media.DATE_MODIFIED, currentTime)
                 put(MediaColumns.DATE_ADDED, currentTime)
                 put(MediaStore.Images.Media.DATE_TAKEN, dateTaken + 1)
             }
@@ -493,18 +486,23 @@ suspend fun savePathListToBitmap(
                 outputStream.close()
 
                 context.contentResolver.update(newUri, contentValues, null)
+                File(absolutePath).setLastModified(currentTime)
 
-                LavenderSnackbarEvents.MessageEvent(
-                    message = "Saved edited image!",
-                    iconResId = R.drawable.file_is_selected_foreground,
-                    duration = SnackbarDuration.Short
-                )
+				LavenderSnackbarController.pushEvent(
+	                LavenderSnackbarEvents.MessageEvent(
+	                    message = "Saved edited image!",
+	                    iconResId = R.drawable.file_is_selected_foreground,
+	                    duration = SnackbarDuration.Short
+	                )
+				)
             } else {
-                LavenderSnackbarEvents.MessageEvent(
-                    message = "Failed to save edited image",
-                    iconResId = R.drawable.error_2,
-                    duration = SnackbarDuration.Long
-                )
+            	LavenderSnackbarController.pushEvent(
+	                LavenderSnackbarEvents.MessageEvent(
+	                    message = "Failed to save edited image",
+	                    iconResId = R.drawable.error_2,
+	                    duration = SnackbarDuration.Long
+	                )
+            	)
             }
         } else {
             val outputStream = context.contentResolver.openOutputStream(uri)
@@ -515,19 +513,15 @@ suspend fun savePathListToBitmap(
                 outputStream.close()
 
                 // update date modified and invalidate cache by proxy
-                context.contentResolver.update(
-                    uri,
-                    ContentValues().apply {
-                        put(MediaStore.Images.Media.DATE_MODIFIED, currentTime)
-                    },
-                    null
-                )
+                File(absolutePath).setLastModified(currentTime)
 
-                LavenderSnackbarEvents.MessageEvent(
-                    message = "Saved edited image!",
-                    iconResId = R.drawable.file_is_selected_foreground,
-                    duration = SnackbarDuration.Short
-                )
+				LavenderSnackbarController.pushEvent(
+	                LavenderSnackbarEvents.MessageEvent(
+	                    message = "Saved edited image!",
+	                    iconResId = R.drawable.file_is_selected_foreground,
+	                    duration = SnackbarDuration.Short
+	                )
+				)
             } else {
                 LavenderSnackbarController.pushEvent(
                     LavenderSnackbarEvents.MessageEvent(
