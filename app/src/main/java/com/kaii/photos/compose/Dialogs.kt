@@ -1161,8 +1161,8 @@ fun SingleAlbumDialog(
 
             Column(
                 modifier = Modifier
-                    .height(reverseHeight + 6.dp)
-                    .padding(8.dp, 0.dp, 8.dp, 6.dp)
+                    .height(reverseHeight)
+                    .padding(8.dp, 0.dp)
             ) {
                 DialogClickableItem(
                     text = "Remove album from list",
@@ -1185,20 +1185,34 @@ fun SingleAlbumDialog(
 
                     navController.popBackStack()
                 }
+            }
 
-				val expanded = remember { mutableStateOf(false) }
-				DialogExpandableItem(
-					text = "Album Info",
-					iconResId = R.drawable.info,
-					position = RowPosition.Bottom,
-					expanded = expanded
-				) {
-					DialogInfoText(
-					    firstText = "Path",
-					    secondText = absoluteDirPath,
-					    iconResId = R.drawable.folder,
-					)
-				}
+			val expanded = remember { mutableStateOf(false) }
+			val expandedHeight by animateDpAsState(
+			    targetValue = if (expanded.value && !isEditingFileName.value) 36.dp else 0.dp,
+			    animationSpec = tween(
+			        durationMillis = 250
+			    ),
+			    label = "height of expandable album info",
+			)
+
+            Column(
+                modifier = Modifier
+                    .height(reverseHeight + 6.dp + expandedHeight)
+                    .padding(8.dp, 0.dp, 8.dp, 6.dp)
+            ) {
+            	DialogExpandableItem(
+            		text = "Album Info",
+            		iconResId = R.drawable.info,
+            		position = RowPosition.Bottom,
+            		expanded = expanded
+            	) {
+            		DialogInfoText(
+            		    firstText = "Path",
+            		    secondText = absoluteDirPath,
+            		    iconResId = R.drawable.folder,
+            		)
+            	}
             }
         }
     }
@@ -1365,6 +1379,8 @@ private fun ExplanationDialogBase(
     showPreviousDialog?.value = false
 
     LavenderDialogBase(
+    	modifier = Modifier
+    		.animateContentSize(),
         onDismiss = {
             showDialog.value = false
         }
