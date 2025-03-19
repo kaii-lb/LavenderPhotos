@@ -267,8 +267,10 @@ class MainActivity : ComponentActivity() {
             )
         )
 
+		// update main photos view albums list
         LaunchedEffect(albumsList) {
-            if (navControllerLocal.currentBackStackEntry?.destination?.route != MultiScreenViewType.MainScreen.name) return@LaunchedEffect
+            if (navControllerLocal.currentBackStackEntry?.destination?.route != MultiScreenViewType.MainScreen.name
+            		|| multiAlbumViewModel.albums.toSet() == albumsList) return@LaunchedEffect
 
             Log.d(TAG, "Refreshing main photos view")
             Log.d(TAG, "In view model: ${multiAlbumViewModel.albums} new: $albumsList")
@@ -280,6 +282,8 @@ class MainActivity : ComponentActivity() {
         }
 
         LaunchedEffect(currentSortMode) {
+        	if (multiAlbumViewModel.sortBy == currentSortMode) return@LaunchedEffect
+
         	Log.d(TAG, "Changing sort mode from: ${multiAlbumViewModel.sortBy} to: $currentSortMode")
         	multiAlbumViewModel.changeSortMode(context = context, sortMode = currentSortMode)
         }
@@ -724,35 +728,40 @@ class MainActivity : ComponentActivity() {
         val coroutineScope = rememberCoroutineScope()
         val checkForUpdatesOnStartup by mainViewModel.settings.Versions.getCheckUpdatesOnStartup().collectAsStateWithLifecycle(initialValue = false)
 
-        if (checkForUpdatesOnStartup) {
-	        mainViewModel.updater.refresh { state ->
-	            Log.d(TAG, "Checking for app updates...")
+		// so it only checks once
+		LaunchedEffect(checkForUpdatesOnStartup) {
+	        if (checkForUpdatesOnStartup) {
+		        mainViewModel.updater.refresh { state ->
+		            Log.d(TAG, "Checking for app updates...")
 
-	            when (state) {
-	                CheckUpdateState.Succeeded -> {
-	                    if (mainViewModel.updater.hasUpdates.value) {
-	                        Log.d(TAG, "Update found! Notifying user...")
+		            when (state) {
+		                CheckUpdateState.Succeeded -> {
+		                    if (mainViewModel.updater.hasUpdates.value) {
+		                        Log.d(TAG, "Update found! Notifying user...")
 
-	                        coroutineScope.launch {
-	                            LavenderSnackbarController.pushEvent(
-	                                LavenderSnackbarEvents.ActionEvent(
-	                                    message = "New app version available!",
-	                                    iconResId = R.drawable.error_2,
-	                                    duration = SnackbarDuration.Short,
-	                                    actionIconResId = R.drawable.download,
-	                                    action = {
-	                                        navControllerLocal.navigate(MultiScreenViewType.UpdatesPage.name)
-	                                    }
-	                                )
-	                            )
-	                        }
-	                    }
-	                }
+		                        coroutineScope.launch {
+		                            LavenderSnackbarController.pushEvent(
+		                                LavenderSnackbarEvents.ActionEvent(
+		                                    message = "New app version available!",
+		                                    iconResId = R.drawable.error_2,
+		                                    duration = SnackbarDuration.Short,
+		                                    actionIconResId = R.drawable.download,
+		                                    action = {
+		                                        navControllerLocal.navigate(MultiScreenViewType.UpdatesPage.name)
+		                                    }
+		                                )
+		                            )
+		                        }
+		                    }
+		                }
 
-	                else -> {}
-	            }
+		                else -> {
+		                	Log.d(TAG, "No update found.")
+		                }
+		            }
+		        }
 	        }
-        }
+		}
     }
 
     @Composable
