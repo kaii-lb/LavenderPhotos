@@ -62,11 +62,11 @@ suspend fun ContentResolver.copyMedia(
     if (storageContentUri != null) {
         val contentValues = ContentValues().apply {
             put(MediaColumns.DISPLAY_NAME, file.name)
-            put(MediaColumns.DATE_MODIFIED, System.currentTimeMillis())
             put(MediaColumns.DATE_TAKEN, media.dateTaken)
             put(MediaColumns.RELATIVE_PATH, destination)
             put(MediaColumns.MIME_TYPE, media.mimeType)
         }
+        file.setLastModified(System.currentTimeMillis())
 
         val newUri = insert(
             storageContentUri,
