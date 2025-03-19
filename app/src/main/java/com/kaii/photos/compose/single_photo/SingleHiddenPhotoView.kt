@@ -69,9 +69,10 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.kaii.photos.LocalNavController
+import com.kaii.photos.R
 import com.kaii.photos.MainActivity
 import com.kaii.photos.MainActivity.Companion.applicationDatabase
-import com.kaii.photos.R
+import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.compose.ConfirmationDialog
 import com.kaii.photos.compose.ConfirmationDialogWithBody
 import com.kaii.photos.compose.DialogInfoText
@@ -432,21 +433,23 @@ private fun BottomBar(
         absolutePath = originalPath,
         shouldRun = runRestoreAction,
     ) {
-        moveImageOutOfLockedFolder(
-        	list = listOf(item),
-        	context = context
-       	) {
-        	showLoadingDialog = false
-        }
+    	mainViewModel.launch(Dispatchers.IO) {
+	        moveImageOutOfLockedFolder(
+	        	list = listOf(item),
+	        	context = context
+	       	) {
+	        	showLoadingDialog = false
+	        }
 
-        sortOutMediaMods(
-            item,
-            groupedMedia,
-            coroutineScope,
-            state
-        ) {
-            popBackStack()
-        }
+	        sortOutMediaMods(
+	            item,
+	            groupedMedia,
+	            coroutineScope,
+	            state
+	        ) {
+	            popBackStack()
+	        }
+    	}
     }
 
     ConfirmationDialog(
@@ -464,19 +467,21 @@ private fun BottomBar(
         dialogBody = "This action cannot be undone!",
         confirmButtonLabel = "Delete"
     ) {
-        permanentlyDeleteSecureFolderImageList(
-            list = listOf(item.absolutePath),
-            context = context
-        )
+    	mainViewModel.launch(Dispatchers.IO) {
+	        permanentlyDeleteSecureFolderImageList(
+	            list = listOf(item.absolutePath),
+	            context = context
+	        )
 
-        sortOutMediaMods(
-            item,
-            groupedMedia,
-            coroutineScope,
-            state
-        ) {
-            popBackStack()
-        }
+	        sortOutMediaMods(
+	            item,
+	            groupedMedia,
+	            coroutineScope,
+	            state
+	        ) {
+	            popBackStack()
+	        }
+    	}
     }
 
     AnimatedVisibility(

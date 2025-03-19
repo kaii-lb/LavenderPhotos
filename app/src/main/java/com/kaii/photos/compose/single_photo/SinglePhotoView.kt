@@ -472,24 +472,26 @@ private fun BottomBar(
                         uris = listOf(currentItem.uri),
                         shouldRun = runTrashAction,
                         onGranted = {
-                            setTrashedOnPhotoList(
-                                context,
-                                listOf(Pair(currentItem.uri, currentItem.absolutePath)),
-                                true
-                            )
+                        	mainViewModel.launch(Dispatchers.IO) {
+	                            setTrashedOnPhotoList(
+	                                context,
+	                                listOf(Pair(currentItem.uri, currentItem.absolutePath)),
+	                                true
+	                            )
 
-                            if (groupedMedia.value.isEmpty()) onZeroItemsLeft()
+	                            if (groupedMedia.value.isEmpty()) onZeroItemsLeft()
 
-							if (loadsFromMainViewModel) {
-	                            sortOutMediaMods(
-	                                currentItem,
-	                                groupedMedia,
-	                                coroutineScope,
-	                                state
-	                            ) {
-	                                onZeroItemsLeft()
-	                            }
-							}
+								if (loadsFromMainViewModel) {
+		                            sortOutMediaMods(
+		                                currentItem,
+		                                groupedMedia,
+		                                coroutineScope,
+		                                state
+		                            ) {
+		                                onZeroItemsLeft()
+		                            }
+								}
+                        	}
                         }
                     )
 
@@ -539,26 +541,27 @@ private fun BottomBar(
                         uris = listOf(currentItem.uri),
                         shouldRun = moveToSecureFolder,
                         onGranted = {
-                            moveImageToLockedFolder(
-                                listOf(currentItem),
-                                context
-                            ) {
-	                            if (groupedMedia.value.isEmpty()) onZeroItemsLeft()
+                        	mainViewModel.launch(Dispatchers.IO) {
+	                            moveImageToLockedFolder(
+	                                listOf(currentItem),
+	                                context
+	                            ) {
+		                            if (groupedMedia.value.isEmpty()) onZeroItemsLeft()
 
-								if (loadsFromMainViewModel) {
-		                            sortOutMediaMods(
-		                                currentItem,
-		                                groupedMedia,
-		                                coroutineScope,
-		                                state
-		                            ) {
-		                                onZeroItemsLeft()
-		                            }
-								}
+									if (loadsFromMainViewModel) {
+			                            sortOutMediaMods(
+			                                currentItem,
+			                                groupedMedia,
+			                                coroutineScope,
+			                                state
+			                            ) {
+			                                onZeroItemsLeft()
+			                            }
+									}
 
-								showLoadingDialog = false
-                            }
-
+									showLoadingDialog = false
+	                            }
+                        	}
                         }
                     )
 

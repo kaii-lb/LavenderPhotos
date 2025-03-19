@@ -70,9 +70,9 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kaii.photos.R
 import com.kaii.photos.MainActivity.Companion.applicationDatabase
 import com.kaii.photos.MainActivity.Companion.mainViewModel
-import com.kaii.photos.R
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.BottomBarTab
@@ -486,13 +486,15 @@ fun MainAppSelectingBottomBar(
             uris = selectedItemsWithoutSection.map { it.uri },
             shouldRun = runDeleteAction,
             onGranted = {
-                setTrashedOnPhotoList(
-                    context = context,
-                    list = selectedItemsWithoutSection.map { Pair(it.uri, it.absolutePath) },
-                    trashed = true
-                )
+            	mainViewModel.launch(Dispatchers.IO) {
+	                setTrashedOnPhotoList(
+	                    context = context,
+	                    list = selectedItemsWithoutSection.map { Pair(it.uri, it.absolutePath) },
+	                    trashed = true
+	                )
 
-                selectedItemsList.clear()
+	                selectedItemsList.clear()
+            	}
             }
         )
 
@@ -715,13 +717,15 @@ fun SingleAlbumViewBottomBar(
             uris = selectedItemsWithoutSection.map { it.uri },
             shouldRun = runTrashAction,
             onGranted = {
-                setTrashedOnPhotoList(
-                    context = context,
-                    list = selectedItemsWithoutSection.map { Pair(it.uri, it.absolutePath) },
-                    trashed = true
-                )
+            	mainViewModel.launch(Dispatchers.IO) {
+	                setTrashedOnPhotoList(
+	                    context = context,
+	                    list = selectedItemsWithoutSection.map { Pair(it.uri, it.absolutePath) },
+	                    trashed = true
+	                )
 
-                selectedItemsList.clear()
+	                selectedItemsList.clear()
+	            }
             }
         )
 
@@ -894,14 +898,16 @@ fun TrashedPhotoGridViewBottomBar(
             uris = selectedItemsWithoutSection.map { it.uri },
             shouldRun = runRestoreAction,
             onGranted = {
-                setTrashedOnPhotoList(
-                    context = context,
-                    list = selectedItemsWithoutSection.map { Pair(it.uri, it.absolutePath) },
-                    trashed = false
-                )
+            	mainViewModel.launch(Dispatchers.IO) {
+	                setTrashedOnPhotoList(
+	                    context = context,
+	                    list = selectedItemsWithoutSection.map { Pair(it.uri, it.absolutePath) },
+	                    trashed = false
+	                )
 
-                selectedItemsList.clear()
-            }
+	                selectedItemsList.clear()
+	            }
+			}
         )
 
         BottomAppBarItem(
@@ -1095,22 +1101,20 @@ fun SecureFolderViewBottomAppBar(
                   	loadingDialogTitle = "Restoring Files"
                     showLoadingDialog = true
 
-                    coroutineScope.launch {
-                        async {
-                            val newList = groupedMedia.value.toMutableList()
+                    mainViewModel.launch(Dispatchers.IO) {
+	                    val newList = groupedMedia.value.toMutableList()
 
-                            moveImageOutOfLockedFolder(
-                            	list = selectedItemsWithoutSection,
-                            	context = context
-                           	) {
-                           		showLoadingDialog = false
-                           	}
+	                    moveImageOutOfLockedFolder(
+	                    	list = selectedItemsWithoutSection,
+	                    	context = context
+	                   	) {
+	                   		showLoadingDialog = false
+	                   	}
 
-                            newList.removeAll(selectedItemsList)
+	                    newList.removeAll(selectedItemsList)
 
-                            selectedItemsList.clear()
-                            groupedMedia.value = newList
-                        }.await()
+	                    selectedItemsList.clear()
+	                    groupedMedia.value = newList
                     }
                 }
             },
@@ -1127,37 +1131,35 @@ fun SecureFolderViewBottomAppBar(
             	loadingDialogTitle = "Deleting Files"
                 showLoadingDialog = true
 
-                withContext(Dispatchers.IO) {
-                    async {
-                        val newList = groupedMedia.value.toMutableList()
+                mainViewModel.launch(Dispatchers.IO) {
+	                val newList = groupedMedia.value.toMutableList()
 
-                        permanentlyDeleteSecureFolderImageList(
-                            list = selectedItemsWithoutSection.map { it.absolutePath },
-                            context = context
-                        )
+	                permanentlyDeleteSecureFolderImageList(
+	                    list = selectedItemsWithoutSection.map { it.absolutePath },
+	                    context = context
+	                )
 
 
-                        selectedItemsWithoutSection.forEach {
-                            newList.remove(it)
-                        }
+	                selectedItemsWithoutSection.forEach {
+	                    newList.remove(it)
+	                }
 
-                        newList.filter {
-                            it.type == MediaType.Section
-                        }.forEach { item ->
-                            // remove sections which no longer have any children
-                            val filtered = newList.filter { newItem ->
-                                newItem.getLastModifiedDay() == item.getLastModifiedDay()
-                            }
+	                newList.filter {
+	                    it.type == MediaType.Section
+	                }.forEach { item ->
+	                    // remove sections which no longer have any children
+	                    val filtered = newList.filter { newItem ->
+	                        newItem.getLastModifiedDay() == item.getLastModifiedDay()
+	                    }
 
-                            if (filtered.size == 1) newList.remove(item)
-                        }
+	                    if (filtered.size == 1) newList.remove(item)
+	                }
 
-                        selectedItemsList.clear()
-                        groupedMedia.value = newList
+	                selectedItemsList.clear()
+	                groupedMedia.value = newList
 
-                        showLoadingDialog = false
-                        runPermaDeleteAction.value = false
-                    }.await()
+	                showLoadingDialog = false
+	                runPermaDeleteAction.value = false
                 }
             }
         }
@@ -1345,13 +1347,15 @@ fun FavouritesViewBottomAppBar(
             uris = selectedItemsWithoutSection.map { it.uri },
             shouldRun = runTrashAction,
             onGranted = {
-                setTrashedOnPhotoList(
-                    context = context,
-                    list = selectedItemsWithoutSection.map { Pair(it.uri, it.absolutePath) },
-                    trashed = true
-                )
+            	mainViewModel.launch(Dispatchers.IO) {
+	                setTrashedOnPhotoList(
+	                    context = context,
+	                    list = selectedItemsWithoutSection.map { Pair(it.uri, it.absolutePath) },
+	                    trashed = true
+	                )
 
-                selectedItemsList.clear()
+	                selectedItemsList.clear()
+            	}
             }
         )
 

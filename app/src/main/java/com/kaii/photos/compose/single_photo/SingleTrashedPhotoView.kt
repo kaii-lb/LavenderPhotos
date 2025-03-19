@@ -58,12 +58,13 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
+import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.compose.SinglePhotoInfoDialog
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.setTrashedOnPhotoList
+import com.kaii.photos.LocalNavController
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.trash_bin.TrashViewModel
@@ -363,11 +364,13 @@ private fun BottomBar(
                         uris = listOf(item.uri),
                         shouldRun = runRestoreAction,
                         onGranted = {
-                            setTrashedOnPhotoList(
-                                context = context,
-                                list = listOf(Pair(item.uri, item.absolutePath)),
-                                trashed = false
-                            )
+                        	mainViewModel.launch(Dispatchers.IO) {
+	                            setTrashedOnPhotoList(
+	                                context = context,
+	                                list = listOf(Pair(item.uri, item.absolutePath)),
+	                                trashed = false
+	                            )
+                        	}
                         }
                     )
 

@@ -91,7 +91,6 @@ fun LockedFolderEntryView(
 
     val context = LocalContext.current
     val cancellationSignal = CancellationSignal()
-    val coroutineScope = rememberCoroutineScope()
 
     // TODO: move again to Android/data for space purposes
     // moves media from old dir to new dir for secure folder
@@ -114,7 +113,7 @@ fun LockedFolderEntryView(
         absolutePath = context.appRestoredFilesDir,
         shouldRun = newFolderDirPermission
     ) {
-        coroutineScope.launch(Dispatchers.IO) {
+        mainViewModel.launch(Dispatchers.IO) {
 			val oldDir = context.getDir(AppDirectories.OldSecureFolder.path, Context.MODE_PRIVATE)
 			val oldFiles = oldDir.listFiles()
 
@@ -167,7 +166,7 @@ fun LockedFolderEntryView(
         absolutePath = context.appRestoredFilesDir,
         shouldRun = encryptionDirPermission
     ) {
-        coroutineScope.launch(Dispatchers.IO) {
+        mainViewModel.launch(Dispatchers.IO) {
             if (unencryptedFilesList.isEmpty()) return@launch
 
             migrating = true
@@ -207,11 +206,12 @@ fun LockedFolderEntryView(
         }
     }
 
+	val coroutineScope = rememberCoroutineScope()
     GetPermissionAndRun(
         uris = uriList,
         shouldRun = runEncryptAction,
         onGranted = {
-            coroutineScope.launch(Dispatchers.IO) {
+            mainViewModel.launch(Dispatchers.IO) {
                 val mediaItems = uriList.mapNotNull { uri ->
                     context.contentResolver.getMediaStoreDataFromUri(uri)
                 }

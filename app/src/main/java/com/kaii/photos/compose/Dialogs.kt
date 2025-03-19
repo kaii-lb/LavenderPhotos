@@ -132,6 +132,7 @@ import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getExternalStorageContentUriFromAbsolutePath
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -1446,15 +1447,16 @@ fun SelectingMoreOptionsDialog(
         uris = selectedItems.map { it.uri },
         shouldRun = moveToSecureFolder,
         onGranted = {
-            moveImageToLockedFolder(
-                selectedItems,
-                context
-            ) {
-	            onDone()
-	            showLoadingDialog = false
-	            showDialog.value = false
-            }
-
+        	mainViewModel.launch(Dispatchers.IO) {
+	            moveImageToLockedFolder(
+	                selectedItems,
+	                context
+	            ) {
+		            onDone()
+		            showLoadingDialog = false
+		            showDialog.value = false
+	            }
+        	}
         }
     )
 
