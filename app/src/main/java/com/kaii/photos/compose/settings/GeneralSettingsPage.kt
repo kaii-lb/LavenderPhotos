@@ -118,8 +118,6 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
-    val context = LocalContext.current
-
     Scaffold(
         topBar = {
             GeneralSettingsTopBar()
@@ -132,41 +130,6 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.Start
         ) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                item {
-                    PreferencesSeparatorText("Permissions")
-                }
-
-                item {
-                    val isMediaManager by mainViewModel.settings.Permissions.getIsMediaManager().collectAsStateWithLifecycle(initialValue = false)
-
-                    val manageMediaLauncher = rememberLauncherForActivityResult(
-                        contract = ActivityResultContracts.StartActivityForResult()
-                    ) { _ ->
-                        val granted = MediaStore.canManageMedia(context)
-
-                        mainViewModel.onPermissionResult(
-                            permission = Manifest.permission.MANAGE_MEDIA,
-                            isGranted = granted
-                        )
-
-                        mainViewModel.settings.Permissions.setIsMediaManager(granted)
-                    }
-
-                    PreferencesSwitchRow(
-                        title = "Media Manager",
-                        summary = "Better and faster trash/delete/copy/move",
-                        iconResID = R.drawable.movie_edit,
-                        checked = isMediaManager,
-                        position = RowPosition.Single,
-                        showBackground = false
-                    ) {
-                        val intent = Intent(Settings.ACTION_REQUEST_MANAGE_MEDIA)
-                        manageMediaLauncher.launch(intent)
-                    }
-                }
-            }
-
             item {
                 PreferencesSeparatorText("Video")
             }

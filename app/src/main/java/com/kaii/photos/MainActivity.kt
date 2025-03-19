@@ -118,6 +118,7 @@ import com.kaii.lavender_snackbars.LavenderSnackbarEvents
 import com.kaii.photos.compose.ErrorPage
 import com.kaii.photos.compose.rememberDeviceOrientation
 import com.kaii.photos.compose.settings.DataAndBackupPage
+import com.kaii.photos.compose.settings.PrivacyAndSecurityPage
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.PhotoGrid
@@ -720,6 +721,22 @@ class MainActivity : ComponentActivity() {
                         )
 
                         DataAndBackupPage()
+                    }
+
+                    composable(MultiScreenViewType.PrivacyAndSecurity.name) {
+                        enableEdgeToEdge(
+                            navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.background.toArgb()),
+                            statusBarStyle = SystemBarStyle.auto(
+                                MaterialTheme.colorScheme.background.toArgb(),
+                                MaterialTheme.colorScheme.background.toArgb()
+                            )
+                        )
+                        setupNextScreen(
+                            selectedItemsList,
+                            window
+                        )
+
+                        PrivacyAndSecurityPage()
                     }
                 }
             }

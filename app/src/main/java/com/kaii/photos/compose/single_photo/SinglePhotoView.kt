@@ -56,7 +56,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -69,6 +68,7 @@ import com.kaii.photos.compose.ExplanationDialog
 import com.kaii.photos.compose.LoadingDialog
 import com.kaii.photos.compose.SinglePhotoInfoDialog
 import com.kaii.photos.compose.setBarVisibility
+import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.GetPermissionAndRun
@@ -84,7 +84,6 @@ import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.favourites_grid.FavouritesViewModel
 import com.kaii.photos.models.favourites_grid.FavouritesViewModelFactory
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
-import com.kaii.photos.models.trash_bin.TrashViewModel
 import kotlinx.coroutines.Dispatchers
 
 // private const val TAG = "SINGLE_PHOTO_VIEW"
@@ -494,6 +493,7 @@ private fun BottomBar(
                         }
                     )
 
+                    val confirmToDelete by mainViewModel.settings.Permissions.getConfirmToDelete().collectAsStateWithLifecycle(initialValue = true)
                     BottomAppBarItem(
                         text = "Delete",
                         iconResId = R.drawable.trash,
@@ -508,7 +508,8 @@ private fun BottomBar(
                             }
                         },
                         action = {
-                            showDeleteDialog.value = true
+                        	if (confirmToDelete) showDeleteDialog.value = true
+                        	else runTrashAction.value = true
                         }
                     )
 

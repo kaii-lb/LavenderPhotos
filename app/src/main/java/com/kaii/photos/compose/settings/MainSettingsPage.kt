@@ -31,7 +31,6 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
-import com.kaii.photos.compose.FeatureNotAvailableDialog
 import com.kaii.photos.compose.PreferencesRow
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.RowPosition
@@ -69,11 +68,6 @@ fun MainSettingsPage() {
             }
 
             item {
-                val showNotImplDialog = remember { mutableStateOf(false) }
-                if (showNotImplDialog.value) {
-                    FeatureNotAvailableDialog(showDialog = showNotImplDialog)
-                }
-
                 PreferencesRow(
                     title = "Privacy & Security",
                     summary = "Fine grained control over your data",
@@ -84,7 +78,7 @@ fun MainSettingsPage() {
                     modifier = Modifier
                     	.padding(0.dp, 6.dp)
                 ) {
-                    showNotImplDialog.value = true
+                    navController.navigate(MultiScreenViewType.PrivacyAndSecurity.name)
                 }
             }
 

@@ -69,6 +69,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.MainActivity.Companion.applicationDatabase
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
@@ -76,6 +77,7 @@ import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
+import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.createDirectoryPicker
@@ -494,6 +496,7 @@ fun MainAppSelectingBottomBar(
             }
         )
 
+        val confirmToDelete by mainViewModel.settings.Permissions.getConfirmToDelete().collectAsStateWithLifecycle(initialValue = true)
         BottomAppBarItem(
             text = "Delete",
             iconResId = R.drawable.delete,
@@ -508,7 +511,8 @@ fun MainAppSelectingBottomBar(
                 }
             },
             action = {
-                showDeleteDialog.value = true
+            	if (confirmToDelete) showDeleteDialog.value = true
+            	else runDeleteAction.value = true
             }
         )
     }
@@ -721,6 +725,7 @@ fun SingleAlbumViewBottomBar(
             }
         )
 
+        val confirmToDelete by mainViewModel.settings.Permissions.getConfirmToDelete().collectAsStateWithLifecycle(initialValue = true)
         BottomAppBarItem(
             text = "Delete",
             iconResId = R.drawable.delete,
@@ -735,7 +740,8 @@ fun SingleAlbumViewBottomBar(
                 }
             },
             action = {
-                showDeleteDialog.value = true
+            	if (confirmToDelete) showDeleteDialog.value = true
+            	else runTrashAction.value = true
             }
         )
     }
@@ -912,7 +918,7 @@ fun TrashedPhotoGridViewBottomBar(
                 }
             },
             action = {
-                showRestoreDialog.value = true
+            	showRestoreDialog.value = true
             }
         )
 
@@ -948,7 +954,7 @@ fun TrashedPhotoGridViewBottomBar(
             },
             action = {
                 if (selectedItemsWithoutSection.isNotEmpty()) {
-                    showPermaDeleteDialog.value = true
+                	showPermaDeleteDialog.value = true
                 }
             }
         )
@@ -1333,6 +1339,7 @@ fun FavouritesViewBottomAppBar(
 
         val showDeleteDialog = remember { mutableStateOf(false) }
         val runTrashAction = remember { mutableStateOf(false) }
+        val confirmToDelete by mainViewModel.settings.Permissions.getConfirmToDelete().collectAsStateWithLifecycle(initialValue = true)
 
         GetPermissionAndRun(
             uris = selectedItemsWithoutSection.map { it.uri },
@@ -1367,7 +1374,17 @@ fun FavouritesViewBottomAppBar(
                 }
             },
             action = {
-                showDeleteDialog.value = true
+            	if (confirmToDelete) {
+            		showDeleteDialog.value = true
+				}
+            	else {
+            		coroutineScope.launch {
+            		    selectedItemsList.forEach {
+            		        dao.deleteEntityById(it.id)
+            		    }
+            		    runTrashAction.value = true
+            		}
+            	}
             }
         )
     }

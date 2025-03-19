@@ -15,7 +15,8 @@ enum class MultiScreenViewType {
     SettingsLookAndFeelView,
     OpenWithView,
     UpdatesPage,
-	DataAndBackup
+	DataAndBackup,
+	PrivacyAndSecurity
 }
 
 internal interface NavigationView {

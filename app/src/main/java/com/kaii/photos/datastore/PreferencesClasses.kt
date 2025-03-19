@@ -221,6 +221,7 @@ class SettingsDebuggingImpl(private val context: Context, private val viewModelS
 
 class SettingsPermissionsImpl(private val context: Context, private val viewModelScope: CoroutineScope) {
     private val isMediaManagerKey = booleanPreferencesKey("is_media_manager")
+    private val confirmToDelete = booleanPreferencesKey("confirm_to_delete")
 
     fun getIsMediaManager(): Flow<Boolean> =
         context.datastore.data.map {
@@ -230,6 +231,17 @@ class SettingsPermissionsImpl(private val context: Context, private val viewMode
     fun setIsMediaManager(value: Boolean) = viewModelScope.launch {
         context.datastore.edit {
             it[isMediaManagerKey] = value
+        }
+    }
+
+    fun getConfirmToDelete() : Flow<Boolean> =
+        context.datastore.data.map {
+            it[confirmToDelete] ?: true
+        }
+
+    fun setConfirmToDelete(value: Boolean) = viewModelScope.launch {
+        context.datastore.edit {
+            it[confirmToDelete] = value
         }
     }
 }
