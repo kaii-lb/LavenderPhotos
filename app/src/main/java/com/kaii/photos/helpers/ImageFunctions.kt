@@ -5,13 +5,13 @@ import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.provider.DocumentsContract
 import android.provider.MediaStore
 import android.provider.MediaStore.MediaColumns
 import android.util.Log
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ColorFilter
@@ -37,6 +37,8 @@ import androidx.compose.ui.unit.toSize
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
+import com.kaii.lavender_snackbars.LavenderSnackbarController
+import com.kaii.lavender_snackbars.LavenderSnackbarEvents
 import com.kaii.photos.MainActivity.Companion.applicationDatabase
 import com.kaii.photos.R
 import com.kaii.photos.database.entities.SecuredItemEntity
@@ -49,7 +51,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.ByteArrayOutputStream
 import java.io.File
 import kotlin.math.min
 
@@ -72,6 +73,7 @@ fun permanentlyDeletePhotoList(context: Context, list: List<Uri>) {
     }
 }
 
+// TODO: remove from favourites
 fun setTrashedOnPhotoList(context: Context, list: List<Uri>, trashed: Boolean) {
     val contentResolver = context.contentResolver
 
@@ -470,7 +472,6 @@ suspend fun savePathListToBitmap(
         val displayName = "${original.nameWithoutExtension}-edited"
 
         if (!overwrite) {
-            // TODO: show photo saved snackbar
             val newUri = context.contentResolver.copyMedia(
                 context = context,
                 media = MediaStoreData(
@@ -501,8 +502,18 @@ suspend fun savePathListToBitmap(
                 outputStream.close()
 
                 context.contentResolver.update(newUri, contentValues, null)
+
+                LavenderSnackbarEvents.MessageEvent(
+                    message = "Saved edited image!",
+                    iconResId = R.drawable.file_is_selected_foreground,
+                    duration = SnackbarDuration.Short
+                )
             } else {
-                // TODO: show failed to save edits snackbar
+                LavenderSnackbarEvents.MessageEvent(
+                    message = "Failed to save edited image",
+                    iconResId = R.drawable.error_2,
+                    duration = SnackbarDuration.Long
+                )
             }
         } else {
             val outputStream = context.contentResolver.openOutputStream(uri)
@@ -520,8 +531,20 @@ suspend fun savePathListToBitmap(
                     },
                     null
                 )
+
+                LavenderSnackbarEvents.MessageEvent(
+                    message = "Saved edited image!",
+                    iconResId = R.drawable.file_is_selected_foreground,
+                    duration = SnackbarDuration.Short
+                )
             } else {
-                // TODO: show failed to save edits snackbar
+                LavenderSnackbarController.pushEvent(
+                    LavenderSnackbarEvents.MessageEvent(
+                        message = "Failed to save edited image",
+                        iconResId = R.drawable.error_2,
+                        duration = SnackbarDuration.Long
+                    )
+                )
             }
         }
     }
