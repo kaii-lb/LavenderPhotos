@@ -652,6 +652,7 @@ fun VideoPlayer(
                         }
                     )
                 }
+                .zIndex(2f)
         ) {
             Box(
                 modifier = Modifier
@@ -660,7 +661,6 @@ fun VideoPlayer(
                     .align(Alignment.CenterStart)
                     .clip(RoundedCornerShape(0, 100, 100, 0))
                     .background(seekBackBackgroundColor)
-                    .zIndex(2f)
             ) {
                 AnimatedVisibility(
                     visible = doubleTapDisplayTimeMillis < 0,
@@ -706,7 +706,6 @@ fun VideoPlayer(
                     .align(Alignment.CenterEnd)
                     .clip(RoundedCornerShape(100, 0, 0, 100))
                     .background(seekForwardBackgroundColor)
-                    .zIndex(2f)
             ) {
                 AnimatedVisibility(
                     visible = doubleTapDisplayTimeMillis > 0,
