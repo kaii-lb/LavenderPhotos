@@ -51,14 +51,26 @@ class MultiAlbumViewModel(
     fun reinitDataSource(
         context: Context,
         albumsList: List<String>,
-        sortBy: MediaItemSortMode
+        sortMode: MediaItemSortMode
     ) {
+    	sortBy = sortMode
         if (albumsList == albums) return
 
         cancelMediaFlow()
         cancellationSignal = CancellationSignal()
         mediaStoreDataSource.value = initDataSource(context, albumsList, sortBy)
     }
+
+	fun changeSortMode(
+		context: Context,
+		sortMode: MediaItemSortMode
+	) {
+		sortBy = sortMode
+
+		cancelMediaFlow()
+		cancellationSignal = CancellationSignal()
+		mediaStoreDataSource.value = initDataSource(context, albums, sortBy)
+	}
 
     private fun initDataSource(
         context: Context,
@@ -69,6 +81,7 @@ class MultiAlbumViewModel(
         Log.d(TAG, "query is $query")
 
         albums = albumsList
+        this.sortBy = sortBy
 
         MultiAlbumDataSource(
             context = context,
@@ -80,28 +93,44 @@ class MultiAlbumViewModel(
 }
 
 /** Groups photos by date */
-fun groupPhotosBy(media: List<MediaStoreData>, sortBy: MediaItemSortMode = MediaItemSortMode.DateTaken, sortDescending: Boolean = true): List<MediaStoreData> {
+fun groupPhotosBy(media: List<MediaStoreData>, sortBy: MediaItemSortMode = MediaItemSortMode.DateTaken): List<MediaStoreData> {
     if (media.isEmpty()) return emptyList()
 
     val sortedList =
-        if (sortDescending) {
-            media.sortedByDescending { item ->
-                if (sortBy == MediaItemSortMode.DateTaken) item.dateTaken else item.dateModified
-            }
-        } else {
-            media.sortedBy { item ->
-                if (sortBy == MediaItemSortMode.DateTaken) item.dateTaken else item.dateModified
-            }
+        media.sortedByDescending { item ->
+        	when (sortBy) {
+        		MediaItemSortMode.DateTaken, MediaItemSortMode.MonthTaken, MediaItemSortMode.Disabled -> {
+        			item.dateTaken
+        		}
+
+        		MediaItemSortMode.LastModified -> {
+        			item.dateModified
+        		}
+        	}
         }
 
+    if (sortBy == MediaItemSortMode.Disabled) return sortedList
+
     val grouped = sortedList.groupBy { item ->
-        if (sortBy == MediaItemSortMode.DateTaken) item.getDateTakenDay() else item.getLastModifiedDay()
+    	when (sortBy) {
+    		MediaItemSortMode.DateTaken -> {
+    			item.getDateTakenDay()
+    		}
+
+    		MediaItemSortMode.LastModified -> {
+    			item.getLastModifiedDay()
+    		}
+
+    		MediaItemSortMode.MonthTaken -> {
+    			item.getDateTakenMonth()
+    		}
+
+            else -> throw IllegalStateException("Sort mode $sortBy should not be reached here")
+    	}
     }
 
     val sortedMap = grouped.toSortedMap(
-        if (sortDescending) compareByDescending { time ->
-            time
-        } else compareBy { time ->
+        compareByDescending { time ->
             time
         }
     )
@@ -130,7 +159,7 @@ fun groupPhotosBy(media: List<MediaStoreData>, sortBy: MediaItemSortMode = Media
             }
 
             else -> {
-                formatDate(sectionTime)
+                formatDate(timestamp = sectionTime, sortBy = sortBy)
             }
         }
 
@@ -147,9 +176,12 @@ fun groupPhotosBy(media: List<MediaStoreData>, sortBy: MediaItemSortMode = Media
     return mediaItems
 }
 
-fun formatDate(timestamp: Long): String {
+fun formatDate(timestamp: Long, sortBy: MediaItemSortMode): String {
     return if (timestamp != 0L) {
-        val dateTimeFormat = DateTimeFormatter.ofPattern("EEE d - MMMM yyyy")
+    	val dateTimeFormat =
+   				if (sortBy == MediaItemSortMode.MonthTaken) DateTimeFormatter.ofPattern("MMMM yyyy")
+   				else DateTimeFormatter.ofPattern("EEE d - MMMM yyyy")
+
         val localDateTime = Instant.ofEpochSecond(timestamp).atZone(ZoneId.systemDefault()).toLocalDateTime()
         val dateTimeString = localDateTime.format(dateTimeFormat)
         dateTimeString.toString()

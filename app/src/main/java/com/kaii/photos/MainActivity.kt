@@ -1,7 +1,6 @@
 package com.kaii.photos
 
 import android.annotation.SuppressLint
-import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -47,12 +46,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
@@ -119,9 +116,11 @@ import com.kaii.lavender_snackbars.LavenderSnackbarBox
 import com.kaii.lavender_snackbars.LavenderSnackbarController
 import com.kaii.lavender_snackbars.LavenderSnackbarEvents
 import com.kaii.photos.compose.ErrorPage
+import com.kaii.photos.compose.rememberDeviceOrientation
 import com.kaii.photos.compose.settings.DataAndBackupPage
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
+import com.kaii.photos.datastore.PhotoGrid
 import com.kaii.photos.helpers.BottomBarTabSaver
 import com.kaii.photos.helpers.CheckUpdateState
 import kotlinx.coroutines.Dispatchers
@@ -258,11 +257,13 @@ class MainActivity : ComponentActivity() {
         mainViewModel.settings.AlbumsList.addToAlbumsList("DCIM/Camera")
 
         val albumsList by mainViewModel.settings.MainPhotosView.getAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
+        val currentSortMode by mainViewModel.settings.PhotoGrid.getSortMode().collectAsStateWithLifecycle(initialValue = MediaItemSortMode.DateTaken)
+
         val multiAlbumViewModel: MultiAlbumViewModel = viewModel(
             factory = MultiAlbumViewModelFactory(
                 context = context,
                 albums = albumsList,
-                sortBy = MediaItemSortMode.DateTaken
+                sortBy = currentSortMode
             )
         )
 
@@ -274,8 +275,13 @@ class MainActivity : ComponentActivity() {
             multiAlbumViewModel.reinitDataSource(
                 context = context,
                 albumsList = albumsList,
-                sortBy = MediaItemSortMode.DateTaken
+                sortMode = currentSortMode
             )
+        }
+
+        LaunchedEffect(currentSortMode) {
+        	Log.d(TAG, "Changing sort mode from: ${multiAlbumViewModel.sortBy} to: $currentSortMode")
+        	multiAlbumViewModel.changeSortMode(context = context, sortMode = currentSortMode)
         }
 
         val snackbarHostState = remember {
@@ -359,11 +365,11 @@ class MainActivity : ComponentActivity() {
 
                         val screen: Screens.SinglePhotoView = it.toRoute()
 
-                        if (screen.albums != multiAlbumViewModel.albums) {
+                        if (!screen.hasSameAlbumsAs(other = multiAlbumViewModel.albums)) {
                             multiAlbumViewModel.reinitDataSource(
                                 context = context,
                                 albumsList = screen.albums,
-                                sortBy = multiAlbumViewModel.sortBy
+                                sortMode = multiAlbumViewModel.sortBy
                             )
                         }
 
@@ -394,11 +400,11 @@ class MainActivity : ComponentActivity() {
 
                         val screen: Screens.SingleAlbumView = it.toRoute()
 
-                        if (screen.albums != multiAlbumViewModel.albums) {
+                        if (!screen.hasSameAlbumsAs(other = multiAlbumViewModel.albums)) {
                             multiAlbumViewModel.reinitDataSource(
                                 context = context,
                                 albumsList = screen.albums,
-                                sortBy = multiAlbumViewModel.sortBy
+                                sortMode = multiAlbumViewModel.sortBy
                             )
                         }
 
@@ -758,10 +764,23 @@ class MainActivity : ComponentActivity() {
     ) {
     	val context = LocalContext.current
     	val albumsList by mainViewModel.settings.MainPhotosView.getAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
-        val mediaStoreData =
-            multiAlbumViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+        val mediaStoreData = multiAlbumViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+        val groupedMedia = remember { mutableStateOf(mediaStoreData.value) }
 
         val tabList by mainViewModel.settings.DefaultTabs.getTabList().collectAsStateWithLifecycle(initialValue = DefaultTabs.defaultList)
+
+        // faster loading if no custom tabs are present
+        LaunchedEffect(tabList) {
+	        if (!tabList.any { it.isCustom() } && currentView.value.albumPaths.toSet() != multiAlbumViewModel.albums.toSet()) {
+                multiAlbumViewModel.reinitDataSource(
+                    context = context,
+                    albumsList = currentView.value.albumPaths,
+                    sortMode = multiAlbumViewModel.sortBy
+                )
+
+                groupedMedia.value = mediaStoreData.value
+	        }
+        }
 
         Scaffold(
             topBar = {
@@ -773,12 +792,7 @@ class MainActivity : ComponentActivity() {
             modifier = Modifier
                 .fillMaxSize(1f)
         ) { padding ->
-            val localConfig = LocalConfiguration.current
-            var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
-
-            LaunchedEffect(localConfig) {
-                isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
-            }
+            val isLandscape by rememberDeviceOrientation()
 
             val safeDrawingPadding = if (isLandscape) {
                 val safeDrawing = WindowInsets.safeDrawing.asPaddingValues()
@@ -825,11 +839,9 @@ class MainActivity : ComponentActivity() {
                             	    multiAlbumViewModel.reinitDataSource(
                             	        context = context,
                             	        albumsList = stateValue.albumPaths,
-                            	        sortBy = multiAlbumViewModel.sortBy
+                            	        sortMode = multiAlbumViewModel.sortBy
                             	    )
                             	}
-
-                            	val groupedMedia = remember { mutableStateOf(mediaStoreData.value) }
 
                             	LaunchedEffect(mediaStoreData.value) {
                             	    groupedMedia.value = mediaStoreData.value
@@ -848,13 +860,11 @@ class MainActivity : ComponentActivity() {
 		                            multiAlbumViewModel.reinitDataSource(
 		                                context = context,
 		                                albumsList = albumsList,
-		                                sortBy = multiAlbumViewModel.sortBy
+		                                sortMode = multiAlbumViewModel.sortBy
 		                            )
 		                        }
 
                                 selectedItemsList.clear()
-
-                                val groupedMedia = remember { mutableStateOf(mediaStoreData.value) }
 
                                 LaunchedEffect(mediaStoreData.value) {
                                     groupedMedia.value = mediaStoreData.value

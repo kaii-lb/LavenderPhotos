@@ -47,7 +47,7 @@ data class MediaStoreData(
     fun getDateTakenMonth() : Long {
         val calendar = Calendar.getInstance(Locale.ENGLISH).apply {
             timeInMillis = dateTaken * 1000
-            set(Calendar.DAY_OF_MONTH, 0)
+            set(Calendar.DAY_OF_MONTH, 1) // months don't start with day numbered 0 :|
             set(Calendar.HOUR_OF_DAY, 0)
             set(Calendar.MINUTE, 0)
             set(Calendar.SECOND, 0)

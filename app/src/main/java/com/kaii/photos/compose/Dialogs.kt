@@ -8,6 +8,7 @@ import android.content.res.Configuration
 import android.util.Log
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandHorizontally
@@ -193,7 +194,13 @@ fun DialogClickableItem(
 /** Do not use background colors for your composable
 currently you need to calculate dp height of your composable manually */
 @Composable
-fun DialogExpandableItem(text: String, iconResId: Int, position: RowPosition, expanded: MutableState<Boolean>, content: @Composable () -> Unit) {
+fun DialogExpandableItem(
+	text: String,
+	iconResId: Int,
+	position: RowPosition,
+	expanded: MutableState<Boolean>,
+	content: @Composable ColumnScope.() -> Unit
+) {
     val buttonHeight = 40.dp
 
     val (firstShape, firstSpacerHeight) = getDefaultShapeSpacerForPosition(position)
@@ -1073,7 +1080,7 @@ fun SingleAlbumDialog(
                     modifier = Modifier
                         .align(Alignment.Center)
                         .widthIn(max = maxWidth - 48.dp - 24.dp) // for button and right side
-                        .padding(0.dp, 0.dp, 0.dp, 4.dp)
+                        .padding(4.dp, 0.dp, 0.dp, 4.dp)
                 )
             }
 
@@ -1088,6 +1095,7 @@ fun SingleAlbumDialog(
             Column(
                 modifier = Modifier
                     .height(reverseHeight)
+                    .animateContentSize()
                     .padding(8.dp, 0.dp)
             ) {
                 DialogClickableItem(
@@ -1160,7 +1168,7 @@ fun SingleAlbumDialog(
                 DialogClickableItem(
                     text = "Remove album from list",
                     iconResId = R.drawable.delete,
-                    position = RowPosition.Bottom,
+                    position = RowPosition.Middle,
                     enabled = !checkDirIsDownloads(dir)
                 ) {
                     mainViewModel.settings.AlbumsList.removeFromAlbumsList(dir)
@@ -1178,6 +1186,20 @@ fun SingleAlbumDialog(
 
                     navController.popBackStack()
                 }
+
+				val expanded = remember { mutableStateOf(false) }
+				DialogExpandableItem(
+					text = "Album Info",
+					iconResId = R.drawable.info,
+					position = RowPosition.Bottom,
+					expanded = expanded
+				) {
+					DialogInfoText(
+					    firstText = "Path",
+					    secondText = absoluteDirPath,
+					    iconResId = R.drawable.folder,
+					)
+				}
             }
         }
     }

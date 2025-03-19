@@ -112,6 +112,7 @@ import com.kaii.photos.compose.rememberDeviceOrientation
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.shareImage
+import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.copyUriToUri
 import com.kaii.photos.models.multi_album.formatDate
@@ -873,7 +874,7 @@ private fun BottomBar(
                                 {
                                     val extension = mimeType.split("/")[1]
                                     val currentTime = System.currentTimeMillis()
-                                    val date = formatDate(currentTime / 1000)
+                                    val date = formatDate(currentTime / 1000, MediaItemSortMode.DateTaken)
                                     val name = "Lavender Photos edited file at $date.$extension"
                                     val destination = File(Environment.DIRECTORY_PICTURES, name) // TODO: maybe move into subdir?
 

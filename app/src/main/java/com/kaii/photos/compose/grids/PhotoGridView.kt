@@ -468,6 +468,7 @@ fun DeviceMedia(
                             visibleItemIndex.value / totalLeftOverItems
                         }
                     }
+                    var chosenItemIndex by remember { mutableStateOf(0) }
 
                     Slider(
                         value = percentScrolled,
@@ -475,8 +476,9 @@ fun DeviceMedia(
                         onValueChange = {
                             coroutineScope.launch {
                                 if (isScrollingByHandle) {
+                                	chosenItemIndex = (it * (groupedMedia.value.size - 1)).roundToInt()
                                     gridState.scrollToItem(
-                                        (it * groupedMedia.value.size).roundToInt()
+                                        chosenItemIndex
                                     )
                                 }
                             }
@@ -533,9 +535,16 @@ fun DeviceMedia(
                                                 .background(MaterialTheme.colorScheme.secondaryContainer)
                                                 .padding(8.dp, 4.dp)
                                         ) {
-                                            val item = groupedMedia.value[(state.value * listSize).roundToInt()]
-                                            val format = DateTimeFormatter.ofPattern("MMM yyyy")
-                                            val formatted = Instant.ofEpochSecond(item.dateTaken).atZone(ZoneId.systemDefault()).toLocalDateTime().format(format)
+                                        	// last index to "reach" even the last items
+                                            val item by remember { derivedStateOf {
+                                            	val index = gridState.layoutInfo.visibleItemsInfo.last().index
+                                                groupedMedia.value[chosenItemIndex]
+                                            }}
+
+                                            val format = remember { DateTimeFormatter.ofPattern("MMM yyyy") }
+                                            val formatted = remember(item) {
+                                            	Instant.ofEpochSecond(item.dateTaken).atZone(ZoneId.systemDefault()).toLocalDateTime().format(format)
+                                           	}
 
                                             Text(
                                                 text = formatted,
@@ -823,8 +832,11 @@ fun Modifier.dragSelectionHandler(
 
     if (groupedMedia.isEmpty()) return@pointerInput
 
-	// 1 instead of 0 since 0 is always a date separator with full width
-    val numberOfHorizontalItems = state.layoutInfo.viewportSize.width / state.layoutInfo.visibleItemsInfo[1].size.width
+	val itemWidth = state.layoutInfo.visibleItemsInfo.firstOrNull {
+		if (it.index in 0..groupedMedia.size - 1) groupedMedia[it.index].type != MediaType.Section else false
+	}?.size?.width
+
+    val numberOfHorizontalItems = itemWidth?.let { state.layoutInfo.viewportSize.width / it } ?: 1
 
     Log.d(TAG, "grid displays $numberOfHorizontalItems horizontal items")
 

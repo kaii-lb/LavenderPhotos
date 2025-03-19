@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -13,10 +12,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -45,6 +42,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
+import com.kaii.photos.compose.ConfirmCancelRow
 import com.kaii.photos.compose.ConfirmationDialogWithBody
 import com.kaii.photos.compose.PreferencesRow
 import com.kaii.photos.compose.PreferencesSeparatorText
@@ -54,7 +52,6 @@ import com.kaii.photos.datastore.Storage
 import com.kaii.photos.datastore.TrashBin
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.brightenColor
-import com.kaii.photos.helpers.dragReorderable
 
 @Composable
 fun MemoryAndStorageSettingsPage() {
@@ -287,23 +284,13 @@ fun SelectableButtonListDialog(
                 buttons()
             }
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth(1f)
-                    .height(56.dp)
-                    .padding(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.End
-            ) {
-                FilledTonalButton(
-                    onClick = {
-                        onConfirm()
-                        showDialog.value = false
-                    }
-                ) {
-                    Text(text = "Confirm")
+
+            ConfirmCancelRow(
+                onConfirm = {
+                    onConfirm()
+                    showDialog.value = false
                 }
-            }
+            )
         }
     }
 }

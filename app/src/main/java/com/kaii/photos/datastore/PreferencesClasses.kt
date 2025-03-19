@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.bumptech.glide.Glide
+import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.getAllAlbumsOnDevice
 import kotlinx.coroutines.CoroutineScope
@@ -162,20 +163,8 @@ class SettingsAlbumsListImpl(private val context: Context, private val viewModel
 }
 
 class SettingsVersionImpl(private val context: Context, private val viewModelScope: CoroutineScope) {
-    private val migrateToEncryptedSecurePhotos = booleanPreferencesKey("migrate_to_encrypted_secure_media")
     private val showUpdateNotice = booleanPreferencesKey("show_update_notice")
     private val checkForUpdatesOnStartup = booleanPreferencesKey("check_for_updates_on_startup")
-
-    fun getShouldMigrateToEncryptedSecurePhotos(): Flow<Boolean> =
-    	context.datastore.data.map {
-    		it[migrateToEncryptedSecurePhotos] ?: true
-    	}
-
-   	fun setShouldMigrateToEncryptedSecurePhotos(value: Boolean) = viewModelScope.launch {
-   		context.datastore.edit {
-   			it[migrateToEncryptedSecurePhotos] = value
-   		}
-   	}
 
     fun getShowUpdateNotice(): Flow<Boolean> =
         context.datastore.data.map {
@@ -473,8 +462,8 @@ class SettingsDefaultTabsImpl(private val context: Context, private val viewMode
 			val tabs = getDefaultTabList()
 				.split(separator)
 				.toMutableList()
-				.apply { removeAll { it == "" } }
-				.map { Json.decodeFromString<BottomBarTab>(it) }
+				.apply { removeAll { string -> string == "" } }
+				.map { tab -> Json.decodeFromString<BottomBarTab>(tab) }
 
 			setTabList(tabs)
 
@@ -528,5 +517,23 @@ class SettingsDefaultTabsImpl(private val context: Context, private val viewMode
         val search = Json.encodeToString(DefaultTabs.TabTypes.search)
 
         photos + separator + secure + separator + albums + separator + search
+    }
+}
+
+class SettingsPhotoGridImpl(private val context: Context, private val viewModelScope: CoroutineScope) {
+    private val mediaSortModeKey = stringPreferencesKey("media_sort_mode")
+
+    fun getSortMode() = context.datastore.data.map {
+        val name = it[mediaSortModeKey] ?: MediaItemSortMode.DateTaken.name
+
+        MediaItemSortMode.entries.find { entry ->
+            entry.name == name
+        } ?: throw IllegalArgumentException("Sort mode $name does not exist! This should never happen!")
+    }
+
+    fun setSortMode(mode: MediaItemSortMode) = viewModelScope.launch {
+        context.datastore.edit {
+            it[mediaSortModeKey] = mode.name
+        }
     }
 }

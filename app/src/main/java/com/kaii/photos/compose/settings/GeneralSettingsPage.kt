@@ -37,7 +37,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
@@ -90,22 +89,28 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.CheckBoxButtonRow
+import com.kaii.photos.compose.ConfirmCancelRow
 import com.kaii.photos.compose.FullWidthDialogButton
 import com.kaii.photos.compose.HorizontalSeparator
 import com.kaii.photos.compose.LavenderDialogBase
 import com.kaii.photos.compose.PreferencesRow
 import com.kaii.photos.compose.PreferencesSeparatorText
 import com.kaii.photos.compose.PreferencesSwitchRow
+import com.kaii.photos.compose.RadioButtonRow
+import com.kaii.photos.compose.TitleCloseRow
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.Editing
 import com.kaii.photos.datastore.MainPhotosView
 import com.kaii.photos.datastore.Permissions
+import com.kaii.photos.datastore.PhotoGrid
 import com.kaii.photos.datastore.StoredDrawable
 import com.kaii.photos.datastore.Versions
 import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.ExtendedMaterialTheme
+import com.kaii.photos.helpers.MediaItemSortMode
+import com.kaii.photos.helpers.MediaItemSortMode.Companion.presentableName
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.createDirectoryPicker
 import com.kaii.photos.helpers.dragReorderable
@@ -352,6 +357,36 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
             }
 
             item {
+            	val currentSortMode by mainViewModel.settings.PhotoGrid.getSortMode().collectAsStateWithLifecycle(initialValue = MediaItemSortMode.DateTaken)
+				var showSortModeSelectorDialog by remember { mutableStateOf(false) }
+
+				if (showSortModeSelectorDialog) {
+					SortModeSelectorDialog(
+						currentSortMode = currentSortMode,
+						dismiss = {
+							showSortModeSelectorDialog = false
+						}
+					)
+				}
+
+            	PreferencesSwitchRow(
+            		title = "Media Sorting",
+            		summary = "Sets the sorting of photos and videos in grids",
+            		iconResID = R.drawable.bolt, // TODO: change to sort icon
+            		position = RowPosition.Single,
+            		showBackground = false,
+            		checked = currentSortMode != MediaItemSortMode.Disabled,
+            		onRowClick = {
+            			showSortModeSelectorDialog = true
+            		},
+            		onSwitchClick = { checked ->
+	                    if (checked) mainViewModel.settings.PhotoGrid.setSortMode(MediaItemSortMode.DateTaken)
+	                    else mainViewModel.settings.PhotoGrid.setSortMode(MediaItemSortMode.Disabled)
+            		}
+            	)
+            }
+
+            item {
                 PreferencesSeparatorText(
                     text = "Tabs"
                 )
@@ -473,16 +508,9 @@ private fun DefaultTabSelectorDialog(
     LavenderDialogBase(
         onDismiss = dismissDialog
     ) {
-
-        Text(
-            text = "Default Tab",
-            fontSize = TextUnit(18f, TextUnitType.Sp),
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier
-                .wrapContentSize()
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
+        TitleCloseRow(title = "Default Tab") {
+        	dismissDialog()
+        }
 
         val state = rememberLazyListState()
         val itemOffset = remember { mutableFloatStateOf(0f) }
@@ -547,23 +575,12 @@ private fun DefaultTabSelectorDialog(
             }
         }
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth(1f)
-                .height(56.dp)
-                .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.End
-        ) {
-            FilledTonalButton(
-                onClick = {
-                    mainViewModel.settings.DefaultTabs.setDefaultTab(selectedTab)
-                    dismissDialog()
-                }
-            ) {
-                Text(text = "Confirm")
+        ConfirmCancelRow(
+            onConfirm = {
+                mainViewModel.settings.DefaultTabs.setDefaultTab(selectedTab)
+                dismissDialog()
             }
-        }
+        )
     }
 }
 
@@ -629,37 +646,9 @@ fun TabCustomizationDialog(
     LavenderDialogBase(
         onDismiss = closeDialog
     ) {
-        Box (
-            modifier = Modifier
-                .fillMaxWidth(1f)
-                .padding(8.dp, 0.dp),
-        ) {
-            Text(
-                text = "Customize Tabs",
-                fontSize = TextUnit(18f, TextUnitType.Sp),
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier
-                    .wrapContentSize()
-                    .align(Alignment.Center)
-            )
-
-
-            IconButton(
-                onClick = {
-                    closeDialog()
-                },
-                modifier = Modifier
-                	.align(Alignment.CenterEnd)
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.close),
-                    contentDescription = "Close this dialog",
-                    tint = MaterialTheme.colorScheme.onSurface
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
+		TitleCloseRow(title = "Customize Tabs") {
+			closeDialog()
+		}
 
         Column(
             modifier = Modifier
@@ -670,7 +659,7 @@ fun TabCustomizationDialog(
         	DefaultTabs.defaultList.forEach { tab ->
         		InfoRow(
         			text = tab.name,
-        			iconResId = if (tab in tabList) R.drawable.close else R.drawable.add,
+        			iconResId = if (tab in tabList) R.drawable.delete else R.drawable.add,
         			opacity = if (tab in tabList) 1f else 0.5f
         		) {
         			mainViewModel.settings.DefaultTabs.setTabList(
@@ -712,7 +701,7 @@ fun TabCustomizationDialog(
             	if (tab !in DefaultTabs.defaultList) {
 	                InfoRow(
 						text = tab.name,
-						iconResId = R.drawable.close
+						iconResId = R.drawable.delete
 					) {
 						if (tabList.size > 1) {
 							mainViewModel.settings.DefaultTabs.setTabList(
@@ -737,7 +726,9 @@ fun TabCustomizationDialog(
             }
         }
 
+		Spacer (modifier = Modifier.height(4.dp))
         HorizontalSeparator()
+        Spacer (modifier = Modifier.height(16.dp))
 
         var showDialog by remember { mutableStateOf(false) }
         if (showDialog) {
@@ -1173,4 +1164,43 @@ private fun AddTabDialog(
         	}
         }
     }
+}
+
+@Composable
+fun SortModeSelectorDialog(
+	currentSortMode: MediaItemSortMode,
+	dismiss: () -> Unit
+) {
+	LavenderDialogBase(onDismiss = dismiss) {
+		TitleCloseRow(title = "Media Sort Mode") {
+			dismiss()
+		}
+
+        var chosenSortMode by remember { mutableStateOf(currentSortMode) }
+		LazyColumn(
+		    modifier = Modifier
+		        .fillMaxWidth(1f)
+		        .wrapContentHeight()
+		) {
+			items(
+				count = MediaItemSortMode.entries.size - 1 // ignore "Disabled"
+			) { index ->
+				val sortMode = MediaItemSortMode.entries.filter { it != MediaItemSortMode.Disabled }[index] // cursed syntax
+
+				RadioButtonRow(
+					text = sortMode.presentableName,
+					checked = chosenSortMode == sortMode
+				) {
+					chosenSortMode = sortMode
+				}
+			}
+		}
+
+        ConfirmCancelRow(
+            onConfirm = {
+                mainViewModel.settings.PhotoGrid.setSortMode(chosenSortMode)
+                dismiss()
+            }
+        )
+	}
 }

@@ -30,6 +30,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -473,4 +474,78 @@ fun HorizontalSeparator() {
             .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
             .clip(RoundedCornerShape(1000.dp))
     )
+}
+
+@Composable
+fun ConfirmCancelRow(
+    onConfirm: () -> Unit,
+    onCancel: (() -> Unit)? = null
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth(1f)
+            .height(56.dp)
+            .padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.End
+    ) {
+        if (onCancel != null) {
+            FilledTonalButton(
+                onClick = {
+                    onCancel()
+                },
+            ) {
+                Text(
+                    text = "Cancel",
+                    fontSize = TextUnit(14f, TextUnitType.Sp)
+                )
+            }
+        }
+
+        Spacer (modifier = Modifier.width(8.dp))
+
+        FilledTonalButton( // maybe use normal button for it?
+            onClick = {
+                onConfirm()
+            }
+        ) {
+            Text(text = "Confirm")
+        }
+    }
+}
+
+@Composable
+fun TitleCloseRow(
+	title: String,
+	onClose: () -> Unit
+) {
+	Box (
+	    modifier = Modifier
+	        .fillMaxWidth(1f)
+	        .padding(8.dp, 0.dp),
+	) {
+	    Text(
+	        text = title,
+	        fontSize = TextUnit(18f, TextUnitType.Sp),
+	        color = MaterialTheme.colorScheme.onSurface,
+	        modifier = Modifier
+	            .wrapContentSize()
+	            .align(Alignment.Center)
+	    )
+
+
+	    IconButton(
+	        onClick = {
+	            onClose()
+	        },
+	        modifier = Modifier
+	        	.align(Alignment.CenterEnd)
+	    ) {
+	        Icon(
+	            painter = painterResource(id = R.drawable.close),
+	            contentDescription = "Close this dialog",
+	            tint = MaterialTheme.colorScheme.onSurface
+	        )
+	    }
+	}
 }

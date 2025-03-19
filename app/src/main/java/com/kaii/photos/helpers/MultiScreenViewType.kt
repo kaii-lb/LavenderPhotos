@@ -1,6 +1,5 @@
 package com.kaii.photos.helpers
 
-import com.kaii.photos.compose.ViewProperties
 import kotlinx.serialization.Serializable
 
 enum class MultiScreenViewType {
@@ -19,19 +18,24 @@ enum class MultiScreenViewType {
 	DataAndBackup
 }
 
+internal interface NavigationView {
+	val albums: List<String>
+
+	fun hasSameAlbumsAs(other: List<String>) = albums.toSet() == other.toSet()
+}
 
 object Screens {
 	@Serializable
 	data class SinglePhotoView(
-	    val albums: List<String>,
-	    val mediaItemId: Long,
+		override val albums: List<String>,
+		val mediaItemId: Long,
 		val loadsFromMainViewModel: Boolean
-	)
+	) : NavigationView
 
 	@Serializable
 	data class SingleAlbumView(
-		val albums: List<String>
-	)
+		override val albums: List<String>
+	) : NavigationView
 
 	@Serializable
 	data class SingleTrashedPhotoView(
