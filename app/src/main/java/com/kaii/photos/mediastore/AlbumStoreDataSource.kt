@@ -14,7 +14,6 @@ import android.provider.MediaStore.MediaColumns
 import android.util.Log
 import com.bumptech.glide.util.Preconditions
 import com.bumptech.glide.util.Util
-import com.kaii.photos.helpers.getDateTakenForMedia
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
@@ -109,7 +108,7 @@ internal constructor(
             "Can only query from a background thread"
         )
 
-        var data: MediaStoreData = MediaStoreData()
+        var data = MediaStoreData()
         val queryArgs = Bundle().apply {
         	putStringArray(ContentResolver.QUERY_ARG_SORT_COLUMNS, arrayOf(MediaColumns.DATE_MODIFIED))
         	putInt(ContentResolver.QUERY_ARG_SORT_DIRECTION, ContentResolver.QUERY_SORT_DIRECTION_DESCENDING)

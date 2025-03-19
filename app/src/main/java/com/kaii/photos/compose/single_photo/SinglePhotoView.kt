@@ -69,12 +69,12 @@ import com.kaii.photos.compose.LoadingDialog
 import com.kaii.photos.compose.SinglePhotoInfoDialog
 import com.kaii.photos.compose.setBarVisibility
 import com.kaii.photos.datastore.Permissions
-import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.GetPermissionAndRun
+import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.moveImageToLockedFolder
-import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareImage
@@ -101,13 +101,13 @@ fun SinglePhotoView(
     loadsFromMainViewModel: Boolean
 ) {
     val holderGroupedMedia =
-	    if (!loadsFromMainViewModel) {
+        if (!loadsFromMainViewModel) {
             viewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
-	    } else {
-	        mainViewModel.groupedMedia.collectAsStateWithLifecycle(initialValue = null)
-	    }
+        } else {
+            mainViewModel.groupedMedia.collectAsStateWithLifecycle(initialValue = null)
+        }
 
-	if (holderGroupedMedia.value == null) return
+    if (holderGroupedMedia.value == null) return
 
     val groupedMedia = remember {
         mutableStateOf(
@@ -118,17 +118,17 @@ fun SinglePhotoView(
     }
 
     LaunchedEffect(holderGroupedMedia.value) {
-    	groupedMedia.value =
-	    	holderGroupedMedia.value!!.filter { item ->
-	    	    item.type != MediaType.Section
-	    	}
+        groupedMedia.value =
+            holderGroupedMedia.value!!.filter { item ->
+                item.type != MediaType.Section
+            }
     }
 
     var currentMediaItemIndex by rememberSaveable {
         mutableIntStateOf(
             groupedMedia.value.indexOf(
                 groupedMedia.value.first {
-                	it.id == mediaItemId
+                    it.id == mediaItemId
                 }
             )
         )
@@ -173,7 +173,7 @@ fun SinglePhotoView(
 
     Scaffold(
         topBar = {
-        	val coroutineScope = rememberCoroutineScope()
+            val coroutineScope = rememberCoroutineScope()
 
             TopBar(
                 mediaItem = currentMediaItem.value,
@@ -267,7 +267,7 @@ private fun TopBar(
     removeIfInFavGrid: () -> Unit,
     onBackClick: () -> Unit
 ) {
-	val context = LocalContext.current
+    val context = LocalContext.current
     val localConfig = LocalConfiguration.current
     var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
 
@@ -340,12 +340,12 @@ private fun TopBar(
                     onClick = {
                         vibratorManager.vibrateShort()
 
-						if (!isSelected) {
-						    favouritesViewModel.addToFavourites(mediaItem, context)
-						} else {
-						    favouritesViewModel.removeFromFavourites(mediaItem.id)
-						    removeIfInFavGrid()
-						}
+                        if (!isSelected) {
+                            favouritesViewModel.addToFavourites(mediaItem, context)
+                        } else {
+                            favouritesViewModel.removeFromFavourites(mediaItem.id)
+                            removeIfInFavGrid()
+                        }
                     },
                 ) {
                     Icon(
@@ -472,26 +472,26 @@ private fun BottomBar(
                         uris = listOf(currentItem.uri),
                         shouldRun = runTrashAction,
                         onGranted = {
-                        	mainViewModel.launch(Dispatchers.IO) {
-	                            setTrashedOnPhotoList(
-	                                context,
-	                                listOf(Pair(currentItem.uri, currentItem.absolutePath)),
-	                                true
-	                            )
+                            mainViewModel.launch(Dispatchers.IO) {
+                                setTrashedOnPhotoList(
+                                    context,
+                                    listOf(Pair(currentItem.uri, currentItem.absolutePath)),
+                                    true
+                                )
 
-	                            if (groupedMedia.value.isEmpty()) onZeroItemsLeft()
+                                if (groupedMedia.value.isEmpty()) onZeroItemsLeft()
 
-								if (loadsFromMainViewModel) {
-		                            sortOutMediaMods(
-		                                currentItem,
-		                                groupedMedia,
-		                                coroutineScope,
-		                                state
-		                            ) {
-		                                onZeroItemsLeft()
-		                            }
-								}
-                        	}
+                                if (loadsFromMainViewModel) {
+                                    sortOutMediaMods(
+                                        currentItem,
+                                        groupedMedia,
+                                        coroutineScope,
+                                        state
+                                    ) {
+                                        onZeroItemsLeft()
+                                    }
+                                }
+                            }
                         }
                     )
 
@@ -510,20 +510,20 @@ private fun BottomBar(
                             }
                         },
                         action = {
-                        	if (confirmToDelete) showDeleteDialog.value = true
-                        	else runTrashAction.value = true
+                            if (confirmToDelete) showDeleteDialog.value = true
+                            else runTrashAction.value = true
                         }
                     )
 
-					// TODO: maybe restructure this
+                    // TODO: maybe restructure this
                     val showMoveToSecureFolderDialog = remember { mutableStateOf(false) }
                     val moveToSecureFolder = remember { mutableStateOf(false) }
                     val tryGetDirPermission = remember { mutableStateOf(false) }
                     var showLoadingDialog by remember { mutableStateOf(false) }
 
-					if (showLoadingDialog) {
-					    LoadingDialog(title = "Encrypting Files", body = "Please wait while the media is processed")
-					}
+                    if (showLoadingDialog) {
+                        LoadingDialog(title = "Encrypting Files", body = "Please wait while the media is processed")
+                    }
 
                     GetDirectoryPermissionAndRun(
                         absolutePath = groupedMedia.value.firstOrNull()?.let { media ->
@@ -541,27 +541,27 @@ private fun BottomBar(
                         uris = listOf(currentItem.uri),
                         shouldRun = moveToSecureFolder,
                         onGranted = {
-                        	mainViewModel.launch(Dispatchers.IO) {
-	                            moveImageToLockedFolder(
-	                                listOf(currentItem),
-	                                context
-	                            ) {
-		                            if (groupedMedia.value.isEmpty()) onZeroItemsLeft()
+                            mainViewModel.launch(Dispatchers.IO) {
+                                moveImageToLockedFolder(
+                                    listOf(currentItem),
+                                    context
+                                ) {
+                                    if (groupedMedia.value.isEmpty()) onZeroItemsLeft()
 
-									if (loadsFromMainViewModel) {
-			                            sortOutMediaMods(
-			                                currentItem,
-			                                groupedMedia,
-			                                coroutineScope,
-			                                state
-			                            ) {
-			                                onZeroItemsLeft()
-			                            }
-									}
+                                    if (loadsFromMainViewModel) {
+                                        sortOutMediaMods(
+                                            currentItem,
+                                            groupedMedia,
+                                            coroutineScope,
+                                            state
+                                        ) {
+                                            onZeroItemsLeft()
+                                        }
+                                    }
 
-									showLoadingDialog = false
-	                            }
-                        	}
+                                    showLoadingDialog = false
+                                }
+                            }
                         }
                     )
 

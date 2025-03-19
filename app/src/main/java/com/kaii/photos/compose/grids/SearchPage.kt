@@ -70,7 +70,7 @@ fun SearchPage(
     val mediaStoreDataHolder =
         searchViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
-    val originalGroupedMedia = remember { derivedStateOf { mediaStoreDataHolder.value }}
+    val originalGroupedMedia = remember { derivedStateOf { mediaStoreDataHolder.value } }
 
     val groupedMedia = remember { mutableStateOf(originalGroupedMedia.value) }
 
@@ -93,12 +93,12 @@ fun SearchPage(
             .fillMaxSize(1f)
             .background(MaterialTheme.colorScheme.background)
     ) {
-    	val coroutineScope = rememberCoroutineScope()
-		val scrollBackToTop = {
-			coroutineScope.launch {
-				gridState.animateScrollToItem(0)
-			}
-		}
+        val coroutineScope = rememberCoroutineScope()
+        val scrollBackToTop = {
+            coroutineScope.launch {
+                gridState.animateScrollToItem(0)
+            }
+        }
 
         val searchedForText = rememberSaveable { mutableStateOf("") }
         var searchNow by rememberSaveable { mutableStateOf(false) }
@@ -119,24 +119,24 @@ fun SearchPage(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             val placeholdersList = remember {
-            	val month = months.random().replaceFirstChar {
-            			it.uppercase()
-            		}
-            	val day = days.random().replaceFirstChar {
-            			it.uppercase()
-            		}
-            	val date = (1..31).random()
-            	val year = (2016..2024).random()
+                val month = months.random().replaceFirstChar {
+                    it.uppercase()
+                }
+                val day = days.random().replaceFirstChar {
+                    it.uppercase()
+                }
+                val date = (1..31).random()
+                val year = (2016..2024).random()
 
-	            listOf(
-	                "Search for a photo's name",
-	                "Search for a specific date",
-	                "$month $date $year",
-	                "$month $year",
-	                "Search by day",
-	                "$day $month $year",
-	                "$date $month $year"
-	            )
+                listOf(
+                    "Search for a photo's name",
+                    "Search for a specific date",
+                    "$month $date $year",
+                    "$month $year",
+                    "Search by day",
+                    "$day $month $year",
+                    "$date $month $year"
+                )
             }
             val placeholder = remember { placeholdersList.random() }
 
@@ -171,7 +171,7 @@ fun SearchPage(
         }
 
         LaunchedEffect(searchedForText.value, originalGroupedMedia.value) {
-        	println("ORIGINAL CHANGED REFRESHING")
+            println("ORIGINAL CHANGED REFRESHING")
             if (searchedForText.value == "") {
                 groupedMedia.value = originalGroupedMedia.value
                 hideLoadingSpinner = true
@@ -180,7 +180,7 @@ fun SearchPage(
 
             hideLoadingSpinner = false
 
-			coroutineScope.launch {
+            coroutineScope.launch {
                 val possibleDate = searchedForText.value.trim().toDateListOrNull()
 
                 if (possibleDate.component1() != null) {
@@ -197,7 +197,7 @@ fun SearchPage(
                     }
 
                     groupedMedia.value = groupPhotosBy(local, MediaItemSortMode.DateTaken)
-		       		hideLoadingSpinner = true
+                    hideLoadingSpinner = true
 
                     return@launch
                 }
@@ -224,7 +224,7 @@ fun SearchPage(
                         }
 
                         groupedMedia.value = groupPhotosBy(local, MediaItemSortMode.DateTaken)
-			       		hideLoadingSpinner = true
+                        hideLoadingSpinner = true
 
                         return@launch
                     }
@@ -238,7 +238,7 @@ fun SearchPage(
                 }
 
                 groupedMedia.value = groupPhotosBy(groupedMediaLocal, MediaItemSortMode.DateTaken)
-	       		hideLoadingSpinner = true
+                hideLoadingSpinner = true
             }
         }
 
@@ -303,13 +303,13 @@ private val months = listOf(
 )
 
 private val days = listOf(
-	"monday",
-	"tuesday",
-	"wednesday",
-	"thursday",
-	"friday",
-	"saturday",
-	"sunday"
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+    "sunday"
 )
 
 private fun String.toDateListOrNull(): List<Date?> {

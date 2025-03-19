@@ -36,7 +36,6 @@ import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.models.multi_album.groupPhotosBy
 import com.kaii.photos.models.favourites_grid.FavouritesViewModel
 import com.kaii.photos.models.favourites_grid.FavouritesViewModelFactory
-import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import kotlinx.coroutines.Dispatchers
 
 @OptIn(ExperimentalMaterial3Api::class)

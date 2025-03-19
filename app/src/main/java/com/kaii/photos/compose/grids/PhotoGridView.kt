@@ -3,7 +3,6 @@ package com.kaii.photos.compose.grids
 import android.content.res.Configuration
 import android.util.Log
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -12,7 +11,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -55,6 +53,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -468,7 +467,7 @@ fun DeviceMedia(
                             visibleItemIndex.value / totalLeftOverItems
                         }
                     }
-                    var chosenItemIndex by remember { mutableStateOf(0) }
+                    var chosenItemIndex by remember { mutableIntStateOf(0) }
 
                     Slider(
                         value = percentScrolled,
@@ -484,7 +483,7 @@ fun DeviceMedia(
                             }
                         },
                         valueRange = 0f..1f,
-                        thumb = { state ->
+                        thumb = { _ ->
                             Box(
                                 modifier = Modifier
                                     .height(48.dp)
@@ -537,7 +536,6 @@ fun DeviceMedia(
                                         ) {
                                         	// last index to "reach" even the last items
                                             val item by remember { derivedStateOf {
-                                            	val index = gridState.layoutInfo.visibleItemsInfo.last().index
                                                 groupedMedia.value[chosenItemIndex]
                                             }}
 
@@ -833,7 +831,7 @@ fun Modifier.dragSelectionHandler(
     if (groupedMedia.isEmpty()) return@pointerInput
 
 	val itemWidth = state.layoutInfo.visibleItemsInfo.firstOrNull {
-		if (it.index in 0..groupedMedia.size - 1) groupedMedia[it.index].type != MediaType.Section else false
+		if (it.index in groupedMedia.indices) groupedMedia[it.index].type != MediaType.Section else false
 	}?.size?.width
 
     val numberOfHorizontalItems = itemWidth?.let { state.layoutInfo.viewportSize.width / it } ?: 1

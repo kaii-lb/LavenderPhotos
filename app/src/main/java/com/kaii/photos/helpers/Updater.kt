@@ -2,7 +2,6 @@ package com.kaii.photos.helpers
 
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageInstaller.SessionParams
 import android.util.Log
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -114,7 +113,7 @@ class Updater(
 
         val url = "https://github.com/kaii-lb/LavenderPhotos/releases/download/${githubVersionName.value}/photos_signed_release.apk"
 
-		try {
+        try {
 			// TODO: switch to fuel-android for better usage
 			coroutineScope.launch(Dispatchers.IO) {
 				Fuel.download(url)

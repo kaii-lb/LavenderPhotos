@@ -26,9 +26,7 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.PreferencesSeparatorText
-import com.kaii.photos.compose.PreferencesSwitchRow
 import com.kaii.photos.compose.PreferencesThreeStateSwitchRow
-import com.kaii.photos.datastore.Debugging
 import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.helpers.RowPosition
 

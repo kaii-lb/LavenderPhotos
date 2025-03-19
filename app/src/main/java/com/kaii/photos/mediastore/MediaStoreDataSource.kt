@@ -16,13 +16,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 
 abstract class MediaStoreDataSource
 internal constructor(
     val context: Context,
-    val neededPath: String,
+    private val neededPath: String,
     val sortBy: MediaItemSortMode,
     private val cancellationSignal: CancellationSignal
 ) {

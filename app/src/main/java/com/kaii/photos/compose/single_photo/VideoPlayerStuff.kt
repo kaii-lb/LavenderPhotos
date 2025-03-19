@@ -133,8 +133,7 @@ fun VideoPlayerControls(
     duration: MutableFloatState,
     title: String,
     modifier: Modifier,
-    onAnyTap: () -> Unit,
-    onSwitchToLandscape: () -> Unit
+    onAnyTap: () -> Unit
 ) {
     BoxWithConstraints(
         modifier = modifier
@@ -782,14 +781,7 @@ fun VideoPlayer(
                 },
                 modifier = Modifier
                     .fillMaxSize(1f)
-            ) {
-                setBarVisibility(
-                    visible = false,
-                    window = window
-                ) {
-                    appBarsVisible.value = it
-                }
-            }
+            )
         }
 
         if ((isTouchLocked.value || controlsVisible.value) && localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {

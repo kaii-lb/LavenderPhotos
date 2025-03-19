@@ -48,7 +48,7 @@ fun setDateTakenForMedia(absolutePath: String, dateTaken: Long) {
         val exifDateTimeFormat = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss")
 
         val localDateTime = Instant.ofEpochSecond(dateTaken).atZone(ZoneId.systemDefault()).toLocalDateTime()
-		val datetime = localDateTime.format(exifDateTimeFormat)
+        val datetime = localDateTime.format(exifDateTimeFormat)
 
 	    exifInterface.setAttribute(
 	        ExifInterface.TAG_DATETIME,

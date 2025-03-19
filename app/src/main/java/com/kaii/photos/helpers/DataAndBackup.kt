@@ -3,8 +3,9 @@ package com.kaii.photos.helpers
 import android.content.Context
 import android.util.Log
 import com.kaii.photos.MainActivity.Companion.applicationDatabase
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -13,8 +14,8 @@ import kotlinx.datetime.format.char
 import kotlinx.datetime.toLocalDateTime
 import java.io.File
 import java.nio.file.Files
-import java.util.zip.ZipEntry
 import java.util.zip.Deflater
+import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
 private const val TAG = "DATA_AND_BACKUP"
@@ -30,18 +31,18 @@ class DataAndBackupHelper {
     }
 
     private fun getCurrentDate() = Instant.fromEpochMilliseconds(System.currentTimeMillis())
-            .toLocalDateTime(TimeZone.currentSystemDefault())
-            .format(LocalDateTime.Format {
-            	minute()
-            	char('_')
-            	hour()
-            	char('_')
-                dayOfMonth()
-                char('_')
-                monthNumber()
-                char('_')
-                year()
-            })
+        .toLocalDateTime(TimeZone.currentSystemDefault())
+        .format(LocalDateTime.Format {
+            minute()
+            char('_')
+            hour()
+            char('_')
+            dayOfMonth()
+            char('_')
+            monthNumber()
+            char('_')
+            year()
+        })
 
     fun getUnencryptedExportDir(context: Context) =
         File(
@@ -50,10 +51,10 @@ class DataAndBackupHelper {
         )
 
     fun getRawExportDir(context: Context) =
-    	File(
-    	    File(context.appStorageDir, EXPORT_DIR),
-    	    RAW_DIR + "_taken_" + getCurrentDate()
-    	)
+        File(
+            File(context.appStorageDir, EXPORT_DIR),
+            RAW_DIR + "_taken_" + getCurrentDate()
+        )
 
     fun getZipFile(context: Context) =
         File(
@@ -74,7 +75,7 @@ class DataAndBackupHelper {
         )
 
     /** takes items in [AppDirectories.SecureFolder], decrypts them, and copies them to [getUnencryptedExportDir] */
-    fun exportUnencryptedSecureFolderItems(context: Context) : Boolean {
+    fun exportUnencryptedSecureFolderItems(context: Context): Boolean {
         val secureFolder = File(context.appSecureFolderDir)
         val exportDir = getUnencryptedExportDir(context)
 
@@ -117,29 +118,29 @@ class DataAndBackupHelper {
     fun exportRawSecureFolderItems(
         context: Context,
         secureFolder: File = File(context.appSecureFolderDir)
-    ) : Boolean {
-    	val exportDir = getRawExportDir(context)
+    ): Boolean {
+        val exportDir = getRawExportDir(context)
 
-    	if (!exportDir.exists()) exportDir.mkdirs()
+        if (!exportDir.exists()) exportDir.mkdirs()
 
-    	val securedItems = secureFolder.listMediaFiles()
+        val securedItems = secureFolder.listMediaFiles()
 
-    	if (securedItems == null) {
+        if (securedItems == null) {
             Log.d(TAG, "Secured items was null, nothing to export.")
             return false
         }
 
-    	securedItems.forEach { secureFile ->
-			val decryptedFile = File(exportDir, secureFile.name)
-			if (!decryptedFile.exists()) secureFile.copyTo(decryptedFile)
-    	}
+        securedItems.forEach { secureFile ->
+            val decryptedFile = File(exportDir, secureFile.name)
+            if (!decryptedFile.exists()) secureFile.copyTo(decryptedFile)
+        }
 
         return true
     }
 
     fun exportSecureFolderToZipFile(
         context: Context,
-    ) : Boolean {
+    ): Boolean {
         val secureFolder = File(context.appSecureFolderDir)
 
         val securedItems = secureFolder.listFiles()
@@ -194,18 +195,18 @@ class DataAndBackupHelper {
 
         val items = database.getAll().first()
 
-		items.forEach { favItem ->
-		    val favFile = File(favItem.absolutePath)
+        items.forEach { favItem ->
+            val favFile = File(favItem.absolutePath)
 
-		    val destination = File(exportDir, favFile.name)
-		    if (!destination.exists()) favFile.copyTo(destination)
-		}
+            val destination = File(exportDir, favFile.name)
+            if (!destination.exists()) favFile.copyTo(destination)
+        }
     }
 
     suspend fun exportFavouritesToZipFile(
-    	context: Context,
-    	progress: (percentage: Float) -> Unit
-   	) {
+        context: Context,
+        progress: (percentage: Float) -> Unit
+    ) {
         val database = applicationDatabase.favouritedItemEntityDao()
 
         val fileOutputStream = getZipFile(context = context).outputStream()
@@ -215,8 +216,8 @@ class DataAndBackupHelper {
 
         val items = database.getAll().first().map { File(it.absolutePath) }
 
-		val totalSize = items.map { it.length() }.sum().toFloat()
-		var currentProgress = 0f
+        val totalSize = items.sumOf { it.length() }.toFloat()
+        var currentProgress = 0f
 
         items.forEach { favFile ->
             try {
@@ -228,11 +229,11 @@ class DataAndBackupHelper {
                 val inputStream = favFile.inputStream()
 
                 while (read > -1) {
-                	read = inputStream.read(buffer)
+                    read = inputStream.read(buffer)
 
-					zipOutputStream.write(buffer)
-                	currentProgress += buffer.size / totalSize
-                	progress(currentProgress)
+                    zipOutputStream.write(buffer)
+                    currentProgress += buffer.size / totalSize
+                    progress(currentProgress)
                 }
 
                 zipOutputStream.closeEntry()
@@ -243,8 +244,10 @@ class DataAndBackupHelper {
             }
         }
 
-        zipOutputStream.close()
-		fileOutputStream.close()
+        withContext(Dispatchers.IO) {
+            zipOutputStream.close()
+            fileOutputStream.close()
+        }
     }
 }
 

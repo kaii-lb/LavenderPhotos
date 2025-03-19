@@ -8,18 +8,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kaii.photos.MainActivity.Companion.mainViewModel
-import com.kaii.photos.datastore.AlbumsList
-import com.kaii.photos.datastore.MainPhotosView
-import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.mediastore.AlbumStoreDataSource
 import com.kaii.photos.mediastore.MediaStoreData
-import com.kaii.photos.mediastore.MultiAlbumDataSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 

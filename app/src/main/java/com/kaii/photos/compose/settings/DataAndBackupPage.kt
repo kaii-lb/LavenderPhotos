@@ -117,7 +117,7 @@ fun DataAndBackupPage() {
                             )
                         )
 
-                		backupHelper.exportRawSecureFolderItems(context = context)
+                        backupHelper.exportRawSecureFolderItems(context = context)
 
                         mainViewModel.settings.AlbumsList.addToAlbumsList(
                             backupHelper.getRawExportDir(context = context)

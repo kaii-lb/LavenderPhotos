@@ -4,11 +4,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
@@ -23,10 +23,10 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -75,13 +75,15 @@ fun MemoryAndStorageSettingsPage() {
                 val autoDeleteInterval by mainViewModel.settings.TrashBin.getAutoDeleteInterval().collectAsStateWithLifecycle(initialValue = 0)
                 val showDeleteIntervalDialog = remember { mutableStateOf(false) }
 
-				val summary by remember { derivedStateOf {
-					if (autoDeleteInterval != 0) {
-						"Auto delete items in trash bin after $autoDeleteInterval days"
-					} else {
-						"Items in trash bin won't be auto deleted"
-					}
-				}}
+                val summary by remember {
+                    derivedStateOf {
+                        if (autoDeleteInterval != 0) {
+                            "Auto delete items in trash bin after $autoDeleteInterval days"
+                        } else {
+                            "Items in trash bin won't be auto deleted"
+                        }
+                    }
+                }
 
                 PreferencesSwitchRow(
                     title = "Auto delete interval",
@@ -117,16 +119,20 @@ fun MemoryAndStorageSettingsPage() {
                 val thumbnailSize by mainViewModel.settings.Storage.getThumbnailSize().collectAsStateWithLifecycle(initialValue = 0)
                 val cacheThumbnails by mainViewModel.settings.Storage.getCacheThumbnails().collectAsStateWithLifecycle(initialValue = true)
 
-                val memoryOrStorage by remember { derivedStateOf {
-                    if (cacheThumbnails) "storage" else "memory"
-                }}
-                val summary by remember { derivedStateOf {
-                    if (thumbnailSize != 0) {
-                        "Thumbnails are currently ${thumbnailSize}x${thumbnailSize} pixels. Higher values use more $memoryOrStorage"
-                    } else {
-                        "Thumbnail are shown at max possible resolution. This uses the most $memoryOrStorage"
+                val memoryOrStorage by remember {
+                    derivedStateOf {
+                        if (cacheThumbnails) "storage" else "memory"
                     }
-                }}
+                }
+                val summary by remember {
+                    derivedStateOf {
+                        if (thumbnailSize != 0) {
+                            "Thumbnails are currently ${thumbnailSize}x${thumbnailSize} pixels. Higher values use more $memoryOrStorage"
+                        } else {
+                            "Thumbnail are shown at max possible resolution. This uses the most $memoryOrStorage"
+                        }
+                    }
+                }
 
                 PreferencesSwitchRow(
                     title = "Cache Thumbnails",
@@ -135,8 +141,8 @@ fun MemoryAndStorageSettingsPage() {
                     position = RowPosition.Single,
                     showBackground = false,
                     checked = cacheThumbnails
-                ) {isChecked ->
-                	mainViewModel.settings.Storage.setCacheThumbnails(isChecked)
+                ) { isChecked ->
+                    mainViewModel.settings.Storage.setCacheThumbnails(isChecked)
                 }
 
                 PreferencesSwitchRow(
@@ -225,8 +231,8 @@ private fun MemoryAndStorageSettingsTopBar() {
 
 @Composable
 fun SelectableButtonListDialog(
-	title: String,
-	body: String? = null,
+    title: String,
+    body: String? = null,
     showDialog: MutableState<Boolean>,
     buttons: @Composable ColumnScope.() -> Unit,
     onConfirm: () -> Unit
@@ -250,7 +256,7 @@ fun SelectableButtonListDialog(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-        	Spacer (modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             Text(
                 text = title,
@@ -260,20 +266,20 @@ fun SelectableButtonListDialog(
                     .wrapContentSize()
             )
 
-			if (body != null) {
-				Spacer (modifier = Modifier.height(8.dp))
+            if (body != null) {
+                Spacer(modifier = Modifier.height(8.dp))
 
-	            Text(
-	                text = body,
-	                fontSize = TextUnit(14f, TextUnitType.Sp),
-	                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-	                modifier = Modifier
-	                    .wrapContentSize()
-	                    .padding(12.dp, 0.dp)
-	            )
-			}
+                Text(
+                    text = body,
+                    fontSize = TextUnit(14f, TextUnitType.Sp),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                    modifier = Modifier
+                        .wrapContentSize()
+                        .padding(12.dp, 0.dp)
+                )
+            }
 
-			Spacer (modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             Column(
                 modifier = Modifier
@@ -303,8 +309,8 @@ fun DeleteIntervalDialog(
     var deleteInterval by remember { mutableIntStateOf(initialValue) }
 
     SelectableButtonListDialog(
-    	title = "Delete Interval",
-    	body = "Photos in the trash bin older than this date will be permanently deleted",
+        title = "Delete Interval",
+        body = "Photos in the trash bin older than this date will be permanently deleted",
         showDialog = showDialog,
         buttons = {
             RadioButtonRow(

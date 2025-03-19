@@ -676,7 +676,6 @@ fun SinglePhotoInfoDialog(
     val context = LocalContext.current
     val isEditingFileName = remember { mutableStateOf(false) }
 
-    val localConfig = LocalConfiguration.current
     val isLandscape by rememberDeviceOrientation()
 
     val modifier = remember(isLandscape) {

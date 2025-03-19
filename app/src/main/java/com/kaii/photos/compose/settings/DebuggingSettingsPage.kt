@@ -1,7 +1,5 @@
 package com.kaii.photos.compose.settings
 
-import android.content.Intent
-import android.content.pm.PackageManager
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -28,8 +26,6 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
-import androidx.core.content.FileProvider
-import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.mainViewModel
@@ -44,7 +40,7 @@ import com.kaii.photos.helpers.appStorageDir
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.shareSecuredImage
-import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
+
 import java.io.File
 
 @Composable

@@ -1,12 +1,8 @@
 package com.kaii.photos.compose
 
-import androidx.compose.animation.core.Easing
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.MarqueeAnimationMode
 import androidx.compose.foundation.background
-import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -15,7 +11,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -32,30 +27,24 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.zIndex
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import com.kaii.photos.R
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.darkenColor
-import kotlin.math.roundToInt
 
 @Composable
 fun PreferencesRow(
@@ -224,30 +213,30 @@ fun PreferencesSwitchRow(
         }
 
 
-        Row (
-        	modifier = Modifier
-        		.padding(12.dp, 0.dp, 0.dp, 0.dp),
-       		verticalAlignment = Alignment.CenterVertically,
-       		horizontalArrangement = Arrangement.Center
+        Row(
+            modifier = Modifier
+                .padding(12.dp, 0.dp, 0.dp, 0.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
         ) {
-	        if (onRowClick != onSwitchClick && onRowClick != null) {
-	            Box(
-	                modifier = Modifier
+            if (onRowClick != onSwitchClick && onRowClick != null) {
+                Box(
+                    modifier = Modifier
                         .width(1.dp)
                         .height(36.dp)
                         .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
-	            )
+                )
 
-	            Spacer(modifier = Modifier.width(16.dp))
-	        }
+                Spacer(modifier = Modifier.width(16.dp))
+            }
 
-	        Switch(
-	            checked = checked,
-	            onCheckedChange = {
-	                onSwitchClick(it)
-	            },
-	            enabled = enabled
-	        )
+            Switch(
+                checked = checked,
+                onCheckedChange = {
+                    onSwitchClick(it)
+                },
+                enabled = enabled
+            )
         }
     }
 }
@@ -269,7 +258,7 @@ fun RadioButtonRow(
     checked: Boolean,
     onClick: () -> Unit
 ) {
-    Row (
+    Row(
         modifier = Modifier
             .fillMaxWidth(1f)
             .height(40.dp)
@@ -289,9 +278,9 @@ fun RadioButtonRow(
             }
         )
 
-        Spacer (modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(16.dp))
 
-        Text (
+        Text(
             text = text,
             fontSize = TextUnit(14f, TextUnitType.Sp),
             color = MaterialTheme.colorScheme.onSurface,
@@ -307,7 +296,7 @@ fun CheckBoxButtonRow(
     checked: Boolean,
     onCheckedChange: () -> Unit
 ) {
-    Row (
+    Row(
         modifier = Modifier
             .fillMaxWidth(1f)
             .height(40.dp)
@@ -327,10 +316,10 @@ fun CheckBoxButtonRow(
             }
         )
 
-        Spacer (modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(16.dp))
 
-		val state = rememberScrollState()
-        Text (
+        val state = rememberScrollState()
+        Text(
             text = text,
             fontSize = TextUnit(14f, TextUnitType.Sp),
             color = MaterialTheme.colorScheme.onSurface,
@@ -356,9 +345,9 @@ fun PreferencesThreeStateSwitchRow(
     trackIcons: List<Int>,
     onStateChange: (state: Int) -> Unit
 ) {
-	val width = 104.dp
+    val width = 104.dp
     fun nextPosition() =
-        when(currentPosition) {
+        when (currentPosition) {
             0 -> 1
             1 -> 2
             2 -> 0
@@ -436,7 +425,7 @@ fun PreferencesThreeStateSwitchRow(
             }
         }
 
-        Box (
+        Box(
             modifier = Modifier
                 .padding(12.dp, 0.dp, 0.dp, 0.dp)
         ) {
@@ -448,7 +437,7 @@ fun PreferencesThreeStateSwitchRow(
                 label = "Animate look and feel dark theme slider value"
             )
 
-			Box(
+            Box(
                 modifier = Modifier
                     .height(40.dp)
                     .width(width)
@@ -491,37 +480,37 @@ fun PreferencesThreeStateSwitchRow(
                 value = animatedSliderVal,
                 valueRange = 0f..2f,
                 onValueChange = {
-                	val snapTo = if (it >= 1.4f) {
-                		2
-                	} else if (it <= 0.6f) {
-                		0
-                	} else {
-                		1
-                	}
+                    val snapTo = if (it >= 1.4f) {
+                        2
+                    } else if (it <= 0.6f) {
+                        0
+                    } else {
+                        1
+                    }
 
-               		onStateChange(snapTo)
+                    onStateChange(snapTo)
                 },
                 track = {
-					Box (
-						modifier = Modifier
+                    Box(
+                        modifier = Modifier
                             .fillMaxWidth(1f)
                             .height(40.dp)
-					)
+                    )
                 },
                 thumb = {
                     Box(
-                       modifier = Modifier
-                           .size(28.dp)
-                           .background(SwitchDefaults.colors().checkedTrackColor, CircleShape)
+                        modifier = Modifier
+                            .size(28.dp)
+                            .background(SwitchDefaults.colors().checkedTrackColor, CircleShape)
                     ) {
-	                    Icon(
-	                        painter = painterResource(id = trackIcons[currentPosition]),
-	                        contentDescription = null,
-	                        tint = SwitchDefaults.colors().checkedThumbColor,
-	                        modifier = Modifier
+                        Icon(
+                            painter = painterResource(id = trackIcons[currentPosition]),
+                            contentDescription = null,
+                            tint = SwitchDefaults.colors().checkedThumbColor,
+                            modifier = Modifier
                                 .size(24.dp)
                                 .align(Alignment.Center)
-	                    )
+                        )
                     }
                 },
                 enabled = enabled,

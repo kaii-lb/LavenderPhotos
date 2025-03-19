@@ -5,11 +5,11 @@ import android.app.Activity
 import android.content.ContentValues
 import android.content.res.Configuration
 import android.net.Uri
-import android.provider.MediaStore
-import android.provider.MediaStore.MediaColumns
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.provider.MediaStore
+import android.provider.MediaStore.MediaColumns
 import android.view.Window
 import android.view.WindowManager
 import android.widget.Toast
@@ -41,13 +41,13 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomAppBar
@@ -80,8 +80,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -100,19 +100,19 @@ import androidx.navigation.toRoute
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
-import com.bumptech.glide.signature.ObjectKey
 import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.bumptech.glide.signature.ObjectKey
 import com.kaii.photos.BuildConfig
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.BottomAppBarItem
 import com.kaii.photos.compose.ExplanationDialog
-import com.kaii.photos.compose.setBarVisibility
 import com.kaii.photos.compose.rememberDeviceOrientation
-import com.kaii.photos.helpers.Screens
-import com.kaii.photos.helpers.MultiScreenViewType
-import com.kaii.photos.helpers.shareImage
+import com.kaii.photos.compose.setBarVisibility
 import com.kaii.photos.helpers.MediaItemSortMode
+import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.Screens
+import com.kaii.photos.helpers.shareImage
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.copyUriToUri
 import com.kaii.photos.models.multi_album.formatDate
@@ -161,82 +161,82 @@ class OpenWithView : ComponentActivity() {
                 val navController = rememberNavController()
 
                 CompositionLocalProvider(LocalNavController provides navController) {
-	                NavHost(
-	                    navController = navController,
-	                    startDestination = MultiScreenViewType.OpenWithView.name,
-	                    modifier = Modifier
-	                        .fillMaxSize(1f)
-	                        .background(MaterialTheme.colorScheme.background),
-	                    enterTransition = {
-	                        slideInHorizontally(
-	                            animationSpec = tween(
-	                                durationMillis = 350
-	                            )
-	                        ) { width -> width } + fadeIn()
-	                    },
-	                    exitTransition = {
-	                        slideOutHorizontally(
-	                            animationSpec = tween(
-	                                durationMillis = 350
-	                            )
-	                        ) { width -> -width } + fadeOut()
-	                    },
-	                    popExitTransition = {
-	                        slideOutHorizontally(
-	                            animationSpec = tween(
-	                                durationMillis = 350
-	                            )
-	                        ) { width -> width } + fadeOut()
-	                    },
-	                    popEnterTransition = {
-	                        slideInHorizontally(
-	                            animationSpec = tween(
-	                                durationMillis = 350
-	                            )
-	                        ) { width -> -width } + fadeIn()
-	                    }
-	                ) {
-	                    composable(MultiScreenViewType.OpenWithView.name) {
-		                    enableEdgeToEdge(
-		                        navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
-		                        statusBarStyle =
-		                        if (!isSystemInDarkTheme()) {
-		                            SystemBarStyle.light(
-		                                MaterialTheme.colorScheme.background.toArgb(),
-		                                MaterialTheme.colorScheme.background.toArgb()
-		                            )
-		                        } else {
-		                            SystemBarStyle.dark(MaterialTheme.colorScheme.background.toArgb())
-		                        }
-		                    )
+                    NavHost(
+                        navController = navController,
+                        startDestination = MultiScreenViewType.OpenWithView.name,
+                        modifier = Modifier
+                            .fillMaxSize(1f)
+                            .background(MaterialTheme.colorScheme.background),
+                        enterTransition = {
+                            slideInHorizontally(
+                                animationSpec = tween(
+                                    durationMillis = 350
+                                )
+                            ) { width -> width } + fadeIn()
+                        },
+                        exitTransition = {
+                            slideOutHorizontally(
+                                animationSpec = tween(
+                                    durationMillis = 350
+                                )
+                            ) { width -> -width } + fadeOut()
+                        },
+                        popExitTransition = {
+                            slideOutHorizontally(
+                                animationSpec = tween(
+                                    durationMillis = 350
+                                )
+                            ) { width -> width } + fadeOut()
+                        },
+                        popEnterTransition = {
+                            slideInHorizontally(
+                                animationSpec = tween(
+                                    durationMillis = 350
+                                )
+                            ) { width -> -width } + fadeIn()
+                        }
+                    ) {
+                        composable(MultiScreenViewType.OpenWithView.name) {
+                            enableEdgeToEdge(
+                                navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
+                                statusBarStyle =
+                                if (!isSystemInDarkTheme()) {
+                                    SystemBarStyle.light(
+                                        MaterialTheme.colorScheme.background.toArgb(),
+                                        MaterialTheme.colorScheme.background.toArgb()
+                                    )
+                                } else {
+                                    SystemBarStyle.dark(MaterialTheme.colorScheme.background.toArgb())
+                                }
+                            )
 
-	                        Content(
-	                            uri = uri,
-	                            window = window
-	                        )
-	                    }
+                            Content(
+                                uri = uri,
+                                window = window
+                            )
+                        }
 
-	                    composable<Screens.EditingScreen> {
-	                        enableEdgeToEdge(
-	                            navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
-	                            statusBarStyle = SystemBarStyle.auto(
-	                                MaterialTheme.colorScheme.surfaceContainer.toArgb(),
-	                                MaterialTheme.colorScheme.surfaceContainer.toArgb()
-	                            )
-	                        )
+                        composable<Screens.EditingScreen> {
+                            enableEdgeToEdge(
+                                navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
+                                statusBarStyle = SystemBarStyle.auto(
+                                    MaterialTheme.colorScheme.surfaceContainer.toArgb(),
+                                    MaterialTheme.colorScheme.surfaceContainer.toArgb()
+                                )
+                            )
 
-	                        val screen: Screens.EditingScreen = it.toRoute()
+                            val screen: Screens.EditingScreen = it.toRoute()
 
-	                        EditingView(
-	                            absolutePath = screen.absolutePath,
-	                            dateTaken = screen.dateTaken,
-	                            uri = screen.uri.toUri(),
-	                            window = window,
-	                            overwriteByDefault = false,
-	                            isOpenWith = true
-	                        )
-	                    }
-	                }
+                            EditingView(
+                                absolutePath = screen.absolutePath,
+                                dateTaken = screen.dateTaken,
+                                uri = screen.uri.toUri(),
+                                window = window,
+                                overwriteByDefault = false,
+                                isOpenWith = true
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -384,7 +384,7 @@ private fun OpenWithVideoPlayer(
         )
     }
 
-	val localConfig = LocalConfiguration.current
+    val localConfig = LocalConfiguration.current
     LaunchedEffect(isPlaying.value, localConfig.orientation) {
         if (!isPlaying.value) {
             controlsVisible.value = true
@@ -400,7 +400,7 @@ private fun OpenWithVideoPlayer(
             }
             exoPlayer.pause()
         } else {
-        	exoPlayer.playWhenReady = true
+            exoPlayer.playWhenReady = true
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             exoPlayer.play()
         }
@@ -423,7 +423,7 @@ private fun OpenWithVideoPlayer(
         }
     }
 
-    Box (
+    Box(
         modifier = Modifier
             .fillMaxSize(1f)
     ) {
@@ -483,13 +483,13 @@ private fun OpenWithVideoPlayer(
         }
 
         LaunchedEffect(isLandscape) {
-       		setBarVisibility(
-       			visible = !isLandscape,
-       			window = window
-       		) {
-       			appBarsVisible.value = it
-       			if (!isLandscape) controlsVisible.value = it
-       		}
+            setBarVisibility(
+                visible = !isLandscape,
+                window = window
+            ) {
+                appBarsVisible.value = it
+                if (!isLandscape) controlsVisible.value = it
+            }
         }
 
         Box(
@@ -658,18 +658,11 @@ private fun OpenWithVideoPlayer(
                 },
                 modifier = Modifier
                     .fillMaxSize(1f)
-            ) {
-                setBarVisibility(
-                    visible = false,
-                    window = window
-                ) {
-                    appBarsVisible.value = it
-                }
-            }
+            )
         }
 
-		if ((isTouchLocked.value || controlsVisible.value) && localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            Row (
+        if ((isTouchLocked.value || controlsVisible.value) && localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            Row(
                 modifier = Modifier
                     .wrapContentSize()
                     .animateContentSize()
@@ -677,8 +670,8 @@ private fun OpenWithVideoPlayer(
                     .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(
-                	space = 4.dp,
-                	alignment = Alignment.CenterHorizontally
+                    space = 4.dp,
+                    alignment = Alignment.CenterHorizontally
                 )
             ) {
                 FilledTonalIconToggleButton(
@@ -706,12 +699,12 @@ private fun OpenWithVideoPlayer(
                 }
 
                 if (controlsVisible.value) {
-                    Column (
+                    Column(
                         modifier = Modifier
                             .wrapContentSize(),
                         verticalArrangement = Arrangement.spacedBy(
-                        	space = 4.dp,
-                        	alignment = Alignment.Top
+                            space = 4.dp,
+                            alignment = Alignment.Top
                         ),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
@@ -782,12 +775,12 @@ private fun TopBar(
                 )
             },
             navigationIcon = {
-            	val context = LocalContext.current
+                val context = LocalContext.current
 
                 IconButton(
                     onClick = {
                         releaseExoPlayer()
-						(context as Activity).finish()
+                        (context as Activity).finish()
                     },
                 ) {
                     Icon(
@@ -829,96 +822,96 @@ private fun BottomBar(
             )
         ) { width -> width } + fadeOut(),
     ) {
-    	val isLandscape by rememberDeviceOrientation()
+        val isLandscape by rememberDeviceOrientation()
 
-	    BottomAppBar(
-	        actions = {
-	        	Row(
-	        	    modifier = Modifier
-	        	        .fillMaxWidth(1f)
-	        	        .padding(12.dp, 0.dp),
-	        	    verticalAlignment = Alignment.CenterVertically,
-	        	    horizontalArrangement =
-	        	    if (isLandscape)
-	        	        Arrangement.spacedBy(
-	        	            space = 48.dp,
-	        	            alignment = Alignment.CenterHorizontally
-	        	        )
-	        	    else Arrangement.SpaceEvenly
-	        	) {
-		            BottomAppBarItem(
-		                text = "Share",
-		                iconResId = R.drawable.share,
-		                cornerRadius = 32.dp,
-		                action = {
-		                    shareImage(uri, context)
-		                }
-		            )
+        BottomAppBar(
+            actions = {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth(1f)
+                        .padding(12.dp, 0.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement =
+                    if (isLandscape)
+                        Arrangement.spacedBy(
+                            space = 48.dp,
+                            alignment = Alignment.CenterHorizontally
+                        )
+                    else Arrangement.SpaceEvenly
+                ) {
+                    BottomAppBarItem(
+                        text = "Share",
+                        iconResId = R.drawable.share,
+                        cornerRadius = 32.dp,
+                        action = {
+                            shareImage(uri, context)
+                        }
+                    )
 
-		            val showNotImplementedDialog = remember { mutableStateOf(false) }
+                    val showNotImplementedDialog = remember { mutableStateOf(false) }
 
-		            if (showNotImplementedDialog.value) {
-		                ExplanationDialog(
-		                    title = "Unimplemented",
-		                    explanation = "Editing videos has not been implemented yet as of version ${BuildConfig.VERSION_NAME} of Lavender Photos. This feature will be added as soon as possible, thank you for your patience.",
-		                    showDialog = showNotImplementedDialog
-		                )
-		            }
+                    if (showNotImplementedDialog.value) {
+                        ExplanationDialog(
+                            title = "Unimplemented",
+                            explanation = "Editing videos has not been implemented yet as of version ${BuildConfig.VERSION_NAME} of Lavender Photos. This feature will be added as soon as possible, thank you for your patience.",
+                            showDialog = showNotImplementedDialog
+                        )
+                    }
 
-		            BottomAppBarItem(
-		                text = "Edit",
-		                iconResId = R.drawable.paintbrush,
-		                cornerRadius = 32.dp,
-		                action =
-                            if (mediaType == MediaType.Image) {
-                                {
-                                    val extension = mimeType.split("/")[1]
-                                    val currentTime = System.currentTimeMillis()
-                                    val date = formatDate(currentTime / 1000, MediaItemSortMode.DateTaken)
-                                    val name = "Lavender Photos edited file at $date.$extension"
-                                    val destination = File(Environment.DIRECTORY_PICTURES, name) // TODO: maybe move into subdir?
+                    BottomAppBarItem(
+                        text = "Edit",
+                        iconResId = R.drawable.paintbrush,
+                        cornerRadius = 32.dp,
+                        action =
+                        if (mediaType == MediaType.Image) {
+                            {
+                                val extension = mimeType.split("/")[1]
+                                val currentTime = System.currentTimeMillis()
+                                val date = formatDate(currentTime / 1000, MediaItemSortMode.DateTaken)
+                                val name = "Lavender Photos edited file at $date.$extension"
+                                val destination = File(Environment.DIRECTORY_PICTURES, name) // TODO: maybe move into subdir?
 
-                                    val contentValues = ContentValues().apply {
-                                        put(MediaColumns.DISPLAY_NAME, name)
-                                        put(MediaColumns.DATE_MODIFIED, currentTime)
-                                        put(MediaColumns.DATE_TAKEN, currentTime)
-                                        put(MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES)
-                                        put(MediaColumns.MIME_TYPE, mimeType)
-                                    }
+                                val contentValues = ContentValues().apply {
+                                    put(MediaColumns.DISPLAY_NAME, name)
+                                    put(MediaColumns.DATE_MODIFIED, currentTime)
+                                    put(MediaColumns.DATE_TAKEN, currentTime)
+                                    put(MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES)
+                                    put(MediaColumns.MIME_TYPE, mimeType)
+                                }
 
-                                    val contentUri = context.contentResolver.insert(
-                                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                                        contentValues
+                                val contentUri = context.contentResolver.insert(
+                                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                                    contentValues
+                                )
+
+                                if (contentUri != null) {
+                                    context.contentResolver.copyUriToUri(
+                                        from = uri,
+                                        to = contentUri
                                     )
 
-                                    if (contentUri != null) {
-                                        context.contentResolver.copyUriToUri(
-                                            from = uri,
-                                            to = contentUri
-                                        )
-
-                                        setBarVisibility(
-                                            visible = true,
-                                            window = window
-                                        ) {
-                                            appBarsVisible.value = it
-                                        }
-
-                                        navController.navigate(
-                                            Screens.EditingScreen(
-                                                absolutePath = destination.absolutePath,
-                                                uri = contentUri.toString(),
-                                                dateTaken = currentTime / 1000
-                                            )
-                                        )
+                                    setBarVisibility(
+                                        visible = true,
+                                        window = window
+                                    ) {
+                                        appBarsVisible.value = it
                                     }
+
+                                    navController.navigate(
+                                        Screens.EditingScreen(
+                                            absolutePath = destination.absolutePath,
+                                            uri = contentUri.toString(),
+                                            dateTaken = currentTime / 1000
+                                        )
+                                    )
                                 }
-                            } else {
-                                { showNotImplementedDialog.value = true }
                             }
-		            )
-				}
-	        }
-	    )
+                        } else {
+                            { showNotImplementedDialog.value = true }
+                        }
+                    )
+                }
+            }
+        )
     }
 }

@@ -71,7 +71,7 @@ class MultiAlbumDataSource(
                 val dateModified = cursor.getLong(dateModifiedColumn)
                 val displayName = cursor.getString(displayNameIndex)
 
-				val mediaStoreDateTaken = cursor.getLong(dateTakenColumn) / 1000
+                val mediaStoreDateTaken = cursor.getLong(dateTakenColumn) / 1000
                 val dateTaken =
 	                if (mediaStoreDateTaken == 0L) {
 	                	if (dateModified != 0L) {

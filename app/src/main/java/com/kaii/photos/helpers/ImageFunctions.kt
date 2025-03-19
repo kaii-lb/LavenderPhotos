@@ -52,10 +52,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.nio.file.attribute.FileTime
 import kotlin.math.min
-import kotlin.io.path.Path
-import kotlin.io.path.setLastModifiedTime
 
 private const val TAG = "IMAGE_FUNCTIONS"
 
@@ -78,19 +75,19 @@ fun permanentlyDeletePhotoList(context: Context, list: List<Uri>) {
 
 // TODO: remove from favourites
 /** @param list is a list of pairs of item uri and its absolute path */
-suspend fun setTrashedOnPhotoList(context: Context, list: List<Pair<Uri, String>>, trashed: Boolean) {
+fun setTrashedOnPhotoList(context: Context, list: List<Pair<Uri, String>>, trashed: Boolean) {
     val contentResolver = context.contentResolver
 
-	val currentTimeMillis = System.currentTimeMillis()
+    val currentTimeMillis = System.currentTimeMillis()
     val trashedValues = ContentValues().apply {
         put(MediaColumns.IS_TRASHED, trashed)
     }
 
     try {
         list.forEach { (uri, path) ->
-        	// order is very important!
-        	// this WILL crash if you try to set last modified on a file that got moved from ex image.png to .trashed-{timestamp}-image.png
-        	File(path).setLastModified(currentTimeMillis)
+            // order is very important!
+            // this WILL crash if you try to set last modified on a file that got moved from ex image.png to .trashed-{timestamp}-image.png
+            File(path).setLastModified(currentTimeMillis)
             contentResolver.update(uri, trashedValues, null)
         }
     } catch (e: Throwable) {
@@ -151,10 +148,10 @@ fun shareMultipleSecuredImages(
     context.startActivity(Intent.createChooser(intent, null))
 }
 
-suspend fun moveImageToLockedFolder(
-	list: List<MediaStoreData>,
-	context: Context,
-	onDone: () -> Unit
+fun moveImageToLockedFolder(
+    list: List<MediaStoreData>,
+    context: Context,
+    onDone: () -> Unit
 ) {
     val contentResolver = context.contentResolver
     val lastModified = System.currentTimeMillis()
@@ -168,12 +165,12 @@ suspend fun moveImageToLockedFolder(
         val copyToPath = context.appSecureFolderDir + "/" + fileToBeHidden.name
         val destinationFile = File(copyToPath)
 
-		if (mediaItem.type == MediaType.Image) {
-	        setDateTakenForMedia(
-	            mediaItem.absolutePath,
-	            mediaItem.dateTaken
-	        )
-		}
+        if (mediaItem.type == MediaType.Image) {
+            setDateTakenForMedia(
+                mediaItem.absolutePath,
+                mediaItem.dateTaken
+            )
+        }
 
         addSecuredCachedMediaThumbnail(
             context = context,
@@ -202,9 +199,9 @@ suspend fun moveImageToLockedFolder(
 }
 
 suspend fun moveImageOutOfLockedFolder(
-	list: List<MediaStoreData>,
-	context: Context,
-	onDone: () -> Unit
+    list: List<MediaStoreData>,
+    context: Context,
+    onDone: () -> Unit
 ) {
     val contentResolver = context.contentResolver
 
@@ -220,9 +217,9 @@ suspend fun moveImageOutOfLockedFolder(
 
         val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(media.absolutePath)
         if (iv != null) {
-        	EncryptionManager.decryptInputStream(fileToBeRestored.inputStream(), tempFile.outputStream(), iv)
+            EncryptionManager.decryptInputStream(fileToBeRestored.inputStream(), tempFile.outputStream(), iv)
         } else {
-        	fileToBeRestored.inputStream().copyTo(tempFile.outputStream())
+            fileToBeRestored.inputStream().copyTo(tempFile.outputStream())
         }
 
         contentResolver.copyMedia(
@@ -245,7 +242,7 @@ suspend fun moveImageOutOfLockedFolder(
 }
 
 /** @param list is a list of the absolute path of every image to be deleted */
-suspend fun permanentlyDeleteSecureFolderImageList(list: List<String>, context: Context) {
+fun permanentlyDeleteSecureFolderImageList(list: List<String>, context: Context) {
     try {
         list.forEach { path ->
             File(path).let { file ->
@@ -308,8 +305,8 @@ fun moveImageListToPath(context: Context, list: List<MediaStoreData>, destinatio
     }
 }
 
-/** @param destination where to copy said files to, should be relative 
-	@param overrideDisplayName should not contain file extension */
+/** @param destination where to copy said files to, should be relative
+@param overrideDisplayName should not contain file extension */
 fun copyImageListToPath(
     context: Context,
     list: List<MediaStoreData>,
@@ -488,21 +485,21 @@ suspend fun savePathListToBitmap(
                 context.contentResolver.update(newUri, contentValues, null)
                 File(absolutePath).setLastModified(currentTime)
 
-				LavenderSnackbarController.pushEvent(
-	                LavenderSnackbarEvents.MessageEvent(
-	                    message = "Saved edited image!",
-	                    iconResId = R.drawable.file_is_selected_foreground,
-	                    duration = SnackbarDuration.Short
-	                )
-				)
+                LavenderSnackbarController.pushEvent(
+                    LavenderSnackbarEvents.MessageEvent(
+                        message = "Saved edited image!",
+                        iconResId = R.drawable.file_is_selected_foreground,
+                        duration = SnackbarDuration.Short
+                    )
+                )
             } else {
-            	LavenderSnackbarController.pushEvent(
-	                LavenderSnackbarEvents.MessageEvent(
-	                    message = "Failed to save edited image",
-	                    iconResId = R.drawable.error_2,
-	                    duration = SnackbarDuration.Long
-	                )
-            	)
+                LavenderSnackbarController.pushEvent(
+                    LavenderSnackbarEvents.MessageEvent(
+                        message = "Failed to save edited image",
+                        iconResId = R.drawable.error_2,
+                        duration = SnackbarDuration.Long
+                    )
+                )
             }
         } else {
             val outputStream = context.contentResolver.openOutputStream(uri)
@@ -515,13 +512,13 @@ suspend fun savePathListToBitmap(
                 // update date modified and invalidate cache by proxy
                 File(absolutePath).setLastModified(currentTime)
 
-				LavenderSnackbarController.pushEvent(
-	                LavenderSnackbarEvents.MessageEvent(
-	                    message = "Saved edited image!",
-	                    iconResId = R.drawable.file_is_selected_foreground,
-	                    duration = SnackbarDuration.Short
-	                )
-				)
+                LavenderSnackbarController.pushEvent(
+                    LavenderSnackbarEvents.MessageEvent(
+                        message = "Saved edited image!",
+                        iconResId = R.drawable.file_is_selected_foreground,
+                        duration = SnackbarDuration.Short
+                    )
+                )
             } else {
                 LavenderSnackbarController.pushEvent(
                     LavenderSnackbarEvents.MessageEvent(

@@ -2,7 +2,6 @@ package com.kaii.photos.helpers
 
 import android.os.Environment
 import android.util.Log
-import kotlinx.coroutines.flow.flow
 import java.io.IOException
 import java.nio.file.FileVisitResult
 import java.nio.file.FileVisitor
@@ -112,9 +111,9 @@ fun Path.getAllAlbumsOnDevice(): List<String> {
                 val dataPath = baseInternalStorageDirectory + "Android/data"
                 val obbPath = baseInternalStorageDirectory + "Android/obb"
 
-				return if (dir?.toString()?.replace(baseInternalStorageDirectory, "") in albums) {
-					FileVisitResult.SKIP_SUBTREE
-				} else if (dir?.startsWith(dataPath) == true || dir?.startsWith(obbPath) == true) {
+                return if (dir?.toString()?.replace(baseInternalStorageDirectory, "") in albums) {
+                    FileVisitResult.SKIP_SUBTREE
+                } else if (dir?.startsWith(dataPath) == true || dir?.startsWith(obbPath) == true) {
                     FileVisitResult.SKIP_SUBTREE
                 } else {
                     FileVisitResult.CONTINUE
@@ -126,7 +125,7 @@ fun Path.getAllAlbumsOnDevice(): List<String> {
                     val matchForDotFiles = Regex("\\.[A-z]")
                     val file = path.toFile()
 
-					val fileParentPath = file.absolutePath.replace(baseInternalStorageDirectory, "").replace(file.name, "")
+                    val fileParentPath = file.absolutePath.replace(baseInternalStorageDirectory, "").replace(file.name, "")
                     if (fileParentPath in albums) return FileVisitResult.SKIP_SUBTREE
 
                     val isDotFile = file.absolutePath.contains(matchForDotFiles) && file.name.startsWith(".")
@@ -167,9 +166,9 @@ fun Path.getAllAlbumsOnDevice(): List<String> {
         e.printStackTrace()
     }
 
-	Log.d(TAG, "Got all albums on device.")
+    Log.d(TAG, "Got all albums on device.")
 
     return albums.map {
-    	it.removeSuffix("/")
+        it.removeSuffix("/")
     }
 }

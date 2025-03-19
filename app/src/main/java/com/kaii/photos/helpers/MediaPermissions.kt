@@ -107,7 +107,7 @@ fun GetDirectoryPermissionAndRun(
 
     LaunchedEffect(shouldRun.value) {
         if (shouldRun.value) {
-        	val alreadyPersisted =
+            val alreadyPersisted =
                 context.contentResolver.persistedUriPermissions.any {
                     val externalContentUri = context.getExternalStorageContentUriFromAbsolutePath(absolutePath, true)
 

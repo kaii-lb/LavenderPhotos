@@ -22,7 +22,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -38,7 +37,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
-import androidx.navigation.NavHostController
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
@@ -56,7 +54,6 @@ import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.signature
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -132,12 +129,12 @@ fun HorizontalImageList(
         modifier = Modifier
             .fillMaxHeight(1f)
     ) { index ->
-		if (groupedMedia.isEmpty()) return@HorizontalPager
+        if (groupedMedia.isEmpty()) return@HorizontalPager
 
         val shouldPlay by remember(state) {
             derivedStateOf {
                 (abs(state.currentPageOffsetFraction) < 0.5f && state.currentPage == index)
-                	|| (abs(state.currentPageOffsetFraction) > 0.5f && state.currentPage == index)
+                        || (abs(state.currentPageOffsetFraction) > 0.5f && state.currentPage == index)
             }
         }
 

@@ -53,7 +53,7 @@ class MultiAlbumViewModel(
         albumsList: List<String>,
         sortMode: MediaItemSortMode
     ) {
-    	sortBy = sortMode
+        sortBy = sortMode
         if (albumsList == albums) return
 
         cancelMediaFlow()

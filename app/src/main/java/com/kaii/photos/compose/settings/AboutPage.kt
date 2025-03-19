@@ -151,7 +151,7 @@ fun AboutPage(popBackStack: () -> Unit) {
                 )
             }
 
-	        PreferencesRow(
+            PreferencesRow(
 	            title = "Privacy Policy",
 	            summary = "we really don't use your data",
 	            iconResID = R.drawable.privacy_policy,

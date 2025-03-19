@@ -9,7 +9,6 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.security.KeyStore
 import javax.crypto.Cipher
-import javax.crypto.CipherInputStream
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.IvParameterSpec
@@ -96,7 +95,7 @@ object EncryptionManager {
         inputStream: InputStream,
         outputStream: OutputStream
     ): ByteArray {
-    	val cipher = Cipher.getInstance(TRANSFORMATION)
+        val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.ENCRYPT_MODE, getOrCreateSecretKey())
 
         writeToOutputStream(
@@ -113,7 +112,7 @@ object EncryptionManager {
         outputStream: OutputStream,
         iv: ByteArray
     ) {
-    	val cipher = Cipher.getInstance(TRANSFORMATION)
+        val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.DECRYPT_MODE, getOrCreateSecretKey(), IvParameterSpec(iv))
 
         writeToOutputStream(
@@ -152,26 +151,26 @@ object EncryptionManager {
     }
 
     fun decryptBytes(bytes: ByteArray, iv: ByteArray): ByteArray {
-    	val cipher = Cipher.getInstance(TRANSFORMATION)
+        val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.DECRYPT_MODE, getOrCreateSecretKey(), IvParameterSpec(iv))
 
         val decrypted = writeToByteArray(
-        	bytes = bytes,
-        	cipher = cipher
-       	)
+            bytes = bytes,
+            cipher = cipher
+        )
 
         return decrypted
     }
 
     /** return the encrypted byte array and an iv as the second param */
     fun encryptBytes(bytes: ByteArray): Pair<ByteArray, ByteArray> {
-    	val cipher = Cipher.getInstance(TRANSFORMATION)
+        val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.ENCRYPT_MODE, getOrCreateSecretKey())
 
         val encrypted = writeToByteArray(
-        	bytes = bytes,
-        	cipher = cipher
-       	)
+            bytes = bytes,
+            cipher = cipher
+        )
 
         return Pair(encrypted, cipher.iv)
     }
@@ -182,15 +181,15 @@ object EncryptionManager {
         context: Context,
         progress: (progress: Float) -> Unit
     ): File {
-    	Log.d(TAG, "trying to decrypt video $absolutePath")
+        Log.d(TAG, "trying to decrypt video $absolutePath")
 
         val original = File(absolutePath)
         val destination = getSecureDecryptedVideoFile(
-        	name = original.name,
-        	context = context
-       	)
+            name = original.name,
+            context = context
+        )
 
-		val cipher = Cipher.getInstance(TRANSFORMATION)
+        val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.DECRYPT_MODE, getOrCreateSecretKey(), IvParameterSpec(iv))
 
         val inputStream = original.inputStream()

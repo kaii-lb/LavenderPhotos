@@ -2,7 +2,6 @@ package com.kaii.photos.models.favourites_grid
 
 import android.net.Uri
 import android.content.Context
-import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.MainActivity
@@ -18,10 +17,9 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.io.File
 import java.nio.file.Files
 
-class FavouritesViewModel() : ViewModel() {
+class FavouritesViewModel : ViewModel() {
     private val dao = MainActivity.applicationDatabase.favouritedItemEntityDao()
 
     val mediaFlow by lazy {

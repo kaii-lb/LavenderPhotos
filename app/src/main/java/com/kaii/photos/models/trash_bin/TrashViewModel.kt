@@ -2,7 +2,6 @@ package com.kaii.photos.models.trash_bin
 
 import android.content.Context
 import android.os.CancellationSignal
-import android.provider.MediaStore.MediaColumns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.helpers.MediaItemSortMode

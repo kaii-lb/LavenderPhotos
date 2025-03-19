@@ -169,11 +169,13 @@ fun SingleHiddenPhotoView(
     val holderGroupedMedia =
         mainViewModel.groupedMedia.collectAsState(initial = null).value ?: return
 
-    val mediaItem by remember { derivedStateOf {
-        holderGroupedMedia.find {
-            it.id == mediaItemId
+    val mediaItem by remember {
+        derivedStateOf {
+            holderGroupedMedia.find {
+                it.id == mediaItemId
+            }
         }
-    }}
+    }
 
     if (mediaItem == null) return
 
@@ -245,9 +247,9 @@ fun SingleHiddenPhotoView(
         }
 
         SingleSecuredPhotoInfoDialog(
-        	showDialog = showInfoDialog,
-        	currentMediaItem = currentMediaItem
-       	)
+            showDialog = showInfoDialog,
+            currentMediaItem = currentMediaItem
+        )
     }
 
     val coroutineScope = rememberCoroutineScope()
@@ -319,7 +321,7 @@ private fun TopBar(
                 val coroutineScope = rememberCoroutineScope()
                 val context = LocalContext.current
 
-                var showLoadingDialog by remember { mutableStateOf(false)}
+                var showLoadingDialog by remember { mutableStateOf(false) }
 
                 if (showLoadingDialog) {
                     LoadingDialog(
@@ -335,8 +337,8 @@ private fun TopBar(
 
                             val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(mediaItem.absolutePath)
                             if (iv == null) {
-                            	Log.e(TAG, "IV for ${mediaItem.displayName} was null, aborting")
-                            	return@launch
+                                Log.e(TAG, "IV for ${mediaItem.displayName} was null, aborting")
+                                return@launch
                             }
 
                             val originalFile = File(mediaItem.absolutePath)
@@ -417,11 +419,11 @@ private fun BottomBar(
     val runRestoreAction = remember { mutableStateOf(false) }
     var originalPath by remember { mutableStateOf("") }
 
-	var showLoadingDialog by remember { mutableStateOf(false) }
+    var showLoadingDialog by remember { mutableStateOf(false) }
 
-	if (showLoadingDialog) {
-	    LoadingDialog(title = "Restoring Files", body = "Please wait while the media is processed")
-	}
+    if (showLoadingDialog) {
+        LoadingDialog(title = "Restoring Files", body = "Please wait while the media is processed")
+    }
 
     LaunchedEffect(item) {
         withContext(Dispatchers.IO) {
@@ -433,23 +435,23 @@ private fun BottomBar(
         absolutePath = originalPath,
         shouldRun = runRestoreAction,
     ) {
-    	mainViewModel.launch(Dispatchers.IO) {
-	        moveImageOutOfLockedFolder(
-	        	list = listOf(item),
-	        	context = context
-	       	) {
-	        	showLoadingDialog = false
-	        }
+        mainViewModel.launch(Dispatchers.IO) {
+            moveImageOutOfLockedFolder(
+                list = listOf(item),
+                context = context
+            ) {
+                showLoadingDialog = false
+            }
 
-	        sortOutMediaMods(
-	            item,
-	            groupedMedia,
-	            coroutineScope,
-	            state
-	        ) {
-	            popBackStack()
-	        }
-    	}
+            sortOutMediaMods(
+                item,
+                groupedMedia,
+                coroutineScope,
+                state
+            ) {
+                popBackStack()
+            }
+        }
     }
 
     ConfirmationDialog(
@@ -467,21 +469,21 @@ private fun BottomBar(
         dialogBody = "This action cannot be undone!",
         confirmButtonLabel = "Delete"
     ) {
-    	mainViewModel.launch(Dispatchers.IO) {
-	        permanentlyDeleteSecureFolderImageList(
-	            list = listOf(item.absolutePath),
-	            context = context
-	        )
+        mainViewModel.launch(Dispatchers.IO) {
+            permanentlyDeleteSecureFolderImageList(
+                list = listOf(item.absolutePath),
+                context = context
+            )
 
-	        sortOutMediaMods(
-	            item,
-	            groupedMedia,
-	            coroutineScope,
-	            state
-	        ) {
-	            popBackStack()
-	        }
-    	}
+            sortOutMediaMods(
+                item,
+                groupedMedia,
+                coroutineScope,
+                state
+            ) {
+                popBackStack()
+            }
+        }
     }
 
     AnimatedVisibility(
@@ -666,15 +668,15 @@ fun SingleSecuredPhotoInfoDialog(
                         )
                     }
 
-					var showLoadingDialog by remember { mutableStateOf(false) }
-					if (showLoadingDialog) {
-						LoadingDialog(
-							title = "Getting file info",
-							body = "Please wait..."
-						)
-					}
+                    var showLoadingDialog by remember { mutableStateOf(false) }
+                    if (showLoadingDialog) {
+                        LoadingDialog(
+                            title = "Getting file info",
+                            body = "Please wait..."
+                        )
+                    }
 
-					val context = LocalContext.current
+                    val context = LocalContext.current
                     LaunchedEffect(Unit) {
                         withContext(Dispatchers.IO) {
                             showLoadingDialog = true
@@ -690,8 +692,8 @@ fun SingleSecuredPhotoInfoDialog(
                                     val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(currentMediaItem.absolutePath)
 
                                     if (iv == null) {
-                                    	Log.e(TAG, "IV for ${currentMediaItem.displayName} was null, aborting")
-                                    	return@withContext
+                                        Log.e(TAG, "IV for ${currentMediaItem.displayName} was null, aborting")
+                                        return@withContext
                                     }
                                     EncryptionManager.decryptVideo(
                                         absolutePath = originalFile.absolutePath,
@@ -700,7 +702,7 @@ fun SingleSecuredPhotoInfoDialog(
                                         progress = {}
                                     )
                                 } else if (cachedFile.length() < originalFile.length()) {
-                                    while(cachedFile.length() < originalFile.length()) {
+                                    while (cachedFile.length() < originalFile.length()) {
                                         delay(100)
                                     }
 
@@ -709,35 +711,35 @@ fun SingleSecuredPhotoInfoDialog(
                                     cachedFile
                                 }
                             } else {
-                            	val originalFile = File(currentMediaItem.absolutePath)
-                            	val cachedFile = getDecryptCacheForFile(
-                            	    file = originalFile,
-                            	    context = context
-                            	)
+                                val originalFile = File(currentMediaItem.absolutePath)
+                                val cachedFile = getDecryptCacheForFile(
+                                    file = originalFile,
+                                    context = context
+                                )
 
-                            	if (!cachedFile.exists()) {
-                            	    val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(currentMediaItem.absolutePath)
+                                if (!cachedFile.exists()) {
+                                    val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(currentMediaItem.absolutePath)
 
-                            	    if (iv == null) {
-                            	    	Log.e(TAG, "IV for ${currentMediaItem.displayName} was null, aborting")
-                            	    	return@withContext
-                            	    }
-                            	    EncryptionManager.decryptInputStream(
-                            	        inputStream = originalFile.inputStream(),
-                            	        outputStream = cachedFile.outputStream(),
-                            	        iv = iv
-                            	    )
+                                    if (iv == null) {
+                                        Log.e(TAG, "IV for ${currentMediaItem.displayName} was null, aborting")
+                                        return@withContext
+                                    }
+                                    EncryptionManager.decryptInputStream(
+                                        inputStream = originalFile.inputStream(),
+                                        outputStream = cachedFile.outputStream(),
+                                        iv = iv
+                                    )
 
-                            	    cachedFile
-                            	} else if (cachedFile.length() < originalFile.length()) {
-                            	    while(cachedFile.length() < originalFile.length()) {
-                            	        delay(100)
-                            	    }
+                                    cachedFile
+                                } else if (cachedFile.length() < originalFile.length()) {
+                                    while (cachedFile.length() < originalFile.length()) {
+                                        delay(100)
+                                    }
 
-                            	    cachedFile
-                            	} else {
-                            	    cachedFile
-                            	}
+                                    cachedFile
+                                } else {
+                                    cachedFile
+                                }
                             }
 
 

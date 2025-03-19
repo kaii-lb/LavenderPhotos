@@ -1,13 +1,6 @@
 package com.kaii.photos.compose.settings
 
-import android.Manifest
-import android.content.Intent
-import android.os.Build
 import android.os.Environment
-import android.provider.MediaStore
-import android.provider.Settings
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -69,7 +62,6 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
@@ -103,7 +95,6 @@ import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.Editing
 import com.kaii.photos.datastore.MainPhotosView
-import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.datastore.PhotoGrid
 import com.kaii.photos.datastore.StoredDrawable
 import com.kaii.photos.datastore.Versions

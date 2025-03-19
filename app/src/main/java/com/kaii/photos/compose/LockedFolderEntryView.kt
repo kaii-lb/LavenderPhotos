@@ -36,12 +36,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.core.content.FileProvider
 import com.kaii.lavender_snackbars.LavenderSnackbarController
 import com.kaii.lavender_snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalNavController
@@ -58,7 +55,6 @@ import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.appSecureFolderDir
-import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.copyImageListToPath
 import com.kaii.photos.helpers.moveImageToLockedFolder
 import com.kaii.photos.helpers.relativePath
@@ -66,9 +62,8 @@ import com.kaii.photos.helpers.toRelativePath
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getMediaStoreDataFromUri
 import com.kaii.photos.mediastore.getUriFromAbsolutePath
-import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -114,10 +109,10 @@ fun LockedFolderEntryView(
         shouldRun = newFolderDirPermission
     ) {
         mainViewModel.launch(Dispatchers.IO) {
-			val oldDir = context.getDir(AppDirectories.OldSecureFolder.path, Context.MODE_PRIVATE)
-			val oldFiles = oldDir.listFiles()
+            val oldDir = context.getDir(AppDirectories.OldSecureFolder.path, Context.MODE_PRIVATE)
+            val oldFiles = oldDir.listFiles()
 
-			if (oldFiles == null || oldFiles.isEmpty()) return@launch
+            if (oldFiles == null || oldFiles.isEmpty()) return@launch
 
             migrating = true
             canOpenSecureFolder = false
@@ -135,13 +130,13 @@ fun LockedFolderEntryView(
                 mainViewModel.settings.AlbumsList.addToAlbumsList(exportDir.relativePath)
 
                 oldFiles.forEach {
-                	Log.d(TAG, "item in old dir ${it.name}")
+                    Log.d(TAG, "item in old dir ${it.name}")
 
-                	val destination = File(context.appSecureFolderDir, it.name)
-                	if (!destination.exists()) {
-                		it.copyTo(destination)
-                		it.delete()
-                	}
+                    val destination = File(context.appSecureFolderDir, it.name)
+                    if (!destination.exists()) {
+                        it.copyTo(destination)
+                        it.delete()
+                    }
                 }
 
                 showExplanationForMigration.value = true
@@ -175,16 +170,16 @@ fun LockedFolderEntryView(
             val restoredFilesDir = context.appRestoredFilesDir
 
             val uris = unencryptedFilesList.mapNotNull { file ->
-            	val destination = File(restoredFilesDir, file.name)
-            	if (!destination.exists()) {
-            		file.copyTo(destination)
-            	}
+                val destination = File(restoredFilesDir, file.name)
+                if (!destination.exists()) {
+                    file.copyTo(destination)
+                }
 
                 val uri = context.contentResolver.getUriFromAbsolutePath(
                     absolutePath = destination.absolutePath,
                     type =
-                        if (Files.probeContentType(Path(destination.absolutePath)).startsWith("image")) MediaType.Image
-                        else MediaType.Video
+                    if (Files.probeContentType(Path(destination.absolutePath)).startsWith("image")) MediaType.Image
+                    else MediaType.Video
                 )
 
                 Log.d(TAG, "Uri for file ${file.name} is $uri")
@@ -193,8 +188,8 @@ fun LockedFolderEntryView(
             }
 
             if (uris.isEmpty()) {
-            	migrating = false
-            	return@launch
+                migrating = false
+                return@launch
             }
 
             Log.d(TAG, "Starting encryption process...")
@@ -206,7 +201,7 @@ fun LockedFolderEntryView(
         }
     }
 
-	val coroutineScope = rememberCoroutineScope()
+    val coroutineScope = rememberCoroutineScope()
     GetPermissionAndRun(
         uris = uriList,
         shouldRun = runEncryptAction,
@@ -263,8 +258,8 @@ fun LockedFolderEntryView(
                 newFolderDirPermission.value = true
             }
 
-            while (newFolderDirPermission.value == true) {
-            	delay(100)
+            while (newFolderDirPermission.value) {
+                delay(100)
             }
 
             val maybeUnencryptedDir = File(context.appSecureFolderDir)
