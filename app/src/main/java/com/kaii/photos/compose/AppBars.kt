@@ -488,7 +488,7 @@ fun MainAppSelectingBottomBar(
             onGranted = {
                 setTrashedOnPhotoList(
                     context = context,
-                    list = selectedItemsWithoutSection.map { it.uri },
+                    list = selectedItemsWithoutSection.map { Pair(it.uri, it.absolutePath) },
                     trashed = true
                 )
 
@@ -717,7 +717,7 @@ fun SingleAlbumViewBottomBar(
             onGranted = {
                 setTrashedOnPhotoList(
                     context = context,
-                    list = selectedItemsWithoutSection.map { it.uri },
+                    list = selectedItemsWithoutSection.map { Pair(it.uri, it.absolutePath) },
                     trashed = true
                 )
 
@@ -896,7 +896,7 @@ fun TrashedPhotoGridViewBottomBar(
             onGranted = {
                 setTrashedOnPhotoList(
                     context = context,
-                    list = selectedItemsWithoutSection.map { it.uri },
+                    list = selectedItemsWithoutSection.map { Pair(it.uri, it.absolutePath) },
                     trashed = false
                 )
 
@@ -1347,7 +1347,7 @@ fun FavouritesViewBottomAppBar(
             onGranted = {
                 setTrashedOnPhotoList(
                     context = context,
-                    list = selectedItemsWithoutSection.map { it.uri },
+                    list = selectedItemsWithoutSection.map { Pair(it.uri, it.absolutePath) },
                     trashed = true
                 )
 

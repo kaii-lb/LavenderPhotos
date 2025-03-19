@@ -52,7 +52,10 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.nio.file.attribute.FileTime
 import kotlin.math.min
+import kotlin.io.path.Path
+import kotlin.io.path.setLastModifiedTime
 
 private const val TAG = "IMAGE_FUNCTIONS"
 
@@ -74,18 +77,22 @@ fun permanentlyDeletePhotoList(context: Context, list: List<Uri>) {
 }
 
 // TODO: remove from favourites
-fun setTrashedOnPhotoList(context: Context, list: List<Uri>, trashed: Boolean) {
+/** @param list is a list of pairs of item uri and its absolute path */
+fun setTrashedOnPhotoList(context: Context, list: List<Pair<Uri, String>>, trashed: Boolean) {
     val contentResolver = context.contentResolver
 
+	val currentTimeMillis = System.currentTimeMillis()
     val trashedValues = ContentValues().apply {
         put(MediaColumns.IS_TRASHED, trashed)
-        put(MediaColumns.DATE_MODIFIED, System.currentTimeMillis())
     }
 
     CoroutineScope(Dispatchers.IO).launch {
         async {
             try {
-                list.forEach { uri ->
+                list.forEach { (uri, path) ->
+                	// order is very important!
+                	// this WILL crash if you try to set last modified on a file that got moved from ex image.png to .trashed-{timestamp}-image.png
+                	File(path).setLastModified(currentTimeMillis)
                     contentResolver.update(uri, trashedValues, null)
                 }
             } catch (e: Throwable) {

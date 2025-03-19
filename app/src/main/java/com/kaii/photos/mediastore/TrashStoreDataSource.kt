@@ -29,6 +29,7 @@ class TrashStoreDataSource(
             arrayOf(
                 MediaColumns._ID,
                 MediaStore.Images.Media.DATA,
+				MediaColumns.DATE_TAKEN,
                 MediaColumns.DATE_MODIFIED,
                 MediaColumns.MIME_TYPE,
                 MediaColumns.DISPLAY_NAME,
@@ -64,11 +65,12 @@ class TrashStoreDataSource(
         mediaCursor.use { cursor ->
             val idColNum = cursor.getColumnIndexOrThrow(MediaColumns._ID)
             val absolutePathColNum =
-                cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA) // look into using the uri + id if this is deprecated
+                cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA)
             val mimeTypeColNum = cursor.getColumnIndexOrThrow(MediaColumns.MIME_TYPE)
             val mediaTypeColumnIndex = cursor.getColumnIndexOrThrow(FileColumns.MEDIA_TYPE)
             val displayNameIndex = cursor.getColumnIndexOrThrow(FileColumns.DISPLAY_NAME)
             val dateModifiedColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATE_MODIFIED)
+            val dateTakenColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.DATE_TAKEN)
 
             while (cursor.moveToNext()) {
                 val id = cursor.getLong(idColNum)
@@ -77,23 +79,33 @@ class TrashStoreDataSource(
                 val dateModified = cursor.getLong(dateModifiedColumn)
                 val displayName = cursor.getString(displayNameIndex)
 
-                val possibleDateTaken = mediaEntityDao.getDateTaken(id)
-                val dateTaken = if (possibleDateTaken != 0L) {
-                    possibleDateTaken
-                } else {
-                    val taken = getDateTakenForMedia(
-                        cursor.getString(absolutePathColNum)
-                    )
-                    mediaEntityDao.insertEntity(
-                        MediaEntity(
-                            id = id,
-                            mimeType = mimeType,
-                            dateTaken = taken,
-                            displayName = displayName
-                        )
-                    )
-                    taken
-                }
+                val mediaStoreDateTaken = cursor.getLong(dateTakenColumn) / 1000
+                val dateTaken =
+	                if (mediaStoreDateTaken == 0L) {
+	                	if (dateModified != 0L) {
+	                		dateModified
+	                	} else {
+	                		val possibleDateTaken = mediaEntityDao.getDateTaken(id)
+
+	                		if (possibleDateTaken != 0L) {
+	                			possibleDateTaken
+                   			} else {
+			                    val taken = getDateTakenForMedia(absolutePath)
+
+			                    mediaEntityDao.insertEntity(
+			                        MediaEntity(
+			                            id = id,
+			                            mimeType = mimeType,
+			                            dateTaken = taken,
+			                            displayName = displayName
+			                        )
+			                    )
+		                    	taken
+	                    	}
+	                	}
+	                } else {
+	                	mediaStoreDateTaken
+	                }
 
                 val type =
                     if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) MediaType.Image
@@ -119,6 +131,6 @@ class TrashStoreDataSource(
         }
         mediaCursor.close()
 
-        return groupPhotosBy(data, MediaItemSortMode.LastModified)
+        return groupPhotosBy(data, sortBy)
     }
 }

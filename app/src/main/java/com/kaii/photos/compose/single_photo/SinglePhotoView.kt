@@ -474,7 +474,7 @@ private fun BottomBar(
                         onGranted = {
                             setTrashedOnPhotoList(
                                 context,
-                                listOf(currentItem.uri),
+                                listOf(Pair(currentItem.uri, currentItem.absolutePath)),
                                 true
                             )
 
