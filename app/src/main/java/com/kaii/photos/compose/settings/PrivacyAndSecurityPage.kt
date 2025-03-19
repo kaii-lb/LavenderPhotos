@@ -101,7 +101,7 @@ fun PrivacyAndSecurityPage() {
                 PreferencesSwitchRow(
                     title = "Confirm to Delete",
                     summary = "Ask for confirmation before deleting any media",
-                    iconResID = R.drawable.delete, // TODO: change icon
+                    iconResID = R.drawable.confirm_action,
                     position = RowPosition.Single,
                     showBackground = false,
                     checked = confirmToDelete

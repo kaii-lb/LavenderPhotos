@@ -335,7 +335,7 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
             	PreferencesSwitchRow(
             		title = "Media Sorting",
             		summary = "Sets the sorting of photos and videos in grids",
-            		iconResID = R.drawable.bolt, // TODO: change to sort icon
+            		iconResID = R.drawable.sorting,
             		position = RowPosition.Single,
             		showBackground = false,
             		checked = currentSortMode != MediaItemSortMode.Disabled,
@@ -414,7 +414,7 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
 
                 PreferencesSwitchRow(
                     title = "Check for Updates",
-                    iconResID = R.drawable.auto_delete, // TODO: fix icon
+                    iconResID = R.drawable.update,
                     summary = "Notifies of new version when you open the app. Does not auto-install the update",
                     position = RowPosition.Single,
                     showBackground = false,
