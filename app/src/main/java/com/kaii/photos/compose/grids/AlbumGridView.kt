@@ -47,6 +47,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
@@ -117,17 +118,25 @@ fun AlbumsGridView(
     )
 
     val albumToThumbnailMapping by albumsViewModel.mediaFlow.collectAsStateWithLifecycle()
+    val cachedAlbumToThumbnailMapping = remember { mutableStateListOf<MediaStoreData>() }
 
     LaunchedEffect(listOfDirs, sortMode, sortByDescending, albumToThumbnailMapping) {
         withContext(Dispatchers.IO) {
             val newList = mutableListOf<String>()
 
+			// set items like this so we don't get blinking effect with each update
+            if (albumToThumbnailMapping.toSet() != cachedAlbumToThumbnailMapping.toSet() && albumToThumbnailMapping.isNotEmpty()) {
+            	cachedAlbumToThumbnailMapping.addAll(albumToThumbnailMapping)
+            	cachedAlbumToThumbnailMapping.retainAll(albumToThumbnailMapping)
+            }
+
+			val copy = listOfDirs
             when (sortMode) {
                 AlbumSortMode.LastModified -> {
                     newList.addAll(
                         if (sortByDescending) {
-                            listOfDirs.sortedByDescending { dir ->
-                            	albumToThumbnailMapping.find {
+                            copy.sortedByDescending { dir ->
+                            	cachedAlbumToThumbnailMapping.find {
                             		it.absolutePath.replace(it.displayName!!, "") == "$baseInternalStorageDirectory$dir"
                             	}?.dateModified ?: File("$baseInternalStorageDirectory$dir").lastModified()
                             }.toMutableList().apply {
@@ -137,8 +146,8 @@ fun AlbumsGridView(
                                 }
                             }
                         } else {
-                            listOfDirs.sortedBy { dir ->
-                                albumToThumbnailMapping.find {
+                            copy.sortedBy { dir ->
+                                cachedAlbumToThumbnailMapping.find {
                                 	it.absolutePath.replace(it.displayName!!, "") == "$baseInternalStorageDirectory$dir"
                                 }?.dateModified ?: File("$baseInternalStorageDirectory$dir").lastModified()
                             }.toMutableList().apply {
@@ -154,11 +163,11 @@ fun AlbumsGridView(
                 AlbumSortMode.Alphabetically -> {
                     newList.addAll(
                         if (!sortByDescending) {
-                            listOfDirs.sortedBy {
+                            copy.sortedBy {
                                 it.split("/").last()
                             }
                         } else {
-                            listOfDirs.sortedByDescending {
+                            copy.sortedByDescending {
                                 it.split("/").last()
                             }
                         }
@@ -167,7 +176,7 @@ fun AlbumsGridView(
 
                 AlbumSortMode.Custom -> {
                     newList.addAll(
-                        listOfDirs
+                        copy
                     )
                 }
             }
@@ -352,9 +361,9 @@ fun AlbumsGridView(
                     albums.value[key]
                 },
             ) { index ->
-                if (albumToThumbnailMapping.isNotEmpty()) {
+                if (cachedAlbumToThumbnailMapping.isNotEmpty()) {
                     val neededDir = albums.value[index]
-                    val mediaItem = albumToThumbnailMapping.find {
+                    val mediaItem = cachedAlbumToThumbnailMapping.find {
                         it.absolutePath.replace(baseInternalStorageDirectory, "").replace(it.displayName!!, "").removeSuffix("/") == neededDir
                     } ?: MediaStoreData()
 

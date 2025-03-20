@@ -105,6 +105,7 @@ import com.kaii.photos.helpers.MediaItemSortMode.Companion.presentableName
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.createDirectoryPicker
 import com.kaii.photos.helpers.dragReorderable
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @Composable
@@ -275,7 +276,9 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
                                     )
                                 )
                                 val albums = mainViewModel.settings.AlbumsList.getAllAlbumsOnDevice()
-                                mainViewModel.settings.AlbumsList.setAlbumsList(albums)
+                                albums.collectLatest {
+                                    mainViewModel.settings.AlbumsList.addToAlbumsList(it)
+                                }
                             }
                             mainViewModel.settings.AlbumsList.setAutoDetect(checked)
 
@@ -298,6 +301,7 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
                                 Environment.DIRECTORY_DOWNLOADS
                             )
                         )
+                        mainViewModel.settings.AlbumsList.setAutoDetect(false)
 
                         LavenderSnackbarController.pushEvent(
                             LavenderSnackbarEvents.MessageEvent(
@@ -311,8 +315,8 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
             }
 
             item {
-            	val currentSortMode by mainViewModel.settings.PhotoGrid.getSortMode().collectAsStateWithLifecycle(initialValue = MediaItemSortMode.DateTaken)
-				var showSortModeSelectorDialog by remember { mutableStateOf(false) }
+                val currentSortMode by mainViewModel.settings.PhotoGrid.getSortMode().collectAsStateWithLifecycle(initialValue = MediaItemSortMode.DateTaken)
+                var showSortModeSelectorDialog by remember { mutableStateOf(false) }
 
 				if (showSortModeSelectorDialog) {
 					SortModeSelectorDialog(
@@ -680,7 +684,7 @@ fun TabCustomizationDialog(
             }
         }
 
-		Spacer (modifier = Modifier.height(4.dp))
+        Spacer (modifier = Modifier.height(4.dp))
         HorizontalSeparator()
         Spacer (modifier = Modifier.height(16.dp))
 

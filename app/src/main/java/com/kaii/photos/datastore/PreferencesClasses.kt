@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -102,7 +103,8 @@ class SettingsAlbumsListImpl(private val context: Context, private val viewModel
 
         autoDetectAlbums.collectLatest {
             if (it) {
-                send(getAllAlbumsOnDevice())
+                val list = getAllAlbumsOnDevice().toList()
+                send(list)
             }
         }
     }
@@ -157,9 +159,8 @@ class SettingsAlbumsListImpl(private val context: Context, private val viewModel
             "Download"
         )
 
-	suspend fun getAllAlbumsOnDevice() : List<String> = withContext(Dispatchers.IO) {
-		Path(baseInternalStorageDirectory).getAllAlbumsOnDevice()
-	}
+    /** emits one album after the other */
+	fun getAllAlbumsOnDevice() : Flow<String> = Path(baseInternalStorageDirectory).getAllAlbumsOnDevice()
 }
 
 class SettingsVersionImpl(private val context: Context, private val viewModelScope: CoroutineScope) {
