@@ -618,7 +618,7 @@ fun VideoPlayer(
                 .fillMaxSize(1f)
                 .pointerInput(Unit) {
                     detectTapGestures(
-                        onTap = {
+                        onTap = { position ->
                             if (!isTouchLocked.value && doubleTapDisplayTimeMillis == 0) {
                                 setBarVisibility(
                                     visible = if (isLandscape) false else !controlsVisible.value,
@@ -626,7 +626,26 @@ fun VideoPlayer(
                                 ) {
                                     appBarsVisible.value = it
                                 }
+
                                 controlsVisible.value = !controlsVisible.value
+                            } else if (!isTouchLocked.value && doubleTapDisplayTimeMillis != 0) {
+	                            if (position.x < size.width / 2) {
+	                            	if (doubleTapDisplayTimeMillis > 0) doubleTapDisplayTimeMillis = 0
+	                                doubleTapDisplayTimeMillis -= 1000
+
+	                                val prev = isPlaying.value
+	                                exoPlayer.seekBack()
+	                                isPlaying.value = prev
+	                            } else if (position.x >= size.width / 2) {
+	                            	if (doubleTapDisplayTimeMillis < 0) doubleTapDisplayTimeMillis = 0
+	                                doubleTapDisplayTimeMillis += 1000
+
+	                                val prev = isPlaying.value
+	                                exoPlayer.seekForward()
+	                                isPlaying.value = prev
+	                            }
+
+	                            showVideoPlayerControlsTimeout += 1
                             }
                         },
 
