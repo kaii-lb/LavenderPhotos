@@ -124,6 +124,7 @@ import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.PhotoGrid
 import com.kaii.photos.helpers.BottomBarTabSaver
 import com.kaii.photos.helpers.CheckUpdateState
+import com.kaii.photos.helpers.LogManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
@@ -245,13 +246,8 @@ class MainActivity : ComponentActivity() {
 
         LaunchedEffect(canRecordLogs) {
             if (canRecordLogs) {
-                try {
-                    File(logPath).delete()
-                    Runtime.getRuntime().exec("logcat -c")
-                    Runtime.getRuntime().exec("logcat -f $logPath")
-                } catch (e: Throwable) {
-                    Log.e(TAG, e.toString())
-                }
+                val logManager = LogManager(context = context)
+                logManager.startRecording()
             }
         }
 

@@ -1,5 +1,6 @@
 package com.kaii.photos.compose.settings
 
+import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -14,11 +15,14 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -26,10 +30,12 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
+import com.kaii.photos.compose.CheckBoxButtonRow
 import com.kaii.photos.compose.PreferencesSeparatorText
 import com.kaii.photos.compose.PreferencesRow
 import com.kaii.photos.compose.PreferencesSwitchRow
@@ -40,7 +46,11 @@ import com.kaii.photos.helpers.appStorageDir
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.shareSecuredImage
-
+import com.kaii.photos.helpers.LogManager
+import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
+import com.kaii.lavender_snackbars.LavenderSnackbarController
+import com.kaii.lavender_snackbars.LavenderSnackbarEvents
+import kotlinx.coroutines.launch
 import java.io.File
 
 @Composable
@@ -63,8 +73,10 @@ fun DebuggingSettingsPage() {
 
         	item {
         		val context = LocalContext.current
-        		val logPath = "${context.appStorageDir}/log.txt"
                 val shouldRecordLogs by mainViewModel.settings.Debugging.getRecordLogs().collectAsStateWithLifecycle(initialValue = false)
+
+                val coroutineScope = rememberCoroutineScope()
+                val showLogTypeDialog = remember { mutableStateOf(false) }
 
                 PreferencesSwitchRow(
                     title = "Record Logs",
@@ -74,18 +86,76 @@ fun DebuggingSettingsPage() {
                     position = RowPosition.Single,
                     showBackground = false,
                     onRowClick = {
-                    	val file = File(logPath)
-
-                    	if (file.exists()) {
-                    		shareSecuredImage(logPath, context)
-                    	} else {
-                    		Toast.makeText(context, "No log file is recorded as of yet.", Toast.LENGTH_LONG).show()
-                    	}
+                    	showLogTypeDialog.value = !showLogTypeDialog.value
                     },
                     onSwitchClick = {
                     	mainViewModel.settings.Debugging.setRecordLogs(it)
                     }
                 )
+
+                if (showLogTypeDialog.value) {
+                	val logManager = remember { LogManager(context = context) }
+                	var chosenPaths = remember { mutableStateListOf(logManager.previousLogPath) }
+
+                	SelectableButtonListDialog(
+                		title = "Choose Logs",
+                		showDialog = showLogTypeDialog,
+                		buttons = {
+                			CheckBoxButtonRow(
+                				text = "Previous run's logs",
+                				checked = logManager.previousLogPath in chosenPaths
+                			) {
+                				if (logManager.previousLogPath !in chosenPaths) chosenPaths.add(logManager.previousLogPath)
+                				else chosenPaths.remove(logManager.previousLogPath)
+                			}
+
+                			CheckBoxButtonRow(
+                				text = "Current run's logs",
+                				checked = logManager.currentLogPath in chosenPaths
+                			) {
+                				if (logManager.currentLogPath !in chosenPaths) chosenPaths.add(logManager.currentLogPath)
+                				else chosenPaths.remove(logManager.currentLogPath)
+                			}
+                		},
+                		onConfirm = {
+                			val existing = chosenPaths.filter {
+                				val exists = File(it).exists()
+
+                				if (!exists) {
+                					coroutineScope.launch {
+                						LavenderSnackbarController.pushEvent(
+                							LavenderSnackbarEvents.MessageEvent(
+                								message = "No log file is recorded as of yet.",
+                								iconResId = R.drawable.error, // TODO: change to no log file icon
+                								duration = SnackbarDuration.Short
+                							)
+                						)
+                					}
+                				}
+
+                				exists
+                			}
+
+                			if (existing.isNotEmpty()) {
+                				val intent = Intent().apply {
+                				    action = Intent.ACTION_SEND_MULTIPLE
+                				    type = "text/plain"
+                				    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                				}
+
+                				val fileUris = ArrayList(
+                				    existing.map {
+                				        FileProvider.getUriForFile(context, LAVENDER_FILE_PROVIDER_AUTHORITY, File(it))
+                				    }
+                				)
+
+                				intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, fileUris)
+
+                				context.startActivity(Intent.createChooser(intent, null))
+                			}
+                		}
+                	)
+                }
         	}
 
         	item {
