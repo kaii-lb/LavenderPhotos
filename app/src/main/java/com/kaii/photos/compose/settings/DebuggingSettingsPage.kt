@@ -1,7 +1,6 @@
 package com.kaii.photos.compose.settings
 
 import android.content.Intent
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.padding
@@ -39,17 +38,16 @@ import com.kaii.photos.compose.CheckBoxButtonRow
 import com.kaii.photos.compose.PreferencesSeparatorText
 import com.kaii.photos.compose.PreferencesRow
 import com.kaii.photos.compose.PreferencesSwitchRow
-import com.kaii.photos.compose.TextEntryDialog
+import com.kaii.photos.compose.dialogs.TextEntryDialog
 import com.kaii.photos.datastore.Debugging
 import com.kaii.photos.datastore.AlbumsList
-import com.kaii.photos.helpers.appStorageDir
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.baseInternalStorageDirectory
-import com.kaii.photos.helpers.shareSecuredImage
 import com.kaii.photos.helpers.LogManager
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.lavender_snackbars.LavenderSnackbarController
 import com.kaii.lavender_snackbars.LavenderSnackbarEvents
+import com.kaii.photos.compose.dialogs.SelectableButtonListDialog
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -95,7 +93,7 @@ fun DebuggingSettingsPage() {
 
                 if (showLogTypeDialog.value) {
                 	val logManager = remember { LogManager(context = context) }
-                	var chosenPaths = remember { mutableStateListOf(logManager.previousLogPath) }
+                	val chosenPaths = remember { mutableStateListOf(logManager.previousLogPath) }
 
                 	SelectableButtonListDialog(
                 		title = "Choose Logs",

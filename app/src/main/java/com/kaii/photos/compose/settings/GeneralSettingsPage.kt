@@ -1,18 +1,11 @@
 package com.kaii.photos.compose.settings
 
 import android.os.Environment
-import androidx.annotation.DrawableRes
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.snapping.SnapPosition
-import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,31 +13,21 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -55,20 +38,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
@@ -84,26 +57,25 @@ import com.kaii.photos.compose.CheckBoxButtonRow
 import com.kaii.photos.compose.ConfirmCancelRow
 import com.kaii.photos.compose.FullWidthDialogButton
 import com.kaii.photos.compose.HorizontalSeparator
-import com.kaii.photos.compose.LavenderDialogBase
+import com.kaii.photos.compose.dialogs.LavenderDialogBase
 import com.kaii.photos.compose.PreferencesRow
 import com.kaii.photos.compose.PreferencesSeparatorText
 import com.kaii.photos.compose.PreferencesSwitchRow
-import com.kaii.photos.compose.RadioButtonRow
 import com.kaii.photos.compose.TitleCloseRow
+import com.kaii.photos.compose.dialogs.AddTabDialog
+import com.kaii.photos.compose.dialogs.InfoRow
+import com.kaii.photos.compose.dialogs.SelectableButtonListDialog
+import com.kaii.photos.compose.dialogs.SortModeSelectorDialog
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.Editing
 import com.kaii.photos.datastore.MainPhotosView
 import com.kaii.photos.datastore.PhotoGrid
-import com.kaii.photos.datastore.StoredDrawable
 import com.kaii.photos.datastore.Versions
 import com.kaii.photos.datastore.Video
-import com.kaii.photos.helpers.ExtendedMaterialTheme
 import com.kaii.photos.helpers.MediaItemSortMode
-import com.kaii.photos.helpers.MediaItemSortMode.Companion.presentableName
 import com.kaii.photos.helpers.RowPosition
-import com.kaii.photos.helpers.createDirectoryPicker
 import com.kaii.photos.helpers.dragReorderable
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -318,7 +290,7 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
                 val currentSortMode by mainViewModel.settings.PhotoGrid.getSortMode().collectAsStateWithLifecycle(initialValue = MediaItemSortMode.DateTaken)
                 var showSortModeSelectorDialog by remember { mutableStateOf(false) }
 
-				if (showSortModeSelectorDialog) {
+                if (showSortModeSelectorDialog) {
 					SortModeSelectorDialog(
 						currentSortMode = currentSortMode,
 						dismiss = {
@@ -721,444 +693,3 @@ fun TabCustomizationDialog(
     }
 }
 
-@Composable
-private fun InfoRow(
-	text: String,
-	@DrawableRes iconResId: Int,
-	opacity: Float = 1f,
-	onRemove: () -> Unit
-) {
-	Row(
-	    modifier = Modifier
-	        .fillMaxWidth(1f)
-	        .height(40.dp)
-	        .padding(16.dp, 8.dp, 8.dp, 8.dp)
-	        .alpha(opacity),
-	    verticalAlignment = Alignment.CenterVertically,
-	    horizontalArrangement = Arrangement.Start
-	) {
-	    Text(
-	        text = text,
-	        fontSize = TextUnit(14f, TextUnitType.Sp),
-	        color = MaterialTheme.colorScheme.onSurface,
-	        overflow = TextOverflow.Ellipsis,
-	        modifier = Modifier
-	            .weight(1f)
-	    )
-
-	    Spacer(modifier = Modifier.width(16.dp))
-
-	    IconButton(
-	        onClick = {
-				onRemove()
-	        }
-	    ) {
-	        Icon(
-	            painter = painterResource(id = iconResId),
-	            contentDescription = "Remove this tab",
-	            tint = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier
-                    .size(20.dp)
-	        )
-	    }
-	}
-}
-
-@Composable
-private fun AddTabDialog(
-	tabList: List<BottomBarTab>,
-    dismissDialog: () -> Unit
-) {
-    LavenderDialogBase(
-        onDismiss = dismissDialog
-    ) {
-    	Box (
-    		modifier = Modifier
-    			.fillMaxWidth(1f)
-    	) {
-    		Text(
-    		    text = "Add a Tab",
-    		    fontSize = TextUnit(18f, TextUnitType.Sp),
-    		    color = MaterialTheme.colorScheme.onSurface,
-    		    modifier = Modifier
-    		        .wrapContentSize()
-    		        .align(Alignment.Center)
-    		)
-
-            IconButton(
-                onClick = {
-                    dismissDialog()
-                },
-                modifier = Modifier
-                	.align(Alignment.CenterEnd)
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.close),
-                    contentDescription = "close this dialog",
-                    tint = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier
-                        .size(24.dp)
-                )
-            }
-    	}
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        val iconList = listOf(
-            StoredDrawable.Albums,
-            StoredDrawable.PhotoGrid,
-            StoredDrawable.SecureFolder,
-            StoredDrawable.Search,
-            StoredDrawable.Favourite,
-            StoredDrawable.Star,
-            StoredDrawable.Bolt,
-            StoredDrawable.Face,
-            StoredDrawable.Pets,
-            StoredDrawable.Motorcycle,
-            StoredDrawable.Motorsports
-        )
-
-        val state = rememberLazyListState()
-
-        val selectedItem by remember {
-            derivedStateOf {
-            	if (state.layoutInfo.visibleItemsInfo.isNotEmpty()) {
-	                val width = state.layoutInfo.viewportSize.width
-	                val itemHalfWidth = state.layoutInfo.visibleItemsInfo[0].size / 2
-	                val center = width / 2
-
-	                val itemIndex = state.layoutInfo.visibleItemsInfo.find {
-	                	println("CENTER $center OFFSET ${it.offset} HALF $itemHalfWidth")
-	                	it.offset == 0 || it.offset in (center - itemHalfWidth)..(center + itemHalfWidth)
-	                }?.index
-
-	                if (itemIndex != null) iconList[itemIndex] else null
-            	} else null
-            }
-        }
-
-        BoxWithConstraints(
-            modifier = Modifier
-                .fillMaxWidth(1f)
-                .wrapContentHeight()
-        ) {
-            LazyRow(
-                state = state,
-                modifier = Modifier
-                    .fillMaxWidth(1f)
-                    .height(48.dp),
-                flingBehavior = rememberSnapFlingBehavior(
-                    lazyListState = state,
-                    snapPosition = SnapPosition.Center
-                ),
-                contentPadding = PaddingValues(
-                    start = maxWidth / 2 - 56.dp / 2,
-                    end = maxWidth / 2 - 56.dp / 2
-                ),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(
-                    space = 16.dp,
-                    alignment = Alignment.CenterHorizontally
-                )
-            ) {
-                items(
-                    count = iconList.size
-                ) { index ->
-                    Box(
-                        modifier = Modifier
-                            .size(56.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                            .border(
-                                width = 2.dp,
-                                color = if (selectedItem == iconList[index]) MaterialTheme.colorScheme.primary else Color.Transparent,
-                                shape = RoundedCornerShape(12.dp)
-                            )
-                    ) {
-                        Icon(
-                            painter = painterResource(id = iconList[index].nonFilled),
-                            contentDescription = "Custom icon for custom tab",
-                            tint = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier
-                                .size(36.dp)
-                                .align(Alignment.Center)
-                        )
-                    }
-                }
-            }
-
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .width(48.dp * 2.5f)
-                    .height(56.dp)
-                    .background(
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(
-                                ExtendedMaterialTheme.colorScheme.dialogSurface,
-                                ExtendedMaterialTheme.colorScheme.dialogSurface,
-                                Color.Transparent
-                            )
-                        )
-                    )
-            )
-
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .width(48.dp * 2.5f)
-                    .height(56.dp)
-                    .background(
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(
-                                Color.Transparent,
-                                ExtendedMaterialTheme.colorScheme.dialogSurface,
-                                ExtendedMaterialTheme.colorScheme.dialogSurface
-                            )
-                        )
-                    )
-            )
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        var tabName by remember { mutableStateOf("") }
-        val focusManager = LocalFocusManager.current
-        val focus = remember { FocusRequester() }
-
-        var hideKb by remember { mutableStateOf(false) }
-        val kbController = LocalSoftwareKeyboardController.current
-
-        LaunchedEffect(hideKb) {
-            if (hideKb) kbController?.hide()
-            hideKb = false
-        }
-
-        TextField(
-            value = tabName,
-            onValueChange = {
-                tabName = it
-            },
-            placeholder = {
-                Text(
-                    text = "Tab name",
-                    fontSize = TextUnit(14f, TextUnitType.Sp)
-                )
-            },
-            singleLine = true,
-            textStyle = LocalTextStyle.current.copy(
-                fontSize = TextUnit(16f, TextUnitType.Sp),
-                textAlign = TextAlign.Start,
-                color = MaterialTheme.colorScheme.onSurface,
-            ),
-            colors = TextFieldDefaults.colors().copy(
-                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                unfocusedIndicatorColor = Color.Transparent,
-                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                unfocusedTrailingIconColor = Color.Transparent,
-                focusedIndicatorColor = Color.Transparent,
-                focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                focusedTrailingIconColor = MaterialTheme.colorScheme.onSurface,
-            ),
-            keyboardOptions = KeyboardOptions(
-                capitalization = KeyboardCapitalization.None,
-                autoCorrectEnabled = false,
-                keyboardType = KeyboardType.Ascii,
-                imeAction = ImeAction.Done,
-                showKeyboardOnFocus = true
-            ),
-            keyboardActions = KeyboardActions(
-                onDone = {
-                    focusManager.clearFocus()
-                    hideKb = true
-                },
-            ),
-            trailingIcon = {
-                Icon(
-                    painter = painterResource(id = R.drawable.file_is_selected_foreground),
-                    contentDescription = "Apply tab name",
-                    modifier = Modifier
-                        .clickable {
-                            focusManager.clearFocus()
-                            hideKb = true
-                        }
-                )
-            },
-            shape = RoundedCornerShape(32.dp),
-            modifier = Modifier
-                .focusRequester(focus)
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        val selectedAlbums = remember { mutableStateListOf<String>() }
-
-        Row (
-			modifier = Modifier
-				.fillMaxWidth(1f)
-                .padding(16.dp, 0.dp, 8.dp, 0.dp),
-			verticalAlignment = Alignment.CenterVertically,
-			horizontalArrangement = Arrangement.Start
-		) {
-			Text(
-				text = "Albums included",
-				fontSize = TextUnit(14f, TextUnitType.Sp),
-				color = MaterialTheme.colorScheme.onSurface,
-				modifier = Modifier
-					.weight(1f)
-			)
-
-            val activityLauncher = createDirectoryPicker { path ->
-                if (path != null) selectedAlbums.add(path)
-            }
-
-			IconButton(
-			    onClick = {
-                    activityLauncher.launch(null)
-			    }
-			) {
-			    Icon(
-			        painter = painterResource(id = R.drawable.add),
-			        contentDescription = "Add a new album to this tab",
-			        tint = MaterialTheme.colorScheme.onSurface
-			    )
-			}
-		}
-
-		Spacer (modifier = Modifier.height(4.dp))
-
-        HorizontalSeparator()
-
-		Spacer (modifier = Modifier.height(2.dp))
-
-        LazyColumn(
-        	modifier = Modifier
-        		.fillMaxWidth(1f)
-        		.heightIn(max = 160.dp)
-        		.wrapContentHeight(),
-        	verticalArrangement = Arrangement.Top,
-        	horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-        	items(
-        		count = selectedAlbums.size
-        	) { index ->
-        		InfoRow(
-        			text = selectedAlbums[index].split("/").last(),
-        			iconResId = R.drawable.close
-        		) {
-        			selectedAlbums.removeAt(index)
-        		}
-        	}
-
-        	if (selectedAlbums.isEmpty()) {
-        		item {
-        			Row(
-        			    modifier = Modifier
-        			        .fillMaxWidth(1f)
-        			        .height(40.dp)
-        			        .padding(16.dp, 8.dp, 8.dp, 8.dp),
-        			    verticalAlignment = Alignment.CenterVertically,
-        			    horizontalArrangement = Arrangement.Start
-        			) {
-        			    Text(
-        			        text = "None",
-        			        fontSize = TextUnit(14f, TextUnitType.Sp),
-        			        color = MaterialTheme.colorScheme.onSurface,
-        			        overflow = TextOverflow.Ellipsis
-        			    )
-       			    }
-        		}
-        	}
-        }
-
-        Spacer (modifier = Modifier.height(16.dp))
-
-		val coroutineScope = rememberCoroutineScope()
-
-        FullWidthDialogButton(
-            text = "Add Tab",
-            color = MaterialTheme.colorScheme.primary,
-            textColor = MaterialTheme.colorScheme.onPrimary,
-            position = RowPosition.Single
-        ) {
-        	if (tabList.size < 5) {
-	        	if (selectedItem != null && selectedAlbums.isNotEmpty() && tabName != "") {
-		        	mainViewModel.settings.DefaultTabs.setTabList(
-		        	    tabList.toMutableList().apply {
-		        	    	add(
-		        	    		BottomBarTab(
-		        	    			name = tabName,
-		        	    			albumPaths = selectedAlbums,
-		        	    			index = tabList.size,
-		        	    			icon = selectedItem!!,
-		        	    		)
-		        	    	)
-		        	    }
-		        	)
-
-		            dismissDialog()
-	        	} else {
-	        		coroutineScope.launch {
-		        		LavenderSnackbarController.pushEvent(
-		        			LavenderSnackbarEvents.MessageEvent(
-		        				message = "Tab parameters cannot be empty",
-		        				iconResId = R.drawable.error_2,
-		        				duration = SnackbarDuration.Short
-		        			)
-		        		)
-	        		}
-	        	}
-        	} else {
-        		coroutineScope.launch {
-	        		LavenderSnackbarController.pushEvent(
-	        			LavenderSnackbarEvents.MessageEvent(
-	        				message = "Can't add more than 5 tabs",
-	        				iconResId = R.drawable.error_2,
-	        				duration = SnackbarDuration.Short
-	        			)
-	        		)
-        		}
-        	}
-        }
-    }
-}
-
-@Composable
-fun SortModeSelectorDialog(
-	currentSortMode: MediaItemSortMode,
-	dismiss: () -> Unit
-) {
-	LavenderDialogBase(onDismiss = dismiss) {
-		TitleCloseRow(title = "Media Sort Mode") {
-			dismiss()
-		}
-
-        var chosenSortMode by remember { mutableStateOf(currentSortMode) }
-		LazyColumn(
-		    modifier = Modifier
-		        .fillMaxWidth(1f)
-		        .wrapContentHeight()
-		) {
-			items(
-				count = MediaItemSortMode.entries.size - 1 // ignore "Disabled"
-			) { index ->
-				val sortMode = MediaItemSortMode.entries.filter { it != MediaItemSortMode.Disabled }[index] // cursed syntax
-
-				RadioButtonRow(
-					text = sortMode.presentableName,
-					checked = chosenSortMode == sortMode
-				) {
-					chosenSortMode = sortMode
-				}
-			}
-		}
-
-        ConfirmCancelRow(
-            onConfirm = {
-                mainViewModel.settings.PhotoGrid.setSortMode(chosenSortMode)
-                dismiss()
-            }
-        )
-	}
-}

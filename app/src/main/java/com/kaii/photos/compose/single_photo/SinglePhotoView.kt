@@ -63,11 +63,11 @@ import com.kaii.photos.BuildConfig
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.BottomAppBarItem
-import com.kaii.photos.compose.ConfirmationDialog
-import com.kaii.photos.compose.ExplanationDialog
-import com.kaii.photos.compose.LoadingDialog
-import com.kaii.photos.compose.SinglePhotoInfoDialog
 import com.kaii.photos.compose.setBarVisibility
+import com.kaii.photos.compose.dialogs.ConfirmationDialog
+import com.kaii.photos.compose.dialogs.ExplanationDialog
+import com.kaii.photos.compose.dialogs.LoadingDialog
+import com.kaii.photos.compose.dialogs.SinglePhotoInfoDialog
 import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.GetPermissionAndRun

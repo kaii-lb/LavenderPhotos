@@ -476,7 +476,7 @@ fun DeviceMedia(
                         onValueChange = {
                             coroutineScope.launch {
                                 if (isScrollingByHandle) {
-                                	chosenItemIndex = (it * (groupedMedia.value.size - 1)).roundToInt()
+                                    chosenItemIndex = (it * (groupedMedia.value.size - 1)).roundToInt()
                                     gridState.scrollToItem(
                                         chosenItemIndex
                                     )

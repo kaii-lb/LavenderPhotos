@@ -146,7 +146,6 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.BottomAppBarItem
 import com.kaii.photos.compose.ColorFilterItem
 import com.kaii.photos.compose.ColorRangeSlider
-import com.kaii.photos.compose.ConfirmationDialog
 import com.kaii.photos.compose.CroppingRatioBottomSheet
 import com.kaii.photos.compose.PopupPillSlider
 import com.kaii.photos.compose.SelectableDropDownMenuItem
@@ -155,6 +154,7 @@ import com.kaii.photos.compose.SimpleTab
 import com.kaii.photos.compose.SplitButton
 import com.kaii.photos.compose.getAppBarContentTransition
 import com.kaii.photos.compose.setBarVisibility
+import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.helpers.ColorFiltersMatrices
 import com.kaii.photos.helpers.ColorIndicator
 import com.kaii.photos.helpers.DrawablePath

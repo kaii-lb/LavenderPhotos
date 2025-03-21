@@ -73,10 +73,10 @@ import com.kaii.photos.R
 import com.kaii.photos.MainActivity
 import com.kaii.photos.MainActivity.Companion.applicationDatabase
 import com.kaii.photos.MainActivity.Companion.mainViewModel
-import com.kaii.photos.compose.ConfirmationDialog
-import com.kaii.photos.compose.ConfirmationDialogWithBody
-import com.kaii.photos.compose.DialogInfoText
-import com.kaii.photos.compose.LoadingDialog
+import com.kaii.photos.compose.dialogs.ConfirmationDialog
+import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
+import com.kaii.photos.compose.dialogs.DialogInfoText
+import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun

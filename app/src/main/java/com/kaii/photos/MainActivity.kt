@@ -67,7 +67,6 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.MemoryCategory
 import com.kaii.photos.compose.LockedFolderEntryView
 import com.kaii.photos.compose.MainAppBottomBar
-import com.kaii.photos.compose.MainAppDialog
 import com.kaii.photos.compose.MainAppSelectingBottomBar
 import com.kaii.photos.compose.MainAppTopBar
 import com.kaii.photos.compose.PermissionHandler
@@ -81,6 +80,7 @@ import com.kaii.photos.compose.grids.SearchPage
 import com.kaii.photos.compose.grids.SingleAlbumView
 import com.kaii.photos.compose.grids.TrashedPhotoGridView
 import com.kaii.photos.compose.setBarVisibility
+import com.kaii.photos.compose.dialogs.MainAppDialog
 import com.kaii.photos.compose.settings.AboutPage
 import com.kaii.photos.compose.settings.DebuggingSettingsPage
 import com.kaii.photos.compose.settings.GeneralSettingsPage
@@ -127,7 +127,6 @@ import com.kaii.photos.helpers.CheckUpdateState
 import com.kaii.photos.helpers.LogManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.io.File
 
 private const val TAG = "MAIN_ACTIVITY"
 
@@ -742,7 +741,7 @@ class MainActivity : ComponentActivity() {
         val checkForUpdatesOnStartup by mainViewModel.settings.Versions.getCheckUpdatesOnStartup().collectAsStateWithLifecycle(initialValue = false)
 
 		// so it only checks once
-		LaunchedEffect(checkForUpdatesOnStartup) {
+        LaunchedEffect(checkForUpdatesOnStartup) {
 	        if (checkForUpdatesOnStartup) {
 		        mainViewModel.updater.refresh { state ->
 		            Log.d(TAG, "Checking for app updates...")

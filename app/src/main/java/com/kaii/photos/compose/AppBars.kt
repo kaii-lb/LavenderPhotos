@@ -77,6 +77,9 @@ import com.kaii.photos.R
 import com.kaii.photos.MainActivity.Companion.applicationDatabase
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
+import com.kaii.photos.compose.dialogs.ConfirmationDialog
+import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
+import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
@@ -1109,11 +1112,11 @@ fun SecureFolderViewBottomAppBar(
 	        shouldRun = runRestoreAction,
 	        onGranted = { grantedList ->
 				mainViewModel.launch(Dispatchers.IO) {
-	                val hasPermission = selectedItemsWithoutSection.fastFilter { selected ->
+                    val hasPermission = selectedItemsWithoutSection.fastFilter { selected ->
 	                    (selected.bytes?.getOriginalPath()?.getParentFromPath() ?: restoredFilesDir) in grantedList
 	                }
 
-					val newList = groupedMedia.value.toMutableList()
+                    val newList = groupedMedia.value.toMutableList()
 
 					moveImageOutOfLockedFolder(
 						list = hasPermission,
@@ -1150,7 +1153,7 @@ fun SecureFolderViewBottomAppBar(
                   	loadingDialogTitle = "Restoring Files"
                     showLoadingDialog = true
 
-					isGettingPermissions.value = true
+                    isGettingPermissions.value = true
                     runRestoreAction.value = true
                 }
             },

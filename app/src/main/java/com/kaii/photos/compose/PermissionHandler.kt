@@ -4,7 +4,6 @@ import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.content.res.Configuration
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
@@ -41,7 +40,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -52,7 +50,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
@@ -64,6 +61,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
+import com.kaii.photos.compose.dialogs.getDefaultShapeSpacerForPosition
+import com.kaii.photos.compose.dialogs.ExplanationDialog
 import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.helpers.RowPosition
 
@@ -72,12 +71,7 @@ fun PermissionHandler(
     continueToApp: MutableState<Boolean>
 ) {
     Scaffold { innerPadding ->
-        val localConfig = LocalConfiguration.current
-        var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
-
-        LaunchedEffect(localConfig) {
-            isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
-        }
+        val isLandscape by rememberDeviceOrientation()
 
         val safeDrawingPadding = if (isLandscape) {
             val safeDrawing = WindowInsets.safeDrawing.asPaddingValues()
@@ -105,8 +99,7 @@ fun PermissionHandler(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            val context = LocalContext.current
-        	val isLandscape by rememberDeviceOrientation()
+			val context = LocalContext.current
 
             var onGrantPermissionClicked by remember { mutableStateOf({}) }
 
@@ -120,7 +113,7 @@ fun PermissionHandler(
                 }
             }
 
-            if (showExplanationDialog.value) {
+			if (showExplanationDialog.value) {
                 ExplanationDialog(
                     title = "Permission Explanation",
                     explanation = whyButtonExplanation,
@@ -128,7 +121,6 @@ fun PermissionHandler(
                     showPreviousDialog = showPermDeniedDialog
                 )
             }
-
 
 			Column(
 	            modifier = Modifier

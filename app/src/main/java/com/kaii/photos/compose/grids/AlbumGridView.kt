@@ -88,6 +88,8 @@ import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.brightenColor
+import com.kaii.photos.helpers.getParentFromPath
+import com.kaii.photos.helpers.toRelativePath
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.signature
 import com.kaii.photos.models.album_grid.AlbumsViewModel
@@ -130,14 +132,14 @@ fun AlbumsGridView(
             	cachedAlbumToThumbnailMapping.retainAll(albumToThumbnailMapping)
             }
 
-			val copy = listOfDirs
+            val copy = listOfDirs
             when (sortMode) {
                 AlbumSortMode.LastModified -> {
                     newList.addAll(
                         if (sortByDescending) {
                             copy.sortedByDescending { dir ->
                             	cachedAlbumToThumbnailMapping.find {
-                            		it.absolutePath.replace(it.displayName!!, "") == "$baseInternalStorageDirectory$dir"
+                            		it.absolutePath.replace(it.displayName, "") == "$baseInternalStorageDirectory$dir"
                             	}?.dateModified ?: File("$baseInternalStorageDirectory$dir").lastModified()
                             }.toMutableList().apply {
                                 find { item -> item == "DCIM/Camera" }?.let { cameraItem ->
@@ -148,7 +150,7 @@ fun AlbumsGridView(
                         } else {
                             copy.sortedBy { dir ->
                                 cachedAlbumToThumbnailMapping.find {
-                                	it.absolutePath.replace(it.displayName!!, "") == "$baseInternalStorageDirectory$dir"
+                                	it.absolutePath.replace(it.displayName, "") == "$baseInternalStorageDirectory$dir"
                                 }?.dateModified ?: File("$baseInternalStorageDirectory$dir").lastModified()
                             }.toMutableList().apply {
                                 find { item -> item == "DCIM/Camera" }?.let { cameraItem ->
@@ -248,7 +250,7 @@ fun AlbumsGridView(
                 .zIndex(1f)
         )
 
-		val coroutineScope = rememberCoroutineScope()
+        val coroutineScope = rememberCoroutineScope()
         LazyVerticalGrid(
             state = lazyGridState,
             columns = GridCells.Fixed(
@@ -364,7 +366,7 @@ fun AlbumsGridView(
                 if (cachedAlbumToThumbnailMapping.isNotEmpty()) {
                     val neededDir = albums.value[index]
                     val mediaItem = cachedAlbumToThumbnailMapping.find {
-                        it.absolutePath.replace(baseInternalStorageDirectory, "").replace(it.displayName!!, "").removeSuffix("/") == neededDir
+                        it.absolutePath.toRelativePath().getParentFromPath() == neededDir
                     } ?: MediaStoreData()
 
                     AlbumGridItem(

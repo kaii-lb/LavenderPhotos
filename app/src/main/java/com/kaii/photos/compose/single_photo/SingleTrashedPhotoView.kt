@@ -60,7 +60,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kaii.photos.R
 import com.kaii.photos.MainActivity.Companion.mainViewModel
-import com.kaii.photos.compose.SinglePhotoInfoDialog
+import com.kaii.photos.compose.dialogs.SinglePhotoInfoDialog
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.setTrashedOnPhotoList
@@ -286,11 +286,7 @@ private fun TopBar(
                 }
             },
             title = {
-                val mediaTitle = if (mediaItem != null) {
-                    mediaItem.displayName ?: mediaItem.type.name
-                } else {
-                    "Media"
-                }
+                val mediaTitle = mediaItem?.displayName ?: "Media"
 
                 Spacer(modifier = Modifier.width(8.dp))
 

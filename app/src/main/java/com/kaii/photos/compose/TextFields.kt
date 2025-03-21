@@ -52,6 +52,8 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import com.kaii.photos.R
+import com.kaii.photos.compose.dialogs.DialogClickableItem
+import com.kaii.photos.compose.dialogs.DialogExpandableItem
 import com.kaii.photos.helpers.RowPosition
 import kotlinx.coroutines.delay
 

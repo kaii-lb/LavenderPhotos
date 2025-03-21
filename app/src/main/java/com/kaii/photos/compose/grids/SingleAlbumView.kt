@@ -27,10 +27,10 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalNavController
-import com.kaii.photos.compose.SingleAlbumDialog
 import com.kaii.photos.compose.SingleAlbumViewBottomBar
 import com.kaii.photos.compose.SingleAlbumViewTopBar
 import com.kaii.photos.compose.ViewProperties
+import com.kaii.photos.compose.dialogs.SingleAlbumDialog
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel

@@ -233,7 +233,7 @@ fun SearchPage(
                 val groupedMediaLocal = originalGroupedMedia.value.filter {
                     val isMedia = it.type != MediaType.Section
                     val matchesFilter =
-                        it.displayName?.contains(searchedForText.value.trim(), true) == true
+                        it.displayName.contains(searchedForText.value.trim(), true)
                     isMedia && matchesFilter
                 }
 

@@ -62,7 +62,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
-import com.kaii.photos.compose.AnnotatedExplanationDialog
+import com.kaii.photos.compose.dialogs.AnnotatedExplanationDialog
 import com.kaii.photos.datastore.Versions
 import com.kaii.photos.helpers.CheckUpdateState
 import kotlinx.coroutines.launch

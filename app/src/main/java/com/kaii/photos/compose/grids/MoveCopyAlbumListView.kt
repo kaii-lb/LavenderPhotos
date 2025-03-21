@@ -60,7 +60,7 @@ import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.FolderIsEmpty
 import com.kaii.photos.compose.SearchTextField
-import com.kaii.photos.compose.getDefaultShapeSpacerForPosition
+import com.kaii.photos.compose.dialogs.getDefaultShapeSpacerForPosition
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun

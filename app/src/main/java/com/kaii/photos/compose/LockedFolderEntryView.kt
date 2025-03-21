@@ -45,6 +45,8 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.applicationDatabase
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
+import com.kaii.photos.compose.dialogs.LoadingDialog
+import com.kaii.photos.compose.dialogs.ExplanationDialog
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
