@@ -428,8 +428,7 @@ fun SelectViewTopBarRightButtons(
             if (showMoreOptionsDialog.value) {
                 SelectingMoreOptionsDialog(
                     showDialog = showMoreOptionsDialog,
-                    selectedItems = selectedItemsWithoutSection,
-                    currentView = currentView
+                    selectedItems = selectedItemsWithoutSection
                 ) {
                     selectedItemsList.clear()
                 }

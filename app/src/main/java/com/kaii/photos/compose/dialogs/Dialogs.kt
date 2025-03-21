@@ -49,6 +49,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -72,13 +73,11 @@ import kotlinx.coroutines.delay
 @Composable
 fun DialogClickableItem(
     text: String,
-    iconResId: Int,
+    @DrawableRes iconResId: Int,
     position: RowPosition,
     enabled: Boolean = true,
     action: (() -> Unit)? = null
 ) {
-    val buttonHeight = 40.dp
-
     val (shape, spacerHeight) = getDefaultShapeSpacerForPosition(position)
 
     val clickableModifier = if (action != null && enabled) Modifier.clickable { action() } else Modifier
@@ -86,11 +85,11 @@ fun DialogClickableItem(
     Row(
         modifier = Modifier
             .fillMaxWidth(1f)
-            .height(buttonHeight)
+            .height(40.dp)
             .clip(shape)
             .background(
-                if (enabled) MaterialTheme.colorScheme.surfaceVariant
-                else darkenColor(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f), 0.1f)
+            	if (enabled) MaterialTheme.colorScheme.surfaceVariant
+            	else darkenColor(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f), 0.1f)
             )
             .wrapContentHeight(align = Alignment.CenterVertically)
             .then(clickableModifier)
@@ -101,6 +100,7 @@ fun DialogClickableItem(
         Icon(
             painter = painterResource(id = iconResId),
             contentDescription = "icon describing: $text",
+            tint = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier
                 .size(20.dp)
         )
@@ -109,8 +109,11 @@ fun DialogClickableItem(
 
         Text(
             text = text,
+            color = MaterialTheme.colorScheme.onSurface,
             fontSize = TextUnit(16f, TextUnitType.Sp),
             textAlign = TextAlign.Start,
+            modifier = Modifier
+            	.wrapContentSize()
         )
     }
 
@@ -314,25 +317,35 @@ fun AnimatableText(
 }
 
 @Composable
-fun DialogInfoText(firstText: String, secondText: String, iconResId: Int) {
+fun DialogInfoText(
+	firstText: String,
+	secondText: String,
+	iconResId: Int,
+	color: Color = ExtendedMaterialTheme.colorScheme.expandableDialogBackground,
+	contentColor: Color = MaterialTheme.colorScheme.onSurface,
+	onClick: (() -> Unit)? = null
+) {
     val context = LocalContext.current
 
     Row(
         modifier = Modifier
             .height(36.dp)
+            .background(color)
             .padding(10.dp, 4.dp)
             .clickable {
-                val clipboardManager =
-                    context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                val clipData = ClipData.newPlainText(firstText, secondText)
-                clipboardManager.setPrimaryClip(clipData)
+		    	if (onClick == null) {
+		    		val clipboardManager =
+		    		    context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+		    		val clipData = ClipData.newPlainText(firstText, secondText)
+		    		clipboardManager.setPrimaryClip(clipData)
+		    	} else onClick()
             },
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             painter = painterResource(id = iconResId),
             contentDescription = "$firstText: $secondText",
-            tint = MaterialTheme.colorScheme.onSurface,
+            tint = contentColor,
             modifier = Modifier
                 .size(16.dp)
         )
@@ -341,8 +354,8 @@ fun DialogInfoText(firstText: String, secondText: String, iconResId: Int) {
 
         val state = rememberScrollState()
         Text(
-            text = "$firstText: ",
-            color = MaterialTheme.colorScheme.onSurface,
+            text = if (firstText == "") "" else "$firstText: ",
+            color = contentColor,
             style = TextStyle(
                 textAlign = TextAlign.Start,
                 fontSize = TextUnit(14f, TextUnitType.Sp),
@@ -355,7 +368,7 @@ fun DialogInfoText(firstText: String, secondText: String, iconResId: Int) {
 
         Text(
             text = secondText,
-            color = MaterialTheme.colorScheme.onSurface,
+            color = contentColor,
             style = TextStyle(
                 textAlign = TextAlign.Start,
                 fontSize = TextUnit(14f, TextUnitType.Sp),

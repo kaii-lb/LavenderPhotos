@@ -164,59 +164,142 @@ fun getExifDataForMedia(absolutePath: String): Flow<Map<MediaData, Any>> = flow 
     }
 }
 
-fun copyExifDataToFile(originalFilePath: String, targetFilePath: String) {
-    val originalExifInterface = ExifInterface(originalFilePath)
+fun eraseExifMedia(absolutePath: String) {
+    val exifInterface = ExifInterface(absolutePath)
 
-    val options = BitmapFactory.Options()
-    options.inJustDecodeBounds = true
-    BitmapFactory.decodeFile(originalFilePath, options)
-
-    val exifInterface = ExifInterface(targetFilePath)
-
-    exifInterface.setAttribute(
-        ExifInterface.TAG_X_RESOLUTION,
-        options.outWidth.toString()
-    )
-
-    exifInterface.setAttribute(
-        ExifInterface.TAG_Y_RESOLUTION,
-        options.outHeight.toString()
-    )
-
-    exifInterface.setLatLong(
-        (originalExifInterface.latLong?.get(0) ?: 0).toDouble(),
-        (originalExifInterface.latLong?.get(1) ?: 0).toDouble()
-    )
+    exifInterface.setLatLong(0.0,0.0)
 
     exifInterface.setAttribute(
         ExifInterface.TAG_MODEL,
-        originalExifInterface.getAttribute(ExifInterface.TAG_MODEL)
+        null
     )
 
     exifInterface.setAttribute(
         ExifInterface.TAG_F_NUMBER,
-        originalExifInterface.getAttribute(ExifInterface.TAG_F_NUMBER)
+        null
     )
 
     exifInterface.setAttribute(
         ExifInterface.TAG_DATETIME,
-        originalExifInterface.getAttribute(ExifInterface.TAG_DATETIME)
+        null
     )
 
     exifInterface.setAttribute(
         ExifInterface.TAG_DATETIME_ORIGINAL,
-        originalExifInterface.getAttribute(ExifInterface.TAG_DATETIME_ORIGINAL)
+        null
     )
 
     exifInterface.setAttribute(
         ExifInterface.TAG_SHUTTER_SPEED_VALUE,
-        originalExifInterface.getAttribute(ExifInterface.TAG_SHUTTER_SPEED_VALUE)
+        null
     )
 
     exifInterface.setAttribute(
         ExifInterface.TAG_EXPOSURE_TIME,
-        originalExifInterface.getAttribute(ExifInterface.TAG_EXPOSURE_TIME)
+        null
     )
+
+    exifInterface.setAttribute(
+        ExifInterface.TAG_ARTIST,
+        null
+    )
+
+    exifInterface.setAttribute(
+        ExifInterface.TAG_CAMERA_OWNER_NAME,
+        null
+    )
+
+    exifInterface.setAttribute(
+        ExifInterface.TAG_DEVICE_SETTING_DESCRIPTION,
+        null
+    )
+
+    exifInterface.setAttribute(
+        ExifInterface.TAG_GPS_ALTITUDE,
+        null
+    )
+
+    exifInterface.setAttribute(
+        ExifInterface.TAG_GPS_LONGITUDE,
+        null
+    )
+
+    exifInterface.setAttribute(
+        ExifInterface.TAG_GPS_LATITUDE,
+        null
+    )
+
+    exifInterface.setAttribute(
+        ExifInterface.LATITUDE_NORTH,
+        null
+    )
+
+    exifInterface.setAttribute(
+        ExifInterface.LATITUDE_SOUTH,
+        null
+    )
+
+    exifInterface.setAttribute(
+        ExifInterface.LONGITUDE_EAST,
+        null
+    )
+
+    exifInterface.setAttribute(
+        ExifInterface.LONGITUDE_WEST,
+        null
+    )
+
+    exifInterface.setAttribute(
+        ExifInterface.TAG_USER_COMMENT,
+        null
+    )
+
+    exifInterface.setAttribute(
+        ExifInterface.TAG_ORF_THUMBNAIL_IMAGE,
+        null
+    )
+
+    exifInterface.setAttribute(
+        ExifInterface.TAG_THUMBNAIL_IMAGE_LENGTH,
+        null
+    )
+
+    exifInterface.setAttribute(
+        ExifInterface.TAG_THUMBNAIL_IMAGE_WIDTH,
+        null
+    )
+
+    exifInterface.setAttribute(
+        ExifInterface.TAG_DATETIME_DIGITIZED,
+        null
+    )
+
+    exifInterface.setAttribute(
+        ExifInterface.TAG_IMAGE_DESCRIPTION,
+        null
+    )
+
+    exifInterface.setAttribute(
+        ExifInterface.TAG_MAKE,
+        null
+    )
+
+    exifInterface.setAttribute(
+        ExifInterface.TAG_MAKER_NOTE,
+        null
+    )
+
+    exifInterface.setAttribute(
+        ExifInterface.TAG_LENS_MAKE,
+        null
+    )
+
+    exifInterface.setAttribute(
+        ExifInterface.TAG_LENS_MODEL,
+        null
+    )
+
+    exifInterface.saveAttributes()
 }
 
 enum class MediaData(val iconResInt: Int) {

@@ -91,6 +91,7 @@ import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.checkPathIsDownloads
 import com.kaii.photos.helpers.createPersistablePermissionLauncher
+import com.kaii.photos.helpers.eraseExifMedia
 import com.kaii.photos.helpers.getExifDataForMedia
 import com.kaii.photos.helpers.getParentFromPath
 import com.kaii.photos.helpers.moveImageToLockedFolder
@@ -412,7 +413,7 @@ fun SinglePhotoInfoDialog(
                 }
 
                 // should add a way to automatically calculate height needed for this
-                val addedHeight by remember { derivedStateOf { 36.dp * mediaData.keys.size } }
+                val addedHeight by remember { derivedStateOf { 36.dp * (mediaData.keys.size + 1) } } // + 1 for the delete exif data row
                 val moveCopyHeight = if (showMoveCopyOptions) 82.dp else 0.dp // 40.dp is height of one single row
                 val setAsHeight = if (currentMediaItem.type != MediaType.Video) 40.dp else 0.dp
 
@@ -488,6 +489,63 @@ fun SinglePhotoInfoDialog(
                                         secondText = value.toString(),
                                         iconResId = key.iconResInt,
                                     )
+                                }
+                            }
+
+                            item {
+                            	val showConfirmEraseDialog = remember { mutableStateOf(false) }
+                                val runEraseExifData = remember { mutableStateOf(false) }
+                                val coroutineScope = rememberCoroutineScope()
+
+								ConfirmationDialogWithBody(
+									showDialog = showConfirmEraseDialog,
+									dialogTitle = "Erase EXIF data?",
+									dialogBody = "This action cannot be undone",
+									confirmButtonLabel = "Erase"
+								) {
+									runEraseExifData.value = true
+								}
+
+                                GetPermissionAndRun(
+                                    uris = listOf(currentMediaItem.uri),
+                                    shouldRun = runEraseExifData,
+                                    onGranted = {
+                                        coroutineScope.launch(Dispatchers.IO) {
+                                            try {
+                                                eraseExifMedia(currentMediaItem.absolutePath)
+
+                                                LavenderSnackbarController.pushEvent(
+                                                    LavenderSnackbarEvents.MessageEvent(
+                                                        message = "Removed EXIF data",
+                                                        iconResId = R.drawable.file_is_selected_foreground,
+                                                        duration = SnackbarDuration.Short
+                                                    )
+                                                )
+                                            } catch (e: Throwable) {
+                                                LavenderSnackbarController.pushEvent(
+                                                    LavenderSnackbarEvents.MessageEvent(
+                                                        message = "Failed erasing exif data",
+                                                        iconResId = R.drawable.error_2,
+                                                        duration = SnackbarDuration.Long
+                                                    )
+                                                )
+
+                                                Log.e(TAG, "Failed erasing exif data for ${currentMediaItem.absolutePath}")
+                                                Log.e(TAG, e.toString())
+                                                e.printStackTrace()
+                                            }
+                                        }
+                                    }
+                                )
+
+                                DialogInfoText(
+                                    firstText = "",
+                                    secondText = "Erase Exif Data",
+                                    iconResId = R.drawable.error,
+                                    color = MaterialTheme.colorScheme.error,
+                                    contentColor = MaterialTheme.colorScheme.onError
+                                ) {
+                                    showConfirmEraseDialog.value = true
                                 }
                             }
                         }
@@ -769,7 +827,6 @@ fun MainAppDialog(
 fun SelectingMoreOptionsDialog(
     showDialog: MutableState<Boolean>,
     selectedItems: List<MediaStoreData>,
-    currentView: MutableState<BottomBarTab>,
     onDone: () -> Unit
 ) {
     val context = LocalContext.current

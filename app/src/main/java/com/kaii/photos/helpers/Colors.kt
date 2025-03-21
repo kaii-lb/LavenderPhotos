@@ -19,12 +19,14 @@ object ExtendedMaterialTheme {
 	val colorScheme: ExtendedColorScheme
 		@Composable
 		get() = ExtendedColorScheme(
-			dialogSurface = brightenColor(MaterialTheme.colorScheme.surface, 0.05f)
+			dialogSurface = brightenColor(MaterialTheme.colorScheme.surface, 0.05f),
+			expandableDialogBackground = darkenColor(MaterialTheme.colorScheme.surfaceVariant, 0.2f)
 		)
 }
 
 data class ExtendedColorScheme(
-	val dialogSurface: Color
+	val dialogSurface: Color,
+	val expandableDialogBackground: Color
 )
 
 fun brightenColor(color: Color, percentage: Float) : Color {
