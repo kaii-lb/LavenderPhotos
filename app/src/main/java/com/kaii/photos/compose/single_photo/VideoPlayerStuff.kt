@@ -670,7 +670,13 @@ fun VideoPlayer(
                         }
                     )
                 }
-                .zIndex(2f)
+        )
+
+		// seperate boxes to avoid touch blocking due to zindex ordering
+        Box (
+        	modifier = Modifier
+        		.fillMaxSize(1f)
+        		.zIndex(2f)
         ) {
             Box(
                 modifier = Modifier
