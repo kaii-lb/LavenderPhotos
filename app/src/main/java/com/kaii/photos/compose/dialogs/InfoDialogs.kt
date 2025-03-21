@@ -63,6 +63,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastMap
+import androidx.compose.ui.util.fastDistinctBy
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
@@ -786,7 +788,11 @@ fun SelectingMoreOptionsDialog(
     var showLoadingDialog by remember { mutableStateOf(false) }
 
     GetDirectoryPermissionAndRun(
-        absoluteDirPaths = listOf(selectedItems.firstOrNull()?.absolutePath?.getParentFromPath() ?: ""),
+        absoluteDirPaths = selectedItems.fastMap {
+            it.absolutePath.getParentFromPath()
+        }.fastDistinctBy {
+			it
+        },
         shouldRun = tryGetDirPermission,
         onGranted = {
             showLoadingDialog = true
@@ -855,16 +861,13 @@ fun SelectingMoreOptionsDialog(
                 .padding(12.dp)
                 .wrapContentHeight()
         ) {
-            // TODO: group by path and then get permission for each path in search page
-            if (currentView.value != DefaultTabs.TabTypes.search) {
-                DialogClickableItem(
-                    text = "Move to Secure Folder",
-                    iconResId = R.drawable.locked_folder,
-                    position = RowPosition.Single
-                ) {
-                    if (selectedItems.isNotEmpty()) tryGetDirPermission.value = true
-                }
-            }
+	        DialogClickableItem(
+	            text = "Move to Secure Folder",
+	            iconResId = R.drawable.locked_folder,
+	            position = RowPosition.Single
+	        ) {
+	            if (selectedItems.isNotEmpty()) tryGetDirPermission.value = true
+	        }
         }
     }
 }

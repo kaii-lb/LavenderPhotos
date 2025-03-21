@@ -27,7 +27,7 @@ import androidx.core.net.toUri
 import com.kaii.lavender_snackbars.LavenderSnackbarController
 import com.kaii.lavender_snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
-import com.kaii.photos.compose.ConfirmationDialogWithBody
+import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
 import com.kaii.photos.mediastore.getExternalStorageContentUriFromAbsolutePath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
