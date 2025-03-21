@@ -46,6 +46,8 @@ import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.copyMedia
+import com.kaii.photos.mediastore.getIv
+import com.kaii.photos.mediastore.getOriginalPath
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -204,18 +206,17 @@ suspend fun moveImageOutOfLockedFolder(
     onDone: () -> Unit
 ) {
     val contentResolver = context.contentResolver
+    val restoredFilesDir = context.appRestoredFilesDir
 
     list.forEach { media ->
         val fileToBeRestored = File(media.absolutePath)
-        val originalPath = applicationDatabase.securedItemEntityDao().getOriginalPathFromSecuredPath(media.absolutePath)?.replace(fileToBeRestored.name, "") ?: context.appRestoredFilesDir
-
-        val thumbnailFile = getSecuredCacheImageForFile(file = fileToBeRestored, context = context)
+        val originalPath = media.bytes?.getOriginalPath() ?: restoredFilesDir
 
         Log.d(TAG, "ORIGINAL PATH $originalPath")
 
         val tempFile = File(context.cacheDir, fileToBeRestored.name)
 
-        val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(media.absolutePath)
+        val iv = media.bytes?.getIv()
         if (iv != null) {
             EncryptionManager.decryptInputStream(fileToBeRestored.inputStream(), tempFile.outputStream(), iv)
         } else {
@@ -227,13 +228,14 @@ suspend fun moveImageOutOfLockedFolder(
             media = media.copy(
                 uri = tempFile.toUri()
             ),
-            destination = originalPath.replace(baseInternalStorageDirectory, "")
+            destination = originalPath.toRelativePath().getParentFromPath()
         )?.let {
             fileToBeRestored.delete()
             tempFile.delete()
-            thumbnailFile.delete()
-            getSecuredCacheImageForFile(file = fileToBeRestored, context = context).delete()
             applicationDatabase.securedItemEntityDao().deleteEntityBySecuredPath(media.absolutePath)
+
+            val thumbnailFile = getSecuredCacheImageForFile(file = fileToBeRestored, context = context)
+            thumbnailFile.delete()
             applicationDatabase.securedItemEntityDao().deleteEntityBySecuredPath(thumbnailFile.absolutePath)
         }
     }
@@ -322,7 +324,7 @@ fun copyImageListToPath(
                     context = context,
                     media = media,
                     destination = destination,
-                    overrideDisplayName = if (overrideDisplayName != null) overrideDisplayName(media.displayName!!) else null
+                    overrideDisplayName = if (overrideDisplayName != null) overrideDisplayName(media.displayName) else null
                 )
             }
         }.await()

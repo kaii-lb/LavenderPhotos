@@ -9,8 +9,10 @@ import kotlinx.parcelize.Parcelize
 import java.util.Calendar
 import java.util.Locale
 
-/** A data model containing data for a single media item. 
- @param date* is in seconds */
+/** A data model containing data for a single media item
+ * @param dateModified is in seconds
+ * @param dateTaken is in seconds
+ * @param bytes is fileIv -> first 16 bytes, thumbnailIv -> second 16 bytes, originalPath -> everything after */
 @Immutable
 @Parcelize
 data class MediaStoreData(
@@ -20,7 +22,7 @@ data class MediaStoreData(
     val mimeType: String? = "image",
     val dateModified: Long = 0L,
     val dateTaken: Long = 0L,
-    val displayName: String? = "",
+    val displayName: String = "",
     val absolutePath: String = "",
     var section: SectionItem = SectionItem(0L, 0),
     val bytes: ByteArray? = null
@@ -95,7 +97,7 @@ data class MediaStoreData(
         result = 31 * result + (mimeType?.hashCode() ?: 0)
         result = 31 * result + dateModified.hashCode()
         result = 31 * result + dateTaken.hashCode()
-        result = 31 * result + (displayName?.hashCode() ?: 0)
+        result = 31 * result + (displayName.hashCode())
         result = 31 * result + absolutePath.hashCode()
         result = 31 * result + section.hashCode()
         return result
@@ -118,3 +120,6 @@ fun String.toMediaType() = when (this) {
     else -> MediaType.Section
 }
 
+fun ByteArray.getIv() = copyOfRange(0, 16)
+fun ByteArray.getThumbnailIv() = copyOfRange(16, 32)
+fun ByteArray.getOriginalPath() = decodeToString(32, size)

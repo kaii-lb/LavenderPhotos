@@ -4,7 +4,6 @@ import android.app.Activity.RESULT_OK
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Environment
 import android.os.Process
 import android.provider.MediaStore
 import android.util.Log
@@ -16,9 +15,13 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
 import com.kaii.lavender_snackbars.LavenderSnackbarController
@@ -27,6 +30,7 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.ConfirmationDialogWithBody
 import com.kaii.photos.mediastore.getExternalStorageContentUriFromAbsolutePath
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -79,19 +83,31 @@ fun GetPermissionAndRun(
     }
 }
 
+/** [onGranted] return the list of permission granted absolutePaths from [absoluteDirPaths] */
+@Throws(IllegalStateException::class)
 @Composable
 fun GetDirectoryPermissionAndRun(
-    absolutePath: String,
+    absoluteDirPaths: List<String>,
     shouldRun: MutableState<Boolean>,
-    onGranted: () -> Unit
+    onGranted: (grantedPaths: List<String>) -> Unit,
+    onRejected: () -> Unit
 ) {
     val showNoPermissionForDirDialog = remember { mutableStateOf(false) }
     val context = LocalContext.current
 
-    val launcher = createPersistablePermissionLauncher { _ ->
-        shouldRun.value = true
-    	onGranted()
-    }
+    var currentIndex by remember { mutableIntStateOf(0) }
+    val grantedList = remember { mutableStateListOf<String>() }
+
+    val launcher = createPersistablePermissionLauncher(
+        onGranted = { _ ->
+            grantedList.add(absoluteDirPaths[currentIndex])
+            currentIndex += 1
+        },
+
+        onFailure = {
+            currentIndex += 1
+        }
+    )
 
     ConfirmationDialogWithBody(
         showDialog = showNoPermissionForDirDialog,
@@ -99,29 +115,49 @@ fun GetDirectoryPermissionAndRun(
         dialogBody = "Lavender Photos needs permission to access this album. Please grant it the permission by selecting \"Use This Folder\" on the next screen.\n This is a one-time permission.",
         confirmButtonLabel = "Grant"
     ) {
-        val uri = context.getExternalStorageContentUriFromAbsolutePath(absolutePath, false)
-        Log.d(TAG, "Content URI for directory $absolutePath is $uri")
+        val uri = context.getExternalStorageContentUriFromAbsolutePath(absoluteDirPaths[currentIndex], false)
+        Log.d(TAG, "Content URI for directory ${absoluteDirPaths[currentIndex]} is $uri")
 
         launcher.launch(uri)
     }
 
-    LaunchedEffect(shouldRun.value) {
-        if (shouldRun.value) {
-            val alreadyPersisted =
-                context.contentResolver.persistedUriPermissions.any {
-                    val externalContentUri = context.getExternalStorageContentUriFromAbsolutePath(absolutePath, true)
+    LaunchedEffect(currentIndex) {
+        if (currentIndex >= absoluteDirPaths.size - 1 && grantedList.isNotEmpty()) onGranted(grantedList.toList())
+        else if (currentIndex >= absoluteDirPaths.size - 1) onRejected() // grantedList IS empty
+    }
 
-                    it.uri == externalContentUri && it.isReadPermission && it.isWritePermission
+    LaunchedEffect(shouldRun.value, absoluteDirPaths) {
+        if (shouldRun.value) {
+        	if (absoluteDirPaths.all { it == "" }) {
+        	    Log.e(TAG, "Cannot get permissions for empty directory list!")
+        	    return@LaunchedEffect
+        	}
+
+            absoluteDirPaths.forEachIndexed { index, absolutePath ->
+            	Log.d(TAG, "getting permission for $absolutePath")
+                val alreadyPersisted =
+                    context.contentResolver.persistedUriPermissions.any {
+                        val externalContentUri = context.getExternalStorageContentUriFromAbsolutePath(absolutePath, true)
+
+                        it.uri == externalContentUri && it.isReadPermission && it.isWritePermission
+                    }
+
+				Log.d(TAG, "already have permission for $absolutePath? $alreadyPersisted")
+
+                if (!alreadyPersisted && !absolutePath.checkPathIsDownloads()) {
+                    showNoPermissionForDirDialog.value = true
+                } else {
+                    grantedList.add(absolutePath)
+                    currentIndex += 1
                 }
 
-			val relative = absolutePath.replace(baseInternalStorageDirectory, "")
-            if (!alreadyPersisted &&
-            	!(relative.startsWith(Environment.DIRECTORY_DOWNLOADS) && relative.removeSuffix("/").endsWith(Environment.DIRECTORY_DOWNLOADS))
-           	) {
-                showNoPermissionForDirDialog.value = true
-            } else {
-                onGranted()
+                while (currentIndex == index) {
+                    delay(100)
+                    Log.d(TAG, "delaying execution")
+                }
             }
+
+            Log.d(TAG, "Finished granting permissions for $absoluteDirPaths")
 
             shouldRun.value = false
         }
@@ -131,38 +167,30 @@ fun GetDirectoryPermissionAndRun(
 /** notifies user via a snackbar if adding the directory fails */
 @Composable
 fun createPersistablePermissionLauncher(
-    onGranted: (uri: Uri) -> Unit
+    onGranted: (uri: Uri) -> Unit,
+    onFailure: () -> Unit
 ): ManagedActivityResultLauncher<Uri?, Uri?> {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
 
     return rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocumentTree()
     ) { uri ->
-        val uriPath = uri?.path
-        if (uri != null && uriPath != null) {
-            try {
+        try {
+            if (uri != null && uri.path != null) {
                 context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
 
-                Log.d(TAG, "Got persistent permission to access parent and child directory with uri $uri and path $uriPath")
+                Log.d(TAG, "Got persistent permission to access parent and child directory with uri $uri and path ${uri.path}")
 
                 onGranted(uri)
-            } catch (e: Throwable) {
-                Log.e(TAG, "Could not get album path.")
-                e.printStackTrace()
+            } else {
+                throw Exception("Requested permission has a null URI, cannot proceed.")
             }
-        } else {
-            coroutineScope.launch {
-                LavenderSnackbarController.pushEvent(
-                    LavenderSnackbarEvents.MessageEvent(
-                        message = "Failed to add album :<",
-                        iconResId = R.drawable.error_2,
-                        duration = SnackbarDuration.Short
-                    )
-                )
-            }
+        } catch (e: Throwable) {
+            Log.e(TAG, "Failed granting persistable permission")
+            Log.e(TAG, e.toString())
+            e.printStackTrace()
 
-            // Toast.makeText(context, "Failed to add album :<", Toast.LENGTH_LONG).show()
+            onFailure()
         }
     }
 }
@@ -172,20 +200,38 @@ fun createPersistablePermissionLauncher(
 fun createDirectoryPicker(
     onGetDir: (albumPath: String?) -> Unit
 ): ManagedActivityResultLauncher<Uri?, Uri?> {
-    return createPersistablePermissionLauncher { uri ->
-        uri.path?.let {
-            val dir = File(it)
+    val coroutineScope = rememberCoroutineScope()
 
-            val pathSections = dir.absolutePath.replace(baseInternalStorageDirectory, "").split(":")
-            val path = pathSections[pathSections.size - 1]
+    return createPersistablePermissionLauncher(
+        onGranted = { uri ->
+            uri.path?.let {
+                val dir = File(it)
 
-            Log.d(TAG, "Chosen directory is $path")
+                val pathSections = dir.absolutePath.replace(baseInternalStorageDirectory, "").split(":")
+                val path = pathSections[pathSections.size - 1]
 
-            onGetDir(path)
-        } ?: run {
-            Log.e(TAG, "Path for $uri does not exist, cannot add!")
+                Log.d(TAG, "Chosen directory is $path")
+
+                onGetDir(path)
+            } ?: run {
+                Log.e(TAG, "Path for $uri does not exist, cannot add!")
+                onGetDir(null)
+            }
+        },
+        onFailure = {
+            Log.e(TAG, "Path for album does not exist, cannot add!")
             onGetDir(null)
+
+            coroutineScope.launch {
+                LavenderSnackbarController.pushEvent(
+                    LavenderSnackbarEvents.MessageEvent(
+                        message = "Failed to add album :<",
+                        iconResId = R.drawable.error_2,
+                        duration = SnackbarDuration.Short
+                    )
+                )
+            }
         }
-    }
+    )
 }
 

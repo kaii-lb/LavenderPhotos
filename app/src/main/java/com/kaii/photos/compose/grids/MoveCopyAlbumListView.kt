@@ -67,7 +67,9 @@ import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.copyImageListToPath
+import com.kaii.photos.helpers.getParentFromPath
 import com.kaii.photos.helpers.moveImageListToPath
+import com.kaii.photos.helpers.toRelativePath
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.album_grid.AlbumsViewModel
@@ -193,7 +195,7 @@ fun MoveCopyAlbumListView(
                         AlbumsListItem(
                             album = album,
                             data = dataList.find { item ->
-                                item.absolutePath.replace(baseInternalStorageDirectory, "").replace(item.displayName!!, "").removeSuffix("/") == album
+                                item.absolutePath.toRelativePath().getParentFromPath() == album
                             } ?: MediaStoreData(),
                             position = if (index == albumsList.size - 1 && albumsList.size != 1) RowPosition.Bottom else if (albumsList.size == 1) RowPosition.Single else if (index == 0) RowPosition.Top else RowPosition.Middle,
                             selectedItemsList = selectedItemsList,
@@ -242,11 +244,13 @@ fun AlbumsListItem(
     val runOnDirGranted = remember { mutableStateOf(false) }
 
     GetDirectoryPermissionAndRun(
-    	absolutePath = baseInternalStorageDirectory + album,
+    	absoluteDirPaths = listOf(baseInternalStorageDirectory + album),
     	shouldRun = runOnDirGranted,
-    ) {
-    	runOnUriGranted.value = true
-    }
+    	onGranted = {
+    		runOnUriGranted.value = true
+    	},
+    	onRejected = {}
+    )
 
     GetPermissionAndRun(
         uris = selectedItemsWithoutSection.map { it.uri },

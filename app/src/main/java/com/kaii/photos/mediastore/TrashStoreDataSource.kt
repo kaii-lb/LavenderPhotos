@@ -90,17 +90,17 @@ class TrashStoreDataSource(
 	                		if (possibleDateTaken != 0L) {
 	                			possibleDateTaken
                    			} else {
-			                    val taken = getDateTakenForMedia(absolutePath)
+                                val taken = getDateTakenForMedia(absolutePath)
 
                                 mediaEntityDao.insertEntity(
-			                        MediaEntity(
-			                            id = id,
-			                            mimeType = mimeType,
-			                            dateTaken = taken,
-			                            displayName = displayName
-			                        )
-			                    )
-		                    	taken
+                                    MediaEntity(
+                                        id = id,
+                                        mimeType = mimeType,
+                                        dateTaken = taken,
+                                        displayName = displayName
+                                    )
+                                )
+                                taken
 	                    	}
 	                	}
 	                } else {

@@ -68,6 +68,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastDistinctBy
+import androidx.compose.ui.util.fastFilter
+import androidx.compose.ui.util.fastMap
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.R
@@ -79,8 +82,11 @@ import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.helpers.EncryptionManager
+import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.GetPermissionAndRun
+import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.createDirectoryPicker
+import com.kaii.photos.helpers.getParentFromPath
 import com.kaii.photos.helpers.moveImageOutOfLockedFolder
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.permanentlyDeleteSecureFolderImageList
@@ -88,6 +94,8 @@ import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareMultipleSecuredImages
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.mediastore.getIv
+import com.kaii.photos.mediastore.getOriginalPath
 import kotlinx.coroutines.async
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -1026,7 +1034,8 @@ fun SecureFolderViewTopAppBar(
 @Composable
 fun SecureFolderViewBottomAppBar(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
-    groupedMedia: MutableState<List<MediaStoreData>>
+    groupedMedia: MutableState<List<MediaStoreData>>,
+    isGettingPermissions: MutableState<Boolean>
 ) {
     IsSelectingBottomAppBar {
         val context = LocalContext.current
@@ -1059,14 +1068,14 @@ fun SecureFolderViewBottomAppBar(
                         val cachedPaths = emptyList<Pair<String, MediaType>>().toMutableList()
 
                         selectedItemsWithoutSection.forEach { item ->
-                            val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(item.absolutePath)
+                            val iv = item.bytes?.getIv()
                             if (iv == null) {
                             	Log.e(TAG, "IV for ${item.displayName} was null, aborting decrypt")
                             	return@async
                             }
 
                             val originalFile = File(item.absolutePath)
-                            val cachedFile = File(context.cacheDir, item.displayName ?: item.id.toString())
+                            val cachedFile = File(context.cacheDir, item.displayName)
 
                             EncryptionManager.decryptInputStream(
                                 inputStream = originalFile.inputStream(),
@@ -1087,6 +1096,46 @@ fun SecureFolderViewBottomAppBar(
         )
 
         val showRestoreDialog = remember { mutableStateOf(false) }
+        val runRestoreAction = remember { mutableStateOf(false) }
+        val restoredFilesDir = remember { context.appRestoredFilesDir }
+
+        GetDirectoryPermissionAndRun(
+            absoluteDirPaths =
+                selectedItemsWithoutSection.fastMap {
+                    it.bytes?.getOriginalPath()?.getParentFromPath() ?: restoredFilesDir
+                }.fastDistinctBy {
+                    it
+                },
+	        shouldRun = runRestoreAction,
+	        onGranted = { grantedList ->
+				mainViewModel.launch(Dispatchers.IO) {
+	                val hasPermission = selectedItemsWithoutSection.fastFilter { selected ->
+	                    (selected.bytes?.getOriginalPath()?.getParentFromPath() ?: restoredFilesDir) in grantedList
+	                }
+
+					val newList = groupedMedia.value.toMutableList()
+
+					moveImageOutOfLockedFolder(
+						list = hasPermission,
+						context = context
+					) {
+						showLoadingDialog = false
+						isGettingPermissions.value = false
+					}
+
+	                newList.removeAll(selectedItemsList.fastFilter { selected ->
+	                    selected.section in hasPermission.fastMap { it.section }
+	                })
+
+					selectedItemsList.clear()
+					groupedMedia.value = newList
+				}
+	        },
+	        onRejected = {
+	        	isGettingPermissions.value = false
+	        	showLoadingDialog = false
+	        }
+	    )
 
         BottomAppBarItem(
             text = "Restore",
@@ -1101,21 +1150,8 @@ fun SecureFolderViewBottomAppBar(
                   	loadingDialogTitle = "Restoring Files"
                     showLoadingDialog = true
 
-                    mainViewModel.launch(Dispatchers.IO) {
-	                    val newList = groupedMedia.value.toMutableList()
-
-	                    moveImageOutOfLockedFolder(
-	                    	list = selectedItemsWithoutSection,
-	                    	context = context
-	                   	) {
-	                   		showLoadingDialog = false
-	                   	}
-
-	                    newList.removeAll(selectedItemsList)
-
-	                    selectedItemsList.clear()
-	                    groupedMedia.value = newList
-                    }
+					isGettingPermissions.value = true
+                    runRestoreAction.value = true
                 }
             },
             action = {

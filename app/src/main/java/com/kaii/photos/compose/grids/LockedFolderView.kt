@@ -28,7 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
+import androidx.core.content.FileProvider
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -42,10 +42,11 @@ import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
+import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.appSecureVideoCacheDir
-import com.kaii.photos.helpers.getDateTakenForMedia
 import com.kaii.photos.helpers.getSecuredCacheImageForFile
+import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.multi_album.groupPhotosBy
@@ -80,6 +81,9 @@ fun LockedFolderView(
     var hideSecureFolder by rememberSaveable {
         mutableStateOf(false)
     }
+    val isGettingPermissions = rememberSaveable {
+        mutableStateOf(false)
+    }
 
     LaunchedEffect(hideSecureFolder, lastLifecycleState) {
         if (hideSecureFolder
@@ -97,21 +101,21 @@ fun LockedFolderView(
         }
     }
 
-    DisposableEffect(key1 = lifecycleOwner.lifecycle.currentState) {
+    DisposableEffect(lifecycleOwner.lifecycle.currentState, isGettingPermissions.value) {
         val lifecycleObserver =
             LifecycleEventObserver { _, event ->
-
                 when (event) {
                     Lifecycle.Event.ON_STOP, Lifecycle.Event.ON_DESTROY -> {
                         if (navController.currentBackStackEntry?.destination?.hasRoute(Screens.SingleHiddenPhotoView::class) == false
                             && navController.currentBackStackEntry?.destination?.route != MultiScreenViewType.MainScreen.name
+                            && !isGettingPermissions.value
                         ) {
                             lastLifecycleState = Lifecycle.State.DESTROYED
                         }
                     }
 
                     Lifecycle.Event.ON_RESUME, Lifecycle.Event.ON_START, Lifecycle.Event.ON_CREATE -> {
-                        if (lastLifecycleState == Lifecycle.State.DESTROYED && navController.currentBackStackEntry != null) {
+                        if (lastLifecycleState == Lifecycle.State.DESTROYED && navController.currentBackStackEntry != null && !isGettingPermissions.value) {
                             lastLifecycleState = Lifecycle.State.STARTED
 
                             hideSecureFolder = true
@@ -140,10 +144,12 @@ fun LockedFolderView(
 
     // TODO: USE APP CONTENT RESOLVER!!!!
     LaunchedEffect(fileList, groupedMedia.value) {
+        val restoredFilesDir = context.appRestoredFilesDir
+        val dao = applicationDatabase.securedItemEntityDao()
+
         withContext(Dispatchers.IO) {
             fileList.forEach { file ->
                 val mimeType = Files.probeContentType(Path(file.absolutePath))
-                val dateTaken = getDateTakenForMedia(file.absolutePath)
 
                 val type =
                     if (mimeType.lowercase().contains("image")) MediaType.Image
@@ -152,24 +158,26 @@ fun LockedFolderView(
 
                 val decryptedBytes =
                     run {
-                        val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(file.absolutePath)
-                        val thumbnailIv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(
+                        val iv = dao.getIvFromSecuredPath(file.absolutePath)
+                        val thumbnailIv = dao.getIvFromSecuredPath(
                             getSecuredCacheImageForFile(file = file, context = context).absolutePath
                         )
 
                         if (iv != null && thumbnailIv != null) iv + thumbnailIv else ByteArray(32)
                     }
 
+                val originalPath = dao.getOriginalPathFromSecuredPath(file.absolutePath) ?: restoredFilesDir
+
                 val item = MediaStoreData(
                     type = type,
                     id = file.hashCode() * file.length() * file.lastModified(),
-                    uri = file.absolutePath.toUri(),
+                    uri = FileProvider.getUriForFile(context, LAVENDER_FILE_PROVIDER_AUTHORITY, file),
                     mimeType = mimeType,
                     dateModified = file.lastModified() / 1000,
-                    dateTaken = dateTaken,
+                    dateTaken = file.lastModified() / 1000,
                     displayName = file.name,
                     absolutePath = file.absolutePath,
-                    bytes = decryptedBytes
+                    bytes = decryptedBytes + originalPath.encodeToByteArray()
                 )
 
                 mediaStoreData.add(item)
@@ -207,14 +215,18 @@ fun LockedFolderView(
         sheetDragHandle = {},
         sheetSwipeEnabled = false,
         topBar = {
-            SecureFolderViewTopAppBar(selectedItemsList = selectedItemsList, currentView = currentView) {
+            SecureFolderViewTopAppBar(
+            	selectedItemsList = selectedItemsList,
+            	currentView = currentView
+           	) {
                 navController.popBackStack()
             }
         },
         sheetContent = {
             SecureFolderViewBottomAppBar(
                 selectedItemsList = selectedItemsList,
-                groupedMedia = groupedMedia
+                groupedMedia = groupedMedia,
+                isGettingPermissions = isGettingPermissions
             )
         },
         sheetPeekHeight = 0.dp,

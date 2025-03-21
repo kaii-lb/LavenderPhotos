@@ -115,6 +115,7 @@ import com.kaii.photos.helpers.vibrateLong
 import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.mediastore.getThumbnailIv
 import com.kaii.photos.mediastore.signature
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -744,10 +745,10 @@ fun MediaStoreItem(
                 model =
                     withContext(Dispatchers.IO) {
                         try {
-                            val thumbnailIv = item.bytes!!.copyOfRange(16, 32) // get thumbnail iv from video
+                            val thumbnailIv = item.bytes!!.getThumbnailIv() // get thumbnail iv from video
 
                             EncryptionManager.decryptBytes(
-                                bytes = getSecuredCacheImageForFile(fileName = item.displayName!!, context = context).readBytes(),
+                                bytes = getSecuredCacheImageForFile(fileName = item.displayName, context = context).readBytes(),
                                 iv = thumbnailIv
                             )
                         } catch (e: Throwable) {

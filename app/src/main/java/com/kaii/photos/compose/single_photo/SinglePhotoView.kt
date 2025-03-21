@@ -73,11 +73,12 @@ import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
-import com.kaii.photos.helpers.baseInternalStorageDirectory
+import com.kaii.photos.helpers.getParentFromPath
 import com.kaii.photos.helpers.moveImageToLockedFolder
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareImage
+import com.kaii.photos.helpers.toRelativePath
 import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
@@ -319,12 +320,10 @@ private fun TopBar(
                 }
             },
             title = {
-                val mediaTitle = mediaItem.displayName ?: mediaItem.type.name
-
                 Spacer(modifier = Modifier.width(8.dp))
 
                 Text(
-                    text = mediaTitle,
+                    text = mediaItem.displayName,
                     fontSize = TextUnit(16f, TextUnitType.Sp),
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
@@ -526,16 +525,14 @@ private fun BottomBar(
                     }
 
                     GetDirectoryPermissionAndRun(
-                        absolutePath = groupedMedia.value.firstOrNull()?.let { media ->
-                            media.absolutePath
-                                .replace(baseInternalStorageDirectory, "")
-                                .replace(media.displayName ?: "", "")
-                        } ?: "",
-                        shouldRun = tryGetDirPermission
-                    ) {
-                        moveToSecureFolder.value = true
-                        showLoadingDialog = true
-                    }
+                        absoluteDirPaths = listOf(groupedMedia.value.firstOrNull()?.absolutePath?.toRelativePath()?.getParentFromPath() ?: ""),
+                        shouldRun = tryGetDirPermission,
+                        onGranted = {
+                        	moveToSecureFolder.value = true
+                        	showLoadingDialog = true
+                        },
+                        onRejected = {}
+                    )
 
                     GetPermissionAndRun(
                         uris = listOf(currentItem.uri),

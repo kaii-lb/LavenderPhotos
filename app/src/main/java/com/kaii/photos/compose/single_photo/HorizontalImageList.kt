@@ -51,6 +51,8 @@ import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.mediastore.getIv
+import com.kaii.photos.mediastore.getThumbnailIv
 import com.kaii.photos.mediastore.signature
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -167,11 +169,11 @@ fun HorizontalImageList(
 
                     withContext(Dispatchers.IO) {
                         try {
-                            val iv = mediaStoreItem.bytes!!.copyOfRange(0, 16)
-                            val thumbnailIv = mediaStoreItem.bytes.copyOfRange(16, 32)
+                            val iv = mediaStoreItem.bytes!!.getIv()
+                            val thumbnailIv = mediaStoreItem.bytes.getThumbnailIv()
 
                             model = EncryptionManager.decryptBytes(
-                                bytes = getSecuredCacheImageForFile(fileName = mediaStoreItem.displayName!!, context = context).readBytes(),
+                                bytes = getSecuredCacheImageForFile(fileName = mediaStoreItem.displayName, context = context).readBytes(),
                                 iv = thumbnailIv
                             )
 

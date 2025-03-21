@@ -77,11 +77,11 @@ import com.kaii.photos.compose.ConfirmationDialog
 import com.kaii.photos.compose.ConfirmationDialogWithBody
 import com.kaii.photos.compose.DialogInfoText
 import com.kaii.photos.compose.LoadingDialog
+import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.MediaData
 import com.kaii.photos.helpers.MultiScreenViewType
-import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.brightenColor
 import com.kaii.photos.helpers.getDecryptCacheForFile
 import com.kaii.photos.helpers.getExifDataForMedia
@@ -89,8 +89,11 @@ import com.kaii.photos.helpers.moveImageOutOfLockedFolder
 import com.kaii.photos.helpers.permanentlyDeleteSecureFolderImageList
 import com.kaii.photos.helpers.shareSecuredImage
 import com.kaii.photos.helpers.getSecureDecryptedVideoFile
+import com.kaii.photos.helpers.getParentFromPath
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.mediastore.getIv
+import com.kaii.photos.mediastore.getOriginalPath
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -119,6 +122,9 @@ fun SingleHiddenPhotoView(
     var hideSecureFolder by rememberSaveable {
         mutableStateOf(false)
     }
+    val isGettingPermissions = rememberSaveable {
+    	mutableStateOf(false)
+    }
 
     LaunchedEffect(hideSecureFolder) {
         if (hideSecureFolder
@@ -128,7 +134,7 @@ fun SingleHiddenPhotoView(
         }
     }
 
-    DisposableEffect(key1 = lifecycleOwner.lifecycle.currentState) {
+    DisposableEffect(key1 = lifecycleOwner.lifecycle.currentState, isGettingPermissions.value) {
         val lifecycleObserver =
             LifecycleEventObserver { _, event ->
 
@@ -136,13 +142,14 @@ fun SingleHiddenPhotoView(
                     Lifecycle.Event.ON_STOP, Lifecycle.Event.ON_DESTROY -> {
                         if (navController.currentBackStackEntry?.destination?.route != MultiScreenViewType.LockedFolderView.name
                             && navController.currentBackStackEntry?.destination?.route != MultiScreenViewType.MainScreen.name
+                            && !isGettingPermissions.value
                         ) {
                             lastLifecycleState = Lifecycle.State.DESTROYED
                         }
                     }
 
                     Lifecycle.Event.ON_RESUME, Lifecycle.Event.ON_START, Lifecycle.Event.ON_CREATE -> {
-                        if (lastLifecycleState == Lifecycle.State.DESTROYED && navController.currentBackStackEntry != null) {
+                        if (lastLifecycleState == Lifecycle.State.DESTROYED && navController.currentBackStackEntry != null && !isGettingPermissions.value) {
                             lastLifecycleState = Lifecycle.State.STARTED
 
                             hideSecureFolder = true
@@ -214,10 +221,11 @@ fun SingleHiddenPhotoView(
         },
         bottomBar = {
             BottomBar(
-                appBarsVisible.value,
-                currentMediaItem,
-                groupedMedia,
-                state
+                visible = appBarsVisible.value,
+                item = currentMediaItem,
+                groupedMedia = groupedMedia,
+                state = state,
+                isGettingPermissions = isGettingPermissions
             ) {
                 navController.popBackStack()
             }
@@ -303,12 +311,10 @@ private fun TopBar(
                 }
             },
             title = {
-                val mediaTitle = mediaItem.displayName ?: mediaItem.type.name
-
                 Spacer(modifier = Modifier.width(8.dp))
 
                 Text(
-                    text = mediaTitle,
+                    text = mediaItem.displayName,
                     fontSize = TextUnit(18f, TextUnitType.Sp),
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
@@ -409,6 +415,7 @@ private fun BottomBar(
     item: MediaStoreData,
     groupedMedia: MutableState<List<MediaStoreData>>,
     state: PagerState,
+    isGettingPermissions: MutableState<Boolean>,
     popBackStack: () -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -417,48 +424,47 @@ private fun BottomBar(
     val showRestoreDialog = remember { mutableStateOf(false) }
     val showDeleteDialog = remember { mutableStateOf(false) }
     val runRestoreAction = remember { mutableStateOf(false) }
-    var originalPath by remember { mutableStateOf("") }
 
     var showLoadingDialog by remember { mutableStateOf(false) }
-
     if (showLoadingDialog) {
         LoadingDialog(title = "Restoring Files", body = "Please wait while the media is processed")
     }
 
-    LaunchedEffect(item) {
-        withContext(Dispatchers.IO) {
-            originalPath = applicationDatabase.securedItemEntityDao().getOriginalPathFromSecuredPath(item.absolutePath)?.replace(item.displayName ?: "", "") ?: context.appRestoredFilesDir
-        }
-    }
-
     GetDirectoryPermissionAndRun(
-        absolutePath = originalPath,
+        absoluteDirPaths = listOf(item.bytes?.getOriginalPath()?.getParentFromPath() ?: context.appRestoredFilesDir),
         shouldRun = runRestoreAction,
-    ) {
-        mainViewModel.launch(Dispatchers.IO) {
-            moveImageOutOfLockedFolder(
-                list = listOf(item),
-                context = context
-            ) {
-                showLoadingDialog = false
-            }
+        onGranted = { _ ->
+	        mainViewModel.launch(Dispatchers.IO) {
+	            moveImageOutOfLockedFolder(
+	                list = listOf(item),
+	                context = context
+	            ) {
+	                isGettingPermissions.value = false
+	                showLoadingDialog = false
+	            }
 
-            sortOutMediaMods(
-                item,
-                groupedMedia,
-                coroutineScope,
-                state
-            ) {
-                popBackStack()
-            }
+	            sortOutMediaMods(
+	                item,
+	                groupedMedia,
+	                coroutineScope,
+	                state
+	            ) {
+	                popBackStack()
+	            }
+	        }
+        },
+        onRejected = {
+        	isGettingPermissions.value = false
+        	showLoadingDialog = false
         }
-    }
+    )
 
     ConfirmationDialog(
         showDialog = showRestoreDialog,
         dialogTitle = "Move item out of Secure Folder?",
         confirmButtonLabel = "Move"
     ) {
+        isGettingPermissions.value = true
         runRestoreAction.value = true
         showLoadingDialog = true
     }
@@ -684,12 +690,12 @@ fun SingleSecuredPhotoInfoDialog(
                             val file = if (currentMediaItem.type == MediaType.Video) {
                                 val originalFile = File(currentMediaItem.absolutePath)
                                 val cachedFile = getSecureDecryptedVideoFile(
-                                    name = currentMediaItem.displayName!!,
+                                    name = currentMediaItem.displayName,
                                     context = context
                                 )
 
                                 if (!cachedFile.exists()) {
-                                    val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(currentMediaItem.absolutePath)
+                                    val iv = currentMediaItem.bytes?.getIv()
 
                                     if (iv == null) {
                                         Log.e(TAG, "IV for ${currentMediaItem.displayName} was null, aborting")
@@ -718,7 +724,7 @@ fun SingleSecuredPhotoInfoDialog(
                                 )
 
                                 if (!cachedFile.exists()) {
-                                    val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(currentMediaItem.absolutePath)
+                                    val iv = currentMediaItem.bytes?.getIv()
 
                                     if (iv == null) {
                                         Log.e(TAG, "IV for ${currentMediaItem.displayName} was null, aborting")
@@ -741,7 +747,6 @@ fun SingleSecuredPhotoInfoDialog(
                                     cachedFile
                                 }
                             }
-
 
                             getExifDataForMedia(file.absolutePath).collect {
                                 mediaData = it

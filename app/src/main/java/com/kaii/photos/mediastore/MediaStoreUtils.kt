@@ -14,10 +14,12 @@ import android.provider.MediaStore.MediaColumns
 import android.util.Log
 import androidx.documentfile.provider.DocumentFile
 import com.kaii.photos.helpers.appRestoredFilesDir
-import com.kaii.photos.helpers.EXTERNAL_DOCUMENTS_AUTHORITY
 import com.kaii.photos.helpers.baseInternalStorageDirectory
-import com.kaii.photos.helpers.setDateTakenForMedia
+import com.kaii.photos.helpers.checkPathIsDownloads
+import com.kaii.photos.helpers.EXTERNAL_DOCUMENTS_AUTHORITY
 import com.kaii.photos.helpers.getDateTakenForMedia
+import com.kaii.photos.helpers.setDateTakenForMedia
+import com.kaii.photos.helpers.toRelativePath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -121,10 +123,10 @@ fun ContentResolver.copyUriToUri(from: Uri, to: Uri) {
 
 
 fun Context.getExternalStorageContentUriFromAbsolutePath(absolutePath: String, trimDoc: Boolean): Uri {
-    val relative = absolutePath.replace(baseInternalStorageDirectory, "").removeSuffix("/")
+    val relative = absolutePath.toRelativePath()
 
 	val needed = if (relative.trim() == "") {
-		appRestoredFilesDir.replace(baseInternalStorageDirectory, "")
+		appRestoredFilesDir.toRelativePath()
 	} else relative
 
     val treeUri = DocumentsContract.buildTreeDocumentUri(EXTERNAL_DOCUMENTS_AUTHORITY, "primary:")
@@ -140,7 +142,7 @@ fun Context.getExternalStorageContentUriFromAbsolutePath(absolutePath: String, t
 }
 
 fun getHighestLevelParentFromAbsolutePath(absolutePath: String) : String {
-    val relative = absolutePath.replace(baseInternalStorageDirectory, "")
+    val relative = absolutePath.toRelativePath()
     val depth =
         if (relative.startsWith("Android") || relative.startsWith(Environment.DIRECTORY_DOWNLOADS)) 1
         else 0
@@ -153,10 +155,10 @@ fun getHighestLevelParentFromAbsolutePath(absolutePath: String) : String {
 }
 
 fun getHighestParentPath(absolutePath: String, depth: Int) : String? {
-   	val relative = absolutePath.replace(baseInternalStorageDirectory, "")
+   	val relative = absolutePath.toRelativePath()
 
     return if (absolutePath.length > baseInternalStorageDirectory.length + 1
-    	&& !(relative.startsWith(Environment.DIRECTORY_DOWNLOADS) && relative.removeSuffix("/").endsWith(Environment.DIRECTORY_DOWNLOADS))
+    	&& !absolutePath.checkPathIsDownloads()
    	) {
         baseInternalStorageDirectory + relative.split("/").subList(fromIndex = 0, toIndex = depth + 1).joinToString("/")
     } else {

@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
+import java.io.File
 import java.io.IOException
 import java.nio.file.FileVisitResult
 import java.nio.file.FileVisitor
@@ -104,11 +105,18 @@ fun Path.checkHasFiles(
     return hasFiles
 }
 
-fun checkDirIsDownloads(dir: String): Boolean = run {
-    val relative = dir.trim().replace(baseInternalStorageDirectory, "")
+fun String.checkPathIsDownloads(): Boolean =
+    toRelativePath().startsWith(Environment.DIRECTORY_DOWNLOADS)
+            && toRelativePath().removeSuffix("/").endsWith(Environment.DIRECTORY_DOWNLOADS)
 
-    relative.startsWith(Environment.DIRECTORY_DOWNLOADS) && relative.removeSuffix("/").endsWith(Environment.DIRECTORY_DOWNLOADS)
-}
+fun String.getFileNameFromPath(): String = trim().removeSuffix("/").split("/").last()
+
+fun String.getParentFromPath(): String = trim().replace(this.getFileNameFromPath(), "").removeSuffix("/")
+
+val File.relativePath: String
+    get() = this.absolutePath.replace(baseInternalStorageDirectory, "")
+
+fun String.toRelativePath() = trim().replace(baseInternalStorageDirectory, "")
 
 fun Path.getAllAlbumsOnDevice(): Flow<String> = channelFlow {
     val albums = mutableStateListOf<String>()

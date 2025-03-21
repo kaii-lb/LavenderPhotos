@@ -119,14 +119,16 @@ import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.baseInternalStorageDirectory
-import com.kaii.photos.helpers.checkDirIsDownloads
+import com.kaii.photos.helpers.checkPathIsDownloads
 import com.kaii.photos.helpers.createPersistablePermissionLauncher
 import com.kaii.photos.helpers.darkenColor
 import com.kaii.photos.helpers.getExifDataForMedia
+import com.kaii.photos.helpers.getParentFromPath
 import com.kaii.photos.helpers.moveImageToLockedFolder
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.renameDirectory
 import com.kaii.photos.helpers.renameImage
+import com.kaii.photos.helpers.toRelativePath
 import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
@@ -610,18 +612,33 @@ fun MainAppDialog(
                 }
 
                 if (currentView.value == DefaultTabs.TabTypes.albums) {
-                    val activityLauncher = createPersistablePermissionLauncher { uri ->
-                        uri.path?.let {
-                            val dir = File(it)
+                    val coroutineScope = rememberCoroutineScope()
+                    val activityLauncher = createPersistablePermissionLauncher(
+                        onGranted = { uri ->
+                            uri.path?.let {
+                                val dir = File(it)
 
-                            val pathSections = dir.absolutePath.replace(baseInternalStorageDirectory, "").split(":")
-                            val path = pathSections[pathSections.size - 1]
+                                val pathSections = dir.absolutePath.toRelativePath().split(":")
+                                val path = pathSections[pathSections.size - 1]
 
-                            Log.d(TAG, "Added album path $path")
+                                Log.d(TAG, "Added album path $path")
 
-                            mainViewModel.settings.AlbumsList.addToAlbumsList(path)
+                                mainViewModel.settings.AlbumsList.addToAlbumsList(path)
+                            }
+                        },
+
+                        onFailure = {
+                            coroutineScope.launch {
+                                LavenderSnackbarController.pushEvent(
+                                    LavenderSnackbarEvents.MessageEvent(
+                                        message = "Failed to add album :<",
+                                        iconResId = R.drawable.error_2,
+                                        duration = SnackbarDuration.Short
+                                    )
+                                )
+                            }
                         }
-                    }
+                    )
 
                     DialogClickableItem(
                         text = "Add an album",
@@ -726,7 +743,7 @@ fun SinglePhotoInfoDialog(
                     .padding(12.dp)
                     .wrapContentHeight()
             ) {
-                var originalFileName = currentMediaItem.displayName ?: "Broken File"
+                var originalFileName = currentMediaItem.displayName
                 val fileName = remember { mutableStateOf(originalFileName) }
                 val saveFileName = remember { mutableStateOf(false) }
 
@@ -741,7 +758,7 @@ fun SinglePhotoInfoDialog(
                         originalFileName = fileName.value
 
                         if (loadsFromMainViewModel) {
-                            val oldName = currentMediaItem.displayName ?: "Broken File"
+                            val oldName = currentMediaItem.displayName
                             val path = currentMediaItem.absolutePath
 
                             val newGroupedMedia = groupedMedia.value.toMutableList()
@@ -1113,45 +1130,47 @@ fun SingleAlbumDialog(
             val context = LocalContext.current
 
             GetDirectoryPermissionAndRun(
-                absolutePath = absoluteDirPath,
-                shouldRun = saveFileName
-            ) {
-                if (saveFileName.value && fileName.value != dir.split("/").last()) {
-                    renameDirectory(context, absoluteDirPath, fileName.value)
+                absoluteDirPaths = listOf(absoluteDirPath),
+                shouldRun = saveFileName,
+                onGranted = {
+	                if (saveFileName.value && fileName.value != dir.split("/").last()) {
+	                    renameDirectory(context, absoluteDirPath, fileName.value)
 
-                    val mainViewModel = MainActivity.mainViewModel
-                    val newDir = dir.replace(title, fileName.value)
+	                    val mainViewModel = MainActivity.mainViewModel
+	                    val newDir = dir.replace(title, fileName.value)
 
-                    mainViewModel.settings.AlbumsList.editInAlbumsList(dir, fileName.value)
-                    showDialog.value = false
+	                    mainViewModel.settings.AlbumsList.editInAlbumsList(dir, fileName.value)
+	                    showDialog.value = false
 
-                    try {
-                        context.contentResolver.releasePersistableUriPermission(
-                            context.getExternalStorageContentUriFromAbsolutePath(absoluteDirPath, true),
-                            Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                        )
-                    } catch (e: Throwable) {
-                        Log.d(TAG, "Couldn't release permission for $absoluteDirPath")
-                        e.printStackTrace()
-                    }
+	                    try {
+	                        context.contentResolver.releasePersistableUriPermission(
+	                            context.getExternalStorageContentUriFromAbsolutePath(absoluteDirPath, true),
+	                            Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+	                        )
+	                    } catch (e: Throwable) {
+	                        Log.d(TAG, "Couldn't release permission for $absoluteDirPath")
+	                        e.printStackTrace()
+	                    }
 
-                    navController.popBackStack()
-                    navController.navigate(
-                        Screens.SingleAlbumView(
-                            albums = listOf(newDir)
-                        )
-                    )
+	                    navController.popBackStack()
+	                    navController.navigate(
+	                        Screens.SingleAlbumView(
+	                            albums = listOf(newDir)
+	                        )
+	                    )
 
-                    saveFileName.value = false
-                }
-            }
+	                    saveFileName.value = false
+	                }
+                },
+                onRejected = {}
+            )
 
             AnimatableTextField(
                 state = isEditingFileName,
                 string = fileName,
                 doAction = saveFileName,
                 rowPosition = RowPosition.Middle,
-                enabled = !checkDirIsDownloads(dir),
+                enabled = !dir.checkPathIsDownloads(),
                 modifier = Modifier
                     .padding(8.dp, 0.dp)
             ) {
@@ -1167,7 +1186,7 @@ fun SingleAlbumDialog(
                     text = "Remove album from list",
                     iconResId = R.drawable.delete,
                     position = RowPosition.Middle,
-                    enabled = !checkDirIsDownloads(dir)
+                    enabled = !dir.checkPathIsDownloads()
                 ) {
                     mainViewModel.settings.AlbumsList.removeFromAlbumsList(dir)
                     showDialog.value = false
@@ -1443,16 +1462,14 @@ fun SelectingMoreOptionsDialog(
     var showLoadingDialog by remember { mutableStateOf(false) }
 
     GetDirectoryPermissionAndRun(
-        absolutePath = selectedItems.firstOrNull()?.let { media ->
-            media.absolutePath
-                .replace(baseInternalStorageDirectory, "")
-                .replace(media.displayName ?: "", "")
-        } ?: "",
-        shouldRun = tryGetDirPermission
-    ) {
-        showLoadingDialog = true
-        moveToSecureFolder.value = true
-    }
+        absoluteDirPaths = listOf(selectedItems.firstOrNull()?.absolutePath?.getParentFromPath() ?: ""),
+        shouldRun = tryGetDirPermission,
+        onGranted = {
+        	showLoadingDialog = true
+        	moveToSecureFolder.value = true
+        },
+        onRejected = {}
+    )
 
     if (showLoadingDialog) {
         LoadingDialog(title = "Encrypting Files", body = "Please wait while the media is processed")

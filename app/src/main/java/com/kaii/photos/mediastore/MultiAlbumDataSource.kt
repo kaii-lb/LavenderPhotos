@@ -84,7 +84,7 @@ class MultiAlbumDataSource(
                    			} else {
 			                    val taken = getDateTakenForMedia(absolutePath)
 
-			                    mediaEntityDao.insertEntity(
+                                mediaEntityDao.insertEntity(
 			                        MediaEntity(
 			                            id = id,
 			                            mimeType = mimeType,

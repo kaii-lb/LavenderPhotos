@@ -76,8 +76,3 @@ val Context.appSecureThumbnailCacheDir: String
 
         return dir.absolutePath.removeSuffix("/")
     }
-
-val File.relativePath: String
-    get() = this.absolutePath.replace(baseInternalStorageDirectory, "")
-
-fun String.toRelativePath() = replace(baseInternalStorageDirectory, "")

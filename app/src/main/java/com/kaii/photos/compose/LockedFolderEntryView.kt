@@ -105,101 +105,105 @@ fun LockedFolderEntryView(
 
     // migrate from old secure folder dir to new one
     GetDirectoryPermissionAndRun(
-        absolutePath = context.appRestoredFilesDir,
-        shouldRun = newFolderDirPermission
-    ) {
-        mainViewModel.launch(Dispatchers.IO) {
-            val oldDir = context.getDir(AppDirectories.OldSecureFolder.path, Context.MODE_PRIVATE)
-            val oldFiles = oldDir.listFiles()
+        absoluteDirPaths = listOf(context.appRestoredFilesDir),
+        shouldRun = newFolderDirPermission,
+        onGranted = {
+	        mainViewModel.launch(Dispatchers.IO) {
+	            val oldDir = context.getDir(AppDirectories.OldSecureFolder.path, Context.MODE_PRIVATE)
+	            val oldFiles = oldDir.listFiles()
 
-            if (oldFiles == null || oldFiles.isEmpty()) return@launch
+	            if (oldFiles == null || oldFiles.isEmpty()) return@launch
 
-            migrating = true
-            canOpenSecureFolder = false
+	            migrating = true
+	            canOpenSecureFolder = false
 
-            Log.d(TAG, "Exporting backup of old secure folder items")
+	            Log.d(TAG, "Exporting backup of old secure folder items")
 
-            val helper = DataAndBackupHelper()
-            val success = helper.exportRawSecureFolderItems(
-                context = context,
-                secureFolder = oldDir
-            )
+	            val helper = DataAndBackupHelper()
+	            val success = helper.exportRawSecureFolderItems(
+	                context = context,
+	                secureFolder = oldDir
+	            )
 
-            if (success) {
-                val exportDir = helper.getRawExportDir(context = context)
-                mainViewModel.settings.AlbumsList.addToAlbumsList(exportDir.relativePath)
+	            if (success) {
+	                val exportDir = helper.getRawExportDir(context = context)
+	                mainViewModel.settings.AlbumsList.addToAlbumsList(exportDir.relativePath)
 
-                oldFiles.forEach {
-                    Log.d(TAG, "item in old dir ${it.name}")
+	                oldFiles.forEach {
+	                    Log.d(TAG, "item in old dir ${it.name}")
 
-                    val destination = File(context.appSecureFolderDir, it.name)
-                    if (!destination.exists()) {
-                        it.copyTo(destination)
-                        it.delete()
-                    }
-                }
+	                    val destination = File(context.appSecureFolderDir, it.name)
+	                    if (!destination.exists()) {
+	                        it.copyTo(destination)
+	                        it.delete()
+	                    }
+	                }
 
-                showExplanationForMigration.value = true
-            } else {
-                LavenderSnackbarController.pushEvent(
-                    LavenderSnackbarEvents.MessageEvent(
-                        message = "Failed exporting backup!",
-                        iconResId = R.drawable.error_2,
-                        duration = SnackbarDuration.Long
-                    )
-                )
-            }
+	                showExplanationForMigration.value = true
+	            } else {
+	                LavenderSnackbarController.pushEvent(
+	                    LavenderSnackbarEvents.MessageEvent(
+	                        message = "Failed exporting backup!",
+	                        iconResId = R.drawable.error_2,
+	                        duration = SnackbarDuration.Long
+	                    )
+	                )
+	            }
 
-            migrating = false
-            canOpenSecureFolder = true
+	            migrating = false
+	            canOpenSecureFolder = true
 
-            rerunMigration = true
-        }
-    }
+	            rerunMigration = true
+	        }
+        },
+        onRejected = {}
+    )
 
     GetDirectoryPermissionAndRun(
-        absolutePath = context.appRestoredFilesDir,
-        shouldRun = encryptionDirPermission
-    ) {
-        mainViewModel.launch(Dispatchers.IO) {
-            if (unencryptedFilesList.isEmpty()) return@launch
+        absoluteDirPaths = listOf(context.appRestoredFilesDir),
+        shouldRun = encryptionDirPermission,
+        onGranted = {
+	        mainViewModel.launch(Dispatchers.IO) {
+	            if (unencryptedFilesList.isEmpty()) return@launch
 
-            migrating = true
-            canOpenSecureFolder = false
+	            migrating = true
+	            canOpenSecureFolder = false
 
-            val restoredFilesDir = context.appRestoredFilesDir
+	            val restoredFilesDir = context.appRestoredFilesDir
 
-            val uris = unencryptedFilesList.mapNotNull { file ->
-                val destination = File(restoredFilesDir, file.name)
-                if (!destination.exists()) {
-                    file.copyTo(destination)
-                }
+	            val uris = unencryptedFilesList.mapNotNull { file ->
+	                val destination = File(restoredFilesDir, file.name)
+	                if (!destination.exists()) {
+	                    file.copyTo(destination)
+	                }
 
-                val uri = context.contentResolver.getUriFromAbsolutePath(
-                    absolutePath = destination.absolutePath,
-                    type =
-                    if (Files.probeContentType(Path(destination.absolutePath)).startsWith("image")) MediaType.Image
-                    else MediaType.Video
-                )
+	                val uri = context.contentResolver.getUriFromAbsolutePath(
+	                    absolutePath = destination.absolutePath,
+	                    type =
+	                    if (Files.probeContentType(Path(destination.absolutePath)).startsWith("image")) MediaType.Image
+	                    else MediaType.Video
+	                )
 
-                Log.d(TAG, "Uri for file ${file.name} is $uri")
+	                Log.d(TAG, "Uri for file ${file.name} is $uri")
 
-                uri
-            }
+	                uri
+	            }
 
-            if (uris.isEmpty()) {
-                migrating = false
-                return@launch
-            }
+	            if (uris.isEmpty()) {
+	                migrating = false
+	                return@launch
+	            }
 
-            Log.d(TAG, "Starting encryption process...")
+	            Log.d(TAG, "Starting encryption process...")
 
-            uriList.clear()
-            uriList.addAll(uris)
+	            uriList.clear()
+	            uriList.addAll(uris)
 
-            runEncryptAction.value = true
-        }
-    }
+	            runEncryptAction.value = true
+	        }
+        },
+        onRejected = {}
+    )
 
     val coroutineScope = rememberCoroutineScope()
     GetPermissionAndRun(
