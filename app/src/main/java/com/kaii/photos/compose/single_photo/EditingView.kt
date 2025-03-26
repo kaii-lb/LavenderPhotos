@@ -3,8 +3,12 @@ package com.kaii.photos.compose.single_photo
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffXfermode
 import android.net.Uri
+import android.os.Build
 import android.view.Window
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -111,12 +115,15 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.asAndroidPath
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.layout
@@ -132,6 +139,8 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.toIntRect
+import androidx.compose.ui.unit.toRect
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
@@ -155,8 +164,10 @@ import com.kaii.photos.compose.SplitButton
 import com.kaii.photos.compose.getAppBarContentTransition
 import com.kaii.photos.compose.setBarVisibility
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
+import com.kaii.photos.helpers.blur
 import com.kaii.photos.helpers.ColorFiltersMatrices
 import com.kaii.photos.helpers.ColorIndicator
+import com.kaii.photos.helpers.DrawableBlur
 import com.kaii.photos.helpers.DrawablePath
 import com.kaii.photos.helpers.DrawableText
 import com.kaii.photos.helpers.DrawingColors
@@ -169,13 +180,17 @@ import com.kaii.photos.helpers.getColorFromLinearGradientList
 import com.kaii.photos.helpers.gradientColorList
 import com.kaii.photos.helpers.savePathListToBitmap
 import com.kaii.photos.helpers.toOffset
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.math.abs
 import kotlin.math.ln
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
+
+private const val TAG = "EDITING_VIEW"
 
 @Composable
 fun EditingView(
@@ -227,6 +242,17 @@ fun EditingView(
 
     val originalImage = remember { BitmapFactory.decodeStream(inputStream) }
     var image by remember { mutableStateOf(originalImage.asImageBitmap()) }
+    var blurredImage by remember { mutableStateOf(image) }
+
+    LaunchedEffect(image) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        	withContext(Dispatchers.IO) {
+            	Log.e(TAG, "blurring bitmap...")
+            	blurredImage = image.asAndroidBitmap().blur(blurRadius = 20f).asImageBitmap()
+            }
+        }
+    }
+
     inputStream?.close()
 
     val rotationMultiplier = remember { mutableIntStateOf(0) }
@@ -471,45 +497,85 @@ fun EditingView(
                 )
 
                 modifications.forEach { modification ->
-                    if (modification is DrawablePath) {
-                        val (path, pathPaint) = modification
+                    when (modification) {
+                        is DrawablePath -> {
+                            val (path, pathPaint) = modification
 
-                        drawPath(
-                            path = path,
-                            style = Stroke(
-                                width = pathPaint.strokeWidth,
-                                cap = pathPaint.strokeCap,
-                                join = pathPaint.strokeJoin,
-                                miter = pathPaint.strokeMiterLimit,
-                                pathEffect = pathPaint.pathEffect
-                            ),
-                            blendMode = pathPaint.blendMode,
-                            color = pathPaint.color,
-                            alpha = pathPaint.alpha
-                        )
-                    } else if (modification is DrawableText) {
-                        val (text, textPosition, textPaint, textRotation, textSize) = modification
-
-                        val textLayout = textMeasurer.measure(
-                            text = text,
-                            style = TextStyle(
-                                color = textPaint.color,
-                                fontSize = TextUnit(textPaint.strokeWidth, TextUnitType.Sp),
-                                textAlign = defaultTextStyle.textAlign,
-                                platformStyle = defaultTextStyle.platformStyle,
-                                lineHeightStyle = defaultTextStyle.lineHeightStyle,
-                                baselineShift = defaultTextStyle.baselineShift
+                            drawPath(
+                                path = path,
+                                style = Stroke(
+                                    width = pathPaint.strokeWidth,
+                                    cap = pathPaint.strokeCap,
+                                    join = pathPaint.strokeJoin,
+                                    miter = pathPaint.strokeMiterLimit,
+                                    pathEffect = pathPaint.pathEffect
+                                ),
+                                blendMode = pathPaint.blendMode,
+                                color = pathPaint.color,
+                                alpha = pathPaint.alpha
                             )
-                        )
+                        }
 
-                        rotate(textRotation, textPosition + textSize.toOffset() / 2f) {
-                            translate(textPosition.x, textPosition.y) {
-                                drawText(
-                                    textLayoutResult = textLayout,
-                                    color = textPaint.color,
-                                    alpha = textPaint.alpha,
-                                    blendMode = textPaint.blendMode
+                        is DrawableBlur -> {
+                            val (path, pathPaint) = modification
+
+                            val offscreenBitmap = Bitmap.createBitmap(size.width, size.height, Bitmap.Config.ARGB_8888)
+                            val offscreenCanvas = android.graphics.Canvas(offscreenBitmap)
+
+                            offscreenCanvas.drawPath(path.asAndroidPath(), pathPaint.asFrameworkPaint())
+
+                            drawIntoCanvas { canvas ->
+                                val frameworkCanvas = canvas.nativeCanvas
+
+                                canvas.saveLayer(size.toIntRect().toRect(), pathPaint)
+
+                                frameworkCanvas.drawBitmap(
+                                    offscreenBitmap,
+                                    0f, 0f,
+                                    null
                                 )
+
+                                frameworkCanvas.drawBitmap(
+                                    blurredImage.asAndroidBitmap(),
+                                    null,
+                                    android.graphics.Rect(
+                                        0, 0,
+                                        size.width, size.height
+                                    ),
+                                    android.graphics.Paint().apply {
+                                        // blendMode = BlendMode.DstIn
+                                        xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_IN)
+                                    }
+                                )
+
+                                canvas.restore()
+                            }
+                        }
+
+                        is DrawableText -> {
+                            val (text, textPosition, textPaint, textRotation, textSize) = modification
+
+                            val textLayout = textMeasurer.measure(
+                                text = text,
+                                style = TextStyle(
+                                    color = textPaint.color,
+                                    fontSize = TextUnit(textPaint.strokeWidth, TextUnitType.Sp),
+                                    textAlign = defaultTextStyle.textAlign,
+                                    platformStyle = defaultTextStyle.platformStyle,
+                                    lineHeightStyle = defaultTextStyle.lineHeightStyle,
+                                    baselineShift = defaultTextStyle.baselineShift
+                                )
+                            )
+
+                            rotate(textRotation, textPosition + textSize.toOffset() / 2f) {
+                                translate(textPosition.x, textPosition.y) {
+                                    drawText(
+                                        textLayoutResult = textLayout,
+                                        color = textPaint.color,
+                                        alpha = textPaint.alpha,
+                                        blendMode = textPaint.blendMode
+                                    )
+                                }
                             }
                         }
                     }
@@ -2300,6 +2366,19 @@ fun DrawTools(
                 color = paint.value.color
             )
         }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            EditingViewBottomAppBarItem(
+                text = "Blur",
+                iconResId = R.drawable.light,
+                selected = paint.value.type == PaintType.Blur
+            ) {
+                paint.value = DrawingPaints.Blur.copy(
+                    strokeWidth = paint.value.strokeWidth,
+                    // color = paint.value.color
+                )
+            }
+        }
     }
 }
 
@@ -2436,6 +2515,97 @@ private fun Modifier.makeDrawCanvas(
                                     val path = (modifications.findLast {
                                         it is DrawablePath
                                     } as DrawablePath).path
+
+                                    path.lineTo(offset.x, offset.y)
+                                    lastPoint = offset
+
+                                    isDrawing.value = false
+                                    changesSize.intValue += 1
+
+                                    event.changes.forEach {
+                                        it.consume()
+                                    }
+                                }
+                            }
+                        } else if (!canceled && (paint.value.type == PaintType.Blur) && event.changes.size == 1) {
+                            when (event.type) {
+                                PointerEventType.Press -> {
+                                    val offset = event.changes.first().position
+
+                                    val path = Path().apply {
+                                        moveTo(offset.x, offset.y)
+                                    }
+
+                                    modifications.add(
+                                        DrawableBlur(
+                                            path,
+                                            paint.value
+                                        )
+                                    )
+
+                                    lastPoint = offset
+                                    isDrawing.value = true
+                                    changesSize.intValue += 1
+
+                                    event.changes.forEach {
+                                        it.consume()
+                                    }
+                                }
+
+                                PointerEventType.Move -> {
+                                    val offset = event.changes.first().position
+                                    var path =
+                                        (modifications.findLast {
+                                            it is DrawableBlur
+                                        } as DrawableBlur?)?.path
+
+                                    if (path == null) {
+                                        val newPath =
+                                            DrawableBlur(
+                                                Path().apply {
+                                                    moveTo(offset.x, offset.y)
+                                                },
+                                                paint.value
+                                            )
+                                        modifications.add(newPath)
+                                        path = newPath.path
+                                    } else {
+                                        modifications.remove(
+                                            DrawableBlur(
+                                                path,
+                                                paint.value
+                                            )
+                                        )
+                                    }
+
+                                    path.quadraticTo(
+                                        lastPoint.x,
+                                        lastPoint.y,
+                                        (lastPoint.x + offset.x) / 2,
+                                        (lastPoint.y + offset.y) / 2
+                                    )
+
+                                    modifications.add(
+                                        DrawableBlur(
+                                            path,
+                                            paint.value
+                                        )
+                                    )
+
+                                    lastPoint = offset
+                                    isDrawing.value = true
+                                    changesSize.intValue += 1
+
+                                    event.changes.forEach {
+                                        it.consume()
+                                    }
+                                }
+
+                                PointerEventType.Release -> {
+                                    val offset = event.changes.first().position
+                                    val path = (modifications.findLast {
+                                        it is DrawableBlur
+                                    } as DrawableBlur).path
 
                                     path.lineTo(offset.x, offset.y)
                                     lastPoint = offset

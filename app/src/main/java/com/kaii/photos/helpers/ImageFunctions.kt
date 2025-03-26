@@ -5,8 +5,11 @@ import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffXfermode
 import android.media.MediaMetadataRetriever
 import android.net.Uri
+import android.os.Build
 import android.provider.DocumentsContract
 import android.provider.MediaStore
 import android.provider.MediaStore.MediaColumns
@@ -19,12 +22,15 @@ import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.asAndroidPath
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
@@ -347,6 +353,13 @@ suspend fun savePathListToBitmap(
 ) {
     val defaultTextStyle = DrawableText.Styles.Default.style
 
+    val blurredImage =
+        if (modifications.any { it is DrawableBlur } && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            image.asAndroidBitmap().blur(blurRadius = 20f)
+        } else {
+            null
+        }
+
     withContext(Dispatchers.IO) {
         val rotationMatrix = android.graphics.Matrix().apply {
             postRotate(rotation)
@@ -383,50 +396,92 @@ suspend fun savePathListToBitmap(
             size.toSize()
         ) {
             modifications.forEach { modification ->
-                if (modification is DrawablePath) {
-                    val (path, paint) = modification
-                    scale(ratio, Offset(0.5f, 0.5f)) {
-                        drawPath(
-                            path = path,
-                            style = Stroke(
-                                width = paint.strokeWidth,
-                                cap = paint.strokeCap,
-                                join = paint.strokeJoin,
-                                miter = paint.strokeMiterLimit,
-                                pathEffect = paint.pathEffect
-                            ),
-                            blendMode = paint.blendMode,
-                            color = paint.color,
-                            alpha = paint.alpha
-                        )
+                when (modification) {
+                    is DrawablePath -> {
+                        val (path, paint) = modification
+                        scale(ratio, Offset(0.5f, 0.5f)) {
+                            drawPath(
+                                path = path,
+                                style = Stroke(
+                                    width = paint.strokeWidth,
+                                    cap = paint.strokeCap,
+                                    join = paint.strokeJoin,
+                                    miter = paint.strokeMiterLimit,
+                                    pathEffect = paint.pathEffect
+                                ),
+                                blendMode = paint.blendMode,
+                                color = paint.color,
+                                alpha = paint.alpha
+                            )
+                        }
                     }
-                } else if (modification is DrawableText) {
-                    val (text, position, paint, textRotation, textSize) = modification
 
-                    scale(ratio, Offset(0.5f, 0.5f)) {
-                        rotate(textRotation, position + textSize.toOffset() / 2f) {
-                            translate(position.x, position.y) {
-                                val textLayout = textMeasurer.measure(
-                                    text = text,
-                                    style = TextStyle(
-                                        color = paint.color,
-                                        fontSize = TextUnit(
-                                            paint.strokeWidth,
-                                            TextUnitType.Sp
-                                        ), // TextUnit(text.paint.strokeWidth * 0.8f * ratio, TextUnitType.Sp)
-                                        textAlign = defaultTextStyle.textAlign,
-                                        platformStyle = defaultTextStyle.platformStyle,
-                                        lineHeightStyle = defaultTextStyle.lineHeightStyle,
-                                        baselineShift = defaultTextStyle.baselineShift
+                    is DrawableBlur -> {
+                        val (path, pathPaint) = modification
+
+                        val offscreenBitmap = Bitmap.createBitmap(size.width, size.height, Bitmap.Config.ARGB_8888)
+                        val offscreenCanvas = android.graphics.Canvas(offscreenBitmap)
+
+                        offscreenCanvas.scale(ratio, ratio, 0.5f, 0.5f)
+                        offscreenCanvas.drawPath(path.asAndroidPath(), pathPaint.asFrameworkPaint())
+
+                        drawIntoCanvas { canvas ->
+                            val frameworkCanvas = canvas.nativeCanvas
+
+                            val rectSize = android.graphics.RectF(
+                                0f, 0f,
+                                size.width.toFloat(), size.height.toFloat()
+                            )
+
+                            frameworkCanvas.saveLayer(rectSize, pathPaint.asFrameworkPaint())
+
+                            frameworkCanvas.drawBitmap(
+                                offscreenBitmap,
+                                0f, 0f,
+                                null
+                            )
+
+                            frameworkCanvas.drawBitmap(
+                                blurredImage!!,
+                                0f, 0f,
+                                android.graphics.Paint().apply {
+                                    // blendMode = BlendMode.DstIn
+                                    xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_IN)
+                                }
+                            )
+
+                            frameworkCanvas.restore()
+                        }
+                    }
+
+                    is DrawableText -> {
+                        val (text, position, paint, textRotation, textSize) = modification
+
+                        scale(ratio, Offset(0.5f, 0.5f)) {
+                            rotate(textRotation, position + textSize.toOffset() / 2f) {
+                                translate(position.x, position.y) {
+                                    val textLayout = textMeasurer.measure(
+                                        text = text,
+                                        style = TextStyle(
+                                            color = paint.color,
+                                            fontSize = TextUnit(
+                                                paint.strokeWidth,
+                                                TextUnitType.Sp
+                                            ), // TextUnit(text.paint.strokeWidth * 0.8f * ratio, TextUnitType.Sp)
+                                            textAlign = defaultTextStyle.textAlign,
+                                            platformStyle = defaultTextStyle.platformStyle,
+                                            lineHeightStyle = defaultTextStyle.lineHeightStyle,
+                                            baselineShift = defaultTextStyle.baselineShift
+                                        )
                                     )
-                                )
 
-                                drawText(
-                                    textLayoutResult = textLayout,
-                                    color = paint.color,
-                                    alpha = paint.alpha,
-                                    blendMode = paint.blendMode
-                                )
+                                    drawText(
+                                        textLayoutResult = textLayout,
+                                        color = paint.color,
+                                        alpha = paint.alpha,
+                                        blendMode = paint.blendMode
+                                    )
+                                }
                             }
                         }
                     }
