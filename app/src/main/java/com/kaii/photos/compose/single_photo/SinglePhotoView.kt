@@ -64,6 +64,7 @@ import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.BottomAppBarItem
 import com.kaii.photos.compose.setBarVisibility
+import com.kaii.photos.compose.rememberDeviceOrientation
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.ExplanationDialog
 import com.kaii.photos.compose.dialogs.LoadingDialog
@@ -385,17 +386,18 @@ private fun BottomBar(
     showEditingView: () -> Unit,
     onZeroItemsLeft: () -> Unit
 ) {
-    val localConfig = LocalConfiguration.current
-    var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
-
-    LaunchedEffect(localConfig) {
-        isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
-    }
+    var isLandscape by rememberDeviceOrientation()
 
     val color = if (isLandscape)
         MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.4f)
     else
         MaterialTheme.colorScheme.surfaceContainer
+
+    var showLoadingDialog by remember { mutableStateOf(false) }
+
+    if (showLoadingDialog) {
+        LoadingDialog(title = "Encrypting Files", body = "Please wait while the media is processed")
+    }
 
     AnimatedVisibility(
         visible = visible,
@@ -518,11 +520,6 @@ private fun BottomBar(
                     val showMoveToSecureFolderDialog = remember { mutableStateOf(false) }
                     val moveToSecureFolder = remember { mutableStateOf(false) }
                     val tryGetDirPermission = remember { mutableStateOf(false) }
-                    var showLoadingDialog by remember { mutableStateOf(false) }
-
-                    if (showLoadingDialog) {
-                        LoadingDialog(title = "Encrypting Files", body = "Please wait while the media is processed")
-                    }
 
                     GetDirectoryPermissionAndRun(
                         absoluteDirPaths = listOf(groupedMedia.value.firstOrNull()?.absolutePath?.toRelativePath()?.getParentFromPath() ?: ""),
