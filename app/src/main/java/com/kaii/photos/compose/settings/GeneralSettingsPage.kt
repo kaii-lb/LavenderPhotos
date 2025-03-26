@@ -157,7 +157,7 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
                 PreferencesSwitchRow(
                     title = "Exit on save",
                     summary = "Automatically exit the editing view when you save the changes",
-                    iconResID = R.drawable.storage, // TODO: fix icon
+                    iconResID = R.drawable.exit,
                     checked = exitOnSave,
                     position = RowPosition.Single,
                     showBackground = false,

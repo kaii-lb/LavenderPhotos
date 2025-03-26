@@ -124,7 +124,7 @@ fun DebuggingSettingsPage() {
                 						LavenderSnackbarController.pushEvent(
                 							LavenderSnackbarEvents.MessageEvent(
                 								message = "No log file is recorded as of yet.",
-                								iconResId = R.drawable.error, // TODO: change to no log file icon
+                								iconResId = R.drawable.no_log,
                 								duration = SnackbarDuration.Short
                 							)
                 						)
