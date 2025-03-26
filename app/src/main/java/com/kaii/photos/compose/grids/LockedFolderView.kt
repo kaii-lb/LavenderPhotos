@@ -136,11 +136,10 @@ fun LockedFolderView(
     if (hideSecureFolder) return
 
     val secureFolder = File(context.appSecureFolderDir)
-    val fileList = secureFolder.listFiles() ?: return
+    val fileList = remember { secureFolder.listFiles() } ?: return
     val mediaStoreData = emptyList<MediaStoreData>().toMutableList()
 
-    val groupedMedia =
-        remember { mutableStateOf(mediaStoreData.toList()) }
+    val groupedMedia = remember { mutableStateOf(mediaStoreData.toList()) }
 
     // TODO: USE APP CONTENT RESOLVER!!!!
     LaunchedEffect(fileList, groupedMedia.value) {
@@ -148,6 +147,8 @@ fun LockedFolderView(
         val dao = applicationDatabase.securedItemEntityDao()
 
         withContext(Dispatchers.IO) {
+        	mediaStoreData.clear()
+
             fileList.forEach { file ->
                 val mimeType = Files.probeContentType(Path(file.absolutePath))
 
