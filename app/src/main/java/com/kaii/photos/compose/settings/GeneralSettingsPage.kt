@@ -152,6 +152,23 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
             }
 
             item {
+                val exitOnSave by mainViewModel.settings.Editing.getExitOnSave().collectAsStateWithLifecycle(initialValue = false)
+
+                PreferencesSwitchRow(
+                    title = "Exit on save",
+                    summary = "Automatically exit the editing view when you save the changes",
+                    iconResID = R.drawable.storage, // TODO: fix icon
+                    checked = exitOnSave,
+                    position = RowPosition.Single,
+                    showBackground = false,
+                    onRowClick = null,
+                    onSwitchClick = { checked ->
+                        mainViewModel.settings.Editing.setExitOnSave(checked)
+                    }
+                )
+            }
+
+            item {
                 PreferencesSeparatorText("Albums")
             }
 

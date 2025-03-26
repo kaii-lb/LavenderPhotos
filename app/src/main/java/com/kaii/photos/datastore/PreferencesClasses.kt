@@ -354,6 +354,7 @@ class SettingsLookAndFeelImpl(private val context: Context, private val viewMode
 
 class SettingsEditingImpl(private val context: Context, private val viewModelScope: CoroutineScope) {
     private val overwriteByDefaultKey = booleanPreferencesKey("editing_overwrite_by_default")
+    private val exitOnSaveKey = booleanPreferencesKey("exit_on_save")
 
     fun getOverwriteByDefault(): Flow<Boolean> =
         context.datastore.data.map {
@@ -363,6 +364,17 @@ class SettingsEditingImpl(private val context: Context, private val viewModelSco
     fun setOverwriteByDefault(value: Boolean) = viewModelScope.launch {
         context.datastore.edit {
             it[overwriteByDefaultKey] = value
+        }
+    }
+
+    fun getExitOnSave(): Flow<Boolean> =
+        context.datastore.data.map {
+            it[exitOnSaveKey] ?: false
+        }
+
+    fun setExitOnSave(value: Boolean) = viewModelScope.launch {
+        context.datastore.edit {
+            it[exitOnSaveKey] = value
         }
     }
 }

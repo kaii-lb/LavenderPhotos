@@ -148,9 +148,11 @@ import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.lavender_snackbars.LavenderSnackbarController
 import com.kaii.lavender_snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalNavController
+import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.BottomAppBarItem
 import com.kaii.photos.compose.ColorFilterItem
@@ -164,6 +166,7 @@ import com.kaii.photos.compose.SplitButton
 import com.kaii.photos.compose.getAppBarContentTransition
 import com.kaii.photos.compose.setBarVisibility
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
+import com.kaii.photos.datastore.Editing
 import com.kaii.photos.helpers.blur
 import com.kaii.photos.helpers.ColorFiltersMatrices
 import com.kaii.photos.helpers.ColorIndicator
@@ -274,6 +277,7 @@ fun EditingView(
 
     Scaffold(
         topBar = {
+            val exitOnSave by mainViewModel.settings.Editing.getExitOnSave().collectAsStateWithLifecycle(initialValue = false)
             val overwrite = remember { mutableStateOf(
             	if (isOpenWith) true else overwriteByDefault
             )}
@@ -309,6 +313,8 @@ fun EditingView(
 
                         delay(500)
                         canExit.value = true
+
+                        if (!isOpenWith && exitOnSave) navController.popBackStack()
                     }
                 }
             )
