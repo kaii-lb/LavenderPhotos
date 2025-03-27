@@ -233,9 +233,6 @@ class MainActivity : ComponentActivity() {
         val context = LocalContext.current
         val showDialog = remember { mutableStateOf(false) }
 
-        val scale = remember { mutableFloatStateOf(1f) }
-        val rotation = remember { mutableFloatStateOf(0f) }
-        val offset = remember { mutableStateOf(Offset.Zero) }
         val selectedItemsList = remember { SnapshotStateList<MediaStoreData>() }
 
         val logPath = "${context.appStorageDir}/log.txt"
@@ -376,9 +373,6 @@ class MainActivity : ComponentActivity() {
                         SinglePhotoView(
                             navController = navControllerLocal,
                             window = window,
-                            scale = scale,
-                            rotation = rotation,
-                            offset = offset,
                             viewModel = multiAlbumViewModel,
                             mediaItemId = screen.mediaItemId,
                             loadsFromMainViewModel = screen.loadsFromMainViewModel
@@ -432,9 +426,6 @@ class MainActivity : ComponentActivity() {
 
                         SingleTrashedPhotoView(
                             window = window,
-                            scale = scale,
-                            rotation = rotation,
-                            offset = offset,
                             mediaItemId = screen.mediaItemId
                         )
                     }
@@ -492,10 +483,7 @@ class MainActivity : ComponentActivity() {
 
                         SingleHiddenPhotoView(
                             mediaItemId = screen.mediaItemId,
-                            window = window,
-                            scale = scale,
-                            rotation = rotation,
-                            offset = offset
+                            window = window
                         )
                     }
 

@@ -77,9 +77,6 @@ import kotlinx.coroutines.Dispatchers
 @Composable
 fun SingleTrashedPhotoView(
     window: Window,
-    scale: MutableState<Float>,
-    rotation: MutableState<Float>,
-    offset: MutableState<Offset>,
     mediaItemId: Long,
 ) {
     val context = LocalContext.current
@@ -223,14 +220,11 @@ fun SingleTrashedPhotoView(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             HorizontalImageList(
-                currentMediaItem,
-                groupedMedia.value,
-                state,
-                scale,
-                rotation,
-                offset,
-                window,
-                appBarsVisible
+                currentMediaItem = currentMediaItem,
+                groupedMedia = groupedMedia.value,
+                state = state,
+                window = window,
+                appBarsVisible = appBarsVisible
             )
         }
 

@@ -1,6 +1,8 @@
 package com.kaii.photos.helpers
 
+import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.mapSaver
+import androidx.compose.ui.geometry.Offset
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.StoredDrawable
 
@@ -30,3 +32,23 @@ val BottomBarTabSaver = run {
         }
     )
 }
+
+val OffsetSaver = run {
+        val xKey = "x"
+        val yKey = "y"
+
+        mapSaver(
+            save = {
+                mapOf(
+                    xKey to it.x,
+                    yKey to it.y
+                )
+            },
+            restore = {
+                Offset(
+                    it[xKey] as Float,
+                    it[yKey] as Float
+                )
+            }
+        )
+    }

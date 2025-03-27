@@ -3,6 +3,9 @@ package com.kaii.photos.compose.single_photo
 import android.content.res.Configuration
 import android.util.Log
 import android.view.Window
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateOffsetAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.calculateCentroid
@@ -19,11 +22,14 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,6 +55,7 @@ import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.getSecuredCacheImageForFile
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.vibrateShort
+import com.kaii.photos.helpers.OffsetSaver
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getIv
@@ -56,6 +63,7 @@ import com.kaii.photos.mediastore.getThumbnailIv
 import com.kaii.photos.mediastore.signature
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -74,17 +82,18 @@ fun HorizontalImageList(
     currentMediaItem: MediaStoreData,
     groupedMedia: List<MediaStoreData>,
     state: PagerState,
-    scale: MutableState<Float>,
-    rotation: MutableState<Float>,
-    offset: MutableState<Offset>,
     window: Window,
     appBarsVisible: MutableState<Boolean>,
     isHidden: Boolean = false,
     isOpenWithView: Boolean = false
 ) {
+    val scale = rememberSaveable { mutableFloatStateOf(1f) }
+    val rotation = rememberSaveable { mutableFloatStateOf(0f) }
+    val offset = rememberSaveable(stateSaver = OffsetSaver) { mutableStateOf(Offset.Zero) }
+
     LaunchedEffect(key1 = currentMediaItem) {
-        scale.value = 1f
-        rotation.value = 0f
+        scale.floatValue = 1f
+        rotation.floatValue = 0f
         offset.value = Offset.Zero
     }
 
@@ -127,7 +136,7 @@ fun HorizontalImageList(
             }
         },
         snapPosition = SnapPosition.Center,
-        userScrollEnabled = (scale.value == 1f && rotation.value == 0f && offset.value == Offset.Zero) && !isTouchLocked.value,
+        userScrollEnabled = (scale.floatValue == 1f && rotation.floatValue == 0f && offset.value == Offset.Zero) && !isTouchLocked.value,
         modifier = Modifier
             .fillMaxHeight(1f)
     ) { index ->
@@ -215,29 +224,50 @@ fun HorizontalImageList(
 
 @Composable
 fun Modifier.mediaModifier(
-    scale: MutableState<Float>,
-    rotation: MutableState<Float>,
+    scale: MutableFloatState,
+    rotation: MutableFloatState,
     offset: MutableState<Offset>,
     window: Window,
     appBarsVisible: MutableState<Boolean>,
     item: MediaStoreData? = null,
 ): Modifier {
-    val localConfig = LocalConfiguration.current
-    var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
     val vibratorManager = rememberVibratorManager()
+    var isDoubleTapToScaling by remember { mutableStateOf(false) }
 
-    LaunchedEffect(localConfig) {
-        isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val animatedScale by animateFloatAsState(
+        targetValue = scale.floatValue,
+        animationSpec = tween(
+            durationMillis = if (isDoubleTapToScaling) 350 else 0
+        )
+    )
+    val animatedRotation by animateFloatAsState(
+        targetValue = rotation.floatValue,
+        animationSpec = tween(
+            durationMillis = if (isDoubleTapToScaling) 350 else 0
+        )
+    )
+    val animatedOffset by animateOffsetAsState(
+        targetValue = offset.value,
+        animationSpec = tween(
+            durationMillis = if (isDoubleTapToScaling) 350 else 0
+        )
+    )
+
+    LaunchedEffect(isDoubleTapToScaling) {
+        if (isDoubleTapToScaling) {
+            delay(350)
+            isDoubleTapToScaling = false
+        }
     }
 
     return this.then(
         Modifier
             .graphicsLayer(
-                scaleX = scale.value,
-                scaleY = scale.value,
-                rotationZ = rotation.value,
-                translationX = -offset.value.x * scale.value,
-                translationY = -offset.value.y * scale.value,
+                scaleX = animatedScale,
+                scaleY = animatedScale,
+                rotationZ = animatedRotation,
+                translationX = -animatedOffset.x * animatedScale,
+                translationY = -animatedOffset.y * animatedScale,
                 transformOrigin = TransformOrigin(0f, 0f)
             )
             .pointerInput(Unit) {
@@ -255,13 +285,14 @@ fun Modifier.mediaModifier(
 
                     onDoubleTap = { clickOffset ->
                         if (item?.type != MediaType.Video) {
-                            if (scale.value == 1f && offset.value == Offset.Zero) {
-                                scale.value = 2f
-                                rotation.value = 0f
-                                offset.value = clickOffset / scale.value
+                            isDoubleTapToScaling = true
+                            if (scale.floatValue == 1f && offset.value == Offset.Zero) {
+                                scale.floatValue = 2f
+                                rotation.floatValue = 0f
+                                offset.value = clickOffset / scale.floatValue
                             } else {
-                                scale.value = 1f
-                                rotation.value = 0f
+                                scale.floatValue = 1f
+                                rotation.floatValue = 0f
                                 offset.value = Offset.Zero
                             }
                         }
@@ -319,25 +350,25 @@ fun Modifier.mediaModifier(
                                 val actualRotation = if (panZoomLock) 0f else rotationChange
 
                                 if (actualRotation != 0f || zoomChange != 1f || offsetChange != Offset.Zero) {
-                                    val oldScale = scale.value
+                                    val oldScale = scale.floatValue
 
                                     if (panZoomLock) {
-                                        scale.value = (scale.value * zoomChange).coerceIn(1f, 5f)
+                                        scale.floatValue = (scale.floatValue * zoomChange).coerceIn(1f, 5f)
                                     }
 
-                                    val nextRotation = rotation.value + actualRotation
+                                    val nextRotation = rotation.floatValue + actualRotation
 
                                     val closestPoint = (nextRotation / 360f).roundToInt() * 360f
                                     val delta = abs(closestPoint - nextRotation)
                                     if (
                                         delta < 2.5f &&
-                                        scale.value == 1f &&
-                                        rotation.value != closestPoint
+                                        scale.floatValue == 1f &&
+                                        rotation.floatValue != closestPoint
                                     ) {
                                         vibratorManager.vibrateShort()
-                                        rotation.value = closestPoint
-                                    } else if (delta > 2.5f || scale.value != 1f) {
-                                        rotation.value = nextRotation
+                                        rotation.floatValue = closestPoint
+                                    } else if (delta > 2.5f || scale.floatValue != 1f) {
+                                        rotation.floatValue = nextRotation
                                     }
 
 
@@ -347,15 +378,15 @@ fun Modifier.mediaModifier(
                                     // compensate for change of visual center of image and offset by that
                                     // this makes it "cleaner" to scale since the image isn't bouncing around when the user moves or scales it
                                     offset.value =
-                                        if (scale.value == 1f && rotation.value == 0f) Offset.Zero else
+                                        if (scale.floatValue == 1f && rotation.floatValue == 0f) Offset.Zero else
                                             (offset.value + centroid / oldScale).rotateBy(
                                                 actualRotation
-                                            ) - (centroid / scale.value + (offsetChange - counterOffset).rotateBy(
-                                                rotation.value + actualRotation
+                                            ) - (centroid / scale.floatValue + (offsetChange - counterOffset).rotateBy(
+                                                rotation.floatValue + actualRotation
                                             ))
                                 }
 
-                                if (offset.value != Offset.Zero || event.changes.size == 2 || scale.value != 1f) {
+                                if (offset.value != Offset.Zero || event.changes.size == 2 || scale.floatValue != 1f) {
                                     event.changes.forEach {
                                         it.consume()
                                     }

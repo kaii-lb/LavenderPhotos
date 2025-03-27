@@ -95,9 +95,6 @@ import kotlinx.coroutines.Dispatchers
 fun SinglePhotoView(
     navController: NavHostController,
     window: Window,
-    scale: MutableState<Float>,
-    rotation: MutableState<Float>,
-    offset: MutableState<Offset>,
     viewModel: MultiAlbumViewModel,
     mediaItemId: Long,
     loadsFromMainViewModel: Boolean
@@ -247,14 +244,11 @@ fun SinglePhotoView(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             HorizontalImageList(
-                currentMediaItem.value,
-                groupedMedia.value,
-                state,
-                scale,
-                rotation,
-                offset,
-                window,
-                appBarsVisible
+                currentMediaItem = currentMediaItem.value,
+                groupedMedia = groupedMedia.value,
+                state = state,
+                window = window,
+                appBarsVisible = appBarsVisible
             )
         }
     }
@@ -386,7 +380,7 @@ private fun BottomBar(
     showEditingView: () -> Unit,
     onZeroItemsLeft: () -> Unit
 ) {
-    var isLandscape by rememberDeviceOrientation()
+    val isLandscape by rememberDeviceOrientation()
 
     val color = if (isLandscape)
         MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.4f)

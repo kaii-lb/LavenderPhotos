@@ -288,8 +288,8 @@ private fun Content(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            val scale = rememberSaveable { mutableStateOf(1f) }
-            val rotation = rememberSaveable { mutableStateOf(0f) }
+            val scale = rememberSaveable { mutableFloatStateOf(1f) }
+            val rotation = rememberSaveable { mutableFloatStateOf(0f) }
             val offset = remember { mutableStateOf(Offset.Zero) }
 
             val isTouchLocked = remember { mutableStateOf(false) }

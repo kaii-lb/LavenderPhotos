@@ -106,10 +106,7 @@ private const val TAG = "SINGLE_HIDDEN_PHOTO_VIEW"
 @Composable
 fun SingleHiddenPhotoView(
     mediaItemId: Long,
-    window: Window,
-    scale: MutableState<Float>,
-    rotation: MutableState<Float>,
-    offset: MutableState<Offset>,
+    window: Window
 ) {
     window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
 
@@ -242,15 +239,12 @@ fun SingleHiddenPhotoView(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             HorizontalImageList(
-                currentMediaItem,
-                groupedMedia.value,
-                state,
-                scale,
-                rotation,
-                offset,
-                window,
-                appBarsVisible,
-                true
+                currentMediaItem = currentMediaItem,
+                groupedMedia = groupedMedia.value,
+                state = state,
+                window = window,
+                appBarsVisible = appBarsVisible,
+                isHidden = true
             )
         }
 
