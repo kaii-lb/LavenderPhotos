@@ -129,7 +129,7 @@ currently you need to calculate dp height of your composable manually */
 @Composable
 fun DialogExpandableItem(
 	text: String,
-	iconResId: Int,
+	@DrawableRes iconResId: Int,
 	position: RowPosition,
 	expanded: MutableState<Boolean>,
 	content: @Composable ColumnScope.() -> Unit

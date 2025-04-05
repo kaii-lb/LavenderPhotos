@@ -62,6 +62,7 @@ import com.kaii.photos.compose.FolderIsEmpty
 import com.kaii.photos.compose.SearchTextField
 import com.kaii.photos.compose.dialogs.getDefaultShapeSpacerForPosition
 import com.kaii.photos.datastore.AlbumsList
+import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.RowPosition
@@ -87,7 +88,7 @@ fun MoveCopyAlbumListView(
     insetsPadding: WindowInsets
 ) {
     val context = LocalContext.current
-    val originalAlbumsList by mainViewModel.settings.AlbumsList.getAlbumsList().collectAsStateWithLifecycle(initialValue = emptyList())
+    val originalAlbumsList by mainViewModel.settings.AlbumsList.get().collectAsStateWithLifecycle(initialValue = emptyList())
 
     if (originalAlbumsList == emptyList<String>()) return
 
@@ -109,7 +110,7 @@ fun MoveCopyAlbumListView(
 
     LaunchedEffect(key1 = searchedForText.value) {
         albumsList = originalAlbumsList.filter {
-            it.contains(searchedForText.value, true)
+            it.name.contains(searchedForText.value, true)
         }
         if (albumsList.isNotEmpty()) state.scrollToItem(0)
     }
@@ -192,20 +193,23 @@ fun MoveCopyAlbumListView(
                     ) { index ->
                         val album = albumsList[index]
 
-                        AlbumsListItem(
-                            album = album,
-                            data = dataList.find { item ->
-                                item.absolutePath.toRelativePath().getParentFromPath() == album
-                            } ?: MediaStoreData(),
-                            position = if (index == albumsList.size - 1 && albumsList.size != 1) RowPosition.Bottom else if (albumsList.size == 1) RowPosition.Single else if (index == 0) RowPosition.Top else RowPosition.Middle,
-                            selectedItemsList = selectedItemsList,
-                            isMoving = isMoving,
-                            show = show,
-                            groupedMedia = groupedMedia,
-                            modifier = Modifier
-                                .fillParentMaxWidth(1f)
-                                .padding(8.dp, 0.dp)
-                        )
+                        if (album.paths.size == 1) { // TODO: fix this so we have "Custom" albums that arent linked to a specific path
+	                        AlbumsListItem(
+	                            album = album,
+	                            data =
+	                            	dataList.find { item ->
+	                                    item.first.id == album.id
+	                            	}?.second ?: MediaStoreData.dummyItem,
+	                            position = if (index == albumsList.size - 1 && albumsList.size != 1) RowPosition.Bottom else if (albumsList.size == 1) RowPosition.Single else if (index == 0) RowPosition.Top else RowPosition.Middle,
+	                            selectedItemsList = selectedItemsList,
+	                            isMoving = isMoving,
+	                            show = show,
+	                            groupedMedia = groupedMedia,
+	                            modifier = Modifier
+	                                .fillParentMaxWidth(1f)
+	                                .padding(8.dp, 0.dp)
+	                        )
+                        }
                     }
                 }
             }
@@ -220,7 +224,7 @@ fun MoveCopyAlbumListView(
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun AlbumsListItem(
-    album: String,
+    album: AlbumInfo,
     data: MediaStoreData,
     position: RowPosition,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
@@ -262,7 +266,7 @@ fun AlbumsListItem(
 	            moveImageListToPath(
 	                context,
 	                selectedItemsWithoutSection,
-	                album
+	                album.mainPath
 	            )
 
 	            if (groupedMedia != null) {
@@ -274,7 +278,7 @@ fun AlbumsListItem(
 	            copyImageListToPath(
 	                context,
 	                selectedItemsWithoutSection,
-	                album
+	                album.mainPath
 	            )
 	        }
 
@@ -296,7 +300,7 @@ fun AlbumsListItem(
 
         GlideImage(
             model = data.uri,
-            contentDescription = album,
+            contentDescription = album.mainPath,
             contentScale = ContentScale.Crop,
             failure = placeholder(R.drawable.broken_image),
             modifier = Modifier
@@ -307,7 +311,7 @@ fun AlbumsListItem(
         Spacer(modifier = Modifier.width(16.dp))
 
         Text(
-            text = album.split("/").last(),
+            text = album.name,
             fontSize = TextUnit(16f, TextUnitType.Sp),
             textAlign = TextAlign.Start,
             color = MaterialTheme.colorScheme.onSurface,

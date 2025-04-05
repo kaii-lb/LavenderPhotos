@@ -24,13 +24,16 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalNavController
+import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.compose.SingleAlbumViewBottomBar
 import com.kaii.photos.compose.SingleAlbumViewTopBar
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.dialogs.SingleAlbumDialog
+import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
@@ -52,6 +55,7 @@ fun SingleAlbumView(
     }
 
     val mediaStoreData by viewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+    val albums by mainViewModel.settings.AlbumsList.get().collectAsStateWithLifecycle(initialValue = emptyList())
 
     val groupedMedia = remember { mutableStateOf(mediaStoreData) }
 
@@ -83,6 +87,24 @@ fun SingleAlbumView(
         bottomSheetState = sheetState
     )
 
+	val albumInfo by remember { derivedStateOf {
+		albums.find {
+        	it.mainPath == viewModel.albums.first()
+       	}
+	}}
+
+	val context = LocalContext.current
+	LaunchedEffect(albumInfo) {
+		if (albumInfo == null) return@LaunchedEffect
+
+		if (viewModel.albums.toSet() != albumInfo!!.paths.toSet()) {
+			viewModel.reinitDataSource(
+				context = context,
+				albumsList = albumInfo!!.paths
+			)
+		}
+	}
+
     BottomSheetScaffold(
         scaffoldState = scaffoldState,
         sheetDragHandle = {},
@@ -91,7 +113,8 @@ fun SingleAlbumView(
             .fillMaxSize(1f),
         topBar = {
             SingleAlbumViewTopBar(
-                dir = viewModel.albums.first(), // TODO: make it handle multiple dirs
+                // dir = viewModel.albums.first(), // TODO: make it handle multiple dirs
+                albumInfo = albumInfo,
                 selectedItemsList = selectedItemsList,
                 showDialog = showDialog,
                 currentView = currentView
@@ -119,7 +142,7 @@ fun SingleAlbumView(
         ) {
             PhotoGrid(
                 groupedMedia = groupedMedia,
-                albums = viewModel.albums,
+                albums = albumInfo?.paths ?: viewModel.albums,
                 selectedItemsList = selectedItemsList,
                 viewProperties = ViewProperties.Album,
                 shouldPadUp = true

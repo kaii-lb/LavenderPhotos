@@ -76,10 +76,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.R
 import com.kaii.photos.MainActivity.Companion.applicationDatabase
 import com.kaii.photos.MainActivity.Companion.mainViewModel
+import com.kaii.photos.compose.dialogs.AlbumPathsDialog
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
 import com.kaii.photos.compose.dialogs.LoadingDialog
+import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
@@ -327,13 +329,20 @@ fun MainAppTopBar(
                     )
                 )
             ) {
+                val albums by mainViewModel.settings.AlbumsList.get().collectAsStateWithLifecycle(initialValue = emptyList())
                 val activityLauncher = createDirectoryPicker { path ->
-                    if (path != null) mainViewModel.settings.AlbumsList.addToAlbumsList(path)
+                    if (path != null) mainViewModel.settings.AlbumsList.add(
+                        AlbumInfo(
+                            name = path.split("/").last(),
+                            id = AlbumInfo.generateId(albums),
+                            paths = listOf(path)
+                        )
+                    )
                 }
 
                 IconButton(
                     onClick = {
-                        activityLauncher.launch(null)
+                        if (albums.isNotEmpty()) activityLauncher.launch(null)
                     },
                 ) {
                     Icon(
@@ -576,13 +585,12 @@ fun IsSelectingBottomAppBar(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SingleAlbumViewTopBar(
-    dir: String,
+    albumInfo: AlbumInfo?,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     showDialog: MutableState<Boolean>,
     currentView: MutableState<BottomBarTab>,
     onBackClick: () -> Unit
 ) {
-    val title = dir.split("/").last()
     val show by remember {
         derivedStateOf {
             selectedItemsList.size > 0
@@ -616,7 +624,7 @@ fun SingleAlbumViewTopBar(
                 },
                 title = {
                     Text(
-                        text = title,
+                        text = albumInfo?.name ?: "Album",
                         fontSize = TextUnit(18f, TextUnitType.Sp),
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
@@ -626,6 +634,39 @@ fun SingleAlbumViewTopBar(
                     )
                 },
                 actions = {
+                    var showPathsDialog by remember { mutableStateOf(false) }
+
+                    if (showPathsDialog && albumInfo != null) {
+                        AlbumPathsDialog(
+                            albumInfo = albumInfo,
+                            onConfirm = { selectedPaths ->
+								mainViewModel.settings.AlbumsList.editInPlace(
+                            		albumId = albumInfo.id,
+                            		newInfo = albumInfo.copy(
+                            			paths = selectedPaths
+                            		)
+                            	)
+                            },
+                            onDismiss = {
+                            	showPathsDialog = false
+                            }
+                        )
+                    }
+
+                    IconButton(
+                        onClick = {
+                            showPathsDialog = true
+                        },
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.add),
+                            contentDescription = "show more options for the album view",
+                            tint = MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier
+                                .size(24.dp)
+                        )
+                    }
+
                     IconButton(
                         onClick = {
                             showDialog.value = true

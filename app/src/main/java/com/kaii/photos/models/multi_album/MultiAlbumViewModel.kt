@@ -51,10 +51,10 @@ class MultiAlbumViewModel(
     fun reinitDataSource(
         context: Context,
         albumsList: List<String>,
-        sortMode: MediaItemSortMode
+        sortMode: MediaItemSortMode = sortBy
     ) {
         sortBy = sortMode
-        if (albumsList == albums) return
+        if (albumsList.toSet() == albums.toSet()) return
 
         cancelMediaFlow()
         cancellationSignal = CancellationSignal()

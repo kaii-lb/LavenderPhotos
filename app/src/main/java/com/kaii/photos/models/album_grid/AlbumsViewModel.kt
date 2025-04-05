@@ -8,6 +8,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kaii.photos.MainActivity.Companion.mainViewModel
+import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.MainPhotosView
 import com.kaii.photos.mediastore.AlbumStoreDataSource
 import com.kaii.photos.mediastore.MediaStoreData
 import kotlinx.coroutines.Dispatchers
@@ -16,39 +19,43 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 
-class AlbumsViewModel(context: Context, private val pathList: List<String>) : ViewModel() {
+class AlbumsViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewModel() {
     private var cancellationSignal = CancellationSignal()
-    private val mediaStoreDataSource = mutableStateOf(initDataSource(context, pathList))
+    private val mediaStoreDataSource = mutableStateOf(initDataSource(context = context, albums = albumInfo))
 
     val mediaFlow by derivedStateOf {
         getMediaDataFlow().value.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
     }
 
-    private fun getMediaDataFlow(): State<Flow<List<MediaStoreData>>> = derivedStateOf {
-        mediaStoreDataSource.value.loadMediaStoreData().flowOn(Dispatchers.IO)
-    }
+    private fun getMediaDataFlow(): State<Flow<List<Pair<AlbumInfo, MediaStoreData>>>> = derivedStateOf {
+    	mediaStoreDataSource.value.loadMediaStoreData().flowOn(Dispatchers.IO)
+   	}
 
     fun refresh(
         context: Context,
-        albumsList: List<String>
+        albums: List<AlbumInfo>
     ) {
-        if (albumsList == pathList) return
+        if (albums.toSet() == albumInfo.toSet()) return
 
         cancellationSignal.cancel()
         cancellationSignal = CancellationSignal()
-        mediaStoreDataSource.value = initDataSource(context, albumsList)
+
+        mediaStoreDataSource.value = initDataSource(context = context, albums = albums)
     }
 
     private fun initDataSource(
         context: Context,
-        paths: List<String>
+        albums: List<AlbumInfo>
     ) = run {
-    	cancellationSignal.cancel()
-    	cancellationSignal = CancellationSignal()
+        albumInfo = albums
+        val queries = albums.map { album ->
+            val query = mainViewModel.settings.MainPhotosView.getSQLiteQuery(albums = album.paths)
+            Pair(album, query)
+        }
 
         AlbumStoreDataSource(
             context = context,
-            albumPaths = paths,
+            albumQueryPairs = queries,
             cancellationSignal = cancellationSignal
         )
     }

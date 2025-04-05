@@ -3,6 +3,8 @@ package com.kaii.photos.datastore
 import androidx.annotation.DrawableRes
 import com.kaii.photos.R
 import kotlinx.serialization.Serializable
+import kotlin.math.abs
+import kotlin.random.Random
 
 // order is important
 enum class AlbumSortMode {
@@ -158,3 +160,35 @@ data class BottomBarTab(
         return result
     }
 }
+
+@Serializable
+data class AlbumInfo(
+    val name: String,
+    val paths: List<String>,
+    val id: Long
+) {
+    companion object {
+        fun generateId(existingAlbums: List<AlbumInfo>) : Long {
+            var newId = getRandomId()
+
+            while (newId in existingAlbums.map { it.id } || newId <= 3L) {
+                newId = getRandomId()
+            }
+
+            return newId
+        }
+
+        private fun getRandomId() = abs((0L..999999999L).random(Random(seed = System.currentTimeMillis())))
+    }
+
+    val mainPath = run {
+        paths.first()
+    }
+}
+
+data class SQLiteQuery(
+    val query: String,
+    val paths: List<String>?
+)
+
+

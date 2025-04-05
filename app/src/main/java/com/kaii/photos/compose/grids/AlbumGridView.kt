@@ -71,6 +71,8 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.center
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toOffset
+import androidx.compose.ui.util.fastMap
+import androidx.compose.ui.util.fastMapIndexed
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -80,16 +82,14 @@ import com.bumptech.glide.integration.compose.placeholder
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
+import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumSortMode
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
-import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.brightenColor
-import com.kaii.photos.helpers.getParentFromPath
-import com.kaii.photos.helpers.toRelativePath
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.signature
 import com.kaii.photos.models.album_grid.AlbumsViewModel
@@ -97,7 +97,6 @@ import com.kaii.photos.models.album_grid.AlbumsViewModelFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.launch
-import java.io.File
 
 private const val TAG = "ALBUMS_GRID_VIEW"
 
@@ -109,27 +108,34 @@ fun AlbumsGridView(
     val context = LocalContext.current
     val navController = LocalNavController.current
 
-    val listOfDirs by mainViewModel.settings.AlbumsList.getAlbumsList().collectAsStateWithLifecycle(initialValue = emptyList())
+    val listOfDirs by mainViewModel.settings.AlbumsList.get().collectAsStateWithLifecycle(initialValue = emptyList())
     val sortMode by mainViewModel.settings.AlbumsList.getAlbumSortMode().collectAsStateWithLifecycle(initialValue = AlbumSortMode.Custom)
     val sortByDescending by mainViewModel.settings.AlbumsList.getSortByDescending().collectAsStateWithLifecycle(initialValue = true)
 
-    val albums = remember { mutableStateOf(listOfDirs) }
+    val albums = remember { mutableStateOf<List<AlbumInfo>>(listOfDirs) }
 
     val albumsViewModel: AlbumsViewModel = viewModel(
-        factory = AlbumsViewModelFactory(context, albums.value)
+        factory = AlbumsViewModelFactory(context = context, albums = albums.value)
     )
 
-    val albumToThumbnailMapping by albumsViewModel.mediaFlow.collectAsStateWithLifecycle()
-    val cachedAlbumToThumbnailMapping = remember { mutableStateListOf<MediaStoreData>() }
+    val albumToThumbnailMapping by albumsViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+    val cachedAlbumToThumbnailMapping = remember { mutableStateListOf<Pair<AlbumInfo, MediaStoreData>>() }
 
     LaunchedEffect(listOfDirs, sortMode, sortByDescending, albumToThumbnailMapping) {
         withContext(Dispatchers.IO) {
-            val newList = mutableListOf<String>()
+            val newList = mutableListOf<AlbumInfo>()
 
-			// set items like this so we don't get blinking effect with each update
+            // if the albums actually changed, not just the order then refresh
+            if (albumsViewModel.albumInfo.toSet() != listOfDirs.toSet()) {
+                albumsViewModel.refresh(
+                    context = context,
+                    albums = listOfDirs
+                )
+            }
+
             if (albumToThumbnailMapping.toSet() != cachedAlbumToThumbnailMapping.toSet() && albumToThumbnailMapping.isNotEmpty()) {
-            	cachedAlbumToThumbnailMapping.addAll(albumToThumbnailMapping)
-            	cachedAlbumToThumbnailMapping.retainAll(albumToThumbnailMapping)
+                cachedAlbumToThumbnailMapping.addAll(albumToThumbnailMapping)
+                cachedAlbumToThumbnailMapping.retainAll(albumToThumbnailMapping)
             }
 
             val copy = listOfDirs
@@ -137,23 +143,23 @@ fun AlbumsGridView(
                 AlbumSortMode.LastModified -> {
                     newList.addAll(
                         if (sortByDescending) {
-                            copy.sortedByDescending { dir ->
+                            copy.sortedByDescending { album ->
                             	cachedAlbumToThumbnailMapping.find {
-                            		it.absolutePath.replace(it.displayName, "") == "$baseInternalStorageDirectory$dir"
-                            	}?.dateModified ?: File("$baseInternalStorageDirectory$dir").lastModified()
+                                    it.first.id == album.id
+                            	}?.second?.dateModified
                             }.toMutableList().apply {
-                                find { item -> item == "DCIM/Camera" }?.let { cameraItem ->
+                                find { item -> item.mainPath == "DCIM/Camera" }?.let { cameraItem ->
                                     remove(cameraItem)
                                     add(0, cameraItem)
                                 }
                             }
                         } else {
-                            copy.sortedBy { dir ->
+                            copy.sortedBy { album ->
                                 cachedAlbumToThumbnailMapping.find {
-                                	it.absolutePath.replace(it.displayName, "") == "$baseInternalStorageDirectory$dir"
-                                }?.dateModified ?: File("$baseInternalStorageDirectory$dir").lastModified()
+                                    it.first.id == album.id
+                                }?.second?.dateModified
                             }.toMutableList().apply {
-                                find { item -> item == "DCIM/Camera" }?.let { cameraItem ->
+                                find { item -> item.mainPath == "DCIM/Camera" }?.let { cameraItem ->
                                     remove(cameraItem)
                                     add(0, cameraItem)
                                 }
@@ -166,11 +172,11 @@ fun AlbumsGridView(
                     newList.addAll(
                         if (!sortByDescending) {
                             copy.sortedBy {
-                                it.split("/").last()
+                                it.name
                             }
                         } else {
                             copy.sortedByDescending {
-                                it.split("/").last()
+                                it.name
                             }
                         }
                     )
@@ -183,15 +189,11 @@ fun AlbumsGridView(
                 }
             }
 
-            // if the albums actually changed, not just the order then refresh
-            if (albums.value.toSet() != newList.toSet()) {
-                albumsViewModel.refresh(
-                    context = context,
-                    albumsList = newList
-                )
-            }
+			albums.value = newList.distinctBy { it.id }
 
-            albums.value = newList
+            Log.d(TAG, "Mapping: $albumToThumbnailMapping")
+            Log.d(TAG, "Albums $albums")
+            Log.d(TAG, "Dirs: $listOfDirs")
 
             Log.d(TAG, "sort mode: $sortMode and new list: $newList")
         }
@@ -199,7 +201,7 @@ fun AlbumsGridView(
 
     // update the list to reflect custom order (doesn't matter for other sorting modes)
     LaunchedEffect(albums.value) {
-        if (albums.value.isNotEmpty()) mainViewModel.settings.AlbumsList.setAlbumsList(albums.value)
+        if (albums.value.isNotEmpty()) mainViewModel.settings.AlbumsList.setAlbumsList(albums.value.fastMap { it.mainPath })
     }
 
     BackHandler(
@@ -226,7 +228,7 @@ fun AlbumsGridView(
 
         val lazyGridState = rememberLazyGridState()
         var itemOffset by remember { mutableStateOf(Offset.Zero) }
-        var selectedItem: String? by remember { mutableStateOf(null) }
+        var selectedItem: AlbumInfo? by remember { mutableStateOf(null) }
 
         val pullToRefreshState = rememberPullToRefreshState()
         var lockHeader by remember { mutableStateOf(false) }
@@ -308,7 +310,7 @@ fun AlbumsGridView(
                                     itemOffset =
                                         change.position - (targetLazyItem.offset + targetLazyItem.size.center).toOffset()
 
-                                    albums.value = newList.distinct()
+                                    albums.value = newList.distinctBy { it.id }
                                     if (sortMode != AlbumSortMode.Custom) mainViewModel.settings.AlbumsList.setAlbumSortMode(AlbumSortMode.Custom)
                                 } else if (currentLazyItem != null) {
                                 	val startOffset = currentLazyItem.offset.y + itemOffset.y
@@ -360,49 +362,47 @@ fun AlbumsGridView(
             items(
                 count = albums.value.size,
                 key = { key ->
-                    albums.value[key]
+                    albums.value[key].id
                 },
             ) { index ->
-                if (cachedAlbumToThumbnailMapping.isNotEmpty()) {
-                    val neededDir = albums.value[index]
-                    val mediaItem = cachedAlbumToThumbnailMapping.find {
-                        it.absolutePath.toRelativePath().getParentFromPath() == neededDir
-                    } ?: MediaStoreData()
+                val neededDir = albums.value[index]
+                val mediaItem = cachedAlbumToThumbnailMapping.find {
+                    it.first.id == neededDir.id
+                }?.second ?: MediaStoreData.dummyItem
 
-                    AlbumGridItem(
-                        album = neededDir,
-                        item = mediaItem,
-                        isSelected = selectedItem == neededDir,
-                        modifier = Modifier
-                            .zIndex(
-                                if (selectedItem == neededDir) 1f
-                                else 0f
-                            )
-                            .graphicsLayer {
-                                if (selectedItem == neededDir) {
-                                    translationX = itemOffset.x
-                                    translationY = itemOffset.y
-                                }
-                            }
-                            .wrapContentSize()
-                            .animateItem(
-                                fadeInSpec = tween(
-                                    durationMillis = 250
-                                ),
-                                fadeOutSpec = tween(
-                                    durationMillis = 250
-                                ),
-                                placementSpec =
-	                                if (selectedItem == neededDir) null // if is selected don't animate so no weird snapping back and forth happens
-	                                else tween(durationMillis = 250)
-                            )
-                    ) {
-                        navController.navigate(
-                            Screens.SingleAlbumView(
-                                albums = listOf(neededDir)
-                            )
+                AlbumGridItem(
+                    album = neededDir,
+                    item = mediaItem,
+                    isSelected = selectedItem == neededDir,
+                    modifier = Modifier
+                        .zIndex(
+                            if (selectedItem == neededDir) 1f
+                            else 0f
                         )
-                    }
+                        .graphicsLayer {
+                            if (selectedItem == neededDir) {
+                                translationX = itemOffset.x
+                                translationY = itemOffset.y
+                            }
+                        }
+                        .wrapContentSize()
+                        .animateItem(
+                            fadeInSpec = tween(
+                                durationMillis = 250
+                            ),
+                            fadeOutSpec = tween(
+                                durationMillis = 250
+                            ),
+                            placementSpec =
+                                if (selectedItem == neededDir) null // if is selected don't animate so no weird snapping back and forth happens
+                                else tween(durationMillis = 250)
+                        )
+                ) {
+                    navController.navigate(
+                        Screens.SingleAlbumView(
+                            albums = neededDir.paths
+                        )
+                    )
                 }
             }
         }
@@ -412,7 +412,7 @@ fun AlbumsGridView(
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 private fun AlbumGridItem(
-    album: String,
+    album: AlbumInfo,
     item: MediaStoreData,
     isSelected: Boolean,
     modifier: Modifier = Modifier,
@@ -476,7 +476,7 @@ private fun AlbumGridItem(
             }
 
             Text(
-                text = " ${album.split("/").last()}",
+                text = " ${album.name}",
                 fontSize = TextUnit(14f, TextUnitType.Sp),
                 textAlign = TextAlign.Start,
                 color = MaterialTheme.colorScheme.onSurface,

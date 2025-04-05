@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlin.io.path.Path
 
@@ -34,6 +35,94 @@ class SettingsAlbumsListImpl(private val context: Context, private val viewModel
     private val sortModeKey = intPreferencesKey("album_sort_mode")
     private val sortModeOrderKey = booleanPreferencesKey("album_sort_mode_order")
     private val autoDetectAlbums = booleanPreferencesKey("album_auto_detect")
+
+    private val albumsInfoListKey = stringPreferencesKey("albums_info_list")
+
+    fun add(albumInfo: AlbumInfo) = viewModelScope.launch {
+        if (albumInfo.name.isEmpty() || albumInfo.paths.isEmpty()) {
+            Log.e(TAG, "Cannot add empty album $albumInfo")
+            return@launch
+        }
+
+        context.datastore.edit { data ->
+            val stringList =
+                if (data[albumsInfoListKey] != null) {
+                    data[albumsInfoListKey]!!
+                } else {
+                    data[albumsInfoListKey] = ""
+                    ""
+                }
+
+            Log.d(TAG, "Adding album with name: ${albumInfo.name}")
+            Log.d(TAG, "With album paths: ${albumInfo.paths}")
+
+            val list = Json.decodeFromString<List<AlbumInfo>>(stringList).toMutableList()
+            list.add(albumInfo)
+
+            data[albumsInfoListKey] = Json.encodeToString(list)
+        }
+    }
+
+    fun editInPlace(albumId: Long, newInfo: AlbumInfo) = viewModelScope.launch {
+        if (newInfo.name.isEmpty() || newInfo.paths.isEmpty()) {
+            Log.e(TAG, "Cannot add empty album $newInfo")
+            return@launch
+        }
+
+        context.datastore.edit { data ->
+            val stringList = data[albumsInfoListKey]
+
+            val list = if(stringList != null) Json.decodeFromString<List<AlbumInfo>>(stringList).toMutableList() else getDefaultList().toMutableList()
+            val oldItem = list.find {
+                it.id == albumId
+            }
+
+            if (oldItem == null) {
+                Log.e(TAG, "Could not edit album, id $albumId does not exist")
+                return@edit
+            }
+
+            val index = list.indexOf(oldItem)
+
+            list.removeAt(index)
+            list.add(oldItem.copy(name = newInfo.name, paths = newInfo.paths))
+
+            data[albumsInfoListKey] = Json.encodeToString(list)
+        }
+    }
+
+    fun remove(albumId: Long) = viewModelScope.launch {
+        context.datastore.edit { data ->
+            val stringList = data[albumsInfoListKey]
+
+            val list = if (stringList != null) Json.decodeFromString<List<AlbumInfo>>(stringList).toMutableList() else getDefaultList().toMutableList()
+            val removedItem = list.find {
+                it.id == albumId
+            }
+
+            if (removedItem == null) {
+                Log.e(TAG, "Could not remove album, id $albumId does not exist")
+                return@edit
+            }
+
+            val index = list.indexOf(removedItem)
+
+            list.removeAt(index)
+
+            data[albumsInfoListKey] = Json.encodeToString(list)
+        }
+    }
+
+    fun get() = context.datastore.data.map { data ->
+        val stringList = data[albumsInfoListKey]
+
+        if (stringList != null) Json.decodeFromString<List<AlbumInfo>>(stringList) else getDefaultList()
+    }
+
+    // private fun getDefaultStringList(data:) {
+    // 	getDefaultList().forEach { add(it) }
+    // 	return getDefaultList()
+    // }
 
     fun addToAlbumsList(path: String) = viewModelScope.launch {
     	if (path == "") return@launch
@@ -158,6 +247,29 @@ class SettingsAlbumsListImpl(private val context: Context, private val viewModel
             "Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images",
             "Download"
         )
+
+	private fun getDefaultList() = listOf(
+		AlbumInfo(
+   			name = "Camera",
+   			paths = listOf("DCIM/Camera"),
+   			id = 0L
+   		),
+		AlbumInfo(
+   			name = "Downloads",
+   			paths = listOf("Download"),
+   			id = 1L
+   		),
+		AlbumInfo(
+   			name = "Screenshots",
+   			paths = listOf("Pictures/Screenshot"),
+   			id = 2L
+   		),
+		AlbumInfo(
+   			name = "Pictures",
+   			paths = listOf("Pictures"),
+   			id = 3L
+   		),
+	)
 
     /** emits one album after the other */
 	fun getAllAlbumsOnDevice() : Flow<String> = Path(baseInternalStorageDirectory).getAllAlbumsOnDevice()
@@ -412,12 +524,11 @@ class SettingMainPhotosViewImpl(private val context: Context, private val viewMo
 		}
 	}
 
-	/** first item is the match paths
-	    second item is the non match paths
-	    non match means subAlbums */
-	fun getSQLiteQuery(albums: List<String>) : Pair<String, List<String>?> {
+	/** returns the media store query and the individual paths
+     * albums needed cuz the query has ? instead of the actual paths for...reasons */
+	fun getSQLiteQuery(albums: List<String>) : SQLiteQuery {
 		if (albums.isEmpty()) {
-            return Pair("AND false", null)
+            return SQLiteQuery(query = "AND false", paths = null)
         }
 
 		albums.forEach {
@@ -435,16 +546,14 @@ class SettingMainPhotosViewImpl(private val context: Context, private val viewMo
 		list.add("$firstAlbum/")
 
 		for (i in 1..<albums.size) {
-			val album = albums[i].apply {
-				removeSuffix("/")
-			}
+			val album = albums[i].removeSuffix("/")
 
 			string += " OR $base"
 			list.add("$album/")
 		}
 
 		val query = "AND ($string)"
-		return Pair(query, list)
+		return SQLiteQuery(query = query, paths = list)
 	}
 
 	private val defaultAlbumsList =

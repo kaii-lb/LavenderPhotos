@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.CancellationSignal
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kaii.photos.datastore.SQLiteQuery
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MultiAlbumDataSource
@@ -18,7 +19,7 @@ class SearchViewModel(context: Context, sortBy: MediaItemSortMode) : ViewModel()
     private val mediaStoreDataSource =
 				    MultiAlbumDataSource(
 				    	context = context,
-				    	queryString = Pair("", null),
+				    	queryString = SQLiteQuery(query = "", paths = null),
 				    	sortBy = sortBy,
 				    	cancellationSignal = cancellationSignal
 				    )
