@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:tools="http://schemas.android.com/tools"
-    xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission
         android:name="android.permission.REORDER_TASKS"
@@ -8,46 +8,51 @@
     <uses-permission
         android:name="android.permission.ACCESS_NETWORK_STATE"
         tools:node="remove" />
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"
-    	android:minSdkVersion="33"/>
-    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"
-    	android:minSdkVersion="33"/>
-	<uses-permission android:name="android.permission.MANAGE_MEDIA"
-		android:minSdkVersion="31"
+    <uses-permission
+        android:name="android.permission.READ_MEDIA_IMAGES"
+        android:minSdkVersion="33" />
+    <uses-permission
+        android:name="android.permission.READ_MEDIA_VIDEO"
+        android:minSdkVersion="33" />
+    <uses-permission
+        android:name="android.permission.MANAGE_MEDIA"
+        android:minSdkVersion="31"
         tools:ignore="ProtectedPermissions" />
 
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
-    	android:maxSdkVersion="32"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-    	android:maxSdkVersion="32"/>
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
 
-    <uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION" />
 
-    <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
-    <uses-permission android:name="android.permission.VIBRATE"/>
-    <uses-permission android:name="android.permission.SET_WALLPAPER"/>
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.SET_WALLPAPER" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
+        android:enableOnBackInvokedCallback="true"
         android:fullBackupContent="@xml/backup_rules"
+        android:hardwareAccelerated="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:largeHeap="true"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Photos.Splashscreen"
-        android:enableOnBackInvokedCallback="true"
-        android:largeHeap="true"
-        android:hardwareAccelerated="true"
         android:windowSoftInputMode="adjustResize">
 
         <activity
             android:name=".MainActivity"
+            android:configChanges="orientation|screenSize|density|screenLayout"
             android:exported="true"
-            android:theme="@style/Theme.Photos"
-            android:configChanges="orientation|screenSize|density|screenLayout">
+            android:theme="@style/Theme.Photos">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -58,9 +63,9 @@
 
         <activity
             android:name=".compose.single_photo.OpenWithView"
+            android:configChanges="orientation|screenSize|density|screenLayout"
             android:exported="true"
-            android:theme="@style/Theme.Photos"
-            android:configChanges="orientation|screenSize|density|screenLayout">
+            android:theme="@style/Theme.Photos">
 
             <intent-filter android:label="Open with Lavender Photos">
                 <category android:name="android.intent.category.DEFAULT" />
@@ -75,14 +80,20 @@
         </activity>
 
         <provider
-			android:name="androidx.core.content.FileProvider"
-			android:authorities="com.kaii.photos.LavenderPhotos.fileprovider"
-			android:exported="false"
-			android:grantUriPermissions="true">
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.kaii.photos.LavenderPhotos.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
 
-			<meta-data
-				android:name="android.support.FILE_PROVIDER_PATHS"
-				android:resource="@xml/file_provider_paths" />
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_provider_paths" />
         </provider>
+
+        <provider
+            android:name=".mediastore.content_provider.LavenderContentProvider"
+            android:authorities="com.kaii.photos.content_provider"
+            android:enabled="true"
+            android:exported="false" />
     </application>
 </manifest>

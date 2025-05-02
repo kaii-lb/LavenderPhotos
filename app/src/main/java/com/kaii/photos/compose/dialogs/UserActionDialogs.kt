@@ -4,12 +4,12 @@ import android.content.res.Configuration
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
@@ -50,10 +50,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.lavender_snackbars.LavenderSnackbarController
 import com.kaii.lavender_snackbars.LavenderSnackbarEvents
-import com.kaii.photos.R
 import com.kaii.photos.MainActivity.Companion.mainViewModel
+import com.kaii.photos.R
 import com.kaii.photos.compose.CheckBoxButtonRow
 import com.kaii.photos.compose.FullWidthDialogButton
 import com.kaii.photos.datastore.AlbumInfo
@@ -397,79 +398,79 @@ private fun ExplanationDialogBase(
 
 @Composable
 fun AlbumPathsDialog(
-	albumInfo: AlbumInfo,
-	onConfirm: (selectedPaths: List<String>) -> Unit,
+    albumInfo: AlbumInfo,
+    onConfirm: (selectedPaths: List<String>) -> Unit,
     onDismiss: () -> Unit
 ) {
-	val selectedPaths = remember { mutableStateListOf<String>().apply { addAll(albumInfo.paths)  } }
+    val selectedPaths = remember { mutableStateListOf<String>().apply { addAll(albumInfo.paths) } }
 
-	LavenderDialogBase(
-		modifier = Modifier
-			.animateContentSize(),
-		onDismiss = onDismiss
-	) {
-		Box(
-			modifier = Modifier
-				.fillMaxWidth(1f)
-		) {
-			Text(
-			    text = albumInfo.name,
-			    fontSize = TextUnit(18f, TextUnitType.Sp),
-			    fontWeight = FontWeight.Bold,
-			    color = MaterialTheme.colorScheme.onSurface,
-			    modifier = Modifier
-			    	.wrapContentSize()
-			    	.align(Alignment.Center)
-			)
+    LavenderDialogBase(
+        modifier = Modifier
+            .animateContentSize(),
+        onDismiss = onDismiss
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(1f)
+        ) {
+            Text(
+                text = albumInfo.name,
+                fontSize = TextUnit(18f, TextUnitType.Sp),
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier
+                    .wrapContentSize()
+                    .align(Alignment.Center)
+            )
 
             val activityLauncher = createDirectoryPicker { path ->
                 if (path != null) {
                     mainViewModel.settings.AlbumsList.editInAlbumsList(
                         albumInfo = albumInfo,
                         newInfo = albumInfo.copy(
-                        	paths = albumInfo.paths.toMutableList().apply {
-                        		if (!contains(path)) {
-                        			add(path)
-                        		}
-                        	}
+                            paths = albumInfo.paths.toMutableList().apply {
+                                if (!contains(path)) {
+                                    add(path)
+                                }
+                            }
                         )
                     )
                 }
             }
 
-			IconButton(
-			    onClick = {
-			        activityLauncher.launch(null)
-			    },
-			    modifier = Modifier
-			        .align(Alignment.CenterEnd)
-			        .padding(0.dp, 0.dp, 0.dp, 4.dp)
-			) {
-			    Icon(
-			        painter = painterResource(id = R.drawable.add),
-			        contentDescription = "add a new album",
-			        modifier = Modifier
-			            .size(24.dp)
-			    )
-			}
-		}
+            IconButton(
+                onClick = {
+                    activityLauncher.launch(null)
+                },
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(0.dp, 0.dp, 0.dp, 4.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.add),
+                    contentDescription = "add a new album",
+                    modifier = Modifier
+                        .size(24.dp)
+                )
+            }
+        }
 
-		Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
-		val groupedPaths = remember(albumInfo.paths) {
-			albumInfo.paths.groupBy {
-				(it.removeSuffix("/") + "/").split("/")[0]
-			}
-		}
+        val groupedPaths = remember(albumInfo.paths) {
+            albumInfo.paths.groupBy {
+                (it.removeSuffix("/") + "/").split("/")[0]
+            }
+        }
 
-		LazyColumn (
-			modifier = Modifier
+        LazyColumn(
+            modifier = Modifier
                 .heightIn(max = 250.dp)
                 .fillMaxWidth(1f)
-		) {
-			itemsIndexed(
+        ) {
+            itemsIndexed(
                 items = groupedPaths.keys.toList()
-			) { index, group ->
+            ) { index, group ->
                 val rowPosition = when {
                     groupedPaths.size == 1 -> {
                         RowPosition.Single
@@ -510,20 +511,140 @@ fun AlbumPathsDialog(
                         }
                     }
                 }
-			}
-		}
+            }
+        }
 
 
-		Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
-		FullWidthDialogButton(
-		    text = "Confirm",
-		    color = MaterialTheme.colorScheme.primary,
-		    textColor = MaterialTheme.colorScheme.onPrimary,
-		    position = RowPosition.Single
-		) {
-			onConfirm(selectedPaths)
+        FullWidthDialogButton(
+            text = "Confirm",
+            color = MaterialTheme.colorScheme.primary,
+            textColor = MaterialTheme.colorScheme.onPrimary,
+            position = RowPosition.Single
+        ) {
+            onConfirm(selectedPaths)
             onDismiss()
-		}
-	}
+        }
+    }
+}
+
+@Composable
+fun AlbumAddChoiceDialog(
+    onDismiss: () -> Unit
+) {
+    LavenderDialogBase(
+        onDismiss = onDismiss
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(1f)
+        ) {
+            IconButton(
+                onClick = {
+                    onDismiss()
+                },
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .padding(0.dp, 0.dp, 0.dp, 4.dp)
+            ) {
+                Icon(
+                    painter = painterResource(
+                        id = R.drawable.close
+                    ),
+                    contentDescription = "Close this dialog",
+                    modifier = Modifier
+                        .size(24.dp)
+                )
+            }
+
+            Text(
+                text = "Album Type",
+                fontSize = TextUnit(18f, TextUnitType.Sp),
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier
+                    .wrapContentSize()
+                    .align(Alignment.Center)
+            )
+        }
+
+        val activityLauncher = createDirectoryPicker { path ->
+            if (path != null) mainViewModel.settings.AlbumsList.addToAlbumsList(
+                AlbumInfo(
+                    id = path.hashCode(),
+                    name = path.split("/").last(),
+                    paths = listOf(path)
+                )
+            )
+        }
+        DialogClickableItem(
+            text = "Folder Album",
+            iconResId = R.drawable.albums,
+            position = RowPosition.Top
+        ) {
+            activityLauncher.launch(null)
+        }
+
+        var showCustomAlbumDialog by remember { mutableStateOf(false) }
+        if (showCustomAlbumDialog) {
+            AddCustomAlbumDialog(
+                onDismissPrev = onDismiss,
+                onDismiss = {
+                    showCustomAlbumDialog = false
+                }
+            )
+        }
+
+        DialogClickableItem(
+            text = "Custom Album",
+            iconResId = R.drawable.albums,
+            position = RowPosition.Bottom
+        ) {
+            showCustomAlbumDialog = true
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+    }
+}
+
+@Composable
+fun AddCustomAlbumDialog(
+    onDismiss: () -> Unit,
+    onDismissPrev: () -> Unit
+) {
+    val albums by mainViewModel.settings.AlbumsList.getAlbumsList()
+        .collectAsStateWithLifecycle(initialValue = emptyList())
+    var name by remember { mutableStateOf("") }
+
+    Box (
+       modifier = Modifier
+           .padding(8.dp, 0.dp)
+    ) {
+        TextEntryDialog(
+            title = "Custom Album",
+            placeholder = "Album Name",
+            onDismiss = onDismiss,
+            onValueChange = { text ->
+                name = text
+                name in albums.map { it.name }
+            },
+            onConfirm = { text ->
+                if (text in albums.map { it.name }) false
+                else {
+                    val albumInfo = AlbumInfo(
+                        id = text.hashCode(),
+                        paths = emptyList(),
+                        name = text,
+                        isCustomAlbum = true
+                    )
+
+                    mainViewModel.settings.AlbumsList.addToAlbumsList(albumInfo)
+                    onDismissPrev()
+
+                    true
+                }
+            }
+        )
+    }
 }

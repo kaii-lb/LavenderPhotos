@@ -38,7 +38,7 @@ class SettingsAlbumsListImpl(
     private val autoDetectAlbums = booleanPreferencesKey("album_auto_detect")
 
     fun addToAlbumsList(albumInfo: AlbumInfo) = viewModelScope.launch {
-        if (albumInfo.paths.isEmpty() || albumInfo.name == "") return@launch
+        if (albumInfo.name == "") return@launch
 
         context.datastore.edit {
             var stringList = it[albumsListKey]

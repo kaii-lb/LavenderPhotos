@@ -76,6 +76,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.MainActivity.Companion.applicationDatabase
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
+import com.kaii.photos.compose.dialogs.AlbumAddChoiceDialog
 import com.kaii.photos.compose.dialogs.AlbumPathsDialog
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
@@ -90,7 +91,6 @@ import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.appRestoredFilesDir
-import com.kaii.photos.helpers.createDirectoryPicker
 import com.kaii.photos.helpers.getParentFromPath
 import com.kaii.photos.helpers.moveImageOutOfLockedFolder
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
@@ -329,21 +329,16 @@ fun MainAppTopBar(
                     )
                 )
             ) {
-                val albums by mainViewModel.settings.AlbumsList.getAlbumsList()
-                    .collectAsStateWithLifecycle(initialValue = emptyList())
-                val activityLauncher = createDirectoryPicker { path ->
-                    if (path != null) mainViewModel.settings.AlbumsList.addToAlbumsList(
-                        AlbumInfo(
-                            id = path.hashCode(),
-                            name = path.split("/").last(),
-                            paths = listOf(path)
-                        )
-                    )
+                var showAlbumTypeDialog by remember { mutableStateOf(false) }
+                if (showAlbumTypeDialog) {
+                    AlbumAddChoiceDialog {
+                        showAlbumTypeDialog = false
+                    }
                 }
 
                 IconButton(
                     onClick = {
-                        if (albums.isNotEmpty()) activityLauncher.launch(null)
+                        showAlbumTypeDialog = true
                     },
                 ) {
                     Icon(

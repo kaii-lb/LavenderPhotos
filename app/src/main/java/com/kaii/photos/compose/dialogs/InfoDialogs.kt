@@ -91,7 +91,6 @@ import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.checkPathIsDownloads
-import com.kaii.photos.helpers.createPersistablePermissionLauncher
 import com.kaii.photos.helpers.eraseExifMedia
 import com.kaii.photos.helpers.getExifDataForMedia
 import com.kaii.photos.helpers.getParentFromPath
@@ -99,14 +98,12 @@ import com.kaii.photos.helpers.moveImageToLockedFolder
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.renameDirectory
 import com.kaii.photos.helpers.renameImage
-import com.kaii.photos.helpers.toRelativePath
 import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getExternalStorageContentUriFromAbsolutePath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.io.File
 
 private const val TAG = "INFO_DIALOGS"
 
@@ -771,46 +768,19 @@ fun MainAppDialog(
                 }
 
                 if (currentView.value == DefaultTabs.TabTypes.albums) {
-                    val coroutineScope = rememberCoroutineScope()
-                    val activityLauncher = createPersistablePermissionLauncher(
-                        onGranted = { uri ->
-                            uri.path?.let {
-                                val dir = File(it)
-
-                                val pathSections = dir.absolutePath.toRelativePath().split(":")
-                                val path = pathSections[pathSections.size - 1]
-
-                                Log.d(TAG, "Added album path $path")
-
-                                mainViewModel.settings.AlbumsList.addToAlbumsList(
-                                    AlbumInfo(
-                                        id = path.hashCode(),
-                                        name = path.split("/").last(),
-                                        paths = listOf(path)
-                                    )
-                                )
-                            }
-                        },
-
-                        onFailure = {
-                            coroutineScope.launch {
-                                LavenderSnackbarController.pushEvent(
-                                    LavenderSnackbarEvents.MessageEvent(
-                                        message = "Failed to add album :<",
-                                        iconResId = R.drawable.error_2,
-                                        duration = SnackbarDuration.Short
-                                    )
-                                )
-                            }
+                    var showAlbumTypeDialog by remember { mutableStateOf(false) }
+                    if (showAlbumTypeDialog) {
+                        AlbumAddChoiceDialog {
+                            showAlbumTypeDialog = false
                         }
-                    )
+                    }
 
                     DialogClickableItem(
                         text = "Add an album",
                         iconResId = R.drawable.add,
                         position = RowPosition.Top,
                     ) {
-                        activityLauncher.launch(null)
+                        showAlbumTypeDialog = true
                     }
                 }
 

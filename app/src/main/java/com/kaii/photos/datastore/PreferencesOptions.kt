@@ -176,7 +176,7 @@ data class AlbumInfo(
     val isCustomAlbum: Boolean = false
 ) {
     val mainPath = run {
-        paths.first()
+        paths.firstOrNull() ?: ""
     }
 }
 

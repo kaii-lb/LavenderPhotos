@@ -1,5 +1,7 @@
 package com.kaii.photos.compose.grids
 
+import android.content.ContentValues
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -51,6 +53,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
@@ -71,6 +74,8 @@ import com.kaii.photos.helpers.copyImageListToPath
 import com.kaii.photos.helpers.moveImageListToPath
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.mediastore.content_provider.LavenderContentProvider
+import com.kaii.photos.mediastore.content_provider.LavenderMediaColumns
 import com.kaii.photos.models.album_grid.AlbumsViewModel
 import com.kaii.photos.models.album_grid.AlbumsViewModelFactory
 import kotlinx.coroutines.Dispatchers
@@ -117,6 +122,8 @@ fun MoveCopyAlbumListView(
     LaunchedEffect(show.value) {
         searchedForText.value = ""
     }
+
+    Log.d("MOVE_COPY_ALBUMS_LIST", albumsList.toString())
 
     if (show.value) {
         ModalBottomSheet(
@@ -187,28 +194,26 @@ fun MoveCopyAlbumListView(
                     items(
                         count = albumsList.size,
                         key = {
-                            albumsList[it]
+                            albumsList[it].id
                         }
                     ) { index ->
                         val album = albumsList[index]
 
-                        if (album.paths.size == 1) { // TODO: fix this so we have "Custom" albums that arent linked to a specific path
-                            AlbumsListItem(
-                                album = album,
-                                data =
-                                    dataList.find { item ->
-                                        item.first.id == album.id
-                                    }?.second ?: MediaStoreData.dummyItem,
-                                position = if (index == albumsList.size - 1 && albumsList.size != 1) RowPosition.Bottom else if (albumsList.size == 1) RowPosition.Single else if (index == 0) RowPosition.Top else RowPosition.Middle,
-                                selectedItemsList = selectedItemsList,
-                                isMoving = isMoving,
-                                show = show,
-                                groupedMedia = groupedMedia,
-                                modifier = Modifier
-                                    .fillParentMaxWidth(1f)
-                                    .padding(8.dp, 0.dp)
-                            )
-                        }
+                        AlbumsListItem(
+                            album = album,
+                            data =
+                                dataList.find { item ->
+                                    item.first.id == album.id
+                                }?.second ?: MediaStoreData.dummyItem,
+                            position = if (index == albumsList.size - 1 && albumsList.size != 1) RowPosition.Bottom else if (albumsList.size == 1) RowPosition.Single else if (index == 0) RowPosition.Top else RowPosition.Middle,
+                            selectedItemsList = selectedItemsList,
+                            isMoving = isMoving,
+                            show = show,
+                            groupedMedia = groupedMedia,
+                            modifier = Modifier
+                                .fillParentMaxWidth(1f)
+                                .padding(8.dp, 0.dp)
+                        )
                     }
                 }
             }
@@ -261,24 +266,56 @@ fun AlbumsListItem(
         onGranted = {
             show.value = false
 
-            if (isMoving) {
-                moveImageListToPath(
-                    context,
-                    selectedItemsWithoutSection,
-                    album.mainPath
-                )
+            when {
+                !album.isCustomAlbum && isMoving -> {
+                    moveImageListToPath(
+                        context,
+                        selectedItemsWithoutSection,
+                        album.mainPath
+                    )
 
-                if (groupedMedia != null) {
-                    val newList = groupedMedia.value.toMutableList()
-                    newList.removeAll(selectedItemsWithoutSection.toSet())
-                    groupedMedia.value = newList
+                    if (groupedMedia != null) {
+                        val newList = groupedMedia.value.toMutableList()
+                        newList.removeAll(selectedItemsWithoutSection.toSet())
+                        groupedMedia.value = newList
+                    }
                 }
-            } else {
-                copyImageListToPath(
-                    context,
-                    selectedItemsWithoutSection,
-                    album.mainPath
-                )
+
+                !album.isCustomAlbum && !isMoving -> {
+                    copyImageListToPath(
+                        context,
+                        selectedItemsWithoutSection,
+                        album.mainPath
+                    )
+                }
+
+                isMoving -> {
+                    // moveImageListToPath(
+                    //     context,
+                    //     selectedItemsWithoutSection,
+                    //     album.mainPath
+                    // )
+                    //
+                    // if (groupedMedia != null) {
+                    //     val newList = groupedMedia.value.toMutableList()
+                    //     newList.removeAll(selectedItemsWithoutSection.toSet())
+                    //     groupedMedia.value = newList
+                    // }
+                }
+
+                else -> {
+                    context.contentResolver.bulkInsert(
+                        LavenderContentProvider.CONTENT_URI,
+                        selectedItemsWithoutSection.fastMap { media ->
+                            ContentValues().apply {
+                                put(LavenderMediaColumns.ID, media.id)
+                                put(LavenderMediaColumns.URI, media.uri.toString())
+                                put(LavenderMediaColumns.PARENT_ID, album.id)
+                                put(LavenderMediaColumns.MIME_TYPE, media.mimeType)
+                            }
+                        }.toTypedArray()
+                    )
+                }
             }
 
             selectedItemsList.clear()

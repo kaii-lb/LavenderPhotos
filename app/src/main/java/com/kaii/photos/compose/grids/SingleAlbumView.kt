@@ -1,5 +1,6 @@
 package com.kaii.photos.compose.grids
 
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -26,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.SingleAlbumViewBottomBar
@@ -35,8 +37,15 @@ import com.kaii.photos.compose.dialogs.SingleAlbumDialog
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.mediastore.MediaStoreData
+import com.kaii.photos.mediastore.content_provider.LavenderContentProvider
+import com.kaii.photos.mediastore.content_provider.LavenderMediaColumns
+import com.kaii.photos.mediastore.getMediaStoreDataFromUri
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
+import com.kaii.photos.models.multi_album.groupPhotosBy
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
+private const val TAG = "SINGLE_ALBUM_VIEW"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,8 +67,40 @@ fun SingleAlbumView(
 
     val groupedMedia = remember { mutableStateOf(mediaStoreData) }
 
+    val contentResolver = LocalContext.current.contentResolver
     LaunchedEffect(mediaStoreData) {
-        groupedMedia.value = mediaStoreData
+        if (albumInfo.isCustomAlbum) {
+            withContext(Dispatchers.IO) {
+                val cursor = contentResolver.query(
+                    LavenderContentProvider.CONTENT_URI,
+                    arrayOf(
+                        LavenderMediaColumns.ID,
+                        LavenderMediaColumns.URI
+                    ),
+                    "TRUE",
+                    null,
+                    null
+                )
+
+                cursor?.use {
+                    val data = mutableListOf<MediaStoreData>()
+
+                    while (cursor.moveToNext()) {
+                        val uriCol = cursor.getColumnIndexOrThrow(LavenderMediaColumns.URI)
+                        val uri = cursor.getString(uriCol).toUri()
+
+                        val mediaItem = contentResolver.getMediaStoreDataFromUri(uri = uri)
+
+                        Log.d(TAG, "Media: " + mediaItem.toString())
+                        if (mediaItem != null) data.add(mediaItem)
+                    }
+
+                    groupedMedia.value = groupPhotosBy(data)
+                }
+            }
+        } else {
+            groupedMedia.value = mediaStoreData
+        }
     }
 
     val showDialog = remember { mutableStateOf(false) }
