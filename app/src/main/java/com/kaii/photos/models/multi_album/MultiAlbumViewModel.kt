@@ -1,13 +1,13 @@
 package com.kaii.photos.models.multi_album
 
 import android.content.Context
-import android.net.Uri
 import android.os.CancellationSignal
 import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.MainActivity.Companion.mainViewModel
@@ -39,7 +39,11 @@ class MultiAlbumViewModel(
     private val mediaStoreDataSource = mutableStateOf(initDataSource(context, albums, sortBy))
 
     val mediaFlow by derivedStateOf {
-        getMediaDataFlow().value.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
+        getMediaDataFlow().value.stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(),
+            emptyList()
+        )
     }
 
     private fun getMediaDataFlow(): State<Flow<List<MediaStoreData>>> = derivedStateOf {
@@ -61,16 +65,16 @@ class MultiAlbumViewModel(
         mediaStoreDataSource.value = initDataSource(context, albumsList, sortBy)
     }
 
-	fun changeSortMode(
-		context: Context,
-		sortMode: MediaItemSortMode
-	) {
-		sortBy = sortMode
+    fun changeSortMode(
+        context: Context,
+        sortMode: MediaItemSortMode
+    ) {
+        sortBy = sortMode
 
-		cancelMediaFlow()
-		cancellationSignal = CancellationSignal()
-		mediaStoreDataSource.value = initDataSource(context, albums, sortBy)
-	}
+        cancelMediaFlow()
+        cancellationSignal = CancellationSignal()
+        mediaStoreDataSource.value = initDataSource(context, albums, sortBy)
+    }
 
     private fun initDataSource(
         context: Context,
@@ -93,40 +97,43 @@ class MultiAlbumViewModel(
 }
 
 /** Groups photos by date */
-fun groupPhotosBy(media: List<MediaStoreData>, sortBy: MediaItemSortMode = MediaItemSortMode.DateTaken): List<MediaStoreData> {
+fun groupPhotosBy(
+    media: List<MediaStoreData>,
+    sortBy: MediaItemSortMode = MediaItemSortMode.DateTaken
+): List<MediaStoreData> {
     if (media.isEmpty()) return emptyList()
 
     val sortedList =
         media.sortedByDescending { item ->
-        	when (sortBy) {
-        		MediaItemSortMode.DateTaken, MediaItemSortMode.MonthTaken, MediaItemSortMode.Disabled -> {
-        			item.dateTaken
-        		}
+            when (sortBy) {
+                MediaItemSortMode.DateTaken, MediaItemSortMode.MonthTaken, MediaItemSortMode.Disabled -> {
+                    item.dateTaken
+                }
 
-        		MediaItemSortMode.LastModified -> {
-        			item.dateModified
-        		}
-        	}
+                MediaItemSortMode.LastModified -> {
+                    item.dateModified
+                }
+            }
         }
 
     if (sortBy == MediaItemSortMode.Disabled) return sortedList
 
     val grouped = sortedList.groupBy { item ->
-    	when (sortBy) {
-    		MediaItemSortMode.DateTaken -> {
-    			item.getDateTakenDay()
-    		}
+        when (sortBy) {
+            MediaItemSortMode.DateTaken -> {
+                item.getDateTakenDay()
+            }
 
-    		MediaItemSortMode.LastModified -> {
-    			item.getLastModifiedDay()
-    		}
+            MediaItemSortMode.LastModified -> {
+                item.getLastModifiedDay()
+            }
 
-    		MediaItemSortMode.MonthTaken -> {
-    			item.getDateTakenMonth()
-    		}
+            MediaItemSortMode.MonthTaken -> {
+                item.getDateTakenMonth()
+            }
 
             else -> throw IllegalStateException("Sort mode $sortBy should not be reached here")
-    	}
+        }
     }
 
     val sortedMap = grouped.toSortedMap(
@@ -178,11 +185,12 @@ fun groupPhotosBy(media: List<MediaStoreData>, sortBy: MediaItemSortMode = Media
 
 fun formatDate(timestamp: Long, sortBy: MediaItemSortMode): String {
     return if (timestamp != 0L) {
-    	val dateTimeFormat =
-   				if (sortBy == MediaItemSortMode.MonthTaken) DateTimeFormatter.ofPattern("MMMM yyyy")
-   				else DateTimeFormatter.ofPattern("EEE d - MMMM yyyy")
+        val dateTimeFormat =
+            if (sortBy == MediaItemSortMode.MonthTaken) DateTimeFormatter.ofPattern("MMMM yyyy")
+            else DateTimeFormatter.ofPattern("EEE d - MMMM yyyy")
 
-        val localDateTime = Instant.ofEpochSecond(timestamp).atZone(ZoneId.systemDefault()).toLocalDateTime()
+        val localDateTime =
+            Instant.ofEpochSecond(timestamp).atZone(ZoneId.systemDefault()).toLocalDateTime()
         val dateTimeString = localDateTime.format(dateTimeFormat)
         dateTimeString.toString()
     } else {
@@ -195,7 +203,7 @@ private fun listSection(title: String, key: Long, childCount: Int): MediaStoreDa
         type = MediaType.Section,
         dateModified = key,
         dateTaken = key,
-        uri = Uri.parse("$title $key"),
+        uri = "$title $key".toUri(),
         displayName = title,
         id = 0L,
         mimeType = null,

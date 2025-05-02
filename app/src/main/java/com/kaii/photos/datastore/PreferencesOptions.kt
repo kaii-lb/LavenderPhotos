@@ -1,10 +1,12 @@
 package com.kaii.photos.datastore
 
+import android.net.Uri
+import android.os.Bundle
 import androidx.annotation.DrawableRes
+import androidx.navigation.NavType
 import com.kaii.photos.R
 import kotlinx.serialization.Serializable
-import kotlin.math.abs
-import kotlin.random.Random
+import kotlinx.serialization.json.Json
 
 // order is important
 enum class AlbumSortMode {
@@ -65,13 +67,13 @@ enum class StoredDrawable(
     ),
 
     SecureFolder(
-    	filled = R.drawable.locked_folder_filled,
+        filled = R.drawable.locked_folder_filled,
         nonFilled = R.drawable.locked_folder,
         storedId = 2
     ),
 
     Albums(
-    	filled = R.drawable.albums_filled,
+        filled = R.drawable.albums_filled,
         nonFilled = R.drawable.albums,
         storedId = 4
     ),
@@ -83,45 +85,45 @@ enum class StoredDrawable(
     ),
 
     Favourite(
-    	filled = R.drawable.favourite_filled,
-    	nonFilled = R.drawable.favourite,
-		storedId = 7
+        filled = R.drawable.favourite_filled,
+        nonFilled = R.drawable.favourite,
+        storedId = 7
     ),
 
     Star(
-    	filled = R.drawable.star_filled,
-    	nonFilled = R.drawable.star,
-    	storedId = 8
+        filled = R.drawable.star_filled,
+        nonFilled = R.drawable.star,
+        storedId = 8
     ),
 
     Bolt(
-    	filled = R.drawable.bolt_filled,
-    	nonFilled = R.drawable.bolt,
-    	storedId = 9
+        filled = R.drawable.bolt_filled,
+        nonFilled = R.drawable.bolt,
+        storedId = 9
     ),
 
     Face(
-    	filled = R.drawable.face_filled,
-    	nonFilled = R.drawable.face,
-    	storedId = 10
+        filled = R.drawable.face_filled,
+        nonFilled = R.drawable.face,
+        storedId = 10
     ),
 
     Pets(
-    	filled = R.drawable.pets,
-    	nonFilled = R.drawable.pets,
-    	storedId = 11
+        filled = R.drawable.pets,
+        nonFilled = R.drawable.pets,
+        storedId = 11
     ),
 
     Motorcycle(
-    	filled = R.drawable.motorcycle_filled,
-    	nonFilled = R.drawable.motorcycle,
-    	storedId = 12
+        filled = R.drawable.motorcycle_filled,
+        nonFilled = R.drawable.motorcycle,
+        storedId = 12
     ),
 
     Motorsports(
-    	filled = R.drawable.motorsports_filled,
-    	nonFilled = R.drawable.motorsports,
-    	storedId = 13
+        filled = R.drawable.motorsports_filled,
+        nonFilled = R.drawable.motorsports,
+        storedId = 13
     );
 
     companion object {
@@ -161,34 +163,41 @@ data class BottomBarTab(
     }
 }
 
+data class SQLiteQuery(
+    val query: String,
+    val paths: List<String>?
+)
+
 @Serializable
 data class AlbumInfo(
+    val id: Int,
     val name: String,
     val paths: List<String>,
-    val id: Long
+    val isCustomAlbum: Boolean = false
 ) {
-    companion object {
-        fun generateId(existingAlbums: List<AlbumInfo>) : Long {
-            var newId = getRandomId()
-
-            while (newId in existingAlbums.map { it.id } || newId <= 3L) {
-                newId = getRandomId()
-            }
-
-            return newId
-        }
-
-        private fun getRandomId() = abs((0L..999999999L).random(Random(seed = System.currentTimeMillis())))
-    }
-
     val mainPath = run {
         paths.first()
     }
 }
 
-data class SQLiteQuery(
-    val query: String,
-    val paths: List<String>?
-)
+object AlbumInfoNavType : NavType<AlbumInfo>(
+    isNullableAllowed = false
+) {
+    override fun get(bundle: Bundle, key: String): AlbumInfo? {
+        return bundle.getString(key)?.let { Json.decodeFromString<AlbumInfo>(it) }
+    }
+
+    override fun parseValue(value: String): AlbumInfo {
+        return Json.decodeFromString(Uri.decode(value))
+    }
+
+    override fun put(bundle: Bundle, key: String, value: AlbumInfo) {
+        bundle.putString(key, Json.encodeToString(value))
+    }
+
+    override fun serializeAsValue(value: AlbumInfo): String {
+        return Uri.encode(Json.encodeToString(value))
+    }
+}
 
 

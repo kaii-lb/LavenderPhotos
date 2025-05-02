@@ -61,22 +61,20 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.FolderIsEmpty
 import com.kaii.photos.compose.SearchTextField
 import com.kaii.photos.compose.dialogs.getDefaultShapeSpacerForPosition
-import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.helpers.GetPermissionAndRun
+import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
+import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.copyImageListToPath
-import com.kaii.photos.helpers.getParentFromPath
 import com.kaii.photos.helpers.moveImageListToPath
-import com.kaii.photos.helpers.toRelativePath
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.album_grid.AlbumsViewModel
 import com.kaii.photos.models.album_grid.AlbumsViewModelFactory
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -88,7 +86,8 @@ fun MoveCopyAlbumListView(
     insetsPadding: WindowInsets
 ) {
     val context = LocalContext.current
-    val originalAlbumsList by mainViewModel.settings.AlbumsList.get().collectAsStateWithLifecycle(initialValue = emptyList())
+    val originalAlbumsList by mainViewModel.settings.AlbumsList.getAlbumsList()
+        .collectAsStateWithLifecycle(initialValue = emptyList())
 
     if (originalAlbumsList == emptyList<String>()) return
 
@@ -194,21 +193,21 @@ fun MoveCopyAlbumListView(
                         val album = albumsList[index]
 
                         if (album.paths.size == 1) { // TODO: fix this so we have "Custom" albums that arent linked to a specific path
-	                        AlbumsListItem(
-	                            album = album,
-	                            data =
-	                            	dataList.find { item ->
-	                                    item.first.id == album.id
-	                            	}?.second ?: MediaStoreData.dummyItem,
-	                            position = if (index == albumsList.size - 1 && albumsList.size != 1) RowPosition.Bottom else if (albumsList.size == 1) RowPosition.Single else if (index == 0) RowPosition.Top else RowPosition.Middle,
-	                            selectedItemsList = selectedItemsList,
-	                            isMoving = isMoving,
-	                            show = show,
-	                            groupedMedia = groupedMedia,
-	                            modifier = Modifier
-	                                .fillParentMaxWidth(1f)
-	                                .padding(8.dp, 0.dp)
-	                        )
+                            AlbumsListItem(
+                                album = album,
+                                data =
+                                    dataList.find { item ->
+                                        item.first.id == album.id
+                                    }?.second ?: MediaStoreData.dummyItem,
+                                position = if (index == albumsList.size - 1 && albumsList.size != 1) RowPosition.Bottom else if (albumsList.size == 1) RowPosition.Single else if (index == 0) RowPosition.Top else RowPosition.Middle,
+                                selectedItemsList = selectedItemsList,
+                                isMoving = isMoving,
+                                show = show,
+                                groupedMedia = groupedMedia,
+                                modifier = Modifier
+                                    .fillParentMaxWidth(1f)
+                                    .padding(8.dp, 0.dp)
+                            )
                         }
                     }
                 }
@@ -248,12 +247,12 @@ fun AlbumsListItem(
     val runOnDirGranted = remember { mutableStateOf(false) }
 
     GetDirectoryPermissionAndRun(
-    	absoluteDirPaths = listOf(baseInternalStorageDirectory + album),
-    	shouldRun = runOnDirGranted,
-    	onGranted = {
-    		runOnUriGranted.value = true
-    	},
-    	onRejected = {}
+        absoluteDirPaths = listOf(baseInternalStorageDirectory + album),
+        shouldRun = runOnDirGranted,
+        onGranted = {
+            runOnUriGranted.value = true
+        },
+        onRejected = {}
     )
 
     GetPermissionAndRun(
@@ -263,26 +262,26 @@ fun AlbumsListItem(
             show.value = false
 
             if (isMoving) {
-	            moveImageListToPath(
-	                context,
-	                selectedItemsWithoutSection,
-	                album.mainPath
-	            )
+                moveImageListToPath(
+                    context,
+                    selectedItemsWithoutSection,
+                    album.mainPath
+                )
 
-	            if (groupedMedia != null) {
-	                val newList = groupedMedia.value.toMutableList()
-	                newList.removeAll(selectedItemsWithoutSection.toSet())
-	                groupedMedia.value = newList
-	            }
-	        } else {
-	            copyImageListToPath(
-	                context,
-	                selectedItemsWithoutSection,
-	                album.mainPath
-	            )
-	        }
+                if (groupedMedia != null) {
+                    val newList = groupedMedia.value.toMutableList()
+                    newList.removeAll(selectedItemsWithoutSection.toSet())
+                    groupedMedia.value = newList
+                }
+            } else {
+                copyImageListToPath(
+                    context,
+                    selectedItemsWithoutSection,
+                    album.mainPath
+                )
+            }
 
-	        selectedItemsList.clear()
+            selectedItemsList.clear()
         }
     )
 

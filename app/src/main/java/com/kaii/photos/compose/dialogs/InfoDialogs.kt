@@ -63,8 +63,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastDistinctBy
+import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
@@ -78,6 +78,7 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.AnimatableTextField
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.compose.rememberDeviceOrientation
+import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
@@ -112,13 +113,11 @@ private const val TAG = "INFO_DIALOGS"
 @Composable
 fun SingleAlbumDialog(
     showDialog: MutableState<Boolean>,
-    dir: String,
+    album: AlbumInfo,
     navController: NavHostController,
     selectedItemsList: SnapshotStateList<MediaStoreData>
 ) {
     if (showDialog.value) {
-        val title = dir.split("/").last()
-
         LavenderDialogBase(
             onDismiss = {
                 showDialog.value = false
@@ -148,7 +147,7 @@ fun SingleAlbumDialog(
 
                 AnimatableText(
                     first = "Rename",
-                    second = title,
+                    second = album.name,
                     state = isEditingFileName.value,
                     modifier = Modifier
                         .align(Alignment.Center)
@@ -181,58 +180,67 @@ fun SingleAlbumDialog(
                     selectedItemsList.add(MediaStoreData())
                 }
             }
-            val fileName = remember { mutableStateOf(title) }
+            val fileName = remember { mutableStateOf(album.name) }
             val saveFileName = remember { mutableStateOf(false) }
 
-            val absoluteDirPath = "$baseInternalStorageDirectory$dir"
             val context = LocalContext.current
+            if (album.paths.size == 1) {
+                val dir = album.mainPath
+                val absoluteDirPath = "$baseInternalStorageDirectory$dir"
 
-            GetDirectoryPermissionAndRun(
-                absoluteDirPaths = listOf(absoluteDirPath),
-                shouldRun = saveFileName,
-                onGranted = {
-                    if (saveFileName.value && fileName.value != dir.split("/").last()) {
-                        renameDirectory(context, absoluteDirPath, fileName.value)
+                GetDirectoryPermissionAndRun(
+                    absoluteDirPaths = listOf(absoluteDirPath),
+                    shouldRun = saveFileName,
+                    onGranted = {
+                        if (saveFileName.value && fileName.value != dir.split("/").last()) {
+                            renameDirectory(context, absoluteDirPath, fileName.value)
 
-                        val mainViewModel = mainViewModel
-                        val newDir = dir.replace(title, fileName.value)
+                            val mainViewModel = mainViewModel
+                            // val newDir = dir.replace(album.name, fileName.value)
 
-                        mainViewModel.settings.AlbumsList.editInAlbumsList(dir, fileName.value)
-                        showDialog.value = false
-
-                        try {
-                            context.contentResolver.releasePersistableUriPermission(
-                                context.getExternalStorageContentUriFromAbsolutePath(absoluteDirPath, true),
-                                Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                            mainViewModel.settings.AlbumsList.editInAlbumsList(
+                                albumInfo = album,
+                                newInfo = album.copy(name = fileName.value)
                             )
-                        } catch (e: Throwable) {
-                            Log.d(TAG, "Couldn't release permission for $absoluteDirPath")
-                            e.printStackTrace()
+                            showDialog.value = false
+
+                            try {
+                                context.contentResolver.releasePersistableUriPermission(
+                                    context.getExternalStorageContentUriFromAbsolutePath(
+                                        absoluteDirPath,
+                                        true
+                                    ),
+                                    Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                                )
+                            } catch (e: Throwable) {
+                                Log.d(TAG, "Couldn't release permission for $absoluteDirPath")
+                                e.printStackTrace()
+                            }
+
+                            navController.popBackStack()
+                            navController.navigate(
+                                Screens.SingleAlbumView(
+                                    albumInfo = album
+                                )
+                            )
+
+                            saveFileName.value = false
                         }
+                    },
+                    onRejected = {}
+                )
 
-                        navController.popBackStack()
-                        navController.navigate(
-                            Screens.SingleAlbumView(
-                                albums = listOf(newDir)
-                            )
-                        )
-
-                        saveFileName.value = false
-                    }
-                },
-                onRejected = {}
-            )
-
-            AnimatableTextField(
-                state = isEditingFileName,
-                string = fileName,
-                doAction = saveFileName,
-                rowPosition = RowPosition.Middle,
-                enabled = !dir.checkPathIsDownloads(),
-                modifier = Modifier
-                    .padding(8.dp, 0.dp)
-            ) {
-                fileName.value = title
+                AnimatableTextField(
+                    state = isEditingFileName,
+                    string = fileName,
+                    doAction = saveFileName,
+                    rowPosition = RowPosition.Middle,
+                    enabled = !dir.checkPathIsDownloads(),
+                    modifier = Modifier
+                        .padding(8.dp, 0.dp)
+                ) {
+                    fileName.value = album.name
+                }
             }
 
             Column(
@@ -244,18 +252,21 @@ fun SingleAlbumDialog(
                     text = "Remove album from list",
                     iconResId = R.drawable.delete,
                     position = RowPosition.Middle,
-                    enabled = !dir.checkPathIsDownloads()
+                    enabled = !album.mainPath.checkPathIsDownloads()
                 ) {
-                    mainViewModel.settings.AlbumsList.removeFromAlbumsList(dir)
+                    mainViewModel.settings.AlbumsList.removeFromAlbumsList(id = album.id)
                     showDialog.value = false
 
                     try {
                         context.contentResolver.releasePersistableUriPermission(
-                            context.getExternalStorageContentUriFromAbsolutePath(absoluteDirPath, true),
+                            context.getExternalStorageContentUriFromAbsolutePath(
+                                album.mainPath,
+                                true
+                            ),
                             Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                         )
                     } catch (e: Throwable) {
-                        Log.d(TAG, "Couldn't release permission for $absoluteDirPath")
+                        Log.d(TAG, "Couldn't release permission for ${album.mainPath}")
                         e.printStackTrace()
                     }
 
@@ -285,7 +296,7 @@ fun SingleAlbumDialog(
                 ) {
                     DialogInfoText(
                         firstText = "Path",
-                        secondText = absoluteDirPath,
+                        secondText = album.mainPath,
                         iconResId = R.drawable.folder,
                     )
                 }
@@ -414,7 +425,8 @@ fun SinglePhotoInfoDialog(
 
                 // should add a way to automatically calculate height needed for this
                 val addedHeight by remember { derivedStateOf { 36.dp * (mediaData.keys.size + 1) } } // + 1 for the delete exif data row
-                val moveCopyHeight = if (showMoveCopyOptions) 82.dp else 0.dp // 40.dp is height of one single row
+                val moveCopyHeight =
+                    if (showMoveCopyOptions) 82.dp else 0.dp // 40.dp is height of one single row
                 val setAsHeight = if (currentMediaItem.type != MediaType.Video) 40.dp else 0.dp
 
                 val height by animateDpAsState(
@@ -482,7 +494,8 @@ fun SinglePhotoInfoDialog(
                                     val splitBy = Regex("(?=[A-Z])")
                                     val split = key.toString().split(splitBy)
                                     // println("SPLIT IS $split")
-                                    val name = if (split.size >= 3) "${split[1]} ${split[2]}" else key.toString()
+                                    val name =
+                                        if (split.size >= 3) "${split[1]} ${split[2]}" else key.toString()
 
                                     DialogInfoText(
                                         firstText = name,
@@ -493,18 +506,18 @@ fun SinglePhotoInfoDialog(
                             }
 
                             item {
-                            	val showConfirmEraseDialog = remember { mutableStateOf(false) }
+                                val showConfirmEraseDialog = remember { mutableStateOf(false) }
                                 val runEraseExifData = remember { mutableStateOf(false) }
                                 val coroutineScope = rememberCoroutineScope()
 
-								ConfirmationDialogWithBody(
-									showDialog = showConfirmEraseDialog,
-									dialogTitle = "Erase EXIF data?",
-									dialogBody = "This action cannot be undone",
-									confirmButtonLabel = "Erase"
-								) {
-									runEraseExifData.value = true
-								}
+                                ConfirmationDialogWithBody(
+                                    showDialog = showConfirmEraseDialog,
+                                    dialogTitle = "Erase EXIF data?",
+                                    dialogBody = "This action cannot be undone",
+                                    confirmButtonLabel = "Erase"
+                                ) {
+                                    runEraseExifData.value = true
+                                }
 
                                 GetPermissionAndRun(
                                     uris = listOf(currentMediaItem.uri),
@@ -530,7 +543,10 @@ fun SinglePhotoInfoDialog(
                                                     )
                                                 )
 
-                                                Log.e(TAG, "Failed erasing exif data for ${currentMediaItem.absolutePath}")
+                                                Log.e(
+                                                    TAG,
+                                                    "Failed erasing exif data for ${currentMediaItem.absolutePath}"
+                                                )
                                                 Log.e(TAG, e.toString())
                                                 e.printStackTrace()
                                             }
@@ -634,7 +650,8 @@ fun MainAppDialog(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Start
             ) {
-                val storedName = mainViewModel.settings.User.getUsername().collectAsStateWithLifecycle(initialValue = null).value ?: return@Row
+                val storedName = mainViewModel.settings.User.getUsername()
+                    .collectAsStateWithLifecycle(initialValue = null).value ?: return@Row
 
                 var originalName by remember { mutableStateOf(storedName) }
 
@@ -765,7 +782,13 @@ fun MainAppDialog(
 
                                 Log.d(TAG, "Added album path $path")
 
-                                mainViewModel.settings.AlbumsList.addToAlbumsList(path)
+                                mainViewModel.settings.AlbumsList.addToAlbumsList(
+                                    AlbumInfo(
+                                        id = path.hashCode(),
+                                        name = path.split("/").last(),
+                                        paths = listOf(path)
+                                    )
+                                )
                             }
                         },
 
@@ -848,7 +871,7 @@ fun SelectingMoreOptionsDialog(
         absoluteDirPaths = selectedItems.fastMap {
             it.absolutePath.getParentFromPath()
         }.fastDistinctBy {
-			it
+            it
         },
         shouldRun = tryGetDirPermission,
         onGranted = {
@@ -918,13 +941,13 @@ fun SelectingMoreOptionsDialog(
                 .padding(12.dp)
                 .wrapContentHeight()
         ) {
-	        DialogClickableItem(
-	            text = "Move to Secure Folder",
-	            iconResId = R.drawable.locked_folder,
-	            position = RowPosition.Single
-	        ) {
-	            if (selectedItems.isNotEmpty()) tryGetDirPermission.value = true
-	        }
+            DialogClickableItem(
+                text = "Move to Secure Folder",
+                iconResId = R.drawable.locked_folder,
+                position = RowPosition.Single
+            ) {
+                if (selectedItems.isNotEmpty()) tryGetDirPermission.value = true
+            }
         }
     }
 }

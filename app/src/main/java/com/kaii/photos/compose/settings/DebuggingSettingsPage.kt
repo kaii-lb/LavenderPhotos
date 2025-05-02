@@ -48,6 +48,8 @@ import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.lavender_snackbars.LavenderSnackbarController
 import com.kaii.lavender_snackbars.LavenderSnackbarEvents
 import com.kaii.photos.compose.dialogs.SelectableButtonListDialog
+import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.helpers.relativePath
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -184,7 +186,11 @@ fun DebuggingSettingsPage() {
 								false
 							} else {
 								mainViewModel.settings.AlbumsList.addToAlbumsList(
-									file.absolutePath.replace(baseInternalStorageDirectory, "")
+									AlbumInfo(
+										id = file.hashCode(),
+										name = file.name,
+										paths = listOf(file.relativePath)
+									)
 								)
 
 								showAddAlbumsDialog = false

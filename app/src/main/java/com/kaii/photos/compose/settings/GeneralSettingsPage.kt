@@ -1,6 +1,5 @@
 package com.kaii.photos.compose.settings
 
-import android.os.Environment
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -28,14 +27,14 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -57,13 +56,13 @@ import com.kaii.photos.compose.CheckBoxButtonRow
 import com.kaii.photos.compose.ConfirmCancelRow
 import com.kaii.photos.compose.FullWidthDialogButton
 import com.kaii.photos.compose.HorizontalSeparator
-import com.kaii.photos.compose.dialogs.LavenderDialogBase
 import com.kaii.photos.compose.PreferencesRow
 import com.kaii.photos.compose.PreferencesSeparatorText
 import com.kaii.photos.compose.PreferencesSwitchRow
 import com.kaii.photos.compose.TitleCloseRow
 import com.kaii.photos.compose.dialogs.AddTabDialog
 import com.kaii.photos.compose.dialogs.InfoRow
+import com.kaii.photos.compose.dialogs.LavenderDialogBase
 import com.kaii.photos.compose.dialogs.SelectableButtonListDialog
 import com.kaii.photos.compose.dialogs.SortModeSelectorDialog
 import com.kaii.photos.datastore.AlbumsList
@@ -99,8 +98,10 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
             }
 
             item {
-                val shouldAutoPlay by mainViewModel.settings.Video.getShouldAutoPlay().collectAsStateWithLifecycle(initialValue = true)
-                val muteOnStart by mainViewModel.settings.Video.getMuteOnStart().collectAsStateWithLifecycle(initialValue = false)
+                val shouldAutoPlay by mainViewModel.settings.Video.getShouldAutoPlay()
+                    .collectAsStateWithLifecycle(initialValue = true)
+                val muteOnStart by mainViewModel.settings.Video.getMuteOnStart()
+                    .collectAsStateWithLifecycle(initialValue = false)
 
                 PreferencesSwitchRow(
                     title = "Auto Play Videos",
@@ -135,7 +136,8 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
             }
 
             item {
-                val overwriteByDefault by mainViewModel.settings.Editing.getOverwriteByDefault().collectAsStateWithLifecycle(initialValue = false)
+                val overwriteByDefault by mainViewModel.settings.Editing.getOverwriteByDefault()
+                    .collectAsStateWithLifecycle(initialValue = false)
 
                 PreferencesSwitchRow(
                     title = "Overwrite on save",
@@ -152,7 +154,8 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
             }
 
             item {
-                val exitOnSave by mainViewModel.settings.Editing.getExitOnSave().collectAsStateWithLifecycle(initialValue = false)
+                val exitOnSave by mainViewModel.settings.Editing.getExitOnSave()
+                    .collectAsStateWithLifecycle(initialValue = false)
 
                 PreferencesSwitchRow(
                     title = "Exit on save",
@@ -173,8 +176,10 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
             }
 
             item {
-                val mainPhotosAlbums by mainViewModel.settings.MainPhotosView.getAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
-                val allAlbums by mainViewModel.settings.AlbumsList.getAlbumsList().collectAsStateWithLifecycle(initialValue = emptyList())
+                val mainPhotosAlbums by mainViewModel.settings.MainPhotosView.getAlbums()
+                    .collectAsStateWithLifecycle(initialValue = emptyList())
+                val allAlbums by mainViewModel.settings.AlbumsList.getAlbumsList()
+                    .collectAsStateWithLifecycle(initialValue = emptyList())
 
                 val showAlbumsSelectionDialog = remember { mutableStateOf(false) }
                 val selectedAlbums = remember { mutableStateListOf<String>() }
@@ -222,13 +227,13 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
                                     val associatedAlbum = allAlbums[index]
 
                                     CheckBoxButtonRow(
-                                        text = associatedAlbum,
-                                        checked = selectedAlbums.contains(associatedAlbum)
+                                        text = associatedAlbum.name,
+                                        checked = selectedAlbums.contains(associatedAlbum.mainPath)
                                     ) {
-                                        if (selectedAlbums.contains(associatedAlbum) && selectedAlbums.size > 1) {
-                                            selectedAlbums.remove(associatedAlbum)
+                                        if (selectedAlbums.contains(associatedAlbum.mainPath) && selectedAlbums.size > 1) {
+                                            selectedAlbums.remove(associatedAlbum.mainPath)
                                         } else {
-                                            selectedAlbums.add(associatedAlbum)
+                                            selectedAlbums.add(associatedAlbum.mainPath)
                                         }
                                     }
                                 }
@@ -239,7 +244,8 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
             }
 
             item {
-                val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect().collectAsStateWithLifecycle(initialValue = false)
+                val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect()
+                    .collectAsStateWithLifecycle(initialValue = false)
                 val isAlreadyLoading = remember { mutableStateOf(false) }
                 val coroutineScope = rememberCoroutineScope()
 
@@ -264,7 +270,8 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
                                         isLoading = isAlreadyLoading
                                     )
                                 )
-                                val albums = mainViewModel.settings.AlbumsList.getAllAlbumsOnDevice()
+                                val albums =
+                                    mainViewModel.settings.AlbumsList.getAllAlbumsOnDevice()
                                 albums.collectLatest {
                                     mainViewModel.settings.AlbumsList.addToAlbumsList(it)
                                 }
@@ -285,10 +292,7 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
                 ) {
                     coroutineScope.launch {
                         mainViewModel.settings.AlbumsList.setAlbumsList(
-                            listOf(
-                                Environment.DIRECTORY_DCIM + "/Camera",
-                                Environment.DIRECTORY_DOWNLOADS
-                            )
+                            mainViewModel.settings.AlbumsList.defaultAlbumsList
                         )
                         mainViewModel.settings.AlbumsList.setAutoDetect(false)
 
@@ -304,33 +308,34 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
             }
 
             item {
-                val currentSortMode by mainViewModel.settings.PhotoGrid.getSortMode().collectAsStateWithLifecycle(initialValue = MediaItemSortMode.DateTaken)
+                val currentSortMode by mainViewModel.settings.PhotoGrid.getSortMode()
+                    .collectAsStateWithLifecycle(initialValue = MediaItemSortMode.DateTaken)
                 var showSortModeSelectorDialog by remember { mutableStateOf(false) }
 
                 if (showSortModeSelectorDialog) {
-					SortModeSelectorDialog(
-						currentSortMode = currentSortMode,
-						dismiss = {
-							showSortModeSelectorDialog = false
-						}
-					)
-				}
+                    SortModeSelectorDialog(
+                        currentSortMode = currentSortMode,
+                        dismiss = {
+                            showSortModeSelectorDialog = false
+                        }
+                    )
+                }
 
-            	PreferencesSwitchRow(
-            		title = "Media Sorting",
-            		summary = "Sets the sorting of photos and videos in grids",
-            		iconResID = R.drawable.sorting,
-            		position = RowPosition.Single,
-            		showBackground = false,
-            		checked = currentSortMode != MediaItemSortMode.Disabled,
-            		onRowClick = {
-            			showSortModeSelectorDialog = true
-            		},
-            		onSwitchClick = { checked ->
-	                    if (checked) mainViewModel.settings.PhotoGrid.setSortMode(MediaItemSortMode.DateTaken)
-	                    else mainViewModel.settings.PhotoGrid.setSortMode(MediaItemSortMode.Disabled)
-            		}
-            	)
+                PreferencesSwitchRow(
+                    title = "Media Sorting",
+                    summary = "Sets the sorting of photos and videos in grids",
+                    iconResID = R.drawable.sorting,
+                    position = RowPosition.Single,
+                    showBackground = false,
+                    checked = currentSortMode != MediaItemSortMode.Disabled,
+                    onRowClick = {
+                        showSortModeSelectorDialog = true
+                    },
+                    onSwitchClick = { checked ->
+                        if (checked) mainViewModel.settings.PhotoGrid.setSortMode(MediaItemSortMode.DateTaken)
+                        else mainViewModel.settings.PhotoGrid.setSortMode(MediaItemSortMode.Disabled)
+                    }
+                )
             }
 
             item {
@@ -341,8 +346,10 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
 
             item {
                 var showDefaultTabAlbumDialog by remember { mutableStateOf(false) }
-                val tabList by mainViewModel.settings.DefaultTabs.getTabList().collectAsStateWithLifecycle(initialValue = emptyList())
-                val defaultTab by mainViewModel.settings.DefaultTabs.getDefaultTab().collectAsStateWithLifecycle(initialValue = DefaultTabs.TabTypes.photos)
+                val tabList by mainViewModel.settings.DefaultTabs.getTabList()
+                    .collectAsStateWithLifecycle(initialValue = emptyList())
+                val defaultTab by mainViewModel.settings.DefaultTabs.getDefaultTab()
+                    .collectAsStateWithLifecycle(initialValue = DefaultTabs.TabTypes.photos)
 
                 if (showDefaultTabAlbumDialog) {
                     DefaultTabSelectorDialog(
@@ -369,7 +376,7 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
 
                 if (showDialog) {
                     TabCustomizationDialog(
-                    	currentTab = currentTab,
+                        currentTab = currentTab,
                         closeDialog = {
                             showDialog = false
                         }
@@ -394,7 +401,8 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
             }
 
             item {
-                val checkForUpdatesOnStartup by mainViewModel.settings.Versions.getCheckUpdatesOnStartup().collectAsStateWithLifecycle(initialValue = false)
+                val checkForUpdatesOnStartup by mainViewModel.settings.Versions.getCheckUpdatesOnStartup()
+                    .collectAsStateWithLifecycle(initialValue = false)
 
                 PreferencesSwitchRow(
                     title = "Check for Updates",
@@ -456,7 +464,7 @@ private fun DefaultTabSelectorDialog(
         onDismiss = dismissDialog
     ) {
         TitleCloseRow(title = "Default Tab") {
-        	dismissDialog()
+            dismissDialog()
         }
 
         val state = rememberLazyListState()
@@ -505,17 +513,21 @@ private fun DefaultTabSelectorDialog(
                     text = tab.name,
                     checked = selectedTab == tab,
                     modifier =
-                    Modifier
-                        .zIndex(
-                            if (selectedItem == tab) 1f
-                            else 0f
-                        )
-                        .graphicsLayer {
-                            if (selectedTab == tab) {
-                                translationY = itemOffset.floatValue
+                        Modifier
+                            .zIndex(
+                                if (selectedItem == tab) 1f
+                                else 0f
+                            )
+                            .graphicsLayer {
+                                if (selectedTab == tab) {
+                                    translationY = itemOffset.floatValue
+                                }
                             }
-                        }
-                        .animateItem(placementSpec = if (selectedItem == tab) null else tween(durationMillis = 250))
+                            .animateItem(
+                                placementSpec = if (selectedItem == tab) null else tween(
+                                    durationMillis = 250
+                                )
+                            )
                 ) {
                     selectedTab = tab
                 }
@@ -584,18 +596,19 @@ private fun ReorderableRadioButtonRow(
 
 @Composable
 fun TabCustomizationDialog(
-	currentTab: MutableState<BottomBarTab>,
+    currentTab: MutableState<BottomBarTab>,
     closeDialog: () -> Unit
 ) {
-    val tabList by mainViewModel.settings.DefaultTabs.getTabList().collectAsStateWithLifecycle(initialValue = emptyList())
+    val tabList by mainViewModel.settings.DefaultTabs.getTabList()
+        .collectAsStateWithLifecycle(initialValue = emptyList())
     val coroutineScope = rememberCoroutineScope()
 
     LavenderDialogBase(
         onDismiss = closeDialog
     ) {
-		TitleCloseRow(title = "Customize Tabs") {
-			closeDialog()
-		}
+        TitleCloseRow(title = "Customize Tabs") {
+            closeDialog()
+        }
 
         Column(
             modifier = Modifier
@@ -603,79 +616,81 @@ fun TabCustomizationDialog(
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.Start
         ) {
-        	DefaultTabs.defaultList.forEach { tab ->
-        		InfoRow(
-        			text = tab.name,
-        			iconResId = if (tab in tabList) R.drawable.delete else R.drawable.add,
-        			opacity = if (tab in tabList) 1f else 0.5f
-        		) {
-        			mainViewModel.settings.DefaultTabs.setTabList(
-        			    tabList.toMutableList().apply {
-        			    	if (tab in tabList && tabList.size > 1) {
-        			    		remove(tab)
-        			    		if (currentTab.value == tab) currentTab.value = tabList[0] // handle tab removal
-        			    	} else if (tab in tabList) {
-        			    		coroutineScope.launch {
-        			    			LavenderSnackbarController.pushEvent(
-        			    				LavenderSnackbarEvents.MessageEvent(
-        			    					message = "At least one tab needs to exist",
-        			    					iconResId = R.drawable.error_2,
-        			    					duration = SnackbarDuration.Short
-        			    				)
-        			    			)
-        			    		}
-        			    	}
+            DefaultTabs.defaultList.forEach { tab ->
+                InfoRow(
+                    text = tab.name,
+                    iconResId = if (tab in tabList) R.drawable.delete else R.drawable.add,
+                    opacity = if (tab in tabList) 1f else 0.5f
+                ) {
+                    mainViewModel.settings.DefaultTabs.setTabList(
+                        tabList.toMutableList().apply {
+                            if (tab in tabList && tabList.size > 1) {
+                                remove(tab)
+                                if (currentTab.value == tab) currentTab.value =
+                                    tabList[0] // handle tab removal
+                            } else if (tab in tabList) {
+                                coroutineScope.launch {
+                                    LavenderSnackbarController.pushEvent(
+                                        LavenderSnackbarEvents.MessageEvent(
+                                            message = "At least one tab needs to exist",
+                                            iconResId = R.drawable.error_2,
+                                            duration = SnackbarDuration.Short
+                                        )
+                                    )
+                                }
+                            }
 
-        			    	if (tab !in tabList && tabList.size < 5) {
-        			    		add(tab)
-        			    	} else if (tab !in tabList) {
-        			    		coroutineScope.launch {
-        			    			LavenderSnackbarController.pushEvent(
-        			    				LavenderSnackbarEvents.MessageEvent(
-        			    					message = "Maximum of 5 tabs allowed",
-        			    					iconResId = R.drawable.error_2,
-        			    					duration = SnackbarDuration.Short
-        			    				)
-        			    			)
-        			    		}
-        			    	}
-        			    }
-        			)
-        		}
-        	}
+                            if (tab !in tabList && tabList.size < 5) {
+                                add(tab)
+                            } else if (tab !in tabList) {
+                                coroutineScope.launch {
+                                    LavenderSnackbarController.pushEvent(
+                                        LavenderSnackbarEvents.MessageEvent(
+                                            message = "Maximum of 5 tabs allowed",
+                                            iconResId = R.drawable.error_2,
+                                            duration = SnackbarDuration.Short
+                                        )
+                                    )
+                                }
+                            }
+                        }
+                    )
+                }
+            }
 
             tabList.forEach { tab ->
-            	if (tab !in DefaultTabs.defaultList) {
-	                InfoRow(
-						text = tab.name,
-						iconResId = R.drawable.delete
-					) {
-						if (tabList.size > 1) {
-							mainViewModel.settings.DefaultTabs.setTabList(
-							    tabList.toMutableList().apply {
-							        remove(tab)
-							        if (currentTab.value == tab) currentTab.value = tabList[0] // handle tab removal
-							    }
-							)
-						} else {
-							coroutineScope.launch {
-								LavenderSnackbarController.pushEvent(
-									LavenderSnackbarEvents.MessageEvent(
-										message = "At least one tab needs to exist",
-										iconResId = R.drawable.error_2,
-										duration = SnackbarDuration.Short
-									)
-								)
-							}
-						}
-					}
-            	}
+                if (tab !in DefaultTabs.defaultList) {
+                    InfoRow(
+                        text = tab.name,
+                        iconResId = R.drawable.delete
+                    ) {
+                        if (tabList.size > 1) {
+                            mainViewModel.settings.DefaultTabs.setTabList(
+                                tabList.toMutableList().apply {
+                                    remove(tab)
+                                    if (currentTab.value == tab) currentTab.value =
+                                        tabList[0] // handle tab removal
+                                }
+                            )
+                        } else {
+                            coroutineScope.launch {
+                                LavenderSnackbarController.pushEvent(
+                                    LavenderSnackbarEvents.MessageEvent(
+                                        message = "At least one tab needs to exist",
+                                        iconResId = R.drawable.error_2,
+                                        duration = SnackbarDuration.Short
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
 
-        Spacer (modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(4.dp))
         HorizontalSeparator()
-        Spacer (modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         var showDialog by remember { mutableStateOf(false) }
         if (showDialog) {

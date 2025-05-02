@@ -3,6 +3,7 @@ package com.kaii.photos.helpers
 import android.os.Environment
 import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
+import com.kaii.photos.datastore.AlbumInfo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -17,8 +18,8 @@ import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
-import kotlin.coroutines.coroutineContext
 import kotlin.io.path.isRegularFile
+import kotlin.io.path.name
 
 private const val TAG = "DIRECTORY_FUNCTIONS"
 const val EXTERNAL_DOCUMENTS_AUTHORITY = "com.android.externalstorage.documents"
@@ -35,7 +36,10 @@ fun Path.checkHasFiles(
 
     val folder = try {
         Files.walkFileTree(this, object : FileVisitor<Path> {
-            override fun preVisitDirectory(dir: Path?, attrs: BasicFileAttributes?): FileVisitResult {
+            override fun preVisitDirectory(
+                dir: Path?,
+                attrs: BasicFileAttributes?
+            ): FileVisitResult {
                 if (dir?.startsWith(this@checkHasFiles) == true && !dir.endsWith(this@checkHasFiles) && matchSubDirs) {
                     throw IOException("won't search path that's a subdir of ${this@checkHasFiles}")
                 }
@@ -43,7 +47,10 @@ fun Path.checkHasFiles(
                 val dataPath = baseInternalStorageDirectory + "Android/data"
                 val obbPath = baseInternalStorageDirectory + "Android/obb"
                 return if (dir?.startsWith(dataPath) == true || dir?.startsWith(obbPath) == true) {
-                    if (this@checkHasFiles.startsWith(dataPath) || this@checkHasFiles.startsWith(obbPath)) {
+                    if (this@checkHasFiles.startsWith(dataPath) || this@checkHasFiles.startsWith(
+                            obbPath
+                        )
+                    ) {
                         throw IOException("Can't access file with path $this")
                     } else {
                         FileVisitResult.SKIP_SUBTREE
@@ -57,7 +64,8 @@ fun Path.checkHasFiles(
                 if (path != null) {
                     val matchForDotFiles = Regex("\\.[A-z]")
                     val file = path.toFile()
-                    val isDotFile = file.absolutePath.contains(matchForDotFiles) && file.name.startsWith(".")
+                    val isDotFile =
+                        file.absolutePath.contains(matchForDotFiles) && file.name.startsWith(".")
 
                     Log.d(TAG, "Trying to scan file ${file.absolutePath}.")
 
@@ -71,7 +79,10 @@ fun Path.checkHasFiles(
                             val isMedia = mimeType.contains("image") || mimeType.contains("video")
 
                             if (isNormal && isMedia) {
-                                Log.d(TAG, "Scanned file ${file.absolutePath} matches all prerequisites, exiting....")
+                                Log.d(
+                                    TAG,
+                                    "Scanned file ${file.absolutePath} matches all prerequisites, exiting...."
+                                )
 
                                 hasFiles = true
                                 return FileVisitResult.TERMINATE
@@ -111,30 +122,43 @@ fun String.checkPathIsDownloads(): Boolean =
 
 fun String.getFileNameFromPath(): String = trim().removeSuffix("/").split("/").last()
 
-fun String.getParentFromPath(): String = trim().replace(this.getFileNameFromPath(), "").removeSuffix("/")
+fun String.getParentFromPath(): String =
+    trim().replace(this.getFileNameFromPath(), "").removeSuffix("/")
 
 val File.relativePath: String
     get() = this.absolutePath.replace(baseInternalStorageDirectory, "")
 
 fun String.toRelativePath() = trim().replace(baseInternalStorageDirectory, "")
 
-fun Path.getAllAlbumsOnDevice(): Flow<String> = channelFlow {
-    val albums = mutableStateListOf<String>()
+fun Path.getAllAlbumsOnDevice(): Flow<AlbumInfo> = channelFlow {
+    val albums = mutableStateListOf<AlbumInfo>()
 
     val coroutineScope = CoroutineScope(context = coroutineContext)
-    fun emitAlbums(string: String) = coroutineScope.launch {
-        send(string)
+    fun emitAlbums(info: AlbumInfo) = coroutineScope.launch {
+        send(info)
     }
 
     try {
         Files.walkFileTree(this@getAllAlbumsOnDevice, object : FileVisitor<Path> {
-            override fun preVisitDirectory(dir: Path?, attrs: BasicFileAttributes?): FileVisitResult {
+            override fun preVisitDirectory(
+                dir: Path?,
+                attrs: BasicFileAttributes?
+            ): FileVisitResult {
                 val dataPath = baseInternalStorageDirectory + "Android/data"
                 val obbPath = baseInternalStorageDirectory + "Android/obb"
 
-                return if (dir?.toString()?.replace(baseInternalStorageDirectory, "") in albums) {
+                if (dir == null) return FileVisitResult.CONTINUE
+
+                val album =
+                    AlbumInfo(
+                        id = dir.hashCode(),
+                        name = dir.name,
+                        paths = listOf(dir.toString().toRelativePath())
+                    )
+
+                return if (album in albums) {
                     FileVisitResult.SKIP_SUBTREE
-                } else if (dir?.startsWith(dataPath) == true || dir?.startsWith(obbPath) == true) {
+                } else if (dir.startsWith(dataPath) || dir.startsWith(obbPath)) {
                     FileVisitResult.SKIP_SUBTREE
                 } else {
                     FileVisitResult.CONTINUE
@@ -146,10 +170,18 @@ fun Path.getAllAlbumsOnDevice(): Flow<String> = channelFlow {
                     val matchForDotFiles = Regex("\\.[A-z]")
                     val file = path.toFile()
 
-                    val fileParentPath = file.absolutePath.replace(baseInternalStorageDirectory, "").replace(file.name, "").removeSuffix("/")
-                    if (fileParentPath in albums) return FileVisitResult.CONTINUE
+                    val fileParentPath = file.absolutePath.toRelativePath().getParentFromPath()
+                    val album =
+                        AlbumInfo(
+                            id = fileParentPath.hashCode(),
+                            name = fileParentPath.getFileNameFromPath(),
+                            paths = listOf(fileParentPath)
+                        )
 
-                    val isDotFile = file.absolutePath.contains(matchForDotFiles) && file.name.startsWith(".")
+                    if (album in albums) return FileVisitResult.CONTINUE
+
+                    val isDotFile =
+                        file.absolutePath.contains(matchForDotFiles) && file.name.startsWith(".")
 
                     Log.d(TAG, "Trying to scan file ${file.absolutePath}.")
 
@@ -161,11 +193,14 @@ fun Path.getAllAlbumsOnDevice(): Flow<String> = channelFlow {
                             val isMedia = mimeType.contains("image") || mimeType.contains("video")
 
                             if (isNormal && isMedia) {
-                                Log.d(TAG, "Scanned file ${file.absolutePath} matches all prerequisites, moving on....")
+                                Log.d(
+                                    TAG,
+                                    "Scanned file ${file.absolutePath} matches all prerequisites, moving on...."
+                                )
 
-                                if (!albums.contains(fileParentPath)) {
-                                    albums.add(fileParentPath)
-                                    emitAlbums(fileParentPath)
+                                if (!albums.contains(album)) {
+                                    albums.add(album)
+                                    emitAlbums(album)
                                 }
 
                                 return FileVisitResult.CONTINUE

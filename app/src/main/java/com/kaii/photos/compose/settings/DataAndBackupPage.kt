@@ -33,10 +33,10 @@ import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.PreferencesRow
 import com.kaii.photos.compose.PreferencesSeparatorText
+import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.helpers.DataAndBackupHelper
 import com.kaii.photos.helpers.RowPosition
-import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.relativePath
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import kotlinx.coroutines.Dispatchers
@@ -88,10 +88,13 @@ fun DataAndBackupPage() {
 
                         backupHelper.exportUnencryptedSecureFolderItems(context = context)
 
+                        val albumFile = backupHelper.getUnencryptedExportDir(context = context)
                         mainViewModel.settings.AlbumsList.addToAlbumsList(
-                            backupHelper.getUnencryptedExportDir(context = context)
-                                .absolutePath
-                                .replace(baseInternalStorageDirectory, "")
+                            AlbumInfo(
+                                name = albumFile.name,
+                                paths = listOf(albumFile.relativePath),
+                                id = albumFile.hashCode()
+                            )
                         )
 
                         isLoading.value = false
@@ -105,8 +108,8 @@ fun DataAndBackupPage() {
                     position = RowPosition.Middle,
                     showBackground = false
                 ) {
-                	mainViewModel.launch(Dispatchers.IO) {
-                		val backupHelper = DataAndBackupHelper()
+                    mainViewModel.launch(Dispatchers.IO) {
+                        val backupHelper = DataAndBackupHelper()
 
                         isLoading.value = true
                         LavenderSnackbarController.pushEvent(
@@ -119,14 +122,17 @@ fun DataAndBackupPage() {
 
                         backupHelper.exportRawSecureFolderItems(context = context)
 
+                        val albumFile = backupHelper.getUnencryptedExportDir(context = context)
                         mainViewModel.settings.AlbumsList.addToAlbumsList(
-                            backupHelper.getRawExportDir(context = context)
-                                .absolutePath
-                                .replace(baseInternalStorageDirectory, "")
+                            AlbumInfo(
+                                name = albumFile.name,
+                                paths = listOf(albumFile.relativePath),
+                                id = albumFile.hashCode()
+                            )
                         )
 
                         isLoading.value = false
-                	}
+                    }
                 }
 
                 PreferencesRow(
@@ -201,8 +207,13 @@ fun DataAndBackupPage() {
                         helper.exportFavourites(context = context)
 
                         val favExportDir = helper.getFavExportDir(context = context)
-
-                        mainViewModel.settings.AlbumsList.addToAlbumsList(favExportDir.relativePath)
+                        mainViewModel.settings.AlbumsList.addToAlbumsList(
+                            AlbumInfo(
+                                name = favExportDir.name,
+                                paths = listOf(favExportDir.relativePath),
+                                id = favExportDir.hashCode()
+                            )
+                        )
 
                         isLoading.value = false
                     }
@@ -228,7 +239,7 @@ fun DataAndBackupPage() {
                         )
 
                         helper.exportFavouritesToZipFile(context = context) { progress ->
-                        	Log.d(TAG, "Progress ${progress * 100}")
+                            Log.d(TAG, "Progress ${progress * 100}")
                         }
 
                         val intent = Intent().apply {

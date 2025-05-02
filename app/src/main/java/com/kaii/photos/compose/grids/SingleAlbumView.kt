@@ -28,12 +28,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalNavController
-import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.compose.SingleAlbumViewBottomBar
 import com.kaii.photos.compose.SingleAlbumViewTopBar
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.dialogs.SingleAlbumDialog
-import com.kaii.photos.datastore.AlbumsList
+import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
@@ -42,6 +41,7 @@ import kotlinx.coroutines.Dispatchers
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SingleAlbumView(
+    albumInfo: AlbumInfo,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     currentView: MutableState<BottomBarTab>,
     viewModel: MultiAlbumViewModel
@@ -55,7 +55,6 @@ fun SingleAlbumView(
     }
 
     val mediaStoreData by viewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
-    val albums by mainViewModel.settings.AlbumsList.get().collectAsStateWithLifecycle(initialValue = emptyList())
 
     val groupedMedia = remember { mutableStateOf(mediaStoreData) }
 
@@ -87,23 +86,15 @@ fun SingleAlbumView(
         bottomSheetState = sheetState
     )
 
-	val albumInfo by remember { derivedStateOf {
-		albums.find {
-        	it.mainPath == viewModel.albums.first()
-       	}
-	}}
-
-	val context = LocalContext.current
-	LaunchedEffect(albumInfo) {
-		if (albumInfo == null) return@LaunchedEffect
-
-		if (viewModel.albums.toSet() != albumInfo!!.paths.toSet()) {
-			viewModel.reinitDataSource(
-				context = context,
-				albumsList = albumInfo!!.paths
-			)
-		}
-	}
+    val context = LocalContext.current
+    LaunchedEffect(albumInfo) {
+        if (viewModel.albums.toSet() != albumInfo.paths.toSet()) {
+            viewModel.reinitDataSource(
+                context = context,
+                albumsList = albumInfo.paths
+            )
+        }
+    }
 
     BottomSheetScaffold(
         scaffoldState = scaffoldState,
@@ -142,13 +133,13 @@ fun SingleAlbumView(
         ) {
             PhotoGrid(
                 groupedMedia = groupedMedia,
-                albums = albumInfo?.paths ?: viewModel.albums,
+                albums = viewModel.albums,
                 selectedItemsList = selectedItemsList,
                 viewProperties = ViewProperties.Album,
                 shouldPadUp = true
             )
 
-            SingleAlbumDialog(showDialog, viewModel.albums.first(), navController, selectedItemsList) // TODO: make it handle multiple albums
+            SingleAlbumDialog(showDialog, albumInfo, navController, selectedItemsList)
         }
     }
 }

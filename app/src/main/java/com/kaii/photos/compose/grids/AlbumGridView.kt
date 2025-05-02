@@ -46,11 +46,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -71,8 +71,6 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.center
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toOffset
-import androidx.compose.ui.util.fastMap
-import androidx.compose.ui.util.fastMapIndexed
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -95,8 +93,8 @@ import com.kaii.photos.mediastore.signature
 import com.kaii.photos.models.album_grid.AlbumsViewModel
 import com.kaii.photos.models.album_grid.AlbumsViewModelFactory
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private const val TAG = "ALBUMS_GRID_VIEW"
 
@@ -108,18 +106,22 @@ fun AlbumsGridView(
     val context = LocalContext.current
     val navController = LocalNavController.current
 
-    val listOfDirs by mainViewModel.settings.AlbumsList.get().collectAsStateWithLifecycle(initialValue = emptyList())
-    val sortMode by mainViewModel.settings.AlbumsList.getAlbumSortMode().collectAsStateWithLifecycle(initialValue = AlbumSortMode.Custom)
-    val sortByDescending by mainViewModel.settings.AlbumsList.getSortByDescending().collectAsStateWithLifecycle(initialValue = true)
+    val listOfDirs by mainViewModel.settings.AlbumsList.getAlbumsList()
+        .collectAsStateWithLifecycle(initialValue = emptyList())
+    val sortMode by mainViewModel.settings.AlbumsList.getAlbumSortMode()
+        .collectAsStateWithLifecycle(initialValue = AlbumSortMode.Custom)
+    val sortByDescending by mainViewModel.settings.AlbumsList.getSortByDescending()
+        .collectAsStateWithLifecycle(initialValue = true)
 
-    val albums = remember { mutableStateOf<List<AlbumInfo>>(listOfDirs) }
+    val albums = remember { mutableStateOf(listOfDirs) }
 
     val albumsViewModel: AlbumsViewModel = viewModel(
         factory = AlbumsViewModelFactory(context = context, albums = albums.value)
     )
 
     val albumToThumbnailMapping by albumsViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
-    val cachedAlbumToThumbnailMapping = remember { mutableStateListOf<Pair<AlbumInfo, MediaStoreData>>() }
+    val cachedAlbumToThumbnailMapping =
+        remember { mutableStateListOf<Pair<AlbumInfo, MediaStoreData>>() }
 
     LaunchedEffect(listOfDirs, sortMode, sortByDescending, albumToThumbnailMapping) {
         withContext(Dispatchers.IO) {
@@ -144,9 +146,9 @@ fun AlbumsGridView(
                     newList.addAll(
                         if (sortByDescending) {
                             copy.sortedByDescending { album ->
-                            	cachedAlbumToThumbnailMapping.find {
+                                cachedAlbumToThumbnailMapping.find {
                                     it.first.id == album.id
-                            	}?.second?.dateModified
+                                }?.second?.dateModified
                             }.toMutableList().apply {
                                 find { item -> item.mainPath == "DCIM/Camera" }?.let { cameraItem ->
                                     remove(cameraItem)
@@ -189,7 +191,7 @@ fun AlbumsGridView(
                 }
             }
 
-			albums.value = newList.distinctBy { it.id }
+            albums.value = newList.distinctBy { it.id }
 
             Log.d(TAG, "Mapping: $albumToThumbnailMapping")
             Log.d(TAG, "Albums $albums")
@@ -201,7 +203,7 @@ fun AlbumsGridView(
 
     // update the list to reflect custom order (doesn't matter for other sorting modes)
     LaunchedEffect(albums.value) {
-        if (albums.value.isNotEmpty()) mainViewModel.settings.AlbumsList.setAlbumsList(albums.value.fastMap { it.mainPath })
+        if (albums.value.isNotEmpty()) mainViewModel.settings.AlbumsList.setAlbumsList(albums.value)
     }
 
     BackHandler(
@@ -241,7 +243,8 @@ fun AlbumsGridView(
         }
 
         LaunchedEffect(lazyGridState.isScrollInProgress) {
-            if (lazyGridState.isScrollInProgress && lazyGridState.canScrollBackward) lockHeader = false
+            if (lazyGridState.isScrollInProgress && lazyGridState.canScrollBackward) lockHeader =
+                false
         }
 
         SortModeHeader(
@@ -295,12 +298,14 @@ fun AlbumsGridView(
 
                             if (targetItemIndex != null) {
                                 val targetItem = albums.value[targetItemIndex]
-                                val currentLazyItem = lazyGridState.layoutInfo.visibleItemsInfo.find {
-                                    it.key == selectedItem
-                                }
-                                val targetLazyItem = lazyGridState.layoutInfo.visibleItemsInfo.find {
-                                    it.key == targetItem
-                                }
+                                val currentLazyItem =
+                                    lazyGridState.layoutInfo.visibleItemsInfo.find {
+                                        it.key == selectedItem
+                                    }
+                                val targetLazyItem =
+                                    lazyGridState.layoutInfo.visibleItemsInfo.find {
+                                        it.key == targetItem
+                                    }
 
                                 if (currentLazyItem != null && targetLazyItem != null) {
                                     val newList = albums.value.toMutableList()
@@ -311,13 +316,18 @@ fun AlbumsGridView(
                                         change.position - (targetLazyItem.offset + targetLazyItem.size.center).toOffset()
 
                                     albums.value = newList.distinctBy { it.id }
-                                    if (sortMode != AlbumSortMode.Custom) mainViewModel.settings.AlbumsList.setAlbumSortMode(AlbumSortMode.Custom)
+                                    if (sortMode != AlbumSortMode.Custom) mainViewModel.settings.AlbumsList.setAlbumSortMode(
+                                        AlbumSortMode.Custom
+                                    )
                                 } else if (currentLazyItem != null) {
-                                	val startOffset = currentLazyItem.offset.y + itemOffset.y
-									val endOffset = currentLazyItem.offset.y + currentLazyItem.size.height + itemOffset.y
+                                    val startOffset = currentLazyItem.offset.y + itemOffset.y
+                                    val endOffset =
+                                        currentLazyItem.offset.y + currentLazyItem.size.height + itemOffset.y
 
-                                    val offsetToTop = startOffset - lazyGridState.layoutInfo.viewportStartOffset
-                                    val offsetToBottom = endOffset - lazyGridState.layoutInfo.viewportEndOffset
+                                    val offsetToTop =
+                                        startOffset - lazyGridState.layoutInfo.viewportStartOffset
+                                    val offsetToBottom =
+                                        endOffset - lazyGridState.layoutInfo.viewportEndOffset
 
                                     val scroll = when {
                                         offsetToTop < 0 -> offsetToTop.coerceAtMost(0f)
@@ -400,7 +410,7 @@ fun AlbumsGridView(
                 ) {
                     navController.navigate(
                         Screens.SingleAlbumView(
-                            albums = neededDir.paths
+                            albumInfo = neededDir
                         )
                     )
                 }
@@ -595,7 +605,8 @@ private fun SortModeHeader(
         )
     ) {
         item {
-            val sortByDescending by mainViewModel.settings.AlbumsList.getSortByDescending().collectAsStateWithLifecycle(initialValue = true)
+            val sortByDescending by mainViewModel.settings.AlbumsList.getSortByDescending()
+                .collectAsStateWithLifecycle(initialValue = true)
 
             OutlinedIconButton(
                 onClick = {
@@ -627,8 +638,8 @@ private fun SortModeHeader(
                     mainViewModel.settings.AlbumsList.setAlbumSortMode(AlbumSortMode.LastModified)
                 },
                 colors =
-                if (sortMode == AlbumSortMode.LastModified) ButtonDefaults.buttonColors()
-                else ButtonDefaults.outlinedButtonColors()
+                    if (sortMode == AlbumSortMode.LastModified) ButtonDefaults.buttonColors()
+                    else ButtonDefaults.outlinedButtonColors()
             ) {
                 Text(
                     text = "Date",
@@ -644,8 +655,8 @@ private fun SortModeHeader(
                     mainViewModel.settings.AlbumsList.setAlbumSortMode(AlbumSortMode.Alphabetically)
                 },
                 colors =
-                if (sortMode == AlbumSortMode.Alphabetically) ButtonDefaults.buttonColors()
-                else ButtonDefaults.outlinedButtonColors()
+                    if (sortMode == AlbumSortMode.Alphabetically) ButtonDefaults.buttonColors()
+                    else ButtonDefaults.outlinedButtonColors()
             ) {
                 Text(
                     text = "Name",
@@ -661,8 +672,8 @@ private fun SortModeHeader(
                     mainViewModel.settings.AlbumsList.setAlbumSortMode(AlbumSortMode.Custom)
                 },
                 colors =
-                if (sortMode == AlbumSortMode.Custom) ButtonDefaults.buttonColors()
-                else ButtonDefaults.outlinedButtonColors()
+                    if (sortMode == AlbumSortMode.Custom) ButtonDefaults.buttonColors()
+                    else ButtonDefaults.outlinedButtonColors()
             ) {
                 Text(
                     text = "Custom",

@@ -48,6 +48,7 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.dialogs.ExplanationDialog
 import com.kaii.photos.datastore.AlbumsList
+import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.helpers.AppDirectories
@@ -110,53 +111,59 @@ fun LockedFolderEntryView(
         absoluteDirPaths = listOf(context.appRestoredFilesDir),
         shouldRun = newFolderDirPermission,
         onGranted = {
-	        mainViewModel.launch(Dispatchers.IO) {
-	            val oldDir = context.getDir(AppDirectories.OldSecureFolder.path, Context.MODE_PRIVATE)
-	            val oldFiles = oldDir.listFiles()
+            mainViewModel.launch(Dispatchers.IO) {
+                val oldDir = context.getDir(AppDirectories.OldSecureFolder.path, Context.MODE_PRIVATE)
+                val oldFiles = oldDir.listFiles()
 
-	            if (oldFiles == null || oldFiles.isEmpty()) return@launch
+                if (oldFiles == null || oldFiles.isEmpty()) return@launch
 
-	            migrating = true
-	            canOpenSecureFolder = false
+                migrating = true
+                canOpenSecureFolder = false
 
-	            Log.d(TAG, "Exporting backup of old secure folder items")
+                Log.d(TAG, "Exporting backup of old secure folder items")
 
-	            val helper = DataAndBackupHelper()
-	            val success = helper.exportRawSecureFolderItems(
-	                context = context,
-	                secureFolder = oldDir
-	            )
+                val helper = DataAndBackupHelper()
+                val success = helper.exportRawSecureFolderItems(
+                    context = context,
+                    secureFolder = oldDir
+                )
 
-	            if (success) {
-	                val exportDir = helper.getRawExportDir(context = context)
-	                mainViewModel.settings.AlbumsList.addToAlbumsList(exportDir.relativePath)
+                if (success) {
+                    val exportDir = helper.getRawExportDir(context = context)
+                    mainViewModel.settings.AlbumsList.addToAlbumsList(
+                        AlbumInfo(
+                            id = exportDir.relativePath.hashCode(),
+                            name = exportDir.relativePath.split("/").last(),
+                            paths = listOf(exportDir.relativePath)
+                        )
+                    )
 
-	                oldFiles.forEach {
-	                    Log.d(TAG, "item in old dir ${it.name}")
+                    oldFiles.forEach {
+                        Log.d(TAG, "item in old dir ${it.name}")
 
-	                    val destination = File(context.appSecureFolderDir, it.name)
-	                    if (!destination.exists()) {
-	                        it.copyTo(destination)
-	                        it.delete()
-	                    }
-	                }
+                        val destination = File(context.appSecureFolderDir, it.name)
+                        if (!destination.exists()) {
+                            it.copyTo(destination)
+                            it.delete()
+                        }
+                    }
 
-	                showExplanationForMigration.value = true
-	            } else {
-	                LavenderSnackbarController.pushEvent(
-	                    LavenderSnackbarEvents.MessageEvent(
-	                        message = "Failed exporting backup!",
-	                        iconResId = R.drawable.error_2,
-	                        duration = SnackbarDuration.Long
-	                    )
-	                )
-	            }
+                    showExplanationForMigration.value = true
+                } else {
+                    LavenderSnackbarController.pushEvent(
+                        LavenderSnackbarEvents.MessageEvent(
+                            message = "Failed exporting backup!",
+                            iconResId = R.drawable.error_2,
+                            duration = SnackbarDuration.Long
+                        )
+                    )
+                }
 
-	            migrating = false
-	            canOpenSecureFolder = true
+                migrating = false
+                canOpenSecureFolder = true
 
-	            rerunMigration = true
-	        }
+                rerunMigration = true
+            }
         },
         onRejected = {}
     )
@@ -165,44 +172,44 @@ fun LockedFolderEntryView(
         absoluteDirPaths = listOf(context.appRestoredFilesDir),
         shouldRun = encryptionDirPermission,
         onGranted = {
-	        mainViewModel.launch(Dispatchers.IO) {
-	            if (unencryptedFilesList.isEmpty()) return@launch
+            mainViewModel.launch(Dispatchers.IO) {
+                if (unencryptedFilesList.isEmpty()) return@launch
 
-	            migrating = true
-	            canOpenSecureFolder = false
+                migrating = true
+                canOpenSecureFolder = false
 
-	            val restoredFilesDir = context.appRestoredFilesDir
+                val restoredFilesDir = context.appRestoredFilesDir
 
-	            val uris = unencryptedFilesList.mapNotNull { file ->
-	                val destination = File(restoredFilesDir, file.name)
-	                if (!destination.exists()) {
-	                    file.copyTo(destination)
-	                }
+                val uris = unencryptedFilesList.mapNotNull { file ->
+                    val destination = File(restoredFilesDir, file.name)
+                    if (!destination.exists()) {
+                        file.copyTo(destination)
+                    }
 
-	                val uri = context.contentResolver.getUriFromAbsolutePath(
-	                    absolutePath = destination.absolutePath,
-	                    type =
-	                    if (Files.probeContentType(Path(destination.absolutePath)).startsWith("image")) MediaType.Image
-	                    else MediaType.Video
-	                )
+                    val uri = context.contentResolver.getUriFromAbsolutePath(
+                        absolutePath = destination.absolutePath,
+                        type =
+                            if (Files.probeContentType(Path(destination.absolutePath)).startsWith("image")) MediaType.Image
+                            else MediaType.Video
+                    )
 
-	                Log.d(TAG, "Uri for file ${file.name} is $uri")
+                    Log.d(TAG, "Uri for file ${file.name} is $uri")
 
-	                uri
-	            }
+                    uri
+                }
 
-	            if (uris.isEmpty()) {
-	                migrating = false
-	                return@launch
-	            }
+                if (uris.isEmpty()) {
+                    migrating = false
+                    return@launch
+                }
 
-	            Log.d(TAG, "Starting encryption process...")
+                Log.d(TAG, "Starting encryption process...")
 
-	            uriList.clear()
-	            uriList.addAll(uris)
+                uriList.clear()
+                uriList.addAll(uris)
 
-	            runEncryptAction.value = true
-	        }
+                runEncryptAction.value = true
+            }
         },
         onRejected = {}
     )
@@ -230,7 +237,15 @@ fun LockedFolderEntryView(
                         name
                     }
                 )
-                mainViewModel.settings.AlbumsList.addToAlbumsList(context.appRestoredFilesDir.toRelativePath())
+
+                val path = context.appRestoredFilesDir.toRelativePath()
+                mainViewModel.settings.AlbumsList.addToAlbumsList(
+                    AlbumInfo(
+                        id = path.hashCode(),
+                        name = path.split("/").last(),
+                        paths = listOf(path)
+                    )
+                )
 
                 Log.d(TAG, "Encrypting secure folder media...")
                 moveImageToLockedFolder(

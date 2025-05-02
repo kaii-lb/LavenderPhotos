@@ -424,8 +424,8 @@ fun AlbumPathsDialog(
 
             val activityLauncher = createDirectoryPicker { path ->
                 if (path != null) {
-                    mainViewModel.settings.AlbumsList.editInPlace(
-                        albumId = albumInfo.id,
+                    mainViewModel.settings.AlbumsList.editInAlbumsList(
+                        albumInfo = albumInfo,
                         newInfo = albumInfo.copy(
                         	paths = albumInfo.paths.toMutableList().apply {
                         		if (!contains(path)) {
