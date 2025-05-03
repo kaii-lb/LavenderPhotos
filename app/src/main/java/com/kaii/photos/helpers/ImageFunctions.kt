@@ -61,6 +61,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.math.min
+import androidx.core.graphics.createBitmap
 
 private const val TAG = "IMAGE_FUNCTIONS"
 
@@ -376,7 +377,7 @@ suspend fun savePathListToBitmap(
         val colorFilteredPaint = Paint().apply {
             colorFilter = ColorFilter.colorMatrix(adjustmentColorMatrix)
         }
-        val savedImage = Bitmap.createBitmap(unadjustedImage.width, unadjustedImage.height, Bitmap.Config.ARGB_8888).asImageBitmap()
+        val savedImage = createBitmap(unadjustedImage.width, unadjustedImage.height).asImageBitmap()
         val adjustCanvas = android.graphics.Canvas(savedImage.asAndroidBitmap())
         adjustCanvas.drawBitmap(unadjustedImage, 0f, 0f, colorFilteredPaint.asFrameworkPaint())
 
@@ -419,7 +420,7 @@ suspend fun savePathListToBitmap(
                     is DrawableBlur -> {
                         val (path, pathPaint) = modification
 
-                        val offscreenBitmap = Bitmap.createBitmap(size.width, size.height, Bitmap.Config.ARGB_8888)
+                        val offscreenBitmap = createBitmap(size.width, size.height)
                         val offscreenCanvas = android.graphics.Canvas(offscreenBitmap)
 
                         offscreenCanvas.scale(ratio, ratio, 0.5f, 0.5f)

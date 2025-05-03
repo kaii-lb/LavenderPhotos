@@ -30,6 +30,7 @@ import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
+import androidx.core.graphics.createBitmap
 
 private const val TAG = "PAINTS"
 
@@ -233,7 +234,7 @@ fun Bitmap.blur(blurRadius: Float) : Bitmap {
         .setWaitForPresent(true)
         .syncAndDraw()
 
-    val emptyBitmap = Bitmap.createBitmap(512,512, Bitmap.Config.ARGB_8888)
+    val emptyBitmap = createBitmap(512, 512)
 
     val image = imageReader.acquireNextImage() ?: run {
     	Log.e(TAG, "image reader was empty")

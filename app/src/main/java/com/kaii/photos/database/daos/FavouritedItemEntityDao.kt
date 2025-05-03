@@ -3,10 +3,9 @@ package com.kaii.photos.database.daos
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
-import androidx.room.Query
 import androidx.room.OnConflictStrategy
+import androidx.room.Query
 import com.kaii.photos.database.entities.FavouritedItemEntity
-import com.kaii.photos.database.entities.MediaEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao

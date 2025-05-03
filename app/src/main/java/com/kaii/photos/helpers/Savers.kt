@@ -1,6 +1,5 @@
 package com.kaii.photos.helpers
 
-import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.mapSaver
 import androidx.compose.ui.geometry.Offset
 import com.kaii.photos.datastore.BottomBarTab

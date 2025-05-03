@@ -105,9 +105,9 @@ import com.bumptech.glide.signature.ObjectKey
 import com.kaii.photos.BuildConfig
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
-import com.kaii.photos.compose.BottomAppBarItem
+import com.kaii.photos.compose.app_bars.BottomAppBarItem
 import com.kaii.photos.compose.rememberDeviceOrientation
-import com.kaii.photos.compose.setBarVisibility
+import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.dialogs.ExplanationDialog
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType

@@ -6,7 +6,7 @@
     android:viewportWidth="920"
     android:viewportHeight="920">
 
-  <group android:translateX="0"
+  <group android:translateX="-25"
       android:translateY="0">
 
 	  <path

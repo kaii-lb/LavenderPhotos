@@ -4,8 +4,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -27,15 +27,15 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kaii.photos.LocalNavController
-import com.kaii.photos.compose.FavouritesViewBottomAppBar
-import com.kaii.photos.compose.FavouritesViewTopAppBar
 import com.kaii.photos.compose.ViewProperties
+import com.kaii.photos.compose.app_bars.FavouritesViewBottomAppBar
+import com.kaii.photos.compose.app_bars.FavouritesViewTopAppBar
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.mediastore.MediaStoreData
-import com.kaii.photos.models.multi_album.groupPhotosBy
 import com.kaii.photos.models.favourites_grid.FavouritesViewModel
 import com.kaii.photos.models.favourites_grid.FavouritesViewModelFactory
+import com.kaii.photos.models.multi_album.groupPhotosBy
 import kotlinx.coroutines.Dispatchers
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -98,7 +98,10 @@ fun FavouritesGridView(
                 WindowInsets.navigationBars
             ),
         topBar = {
-            FavouritesViewTopAppBar(selectedItemsList = selectedItemsList, currentView = currentView) {
+            FavouritesViewTopAppBar(
+                selectedItemsList = selectedItemsList,
+                currentView = currentView
+            ) {
                 navController.popBackStack()
             }
         },

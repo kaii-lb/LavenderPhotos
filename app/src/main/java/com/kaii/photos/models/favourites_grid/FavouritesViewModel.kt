@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.nio.file.Files
+import androidx.core.net.toUri
 
 class FavouritesViewModel : ViewModel() {
     private val dao = MainActivity.applicationDatabase.favouritedItemEntityDao()
@@ -35,7 +36,7 @@ class FavouritesViewModel : ViewModel() {
                     dateTaken = entity.dateTaken,
                     absolutePath = entity.absolutePath,
                     mimeType = entity.mimeType,
-                    uri = Uri.parse(entity.uri),
+                    uri = entity.uri.toUri(),
                     type = entity.type,
                     id = entity.id,
                     dateModified = entity.dateModified,
@@ -57,7 +58,7 @@ class FavouritesViewModel : ViewModel() {
                     mimeType = mediaItem.mimeType ?: context.contentResolver.getType(mediaItem.uri) ?: Files.probeContentType(Path(mediaItem.absolutePath)),
                     type = mediaItem.type,
                     absolutePath = mediaItem.absolutePath,
-                    displayName = mediaItem.displayName ?: "Media",
+                    displayName = mediaItem.displayName,
                     uri = mediaItem.uri.toString()
                 )
             )

@@ -47,20 +47,21 @@ fun setDateTakenForMedia(absolutePath: String, dateTaken: Long) {
         val exifInterface = ExifInterface(absolutePath)
         val exifDateTimeFormat = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss")
 
-        val localDateTime = Instant.ofEpochSecond(dateTaken).atZone(ZoneId.systemDefault()).toLocalDateTime()
+        val localDateTime =
+            Instant.ofEpochSecond(dateTaken).atZone(ZoneId.systemDefault()).toLocalDateTime()
         val datetime = localDateTime.format(exifDateTimeFormat)
 
-	    exifInterface.setAttribute(
-	        ExifInterface.TAG_DATETIME,
-	        datetime
-	    )
+        exifInterface.setAttribute(
+            ExifInterface.TAG_DATETIME,
+            datetime
+        )
 
-	    exifInterface.setAttribute(
-	        ExifInterface.TAG_DATETIME_ORIGINAL,
-	        datetime
-	    )
+        exifInterface.setAttribute(
+            ExifInterface.TAG_DATETIME_ORIGINAL,
+            datetime
+        )
 
-	    exifInterface.saveAttributes()
+        exifInterface.saveAttributes()
     } catch (e: Throwable) {
         Log.e(TAG, e.toString())
         e.printStackTrace()
@@ -114,9 +115,9 @@ fun getExifDataForMedia(absolutePath: String): Flow<Map<MediaData, Any>> = flow 
 
         emit(
             list
-	            .filter { (_, value) ->
-	                value != null
-	            }
+                .filter { (_, value) ->
+                    value != null
+                }
                 .mapValues { (_, value) ->
                     value!!
                 }
@@ -151,9 +152,9 @@ fun getExifDataForMedia(absolutePath: String): Flow<Map<MediaData, Any>> = flow 
 
         emit(
             list
-	            .filter { (_, value) ->
-	                value != null
-	            }
+                .filter { (_, value) ->
+                    value != null
+                }
                 .mapValues { (_, value) ->
                     value!!
                 }
@@ -167,7 +168,7 @@ fun getExifDataForMedia(absolutePath: String): Flow<Map<MediaData, Any>> = flow 
 fun eraseExifMedia(absolutePath: String) {
     val exifInterface = ExifInterface(absolutePath)
 
-    exifInterface.setLatLong(0.0,0.0)
+    exifInterface.setLatLong(0.0, 0.0)
 
     exifInterface.setAttribute(
         ExifInterface.TAG_MODEL,

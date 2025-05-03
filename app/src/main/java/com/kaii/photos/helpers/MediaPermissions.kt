@@ -48,13 +48,14 @@ fun GetPermissionAndRun(
 
     val context = LocalContext.current
 
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
-        if (result.resultCode == RESULT_OK) {
-            onGranted()
-        } else {
-            onRejected()
+    val launcher =
+        rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                onGranted()
+            } else {
+                onRejected()
+            }
         }
-    }
 
     val senderRequest = run {
         val writeRequestIntent = MediaStore.createWriteRequest(
@@ -68,7 +69,14 @@ fun GetPermissionAndRun(
     LaunchedEffect(shouldRun.value) {
         if (shouldRun.value) {
             withContext(Dispatchers.IO) {
-                val allGranted = uris.all { context.checkUriPermission(it, Process.myPid(), Process.myUid(), Intent.FLAG_GRANT_WRITE_URI_PERMISSION) == PackageManager.PERMISSION_GRANTED }
+                val allGranted = uris.all {
+                    context.checkUriPermission(
+                        it,
+                        Process.myPid(),
+                        Process.myUid(),
+                        Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                    ) == PackageManager.PERMISSION_GRANTED
+                }
                 Log.d(TAG, "Gotten permissions for all items? $allGranted")
 
                 if (allGranted) {
@@ -115,34 +123,40 @@ fun GetDirectoryPermissionAndRun(
         dialogBody = "Lavender Photos needs permission to access this album. Please grant it the permission by selecting \"Use This Folder\" on the next screen.\n This is a one-time permission.",
         confirmButtonLabel = "Grant"
     ) {
-        val uri = context.getExternalStorageContentUriFromAbsolutePath(absoluteDirPaths[currentIndex], false)
+        val uri = context.getExternalStorageContentUriFromAbsolutePath(
+            absoluteDirPaths[currentIndex],
+            false
+        )
         Log.d(TAG, "Content URI for directory ${absoluteDirPaths[currentIndex]} is $uri")
 
         launcher.launch(uri)
     }
 
     LaunchedEffect(currentIndex) {
-        if (currentIndex >= absoluteDirPaths.size - 1 && grantedList.isNotEmpty()) onGranted(grantedList.toList())
+        if (currentIndex >= absoluteDirPaths.size - 1 && grantedList.isNotEmpty()) onGranted(
+            grantedList.toList()
+        )
         else if (currentIndex >= absoluteDirPaths.size - 1) onRejected() // grantedList IS empty
     }
 
     LaunchedEffect(shouldRun.value, absoluteDirPaths) {
         if (shouldRun.value) {
-        	if (absoluteDirPaths.all { it == "" }) {
-        	    Log.e(TAG, "Cannot get permissions for empty directory list!")
-        	    return@LaunchedEffect
-        	}
+            if (absoluteDirPaths.all { it == "" }) {
+                Log.e(TAG, "Cannot get permissions for empty directory list!")
+                return@LaunchedEffect
+            }
 
             absoluteDirPaths.forEachIndexed { index, absolutePath ->
-            	Log.d(TAG, "getting permission for $absolutePath")
+                Log.d(TAG, "getting permission for $absolutePath")
                 val alreadyPersisted =
                     context.contentResolver.persistedUriPermissions.any {
-                        val externalContentUri = context.getExternalStorageContentUriFromAbsolutePath(absolutePath, true)
+                        val externalContentUri =
+                            context.getExternalStorageContentUriFromAbsolutePath(absolutePath, true)
 
                         it.uri == externalContentUri && it.isReadPermission && it.isWritePermission
                     }
 
-				Log.d(TAG, "already have permission for $absolutePath? $alreadyPersisted")
+                Log.d(TAG, "already have permission for $absolutePath? $alreadyPersisted")
 
                 if (!alreadyPersisted && !absolutePath.checkPathIsDownloads()) {
                     showNoPermissionForDirDialog.value = true
@@ -177,9 +191,15 @@ fun createPersistablePermissionLauncher(
     ) { uri ->
         try {
             if (uri != null && uri.path != null) {
-                context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                context.contentResolver.takePersistableUriPermission(
+                    uri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                )
 
-                Log.d(TAG, "Got persistent permission to access parent and child directory with uri $uri and path ${uri.path}")
+                Log.d(
+                    TAG,
+                    "Got persistent permission to access parent and child directory with uri $uri and path ${uri.path}"
+                )
 
                 onGranted(uri)
             } else {
@@ -207,7 +227,8 @@ fun createDirectoryPicker(
             uri.path?.let {
                 val dir = File(it)
 
-                val pathSections = dir.absolutePath.replace(baseInternalStorageDirectory, "").split(":")
+                val pathSections =
+                    dir.absolutePath.replace(baseInternalStorageDirectory, "").split(":")
                 val path = pathSections[pathSections.size - 1]
 
                 Log.d(TAG, "Chosen directory is $path")

@@ -47,7 +47,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -62,8 +61,8 @@ import androidx.navigation.NavHostController
 import com.kaii.photos.BuildConfig
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
-import com.kaii.photos.compose.BottomAppBarItem
-import com.kaii.photos.compose.setBarVisibility
+import com.kaii.photos.compose.app_bars.BottomAppBarItem
+import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.rememberDeviceOrientation
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.ExplanationDialog

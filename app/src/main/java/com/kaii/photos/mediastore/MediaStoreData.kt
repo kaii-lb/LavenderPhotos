@@ -8,6 +8,7 @@ import com.kaii.photos.helpers.SectionItem
 import kotlinx.parcelize.Parcelize
 import java.util.Calendar
 import java.util.Locale
+import androidx.core.net.toUri
 
 /** A data model containing data for a single media item
  * @param dateModified is in seconds
@@ -18,7 +19,7 @@ import java.util.Locale
 data class MediaStoreData(
     val type: MediaType = MediaType.Image,
     val id: Long = 0L,
-    val uri: Uri = Uri.parse(""),
+    val uri: Uri = "".toUri(),
     val mimeType: String? = "image",
     val dateModified: Long = 0L,
     val dateTaken: Long = 0L,

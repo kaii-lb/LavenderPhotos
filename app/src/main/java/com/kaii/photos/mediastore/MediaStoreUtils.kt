@@ -13,10 +13,10 @@ import android.provider.MediaStore.Files.FileColumns
 import android.provider.MediaStore.MediaColumns
 import android.util.Log
 import androidx.documentfile.provider.DocumentFile
+import com.kaii.photos.helpers.EXTERNAL_DOCUMENTS_AUTHORITY
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.checkPathIsDownloads
-import com.kaii.photos.helpers.EXTERNAL_DOCUMENTS_AUTHORITY
 import com.kaii.photos.helpers.getDateTakenForMedia
 import com.kaii.photos.helpers.setDateTakenForMedia
 import com.kaii.photos.helpers.toRelativePath
@@ -25,6 +25,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.file.Files
 import kotlin.io.path.Path
+import androidx.core.net.toUri
 
 private const val TAG = "MEDIA_STORE_UTILS"
 
@@ -54,10 +55,16 @@ suspend fun ContentResolver.copyMedia(
     val file = File(media.absolutePath)
 
     val storageContentUri = when {
-        destination.startsWith(Environment.DIRECTORY_DCIM) || destination.startsWith(Environment.DIRECTORY_PICTURES) || destination.startsWith(Environment.DIRECTORY_MOVIES) -> {
-        	if (media.type == MediaType.Image) MediaStore.Images.Media.EXTERNAL_CONTENT_URI else MediaStore.Video.Media.EXTERNAL_CONTENT_URI
-   		}
-        destination.startsWith(Environment.DIRECTORY_DOCUMENTS) || destination.startsWith(Environment.DIRECTORY_DOWNLOADS) -> MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL)
+        destination.startsWith(Environment.DIRECTORY_DCIM) || destination.startsWith(Environment.DIRECTORY_PICTURES) || destination.startsWith(
+            Environment.DIRECTORY_MOVIES
+        ) -> {
+            if (media.type == MediaType.Image) MediaStore.Images.Media.EXTERNAL_CONTENT_URI else MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+        }
+
+        destination.startsWith(Environment.DIRECTORY_DOCUMENTS) || destination.startsWith(
+            Environment.DIRECTORY_DOWNLOADS
+        ) -> MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL)
+
         else -> null
     }
 
@@ -122,12 +129,15 @@ fun ContentResolver.copyUriToUri(from: Uri, to: Uri) {
 }
 
 
-fun Context.getExternalStorageContentUriFromAbsolutePath(absolutePath: String, trimDoc: Boolean): Uri {
+fun Context.getExternalStorageContentUriFromAbsolutePath(
+    absolutePath: String,
+    trimDoc: Boolean
+): Uri {
     val relative = absolutePath.toRelativePath()
 
-	val needed = if (relative.trim() == "") {
-		appRestoredFilesDir.toRelativePath()
-	} else relative
+    val needed = if (relative.trim() == "") {
+        appRestoredFilesDir.toRelativePath()
+    } else relative
 
     val treeUri = DocumentsContract.buildTreeDocumentUri(EXTERNAL_DOCUMENTS_AUTHORITY, "primary:")
     val pathId = "primary:$needed"
@@ -138,10 +148,10 @@ fun Context.getExternalStorageContentUriFromAbsolutePath(absolutePath: String, t
     }
     Log.d(TAG, "Path ID for $absolutePath is $pathId, with document id $documentUri")
 
-    return Uri.parse(documentUri)
+    return documentUri.toUri()
 }
 
-fun getHighestLevelParentFromAbsolutePath(absolutePath: String) : String {
+fun getHighestLevelParentFromAbsolutePath(absolutePath: String): String {
     val relative = absolutePath.toRelativePath()
     val depth =
         if (relative.startsWith("Android") || relative.startsWith(Environment.DIRECTORY_DOWNLOADS)) 1
@@ -149,107 +159,110 @@ fun getHighestLevelParentFromAbsolutePath(absolutePath: String) : String {
 
     val highestParent = getHighestParentPath(absolutePath, depth)
 
-	Log.d(TAG, "Highest parent for $absolutePath is $highestParent")
+    Log.d(TAG, "Highest parent for $absolutePath is $highestParent")
 
     return baseInternalStorageDirectory + highestParent.toString()
 }
 
-fun getHighestParentPath(absolutePath: String, depth: Int) : String? {
-   	val relative = absolutePath.toRelativePath()
+fun getHighestParentPath(absolutePath: String, depth: Int): String? {
+    val relative = absolutePath.toRelativePath()
 
     return if (absolutePath.length > baseInternalStorageDirectory.length + 1
-    	&& !absolutePath.checkPathIsDownloads()
-   	) {
-        baseInternalStorageDirectory + relative.split("/").subList(fromIndex = 0, toIndex = depth + 1).joinToString("/")
+        && !absolutePath.checkPathIsDownloads()
+    ) {
+        baseInternalStorageDirectory + relative.split("/")
+            .subList(fromIndex = 0, toIndex = depth + 1).joinToString("/")
     } else {
         null
     }
 }
 
-fun ContentResolver.getUriFromAbsolutePath(absolutePath: String, type: MediaType) : Uri? {
-	val contentUri = if (type == MediaType.Image) MediaStore.Images.Media.EXTERNAL_CONTENT_URI else MediaStore.Video.Media.EXTERNAL_CONTENT_URI
-	val data = if (type == MediaType.Image) MediaStore.Images.Media.DATA else MediaStore.Video.Media.DATA
+fun ContentResolver.getUriFromAbsolutePath(absolutePath: String, type: MediaType): Uri? {
+    val contentUri =
+        if (type == MediaType.Image) MediaStore.Images.Media.EXTERNAL_CONTENT_URI else MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+    val data =
+        if (type == MediaType.Image) MediaStore.Images.Media.DATA else MediaStore.Video.Media.DATA
 
-	Log.d(TAG, "Absolute path is $absolutePath")
+    Log.d(TAG, "Absolute path is $absolutePath")
 
-	val mediaCursor = query(
-		contentUri,
+    val mediaCursor = query(
+        contentUri,
         arrayOf(
             MediaColumns._ID,
             MediaColumns.DATA
         ),
-       "$data = ?",
+        "$data = ?",
         arrayOf(absolutePath),
         null
-	)
+    )
 
 
-	mediaCursor?.let { cursor ->
-	    val idColNum = cursor.getColumnIndexOrThrow(MediaColumns._ID)
+    mediaCursor?.let { cursor ->
+        val idColNum = cursor.getColumnIndexOrThrow(MediaColumns._ID)
 
-		while (cursor.moveToFirst()) {
-			val id = cursor.getLong(idColNum)
+        while (cursor.moveToFirst()) {
+            val id = cursor.getLong(idColNum)
 
-			return ContentUris.withAppendedId(contentUri, id)
-		}
+            return ContentUris.withAppendedId(contentUri, id)
+        }
 
         cursor.close()
-	}
+    }
 
-	return null
+    return null
 }
 
-fun ContentResolver.getMediaStoreDataFromUri(uri: Uri) : MediaStoreData? {
-	val id = uri.lastPathSegment!!
+fun ContentResolver.getMediaStoreDataFromUri(uri: Uri): MediaStoreData? {
+    val id = uri.lastPathSegment!!
 
-	Log.d(TAG, "ID for media is $id with uri $uri")
+    Log.d(TAG, "ID for media is $id with uri $uri")
 
-	val mediaCursor = query(
-		MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-		arrayOf(
-		    MediaColumns._ID,
-		    MediaColumns.DATA,
-		    MediaColumns.DATE_MODIFIED,
-		    MediaColumns.MIME_TYPE,
-		    MediaColumns.DISPLAY_NAME
-		),
-		"${MediaColumns._ID} = ?",
-		arrayOf(id),
-		null
-	)
+    val mediaCursor = query(
+        MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+        arrayOf(
+            MediaColumns._ID,
+            MediaColumns.DATA,
+            MediaColumns.DATE_MODIFIED,
+            MediaColumns.MIME_TYPE,
+            MediaColumns.DISPLAY_NAME
+        ),
+        "${MediaColumns._ID} = ?",
+        arrayOf(id),
+        null
+    )
 
-	mediaCursor?.let { cursor ->
+    mediaCursor?.let { cursor ->
         val absolutePathColNum = mediaCursor.getColumnIndexOrThrow(MediaColumns.DATA)
         val mimeTypeColNum = mediaCursor.getColumnIndexOrThrow(MediaColumns.MIME_TYPE)
         val displayNameIndex = mediaCursor.getColumnIndexOrThrow(FileColumns.DISPLAY_NAME)
         val dateModifiedColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.DATE_MODIFIED)
 
-		while (cursor.moveToNext()) {
-			val mimeType = cursor.getString(mimeTypeColNum)
-			val absolutePath = cursor.getString(absolutePathColNum)
-			val dateModified = cursor.getLong(dateModifiedColumn)
-			val displayName = cursor.getString(displayNameIndex)
+        while (cursor.moveToNext()) {
+            val mimeType = cursor.getString(mimeTypeColNum)
+            val absolutePath = cursor.getString(absolutePathColNum)
+            val dateModified = cursor.getLong(dateModifiedColumn)
+            val displayName = cursor.getString(displayNameIndex)
 
-			val dateTaken = getDateTakenForMedia(absolutePath)
+            val dateTaken = getDateTakenForMedia(absolutePath)
 
-			val type =
-				if (mimeType.contains("image")) MediaType.Image
-				else MediaType.Video
+            val type =
+                if (mimeType.contains("image")) MediaType.Image
+                else MediaType.Video
 
-			cursor.close()
+            cursor.close()
 
-			return MediaStoreData(
-				type = type,
-				id = id.toLong(),
-				uri = uri,
-				mimeType = mimeType,
-				dateModified = dateModified,
-				dateTaken = dateTaken,
-				displayName = displayName,
-				absolutePath = absolutePath
-			)
-       	}
-	}
+            return MediaStoreData(
+                type = type,
+                id = id.toLong(),
+                uri = uri,
+                mimeType = mimeType,
+                dateModified = dateModified,
+                dateTaken = dateTaken,
+                displayName = displayName,
+                absolutePath = absolutePath
+            )
+        }
+    }
 
-	return null
+    return null
 }

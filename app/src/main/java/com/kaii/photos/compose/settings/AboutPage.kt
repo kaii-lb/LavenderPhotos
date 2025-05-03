@@ -42,9 +42,9 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
+import com.kaii.photos.compose.PreferencesRow
 import com.kaii.photos.compose.dialogs.ExplanationDialog
 import com.kaii.photos.compose.dialogs.FeatureNotAvailableDialog
-import com.kaii.photos.compose.PreferencesRow
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.RowPosition
 
@@ -57,11 +57,11 @@ fun AboutPage(popBackStack: () -> Unit) {
     val showVersionInfoDialog = remember { mutableStateOf(false) }
 
     VersionInfoDialog(
-    	showDialog = showVersionInfoDialog,
-    	changelog = stringResource(id = R.string.changelog)
-   	)
+        showDialog = showVersionInfoDialog,
+        changelog = stringResource(id = R.string.changelog)
+    )
 
-    Column (
+    Column(
         modifier = Modifier
             .fillMaxSize(1f)
             .padding(8.dp)
@@ -69,14 +69,14 @@ fun AboutPage(popBackStack: () -> Unit) {
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Column (
+        Column(
             modifier = Modifier
                 .fillMaxWidth(1f)
                 .wrapContentHeight(),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Row (
+            Row(
                 modifier = Modifier
                     .fillMaxWidth(1f)
                     .padding(0.dp, 24.dp, 0.dp, 0.dp)
@@ -108,7 +108,7 @@ fun AboutPage(popBackStack: () -> Unit) {
                     .size(128.dp)
             )
 
-            Text (
+            Text(
                 text = "Lavender Photos",
                 textAlign = TextAlign.Center,
                 fontSize = TextUnit(22f, TextUnitType.Sp),
@@ -121,26 +121,26 @@ fun AboutPage(popBackStack: () -> Unit) {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-	    Column (
-	        modifier = Modifier
+        Column(
+            modifier = Modifier
                 .fillMaxSize(1f)
                 .padding(8.dp)
                 .background(MaterialTheme.colorScheme.background),
-	        verticalArrangement = Arrangement.Top,
-	        horizontalAlignment = Alignment.CenterHorizontally
-	    ) {
-	        PreferencesRow(
-	            title = "Developer",
-	            summary = "kaii-lb",
-	            iconResID = R.drawable.code,
-	            position = RowPosition.Top
-	        ) {
-	            val intent = Intent(Intent.ACTION_VIEW).apply {
-	                setData("https://github.com/kaii-lb".toUri())
-	            }
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            PreferencesRow(
+                title = "Developer",
+                summary = "kaii-lb",
+                iconResID = R.drawable.code,
+                position = RowPosition.Top
+            ) {
+                val intent = Intent(Intent.ACTION_VIEW).apply {
+                    setData("https://github.com/kaii-lb".toUri())
+                }
 
-	            context.startActivity(intent)
-	        }
+                context.startActivity(intent)
+            }
 
             val showPrivacyPolicy = remember { mutableStateOf(false) }
             if (showPrivacyPolicy.value) {
@@ -152,11 +152,11 @@ fun AboutPage(popBackStack: () -> Unit) {
             }
 
             PreferencesRow(
-	            title = "Privacy Policy",
-	            summary = "we really don't use your data",
-	            iconResID = R.drawable.privacy_policy,
-	            position = RowPosition.Middle
-	        ) {
+                title = "Privacy Policy",
+                summary = "we really don't use your data",
+                iconResID = R.drawable.privacy_policy,
+                position = RowPosition.Middle
+            ) {
                 showPrivacyPolicy.value = true
             }
 
@@ -167,46 +167,46 @@ fun AboutPage(popBackStack: () -> Unit) {
 
             val navController = LocalNavController.current
             PreferencesRow(
-	            title = "Updates",
-	            summary = "keep the app up to date",
-	            iconResID = R.drawable.update,
-	            position = RowPosition.Middle,
-	            goesToOtherPage = true
-	        ) {
+                title = "Updates",
+                summary = "keep the app up to date",
+                iconResID = R.drawable.update,
+                position = RowPosition.Middle,
+                goesToOtherPage = true
+            ) {
                 navController.navigate(MultiScreenViewType.UpdatesPage.name)
             }
 
-	        PreferencesRow(
-	            title = "Support & Donations",
-	            summary = "help me keep the app alive",
-	            iconResID = R.drawable.donation,
-	            position = RowPosition.Middle
-	        ) {
+            PreferencesRow(
+                title = "Support & Donations",
+                summary = "help me keep the app alive",
+                iconResID = R.drawable.donation,
+                position = RowPosition.Middle
+            ) {
                 showNotImplDialog.value = true
             }
 
-	        val versionName = try {
-	            context.packageManager.getPackageInfo(context.packageName,0).versionName
-	        } catch (e: Throwable) {
-	            Log.e(TAG, e.toString())
-	            "Couldn't get version number"
-	        }
-	        PreferencesRow(
-	            title = "Version Info",
-	            summary = versionName,
-	            iconResID = R.drawable.info,
-	            position = RowPosition.Bottom,
-	        ) {
-	            showVersionInfoDialog.value = true
-	        }
-	    }
+            val versionName = try {
+                context.packageManager.getPackageInfo(context.packageName, 0).versionName
+            } catch (e: Throwable) {
+                Log.e(TAG, e.toString())
+                "Couldn't get version number"
+            }
+            PreferencesRow(
+                title = "Version Info",
+                summary = versionName,
+                iconResID = R.drawable.info,
+                position = RowPosition.Bottom,
+            ) {
+                showVersionInfoDialog.value = true
+            }
+        }
     }
 }
 
 @Composable
 fun VersionInfoDialog(
-	showDialog: MutableState<Boolean>,
-	changelog: String
+    showDialog: MutableState<Boolean>,
+    changelog: String
 ) {
     if (showDialog.value) {
         AlertDialog(
@@ -226,33 +226,33 @@ fun VersionInfoDialog(
                 }
             },
             text = {
-            	Column (
+                Column(
                     verticalArrangement = Arrangement.SpaceEvenly,
                     horizontalAlignment = Alignment.CenterHorizontally
-            	) {
-					Text (
+                ) {
+                    Text(
                         text = "Changelog",
                         fontSize = TextUnit(18f, TextUnitType.Sp),
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center
                     )
 
-                    Spacer (modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
-	                LazyColumn (
-	                	modifier = Modifier
-	                		.height(320.dp),
-	                    verticalArrangement = Arrangement.SpaceEvenly,
-	                    horizontalAlignment = Alignment.CenterHorizontally
-	                ) {
-	                	item {
-		                    Text(
-		                        text = changelog,
-		                        fontSize = TextUnit(14f, TextUnitType.Sp),
-		                    )
-	                	}
-	                }
-            	}
+                    LazyColumn(
+                        modifier = Modifier
+                            .height(320.dp),
+                        verticalArrangement = Arrangement.SpaceEvenly,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        item {
+                            Text(
+                                text = changelog,
+                                fontSize = TextUnit(14f, TextUnitType.Sp),
+                            )
+                        }
+                    }
+                }
             }
         )
     }

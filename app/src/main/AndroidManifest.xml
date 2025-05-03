@@ -46,7 +46,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Photos.Splashscreen"
-        android:windowSoftInputMode="adjustResize">
+        android:windowSoftInputMode="adjustResize"
+        tools:targetApi="33">
 
         <activity
             android:name=".MainActivity"

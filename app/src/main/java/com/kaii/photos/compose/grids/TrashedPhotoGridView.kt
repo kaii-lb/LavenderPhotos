@@ -33,9 +33,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.mainViewModel
-import com.kaii.photos.compose.TrashedPhotoGridViewBottomBar
-import com.kaii.photos.compose.TrashedPhotoGridViewTopBar
 import com.kaii.photos.compose.ViewProperties
+import com.kaii.photos.compose.app_bars.TrashedPhotoGridViewBottomBar
+import com.kaii.photos.compose.app_bars.TrashedPhotoGridViewTopBar
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.TrashBin
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
@@ -54,10 +54,11 @@ fun TrashedPhotoGridView(
 ) {
     val context = LocalContext.current
     val trashViewModel: TrashViewModel = viewModel(
-    	factory = TrashViewModelFactory(context = context)
+        factory = TrashViewModelFactory(context = context)
     )
 
-    val mediaStoreData = trashViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+    val mediaStoreData =
+        trashViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
     val groupedMedia = remember { mutableStateOf(mediaStoreData.value) }
 
@@ -66,12 +67,13 @@ fun TrashedPhotoGridView(
     }
 
     var triedDeletingAlready by rememberSaveable { mutableStateOf(false) }
-    val autoDeleteInterval by mainViewModel.settings.TrashBin.getAutoDeleteInterval().collectAsStateWithLifecycle(initialValue = 0)
+    val autoDeleteInterval by mainViewModel.settings.TrashBin.getAutoDeleteInterval()
+        .collectAsStateWithLifecycle(initialValue = 0)
 
     val runAutoDeleteAction = remember { mutableStateOf(false) }
     var mediaToBeAutoDeleted by remember { mutableStateOf(emptyList<Uri>()) }
 
-    LaunchedEffect (runAutoDeleteAction.value) {
+    LaunchedEffect(runAutoDeleteAction.value) {
         permanentlyDeletePhotoList(context, mediaToBeAutoDeleted)
 
         triedDeletingAlready = true
@@ -86,7 +88,8 @@ fun TrashedPhotoGridView(
         mediaToBeAutoDeleted = groupedMedia.value
             .filter { it.type != MediaType.Section }
             .filter { media ->
-                val dateDeletedMillis = currentDate - (media.dateModified * 1000) // dateModified is in seconds
+                val dateDeletedMillis =
+                    currentDate - (media.dateModified * 1000) // dateModified is in seconds
                 val dateDeletedDays = (dateDeletedMillis / (1000 * 60 * 60 * 24)).days
 
                 dateDeletedDays > autoDeleteInterval.days

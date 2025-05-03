@@ -61,8 +61,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
-import com.kaii.photos.compose.dialogs.getDefaultShapeSpacerForPosition
 import com.kaii.photos.compose.dialogs.ExplanationDialog
+import com.kaii.photos.compose.dialogs.getDefaultShapeSpacerForPosition
 import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.helpers.RowPosition
 
@@ -87,19 +87,19 @@ fun PermissionHandler(
 
         Row(
             modifier = Modifier
-                .padding(
-                    safeDrawingPadding.first,
-                    innerPadding.calculateTopPadding() + 8.dp,
-                    safeDrawingPadding.second,
-                    innerPadding.calculateBottomPadding()
-                )
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .padding(16.dp, 8.dp),
+				.padding(
+					safeDrawingPadding.first,
+					innerPadding.calculateTopPadding() + 8.dp,
+					safeDrawingPadding.second,
+					innerPadding.calculateBottomPadding()
+				)
+				.fillMaxSize()
+				.background(MaterialTheme.colorScheme.background)
+				.padding(16.dp, 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-			val context = LocalContext.current
+            val context = LocalContext.current
 
             var onGrantPermissionClicked by remember { mutableStateOf({}) }
 
@@ -108,12 +108,15 @@ fun PermissionHandler(
             var whyButtonExplanation by rememberSaveable { mutableStateOf("") }
 
             if (showPermDeniedDialog.value) {
-                PermissionDeniedDialog(showDialog = showPermDeniedDialog, showExplanationDialog = showExplanationDialog) {
+                PermissionDeniedDialog(
+                    showDialog = showPermDeniedDialog,
+                    showExplanationDialog = showExplanationDialog
+                ) {
                     onGrantPermissionClicked()
                 }
             }
 
-			if (showExplanationDialog.value) {
+            if (showExplanationDialog.value) {
                 ExplanationDialog(
                     title = "Permission Explanation",
                     explanation = whyButtonExplanation,
@@ -122,285 +125,288 @@ fun PermissionHandler(
                 )
             }
 
-			Column(
-	            modifier = Modifier
-	                .weight(1f),
-	            verticalArrangement = Arrangement.SpaceEvenly,
-	            horizontalAlignment = Alignment.CenterHorizontally
-			) {
-	            Text(
-	                text = "Permissions",
-	                fontSize = TextUnit(22f, TextUnitType.Sp),
-	                fontWeight = FontWeight.Bold,
-	                color = MaterialTheme.colorScheme.onBackground
-	            )
+            Column(
+                modifier = Modifier
+                    .weight(1f),
+                verticalArrangement = Arrangement.SpaceEvenly,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Permissions",
+                    fontSize = TextUnit(22f, TextUnitType.Sp),
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
 
-	            Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
-	            LazyColumn(
-	                verticalArrangement = Arrangement.spacedBy(
-	                    space = 4.dp,
-	                    alignment = Alignment.Top
-	                ),
-	                horizontalAlignment = Alignment.CenterHorizontally,
-	                modifier = Modifier
-	                    .weight(1f)
-	            ) {
-	            	item {
-	            		PreferencesSeparatorText(
-	            			text = "Permissions"
-	            		)
-	            	}
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(
+                        space = 4.dp,
+                        alignment = Alignment.Top
+                    ),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .weight(1f)
+                ) {
+                    item {
+                        PreferencesSeparatorText(
+                            text = "Permissions"
+                        )
+                    }
 
-	                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-	                    item {
-	                        val readMediaImageLauncher = rememberLauncherForActivityResult(
-	                            contract = ActivityResultContracts.RequestPermission()
-	                        ) { granted ->
-	                            mainViewModel.onPermissionResult(
-	                                permission = Manifest.permission.READ_MEDIA_IMAGES,
-	                                isGranted = granted
-	                            )
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        item {
+                            val readMediaImageLauncher = rememberLauncherForActivityResult(
+                                contract = ActivityResultContracts.RequestPermission()
+                            ) { granted ->
+                                mainViewModel.onPermissionResult(
+                                    permission = Manifest.permission.READ_MEDIA_IMAGES,
+                                    isGranted = granted
+                                )
 
-	                            showPermDeniedDialog.value = !granted
-	                        }
+                                showPermDeniedDialog.value = !granted
+                            }
 
-	                        val appDetailsLauncher = rememberLauncherForActivityResult(
-	                            contract = ActivityResultContracts.StartActivityForResult()
-	                        ) { _ ->
-	                            val granted = context.checkSelfPermission(Manifest.permission.READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED
+                            val appDetailsLauncher = rememberLauncherForActivityResult(
+                                contract = ActivityResultContracts.StartActivityForResult()
+                            ) { _ ->
+                                val granted =
+                                    context.checkSelfPermission(Manifest.permission.READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED
 
-	                            mainViewModel.onPermissionResult(
-	                                permission = Manifest.permission.READ_MEDIA_IMAGES,
-	                                isGranted = granted
-	                            )
+                                mainViewModel.onPermissionResult(
+                                    permission = Manifest.permission.READ_MEDIA_IMAGES,
+                                    isGranted = granted
+                                )
 
-	                            showPermDeniedDialog.value = !granted
-	                        }
+                                showPermDeniedDialog.value = !granted
+                            }
 
-	                        PermissionButton(
-	                            name = "Read Images",
-	                            description = "Allow Lavender Photos to discover photos on the device",
-	                            position = RowPosition.Top,
-	                            granted = !mainViewModel.permissionQueue.contains(Manifest.permission.READ_MEDIA_IMAGES)
-	                        ) {
-	                            readMediaImageLauncher.launch(Manifest.permission.READ_MEDIA_IMAGES)
+                            PermissionButton(
+                                name = "Read Images",
+                                description = "Allow Lavender Photos to discover photos on the device",
+                                position = RowPosition.Top,
+                                granted = !mainViewModel.permissionQueue.contains(Manifest.permission.READ_MEDIA_IMAGES)
+                            ) {
+                                readMediaImageLauncher.launch(Manifest.permission.READ_MEDIA_IMAGES)
 
-	                            whyButtonExplanation = Explanations.READ_MEDIA
+                                whyButtonExplanation = Explanations.READ_MEDIA
 
-	                            onGrantPermissionClicked = {
-	                                val intent = Intent(
-	                                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-	                                    Uri.fromParts("package", context.packageName, null)
-	                                )
+                                onGrantPermissionClicked = {
+                                    val intent = Intent(
+                                        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                        Uri.fromParts("package", context.packageName, null)
+                                    )
 
-	                                appDetailsLauncher.launch(intent)
-	                            }
-	                        }
-	                    }
+                                    appDetailsLauncher.launch(intent)
+                                }
+                            }
+                        }
 
-	                    item {
-	                        val readMediaVideoLauncher = rememberLauncherForActivityResult(
-	                            contract = ActivityResultContracts.RequestPermission()
-	                        ) { granted ->
-	                            mainViewModel.onPermissionResult(
-	                                permission = Manifest.permission.READ_MEDIA_VIDEO,
-	                                isGranted = granted
-	                            )
+                        item {
+                            val readMediaVideoLauncher = rememberLauncherForActivityResult(
+                                contract = ActivityResultContracts.RequestPermission()
+                            ) { granted ->
+                                mainViewModel.onPermissionResult(
+                                    permission = Manifest.permission.READ_MEDIA_VIDEO,
+                                    isGranted = granted
+                                )
 
-	                            showPermDeniedDialog.value = !granted
-	                        }
+                                showPermDeniedDialog.value = !granted
+                            }
 
-	                        val appDetailsLauncher = rememberLauncherForActivityResult(
-	                            contract = ActivityResultContracts.StartActivityForResult()
-	                        ) { _ ->
-	                            val granted = context.checkSelfPermission(Manifest.permission.READ_MEDIA_VIDEO) == PackageManager.PERMISSION_GRANTED
+                            val appDetailsLauncher = rememberLauncherForActivityResult(
+                                contract = ActivityResultContracts.StartActivityForResult()
+                            ) { _ ->
+                                val granted =
+                                    context.checkSelfPermission(Manifest.permission.READ_MEDIA_VIDEO) == PackageManager.PERMISSION_GRANTED
 
-	                            mainViewModel.onPermissionResult(
-	                                permission = Manifest.permission.READ_MEDIA_VIDEO,
-	                                isGranted = granted
-	                            )
+                                mainViewModel.onPermissionResult(
+                                    permission = Manifest.permission.READ_MEDIA_VIDEO,
+                                    isGranted = granted
+                                )
 
-	                            showPermDeniedDialog.value = !granted
-	                        }
+                                showPermDeniedDialog.value = !granted
+                            }
 
-	                        PermissionButton(
-	                            name = "Read Videos",
-	                            description = "Allow Lavender Photos to discover videos on the device",
-	                            position = RowPosition.Middle,
-	                            granted = !mainViewModel.permissionQueue.contains(Manifest.permission.READ_MEDIA_VIDEO)
-	                        ) {
-	                            readMediaVideoLauncher.launch(Manifest.permission.READ_MEDIA_VIDEO)
+                            PermissionButton(
+                                name = "Read Videos",
+                                description = "Allow Lavender Photos to discover videos on the device",
+                                position = RowPosition.Middle,
+                                granted = !mainViewModel.permissionQueue.contains(Manifest.permission.READ_MEDIA_VIDEO)
+                            ) {
+                                readMediaVideoLauncher.launch(Manifest.permission.READ_MEDIA_VIDEO)
 
-	                            whyButtonExplanation = Explanations.READ_MEDIA
+                                whyButtonExplanation = Explanations.READ_MEDIA
 
-	                            onGrantPermissionClicked = {
-	                                val intent = Intent(
-	                                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-	                                    Uri.fromParts("package", context.packageName, null)
-	                                )
+                                onGrantPermissionClicked = {
+                                    val intent = Intent(
+                                        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                        Uri.fromParts("package", context.packageName, null)
+                                    )
 
-	                                appDetailsLauncher.launch(intent)
-	                            }
-	                        }
-	                    }
-	                } else {
-	                    item {
-	                        val readExternalStorageLauncher = rememberLauncherForActivityResult(
-	                            contract = ActivityResultContracts.RequestPermission()
-	                        ) { granted ->
-	                            mainViewModel.onPermissionResult(
-	                                permission = Manifest.permission.READ_EXTERNAL_STORAGE,
-	                                isGranted = granted
-	                            )
+                                    appDetailsLauncher.launch(intent)
+                                }
+                            }
+                        }
+                    } else {
+                        item {
+                            val readExternalStorageLauncher = rememberLauncherForActivityResult(
+                                contract = ActivityResultContracts.RequestPermission()
+                            ) { granted ->
+                                mainViewModel.onPermissionResult(
+                                    permission = Manifest.permission.READ_EXTERNAL_STORAGE,
+                                    isGranted = granted
+                                )
 
-	                            showPermDeniedDialog.value = !granted
-	                        }
+                                showPermDeniedDialog.value = !granted
+                            }
 
-	                        val appDetailsLauncher = rememberLauncherForActivityResult(
-	                            contract = ActivityResultContracts.StartActivityForResult()
-	                        ) { _ ->
-	                            val granted = context.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
+                            val appDetailsLauncher = rememberLauncherForActivityResult(
+                                contract = ActivityResultContracts.StartActivityForResult()
+                            ) { _ ->
+                                val granted =
+                                    context.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
 
-	                            mainViewModel.onPermissionResult(
-	                                permission = Manifest.permission.READ_EXTERNAL_STORAGE,
-	                                isGranted = granted
-	                            )
+                                mainViewModel.onPermissionResult(
+                                    permission = Manifest.permission.READ_EXTERNAL_STORAGE,
+                                    isGranted = granted
+                                )
 
-	                            showPermDeniedDialog.value = !granted
-	                        }
+                                showPermDeniedDialog.value = !granted
+                            }
 
-	                        PermissionButton(
-	                            name = "Read External Storage",
-	                            description = "Allow Lavender Photos to discover photos and videos on the device",
-	                            position = RowPosition.Top,
-	                            granted = !mainViewModel.permissionQueue.contains(Manifest.permission.READ_EXTERNAL_STORAGE)
-	                        ) {
-	                            readExternalStorageLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
+                            PermissionButton(
+                                name = "Read External Storage",
+                                description = "Allow Lavender Photos to discover photos and videos on the device",
+                                position = RowPosition.Top,
+                                granted = !mainViewModel.permissionQueue.contains(Manifest.permission.READ_EXTERNAL_STORAGE)
+                            ) {
+                                readExternalStorageLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
 
-	                            whyButtonExplanation = Explanations.READ_MEDIA
+                                whyButtonExplanation = Explanations.READ_MEDIA
 
-	                            onGrantPermissionClicked = {
-	                                val intent = Intent(
-	                                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-	                                    Uri.fromParts("package", context.packageName, null)
-	                                )
+                                onGrantPermissionClicked = {
+                                    val intent = Intent(
+                                        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                        Uri.fromParts("package", context.packageName, null)
+                                    )
 
-	                                appDetailsLauncher.launch(intent)
-	                            }
-	                        }
-	                    }
-	                }
+                                    appDetailsLauncher.launch(intent)
+                                }
+                            }
+                        }
+                    }
 
-	                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-	                    item {
-	                        val manageMediaLauncher = rememberLauncherForActivityResult(
-	                            contract = ActivityResultContracts.StartActivityForResult()
-	                        ) { _ ->
-	                            val granted = MediaStore.canManageMedia(context)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        item {
+                            val manageMediaLauncher = rememberLauncherForActivityResult(
+                                contract = ActivityResultContracts.StartActivityForResult()
+                            ) { _ ->
+                                val granted = MediaStore.canManageMedia(context)
 
-	                            mainViewModel.onPermissionResult(
-	                                permission = Manifest.permission.MANAGE_MEDIA,
-	                                isGranted = granted
-	                            )
+                                mainViewModel.onPermissionResult(
+                                    permission = Manifest.permission.MANAGE_MEDIA,
+                                    isGranted = granted
+                                )
 
-	                            mainViewModel.settings.Permissions.setIsMediaManager(granted)
-	                        }
+                                mainViewModel.settings.Permissions.setIsMediaManager(granted)
+                            }
 
-	                        PermissionButton(
-	                            name = "Manage Media",
-	                            description = "Optional permission. Is used for faster trash/delete functionality",
-	                            position = RowPosition.Bottom,
-	                            granted = !mainViewModel.permissionQueue.contains(Manifest.permission.MANAGE_MEDIA)
-	                        ) {
-	                            val intent = Intent(Settings.ACTION_REQUEST_MANAGE_MEDIA)
-	                            manageMediaLauncher.launch(intent)
+                            PermissionButton(
+                                name = "Manage Media",
+                                description = "Optional permission. Is used for faster trash/delete functionality",
+                                position = RowPosition.Bottom,
+                                granted = !mainViewModel.permissionQueue.contains(Manifest.permission.MANAGE_MEDIA)
+                            ) {
+                                val intent = Intent(Settings.ACTION_REQUEST_MANAGE_MEDIA)
+                                manageMediaLauncher.launch(intent)
 
-	                            whyButtonExplanation = Explanations.MANAGE_MEDIA
+                                whyButtonExplanation = Explanations.MANAGE_MEDIA
 
-	                            onGrantPermissionClicked = {
-	                                manageMediaLauncher.launch(intent)
-	                            }
-	                        }
-	                    }
-	                }
+                                onGrantPermissionClicked = {
+                                    manageMediaLauncher.launch(intent)
+                                }
+                            }
+                        }
+                    }
 
-					item {
-						PreferencesSeparatorText(
-							text = "Other Info"
-						)
-					}
+                    item {
+                        PreferencesSeparatorText(
+                            text = "Other Info"
+                        )
+                    }
 
-	                item {
-	                	PreferencesRow(
-	                		title = "Install Packages",
-	                		summary = "If you use the in-app updater, Lavender Photos will request the Install Packages permission.",
-	                		iconResID = R.drawable.error_2,
-	                		position = RowPosition.Single,
-	                		backgroundColor = MaterialTheme.colorScheme.surfaceContainer,
-	                		contentColor = MaterialTheme.colorScheme.onSurface
-	                	)
-	                }
-	            }
+                    item {
+                        PreferencesRow(
+                            title = "Install Packages",
+                            summary = "If you use the in-app updater, Lavender Photos will request the Install Packages permission.",
+                            iconResID = R.drawable.error_2,
+                            position = RowPosition.Single,
+                            backgroundColor = MaterialTheme.colorScheme.surfaceContainer,
+                            contentColor = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
 
-	            if (!isLandscape) {
-					Box(
-					    modifier = Modifier
-					        .fillMaxWidth(1f)
-					        .height(64.dp)
-					) {
-					    FilledTonalButton(
-					        onClick = {
-					            (context as Activity).finish()
-					        },
-					        modifier = Modifier
-					            .align(Alignment.CenterStart)
-					    ) {
-					        Text(text = "Exit")
-					    }
+                if (!isLandscape) {
+                    Box(
+                        modifier = Modifier
+							.fillMaxWidth(1f)
+							.height(64.dp)
+                    ) {
+                        FilledTonalButton(
+                            onClick = {
+                                (context as Activity).finish()
+                            },
+                            modifier = Modifier
+                                .align(Alignment.CenterStart)
+                        ) {
+                            Text(text = "Exit")
+                        }
 
-					    Button(
-					        onClick = {
-					            continueToApp.value = true
-					        },
-					        enabled = mainViewModel.checkCanPass(),
-					        modifier = Modifier
-					            .align(Alignment.CenterEnd)
-					    ) {
-					        Text(text = "Continue")
-					    }
-					}
-	            }
+                        Button(
+                            onClick = {
+                                continueToApp.value = true
+                            },
+                            enabled = mainViewModel.checkCanPass(),
+                            modifier = Modifier
+                                .align(Alignment.CenterEnd)
+                        ) {
+                            Text(text = "Continue")
+                        }
+                    }
+                }
             }
 
-			if (isLandscape) {
-				Column(
-				    modifier = Modifier
-				        .weight(1f)
-				        .fillMaxHeight(1f),
-			        verticalArrangement = Arrangement.Center,
-			        horizontalAlignment = Alignment.CenterHorizontally
-				) {
-				    Button(
-				        onClick = {
-				            continueToApp.value = true
-				        },
-				        enabled = mainViewModel.checkCanPass()
-				    ) {
-				        Text(text = "Continue")
-				    }
+            if (isLandscape) {
+                Column(
+                    modifier = Modifier
+						.weight(1f)
+						.fillMaxHeight(1f),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Button(
+                        onClick = {
+                            continueToApp.value = true
+                        },
+                        enabled = mainViewModel.checkCanPass()
+                    ) {
+                        Text(text = "Continue")
+                    }
 
-				    Spacer (modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
-				    FilledTonalButton(
-				        onClick = {
-				            (context as Activity).finish()
-				        }
-				    ) {
-				        Text(text = "Exit")
-				    }
-				}
-			}
+                    FilledTonalButton(
+                        onClick = {
+                            (context as Activity).finish()
+                        }
+                    ) {
+                        Text(text = "Exit")
+                    }
+                }
+            }
         }
     }
 }
@@ -419,18 +425,18 @@ fun PermissionButton(
 
     Box(
         modifier = Modifier
-            .fillMaxWidth(1f)
-            .height(104.dp)
-            .clip(shape)
-            .background(if (!granted) MaterialTheme.colorScheme.surfaceContainer else MaterialTheme.colorScheme.primary)
-            .then(clickModifier)
-            .padding(16.dp, 12.dp)
+			.fillMaxWidth(1f)
+			.height(104.dp)
+			.clip(shape)
+			.background(if (!granted) MaterialTheme.colorScheme.surfaceContainer else MaterialTheme.colorScheme.primary)
+			.then(clickModifier)
+			.padding(16.dp, 12.dp)
     ) {
         Column(
             modifier = Modifier
-                .wrapContentWidth()
-                .fillMaxHeight(1f)
-                .align(Alignment.CenterStart),
+				.wrapContentWidth()
+				.fillMaxHeight(1f)
+				.align(Alignment.CenterStart),
             verticalArrangement = Arrangement.SpaceEvenly,
             horizontalAlignment = Alignment.Start
         ) {
@@ -445,7 +451,9 @@ fun PermissionButton(
 
             Text(
                 text = description,
-                color = if (!granted) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f) else MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f),
+                color = if (!granted) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f) else MaterialTheme.colorScheme.onPrimary.copy(
+                    alpha = 0.8f
+                ),
                 fontSize = TextUnit(14f, TextUnitType.Sp),
                 fontWeight = FontWeight.Bold
             )
@@ -454,10 +462,10 @@ fun PermissionButton(
         if (granted) {
             Column(
                 modifier = Modifier
-                    .fillMaxHeight(1f)
-                    .width(32.dp)
-                    .background(MaterialTheme.colorScheme.primary)
-                    .align(Alignment.CenterEnd),
+					.fillMaxHeight(1f)
+					.width(32.dp)
+					.background(MaterialTheme.colorScheme.primary)
+					.align(Alignment.CenterEnd),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -490,10 +498,10 @@ fun PermissionDeniedDialog(
     ) {
         Column(
             modifier = Modifier
-                .wrapContentSize()
-                .clip(RoundedCornerShape(32.dp))
-                .background(MaterialTheme.colorScheme.background)
-                .padding(16.dp),
+				.wrapContentSize()
+				.clip(RoundedCornerShape(32.dp))
+				.background(MaterialTheme.colorScheme.background)
+				.padding(16.dp),
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -556,24 +564,28 @@ fun FullWidthDialogButton(
     enabled: Boolean = true,
     onClick: () -> Unit
 ) {
-    val (shape, spacerHeight) = getDefaultShapeSpacerForPosition(position, cornerRadius = 24.dp, innerCornerRadius = 4.dp)
+    val (shape, spacerHeight) = getDefaultShapeSpacerForPosition(
+        position,
+        cornerRadius = 24.dp,
+        innerCornerRadius = 4.dp
+    )
 
     Row(
         modifier = Modifier
-            .fillMaxWidth(1f)
-            .height(48.dp)
-            .clip(shape)
-            .background(
-            	if (enabled) color else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
-           	)
-            .then(
-            	if (enabled) {
-            		Modifier.clickable {
-            			onClick()
-            		}
-            	} else Modifier
-            )
-            .padding(8.dp),
+			.fillMaxWidth(1f)
+			.height(48.dp)
+			.clip(shape)
+			.background(
+				if (enabled) color else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
+			)
+			.then(
+				if (enabled) {
+					Modifier.clickable {
+						onClick()
+					}
+				} else Modifier
+			)
+			.padding(8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {
@@ -588,6 +600,8 @@ fun FullWidthDialogButton(
 }
 
 private object Explanations {
-    const val READ_MEDIA = "This permission is needed to find photos and videos on the device. Lavender Photos is very strict with what files it reads, and never shares or exploits this info."
-    const val MANAGE_MEDIA = "This permission is optional, but is highly recommended. Manage Media permission allows Lavender Photos to use Android's Content Resolver API to trash/delete/move/copy media, which makes the process much smoother and more interoperable with other apps."
+    const val READ_MEDIA =
+        "This permission is needed to find photos and videos on the device. Lavender Photos is very strict with what files it reads, and never shares or exploits this info."
+    const val MANAGE_MEDIA =
+        "This permission is optional, but is highly recommended. Manage Media permission allows Lavender Photos to use Android's Content Resolver API to trash/delete/move/copy media, which makes the process much smoother and more interoperable with other apps."
 }

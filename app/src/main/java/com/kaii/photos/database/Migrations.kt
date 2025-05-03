@@ -31,7 +31,7 @@ class Migration3to4(val context: Context) : Migration(startVersion = 3, endVersi
             val type = favItems.getString(typeNum).toMediaType()
             val dateModified = favItems.getLong(dateModifiedNum)
 
-            val uri = context.contentResolver.getUriFromAbsolutePath(absolutePath = absolutePath, type = type).toString() ?: ""
+            val uri = context.contentResolver.getUriFromAbsolutePath(absolutePath = absolutePath, type = type).toString()
 
             newFavItems.add(
                 FavouritedItemEntity(

@@ -154,7 +154,7 @@ import com.kaii.lavender_snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
-import com.kaii.photos.compose.BottomAppBarItem
+import com.kaii.photos.compose.app_bars.BottomAppBarItem
 import com.kaii.photos.compose.ColorFilterItem
 import com.kaii.photos.compose.ColorRangeSlider
 import com.kaii.photos.compose.CroppingRatioBottomSheet
@@ -163,8 +163,8 @@ import com.kaii.photos.compose.SelectableDropDownMenuItem
 import com.kaii.photos.compose.SetEditingViewDrawableTextBottomSheet
 import com.kaii.photos.compose.SimpleTab
 import com.kaii.photos.compose.SplitButton
-import com.kaii.photos.compose.getAppBarContentTransition
-import com.kaii.photos.compose.setBarVisibility
+import com.kaii.photos.compose.app_bars.getAppBarContentTransition
+import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.datastore.Editing
 import com.kaii.photos.helpers.blur
@@ -192,6 +192,8 @@ import kotlin.math.ln
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
+import androidx.core.graphics.scale
+import androidx.core.graphics.createBitmap
 
 private const val TAG = "EDITING_VIEW"
 
@@ -468,12 +470,7 @@ fun EditingView(
                     val canvasWidth = size.width * imageRatio
                     val canvasHeight = canvasWidth / imageRatio
 
-                    Bitmap.createScaledBitmap(
-                        image.asAndroidBitmap(),
-                        canvasWidth.toInt(),
-                        canvasHeight.toInt(),
-                        true
-                    ).asImageBitmap()
+                    image.asAndroidBitmap().scale(canvasWidth.toInt(), canvasHeight.toInt()).asImageBitmap()
                 }
             }
 
@@ -525,7 +522,7 @@ fun EditingView(
                         is DrawableBlur -> {
                             val (path, pathPaint) = modification
 
-                            val offscreenBitmap = Bitmap.createBitmap(size.width, size.height, Bitmap.Config.ARGB_8888)
+                            val offscreenBitmap = createBitmap(size.width, size.height)
                             val offscreenCanvas = android.graphics.Canvas(offscreenBitmap)
 
                             offscreenCanvas.drawPath(path.asAndroidPath(), pathPaint.asFrameworkPaint())
@@ -2485,12 +2482,10 @@ private fun Modifier.makeDrawCanvas(
                                         modifications.add(newPath)
                                         path = newPath.path
                                     } else {
-                                        modifications.remove(
-                                            DrawablePath(
-                                                path,
-                                                paint.value
-                                            )
-                                        )
+                                        modifications.removeAll {
+                                            it as DrawablePath
+                                            it.path == path && it.paint == paint.value
+                                        }
                                     }
 
                                     path.quadraticTo(
@@ -2576,12 +2571,10 @@ private fun Modifier.makeDrawCanvas(
                                         modifications.add(newPath)
                                         path = newPath.path
                                     } else {
-                                        modifications.remove(
-                                            DrawableBlur(
-                                                path,
-                                                paint.value
-                                            )
-                                        )
+                                        modifications.removeAll {
+                                            it as DrawableBlur
+                                            it.path == path && it.paint == paint.value
+                                        }
                                     }
 
                                     path.quadraticTo(

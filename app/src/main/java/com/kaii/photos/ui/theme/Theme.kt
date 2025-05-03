@@ -1,6 +1,6 @@
 package com.kaii.photos.ui.theme
 
-import android.content.Context
+import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
@@ -44,7 +44,7 @@ fun PhotosTheme(
         0 -> {
         	val systemInDarkTheme = isSystemInDarkTheme()
 
-			if (dynamicColor) {
+			if (dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
 				if (systemInDarkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
 			} else {
 				if (systemInDarkTheme) DarkColorScheme else LightColorScheme
@@ -52,8 +52,8 @@ fun PhotosTheme(
         }
 
 
-        1 -> if (dynamicColor) dynamicDarkColorScheme(context) else DarkColorScheme
-        2 -> if (dynamicColor) dynamicLightColorScheme(context) else LightColorScheme
+        1 -> if (dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) dynamicDarkColorScheme(context) else DarkColorScheme
+        2 -> if (dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) dynamicLightColorScheme(context) else LightColorScheme
 
         else -> LightColorScheme
     }

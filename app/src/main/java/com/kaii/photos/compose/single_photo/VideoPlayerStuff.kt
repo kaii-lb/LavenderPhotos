@@ -4,10 +4,10 @@ import android.app.Activity
 import android.content.Context
 import android.content.res.Configuration
 import android.net.Uri
+import android.util.Log
 import android.view.ViewGroup
 import android.view.Window
 import android.view.WindowManager
-import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -102,8 +102,8 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.applicationDatabase
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
+import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.rememberDeviceOrientation
-import com.kaii.photos.compose.setBarVisibility
 import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.appSecureFolderDir
@@ -179,7 +179,8 @@ fun VideoPlayerControls(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
-                val currentDurationFormatted = currentVideoPosition.floatValue.roundToInt().seconds.formatLikeANormalPerson()
+                val currentDurationFormatted =
+                    currentVideoPosition.floatValue.roundToInt().seconds.formatLikeANormalPerson()
 
                 // video progress
                 Row(
@@ -211,7 +212,8 @@ fun VideoPlayerControls(
                     interactionSource.interactions.collect { interaction ->
                         when (interaction) {
                             is DragInteraction.Start -> isDraggingTimelineSlider = true
-                            is DragInteraction.Stop, is DragInteraction.Cancel -> isDraggingTimelineSlider = false
+                            is DragInteraction.Stop, is DragInteraction.Cancel -> isDraggingTimelineSlider =
+                                false
                         }
                     }
                 }
@@ -270,7 +272,8 @@ fun VideoPlayerControls(
 
                 Spacer(modifier = Modifier.width(8.dp))
 
-                val formattedDuration = duration.floatValue.roundToInt().seconds.formatLikeANormalPerson()
+                val formattedDuration =
+                    duration.floatValue.roundToInt().seconds.formatLikeANormalPerson()
 
                 // total duration
                 Row(
@@ -404,12 +407,13 @@ fun VideoPlayer(
 
         LaunchedEffect(Unit) {
             withContext(Dispatchers.IO) {
-                val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(item.absolutePath)
+                val iv = applicationDatabase.securedItemEntityDao()
+                    .getIvFromSecuredPath(item.absolutePath)
 
-				if (iv == null) {
-					Log.e(TAG, "IV for ${item.displayName} was null, aborting")
-					return@withContext
-				}
+                if (iv == null) {
+                    Log.e(TAG, "IV for ${item.displayName} was null, aborting")
+                    return@withContext
+                }
 
                 val output =
                     EncryptionManager.decryptVideo(
@@ -473,10 +477,17 @@ fun VideoPlayer(
     val currentVideoPosition = rememberSaveable { mutableFloatStateOf(0f) }
     val duration = rememberSaveable { mutableFloatStateOf(0f) }
 
-    val exoPlayer = rememberExoPlayerWithLifeCycle(videoSource, item.absolutePath, isPlaying, duration, currentVideoPosition)
+    val exoPlayer = rememberExoPlayerWithLifeCycle(
+        videoSource,
+        item.absolutePath,
+        isPlaying,
+        duration,
+        currentVideoPosition
+    )
     val playerView = rememberPlayerView(exoPlayer, context as Activity, item.absolutePath)
 
-    val muteVideoOnStart by mainViewModel.settings.Video.getMuteOnStart().collectAsStateWithLifecycle(initialValue = true)
+    val muteVideoOnStart by mainViewModel.settings.Video.getMuteOnStart()
+        .collectAsStateWithLifecycle(initialValue = true)
 
     val controlsVisible = remember { mutableStateOf(true) }
     var showVideoPlayerControlsTimeout by remember { mutableIntStateOf(0) }
@@ -585,14 +596,18 @@ fun VideoPlayer(
         var doubleTapDisplayTimeMillis by remember { mutableIntStateOf(0) }
         val isLandscape by rememberDeviceOrientation()
         val seekBackBackgroundColor by animateColorAsState(
-            targetValue = if (doubleTapDisplayTimeMillis < 0) MaterialTheme.colorScheme.primary.copy(alpha = 0.4f) else Color.Transparent,
+            targetValue = if (doubleTapDisplayTimeMillis < 0) MaterialTheme.colorScheme.primary.copy(
+                alpha = 0.4f
+            ) else Color.Transparent,
             animationSpec = tween(
                 durationMillis = 350
             ),
             label = "Animate double tap to skip background color"
         )
         val seekForwardBackgroundColor by animateColorAsState(
-            targetValue = if (doubleTapDisplayTimeMillis > 0) MaterialTheme.colorScheme.primary.copy(alpha = 0.4f) else Color.Transparent,
+            targetValue = if (doubleTapDisplayTimeMillis > 0) MaterialTheme.colorScheme.primary.copy(
+                alpha = 0.4f
+            ) else Color.Transparent,
             animationSpec = tween(
                 durationMillis = 350
             ),
@@ -604,13 +619,13 @@ fun VideoPlayer(
             doubleTapDisplayTimeMillis = 0
         }
         LaunchedEffect(isLandscape) {
-       		setBarVisibility(
-       			visible = !isLandscape,
-       			window = window
-       		) {
-       			appBarsVisible.value = it
-       			if (!isLandscape) controlsVisible.value = it
-       		}
+            setBarVisibility(
+                visible = !isLandscape,
+                window = window
+            ) {
+                appBarsVisible.value = it
+                if (!isLandscape) controlsVisible.value = it
+            }
         }
 
         Box(
@@ -629,36 +644,38 @@ fun VideoPlayer(
 
                                 controlsVisible.value = !controlsVisible.value
                             } else if (!isTouchLocked.value && doubleTapDisplayTimeMillis != 0) {
-	                            if (position.x < size.width / 2) {
-	                            	if (doubleTapDisplayTimeMillis > 0) doubleTapDisplayTimeMillis = 0
-	                                doubleTapDisplayTimeMillis -= 1000
+                                if (position.x < size.width / 2) {
+                                    if (doubleTapDisplayTimeMillis > 0) doubleTapDisplayTimeMillis =
+                                        0
+                                    doubleTapDisplayTimeMillis -= 1000
 
-	                                val prev = isPlaying.value
-	                                exoPlayer.seekBack()
-	                                isPlaying.value = prev
-	                            } else if (position.x >= size.width / 2) {
-	                            	if (doubleTapDisplayTimeMillis < 0) doubleTapDisplayTimeMillis = 0
-	                                doubleTapDisplayTimeMillis += 1000
+                                    val prev = isPlaying.value
+                                    exoPlayer.seekBack()
+                                    isPlaying.value = prev
+                                } else if (position.x >= size.width / 2) {
+                                    if (doubleTapDisplayTimeMillis < 0) doubleTapDisplayTimeMillis =
+                                        0
+                                    doubleTapDisplayTimeMillis += 1000
 
-	                                val prev = isPlaying.value
-	                                exoPlayer.seekForward()
-	                                isPlaying.value = prev
-	                            }
+                                    val prev = isPlaying.value
+                                    exoPlayer.seekForward()
+                                    isPlaying.value = prev
+                                }
 
-	                            showVideoPlayerControlsTimeout += 1
+                                showVideoPlayerControlsTimeout += 1
                             }
                         },
 
                         onDoubleTap = { position ->
                             if (!isTouchLocked.value && position.x < size.width / 2) {
-                            	if (doubleTapDisplayTimeMillis > 0) doubleTapDisplayTimeMillis = 0
+                                if (doubleTapDisplayTimeMillis > 0) doubleTapDisplayTimeMillis = 0
                                 doubleTapDisplayTimeMillis -= 1000
 
                                 val prev = isPlaying.value
                                 exoPlayer.seekBack()
                                 isPlaying.value = prev
                             } else if (!isTouchLocked.value && position.x >= size.width / 2) {
-                            	if (doubleTapDisplayTimeMillis < 0) doubleTapDisplayTimeMillis = 0
+                                if (doubleTapDisplayTimeMillis < 0) doubleTapDisplayTimeMillis = 0
                                 doubleTapDisplayTimeMillis += 1000
 
                                 val prev = isPlaying.value
@@ -672,11 +689,11 @@ fun VideoPlayer(
                 }
         )
 
-		// seperate boxes to avoid touch blocking due to zindex ordering
-        Box (
-        	modifier = Modifier
-        		.fillMaxSize(1f)
-        		.zIndex(2f)
+        // seperate boxes to avoid touch blocking due to zindex ordering
+        Box(
+            modifier = Modifier
+                .fillMaxSize(1f)
+                .zIndex(2f)
         ) {
             Box(
                 modifier = Modifier
@@ -689,27 +706,27 @@ fun VideoPlayer(
                 AnimatedVisibility(
                     visible = doubleTapDisplayTimeMillis < 0,
                     enter =
-                    fadeIn(
-                        animationSpec = tween(
-                            durationMillis = 300
-                        )
-                    ) + scaleIn(
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessMedium,
-                        )
-                    ),
+                        fadeIn(
+                            animationSpec = tween(
+                                durationMillis = 300
+                            )
+                        ) + scaleIn(
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMedium,
+                            )
+                        ),
                     exit =
-                    fadeOut(
-                        animationSpec = tween(
-                            durationMillis = 300
-                        )
-                    ) + scaleOut(
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessMedium,
-                        )
-                    ),
+                        fadeOut(
+                            animationSpec = tween(
+                                durationMillis = 300
+                            )
+                        ) + scaleOut(
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMedium,
+                            )
+                        ),
                     modifier = Modifier
                         .align(Alignment.Center)
                 ) {
@@ -734,27 +751,27 @@ fun VideoPlayer(
                 AnimatedVisibility(
                     visible = doubleTapDisplayTimeMillis > 0,
                     enter =
-                    fadeIn(
-                        animationSpec = tween(
-                            durationMillis = 300
-                        )
-                    ) + scaleIn(
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessMedium,
-                        )
-                    ),
+                        fadeIn(
+                            animationSpec = tween(
+                                durationMillis = 300
+                            )
+                        ) + scaleIn(
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMedium,
+                            )
+                        ),
                     exit =
-                    fadeOut(
-                        animationSpec = tween(
-                            durationMillis = 300
-                        )
-                    ) + scaleOut(
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessMedium,
-                        )
-                    ),
+                        fadeOut(
+                            animationSpec = tween(
+                                durationMillis = 300
+                            )
+                        ) + scaleOut(
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMedium,
+                            )
+                        ),
                     modifier = Modifier
                         .align(Alignment.Center)
                 ) {
@@ -913,7 +930,8 @@ fun rememberExoPlayerWithLifeCycle(
     val lifecycleOwner = LocalLifecycleOwner.current
 
     DisposableEffect(lifecycleOwner.lifecycle.currentState) {
-        val lifecycleObserver = getExoPlayerLifecycleObserver(exoPlayer, isPlaying, context as Activity, absolutePath)
+        val lifecycleObserver =
+            getExoPlayerLifecycleObserver(exoPlayer, isPlaying, context as Activity, absolutePath)
 
         lifecycleOwner.lifecycle.addObserver(lifecycleObserver)
 
@@ -1035,7 +1053,10 @@ fun getExoPlayerLifecycleObserver(
 
                     if (absolutePath != null) {
                         // delete decrypted video if exists
-                        getSecureDecryptedVideoFile(name = File(absolutePath).name, context = activity.applicationContext).apply {
+                        getSecureDecryptedVideoFile(
+                            name = File(absolutePath).name,
+                            context = activity.applicationContext
+                        ).apply {
                             if (exists()) delete()
                         }
                     }
@@ -1078,7 +1099,10 @@ fun rememberPlayerView(
 
                 if (absolutePath != null) {
                     // delete decrypted video if exists
-                    getSecureDecryptedVideoFile(name = File(absolutePath).name, context = activity.applicationContext).apply {
+                    getSecureDecryptedVideoFile(
+                        name = File(absolutePath).name,
+                        context = activity.applicationContext
+                    ).apply {
                         if (exists()) delete()
                     }
                 }

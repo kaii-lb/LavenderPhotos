@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Photos.Splashscreen" parent="Theme.SplashScreen.IconBackground">
+        <item name="postSplashScreenTheme">@style/Theme.Photos</item>
+
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">#ffffff</item>
+        <item name="android:windowSplashScreenBackground">?attr/backgroundColor</item>
+    </style>
+
+    <style name="Theme.Photos" parent="Theme.Material3.DynamicColors.DayNight">
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+    </style>
+</resources>

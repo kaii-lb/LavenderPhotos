@@ -7,7 +7,7 @@ import java.io.File
 private const val TAG = "LOG_MANAGER"
 
 class LogManager(
-	private val context: Context
+	context: Context
 ) {
 	private val previousSuffix = "-previous"
 	private val fileType = ".txt"

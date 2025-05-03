@@ -91,8 +91,8 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.kaii.photos.LocalNavController
-import com.kaii.photos.R
 import com.kaii.photos.MainActivity.Companion.mainViewModel
+import com.kaii.photos.R
 import com.kaii.photos.compose.FolderIsEmpty
 import com.kaii.photos.compose.ShowSelectedState
 import com.kaii.photos.compose.ViewProperties
@@ -261,8 +261,10 @@ fun DeviceMedia(
                 .height(maxHeight - spacerHeight)
                 .align(Alignment.TopCenter)
         ) {
-            val cacheThumbnails by mainViewModel.settings.Storage.getCacheThumbnails().collectAsStateWithLifecycle(initialValue = false)
-            val thumbnailSize by mainViewModel.settings.Storage.getThumbnailSize().collectAsStateWithLifecycle(initialValue = 0)
+            val cacheThumbnails by mainViewModel.settings.Storage.getCacheThumbnails()
+                .collectAsStateWithLifecycle(initialValue = false)
+            val thumbnailSize by mainViewModel.settings.Storage.getThumbnailSize()
+                .collectAsStateWithLifecycle(initialValue = 0)
 
             val scrollSpeed = remember { mutableFloatStateOf(0f) }
             val isDragSelecting = remember { mutableStateOf(false) }
@@ -278,7 +280,7 @@ fun DeviceMedia(
             }
 
             LazyVerticalGrid(
-            	state = gridState,
+                state = gridState,
                 columns = GridCells.Fixed(
                     if (!isLandscape) {
                         3
@@ -290,16 +292,16 @@ fun DeviceMedia(
                 modifier = Modifier
                     .fillMaxSize(1f)
                     .align(Alignment.TopCenter)
-	                .dragSelectionHandler(
-	                    state = gridState,
-	                    selectedItemsList = selectedItemsList,
-	                    groupedMedia = groupedMedia.value,
-	                    scrollSpeed = scrollSpeed,
-	                    scrollThreshold = with(localDensity) {
-	                        40.dp.toPx()
-	                    },
-	                    isDragSelecting = isDragSelecting
-	                )
+                    .dragSelectionHandler(
+                        state = gridState,
+                        selectedItemsList = selectedItemsList,
+                        groupedMedia = groupedMedia.value,
+                        scrollSpeed = scrollSpeed,
+                        scrollThreshold = with(localDensity) {
+                            40.dp.toPx()
+                        },
+                        isDragSelecting = isDragSelecting
+                    )
             ) {
                 items(
                     count = groupedMedia.value.size,
@@ -458,11 +460,12 @@ fun DeviceMedia(
                     visible = showHandle && !showLoadingSpinner && totalLeftOverItems > 50f,
                     modifier = Modifier.fillMaxHeight(1f),
                     enter =
-                    slideInHorizontally { width -> width },
+                        slideInHorizontally { width -> width },
                     exit =
-                    slideOutHorizontally { width -> width }
+                        slideOutHorizontally { width -> width }
                 ) {
-                    val visibleItemIndex = remember { derivedStateOf { gridState.firstVisibleItemIndex } }
+                    val visibleItemIndex =
+                        remember { derivedStateOf { gridState.firstVisibleItemIndex } }
                     val percentScrolled by remember {
                         derivedStateOf {
                             visibleItemIndex.value / totalLeftOverItems
@@ -476,7 +479,8 @@ fun DeviceMedia(
                         onValueChange = {
                             coroutineScope.launch {
                                 if (isScrollingByHandle) {
-                                    chosenItemIndex = (it * (groupedMedia.value.size - 1)).roundToInt()
+                                    chosenItemIndex =
+                                        (it * (groupedMedia.value.size - 1)).roundToInt()
                                     gridState.scrollToItem(
                                         chosenItemIndex
                                     )
@@ -519,9 +523,9 @@ fun DeviceMedia(
                                     AnimatedVisibility(
                                         visible = isScrollingByHandle,
                                         enter =
-                                        slideInHorizontally { width -> width / 4 } + fadeIn(),
+                                            slideInHorizontally { width -> width / 4 } + fadeIn(),
                                         exit =
-                                        slideOutHorizontally { width -> width / 4 } + fadeOut(),
+                                            slideOutHorizontally { width -> width / 4 } + fadeOut(),
                                         modifier = Modifier
                                             .align(Alignment.CenterStart)
                                             .height(32.dp)
@@ -535,15 +539,20 @@ fun DeviceMedia(
                                                 .background(MaterialTheme.colorScheme.secondaryContainer)
                                                 .padding(8.dp, 4.dp)
                                         ) {
-                                        	// last index to "reach" even the last items
-                                            val item by remember { derivedStateOf {
-                                                groupedMedia.value[chosenItemIndex]
-                                            }}
+                                            // last index to "reach" even the last items
+                                            val item by remember {
+                                                derivedStateOf {
+                                                    groupedMedia.value[chosenItemIndex]
+                                                }
+                                            }
 
-                                            val format = remember { DateTimeFormatter.ofPattern("MMM yyyy") }
+                                            val format =
+                                                remember { DateTimeFormatter.ofPattern("MMM yyyy") }
                                             val formatted = remember(item) {
-                                            	Instant.ofEpochSecond(item.dateTaken).atZone(ZoneId.systemDefault()).toLocalDateTime().format(format)
-                                           	}
+                                                Instant.ofEpochSecond(item.dateTaken)
+                                                    .atZone(ZoneId.systemDefault())
+                                                    .toLocalDateTime().format(format)
+                                            }
 
                                             Text(
                                                 text = formatted,
@@ -637,11 +646,17 @@ fun MediaStoreItem(
                     indication = null,
                 ) {
                     if (isSectionSelected) {
-                        selectedItemsList.unselectSection(section = item.section, groupedMedia = groupedMedia.value)
+                        selectedItemsList.unselectSection(
+                            section = item.section,
+                            groupedMedia = groupedMedia.value
+                        )
                     } else {
                         if (selectedItemsList.size == 1 && selectedItemsList[0] == MediaStoreData.dummyItem) selectedItemsList.clear()
 
-                        selectedItemsList.selectSection(section = item.section, groupedMedia = groupedMedia.value)
+                        selectedItemsList.selectSection(
+                            section = item.section,
+                            groupedMedia = groupedMedia.value
+                        )
                     }
 
                     vibratorManager.vibrateLong()
@@ -737,7 +752,8 @@ fun MediaStoreItem(
             val context = LocalContext.current
 
             var model by remember { mutableStateOf<Any?>(null) }
-            val isSecureMedia = remember(viewProperties) { viewProperties == ViewProperties.SecureFolder }
+            val isSecureMedia =
+                remember(viewProperties) { viewProperties == ViewProperties.SecureFolder }
 
             LaunchedEffect(isSecureMedia) {
                 if (!isSecureMedia || model != null) return@LaunchedEffect
@@ -745,10 +761,14 @@ fun MediaStoreItem(
                 model =
                     withContext(Dispatchers.IO) {
                         try {
-                            val thumbnailIv = item.bytes!!.getThumbnailIv() // get thumbnail iv from video
+                            val thumbnailIv =
+                                item.bytes!!.getThumbnailIv() // get thumbnail iv from video
 
                             EncryptionManager.decryptBytes(
-                                bytes = getSecuredCacheImageForFile(fileName = item.displayName, context = context).readBytes(),
+                                bytes = getSecuredCacheImageForFile(
+                                    fileName = item.displayName,
+                                    context = context
+                                ).readBytes(),
                                 iv = thumbnailIv
                             )
                         } catch (e: Throwable) {
@@ -771,11 +791,10 @@ fun MediaStoreItem(
                     .scale(animatedItemScale)
                     .clip(RoundedCornerShape(animatedItemCornerRadius))
             ) {
-				if (isSecureMedia) {
-					it.signature(item.signature())
+                if (isSecureMedia) {
+                    it.signature(item.signature())
                         .diskCacheStrategy(DiskCacheStrategy.NONE)
-				}
-                else if (thumbnailSettings.second == 0) {
+                } else if (thumbnailSettings.second == 0) {
                     it.signature(item.signature())
                         .diskCacheStrategy(
                             if (thumbnailSettings.first) DiskCacheStrategy.ALL
@@ -831,9 +850,9 @@ fun Modifier.dragSelectionHandler(
 
     if (groupedMedia.isEmpty()) return@pointerInput
 
-	val itemWidth = state.layoutInfo.visibleItemsInfo.firstOrNull {
-		if (it.index in groupedMedia.indices) groupedMedia[it.index].type != MediaType.Section else false
-	}?.size?.width
+    val itemWidth = state.layoutInfo.visibleItemsInfo.firstOrNull {
+        if (it.index in groupedMedia.indices) groupedMedia[it.index].type != MediaType.Section else false
+    }?.size?.width
 
     val numberOfHorizontalItems = itemWidth?.let { state.layoutInfo.viewportSize.width / it } ?: 1
 
@@ -847,13 +866,20 @@ fun Modifier.dragSelectionHandler(
                 initialKey = groupedMedia.indexOf(selectedItemsList[0])
                 currentKey = initialKey
             } else {
-                state.getGridItemAtOffset(offset, groupedMedia.map { it.uri.toString() }, numberOfHorizontalItems)?.let { key ->
+                state.getGridItemAtOffset(
+                    offset,
+                    groupedMedia.map { it.uri.toString() },
+                    numberOfHorizontalItems
+                )?.let { key ->
                     val item = groupedMedia[key]
 
                     if (item.type != MediaType.Section) {
                         initialKey = key
                         currentKey = key
-                        if (!selectedItemsList.contains(item)) selectedItemsList.selectItem(item, groupedMedia)
+                        if (!selectedItemsList.contains(item)) selectedItemsList.selectItem(
+                            item,
+                            groupedMedia
+                        )
                     }
                 }
             }
@@ -882,11 +908,18 @@ fun Modifier.dragSelectionHandler(
                     else -> 0f
                 }
 
-                state.getGridItemAtOffset(change.position, groupedMedia.map { it.uri.toString() }, numberOfHorizontalItems)?.let { key ->
+                state.getGridItemAtOffset(
+                    change.position,
+                    groupedMedia.map { it.uri.toString() },
+                    numberOfHorizontalItems
+                )?.let { key ->
                     if (currentKey != key) {
                         selectedItemsList.apply {
                             val toBeRemoved =
-                                if (initialKey!! <= currentKey!!) groupedMedia.subList(initialKey!!, currentKey!! + 1)
+                                if (initialKey!! <= currentKey!!) groupedMedia.subList(
+                                    initialKey!!,
+                                    currentKey!! + 1
+                                )
                                 else groupedMedia.subList(currentKey!!, initialKey!! + 1)
 
                             unselectAll(
@@ -917,8 +950,12 @@ fun Modifier.dragSelectionHandler(
 }
 
 @Suppress("UNCHECKED_CAST")
-/** make sure [T] is the same type as state keys */
-fun <T: Any>LazyGridState.getGridItemAtOffset(offset: Offset, keys: List<T>, numberOfHorizontalItems: Int): Int? {
+        /** make sure [T] is the same type as state keys */
+fun <T : Any> LazyGridState.getGridItemAtOffset(
+    offset: Offset,
+    keys: List<T>,
+    numberOfHorizontalItems: Int
+): Int? {
     var key: T? = null
 
     // scan the entire row for this item

@@ -30,9 +30,9 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalNavController
-import com.kaii.photos.compose.SingleAlbumViewBottomBar
-import com.kaii.photos.compose.SingleAlbumViewTopBar
 import com.kaii.photos.compose.ViewProperties
+import com.kaii.photos.compose.app_bars.SingleAlbumViewBottomBar
+import com.kaii.photos.compose.app_bars.SingleAlbumViewTopBar
 import com.kaii.photos.compose.dialogs.SingleAlbumDialog
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.BottomBarTab

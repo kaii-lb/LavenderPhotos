@@ -1,7 +1,7 @@
 package com.kaii.photos.mediastore
 
-import android.content.Context
 import android.content.ContentResolver
+import android.content.Context
 import android.database.ContentObserver
 import android.net.Uri
 import android.os.Bundle
@@ -16,15 +16,13 @@ import com.bumptech.glide.util.Preconditions
 import com.bumptech.glide.util.Util
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.SQLiteQuery
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 
 private const val TAG = "ALBUM_STORE_DATA_SOURCE"
 
@@ -36,7 +34,8 @@ internal constructor(
     private val cancellationSignal: CancellationSignal
 ) {
     companion object {
-        private val MEDIA_STORE_FILE_URI = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL)
+        private val MEDIA_STORE_FILE_URI =
+            MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL)
         private val PROJECTION =
             arrayOf(
                 MediaColumns._ID,
@@ -55,15 +54,15 @@ internal constructor(
                     super.onChange(selfChange)
                     launch(Dispatchers.IO) {
                         runCatching {
-			                val result = mutableListOf<Pair<AlbumInfo, MediaStoreData>>()
+                            val result = mutableListOf<Pair<AlbumInfo, MediaStoreData>>()
 
-							albumQueryPairs.forEach { (album, queryString) ->
-								val item = query(sqlQuery = queryString)
+                            albumQueryPairs.forEach { (album, queryString) ->
+                                val item = query(sqlQuery = queryString)
 
-								result.add(Pair(album, item))
-							}
+                                result.add(Pair(album, item))
+                            }
 
-			                trySend(result)
+                            trySend(result)
                         }
                     }
                 }
@@ -79,11 +78,11 @@ internal constructor(
             runCatching {
                 val result = mutableListOf<Pair<AlbumInfo, MediaStoreData>>()
 
-				albumQueryPairs.forEach { (album, queryString) ->
-					val item = query(sqlQuery = queryString)
+                albumQueryPairs.forEach { (album, queryString) ->
+                    val item = query(sqlQuery = queryString)
 
-					result.add(Pair(album, item))
-				}
+                    result.add(Pair(album, item))
+                }
 
                 trySend(result)
             }
@@ -110,11 +109,23 @@ internal constructor(
 
         var data = MediaStoreData()
         val queryArgs = Bundle().apply {
-        	putStringArray(ContentResolver.QUERY_ARG_SORT_COLUMNS, arrayOf(MediaColumns.DATE_MODIFIED))
-        	putInt(ContentResolver.QUERY_ARG_SORT_DIRECTION, ContentResolver.QUERY_SORT_DIRECTION_DESCENDING)
-        	putInt(ContentResolver.QUERY_ARG_LIMIT, 1)
-        	putString(ContentResolver.QUERY_ARG_SQL_SELECTION, "((${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_IMAGE}) OR (${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_VIDEO})) ${sqlQuery.query}")
-        	putStringArray(ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS, sqlQuery.paths?.toTypedArray())
+            putStringArray(
+                ContentResolver.QUERY_ARG_SORT_COLUMNS,
+                arrayOf(MediaColumns.DATE_MODIFIED)
+            )
+            putInt(
+                ContentResolver.QUERY_ARG_SORT_DIRECTION,
+                ContentResolver.QUERY_SORT_DIRECTION_DESCENDING
+            )
+            putInt(ContentResolver.QUERY_ARG_LIMIT, 1)
+            putString(
+                ContentResolver.QUERY_ARG_SQL_SELECTION,
+                "((${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_IMAGE}) OR (${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_VIDEO})) ${sqlQuery.query}"
+            )
+            putStringArray(
+                ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS,
+                sqlQuery.paths?.toTypedArray()
+            )
         }
 
         val mediaCursor =
@@ -127,7 +138,8 @@ internal constructor(
 
         mediaCursor.use { cursor ->
             val idColNum = cursor.getColumnIndexOrThrow(MediaColumns._ID)
-            val absolutePathColNum = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA) // look into using the uri + id if this is deprecated
+            val absolutePathColNum =
+                cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA) // look into using the uri + id if this is deprecated
             val dateModifiedColNum = cursor.getColumnIndexOrThrow(MediaColumns.DATE_MODIFIED)
             val mimeTypeColNum = cursor.getColumnIndexOrThrow(MediaColumns.MIME_TYPE)
             val mediaTypeColumnIndex = cursor.getColumnIndexOrThrow(FileColumns.MEDIA_TYPE)
@@ -140,11 +152,11 @@ internal constructor(
                 val dateModified = cursor.getLong(dateModifiedColNum)
                 val displayName = cursor.getString(displayNameIndex)
                 val type =
-                	if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) MediaType.Image
-                	else MediaType.Video
+                    if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) MediaType.Image
+                    else MediaType.Video
 
                 Log.d(TAG, "The latest media is $absolutePath for the following albums:")
-				Log.d(TAG, sqlQuery.paths.toString())
+                Log.d(TAG, sqlQuery.paths.toString())
                 data =
                     MediaStoreData(
                         type = type,

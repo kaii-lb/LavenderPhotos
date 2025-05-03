@@ -49,13 +49,13 @@ import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
-import com.kaii.photos.compose.setBarVisibility
+import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.EncryptionManager
+import com.kaii.photos.helpers.OffsetSaver
 import com.kaii.photos.helpers.getSecuredCacheImageForFile
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.vibrateShort
-import com.kaii.photos.helpers.OffsetSaver
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getIv
@@ -110,11 +110,13 @@ fun HorizontalImageList(
 
     val shouldAutoPlay =
         if (isOpenWithView) true
-        else mainViewModel.settings.Video.getShouldAutoPlay().collectAsStateWithLifecycle(initialValue = true).value
+        else mainViewModel.settings.Video.getShouldAutoPlay()
+            .collectAsStateWithLifecycle(initialValue = true).value
 
     val muteVideoOnStart =
         if (isOpenWithView) false
-        else mainViewModel.settings.Video.getMuteOnStart().collectAsStateWithLifecycle(initialValue = true).value
+        else mainViewModel.settings.Video.getMuteOnStart()
+            .collectAsStateWithLifecycle(initialValue = true).value
 
     val lastVideoWasMuted = remember { mutableStateOf(muteVideoOnStart) }
 
@@ -182,7 +184,10 @@ fun HorizontalImageList(
                             val thumbnailIv = mediaStoreItem.bytes.getThumbnailIv()
 
                             model = EncryptionManager.decryptBytes(
-                                bytes = getSecuredCacheImageForFile(fileName = mediaStoreItem.displayName, context = context).readBytes(),
+                                bytes = getSecuredCacheImageForFile(
+                                    fileName = mediaStoreItem.displayName,
+                                    context = context
+                                ).readBytes(),
                                 iv = thumbnailIv
                             )
 
@@ -353,7 +358,8 @@ fun Modifier.mediaModifier(
                                     val oldScale = scale.floatValue
 
                                     if (panZoomLock) {
-                                        scale.floatValue = (scale.floatValue * zoomChange).coerceIn(1f, 5f)
+                                        scale.floatValue =
+                                            (scale.floatValue * zoomChange).coerceIn(1f, 5f)
                                     }
 
                                     val nextRotation = rotation.floatValue + actualRotation

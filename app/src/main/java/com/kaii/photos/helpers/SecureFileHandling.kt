@@ -11,6 +11,7 @@ import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import java.io.ByteArrayOutputStream
 import java.io.File
+import androidx.core.graphics.scale
 
 fun getSecuredCacheImageForFile(
     file: File,
@@ -54,12 +55,7 @@ fun addSecuredCachedMediaThumbnail(
             val image = BitmapFactory.decodeFile(mediaItem.absolutePath)
             val ratio = image.width.toFloat() / image.height.toFloat()
 
-            Bitmap.createScaledBitmap(
-                image,
-                (1024 * ratio).toInt(),
-                1024,
-                false
-            )
+            image.scale((1024 * ratio).toInt(), 1024, false)
         }
 
     val actual =

@@ -35,9 +35,9 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavDestination.Companion.hasRoute
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.applicationDatabase
-import com.kaii.photos.compose.SecureFolderViewBottomAppBar
-import com.kaii.photos.compose.SecureFolderViewTopAppBar
 import com.kaii.photos.compose.ViewProperties
+import com.kaii.photos.compose.app_bars.SecureFolderViewBottomAppBar
+import com.kaii.photos.compose.app_bars.SecureFolderViewTopAppBar
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
@@ -147,7 +147,7 @@ fun LockedFolderView(
         val dao = applicationDatabase.securedItemEntityDao()
 
         withContext(Dispatchers.IO) {
-        	mediaStoreData.clear()
+            mediaStoreData.clear()
 
             fileList.forEach { file ->
                 val mimeType = Files.probeContentType(Path(file.absolutePath))
@@ -167,12 +167,17 @@ fun LockedFolderView(
                         if (iv != null && thumbnailIv != null) iv + thumbnailIv else ByteArray(32)
                     }
 
-                val originalPath = dao.getOriginalPathFromSecuredPath(file.absolutePath) ?: restoredFilesDir
+                val originalPath =
+                    dao.getOriginalPathFromSecuredPath(file.absolutePath) ?: restoredFilesDir
 
                 val item = MediaStoreData(
                     type = type,
                     id = file.hashCode() * file.length() * file.lastModified(),
-                    uri = FileProvider.getUriForFile(context, LAVENDER_FILE_PROVIDER_AUTHORITY, file),
+                    uri = FileProvider.getUriForFile(
+                        context,
+                        LAVENDER_FILE_PROVIDER_AUTHORITY,
+                        file
+                    ),
                     mimeType = mimeType,
                     dateModified = file.lastModified() / 1000,
                     dateTaken = file.lastModified() / 1000,
@@ -217,9 +222,9 @@ fun LockedFolderView(
         sheetSwipeEnabled = false,
         topBar = {
             SecureFolderViewTopAppBar(
-            	selectedItemsList = selectedItemsList,
-            	currentView = currentView
-           	) {
+                selectedItemsList = selectedItemsList,
+                currentView = currentView
+            ) {
                 navController.popBackStack()
             }
         },

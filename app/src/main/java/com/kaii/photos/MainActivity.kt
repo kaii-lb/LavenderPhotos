@@ -70,13 +70,14 @@ import com.kaii.lavender_snackbars.LavenderSnackbarEvents
 import com.kaii.lavender_snackbars.LavenderSnackbarHostState
 import com.kaii.photos.compose.ErrorPage
 import com.kaii.photos.compose.LockedFolderEntryView
-import com.kaii.photos.compose.MainAppBottomBar
-import com.kaii.photos.compose.MainAppSelectingBottomBar
-import com.kaii.photos.compose.MainAppTopBar
 import com.kaii.photos.compose.PermissionHandler
 import com.kaii.photos.compose.ViewProperties
+import com.kaii.photos.compose.app_bars.MainAppBottomBar
+import com.kaii.photos.compose.app_bars.MainAppSelectingBottomBar
+import com.kaii.photos.compose.app_bars.MainAppTopBar
+import com.kaii.photos.compose.app_bars.getAppBarContentTransition
+import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.dialogs.MainAppDialog
-import com.kaii.photos.compose.getAppBarContentTransition
 import com.kaii.photos.compose.grids.AlbumsGridView
 import com.kaii.photos.compose.grids.FavouritesGridView
 import com.kaii.photos.compose.grids.LockedFolderView
@@ -85,7 +86,6 @@ import com.kaii.photos.compose.grids.SearchPage
 import com.kaii.photos.compose.grids.SingleAlbumView
 import com.kaii.photos.compose.grids.TrashedPhotoGridView
 import com.kaii.photos.compose.rememberDeviceOrientation
-import com.kaii.photos.compose.setBarVisibility
 import com.kaii.photos.compose.settings.AboutPage
 import com.kaii.photos.compose.settings.DataAndBackupPage
 import com.kaii.photos.compose.settings.DebuggingSettingsPage

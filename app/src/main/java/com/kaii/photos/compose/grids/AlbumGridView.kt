@@ -136,8 +136,8 @@ fun AlbumsGridView(
             }
 
             if (albumToThumbnailMapping.toSet() != cachedAlbumToThumbnailMapping.toSet() && albumToThumbnailMapping.isNotEmpty()) {
-                cachedAlbumToThumbnailMapping.addAll(albumToThumbnailMapping)
-                cachedAlbumToThumbnailMapping.retainAll(albumToThumbnailMapping)
+                cachedAlbumToThumbnailMapping.addAll(albumToThumbnailMapping.toSet())
+                cachedAlbumToThumbnailMapping.retainAll(albumToThumbnailMapping.toSet().toSet())
             }
 
             val copy = listOfDirs

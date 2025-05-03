@@ -66,7 +66,7 @@ fun SnapshotStateList<MediaStoreData>.selectAll(
 		}
 
 		sectionItems?.let {
-			removeAll(it)
+			removeAll(it.toSet())
 			addAll(it)
 		}
 	}
@@ -90,7 +90,7 @@ fun SnapshotStateList<MediaStoreData>.unselectAll(
 		remove(section)
 
 		sectionItems?.let {
-			removeAll(it)
+			removeAll(it.toSet())
 		}
 	}
 }
@@ -103,7 +103,7 @@ fun SnapshotStateList<MediaStoreData>.selectSection(
 		it.section == section
 	}
 
-	removeAll(media)
+	removeAll(media.toSet())
 	addAll(media)
 }
 
@@ -115,5 +115,5 @@ fun SnapshotStateList<MediaStoreData>.unselectSection(
 		it.section == section
 	}
 
-	removeAll(media)
+	removeAll(media.toSet())
 }
