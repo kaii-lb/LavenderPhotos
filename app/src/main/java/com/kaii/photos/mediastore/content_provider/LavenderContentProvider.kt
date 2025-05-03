@@ -23,12 +23,13 @@ class LavenderContentProvider : ContentProvider() {
 
     private lateinit var database: SQLiteDatabase
     private val dbName = "album_db"
-    private val dbVersion = 1
+    private val dbVersion = 3
     private val createSQLTable = " CREATE TABLE " + TABLE_NAME +
             " (${LavenderMediaColumns.ID} INTEGER PRIMARY KEY AUTOINCREMENT, " +
             " ${LavenderMediaColumns.PARENT_ID} INTEGER NOT NULL," +
             " ${LavenderMediaColumns.URI} TEXT NOT NULL," +
-            " ${LavenderMediaColumns.MIME_TYPE} TEXT NOT NULL);"
+            " ${LavenderMediaColumns.MIME_TYPE} TEXT NOT NULL," +
+            "${LavenderMediaColumns.DATE_TAKEN} INTEGER NOT NULL);"
 
     inner class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, dbName, null, dbVersion) {
         override fun onCreate(db: SQLiteDatabase?) {
@@ -120,4 +121,5 @@ object LavenderMediaColumns {
     const val PARENT_ID = "parentId"
     const val URI = "uri"
     const val MIME_TYPE = "mimetype"
+    const val DATE_TAKEN = "date_taken"
 }

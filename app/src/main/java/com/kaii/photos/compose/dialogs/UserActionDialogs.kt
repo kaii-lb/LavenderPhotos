@@ -3,7 +3,9 @@ package com.kaii.photos.compose.dialogs
 import android.content.res.Configuration
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,6 +14,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -535,8 +538,6 @@ fun AlbumAddChoiceDialog(
 ) {
     LavenderDialogBase(
         onDismiss = onDismiss,
-        modifier = Modifier
-            .padding(8.dp, 0.dp)
     ) {
         Box(
             modifier = Modifier
@@ -571,39 +572,49 @@ fun AlbumAddChoiceDialog(
             )
         }
 
-        val activityLauncher = createDirectoryPicker { path ->
-            if (path != null) mainViewModel.settings.AlbumsList.addToAlbumsList(
-                AlbumInfo(
-                    id = path.hashCode(),
-                    name = path.split("/").last(),
-                    paths = listOf(path)
+        Column (
+            modifier = Modifier
+                .fillMaxWidth(1f)
+                .wrapContentHeight()
+                .padding(8.dp, 0.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            val activityLauncher = createDirectoryPicker { path ->
+                if (path != null) mainViewModel.settings.AlbumsList.addToAlbumsList(
+                    AlbumInfo(
+                        id = path.hashCode(),
+                        name = path.split("/").last(),
+                        paths = listOf(path)
+                    )
                 )
-            )
-        }
-        DialogClickableItem(
-            text = "Folder Album",
-            iconResId = R.drawable.albums,
-            position = RowPosition.Top
-        ) {
-            activityLauncher.launch(null)
-        }
+            }
 
-        var showCustomAlbumDialog by remember { mutableStateOf(false) }
-        if (showCustomAlbumDialog) {
-            AddCustomAlbumDialog(
-                onDismissPrev = onDismiss,
-                onDismiss = {
-                    showCustomAlbumDialog = false
-                }
-            )
-        }
+            DialogClickableItem(
+                text = "Folder Album",
+                iconResId = R.drawable.albums,
+                position = RowPosition.Top
+            ) {
+                activityLauncher.launch(null)
+            }
 
-        DialogClickableItem(
-            text = "Custom Album",
-            iconResId = R.drawable.albums,
-            position = RowPosition.Bottom
-        ) {
-            showCustomAlbumDialog = true
+            var showCustomAlbumDialog by remember { mutableStateOf(false) }
+            if (showCustomAlbumDialog) {
+                AddCustomAlbumDialog(
+                    onDismissPrev = onDismiss,
+                    onDismiss = {
+                        showCustomAlbumDialog = false
+                    }
+                )
+            }
+
+            DialogClickableItem(
+                text = "Custom Album",
+                iconResId = R.drawable.albums,
+                position = RowPosition.Bottom
+            ) {
+                showCustomAlbumDialog = true
+            }
         }
 
         Spacer(modifier = Modifier.height(8.dp))

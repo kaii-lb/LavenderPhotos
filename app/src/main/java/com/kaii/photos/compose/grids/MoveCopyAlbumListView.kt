@@ -329,6 +329,7 @@ fun AlbumsListItem(
                                     put(LavenderMediaColumns.URI, media.uri.toString())
                                     put(LavenderMediaColumns.PARENT_ID, album.id)
                                     put(LavenderMediaColumns.MIME_TYPE, media.mimeType)
+                                    put(LavenderMediaColumns.DATE_TAKEN, media.dateTaken)
                                 }
                             }.toTypedArray()
                     )

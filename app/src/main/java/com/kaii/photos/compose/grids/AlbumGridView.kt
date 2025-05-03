@@ -123,7 +123,8 @@ fun AlbumsGridView(
     val albumsViewModel: AlbumsViewModel = viewModel(
         factory = AlbumsViewModelFactory(
             context = context,
-            albums = albums.value.filter { !it.isCustomAlbum })
+            albums = albums.value
+        )
     )
 
     val albumToThumbnailMapping by albumsViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
@@ -135,12 +136,10 @@ fun AlbumsGridView(
             val newList = mutableListOf<AlbumInfo>()
 
             // if the albums actually changed, not just the order then refresh
-            if (albumsViewModel.albumInfo.toSet() != listOfDirs.toSet()
-                    .filter { !it.isCustomAlbum }
-            ) {
+            if (albumsViewModel.albumInfo.toSet() != listOfDirs.toSet()) {
                 albumsViewModel.refresh(
                     context = context,
-                    albums = listOfDirs.filter { !it.isCustomAlbum }
+                    albums = listOfDirs
                 )
             }
 
