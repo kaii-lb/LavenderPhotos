@@ -412,6 +412,7 @@ fun AddTabDialog(
                                     albumPaths = selectedAlbums,
                                     index = tabList.size,
                                     icon = selectedItem!!,
+                                    id = tabList.size
                                 )
                             )
                         }

@@ -30,6 +30,7 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.FavouritesViewBottomAppBar
 import com.kaii.photos.compose.app_bars.FavouritesViewTopAppBar
+import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.mediastore.MediaStoreData
@@ -66,7 +67,7 @@ fun FavouritesGridView(
 
     val showBottomSheet by remember {
         derivedStateOf {
-            selectedItemsList.size > 0
+            selectedItemsList.isNotEmpty()
         }
     }
 
@@ -123,7 +124,7 @@ fun FavouritesGridView(
         ) {
             PhotoGrid(
                 groupedMedia = groupedMedia,
-                albums = emptyList(),
+                albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
                 selectedItemsList = selectedItemsList,
                 viewProperties = ViewProperties.Favourites,
                 shouldPadUp = true

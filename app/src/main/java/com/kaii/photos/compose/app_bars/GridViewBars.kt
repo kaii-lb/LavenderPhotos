@@ -61,6 +61,8 @@ import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareMultipleSecuredImages
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.mediastore.content_provider.LavenderContentProvider
+import com.kaii.photos.mediastore.content_provider.LavenderMediaColumns
 import com.kaii.photos.mediastore.getIv
 import com.kaii.photos.mediastore.getOriginalPath
 import kotlinx.coroutines.Dispatchers
@@ -82,7 +84,7 @@ fun SingleAlbumViewTopBar(
 ) {
     val show by remember {
         derivedStateOf {
-            selectedItemsList.size > 0
+            selectedItemsList.isNotEmpty()
         }
     }
 
@@ -142,18 +144,20 @@ fun SingleAlbumViewTopBar(
                         )
                     }
 
-                    IconButton(
-                        onClick = {
-                            showPathsDialog = true
-                        },
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.add),
-                            contentDescription = "show more options for the album view",
-                            tint = MaterialTheme.colorScheme.onBackground,
-                            modifier = Modifier
-                                .size(24.dp)
-                        )
+                    if (albumInfo?.isCustomAlbum == false) {
+                        IconButton(
+                            onClick = {
+                                showPathsDialog = true
+                            },
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.add),
+                                contentDescription = "show more options for the album view",
+                                tint = MaterialTheme.colorScheme.onBackground,
+                                modifier = Modifier
+                                    .size(24.dp)
+                            )
+                        }
                     }
 
                     IconButton(
@@ -183,6 +187,7 @@ fun SingleAlbumViewTopBar(
 
 @Composable
 fun SingleAlbumViewBottomBar(
+    albumInfo: AlbumInfo,
     selectedItemsList: SnapshotStateList<MediaStoreData>
 ) {
     IsSelectingBottomAppBar {
@@ -236,6 +241,7 @@ fun SingleAlbumViewBottomBar(
         BottomAppBarItem(
             text = "Move",
             iconResId = R.drawable.cut,
+            enabled = !albumInfo.isCustomAlbum,
             action = {
                 isMoving = true
                 show.value = true
@@ -272,24 +278,54 @@ fun SingleAlbumViewBottomBar(
 
         val confirmToDelete by mainViewModel.settings.Permissions.getConfirmToDelete()
             .collectAsStateWithLifecycle(initialValue = true)
-        BottomAppBarItem(
-            text = "Delete",
-            iconResId = R.drawable.delete,
-            cornerRadius = 16.dp,
-            dialogComposable = {
-                ConfirmationDialog(
-                    showDialog = showDeleteDialog,
-                    dialogTitle = "Move selected items to Trash Bin?",
-                    confirmButtonLabel = "Delete"
-                ) {
-                    runTrashAction.value = true
+        if (!albumInfo.isCustomAlbum) {
+            BottomAppBarItem(
+                text = "Delete",
+                iconResId = R.drawable.delete,
+                cornerRadius = 16.dp,
+                action = {
+                    if (confirmToDelete) showDeleteDialog.value = true
+                    else runTrashAction.value = true
+                },
+                dialogComposable = {
+                    ConfirmationDialog(
+                        showDialog = showDeleteDialog,
+                        dialogTitle = "Move selected items to Trash Bin?",
+                        confirmButtonLabel = "Delete"
+                    ) {
+                        runTrashAction.value = true
+                    }
                 }
-            },
-            action = {
-                if (confirmToDelete) showDeleteDialog.value = true
-                else runTrashAction.value = true
-            }
-        )
+            )
+        } else {
+            BottomAppBarItem(
+                text = "Remove",
+                iconResId = R.drawable.delete,
+                cornerRadius = 16.dp,
+                action = {
+                    if (confirmToDelete) showDeleteDialog.value = true
+                    else runTrashAction.value = true
+                },
+                dialogComposable = {
+                    ConfirmationDialog(
+                        showDialog = showDeleteDialog,
+                        dialogTitle = "Remove these items from the album?",
+                        confirmButtonLabel = "Remove"
+                    ) {
+                        mainViewModel.launch(Dispatchers.IO) {
+                            selectedItemsWithoutSection.forEach { item ->
+                                context.contentResolver.delete(
+                                    LavenderContentProvider.CONTENT_URI,
+                                    "${LavenderMediaColumns.ID} = ?",
+                                    arrayOf(item.id.toString())
+                                )
+                            }
+                            selectedItemsList.clear()
+                        }
+                    }
+                }
+            )
+        }
     }
 }
 
@@ -328,7 +364,7 @@ fun TrashedPhotoGridViewTopBar(
 
     val show by remember {
         derivedStateOf {
-            selectedItemsList.size > 0
+            selectedItemsList.isNotEmpty()
         }
     }
 
@@ -456,6 +492,9 @@ fun TrashedPhotoGridViewBottomBar(
             text = "Restore",
             iconResId = R.drawable.untrash,
             cornerRadius = 16.dp,
+            action = {
+                showRestoreDialog.value = true
+            },
             dialogComposable = {
                 ConfirmationDialog(
                     showDialog = showRestoreDialog,
@@ -464,9 +503,6 @@ fun TrashedPhotoGridViewBottomBar(
                 ) {
                     runRestoreAction.value = true
                 }
-            },
-            action = {
-                showRestoreDialog.value = true
             }
         )
 
@@ -490,6 +526,11 @@ fun TrashedPhotoGridViewBottomBar(
             text = "Delete",
             iconResId = R.drawable.delete,
             cornerRadius = 16.dp,
+            action = {
+                if (selectedItemsWithoutSection.isNotEmpty()) {
+                    showPermaDeleteDialog.value = true
+                }
+            },
             dialogComposable = {
                 ConfirmationDialogWithBody(
                     showDialog = showPermaDeleteDialog,
@@ -498,11 +539,6 @@ fun TrashedPhotoGridViewBottomBar(
                     confirmButtonLabel = "Delete"
                 ) {
                     runPermaDeleteAction.value = true
-                }
-            },
-            action = {
-                if (selectedItemsWithoutSection.isNotEmpty()) {
-                    showPermaDeleteDialog.value = true
                 }
             }
         )
@@ -518,7 +554,7 @@ fun SecureFolderViewTopAppBar(
 ) {
     val show by remember {
         derivedStateOf {
-            selectedItemsList.size > 0
+            selectedItemsList.isNotEmpty()
         }
     }
 
@@ -679,6 +715,9 @@ fun SecureFolderViewBottomAppBar(
             text = "Restore",
             iconResId = R.drawable.unlock,
             cornerRadius = 16.dp,
+            action = {
+                showRestoreDialog.value = true
+            },
             dialogComposable = {
                 ConfirmationDialog(
                     showDialog = showRestoreDialog,
@@ -691,9 +730,6 @@ fun SecureFolderViewBottomAppBar(
                     isGettingPermissions.value = true
                     runRestoreAction.value = true
                 }
-            },
-            action = {
-                showRestoreDialog.value = true
             }
         )
 
@@ -742,6 +778,9 @@ fun SecureFolderViewBottomAppBar(
             text = "Delete",
             iconResId = R.drawable.delete,
             cornerRadius = 16.dp,
+            action = {
+                showPermaDeleteDialog.value = true
+            },
             dialogComposable = {
                 ConfirmationDialogWithBody(
                     showDialog = showPermaDeleteDialog,
@@ -751,9 +790,6 @@ fun SecureFolderViewBottomAppBar(
                 ) {
                     runPermaDeleteAction.value = true
                 }
-            },
-            action = {
-                showPermaDeleteDialog.value = true
             }
         )
     }
@@ -768,7 +804,7 @@ fun FavouritesViewTopAppBar(
 ) {
     val show by remember {
         derivedStateOf {
-            selectedItemsList.size > 0
+            selectedItemsList.isNotEmpty()
         }
     }
 
@@ -878,6 +914,9 @@ fun FavouritesViewBottomAppBar(
             text = "Remove",
             iconResId = R.drawable.unfavourite,
             cornerRadius = 16.dp,
+            action = {
+                showUnFavDialog.value = true
+            },
             dialogComposable = {
                 ConfirmationDialog(
                     showDialog = showUnFavDialog,
@@ -907,9 +946,6 @@ fun FavouritesViewBottomAppBar(
                         }
                     }
                 }
-            },
-            action = {
-                showUnFavDialog.value = true
             }
         )
 
@@ -938,12 +974,10 @@ fun FavouritesViewBottomAppBar(
             text = "Delete",
             iconResId = R.drawable.delete,
             cornerRadius = 16.dp,
-            dialogComposable = {
-                ConfirmationDialog(
-                    showDialog = showDeleteDialog,
-                    dialogTitle = "Move selected items to trash?",
-                    confirmButtonLabel = "Delete"
-                ) {
+            action = {
+                if (confirmToDelete) {
+                    showDeleteDialog.value = true
+                } else {
                     coroutineScope.launch {
                         selectedItemsList.forEach {
                             dao.deleteEntityById(it.id)
@@ -952,10 +986,12 @@ fun FavouritesViewBottomAppBar(
                     }
                 }
             },
-            action = {
-                if (confirmToDelete) {
-                    showDeleteDialog.value = true
-                } else {
+            dialogComposable = {
+                ConfirmationDialog(
+                    showDialog = showDeleteDialog,
+                    dialogTitle = "Move selected items to trash?",
+                    confirmButtonLabel = "Delete"
+                ) {
                     coroutineScope.launch {
                         selectedItemsList.forEach {
                             dao.deleteEntityById(it.id)

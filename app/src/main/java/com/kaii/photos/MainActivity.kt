@@ -120,6 +120,8 @@ import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.appStorageDir
 import com.kaii.photos.mediastore.MediaStoreData
+import com.kaii.photos.models.custom_album.CustomAlbumViewModel
+import com.kaii.photos.models.custom_album.CustomAlbumViewModelFactory
 import com.kaii.photos.models.main_activity.MainViewModel
 import com.kaii.photos.models.main_activity.MainViewModelFactory
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
@@ -264,7 +266,15 @@ class MainActivity : ComponentActivity() {
         val multiAlbumViewModel: MultiAlbumViewModel = viewModel(
             factory = MultiAlbumViewModelFactory(
                 context = context,
-                albums = albumsList,
+                albumInfo = AlbumInfo.createPathOnlyAlbum(albumsList),
+                sortBy = currentSortMode
+            )
+        )
+
+        val customAlbumViewModel: CustomAlbumViewModel = viewModel(
+            factory = CustomAlbumViewModelFactory(
+                context = context,
+                albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
                 sortBy = currentSortMode
             )
         )
@@ -272,14 +282,14 @@ class MainActivity : ComponentActivity() {
         // update main photos view albums list
         LaunchedEffect(albumsList) {
             if (navControllerLocal.currentBackStackEntry?.destination?.route != MultiScreenViewType.MainScreen.name
-                || multiAlbumViewModel.albums.toSet() == albumsList
+                || multiAlbumViewModel.albumInfo.paths.toSet() == albumsList
             ) return@LaunchedEffect
 
             Log.d(TAG, "Refreshing main photos view")
-            Log.d(TAG, "In view model: ${multiAlbumViewModel.albums} new: $albumsList")
+            Log.d(TAG, "In view model: ${multiAlbumViewModel.albumInfo.paths} new: $albumsList")
             multiAlbumViewModel.reinitDataSource(
                 context = context,
-                albumsList = albumsList,
+                album = AlbumInfo.createPathOnlyAlbum(albumsList),
                 sortMode = currentSortMode
             )
         }
@@ -292,6 +302,7 @@ class MainActivity : ComponentActivity() {
                 "Changing sort mode from: ${multiAlbumViewModel.sortBy} to: $currentSortMode"
             )
             multiAlbumViewModel.changeSortMode(context = context, sortMode = currentSortMode)
+            customAlbumViewModel.changeSortMode(context = context, sortMode = currentSortMode)
         }
 
         val snackbarHostState = remember {
@@ -356,7 +367,12 @@ class MainActivity : ComponentActivity() {
                         Content(currentView, showDialog, selectedItemsList, multiAlbumViewModel)
                     }
 
-                    composable<Screens.SinglePhotoView> {
+                    composable<Screens.SinglePhotoView>(
+                        typeMap = mapOf(
+                            typeOf<AlbumInfo>() to AlbumInfoNavType,
+                            typeOf<List<String>>() to NavType.StringListType
+                        )
+                    ) {
                         enableEdgeToEdge(
                             navigationBarStyle = SystemBarStyle.dark(
                                 MaterialTheme.colorScheme.surfaceContainer.copy(
@@ -375,10 +391,10 @@ class MainActivity : ComponentActivity() {
 
                         val screen: Screens.SinglePhotoView = it.toRoute()
 
-                        if (!screen.hasSameAlbumsAs(other = multiAlbumViewModel.albums)) {
+                        if (!screen.hasSameAlbumsAs(other = multiAlbumViewModel.albumInfo.paths)) {
                             multiAlbumViewModel.reinitDataSource(
                                 context = context,
-                                albumsList = screen.albums,
+                                album = screen.albumInfo,
                                 sortMode = multiAlbumViewModel.sortBy
                             )
                         }
@@ -412,20 +428,37 @@ class MainActivity : ComponentActivity() {
 
                         val screen: Screens.SingleAlbumView = it.toRoute()
 
-                        if (screen.albumInfo.paths.toSet() != multiAlbumViewModel.albums.toSet()) {
-                            multiAlbumViewModel.reinitDataSource(
-                                context = context,
-                                albumsList = screen.albumInfo.paths,
-                                sortMode = multiAlbumViewModel.sortBy
+                        if (!screen.albumInfo.isCustomAlbum) {
+                            if (screen.albumInfo != multiAlbumViewModel.albumInfo) {
+                                multiAlbumViewModel.reinitDataSource(
+                                    context = context,
+                                    album = screen.albumInfo,
+                                    sortMode = multiAlbumViewModel.sortBy
+                                )
+                            }
+
+                            SingleAlbumView(
+                                albumInfo = screen.albumInfo,
+                                selectedItemsList = selectedItemsList,
+                                currentView = currentView,
+                                viewModel = multiAlbumViewModel
+                            )
+                        } else {
+                            if (screen.albumInfo != multiAlbumViewModel.albumInfo) {
+                                customAlbumViewModel.reinitDataSource(
+                                    context = context,
+                                    album = screen.albumInfo,
+                                    sortMode = customAlbumViewModel.sortBy
+                                )
+                            }
+
+                            SingleAlbumView(
+                                albumInfo = screen.albumInfo,
+                                selectedItemsList = selectedItemsList,
+                                currentView = currentView,
+                                viewModel = customAlbumViewModel
                             )
                         }
-
-                        SingleAlbumView(
-                            albumInfo = screen.albumInfo,
-                            selectedItemsList = selectedItemsList,
-                            currentView = currentView,
-                            viewModel = multiAlbumViewModel
-                        )
                     }
 
                     composable<Screens.SingleTrashedPhotoView> {
@@ -804,10 +837,15 @@ class MainActivity : ComponentActivity() {
 
         // faster loading if no custom tabs are present
         LaunchedEffect(tabList) {
-            if (!tabList.any { it.isCustom() } && currentView.value.albumPaths.toSet() != multiAlbumViewModel.albums.toSet()) {
+            if (!tabList.any { it.isCustom } && currentView.value.albumPaths.toSet() != multiAlbumViewModel.albumInfo.paths.toSet()) {
                 multiAlbumViewModel.reinitDataSource(
                     context = context,
-                    albumsList = currentView.value.albumPaths,
+                    album = AlbumInfo(
+                        id = currentView.value.id,
+                        name = currentView.value.name,
+                        paths = currentView.value.albumPaths,
+                        isCustomAlbum = currentView.value.isCustom
+                    ),
                     sortMode = multiAlbumViewModel.sortBy
                 )
 
@@ -875,11 +913,16 @@ class MainActivity : ComponentActivity() {
                 ) { stateValue ->
                     if (stateValue in tabList) {
                         when {
-                            stateValue.isCustom() -> {
-                                if (stateValue.albumPaths.toSet() != multiAlbumViewModel.albums.toSet()) {
+                            stateValue.isCustom -> {
+                                if (stateValue.albumPaths.toSet() != multiAlbumViewModel.albumInfo.paths.toSet()) {
                                     multiAlbumViewModel.reinitDataSource(
                                         context = context,
-                                        albumsList = stateValue.albumPaths,
+                                        album = AlbumInfo(
+                                            id = stateValue.id,
+                                            name = stateValue.name,
+                                            paths = stateValue.albumPaths,
+                                            isCustomAlbum = true
+                                        ),
                                         sortMode = multiAlbumViewModel.sortBy
                                     )
                                 }
@@ -890,17 +933,27 @@ class MainActivity : ComponentActivity() {
 
                                 PhotoGrid(
                                     groupedMedia = groupedMedia,
-                                    albums = stateValue.albumPaths,
+                                    albumInfo = AlbumInfo(
+                                        id = stateValue.id,
+                                        name = stateValue.name,
+                                        paths = stateValue.albumPaths,
+                                        isCustomAlbum = true
+                                    ),
                                     viewProperties = ViewProperties.Album,
                                     selectedItemsList = selectedItemsList,
                                 )
                             }
 
                             stateValue == DefaultTabs.TabTypes.photos -> {
-                                if (albumsList.toSet() != multiAlbumViewModel.albums.toSet()) {
+                                if (albumsList.toSet() != multiAlbumViewModel.albumInfo.paths.toSet()) {
                                     multiAlbumViewModel.reinitDataSource(
                                         context = context,
-                                        albumsList = albumsList,
+                                        album = AlbumInfo(
+                                            id = stateValue.id,
+                                            name = stateValue.name,
+                                            paths = albumsList,
+                                            isCustomAlbum = false
+                                        ),
                                         sortMode = multiAlbumViewModel.sortBy
                                     )
                                 }
@@ -913,7 +966,7 @@ class MainActivity : ComponentActivity() {
 
                                 PhotoGrid(
                                     groupedMedia = groupedMedia,
-                                    albums = multiAlbumViewModel.albums,
+                                    albumInfo = multiAlbumViewModel.albumInfo,
                                     viewProperties = ViewProperties.Album,
                                     selectedItemsList = selectedItemsList,
                                 )
@@ -952,7 +1005,7 @@ class MainActivity : ComponentActivity() {
     ) {
         val show by remember {
             derivedStateOf {
-                selectedItemsList.size > 0
+                selectedItemsList.isNotEmpty()
             }
         }
 
@@ -973,7 +1026,7 @@ class MainActivity : ComponentActivity() {
         val navController = LocalNavController.current
         val show by remember {
             derivedStateOf {
-                selectedItemsList.size > 0
+                selectedItemsList.isNotEmpty()
             }
         }
 

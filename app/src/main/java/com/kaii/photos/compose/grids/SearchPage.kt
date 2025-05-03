@@ -40,6 +40,7 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.compose.SearchTextField
 import com.kaii.photos.compose.ViewProperties
+import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.helpers.MediaItemSortMode
@@ -187,13 +188,13 @@ fun SearchPage(
                     val local = originalGroupedMedia.value.filter {
                         it.type != MediaType.Section &&
                                 (possibleDate.getOrNull(0)?.toDayLong()
-                                    ?.let { date -> it.getDateTakenDay() == date } ?: false ||
+                                    ?.let { date -> it.getDateTakenDay() == date } == true ||
                                         possibleDate.getOrNull(1)?.toDayLong()
-                                            ?.let { date -> it.getDateTakenDay() == date } ?: false ||
+                                            ?.let { date -> it.getDateTakenDay() == date } == true ||
                                         possibleDate.getOrNull(2)?.toDayLong()
-                                            ?.let { date -> it.getDateTakenDay() == date } ?: false ||
+                                            ?.let { date -> it.getDateTakenDay() == date } == true ||
                                         possibleDate.getOrNull(3)?.toDayLong()
-                                            ?.let { date -> it.getDateTakenDay() == date } ?: false)
+                                            ?.let { date -> it.getDateTakenDay() == date } == true)
                     }
 
                     groupedMedia.value = groupPhotosBy(local, MediaItemSortMode.DateTaken)
@@ -248,7 +249,7 @@ fun SearchPage(
         ) {
             PhotoGrid(
                 groupedMedia = groupedMedia,
-                albums = emptyList(),
+                albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
                 selectedItemsList = selectedItemsList,
                 viewProperties = if (searchedForText.value == "") ViewProperties.SearchLoading else ViewProperties.SearchNotFound,
                 state = gridState,

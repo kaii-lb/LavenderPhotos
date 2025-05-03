@@ -27,6 +27,7 @@ val BottomBarTabSaver = run {
                 albumPaths = it[albumPathKey] as List<String>,
                 index = it[indexKey] as Int,
                 icon = StoredDrawable.toResId(storedId = it[iconKey] as Int),
+                id = it[indexKey] as Int
             )
         }
     )

@@ -53,6 +53,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastFilter
 import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -81,6 +82,8 @@ import com.kaii.photos.models.album_grid.AlbumsViewModelFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
+private const val TAG = "MOVE_COPY_ALBUM_LIST_VIEW"
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun MoveCopyAlbumListView(
@@ -97,7 +100,7 @@ fun MoveCopyAlbumListView(
     if (originalAlbumsList == emptyList<String>()) return
 
     val albumsViewModel: AlbumsViewModel = viewModel(
-        factory = AlbumsViewModelFactory(context, originalAlbumsList)
+        factory = AlbumsViewModelFactory(context, originalAlbumsList.fastFilter { !it.isCustomAlbum })
     )
     val dataList by albumsViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
@@ -266,56 +269,24 @@ fun AlbumsListItem(
         onGranted = {
             show.value = false
 
-            when {
-                !album.isCustomAlbum && isMoving -> {
-                    moveImageListToPath(
-                        context,
-                        selectedItemsWithoutSection,
-                        album.mainPath
-                    )
+            if (isMoving) {
+                moveImageListToPath(
+                    context,
+                    selectedItemsWithoutSection,
+                    album.mainPath
+                )
 
-                    if (groupedMedia != null) {
-                        val newList = groupedMedia.value.toMutableList()
-                        newList.removeAll(selectedItemsWithoutSection.toSet())
-                        groupedMedia.value = newList
-                    }
+                if (groupedMedia != null) {
+                    val newList = groupedMedia.value.toMutableList()
+                    newList.removeAll(selectedItemsWithoutSection.toSet())
+                    groupedMedia.value = newList
                 }
-
-                !album.isCustomAlbum && !isMoving -> {
-                    copyImageListToPath(
-                        context,
-                        selectedItemsWithoutSection,
-                        album.mainPath
-                    )
-                }
-
-                isMoving -> {
-                    // moveImageListToPath(
-                    //     context,
-                    //     selectedItemsWithoutSection,
-                    //     album.mainPath
-                    // )
-                    //
-                    // if (groupedMedia != null) {
-                    //     val newList = groupedMedia.value.toMutableList()
-                    //     newList.removeAll(selectedItemsWithoutSection.toSet())
-                    //     groupedMedia.value = newList
-                    // }
-                }
-
-                else -> {
-                    context.contentResolver.bulkInsert(
-                        LavenderContentProvider.CONTENT_URI,
-                        selectedItemsWithoutSection.fastMap { media ->
-                            ContentValues().apply {
-                                put(LavenderMediaColumns.ID, media.id)
-                                put(LavenderMediaColumns.URI, media.uri.toString())
-                                put(LavenderMediaColumns.PARENT_ID, album.id)
-                                put(LavenderMediaColumns.MIME_TYPE, media.mimeType)
-                            }
-                        }.toTypedArray()
-                    )
-                }
+            } else {
+                copyImageListToPath(
+                    context,
+                    selectedItemsWithoutSection,
+                    album.mainPath
+                )
             }
 
             selectedItemsList.clear()
@@ -328,7 +299,45 @@ fun AlbumsListItem(
             .clip(shape)
             .background(MaterialTheme.colorScheme.surfaceContainer)
             .clickable {
-                runOnDirGranted.value = true
+                if (!album.isCustomAlbum) {
+                    runOnDirGranted.value = true
+                } else {
+                    val data = mutableListOf<Long>()
+                    context.contentResolver.query(
+                        LavenderContentProvider.CONTENT_URI,
+                        arrayOf(LavenderMediaColumns.ID),
+                        null,
+                        null,
+                        null
+                    )?.use { cursor ->
+                        while (cursor.moveToNext()) {
+                            val idCol = cursor.getColumnIndexOrThrow(LavenderMediaColumns.ID)
+                            val id = cursor.getLong(idCol)
+
+                            data.add(id)
+                        }
+                    }
+
+                    val inserted = context.contentResolver.bulkInsert(
+                        LavenderContentProvider.CONTENT_URI,
+                        selectedItemsWithoutSection
+                            .fastFilter { media ->
+                                media.id !in data
+                            }.fastMap { media ->
+                                ContentValues().apply {
+                                    put(LavenderMediaColumns.ID, media.id)
+                                    put(LavenderMediaColumns.URI, media.uri.toString())
+                                    put(LavenderMediaColumns.PARENT_ID, album.id)
+                                    put(LavenderMediaColumns.MIME_TYPE, media.mimeType)
+                                }
+                            }.toTypedArray()
+                    )
+
+                    Log.d(TAG, "Number of inserted items: $inserted")
+                    Log.d(TAG, "Got album id ${album.id}")
+
+                    selectedItemsList.clear()
+                }
             },
         verticalAlignment = Alignment.CenterVertically
     ) {

@@ -21,28 +21,32 @@ object DefaultTabs {
             name = "Photos",
             albumPaths = listOf("main_photos"),
             index = 0,
-            icon = StoredDrawable.PhotoGrid
+            icon = StoredDrawable.PhotoGrid,
+            id = 0
         )
 
         val secure = BottomBarTab(
             name = "Secure",
             albumPaths = listOf("secure_folder"),
             index = 1,
-            icon = StoredDrawable.SecureFolder
+            icon = StoredDrawable.SecureFolder,
+            id = 1
         )
 
         val albums = BottomBarTab(
             name = "Albums",
             albumPaths = listOf("albums_page"),
             index = 2,
-            icon = StoredDrawable.Albums
+            icon = StoredDrawable.Albums,
+            id = 2
         )
 
         val search = BottomBarTab(
             name = "Search",
             albumPaths = listOf("search_page"),
             index = 3,
-            icon = StoredDrawable.Search
+            icon = StoredDrawable.Search,
+            id = 3
         )
     }
 
@@ -133,13 +137,13 @@ enum class StoredDrawable(
 
 @Serializable
 data class BottomBarTab(
+    val id: Int,
     val name: String,
     val albumPaths: List<String>,
     val index: Int,
     val icon: StoredDrawable,
+    val isCustom: Boolean = false,
 ) {
-    fun isCustom() = DefaultTabs.defaultList.all { it.albumPaths != albumPaths }
-
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -158,7 +162,7 @@ data class BottomBarTab(
         var result = name.hashCode()
         result = 31 * result + albumPaths.hashCode()
         result = 31 * result + icon.hashCode()
-        result = 31 * result + isCustom().hashCode()
+        result = 31 * result + isCustom.hashCode()
         return result
     }
 }
@@ -175,8 +179,37 @@ data class AlbumInfo(
     val paths: List<String>,
     val isCustomAlbum: Boolean = false
 ) {
+    companion object {
+        fun createPathOnlyAlbum(paths: List<String>) =
+            AlbumInfo(name = "", id = 0, isCustomAlbum = false, paths = paths)
+    }
+
     val mainPath = run {
         paths.firstOrNull() ?: ""
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as AlbumInfo
+
+        if (id != other.id) return false
+        if (isCustomAlbum != other.isCustomAlbum) return false
+        if (name != other.name) return false
+        if (paths.toSet() != other.paths.toSet()) return false
+        if (mainPath != other.mainPath) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = id
+        result = 31 * result + isCustomAlbum.hashCode()
+        result = 31 * result + name.hashCode()
+        result = 31 * result + paths.toSet().hashCode()
+        result = 31 * result + mainPath.hashCode()
+        return result
     }
 }
 

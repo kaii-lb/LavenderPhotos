@@ -38,6 +38,7 @@ import com.kaii.photos.MainActivity.Companion.applicationDatabase
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.SecureFolderViewBottomAppBar
 import com.kaii.photos.compose.app_bars.SecureFolderViewTopAppBar
+import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
@@ -195,7 +196,7 @@ fun LockedFolderView(
 
     val showBottomSheet by remember {
         derivedStateOf {
-            selectedItemsList.size > 0
+            selectedItemsList.isNotEmpty()
         }
     }
 
@@ -249,7 +250,7 @@ fun LockedFolderView(
         ) {
             PhotoGrid(
                 groupedMedia = groupedMedia,
-                albums = emptyList(),
+                albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
                 selectedItemsList = selectedItemsList,
                 viewProperties = ViewProperties.SecureFolder,
                 shouldPadUp = true

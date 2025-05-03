@@ -36,6 +36,7 @@ import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.TrashedPhotoGridViewBottomBar
 import com.kaii.photos.compose.app_bars.TrashedPhotoGridViewTopBar
+import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.TrashBin
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
@@ -101,23 +102,23 @@ fun TrashedPhotoGridView(
         runAutoDeleteAction.value = true
     }
 
+    val showBottomSheet by remember {
+        derivedStateOf {
+            selectedItemsList.isNotEmpty()
+        }
+    }
+
     BackHandler(
-        enabled = selectedItemsList.size > 0
+        enabled = showBottomSheet
     ) {
         selectedItemsList.clear()
     }
 
     val navController = LocalNavController.current
     BackHandler(
-        enabled = selectedItemsList.size == 0
+        enabled = !showBottomSheet
     ) {
         navController.popBackStack()
-    }
-
-    val showBottomSheet by remember {
-        derivedStateOf {
-            selectedItemsList.size > 0
-        }
     }
 
     val sheetState = rememberStandardBottomSheetState(
@@ -168,7 +169,7 @@ fun TrashedPhotoGridView(
         ) {
             PhotoGrid(
                 groupedMedia = groupedMedia,
-                albums = emptyList(),
+                albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
                 selectedItemsList = selectedItemsList,
                 viewProperties = ViewProperties.Trash,
                 shouldPadUp = true

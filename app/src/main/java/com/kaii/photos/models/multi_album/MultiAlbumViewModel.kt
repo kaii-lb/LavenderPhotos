@@ -11,6 +11,7 @@ import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.MainActivity.Companion.mainViewModel
+import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.MainPhotosView
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.SectionItem
@@ -32,11 +33,11 @@ private const val TAG = "MULTI_ALBUM_VIEW_MODEL"
 
 class MultiAlbumViewModel(
     context: Context,
-    var albums: List<String>,
+    var albumInfo: AlbumInfo,
     var sortBy: MediaItemSortMode
 ) : ViewModel() {
     private var cancellationSignal = CancellationSignal()
-    private val mediaStoreDataSource = mutableStateOf(initDataSource(context, albums, sortBy))
+    private val mediaStoreDataSource = mutableStateOf(initDataSource(context, albumInfo, sortBy))
 
     val mediaFlow by derivedStateOf {
         getMediaDataFlow().value.stateIn(
@@ -54,15 +55,15 @@ class MultiAlbumViewModel(
 
     fun reinitDataSource(
         context: Context,
-        albumsList: List<String>,
+        album: AlbumInfo,
         sortMode: MediaItemSortMode = sortBy
     ) {
         sortBy = sortMode
-        if (albumsList.toSet() == albums.toSet()) return
+        if (album == albumInfo) return
 
         cancelMediaFlow()
         cancellationSignal = CancellationSignal()
-        mediaStoreDataSource.value = initDataSource(context, albumsList, sortBy)
+        mediaStoreDataSource.value = initDataSource(context, album, sortBy)
     }
 
     fun changeSortMode(
@@ -73,18 +74,18 @@ class MultiAlbumViewModel(
 
         cancelMediaFlow()
         cancellationSignal = CancellationSignal()
-        mediaStoreDataSource.value = initDataSource(context, albums, sortBy)
+        mediaStoreDataSource.value = initDataSource(context, albumInfo, sortBy)
     }
 
     private fun initDataSource(
         context: Context,
-        albumsList: List<String>,
+        album: AlbumInfo,
         sortBy: MediaItemSortMode
     ) = run {
-        val query = mainViewModel.settings.MainPhotosView.getSQLiteQuery(albumsList)
+        val query = mainViewModel.settings.MainPhotosView.getSQLiteQuery(album.paths)
         Log.d(TAG, "query is $query")
 
-        albums = albumsList
+        albumInfo = album
         this.sortBy = sortBy
 
         MultiAlbumDataSource(

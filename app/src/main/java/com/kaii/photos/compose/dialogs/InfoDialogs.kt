@@ -122,10 +122,12 @@ fun SingleAlbumDialog(
         ) {
             val isEditingFileName = remember { mutableStateOf(false) }
 
-            BoxWithConstraints(
+            BoxWithConstraints (
                 modifier = Modifier
-                    .fillMaxWidth(1f),
+                    .fillMaxWidth(1f)
             ) {
+                val textWidth = maxWidth - 48.dp - 24.dp
+
                 IconButton(
                     onClick = {
                         showDialog.value = false
@@ -148,7 +150,7 @@ fun SingleAlbumDialog(
                     state = isEditingFileName.value,
                     modifier = Modifier
                         .align(Alignment.Center)
-                        .widthIn(max = maxWidth - 48.dp - 24.dp) // for button and right side
+                        .widthIn(max = textWidth) // for button and right side
                         .padding(4.dp, 0.dp, 0.dp, 4.dp)
                 )
             }
@@ -292,8 +294,8 @@ fun SingleAlbumDialog(
                     expanded = expanded
                 ) {
                     DialogInfoText(
-                        firstText = "Path",
-                        secondText = album.mainPath,
+                        firstText = if (!album.isCustomAlbum) "Path" else "Id",
+                        secondText = if (!album.isCustomAlbum) album.mainPath else album.id.toString(),
                         iconResId = R.drawable.folder,
                     )
                 }

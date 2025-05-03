@@ -54,14 +54,17 @@ fun BottomAppBarItem(
     buttonHeight: Dp = 56.dp,
     iconSize: Dp = 24.dp,
     textSize: Float = 14f,
-    color: Color = Color.Transparent,
-    contentColor: Color = MaterialTheme.colorScheme.onBackground,
+    enabled: Boolean = true,
     showRipple: Boolean = true,
     cornerRadius: Dp = 1000.dp,
+    color: Color = Color.Transparent,
+    contentColor: Color = if (enabled) MaterialTheme.colorScheme.onBackground else (MaterialTheme.colorScheme.onBackground.copy(
+        alpha = 0.6f
+    )),
     action: (() -> Unit)? = null,
-    dialogComposable: (@Composable () -> Unit)? = null
+    dialogComposable: @Composable (() -> Unit)? = null
 ) {
-    val clickModifier = if (action != null) {
+    val clickModifier = if (action != null && enabled) {
         Modifier.clickable(
             interactionSource = remember { MutableInteractionSource() },
             indication = if (!showRipple) null else LocalIndication.current
@@ -104,7 +107,7 @@ fun BottomAppBarItem(
         Text(
             text = text,
             fontSize = TextUnit(textSize, TextUnitType.Sp),
-            color = MaterialTheme.colorScheme.onBackground,
+            color = contentColor,
             modifier = Modifier
                 .wrapContentSize()
                 .align(Alignment.BottomCenter)

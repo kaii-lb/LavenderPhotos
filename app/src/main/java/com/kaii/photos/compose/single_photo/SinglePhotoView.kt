@@ -494,6 +494,10 @@ private fun BottomBar(
                         text = "Delete",
                         iconResId = R.drawable.trash,
                         cornerRadius = 32.dp,
+                        action = {
+                            if (confirmToDelete) showDeleteDialog.value = true
+                            else runTrashAction.value = true
+                        },
                         dialogComposable = {
                             ConfirmationDialog(
                                 showDialog = showDeleteDialog,
@@ -502,10 +506,6 @@ private fun BottomBar(
                             ) {
                                 runTrashAction.value = true
                             }
-                        },
-                        action = {
-                            if (confirmToDelete) showDeleteDialog.value = true
-                            else runTrashAction.value = true
                         }
                     )
 
@@ -556,6 +556,9 @@ private fun BottomBar(
                         text = "Secure",
                         iconResId = R.drawable.locked_folder,
                         cornerRadius = 32.dp,
+                        action = {
+                            showMoveToSecureFolderDialog.value = true
+                        },
                         dialogComposable = {
                             ConfirmationDialog(
                                 showDialog = showMoveToSecureFolderDialog,
@@ -566,9 +569,6 @@ private fun BottomBar(
 
                                 if (groupedMedia.value.isEmpty()) onZeroItemsLeft()
                             }
-                        },
-                        action = {
-                            showMoveToSecureFolderDialog.value = true
                         }
                     )
                 }

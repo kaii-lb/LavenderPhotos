@@ -534,7 +534,9 @@ fun AlbumAddChoiceDialog(
     onDismiss: () -> Unit
 ) {
     LavenderDialogBase(
-        onDismiss = onDismiss
+        onDismiss = onDismiss,
+        modifier = Modifier
+            .padding(8.dp, 0.dp)
     ) {
         Box(
             modifier = Modifier

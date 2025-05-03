@@ -96,6 +96,7 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.FolderIsEmpty
 import com.kaii.photos.compose.ShowSelectedState
 import com.kaii.photos.compose.ViewProperties
+import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.Storage
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.ImageFunctions
@@ -134,7 +135,7 @@ private const val TAG = "PHOTO_GRID_VIEW"
 @Composable
 fun PhotoGrid(
     groupedMedia: MutableState<List<MediaStoreData>>,
-    albums: List<String>,
+    albumInfo: AlbumInfo,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     modifier: Modifier = Modifier,
     viewProperties: ViewProperties,
@@ -146,17 +147,17 @@ fun PhotoGrid(
 
     LaunchedEffect(groupedMedia.value) {
         withContext(Dispatchers.IO) {
-            hasFiles = when (viewProperties) {
-                ViewProperties.SecureFolder -> {
+            hasFiles = when {
+                viewProperties == ViewProperties.SecureFolder -> {
                     val basePath = context.appSecureFolderDir
 
                     File(basePath).listFiles()?.isNotEmpty() == true
                 }
 
-                ViewProperties.Album -> {
+                viewProperties == ViewProperties.Album && !albumInfo.isCustomAlbum -> {
                     var result: Boolean? = null
 
-                    albums.any { path ->
+                    albumInfo.paths.any { path ->
                         result = Path("$baseInternalStorageDirectory$path").checkHasFiles()
                         result == true
                     }
@@ -195,7 +196,7 @@ fun PhotoGrid(
                     viewProperties = viewProperties,
                     shouldPadUp = shouldPadUp,
                     gridState = state,
-                    albums = albums
+                    albumInfo = albumInfo
                 )
             }
         }
@@ -214,14 +215,14 @@ fun DeviceMedia(
     viewProperties: ViewProperties,
     shouldPadUp: Boolean,
     gridState: LazyGridState,
-    albums: List<String>
+    albumInfo: AlbumInfo
 ) {
     var showLoadingSpinner by remember { mutableStateOf(true) }
 
     val coroutineScope = rememberCoroutineScope()
 
     BackHandler(
-        enabled = selectedItemsList.size > 0
+        enabled = selectedItemsList.isNotEmpty()
     ) {
         selectedItemsList.clear()
     }
@@ -235,10 +236,10 @@ fun DeviceMedia(
     }
 
     val spacerHeight by animateDpAsState(
-        targetValue = if (selectedItemsList.size > 0 && shouldPadUp) 80.dp else 0.dp,
+        targetValue = if (selectedItemsList.isNotEmpty() && shouldPadUp) 80.dp else 0.dp,
         animationSpec = tween(
             durationMillis = 350,
-            delayMillis = if (selectedItemsList.size > 0 && shouldPadUp) 350 else 0
+            delayMillis = if (selectedItemsList.isNotEmpty() && shouldPadUp) 350 else 0
         ),
         label = "animate spacer on bottom of photo grid"
     )
@@ -345,7 +346,7 @@ fun DeviceMedia(
 
                                     navController.navigate(
                                         Screens.SinglePhotoView(
-                                            albums = albums,
+                                            albumInfo = albumInfo,
                                             mediaItemId = mediaStoreItem.id,
                                             loadsFromMainViewModel = viewProperties == ViewProperties.SearchLoading || viewProperties == ViewProperties.SearchNotFound || viewProperties == ViewProperties.Favourites
                                         )

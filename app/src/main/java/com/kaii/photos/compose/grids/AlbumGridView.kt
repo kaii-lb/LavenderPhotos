@@ -106,17 +106,24 @@ fun AlbumsGridView(
     val context = LocalContext.current
     val navController = LocalNavController.current
 
-    val listOfDirs by mainViewModel.settings.AlbumsList.getAlbumsList()
+    val listOfDirs by mainViewModel.settings.AlbumsList
+        .getAlbumsList()
         .collectAsStateWithLifecycle(initialValue = emptyList())
-    val sortMode by mainViewModel.settings.AlbumsList.getAlbumSortMode()
+
+    val sortMode by mainViewModel.settings.AlbumsList
+        .getAlbumSortMode()
         .collectAsStateWithLifecycle(initialValue = AlbumSortMode.Custom)
-    val sortByDescending by mainViewModel.settings.AlbumsList.getSortByDescending()
+
+    val sortByDescending by mainViewModel.settings.AlbumsList
+        .getSortByDescending()
         .collectAsStateWithLifecycle(initialValue = true)
 
     val albums = remember { mutableStateOf(listOfDirs) }
 
     val albumsViewModel: AlbumsViewModel = viewModel(
-        factory = AlbumsViewModelFactory(context = context, albums = albums.value)
+        factory = AlbumsViewModelFactory(
+            context = context,
+            albums = albums.value.filter { !it.isCustomAlbum })
     )
 
     val albumToThumbnailMapping by albumsViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
@@ -128,10 +135,12 @@ fun AlbumsGridView(
             val newList = mutableListOf<AlbumInfo>()
 
             // if the albums actually changed, not just the order then refresh
-            if (albumsViewModel.albumInfo.toSet() != listOfDirs.toSet()) {
+            if (albumsViewModel.albumInfo.toSet() != listOfDirs.toSet()
+                    .filter { !it.isCustomAlbum }
+            ) {
                 albumsViewModel.refresh(
                     context = context,
-                    albums = listOfDirs
+                    albums = listOfDirs.filter { !it.isCustomAlbum }
                 )
             }
 
@@ -142,7 +151,7 @@ fun AlbumsGridView(
 
             val copy = listOfDirs
             when (sortMode) {
-                AlbumSortMode.LastModified -> {
+                AlbumSortMode.LastModified   -> {
                     newList.addAll(
                         if (sortByDescending) {
                             copy.sortedByDescending { album ->
@@ -184,7 +193,7 @@ fun AlbumsGridView(
                     )
                 }
 
-                AlbumSortMode.Custom -> {
+                AlbumSortMode.Custom         -> {
                     newList.addAll(
                         copy
                     )

@@ -23,11 +23,11 @@ enum class MultiScreenViewType {
 object Screens {
 	@Serializable
 	data class SinglePhotoView(
-		val albums: List<String>,
+		val albumInfo: AlbumInfo,
 		val mediaItemId: Long,
 		val loadsFromMainViewModel: Boolean
 	) {
-		fun hasSameAlbumsAs(other: List<String>) = albums.toSet() == other.toSet()
+		fun hasSameAlbumsAs(other: List<String>) = albumInfo.paths.toSet() == other.toSet()
 	}
 
 	@Serializable
