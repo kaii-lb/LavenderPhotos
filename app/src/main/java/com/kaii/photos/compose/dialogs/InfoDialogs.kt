@@ -114,17 +114,20 @@ fun SingleAlbumDialog(
     showDialog: MutableState<Boolean>,
     album: AlbumInfo,
     navController: NavHostController,
-    selectedItemsList: SnapshotStateList<MediaStoreData>
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    itemCount: Int
 ) {
     if (showDialog.value) {
         LavenderDialogBase(
             onDismiss = {
                 showDialog.value = false
-            }
+            },
+            modifier = Modifier
+                .wrapContentHeight(unbounded = true)
         ) {
             val isEditingFileName = remember { mutableStateOf(false) }
 
-            BoxWithConstraints (
+            BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxWidth(1f)
             ) {
@@ -157,30 +160,24 @@ fun SingleAlbumDialog(
                 )
             }
 
-            val reverseHeight by animateDpAsState(
-                targetValue = if (isEditingFileName.value) 0.dp else 42.dp,
-                label = "height of other options",
-                animationSpec = tween(
-                    durationMillis = 500
-                )
-            )
-
-            Column(
+            DialogClickableItem(
+                text = "Select",
+                iconResId = R.drawable.check_item,
+                position = RowPosition.Top,
                 modifier = Modifier
-                    .height(reverseHeight)
-                    .animateContentSize()
+                    .animateContentSize(
+                        animationSpec = tween(
+                            durationMillis = 500
+                        )
+                    )
+                    .height(if (!isEditingFileName.value) 42.dp else 0.dp)
                     .padding(8.dp, 0.dp)
             ) {
-                DialogClickableItem(
-                    text = "Select",
-                    iconResId = R.drawable.check_item,
-                    position = RowPosition.Top,
-                ) {
-                    showDialog.value = false
-                    selectedItemsList.clear()
-                    selectedItemsList.add(MediaStoreData())
-                }
+                showDialog.value = false
+                selectedItemsList.clear()
+                selectedItemsList.add(MediaStoreData())
             }
+
             val fileName = remember { mutableStateOf(album.name) }
             val saveFileName = remember { mutableStateOf(false) }
 
@@ -244,55 +241,59 @@ fun SingleAlbumDialog(
                 }
             }
 
-            Column(
+            DialogClickableItem(
+                text = "Remove album from list",
+                iconResId = R.drawable.delete,
+                position = RowPosition.Middle,
+                enabled = !album.mainPath.checkPathIsDownloads(),
                 modifier = Modifier
-                    .height(reverseHeight)
+                    .animateContentSize(
+                        animationSpec = tween(
+                            durationMillis = 500
+                        )
+                    )
+                    .height(if (!isEditingFileName.value) 42.dp else 0.dp)
                     .padding(8.dp, 0.dp)
             ) {
-                DialogClickableItem(
-                    text = "Remove album from list",
-                    iconResId = R.drawable.delete,
-                    position = RowPosition.Middle,
-                    enabled = !album.mainPath.checkPathIsDownloads()
-                ) {
-                    mainViewModel.settings.AlbumsList.removeFromAlbumsList(id = album.id)
-                    showDialog.value = false
+                mainViewModel.settings.AlbumsList.removeFromAlbumsList(id = album.id)
+                showDialog.value = false
 
-                    try {
-                        context.contentResolver.delete(
-                            LavenderContentProvider.CONTENT_URI,
-                            "${LavenderMediaColumns.PARENT_ID} = ?",
-                            arrayOf("${album.id}")
-                        )
+                try {
+                    context.contentResolver.delete(
+                        LavenderContentProvider.CONTENT_URI,
+                        "${LavenderMediaColumns.PARENT_ID} = ?",
+                        arrayOf("${album.id}")
+                    )
 
-                        context.contentResolver.releasePersistableUriPermission(
-                            context.getExternalStorageContentUriFromAbsolutePath(
-                                album.mainPath,
-                                true
-                            ),
-                            Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                        )
-                    } catch (e: Throwable) {
-                        Log.d(TAG, "Couldn't release permission for ${album.mainPath}")
-                        e.printStackTrace()
-                    }
-
-                    navController.popBackStack()
+                    context.contentResolver.releasePersistableUriPermission(
+                        context.getExternalStorageContentUriFromAbsolutePath(
+                            album.mainPath,
+                            true
+                        ),
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                    )
+                } catch (e: Throwable) {
+                    Log.d(TAG, "Couldn't release permission for ${album.mainPath}")
+                    e.printStackTrace()
                 }
+
+                navController.popBackStack()
             }
 
             val expanded = remember { mutableStateOf(false) }
-            val expandedHeight by animateDpAsState(
-                targetValue = if (expanded.value && !isEditingFileName.value) 36.dp else 0.dp,
-                animationSpec = tween(
-                    durationMillis = 250
-                ),
-                label = "height of expandable album info",
-            )
 
             Column(
                 modifier = Modifier
-                    .height(reverseHeight + 6.dp + expandedHeight)
+                    .animateContentSize(
+                        animationSpec = tween(
+                            durationMillis = 500
+                        )
+                    )
+                    .then(
+                        if (!isEditingFileName.value) Modifier
+                            .wrapContentHeight(unbounded = true)
+                        else Modifier.height(0.dp)
+                    )
                     .padding(8.dp, 0.dp, 8.dp, 6.dp)
             ) {
                 DialogExpandableItem(
@@ -305,6 +306,12 @@ fun SingleAlbumDialog(
                         firstText = if (!album.isCustomAlbum) "Path" else "Id",
                         secondText = if (!album.isCustomAlbum) album.mainPath else album.id.toString(),
                         iconResId = R.drawable.folder,
+                    )
+
+                    DialogInfoText(
+                        firstText = "Number of Items",
+                        secondText = itemCount.toString(),
+                        iconResId = R.drawable.data,
                     )
                 }
             }

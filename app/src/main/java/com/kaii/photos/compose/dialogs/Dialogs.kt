@@ -75,6 +75,7 @@ fun DialogClickableItem(
     text: String,
     @DrawableRes iconResId: Int,
     position: RowPosition,
+    modifier: Modifier = Modifier,
     enabled: Boolean = true,
     action: (() -> Unit)? = null
 ) {
@@ -83,7 +84,7 @@ fun DialogClickableItem(
     val clickableModifier = if (action != null && enabled) Modifier.clickable { action() } else Modifier
 
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth(1f)
             .height(40.dp)
             .clip(shape)

@@ -205,7 +205,13 @@ private fun SingleAlbumViewCommon(
                 shouldPadUp = true
             )
 
-            SingleAlbumDialog(showDialog, albumInfo, navController, selectedItemsList)
+            SingleAlbumDialog(
+                showDialog = showDialog,
+                album = albumInfo,
+                navController = navController,
+                selectedItemsList = selectedItemsList,
+                itemCount = groupedMedia.value.size
+            )
         }
     }
 }
