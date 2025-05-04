@@ -7,8 +7,8 @@ import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
 import android.net.Uri
 import android.os.Build
-import android.view.Window
 import android.util.Log
+import android.view.Window
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -104,6 +104,7 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.ClipOp
@@ -139,22 +140,23 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.toIntRect
-import androidx.compose.ui.unit.toRect
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.toIntRect
 import androidx.compose.ui.unit.toOffset
+import androidx.compose.ui.unit.toRect
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
+import androidx.core.graphics.createBitmap
+import androidx.core.graphics.scale
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.lavender_snackbars.LavenderSnackbarController
 import com.kaii.lavender_snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
-import com.kaii.photos.compose.app_bars.BottomAppBarItem
 import com.kaii.photos.compose.ColorFilterItem
 import com.kaii.photos.compose.ColorRangeSlider
 import com.kaii.photos.compose.CroppingRatioBottomSheet
@@ -163,11 +165,11 @@ import com.kaii.photos.compose.SelectableDropDownMenuItem
 import com.kaii.photos.compose.SetEditingViewDrawableTextBottomSheet
 import com.kaii.photos.compose.SimpleTab
 import com.kaii.photos.compose.SplitButton
+import com.kaii.photos.compose.app_bars.BottomAppBarItem
 import com.kaii.photos.compose.app_bars.getAppBarContentTransition
 import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.datastore.Editing
-import com.kaii.photos.helpers.blur
 import com.kaii.photos.helpers.ColorFiltersMatrices
 import com.kaii.photos.helpers.ColorIndicator
 import com.kaii.photos.helpers.DrawableBlur
@@ -179,6 +181,7 @@ import com.kaii.photos.helpers.ExtendedPaint
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.Modification
 import com.kaii.photos.helpers.PaintType
+import com.kaii.photos.helpers.blur
 import com.kaii.photos.helpers.getColorFromLinearGradientList
 import com.kaii.photos.helpers.gradientColorList
 import com.kaii.photos.helpers.savePathListToBitmap
@@ -192,8 +195,6 @@ import kotlin.math.ln
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
-import androidx.core.graphics.scale
-import androidx.core.graphics.createBitmap
 
 private const val TAG = "EDITING_VIEW"
 
@@ -251,9 +252,9 @@ fun EditingView(
 
     LaunchedEffect(image) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        	withContext(Dispatchers.IO) {
-            	Log.e(TAG, "blurring bitmap...")
-            	blurredImage = image.asAndroidBitmap().blur(blurRadius = 20f).asImageBitmap()
+            withContext(Dispatchers.IO) {
+                Log.e(TAG, "blurring bitmap...")
+                blurredImage = image.asAndroidBitmap().blur(blurRadius = 20f).asImageBitmap()
             }
         }
     }
@@ -279,10 +280,13 @@ fun EditingView(
 
     Scaffold(
         topBar = {
-            val exitOnSave by mainViewModel.settings.Editing.getExitOnSave().collectAsStateWithLifecycle(initialValue = false)
-            val overwrite = remember { mutableStateOf(
-            	if (isOpenWith) true else overwriteByDefault
-            )}
+            val exitOnSave by mainViewModel.settings.Editing.getExitOnSave()
+                .collectAsStateWithLifecycle(initialValue = false)
+            val overwrite = remember {
+                mutableStateOf(
+                    if (isOpenWith) true else overwriteByDefault
+                )
+            }
 
             LaunchedEffect(overwriteByDefault) {
                 overwrite.value = if (isOpenWith) true else overwriteByDefault
@@ -435,7 +439,10 @@ fun EditingView(
                                 if (isLandscape) {
                                     maxHeight.toPx() / size.height
                                 } else {
-                                    min(maxWidth.toPx() / size.width, maxHeight.toPx() / size.height)
+                                    min(
+                                        maxWidth.toPx() / size.width,
+                                        maxHeight.toPx() / size.height
+                                    )
                                 }
                             lastScale
                         } else if (isHorizontal) {
@@ -443,7 +450,10 @@ fun EditingView(
                                 if (isLandscape) {
                                     maxHeight.toPx() / size.width
                                 } else {
-                                    min(maxWidth.toPx() / size.height, maxHeight.toPx() / size.height)
+                                    min(
+                                        maxWidth.toPx() / size.height,
+                                        maxHeight.toPx() / size.height
+                                    )
                                 }
                             lastScale
                         } else lastScale
@@ -470,7 +480,9 @@ fun EditingView(
                     val canvasWidth = size.width * imageRatio
                     val canvasHeight = canvasWidth / imageRatio
 
-                    image.asAndroidBitmap().scale(canvasWidth.toInt(), canvasHeight.toInt()).asImageBitmap()
+                    image.asAndroidBitmap()
+                        .scale(canvasWidth.toInt(), canvasHeight.toInt())
+                        .asImageBitmap()
                 }
             }
 
@@ -525,7 +537,10 @@ fun EditingView(
                             val offscreenBitmap = createBitmap(size.width, size.height)
                             val offscreenCanvas = android.graphics.Canvas(offscreenBitmap)
 
-                            offscreenCanvas.drawPath(path.asAndroidPath(), pathPaint.asFrameworkPaint())
+                            offscreenCanvas.drawPath(
+                                path.asAndroidPath(),
+                                pathPaint.asFrameworkPaint()
+                            )
 
                             drawIntoCanvas { canvas ->
                                 val frameworkCanvas = canvas.nativeCanvas
@@ -642,8 +657,13 @@ fun EditingView(
                             ).coerceIn(
                                 minX = 0,
                                 minY = 0,
-                                maxX = (topRightOffset.x - (with(localDensity) { 56.dp.toPx() } * croppingRatio.floatValue).toInt()).coerceAtLeast(0),
-                                maxY = (bottomLeftOffset.y - with(localDensity) { 56.dp.toPx().toInt() }).coerceAtLeast(0)
+                                maxX = (topRightOffset.x - (with(localDensity) { 56.dp.toPx() } * croppingRatio.floatValue).toInt()).coerceAtLeast(
+                                    0
+                                ),
+                                maxY = (bottomLeftOffset.y - with(localDensity) {
+                                    56.dp.toPx()
+                                        .toInt()
+                                }).coerceAtLeast(0)
                             )
                     } else {
                         // if not freeform and tall ratio
@@ -655,8 +675,12 @@ fun EditingView(
                             ).coerceIn(
                                 minX = 0,
                                 minY = 0,
-                                maxX = (topRightOffset.x - with(localDensity) { 56.dp.toPx() }.toInt()).coerceAtLeast(0),
-                                maxY = (bottomLeftOffset.y - (with(localDensity) { 56.dp.toPx() } / croppingRatio.floatValue).toInt()).coerceAtLeast(0)
+                                maxX = (topRightOffset.x - with(localDensity) { 56.dp.toPx() }.toInt()).coerceAtLeast(
+                                    0
+                                ),
+                                maxY = (bottomLeftOffset.y - (with(localDensity) { 56.dp.toPx() } / croppingRatio.floatValue).toInt()).coerceAtLeast(
+                                    0
+                                )
                             )
                     }
 
@@ -910,7 +934,9 @@ fun EditingView(
                                                     maxX = (topRightOffset.x - 56.dp
                                                         .toPx()
                                                         .toInt()).coerceAtLeast(0),
-                                                    maxY = (bottomLeftOffset.y - (56.dp.toPx() / croppingRatio.floatValue).toInt()).coerceAtLeast(0)
+                                                    maxY = (bottomLeftOffset.y - (56.dp.toPx() / croppingRatio.floatValue).toInt()).coerceAtLeast(
+                                                        0
+                                                    )
                                                 )
                                         } else if (width + positionChange.x !in width - 5..width + 5) {
                                             topLeftOffset =
@@ -920,7 +946,9 @@ fun EditingView(
                                                 ).coerceIn(
                                                     minX = 0,
                                                     minY = bottomRightOffset.y - width,
-                                                    maxX = (topRightOffset.x - (56.dp.toPx() * croppingRatio.floatValue).toInt()).coerceAtLeast(0),
+                                                    maxX = (topRightOffset.x - (56.dp.toPx() * croppingRatio.floatValue).toInt()).coerceAtLeast(
+                                                        0
+                                                    ),
                                                     maxY = (bottomLeftOffset.y - 56.dp
                                                         .toPx()
                                                         .toInt()).coerceAtLeast(0)
@@ -944,7 +972,9 @@ fun EditingView(
                                                     maxX = (topRightOffset.x - 56.dp
                                                         .toPx()
                                                         .toInt()).coerceAtLeast(0),
-                                                    maxY = (bottomLeftOffset.y - (56.dp.toPx() / croppingRatio.floatValue).toInt()).coerceAtLeast(0)
+                                                    maxY = (bottomLeftOffset.y - (56.dp.toPx() / croppingRatio.floatValue).toInt()).coerceAtLeast(
+                                                        0
+                                                    )
                                                 )
                                         } else if (width + positionChange.x !in width - 5..width + 5) {
                                             topLeftOffset =
@@ -954,7 +984,9 @@ fun EditingView(
                                                 ).coerceIn(
                                                     minX = bottomRightOffset.x - (height * croppingRatio.floatValue).toInt(),
                                                     minY = 0,
-                                                    maxX = (topRightOffset.x - (56.dp.toPx() * croppingRatio.floatValue).toInt()).coerceAtLeast(0),
+                                                    maxX = (topRightOffset.x - (56.dp.toPx() * croppingRatio.floatValue).toInt()).coerceAtLeast(
+                                                        0
+                                                    ),
                                                     maxY = (bottomLeftOffset.y - 56.dp
                                                         .toPx()
                                                         .toInt()).coerceAtLeast(0)
@@ -1030,7 +1062,9 @@ fun EditingView(
                                                         .toInt()),
                                                     minY = bottomRightOffset.y - (width / croppingRatio.floatValue).toInt(),
                                                     maxX = size.width,
-                                                    maxY = (bottomRightOffset.y - (56.dp.toPx() / croppingRatio.floatValue).toInt()).coerceAtLeast(0)
+                                                    maxY = (bottomRightOffset.y - (56.dp.toPx() / croppingRatio.floatValue).toInt()).coerceAtLeast(
+                                                        0
+                                                    )
                                                 )
                                         } else if (width + positionChange.x !in width - 5..width + 5) {
                                             topRightOffset =
@@ -1064,7 +1098,9 @@ fun EditingView(
                                                         .toInt(),
                                                     minY = 0,
                                                     maxX = size.width,
-                                                    maxY = (bottomRightOffset.y - (56.dp.toPx() / croppingRatio.floatValue).toInt()).coerceAtLeast(0)
+                                                    maxY = (bottomRightOffset.y - (56.dp.toPx() / croppingRatio.floatValue).toInt()).coerceAtLeast(
+                                                        0
+                                                    )
                                                 )
                                         } else if (width + positionChange.x !in width - 5..width + 5) {
                                             topRightOffset =
@@ -1075,7 +1111,9 @@ fun EditingView(
                                                     minX = topLeftOffset.x + 56.dp
                                                         .toPx()
                                                         .toInt(),
-                                                    minY = (bottomRightOffset.y - (height / croppingRatio.floatValue).toInt()).coerceAtLeast(0),
+                                                    minY = (bottomRightOffset.y - (height / croppingRatio.floatValue).toInt()).coerceAtLeast(
+                                                        0
+                                                    ),
                                                     maxX = topLeftOffset.x + (height * croppingRatio.floatValue).toInt(),
                                                     maxY = (bottomRightOffset.y - 56.dp
                                                         .toPx()
@@ -1197,7 +1235,9 @@ fun EditingView(
                                                     maxX = bottomRightOffset.x - 56.dp
                                                         .toPx()
                                                         .toInt(),
-                                                    maxY = (topLeftOffset.y + (width / croppingRatio.floatValue).toInt()).coerceAtMost(size.height)
+                                                    maxY = (topLeftOffset.y + (width / croppingRatio.floatValue).toInt()).coerceAtMost(
+                                                        size.height
+                                                    )
                                                 )
                                         }
                                     }
@@ -1257,7 +1297,8 @@ fun EditingView(
                                         val width = bottomRightOffsetPos.x - bottomLeftOffset.x
                                         val height = bottomRightOffsetPos.y - topRightOffset.y
 
-                                        val positionChange = bottomRightOffsetPos - bottomRightOffset
+                                        val positionChange =
+                                            bottomRightOffsetPos - bottomRightOffset
 
                                         if (height + positionChange.y !in height - 5..height + 5) {
                                             bottomRightOffset =
@@ -1269,7 +1310,9 @@ fun EditingView(
                                                         .toPx()
                                                         .toInt() * croppingRatio.floatValue).toInt(),
                                                     minY = topRightOffset.y + (56.dp.toPx() / croppingRatio.floatValue).toInt(),
-                                                    maxX = (bottomLeftOffset.x + (width * croppingRatio.floatValue).toInt()).coerceAtMost(size.width),
+                                                    maxX = (bottomLeftOffset.x + (width * croppingRatio.floatValue).toInt()).coerceAtMost(
+                                                        size.width
+                                                    ),
                                                     maxY = topRightOffset.y + (width / croppingRatio.floatValue).toInt()
                                                 )
                                         } else if (width + positionChange.x !in width - 5..width + 5) {
@@ -1303,8 +1346,12 @@ fun EditingView(
                                                         .toPx()
                                                         .toInt(),
                                                     minY = topRightOffset.y + (56.dp.toPx() / croppingRatio.floatValue).toInt(),
-                                                    maxX = (bottomLeftOffset.x + (height * croppingRatio.floatValue).toInt()).coerceAtMost(size.width),
-                                                    maxY = (topRightOffset.y + (width / croppingRatio.floatValue).toInt()).coerceAtMost(size.height)
+                                                    maxX = (bottomLeftOffset.x + (height * croppingRatio.floatValue).toInt()).coerceAtMost(
+                                                        size.width
+                                                    ),
+                                                    maxY = (topRightOffset.y + (width / croppingRatio.floatValue).toInt()).coerceAtMost(
+                                                        size.height
+                                                    )
                                                 )
                                         } else if (width + positionChange.x !in width - 5..width + 5) {
                                             bottomRightOffset =
@@ -1316,8 +1363,12 @@ fun EditingView(
                                                         .toPx()
                                                         .toInt(),
                                                     minY = topLeftOffset.y + (56.dp.toPx() / croppingRatio.floatValue).toInt(),
-                                                    maxX = (bottomLeftOffset.x + (height * croppingRatio.floatValue).toInt()).coerceAtMost(size.width),
-                                                    maxY = (topRightOffset.y + (width / croppingRatio.floatValue).toInt()).coerceAtMost(size.height)
+                                                    maxX = (bottomLeftOffset.x + (height * croppingRatio.floatValue).toInt()).coerceAtMost(
+                                                        size.width
+                                                    ),
+                                                    maxY = (topRightOffset.y + (width / croppingRatio.floatValue).toInt()).coerceAtMost(
+                                                        size.height
+                                                    )
                                                 )
                                         }
                                     }
@@ -1474,8 +1525,8 @@ private fun EditingViewTopBar(
                         enabled = changesSize.intValue != oldChangesSize.intValue,
                         secondaryContentMaxWidth = 40.dp,
                         secondaryContainerColor =
-                        	if (!isOpenWith) MaterialTheme.colorScheme.primary
-                        	else MaterialTheme.colorScheme.surfaceContainer,
+                            if (!isOpenWith) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.surfaceContainer,
                         primaryContent = {
                             Text(
                                 text = saveButtonTitle,
@@ -1967,11 +2018,21 @@ fun AdjustTools(
     var colorTintMatrix1 by rememberSaveable { mutableStateOf(multiplicativeEmptyArray) }
     var colorTintMatrix2 by rememberSaveable { mutableStateOf(additiveEmptyArray) }
 
-    LaunchedEffect(brightnessMatrix, contrastMatrix, saturationMatrix, blackPointMatrix, warmthMatrix, whitePointMatrix, colorTintMatrix2, highlightsMatrix) {
+    LaunchedEffect(
+        brightnessMatrix,
+        contrastMatrix,
+        saturationMatrix,
+        blackPointMatrix,
+        warmthMatrix,
+        whitePointMatrix,
+        colorTintMatrix2,
+        highlightsMatrix
+    ) {
         val floatArray = emptyList<Float>().toMutableList()
 
         for (i in contrastMatrix.indices) {
-            val multiply = contrastMatrix[i] * saturationMatrix[i] * warmthMatrix[i] * whitePointMatrix[i] * highlightsMatrix[i] * colorTintMatrix1[i]
+            val multiply =
+                contrastMatrix[i] * saturationMatrix[i] * warmthMatrix[i] * whitePointMatrix[i] * highlightsMatrix[i] * colorTintMatrix1[i]
             val add = brightnessMatrix[i] + blackPointMatrix[i] + colorTintMatrix2[i]
 
             floatArray.add(multiply + add)
@@ -2153,7 +2214,8 @@ fun AdjustTools(
                     return@run
                 }
 
-                val tint = (sliderValue.floatValue * 0.5f + 0.5f).coerceIn(0f, gradientColorList.size - 1f)
+                val tint =
+                    (sliderValue.floatValue * 0.5f + 0.5f).coerceIn(0f, gradientColorList.size - 1f)
 
                 val resolvedColor = getColorFromLinearGradientList(tint, gradientColorList)
 
@@ -2434,6 +2496,7 @@ private fun Modifier.makeDrawCanvas(
                     var lastPoint = Offset.Unspecified
                     var lastText: DrawableText? = null
                     var touchOffset = Offset.Zero
+                    var zoomingText: DrawableText? = null
 
                     do {
                         val event = awaitPointerEvent()
@@ -2617,21 +2680,25 @@ private fun Modifier.makeDrawCanvas(
                                     }
                                 }
                             }
-                        } else if (!canceled && paint.value.type == PaintType.Text && event.changes.size == 1 && event.calculateZoom() == 1f && event.calculateRotation() == 0f) {
+                        } else if (!canceled && paint.value.type == PaintType.Text && event.changes.size == 1 && event.calculateZoom() == 1f && event.calculateRotation() == 0f && modifications.size <= 1) {
                             when (event.type) {
                                 PointerEventType.Press -> {
                                     val position = event.changes.first().position
 
                                     val tappedOnText =
-                                        modifications.filterIsInstance<DrawableText>().firstOrNull {
-                                            checkIfClickedOnText(
-                                                text = it,
-                                                clickPosition = position,
-                                                extraPadding = if (it.paint.strokeWidth <= 40f) 60f else 0f
-                                            )
+                                        modifications.filterIsInstance<DrawableText>().minByOrNull {
+                                            (position - getTextBoundingBox(text = it).center).getDistanceSquared()
+                                        }?.let {
+                                            if (checkIfClickedOnText(
+                                                    text = it,
+                                                    clickPosition = position
+                                                )
+                                            ) {
+                                                it
+                                            } else null
                                         }
 
-                                    if (tappedOnText == null) {
+                                    if (tappedOnText == null && event.changes.size == 1) {
                                         val textLayout = textMeasurer.measure(
                                             text = "text",
                                             style = localTextStyle.copy(
@@ -2657,13 +2724,20 @@ private fun Modifier.makeDrawCanvas(
                                             rotation = 90f * rotationMultiplier.intValue,
                                             size = textLayout.size
                                         )
+
                                         modifications.add(text)
                                         lastText = text
+                                    } else if (tappedOnText != null && zoomingText != null) {
+                                        lastText = null
                                     } else {
                                         lastText = tappedOnText
                                     }
 
-                                    touchOffset = position - lastText.position
+                                    Log.d(TAG, "Last $lastText tapped $tappedOnText zooming $zoomingText")
+
+                                    lastText?.position?.let {
+                                        touchOffset = position - it
+                                    }
 
                                     isDrawing.value = false
                                     changesSize.intValue += 1
@@ -2675,9 +2749,7 @@ private fun Modifier.makeDrawCanvas(
                                 PointerEventType.Move -> {
                                     val offset = event.changes.first().position
 
-                                    if (lastText != null) {
-                                        modifications.remove(lastText)
-
+                                    if (lastText != null && modifications.remove(lastText)) {
                                         lastText.position += (offset - lastText.position - touchOffset)
                                         modifications.add(lastText)
                                     }
@@ -2698,38 +2770,44 @@ private fun Modifier.makeDrawCanvas(
                                     }
                                 }
                             }
-                        } else if (!canceled && paint.value.type == PaintType.Text && event.changes.size == 2 && event.calculateZoom() != 1f) {
+                        } else if (!canceled && paint.value.type == PaintType.Text && event.changes.size >= 2) {
                             when (event.type) {
                                 PointerEventType.Press, PointerEventType.Move -> {
                                     val positionFirst = event.changes.first().position
                                     val positionSecond = event.changes[1].position
 
                                     val tappedOnText =
-                                        modifications.filterIsInstance<DrawableText>().firstOrNull {
-                                            val matchesFirstDown = checkIfClickedOnText(
-                                                text = it,
-                                                clickPosition = positionFirst,
-                                                extraPadding = if (it.paint.strokeWidth <= 40f) 60f else 0f
-                                            )
+                                        modifications.filterIsInstance<DrawableText>()
+                                            .minByOrNull {
+                                                val midpoint =
+                                                    (positionFirst + positionSecond) / 2f
 
-                                            val matchesSecondDown = checkIfClickedOnText(
-                                                text = it,
-                                                clickPosition = positionSecond,
-                                                extraPadding = if (it.paint.strokeWidth <= 40f) 60f else 0f
-                                            )
-
-                                            matchesFirstDown && matchesSecondDown
-                                        }
+                                                (midpoint - getTextBoundingBox(text = it).center).getDistanceSquared()
+                                            }?.let {
+                                                if (checkIfClickedOnText(
+                                                        text = it,
+                                                        clickPosition = (positionFirst + positionSecond) / 2f
+                                                    )
+                                                ) {
+                                                    it
+                                                } else null
+                                            }
 
                                     tappedOnText?.let { text ->
+                                        zoomingText = text
+
                                         val zoom = event.calculateZoom()
                                         val rotation = event.calculateRotation()
 
-                                        modifications.remove(text)
+                                        val index = modifications.indexOf(text)
+                                        modifications.removeAll {
+                                            it == text
+                                        }
 
                                         // move topLeft of textbox to the text's position
                                         // basically de-centers the text so we can center it to that position with the new size
-                                        val oldPosition = text.position + (text.size.toOffset() / 2f)
+                                        val oldPosition =
+                                            text.position + (text.size.toOffset() / 2f)
                                         val newWidth = text.paint.strokeWidth * zoom
 
                                         val textLayout = textMeasurer.measure(
@@ -2746,6 +2824,7 @@ private fun Modifier.makeDrawCanvas(
                                                 baselineShift = defaultTextStyle.baselineShift
                                             )
                                         )
+
                                         val zoomedText = text.copy(
                                             paint = text.paint.copy(
                                                 strokeWidth = newWidth
@@ -2755,7 +2834,7 @@ private fun Modifier.makeDrawCanvas(
                                             rotation = if (zoom != 1f) text.rotation + rotation else text.rotation
                                         )
 
-                                        modifications.add(zoomedText)
+                                        modifications.add(index, zoomedText)
                                     }
 
                                     isDrawing.value = true
@@ -2766,6 +2845,7 @@ private fun Modifier.makeDrawCanvas(
 
                                 PointerEventType.Release -> {
                                     isDrawing.value = false
+                                    zoomingText = null
 
                                     event.changes.forEach {
                                         it.consume()
@@ -2978,6 +3058,17 @@ fun checkIfClickedOnText(
     clickPosition: Offset,
     extraPadding: Float = 0f
 ): Boolean {
+    val boundingBox = getTextBoundingBox(text = text)
+
+    val isInTextWidth =
+        clickPosition.x in boundingBox.left - extraPadding..boundingBox.right + extraPadding
+    val isInTextHeight =
+        clickPosition.y in boundingBox.top - extraPadding..boundingBox.bottom + extraPadding
+
+    return isInTextWidth && isInTextHeight
+}
+
+private fun getTextBoundingBox(text: DrawableText): Rect {
     val textPosition = text.position
     val textSize = text.size
 
@@ -2986,10 +3077,7 @@ fun checkIfClickedOnText(
     val textTop = textPosition.y
     val textBottom = textPosition.y + textSize.height
 
-    val isInTextWidth = clickPosition.x in textLeft - extraPadding..textRight + extraPadding
-    val isInTextHeight = clickPosition.y in textTop - extraPadding..textBottom + extraPadding
-
-    return isInTextWidth && isInTextHeight
+    return Rect(left = textLeft, top = textTop, right = textRight, bottom = textBottom)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
