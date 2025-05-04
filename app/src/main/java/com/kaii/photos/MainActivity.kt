@@ -502,7 +502,7 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
-                    composable(MultiScreenViewType.LockedFolderView.name) {
+                    composable(MultiScreenViewType.SecureFolder.name) {
                         enableEdgeToEdge(
                             navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
                             statusBarStyle = SystemBarStyle.auto(
@@ -911,7 +911,7 @@ class MainActivity : ComponentActivity() {
                     },
                     label = "MainAnimatedContentView"
                 ) { stateValue ->
-                    if (stateValue in tabList) {
+                    if (stateValue in tabList || stateValue == DefaultTabs.TabTypes.secure) {
                         when {
                             stateValue.isCustom -> {
                                 if (stateValue.albumPaths.toSet() != multiAlbumViewModel.albumInfo.paths.toSet()) {

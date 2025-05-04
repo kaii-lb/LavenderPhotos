@@ -332,7 +332,7 @@ fun LockedFolderEntryView(
     val promptCallback = object : BiometricPrompt.AuthenticationCallback() {
         override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult?) {
             super.onAuthenticationSucceeded(result)
-            navController.navigate(MultiScreenViewType.LockedFolderView.name)
+            navController.navigate(MultiScreenViewType.SecureFolder.name)
         }
 
         override fun onAuthenticationError(errorCode: Int, errString: CharSequence?) {

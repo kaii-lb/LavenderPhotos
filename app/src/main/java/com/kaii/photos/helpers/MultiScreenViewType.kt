@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 enum class MultiScreenViewType {
     MainScreen,
     TrashedPhotoView,
-    LockedFolderView,
+    SecureFolder,
     AboutAndUpdateView,
     FavouritesGridView,
     SettingsMainView,

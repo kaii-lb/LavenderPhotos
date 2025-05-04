@@ -124,7 +124,7 @@ fun SingleHiddenPhotoView(
 
     LaunchedEffect(hideSecureFolder) {
         if (hideSecureFolder
-            && navController.currentBackStackEntry?.destination?.route != MultiScreenViewType.LockedFolderView.name
+            && navController.currentBackStackEntry?.destination?.route != MultiScreenViewType.SecureFolder.name
         ) {
             navController.navigate(MultiScreenViewType.MainScreen.name)
         }
@@ -136,7 +136,7 @@ fun SingleHiddenPhotoView(
 
                 when (event) {
                     Lifecycle.Event.ON_STOP, Lifecycle.Event.ON_DESTROY -> {
-                        if (navController.currentBackStackEntry?.destination?.route != MultiScreenViewType.LockedFolderView.name
+                        if (navController.currentBackStackEntry?.destination?.route != MultiScreenViewType.SecureFolder.name
                             && navController.currentBackStackEntry?.destination?.route != MultiScreenViewType.MainScreen.name
                             && !isGettingPermissions.value
                         ) {

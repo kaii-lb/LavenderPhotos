@@ -150,7 +150,7 @@ fun AlbumsGridView(
 
             val copy = listOfDirs
             when (sortMode) {
-                AlbumSortMode.LastModified   -> {
+                AlbumSortMode.LastModified -> {
                     newList.addAll(
                         if (sortByDescending) {
                             copy.sortedByDescending { album ->
@@ -192,7 +192,7 @@ fun AlbumsGridView(
                     )
                 }
 
-                AlbumSortMode.Custom         -> {
+                AlbumSortMode.Custom -> {
                     newList.addAll(
                         copy
                     )
@@ -257,6 +257,7 @@ fun AlbumsGridView(
 
         SortModeHeader(
             sortMode = sortMode,
+            currentView = currentView,
             progress = pullToRefreshState.distanceFraction.coerceAtMost(1f),
             modifier = Modifier
                 .height(with(localDensity) { headerHeight.toDp() })
@@ -493,7 +494,7 @@ private fun AlbumGridItem(
                 it.signature(item.signature())
             }
 
-            Row (
+            Row(
                 modifier = Modifier
                     .fillMaxWidth(1f)
                     .padding(2.dp),
@@ -614,9 +615,13 @@ private fun CategoryList(
 @Composable
 private fun SortModeHeader(
     sortMode: AlbumSortMode,
+    currentView: MutableState<BottomBarTab>,
     @FloatRange(0.0, 1.0) progress: Float,
     modifier: Modifier = Modifier
 ) {
+    val tabList by mainViewModel.settings.DefaultTabs.getTabList()
+        .collectAsStateWithLifecycle(initialValue = emptyList())
+
     LazyRow(
         modifier = modifier
             .fillMaxWidth(1f)
@@ -703,6 +708,25 @@ private fun SortModeHeader(
                     modifier = Modifier
                         .scale(progress)
                 )
+            }
+        }
+
+        if (!tabList.contains(DefaultTabs.TabTypes.secure)) {
+            item {
+                OutlinedButton(
+                    onClick = {
+                        currentView.value = DefaultTabs.TabTypes.secure
+                    },
+                    colors =
+                        if (sortMode == AlbumSortMode.Custom) ButtonDefaults.buttonColors()
+                        else ButtonDefaults.outlinedButtonColors()
+                ) {
+                    Text(
+                        text = "Secure Folder",
+                        modifier = Modifier
+                            .scale(progress)
+                    )
+                }
             }
         }
     }
