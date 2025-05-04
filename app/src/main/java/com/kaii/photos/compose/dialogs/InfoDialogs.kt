@@ -101,6 +101,8 @@ import com.kaii.photos.helpers.renameImage
 import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.mediastore.content_provider.LavenderContentProvider
+import com.kaii.photos.mediastore.content_provider.LavenderMediaColumns
 import com.kaii.photos.mediastore.getExternalStorageContentUriFromAbsolutePath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -257,6 +259,12 @@ fun SingleAlbumDialog(
                     showDialog.value = false
 
                     try {
+                        context.contentResolver.delete(
+                            LavenderContentProvider.CONTENT_URI,
+                            "${LavenderMediaColumns.PARENT_ID} = ?",
+                            arrayOf("${album.id}")
+                        )
+
                         context.contentResolver.releasePersistableUriPermission(
                             context.getExternalStorageContentUriFromAbsolutePath(
                                 album.mainPath,

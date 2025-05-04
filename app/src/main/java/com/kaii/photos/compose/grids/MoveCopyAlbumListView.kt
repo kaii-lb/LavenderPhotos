@@ -31,6 +31,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ModalBottomSheetProperties
 import androidx.compose.material3.SheetValue
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -60,6 +61,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
+import com.kaii.lavender_snackbars.LavenderSnackbarController
+import com.kaii.lavender_snackbars.LavenderSnackbarEvents
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.FolderIsEmpty
@@ -100,7 +103,9 @@ fun MoveCopyAlbumListView(
     if (originalAlbumsList == emptyList<String>()) return
 
     val albumsViewModel: AlbumsViewModel = viewModel(
-        factory = AlbumsViewModelFactory(context, originalAlbumsList.fastFilter { !it.isCustomAlbum })
+        factory = AlbumsViewModelFactory(
+            context,
+            originalAlbumsList.filter { if (isMoving) !it.isCustomAlbum else true })
     )
     val dataList by albumsViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
@@ -246,7 +251,7 @@ fun AlbumsListItem(
     val selectedItemsWithoutSection by remember {
         derivedStateOf {
             selectedItemsList.filter {
-                it.type != MediaType.Section && it != MediaStoreData()
+                it.type != MediaType.Section && it != MediaStoreData.dummyItem
             }
         }
     }
@@ -293,6 +298,7 @@ fun AlbumsListItem(
         }
     )
 
+    val coroutineScope = rememberCoroutineScope()
     Row(
         modifier = modifier
             .height(88.dp)
@@ -302,40 +308,54 @@ fun AlbumsListItem(
                 if (!album.isCustomAlbum) {
                     runOnDirGranted.value = true
                 } else {
-                    val data = mutableListOf<Long>()
-                    context.contentResolver.query(
-                        LavenderContentProvider.CONTENT_URI,
-                        arrayOf(LavenderMediaColumns.ID),
-                        null,
-                        null,
-                        null
-                    )?.use { cursor ->
-                        while (cursor.moveToNext()) {
-                            val idCol = cursor.getColumnIndexOrThrow(LavenderMediaColumns.ID)
-                            val id = cursor.getLong(idCol)
+                    val items = selectedItemsWithoutSection
 
-                            data.add(id)
+                    coroutineScope.launch(Dispatchers.IO) {
+                        val data = mutableListOf<String>()
+                        context.contentResolver.query(
+                            LavenderContentProvider.CONTENT_URI,
+                            arrayOf(LavenderMediaColumns.URI, LavenderMediaColumns.PARENT_ID),
+                            "${LavenderMediaColumns.PARENT_ID} = ?",
+                            arrayOf("${album.id}"),
+                            null
+                        )?.use { cursor ->
+                            while (cursor.moveToNext()) {
+                                val uriCol = cursor.getColumnIndexOrThrow(LavenderMediaColumns.URI)
+                                val uri = cursor.getString(uriCol)
+
+                                data.add(uri)
+                            }
+                        }
+
+                        val inserted = context.contentResolver.bulkInsert(
+                            LavenderContentProvider.CONTENT_URI,
+                            items
+                                .fastFilter { media ->
+                                    media.uri.toString() !in data
+                                }.fastMap { media ->
+                                    ContentValues().apply {
+                                        // no id since the content provider handles that on its own
+                                        put(LavenderMediaColumns.URI, media.uri.toString())
+                                        put(LavenderMediaColumns.PARENT_ID, album.id)
+                                        put(LavenderMediaColumns.MIME_TYPE, media.mimeType)
+                                        put(LavenderMediaColumns.DATE_TAKEN, media.dateTaken)
+                                    }
+                                }.toTypedArray()
+                        )
+
+                        Log.d(TAG, "Number of inserted items: $inserted")
+                        Log.d(TAG, "Got album id ${album.id}")
+
+                        if (inserted == 0) {
+                            LavenderSnackbarController.pushEvent(
+                                LavenderSnackbarEvents.MessageEvent(
+                                    message = "All items are already in album",
+                                    iconResId = R.drawable.error_2,
+                                    duration = SnackbarDuration.Short
+                                )
+                            )
                         }
                     }
-
-                    val inserted = context.contentResolver.bulkInsert(
-                        LavenderContentProvider.CONTENT_URI,
-                        selectedItemsWithoutSection
-                            .fastFilter { media ->
-                                media.id !in data
-                            }.fastMap { media ->
-                                ContentValues().apply {
-                                    put(LavenderMediaColumns.ID, media.id)
-                                    put(LavenderMediaColumns.URI, media.uri.toString())
-                                    put(LavenderMediaColumns.PARENT_ID, album.id)
-                                    put(LavenderMediaColumns.MIME_TYPE, media.mimeType)
-                                    put(LavenderMediaColumns.DATE_TAKEN, media.dateTaken)
-                                }
-                            }.toTypedArray()
-                    )
-
-                    Log.d(TAG, "Number of inserted items: $inserted")
-                    Log.d(TAG, "Got album id ${album.id}")
 
                     selectedItemsList.clear()
                 }

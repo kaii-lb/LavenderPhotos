@@ -493,17 +493,32 @@ private fun AlbumGridItem(
                 it.signature(item.signature())
             }
 
-            Text(
-                text = " ${album.name}",
-                fontSize = TextUnit(14f, TextUnitType.Sp),
-                textAlign = TextAlign.Start,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+            Row (
                 modifier = Modifier
                     .fillMaxWidth(1f)
-                    .padding(2.dp)
-            )
+                    .padding(2.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = " ${album.name}",
+                    fontSize = TextUnit(14f, TextUnitType.Sp),
+                    textAlign = TextAlign.Start,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                if (album.isCustomAlbum) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.art_track),
+                        contentDescription = "This album is a custom album",
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier
+                            .padding(end = 2.dp)
+                    )
+                }
+            }
         }
     }
 }
