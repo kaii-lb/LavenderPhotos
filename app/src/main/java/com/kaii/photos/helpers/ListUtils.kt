@@ -1,5 +1,6 @@
 package com.kaii.photos.helpers
 
+import android.util.Log
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.lazy.LazyListState
@@ -8,17 +9,48 @@ import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.center
+import androidx.compose.ui.unit.toOffset
+import com.kaii.photos.MainActivity.Companion.mainViewModel
+import com.kaii.photos.datastore.AlbumSortMode
+import com.kaii.photos.datastore.AlbumsList
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
-fun LazyListState.getItemAtOffset(
-    offset: Int
-) = layoutInfo.visibleItemsInfo.find { item ->
-        offset in item.offset..item.offset + item.size
-    }?.index
+private const val TAG = "LIST_UTILS"
+// fun LazyListState.getItemAtOffset(
+//     offset: Int
+// ) = layoutInfo.visibleItemsInfo.find { item ->
+//         offset in item.offset..item.offset + item.size
+//     }?.index
+
+@Suppress("UNCHECKED_CAST")
+fun <T : Any> LazyListState.getItemAtOffset(
+    offset: Int,
+    keys: List<T>
+): Int? {
+    var key: T? = null
+    val relativeOffset = offset - layoutInfo.viewportStartOffset
+
+    val possibleItem = layoutInfo.visibleItemsInfo.find { item ->
+        relativeOffset >= item.offset && relativeOffset < item.offset + item.size
+    }
+
+    if (possibleItem != null) {
+        key = possibleItem.key as? T
+    }
+
+    val found = keys.find {
+        it == key
+    } ?: return null
+
+    return keys.indexOf(found)
+}
 
 @Composable
 fun Modifier.dragReorderable(
     state: LazyListState,
+    keys: List<Any>,
     itemOffset: MutableFloatState,
     onItemSelected: (itemIndex: Int?) -> Unit,
     onMove: (currentIndex: Int, targetIndex: Int) -> Unit
@@ -30,9 +62,12 @@ fun Modifier.dragReorderable(
 
         detectDragGesturesAfterLongPress(
             onDragStart = { offset ->
-                state.getItemAtOffset(offset = offset.y.toInt())?.let {
+                state.getItemAtOffset(
+                    offset = offset.y.roundToInt(),
+                    keys = keys
+                )?.let {
+                    Log.d(TAG, "Item index start : $it")
                     selectedItemIndex = it
-                    onItemSelected(it)
                 }
             },
 
@@ -40,37 +75,55 @@ fun Modifier.dragReorderable(
                 change.consume()
                 itemOffset.floatValue += offset.y
 
-                val currentIndex = selectedItemIndex ?: return@detectDragGesturesAfterLongPress
-                val currentItem = state.layoutInfo.visibleItemsInfo.find { it.index == currentIndex } ?: return@detectDragGesturesAfterLongPress
+                run {
+                    val targetItemIndex = state.getItemAtOffset(
+                        offset = offset.y.roundToInt(),
+                        keys = keys
+                    )
 
-                val startOffset = currentItem.offset + itemOffset.floatValue
-                val endOffset = currentItem.offset + currentItem.size + itemOffset.floatValue
-                val middleOffset = startOffset + (endOffset - startOffset) / 2
+                    Log.d(TAG, "Target item index: $targetItemIndex")
 
-                val targetItemIndex = state.getItemAtOffset(middleOffset.toInt())?.let {
-                    if (it != currentIndex) it else null
-                }
+                    if (targetItemIndex != null && selectedItemIndex != null) {
+                        val currentItem = state.layoutInfo.visibleItemsInfo.find {
+                            it.key == keys[selectedItemIndex!!]
+                        }
+                        val targetItem = state.layoutInfo.visibleItemsInfo.find {
+                            it.key == keys[targetItemIndex]
+                        }
 
-                if (targetItemIndex != null) {
-                    onMove(currentIndex, targetItemIndex)
-                    onItemSelected(selectedItemIndex)
+                        if (currentItem != null && targetItem != null) {
+                            onMove(selectedItemIndex!!, targetItemIndex)
 
-                    selectedItemIndex = targetItemIndex
-                    val targetItem = state.layoutInfo.visibleItemsInfo[targetItemIndex]
-                    itemOffset.value += currentItem.offset - targetItem.offset
-                } else {
-                    val offsetToTop = startOffset - state.layoutInfo.viewportStartOffset
-                    val offsetToBottom = endOffset - state.layoutInfo.viewportEndOffset
+                            // itemOffset.floatValue =
+                            //     change.position.y - (targetItem.offset + targetItem.size / 2)
+                        } else if (currentItem != null) {
+                            val startOffset = currentItem.offset + itemOffset.floatValue
+                            val endOffset =
+                                currentItem.offset + currentItem.size + itemOffset.floatValue
 
-                    val scroll = when {
-                        offsetToTop < 0 -> offsetToTop.coerceAtMost(0f)
-                        offsetToBottom > 0 -> offsetToBottom.coerceAtLeast(0f)
-                        else -> 0f
+                            val offsetToTop = startOffset - state.layoutInfo.viewportStartOffset
+                            val offsetToBottom = endOffset - state.layoutInfo.viewportEndOffset
+
+                            val scroll = when {
+                                offsetToTop < 0 -> offsetToTop.coerceAtMost(0f)
+                                offsetToBottom > 0 -> offsetToBottom.coerceAtLeast(0f)
+                                else -> 0f
+                            }
+
+                            if (scroll != 0f && (state.canScrollBackward || state.canScrollForward)) coroutineScope.launch {
+                                state.scrollBy(scroll)
+                            }
+                        }
                     }
 
-                    if (scroll != 0f && (state.canScrollBackward || state.canScrollForward)) coroutineScope.launch {
-                        state.scrollBy(scroll)
-                    }
+                    // if (targetItemIndex != null && currentItem != null) {
+                    //     onMove(currentIndex, targetItemIndex)
+                    //     onItemSelected(selectedItemIndex)
+                    //
+                    //     selectedItemIndex = targetItemIndex
+                    //     val targetItem = state.layoutInfo.visibleItemsInfo[targetItemIndex]
+                    //     itemOffset.floatValue += currentItem.offset - targetItem.offset
+                    //
                 }
             },
 

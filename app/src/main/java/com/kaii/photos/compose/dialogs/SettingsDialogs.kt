@@ -8,6 +8,7 @@ import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -62,6 +63,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.lavender_snackbars.LavenderSnackbarController
 import com.kaii.lavender_snackbars.LavenderSnackbarEvents
 import com.kaii.photos.MainActivity.Companion.mainViewModel
@@ -82,6 +84,9 @@ import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MediaItemSortMode.Companion.presentableName
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.createDirectoryPicker
+import com.kaii.photos.reorderable_lists.ReorderableItem
+import com.kaii.photos.reorderable_lists.ReorderableLazyList
+import com.kaii.photos.reorderable_lists.rememberReorderableState
 import kotlinx.coroutines.launch
 
 @Composable
@@ -92,7 +97,7 @@ fun AddTabDialog(
     LavenderDialogBase(
         onDismiss = dismissDialog
     ) {
-        Box (
+        Box(
             modifier = Modifier
                 .fillMaxWidth(1f)
         ) {
@@ -314,7 +319,7 @@ fun AddTabDialog(
 
         val selectedAlbums = remember { mutableStateListOf<String>() }
 
-        Row (
+        Row(
             modifier = Modifier
                 .fillMaxWidth(1f)
                 .padding(16.dp, 0.dp, 8.dp, 0.dp),
@@ -346,11 +351,11 @@ fun AddTabDialog(
             }
         }
 
-        Spacer (modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         HorizontalSeparator()
 
-        Spacer (modifier = Modifier.height(2.dp))
+        Spacer(modifier = Modifier.height(2.dp))
 
         LazyColumn(
             modifier = Modifier
@@ -392,7 +397,7 @@ fun AddTabDialog(
             }
         }
 
-        Spacer (modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         val coroutineScope = rememberCoroutineScope()
 
@@ -464,7 +469,8 @@ fun SortModeSelectorDialog(
             items(
                 count = MediaItemSortMode.entries.size - 1 // ignore "Disabled"
             ) { index ->
-                val sortMode = MediaItemSortMode.entries.filter { it != MediaItemSortMode.Disabled }[index] // cursed syntax
+                val sortMode =
+                    MediaItemSortMode.entries.filter { it != MediaItemSortMode.Disabled }[index] // cursed syntax
 
                 RadioButtonRow(
                     text = sortMode.presentableName,
@@ -588,4 +594,236 @@ fun ThumbnailSizeDialog(
             mainViewModel.settings.Storage.setThumbnailSize(thumbnailSize)
         }
     )
+}
+
+@Composable
+fun TabCustomizationDialog(
+    currentTab: MutableState<BottomBarTab>,
+    closeDialog: () -> Unit
+) {
+    val tabList by mainViewModel.settings.DefaultTabs.getTabList()
+        .collectAsStateWithLifecycle(initialValue = emptyList())
+    val coroutineScope = rememberCoroutineScope()
+
+    LavenderDialogBase(
+        onDismiss = closeDialog
+    ) {
+        TitleCloseRow(title = "Customize Tabs") {
+            closeDialog()
+        }
+
+        Column(
+            modifier = Modifier
+                .wrapContentSize(),
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.Start
+        ) {
+            DefaultTabs.defaultList.forEach { tab ->
+                InfoRow(
+                    text = tab.name,
+                    iconResId = if (tab in tabList) R.drawable.delete else R.drawable.add,
+                    opacity = if (tab in tabList) 1f else 0.5f
+                ) {
+                    mainViewModel.settings.DefaultTabs.setTabList(
+                        tabList.toMutableList().apply {
+                            if (tab in tabList && tabList.size > 1) {
+                                remove(tab)
+                                if (currentTab.value == tab) currentTab.value =
+                                    tabList[0] // handle tab removal
+                            } else if (tab in tabList) {
+                                coroutineScope.launch {
+                                    LavenderSnackbarController.pushEvent(
+                                        LavenderSnackbarEvents.MessageEvent(
+                                            message = "At least one tab needs to exist",
+                                            iconResId = R.drawable.error_2,
+                                            duration = SnackbarDuration.Short
+                                        )
+                                    )
+                                }
+                            }
+
+                            if (tab !in tabList && tabList.size < 5) {
+                                add(tab)
+                            } else if (tab !in tabList) {
+                                coroutineScope.launch {
+                                    LavenderSnackbarController.pushEvent(
+                                        LavenderSnackbarEvents.MessageEvent(
+                                            message = "Maximum of 5 tabs allowed",
+                                            iconResId = R.drawable.error_2,
+                                            duration = SnackbarDuration.Short
+                                        )
+                                    )
+                                }
+                            }
+                        }
+                    )
+                }
+            }
+
+            tabList.forEach { tab ->
+                if (tab !in DefaultTabs.defaultList) {
+                    InfoRow(
+                        text = tab.name,
+                        iconResId = R.drawable.delete
+                    ) {
+                        if (tabList.size > 1) {
+                            mainViewModel.settings.DefaultTabs.setTabList(
+                                tabList.toMutableList().apply {
+                                    remove(tab)
+                                    if (currentTab.value == tab) currentTab.value =
+                                        tabList[0] // handle tab removal
+                                }
+                            )
+                        } else {
+                            coroutineScope.launch {
+                                LavenderSnackbarController.pushEvent(
+                                    LavenderSnackbarEvents.MessageEvent(
+                                        message = "At least one tab needs to exist",
+                                        iconResId = R.drawable.error_2,
+                                        duration = SnackbarDuration.Short
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+        HorizontalSeparator()
+        Spacer(modifier = Modifier.height(16.dp))
+
+        var showDialog by remember { mutableStateOf(false) }
+        if (showDialog) {
+            AddTabDialog(
+                tabList = tabList,
+                dismissDialog = {
+                    showDialog = false
+                }
+            )
+        }
+
+        FullWidthDialogButton(
+            text = "Add a tab",
+            color = MaterialTheme.colorScheme.primary,
+            position = RowPosition.Single,
+            textColor = MaterialTheme.colorScheme.onPrimary
+        ) {
+            if (tabList.size < 5) {
+                showDialog = true
+            } else {
+                coroutineScope.launch {
+                    LavenderSnackbarController.pushEvent(
+                        LavenderSnackbarEvents.MessageEvent(
+                            message = "Maximum of 5 tabs allowed",
+                            iconResId = R.drawable.error_2,
+                            duration = SnackbarDuration.Short
+                        )
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DefaultTabSelectorDialog(
+    tabList: List<BottomBarTab>,
+    defaultTab: BottomBarTab,
+    dismissDialog: () -> Unit
+) {
+    var selectedTab by remember(defaultTab) { mutableStateOf(defaultTab) }
+    val tabListDynamic = remember { mutableStateListOf<BottomBarTab>().apply { addAll(tabList) } }
+
+    LavenderDialogBase(
+        onDismiss = dismissDialog
+    ) {
+        TitleCloseRow(title = "Default Tab") {
+            dismissDialog()
+        }
+
+        // val state = rememberLazyListState()
+        // val itemOffset = remember { mutableFloatStateOf(0f) }
+        // var selectedItem: BottomBarTab? by remember { mutableStateOf(null) }
+
+        val listState = rememberLazyListState()
+
+        val reorderableState = rememberReorderableState(listState) { fromIndex, toIndex ->
+            val newList = tabListDynamic.toMutableList()
+            newList.add(toIndex, newList.removeAt(fromIndex))
+
+            tabListDynamic.clear()
+            tabListDynamic.addAll(newList.distinctBy { it.name })
+        }
+
+        ReorderableLazyList(
+            listState = listState,
+            reorderableState = reorderableState
+        ) {
+            items(
+                count = tabListDynamic.size,
+                key = { index ->
+                    tabListDynamic[index].name
+                }
+            ) { index ->
+                ReorderableItem(
+                    index = index,
+                    reorderableState = reorderableState
+                ) {
+                    val tab = tabListDynamic[index]
+
+                    ReorderableRadioButtonRow(
+                        text = tab.name,
+                        checked = selectedTab == tab
+                    ) {
+                        selectedTab = tab
+                    }
+                }
+            }
+        }
+
+        // LazyColumn(
+        //     state = state,
+        //     modifier = Modifier
+        //         .wrapContentSize()
+        //         .dragReorderable(
+        //             state = state,
+        //             keys = tabListDynamic.map { it.name },
+        //             itemOffset = itemOffset,
+        //             onItemSelected = { index ->
+        //                 selectedItem =
+        //                     if (index != null) tabListDynamic[index]
+        //                     else null
+        //             },
+        //             onMove = { currentIndex, targetIndex ->
+        //                 val newList = tabListDynamic.toMutableList()
+        //                 newList.add(targetIndex, newList.removeAt(currentIndex))
+        //
+        //                 tabListDynamic.clear()
+        //                 tabListDynamic.addAll(newList.distinctBy { it.name })
+        //             }
+        //         ),
+        //     verticalArrangement = Arrangement.Top,
+        //     horizontalAlignment = Alignment.Start
+        // ) {
+        //     items(
+        //         count = tabListDynamic.size,
+        //         key = { key ->
+        //             tabListDynamic[key].name
+        //         },
+        //     ) { index ->
+        //
+        //     }
+        // }
+
+        ConfirmCancelRow(
+            onConfirm = {
+                mainViewModel.settings.DefaultTabs.setTabList(tabListDynamic)
+                mainViewModel.settings.DefaultTabs.setDefaultTab(selectedTab)
+
+                dismissDialog()
+            }
+        )
+    }
 }

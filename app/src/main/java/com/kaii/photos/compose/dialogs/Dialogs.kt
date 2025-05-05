@@ -37,6 +37,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -63,6 +64,7 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.kaii.photos.R
 import com.kaii.photos.compose.ConfirmCancelRow
 import com.kaii.photos.helpers.ExtendedMaterialTheme
 import com.kaii.photos.helpers.RowPosition
@@ -566,5 +568,56 @@ fun SelectableButtonListDialog(
                 }
             )
         }
+    }
+}
+
+@Composable
+fun ReorderableRadioButtonRow(
+    text: String,
+    checked: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth(1f)
+            .height(40.dp)
+            .background(Color.Transparent)
+            .padding(12.dp, 4.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .clickable {
+                onClick()
+            },
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Start
+    ) {
+        RadioButton(
+            selected = checked,
+            onClick = {
+                onClick()
+            }
+        )
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        Text(
+            text = text,
+            fontSize = TextUnit(14f, TextUnitType.Sp),
+            color = MaterialTheme.colorScheme.onSurface,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier
+                .weight(1f)
+        )
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        Icon(
+            painter = painterResource(id = R.drawable.reorderable),
+            contentDescription = "this item can be dragged and reordered",
+            modifier = Modifier
+                .size(24.dp)
+        )
+
+        Spacer(modifier = Modifier.width(8.dp))
     }
 }
