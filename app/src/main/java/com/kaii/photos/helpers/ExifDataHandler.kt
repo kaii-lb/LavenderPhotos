@@ -42,6 +42,7 @@ fun getDateTakenForMedia(absolutePath: String): Long {
     }
 }
 
+/** @param dateTaken is in seconds since epoch */
 fun setDateTakenForMedia(absolutePath: String, dateTaken: Long) {
     try {
         val exifInterface = ExifInterface(absolutePath)

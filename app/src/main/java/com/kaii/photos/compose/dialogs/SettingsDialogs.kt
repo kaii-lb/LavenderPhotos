@@ -783,40 +783,6 @@ fun DefaultTabSelectorDialog(
             }
         }
 
-        // LazyColumn(
-        //     state = state,
-        //     modifier = Modifier
-        //         .wrapContentSize()
-        //         .dragReorderable(
-        //             state = state,
-        //             keys = tabListDynamic.map { it.name },
-        //             itemOffset = itemOffset,
-        //             onItemSelected = { index ->
-        //                 selectedItem =
-        //                     if (index != null) tabListDynamic[index]
-        //                     else null
-        //             },
-        //             onMove = { currentIndex, targetIndex ->
-        //                 val newList = tabListDynamic.toMutableList()
-        //                 newList.add(targetIndex, newList.removeAt(currentIndex))
-        //
-        //                 tabListDynamic.clear()
-        //                 tabListDynamic.addAll(newList.distinctBy { it.name })
-        //             }
-        //         ),
-        //     verticalArrangement = Arrangement.Top,
-        //     horizontalAlignment = Alignment.Start
-        // ) {
-        //     items(
-        //         count = tabListDynamic.size,
-        //         key = { key ->
-        //             tabListDynamic[key].name
-        //         },
-        //     ) { index ->
-        //
-        //     }
-        // }
-
         ConfirmCancelRow(
             onConfirm = {
                 mainViewModel.settings.DefaultTabs.setTabList(tabListDynamic)

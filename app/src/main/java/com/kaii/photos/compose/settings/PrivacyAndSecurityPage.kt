@@ -109,6 +109,21 @@ fun PrivacyAndSecurityPage() {
                     mainViewModel.settings.Permissions.setConfirmToDelete(it)
                 }
             }
+
+            item {
+                val overwriteOnMove by mainViewModel.settings.Permissions.getOverwriteDateOnMove().collectAsStateWithLifecycle(initialValue = true)
+
+                PreferencesSwitchRow(
+                    title = "Overwrite Date on Move",
+                    summary = "When enabled, copied/moved media shows at the top of the list",
+                    iconResID = R.drawable.clock,
+                    position = RowPosition.Single,
+                    showBackground = false,
+                    checked = overwriteOnMove
+                ) {
+                    mainViewModel.settings.Permissions.setOverwriteDateOnMove(it)
+                }
+            }
         }
     }
 }

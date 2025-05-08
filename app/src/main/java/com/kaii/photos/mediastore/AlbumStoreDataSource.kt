@@ -136,9 +136,9 @@ internal constructor(
 
                 val media = context.contentResolver.getMediaStoreDataFromUri(uri.toUri())
 
-                Log.d(TAG, "The latest media is ${media!!.absolutePath} for the following albums: $parentId")
+                // Log.d(TAG, "The latest media is ${media!!.absolutePath} for the following albums: $parentId")
 
-                data = media
+                data = media!!
             }
         }
 
@@ -199,8 +199,8 @@ internal constructor(
                     if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) MediaType.Image
                     else MediaType.Video
 
-                Log.d(TAG, "The latest media is $absolutePath for the following albums:")
-                Log.d(TAG, sqlQuery.paths.toString())
+                // Log.d(TAG, "The latest media is $absolutePath for the following albums:")
+                // Log.d(TAG, sqlQuery.paths.toString())
                 data =
                     MediaStoreData(
                         type = type,

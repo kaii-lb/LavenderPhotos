@@ -12,6 +12,7 @@ import android.provider.MediaStore
 import android.provider.MediaStore.Files.FileColumns
 import android.provider.MediaStore.MediaColumns
 import android.util.Log
+import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.kaii.photos.helpers.EXTERNAL_DOCUMENTS_AUTHORITY
 import com.kaii.photos.helpers.appRestoredFilesDir
@@ -25,7 +26,6 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.file.Files
 import kotlin.io.path.Path
-import androidx.core.net.toUri
 
 private const val TAG = "MEDIA_STORE_UTILS"
 
@@ -37,10 +37,11 @@ suspend fun ContentResolver.copyMedia(
     context: Context,
     media: MediaStoreData,
     destination: String,
+    overwriteDate: Boolean,
     overrideDisplayName: String? = null,
     setExifDateBeforeCopy: Boolean = false
 ): Uri? = withContext(Dispatchers.IO) {
-    if (setExifDateBeforeCopy && media.type == MediaType.Image) {
+    if (setExifDateBeforeCopy && media.type == MediaType.Image && !overwriteDate) {
         try {
             setDateTakenForMedia(
                 media.absolutePath,
@@ -53,6 +54,7 @@ suspend fun ContentResolver.copyMedia(
     }
 
     val file = File(media.absolutePath)
+    val currentTime = System.currentTimeMillis()
 
     val storageContentUri = when {
         destination.startsWith(Environment.DIRECTORY_DCIM) || destination.startsWith(Environment.DIRECTORY_PICTURES) || destination.startsWith(
@@ -71,11 +73,9 @@ suspend fun ContentResolver.copyMedia(
     if (storageContentUri != null) {
         val contentValues = ContentValues().apply {
             put(MediaColumns.DISPLAY_NAME, file.name)
-            put(MediaColumns.DATE_TAKEN, media.dateTaken)
             put(MediaColumns.RELATIVE_PATH, destination)
             put(MediaColumns.MIME_TYPE, media.mimeType)
         }
-        file.setLastModified(System.currentTimeMillis())
 
         val newUri = insert(
             storageContentUri,
@@ -84,6 +84,49 @@ suspend fun ContentResolver.copyMedia(
 
         newUri?.let { uri ->
             copyUriToUri(media.uri, uri)
+
+            val target =
+                File(baseInternalStorageDirectory + destination.removeSuffix("/") + "/${overrideDisplayName ?: file.name}")
+
+            if (overwriteDate) {
+                target.setLastModified(currentTime)
+
+                if (media.type == MediaType.Image) {
+                    setDateTakenForMedia(
+                        absolutePath = target.absolutePath,
+                        dateTaken = currentTime / 1000
+                    )
+                }
+
+                update(
+                    uri,
+                    ContentValues().apply {
+                        put(MediaColumns.DATE_ADDED, currentTime)
+                        put(MediaColumns.DATE_TAKEN, currentTime)
+                        put(MediaColumns.DATE_MODIFIED, currentTime)
+                    },
+                    null
+                )
+            } else {
+                target.setLastModified(media.dateTaken * 1000)
+
+                if (media.type == MediaType.Image) {
+                    setDateTakenForMedia(
+                        absolutePath = target.absolutePath,
+                        dateTaken = media.dateTaken
+                    )
+                }
+
+                update(
+                    uri,
+                    ContentValues().apply {
+                        put(MediaColumns.DATE_ADDED, media.dateTaken * 1000)
+                        put(MediaColumns.DATE_TAKEN, media.dateTaken * 1000)
+                        put(MediaColumns.DATE_MODIFIED, media.dateTaken * 1000)
+                    },
+                    null
+                )
+            }
 
             return@withContext uri
         }
@@ -105,6 +148,49 @@ suspend fun ContentResolver.copyMedia(
                 from = media.uri,
                 to = savedToFile.uri
             )
+
+            val target =
+                File(baseInternalStorageDirectory + destination.removeSuffix("/") + "/${overrideDisplayName ?: file.name}")
+
+            if (overwriteDate) {
+                target.setLastModified(currentTime)
+
+                if (media.type == MediaType.Image) {
+                    setDateTakenForMedia(
+                        absolutePath = target.absolutePath,
+                        dateTaken = currentTime / 1000
+                    )
+                }
+
+                update(
+                    savedToFile.uri,
+                    ContentValues().apply {
+                        put(MediaColumns.DATE_ADDED, currentTime)
+                        put(MediaColumns.DATE_TAKEN, currentTime)
+                        put(MediaColumns.DATE_MODIFIED, currentTime)
+                    },
+                    null
+                )
+            } else {
+                target.setLastModified(media.dateTaken * 1000)
+
+                if (media.type == MediaType.Image) {
+                    setDateTakenForMedia(
+                        absolutePath = target.absolutePath,
+                        dateTaken = media.dateTaken
+                    )
+                }
+
+                update(
+                    savedToFile.uri,
+                    ContentValues().apply {
+                        put(MediaColumns.DATE_ADDED, media.dateTaken * 1000)
+                        put(MediaColumns.DATE_TAKEN, media.dateTaken * 1000)
+                        put(MediaColumns.DATE_MODIFIED, media.dateTaken * 1000)
+                    },
+                    null
+                )
+            }
 
             return@withContext savedToFile.uri
         }

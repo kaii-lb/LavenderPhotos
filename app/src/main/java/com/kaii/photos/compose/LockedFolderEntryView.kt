@@ -229,6 +229,7 @@ fun LockedFolderEntryView(
                     list = mediaItems,
                     context = context,
                     destination = context.appRestoredFilesDir,
+                    overwriteDate = true,
                     overrideDisplayName = { displayName ->
                         val extension = displayName.replaceBeforeLast(".", "")
 
@@ -292,7 +293,8 @@ fun LockedFolderEntryView(
                     Log.e(TAG, "${it.name} has IV? $hasIV")
                     !hasIV // we want items that don't have an IV, that means they have not been encrypted yet
                 } catch (e: Throwable) {
-                    Log.e(TAG, "${it.name} has no IV")
+                    Log.e(TAG, "${it.name} has no IV, error: ${e.message}")
+                    e.printStackTrace()
                     true
                 }
             }

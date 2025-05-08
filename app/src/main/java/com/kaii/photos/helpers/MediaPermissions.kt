@@ -123,13 +123,18 @@ fun GetDirectoryPermissionAndRun(
         dialogBody = "Lavender Photos needs permission to access this album. Please grant it the permission by selecting \"Use This Folder\" on the next screen.\n This is a one-time permission.",
         confirmButtonLabel = "Grant"
     ) {
-        val uri = context.getExternalStorageContentUriFromAbsolutePath(
-            absoluteDirPaths[currentIndex],
-            false
-        )
-        Log.d(TAG, "Content URI for directory ${absoluteDirPaths[currentIndex]} is $uri")
+        if (currentIndex < absoluteDirPaths.size) {
+            val uri = context.getExternalStorageContentUriFromAbsolutePath(
+                absoluteDirPaths[currentIndex],
+                false
+            )
+            Log.d(TAG, "Content URI for directory ${absoluteDirPaths[currentIndex]} is $uri")
 
-        launcher.launch(uri)
+            launcher.launch(uri)
+        } else {
+            Log.d(TAG, "URI is not in list! This shouldn't happen!")
+            Log.d(TAG, "The current index is $currentIndex, with size ${absoluteDirPaths.size}")
+        }
     }
 
     LaunchedEffect(currentIndex) {

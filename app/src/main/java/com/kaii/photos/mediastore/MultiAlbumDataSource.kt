@@ -15,6 +15,8 @@ import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.getDateTakenForMedia
 import com.kaii.photos.models.multi_album.groupPhotosBy
 
+// private const val TAG = "MULTI_ALBUM_DATA_SOURCE"
+
 /** Loads metadata from the media store for images and videos. */
 class MultiAlbumDataSource(
     context: Context,

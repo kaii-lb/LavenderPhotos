@@ -70,6 +70,7 @@ import com.kaii.photos.compose.SearchTextField
 import com.kaii.photos.compose.dialogs.getDefaultShapeSpacerForPosition
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
+import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.RowPosition
@@ -268,6 +269,7 @@ fun AlbumsListItem(
         onRejected = {}
     )
 
+    val overwriteDate by mainViewModel.settings.Permissions.getOverwriteDateOnMove().collectAsStateWithLifecycle(initialValue = true)
     GetPermissionAndRun(
         uris = selectedItemsWithoutSection.map { it.uri },
         shouldRun = runOnUriGranted,
@@ -278,7 +280,8 @@ fun AlbumsListItem(
                 moveImageListToPath(
                     context,
                     selectedItemsWithoutSection,
-                    album.mainPath
+                    album.mainPath,
+                    overwriteDate
                 )
 
                 if (groupedMedia != null) {
@@ -290,7 +293,8 @@ fun AlbumsListItem(
                 copyImageListToPath(
                     context,
                     selectedItemsWithoutSection,
-                    album.mainPath
+                    album.mainPath,
+                    overwriteDate
                 )
             }
 

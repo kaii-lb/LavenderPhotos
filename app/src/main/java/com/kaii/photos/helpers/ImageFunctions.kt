@@ -235,7 +235,8 @@ suspend fun moveImageOutOfLockedFolder(
             media = media.copy(
                 uri = tempFile.toUri()
             ),
-            destination = originalPath.toRelativePath().getParentFromPath()
+            destination = originalPath.toRelativePath().getParentFromPath(),
+            overwriteDate = false
         )?.let {
             fileToBeRestored.delete()
             tempFile.delete()
@@ -296,7 +297,12 @@ fun renameDirectory(context: Context, absolutePath: String, newName: String) {
 }
 
 /** @param destination where to move said files to, should be relative*/
-fun moveImageListToPath(context: Context, list: List<MediaStoreData>, destination: String) {
+fun moveImageListToPath(
+    context: Context,
+    list: List<MediaStoreData>,
+    destination: String,
+    overwriteDate: Boolean
+) {
     CoroutineScope(Dispatchers.IO).launch {
         val contentResolver = context.contentResolver
 
@@ -305,7 +311,8 @@ fun moveImageListToPath(context: Context, list: List<MediaStoreData>, destinatio
                 contentResolver.copyMedia(
                     context = context,
                     media = media,
-                    destination = destination
+                    destination = destination,
+                    overwriteDate = overwriteDate
                 )?.let {
                     contentResolver.delete(media.uri, null)
                 }
@@ -320,6 +327,7 @@ fun copyImageListToPath(
     context: Context,
     list: List<MediaStoreData>,
     destination: String,
+    overwriteDate: Boolean,
     overrideDisplayName: ((displayName: String) -> String)? = null
 ) {
     CoroutineScope(Dispatchers.IO).launch {
@@ -327,10 +335,12 @@ fun copyImageListToPath(
 
         async {
             list.forEach { media ->
+                Log.d(TAG, "Media modified date: ${media.dateModified}")
                 contentResolver.copyMedia(
                     context = context,
                     media = media,
                     destination = destination,
+                    overwriteDate = overwriteDate,
                     overrideDisplayName = if (overrideDisplayName != null) overrideDisplayName(media.displayName) else null
                 )
             }
@@ -525,7 +535,8 @@ suspend fun savePathListToBitmap(
                     id = 0L
                 ),
                 destination = original.absolutePath.replace(original.name, "").replace(baseInternalStorageDirectory, ""),
-                overrideDisplayName = displayName
+                overrideDisplayName = displayName,
+                overwriteDate = true
             )
 
             val contentValues = ContentValues().apply {

@@ -162,7 +162,7 @@ class SettingsAlbumsListImpl(
     }
 
     fun getSortByDescending() = context.datastore.data.map {
-        it[sortModeOrderKey] ?: true
+        it[sortModeOrderKey] != false
     }
 
     fun setAlbumsList(list: List<AlbumInfo>) = viewModelScope.launch {
@@ -172,7 +172,7 @@ class SettingsAlbumsListImpl(
     }
 
     fun getAutoDetect() = context.datastore.data.map {
-        it[autoDetectAlbums] ?: true
+        it[autoDetectAlbums] != false
     }
 
     fun setAutoDetect(value: Boolean) = viewModelScope.launch {
@@ -224,7 +224,7 @@ class SettingsVersionImpl(
 
     fun getShowUpdateNotice(): Flow<Boolean> =
         context.datastore.data.map {
-            it[showUpdateNotice] ?: true
+            it[showUpdateNotice] != false
         }
 
     fun setShowUpdateNotice(value: Boolean) = viewModelScope.launch {
@@ -235,7 +235,7 @@ class SettingsVersionImpl(
 
     fun getCheckUpdatesOnStartup(): Flow<Boolean> =
         context.datastore.data.map {
-            it[checkForUpdatesOnStartup] ?: false
+            it[checkForUpdatesOnStartup] == true
         }
 
     fun setCheckUpdatesOnStartup(value: Boolean) = viewModelScope.launch {
@@ -268,7 +268,7 @@ class SettingsDebuggingImpl(
 
     fun getRecordLogs(): Flow<Boolean> =
         context.datastore.data.map {
-            it[recordLogsKey] ?: true
+            it[recordLogsKey] != false
         }
 
     fun setRecordLogs(value: Boolean) = viewModelScope.launch {
@@ -284,10 +284,11 @@ class SettingsPermissionsImpl(
 ) {
     private val isMediaManagerKey = booleanPreferencesKey("is_media_manager")
     private val confirmToDelete = booleanPreferencesKey("confirm_to_delete")
+    private val overwriteDateOnMoveKey = booleanPreferencesKey("overwrite_data_on_move")
 
     fun getIsMediaManager(): Flow<Boolean> =
         context.datastore.data.map {
-            it[isMediaManagerKey] ?: false
+            it[isMediaManagerKey] == true
         }
 
     fun setIsMediaManager(value: Boolean) = viewModelScope.launch {
@@ -298,12 +299,23 @@ class SettingsPermissionsImpl(
 
     fun getConfirmToDelete(): Flow<Boolean> =
         context.datastore.data.map {
-            it[confirmToDelete] ?: true
+            it[confirmToDelete] != false
         }
 
     fun setConfirmToDelete(value: Boolean) = viewModelScope.launch {
         context.datastore.edit {
             it[confirmToDelete] = value
+        }
+    }
+
+    fun getOverwriteDateOnMove(): Flow<Boolean> =
+        context.datastore.data.map {
+            it[overwriteDateOnMoveKey] != false
+        }
+
+    fun setOverwriteDateOnMove(value: Boolean) = viewModelScope.launch {
+        context.datastore.edit {
+            it[overwriteDateOnMoveKey] = value
         }
     }
 }
@@ -346,7 +358,7 @@ class SettingsStorageImpl(
 
     fun getCacheThumbnails(): Flow<Boolean> =
         context.datastore.data.map {
-            it[cacheThumbnailsKey] ?: true
+            it[cacheThumbnailsKey] != false
         }
 
     fun setCacheThumbnails(value: Boolean) = viewModelScope.launch {
@@ -368,7 +380,7 @@ class SettingsVideoImpl(private val context: Context, private val viewModelScope
 
     fun getShouldAutoPlay(): Flow<Boolean> =
         context.datastore.data.map {
-            it[shouldAutoPlayKey] ?: true
+            it[shouldAutoPlayKey] != false
         }
 
     fun setShouldAutoPlay(value: Boolean) = viewModelScope.launch {
@@ -379,7 +391,7 @@ class SettingsVideoImpl(private val context: Context, private val viewModelScope
 
     fun getMuteOnStart(): Flow<Boolean> =
         context.datastore.data.map {
-            it[muteOnStartKey] ?: false
+            it[muteOnStartKey] == true
         }
 
     fun setMuteOnStart(value: Boolean) = viewModelScope.launch {
@@ -431,7 +443,7 @@ class SettingsEditingImpl(
 
     fun getOverwriteByDefault(): Flow<Boolean> =
         context.datastore.data.map {
-            it[overwriteByDefaultKey] ?: false
+            it[overwriteByDefaultKey] == true
         }
 
     fun setOverwriteByDefault(value: Boolean) = viewModelScope.launch {
@@ -442,7 +454,7 @@ class SettingsEditingImpl(
 
     fun getExitOnSave(): Flow<Boolean> =
         context.datastore.data.map {
-            it[exitOnSaveKey] ?: false
+            it[exitOnSaveKey] == true
         }
 
     fun setExitOnSave(value: Boolean) = viewModelScope.launch {
