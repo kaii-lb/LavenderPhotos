@@ -2546,8 +2546,9 @@ private fun Modifier.makeDrawCanvas(
                                         path = newPath.path
                                     } else {
                                         modifications.removeAll {
-                                            it as DrawablePath
-                                            it.path == path && it.paint == paint.value
+                                            if (it is DrawablePath) {
+                                                it.path == path && it.paint == paint.value
+                                            } else false
                                         }
                                     }
 
@@ -2635,8 +2636,9 @@ private fun Modifier.makeDrawCanvas(
                                         path = newPath.path
                                     } else {
                                         modifications.removeAll {
-                                            it as DrawableBlur
-                                            it.path == path && it.paint == paint.value
+                                            if (it is DrawableBlur) {
+                                                it.path == path && it.paint == paint.value
+                                            } else false
                                         }
                                     }
 
