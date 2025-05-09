@@ -131,7 +131,7 @@ fun SingleAlbumDialog(
                 modifier = Modifier
                     .fillMaxWidth(1f)
             ) {
-                val textWidth = maxWidth - 48.dp - 24.dp
+                val textWidth = this.maxWidth - 48.dp - 24.dp
 
                 IconButton(
                     onClick = {

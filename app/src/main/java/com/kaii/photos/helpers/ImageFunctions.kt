@@ -366,7 +366,7 @@ suspend fun savePathListToBitmap(
 
     val blurredImage =
         if (modifications.any { it is DrawableBlur } && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            image.asAndroidBitmap().blur(blurRadius = 20f)
+            image.asAndroidBitmap().blur(blurRadius = 32f)
         } else {
             null
         }

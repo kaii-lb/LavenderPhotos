@@ -117,6 +117,7 @@ import kotlin.math.roundToInt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
+import androidx.lifecycle.compose.currentStateAsState
 
 // special thanks to @bedirhansaricayir on github, helped with a LOT of performance stuff
 // https://github.com/bedirhansaricayir/Instagram-Reels-Jetpack-Compose/blob/master/app/src/main/java/com/reels/example/presentation/components/ExploreVideoPlayer.kt
@@ -929,7 +930,7 @@ fun rememberExoPlayerWithLifeCycle(
 
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    DisposableEffect(lifecycleOwner.lifecycle.currentState) {
+    DisposableEffect(lifecycleOwner.lifecycle.currentStateAsState().value) {
         val lifecycleObserver =
             getExoPlayerLifecycleObserver(exoPlayer, isPlaying, context as Activity, absolutePath)
 

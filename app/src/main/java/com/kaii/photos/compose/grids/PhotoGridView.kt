@@ -259,7 +259,7 @@ fun DeviceMedia(
         Box(
             modifier = Modifier
                 .fillMaxWidth(1f)
-                .height(maxHeight - spacerHeight)
+                .height(this.maxHeight - spacerHeight)
                 .align(Alignment.TopCenter)
         ) {
             val cacheThumbnails by mainViewModel.settings.Storage.getCacheThumbnails()

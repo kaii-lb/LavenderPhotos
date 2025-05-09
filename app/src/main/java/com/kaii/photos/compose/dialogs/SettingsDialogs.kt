@@ -177,8 +177,8 @@ fun AddTabDialog(
                     snapPosition = SnapPosition.Center
                 ),
                 contentPadding = PaddingValues(
-                    start = maxWidth / 2 - 56.dp / 2,
-                    end = maxWidth / 2 - 56.dp / 2
+                    start = this.maxWidth / 2 - 56.dp / 2,
+                    end = this.maxWidth / 2 - 56.dp / 2
                 ),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(

@@ -107,7 +107,7 @@ fun BottomAppBarItem(
         Text(
             text = text,
             fontSize = TextUnit(textSize, TextUnitType.Sp),
-            color = contentColor,
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier
                 .wrapContentSize()
                 .align(Alignment.BottomCenter)

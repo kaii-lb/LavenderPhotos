@@ -50,6 +50,7 @@ import com.kaii.lavender_snackbars.LavenderSnackbarEvents
 import com.kaii.photos.compose.dialogs.SelectableButtonListDialog
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.relativePath
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -206,6 +207,52 @@ fun DebuggingSettingsPage() {
 	               	)
 				}
         	}
+
+			item {
+				val isLoading = remember { mutableStateOf(false) }
+				val coroutineScope = rememberCoroutineScope()
+
+				PreferencesRow(
+					title = "Spawn Loading snackbar",
+					iconResID = R.drawable.progress_activity,
+					summary = "Debug lavender snackbars whenever compose decides to do something stupid",
+					position = RowPosition.Single,
+					showBackground = false
+				) {
+					isLoading.value = true
+
+					coroutineScope.launch {
+						LavenderSnackbarController.pushEvent(
+							LavenderSnackbarEvents.LoadingEvent(
+								message = "Debugging...",
+								isLoading = isLoading,
+								iconResId = R.drawable.logs
+							)
+						)
+
+						delay(5000)
+						isLoading.value = false
+					}
+				}
+
+				PreferencesRow(
+					title = "Spawn Message snackbar",
+					iconResID = R.drawable.progress_activity,
+					summary = "Like deprecate a feature and not add an equivalent :D3",
+					position = RowPosition.Single,
+					showBackground = false
+				) {
+					coroutineScope.launch {
+						LavenderSnackbarController.pushEvent(
+							LavenderSnackbarEvents.MessageEvent(
+								message = "Debugging...",
+								iconResId = R.drawable.logs,
+								duration = SnackbarDuration.Short
+							)
+						)
+					}
+				}
+			}
         }
 	}
 }
