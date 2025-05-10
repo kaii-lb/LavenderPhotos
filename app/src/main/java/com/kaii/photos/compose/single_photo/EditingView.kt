@@ -9,7 +9,6 @@ import android.graphics.RectF
 import android.net.Uri
 import android.os.Build
 import android.util.Log
-import android.view.ViewConfiguration
 import android.view.Window
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
@@ -27,15 +26,13 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.calculateRotation
-import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.gestures.snapping.SnapPosition
-import androidx.compose.foundation.gestures.waitForUpOrCancellation
+import androidx.compose.foundation.interaction.DragInteraction
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -72,6 +69,8 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -89,7 +88,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -116,7 +114,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.asAndroidBitmap
@@ -129,7 +126,6 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalConfiguration
@@ -173,6 +169,8 @@ import com.kaii.photos.compose.app_bars.BottomAppBarItem
 import com.kaii.photos.compose.app_bars.getAppBarContentTransition
 import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
+import com.kaii.photos.compose.rememberDeviceOrientation
+import com.kaii.photos.compose.single_photo.editing_view.SliderStates
 import com.kaii.photos.compose.single_photo.editing_view.makeDrawCanvas
 import com.kaii.photos.datastore.Editing
 import com.kaii.photos.helpers.ColorFiltersMatrices
@@ -284,6 +282,11 @@ fun EditingView(
     val colorMatrix = remember { mutableStateOf(ColorMatrix()) }
     val currentFilter = remember { mutableStateOf(ColorFiltersMatrices["None"]!!) }
 
+    val manualScale = remember { mutableFloatStateOf(0f) }
+    val manualOffset = remember { mutableStateOf(Offset.Zero) }
+
+    val selectedText: MutableState<DrawableText?> = remember { mutableStateOf(null) }
+
     Scaffold(
         topBar = {
             val exitOnSave by mainViewModel.settings.Editing.getExitOnSave()
@@ -359,6 +362,7 @@ fun EditingView(
                 currentFilter = currentFilter,
                 image = image,
                 window = window,
+                selectedText = selectedText,
                 resetCropping = {
                     rotationMultiplier.intValue = 0
                     image = originalImage.asImageBitmap()
@@ -511,9 +515,12 @@ fun EditingView(
                     .size(dpSize)
                     .align(Alignment.Center)
                     .graphicsLayer {
-                        scaleX = animatedSize
-                        scaleY = animatedSize
+                        scaleX = animatedSize + manualScale.floatValue
+                        scaleY = animatedSize + manualScale.floatValue
                         rotationZ = rotation
+
+                        translationX = manualOffset.value.x
+                        translationY = manualOffset.value.y
                     }
                     .clipToBounds()
                     .makeDrawCanvas(
@@ -522,7 +529,10 @@ fun EditingView(
                         paint = paint,
                         isDrawing = isDrawing,
                         changesSize = changesSize,
-                        rotationMultiplier = rotationMultiplier
+                        rotationMultiplier = rotationMultiplier,
+                        manualScale = manualScale,
+                        manualOffset = manualOffset,
+                        selectedText = selectedText
                     )
             ) {
                 drawImage(
@@ -1418,7 +1428,9 @@ fun EditingView(
                 modifications = modifications,
                 paint = paint,
                 changesSize = changesSize,
-                isDrawing = isDrawing
+                isDrawing = isDrawing,
+                selectedText = selectedText,
+                manualScale = manualScale
             )
         }
     }
@@ -1657,6 +1669,7 @@ private fun EditingViewBottomBar(
     currentFilter: MutableState<ColorMatrix>,
     image: ImageBitmap,
     window: Window,
+    selectedText: MutableState<DrawableText?>,
     resetCropping: () -> Unit
 ) {
     val localConfig = LocalConfiguration.current
@@ -1928,7 +1941,10 @@ private fun EditingViewBottomBar(
                             }
 
                             3 -> {
-                                DrawTools(paint)
+                                DrawTools(
+                                    paint = paint,
+                                    selectedText = selectedText
+                                )
                             }
                         }
                     }
@@ -2411,7 +2427,8 @@ fun FiltersTools(
 
 @Composable
 fun DrawTools(
-    paint: MutableState<ExtendedPaint>
+    paint: MutableState<ExtendedPaint>,
+    selectedText: MutableState<DrawableText?>
 ) {
     Row(
         modifier = Modifier
@@ -2428,6 +2445,7 @@ fun DrawTools(
                 strokeWidth = paint.value.strokeWidth,
                 color = paint.value.color
             )
+            selectedText.value = null
         }
 
         EditingViewBottomAppBarItem(
@@ -2439,6 +2457,7 @@ fun DrawTools(
                 strokeWidth = paint.value.strokeWidth,
                 color = paint.value.color
             )
+            selectedText.value = null
         }
 
         EditingViewBottomAppBarItem(
@@ -2450,6 +2469,7 @@ fun DrawTools(
                 strokeWidth = paint.value.strokeWidth,
                 color = paint.value.color
             )
+            selectedText.value = null
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -2460,8 +2480,9 @@ fun DrawTools(
             ) {
                 paint.value = DrawingPaints.Blur.copy(
                     strokeWidth = paint.value.strokeWidth,
-                    // color = paint.value.color
                 )
+
+                selectedText.value = null
             }
         }
     }
@@ -2498,6 +2519,7 @@ private fun BoxWithConstraintsScope.DrawActionsAndColors(
     paint: MutableState<ExtendedPaint>,
     changesSize: MutableIntState,
     landscapeMode: Boolean = false,
+    selectedText: MutableState<DrawableText?>
 ) {
     val neededWidth = if (landscapeMode) maxHeight else maxWidth
 
@@ -2606,7 +2628,7 @@ private fun BoxWithConstraintsScope.DrawActionsAndColors(
                 }
 
                 ColorIndicator(
-                    color = paint.value.color,
+                    color = if (selectedText.value == null) paint.value.color else selectedText.value!!.paint.color,
                     selected = false,
                     modifier = Modifier
                         .align(Alignment.CenterEnd)
@@ -2629,7 +2651,16 @@ private fun BoxWithConstraintsScope.DrawActionsAndColors(
                 selected = paint.value.color == DrawingColors.White
             ) {
                 showColorPalette = false
-                paint.value = paint.value.copy(color = DrawingColors.White)
+
+                if (selectedText.value != null) {
+                    modifications.remove(selectedText.value!!)
+                    selectedText.value =
+                        selectedText.value!!.copy(paint = selectedText.value!!.paint.copy(color = DrawingColors.White))
+                    modifications.add(selectedText.value!!)
+                }
+                else {
+                    paint.value = paint.value.copy(color = DrawingColors.White)
+                }
             }
 
             ColorIndicator(
@@ -2637,7 +2668,15 @@ private fun BoxWithConstraintsScope.DrawActionsAndColors(
                 selected = paint.value.color == DrawingColors.Black
             ) {
                 showColorPalette = false
-                paint.value = paint.value.copy(color = DrawingColors.Black)
+
+                if (selectedText.value != null) {
+                    modifications.remove(selectedText.value!!)
+                    selectedText.value =
+                        selectedText.value!!.copy(paint = selectedText.value!!.paint.copy(color = DrawingColors.Black))
+                    modifications.add(selectedText.value!!)
+                } else {
+                    paint.value = paint.value.copy(color = DrawingColors.Black)
+                }
             }
 
             ColorIndicator(
@@ -2645,7 +2684,15 @@ private fun BoxWithConstraintsScope.DrawActionsAndColors(
                 selected = paint.value.color == DrawingColors.Red
             ) {
                 showColorPalette = false
-                paint.value = paint.value.copy(color = DrawingColors.Red)
+
+                if (selectedText.value != null) {
+                    modifications.remove(selectedText.value!!)
+                    selectedText.value =
+                        selectedText.value!!.copy(paint = selectedText.value!!.paint.copy(color = DrawingColors.Red))
+                    modifications.add(selectedText.value!!)
+                } else {
+                    paint.value = paint.value.copy(color = DrawingColors.Red)
+                }
             }
 
             ColorIndicator(
@@ -2653,7 +2700,15 @@ private fun BoxWithConstraintsScope.DrawActionsAndColors(
                 selected = paint.value.color == DrawingColors.Yellow
             ) {
                 showColorPalette = false
-                paint.value = paint.value.copy(color = DrawingColors.Yellow)
+
+                if (selectedText.value != null) {
+                    modifications.remove(selectedText.value!!)
+                    selectedText.value =
+                        selectedText.value!!.copy(paint = selectedText.value!!.paint.copy(color = DrawingColors.Yellow))
+                    modifications.add(selectedText.value!!)
+                } else {
+                    paint.value = paint.value.copy(color = DrawingColors.Yellow)
+                }
             }
 
             ColorIndicator(
@@ -2661,7 +2716,15 @@ private fun BoxWithConstraintsScope.DrawActionsAndColors(
                 selected = paint.value.color == DrawingColors.Green
             ) {
                 showColorPalette = false
-                paint.value = paint.value.copy(color = DrawingColors.Green)
+
+                if (selectedText.value != null) {
+                    modifications.remove(selectedText.value!!)
+                    selectedText.value =
+                        selectedText.value!!.copy(paint = selectedText.value!!.paint.copy(color = DrawingColors.Green))
+                    modifications.add(selectedText.value!!)
+                } else {
+                    paint.value = paint.value.copy(color = DrawingColors.Green)
+                }
             }
 
             ColorIndicator(
@@ -2669,7 +2732,15 @@ private fun BoxWithConstraintsScope.DrawActionsAndColors(
                 selected = paint.value.color == DrawingColors.Blue
             ) {
                 showColorPalette = false
-                paint.value = paint.value.copy(color = DrawingColors.Blue)
+
+                if (selectedText.value != null) {
+                    modifications.remove(selectedText.value!!)
+                    selectedText.value =
+                        selectedText.value!!.copy(paint = selectedText.value!!.paint.copy(color = DrawingColors.Blue))
+                    modifications.add(selectedText.value!!)
+                } else {
+                    paint.value = paint.value.copy(color = DrawingColors.Blue)
+                }
             }
 
             ColorIndicator(
@@ -2677,7 +2748,15 @@ private fun BoxWithConstraintsScope.DrawActionsAndColors(
                 selected = paint.value.color == DrawingColors.Purple
             ) {
                 showColorPalette = false
-                paint.value = paint.value.copy(color = DrawingColors.Purple)
+
+                if (selectedText.value != null) {
+                    modifications.remove(selectedText.value!!)
+                    selectedText.value =
+                        selectedText.value!!.copy(paint = selectedText.value!!.paint.copy(color = DrawingColors.Purple))
+                    modifications.add(selectedText.value!!)
+                } else {
+                    paint.value = paint.value.copy(color = DrawingColors.Purple)
+                }
             }
         }
     }
@@ -2717,14 +2796,15 @@ fun BoxWithConstraintsScope.DrawingControls(
     isDrawing: MutableState<Boolean>,
     paint: MutableState<ExtendedPaint>,
     modifications: SnapshotStateList<Modification>,
-    changesSize: MutableIntState
+    changesSize: MutableIntState,
+    selectedText: MutableState<DrawableText?>,
+    manualScale: MutableFloatState
 ) {
-    val localConfig = LocalConfiguration.current
-    var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
+    val textMeasurer = rememberTextMeasurer()
+    val localTextStyle = LocalTextStyle.current
+    val defaultTextStyle = DrawableText.Styles.Default.style
 
-    LaunchedEffect(localConfig) {
-        isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
-    }
+    val isLandscape by rememberDeviceOrientation()
 
     var shouldShowDrawOptions by remember { mutableStateOf(false) }
     var lastPage by remember { mutableIntStateOf(pagerState.currentPage) }
@@ -2744,6 +2824,27 @@ fun BoxWithConstraintsScope.DrawingControls(
 
     val statusBarPadding = WindowInsets.safeContent.asPaddingValues()
         .calculateStartPadding(LocalLayoutDirection.current)
+
+    var sliderVal by remember { mutableFloatStateOf(paint.value.strokeWidth / 128f) }
+    var sliderState by remember { mutableStateOf(SliderStates.FontScaling) }
+    var isSliding by remember { mutableStateOf(false) }
+
+    LaunchedEffect(manualScale.floatValue, selectedText.value, isSliding) {
+        if (sliderState == SliderStates.Zooming) {
+            sliderVal = manualScale.floatValue
+            selectedText.value = null
+        }
+
+        if (selectedText.value != null && !isSliding) {
+            sliderState = SliderStates.SelectedTextScaling
+        }
+
+        if (selectedText.value == null && pagerState.currentPage != 2) {
+            sliderState = SliderStates.FontScaling
+            sliderVal = paint.value.strokeWidth / 128f
+        }
+    }
+
     AnimatedVisibility(
         visible = pagerState.currentPage == 3 && shouldShowDrawOptions,
         enter = slideInHorizontally { width -> -width } + fadeIn(),
@@ -2752,49 +2853,158 @@ fun BoxWithConstraintsScope.DrawingControls(
             .fillMaxHeight(1f)
             .padding(statusBarPadding, 16.dp),
     ) {
-        var slideVal by remember { mutableFloatStateOf(paint.value.strokeWidth / 128f) }
+        BoxWithConstraints {
+            Row(
+                modifier = Modifier
+                    .rotate(-90f)
+                    .wrapContentSize()
+                    .align(Alignment.Center)
+                    .offset(y = -this.maxWidth / 2 + 32.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                IconButton(
+                    onClick = {
+                        val currentIndex = SliderStates.entries.indexOf(sliderState)
+                        var nextIndex =
+                            if (currentIndex + 1 >= SliderStates.entries.size) 0 else currentIndex + 1
 
-        Slider(
-            value = slideVal,
-            onValueChange = { newVal ->
-                slideVal = newVal
-                paint.value = paint.value.copy(
-                    strokeWidth = newVal * 128f
-                )
-            },
-            steps = 16,
-            valueRange = 0f..1f,
-            thumb = {
-                Box(
+                        if (SliderStates.entries[nextIndex] == SliderStates.SelectedTextScaling
+                            && selectedText.value == null
+                        ) {
+                            nextIndex = 0
+                        }
+
+                        sliderState = SliderStates.entries[nextIndex]
+
+                        sliderVal = if (sliderState == SliderStates.FontScaling) {
+                            paint.value.strokeWidth / 128f
+                        } else if (sliderState == SliderStates.Zooming) {
+                            manualScale.floatValue
+                        } else {
+                            selectedText.value!!.paint.strokeWidth / 128f
+                        }
+                    },
+                    colors = IconButtonDefaults.iconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        contentColor = MaterialTheme.colorScheme.onSurface
+                    ),
                     modifier = Modifier
-                        .height(16.dp)
-                        .width(8.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary)
-                )
-            },
-            modifier = Modifier
-                .graphicsLayer {
-                    rotationZ = 270f
-                    translationX = 16.dp.toPx()
-                    transformOrigin = TransformOrigin(0f, 0f)
-                }
-                .layout { measurable, constraints ->
-                    val scale = if (isLandscape) 1.25f else 2f
-                    val placeable = measurable.measure(
-                        Constraints(
-                            minWidth = (constraints.minHeight / scale).toInt(),
-                            minHeight = constraints.minWidth,
-                            maxWidth = (constraints.maxHeight / scale).toInt(),
-                            maxHeight = constraints.maxWidth
-                        )
-                    )
+                        .size(32.dp)
+                        .rotate(90f)
+                ) {
+                    when (sliderState) {
+                        SliderStates.FontScaling -> {
+                            Icon(
+                                painter = painterResource(id = R.drawable.paintbrush_2),
+                                contentDescription = "Change paintbrush or text size",
+                                modifier = Modifier
+                                    .size(22.dp)
+                            )
+                        }
 
-                    layout(placeable.height, placeable.width) {
-                        placeable.place(-placeable.width, -placeable.height / 2)
+                        SliderStates.Zooming -> {
+                            Icon(
+                                painter = painterResource(id = R.drawable.zoom_in),
+                                contentDescription = "Zoom in instead of scaling font size",
+                                modifier = Modifier
+                                    .size(22.dp)
+                            )
+                        }
+
+                        SliderStates.SelectedTextScaling -> {
+                            Icon(
+                                painter = painterResource(id = R.drawable.text),
+                                contentDescription = "Change font size of selected text",
+                                modifier = Modifier
+                                    .size(20.dp)
+                            )
+                        }
                     }
                 }
-        )
+
+                Spacer(modifier = Modifier.width(4.dp))
+
+                val interactionSource = remember { MutableInteractionSource() }
+                LaunchedEffect(interactionSource.interactions) {
+                    interactionSource.interactions.collect {
+                        isSliding = it is DragInteraction.Start || it is PressInteraction.Press
+                    }
+                }
+
+                Slider(
+                    value = sliderVal,
+                    onValueChange = { newVal ->
+                        sliderVal = newVal
+
+                        when (sliderState) {
+                            SliderStates.FontScaling -> {
+                                paint.value = paint.value.copy(
+                                    strokeWidth = newVal * 128f
+                                )
+                            }
+
+                            SliderStates.Zooming -> {
+                                manualScale.floatValue = newVal
+                            }
+
+                            SliderStates.SelectedTextScaling -> {
+                                if (selectedText.value != null) {
+                                    modifications.remove(selectedText.value!!)
+
+                                    // move topLeft of textbox to the text's position
+                                    // basically de-centers the text so we can center it to that position with the new size
+                                    val oldPosition =
+                                        selectedText.value!!.position + (selectedText.value!!.size.toOffset() / 2f)
+
+                                    val textLayout = textMeasurer.measure(
+                                        text = selectedText.value!!.text,
+                                        style = localTextStyle.copy(
+                                            color = selectedText.value!!.paint.color,
+                                            fontSize = TextUnit(
+                                                sliderVal * 128f,
+                                                TextUnitType.Sp
+                                            ),
+                                            textAlign = defaultTextStyle.textAlign,
+                                            platformStyle = defaultTextStyle.platformStyle,
+                                            lineHeightStyle = defaultTextStyle.lineHeightStyle,
+                                            baselineShift = defaultTextStyle.baselineShift
+                                        )
+                                    )
+
+                                    val text = DrawableText(
+                                        text = selectedText.value!!.text,
+                                        position = oldPosition - (textLayout.size.toOffset() / 2f), // move from old topLeft to new center
+                                        paint = selectedText.value!!.paint.copy(
+                                            strokeWidth = sliderVal * 128f
+                                        ),
+                                        rotation = selectedText.value!!.rotation,
+                                        size = textLayout.size
+                                    )
+
+                                    modifications.add(text)
+                                    selectedText.value = text
+                                }
+                            }
+                        }
+                    },
+                    steps = 16,
+                    valueRange = 0f..1f,
+                    thumb = {
+                        Box(
+                            modifier = Modifier
+                                .height(16.dp)
+                                .width(8.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primary)
+                        )
+                    },
+                    interactionSource = interactionSource,
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                )
+            }
+        }
     }
 
     if (!isLandscape) {
@@ -2809,7 +3019,8 @@ fun BoxWithConstraintsScope.DrawingControls(
             DrawActionsAndColors(
                 modifications = modifications,
                 paint = paint,
-                changesSize = changesSize
+                changesSize = changesSize,
+                selectedText = selectedText
             )
         }
     } else {
@@ -2845,7 +3056,8 @@ fun BoxWithConstraintsScope.DrawingControls(
                 modifications = modifications,
                 paint = paint,
                 changesSize = changesSize,
-                landscapeMode = true
+                landscapeMode = true,
+                selectedText = selectedText
             )
         }
     }
