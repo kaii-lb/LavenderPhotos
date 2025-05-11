@@ -66,10 +66,12 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.center
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.round
 import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -286,67 +288,65 @@ fun AlbumsGridView(
                 .pointerInput(Unit) {
                     detectDragGestures(
                         onDragStart = { offset ->
-                            val selectedItemIndex = lazyGridState.getGridItemAtOffset(
-                                offset = offset,
-                                keys = albums.value,
-                                numberOfHorizontalItems = 1
-                            )
-
-                            selectedItemIndex?.let { selectedItem = albums.value[it] }
+                            lazyGridState.layoutInfo.visibleItemsInfo
+                                .find { item ->
+                                    IntRect(
+                                        offset = item.offset,
+                                        size = item.size
+                                    ).contains(offset.round())
+                                }?.let { item ->
+                                    selectedItem = albums.value[item.index - 1]
+                                } ?: run { selectedItem = null }
                         },
 
                         onDrag = { change, offset ->
                             change.consume()
                             itemOffset += offset
 
-                            val targetItemIndex = lazyGridState.getGridItemAtOffset(
-                                offset = change.position,
-                                keys = albums.value,
-                                numberOfHorizontalItems = 1
-                            )
+                            val targetItem = lazyGridState.layoutInfo.visibleItemsInfo
+                                .find { item ->
+                                    IntRect(
+                                        offset = item.offset,
+                                        size = item.size
+                                    ).contains(change.position.round())
+                                }
 
-                            if (targetItemIndex != null) {
-                                val targetItem = albums.value[targetItemIndex]
-                                val currentLazyItem =
-                                    lazyGridState.layoutInfo.visibleItemsInfo.find {
-                                        it.key == selectedItem
-                                    }
-                                val targetLazyItem =
-                                    lazyGridState.layoutInfo.visibleItemsInfo.find {
-                                        it.key == targetItem
-                                    }
+                            val currentLazyItem =
+                                lazyGridState.layoutInfo.visibleItemsInfo.find {
+                                    it.key == selectedItem?.id
+                                }
 
-                                if (currentLazyItem != null && targetLazyItem != null) {
-                                    val newList = albums.value.toMutableList()
-                                    newList.remove(selectedItem)
-                                    newList.add(targetItemIndex, selectedItem!!)
+                            if (targetItem != null && currentLazyItem != null) {
+                                val targetItemIndex = albums.value.indexOfFirst { it.id == targetItem.key }
+                                val newList = albums.value.toMutableList()
+                                newList.remove(selectedItem)
+                                newList.add(targetItemIndex, selectedItem!!)
 
-                                    itemOffset =
-                                        change.position - (targetLazyItem.offset + targetLazyItem.size.center).toOffset()
+                                itemOffset =
+                                    change.position - (targetItem.offset + targetItem.size.center).toOffset()
 
-                                    albums.value = newList.distinctBy { it.id }
-                                    if (sortMode != AlbumSortMode.Custom) mainViewModel.settings.AlbumsList.setAlbumSortMode(
-                                        AlbumSortMode.Custom
-                                    )
-                                } else if (currentLazyItem != null) {
-                                    val startOffset = currentLazyItem.offset.y + itemOffset.y
-                                    val endOffset =
-                                        currentLazyItem.offset.y + currentLazyItem.size.height + itemOffset.y
+                                albums.value = newList.distinctBy { it.id }
+                                if (sortMode != AlbumSortMode.Custom) mainViewModel.settings.AlbumsList.setAlbumSortMode(
+                                    AlbumSortMode.Custom
+                                )
+                            } else if (currentLazyItem != null) {
+                                val startOffset = currentLazyItem.offset.y + itemOffset.y
+                                val endOffset =
+                                    currentLazyItem.offset.y + currentLazyItem.size.height + itemOffset.y
 
-                                    val offsetToTop =
-                                        startOffset - lazyGridState.layoutInfo.viewportStartOffset
-                                    val offsetToBottom =
-                                        endOffset - lazyGridState.layoutInfo.viewportEndOffset
+                                val offsetToTop =
+                                    startOffset - lazyGridState.layoutInfo.viewportStartOffset
+                                val offsetToBottom =
+                                    endOffset - lazyGridState.layoutInfo.viewportEndOffset
 
-                                    val scroll = when {
-                                        offsetToTop < 0 -> offsetToTop.coerceAtMost(0f)
-                                        offsetToBottom > 0 -> offsetToBottom.coerceAtLeast(0f)
-                                        else -> 0f
-                                    }
+                                val scroll = when {
+                                    offsetToTop < 0 -> offsetToTop.coerceAtMost(0f)
+                                    offsetToBottom > 0 -> offsetToBottom.coerceAtLeast(0f)
+                                    else -> 0f
+                                }
 
-                                    if (scroll != 0f && (lazyGridState.canScrollBackward || lazyGridState.canScrollForward)) coroutineScope.launch {
-                                        lazyGridState.scrollBy(scroll)
-                                    }
+                                if (scroll != 0f && (lazyGridState.canScrollBackward || lazyGridState.canScrollForward)) coroutineScope.launch {
+                                    lazyGridState.scrollBy(scroll)
                                 }
                             }
                         },

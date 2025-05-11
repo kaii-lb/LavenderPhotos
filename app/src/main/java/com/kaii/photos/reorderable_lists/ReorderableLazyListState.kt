@@ -126,9 +126,9 @@ class ReorderableLazyListState(
 }
 
 @Composable
-fun rememberReorderableState(
+fun rememberReorderableListState(
     lazyListState: LazyListState,
-    onMove: (Int, Int) -> Unit
+    onMove: (fromIndex: Int, toIndex: Int) -> Unit
 ): ReorderableLazyListState {
     val scope = rememberCoroutineScope()
 

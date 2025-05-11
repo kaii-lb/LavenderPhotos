@@ -1,6 +1,5 @@
 package com.kaii.photos.compose.single_photo.editing_view
 
-import android.util.Log
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.gestures.detectTapGestures

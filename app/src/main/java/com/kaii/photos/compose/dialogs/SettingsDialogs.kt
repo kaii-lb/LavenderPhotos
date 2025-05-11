@@ -86,7 +86,7 @@ import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.createDirectoryPicker
 import com.kaii.photos.reorderable_lists.ReorderableItem
 import com.kaii.photos.reorderable_lists.ReorderableLazyList
-import com.kaii.photos.reorderable_lists.rememberReorderableState
+import com.kaii.photos.reorderable_lists.rememberReorderableListState
 import kotlinx.coroutines.launch
 
 @Composable
@@ -749,7 +749,7 @@ fun DefaultTabSelectorDialog(
 
         val listState = rememberLazyListState()
 
-        val reorderableState = rememberReorderableState(listState) { fromIndex, toIndex ->
+        val reorderableState = rememberReorderableListState(listState) { fromIndex, toIndex ->
             val newList = tabListDynamic.toMutableList()
             newList.add(toIndex, newList.removeAt(fromIndex))
 
