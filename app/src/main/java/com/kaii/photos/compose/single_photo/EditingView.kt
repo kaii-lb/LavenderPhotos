@@ -105,6 +105,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
@@ -623,6 +624,19 @@ fun EditingView(
                                         alpha = textPaint.alpha,
                                         blendMode = textPaint.blendMode
                                     )
+
+                                    if (selectedText.value == modification) {
+                                        drawRoundRect(
+                                            color = textPaint.color,
+                                            topLeft = textSize.toOffset().copy(y = 0f) * -0.05f,
+                                            cornerRadius = CornerRadius(16.dp.toPx() * textPaint.strokeWidth / 128f),
+                                            size = textSize.toSize() * 1.1f,
+                                            style = Stroke(
+                                                width = textPaint.strokeWidth / 2,
+                                                cap = StrokeCap.Round
+                                            )
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -2657,8 +2671,7 @@ private fun BoxWithConstraintsScope.DrawActionsAndColors(
                     selectedText.value =
                         selectedText.value!!.copy(paint = selectedText.value!!.paint.copy(color = DrawingColors.White))
                     modifications.add(selectedText.value!!)
-                }
-                else {
+                } else {
                     paint.value = paint.value.copy(color = DrawingColors.White)
                 }
             }
@@ -2835,13 +2848,18 @@ fun BoxWithConstraintsScope.DrawingControls(
             selectedText.value = null
         }
 
-        if (selectedText.value != null && !isSliding) {
+        if (!isSliding && selectedText.value != null) {
             sliderState = SliderStates.SelectedTextScaling
+        }
+
+        if (selectedText.value == null && sliderState == SliderStates.SelectedTextScaling) {
+            sliderState = SliderStates.FontScaling
         }
 
         if (paint.value.type != PaintType.Text && !isSliding && sliderState != SliderStates.Zooming) {
             sliderState = SliderStates.FontScaling
             sliderVal = paint.value.strokeWidth / 128f
+            selectedText.value = null
         }
     }
 
@@ -2876,6 +2894,9 @@ fun BoxWithConstraintsScope.DrawingControls(
                         }
 
                         sliderState = SliderStates.entries[nextIndex]
+
+                        if (sliderState != SliderStates.SelectedTextScaling) selectedText.value =
+                            null
 
                         sliderVal = if (sliderState == SliderStates.FontScaling) {
                             paint.value.strokeWidth / 128f

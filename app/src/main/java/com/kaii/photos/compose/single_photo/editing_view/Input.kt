@@ -330,7 +330,7 @@ fun Modifier.makeDrawCanvas(
                                 modifications.add(text)
                                 lastText = text
                             } else {
-                                selectedText.value = tappedOnText
+                                if (selectedText.value == tappedOnText) selectedText.value = null else selectedText.value = tappedOnText
                                 lastText = tappedOnText
                             }
                         } else {
