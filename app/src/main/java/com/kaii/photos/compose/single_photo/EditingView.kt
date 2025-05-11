@@ -2830,7 +2830,7 @@ fun BoxWithConstraintsScope.DrawingControls(
     var isSliding by remember { mutableStateOf(false) }
 
     LaunchedEffect(manualScale.floatValue, selectedText.value, isSliding) {
-        if (sliderState == SliderStates.Zooming) {
+        if (sliderState == SliderStates.Zooming && selectedText.value == null) {
             sliderVal = manualScale.floatValue
             selectedText.value = null
         }
@@ -2839,7 +2839,7 @@ fun BoxWithConstraintsScope.DrawingControls(
             sliderState = SliderStates.SelectedTextScaling
         }
 
-        if (selectedText.value == null && pagerState.currentPage != 2) {
+        if (paint.value.type != PaintType.Text && !isSliding && sliderState != SliderStates.Zooming) {
             sliderState = SliderStates.FontScaling
             sliderVal = paint.value.strokeWidth / 128f
         }
@@ -2957,12 +2957,14 @@ fun BoxWithConstraintsScope.DrawingControls(
                                     val oldPosition =
                                         selectedText.value!!.position + (selectedText.value!!.size.toOffset() / 2f)
 
+                                    val newFontSize = sliderVal.coerceAtLeast(0.05f) * 128f
+
                                     val textLayout = textMeasurer.measure(
                                         text = selectedText.value!!.text,
                                         style = localTextStyle.copy(
                                             color = selectedText.value!!.paint.color,
                                             fontSize = TextUnit(
-                                                sliderVal * 128f,
+                                                newFontSize,
                                                 TextUnitType.Sp
                                             ),
                                             textAlign = defaultTextStyle.textAlign,
@@ -2976,7 +2978,7 @@ fun BoxWithConstraintsScope.DrawingControls(
                                         text = selectedText.value!!.text,
                                         position = oldPosition - (textLayout.size.toOffset() / 2f), // move from old topLeft to new center
                                         paint = selectedText.value!!.paint.copy(
-                                            strokeWidth = sliderVal * 128f
+                                            strokeWidth = newFontSize
                                         ),
                                         rotation = selectedText.value!!.rotation,
                                         size = textLayout.size
