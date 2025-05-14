@@ -82,6 +82,7 @@ import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.getParentFromPath
 import com.kaii.photos.helpers.moveImageToLockedFolder
 import com.kaii.photos.helpers.rememberVibratorManager
+import com.kaii.photos.helpers.searchWithGoogleLens
 import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareImage
 import com.kaii.photos.helpers.toRelativePath
@@ -355,6 +356,24 @@ private fun TopBar(
                             .size(24.dp)
                             .padding(0.dp, 1.dp, 0.dp, 0.dp)
                     )
+                }
+
+                // Google Lens button - only show for images, not videos
+                if (mediaItem.type == MediaType.Image) {
+                    IconButton(
+                        onClick = {
+                            vibratorManager.vibrateShort()
+                            searchWithGoogleLens(mediaItem.uri, context)
+                        },
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.search),
+                            contentDescription = "search with Google Lens",
+                            tint = MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier
+                                .size(24.dp)
+                        )
+                    }
                 }
 
                 IconButton(
