@@ -111,6 +111,7 @@ fun BottomAppBarItem(
             modifier = Modifier
                 .wrapContentSize()
                 .align(Alignment.BottomCenter)
+                .background(Color.Transparent)
         )
     }
 }
@@ -124,7 +125,8 @@ fun getAppBarContentTransition(slideLeft: Boolean) = run {
         ) { width -> width } + fadeIn(
             animationSpec = tween(
                 durationMillis = 350
-            )
+            ),
+            initialAlpha = 0f
         )).togetherWith(
             slideOutHorizontally(
                 animationSpec = tween(
@@ -133,7 +135,8 @@ fun getAppBarContentTransition(slideLeft: Boolean) = run {
             ) { width -> -width } + fadeOut(
                 animationSpec = tween(
                     durationMillis = 350
-                )
+                ),
+                targetAlpha = 0f
             )
         )
     } else {
@@ -144,7 +147,8 @@ fun getAppBarContentTransition(slideLeft: Boolean) = run {
         ) { width -> -width } + fadeIn(
             animationSpec = tween(
                 durationMillis = 350
-            )
+            ),
+            initialAlpha = 0f
         )).togetherWith(
             slideOutHorizontally(
                 animationSpec = tween(
@@ -153,7 +157,8 @@ fun getAppBarContentTransition(slideLeft: Boolean) = run {
             ) { width -> width } + fadeOut(
                 animationSpec = tween(
                     durationMillis = 350
-                )
+                ),
+                targetAlpha = 0f
             )
         )
     }

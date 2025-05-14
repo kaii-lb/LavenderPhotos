@@ -23,6 +23,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -47,6 +48,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -868,6 +870,8 @@ class MainActivity : ComponentActivity() {
                     tabs = tabList
                 )
             },
+            containerColor = Color.Transparent,
+            contentColor = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier
                 .fillMaxSize(1f)
         ) { padding ->
@@ -891,8 +895,9 @@ class MainActivity : ComponentActivity() {
                         safeDrawingPadding.first,
                         padding.calculateTopPadding(),
                         safeDrawingPadding.second,
-                        padding.calculateBottomPadding()
+                        0.dp // Remove bottom padding to allow content to be visible behind the bottom bar
                     )
+                    .fillMaxSize()
             ) {
                 MainAppDialog(showDialog, currentView, selectedItemsList)
 
@@ -900,16 +905,17 @@ class MainActivity : ComponentActivity() {
                     targetState = currentView.value,
                     transitionSpec = {
                         if (targetState.index > initialState.index) {
-                            (slideInHorizontally { width -> width } + fadeIn()).togetherWith(
-                                slideOutHorizontally { width -> -width } + fadeOut())
+                            (slideInHorizontally { width -> width } + fadeIn(initialAlpha = 0f)).togetherWith(
+                                slideOutHorizontally { width -> -width } + fadeOut(targetAlpha = 0f))
                         } else {
-                            (slideInHorizontally { width -> -width } + fadeIn()).togetherWith(
-                                slideOutHorizontally { width -> width } + fadeOut())
+                            (slideInHorizontally { width -> -width } + fadeIn(initialAlpha = 0f)).togetherWith(
+                                slideOutHorizontally { width -> width } + fadeOut(targetAlpha = 0f))
                         }.using(
                             SizeTransform(clip = false)
                         )
                     },
-                    label = "MainAnimatedContentView"
+                    label = "MainAnimatedContentView",
+                    modifier = Modifier.background(Color.Transparent)
                 ) { stateValue ->
                     if (stateValue in tabList || stateValue == DefaultTabs.TabTypes.secure) {
                         when {
@@ -1035,7 +1041,8 @@ class MainActivity : ComponentActivity() {
             transitionSpec = {
                 getAppBarContentTransition(show)
             },
-            label = "MainBottomBarAnimatedContentView"
+            label = "MainBottomBarAnimatedContentView",
+            modifier = Modifier.background(Color.Transparent)
         ) { state ->
             if (!state) {
                 MainAppBottomBar(

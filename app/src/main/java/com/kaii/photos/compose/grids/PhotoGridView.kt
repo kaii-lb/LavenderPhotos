@@ -35,6 +35,7 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
@@ -59,6 +60,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -292,6 +294,7 @@ fun DeviceMedia(
                 userScrollEnabled = !isDragSelecting.value,
                 modifier = Modifier
                     .fillMaxSize(1f)
+                    .padding(horizontal = 12.dp)
                     .align(Alignment.TopCenter)
                     .dragSelectionHandler(
                         state = gridState,
@@ -733,8 +736,8 @@ fun MediaStoreItem(
         Box(
             modifier = Modifier
                 .aspectRatio(1f)
-                .padding(2.dp)
-                .clip(RoundedCornerShape(0.dp))
+                .padding(4.dp)
+                .clip(RoundedCornerShape(17.dp))
                 .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
                 .then(
                     if (selectedItemsList.isNotEmpty()) {
@@ -836,6 +839,99 @@ fun MediaStoreItem(
             )
         }
     }
+}
+
+@Preview
+@Composable
+fun PhotoGridPreview() {
+    val groupedMedia = remember { mutableStateOf(emptyList<MediaStoreData>()) }
+    val albumInfo = remember { AlbumInfo(id = 0, name = "Sample Album", paths = emptyList()) }
+    val selectedItemsList = remember { SnapshotStateList<MediaStoreData>() }
+    val viewProperties = remember { ViewProperties.Album }
+
+    PhotoGrid(
+        groupedMedia = groupedMedia,
+        albumInfo = albumInfo,
+        selectedItemsList = selectedItemsList,
+        viewProperties = viewProperties
+    )
+}
+
+@Preview
+@Composable
+fun PhotoGridWithItemsPreview() {
+    val sampleMedia = remember {
+        mutableStateOf(
+            listOf(
+                MediaStoreData(id = 1, displayName = "Image 1"),
+                MediaStoreData(id = 2, displayName = "Image 2"),
+                MediaStoreData(type = MediaType.Section, displayName = "Section 1"),
+                MediaStoreData(id = 3, displayName = "Image 3"),
+                MediaStoreData(id = 4, displayName = "Video 1", type = MediaType.Video),
+            )
+        )
+    }
+    val albumInfo = remember { AlbumInfo(id = 0, name = "Sample Album", paths = emptyList()) }
+    val selectedItemsList = remember { SnapshotStateList<MediaStoreData>() }
+    val viewProperties = remember { ViewProperties.Album }
+
+    PhotoGrid(
+        groupedMedia = sampleMedia,
+        albumInfo = albumInfo,
+        selectedItemsList = selectedItemsList,
+        viewProperties = viewProperties
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview
+@Composable
+fun DeviceMediaPreview() {
+    val sampleMedia = remember {
+        mutableStateOf(
+            listOf(
+                MediaStoreData(id = 1, displayName = "Image 1"),
+                MediaStoreData(id = 2, displayName = "Image 2"),
+                MediaStoreData(type = MediaType.Section, displayName = "Section 1"),
+                MediaStoreData(id = 3, displayName = "Image 3"),
+                MediaStoreData(id = 4, displayName = "Video 1", type = MediaType.Video),
+            )
+        )
+    }
+    val selectedItemsList = remember { SnapshotStateList<MediaStoreData>() }
+    val viewProperties = remember { ViewProperties.Album }
+    val albumInfo = remember { AlbumInfo(id = 0, name = "Sample Album", paths = emptyList()) }
+    val gridState = rememberLazyGridState()
+
+    DeviceMedia(
+        groupedMedia = sampleMedia,
+        selectedItemsList = selectedItemsList,
+        viewProperties = viewProperties,
+        shouldPadUp = false,
+        gridState = gridState,
+        albumInfo = albumInfo
+    )
+}
+
+@OptIn(ExperimentalGlideComposeApi::class, ExperimentalFoundationApi::class)
+@Preview
+@Composable
+fun MediaStoreItemPreview() {
+    val item = remember { MediaStoreData(id = 1, displayName = "Image 1") }
+    val groupedMedia = remember { mutableStateOf(emptyList<MediaStoreData>()) }
+    val selectedItemsList = remember { SnapshotStateList<MediaStoreData>() }
+    val viewProperties = remember { ViewProperties.Album }
+    val isDragSelecting = remember { mutableStateOf(false) }
+
+    MediaStoreItem(
+        item = item,
+        groupedMedia = groupedMedia,
+        viewProperties = viewProperties,
+        selectedItemsList = selectedItemsList,
+        thumbnailSettings = Pair(false, 0),
+        isDragSelecting = isDragSelecting,
+        onClick = {}
+    )
 }
 
 fun Modifier.dragSelectionHandler(
