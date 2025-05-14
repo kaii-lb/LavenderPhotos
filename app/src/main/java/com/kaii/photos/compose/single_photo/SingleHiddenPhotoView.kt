@@ -38,6 +38,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -53,6 +54,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -500,12 +503,30 @@ private fun BottomBar(
             )
         ) { width -> width } + fadeOut(),
     ) {
-
-        BottomAppBar(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-            contentColor = MaterialTheme.colorScheme.onBackground,
-            contentPadding = PaddingValues(0.dp),
-            actions = {
+        // Outer Box container with transparent background
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 16.dp)
+                .background(Color.Transparent),
+            contentAlignment = Alignment.Center
+        ) {
+            // Floating bottom bar container
+            Box(
+                modifier = Modifier
+                    .height(76.dp)
+                    .fillMaxWidth(0.95f)
+                    .shadow(
+                        elevation = 8.dp,
+                        shape = RoundedCornerShape(percent = 35),
+                        spotColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                    )
+                    .background(
+                        color = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp).copy(alpha = 0.9f),
+                        shape = RoundedCornerShape(percent = 35)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth(1f)
@@ -590,7 +611,7 @@ private fun BottomBar(
                     }
                 }
             }
-        )
+        }
     }
 }
 

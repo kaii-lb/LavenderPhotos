@@ -12,6 +12,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -19,10 +20,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.BottomAppBar
@@ -34,6 +38,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -47,6 +52,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -381,11 +387,6 @@ private fun BottomBar(
 ) {
     val isLandscape by rememberDeviceOrientation()
 
-    val color = if (isLandscape)
-        MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.4f)
-    else
-        MaterialTheme.colorScheme.surfaceContainer
-
     var showLoadingDialog by remember { mutableStateOf(false) }
 
     if (showLoadingDialog) {
@@ -408,11 +409,31 @@ private fun BottomBar(
         ) { width -> width } + fadeOut(),
     ) {
         val context = LocalContext.current
-        BottomAppBar(
-            containerColor = color,
-            contentColor = MaterialTheme.colorScheme.onBackground,
-            contentPadding = PaddingValues(0.dp),
-            actions = {
+
+        // Outer Box container with transparent background
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 16.dp)
+                .background(Color.Transparent),
+            contentAlignment = Alignment.Center
+        ) {
+            // Floating bottom bar container
+            Box(
+                modifier = Modifier
+                    .height(76.dp)
+                    .fillMaxWidth(0.95f)
+                    .shadow(
+                        elevation = 8.dp,
+                        shape = RoundedCornerShape(percent = 35),
+                        spotColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                    )
+                    .background(
+                        color = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp).copy(alpha = 0.9f),
+                        shape = RoundedCornerShape(percent = 35)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth(1f)
@@ -573,7 +594,7 @@ private fun BottomBar(
                     )
                 }
             }
-        )
+        }
     }
 }
 
