@@ -367,7 +367,7 @@ private fun TopBar(
                         },
                     ) {
                         Icon(
-                            painter = painterResource(id = R.drawable.search),
+                            painter = painterResource(id = R.drawable.lens),
                             contentDescription = "search with Google Lens",
                             tint = MaterialTheme.colorScheme.onBackground,
                             modifier = Modifier
