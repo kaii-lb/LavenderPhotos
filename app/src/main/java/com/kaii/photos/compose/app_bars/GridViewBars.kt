@@ -144,20 +144,18 @@ fun SingleAlbumViewTopBar(
                         )
                     }
 
-                    if (albumInfo?.isCustomAlbum == false) {
-                        IconButton(
-                            onClick = {
-                                showPathsDialog = true
-                            },
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.add),
-                                contentDescription = "show more options for the album view",
-                                tint = MaterialTheme.colorScheme.onBackground,
-                                modifier = Modifier
-                                    .size(24.dp)
-                            )
-                        }
+                    IconButton(
+                        onClick = {
+                            showPathsDialog = true
+                        },
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.add),
+                            contentDescription = "show more options for the album view",
+                            tint = MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier
+                                .size(24.dp)
+                        )
                     }
 
                     IconButton(

@@ -86,7 +86,8 @@ fun SingleAlbumView(
     albumInfo: AlbumInfo,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     currentView: MutableState<BottomBarTab>,
-    viewModel: CustomAlbumViewModel
+    customViewModel: CustomAlbumViewModel,
+    multiViewModel: MultiAlbumViewModel
 ) {
     val navController = LocalNavController.current
     val context = LocalContext.current
@@ -94,19 +95,20 @@ fun SingleAlbumView(
     BackHandler(
         enabled = selectedItemsList.isEmpty()
     ) {
-        viewModel.cancelMediaFlow()
+        customViewModel.cancelMediaFlow()
+        multiViewModel.cancelMediaFlow()
+
         navController.popBackStack()
     }
 
-    val mediaStoreData by viewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+    val customMediaStoreData by customViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+    val multiMediaStoreData by multiViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
-    val groupedMedia = remember { mutableStateOf(mediaStoreData) }
+    val groupedMedia = remember { mutableStateOf(customMediaStoreData + multiMediaStoreData) }
 
-    LaunchedEffect(mediaStoreData) {
-        groupedMedia.value = mediaStoreData
+    LaunchedEffect(customMediaStoreData, multiMediaStoreData) {
+        groupedMedia.value = (customMediaStoreData + multiMediaStoreData).distinct()
     }
-
-    println("SINGLE_ALBUM_VIEW ${groupedMedia.value}")
 
     SingleAlbumViewCommon(
         groupedMedia = groupedMedia,
@@ -115,8 +117,15 @@ fun SingleAlbumView(
         currentView = currentView,
         navController = navController
     ) {
-        if (viewModel.albumInfo != albumInfo) {
-            viewModel.reinitDataSource(
+        if (customViewModel.albumInfo != albumInfo) {
+            customViewModel.reinitDataSource(
+                context = context,
+                album = albumInfo
+            )
+        }
+
+        if (multiViewModel.albumInfo != albumInfo) {
+            multiViewModel.reinitDataSource(
                 context = context,
                 album = albumInfo
             )

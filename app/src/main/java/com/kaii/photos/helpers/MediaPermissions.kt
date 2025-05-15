@@ -58,6 +58,7 @@ fun GetPermissionAndRun(
         }
 
     val senderRequest = run {
+        Log.d(TAG, "URIS are $uris")
         val writeRequestIntent = MediaStore.createWriteRequest(
             context.contentResolver,
             uris
