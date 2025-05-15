@@ -309,7 +309,7 @@ fun MainAppSelectingBottomBar(
                     spotColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
                 )
                 .background(
-                    color = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp).copy(alpha = 0.9f),
+                    color = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp),
                     shape = RoundedCornerShape(percent = 30)
                 ),
             contentAlignment = Alignment.Center
