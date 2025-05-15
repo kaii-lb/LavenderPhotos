@@ -1,236 +1,199 @@
 package com.kaii.photos.helpers
 
-import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.util.Log
 import android.widget.Toast
 import androidx.core.content.FileProvider
 import java.io.File
 
+/**
+ * Helper class for Google Lens integration
+ */
 private const val TAG = "GoogleLensHelper"
-private const val GOOGLE_PACKAGE = "com.google.android.googlequicksearchbox"
-private const val GOOGLE_PHOTOS_PACKAGE = "com.google.android.apps.photos"
 
 /**
- * Helper function to launch Google Lens with the given image URI
+ * Launch Google Lens with the given image URI
  *
  * @param uri The URI of the image to search with Google Lens
  * @param context The context to use for launching the intent
  * @return True if Google Lens was launched successfully, false otherwise
  */
 fun searchWithGoogleLens(uri: Uri, context: Context): Boolean {
-    // Get the content URI using FileProvider
-    val contentUri = if (uri.scheme == "content") {
-        uri
-    } else {
+    Log.d(TAG, "Launching Google Lens with URI: $uri")
+
+    try {
+        // Get the content URI using FileProvider if needed
+        val contentUri = if (uri.scheme == "content") {
+            uri
+        } else {
+            try {
+                val file = File(uri.path ?: return false)
+                if (!file.exists()) {
+                    Log.e(TAG, "Image file does not exist: ${file.absolutePath}")
+                    Toast.makeText(context, "Image file not found", Toast.LENGTH_SHORT).show()
+                    return false
+                }
+
+                FileProvider.getUriForFile(
+                    context,
+                    "com.kaii.photos.LavenderPhotos.fileprovider",
+                    file
+                )
+            } catch (e: Exception) {
+                Log.e(TAG, "Error creating content URI: ${e.message}")
+                Toast.makeText(context, "Error preparing image for Google Lens", Toast.LENGTH_SHORT).show()
+                return false
+            }
+        }
+
+        Log.d(TAG, "Content URI: $contentUri")
+
+        // Try different approaches to launch Google Lens
+        var success = false
+
+        // Approach 1: Use Google Lens directly with ACTION_SEND
         try {
-            val file = File(uri.path ?: return false)
-            FileProvider.getUriForFile(
-                context,
-                "com.kaii.photos.LavenderPhotos.fileprovider",
-                file
-            )
+            val lensIntent = Intent(Intent.ACTION_SEND).apply {
+                type = "image/*"
+                putExtra(Intent.EXTRA_STREAM, contentUri)
+                setPackage("com.google.android.googlequicksearchbox")
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+
+            context.startActivity(lensIntent)
+            vibrateDevice(context) // Provide haptic feedback
+            Log.d(TAG, "Google Lens launched with ACTION_SEND")
+            success = true
         } catch (e: Exception) {
-            Log.e(TAG, "Error creating content URI: ${e.message}")
-            Toast.makeText(
-                context,
-                "Error preparing image for Google Lens",
-                Toast.LENGTH_SHORT
-            ).show()
+            Log.e(TAG, "Failed to launch Google Lens with ACTION_SEND: ${e.message}")
+        }
+
+        // Approach 2: Use Google Photos with ACTION_SEND
+        if (!success) {
+            try {
+                val photosIntent = Intent(Intent.ACTION_SEND).apply {
+                    type = "image/*"
+                    putExtra(Intent.EXTRA_STREAM, contentUri)
+                    setPackage("com.google.android.apps.photos")
+                    putExtra("lens", true) // Hint to open in Lens mode
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+
+                context.startActivity(photosIntent)
+                vibrateDevice(context) // Provide haptic feedback
+                Log.d(TAG, "Google Photos launched with ACTION_SEND")
+                success = true
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to launch Google Photos: ${e.message}")
+            }
+        }
+
+        // Approach 3: Use a chooser with ACTION_SEND
+        if (!success) {
+            try {
+                val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                    type = "image/*"
+                    putExtra(Intent.EXTRA_STREAM, contentUri)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+
+                val chooser = Intent.createChooser(sendIntent, "Search with Google Lens")
+                chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+                context.startActivity(chooser)
+                vibrateDevice(context) // Provide haptic feedback
+                Log.d(TAG, "Chooser launched with ACTION_SEND")
+                success = true
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to launch chooser: ${e.message}")
+            }
+        }
+
+        // Approach 4: Use Google app with ACTION_VIEW
+        if (!success) {
+            try {
+                val googleIntent = Intent(Intent.ACTION_VIEW).apply {
+                    setPackage("com.google.android.googlequicksearchbox")
+                    data = contentUri
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+
+                context.startActivity(googleIntent)
+                vibrateDevice(context) // Provide haptic feedback
+                Log.d(TAG, "Google app launched with ACTION_VIEW")
+                success = true
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to launch Google app with ACTION_VIEW: ${e.message}")
+            }
+        }
+
+        // Approach 5: Use web browser with lens.google.com
+        if (!success) {
+            try {
+                val webIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://lens.google.com")).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+
+                context.startActivity(webIntent)
+                vibrateDevice(context) // Provide haptic feedback
+
+                Toast.makeText(
+                    context,
+                    "Opening Google Lens website as fallback",
+                    Toast.LENGTH_SHORT
+                ).show()
+
+                Log.d(TAG, "Web Google Lens launched")
+                success = true
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to launch web Google Lens: ${e.message}")
+            }
+        }
+
+        // If all approaches failed
+        if (!success) {
+            Toast.makeText(context, "Google Lens is not available on this device", Toast.LENGTH_SHORT).show()
+            Log.e(TAG, "Google Lens not available - all approaches failed")
             return false
         }
-    }
 
-    // Multi-layered approach with fallbacks
-    return trySendToGoogleApp(context, contentUri) ||
-           trySendToGooglePhotos(context, contentUri) ||
-           tryShowChooser(context, contentUri) ||
-           tryViewWithGoogleApp(context, contentUri) ||
-           tryWebSearch(context)
-}
-
-/**
- * Primary Method: Direct integration with Google app using ACTION_SEND intent
- */
-private fun trySendToGoogleApp(context: Context, contentUri: Uri): Boolean {
-    if (!isPackageInstalled(context, GOOGLE_PACKAGE)) {
-        Log.d(TAG, "Google app not installed, skipping primary method")
+        return true
+    } catch (e: Exception) {
+        Log.e(TAG, "Error launching Google Lens", e)
+        Toast.makeText(context, "Error launching Google Lens", Toast.LENGTH_SHORT).show()
         return false
     }
-
-    return try {
-        val intent = Intent(Intent.ACTION_SEND).apply {
-            setPackage(GOOGLE_PACKAGE)
-            type = "image/*"
-            putExtra(Intent.EXTRA_STREAM, contentUri)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
-
-        // Check if the intent can be resolved
-        if (intent.resolveActivity(context.packageManager) != null) {
-            context.startActivity(intent)
-            Log.d(TAG, "Successfully launched Google app with ACTION_SEND")
-            return true
-        }
-
-        Log.d(TAG, "Google app doesn't support ACTION_SEND for images")
-        false
-    } catch (e: Exception) {
-        Log.e(TAG, "Error sending to Google app: ${e.message}")
-        false
-    }
 }
 
 /**
- * Fallback 1: Try to send the image to Google Photos
+ * Vibrates the device to provide haptic feedback
  */
-private fun trySendToGooglePhotos(context: Context, contentUri: Uri): Boolean {
-    if (!isPackageInstalled(context, GOOGLE_PHOTOS_PACKAGE)) {
-        Log.d(TAG, "Google Photos not installed, skipping fallback 1")
-        return false
-    }
-
-    return try {
-        val intent = Intent(Intent.ACTION_SEND).apply {
-            setPackage(GOOGLE_PHOTOS_PACKAGE)
-            type = "image/*"
-            putExtra(Intent.EXTRA_STREAM, contentUri)
-            putExtra("lens", true) // Hint to open in Lens mode
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
-
-        if (intent.resolveActivity(context.packageManager) != null) {
-            context.startActivity(intent)
-            Log.d(TAG, "Successfully launched Google Photos with ACTION_SEND")
-            return true
-        }
-
-        Log.d(TAG, "Google Photos doesn't support ACTION_SEND for images")
-        false
-    } catch (e: Exception) {
-        Log.e(TAG, "Error sending to Google Photos: ${e.message}")
-        false
-    }
-}
-
-/**
- * Fallback 2: Show a chooser dialog for the user to select an app
- */
-private fun tryShowChooser(context: Context, contentUri: Uri): Boolean {
-    return try {
-        val intent = Intent(Intent.ACTION_SEND).apply {
-            type = "image/*"
-            putExtra(Intent.EXTRA_STREAM, contentUri)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
-
-        val chooserIntent = Intent.createChooser(intent, "Search with Google Lens")
-
-        if (chooserIntent.resolveActivity(context.packageManager) != null) {
-            context.startActivity(chooserIntent)
-            Log.d(TAG, "Successfully showed chooser dialog")
-            return true
-        }
-
-        Log.d(TAG, "No apps available to handle ACTION_SEND for images")
-        false
-    } catch (e: Exception) {
-        Log.e(TAG, "Error showing chooser: ${e.message}")
-        false
-    }
-}
-
-/**
- * Fallback 3: Try to use ACTION_VIEW with the Google app
- */
-private fun tryViewWithGoogleApp(context: Context, contentUri: Uri): Boolean {
-    if (!isPackageInstalled(context, GOOGLE_PACKAGE)) {
-        Log.d(TAG, "Google app not installed, skipping fallback 3")
-        return false
-    }
-
-    // Try multiple known intents for Google Lens in the Google app
-    val intents = listOf(
-        // Method 1: Using specific action for Lens
-        Intent("com.google.android.apps.lens.SEARCH_BY_IMAGE").apply {
-            setPackage(GOOGLE_PACKAGE)
-            setDataAndType(contentUri, "image/*")
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        },
-
-        // Method 2: Using ACTION_VIEW with lens parameter
-        Intent(Intent.ACTION_VIEW).apply {
-            setPackage(GOOGLE_PACKAGE)
-            setDataAndType(contentUri, "image/*")
-            putExtra("lens", true)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
-    )
-
-    // Try each intent until one works
-    for (intent in intents) {
-        try {
-            if (intent.resolveActivity(context.packageManager) != null) {
-                context.startActivity(intent)
-                Log.d(TAG, "Successfully launched Google app with ACTION_VIEW")
-                return true
+private fun vibrateDevice(context: Context) {
+    try {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) { // Android 12+
+            val vibratorManager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+            val vibrator = vibratorManager.defaultVibrator
+            vibrator.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
+        } else {
+            @Suppress("DEPRECATION")
+            val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { // Android 8.0+
+                vibrator.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator.vibrate(50)
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error with Google app intent: ${e.message}")
-            // Continue to the next intent
         }
-    }
-
-    Log.d(TAG, "Google app doesn't support any of the ACTION_VIEW methods")
-    return false
-}
-
-/**
- * Fallback 4: Open the web version of Google Lens as a last resort
- */
-private fun tryWebSearch(context: Context): Boolean {
-    return try {
-        // Try to open Google Lens website
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://lens.google.com"))
-
-        if (intent.resolveActivity(context.packageManager) != null) {
-            context.startActivity(intent)
-
-            Toast.makeText(
-                context,
-                "Opening Google Lens website as fallback",
-                Toast.LENGTH_SHORT
-            ).show()
-
-            Log.d(TAG, "Successfully opened Google Lens website")
-            return true
-        }
-
-        Log.d(TAG, "No web browser available to open Google Lens website")
-        false
-    } catch (e: ActivityNotFoundException) {
-        // Show error message if even the web browser isn't available
-        Toast.makeText(
-            context,
-            "Google Lens is not available on this device",
-            Toast.LENGTH_SHORT
-        ).show()
-        Log.e(TAG, "Error opening web browser: ${e.message}")
-        false
-    }
-}
-
-/**
- * Check if a package is installed on the device
- */
-private fun isPackageInstalled(context: Context, packageName: String): Boolean {
-    return try {
-        context.packageManager.getPackageInfo(packageName, 0)
-        true
-    } catch (e: PackageManager.NameNotFoundException) {
-        false
+    } catch (e: Exception) {
+        Log.e(TAG, "Error vibrating device", e)
     }
 }
