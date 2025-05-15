@@ -26,7 +26,7 @@ private const val TAG = "GoogleLensHelper"
  */
 fun searchWithGoogleLens(uri: Uri, context: Context): Boolean {
     Log.d(TAG, "Launching Google Lens with URI: $uri")
-
+    
     try {
         // Get the content URI using FileProvider if needed
         val contentUri = if (uri.scheme == "content") {
@@ -39,7 +39,7 @@ fun searchWithGoogleLens(uri: Uri, context: Context): Boolean {
                     Toast.makeText(context, "Image file not found", Toast.LENGTH_SHORT).show()
                     return false
                 }
-
+                
                 FileProvider.getUriForFile(
                     context,
                     "com.kaii.photos.LavenderPhotos.fileprovider",
@@ -51,12 +51,12 @@ fun searchWithGoogleLens(uri: Uri, context: Context): Boolean {
                 return false
             }
         }
-
+        
         Log.d(TAG, "Content URI: $contentUri")
-
+        
         // Try different approaches to launch Google Lens
         var success = false
-
+        
         // Approach 1: Use Google Lens directly with ACTION_SEND
         try {
             val lensIntent = Intent(Intent.ACTION_SEND).apply {
@@ -66,7 +66,7 @@ fun searchWithGoogleLens(uri: Uri, context: Context): Boolean {
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
-
+            
             context.startActivity(lensIntent)
             vibrateDevice(context) // Provide haptic feedback
             Log.d(TAG, "Google Lens launched with ACTION_SEND")
@@ -74,7 +74,7 @@ fun searchWithGoogleLens(uri: Uri, context: Context): Boolean {
         } catch (e: Exception) {
             Log.e(TAG, "Failed to launch Google Lens with ACTION_SEND: ${e.message}")
         }
-
+        
         // Approach 2: Use Google Photos with ACTION_SEND
         if (!success) {
             try {
@@ -86,7 +86,7 @@ fun searchWithGoogleLens(uri: Uri, context: Context): Boolean {
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 }
-
+                
                 context.startActivity(photosIntent)
                 vibrateDevice(context) // Provide haptic feedback
                 Log.d(TAG, "Google Photos launched with ACTION_SEND")
@@ -95,7 +95,7 @@ fun searchWithGoogleLens(uri: Uri, context: Context): Boolean {
                 Log.e(TAG, "Failed to launch Google Photos: ${e.message}")
             }
         }
-
+        
         // Approach 3: Use a chooser with ACTION_SEND
         if (!success) {
             try {
@@ -104,10 +104,10 @@ fun searchWithGoogleLens(uri: Uri, context: Context): Boolean {
                     putExtra(Intent.EXTRA_STREAM, contentUri)
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
-
+                
                 val chooser = Intent.createChooser(sendIntent, "Search with Google Lens")
                 chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-
+                
                 context.startActivity(chooser)
                 vibrateDevice(context) // Provide haptic feedback
                 Log.d(TAG, "Chooser launched with ACTION_SEND")
@@ -116,7 +116,7 @@ fun searchWithGoogleLens(uri: Uri, context: Context): Boolean {
                 Log.e(TAG, "Failed to launch chooser: ${e.message}")
             }
         }
-
+        
         // Approach 4: Use Google app with ACTION_VIEW
         if (!success) {
             try {
@@ -126,7 +126,7 @@ fun searchWithGoogleLens(uri: Uri, context: Context): Boolean {
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 }
-
+                
                 context.startActivity(googleIntent)
                 vibrateDevice(context) // Provide haptic feedback
                 Log.d(TAG, "Google app launched with ACTION_VIEW")
@@ -135,30 +135,30 @@ fun searchWithGoogleLens(uri: Uri, context: Context): Boolean {
                 Log.e(TAG, "Failed to launch Google app with ACTION_VIEW: ${e.message}")
             }
         }
-
+        
         // Approach 5: Use web browser with lens.google.com
         if (!success) {
             try {
                 val webIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://lens.google.com")).apply {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 }
-
+                
                 context.startActivity(webIntent)
                 vibrateDevice(context) // Provide haptic feedback
-
+                
                 Toast.makeText(
                     context,
                     "Opening Google Lens website as fallback",
                     Toast.LENGTH_SHORT
                 ).show()
-
+                
                 Log.d(TAG, "Web Google Lens launched")
                 success = true
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to launch web Google Lens: ${e.message}")
             }
         }
-
+        
         // If all approaches failed
         if (!success) {
             Toast.makeText(context, "Google Lens is not available on this device", Toast.LENGTH_SHORT).show()
