@@ -82,6 +82,17 @@ fun SearchPage(
     val gridState = rememberLazyGridState()
     val navController = LocalNavController.current
 
+    // Observe grid view mode changes to update the UI immediately
+    val isGridView by mainViewModel.isGridViewMode.collectAsStateWithLifecycle(initialValue = true)
+
+    // React to grid view mode changes
+    LaunchedEffect(isGridView) {
+        val mediaItems = originalGroupedMedia.value.filter { it.type != MediaType.Section }
+        if (mediaItems.isNotEmpty()) {
+            groupedMedia.value = groupPhotosBy(mediaItems, MediaItemSortMode.DateTaken, isGridView)
+        }
+    }
+
     BackHandler(
         enabled = currentView.value == DefaultTabs.TabTypes.search && navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name
     ) {

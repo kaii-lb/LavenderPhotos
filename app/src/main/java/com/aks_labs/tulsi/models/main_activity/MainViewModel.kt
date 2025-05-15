@@ -14,6 +14,8 @@ import com.aks_labs.tulsi.datastore.PhotoGrid
 import com.aks_labs.tulsi.datastore.Settings
 import com.aks_labs.tulsi.helpers.Updater
 import com.aks_labs.tulsi.mediastore.MediaStoreData
+import com.aks_labs.tulsi.mediastore.MediaType
+import com.aks_labs.tulsi.models.multi_album.groupPhotosBy
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -49,7 +51,25 @@ class MainViewModel(context: Context) : ViewModel() {
     // Toggle grid view mode
     fun toggleGridViewMode() {
         val newMode = !_isGridViewMode.value
+
+        // Update the state immediately for UI responsiveness
         _isGridViewMode.value = newMode
+
+        // Also update the grouped media if available
+        _groupedMedia.value?.let { currentMedia ->
+            val filteredMedia = currentMedia.filter { it.type != MediaType.Section }
+            if (filteredMedia.isNotEmpty()) {
+                // Import needed for this to work
+                val regroupedMedia = com.aks_labs.tulsi.models.multi_album.groupPhotosBy(
+                    filteredMedia,
+                    com.aks_labs.tulsi.helpers.MediaItemSortMode.DateTaken,
+                    newMode
+                )
+                _groupedMedia.value = regroupedMedia
+            }
+        }
+
+        // Save the preference in the background
         viewModelScope.launch {
             settings.PhotoGrid.setGridViewMode(newMode)
         }
@@ -58,7 +78,25 @@ class MainViewModel(context: Context) : ViewModel() {
     // Set grid view mode
     fun setGridViewMode(isGridView: Boolean) {
         if (_isGridViewMode.value == isGridView) return
+
+        // Update the state immediately for UI responsiveness
         _isGridViewMode.value = isGridView
+
+        // Also update the grouped media if available
+        _groupedMedia.value?.let { currentMedia ->
+            val filteredMedia = currentMedia.filter { it.type != MediaType.Section }
+            if (filteredMedia.isNotEmpty()) {
+                // Import needed for this to work
+                val regroupedMedia = com.aks_labs.tulsi.models.multi_album.groupPhotosBy(
+                    filteredMedia,
+                    com.aks_labs.tulsi.helpers.MediaItemSortMode.DateTaken,
+                    isGridView
+                )
+                _groupedMedia.value = regroupedMedia
+            }
+        }
+
+        // Save the preference in the background
         viewModelScope.launch {
             settings.PhotoGrid.setGridViewMode(isGridView)
         }

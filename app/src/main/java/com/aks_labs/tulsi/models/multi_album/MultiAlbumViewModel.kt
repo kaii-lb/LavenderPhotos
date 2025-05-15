@@ -40,6 +40,9 @@ class MultiAlbumViewModel(
     private var isGridView = false
     private val mediaStoreDataSource = mutableStateOf(initDataSource(context, albumInfo, sortBy))
 
+    // Add a mutable state flow for direct media updates
+    private val _mediaFlow = mutableStateOf<List<MediaStoreData>>(emptyList())
+
     val mediaFlow by derivedStateOf {
         getMediaDataFlow().value.stateIn(
             viewModelScope,
@@ -100,6 +103,11 @@ class MultiAlbumViewModel(
 
     fun getGridViewMode(): Boolean {
         return isGridView
+    }
+
+    // Set grouped media directly for immediate UI updates
+    fun setGroupedMedia(media: List<MediaStoreData>) {
+        _mediaFlow.value = media
     }
 
     private fun initDataSource(

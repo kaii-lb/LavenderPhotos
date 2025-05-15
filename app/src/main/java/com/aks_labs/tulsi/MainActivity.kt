@@ -121,6 +121,8 @@ import com.aks_labs.tulsi.helpers.MultiScreenViewType
 import com.aks_labs.tulsi.helpers.Screens
 import com.aks_labs.tulsi.helpers.appStorageDir
 import com.aks_labs.tulsi.mediastore.MediaStoreData
+import com.aks_labs.tulsi.mediastore.MediaType
+import com.aks_labs.tulsi.models.multi_album.groupPhotosBy
 import com.aks_labs.tulsi.models.custom_album.CustomAlbumViewModel
 import com.aks_labs.tulsi.models.custom_album.CustomAlbumViewModelFactory
 import com.aks_labs.tulsi.models.main_activity.MainViewModel
@@ -304,6 +306,15 @@ class MainActivity : ComponentActivity() {
                 return@LaunchedEffect
             }
 
+            // First, update the grouped media immediately to reflect the new view mode
+            val currentMedia = multiAlbumViewModel.mediaFlow.value
+            val filteredMedia = currentMedia.filter { it.type != MediaType.Section }
+            if (filteredMedia.isNotEmpty()) {
+                val regroupedMedia = groupPhotosBy(filteredMedia, multiAlbumViewModel.sortBy, isGridView)
+                multiAlbumViewModel.setGroupedMedia(regroupedMedia)
+            }
+
+            // Then update the view mode in the view model (which will reload data in the background)
             multiAlbumViewModel.setGridViewMode(context, isGridView)
         }
 
