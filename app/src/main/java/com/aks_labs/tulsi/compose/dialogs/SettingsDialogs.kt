@@ -1,4 +1,4 @@
-package com.kaii.photos.compose.dialogs
+package com.aks_labs.tulsi.compose.dialogs
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
