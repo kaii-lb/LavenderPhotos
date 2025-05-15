@@ -44,20 +44,20 @@ fun searchWithGoogleLens(uri: Uri, context: Context): Boolean {
         }
     }
 
-    // Multi-layered approach with fallbacks
-    return trySendToGoogleApp(context, contentUri) ||
+    // Multi-layered approach with fallbacks - prioritizing the chooser dialog
+    return tryShowChooser(context, contentUri) ||
+           trySendToGoogleApp(context, contentUri) ||
            trySendToGooglePhotos(context, contentUri) ||
-           tryShowChooser(context, contentUri) ||
            tryViewWithGoogleApp(context, contentUri) ||
            tryWebSearch(context)
 }
 
 /**
- * Primary Method: Direct integration with Google app using ACTION_SEND intent
+ * Secondary Approach: Direct integration with Google app using ACTION_SEND intent
  */
 private fun trySendToGoogleApp(context: Context, contentUri: Uri): Boolean {
     if (!isPackageInstalled(context, GOOGLE_PACKAGE)) {
-        Log.d(TAG, "Google app not installed, skipping primary method")
+        Log.d(TAG, "Google app not installed, skipping secondary approach")
         return false
     }
 
@@ -85,11 +85,11 @@ private fun trySendToGoogleApp(context: Context, contentUri: Uri): Boolean {
 }
 
 /**
- * Fallback 1: Try to send the image to Google Photos
+ * Tertiary Approach: Try to send the image to Google Photos
  */
 private fun trySendToGooglePhotos(context: Context, contentUri: Uri): Boolean {
     if (!isPackageInstalled(context, GOOGLE_PHOTOS_PACKAGE)) {
-        Log.d(TAG, "Google Photos not installed, skipping fallback 1")
+        Log.d(TAG, "Google Photos not installed, skipping tertiary approach")
         return false
     }
 
@@ -117,38 +117,50 @@ private fun trySendToGooglePhotos(context: Context, contentUri: Uri): Boolean {
 }
 
 /**
- * Fallback 2: Show a chooser dialog for the user to select an app
+ * Primary Approach: Show a chooser dialog for the user to select an app
+ *
+ * This approach is more flexible and has a higher chance of success across different device configurations because:
+ * - It doesn't rely on a specific package being installed
+ * - It allows the user to choose from all compatible apps
+ * - It works even if Google Lens is integrated into a different app on the user's device
  */
 private fun tryShowChooser(context: Context, contentUri: Uri): Boolean {
     return try {
-        val intent = Intent(Intent.ACTION_SEND).apply {
+        // Create the base intent for sharing
+        val sendIntent = Intent(Intent.ACTION_SEND).apply {
             type = "image/*"
             putExtra(Intent.EXTRA_STREAM, contentUri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
 
-        val chooserIntent = Intent.createChooser(intent, "Search with Google Lens")
+        // Create a chooser with a custom title
+        val chooser = Intent.createChooser(sendIntent, "Search with Google Lens")
 
-        if (chooserIntent.resolveActivity(context.packageManager) != null) {
-            context.startActivity(chooserIntent)
-            Log.d(TAG, "Successfully showed chooser dialog")
+        // Add flags to ensure proper launching
+        chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+        // Check if there are apps that can handle this intent
+        if (chooser.resolveActivity(context.packageManager) != null) {
+            // Launch the chooser dialog
+            context.startActivity(chooser)
+            Log.d(TAG, "Successfully launched chooser with ACTION_SEND")
             return true
         }
 
         Log.d(TAG, "No apps available to handle ACTION_SEND for images")
         false
     } catch (e: Exception) {
-        Log.e(TAG, "Error showing chooser: ${e.message}")
+        Log.e(TAG, "Failed to launch chooser: ${e.message}")
         false
     }
 }
 
 /**
- * Fallback 3: Try to use ACTION_VIEW with the Google app
+ * Quaternary Approach: Try to use ACTION_VIEW with the Google app
  */
 private fun tryViewWithGoogleApp(context: Context, contentUri: Uri): Boolean {
     if (!isPackageInstalled(context, GOOGLE_PACKAGE)) {
-        Log.d(TAG, "Google app not installed, skipping fallback 3")
+        Log.d(TAG, "Google app not installed, skipping quaternary approach")
         return false
     }
 
@@ -189,7 +201,7 @@ private fun tryViewWithGoogleApp(context: Context, contentUri: Uri): Boolean {
 }
 
 /**
- * Fallback 4: Open the web version of Google Lens as a last resort
+ * Final Fallback: Open the web version of Google Lens as a last resort
  */
 private fun tryWebSearch(context: Context): Boolean {
     return try {
