@@ -395,6 +395,10 @@ fun SelectViewTopBarRightButtons(
             }
         }
 
+        val isSelectAllEnabled by remember { derivedStateOf {
+            groupedMedia.value?.size?.let { it < 5000 } == true
+        }}
+
         IconButton(
             onClick = {
                 if (groupedMedia.value != null) {
@@ -408,6 +412,7 @@ fun SelectViewTopBarRightButtons(
                     }
                 }
             },
+            enabled = isSelectAllEnabled, // arbitrary limit since android can't handle infinitely many uris
             modifier = Modifier
                 .clip(RoundedCornerShape(1000.dp))
                 .size(42.dp)
@@ -416,7 +421,19 @@ fun SelectViewTopBarRightButtons(
             Icon(
                 painter = painterResource(R.drawable.checklist),
                 contentDescription = "select all items",
-                tint = if (isTicked) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimaryContainer,
+                tint = when {
+                    isSelectAllEnabled && isTicked -> {
+                        MaterialTheme.colorScheme.onPrimary
+                    }
+
+                    isSelectAllEnabled -> {
+                        MaterialTheme.colorScheme.onPrimaryContainer
+                    }
+
+                    else -> {
+                        MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
+                    }
+                },
                 modifier = Modifier
                     .size(24.dp)
             )
