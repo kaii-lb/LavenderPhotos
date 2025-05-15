@@ -233,7 +233,7 @@ class MainActivity : ComponentActivity() {
         val navControllerLocal = rememberNavController()
 
         val defaultTab by mainViewModel.settings.DefaultTabs.getDefaultTab()
-            .collectAsStateWithLifecycle(initialValue = DefaultTabs.TabTypes.photos)
+            .collectAsStateWithLifecycle(initialValue = DefaultTabs.TabTypes.search)
         val currentView = rememberSaveable(
             inputs = arrayOf(defaultTab),
             stateSaver = BottomBarTabSaver
