@@ -482,6 +482,30 @@ class SettingMainPhotosViewImpl(
             list
         }
 
+    /**
+     * Returns a list of all available paths that can be added to albums
+     * This combines the current albums list with all albums detected on the device
+     */
+    fun getAvailablePaths(): Flow<List<String>> = channelFlow {
+        // First, get the current albums list
+        getAlbums().collectLatest { currentAlbums ->
+            val allPaths = currentAlbums.toMutableList()
+
+            // Then add all albums detected on the device
+            getAllAlbumsOnDevice().collectLatest { albumInfo ->
+                albumInfo.paths.forEach { path ->
+                    if (!allPaths.contains(path)) {
+                        allPaths.add(path)
+                    }
+                }
+                send(allPaths.distinct())
+            }
+
+            // Send at least the current albums
+            send(allPaths.distinct())
+        }
+    }
+
     fun addAlbum(relativePath: String) = viewModelScope.launch {
         context.datastore.edit {
             var list = it[mainPhotosAlbumsList] ?: defaultAlbumsList
