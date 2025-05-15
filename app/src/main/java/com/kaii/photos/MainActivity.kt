@@ -913,6 +913,7 @@ class MainActivity : ComponentActivity() {
                     label = "MainAnimatedContentView"
                 ) { stateValue ->
                     if (stateValue in tabList || stateValue == DefaultTabs.TabTypes.secure) {
+                        Log.d(TAG, "Tab needed is $stateValue")
                         when {
                             stateValue.isCustom -> {
                                 if (stateValue.albumPaths.toSet() != multiAlbumViewModel.albumInfo.paths.toSet()) {
