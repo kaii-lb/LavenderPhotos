@@ -175,7 +175,8 @@ fun SearchPage(
         LaunchedEffect(searchedForText.value, originalGroupedMedia.value) {
             println("ORIGINAL CHANGED REFRESHING")
             if (searchedForText.value == "") {
-                val isGridView by mainViewModel.isGridViewMode.collectAsStateWithLifecycle(initialValue = true)
+                // Get the current grid view mode from MainViewModel
+                val isGridView = mainViewModel.isGridViewMode.value
                 // Filter out section items and regroup with current grid view mode
                 val mediaItems = originalGroupedMedia.value.filter { it.type != MediaType.Section }
                 groupedMedia.value = if (mediaItems.isNotEmpty()) {
@@ -205,7 +206,8 @@ fun SearchPage(
                                             ?.let { date -> it.getDateTakenDay() == date } == true)
                     }
 
-                    val isGridView by mainViewModel.isGridViewMode.collectAsStateWithLifecycle(initialValue = true)
+                    // Get the current grid view mode from MainViewModel
+                    val isGridView = mainViewModel.isGridViewMode.value
                     groupedMedia.value = groupPhotosBy(local, MediaItemSortMode.DateTaken, isGridView)
                     hideLoadingSpinner = true
 
@@ -233,7 +235,8 @@ fun SearchPage(
                                     it.getDateTakenMonth() == calendar.timeInMillis / 1000
                         }
 
-                        val isGridView by mainViewModel.isGridViewMode.collectAsStateWithLifecycle(initialValue = true)
+                        // Get the current grid view mode from MainViewModel
+                        val isGridView = mainViewModel.isGridViewMode.value
                         groupedMedia.value = groupPhotosBy(local, MediaItemSortMode.DateTaken, isGridView)
                         hideLoadingSpinner = true
 
@@ -248,7 +251,8 @@ fun SearchPage(
                     isMedia && matchesFilter
                 }
 
-                val isGridView by mainViewModel.isGridViewMode.collectAsStateWithLifecycle(initialValue = true)
+                // Get the current grid view mode from MainViewModel
+                val isGridView = mainViewModel.isGridViewMode.value
                 groupedMedia.value = groupPhotosBy(groupedMediaLocal, MediaItemSortMode.DateTaken, isGridView)
                 hideLoadingSpinner = true
             }

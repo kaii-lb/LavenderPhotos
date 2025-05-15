@@ -10,6 +10,7 @@ import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aks_labs.tulsi.datastore.PhotoGrid
 import com.aks_labs.tulsi.datastore.Settings
 import com.aks_labs.tulsi.helpers.Updater
 import com.aks_labs.tulsi.mediastore.MediaStoreData
@@ -32,6 +33,10 @@ class MainViewModel(context: Context) : ViewModel() {
 
     val updater = Updater(context = context, coroutineScope = viewModelScope)
 
+    // Grid view mode state
+    private val _isGridViewMode = MutableStateFlow(true) // Default to grid view
+    val isGridViewMode = _isGridViewMode
+
     // Initialize grid view mode from preferences
     init {
         viewModelScope.launch {
@@ -40,10 +45,6 @@ class MainViewModel(context: Context) : ViewModel() {
             }
         }
     }
-
-    // Grid view mode state
-    private val _isGridViewMode = MutableStateFlow(true) // Default to grid view
-    val isGridViewMode: Flow<Boolean> = _isGridViewMode.asStateFlow()
 
     // Toggle grid view mode
     fun toggleGridViewMode() {
