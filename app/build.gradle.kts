@@ -9,11 +9,11 @@ plugins {
 }
 
 android {
-    namespace = "com.kaii.photos"
+    namespace = "com.aks_labs.tulsi"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.kaii.photos"
+        applicationId = "com.aks_labs.tulsi"
         minSdk = 30
         targetSdk = 35
         versionCode = 95

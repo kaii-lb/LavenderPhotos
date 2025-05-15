@@ -5,7 +5,7 @@ import android.os.Environment
 import java.io.File
 
 enum class AppDirectories(val path: String) {
-    MainDir("LavenderPhotos"),
+    MainDir("Tulsi"),
     SecureFolder("secure_folder"),
     RestoredFolder("Restored Files"),
     SecureVideoCacheDir("secure_video_cache_dir"),

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths xmlns:android="https://schemas.android.com/apk/res/android">
-    <external-path name="files" path="/Android/media/com.kaii.photos" />
+    <external-path name="files" path="/Android/media/com.aks_labs.tulsi" />
     <external-path name="external_files" path="." />
     <files-path name="secure" path="/secure_folder" />
     <cache-path name="cache" path="." />

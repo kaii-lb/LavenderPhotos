@@ -15,7 +15,7 @@ import androidx.core.net.toUri
 
 class LavenderContentProvider : ContentProvider() {
     companion object {
-        private const val AUTHORITY = "com.kaii.photos.content_provider"
+        private const val AUTHORITY = "com.aks_labs.tulsi.content_provider"
 
         private const val TABLE_NAME = "custom_albums"
         val CONTENT_URI: Uri = "content://$AUTHORITY/$TABLE_NAME".toUri()

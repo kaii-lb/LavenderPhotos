@@ -66,7 +66,7 @@ class Updater(
     	coroutineScope.launch(Dispatchers.IO) {
     		async {
     			onRefresh(CheckUpdateState.Checking)
-		        val url = "https://api.github.com/repos/kaii-lb/LavenderPhotos/releases/latest"
+		        val url = "https://api.github.com/repos/AKS-Labs/Tulsi/releases/latest"
 
 		        val body = try {
 		        	Fuel.get(url).responseJson().third.fold(
@@ -111,7 +111,7 @@ class Updater(
             return
         }
 
-        val url = "https://github.com/kaii-lb/LavenderPhotos/releases/download/${githubVersionName.value}/photos_signed_release.apk"
+        val url = "https://github.com/AKS-Labs/Tulsi/releases/download/${githubVersionName.value}/photos_signed_release.apk"
 
         try {
 			// TODO: switch to fuel-android for better usage

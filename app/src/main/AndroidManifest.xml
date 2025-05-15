@@ -68,7 +68,7 @@
             android:exported="true"
             android:theme="@style/Theme.Photos">
 
-            <intent-filter android:label="Open with Lavender Photos">
+            <intent-filter android:label="Open with Tulsi Photos">
                 <category android:name="android.intent.category.DEFAULT" />
 
                 <action android:name="android.intent.action.VIEW" />
@@ -82,7 +82,7 @@
 
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="com.kaii.photos.LavenderPhotos.fileprovider"
+            android:authorities="com.aks_labs.tulsi.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">
 
@@ -93,7 +93,7 @@
 
         <provider
             android:name=".mediastore.content_provider.LavenderContentProvider"
-            android:authorities="com.kaii.photos.content_provider"
+            android:authorities="com.aks_labs.tulsi.content_provider"
             android:enabled="true"
             android:exported="false" />
     </application>
