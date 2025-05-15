@@ -428,15 +428,15 @@ class MainActivity : ComponentActivity() {
 
                         val screen: Screens.SingleAlbumView = it.toRoute()
 
-                        if (!screen.albumInfo.isCustomAlbum) {
-                            if (screen.albumInfo != multiAlbumViewModel.albumInfo) {
-                                multiAlbumViewModel.reinitDataSource(
-                                    context = context,
-                                    album = screen.albumInfo,
-                                    sortMode = multiAlbumViewModel.sortBy
-                                )
-                            }
+                        if (screen.albumInfo != multiAlbumViewModel.albumInfo) {
+                            multiAlbumViewModel.reinitDataSource(
+                                context = context,
+                                album = screen.albumInfo,
+                                sortMode = multiAlbumViewModel.sortBy
+                            )
+                        }
 
+                        if (!screen.albumInfo.isCustomAlbum) {
                             SingleAlbumView(
                                 albumInfo = screen.albumInfo,
                                 selectedItemsList = selectedItemsList,
@@ -456,7 +456,8 @@ class MainActivity : ComponentActivity() {
                                 albumInfo = screen.albumInfo,
                                 selectedItemsList = selectedItemsList,
                                 currentView = currentView,
-                                viewModel = customAlbumViewModel
+                                customViewModel = customAlbumViewModel,
+                                multiViewModel = multiAlbumViewModel
                             )
                         }
                     }
