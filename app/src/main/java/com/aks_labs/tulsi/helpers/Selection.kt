@@ -16,6 +16,16 @@ fun SnapshotStateList<MediaStoreData>.unselectItem(
 	item: MediaStoreData,
 	groupedMedia: List<MediaStoreData>
 ) {
+	// Check if we're in grid view mode (all items in a single section with date=0L)
+	val isGridViewMode = item.section.date == 0L && groupedMedia.none { it.type == MediaType.Section }
+
+	if (isGridViewMode) {
+		// In grid view mode, just remove the item without section handling
+		remove(item)
+		return
+	}
+
+	// Date-grouped view mode logic
 	// not necessary to check if not the same as section size
 	// cuz were removing an item, it will never be
 	groupedMedia.firstOrNull {
@@ -31,14 +41,24 @@ fun SnapshotStateList<MediaStoreData>.selectItem(
 	item: MediaStoreData,
 	groupedMedia: List<MediaStoreData>
 ) {
+	// Check if we're in grid view mode (all items in a single section with date=0L)
+	val isGridViewMode = item.section.date == 0L && groupedMedia.none { it.type == MediaType.Section }
+
+	if (isGridViewMode) {
+		// In grid view mode, just add the item without section handling
+		if (!contains(item)) add(item)
+		return
+	}
+
+	// Date-grouped view mode logic
 	val alreadySelected = filter {
 		it.section == item.section && it.type != MediaType.Section
 	}
 
 	if (alreadySelected.size == item.section.childCount - 1) {
-		groupedMedia.first {
+		groupedMedia.firstOrNull {
 			it.section == item.section && it.type == MediaType.Section
-		}.let {
+		}?.let {
 			add(it)
 		}
 	}
@@ -50,6 +70,18 @@ fun SnapshotStateList<MediaStoreData>.selectAll(
 	items: List<MediaStoreData>,
 	groupedMedia: List<MediaStoreData>
 ) {
+	// Check if we're in grid view mode (all items in a single section with date=0L)
+	val isGridViewMode = items.isNotEmpty() && items.first().section.date == 0L &&
+		groupedMedia.none { it.type == MediaType.Section }
+
+	if (isGridViewMode) {
+		// In grid view mode, just add all items without section handling
+		val itemsToAdd = items.filter { !contains(it) }
+		addAll(itemsToAdd)
+		return
+	}
+
+	// Date-grouped view mode logic
 	val grouped = items.groupBy {
 		it.section
 	}
@@ -58,11 +90,11 @@ fun SnapshotStateList<MediaStoreData>.selectAll(
 		val sectionItems = grouped[key]
 
 		if (sectionItems?.size == key.childCount) {
-			val section = groupedMedia.first {
+			groupedMedia.firstOrNull {
 				it.type == MediaType.Section && it.section == key
+			}?.let {
+				add(it)
 			}
-
-			add(section)
 		}
 
 		sectionItems?.let {
@@ -76,6 +108,17 @@ fun SnapshotStateList<MediaStoreData>.unselectAll(
 	items: List<MediaStoreData>,
 	groupedMedia: List<MediaStoreData>
 ) {
+	// Check if we're in grid view mode (all items in a single section with date=0L)
+	val isGridViewMode = items.isNotEmpty() && items.first().section.date == 0L &&
+		groupedMedia.none { it.type == MediaType.Section }
+
+	if (isGridViewMode) {
+		// In grid view mode, just remove all items without section handling
+		removeAll(items.toSet())
+		return
+	}
+
+	// Date-grouped view mode logic
 	val grouped = items.groupBy {
 		it.section
 	}
@@ -83,11 +126,11 @@ fun SnapshotStateList<MediaStoreData>.unselectAll(
 	grouped.keys.forEach { key ->
 		val sectionItems = grouped[key]
 
-		val section = groupedMedia.first {
+		groupedMedia.firstOrNull {
 			it.type == MediaType.Section && it.section == key
+		}?.let {
+			remove(it)
 		}
-
-		remove(section)
 
 		sectionItems?.let {
 			removeAll(it.toSet())
@@ -99,21 +142,46 @@ fun SnapshotStateList<MediaStoreData>.selectSection(
 	section: SectionItem,
 	groupedMedia: List<MediaStoreData>
 ) {
+	// Check if we're in grid view mode (all items in a single section with date=0L)
+	val isGridViewMode = section.date == 0L && groupedMedia.none { it.type == MediaType.Section }
+
+	if (isGridViewMode) {
+		// In grid view mode, this shouldn't be called, but just in case
+		val mediaItems = groupedMedia.filter { it.type != MediaType.Section }
+		addAll(mediaItems.filter { !contains(it) })
+		return
+	}
+
+	// Date-grouped view mode logic
 	val media = groupedMedia.filter {
 		it.section == section
 	}
 
-	removeAll(media.toSet())
-	addAll(media)
+	if (media.isNotEmpty()) {
+		removeAll(media.toSet())
+		addAll(media)
+	}
 }
 
 fun SnapshotStateList<MediaStoreData>.unselectSection(
 	section: SectionItem,
 	groupedMedia: List<MediaStoreData>
 ) {
+	// Check if we're in grid view mode (all items in a single section with date=0L)
+	val isGridViewMode = section.date == 0L && groupedMedia.none { it.type == MediaType.Section }
+
+	if (isGridViewMode) {
+		// In grid view mode, this shouldn't be called, but just in case
+		clear()
+		return
+	}
+
+	// Date-grouped view mode logic
 	val media = groupedMedia.filter {
 		it.section == section
 	}
 
-	removeAll(media.toSet())
+	if (media.isNotEmpty()) {
+		removeAll(media.toSet())
+	}
 }
