@@ -263,6 +263,8 @@ class MainActivity : ComponentActivity() {
             .collectAsStateWithLifecycle(initialValue = emptyList())
         val currentSortMode by mainViewModel.settings.PhotoGrid.getSortMode()
             .collectAsStateWithLifecycle(initialValue = MediaItemSortMode.DateTaken)
+        val isGridView by mainViewModel.isGridViewMode
+            .collectAsStateWithLifecycle(initialValue = true)
 
         val multiAlbumViewModel: MultiAlbumViewModel = viewModel(
             factory = MultiAlbumViewModelFactory(
@@ -291,8 +293,18 @@ class MainActivity : ComponentActivity() {
             multiAlbumViewModel.reinitDataSource(
                 context = context,
                 album = AlbumInfo.createPathOnlyAlbum(albumsList),
-                sortMode = currentSortMode
+                sortMode = currentSortMode,
+                gridView = isGridView
             )
+        }
+
+        // update grid view mode when it changes
+        LaunchedEffect(isGridView) {
+            if (navControllerLocal.currentBackStackEntry?.destination?.route != MultiScreenViewType.MainScreen.name) {
+                return@LaunchedEffect
+            }
+
+            multiAlbumViewModel.setGridViewMode(context, isGridView)
         }
 
         LaunchedEffect(currentSortMode) {

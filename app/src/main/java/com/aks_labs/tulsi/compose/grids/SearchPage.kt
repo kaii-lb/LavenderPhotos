@@ -175,7 +175,14 @@ fun SearchPage(
         LaunchedEffect(searchedForText.value, originalGroupedMedia.value) {
             println("ORIGINAL CHANGED REFRESHING")
             if (searchedForText.value == "") {
-                groupedMedia.value = originalGroupedMedia.value
+                val isGridView by mainViewModel.isGridViewMode.collectAsStateWithLifecycle(initialValue = true)
+                // Filter out section items and regroup with current grid view mode
+                val mediaItems = originalGroupedMedia.value.filter { it.type != MediaType.Section }
+                groupedMedia.value = if (mediaItems.isNotEmpty()) {
+                    groupPhotosBy(mediaItems, MediaItemSortMode.DateTaken, isGridView)
+                } else {
+                    originalGroupedMedia.value
+                }
                 hideLoadingSpinner = true
                 return@LaunchedEffect
             }
@@ -198,7 +205,8 @@ fun SearchPage(
                                             ?.let { date -> it.getDateTakenDay() == date } == true)
                     }
 
-                    groupedMedia.value = groupPhotosBy(local, MediaItemSortMode.DateTaken)
+                    val isGridView by mainViewModel.isGridViewMode.collectAsStateWithLifecycle(initialValue = true)
+                    groupedMedia.value = groupPhotosBy(local, MediaItemSortMode.DateTaken, isGridView)
                     hideLoadingSpinner = true
 
                     return@launch
@@ -225,7 +233,8 @@ fun SearchPage(
                                     it.getDateTakenMonth() == calendar.timeInMillis / 1000
                         }
 
-                        groupedMedia.value = groupPhotosBy(local, MediaItemSortMode.DateTaken)
+                        val isGridView by mainViewModel.isGridViewMode.collectAsStateWithLifecycle(initialValue = true)
+                        groupedMedia.value = groupPhotosBy(local, MediaItemSortMode.DateTaken, isGridView)
                         hideLoadingSpinner = true
 
                         return@launch
@@ -239,7 +248,8 @@ fun SearchPage(
                     isMedia && matchesFilter
                 }
 
-                groupedMedia.value = groupPhotosBy(groupedMediaLocal, MediaItemSortMode.DateTaken)
+                val isGridView by mainViewModel.isGridViewMode.collectAsStateWithLifecycle(initialValue = true)
+                groupedMedia.value = groupPhotosBy(groupedMediaLocal, MediaItemSortMode.DateTaken, isGridView)
                 hideLoadingSpinner = true
             }
         }

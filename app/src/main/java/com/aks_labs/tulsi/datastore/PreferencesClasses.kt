@@ -638,6 +638,7 @@ class SettingsPhotoGridImpl(
     private val viewModelScope: CoroutineScope
 ) {
     private val mediaSortModeKey = stringPreferencesKey("media_sort_mode")
+    private val gridViewModeKey = booleanPreferencesKey("grid_view_mode")
 
     fun getSortMode() = context.datastore.data.map {
         val name = it[mediaSortModeKey] ?: MediaItemSortMode.DateTaken.name
@@ -651,6 +652,18 @@ class SettingsPhotoGridImpl(
     fun setSortMode(mode: MediaItemSortMode) = viewModelScope.launch {
         context.datastore.edit {
             it[mediaSortModeKey] = mode.name
+        }
+    }
+
+    // Get the current view mode (true = grid view, false = date-grouped view)
+    fun getGridViewMode() = context.datastore.data.map {
+        it[gridViewModeKey] ?: true // Default to grid view
+    }
+
+    // Set the view mode (true = grid view, false = date-grouped view)
+    fun setGridViewMode(isGridView: Boolean) = viewModelScope.launch {
+        context.datastore.edit {
+            it[gridViewModeKey] = isGridView
         }
     }
 }
