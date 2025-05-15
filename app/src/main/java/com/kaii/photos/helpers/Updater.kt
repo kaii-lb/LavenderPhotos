@@ -49,7 +49,10 @@ class Updater(
     }
 
     /** check for updates and return whether there is one */
-    val hasUpdates = derivedStateOf { githubVersionCode.value > currentVersionCode }
+    val hasUpdates = derivedStateOf {
+        Log.d(TAG, "Current version: $currentVersionCode Github available version: ${githubVersionCode.value}")
+        githubVersionCode.value > currentVersionCode
+    }
 
     init {
         updateFile.parentFile
@@ -75,7 +78,7 @@ class Updater(
                         },
 
                         failure = { error ->
-                            Log.e(TAG, error.toString())
+                            Log.e(TAG, error.message.toString())
                             error.printStackTrace()
 
                             onRefresh(CheckUpdateState.Failed)
