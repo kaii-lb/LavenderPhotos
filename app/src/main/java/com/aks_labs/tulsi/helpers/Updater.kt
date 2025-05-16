@@ -171,3 +171,5 @@ enum class CheckUpdateState {
 	Failed,
 	Succeeded
 }
+
+

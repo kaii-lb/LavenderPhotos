@@ -868,7 +868,7 @@ private fun BottomBar(
                                 val extension = mimeType.split("/")[1]
                                 val currentTime = System.currentTimeMillis()
                                 val date = formatDate(currentTime / 1000, MediaItemSortMode.DateTaken)
-                                val name = "Lavender Photos edited file at $date.$extension"
+                                val name = "Tulsi Photos edited file at $date.$extension"
                                 val destination = File(Environment.DIRECTORY_PICTURES, name) // TODO: maybe move into subdir?
 
                                 val contentValues = ContentValues().apply {
@@ -915,3 +915,5 @@ private fun BottomBar(
         )
     }
 }
+
+

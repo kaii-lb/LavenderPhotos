@@ -1,4 +1,4 @@
-package com.kaii.photos
+package com.aks_labs.tulsi
 
 import org.junit.Test
 

@@ -9,3 +9,4 @@ sealed class LavenderSnackbarEvents {
         val duration: SnackbarDuration = SnackbarDuration.Short
     ) : LavenderSnackbarEvents()
 }
+

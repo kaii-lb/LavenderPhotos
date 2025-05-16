@@ -11,3 +11,4 @@ object LavenderSnackbarController {
         _events.emit(event)
     }
 }
+

@@ -130,7 +130,7 @@ fun SingleAlbumViewTopBar(
                     if (showPathsDialog && albumInfo != null) {
                         AlbumPathsDialog(
                             albumInfo = albumInfo,
-                            onConfirm = { selectedPaths ->
+                            onConfirm = { selectedPaths: List<String> ->
                                 mainViewModel.settings.AlbumsList.editInAlbumsList(
                                     albumInfo = albumInfo,
                                     newInfo = albumInfo.copy(
@@ -1001,3 +1001,4 @@ fun FavouritesViewBottomAppBar(
         )
     }
 }
+

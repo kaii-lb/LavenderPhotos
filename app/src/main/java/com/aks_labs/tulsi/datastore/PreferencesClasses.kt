@@ -484,26 +484,28 @@ class SettingMainPhotosViewImpl(
 
     /**
      * Returns a list of all available paths that can be added to albums
-     * This combines the current albums list with all albums detected on the device
+     * This combines the current albums list with some default paths
      */
-    fun getAvailablePaths(): Flow<List<String>> = channelFlow {
-        // First, get the current albums list
-        getAlbums().collectLatest { currentAlbums ->
-            val allPaths = currentAlbums.toMutableList()
+    fun getAvailablePaths(): Flow<List<String>> = getAlbums().map { currentAlbums ->
+        val allPaths = currentAlbums.toMutableList()
 
-            // Then add all albums detected on the device
-            getAllAlbumsOnDevice().collectLatest { albumInfo ->
-                albumInfo.paths.forEach { path ->
-                    if (!allPaths.contains(path)) {
-                        allPaths.add(path)
-                    }
-                }
-                send(allPaths.distinct())
+        // Add some default paths that might be useful
+        val defaultPaths = listOf(
+            "DCIM/Camera",
+            "Pictures",
+            "Pictures/Screenshot",
+            "Download"
+        )
+
+        // Add default paths if they're not already in the list
+        defaultPaths.forEach { path ->
+            if (!allPaths.contains(path)) {
+                allPaths.add(path)
             }
-
-            // Send at least the current albums
-            send(allPaths.distinct())
         }
+
+        // Return the combined list
+        allPaths.distinct()
     }
 
     fun addAlbum(relativePath: String) = viewModelScope.launch {
@@ -691,4 +693,5 @@ class SettingsPhotoGridImpl(
         }
     }
 }
+
 
