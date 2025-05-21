@@ -57,6 +57,7 @@ internal constructor(
         cancellationSignal.setOnCancelListener {
             try {
                 cancel("Cancelling MediaStoreDataSource $neededPath channel because of exit signal...")
+                channel.close()
             } catch (e: Throwable) {
                 Log.e("MEDIA_STORE_DATASOURCE", e.toString())
             }

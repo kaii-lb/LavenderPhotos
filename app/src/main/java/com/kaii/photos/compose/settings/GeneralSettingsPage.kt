@@ -54,7 +54,10 @@ import com.kaii.photos.datastore.Versions
 import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.RowPosition
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
 
 @Composable
@@ -224,6 +227,13 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
             item {
                 val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect()
                     .collectAsStateWithLifecycle(initialValue = false)
+                val customAlbums = mainViewModel.settings.AlbumsList.getAlbumsList()
+                    .collectAsStateWithLifecycle(initialValue = emptyList())
+                    .value
+                    .filter {
+                        it.isCustomAlbum
+                    }
+
                 val isAlreadyLoading = remember { mutableStateOf(false) }
                 val coroutineScope = rememberCoroutineScope()
 
@@ -248,10 +258,18 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
                                         isLoading = isAlreadyLoading
                                     )
                                 )
+
                                 val albums =
                                     mainViewModel.settings.AlbumsList.getAllAlbumsOnDevice()
-                                albums.collectLatest {
-                                    mainViewModel.settings.AlbumsList.addToAlbumsList(it)
+
+                                coroutineScope.launch {
+                                    albums
+                                        .cancellable()
+                                        .onCompletion {
+                                            this@launch.cancel()
+                                        }.collectLatest {
+                                            mainViewModel.settings.AlbumsList.setAlbumsList(it + customAlbums)
+                                        }
                                 }
                             }
                             mainViewModel.settings.AlbumsList.setAutoDetect(checked)

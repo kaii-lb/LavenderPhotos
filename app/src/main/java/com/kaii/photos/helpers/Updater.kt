@@ -3,11 +3,13 @@ package com.kaii.photos.helpers
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.MutableState
 import androidx.core.content.FileProvider
+import androidx.navigation.NavHostController
 import com.kaii.photos.BuildConfig
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import kotlinx.coroutines.async
@@ -16,6 +18,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.fuel.json.responseJson
+import com.kaii.lavender_snackbars.LavenderSnackbarController
+import com.kaii.lavender_snackbars.LavenderSnackbarEvents
+import com.kaii.photos.MainActivity.Companion.mainViewModel
+import com.kaii.photos.R
 import java.io.File
 import org.json.JSONObject
 
@@ -173,4 +179,37 @@ enum class CheckUpdateState {
 	Checking,
 	Failed,
 	Succeeded
+}
+
+fun startupUpdateCheck(
+    coroutineScope: CoroutineScope,
+    navController: NavHostController
+) = mainViewModel.updater.refresh { state ->
+    Log.d(TAG, "Checking for app updates...")
+
+    when (state) {
+        CheckUpdateState.Succeeded -> {
+            if (mainViewModel.updater.hasUpdates.value) {
+                Log.d(TAG, "Update found! Notifying user...")
+
+                coroutineScope.launch {
+                    LavenderSnackbarController.pushEvent(
+                        LavenderSnackbarEvents.ActionEvent(
+                            message = "New app version available!",
+                            iconResId = R.drawable.error_2,
+                            duration = SnackbarDuration.Short,
+                            actionIconResId = R.drawable.download,
+                            action = {
+                                navController.navigate(MultiScreenViewType.UpdatesPage.name)
+                            }
+                        )
+                    )
+                }
+            }
+        }
+
+        else -> {
+            Log.d(TAG, "No update found.")
+        }
+    }
 }

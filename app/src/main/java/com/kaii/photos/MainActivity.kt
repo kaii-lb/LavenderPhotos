@@ -33,7 +33,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -104,6 +103,7 @@ import com.kaii.photos.database.Migration3to4
 import com.kaii.photos.database.Migration4to5
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumInfoNavType
+import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.Debugging
 import com.kaii.photos.datastore.DefaultTabs
@@ -111,14 +111,16 @@ import com.kaii.photos.datastore.Editing
 import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.datastore.MainPhotosView
 import com.kaii.photos.datastore.PhotoGrid
+import com.kaii.photos.datastore.User
 import com.kaii.photos.datastore.Versions
 import com.kaii.photos.helpers.BottomBarTabSaver
-import com.kaii.photos.helpers.CheckUpdateState
 import com.kaii.photos.helpers.LogManager
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.appStorageDir
+import com.kaii.photos.helpers.startupUpdateCheck
+import com.kaii.photos.helpers.tryGetAllAlbums
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.custom_album.CustomAlbumViewModelFactory
@@ -128,7 +130,8 @@ import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModelFactory
 import com.kaii.photos.ui.theme.PhotosTheme
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.cancellable
+import kotlinx.coroutines.flow.collectLatest
 import kotlin.reflect.typeOf
 
 private const val TAG = "MAIN_ACTIVITY"
@@ -783,38 +786,39 @@ class MainActivity : ComponentActivity() {
         val checkForUpdatesOnStartup by mainViewModel.settings.Versions.getCheckUpdatesOnStartup()
             .collectAsStateWithLifecycle(initialValue = false)
 
+        // try and find all albums on the device on first start
+        val searchedForAllAlbums by mainViewModel.settings.User.getHasSearchedForAlbums()
+            .collectAsStateWithLifecycle(initialValue = true)
+        val isLoading = remember { mutableStateOf(false) }
+
+        LaunchedEffect(searchedForAllAlbums) {
+            if (!searchedForAllAlbums) {
+                LavenderSnackbarController.pushEvent(
+                    LavenderSnackbarEvents.LoadingEvent(
+                        message = "Finding albums on this device...",
+                        iconResId = R.drawable.art_track,
+                        isLoading = isLoading
+                    )
+                )
+
+                tryGetAllAlbums(context = context).cancellable().collectLatest { list ->
+                    mainViewModel.settings.AlbumsList.setAlbumsList(list)
+                    mainViewModel.settings.AlbumsList.setAutoDetect(true)
+                    mainViewModel.settings.User.setHasSearchedForAlbums(true)
+
+                    Log.d(TAG, "Albums on device are $list")
+                    isLoading.value = false
+                }
+            }
+        }
+
         // so it only checks once
         LaunchedEffect(checkForUpdatesOnStartup) {
             if (checkForUpdatesOnStartup) {
-                mainViewModel.updater.refresh { state ->
-                    Log.d(TAG, "Checking for app updates...")
-
-                    when (state) {
-                        CheckUpdateState.Succeeded -> {
-                            if (mainViewModel.updater.hasUpdates.value) {
-                                Log.d(TAG, "Update found! Notifying user...")
-
-                                coroutineScope.launch {
-                                    LavenderSnackbarController.pushEvent(
-                                        LavenderSnackbarEvents.ActionEvent(
-                                            message = "New app version available!",
-                                            iconResId = R.drawable.error_2,
-                                            duration = SnackbarDuration.Short,
-                                            actionIconResId = R.drawable.download,
-                                            action = {
-                                                navControllerLocal.navigate(MultiScreenViewType.UpdatesPage.name)
-                                            }
-                                        )
-                                    )
-                                }
-                            }
-                        }
-
-                        else -> {
-                            Log.d(TAG, "No update found.")
-                        }
-                    }
-                }
+                startupUpdateCheck(
+                    coroutineScope = coroutineScope,
+                    navController = navControllerLocal
+                )
             }
         }
     }

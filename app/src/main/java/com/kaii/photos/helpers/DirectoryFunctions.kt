@@ -1,15 +1,17 @@
 package com.kaii.photos.helpers
 
+import android.content.Context
+import android.os.CancellationSignal
 import android.os.Environment
 import android.util.Log
-import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.ui.util.fastDistinctBy
+import androidx.compose.ui.util.fastMap
 import com.kaii.photos.datastore.AlbumInfo
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import com.kaii.photos.datastore.SQLiteQuery
+import com.kaii.photos.mediastore.MultiAlbumDataSource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.collectLatest
 import java.io.File
 import java.io.IOException
 import java.nio.file.FileVisitResult
@@ -19,7 +21,7 @@ import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import kotlin.io.path.isRegularFile
-import kotlin.io.path.name
+import kotlin.random.Random
 
 private const val TAG = "DIRECTORY_FUNCTIONS"
 const val EXTERNAL_DOCUMENTS_AUTHORITY = "com.android.externalstorage.documents"
@@ -130,100 +132,31 @@ val File.relativePath: String
 
 fun String.toRelativePath() = trim().replace(baseInternalStorageDirectory, "")
 
-fun Path.getAllAlbumsOnDevice(): Flow<AlbumInfo> = channelFlow {
-    val albums = mutableStateListOf<AlbumInfo>()
+fun tryGetAllAlbums(context: Context): Flow<List<AlbumInfo>> = channelFlow {
+    val cancellationSignal = CancellationSignal()
+    val mediaStoreDataSource =
+        MultiAlbumDataSource(
+            context = context,
+            queryString = SQLiteQuery(query = "", paths = null),
+            sortBy = MediaItemSortMode.DateTaken,
+            cancellationSignal = cancellationSignal
+        )
 
-    val coroutineScope = CoroutineScope(context = coroutineContext)
-    fun emitAlbums(info: AlbumInfo) = coroutineScope.launch {
-        send(info)
+    mediaStoreDataSource.loadMediaStoreData().collectLatest { list ->
+        if (list.isNotEmpty()) {
+            list.fastDistinctBy { media ->
+                media.absolutePath.getParentFromPath().toRelativePath()
+            }.fastMap { media ->
+                val album = media.absolutePath.getParentFromPath().toRelativePath()
+
+                AlbumInfo(
+                    name = album.split("/").last(),
+                    paths = listOf(album),
+                    id = Random.nextInt()
+                )
+            }.let {
+                this@channelFlow.send(it.filter { it.name != "" && it.paths.isNotEmpty() })
+            }
+        }
     }
-
-    try {
-        Files.walkFileTree(this@getAllAlbumsOnDevice, object : FileVisitor<Path> {
-            override fun preVisitDirectory(
-                dir: Path?,
-                attrs: BasicFileAttributes?
-            ): FileVisitResult {
-                val dataPath = baseInternalStorageDirectory + "Android/data"
-                val obbPath = baseInternalStorageDirectory + "Android/obb"
-
-                if (dir == null) return FileVisitResult.CONTINUE
-
-                val album =
-                    AlbumInfo(
-                        id = dir.hashCode(),
-                        name = dir.name,
-                        paths = listOf(dir.toString().toRelativePath())
-                    )
-
-                return if (album in albums) {
-                    FileVisitResult.SKIP_SUBTREE
-                } else if (dir.startsWith(dataPath) || dir.startsWith(obbPath)) {
-                    FileVisitResult.SKIP_SUBTREE
-                } else {
-                    FileVisitResult.CONTINUE
-                }
-            }
-
-            override fun visitFile(path: Path?, attrs: BasicFileAttributes?): FileVisitResult {
-                if (path != null) {
-                    val matchForDotFiles = Regex("\\.[A-z]")
-                    val file = path.toFile()
-
-                    val fileParentPath = file.absolutePath.toRelativePath().getParentFromPath()
-                    val album =
-                        AlbumInfo(
-                            id = fileParentPath.hashCode(),
-                            name = fileParentPath.getFileNameFromPath(),
-                            paths = listOf(fileParentPath)
-                        )
-
-                    if (album in albums) return FileVisitResult.CONTINUE
-
-                    val isDotFile =
-                        file.absolutePath.contains(matchForDotFiles) && file.name.startsWith(".")
-
-                    Log.d(TAG, "Trying to scan file ${file.absolutePath}.")
-
-                    if (!isDotFile) {
-                        val isNormal = path.isRegularFile(LinkOption.NOFOLLOW_LINKS)
-                        val mimeType = Files.probeContentType(path)
-
-                        if (mimeType != null) {
-                            val isMedia = mimeType.contains("image") || mimeType.contains("video")
-
-                            if (isNormal && isMedia) {
-                                Log.d(
-                                    TAG,
-                                    "Scanned file ${file.absolutePath} matches all prerequisites, moving on...."
-                                )
-
-                                if (!albums.contains(album)) {
-                                    albums.add(album)
-                                    emitAlbums(album)
-                                }
-
-                                return FileVisitResult.CONTINUE
-                            }
-                        }
-                    }
-                }
-
-                return FileVisitResult.CONTINUE
-            }
-
-            override fun visitFileFailed(file: Path?, exc: IOException?): FileVisitResult {
-                return FileVisitResult.CONTINUE
-            }
-
-            override fun postVisitDirectory(dir: Path?, exc: IOException?): FileVisitResult {
-                return FileVisitResult.CONTINUE
-            }
-        })
-    } catch (e: Throwable) {
-        Log.e(TAG, "cannot traverse device directory tree")
-        e.printStackTrace()
-    }
-
-    Log.d(TAG, "Got all albums on device.")
-}.flowOn(Dispatchers.IO)
+}

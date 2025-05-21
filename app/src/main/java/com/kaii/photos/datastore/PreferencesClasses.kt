@@ -10,18 +10,17 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.bumptech.glide.Glide
 import com.kaii.photos.helpers.MediaItemSortMode
-import com.kaii.photos.helpers.baseInternalStorageDirectory
-import com.kaii.photos.helpers.getAllAlbumsOnDevice
+import com.kaii.photos.helpers.tryGetAllAlbums
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
-import kotlin.io.path.Path
 
 const val separator = "|-SEPARATOR-|"
 private const val TAG = "PREFERENCES_CLASSES"
@@ -35,7 +34,7 @@ class SettingsAlbumsListImpl(
     private val albumsListKey = stringPreferencesKey("album_folder_path_list")
     private val sortModeKey = intPreferencesKey("album_sort_mode")
     private val sortModeOrderKey = booleanPreferencesKey("album_sort_mode_order")
-    private val autoDetectAlbums = booleanPreferencesKey("album_auto_detect")
+    private val autoDetectAlbumsKey = booleanPreferencesKey("album_auto_detect")
 
     fun addToAlbumsList(albumInfo: AlbumInfo) = viewModelScope.launch {
         if (albumInfo.name == "") return@launch
@@ -89,59 +88,69 @@ class SettingsAlbumsListImpl(
     }
 
     fun getAlbumsList(): Flow<List<AlbumInfo>> = channelFlow {
-        val prevList = context.datastore.data.map { data ->
-            val list = data[albumsListKey]
-            val isPreV083 =
-                list?.startsWith(",") == true// if list starts with a , then its using an old version of list storing system, move to new version
-            val isPreV095 = list?.startsWith(separator)
+        val autoDetectAlbums = getAutoDetect().first()
 
-            if (list == null) {
-                setAlbumsList(defaultAlbumsList)
+        Log.d(TAG, "Auto detect albums is $autoDetectAlbums")
 
-                return@map defaultAlbumsList
-            } else if (isPreV083) {
-                val split = list.split(",").distinct().toMutableList()
-                split.remove("")
-                split.remove("/storage/emulated/0")
+        if (autoDetectAlbums) {
+            var current = emptyList<AlbumInfo>()
+            val customAlbums = context.datastore.data.map { data ->
+                val list = Json.decodeFromString<List<AlbumInfo>>(data[albumsListKey] ?: "")
 
-                return@map split.map { path ->
-                    AlbumInfo(
-                        id = path.hashCode(),
-                        name = path.split("/").last(),
-                        paths = listOf(path)
-                    )
-                }
-            } else if (isPreV095 == true) {
-                val split = list.split(separator).distinct().toMutableList()
-                split.remove("")
-
-                return@map split.map { path ->
-                    AlbumInfo(
-                        id = path.hashCode(),
-                        name = path.split("/").last(),
-                        paths = listOf(path)
-                    )
-                }
+                list.filter { it.isCustomAlbum && it.name != "" }
             }
 
-            val split = Json.decodeFromString<List<AlbumInfo>>(list)
+            val custom = customAlbums.first()
 
-            return@map split
-        }
-
-        prevList.collectLatest { send(it) }
-
-        val autoDetectAlbums = getAutoDetect()
-
-        autoDetectAlbums.collectLatest {
-            if (it) {
-                val list = mutableListOf<AlbumInfo>()
-                getAllAlbumsOnDevice().collectLatest { item ->
-                    list.add(item)
-                    send(list)
+            Log.d(TAG, "Custom albums are $custom")
+            tryGetAllAlbums(context = context).collectLatest { list ->
+                if (current != list + custom) {
+                    current = list + custom
+                    send(list + custom)
                 }
-                send(list)
             }
+        } else {
+            val prevList = context.datastore.data.map { data ->
+                val list = data[albumsListKey]
+                val isPreV083 =
+                    list?.startsWith(",") == true// if list starts with a , then its using an old version of list storing system, move to new version
+                val isPreV095 = list?.startsWith(separator)
+
+                if (list == null) {
+                    setAlbumsList(defaultAlbumsList)
+
+                    return@map defaultAlbumsList
+                } else if (isPreV083) {
+                    val split = list.split(",").distinct().toMutableList()
+                    split.remove("")
+                    split.remove("/storage/emulated/0")
+
+                    return@map split.map { path ->
+                        AlbumInfo(
+                            id = path.hashCode(),
+                            name = path.split("/").last(),
+                            paths = listOf(path)
+                        )
+                    }
+                } else if (isPreV095 == true) {
+                    val split = list.split(separator).distinct().toMutableList()
+                    split.remove("")
+
+                    return@map split.map { path ->
+                        AlbumInfo(
+                            id = path.hashCode(),
+                            name = path.split("/").last(),
+                            paths = listOf(path)
+                        )
+                    }
+                }
+
+                val split = Json.decodeFromString<List<AlbumInfo>>(list)
+
+                return@map split
+            }
+
+            prevList.collectLatest { send(it) }
         }
     }
 
@@ -172,12 +181,12 @@ class SettingsAlbumsListImpl(
     }
 
     fun getAutoDetect() = context.datastore.data.map {
-        it[autoDetectAlbums] != false
+        it[autoDetectAlbumsKey] != false
     }
 
     fun setAutoDetect(value: Boolean) = viewModelScope.launch {
         context.datastore.edit {
-            it[autoDetectAlbums] = value
+            it[autoDetectAlbumsKey] = value
         }
     }
 
@@ -211,8 +220,8 @@ class SettingsAlbumsListImpl(
         )
 
     /** emits one album after the other */
-    fun getAllAlbumsOnDevice(): Flow<AlbumInfo> =
-        Path(baseInternalStorageDirectory).getAllAlbumsOnDevice()
+    fun getAllAlbumsOnDevice(): Flow<List<AlbumInfo>> =
+        tryGetAllAlbums(context = context)
 }
 
 class SettingsVersionImpl(
@@ -247,6 +256,7 @@ class SettingsVersionImpl(
 
 class SettingsUserImpl(private val context: Context, private val viewModelScope: CoroutineScope) {
     private val usernameKey = stringPreferencesKey("username")
+    private val hasSearchedForAlbums = booleanPreferencesKey("has_searched_for_albums")
 
     fun getUsername(): Flow<String?> =
         context.datastore.data.map {
@@ -256,6 +266,17 @@ class SettingsUserImpl(private val context: Context, private val viewModelScope:
     fun setUsername(name: String) = viewModelScope.launch {
         context.datastore.edit {
             it[usernameKey] = name
+        }
+    }
+
+    fun getHasSearchedForAlbums(): Flow<Boolean> =
+        context.datastore.data.map {
+            it[hasSearchedForAlbums] == true
+        }
+
+    fun setHasSearchedForAlbums(value: Boolean) = viewModelScope.launch {
+        context.datastore.edit {
+            it[hasSearchedForAlbums] = value
         }
     }
 }
