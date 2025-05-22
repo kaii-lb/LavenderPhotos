@@ -49,6 +49,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -76,6 +77,7 @@ import com.kaii.photos.compose.app_bars.MainAppSelectingBottomBar
 import com.kaii.photos.compose.app_bars.MainAppTopBar
 import com.kaii.photos.compose.app_bars.getAppBarContentTransition
 import com.kaii.photos.compose.app_bars.setBarVisibility
+import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
 import com.kaii.photos.compose.dialogs.MainAppDialog
 import com.kaii.photos.compose.grids.AlbumsGridView
 import com.kaii.photos.compose.grids.FavouritesGridView
@@ -120,7 +122,6 @@ import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.appStorageDir
 import com.kaii.photos.helpers.startupUpdateCheck
-import com.kaii.photos.helpers.tryGetAllAlbums
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.custom_album.CustomAlbumViewModelFactory
@@ -132,6 +133,7 @@ import com.kaii.photos.ui.theme.PhotosTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import kotlin.reflect.typeOf
 
 private const val TAG = "MAIN_ACTIVITY"
@@ -786,28 +788,40 @@ class MainActivity : ComponentActivity() {
         val checkForUpdatesOnStartup by mainViewModel.settings.Versions.getCheckUpdatesOnStartup()
             .collectAsStateWithLifecycle(initialValue = false)
 
-        // try and find all albums on the device on first start
-        val searchedForAllAlbums by mainViewModel.settings.User.getHasSearchedForAlbums()
+        val firstStartup by mainViewModel.settings.User.getFirstStartup()
             .collectAsStateWithLifecycle(initialValue = true)
-        val isLoading = remember { mutableStateOf(false) }
 
-        LaunchedEffect(searchedForAllAlbums) {
-            if (!searchedForAllAlbums) {
-                LavenderSnackbarController.pushEvent(
-                    LavenderSnackbarEvents.LoadingEvent(
-                        message = "Finding albums on this device...",
-                        iconResId = R.drawable.art_track,
-                        isLoading = isLoading
+        if (firstStartup) {
+            val showFirstStartupDialog = remember { mutableStateOf(false) }
+            val isLoading = remember { mutableStateOf(false) }
+            val findingAlbumsOnDevice = stringResource(id = R.string.finding_albums_on_device)
+
+            ConfirmationDialogWithBody(
+                dialogTitle = stringResource(id = R.string.first_startup_dialog_title),
+                dialogBody = stringResource(id = R.string.first_startup_dialog_body),
+                showDialog = showFirstStartupDialog,
+                confirmButtonLabel = stringResource(id = R.string.first_startup_dialog_confirm_title)
+            ) {
+                coroutineScope.launch {
+                    LavenderSnackbarController.pushEvent(
+                        LavenderSnackbarEvents.LoadingEvent(
+                            message = findingAlbumsOnDevice,
+                            iconResId = R.drawable.art_track,
+                            isLoading = isLoading
+                        )
                     )
-                )
 
-                tryGetAllAlbums(context = context).cancellable().collectLatest { list ->
-                    mainViewModel.settings.AlbumsList.setAlbumsList(list)
-                    mainViewModel.settings.AlbumsList.setAutoDetect(true)
-                    mainViewModel.settings.User.setHasSearchedForAlbums(true)
+                    mainViewModel.settings.AlbumsList.getAllAlbumsOnDevice()
+                        .cancellable()
+                        .collectLatest { list ->
+                            mainViewModel.settings.AlbumsList.setAlbumsList(list)
+                            mainViewModel.settings.AlbumsList.setAutoDetect(true)
 
-                    Log.d(TAG, "Albums on device are $list")
-                    isLoading.value = false
+                            Log.d(TAG, "Albums on device are $list")
+                            isLoading.value = false
+
+                            mainViewModel.settings.User.setFirstStartup(false)
+                        }
                 }
             }
         }
@@ -994,7 +1008,7 @@ class MainActivity : ComponentActivity() {
                         }
                     } else {
                         ErrorPage(
-                            message = "This tab doesn't exist!",
+                            message = stringResource(id = R.string.tab_non_existent),
                             iconResId = R.drawable.error
                         )
                     }

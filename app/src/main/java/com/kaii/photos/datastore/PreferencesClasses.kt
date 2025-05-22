@@ -256,7 +256,7 @@ class SettingsVersionImpl(
 
 class SettingsUserImpl(private val context: Context, private val viewModelScope: CoroutineScope) {
     private val usernameKey = stringPreferencesKey("username")
-    private val hasSearchedForAlbums = booleanPreferencesKey("has_searched_for_albums")
+    private val firstStartup = booleanPreferencesKey("first_startup")
 
     fun getUsername(): Flow<String?> =
         context.datastore.data.map {
@@ -269,14 +269,14 @@ class SettingsUserImpl(private val context: Context, private val viewModelScope:
         }
     }
 
-    fun getHasSearchedForAlbums(): Flow<Boolean> =
+    fun getFirstStartup(): Flow<Boolean> =
         context.datastore.data.map {
-            it[hasSearchedForAlbums] == true
+            it[firstStartup] == true
         }
 
-    fun setHasSearchedForAlbums(value: Boolean) = viewModelScope.launch {
+    fun setFirstStartup(value: Boolean) = viewModelScope.launch {
         context.datastore.edit {
-            it[hasSearchedForAlbums] = value
+            it[firstStartup] = value
         }
     }
 }

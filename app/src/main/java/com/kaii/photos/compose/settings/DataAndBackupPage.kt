@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
@@ -59,18 +60,19 @@ fun DataAndBackupPage() {
         ) {
             item {
                 PreferencesSeparatorText(
-                    text = "Secure Folder"
+                    text = stringResource(id = R.string.secure_folder)
                 )
             }
 
             item {
                 val context = LocalContext.current
                 val isLoading = remember { mutableStateOf(false) }
+                val exportingBackup = stringResource(id = R.string.exporting_backup)
 
                 PreferencesRow(
-                    title = "Export Unencrypted Backup",
+                    title = stringResource(id = R.string.export_unenc_backup),
                     iconResID = R.drawable.key_remove,
-                    summary = "Exports a folder of all your secured items, unencrypted",
+                    summary = stringResource(id = R.string.export_unenc_backup_desc),
                     position = RowPosition.Middle,
                     showBackground = false
                 ) {
@@ -80,7 +82,7 @@ fun DataAndBackupPage() {
                         isLoading.value = true
                         LavenderSnackbarController.pushEvent(
                             LavenderSnackbarEvents.LoadingEvent(
-                                message = "Exporting backup...",
+                                message = exportingBackup,
                                 iconResId = R.drawable.folder_export,
                                 isLoading = isLoading
                             )
@@ -102,9 +104,9 @@ fun DataAndBackupPage() {
                 }
 
                 PreferencesRow(
-                    title = "Export Raw Backup",
+                    title = stringResource(id = R.string.export_raw_backup),
                     iconResID = R.drawable.folder_export,
-                    summary = "Exports a folder of all your secured items, raw (encrypted or not)",
+                    summary = stringResource(id = R.string.export_raw_backup_desc),
                     position = RowPosition.Middle,
                     showBackground = false
                 ) {
@@ -114,7 +116,7 @@ fun DataAndBackupPage() {
                         isLoading.value = true
                         LavenderSnackbarController.pushEvent(
                             LavenderSnackbarEvents.LoadingEvent(
-                                message = "Exporting backup...",
+                                message = exportingBackup,
                                 iconResId = R.drawable.folder_export,
                                 isLoading = isLoading
                             )
@@ -136,9 +138,9 @@ fun DataAndBackupPage() {
                 }
 
                 PreferencesRow(
-                    title = "Export Backup To Zip",
+                    title = stringResource(id = R.string.export_unenc_zip),
                     iconResID = R.drawable.folder_zip,
-                    summary = "Exports a zip file of all your secured items",
+                    summary = stringResource(id = R.string.export_unenc_zip_desc),
                     position = RowPosition.Middle,
                     showBackground = false
                 ) {
@@ -148,7 +150,7 @@ fun DataAndBackupPage() {
                         isLoading.value = true
                         LavenderSnackbarController.pushEvent(
                             LavenderSnackbarEvents.LoadingEvent(
-                                message = "Compressing backup...",
+                                message = exportingBackup,
                                 iconResId = R.drawable.folder_export,
                                 isLoading = isLoading
                             )
@@ -177,18 +179,19 @@ fun DataAndBackupPage() {
 
             item {
                 PreferencesSeparatorText(
-                    text = "Favourites"
+                    text = stringResource(id = R.string.favourites)
                 )
             }
 
             item {
                 val context = LocalContext.current
                 val isLoading = remember { mutableStateOf(false) }
+                val exportingBackup = stringResource(id = R.string.exporting_backup)
 
                 PreferencesRow(
-                    title = "Export Backup To Folder",
+                    title = stringResource(id = R.string.export_fav_to_folder),
                     iconResID = R.drawable.folder_favourites,
-                    summary = "Exports of all your favourited items to a folder",
+                    summary = stringResource(id = R.string.export_fav_to_folder_desc),
                     position = RowPosition.Middle,
                     showBackground = false
                 ) {
@@ -198,7 +201,7 @@ fun DataAndBackupPage() {
                         isLoading.value = true
                         LavenderSnackbarController.pushEvent(
                             LavenderSnackbarEvents.LoadingEvent(
-                                message = "Exporting backup...",
+                                message = exportingBackup,
                                 iconResId = R.drawable.folder_export,
                                 isLoading = isLoading
                             )
@@ -220,9 +223,9 @@ fun DataAndBackupPage() {
                 }
 
                 PreferencesRow(
-                    title = "Export Backup To Zip",
+                    title = stringResource(id = R.string.export_unenc_zip),
                     iconResID = R.drawable.folder_zip,
-                    summary = "Exports a zip file of all your favourited items",
+                    summary = stringResource(id = R.string.export_fav_to_zip_desc),
                     position = RowPosition.Middle,
                     showBackground = false
                 ) {
@@ -232,7 +235,7 @@ fun DataAndBackupPage() {
                         isLoading.value = true
                         LavenderSnackbarController.pushEvent(
                             LavenderSnackbarEvents.LoadingEvent(
-                                message = "Compressing backup...",
+                                message = exportingBackup,
                                 iconResId = R.drawable.folder_export,
                                 isLoading = isLoading
                             )
@@ -271,7 +274,7 @@ private fun DataAndBackupTopBar() {
     TopAppBar(
         title = {
             Text(
-                text = "Data & Backup",
+                text = stringResource(id = R.string.data_and_backup),
                 fontSize = TextUnit(22f, TextUnitType.Sp)
             )
         },
@@ -283,7 +286,7 @@ private fun DataAndBackupTopBar() {
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.back_arrow),
-                    contentDescription = "Go back to previous page",
+                    contentDescription = stringResource(id = R.string.return_to_previous_page),
                     tint = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier
                         .size(24.dp)

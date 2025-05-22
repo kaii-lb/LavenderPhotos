@@ -27,6 +27,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
@@ -54,10 +55,8 @@ import com.kaii.photos.datastore.Versions
 import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.RowPosition
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
 
 @Composable
@@ -75,7 +74,7 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
             horizontalAlignment = Alignment.Start
         ) {
             item {
-                PreferencesSeparatorText("Video")
+                PreferencesSeparatorText(stringResource(id = R.string.video))
             }
 
             item {
@@ -85,8 +84,8 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
                     .collectAsStateWithLifecycle(initialValue = false)
 
                 PreferencesSwitchRow(
-                    title = "Auto Play Videos",
-                    summary = "Start playing videos as soon as they appear on screen",
+                    title = stringResource(id = R.string.video_auto_play),
+                    summary = stringResource(id = R.string.video_auto_play_desc),
                     iconResID = R.drawable.auto_play,
                     checked = shouldAutoPlay,
                     position = RowPosition.Single,
@@ -98,8 +97,8 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
                 )
 
                 PreferencesSwitchRow(
-                    title = "Videos Start Muted",
-                    summary = "Don't play audio when first starting video playback",
+                    title = stringResource(id = R.string.video_start_muted),
+                    summary = stringResource(id = R.string.video_start_muted_desc),
                     iconResID = R.drawable.volume_mute,
                     checked = muteOnStart,
                     position = RowPosition.Single,
@@ -113,7 +112,7 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
 
 
             item {
-                PreferencesSeparatorText("Editing")
+                PreferencesSeparatorText(stringResource(id = R.string.editing))
             }
 
             item {
@@ -121,8 +120,8 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
                     .collectAsStateWithLifecycle(initialValue = false)
 
                 PreferencesSwitchRow(
-                    title = "Overwrite on save",
-                    summary = "Default to overwriting instead of saving a copy when editing media",
+                    title = stringResource(id = R.string.editing_overwrite_on_save),
+                    summary = stringResource(id = R.string.editing_overwrite_on_save_desc),
                     iconResID = R.drawable.storage,
                     checked = overwriteByDefault,
                     position = RowPosition.Single,
@@ -139,8 +138,8 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
                     .collectAsStateWithLifecycle(initialValue = false)
 
                 PreferencesSwitchRow(
-                    title = "Exit on save",
-                    summary = "Automatically exit the editing view when you save the changes",
+                    title = stringResource(id = R.string.editing_exit_on_save),
+                    summary = stringResource(id = R.string.editing_exit_on_save_desc),
                     iconResID = R.drawable.exit,
                     checked = exitOnSave,
                     position = RowPosition.Single,
@@ -153,7 +152,7 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
             }
 
             item {
-                PreferencesSeparatorText("Albums")
+                PreferencesSeparatorText(stringResource(id = R.string.albums))
             }
 
             item {
@@ -166,11 +165,11 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
                 val selectedAlbums = remember { mutableStateListOf<String>() }
 
                 PreferencesRow(
-                    title = "Main Albums List",
+                    title = stringResource(id = R.string.albums_main_list),
                     iconResID = R.drawable.photogrid,
                     position = RowPosition.Single,
                     showBackground = false,
-                    summary = "Select albums that will have their photos displayed in the main photo view"
+                    summary = stringResource(id = R.string.albums_main_list_desc)
                 ) {
                     selectedAlbums.clear()
                     selectedAlbums.addAll(
@@ -186,8 +185,8 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
 
                 if (showAlbumsSelectionDialog.value) {
                     SelectableButtonListDialog(
-                        title = "Selected Albums",
-                        body = "Albums selected here will show up in the main photo view",
+                        title = stringResource(id = R.string.albums_selected),
+                        body = stringResource(id = R.string.albums_main_list_selected),
                         showDialog = showAlbumsSelectionDialog,
                         onConfirm = {
                             mainViewModel.settings.MainPhotosView.clear()
@@ -236,10 +235,12 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
 
                 val isAlreadyLoading = remember { mutableStateOf(false) }
                 val coroutineScope = rememberCoroutineScope()
+                val findingAlbums = stringResource(id = R.string.finding_albums_on_device)
+                val foundAlbums = stringResource(id = R.string.albums_found)
 
                 PreferencesSwitchRow(
-                    title = "Automatically detect albums",
-                    summary = "Detects all the folders with media on the device and adds them to the album list",
+                    title = stringResource(id = R.string.albums_auto_detect),
+                    summary = stringResource(id = R.string.albums_auto_detect_desc),
                     iconResID = R.drawable.albums_search,
                     position = RowPosition.Single,
                     showBackground = false,
@@ -253,25 +254,22 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
                             if (checked) {
                                 LavenderSnackbarController.pushEvent(
                                     LavenderSnackbarEvents.LoadingEvent(
-                                        message = if (isAlreadyLoading.value) "Finding albums..." else "Found all albums!",
+                                        message = if (isAlreadyLoading.value) findingAlbums else foundAlbums,
                                         iconResId = R.drawable.albums_search,
                                         isLoading = isAlreadyLoading
                                     )
                                 )
 
-                                val albums =
-                                    mainViewModel.settings.AlbumsList.getAllAlbumsOnDevice()
+                                mainViewModel.settings.AlbumsList.getAllAlbumsOnDevice()
+                                    .cancellable()
+                                    .collectLatest { list ->
+                                        mainViewModel.settings.AlbumsList.setAlbumsList(customAlbums + list)
+                                        mainViewModel.settings.AlbumsList.setAutoDetect(true)
 
-                                coroutineScope.launch {
-                                    albums
-                                        .cancellable()
-                                        .onCompletion {
-                                            this@launch.cancel()
-                                        }.collectLatest {
-                                            mainViewModel.settings.AlbumsList.setAlbumsList(it + customAlbums)
-                                        }
-                                }
+                                        isAlreadyLoading.value = false
+                                    }
                             }
+
                             mainViewModel.settings.AlbumsList.setAutoDetect(checked)
 
                             isAlreadyLoading.value = false
@@ -279,9 +277,10 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
                     }
                 }
 
+                val clearDone = stringResource(id = R.string.albums_clear_list_done)
                 PreferencesRow(
-                    title = "Clear album list",
-                    summary = "Remove all albums except for Camera and Download",
+                    title = stringResource(id = R.string.albums_clear_list),
+                    summary = stringResource(id = R.string.albums_clear_list_desc),
                     iconResID = R.drawable.albums_clear,
                     position = RowPosition.Single,
                     showBackground = false
@@ -294,7 +293,7 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
 
                         LavenderSnackbarController.pushEvent(
                             LavenderSnackbarEvents.MessageEvent(
-                                message = "Cleared album list",
+                                message = clearDone,
                                 duration = SnackbarDuration.Short,
                                 iconResId = R.drawable.albums
                             )
@@ -318,8 +317,8 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
                 }
 
                 PreferencesSwitchRow(
-                    title = "Media Sorting",
-                    summary = "Sets the sorting of photos and videos in grids",
+                    title = stringResource(id = R.string.albums_media_sorting),
+                    summary = stringResource(id = R.string.albums_media_sorting_desc),
                     iconResID = R.drawable.sorting,
                     position = RowPosition.Single,
                     showBackground = false,
@@ -336,7 +335,7 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
 
             item {
                 PreferencesSeparatorText(
-                    text = "Tabs"
+                    text = stringResource(id = R.string.tabs)
                 )
             }
 
@@ -357,8 +356,8 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
                 }
 
                 PreferencesRow(
-                    title = "Default Tab",
-                    summary = "Lavender Photos will auto-open this tab at startup",
+                    title = stringResource(id = R.string.tabs_default),
+                    summary = stringResource(id = R.string.tabs_default_desc),
                     iconResID = R.drawable.folder_open,
                     position = RowPosition.Single,
                     showBackground = false
@@ -380,8 +379,8 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
                 }
 
                 PreferencesRow(
-                    title = "Customize Tabs",
-                    summary = "Change what tabs are available in the bottom bar",
+                    title = stringResource(id = R.string.tabs_customize),
+                    summary = stringResource(id = R.string.tabs_customize_desc),
                     iconResID = R.drawable.edit,
                     position = RowPosition.Single,
                     showBackground = false
@@ -392,7 +391,7 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
 
             item {
                 PreferencesSeparatorText(
-                    text = "Updates"
+                    text = stringResource(id = R.string.updates)
                 )
             }
 
@@ -401,9 +400,9 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
                     .collectAsStateWithLifecycle(initialValue = false)
 
                 PreferencesSwitchRow(
-                    title = "Check for Updates",
+                    title = stringResource(id = R.string.updates_check),
                     iconResID = R.drawable.update,
-                    summary = "Notifies of new version when you open the app. Does not auto-install the update",
+                    summary = stringResource(id = R.string.updates_check_desc),
                     position = RowPosition.Single,
                     showBackground = false,
                     checked = checkForUpdatesOnStartup
@@ -423,7 +422,7 @@ private fun GeneralSettingsTopBar() {
     TopAppBar(
         title = {
             Text(
-                text = "General",
+                text = stringResource(id = R.string.settings_general),
                 fontSize = TextUnit(22f, TextUnitType.Sp)
             )
         },
@@ -435,7 +434,7 @@ private fun GeneralSettingsTopBar() {
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.back_arrow),
-                    contentDescription = "Go back to previous page",
+                    contentDescription = stringResource(id = R.string.return_to_previous_page),
                     tint = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier
                         .size(24.dp)

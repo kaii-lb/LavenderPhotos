@@ -91,7 +91,7 @@ fun AboutPage(popBackStack: () -> Unit) {
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.back_arrow),
-                        contentDescription = "return to previous page",
+                        contentDescription = stringResource(id = R.string.return_to_previous_page),
                         tint = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier
                             .size(24.dp)
@@ -101,7 +101,7 @@ fun AboutPage(popBackStack: () -> Unit) {
 
             GlideImage(
                 model = R.drawable.lavender,
-                contentDescription = "app icon",
+                contentDescription = stringResource(id = R.string.app_icon),
                 colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onBackground),
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
@@ -109,7 +109,7 @@ fun AboutPage(popBackStack: () -> Unit) {
             )
 
             Text(
-                text = "Lavender Photos",
+                text = stringResource(id = R.string.app_name_full),
                 textAlign = TextAlign.Center,
                 fontSize = TextUnit(22f, TextUnitType.Sp),
                 fontWeight = FontWeight.Bold,
@@ -130,8 +130,8 @@ fun AboutPage(popBackStack: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             PreferencesRow(
-                title = "Developer",
-                summary = "kaii-lb",
+                title = stringResource(id = R.string.dev_title),
+                summary = stringResource(id = R.string.dev_name),
                 iconResID = R.drawable.code,
                 position = RowPosition.Top
             ) {
@@ -145,15 +145,15 @@ fun AboutPage(popBackStack: () -> Unit) {
             val showPrivacyPolicy = remember { mutableStateOf(false) }
             if (showPrivacyPolicy.value) {
                 ExplanationDialog(
-                    title = "Privacy Policy",
-                    explanation = "There isn't one! None of your data goes anywhere but this device. No AI is trained on it, no algorithms to harvest information, nothing. Lavender Photos has and always will be a privacy focused gallery app.",
+                    title = stringResource(id = R.string.privacy_policy_title),
+                    explanation = stringResource(id = R.string.privacy_policy),
                     showDialog = showPrivacyPolicy,
                 )
             }
 
             PreferencesRow(
-                title = "Privacy Policy",
-                summary = "we really don't use your data",
+                title = stringResource(id = R.string.privacy_policy_title),
+                summary = stringResource(id = R.string.i_swear_were_not_bad),
                 iconResID = R.drawable.privacy_policy,
                 position = RowPosition.Middle
             ) {
@@ -167,8 +167,8 @@ fun AboutPage(popBackStack: () -> Unit) {
 
             val navController = LocalNavController.current
             PreferencesRow(
-                title = "Updates",
-                summary = "keep the app up to date",
+                title = stringResource(id = R.string.updates),
+                summary = stringResource(id = R.string.updates_desc),
                 iconResID = R.drawable.update,
                 position = RowPosition.Middle,
                 goesToOtherPage = true
@@ -177,8 +177,8 @@ fun AboutPage(popBackStack: () -> Unit) {
             }
 
             PreferencesRow(
-                title = "Support & Donations",
-                summary = "help me keep the app alive",
+                title = stringResource(id = R.string.support),
+                summary = stringResource(id = R.string.support_desc),
                 iconResID = R.drawable.donation,
                 position = RowPosition.Middle
             ) {
@@ -192,7 +192,7 @@ fun AboutPage(popBackStack: () -> Unit) {
                 "Couldn't get version number"
             }
             PreferencesRow(
-                title = "Version Info",
+                title = stringResource(id = R.string.version_info),
                 summary = versionName,
                 iconResID = R.drawable.info,
                 position = RowPosition.Bottom,
