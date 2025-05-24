@@ -55,6 +55,25 @@
     <string name="updates_desc">keep the app up to date</string>
     <string name="updates_check">Check for Updates</string>
     <string name="updates_check_desc">Notifies of new version when you open the app. Doesn not auto-install the update</string>
+    <string name="updates_whats_new">What\'s new</string>
+    <string name="updates_notice">Download Notice</string>
+    <string name="updates_notice_desc">
+        <![CDATA[
+            <p>This updater downloads apks from <a href="https://github.com/kaii-lb/LavenderPhotos/releases">GitHub Releases</a> which
+                means that they don\'t go through the additional screening and testing performed at IzzyOnDroid, F-Droid or elsewhere.
+
+                <br><br>The builds hosted on GitHub are always signed, checked, and verified by the developer (kaii-lb), but it is up to you whether you want to use them or not.
+
+                <br><br>Lavender Photos never does auto-updates, and only ever updates with explicit user consent.
+            </p>
+        ]]>
+    </string>
+    <string name="updates_not_found">No Updates Found</string>
+    <string name="updates_new_version_available">New version available!</string>
+    <string name="updates_latest">Already on latest version</string>
+    <string name="updates_failed">Failed checking for updates</string>
+    <string name="updates_checking">Checking For Updates</string>
+    <string name="updates_start">Start Update</string>
 
     <!-- Secure Folder -->
     <string name="locked_folder_help_top">Locked Folder is a secure folder for your images and videos on this device.\nThe secured media is never uploaded anywhere and is always on-device, encrypted with a key unique to your device\'s password or fingerprint data.</string>
@@ -78,6 +97,8 @@
     <string name="favourites">Favourites</string>
 
     <!-- Debugging -->
+    <string name="debugging">Debugging</string>
+    <string name="debugging_desc">Tools for debugging issues</string>
     <string name="logs">Logs</string>
     <string name="record_logs">Record Logs</string>
     <string name="record_logs_desc">Store logs for debugging. Tap to view.</string>
@@ -108,5 +129,46 @@
     <string name="editing_exit_on_save_desc">Automatically exit the editing view when you save the changes</string>
 
     <!-- Settings -->
+    <string name="settings">Settings</string>
     <string name="settings_general">General</string>
+    <string name="settings_general_desc">App preferences and customizations</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_dark_theme">Dark Theme</string>
+    <string name="settings_look_and_feel">Look &amp; Feel</string>
+    <string name="settings_look_and_feel_desc">Change how the app looks</string>
+    <string name="settings_theme_follow">App follows the system theme</string>
+    <string name="settings_theme_dark">App is always in dark theme</string>
+    <string name="settings_theme_light">App is always in light theme</string>
+    <string name="settings_privacy">Privacy &amp; Security</string>
+    <string name="settings_privacy_desc">Fine grained control over your data</string>
+    <string name="settings_memory_storage">Memory &amp; Storage</string>
+    <string name="settings_storage_desc">Performance and space options</string>
+    <string name="settings_storage">Storage</string>
+    <string name="settings_memory">Memory</string>
+    <string name="settings_storage_thumbnails_size">Thumbnails are currently %1$s pixels. Higher values use more %2$s</string>
+    <string name="settings_storage_thumbnails_max">Thumbnail are shown at max possible resolution. This uses the most %1$s</string>
+    <string name="settings_storage_thumbnails_cache">Cache Thumbnails</string>
+    <string name="settings_storage_thumbnails_cache_desc">Allows for faster loading at the cost of storage usage</string>
+    <string name="settings_storage_thumbnails_resolution">Thumbnail Resolution</string>
+    <string name="settings_storage_thumbnails_clear_cache">Clear thumbnail cache</string>
+    <string name="settings_storage_thumbnails_clear_cache_desc">Erases thumbnail caches to free up storage</string>
+    <string name="settings_clear">Clear</string>
+    <string name="settings_clear_cache_desc">This will erase all the thumbnail caches on this device, freeing up storage. Thumbnail loading will take longer on the next startup.</string>
+
+    <!-- Trash -->
+    <string name="trash">Trash Bin</string>
+    <string name="trash_auto_delete">Auto delete items in trash bin after</string>
+    <string name="trash_days">days</string>
+    <string name="trash_no_auto_delete">Items in trash bin won\'t be auto deleted</string>
+    <string name="trash_auto_delete_interval">Auto delete interval</string>
+
+    <!-- Permission -->
+    <string name="permissions">Permission</string>
+    <string name="permissions_media_manager">Media Manager</string>
+    <string name="permissions_media_manager_desc">Better and faster trash/delete/copy/move</string>
+    <string name="permissions_media_management">Media Management</string>
+    <string name="permissions_confirm_to_delete">Confirm to Delete</string>
+    <string name="permissions_confirm_too_delete_desc">Ask for confirmation before deleting any media</string>
+    <string name="permissions_overwrite_date_on_move">Overwrite Date on Move</string>
+    <string name="permissions_overwrite_date_on_move_desc">When enabled, copied/moved media shows at the top of the list</string>
 </resources>

@@ -18,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
@@ -45,15 +46,15 @@ fun LookAndFeelSettingsPage() {
             horizontalAlignment = Alignment.Start
         ) {
         	item {
-        		PreferencesSeparatorText("Theme")
+        		PreferencesSeparatorText(stringResource(id = R.string.settings_theme))
         	}
 
         	item {
                 val followDarkMode by mainViewModel.settings.LookAndFeel.getFollowDarkMode().collectAsStateWithLifecycle(initialValue = 0)
 
                 PreferencesThreeStateSwitchRow(
-                    title = "Dark Theme",
-                    summary = DarkThemeSetting.entries[followDarkMode].description,
+                    title = stringResource(id = R.string.settings_dark_theme),
+                    summary = stringResource(id = DarkThemeSetting.entries[followDarkMode].descriptionId),
                     iconResID = R.drawable.palette,
                     currentPosition = followDarkMode,
                     trackIcons = listOf(
@@ -79,7 +80,7 @@ private fun DebuggingSettingsTopBar() {
 	TopAppBar(
         title = {
             Text(
-                text = "Look & Feel",
+                text = stringResource(id = R.string.settings_look_and_feel),
                 fontSize = TextUnit(22f, TextUnitType.Sp)
             )
         },
@@ -91,7 +92,7 @@ private fun DebuggingSettingsTopBar() {
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.back_arrow),
-                    contentDescription = "Go back to previous page",
+                    contentDescription = stringResource(id = R.string.return_to_previous_page),
                     tint = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier
                         .size(24.dp)
@@ -104,8 +105,8 @@ private fun DebuggingSettingsTopBar() {
     )
 }
 
-enum class DarkThemeSetting(val description: String) {
-    FollowSystem("App follows the system theme"),
-    ForceDark("App is always in dark theme"),
-    ForceLight("App is always in light theme")
+enum class DarkThemeSetting(val descriptionId: Int) {
+    FollowSystem(R.string.settings_theme_follow),
+    ForceDark(R.string.settings_theme_dark),
+    ForceLight(R.string.settings_theme_light)
 }

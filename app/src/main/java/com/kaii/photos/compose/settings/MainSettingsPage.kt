@@ -26,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
@@ -54,8 +55,8 @@ fun MainSettingsPage() {
         ) {
             item {
                 PreferencesRow(
-                    title = "General",
-                    summary = "App preferences and customizations",
+                    title = stringResource(id = R.string.settings_general),
+                    summary = stringResource(id = R.string.settings_general_desc),
                     iconResID = R.drawable.settings,
                     position = RowPosition.Top,
                     showBackground = false,
@@ -69,8 +70,8 @@ fun MainSettingsPage() {
 
             item {
                 PreferencesRow(
-                    title = "Privacy & Security",
-                    summary = "Fine grained control over your data",
+                    title = stringResource(id = R.string.settings_privacy),
+                    summary = stringResource(id = R.string.settings_privacy_desc),
                     iconResID = R.drawable.privacy_policy,
                     position = RowPosition.Middle,
                     showBackground = false,
@@ -84,8 +85,8 @@ fun MainSettingsPage() {
 
             item {
                 PreferencesRow(
-                    title = "Look & Feel",
-                    summary = "Change how the app looks",
+                    title = stringResource(id = R.string.settings_look_and_feel),
+                    summary = stringResource(id = R.string.settings_look_and_feel_desc),
                     iconResID = R.drawable.palette,
                     position = RowPosition.Middle,
                     showBackground = false,
@@ -99,8 +100,8 @@ fun MainSettingsPage() {
 
             item {
                 PreferencesRow(
-                    title = "Memory & Storage",
-                    summary = "Performance and space options",
+                    title = stringResource(id = R.string.settings_memory_storage),
+                    summary = stringResource(id = R.string.settings_storage_desc),
                     iconResID = R.drawable.privacy_policy,
                     position = RowPosition.Middle,
                     showBackground = false,
@@ -114,8 +115,8 @@ fun MainSettingsPage() {
 
             item {
                 PreferencesRow(
-                    title = "Debugging",
-                    summary = "Tools for debugging issues",
+                    title = stringResource(id = R.string.debugging),
+                    summary = stringResource(id = R.string.debugging_desc),
                     iconResID = R.drawable.memory,
                     position = RowPosition.Bottom,
                     showBackground = false,
@@ -145,7 +146,7 @@ private fun MainSettingsTopBar() {
     TopAppBar(
         title = {
             Text(
-                text = "Settings",
+                text = stringResource(id = R.string.settings),
                 fontSize = TextUnit(22f, TextUnitType.Sp)
             )
         },
@@ -157,7 +158,7 @@ private fun MainSettingsTopBar() {
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.back_arrow),
-                    contentDescription = "Go back to previous page",
+                    contentDescription = stringResource(id = R.string.return_to_previous_page),
                     tint = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier
                         .size(24.dp)

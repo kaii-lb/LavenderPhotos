@@ -47,7 +47,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
@@ -112,7 +114,7 @@ fun UpdatesPage() {
 				horizontalAlignment = Alignment.CenterHorizontally
 			) {
 				Text (
-					text = "What's New",
+					text = stringResource(id = R.string.updates_whats_new),
 					fontSize = TextUnit(18f, TextUnitType.Sp),
 					fontWeight = FontWeight.Bold,
 					modifier = Modifier
@@ -168,7 +170,7 @@ private fun TopBar() {
 	TopAppBar(
 		title = {
 			Text(
-				text = "Updates",
+				text = stringResource(id = R.string.updates),
 				fontSize = TextUnit(22f, TextUnitType.Sp)
 			)
 		},
@@ -182,7 +184,7 @@ private fun TopBar() {
 			) {
 				Icon(
 					painter = painterResource(id = R.drawable.back_arrow),
-					contentDescription = "return to previous page",
+					contentDescription = stringResource(id = R.string.return_to_previous_page),
 					tint = MaterialTheme.colorScheme.onBackground,
 					modifier = Modifier
 						.size(24.dp)
@@ -190,6 +192,7 @@ private fun TopBar() {
 			}
 		},
 		actions = {
+			val context = LocalContext.current
 			val showUpdateNotice by mainViewModel.settings.Versions.getShowUpdateNotice().collectAsStateWithLifecycle(false)
 			val showDialog = remember { mutableStateOf(false) }
 
@@ -202,20 +205,12 @@ private fun TopBar() {
 			}
 
 			val htmlString = remember {
-				"""
-					<p>This updater downloads apks from <a href="https://github.com/kaii-lb/LavenderPhotos/releases">GitHub Releases</a> which
-						means that they don't go through the additional screening and testing performed at IzzyOnDroid, F-Droid or elsewhere.
-
-						<br><br>The builds hosted on GitHub are always signed, checked, and verified by the developer (kaii-lb), but it is up to you whether you want to use them or not.
-
-						<br><br>Lavender Photos never does auto-updates, and only ever updates with explicit user consent.
-					</p>
-				""".trimIndent()
+				context.resources.getString(R.string.updates_notice_desc).trimIndent()
 			}
 
 			if (showDialog.value) {
 				AnnotatedExplanationDialog(
-					title = "Download Notice",
+					title = stringResource(id = R.string.updates_notice),
 					annotatedExplanation = AnnotatedString.fromHtml(
 						htmlString = htmlString,
 						linkStyles = TextLinkStyles(
@@ -243,7 +238,7 @@ private fun TopBar() {
 			) {
 				Icon(
 					painter = painterResource(id = R.drawable.info),
-					contentDescription = "check if there is an update"
+					contentDescription = stringResource(id = R.string.updates_check)
 				)
 			}
 		}
@@ -255,6 +250,8 @@ private fun BottomBar(
 	showLoadingSpinner: MutableState<Boolean>,
 	runRefreshAction: MutableState<Boolean>
 ) {
+	val context = LocalContext.current
+
 	Column (
 		modifier = Modifier
 			.fillMaxWidth(1f)
@@ -268,7 +265,7 @@ private fun BottomBar(
 		}
 		var isDownloading by rememberSaveable { mutableStateOf(false) }
 		var progress by rememberSaveable { mutableFloatStateOf(0f) }
-		var updateStatusText by remember { mutableStateOf("No Updates Found")}
+		var updateStatusText by remember { mutableStateOf(context.resources.getString(R.string.updates_not_found))}
 
 		// refresh on start
 		LaunchedEffect(runRefreshAction.value) {
@@ -280,18 +277,18 @@ private fun BottomBar(
 						showLoadingSpinner.value = false
 
 						updateStatusText =
-							if (newVersionExists) "New version available!"
-							else "Already on latest version"
+							if (newVersionExists) context.resources.getString(R.string.updates_new_version_available)
+							else context.resources.getString(R.string.updates_latest)
 					}
 
 					CheckUpdateState.Failed -> {
 						showLoadingSpinner.value = false
-						updateStatusText = "Failed checking for updates"
+						updateStatusText = context.resources.getString(R.string.updates_failed)
 					}
 
 					CheckUpdateState.Checking -> {
 						showLoadingSpinner.value = true
-						updateStatusText = "Checking For Updates"
+						updateStatusText = context.resources.getString(R.string.updates_checking)
 					}
 				}
 			}
@@ -369,7 +366,7 @@ private fun BottomBar(
 							}
 						) {
 							Text(
-								text = "Start Update",
+								text = stringResource(id = R.string.updates_start),
 								fontSize = TextUnit(14f, TextUnitType.Sp),
 							)
 						}

@@ -20,7 +20,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
@@ -28,12 +30,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
-import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
 import com.kaii.photos.compose.PreferencesRow
 import com.kaii.photos.compose.PreferencesSeparatorText
 import com.kaii.photos.compose.PreferencesSwitchRow
-import com.kaii.photos.compose.dialogs.ThumbnailSizeDialog
+import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
 import com.kaii.photos.compose.dialogs.DeleteIntervalDialog
+import com.kaii.photos.compose.dialogs.ThumbnailSizeDialog
 import com.kaii.photos.datastore.Storage
 import com.kaii.photos.datastore.TrashBin
 import com.kaii.photos.helpers.RowPosition
@@ -53,25 +55,32 @@ fun MemoryAndStorageSettingsPage() {
             horizontalAlignment = Alignment.Start
         ) {
             item {
-                PreferencesSeparatorText(text = "Trash Bin")
+                PreferencesSeparatorText(text = stringResource(id = R.string.trash))
             }
 
             item {
-                val autoDeleteInterval by mainViewModel.settings.TrashBin.getAutoDeleteInterval().collectAsStateWithLifecycle(initialValue = 0)
+                val autoDeleteInterval by mainViewModel.settings.TrashBin.getAutoDeleteInterval()
+                    .collectAsStateWithLifecycle(initialValue = 0)
                 val showDeleteIntervalDialog = remember { mutableStateOf(false) }
+
+                val autoDelete =
+                    stringResource(id = R.string.trash_auto_delete) + " $autoDeleteInterval " + stringResource(
+                        id = R.string.trash_days
+                    )
+                val noAutoDelete = stringResource(id = R.string.trash_no_auto_delete)
 
                 val summary by remember {
                     derivedStateOf {
                         if (autoDeleteInterval != 0) {
-                            "Auto delete items in trash bin after $autoDeleteInterval days"
+                            autoDelete
                         } else {
-                            "Items in trash bin won't be auto deleted"
+                            noAutoDelete
                         }
                     }
                 }
 
                 PreferencesSwitchRow(
-                    title = "Auto delete interval",
+                    title = stringResource(id = R.string.trash_auto_delete_interval),
                     iconResID = R.drawable.auto_delete,
                     summary = summary,
                     position = RowPosition.Single,
@@ -96,33 +105,45 @@ fun MemoryAndStorageSettingsPage() {
             }
 
             item {
-                PreferencesSeparatorText(text = "Storage")
+                PreferencesSeparatorText(text = stringResource(id = R.string.settings_storage))
             }
 
             item {
+                val context = LocalContext.current
                 val showThumbnailSizeDialog = remember { mutableStateOf(false) }
-                val thumbnailSize by mainViewModel.settings.Storage.getThumbnailSize().collectAsStateWithLifecycle(initialValue = 0)
-                val cacheThumbnails by mainViewModel.settings.Storage.getCacheThumbnails().collectAsStateWithLifecycle(initialValue = true)
+                val thumbnailSize by mainViewModel.settings.Storage.getThumbnailSize()
+                    .collectAsStateWithLifecycle(initialValue = 0)
+                val cacheThumbnails by mainViewModel.settings.Storage.getCacheThumbnails()
+                    .collectAsStateWithLifecycle(initialValue = true)
 
                 val memoryOrStorage by remember {
                     derivedStateOf {
-                        if (cacheThumbnails) "storage" else "memory"
+                        if (cacheThumbnails) context.resources.getString(R.string.settings_storage)
+                            .lowercase() else context.resources.getString(R.string.settings_memory)
+                            .lowercase()
                     }
                 }
                 val summary by remember {
                     derivedStateOf {
                         if (thumbnailSize != 0) {
-                            "Thumbnails are currently ${thumbnailSize}x${thumbnailSize} pixels. Higher values use more $memoryOrStorage"
+                            context.resources.getString(
+                                R.string.settings_storage_thumbnails_size,
+                                "${thumbnailSize}x${thumbnailSize}",
+                                memoryOrStorage
+                            )
                         } else {
-                            "Thumbnail are shown at max possible resolution. This uses the most $memoryOrStorage"
+                            context.resources.getString(
+                                R.string.settings_storage_thumbnails_max,
+                                memoryOrStorage
+                            )
                         }
                     }
                 }
 
                 PreferencesSwitchRow(
-                    title = "Cache Thumbnails",
+                    title = stringResource(id = R.string.settings_storage_thumbnails_cache),
                     iconResID = R.drawable.storage,
-                    summary = "Allows for faster loading at the cost of storage usage",
+                    summary = stringResource(id = R.string.settings_storage_thumbnails_cache_desc),
                     position = RowPosition.Single,
                     showBackground = false,
                     checked = cacheThumbnails
@@ -131,7 +152,7 @@ fun MemoryAndStorageSettingsPage() {
                 }
 
                 PreferencesSwitchRow(
-                    title = "Thumbnail Resolution",
+                    title = stringResource(id = R.string.settings_storage_thumbnails_resolution),
                     iconResID = R.drawable.resolution,
                     summary = summary,
                     position = RowPosition.Single,
@@ -159,11 +180,11 @@ fun MemoryAndStorageSettingsPage() {
                 val showConfirmationDialog = remember { mutableStateOf(false) }
 
                 PreferencesRow(
-                    title = "Clear thumbnail cache",
+                    title = stringResource(id = R.string.settings_storage_thumbnails_clear_cache),
                     iconResID = R.drawable.close,
                     position = RowPosition.Single,
                     showBackground = false,
-                    summary = "Erases thumbnail caches to free up storage"
+                    summary = stringResource(id = R.string.settings_storage_thumbnails_clear_cache_desc)
                 ) {
                     showConfirmationDialog.value = true
                 }
@@ -171,8 +192,8 @@ fun MemoryAndStorageSettingsPage() {
                 ConfirmationDialogWithBody(
                     showDialog = showConfirmationDialog,
                     confirmButtonLabel = "Clear",
-                    dialogTitle = "Clear Thumbnail Caches?",
-                    dialogBody = "This will erase all the thumbnail caches on this device, freeing up storage. Thumbnail loading will take longer on the next startup."
+                    dialogTitle = stringResource(id = R.string.settings_storage_thumbnails_clear_cache) + "?",
+                    dialogBody = stringResource(id = R.string.settings_clear_cache_desc)
                 ) {
                     mainViewModel.settings.Storage.clearThumbnailCache()
                 }
@@ -189,7 +210,7 @@ private fun MemoryAndStorageSettingsTopBar() {
     TopAppBar(
         title = {
             Text(
-                text = "Memory & Storage",
+                text = stringResource(id = R.string.settings_memory_storage),
                 fontSize = TextUnit(22f, TextUnitType.Sp)
             )
         },
@@ -201,7 +222,7 @@ private fun MemoryAndStorageSettingsTopBar() {
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.back_arrow),
-                    contentDescription = "Go back to previous page",
+                    contentDescription = stringResource(id = R.string.return_to_previous_page),
                     tint = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier
                         .size(24.dp)

@@ -26,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
@@ -56,7 +57,7 @@ fun PrivacyAndSecurityPage() {
         ) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 item {
-                    PreferencesSeparatorText("Permissions")
+                    PreferencesSeparatorText(stringResource(id = R.string.permissions))
                 }
 
                 item {
@@ -76,8 +77,8 @@ fun PrivacyAndSecurityPage() {
                     }
 
                     PreferencesSwitchRow(
-                        title = "Media Manager",
-                        summary = "Better and faster trash/delete/copy/move",
+                        title = stringResource(id = R.string.permissions_media_manager),
+                        summary = stringResource(id = R.string.permissions_media_manager_desc),
                         iconResID = R.drawable.movie_edit,
                         checked = isMediaManager,
                         position = RowPosition.Single,
@@ -91,7 +92,7 @@ fun PrivacyAndSecurityPage() {
 
             item {
                 PreferencesSeparatorText(
-                    text = "Media Management"
+                    text = stringResource(id = R.string.permissions_media_management)
                 )
             }
 
@@ -99,8 +100,8 @@ fun PrivacyAndSecurityPage() {
                 val confirmToDelete by mainViewModel.settings.Permissions.getConfirmToDelete().collectAsStateWithLifecycle(initialValue = true)
 
                 PreferencesSwitchRow(
-                    title = "Confirm to Delete",
-                    summary = "Ask for confirmation before deleting any media",
+                    title = stringResource(id = R.string.permissions_confirm_to_delete),
+                    summary = stringResource(id = R.string.permissions_confirm_too_delete_desc),
                     iconResID = R.drawable.confirm_action,
                     position = RowPosition.Single,
                     showBackground = false,
@@ -114,8 +115,8 @@ fun PrivacyAndSecurityPage() {
                 val overwriteOnMove by mainViewModel.settings.Permissions.getOverwriteDateOnMove().collectAsStateWithLifecycle(initialValue = true)
 
                 PreferencesSwitchRow(
-                    title = "Overwrite Date on Move",
-                    summary = "When enabled, copied/moved media shows at the top of the list",
+                    title = stringResource(id = R.string.permissions_overwrite_date_on_move),
+                    summary = stringResource(id = R.string.permissions_overwrite_date_on_move_desc),
                     iconResID = R.drawable.clock,
                     position = RowPosition.Single,
                     showBackground = false,
@@ -136,7 +137,7 @@ private fun PrivacyAndSecuritySettingsTopBar() {
     TopAppBar(
         title = {
             Text(
-                text = "Privacy & Security",
+                text = stringResource(id = R.string.settings_privacy),
                 fontSize = TextUnit(22f, TextUnitType.Sp)
             )
         },
@@ -148,7 +149,7 @@ private fun PrivacyAndSecuritySettingsTopBar() {
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.back_arrow),
-                    contentDescription = "Go back to previous page",
+                    contentDescription = stringResource(id = R.string.return_to_previous_page),
                     tint = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier
                         .size(24.dp)

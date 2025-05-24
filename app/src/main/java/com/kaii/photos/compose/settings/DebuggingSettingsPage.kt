@@ -281,7 +281,7 @@ private fun DebuggingSettingsTopBar() {
     TopAppBar(
         title = {
             Text(
-                text = "Debugging",
+                text = stringResource(id = R.string.debugging),
                 fontSize = TextUnit(22f, TextUnitType.Sp)
             )
         },
@@ -293,7 +293,7 @@ private fun DebuggingSettingsTopBar() {
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.back_arrow),
-                    contentDescription = "Go back to previous page",
+                    contentDescription = stringResource(id = R.string.return_to_previous_page),
                     tint = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier
                         .size(24.dp)
