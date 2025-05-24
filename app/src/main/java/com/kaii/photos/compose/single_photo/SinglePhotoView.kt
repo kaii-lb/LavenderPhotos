@@ -2,6 +2,7 @@ package com.kaii.photos.compose.single_photo
 
 import android.annotation.SuppressLint
 import android.content.res.Configuration
+import android.util.Log
 import android.view.Window
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -50,6 +51,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
@@ -87,7 +89,7 @@ import com.kaii.photos.models.favourites_grid.FavouritesViewModelFactory
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import kotlinx.coroutines.Dispatchers
 
-// private const val TAG = "SINGLE_PHOTO_VIEW"
+private const val TAG = "SINGLE_PHOTO_VIEW"
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -148,6 +150,7 @@ fun SinglePhotoView(
     }
 
     val appBarsVisible = remember { mutableStateOf(true) }
+    val context = LocalContext.current
     val currentMediaItem = remember {
         derivedStateOf {
             val index = state.layoutInfo.visiblePagesInfo.firstOrNull()?.index ?: 0
@@ -155,7 +158,7 @@ fun SinglePhotoView(
                 groupedMedia.value[index]
             } else {
                 MediaStoreData(
-                    displayName = "Broken Media"
+                    displayName = context.resources.getString(R.string.media_broken)
                 )
             }
         }
@@ -306,7 +309,7 @@ private fun TopBar(
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.back_arrow),
-                        contentDescription = "Go back to previous page",
+                        contentDescription = stringResource(id = R.string.return_to_previous_page),
                         tint = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier
                             .size(24.dp)
@@ -343,7 +346,7 @@ private fun TopBar(
                 ) {
                     Icon(
                         painter = painterResource(id = if (isSelected) R.drawable.favourite_filled else R.drawable.favourite),
-                        contentDescription = "favorite this media item",
+                        contentDescription = stringResource(id = R.string.favourites_add_this),
                         tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier
                             .size(24.dp)
@@ -358,7 +361,7 @@ private fun TopBar(
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.more_options),
-                        contentDescription = "show more options",
+                        contentDescription = stringResource(id = R.string.show_options),
                         tint = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier
                             .size(24.dp)
@@ -389,7 +392,10 @@ private fun BottomBar(
     var showLoadingDialog by remember { mutableStateOf(false) }
 
     if (showLoadingDialog) {
-        LoadingDialog(title = "Encrypting Files", body = "Please wait while the media is processed")
+        LoadingDialog(
+            title = stringResource(id = R.string.secure_encrypting),
+            body = stringResource(id = R.string.secure_processing)
+        )
     }
 
     AnimatedVisibility(
@@ -427,7 +433,7 @@ private fun BottomBar(
                     else Arrangement.SpaceEvenly
                 ) {
                     BottomAppBarItem(
-                        text = "Share",
+                        text = stringResource(id = R.string.media_share),
                         iconResId = R.drawable.share,
                         cornerRadius = 32.dp,
                         action = {
@@ -439,8 +445,8 @@ private fun BottomBar(
 
                     if (showNotImplementedDialog.value) {
                         ExplanationDialog(
-                            title = "Unimplemented",
-                            explanation = "Editing videos has not been implemented yet as of version ${BuildConfig.VERSION_NAME} of Lavender Photos. This feature will be added as soon as possible, thank you for your patience.",
+                            title = stringResource(id = R.string.feature_unimplemented),
+                            explanation = stringResource(id = R.string.feature_editing_unimplemented, BuildConfig.VERSION_NAME),
                             showDialog = showNotImplementedDialog
                         )
                     }
@@ -459,7 +465,7 @@ private fun BottomBar(
                     val showDeleteDialog = remember { mutableStateOf(false) }
                     val runTrashAction = remember { mutableStateOf(false) }
 
-                    println("CURRENT ITEM URI ${currentItem.uri}")
+                    Log.d(TAG, "CURRENT ITEM URI ${currentItem.uri}")
 
                     val coroutineScope = rememberCoroutineScope()
                     GetPermissionAndRun(
@@ -501,8 +507,8 @@ private fun BottomBar(
                         dialogComposable = {
                             ConfirmationDialog(
                                 showDialog = showDeleteDialog,
-                                dialogTitle = "Delete this ${currentItem.type}?",
-                                confirmButtonLabel = "Delete"
+                                dialogTitle = stringResource(id = R.string.media_delete_confirm, currentItem.type),
+                                confirmButtonLabel = stringResource(id = R.string.media_delete)
                             ) {
                                 runTrashAction.value = true
                             }
@@ -553,7 +559,7 @@ private fun BottomBar(
                     )
 
                     BottomAppBarItem(
-                        text = "Secure",
+                        text = stringResource(id = R.string.media_secure),
                         iconResId = R.drawable.locked_folder,
                         cornerRadius = 32.dp,
                         action = {
@@ -562,8 +568,8 @@ private fun BottomBar(
                         dialogComposable = {
                             ConfirmationDialog(
                                 showDialog = showMoveToSecureFolderDialog,
-                                dialogTitle = "Move this ${currentItem.type} to Secure Folder?",
-                                confirmButtonLabel = "Secure"
+                                dialogTitle = stringResource(id = R.string.media_secure_confirm, currentItem.type),
+                                confirmButtonLabel = stringResource(id = R.string.media_secure)
                             ) {
                                 tryGetDirPermission.value = true
 

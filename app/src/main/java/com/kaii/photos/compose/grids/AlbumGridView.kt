@@ -64,6 +64,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntRect
@@ -516,7 +517,7 @@ private fun AlbumGridItem(
                 if (album.isCustomAlbum) {
                     Icon(
                         painter = painterResource(id = R.drawable.art_track),
-                        contentDescription = "This album is a custom album",
+                        contentDescription = stringResource(id = R.string.albums_is_custom),
                         tint = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier
                             .padding(end = 2.dp)
@@ -556,7 +557,7 @@ private fun CategoryList(
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.favourite),
-                    contentDescription = "Favourites Button",
+                    contentDescription = stringResource(id = R.string.favourites),
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier
                         .size(22.dp)
@@ -569,7 +570,7 @@ private fun CategoryList(
                 )
 
                 Text(
-                    text = "Favourites",
+                    text = stringResource(id = R.string.favourites),
                     fontSize = TextUnit(16f, TextUnitType.Sp),
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onBackground,
@@ -596,14 +597,14 @@ private fun CategoryList(
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.trash),
-                    contentDescription = "Trash Button",
+                    contentDescription = stringResource(id = R.string.trash_bin),
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier
                         .size(20.dp)
                 )
 
                 Text(
-                    text = "Trash ",
+                    text = stringResource(id = R.string.trash) + " ",
                     fontSize = TextUnit(16f, TextUnitType.Sp),
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onBackground,
@@ -656,7 +657,7 @@ private fun SortModeHeader(
 
                 Icon(
                     painter = painterResource(id = R.drawable.back_arrow),
-                    contentDescription = "Sort by descending indicator",
+                    contentDescription = stringResource(id = R.string.sort_indicator),
                     modifier = Modifier
                         .rotate(animatedRotation)
                 )
@@ -673,7 +674,7 @@ private fun SortModeHeader(
                     else ButtonDefaults.outlinedButtonColors()
             ) {
                 Text(
-                    text = "Date",
+                    text = stringResource(id = R.string.sort_date),
                     modifier = Modifier
                         .scale(progress)
                 )
@@ -690,7 +691,7 @@ private fun SortModeHeader(
                     else ButtonDefaults.outlinedButtonColors()
             ) {
                 Text(
-                    text = "Name",
+                    text = stringResource(id = R.string.sort_name),
                     modifier = Modifier
                         .scale(progress)
                 )
@@ -707,7 +708,7 @@ private fun SortModeHeader(
                     else ButtonDefaults.outlinedButtonColors()
             ) {
                 Text(
-                    text = "Custom",
+                    text = stringResource(id = R.string.sort_custom),
                     modifier = Modifier
                         .scale(progress)
                 )
@@ -725,7 +726,7 @@ private fun SortModeHeader(
                         else ButtonDefaults.outlinedButtonColors()
                 ) {
                     Text(
-                        text = "Secure Folder",
+                        text = stringResource(id = R.string.secure_folder),
                         modifier = Modifier
                             .scale(progress)
                     )

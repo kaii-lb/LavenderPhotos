@@ -73,6 +73,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -151,7 +152,7 @@ fun VideoPlayerControls(
                     .padding(16.dp)
             ) {
                 Text(
-                    text = if (title == "") "Media" else title,
+                    text = if (title == "") stringResource(id = R.string.media) else title,
                     fontSize = TextUnit(12f, TextUnitType.Sp),
                     color = MaterialTheme.colorScheme.onSecondaryContainer,
                     overflow = TextOverflow.Ellipsis,
@@ -311,7 +312,7 @@ fun VideoPlayerControls(
                 ) {
                     Icon(
                         painter = painterResource(id = if (isMuted.value) R.drawable.volume_mute else R.drawable.volume_max),
-                        contentDescription = "Video player mute or un-mute",
+                        contentDescription = stringResource(id = R.string.video_mute_toggle),
                         modifier = Modifier
                             .size(24.dp)
                     )
@@ -340,7 +341,7 @@ fun VideoPlayerControls(
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.fast_rewind),
-                    contentDescription = "Video player skip back 5 seconds",
+                    contentDescription = stringResource(id = R.string.video_seek_back),
                     modifier = Modifier
                         .padding(0.dp, 0.dp, 2.dp, 0.dp)
                 )
@@ -359,7 +360,7 @@ fun VideoPlayerControls(
             ) {
                 Icon(
                     painter = painterResource(id = if (!isPlaying.value) R.drawable.play_arrow else R.drawable.pause),
-                    contentDescription = "Video player play or pause"
+                    contentDescription = stringResource(id = R.string.video_play_toggle)
                 )
             }
 
@@ -378,7 +379,7 @@ fun VideoPlayerControls(
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.fast_forward),
-                    contentDescription = "Video player skip forward 5 seconds",
+                    contentDescription = stringResource(id = R.string.video_seek_front),
                     modifier = Modifier
                         .padding(2.dp, 0.dp, 0.dp, 0.dp)
                 )
@@ -438,14 +439,14 @@ fun VideoPlayer(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Decrypting video, please wait",
+                    text = stringResource(id = R.string.video_decrypting),
                     fontSize = TextUnit(16f, TextUnitType.Sp)
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "Progress:",
+                    text = stringResource(id = R.string.media_progress),
                     fontSize = TextUnit(16f, TextUnitType.Sp)
                 )
 
@@ -733,7 +734,7 @@ fun VideoPlayer(
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.fast_rewind),
-                        contentDescription = "Shows which way the user is seeking",
+                        contentDescription = stringResource(id = R.string.video_seek_icon_desc),
                         modifier = Modifier
                             .size(48.dp)
                             .align(Alignment.Center)
@@ -778,7 +779,7 @@ fun VideoPlayer(
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.fast_forward),
-                        contentDescription = "Shows which way the user is seeking",
+                        contentDescription = stringResource(id = R.string.video_seek_icon_desc),
                         modifier = Modifier
                             .size(48.dp)
                             .align(Alignment.Center)
@@ -858,7 +859,7 @@ fun VideoPlayer(
                 ) {
                     Icon(
                         painter = painterResource(id = if (isTouchLocked.value) R.drawable.locked_folder else R.drawable.unlock),
-                        contentDescription = "Lock the screen preventing miss-touch",
+                        contentDescription = stringResource(id = R.string.video_lock_screen),
                         modifier = Modifier
                             .size(20.dp)
                     )
@@ -895,7 +896,7 @@ fun VideoPlayer(
                         ) {
                             Icon(
                                 painter = painterResource(id = R.drawable.more_options),
-                                contentDescription = "Show more video player options",
+                                contentDescription = stringResource(id = R.string.show_options),
                                 modifier = Modifier
                                     .size(20.dp)
                             )

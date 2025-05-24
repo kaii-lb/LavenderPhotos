@@ -56,6 +56,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -69,7 +70,6 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
-import com.kaii.photos.MainActivity
 import com.kaii.photos.MainActivity.Companion.applicationDatabase
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
@@ -98,6 +98,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import androidx.lifecycle.compose.currentStateAsState
 
 private const val TAG = "SINGLE_HIDDEN_PHOTO_VIEW"
 
@@ -130,7 +131,7 @@ fun SingleHiddenPhotoView(
         }
     }
 
-    DisposableEffect(key1 = lifecycleOwner.lifecycle.currentState, isGettingPermissions.value) {
+    DisposableEffect(key1 = lifecycleOwner.lifecycle.currentStateAsState().value, isGettingPermissions.value) {
         val lifecycleObserver =
             LifecycleEventObserver { _, event ->
 
@@ -165,8 +166,6 @@ fun SingleHiddenPhotoView(
 
     if (hideSecureFolder) return
 
-    val mainViewModel = MainActivity.mainViewModel
-
     // val mediaItem = mainViewModel.selectedMediaData.collectAsState(initial = null).value ?: return
 
     val holderGroupedMedia =
@@ -194,6 +193,7 @@ fun SingleHiddenPhotoView(
     val state = rememberPagerState {
         groupedMedia.value.size
     }
+    val context = LocalContext.current
     val currentMediaItem by remember {
         derivedStateOf {
             val index = state.layoutInfo.visiblePagesInfo.firstOrNull()?.index ?: 0
@@ -201,7 +201,7 @@ fun SingleHiddenPhotoView(
                 groupedMedia.value[index]
             } else {
                 MediaStoreData(
-                    displayName = "Broken Media"
+                    displayName = context.resources.getString(R.string.media_broken)
                 )
             }
         }
@@ -296,7 +296,7 @@ private fun TopBar(
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.back_arrow),
-                        contentDescription = "Go back to previous page",
+                        contentDescription = stringResource(id = R.string.return_to_previous_page),
                         tint = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier
                             .size(24.dp)
@@ -324,8 +324,8 @@ private fun TopBar(
 
                 if (showLoadingDialog) {
                     LoadingDialog(
-                        title = "Sharing Image",
-                        body = "Hold on while this image is processed"
+                        title = stringResource(id = R.string.secure_sharing),
+                        body = stringResource(id = R.string.secure_processing)
                     )
                 }
 
@@ -377,7 +377,7 @@ private fun TopBar(
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.share),
-                        contentDescription = "share this secured photo",
+                        contentDescription = stringResource(id = R.string.secure_share_media),
                         tint = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier
                             .size(24.dp)
@@ -391,7 +391,7 @@ private fun TopBar(
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.more_options),
-                        contentDescription = "show more options",
+                        contentDescription = stringResource(id = R.string.show_options),
                         tint = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier
                             .size(24.dp)

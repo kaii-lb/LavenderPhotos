@@ -134,6 +134,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -220,16 +221,16 @@ fun EditingView(
 
     ConfirmationDialog(
         showDialog = showCloseDialog,
-        dialogTitle = "Discard ongoing edits?",
-        confirmButtonLabel = "Discard"
+        dialogTitle = stringResource(id = R.string.editing_discard_desc),
+        confirmButtonLabel = stringResource(id = R.string.editing_discard)
     ) {
         navController.popBackStack()
     }
 
     ConfirmationDialog(
         showDialog = showBackClickCloseDialog,
-        dialogTitle = "Exit editing view?",
-        confirmButtonLabel = "Exit"
+        dialogTitle = stringResource(id = R.string.editing_exit_desc),
+        confirmButtonLabel = stringResource(id = R.string.editing_exit)
     ) {
         navController.popBackStack()
     }
@@ -1524,7 +1525,7 @@ private fun EditingViewTopBar(
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.close),
-                            contentDescription = "Close editing view",
+                            contentDescription = stringResource(id = R.string.editing_close_desc),
                             tint = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier
                                 .size(24.dp)
@@ -1552,12 +1553,13 @@ private fun EditingViewTopBar(
                         Spacer(modifier = Modifier.width(8.dp))
                     }
 
+                    val context = LocalContext.current
                     val saveButtonTitle by remember {
                         derivedStateOf {
                             if (overwrite.value) {
-                                "Save"
+                                context.resources.getString(R.string.editing_overwrite)
                             } else {
-                                "Save Copy"
+                                context.resources.getString(R.string.editing_save)
                             }
                         }
                     }
@@ -1587,7 +1589,7 @@ private fun EditingViewTopBar(
                         secondaryContent = {
                             Icon(
                                 painter = painterResource(id = R.drawable.drop_down_arrow),
-                                contentDescription = "Show save options",
+                                contentDescription = stringResource(id = R.string.editing_save_option_desc),
                                 modifier = Modifier
                                     .size(32.dp)
                             )
@@ -1608,7 +1610,7 @@ private fun EditingViewTopBar(
                         shadowElevation = 8.dp
                     ) {
                         SelectableDropDownMenuItem(
-                            text = "Overwrite Original",
+                            text = stringResource(id = R.string.editing_overwrite_desc),
                             iconResId = R.drawable.file_is_selected_foreground,
                             isSelected = overwrite.value
                         ) {
@@ -1618,7 +1620,7 @@ private fun EditingViewTopBar(
                         }
 
                         SelectableDropDownMenuItem(
-                            text = "Save Copy",
+                            text = stringResource(id = R.string.editing_save),
                             iconResId = R.drawable.file_is_selected_foreground,
                             isSelected = !overwrite.value
                         ) {
@@ -1658,7 +1660,7 @@ private fun EditingViewTopBar(
                 Icon(
                     painter = painterResource(id = R.drawable.other_page_indicator),
                     tint = MaterialTheme.colorScheme.onSurface,
-                    contentDescription = "Show editing top bar",
+                    contentDescription = stringResource(id = R.string.editing_show_topbar),
                     modifier = Modifier
                         .padding(0.dp, 0.dp, 0.dp, 4.dp)
                         .rotate(animatedRotation)
@@ -1758,7 +1760,7 @@ private fun EditingViewBottomBar(
                 Icon(
                     painter = painterResource(id = R.drawable.other_page_indicator),
                     tint = MaterialTheme.colorScheme.onSurface,
-                    contentDescription = "Show editing tools",
+                    contentDescription = stringResource(id = R.string.editing_show_tools),
                     modifier = Modifier
                         .padding(0.dp, 4.dp, 0.dp, 0.dp)
                         .rotate(animatedRotation)
@@ -1870,25 +1872,25 @@ private fun EditingViewBottomBar(
                                     orientation = Orientation.Horizontal
                                 )
                         ) {
-                            SimpleTab(text = "Crop", selected = pagerState.currentPage == 0) {
+                            SimpleTab(text = stringResource(id = R.string.editing_crop), selected = pagerState.currentPage == 0) {
                                 coroutineScope.launch {
                                     pagerState.animateScrollToPage(0)
                                 }
                             }
 
-                            SimpleTab(text = "Adjust", selected = pagerState.currentPage == 1) {
+                            SimpleTab(text = stringResource(id = R.string.editing_adjust), selected = pagerState.currentPage == 1) {
                                 coroutineScope.launch {
                                     pagerState.animateScrollToPage(1)
                                 }
                             }
 
-                            SimpleTab(text = "Filters", selected = pagerState.currentPage == 2) {
+                            SimpleTab(text = stringResource(id = R.string.editing_filters), selected = pagerState.currentPage == 2) {
                                 coroutineScope.launch {
                                     pagerState.animateScrollToPage(2)
                                 }
                             }
 
-                            SimpleTab(text = "Draw", selected = pagerState.currentPage == 3) {
+                            SimpleTab(text = stringResource(id = R.string.editing_draw), selected = pagerState.currentPage == 3) {
                                 coroutineScope.launch {
                                     pagerState.animateScrollToPage(3)
                                 }
@@ -1982,7 +1984,7 @@ fun CropTools(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
-        EditingViewBottomAppBarItem(text = "Rotate", iconResId = R.drawable.rotate_ccw) {
+        EditingViewBottomAppBarItem(text = stringResource(id = R.string.editing_rotate), iconResId = R.drawable.rotate_ccw) {
             rotationMultiplier.intValue += 1
             changesSize.intValue += 1
         }
@@ -1995,11 +1997,11 @@ fun CropTools(
                 croppingRatio.floatValue = ratio
             }
         )
-        EditingViewBottomAppBarItem(text = "Ratio", iconResId = R.drawable.resolution) {
+        EditingViewBottomAppBarItem(text = stringResource(id = R.string.editing_ratio), iconResId = R.drawable.resolution) {
             showBottomSheet.value = true
         }
 
-        EditingViewBottomAppBarItem(text = "Reset", iconResId = R.drawable.reset) {
+        EditingViewBottomAppBarItem(text = stringResource(id = R.string.editing_reset), iconResId = R.drawable.reset) {
             resetCropping()
             changesSize.intValue += 1
         }
@@ -2301,7 +2303,7 @@ fun AdjustTools(
     ) {
         item {
             EditingViewBottomAppBarItem(
-                text = "Contrast",
+                text = stringResource(id = R.string.editing_contrast),
                 iconResId = R.drawable.contrast,
                 selected = selectedProperty.value == SelectedImageProperties.Contrast
             ) {
@@ -2313,7 +2315,7 @@ fun AdjustTools(
 
         item {
             EditingViewBottomAppBarItem(
-                text = "Brightness",
+                text = stringResource(id = R.string.editing_brightness),
                 iconResId = R.drawable.palette,
                 selected = selectedProperty.value == SelectedImageProperties.Brightness
             ) {
@@ -2325,7 +2327,7 @@ fun AdjustTools(
 
         item {
             EditingViewBottomAppBarItem(
-                text = "Saturation",
+                text = stringResource(id = R.string.editing_saturation),
                 iconResId = R.drawable.resolution,
                 selected = selectedProperty.value == SelectedImageProperties.Saturation
             ) {
@@ -2337,7 +2339,7 @@ fun AdjustTools(
 
         item {
             EditingViewBottomAppBarItem(
-                text = "Black Point",
+                text = stringResource(id = R.string.editing_black_point),
                 iconResId = R.drawable.file_is_selected_background,
                 selected = selectedProperty.value == SelectedImageProperties.BlackPoint
             ) {
@@ -2349,7 +2351,7 @@ fun AdjustTools(
 
         item {
             EditingViewBottomAppBarItem(
-                text = "White Point",
+                text = stringResource(id = R.string.editing_white_point),
                 iconResId = R.drawable.file_not_selected_background,
                 selected = selectedProperty.value == SelectedImageProperties.WhitePoint
             ) {
@@ -2361,7 +2363,7 @@ fun AdjustTools(
 
         item {
             EditingViewBottomAppBarItem(
-                text = "Shadows",
+                text = stringResource(id = R.string.editing_shadows),
                 iconResId = R.drawable.shadow,
                 selected = selectedProperty.value == SelectedImageProperties.Shadows
             )
@@ -2369,7 +2371,7 @@ fun AdjustTools(
 
         item {
             EditingViewBottomAppBarItem(
-                text = "Warmth",
+                text = stringResource(id = R.string.editing_warmth),
                 iconResId = R.drawable.skillet,
                 selected = selectedProperty.value == SelectedImageProperties.Warmth
             ) {
@@ -2381,7 +2383,7 @@ fun AdjustTools(
 
         item {
             EditingViewBottomAppBarItem(
-                text = "Color Tint",
+                text = stringResource(id = R.string.editing_color_tint),
                 iconResId = R.drawable.colors,
                 selected = selectedProperty.value == SelectedImageProperties.ColorTint
             ) {
@@ -2393,7 +2395,7 @@ fun AdjustTools(
 
         item {
             EditingViewBottomAppBarItem(
-                text = "Highlights",
+                text = stringResource(id = R.string.editing_highlights),
                 iconResId = R.drawable.highlights,
                 selected = selectedProperty.value == SelectedImageProperties.Highlights
             ) {
@@ -2451,7 +2453,7 @@ fun DrawTools(
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         EditingViewBottomAppBarItem(
-            text = "Pencil",
+            text = stringResource(id = R.string.editing_pencil),
             iconResId = R.drawable.pencil,
             selected = paint.value.type == PaintType.Pencil
         ) {
@@ -2463,7 +2465,7 @@ fun DrawTools(
         }
 
         EditingViewBottomAppBarItem(
-            text = "Highlighter",
+            text = stringResource(id = R.string.editing_highlighter),
             iconResId = R.drawable.highlighter,
             selected = paint.value.type == PaintType.Highlighter
         ) {
@@ -2475,7 +2477,7 @@ fun DrawTools(
         }
 
         EditingViewBottomAppBarItem(
-            text = "Text",
+            text = stringResource(id = R.string.editing_text),
             iconResId = R.drawable.text,
             selected = paint.value.type == PaintType.Text
         ) {
@@ -2488,7 +2490,7 @@ fun DrawTools(
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             EditingViewBottomAppBarItem(
-                text = "Blur",
+                text = stringResource(id = R.string.editing_blur),
                 iconResId = R.drawable.light,
                 selected = paint.value.type == PaintType.Blur
             ) {
@@ -2584,7 +2586,7 @@ private fun BoxWithConstraintsScope.DrawActionsAndColors(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "Clear",
+                            text = stringResource(id = R.string.settings_clear),
                             fontSize = TextUnit(14f, TextUnitType.Sp),
                             color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier
@@ -2611,7 +2613,7 @@ private fun BoxWithConstraintsScope.DrawActionsAndColors(
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.close),
-                            contentDescription = "undo all actions",
+                            contentDescription = stringResource(id = R.string.editing_undo_all),
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -2636,7 +2638,7 @@ private fun BoxWithConstraintsScope.DrawActionsAndColors(
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.back_arrow),
-                        contentDescription = "undo last action",
+                        contentDescription = stringResource(id = R.string.editing_undo_last),
                         tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
@@ -2918,7 +2920,7 @@ fun BoxWithConstraintsScope.DrawingControls(
                         SliderStates.FontScaling -> {
                             Icon(
                                 painter = painterResource(id = R.drawable.paintbrush_2),
-                                contentDescription = "Change paintbrush or text size",
+                                contentDescription = stringResource(id = R.string.editing_scale_paint),
                                 modifier = Modifier
                                     .size(22.dp)
                             )
@@ -2927,7 +2929,7 @@ fun BoxWithConstraintsScope.DrawingControls(
                         SliderStates.Zooming -> {
                             Icon(
                                 painter = painterResource(id = R.drawable.zoom_in),
-                                contentDescription = "Zoom in instead of scaling font size",
+                                contentDescription = stringResource(id = R.string.editing_scale_zoom),
                                 modifier = Modifier
                                     .size(22.dp)
                             )
@@ -2936,7 +2938,7 @@ fun BoxWithConstraintsScope.DrawingControls(
                         SliderStates.SelectedTextScaling -> {
                             Icon(
                                 painter = painterResource(id = R.drawable.text),
-                                contentDescription = "Change font size of selected text",
+                                contentDescription = stringResource(id = R.string.editing_scale_text),
                                 modifier = Modifier
                                     .size(20.dp)
                             )

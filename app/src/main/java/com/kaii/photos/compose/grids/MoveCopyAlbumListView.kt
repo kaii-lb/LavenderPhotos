@@ -50,6 +50,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
@@ -191,7 +192,7 @@ fun MoveCopyAlbumListView(
 
             if (albumsList.isEmpty()) {
                 FolderIsEmpty(
-                    emptyText = "No such albums exists",
+                    emptyText = stringResource(id = R.string.albums_non_existent),
                     emptyIconResId = R.drawable.error,
                     backgroundColor = Color.Transparent
                 )
@@ -358,7 +359,7 @@ fun AlbumsListItem(
                         if (inserted == 0) {
                             LavenderSnackbarController.pushEvent(
                                 LavenderSnackbarEvents.MessageEvent(
-                                    message = "All items are already in album",
+                                    message = context.resources.getString(R.string.albums_already_contains_all),
                                     iconResId = R.drawable.error_2,
                                     duration = SnackbarDuration.Short
                                 )

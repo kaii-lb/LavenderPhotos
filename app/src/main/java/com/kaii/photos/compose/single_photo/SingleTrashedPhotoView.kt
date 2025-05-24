@@ -49,6 +49,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -129,7 +130,7 @@ fun SingleTrashedPhotoView(
                 groupedMedia.value[index]
             } else {
                 MediaStoreData(
-                    displayName = "Broken Media"
+                    displayName = context.resources.getString(R.string.media_broken)
                 )
             }
         }
@@ -162,14 +163,14 @@ fun SingleTrashedPhotoView(
                     }
                 ) {
                     Text(
-                        text = "Delete",
+                        text = stringResource(id = R.string.media_delete),
                         fontSize = TextUnit(14f, TextUnitType.Sp)
                     )
                 }
             },
             title = {
                 Text(
-                    text = "Permanently delete this ${currentMediaItem.type.name}?",
+                    text = stringResource(id = R.string.media_delete_permanently_confirm, currentMediaItem.type.name),
                     fontSize = TextUnit(16f, TextUnitType.Sp)
                 )
             },
@@ -184,7 +185,7 @@ fun SingleTrashedPhotoView(
                     )
                 ) {
                     Text(
-                        text = "Cancel",
+                        text = stringResource(id = R.string.media_cancel),
                         fontSize = TextUnit(14f, TextUnitType.Sp)
                     )
                 }
@@ -271,7 +272,7 @@ private fun TopBar(
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.back_arrow),
-                        contentDescription = "Go back to previous page",
+                        contentDescription = stringResource(id = R.string.return_to_previous_page),
                         tint = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier
                             .size(24.dp)
@@ -279,13 +280,13 @@ private fun TopBar(
                 }
             },
             title = {
-                val mediaTitle = mediaItem?.displayName ?: "Media"
+                val mediaTitle = mediaItem?.displayName ?: stringResource(id = R.string.media)
 
                 Spacer(modifier = Modifier.width(8.dp))
 
                 val splitBy = Regex("trashed-[0-9]+-")
                 Text(
-                    text = mediaTitle.split(splitBy).lastOrNull() ?: "Media",
+                    text = mediaTitle.split(splitBy).lastOrNull() ?: stringResource(id = R.string.media),
                     fontSize = TextUnit(18f, TextUnitType.Sp),
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
@@ -302,7 +303,7 @@ private fun TopBar(
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.more_options),
-                        contentDescription = "show more options",
+                        contentDescription = stringResource(id = R.string.show_options),
                         tint = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier
                             .size(24.dp)
@@ -378,7 +379,7 @@ private fun BottomBar(
                         ) {
                             Icon(
                                 painter = painterResource(id = R.drawable.favourite),
-                                contentDescription = "Restore Image Button",
+                                contentDescription = stringResource(id = R.string.media_restore),
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier
                                     .size(22.dp)
@@ -390,7 +391,7 @@ private fun BottomBar(
                             )
 
                             Text(
-                                text = "Restore",
+                                text = stringResource(id = R.string.media_restore),
                                 fontSize = TextUnit(16f, TextUnitType.Sp),
                                 textAlign = TextAlign.Center,
                                 color = MaterialTheme.colorScheme.onBackground,
@@ -417,7 +418,7 @@ private fun BottomBar(
                         ) {
                             Icon(
                                 painter = painterResource(id = R.drawable.trash),
-                                contentDescription = "Permanently Delete Image Button",
+                                contentDescription = stringResource(id = R.string.media_delete_permanently),
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier
                                     .size(22.dp)
@@ -429,7 +430,7 @@ private fun BottomBar(
                             )
 
                             Text(
-                                text = "Delete",
+                                text = stringResource(id = R.string.media_delete),
                                 fontSize = TextUnit(16f, TextUnitType.Sp),
                                 textAlign = TextAlign.Center,
                                 color = MaterialTheme.colorScheme.onBackground,

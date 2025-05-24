@@ -38,6 +38,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.mainViewModel
+import com.kaii.photos.R
 import com.kaii.photos.compose.SearchTextField
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.datastore.AlbumInfo
@@ -119,6 +120,7 @@ fun SearchPage(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            val context = LocalContext.current
             val placeholdersList = remember {
                 val month = months.random().replaceFirstChar {
                     it.uppercase()
@@ -130,11 +132,11 @@ fun SearchPage(
                 val year = (2016..2024).random()
 
                 listOf(
-                    "Search for a photo's name",
-                    "Search for a specific date",
+                    context.resources.getString(R.string.search_photo_name),
+                    context.resources.getString(R.string.search_photo_date),
                     "$month $date $year",
                     "$month $year",
-                    "Search by day",
+                    context.resources.getString(R.string.search_photo_day),
                     "$day $month $year",
                     "$date $month $year"
                 )
@@ -288,6 +290,7 @@ fun SearchPage(
     }
 }
 
+// TODO: respect locale
 private val months = listOf(
     "january",
     "february",
@@ -313,6 +316,7 @@ private val days = listOf(
     "sunday"
 )
 
+// TODO: rewrite
 private fun String.toDateListOrNull(): List<Date?> {
     val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
     dateFormat.isLenient = true

@@ -55,7 +55,7 @@ fun MemoryAndStorageSettingsPage() {
             horizontalAlignment = Alignment.Start
         ) {
             item {
-                PreferencesSeparatorText(text = stringResource(id = R.string.trash))
+                PreferencesSeparatorText(text = stringResource(id = R.string.trash_bin))
             }
 
             item {

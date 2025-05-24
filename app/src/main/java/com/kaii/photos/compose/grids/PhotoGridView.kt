@@ -76,6 +76,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
@@ -547,6 +548,7 @@ fun DeviceMedia(
                                                 }
                                             }
 
+                                            // TODO: respect locale
                                             val format =
                                                 remember { DateTimeFormatter.ofPattern("MMM yyyy") }
                                             val formatted = remember(item) {
@@ -819,7 +821,7 @@ fun MediaStoreItem(
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.movie_filled),
-                        contentDescription = "file is video indicator",
+                        contentDescription = stringResource(id = R.string.file_is_a_video),
                         tint = Color.White,
                         modifier = Modifier
                             .size(20.dp)

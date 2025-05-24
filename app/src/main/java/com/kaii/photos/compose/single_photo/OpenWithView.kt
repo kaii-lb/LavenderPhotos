@@ -83,6 +83,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
@@ -127,7 +128,7 @@ class OpenWithView : ComponentActivity() {
         val uri = intent.data
 
         if (uri == null) {
-            Toast.makeText(applicationContext, "This media doesn't exist!", Toast.LENGTH_LONG).show()
+            Toast.makeText(applicationContext, applicationContext.resources.getString(R.string.media_non_existent), Toast.LENGTH_LONG).show()
             finish()
             return
         }
@@ -567,7 +568,7 @@ private fun OpenWithVideoPlayer(
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.fast_rewind),
-                        contentDescription = "Shows which way the user is seeking",
+                        contentDescription = stringResource(id = R.string.video_seek_icon_desc),
                         modifier = Modifier
                             .size(48.dp)
                             .align(Alignment.Center)
@@ -613,7 +614,7 @@ private fun OpenWithVideoPlayer(
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.fast_forward),
-                        contentDescription = "Shows which way the user is seeking",
+                        contentDescription = stringResource(id = R.string.video_seek_icon_desc),
                         modifier = Modifier
                             .size(48.dp)
                             .align(Alignment.Center)
@@ -692,7 +693,7 @@ private fun OpenWithVideoPlayer(
                 ) {
                     Icon(
                         painter = painterResource(id = if (isTouchLocked.value) R.drawable.locked_folder else R.drawable.unlock),
-                        contentDescription = "Lock the screen preventing miss-touch",
+                        contentDescription = stringResource(id = R.string.video_lock_screen),
                         modifier = Modifier
                             .size(20.dp)
                     )
@@ -729,7 +730,7 @@ private fun OpenWithVideoPlayer(
                         ) {
                             Icon(
                                 painter = painterResource(id = R.drawable.more_options),
-                                contentDescription = "Show more video player options",
+                                contentDescription = stringResource(id = R.string.show_options),
                                 modifier = Modifier
                                     .size(20.dp)
                             )
@@ -765,7 +766,7 @@ private fun TopBar(
         TopAppBar(
             title = {
                 Text(
-                    text = "Media",
+                    text = stringResource(id = R.string.media),
                     fontSize = TextUnit(18f, TextUnitType.Sp),
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
@@ -785,7 +786,7 @@ private fun TopBar(
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.back_arrow),
-                        contentDescription = "Go back to previous page",
+                        contentDescription = stringResource(id = R.string.return_to_previous_page),
                         tint = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier
                             .size(24.dp)
@@ -852,14 +853,14 @@ private fun BottomBar(
 
                     if (showNotImplementedDialog.value) {
                         ExplanationDialog(
-                            title = "Unimplemented",
-                            explanation = "Editing videos has not been implemented yet as of version ${BuildConfig.VERSION_NAME} of Lavender Photos. This feature will be added as soon as possible, thank you for your patience.",
+                            title = stringResource(id = R.string.feature_unimplemented),
+                            explanation = stringResource(id = R.string.feature_editing_unimplemented, BuildConfig.VERSION_NAME),
                             showDialog = showNotImplementedDialog
                         )
                     }
 
                     BottomAppBarItem(
-                        text = "Edit",
+                        text = stringResource(id = R.string.edit),
                         iconResId = R.drawable.paintbrush,
                         cornerRadius = 32.dp,
                         action =
@@ -868,7 +869,7 @@ private fun BottomBar(
                                 val extension = mimeType.split("/")[1]
                                 val currentTime = System.currentTimeMillis()
                                 val date = formatDate(currentTime / 1000, MediaItemSortMode.DateTaken)
-                                val name = "Lavender Photos edited file at $date.$extension"
+                                val name = context.resources.getString(R.string.edit_desc, "$date.$extension")
                                 val destination = File(Environment.DIRECTORY_PICTURES, name) // TODO: maybe move into subdir?
 
                                 val contentValues = ContentValues().apply {

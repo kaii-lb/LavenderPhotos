@@ -26,6 +26,9 @@
     <string name="albums_clear_list_done">Cleared albums list</string>
     <string name="albums_media_sorting">Media Sorting</string>
     <string name="albums_media_sorting_desc">Sets the sorting of photos and videos in grids</string>
+    <string name="albums_is_custom">This is a custom album</string>
+    <string name="albums_non_existent">No such albums exist</string>
+    <string name="albums_already_contains_all">Album contains all items already</string>
 
     <!-- Tabs -->
     <string name="tabs">Tabs</string>
@@ -79,6 +82,10 @@
     <string name="locked_folder_help_top">Locked Folder is a secure folder for your images and videos on this device.\nThe secured media is never uploaded anywhere and is always on-device, encrypted with a key unique to your device\'s password or fingerprint data.</string>
     <string name="locked_folder_help_bottom">The secured data cannot be restored if the password was forgotten or the fingerprint was removed.</string>
     <string name="secure_folder">Secure Folder</string>
+    <string name="secure_sharing">Sharing Media</string>
+    <string name="secure_processing">Hold on while this media is processed</string>
+    <string name="secure_share_media">Share this secured media</string>
+    <string name="secure_encrypting">Encrypting Files</string>
 
     <!-- Data and Backup -->
     <string name="export_unenc_backup">Export Unencrypted Backup</string>
@@ -95,6 +102,7 @@
 
     <!-- Favourites -->
     <string name="favourites">Favourites</string>
+    <string name="favourites_add_this">Favourite this media</string>
 
     <!-- Debugging -->
     <string name="debugging">Debugging</string>
@@ -120,13 +128,58 @@
     <string name="video_auto_play_desc">Start playing videos as soon as they appear on screen</string>
     <string name="video_start_muted">Videos Start Muted</string>
     <string name="video_start_muted_desc">Don\'t play audio when first starting video playback</string>
+    <string name="file_is_a_video">File is a video</string>
+    <string name="video_seek_icon_desc">Shows which way the user is seeking</string>
+    <string name="video_lock_screen">Lock the screen preventing miss-touch</string>
+    <string name="video_mute_toggle">Mute or unmute this video</string>
+    <string name="video_seek_back">Skip backwards 5 seconds</string>
+    <string name="video_seek_front">Skip forwards 5 seconds</string>
+    <string name="video_play_toggle">Toggle play/pause for this video</string>
+    <string name="video_decrypting">Decrypting video, please wait</string>
 
     <!-- Editing -->
+    <string name="edit">Edit</string>
     <string name="editing">Editing</string>
     <string name="editing_overwrite_on_save">Overwrite on Save</string>
     <string name="editing_overwrite_on_save_desc">Default to overwriting instead of saving a copy when editing media</string>
     <string name="editing_exit_on_save">Exit on Save</string>
     <string name="editing_exit_on_save_desc">Automatically exit the editing view when you save the changes</string>
+    <string name="editing_discard">Discard</string>
+    <string name="editing_discard_desc">Discard ongoing edits?</string>
+    <string name="editing_exit">Exit</string>
+    <string name="editing_exit_desc">Exit editing view?</string>
+    <string name="editing_close_desc">Close editing view</string>
+    <string name="editing_save">Save Copy</string>
+    <string name="editing_overwrite">Save</string>
+    <string name="editing_save_option_desc">Show save options</string>
+    <string name="editing_overwrite_desc">Overwrite Original</string>
+    <string name="editing_show_topbar">Show editor\'s top bar</string>
+    <string name="editing_show_tools">Show editor\'s tools</string>
+    <string name="editing_crop">Crop</string>
+    <string name="editing_adjust">Adjust</string>
+    <string name="editing_filters">Filters</string>
+    <string name="editing_draw">Draw</string>
+    <string name="editing_rotate">Rotate</string>
+    <string name="editing_ratio">Ratio</string>
+    <string name="editing_reset">Reset</string>
+    <string name="editing_contrast">Contrast</string>
+    <string name="editing_brightness">Brightness</string>
+    <string name="editing_saturation">Saturation</string>
+    <string name="editing_black_point">Black Point</string>
+    <string name="editing_white_point">White Point</string>
+    <string name="editing_shadows">Shadows</string>
+    <string name="editing_warmth">Warmth</string>
+    <string name="editing_color_tint">Color Tint</string>
+    <string name="editing_highlights">Highlights</string>
+    <string name="editing_pencil">Pencil</string>
+    <string name="editing_highlighter">Highlighter</string>
+    <string name="editing_text">Text</string>
+    <string name="editing_blur">Blur</string>
+    <string name="editing_undo_all">Undo all actions</string>
+    <string name="editing_undo_last">Undo last action</string>
+    <string name="editing_scale_paint">Change paintbrush or text size</string>
+    <string name="editing_scale_zoom">Zoom in instead of scaling font size</string>
+    <string name="editing_scale_text">Change font size of selected text</string>
 
     <!-- Settings -->
     <string name="settings">Settings</string>
@@ -156,7 +209,8 @@
     <string name="settings_clear_cache_desc">This will erase all the thumbnail caches on this device, freeing up storage. Thumbnail loading will take longer on the next startup.</string>
 
     <!-- Trash -->
-    <string name="trash">Trash Bin</string>
+    <string name="trash">Trash</string>
+    <string name="trash_bin">Trash Bin</string>
     <string name="trash_auto_delete">Auto delete items in trash bin after</string>
     <string name="trash_days">days</string>
     <string name="trash_no_auto_delete">Items in trash bin won\'t be auto deleted</string>
@@ -171,4 +225,36 @@
     <string name="permissions_confirm_too_delete_desc">Ask for confirmation before deleting any media</string>
     <string name="permissions_overwrite_date_on_move">Overwrite Date on Move</string>
     <string name="permissions_overwrite_date_on_move_desc">When enabled, copied/moved media shows at the top of the list</string>
+
+    <!-- Media -->
+    <string name="media">Media</string>
+    <string name="sort_indicator">Sort by indicator</string>
+    <string name="sort_date">Date</string>
+    <string name="sort_name">Name</string>
+    <string name="sort_custom">Custom</string>
+    <string name="media_non_existent">This media doesn\'t exist!</string>
+    <string name="media_broken">Broken Media</string>
+    <string name="media_share">Share</string>
+    <string name="media_delete">Delete</string>
+    <string name="media_delete_confirm">Delete this %1$s?</string>
+    <string name="media_secure">Secure</string>
+    <string name="media_secure_confirm">Move this %1$s to Secure Folder?</string>
+    <string name="media_delete_permanently">Delete Permanently</string>
+    <string name="media_delete_permanently_confirm">Permanently delete this %1$s?</string>
+    <string name="media_cancel">Cancel</string>
+    <string name="media_restore">Restore</string>
+    <string name="media_progress">Progress:</string>
+
+    <!-- Search -->
+    <string name="search_photo_name">Search for a photo\'s name</string>
+    <string name="search_photo_date">Search for a photo\'s date</string>
+    <string name="search_photo_day">Search by day</string>
+
+    <!-- Explanations -->
+    <string name="feature_unimplemented">Unimplemented</string>
+    <string name="feature_editing_unimplemented">Editing videos has not been implemented yet as of version %1$s of Lavender Photos. This feature will be added as soon as possible, thank you for your patience.</string>
+    <string name="edit_desc">Lavender Photos edited file at %1$s</string>
+
+    <!-- Miscellaneous -->
+    <string name="show_options">Show more options</string>
 </resources>
