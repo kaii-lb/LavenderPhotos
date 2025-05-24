@@ -5,6 +5,7 @@ import android.os.CancellationSignal
 import android.os.Environment
 import android.util.Log
 import androidx.compose.ui.util.fastDistinctBy
+import androidx.compose.ui.util.fastFilter
 import androidx.compose.ui.util.fastMap
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.SQLiteQuery
@@ -12,6 +13,8 @@ import com.kaii.photos.mediastore.MultiAlbumDataSource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import java.io.File
 import java.io.IOException
 import java.nio.file.FileVisitResult
@@ -142,21 +145,24 @@ fun tryGetAllAlbums(context: Context): Flow<List<AlbumInfo>> = channelFlow {
             cancellationSignal = cancellationSignal
         )
 
-    mediaStoreDataSource.loadMediaStoreData().collectLatest { list ->
-        if (list.isNotEmpty()) {
-            list.fastDistinctBy { media ->
-                media.absolutePath.getParentFromPath().toRelativePath()
-            }.fastMap { media ->
-                val album = media.absolutePath.getParentFromPath().toRelativePath()
+    suspend fun emitNew(list: List<AlbumInfo>) = send(list)
 
-                AlbumInfo(
-                    name = album.split("/").last(),
-                    paths = listOf(album),
-                    id = Random.nextInt()
-                )
-            }.let {
-                this@channelFlow.send(it.filter { it.name != "" && it.paths.isNotEmpty() })
-            }
+    mediaStoreDataSource.loadMediaStoreData().collectLatest { list ->
+        val new = list.fastDistinctBy { media ->
+            media.absolutePath.getParentFromPath().toRelativePath()
+        }.fastMap { media ->
+            val album = media.absolutePath.getParentFromPath().toRelativePath()
+
+            AlbumInfo(
+                name = album.split("/").last(),
+                paths = listOf(album),
+                id = media.absolutePath.hashCode()
+            )
+        }.fastFilter {
+            it.name != "" && it.paths.isNotEmpty()
         }
+
+        Log.d(TAG, "new albums are being added")
+        emitNew(new)
     }
 }

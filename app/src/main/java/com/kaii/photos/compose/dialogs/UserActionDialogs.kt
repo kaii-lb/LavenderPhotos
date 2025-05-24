@@ -626,8 +626,13 @@ fun AddCustomAlbumDialog(
     onDismiss: () -> Unit,
     onDismissPrev: () -> Unit
 ) {
-    val albums by mainViewModel.settings.AlbumsList.getAlbumsList()
-        .collectAsStateWithLifecycle(initialValue = emptyList())
+    val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect().collectAsStateWithLifecycle()
+    val albums by if (autoDetectAlbums) {
+        mainViewModel.settings.AlbumsList.getAutoDetectedAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
+    } else {
+        mainViewModel.settings.AlbumsList.getNormalAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
+    }
+
     var name by remember { mutableStateOf("") }
 
     Box (

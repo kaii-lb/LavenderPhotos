@@ -98,8 +98,12 @@ fun MoveCopyAlbumListView(
     insetsPadding: WindowInsets
 ) {
     val context = LocalContext.current
-    val originalAlbumsList by mainViewModel.settings.AlbumsList.getAlbumsList()
-        .collectAsStateWithLifecycle(initialValue = emptyList())
+    val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect().collectAsStateWithLifecycle()
+    val originalAlbumsList by if (autoDetectAlbums) {
+        mainViewModel.settings.AlbumsList.getAutoDetectedAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
+    } else {
+        mainViewModel.settings.AlbumsList.getNormalAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
+    }
 
     if (originalAlbumsList == emptyList<String>()) return
 
@@ -222,6 +226,7 @@ fun MoveCopyAlbumListView(
                             modifier = Modifier
                                 .fillParentMaxWidth(1f)
                                 .padding(8.dp, 0.dp)
+                                .animateItem()
                         )
                     }
                 }

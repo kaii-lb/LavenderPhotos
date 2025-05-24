@@ -14,10 +14,15 @@ import com.kaii.photos.helpers.tryGetAllAlbums
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.zip
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -87,71 +92,60 @@ class SettingsAlbumsListImpl(
         }
     }
 
-    fun getAlbumsList(): Flow<List<AlbumInfo>> = channelFlow {
-        val autoDetectAlbums = getAutoDetect().first()
+    fun getCustomAlbums(): Flow<List<AlbumInfo>> = context.datastore.data.map { data ->
+        val list = Json.decodeFromString<List<AlbumInfo>>(data[albumsListKey] ?: "[]")
 
-        Log.d(TAG, "Auto detect albums is $autoDetectAlbums")
-
-        if (autoDetectAlbums) {
-            var current = emptyList<AlbumInfo>()
-            val customAlbums = context.datastore.data.map { data ->
-                val list = Json.decodeFromString<List<AlbumInfo>>(data[albumsListKey] ?: "")
-
-                list.filter { it.isCustomAlbum && it.name != "" }
-            }
-
-            val custom = customAlbums.first()
-
-            Log.d(TAG, "Custom albums are $custom")
-            tryGetAllAlbums(context = context).collectLatest { list ->
-                if (current != list + custom) {
-                    current = list + custom
-                    send(list + custom)
-                }
-            }
-        } else {
-            val prevList = context.datastore.data.map { data ->
-                val list = data[albumsListKey]
-                val isPreV083 =
-                    list?.startsWith(",") == true// if list starts with a , then its using an old version of list storing system, move to new version
-                val isPreV095 = list?.startsWith(separator)
-
-                if (list == null) {
-                    setAlbumsList(defaultAlbumsList)
-
-                    return@map defaultAlbumsList
-                } else if (isPreV083) {
-                    val split = list.split(",").distinct().toMutableList()
-                    split.remove("")
-                    split.remove("/storage/emulated/0")
-
-                    return@map split.map { path ->
-                        AlbumInfo(
-                            id = path.hashCode(),
-                            name = path.split("/").last(),
-                            paths = listOf(path)
-                        )
-                    }
-                } else if (isPreV095 == true) {
-                    val split = list.split(separator).distinct().toMutableList()
-                    split.remove("")
-
-                    return@map split.map { path ->
-                        AlbumInfo(
-                            id = path.hashCode(),
-                            name = path.split("/").last(),
-                            paths = listOf(path)
-                        )
-                    }
-                }
-
-                val split = Json.decodeFromString<List<AlbumInfo>>(list)
-
-                return@map split
-            }
-
-            prevList.collectLatest { send(it) }
+        list.filter {
+            it.isCustomAlbum && it.name != ""
         }
+    }
+
+    fun getAutoDetectedAlbums(): Flow<List<AlbumInfo>> = tryGetAllAlbums(context = context).combine(getCustomAlbums()) { first, second ->
+        first + second
+    }
+
+    fun getNormalAlbums() = channelFlow {
+        val prevList = context.datastore.data.map { data ->
+            val list = data[albumsListKey]
+            val isPreV083 =
+                list?.startsWith(",") == true// if list starts with a , then its using an old version of list storing system, move to new version
+            val isPreV095 = list?.startsWith(separator)
+
+            if (list == null) {
+                setAlbumsList(defaultAlbumsList)
+
+                return@map defaultAlbumsList
+            } else if (isPreV083) {
+                val split = list.split(",").distinct().toMutableList()
+                split.remove("")
+                split.remove("/storage/emulated/0")
+
+                return@map split.map { path ->
+                    AlbumInfo(
+                        id = path.hashCode(),
+                        name = path.split("/").last(),
+                        paths = listOf(path)
+                    )
+                }
+            } else if (isPreV095 == true) {
+                val split = list.split(separator).distinct().toMutableList()
+                split.remove("")
+
+                return@map split.map { path ->
+                    AlbumInfo(
+                        id = path.hashCode(),
+                        name = path.split("/").last(),
+                        paths = listOf(path)
+                    )
+                }
+            }
+
+            val split = Json.decodeFromString<List<AlbumInfo>>(list)
+
+            return@map split
+        }
+
+        prevList.collectLatest { send(it) }
     }
 
     fun setAlbumSortMode(sortMode: AlbumSortMode) = viewModelScope.launch {
@@ -182,7 +176,7 @@ class SettingsAlbumsListImpl(
 
     fun getAutoDetect() = context.datastore.data.map {
         it[autoDetectAlbumsKey] != false
-    }
+    }.stateIn(scope = viewModelScope, initialValue = true, started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000))
 
     fun setAutoDetect(value: Boolean) = viewModelScope.launch {
         context.datastore.edit {

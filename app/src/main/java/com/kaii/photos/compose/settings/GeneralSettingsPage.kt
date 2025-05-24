@@ -158,8 +158,12 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
             item {
                 val mainPhotosAlbums by mainViewModel.settings.MainPhotosView.getAlbums()
                     .collectAsStateWithLifecycle(initialValue = emptyList())
-                val allAlbums by mainViewModel.settings.AlbumsList.getAlbumsList()
-                    .collectAsStateWithLifecycle(initialValue = emptyList())
+                val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect().collectAsStateWithLifecycle()
+                val allAlbums by if (autoDetectAlbums) {
+                    mainViewModel.settings.AlbumsList.getAutoDetectedAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
+                } else {
+                    mainViewModel.settings.AlbumsList.getNormalAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
+                }
 
                 val showAlbumsSelectionDialog = remember { mutableStateOf(false) }
                 val selectedAlbums = remember { mutableStateListOf<String>() }
@@ -226,12 +230,8 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
             item {
                 val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect()
                     .collectAsStateWithLifecycle(initialValue = false)
-                val customAlbums = mainViewModel.settings.AlbumsList.getAlbumsList()
-                    .collectAsStateWithLifecycle(initialValue = emptyList())
-                    .value
-                    .filter {
-                        it.isCustomAlbum
-                    }
+
+                val customAlbums by mainViewModel.settings.AlbumsList.getCustomAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
 
                 val isAlreadyLoading = remember { mutableStateOf(false) }
                 val coroutineScope = rememberCoroutineScope()
