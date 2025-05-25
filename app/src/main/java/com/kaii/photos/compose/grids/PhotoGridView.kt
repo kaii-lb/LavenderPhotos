@@ -203,7 +203,7 @@ fun PhotoGrid(
         }
 
         false -> {
-            FolderIsEmpty(viewProperties.emptyText, viewProperties.emptyIconResId)
+            FolderIsEmpty(ViewProperties.getText(id = viewProperties.emptyText, context = context), viewProperties.emptyIconResId)
         }
     }
 }
@@ -666,8 +666,9 @@ fun MediaStoreItem(
                 }
                 .padding(16.dp, 8.dp),
         ) {
+            val context = LocalContext.current
             Text(
-                text = "${viewProperties.prefix}${item.displayName}",
+                text = "${ViewProperties.getText(id = viewProperties.prefix, context = context)} ${item.displayName}",
                 fontSize = TextUnit(16f, TextUnitType.Sp),
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground,

@@ -1,5 +1,6 @@
 package com.kaii.photos.compose
 
+import android.content.Context
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -22,53 +23,58 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.kaii.photos.R
 import com.kaii.photos.helpers.ImageFunctions
 
 enum class ViewProperties(
-    val emptyText: String,
+    val emptyText: Int,
     val emptyIconResId: Int,
-    val prefix: String,
+    val prefix: Int,
     val operation: ImageFunctions
 ) {
     Trash(
-        emptyText = "Trashed items show up here",
+        emptyText = R.string.error_views_trash_empty,
         emptyIconResId = R.drawable.delete,
-        prefix = "Trashed On ",
+        prefix = R.string.error_views_trash_prefix,
         operation = ImageFunctions.LoadTrashedImage
     ),
     Album(
-        emptyText = "This album is empty",
+        emptyText = R.string.error_views_album_empty,
         emptyIconResId = R.drawable.error,
-        prefix = "",
+        prefix = R.string.empty_string,
         operation = ImageFunctions.LoadNormalImage
     ),
     SearchLoading(
-        emptyText = "Search for some photos!",
+        emptyText = R.string.error_views_search_empty,
         emptyIconResId = R.drawable.search,
-        prefix = "",
+        prefix = R.string.empty_string,
         operation = ImageFunctions.LoadNormalImage
     ),
     SearchNotFound(
-        emptyText = "Unable to find any matches",
+        emptyText = R.string.error_views_search_not_found,
         emptyIconResId = R.drawable.error,
-        prefix = "",
+        prefix = R.string.empty_string,
         operation = ImageFunctions.LoadNormalImage
     ),
     SecureFolder(
-        emptyText = "Add items here to secure them",
+        emptyText = R.string.error_views_secure_empty,
         emptyIconResId = R.drawable.locked_folder,
-        prefix = "Secured On ",
+        prefix = R.string.error_views_secure_prefix,
         operation = ImageFunctions.LoadSecuredImage
     ),
     Favourites(
-        emptyText = "Add your most precious memories",
+        emptyText = R.string.error_views_favourites_empty,
         emptyIconResId = R.drawable.favourite,
-        prefix = "",
+        prefix = R.string.empty_string,
         operation = ImageFunctions.LoadNormalImage
-    )
+    );
+
+    companion object {
+        fun getText(id: Int, context: Context) = context.resources.getString(id)
+    }
 }
 
 @OptIn(ExperimentalGlideComposeApi::class)
@@ -87,7 +93,7 @@ fun FolderIsEmpty(
     ) {
         GlideImage(
             model = emptyIconResId,
-            contentDescription = "folder doesn't exist icon",
+            contentDescription = stringResource(id = R.string.error_views_folder_non_existent),
             colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onBackground),
             contentScale = ContentScale.Fit,
             modifier = Modifier
@@ -120,7 +126,7 @@ fun ErrorPage(
     ) {
         Icon(
             painter = painterResource(id = iconResId),
-            contentDescription = "Error page icon",
+            contentDescription = stringResource(id = R.string.error_views_error_page),
             tint = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier
                 .size(56.dp)

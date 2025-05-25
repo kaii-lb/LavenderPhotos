@@ -84,28 +84,40 @@ import com.kaii.photos.helpers.toRelativePath
 import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.favourites_grid.FavouritesViewModel
 import com.kaii.photos.models.favourites_grid.FavouritesViewModelFactory
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlin.collections.distinct
+import kotlin.collections.plus
 
 private const val TAG = "SINGLE_PHOTO_VIEW"
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun SinglePhotoView(
     navController: NavHostController,
     window: Window,
-    viewModel: MultiAlbumViewModel,
+    multiAlbumViewModel: MultiAlbumViewModel,
+    customAlbumViewModel: CustomAlbumViewModel,
     mediaItemId: Long,
     loadsFromMainViewModel: Boolean
 ) {
-    val holderGroupedMedia =
-        if (!loadsFromMainViewModel) {
-            viewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
-        } else {
-            mainViewModel.groupedMedia.collectAsStateWithLifecycle(initialValue = null)
+    val holderGroupedMedia: MutableState<List<MediaStoreData>?> = remember { mutableStateOf(null) }
+
+    if (!loadsFromMainViewModel) {
+        val customMediaStoreData by customAlbumViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+        val multiMediaStoreData by multiAlbumViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+
+        LaunchedEffect(customMediaStoreData, multiMediaStoreData) {
+            holderGroupedMedia.value = (customMediaStoreData + multiMediaStoreData).distinct()
         }
+    } else {
+        val media by mainViewModel.groupedMedia.collectAsStateWithLifecycle(initialValue = null)
+        LaunchedEffect(media) {
+            holderGroupedMedia.value = media
+        }
+    }
 
     if (holderGroupedMedia.value == null) return
 
@@ -124,6 +136,73 @@ fun SinglePhotoView(
             }
     }
 
+    SinglePhotoViewCommon(
+        navController = navController,
+        window = window,
+        mediaItemId = mediaItemId,
+        groupedMedia = groupedMedia,
+        loadsFromMainViewModel = loadsFromMainViewModel
+    )
+}
+
+@Composable
+fun SinglePhotoView(
+    navController: NavHostController,
+    window: Window,
+    multiAlbumViewModel: MultiAlbumViewModel,
+    mediaItemId: Long,
+    loadsFromMainViewModel: Boolean
+) {
+    val holderGroupedMedia: MutableState<List<MediaStoreData>?> = remember { mutableStateOf(null) }
+
+    if (!loadsFromMainViewModel) {
+        val multiMediaStoreData by multiAlbumViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+
+        LaunchedEffect(multiMediaStoreData) {
+            holderGroupedMedia.value = multiMediaStoreData
+        }
+    } else {
+        val media by mainViewModel.groupedMedia.collectAsStateWithLifecycle(initialValue = null)
+        LaunchedEffect(media) {
+            holderGroupedMedia.value = media
+        }
+    }
+
+    if (holderGroupedMedia.value == null) return
+
+    val groupedMedia = remember {
+        mutableStateOf(
+            holderGroupedMedia.value!!.filter { item ->
+                item.type != MediaType.Section
+            }
+        )
+    }
+
+    LaunchedEffect(holderGroupedMedia.value) {
+        groupedMedia.value =
+            holderGroupedMedia.value!!.filter { item ->
+                item.type != MediaType.Section
+            }
+    }
+
+    SinglePhotoViewCommon(
+        navController = navController,
+        window = window,
+        mediaItemId = mediaItemId,
+        groupedMedia = groupedMedia,
+        loadsFromMainViewModel = loadsFromMainViewModel
+    )
+}
+
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@Composable
+fun SinglePhotoViewCommon(
+    navController: NavHostController,
+    window: Window,
+    mediaItemId: Long,
+    groupedMedia: MutableState<List<MediaStoreData>>,
+    loadsFromMainViewModel: Boolean
+) {
     var currentMediaItemIndex by rememberSaveable {
         mutableIntStateOf(
             groupedMedia.value.indexOf(

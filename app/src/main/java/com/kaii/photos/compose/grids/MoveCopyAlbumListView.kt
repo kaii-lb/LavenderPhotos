@@ -364,6 +364,7 @@ fun AlbumsListItem(
                                     duration = SnackbarDuration.Short
                                 )
                             )
+                            show.value = false
                         }
                     }
 

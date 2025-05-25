@@ -26,7 +26,8 @@ data class MediaStoreData(
     val displayName: String = "",
     val absolutePath: String = "",
     var section: SectionItem = SectionItem(0L, 0),
-    val bytes: ByteArray? = null
+    val bytes: ByteArray? = null,
+    val customId: Int? = null
 ) : Parcelable {
     companion object {
         val dummyItem = MediaStoreData()
@@ -87,6 +88,7 @@ data class MediaStoreData(
         if (displayName != other.displayName) return false
         if (absolutePath != other.absolutePath) return false
         if (section != other.section) return false
+        if (customId != other.customId) return false
 
         return true
     }
@@ -101,6 +103,7 @@ data class MediaStoreData(
         result = 31 * result + (displayName.hashCode())
         result = 31 * result + absolutePath.hashCode()
         result = 31 * result + section.hashCode()
+        result = 31 * result + customId.hashCode()
         return result
     }
 }

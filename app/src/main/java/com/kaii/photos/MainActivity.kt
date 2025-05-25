@@ -396,7 +396,7 @@ class MainActivity : ComponentActivity() {
 
                         val screen: Screens.SinglePhotoView = it.toRoute()
 
-                        if (!screen.hasSameAlbumsAs(other = multiAlbumViewModel.albumInfo.paths)) {
+                        if (screen.albumInfo != multiAlbumViewModel.albumInfo) {
                             multiAlbumViewModel.reinitDataSource(
                                 context = context,
                                 album = screen.albumInfo,
@@ -404,13 +404,32 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
-                        SinglePhotoView(
-                            navController = navControllerLocal,
-                            window = window,
-                            viewModel = multiAlbumViewModel,
-                            mediaItemId = screen.mediaItemId,
-                            loadsFromMainViewModel = screen.loadsFromMainViewModel
-                        )
+                        if (!screen.albumInfo.isCustomAlbum) {
+                            SinglePhotoView(
+                                navController = navControllerLocal,
+                                window = window,
+                                multiAlbumViewModel = multiAlbumViewModel,
+                                mediaItemId = screen.mediaItemId,
+                                loadsFromMainViewModel = screen.loadsFromMainViewModel
+                            )
+                        } else {
+                            if (screen.albumInfo != multiAlbumViewModel.albumInfo) {
+                                customAlbumViewModel.reinitDataSource(
+                                    context = context,
+                                    album = screen.albumInfo,
+                                    sortMode = customAlbumViewModel.sortBy
+                                )
+                            }
+
+                            SinglePhotoView(
+                                navController = navControllerLocal,
+                                window = window,
+                                multiAlbumViewModel = multiAlbumViewModel,
+                                customAlbumViewModel = customAlbumViewModel,
+                                mediaItemId = screen.mediaItemId,
+                                loadsFromMainViewModel = screen.loadsFromMainViewModel
+                            )
+                        }
                     }
 
                     composable<Screens.SingleAlbumView>(

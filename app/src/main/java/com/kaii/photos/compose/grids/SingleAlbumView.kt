@@ -107,7 +107,7 @@ fun SingleAlbumView(
     val groupedMedia = remember { mutableStateOf(customMediaStoreData + multiMediaStoreData) }
 
     LaunchedEffect(customMediaStoreData, multiMediaStoreData) {
-        groupedMedia.value = (customMediaStoreData + multiMediaStoreData).distinct()
+        groupedMedia.value = (customMediaStoreData + multiMediaStoreData).distinctBy { it.uri }
     }
 
     SingleAlbumViewCommon(

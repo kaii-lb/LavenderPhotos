@@ -254,7 +254,31 @@
     <string name="feature_unimplemented">Unimplemented</string>
     <string name="feature_editing_unimplemented">Editing videos has not been implemented yet as of version %1$s of Lavender Photos. This feature will be added as soon as possible, thank you for your patience.</string>
     <string name="edit_desc">Lavender Photos edited file at %1$s</string>
+    <string name="custom_album_media_not_custom_title">Non Custom Media</string>
+    <string name="custom_album_media_not_custom_explanation">Some media in this album belongs to actual folders, Lavender Photos cannot remove that media without deleting it so it will be ignored.</string>
 
     <!-- Miscellaneous -->
     <string name="show_options">Show more options</string>
+    <string name="empty_string" />
+
+    <!-- Bottom Sheets -->
+    <string name="bottom_sheets_enter_text">Enter Text</string>
+    <string name="bottom_sheets_freeform">Freeform</string>
+    <string name="bottom_sheets_image_ratio">Image Ratio</string>
+    <string name="bottom_sheets_square">Square</string>
+    <string name="bottom_sheets_vertical">vertical</string>
+    <string name="bottom_sheets_horizontal">horizontal</string>
+    <string name="bottom_sheets_ratio_selected">This cropping ratio is selected</string>
+
+    <!-- Error Views -->
+    <string name="error_views_trash_empty">Trashed items show up here</string>
+    <string name="error_views_trash_prefix">Trashed On</string>
+    <string name="error_views_album_empty">This album is empty</string>
+    <string name="error_views_search_empty">Search for some photos!</string>
+    <string name="error_views_search_not_found">Unable to find any matches</string>
+    <string name="error_views_secure_empty">None of your media is protected!</string>
+    <string name="error_views_secure_prefix">Secured On</string>
+    <string name="error_views_favourites_empty">Add your most precious memories!</string>
+    <string name="error_views_folder_non_existent">Folder doesn\'t exist</string>
+    <string name="error_views_error_page">This is an error page</string>
 </resources>

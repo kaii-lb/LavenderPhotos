@@ -28,6 +28,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
@@ -43,6 +44,7 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.AlbumPathsDialog
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
+import com.kaii.photos.compose.dialogs.ExplanationDialog
 import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.datastore.AlbumInfo
@@ -296,6 +298,15 @@ fun SingleAlbumViewBottomBar(
                 }
             )
         } else {
+            val showExplanationDialog = remember { mutableStateOf(false) }
+            if (showExplanationDialog.value) {
+                ExplanationDialog(
+                    title = stringResource(id = R.string.custom_album_media_not_custom_title),
+                    explanation = stringResource(id = R.string.custom_album_media_not_custom_explanation),
+                    showDialog = showExplanationDialog
+                )
+            }
+
             BottomAppBarItem(
                 text = "Remove",
                 iconResId = R.drawable.delete,
@@ -310,13 +321,17 @@ fun SingleAlbumViewBottomBar(
                         dialogTitle = "Remove these items from the album?",
                         confirmButtonLabel = "Remove"
                     ) {
+                        if (selectedItemsWithoutSection.any { it.customId == null }) {
+                            showExplanationDialog.value = true
+                        }
+
                         mainViewModel.launch(Dispatchers.IO) {
                             selectedItemsWithoutSection.forEach { item ->
-                                context.contentResolver.delete(
+                                Log.d(TAG, "Removed this many rows: " + context.contentResolver.delete(
                                     LavenderContentProvider.CONTENT_URI,
-                                    "${LavenderMediaColumns.ID} = ?",
-                                    arrayOf(item.id.toString())
-                                )
+                                    "${LavenderMediaColumns.ID} = ? AND ${LavenderMediaColumns.PARENT_ID} = ?",
+                                    arrayOf(item.customId.toString(), albumInfo.id.toString())
+                                ))
                             }
                             selectedItemsList.clear()
                         }

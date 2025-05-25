@@ -38,6 +38,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
@@ -90,7 +91,7 @@ fun SetEditingViewDrawableTextBottomSheet(
 
             TextFieldWithConfirm(
                 text = text,
-                placeholder = "Enter Text",
+                placeholder = stringResource(id = R.string.bottom_sheets_enter_text),
                 modifier = Modifier
                     .padding(8.dp)
                     .fillMaxWidth(1f)
@@ -162,7 +163,7 @@ fun CroppingRatioBottomSheet(
                 horizontalAlignment = Alignment.Start
             ) {
                 ClickableRow(
-                    title = "Freeform",
+                    title = stringResource(id = R.string.bottom_sheets_freeform),
                     position = RowPosition.Top,
                     selected = ratio == 0f
                 ) {
@@ -176,7 +177,7 @@ fun CroppingRatioBottomSheet(
                 }
 
                 ClickableRow(
-                    title = "Image Ratio",
+                    title = stringResource(id = R.string.bottom_sheets_image_ratio),
                     position = RowPosition.Middle,
                     selected = ratio == originalImageRatio
                 ) {
@@ -190,7 +191,7 @@ fun CroppingRatioBottomSheet(
                 }
 
                 ClickableRow(
-                    title = "Square",
+                    title = stringResource(id = R.string.bottom_sheets_square),
                     position = RowPosition.Middle,
                     selected = ratio == 1f
                 ) {
@@ -218,7 +219,7 @@ fun CroppingRatioBottomSheet(
                 }
 
                 ClickableRow(
-                    title = "9:16 (vertical)",
+                    title = "9:16 (${stringResource(id = R.string.bottom_sheets_vertical)})",
                     position = RowPosition.Middle,
                     selected = ratio == 9f / 16f
                 ) {
@@ -232,7 +233,7 @@ fun CroppingRatioBottomSheet(
                 }
 
                 ClickableRow(
-                    title = "16:9 (horizontal)",
+                    title = "16:9 (${stringResource(id = R.string.bottom_sheets_horizontal)})",
                     position = RowPosition.Middle,
                     selected = ratio == 16f / 9f
                 ) {
@@ -321,7 +322,7 @@ fun ClickableRow(
         if (selected) {
             Icon(
                 painter = painterResource(id = R.drawable.file_is_selected_foreground),
-                contentDescription = "this cropping ratio is selected",
+                contentDescription = stringResource(id = R.string.bottom_sheets_ratio_selected),
                 tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier
                     .size(24.dp)
