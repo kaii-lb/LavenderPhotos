@@ -182,6 +182,7 @@ enum class CheckUpdateState {
 }
 
 fun startupUpdateCheck(
+    text: String,
     coroutineScope: CoroutineScope,
     navController: NavHostController
 ) = mainViewModel.updater.refresh { state ->
@@ -195,7 +196,7 @@ fun startupUpdateCheck(
                 coroutineScope.launch {
                     LavenderSnackbarController.pushEvent(
                         LavenderSnackbarEvents.ActionEvent(
-                            message = "New app version available!",
+                            message = text,
                             iconResId = R.drawable.error_2,
                             duration = SnackbarDuration.Short,
                             actionIconResId = R.drawable.download,

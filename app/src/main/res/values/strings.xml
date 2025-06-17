@@ -27,8 +27,21 @@
     <string name="albums_media_sorting">Media Sorting</string>
     <string name="albums_media_sorting_desc">Sets the sorting of photos and videos in grids</string>
     <string name="albums_is_custom">This is a custom album</string>
+    <string name="albums_custom">Custom Album</string>
     <string name="albums_non_existent">No such albums exist</string>
     <string name="albums_already_contains_all">Album contains all items already</string>
+    <string name="albums_remove">Remove album from list</string>
+    <string name="albums_info">Album Info</string>
+    <string name="albums_path">Path</string>
+    <string name="albums_id">Id</string>
+    <string name="albums_item_count">Item Count</string>
+    <string name="albums_move_to">Move to Album</string>
+    <string name="albums_copy_to">Copy to Album</string>
+    <string name="albums_move_to_secure">Move to Secure Folder</string>
+    <string name="albums_name">Album Name</string>
+    <string name="albums_type">Album Type</string>
+    <string name="albums_folder">Folder Album</string>
+    <string name="albums_add_failed">Failed to add albums :&lt;</string>
 
     <!-- Tabs -->
     <string name="tabs">Tabs</string>
@@ -37,6 +50,14 @@
     <string name="tabs_default_desc">Lavender Photos will auto-open this tab at startup</string>
     <string name="tabs_customize">Customize Tabs</string>
     <string name="tabs_customize_desc">Change what tabs are available in the bottom bar</string>
+    <string name="tabs_navigate_to">Navigate to %s$1 page</string>
+    <string name="tabs_add">Add a Tab</string>
+    <string name="tabs_name">Tab name</string>
+    <string name="tabs_albums_incl">Albums Included</string>
+    <string name="tabs_confirm">Add Tab</string>
+    <string name="tabs_empty_params">Tab parameters cannot be empty</string>
+    <string name="tabs_max_reached">Can\'t add more than 5 tabs</string>
+    <string name="tabs_min_reached">At least one tab needs to exist</string>
 
     <!-- Navigation -->
     <string name="return_to_previous_page">Return to previous page</string>
@@ -86,6 +107,7 @@
     <string name="secure_processing">Hold on while this media is processed</string>
     <string name="secure_share_media">Share this secured media</string>
     <string name="secure_encrypting">Encrypting Files</string>
+    <string name="secure_decrypting">Decrypting Files</string>
 
     <!-- Data and Backup -->
     <string name="export_unenc_backup">Export Unencrypted Backup</string>
@@ -115,6 +137,7 @@
     <string name="current_run_logs">Current run\'s logs</string>
     <string name="log_file_non_existent">No log file is recorded as of yet.</string>
     <string name="album_add_path">Add Albums Path</string>
+    <string name="album_add">Add album</string>
     <string name="album_add_path_placeholder">Download/Movies</string>
     <string name="debugging_spawn_loading_snackbar">Spawn Loading Snackbar</string>
     <string name="debugging_spawn_loading_snackbar_desc">Debug lavender snackbars whenever compose decides to do something stupid</string>
@@ -180,6 +203,8 @@
     <string name="editing_scale_paint">Change paintbrush or text size</string>
     <string name="editing_scale_zoom">Zoom in instead of scaling font size</string>
     <string name="editing_scale_text">Change font size of selected text</string>
+    <string name="editing_done">Saved edited image!</string>
+    <string name="editing_failed">Failed to save edited image</string>
 
     <!-- Settings -->
     <string name="settings">Settings</string>
@@ -203,10 +228,12 @@
     <string name="settings_storage_thumbnails_cache">Cache Thumbnails</string>
     <string name="settings_storage_thumbnails_cache_desc">Allows for faster loading at the cost of storage usage</string>
     <string name="settings_storage_thumbnails_resolution">Thumbnail Resolution</string>
+    <string name="settings_storage_thumbnails_notice">Higher resolutions use more storage</string>
     <string name="settings_storage_thumbnails_clear_cache">Clear thumbnail cache</string>
     <string name="settings_storage_thumbnails_clear_cache_desc">Erases thumbnail caches to free up storage</string>
     <string name="settings_clear">Clear</string>
     <string name="settings_clear_cache_desc">This will erase all the thumbnail caches on this device, freeing up storage. Thumbnail loading will take longer on the next startup.</string>
+    <string name="settings_about_and_updates">About &amp; Updates</string>
 
     <!-- Trash -->
     <string name="trash">Trash</string>
@@ -215,6 +242,10 @@
     <string name="trash_days">days</string>
     <string name="trash_no_auto_delete">Items in trash bin won\'t be auto deleted</string>
     <string name="trash_auto_delete_interval">Auto delete interval</string>
+    <string name="trash_auto_delete_notice">Photos in the trash bin older than this date will be permanently deleted</string>
+    <string name="trash_empty">Empty trash bin?</string>
+    <string name="trash_empty_desc">This deletes all items in the trash bin, action cannot be undone</string>
+    <string name="trash_empty_confirm">Empty Out</string>
 
     <!-- Permission -->
     <string name="permissions">Permission</string>
@@ -225,10 +256,14 @@
     <string name="permissions_confirm_too_delete_desc">Ask for confirmation before deleting any media</string>
     <string name="permissions_overwrite_date_on_move">Overwrite Date on Move</string>
     <string name="permissions_overwrite_date_on_move_desc">When enabled, copied/moved media shows at the top of the list</string>
+    <string name="permissions_needed">Permission Needed</string>
+    <string name="permissions_needed_desc">Lavender Photos needs permission to access this album. Please grant it the permission by selecting "Use This Folder" on the next screen.This is a one-time permission.</string>
+    <string name="permissions_grant">Grant</string>
 
     <!-- Media -->
     <string name="media">Media</string>
     <string name="sort_indicator">Sort by indicator</string>
+    <string name="sort_mode">Media Sort Mode</string>
     <string name="sort_date">Date</string>
     <string name="sort_name">Name</string>
     <string name="sort_custom">Custom</string>
@@ -237,13 +272,26 @@
     <string name="media_share">Share</string>
     <string name="media_delete">Delete</string>
     <string name="media_delete_confirm">Delete this %1$s?</string>
+    <string name="media_trash_confirm">Move selected items to trash bin?</string>
     <string name="media_secure">Secure</string>
     <string name="media_secure_confirm">Move this %1$s to Secure Folder?</string>
     <string name="media_delete_permanently">Delete Permanently</string>
     <string name="media_delete_permanently_confirm">Permanently delete this %1$s?</string>
     <string name="media_cancel">Cancel</string>
     <string name="media_restore">Restore</string>
+    <string name="media_restore_confirm">Restore these items?</string>
+    <string name="media_restore_processing">Restoring Files</string>
     <string name="media_progress">Progress:</string>
+    <string name="media_move">Move</string>
+    <string name="media_copy">Copy</string>
+    <string name="media_rename">Rename</string>
+    <string name="media_select">Select</string>
+    <string name="media_exif_erase">Erase EXIF date?</string>
+    <string name="media_exif_done">Removed EXIF data</string>
+    <string name="media_exif_failed">Failed erasing EXIF data</string>
+    <string name="media_erase">Erase</string>
+    <string name="media_confirm">Confirm</string>
+    <string name="media_okay">Okay</string>
 
     <!-- Search -->
     <string name="search_photo_name">Search for a photo\'s name</string>
@@ -256,10 +304,22 @@
     <string name="edit_desc">Lavender Photos edited file at %1$s</string>
     <string name="custom_album_media_not_custom_title">Non Custom Media</string>
     <string name="custom_album_media_not_custom_explanation">Some media in this album belongs to actual folders, Lavender Photos cannot remove that media without deleting it so it will be ignored.</string>
+    <string name="custom_album_remove_media">Remove</string>
+    <string name="custom_album_remove_media_desc">Remove these items from the album?</string>
+    <string name="action_cannot_be_undone">This action cannot be undone!</string>
 
     <!-- Miscellaneous -->
     <string name="show_options">Show more options</string>
     <string name="empty_string" />
+    <string name="more_options">More Options</string>
+    <string name="set_as">Set As</string>
+    <string name="set_as_wallpaper">Set as Wallpaper</string>
+    <string name="more_info">More Info</string>
+    <string name="not_available">Not Available</string>
+    <string name="not_available_desc">This feature is not available yet as the app is in Beta, please wait for a future release.</string>
+    <string name="none">None</string>
+    <string name="pixels">Pixels</string>
+    <string name="paths_should_be_relative">Path needs to be relative</string>
 
     <!-- Bottom Sheets -->
     <string name="bottom_sheets_enter_text">Enter Text</string>

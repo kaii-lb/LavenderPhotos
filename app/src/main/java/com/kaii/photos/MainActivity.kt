@@ -849,6 +849,7 @@ class MainActivity : ComponentActivity() {
         LaunchedEffect(checkForUpdatesOnStartup) {
             if (checkForUpdatesOnStartup) {
                 startupUpdateCheck(
+                    text = context.resources.getString(R.string.updates_new_version_available),
                     coroutineScope = coroutineScope,
                     navController = navControllerLocal
                 )

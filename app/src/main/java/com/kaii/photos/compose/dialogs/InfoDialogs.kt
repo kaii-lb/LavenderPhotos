@@ -55,6 +55,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -150,7 +151,7 @@ fun SingleAlbumDialog(
                 }
 
                 AnimatableText(
-                    first = "Rename",
+                    first = stringResource(id = R.string.media_rename),
                     second = album.name,
                     state = isEditingFileName.value,
                     modifier = Modifier
@@ -161,7 +162,7 @@ fun SingleAlbumDialog(
             }
 
             DialogClickableItem(
-                text = "Select",
+                text = stringResource(id = R.string.media_select),
                 iconResId = R.drawable.check_item,
                 position = RowPosition.Top,
                 modifier = Modifier
@@ -242,7 +243,7 @@ fun SingleAlbumDialog(
             }
 
             DialogClickableItem(
-                text = "Remove album from list",
+                text = stringResource(id = R.string.albums_remove),
                 iconResId = R.drawable.delete,
                 position = RowPosition.Middle,
                 enabled = !album.mainPath.checkPathIsDownloads(),
@@ -297,19 +298,19 @@ fun SingleAlbumDialog(
                     .padding(8.dp, 0.dp, 8.dp, 6.dp)
             ) {
                 DialogExpandableItem(
-                    text = "Album Info",
+                    text = stringResource(id = R.string.albums_info),
                     iconResId = R.drawable.info,
                     position = RowPosition.Bottom,
                     expanded = expanded
                 ) {
                     DialogInfoText(
-                        firstText = if (!album.isCustomAlbum) "Path" else "Id",
+                        firstText = if (!album.isCustomAlbum) stringResource(id = R.string.albums_path) else stringResource(id = R.string.albums_id),
                         secondText = if (!album.isCustomAlbum) album.mainPath else album.id.toString(),
                         iconResId = R.drawable.folder,
                     )
 
                     DialogInfoText(
-                        firstText = "Number of Items",
+                        firstText = stringResource(id = R.string.albums_item_count),
                         secondText = itemCount.toString(),
                         iconResId = R.drawable.data,
                     )
@@ -369,8 +370,8 @@ fun SinglePhotoInfoDialog(
                 }
 
                 AnimatableText(
-                    first = "Rename",
-                    second = "More Options",
+                    first = stringResource(id = R.string.media_rename),
+                    second = stringResource(id = R.string.more_options),
                     state = isEditingFileName.value,
                     modifier = Modifier
                         .align(Alignment.Center)
@@ -478,7 +479,7 @@ fun SinglePhotoInfoDialog(
                         )
 
                         DialogClickableItem(
-                            text = "Copy to Album",
+                            text = stringResource(id = R.string.albums_copy_to),
                             iconResId = R.drawable.copy,
                             position = RowPosition.Middle,
                         ) {
@@ -487,7 +488,7 @@ fun SinglePhotoInfoDialog(
                         }
 
                         DialogClickableItem(
-                            text = "Move to Album",
+                            text = stringResource(id = R.string.albums_move_to),
                             iconResId = R.drawable.cut,
                             position = RowPosition.Middle,
                         ) {
@@ -526,9 +527,9 @@ fun SinglePhotoInfoDialog(
 
                                 ConfirmationDialogWithBody(
                                     showDialog = showConfirmEraseDialog,
-                                    dialogTitle = "Erase EXIF data?",
-                                    dialogBody = "This action cannot be undone",
-                                    confirmButtonLabel = "Erase"
+                                    dialogTitle = stringResource(id = R.string.media_non_existent),
+                                    dialogBody = stringResource(id = R.string.action_cannot_be_undone),
+                                    confirmButtonLabel = stringResource(id = R.string.media_erase)
                                 ) {
                                     runEraseExifData.value = true
                                 }
@@ -543,7 +544,7 @@ fun SinglePhotoInfoDialog(
 
                                                 LavenderSnackbarController.pushEvent(
                                                     LavenderSnackbarEvents.MessageEvent(
-                                                        message = "Removed EXIF data",
+                                                        message = context.resources.getString(R.string.media_exif_done),
                                                         iconResId = R.drawable.file_is_selected_foreground,
                                                         duration = SnackbarDuration.Short
                                                     )
@@ -551,7 +552,7 @@ fun SinglePhotoInfoDialog(
                                             } catch (e: Throwable) {
                                                 LavenderSnackbarController.pushEvent(
                                                     LavenderSnackbarEvents.MessageEvent(
-                                                        message = "Failed erasing exif data",
+                                                        message = context.resources.getString(R.string.media_exif_failed),
                                                         iconResId = R.drawable.error_2,
                                                         duration = SnackbarDuration.Long
                                                     )
@@ -583,7 +584,7 @@ fun SinglePhotoInfoDialog(
 
                     if (currentMediaItem.type == MediaType.Image) {
                         DialogClickableItem(
-                            text = "Set As",
+                            text = stringResource(id = R.string.set_as),
                             iconResId = R.drawable.paintbrush,
                             position = RowPosition.Middle
                         ) {
@@ -594,12 +595,12 @@ fun SinglePhotoInfoDialog(
                                 putExtra("mimeType", currentMediaItem.mimeType)
                             }
 
-                            context.startActivity(Intent.createChooser(intent, "Set as wallpaper"))
+                            context.startActivity(Intent.createChooser(intent, context.resources.getString(R.string.set_as_wallpaper)))
                         }
                     }
 
                     DialogExpandableItem(
-                        text = "More Info",
+                        text = stringResource(id = R.string.more_info),
                         iconResId = R.drawable.info,
                         position = RowPosition.Bottom,
                         expanded = expanded
@@ -773,7 +774,7 @@ fun MainAppDialog(
             ) {
                 if (currentView.value != DefaultTabs.TabTypes.albums && currentView.value != DefaultTabs.TabTypes.secure) {
                     DialogClickableItem(
-                        text = "Select",
+                        text = stringResource(id = R.string.media_select),
                         iconResId = R.drawable.check_item,
                         position = RowPosition.Top,
                     ) {
@@ -793,7 +794,7 @@ fun MainAppDialog(
                     }
 
                     DialogClickableItem(
-                        text = "Add an album",
+                        text = stringResource(id = R.string.add_album),
                         iconResId = R.drawable.add,
                         position = RowPosition.Top,
                     ) {
@@ -802,7 +803,7 @@ fun MainAppDialog(
                 }
 
                 DialogClickableItem(
-                    text = "Data & Backup",
+                    text = stringResource(id = R.string.data_and_backup),
                     iconResId = R.drawable.data,
                     position = if (currentView.value == DefaultTabs.TabTypes.secure) RowPosition.Top else RowPosition.Middle,
                 ) {
@@ -811,7 +812,7 @@ fun MainAppDialog(
                 }
 
                 DialogClickableItem(
-                    text = "Settings",
+                    text = stringResource(id = R.string.settings),
                     iconResId = R.drawable.settings,
                     position = RowPosition.Middle,
                 ) {
@@ -820,7 +821,7 @@ fun MainAppDialog(
                 }
 
                 DialogClickableItem(
-                    text = "About & Updates",
+                    text = stringResource(id = R.string.settings_about_and_updates),
                     iconResId = R.drawable.info,
                     position = RowPosition.Bottom,
                 ) {
@@ -869,7 +870,7 @@ fun SelectingMoreOptionsDialog(
     )
 
     if (showLoadingDialog) {
-        LoadingDialog(title = "Encrypting Files", body = "Please wait while the media is processed")
+        LoadingDialog(title = stringResource(id = R.string.secure_encrypting), body = stringResource(id = R.string.secure_processing))
     }
 
     GetPermissionAndRun(
@@ -917,7 +918,7 @@ fun SelectingMoreOptionsDialog(
             }
 
             Text(
-                text = "More Options",
+                text = stringResource(id = R.string.more_options),
                 modifier = Modifier
                     .align(Alignment.Center)
             )
@@ -929,7 +930,7 @@ fun SelectingMoreOptionsDialog(
                 .wrapContentHeight()
         ) {
             DialogClickableItem(
-                text = "Move to Secure Folder",
+                text = stringResource(id = R.string.albums_move_to_secure),
                 iconResId = R.drawable.locked_folder,
                 position = RowPosition.Single
             ) {
@@ -942,8 +943,8 @@ fun SelectingMoreOptionsDialog(
 @Composable
 fun FeatureNotAvailableDialog(showDialog: MutableState<Boolean>) {
     ExplanationDialog(
-        title = "Not Available",
-        explanation = "This feature is not available yet as the app is in Beta, please wait for a future release.",
+        title = stringResource(id = R.string.not_available),
+        explanation = stringResource(id = R.string.not_available_desc),
         showDialog = showDialog
     )
 }

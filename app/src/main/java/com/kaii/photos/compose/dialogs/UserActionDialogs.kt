@@ -44,8 +44,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -121,7 +123,7 @@ fun ConfirmationDialog(
                     )
                 ) {
                     Text(
-                        text = "Cancel",
+                        text = stringResource(id = R.string.media_cancel),
                         fontSize = TextUnit(14f, TextUnitType.Sp)
                     )
                 }
@@ -195,7 +197,7 @@ fun ConfirmationDialogWithBody(
                         )
                     ) {
                         Text(
-                            text = "Cancel",
+                            text = stringResource(id = R.string.media_cancel),
                             fontSize = TextUnit(14f, TextUnitType.Sp)
                         )
                     }
@@ -251,6 +253,7 @@ fun TextEntryDialog(
                 if (showError) {
                     Row {
                         val coroutineScope = rememberCoroutineScope()
+                        val context = LocalContext.current
 
                         Icon(
                             painter = painterResource(id = R.drawable.error_2),
@@ -262,7 +265,7 @@ fun TextEntryDialog(
                                     coroutineScope.launch {
                                         LavenderSnackbarController.pushEvent(
                                             LavenderSnackbarEvents.MessageEvent(
-                                                message = "Paths need to be relative",
+                                                message = context.resources.getString(R.string.paths_should_be_relative),
                                                 iconResId = R.drawable.error_2,
                                                 duration = SnackbarDuration.Short
                                             )
@@ -302,7 +305,7 @@ fun TextEntryDialog(
         Spacer(modifier = Modifier.height(24.dp))
 
         FullWidthDialogButton(
-            text = "Confirm",
+            text = stringResource(id = R.string.media_confirm),
             color = MaterialTheme.colorScheme.primary,
             textColor = MaterialTheme.colorScheme.onPrimary,
             position = RowPosition.Single,
@@ -388,7 +391,7 @@ private fun ExplanationDialogBase(
         Spacer(modifier = Modifier.height(24.dp))
 
         FullWidthDialogButton(
-            text = "Okay",
+            text = stringResource(id = R.string.media_okay),
             color = MaterialTheme.colorScheme.primary,
             textColor = MaterialTheme.colorScheme.onPrimary,
             position = RowPosition.Single
@@ -521,7 +524,7 @@ fun AlbumPathsDialog(
         Spacer(modifier = Modifier.height(24.dp))
 
         FullWidthDialogButton(
-            text = "Confirm",
+            text = stringResource(id = R.string.media_confirm),
             color = MaterialTheme.colorScheme.primary,
             textColor = MaterialTheme.colorScheme.onPrimary,
             position = RowPosition.Single
@@ -562,7 +565,7 @@ fun AlbumAddChoiceDialog(
             }
 
             Text(
-                text = "Album Type",
+                text = stringResource(id = R.string.albums_type),
                 fontSize = TextUnit(18f, TextUnitType.Sp),
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -591,7 +594,7 @@ fun AlbumAddChoiceDialog(
             }
 
             DialogClickableItem(
-                text = "Folder Album",
+                text = stringResource(id = R.string.albums_folder),
                 iconResId = R.drawable.albums,
                 position = RowPosition.Top
             ) {
@@ -609,7 +612,7 @@ fun AlbumAddChoiceDialog(
             }
 
             DialogClickableItem(
-                text = "Custom Album",
+                text = stringResource(id = R.string.albums_custom),
                 iconResId = R.drawable.albums,
                 position = RowPosition.Bottom
             ) {
@@ -640,8 +643,8 @@ fun AddCustomAlbumDialog(
            .padding(8.dp, 0.dp)
     ) {
         TextEntryDialog(
-            title = "Custom Album",
-            placeholder = "Album Name",
+            title = stringResource(id = R.string.albums_custom),
+            placeholder = stringResource(id = R.string.albums_name),
             onDismiss = onDismiss,
             onValueChange = { text ->
                 name = text

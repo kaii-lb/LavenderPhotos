@@ -308,7 +308,7 @@ fun SingleAlbumViewBottomBar(
             }
 
             BottomAppBarItem(
-                text = "Remove",
+                text = stringResource(id = R.string.custom_album_remove_media),
                 iconResId = R.drawable.delete,
                 cornerRadius = 16.dp,
                 action = {
@@ -318,8 +318,8 @@ fun SingleAlbumViewBottomBar(
                 dialogComposable = {
                     ConfirmationDialog(
                         showDialog = showDeleteDialog,
-                        dialogTitle = "Remove these items from the album?",
-                        confirmButtonLabel = "Remove"
+                        dialogTitle = stringResource(id = R.string.custom_album_remove_media_desc),
+                        confirmButtonLabel = stringResource(id = R.string.custom_album_remove_media)
                     ) {
                         if (selectedItemsWithoutSection.any { it.customId == null }) {
                             showExplanationDialog.value = true
@@ -368,9 +368,9 @@ fun TrashedPhotoGridViewTopBar(
 
     ConfirmationDialogWithBody(
         showDialog = showDialog,
-        dialogTitle = "Empty trash bin?",
-        dialogBody = "This deletes all items in the trash bin, action cannot be undone",
-        confirmButtonLabel = "Empty Out"
+        dialogTitle = stringResource(id = R.string.trash_empty),
+        dialogBody = stringResource(id = R.string.trash_empty),
+        confirmButtonLabel = stringResource(id = R.string.trash_empty_confirm)
     ) {
         runEmptyTrashAction.value = true
     }
@@ -399,7 +399,7 @@ fun TrashedPhotoGridViewTopBar(
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.back_arrow),
-                            contentDescription = "Go back to previous page",
+                            contentDescription = stringResource(id = R.string.return_to_previous_page),
                             tint = MaterialTheme.colorScheme.onBackground,
                             modifier = Modifier
                                 .size(24.dp)
@@ -408,7 +408,7 @@ fun TrashedPhotoGridViewTopBar(
                 },
                 title = {
                     Text(
-                        text = "Trash Bin",
+                        text = stringResource(id = R.string.trash_bin),
                         fontSize = TextUnit(18f, TextUnitType.Sp),
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
@@ -425,7 +425,7 @@ fun TrashedPhotoGridViewTopBar(
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.trash),
-                            contentDescription = "empty out the trash bin",
+                            contentDescription = stringResource(id = R.string.trash_empty_desc),
                             tint = MaterialTheme.colorScheme.onBackground,
                             modifier = Modifier
                                 .size(24.dp)
@@ -502,7 +502,7 @@ fun TrashedPhotoGridViewBottomBar(
         )
 
         BottomAppBarItem(
-            text = "Restore",
+            text = stringResource(id = R.string.media_restore),
             iconResId = R.drawable.untrash,
             cornerRadius = 16.dp,
             action = {
@@ -511,8 +511,8 @@ fun TrashedPhotoGridViewBottomBar(
             dialogComposable = {
                 ConfirmationDialog(
                     showDialog = showRestoreDialog,
-                    dialogTitle = "Restore these items?",
-                    confirmButtonLabel = "Restore"
+                    dialogTitle = stringResource(id = R.string.media_restore_confirm),
+                    confirmButtonLabel = stringResource(id = R.string.media_restore)
                 ) {
                     runRestoreAction.value = true
                 }
@@ -536,7 +536,7 @@ fun TrashedPhotoGridViewBottomBar(
         }
 
         BottomAppBarItem(
-            text = "Delete",
+            text = stringResource(id = R.string.media_delete),
             iconResId = R.drawable.delete,
             cornerRadius = 16.dp,
             action = {
@@ -547,9 +547,9 @@ fun TrashedPhotoGridViewBottomBar(
             dialogComposable = {
                 ConfirmationDialogWithBody(
                     showDialog = showPermaDeleteDialog,
-                    dialogTitle = "Permanently delete these items?",
-                    dialogBody = "This action cannot be undone!",
-                    confirmButtonLabel = "Delete"
+                    dialogTitle = stringResource(id = R.string.media_delete_permanently_confirm, "items"),
+                    dialogBody = stringResource(id = R.string.action_cannot_be_undone),
+                    confirmButtonLabel = stringResource(id = R.string.media_delete)
                 ) {
                     runPermaDeleteAction.value = true
                 }
@@ -589,7 +589,7 @@ fun SecureFolderViewTopAppBar(
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.back_arrow),
-                            contentDescription = "Go back to previous page",
+                            contentDescription = stringResource(id = R.string.return_to_previous_page),
                             tint = MaterialTheme.colorScheme.onBackground,
                             modifier = Modifier
                                 .size(24.dp)
@@ -598,7 +598,7 @@ fun SecureFolderViewTopAppBar(
                 },
                 title = {
                     Text(
-                        text = "Secure Folder",
+                        text = stringResource(id = R.string.secure_folder),
                         fontSize = TextUnit(18f, TextUnitType.Sp),
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
@@ -633,22 +633,22 @@ fun SecureFolderViewBottomAppBar(
         }
 
         var showLoadingDialog by remember { mutableStateOf(false) }
-        var loadingDialogTitle by remember { mutableStateOf("Decrypting Files") }
+        var loadingDialogTitle by remember { mutableStateOf(context.resources.getString(R.string.secure_decrypting)) }
 
         if (showLoadingDialog) {
             LoadingDialog(
                 title = loadingDialogTitle,
-                body = "Please wait while the media is processed"
+                body = stringResource(id = R.string.secure_processing)
             )
         }
 
         BottomAppBarItem(
-            text = "Share",
+            text = stringResource(id = R.string.media_share),
             iconResId = R.drawable.share,
             action = {
                 coroutineScope.launch(Dispatchers.IO) {
                     async {
-                        loadingDialogTitle = "Decrypting Files"
+                        loadingDialogTitle = context.resources.getString(R.string.secure_decrypting)
                         showLoadingDialog = true
 
                         val cachedPaths = emptyList<Pair<String, MediaType>>().toMutableList()
@@ -725,7 +725,7 @@ fun SecureFolderViewBottomAppBar(
         )
 
         BottomAppBarItem(
-            text = "Restore",
+            text = stringResource(id = R.string.media_restore),
             iconResId = R.drawable.unlock,
             cornerRadius = 16.dp,
             action = {
@@ -734,10 +734,10 @@ fun SecureFolderViewBottomAppBar(
             dialogComposable = {
                 ConfirmationDialog(
                     showDialog = showRestoreDialog,
-                    dialogTitle = "Restore these items?",
-                    confirmButtonLabel = "Restore"
+                    dialogTitle = stringResource(id = R.string.media_restore_confirm),
+                    confirmButtonLabel = stringResource(id = R.string.media_restore)
                 ) {
-                    loadingDialogTitle = "Restoring Files"
+                    loadingDialogTitle = context.resources.getString(R.string.media_restore_processing)
                     showLoadingDialog = true
 
                     isGettingPermissions.value = true
@@ -788,7 +788,7 @@ fun SecureFolderViewBottomAppBar(
         }
 
         BottomAppBarItem(
-            text = "Delete",
+            text = stringResource(id = R.string.media_delete),
             iconResId = R.drawable.delete,
             cornerRadius = 16.dp,
             action = {
@@ -797,9 +797,9 @@ fun SecureFolderViewBottomAppBar(
             dialogComposable = {
                 ConfirmationDialogWithBody(
                     showDialog = showPermaDeleteDialog,
-                    dialogTitle = "Permanently delete these items?",
-                    dialogBody = "This action cannot be undone!",
-                    confirmButtonLabel = "Delete"
+                    dialogTitle = stringResource(id = R.string.media_delete_permanently_confirm, "items"),
+                    dialogBody = stringResource(id = R.string.action_cannot_be_undone),
+                    confirmButtonLabel = stringResource(id = R.string.media_delete)
                 ) {
                     runPermaDeleteAction.value = true
                 }
@@ -836,7 +836,7 @@ fun FavouritesViewTopAppBar(
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.back_arrow),
-                            contentDescription = "Go back to previous page",
+                            contentDescription = stringResource(id = R.string.return_to_previous_page),
                             tint = MaterialTheme.colorScheme.onBackground,
                             modifier = Modifier
                                 .size(24.dp)
@@ -845,7 +845,7 @@ fun FavouritesViewTopAppBar(
                 },
                 title = {
                     Text(
-                        text = "Favourites",
+                        text = stringResource(id = R.string.favourites),
                         fontSize = TextUnit(18f, TextUnitType.Sp),
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
@@ -924,7 +924,7 @@ fun FavouritesViewBottomAppBar(
 
         val showUnFavDialog = remember { mutableStateOf(false) }
         BottomAppBarItem(
-            text = "Remove",
+            text = stringResource(id = R.string.custom_album_remove_media),
             iconResId = R.drawable.unfavourite,
             cornerRadius = 16.dp,
             action = {
@@ -933,8 +933,8 @@ fun FavouritesViewBottomAppBar(
             dialogComposable = {
                 ConfirmationDialog(
                     showDialog = showUnFavDialog,
-                    dialogTitle = "Remove selected items from favourites?",
-                    confirmButtonLabel = "Remove"
+                    dialogTitle = stringResource(id = R.string.custom_album_remove_media_desc),
+                    confirmButtonLabel = stringResource(id = R.string.custom_album_remove_media)
                 ) {
                     coroutineScope.launch {
                         withContext(Dispatchers.IO) {
@@ -984,7 +984,7 @@ fun FavouritesViewBottomAppBar(
         )
 
         BottomAppBarItem(
-            text = "Delete",
+            text = stringResource(id = R.string.media_delete),
             iconResId = R.drawable.delete,
             cornerRadius = 16.dp,
             action = {
@@ -1002,8 +1002,8 @@ fun FavouritesViewBottomAppBar(
             dialogComposable = {
                 ConfirmationDialog(
                     showDialog = showDeleteDialog,
-                    dialogTitle = "Move selected items to trash?",
-                    confirmButtonLabel = "Delete"
+                    dialogTitle = stringResource(id = R.string.media_trash_confirm),
+                    confirmButtonLabel = stringResource(id = R.string.media_delete)
                 ) {
                     coroutineScope.launch {
                         selectedItemsList.forEach {

@@ -33,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
@@ -68,12 +69,12 @@ fun MainAppTopBar(
         title = {
             Row {
                 Text(
-                    text = "Lavender ",
+                    text = stringResource(id = R.string.app_name_full).split(" ").first() + " ",
                     fontWeight = FontWeight.Bold,
                     fontSize = TextUnit(22f, TextUnitType.Sp)
                 )
                 Text(
-                    text = "Photos",
+                    text = stringResource(id = R.string.app_name_full).split(" ")[1], // second part
                     fontWeight = FontWeight.Normal,
                     fontSize = TextUnit(22f, TextUnitType.Sp)
                 )
@@ -109,7 +110,7 @@ fun MainAppTopBar(
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.add),
-                        contentDescription = "Add album",
+                        contentDescription = stringResource(id = R.string.album_add),
                         tint = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.size(24.dp)
                     )
@@ -123,7 +124,7 @@ fun MainAppTopBar(
             ) {
                 Icon(
                     painter = painterResource(R.drawable.settings),
-                    contentDescription = "Settings Button",
+                    contentDescription = stringResource(id = R.string.settings),
                     tint = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.size(24.dp)
                 )
@@ -170,7 +171,7 @@ fun MainAppBottomBar(
                     icon = {
                         Icon(
                             painter = painterResource(id = if (currentView.value == tab) tab.icon.filled else tab.icon.nonFilled),
-                            contentDescription = "Navigate to ${tab.name} page",
+                            contentDescription = stringResource(id = R.string.tabs_navigate_to, tab.name),
                             tint = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier
                                 .size(24.dp)
@@ -244,7 +245,7 @@ fun MainAppSelectingBottomBar(
         )
 
         BottomAppBarItem(
-            text = "Move",
+            text = stringResource(id = R.string.media_move),
             iconResId = R.drawable.cut,
             action = {
                 isMoving = true
@@ -253,7 +254,7 @@ fun MainAppSelectingBottomBar(
         )
 
         BottomAppBarItem(
-            text = "Copy",
+            text = stringResource(id = R.string.media_copy),
             iconResId = R.drawable.copy,
             action = {
                 isMoving = false
@@ -293,8 +294,8 @@ fun MainAppSelectingBottomBar(
             dialogComposable = {
                 ConfirmationDialog(
                     showDialog = showDeleteDialog,
-                    dialogTitle = "Move these items to Trash Bin?",
-                    confirmButtonLabel = "Delete"
+                    dialogTitle = stringResource(id = R.string.media_trash_confirm),
+                    confirmButtonLabel = stringResource(id = R.string.media_delete)
                 ) {
                     runDeleteAction.value = true
                 }

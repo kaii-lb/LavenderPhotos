@@ -267,7 +267,7 @@ fun AlbumsListItem(
     val runOnDirGranted = remember { mutableStateOf(false) }
 
     GetDirectoryPermissionAndRun(
-        absoluteDirPaths = listOf(baseInternalStorageDirectory + album),
+        absoluteDirPaths = listOf(baseInternalStorageDirectory + album.mainPath),
         shouldRun = runOnDirGranted,
         onGranted = {
             runOnUriGranted.value = true

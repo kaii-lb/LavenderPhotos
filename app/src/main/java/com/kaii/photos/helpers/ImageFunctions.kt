@@ -556,7 +556,7 @@ suspend fun savePathListToBitmap(
 
                 LavenderSnackbarController.pushEvent(
                     LavenderSnackbarEvents.MessageEvent(
-                        message = "Saved edited image!",
+                        message = context.resources.getString(R.string.editing_done),
                         iconResId = R.drawable.file_is_selected_foreground,
                         duration = SnackbarDuration.Short
                     )
@@ -564,7 +564,7 @@ suspend fun savePathListToBitmap(
             } else {
                 LavenderSnackbarController.pushEvent(
                     LavenderSnackbarEvents.MessageEvent(
-                        message = "Failed to save edited image",
+                        message = context.resources.getString(R.string.editing_failed),
                         iconResId = R.drawable.error_2,
                         duration = SnackbarDuration.Long
                     )
@@ -583,7 +583,7 @@ suspend fun savePathListToBitmap(
 
                 LavenderSnackbarController.pushEvent(
                     LavenderSnackbarEvents.MessageEvent(
-                        message = "Saved edited image!",
+                        message = context.resources.getString(R.string.editing_done),
                         iconResId = R.drawable.file_is_selected_foreground,
                         duration = SnackbarDuration.Short
                     )
@@ -591,7 +591,7 @@ suspend fun savePathListToBitmap(
             } else {
                 LavenderSnackbarController.pushEvent(
                     LavenderSnackbarEvents.MessageEvent(
-                        message = "Failed to save edited image",
+                        message = context.resources.getString(R.string.editing_failed),
                         iconResId = R.drawable.error_2,
                         duration = SnackbarDuration.Long
                     )

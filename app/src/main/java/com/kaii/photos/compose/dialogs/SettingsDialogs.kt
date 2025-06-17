@@ -52,9 +52,11 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -102,7 +104,7 @@ fun AddTabDialog(
                 .fillMaxWidth(1f)
         ) {
             Text(
-                text = "Add a Tab",
+                text = stringResource(id = R.string.tabs_add),
                 fontSize = TextUnit(18f, TextUnitType.Sp),
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier
@@ -266,7 +268,7 @@ fun AddTabDialog(
             },
             placeholder = {
                 Text(
-                    text = "Tab name",
+                    text = stringResource(id = R.string.tabs_name),
                     fontSize = TextUnit(14f, TextUnitType.Sp)
                 )
             },
@@ -327,7 +329,7 @@ fun AddTabDialog(
             horizontalArrangement = Arrangement.Start
         ) {
             Text(
-                text = "Albums included",
+                text = stringResource(id = R.string.tabs_albums_incl),
                 fontSize = TextUnit(14f, TextUnitType.Sp),
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier
@@ -387,7 +389,7 @@ fun AddTabDialog(
                         horizontalArrangement = Arrangement.Start
                     ) {
                         Text(
-                            text = "None",
+                            text = stringResource(id = R.string.none),
                             fontSize = TextUnit(14f, TextUnitType.Sp),
                             color = MaterialTheme.colorScheme.onSurface,
                             overflow = TextOverflow.Ellipsis
@@ -400,9 +402,10 @@ fun AddTabDialog(
         Spacer(modifier = Modifier.height(16.dp))
 
         val coroutineScope = rememberCoroutineScope()
+        val context = LocalContext.current
 
         FullWidthDialogButton(
-            text = "Add Tab",
+            text = stringResource(id = R.string.tabs_confirm),
             color = MaterialTheme.colorScheme.primary,
             textColor = MaterialTheme.colorScheme.onPrimary,
             position = RowPosition.Single
@@ -429,7 +432,7 @@ fun AddTabDialog(
                     coroutineScope.launch {
                         LavenderSnackbarController.pushEvent(
                             LavenderSnackbarEvents.MessageEvent(
-                                message = "Tab parameters cannot be empty",
+                                message = context.resources.getString(R.string.tabs_empty_params),
                                 iconResId = R.drawable.error_2,
                                 duration = SnackbarDuration.Short
                             )
@@ -440,7 +443,7 @@ fun AddTabDialog(
                 coroutineScope.launch {
                     LavenderSnackbarController.pushEvent(
                         LavenderSnackbarEvents.MessageEvent(
-                            message = "Can't add more than 5 tabs",
+                            message = context.resources.getString(R.string.tabs_max_reached),
                             iconResId = R.drawable.error_2,
                             duration = SnackbarDuration.Short
                         )
@@ -457,7 +460,7 @@ fun SortModeSelectorDialog(
     dismiss: () -> Unit
 ) {
     LavenderDialogBase(onDismiss = dismiss) {
-        TitleCloseRow(title = "Media Sort Mode") {
+        TitleCloseRow(title = stringResource(id = R.string.sort_mode)) {
             dismiss()
         }
 
@@ -499,40 +502,40 @@ fun DeleteIntervalDialog(
     var deleteInterval by remember { mutableIntStateOf(initialValue) }
 
     SelectableButtonListDialog(
-        title = "Delete Interval",
-        body = "Photos in the trash bin older than this date will be permanently deleted",
+        title = stringResource(id = R.string.trash_auto_delete_interval),
+        body = stringResource(id = R.string.trash_auto_delete_notice),
         showDialog = showDialog,
         buttons = {
             RadioButtonRow(
-                text = "3 Days",
+                text = "3" + stringResource(id = R.string.trash_days),
                 checked = deleteInterval == 3
             ) {
                 deleteInterval = 3
             }
 
             RadioButtonRow(
-                text = "10 Days",
+                text = "10" + stringResource(id = R.string.trash_days),
                 checked = deleteInterval == 10
             ) {
                 deleteInterval = 10
             }
 
             RadioButtonRow(
-                text = "15 Days",
+                text = "15" + stringResource(id = R.string.trash_days),
                 checked = deleteInterval == 15
             ) {
                 deleteInterval = 15
             }
 
             RadioButtonRow(
-                text = "30 Days",
+                text = "30" + stringResource(id = R.string.trash_days),
                 checked = deleteInterval == 30
             ) {
                 deleteInterval = 30
             }
 
             RadioButtonRow(
-                text = "60 Days",
+                text = "60" + stringResource(id = R.string.trash_days),
                 checked = deleteInterval == 60
             ) {
                 deleteInterval = 60
@@ -552,40 +555,40 @@ fun ThumbnailSizeDialog(
     var thumbnailSize by remember { mutableIntStateOf(initialValue) }
 
     SelectableButtonListDialog(
-        title = "Thumbnail Size",
-        body = "Higher resolutions use more storage space",
+        title = stringResource(id = R.string.settings_storage_thumbnails_resolution),
+        body = stringResource(id = R.string.settings_storage_thumbnails_notice),
         showDialog = showDialog,
         buttons = {
             RadioButtonRow(
-                text = "32x32 Pixels",
+                text = "32x32" + stringResource(id = R.string.pixels),
                 checked = thumbnailSize == 32
             ) {
                 thumbnailSize = 32
             }
 
             RadioButtonRow(
-                text = "64x64 Pixel",
+                text = "64x64" + stringResource(id = R.string.pixels),
                 checked = thumbnailSize == 64
             ) {
                 thumbnailSize = 64
             }
 
             RadioButtonRow(
-                text = "128x128 Pixels",
+                text = "128x128" + stringResource(id = R.string.pixels),
                 checked = thumbnailSize == 128
             ) {
                 thumbnailSize = 128
             }
 
             RadioButtonRow(
-                text = "256x256 Pixels",
+                text = "256x256" + stringResource(id = R.string.pixels),
                 checked = thumbnailSize == 256
             ) {
                 thumbnailSize = 256
             }
 
             RadioButtonRow(
-                text = "512x512 Pixels",
+                text = "512x512" + stringResource(id = R.string.pixels),
                 checked = thumbnailSize == 512
             ) {
                 thumbnailSize = 512
@@ -609,7 +612,7 @@ fun TabCustomizationDialog(
     LavenderDialogBase(
         onDismiss = closeDialog
     ) {
-        TitleCloseRow(title = "Customize Tabs") {
+        TitleCloseRow(title = stringResource(id = R.string.tabs_customize)) {
             closeDialog()
         }
 
@@ -619,6 +622,8 @@ fun TabCustomizationDialog(
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.Start
         ) {
+            val context = LocalContext.current
+
             DefaultTabs.defaultList.forEach { tab ->
                 InfoRow(
                     text = tab.name,
@@ -635,7 +640,7 @@ fun TabCustomizationDialog(
                                 coroutineScope.launch {
                                     LavenderSnackbarController.pushEvent(
                                         LavenderSnackbarEvents.MessageEvent(
-                                            message = "At least one tab needs to exist",
+                                            message = context.resources.getString(R.string.tabs_min_reached),
                                             iconResId = R.drawable.error_2,
                                             duration = SnackbarDuration.Short
                                         )
@@ -649,7 +654,7 @@ fun TabCustomizationDialog(
                                 coroutineScope.launch {
                                     LavenderSnackbarController.pushEvent(
                                         LavenderSnackbarEvents.MessageEvent(
-                                            message = "Maximum of 5 tabs allowed",
+                                            message = context.resources.getString(R.string.tabs_max_reached),
                                             iconResId = R.drawable.error_2,
                                             duration = SnackbarDuration.Short
                                         )
@@ -679,7 +684,7 @@ fun TabCustomizationDialog(
                             coroutineScope.launch {
                                 LavenderSnackbarController.pushEvent(
                                     LavenderSnackbarEvents.MessageEvent(
-                                        message = "At least one tab needs to exist",
+                                        message = context.resources.getString(R.string.tabs_min_reached),
                                         iconResId = R.drawable.error_2,
                                         duration = SnackbarDuration.Short
                                     )
@@ -705,8 +710,9 @@ fun TabCustomizationDialog(
             )
         }
 
+        val context = LocalContext.current
         FullWidthDialogButton(
-            text = "Add a tab",
+            text = stringResource(id = R.string.tabs_add),
             color = MaterialTheme.colorScheme.primary,
             position = RowPosition.Single,
             textColor = MaterialTheme.colorScheme.onPrimary
@@ -717,7 +723,7 @@ fun TabCustomizationDialog(
                 coroutineScope.launch {
                     LavenderSnackbarController.pushEvent(
                         LavenderSnackbarEvents.MessageEvent(
-                            message = "Maximum of 5 tabs allowed",
+                            message = context.resources.getString(R.string.tabs_max_reached),
                             iconResId = R.drawable.error_2,
                             duration = SnackbarDuration.Short
                         )
@@ -740,7 +746,7 @@ fun DefaultTabSelectorDialog(
     LavenderDialogBase(
         onDismiss = dismissDialog
     ) {
-        TitleCloseRow(title = "Default Tab") {
+        TitleCloseRow(title = stringResource(id = R.string.tabs_default)) {
             dismissDialog()
         }
 
