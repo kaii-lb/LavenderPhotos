@@ -23,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.core.net.toUri
 import com.kaii.lavender_snackbars.LavenderSnackbarController
 import com.kaii.lavender_snackbars.LavenderSnackbarEvents
@@ -120,9 +121,9 @@ fun GetDirectoryPermissionAndRun(
 
     ConfirmationDialogWithBody(
         showDialog = showNoPermissionForDirDialog,
-        dialogTitle = "Permission Needed",
-        dialogBody = "Lavender Photos needs permission to access this album. Please grant it the permission by selecting \"Use This Folder\" on the next screen.\n This is a one-time permission.",
-        confirmButtonLabel = "Grant"
+        dialogTitle = stringResource(id = R.string.permissions_needed),
+        dialogBody = stringResource(id = R.string.permissions_needed_desc),
+        confirmButtonLabel = stringResource(id = R.string.permissions_grant)
     ) {
         if (currentIndex < absoluteDirPaths.size) {
             val uri = context.getExternalStorageContentUriFromAbsolutePath(
@@ -227,6 +228,7 @@ fun createDirectoryPicker(
     onGetDir: (albumPath: String?) -> Unit
 ): ManagedActivityResultLauncher<Uri?, Uri?> {
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     return createPersistablePermissionLauncher(
         onGranted = { uri ->
@@ -252,7 +254,7 @@ fun createDirectoryPicker(
             coroutineScope.launch {
                 LavenderSnackbarController.pushEvent(
                     LavenderSnackbarEvents.MessageEvent(
-                        message = "Failed to add album :<",
+                        message = context.resources.getString(R.string.albums_add_failed),
                         iconResId = R.drawable.error_2,
                         duration = SnackbarDuration.Short
                     )
