@@ -167,7 +167,7 @@ fun groupPhotosBy(
             }
 
             else -> {
-                formatDate(timestamp = sectionTime, sortBy = sortBy)
+                formatDate(timestamp = sectionTime, sortBy = sortBy, format = mainViewModel.displayDateFormat.value)
             }
         }
 
@@ -184,11 +184,17 @@ fun groupPhotosBy(
     return mediaItems
 }
 
-fun formatDate(timestamp: Long, sortBy: MediaItemSortMode): String {
+enum class DisplayDateFormat(val format: String) {
+    Default(format = "EEE d - MMMM yyyy"),
+    Short(format = "d - MMM yy"),
+    Compressed(format = "MM/dd/yyyy")
+}
+
+fun formatDate(timestamp: Long, sortBy: MediaItemSortMode, format: DisplayDateFormat): String {
     return if (timestamp != 0L) {
         val dateTimeFormat =
             if (sortBy == MediaItemSortMode.MonthTaken) DateTimeFormatter.ofPattern("MMMM yyyy")
-            else DateTimeFormatter.ofPattern("EEE d - MMMM yyyy")
+            else DateTimeFormatter.ofPattern(format.format)
 
         val localDateTime =
             Instant.ofEpochSecond(timestamp).atZone(ZoneId.systemDefault()).toLocalDateTime()

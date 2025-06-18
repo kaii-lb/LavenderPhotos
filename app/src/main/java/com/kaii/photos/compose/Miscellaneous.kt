@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -534,12 +535,13 @@ fun ConfirmCancelRow(
 @Composable
 fun TitleCloseRow(
 	title: String,
+    closeOffset: Dp = 0.dp,
 	onClose: () -> Unit
 ) {
 	Box (
 	    modifier = Modifier
 	        .fillMaxWidth(1f)
-	        .padding(8.dp, 0.dp),
+	        .padding(8.dp, 0.dp)
 	) {
 	    Text(
 	        text = title,
@@ -557,6 +559,7 @@ fun TitleCloseRow(
 	        },
 	        modifier = Modifier
 	        	.align(Alignment.CenterEnd)
+                .offset(x = closeOffset)
 	    ) {
 	        Icon(
 	            painter = painterResource(id = R.drawable.close),

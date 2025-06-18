@@ -16,11 +16,15 @@ This is Lavender Photos, a no non-sense, smooth, and performant gallery app for 
 - Privacy focused design, no chance of anything happening without your permission
 - WAY more to come
 
+# Help us translate
+Lavender Photos is meant to be accessible for all, and contributing a translation would greatly help with that!
+Our [Weblate](https://hosted.weblate.org/projects/lavender-photos/) instance is a great place to start.
+
 # Screenshots
   Main View                 |  Albums                   |
 :--------------------------:|:-------------------------:|
 ![](/assets/images/main.png)|![](/assets/images/albums.png)
-  
+
   Secure Folder            |  Favourites & Trash       |  Search                  |
 :-------------------------:|:-------------------------:|:-------------------------:
   ![](/assets/images/locked.png)|![](/assets/images/favtrash.png)|![](/assets/images/search.png)

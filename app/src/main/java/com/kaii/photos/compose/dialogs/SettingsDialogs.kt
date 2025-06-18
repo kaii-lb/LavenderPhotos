@@ -73,10 +73,12 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.ConfirmCancelRow
 import com.kaii.photos.compose.FullWidthDialogButton
 import com.kaii.photos.compose.HorizontalSeparator
+import com.kaii.photos.compose.PreferencesRow
 import com.kaii.photos.compose.RadioButtonRow
 import com.kaii.photos.compose.TitleCloseRow
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
+import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.datastore.PhotoGrid
 import com.kaii.photos.datastore.Storage
 import com.kaii.photos.datastore.StoredDrawable
@@ -86,10 +88,14 @@ import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MediaItemSortMode.Companion.presentableName
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.createDirectoryPicker
+import com.kaii.photos.models.multi_album.DisplayDateFormat
 import com.kaii.photos.reorderable_lists.ReorderableItem
 import com.kaii.photos.reorderable_lists.ReorderableLazyList
 import com.kaii.photos.reorderable_lists.rememberReorderableListState
 import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun AddTabDialog(
@@ -798,5 +804,71 @@ fun DefaultTabSelectorDialog(
                 dismissDialog()
             }
         )
+    }
+}
+
+@Composable
+fun DateFormatDialog(
+    onDismiss: () -> Unit
+) {
+    LavenderDialogBase(
+        onDismiss = onDismiss
+    ) {
+        TitleCloseRow(
+            title = stringResource(id = R.string.look_and_feel_date_format),
+            closeOffset = 12.dp
+        ) {
+            onDismiss()
+        }
+
+        Column(
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(modifier = Modifier.height(12.dp))
+
+            val currentDate = remember {
+                Instant.now().atZone(ZoneId.systemDefault()).toLocalDateTime()
+            }
+
+            PreferencesRow(
+                title = stringResource(id = R.string.look_and_feel_date_format_default),
+                summary = run {
+                    currentDate.format(DateTimeFormatter.ofPattern(DisplayDateFormat.Default.format))
+                },
+                position = RowPosition.Top,
+                iconResID = R.drawable.calendar
+            ) {
+                mainViewModel.settings.LookAndFeel.setDisplayDateFormat(DisplayDateFormat.Default)
+                mainViewModel.setDisplayDateFormat(DisplayDateFormat.Default)
+                onDismiss()
+            }
+
+            PreferencesRow(
+                title = stringResource(id = R.string.look_and_feel_date_format_short),
+                summary = run {
+                    currentDate.format(DateTimeFormatter.ofPattern(DisplayDateFormat.Short.format))
+                },
+                position = RowPosition.Middle,
+                iconResID = R.drawable.clarify
+            ) {
+                mainViewModel.settings.LookAndFeel.setDisplayDateFormat(DisplayDateFormat.Short)
+                mainViewModel.setDisplayDateFormat(DisplayDateFormat.Short)
+                onDismiss()
+            }
+
+            PreferencesRow(
+                title = stringResource(id = R.string.look_and_feel_date_format_compressed),
+                summary = run {
+                    currentDate.format(DateTimeFormatter.ofPattern(DisplayDateFormat.Compressed.format))
+                },
+                position = RowPosition.Bottom,
+                iconResID = R.drawable.acute
+            ) {
+                mainViewModel.settings.LookAndFeel.setDisplayDateFormat(DisplayDateFormat.Compressed)
+                mainViewModel.setDisplayDateFormat(DisplayDateFormat.Compressed)
+                onDismiss()
+            }
+        }
     }
 }

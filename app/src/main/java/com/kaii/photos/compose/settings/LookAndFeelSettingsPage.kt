@@ -14,7 +14,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -26,10 +30,17 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
+import com.kaii.photos.compose.PreferencesRow
 import com.kaii.photos.compose.PreferencesSeparatorText
 import com.kaii.photos.compose.PreferencesThreeStateSwitchRow
+import com.kaii.photos.compose.dialogs.DateFormatDialog
 import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.models.multi_album.DisplayDateFormat
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import kotlin.text.format
 
 @Composable
 fun LookAndFeelSettingsPage() {
@@ -53,7 +64,10 @@ fun LookAndFeelSettingsPage() {
                 val followDarkMode by mainViewModel.settings.LookAndFeel.getFollowDarkMode().collectAsStateWithLifecycle(initialValue = 0)
 
                 PreferencesThreeStateSwitchRow(
-                    title = stringResource(id = R.string.settings_dark_theme),
+                    title =
+                        if (followDarkMode == 0) stringResource(id = R.string.settings_Auto_theme)
+                        else if (followDarkMode == 1) stringResource(id = R.string.settings_dark_theme)
+                        else stringResource(id = R.string.settings_light_theme),
                     summary = stringResource(id = DarkThemeSetting.entries[followDarkMode].descriptionId),
                     iconResID = R.drawable.palette,
                     currentPosition = followDarkMode,
@@ -68,6 +82,45 @@ fun LookAndFeelSettingsPage() {
 					mainViewModel.settings.LookAndFeel.setFollowDarkMode(it)
                 }
         	}
+
+            item {
+                PreferencesSeparatorText(stringResource(id = R.string.look_and_feel_styling_separator))
+            }
+
+            item {
+                var showDateFormatDialog by remember { mutableStateOf(false) }
+                val displayDateFormat by mainViewModel.settings.LookAndFeel.getDisplayDateFormat().collectAsStateWithLifecycle(initialValue = DisplayDateFormat.Default)
+                var currentDate by remember { mutableStateOf(
+                    Instant.now()
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalDateTime()
+                        .format(DateTimeFormatter.ofPattern(displayDateFormat.format))
+                )}
+
+                LaunchedEffect(displayDateFormat) {
+                    currentDate = Instant.now()
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalDateTime()
+                        .format(DateTimeFormatter.ofPattern(displayDateFormat.format))
+                }
+
+                if (showDateFormatDialog) {
+                    DateFormatDialog {
+                        showDateFormatDialog = false
+                    }
+                }
+
+                PreferencesRow(
+                    title = stringResource(id = R.string.look_and_feel_date_format),
+                    summary = currentDate,
+                    iconResID = R.drawable.calendar_month,
+                    position = RowPosition.Single,
+                    showBackground = false,
+                    goesToOtherPage = true
+                ) {
+                    showDateFormatDialog = true
+                }
+            }
         }
 	}
 }

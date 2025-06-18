@@ -212,6 +212,8 @@
     <string name="settings_general_desc">App preferences and customizations</string>
     <string name="settings_theme">Theme</string>
     <string name="settings_dark_theme">Dark Theme</string>
+    <string name="settings_light_theme">Light Theme</string>
+    <string name="settings_Auto_theme">Auto Theme</string>
     <string name="settings_look_and_feel">Look &amp; Feel</string>
     <string name="settings_look_and_feel_desc">Change how the app looks</string>
     <string name="settings_theme_follow">App follows the system theme</string>
@@ -341,4 +343,12 @@
     <string name="error_views_favourites_empty">Add your most precious memories!</string>
     <string name="error_views_folder_non_existent">Folder doesn\'t exist</string>
     <string name="error_views_error_page">This is an error page</string>
+
+    <!-- Look and Feel -->
+    <string name="look_and_feel_styling_separator">Styling</string>
+    <string name="look_and_feel_date_format">Date Format</string>
+    <string name="look_and_feel_date_format_desc">Change how dates are displayed</string>
+    <string name="look_and_feel_date_format_default">Default</string>
+    <string name="look_and_feel_date_format_short">Short</string>
+    <string name="look_and_feel_date_format_compressed">Compressed</string>
 </resources>

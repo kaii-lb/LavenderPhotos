@@ -116,6 +116,7 @@ import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.shareImage
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.copyUriToUri
+import com.kaii.photos.models.multi_album.DisplayDateFormat
 import com.kaii.photos.models.multi_album.formatDate
 import com.kaii.photos.ui.theme.PhotosTheme
 import kotlinx.coroutines.delay
@@ -868,7 +869,11 @@ private fun BottomBar(
                             {
                                 val extension = mimeType.split("/")[1]
                                 val currentTime = System.currentTimeMillis()
-                                val date = formatDate(currentTime / 1000, MediaItemSortMode.DateTaken)
+                                val date = formatDate(
+                                    timestamp = currentTime / 1000,
+                                    sortBy = MediaItemSortMode.DateTaken,
+                                    format = DisplayDateFormat.Default
+                                )
                                 val name = context.resources.getString(R.string.edit_desc, "$date.$extension")
                                 val destination = File(Environment.DIRECTORY_PICTURES, name) // TODO: maybe move into subdir?
 

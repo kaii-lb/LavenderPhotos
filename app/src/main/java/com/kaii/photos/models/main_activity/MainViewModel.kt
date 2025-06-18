@@ -8,11 +8,13 @@ import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.datastore.Settings
 import com.kaii.photos.helpers.Updater
 import com.kaii.photos.mediastore.MediaStoreData
+import com.kaii.photos.models.multi_album.DisplayDateFormat
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -31,6 +33,9 @@ class MainViewModel(context: Context) : ViewModel() {
     val settings = Settings(context, viewModelScope)
 
     val updater = Updater(context = context, coroutineScope = viewModelScope)
+
+    private val _displayDateFormat = MutableStateFlow(DisplayDateFormat.Default)
+    val displayDateFormat = _displayDateFormat.asStateFlow()
 
     fun setGroupedMedia(media: List<MediaStoreData>?) {
         _groupedMedia.value = media
@@ -115,5 +120,9 @@ class MainViewModel(context: Context) : ViewModel() {
         block: suspend () -> Unit
     ) = viewModelScope.launch(dispatcher) {
         block()
+    }
+
+    fun setDisplayDateFormat(format: DisplayDateFormat) {
+        _displayDateFormat.value = format
     }
 }

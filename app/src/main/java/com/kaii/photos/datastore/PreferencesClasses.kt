@@ -11,6 +11,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import com.bumptech.glide.Glide
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.tryGetAllAlbums
+import com.kaii.photos.models.multi_album.DisplayDateFormat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -421,6 +422,7 @@ class SettingsLookAndFeelImpl(
     private val viewModelScope: CoroutineScope
 ) {
     private val followDarkModeKey = intPreferencesKey("look_and_feel_follow_dark_mode")
+    private val displayDateFormat = intPreferencesKey("look_and_feel_display_date_format")
 
     /** 0 is follow system
      * 1 is dark
@@ -446,6 +448,17 @@ class SettingsLookAndFeelImpl(
                 else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
             }
         )
+    }
+
+    fun getDisplayDateFormat(): Flow<DisplayDateFormat> =
+        context.datastore.data.map {
+            DisplayDateFormat.entries[it[displayDateFormat] ?: 0]
+        }
+
+    fun setDisplayDateFormat(format: DisplayDateFormat) = viewModelScope.launch {
+        context.datastore.edit {
+            it[displayDateFormat] = DisplayDateFormat.entries.indexOf(format)
+        }
     }
 }
 
