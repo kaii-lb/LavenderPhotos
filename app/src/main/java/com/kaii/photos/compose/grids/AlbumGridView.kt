@@ -109,7 +109,7 @@ fun AlbumsGridView(
     val context = LocalContext.current
     val navController = LocalNavController.current
 
-    val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect().collectAsStateWithLifecycle()
+    val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect().collectAsStateWithLifecycle(initialValue = true)
     val listOfDirs by if (autoDetectAlbums) {
         mainViewModel.settings.AlbumsList.getAutoDetectedAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
     } else {

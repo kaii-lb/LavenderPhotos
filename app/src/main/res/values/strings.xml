@@ -19,7 +19,7 @@
     <string name="albums_main_list_desc">Select albums that will have their photos displayed in the main photo view</string>
     <string name="albums_main_list_selected">Albums selected here will show up in the main photo view</string>
     <string name="albums_selected">Selected Albums</string>
-    <string name="albums_auto_detect">Automatically detect albums</string>
+    <string name="albums_auto_detect">Auto detect albums</string>
     <string name="albums_auto_detect_desc">Detects all the folders with media on this device and add them to the albums view</string>
     <string name="albums_clear_list">Clear album list</string>
     <string name="albums_clear_list_desc">Remove all albums except for Camera and Download</string>

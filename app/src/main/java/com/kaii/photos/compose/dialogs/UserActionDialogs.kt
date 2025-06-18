@@ -629,7 +629,7 @@ fun AddCustomAlbumDialog(
     onDismiss: () -> Unit,
     onDismissPrev: () -> Unit
 ) {
-    val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect().collectAsStateWithLifecycle()
+    val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect().collectAsStateWithLifecycle(initialValue = true)
     val albums by if (autoDetectAlbums) {
         mainViewModel.settings.AlbumsList.getAutoDetectedAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
     } else {

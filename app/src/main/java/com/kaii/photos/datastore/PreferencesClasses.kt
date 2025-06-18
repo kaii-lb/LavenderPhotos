@@ -177,7 +177,7 @@ class SettingsAlbumsListImpl(
 
     fun getAutoDetect() = context.datastore.data.map {
         it[autoDetectAlbumsKey] != false
-    }.stateIn(scope = viewModelScope, initialValue = true, started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000))
+    }//.stateIn(scope = viewModelScope, initialValue = true, started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000))
 
     fun setAutoDetect(value: Boolean) = viewModelScope.launch {
         context.datastore.edit {

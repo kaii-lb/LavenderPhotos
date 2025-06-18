@@ -158,7 +158,7 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
             item {
                 val mainPhotosAlbums by mainViewModel.settings.MainPhotosView.getAlbums()
                     .collectAsStateWithLifecycle(initialValue = emptyList())
-                val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect().collectAsStateWithLifecycle()
+                val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect().collectAsStateWithLifecycle(initialValue = true)
                 val allAlbums by if (autoDetectAlbums) {
                     mainViewModel.settings.AlbumsList.getAutoDetectedAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
                 } else {
@@ -228,8 +228,7 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
             }
 
             item {
-                val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect()
-                    .collectAsStateWithLifecycle(initialValue = false)
+                val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect().collectAsStateWithLifecycle(initialValue = true)
 
                 val customAlbums by mainViewModel.settings.AlbumsList.getCustomAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
 

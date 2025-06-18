@@ -99,7 +99,7 @@ fun MoveCopyAlbumListView(
     insetsPadding: WindowInsets
 ) {
     val context = LocalContext.current
-    val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect().collectAsStateWithLifecycle()
+    val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect().collectAsStateWithLifecycle(initialValue = true)
     val originalAlbumsList by if (autoDetectAlbums) {
         mainViewModel.settings.AlbumsList.getAutoDetectedAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
     } else {
