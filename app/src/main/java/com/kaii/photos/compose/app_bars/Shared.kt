@@ -33,6 +33,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,6 +44,9 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kaii.photos.MainActivity.Companion.mainViewModel
+import com.kaii.photos.datastore.LookAndFeel
 
 /** please only use dialogComposable for its intended purpose */
 @Composable
@@ -191,8 +195,17 @@ fun DualFunctionTopAppBar(
     alternateActions: @Composable () -> Unit,
     navigationIcon: @Composable () -> Unit = @Composable {}
 ) {
-    TopAppBarDefaults.topAppBarColors()
+    val isAmoled by mainViewModel.settings.LookAndFeel.getFollowDarkMode().collectAsStateWithLifecycle(initialValue = null)
+    if (isAmoled == null) return
+
     TopAppBar(
+        colors = TopAppBarDefaults.topAppBarColors().copy(
+            containerColor = if (isAmoled == 3) {
+                Color.Black
+            } else {
+                TopAppBarDefaults.topAppBarColors().containerColor
+            }
+        ),
         navigationIcon = navigationIcon,
         title = {
             AnimatedContent(

@@ -426,7 +426,8 @@ class SettingsLookAndFeelImpl(
 
     /** 0 is follow system
      * 1 is dark
-     * 2 is light */
+     * 2 is light
+     * 3 is amoled black */
     fun getFollowDarkMode(): Flow<Int> =
         context.datastore.data.map {
             it[followDarkModeKey] ?: 0
@@ -434,7 +435,8 @@ class SettingsLookAndFeelImpl(
 
     /** 0 is follow system
      * 1 is dark
-     * 2 is light */
+     * 2 is light
+     * 3 is amoled black */
     fun setFollowDarkMode(value: Int) = viewModelScope.launch {
         context.datastore.edit {
             it[followDarkModeKey] = value
@@ -442,7 +444,7 @@ class SettingsLookAndFeelImpl(
 
         AppCompatDelegate.setDefaultNightMode(
             when (value) {
-                1 -> AppCompatDelegate.MODE_NIGHT_YES
+                1, 3 -> AppCompatDelegate.MODE_NIGHT_YES
                 2 -> AppCompatDelegate.MODE_NIGHT_NO
 
                 else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM

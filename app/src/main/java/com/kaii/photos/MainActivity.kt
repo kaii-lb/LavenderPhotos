@@ -127,7 +127,6 @@ import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.custom_album.CustomAlbumViewModelFactory
 import com.kaii.photos.models.main_activity.MainViewModel
 import com.kaii.photos.models.main_activity.MainViewModelFactory
-import com.kaii.photos.models.multi_album.DisplayDateFormat
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModelFactory
 import com.kaii.photos.ui.theme.PhotosTheme
@@ -191,7 +190,7 @@ class MainActivity : ComponentActivity() {
                 )
 
             PhotosTheme(
-                darkTheme = followDarkTheme,
+                theme = followDarkTheme,
                 dynamicColor = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
             ) {
                 AnimatedContent(

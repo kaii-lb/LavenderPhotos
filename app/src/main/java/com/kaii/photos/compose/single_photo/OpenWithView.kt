@@ -157,7 +157,7 @@ class OpenWithView : ComponentActivity() {
                 }
 
             PhotosTheme(
-                darkTheme = followDarkTheme,
+                theme = followDarkTheme,
                 dynamicColor = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
             ) {
                 val navController = rememberNavController()
