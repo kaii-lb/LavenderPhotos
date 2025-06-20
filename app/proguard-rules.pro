@@ -21,3 +21,4 @@
 #-renamesourcefileattribute SourceFile
 
 -keep class androidx.datastore.*.** {*;}
+-keepnames class com.kaii.*.** {*;}
