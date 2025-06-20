@@ -3,7 +3,7 @@
     <string name="app_name">Photos</string>
     <string name="default_homepage_photogrid_dir">DCIM/Appareil photo</string>
     <string name="finding_albums_on_device">Recherche des albums…</string>
-    <string name="first_startup_dialog_body">Recherche tous les albums sur cet appareil et les ajoute à Lavender Photos.\nNote: si vous possédiez une ancienne version de l\'appli vos albums albums SERONT effacés si cette option est utilisée.</string>
+    <string name="first_startup_dialog_body">Recherche tous les albums sur cet appareil et les ajoute à Lavender Photos.\nNote : si vous possédiez une ancienne version de l\'appli vos albums SERONT effacés si cette option est utilisée.</string>
     <string name="add_album">Ajouter un album</string>
     <string name="albums">Albums</string>
     <string name="first_startup_dialog_title">Chercher tous les albums de l\'appareil ?</string>
@@ -36,7 +36,7 @@
     <string name="updates">Mises à jour</string>
     <string name="updates_desc">gardez cette appli à jour</string>
     <string name="updates_check">Vérifier les mises à jour</string>
-    <string name="updates_check_desc">Vous informe d\'une nouvelle version quand vous ouvrez cette appli. N\'installe pas automatiquement la mise à jour.</string>
+    <string name="updates_check_desc">Vous informe d\'une nouvelle version quand vous ouvrez cette appli. N\'installe pas automatiquement la mise à jour</string>
     <string name="updates_whats_new">Quoi de neuf</string>
     <string name="updates_notice">Notification de téléchargement</string>
     <string name="updates_not_found">Pas de mise à jour trouvée</string>
