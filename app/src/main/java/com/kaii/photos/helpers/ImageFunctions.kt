@@ -349,19 +349,14 @@ fun copyImageListToPath(
 }
 
 // TODO: scroll left one image
-suspend fun savePathListToBitmap(
+suspend fun modificationsToBitmap(
     modifications: List<Modification>,
     adjustmentColorMatrix: ColorMatrix,
-    absolutePath: String,
-    dateTaken: Long,
-    uri: Uri,
     image: ImageBitmap,
     maxSize: Size,
     rotation: Float,
     textMeasurer: TextMeasurer,
-    overwrite: Boolean,
-    context: Context
-) {
+) : ImageBitmap {
     val defaultTextStyle = DrawableText.Styles.Default.style
 
     val blurredImage =
@@ -371,7 +366,7 @@ suspend fun savePathListToBitmap(
             null
         }
 
-    withContext(Dispatchers.IO) {
+    return withContext(Dispatchers.IO) {
         val rotationMatrix = android.graphics.Matrix().apply {
             postRotate(rotation)
         }
@@ -510,93 +505,104 @@ suspend fun savePathListToBitmap(
             false
         ).copy(Bitmap.Config.ARGB_8888, true).asImageBitmap()
 
-        val original = File(absolutePath)
-        val format = when (original.extension) {
-            "webp" -> Bitmap.CompressFormat.WEBP_LOSSLESS
-            "jpeg", "jpg" -> Bitmap.CompressFormat.JPEG
-            else -> Bitmap.CompressFormat.PNG
+        return@withContext rotatedImage
+    }
+}
+
+suspend fun saveToFile(
+    absolutePath: String,
+    overwrite: Boolean,
+    context: Context,
+    dateTaken: Long,
+    rotatedImage: ImageBitmap,
+    uri: Uri
+) {
+    val original = File(absolutePath)
+    val format = when (original.extension) {
+        "webp" -> Bitmap.CompressFormat.WEBP_LOSSLESS
+        "jpeg", "jpg" -> Bitmap.CompressFormat.JPEG
+        else -> Bitmap.CompressFormat.PNG
+    }
+
+    val currentTime = System.currentTimeMillis()
+
+    val displayName = "${original.nameWithoutExtension}-edited"
+
+    if (!overwrite) {
+        val newUri = context.contentResolver.copyMedia(
+            context = context,
+            media = MediaStoreData(
+                type = MediaType.Image,
+                uri = uri,
+                mimeType = "image/$format",
+                absolutePath = absolutePath,
+                dateModified = currentTime,
+                dateTaken = dateTaken + 1,
+                displayName = displayName,
+                id = 0L
+            ),
+            destination = original.absolutePath.replace(original.name, "").replace(baseInternalStorageDirectory, ""),
+            overrideDisplayName = displayName,
+            overwriteDate = true
+        )
+
+        val contentValues = ContentValues().apply {
+            put(MediaColumns.DATE_ADDED, currentTime)
+            put(MediaStore.Images.Media.DATE_TAKEN, dateTaken + 1)
         }
 
-        val currentTime = System.currentTimeMillis()
+        val outputStream = newUri?.let { context.contentResolver.openOutputStream(newUri) }
 
-        val displayName = "${original.nameWithoutExtension}-edited"
+        if (newUri != null && outputStream != null) {
+            rotatedImage.asAndroidBitmap()
+                .compress(format, 100, outputStream)
+            outputStream.close()
 
-        if (!overwrite) {
-            val newUri = context.contentResolver.copyMedia(
-                context = context,
-                media = MediaStoreData(
-                    type = MediaType.Image,
-                    uri = uri,
-                    mimeType = "image/$format",
-                    absolutePath = absolutePath,
-                    dateModified = currentTime,
-                    dateTaken = dateTaken + 1,
-                    displayName = displayName,
-                    id = 0L
-                ),
-                destination = original.absolutePath.replace(original.name, "").replace(baseInternalStorageDirectory, ""),
-                overrideDisplayName = displayName,
-                overwriteDate = true
+            context.contentResolver.update(newUri, contentValues, null)
+            File(absolutePath).setLastModified(currentTime)
+
+            LavenderSnackbarController.pushEvent(
+                LavenderSnackbarEvents.MessageEvent(
+                    message = context.resources.getString(R.string.editing_done),
+                    iconResId = R.drawable.file_is_selected_foreground,
+                    duration = SnackbarDuration.Short
+                )
             )
-
-            val contentValues = ContentValues().apply {
-                put(MediaColumns.DATE_ADDED, currentTime)
-                put(MediaStore.Images.Media.DATE_TAKEN, dateTaken + 1)
-            }
-
-            val outputStream = newUri?.let { context.contentResolver.openOutputStream(newUri) }
-
-            if (newUri != null && outputStream != null) {
-                rotatedImage.asAndroidBitmap()
-                    .compress(format, 100, outputStream)
-                outputStream.close()
-
-                context.contentResolver.update(newUri, contentValues, null)
-                File(absolutePath).setLastModified(currentTime)
-
-                LavenderSnackbarController.pushEvent(
-                    LavenderSnackbarEvents.MessageEvent(
-                        message = context.resources.getString(R.string.editing_done),
-                        iconResId = R.drawable.file_is_selected_foreground,
-                        duration = SnackbarDuration.Short
-                    )
-                )
-            } else {
-                LavenderSnackbarController.pushEvent(
-                    LavenderSnackbarEvents.MessageEvent(
-                        message = context.resources.getString(R.string.editing_failed),
-                        iconResId = R.drawable.error_2,
-                        duration = SnackbarDuration.Long
-                    )
-                )
-            }
         } else {
-            val outputStream = context.contentResolver.openOutputStream(uri)
-
-            if (outputStream != null) {
-                rotatedImage.asAndroidBitmap()
-                    .compress(format, 100, outputStream)
-                outputStream.close()
-
-                // update date modified and invalidate cache by proxy
-                File(absolutePath).setLastModified(currentTime)
-
-                LavenderSnackbarController.pushEvent(
-                    LavenderSnackbarEvents.MessageEvent(
-                        message = context.resources.getString(R.string.editing_done),
-                        iconResId = R.drawable.file_is_selected_foreground,
-                        duration = SnackbarDuration.Short
-                    )
+            LavenderSnackbarController.pushEvent(
+                LavenderSnackbarEvents.MessageEvent(
+                    message = context.resources.getString(R.string.editing_failed),
+                    iconResId = R.drawable.error_2,
+                    duration = SnackbarDuration.Long
                 )
-            } else {
-                LavenderSnackbarController.pushEvent(
-                    LavenderSnackbarEvents.MessageEvent(
-                        message = context.resources.getString(R.string.editing_failed),
-                        iconResId = R.drawable.error_2,
-                        duration = SnackbarDuration.Long
-                    )
+            )
+        }
+    } else {
+        val outputStream = context.contentResolver.openOutputStream(uri)
+
+        if (outputStream != null) {
+            rotatedImage.asAndroidBitmap()
+                .compress(format, 100, outputStream)
+            outputStream.close()
+
+            // update date modified and invalidate cache by proxy
+            File(absolutePath).setLastModified(currentTime)
+
+            LavenderSnackbarController.pushEvent(
+                LavenderSnackbarEvents.MessageEvent(
+                    message = context.resources.getString(R.string.editing_done),
+                    iconResId = R.drawable.file_is_selected_foreground,
+                    duration = SnackbarDuration.Short
                 )
-            }
+            )
+        } else {
+            LavenderSnackbarController.pushEvent(
+                LavenderSnackbarEvents.MessageEvent(
+                    message = context.resources.getString(R.string.editing_failed),
+                    iconResId = R.drawable.error_2,
+                    duration = SnackbarDuration.Long
+                )
+            )
         }
     }
 }

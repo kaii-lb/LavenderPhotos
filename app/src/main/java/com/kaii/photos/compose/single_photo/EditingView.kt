@@ -189,7 +189,8 @@ import com.kaii.photos.helpers.PaintType
 import com.kaii.photos.helpers.blur
 import com.kaii.photos.helpers.getColorFromLinearGradientList
 import com.kaii.photos.helpers.gradientColorList
-import com.kaii.photos.helpers.savePathListToBitmap
+import com.kaii.photos.helpers.modificationsToBitmap
+import com.kaii.photos.helpers.saveToFile
 import com.kaii.photos.helpers.toOffset
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -254,16 +255,6 @@ fun EditingView(
 
     val originalImage = remember { BitmapFactory.decodeStream(inputStream) }
     var image by remember { mutableStateOf(originalImage.asImageBitmap()) }
-    var blurredImage by remember { mutableStateOf(image) }
-
-    LaunchedEffect(image) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            withContext(Dispatchers.IO) {
-                Log.e(TAG, "blurring bitmap...")
-                blurredImage = image.asAndroidBitmap().blur(blurRadius = 32f).asImageBitmap()
-            }
-        }
-    }
 
     inputStream?.close()
 
@@ -283,6 +274,26 @@ fun EditingView(
     val adjustSliderValue = remember { mutableFloatStateOf(0f) }
     val colorMatrix = remember { mutableStateOf(ColorMatrix()) }
     val currentFilter = remember { mutableStateOf(ColorFiltersMatrices["None"]!!) }
+
+    var blurredImage by remember { mutableStateOf(image) }
+    LaunchedEffect(image, modifications.size, colorMatrix.value, rotation) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            withContext(Dispatchers.IO) {
+                Log.e(TAG, "blurring bitmap...")
+                blurredImage =
+                    modificationsToBitmap(
+                        modifications = modifications.toList().filter { it !is DrawableBlur },
+                        adjustmentColorMatrix = colorMatrix.value,
+                        image = image,
+                        maxSize = maxSize,
+                        rotation = rotation,
+                        textMeasurer = textMeasurer
+                    )
+                        .asAndroidBitmap()
+                        .blur(blurRadius = 32f).asImageBitmap()
+            }
+        }
+    }
 
     val manualScale = remember { mutableFloatStateOf(0f) }
     val manualOffset = remember { mutableStateOf(Offset.Zero) }
@@ -314,18 +325,22 @@ fun EditingView(
                     coroutineScope.launch {
                         canExit.value = false
 
-                        savePathListToBitmap(
+                        val bitmap = modificationsToBitmap(
                             modifications = modifications,
                             adjustmentColorMatrix = colorMatrix.value,
-                            absolutePath = absolutePath,
-                            dateTaken = dateTaken,
-                            uri = uri,
                             image = image,
                             maxSize = maxSize,
                             rotation = rotation,
-                            textMeasurer = textMeasurer,
+                            textMeasurer = textMeasurer
+                        )
+
+                        saveToFile(
+                            absolutePath = absolutePath,
+                            dateTaken = dateTaken,
+                            uri = uri,
                             overwrite = overwrite.value,
-                            context = context
+                            context = context,
+                            rotatedImage = bitmap
                         )
 
                         delay(500)

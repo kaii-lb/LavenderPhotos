@@ -41,3 +41,5 @@ photos_signed_universal.apk.idsig
 .idea
 .kotlin
 .idea/gradle.xml
+/baselineprofile/
+/app/src/release/
