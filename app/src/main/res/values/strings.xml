@@ -73,6 +73,8 @@
     <string name="support">Support &amp; Donations</string>
     <string name="support_desc">help me keep the app alive</string>
     <string name="version_info">Version Info</string>
+    <string name="translation">Translation</string>
+    <string name="translation_desc">bring Lavender Photos worldwide!</string>
 
     <!-- Updates -->
     <string name="updates">Updates</string>

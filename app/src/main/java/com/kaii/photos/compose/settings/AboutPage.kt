@@ -185,6 +185,19 @@ fun AboutPage(popBackStack: () -> Unit) {
                 showNotImplDialog.value = true
             }
 
+            PreferencesRow(
+                title = stringResource(id = R.string.translation),
+                summary = stringResource(id = R.string.translation_desc),
+                iconResID = R.drawable.globe,
+                position = RowPosition.Middle
+            ) {
+                val intent = Intent(Intent.ACTION_VIEW).apply {
+                    setData("https://hosted.weblate.org/projects/lavender-photos/".toUri())
+                }
+
+                context.startActivity(intent)
+            }
+
             val versionName = try {
                 context.packageManager.getPackageInfo(context.packageName, 0).versionName
             } catch (e: Throwable) {
