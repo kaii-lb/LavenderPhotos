@@ -17,6 +17,7 @@ import java.nio.file.Files
 import java.util.zip.Deflater
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
+import kotlin.math.exp
 
 private const val TAG = "DATA_AND_BACKUP"
 
@@ -83,7 +84,7 @@ class DataAndBackupHelper {
 
         val securedItems = secureFolder.listMediaFiles()
 
-        if (securedItems == null) {
+        if (securedItems == null || securedItems.isEmpty()) {
             Log.d(TAG, "Secured items was null, nothing to export.")
             return false
         }
@@ -125,7 +126,7 @@ class DataAndBackupHelper {
 
         val securedItems = secureFolder.listMediaFiles()
 
-        if (securedItems == null) {
+        if (securedItems == null || securedItems.isEmpty()) {
             Log.d(TAG, "Secured items was null, nothing to export.")
             return false
         }
@@ -140,17 +141,20 @@ class DataAndBackupHelper {
 
     fun exportSecureFolderToZipFile(
         context: Context,
-    ): Boolean {
+    ): String? {
         val secureFolder = File(context.appSecureFolderDir)
 
         val securedItems = secureFolder.listFiles()
 
-        if (securedItems == null) {
+        if (securedItems == null || securedItems.isEmpty()) {
             Log.d(TAG, "Secured items was null, nothing to export.")
-            return false
+            return null
         }
 
-        val fileOutputStream = getZipFile(context = context).outputStream()
+        val zipFile = getZipFile(context = context)
+        if (!zipFile.exists()) zipFile.parentFile?.mkdirs()
+
+        val fileOutputStream = zipFile.outputStream()
         val zipOutputStream = ZipOutputStream(fileOutputStream)
 
         zipOutputStream.setLevel(Deflater.BEST_COMPRESSION)
@@ -186,14 +190,17 @@ class DataAndBackupHelper {
             zipOutputStream.close()
         }
 
-        return true
+        return zipFile.absolutePath
     }
 
     suspend fun exportFavourites(context: Context) {
         val database = applicationDatabase.favouritedItemEntityDao()
         val exportDir = getFavExportDir(context = context)
+        if (!exportDir.exists()) exportDir.mkdirs()
 
         val items = database.getAll().first()
+
+        if (items.isEmpty()) return
 
         items.forEach { favItem ->
             val favFile = File(favItem.absolutePath)
@@ -206,15 +213,25 @@ class DataAndBackupHelper {
     suspend fun exportFavouritesToZipFile(
         context: Context,
         progress: (percentage: Float) -> Unit
-    ) {
+    ) : String? {
         val database = applicationDatabase.favouritedItemEntityDao()
 
-        val fileOutputStream = getZipFile(context = context).outputStream()
+        val zipFile = getZipFile(context = context)
+        if (!zipFile.exists()) zipFile.parentFile?.mkdirs()
+
+        val fileOutputStream = zipFile.outputStream()
         val zipOutputStream = ZipOutputStream(fileOutputStream)
 
-        zipOutputStream.setLevel(Deflater.BEST_COMPRESSION)
+        zipOutputStream.setLevel(Deflater.DEFAULT_COMPRESSION)
 
         val items = database.getAll().first().map { File(it.absolutePath) }
+
+        if (items.isEmpty()) {
+            zipOutputStream.close()
+            fileOutputStream.close()
+            progress(1f)
+            return null
+        }
 
         val totalSize = items.sumOf { it.length() }.toFloat()
         var currentProgress = 0f
@@ -248,6 +265,8 @@ class DataAndBackupHelper {
             zipOutputStream.close()
             fileOutputStream.close()
         }
+
+        return zipFile.absolutePath
     }
 }
 

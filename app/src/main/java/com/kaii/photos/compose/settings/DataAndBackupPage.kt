@@ -41,6 +41,7 @@ import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.relativePath
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import kotlinx.coroutines.Dispatchers
+import java.io.File
 
 private const val TAG = "DATA_AND_BACKUP_PAGE"
 
@@ -156,21 +157,23 @@ fun DataAndBackupPage() {
                             )
                         )
 
-                        backupHelper.exportSecureFolderToZipFile(context = context)
+                        val filePath = backupHelper.exportSecureFolderToZipFile(context = context)
 
-                        val intent = Intent().apply {
-                            action = Intent.ACTION_VIEW
-                            data = FileProvider.getUriForFile(
-                                context,
-                                LAVENDER_FILE_PROVIDER_AUTHORITY,
-                                backupHelper.getZipFile(context = context)
-                            )
+                        if (filePath != null) {
+                            val intent = Intent().apply {
+                                action = Intent.ACTION_VIEW
+                                data = FileProvider.getUriForFile(
+                                    context,
+                                    LAVENDER_FILE_PROVIDER_AUTHORITY,
+                                    File(filePath)
+                                )
 
-                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                            addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                            }
+
+                            context.startActivity(intent)
                         }
-
-                        context.startActivity(intent)
 
                         isLoading.value = false
                     }
@@ -241,23 +244,25 @@ fun DataAndBackupPage() {
                             )
                         )
 
-                        helper.exportFavouritesToZipFile(context = context) { progress ->
+                        val filePath = helper.exportFavouritesToZipFile(context = context) { progress ->
                             Log.d(TAG, "Progress ${progress * 100}")
                         }
+                        if (filePath != null) {
+                            val intent = Intent().apply {
+                                action = Intent.ACTION_VIEW
+                                data = FileProvider.getUriForFile(
+                                    context,
+                                    LAVENDER_FILE_PROVIDER_AUTHORITY,
+                                    File(filePath)
+                                )
 
-                        val intent = Intent().apply {
-                            action = Intent.ACTION_VIEW
-                            data = FileProvider.getUriForFile(
-                                context,
-                                LAVENDER_FILE_PROVIDER_AUTHORITY,
-                                helper.getFavZipFile(context = context)
-                            )
+                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                            }
 
-                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                            addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                            context.startActivity(intent)
                         }
 
-                        context.startActivity(intent)
                         isLoading.value = false
                     }
                 }
