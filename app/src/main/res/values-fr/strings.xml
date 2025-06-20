@@ -207,4 +207,20 @@
     <string name="error_views_trash_prefix">Mis à la corbeille le</string>
     <string name="error_views_search_empty">Cherchez des photos !</string>
     <string name="bottom_sheets_square">Carré</string>
+    <string name="albums_clear_list">Effacer la liste d\'albums</string>
+    <string name="albums_clear_list_desc">Enlève tous les albums à l\'exception de Appareil Photo et Téléchargements</string>
+    <string name="albums_media_sorting">Tri des médias</string>
+    <string name="albums_is_custom">Ceci est un album personnalisé</string>
+    <string name="albums_custom">Album Personnalisé</string>
+    <string name="albums_already_contains_all">Cet album contient déjà tous les médias</string>
+    <string name="albums_info">Infos sur l\'album</string>
+    <string name="albums_id">Identifiant</string>
+    <string name="albums_move_to">Déplacer vers un album</string>
+    <string name="albums_copy_to">Copier vers un album</string>
+    <string name="albums_remove">Retirer l\'album de la liste</string>
+    <string name="albums_clear_list_done">Liste d\'albums effacée</string>
+    <string name="albums_path">Chemin</string>
+    <string name="albums_media_sorting_desc">Le tri des photos et des vidéos sera fait en grilles</string>
+    <string name="albums_item_count">Nombre de médias</string>
+    <string name="albums_non_existent">Aucun album de ce genre n\'existe</string>
 </resources>
