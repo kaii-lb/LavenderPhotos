@@ -67,7 +67,7 @@ fun LookAndFeelSettingsPage() {
                 PreferencesThreeStateSwitchRow(
                     title =
                         if (followDarkMode == 0) stringResource(id = R.string.settings_Auto_theme)
-                        else if (followDarkMode == 1) stringResource(id = R.string.settings_dark_theme)
+                        else if (followDarkMode == 1 || followDarkMode == 3) stringResource(id = R.string.settings_dark_theme)
                         else stringResource(id = R.string.settings_light_theme),
                     summary = stringResource(id = DarkThemeSetting.entries[if (followDarkMode == 3) 1 else followDarkMode].descriptionId),
                     iconResID = R.drawable.palette,

@@ -63,10 +63,15 @@ fun MemoryAndStorageSettingsPage() {
                     .collectAsStateWithLifecycle(initialValue = 0)
                 val showDeleteIntervalDialog = remember { mutableStateOf(false) }
 
-                val autoDelete =
-                    stringResource(id = R.string.trash_auto_delete) + " $autoDeleteInterval " + stringResource(
-                        id = R.string.trash_days
-                    )
+                val context = LocalContext.current
+                val autoDelete by remember {
+                    derivedStateOf {
+                        context.resources.getString(
+                            R.string.trash_auto_delete,
+                            autoDeleteInterval
+                        )
+                    }
+                }
                 val noAutoDelete = stringResource(id = R.string.trash_no_auto_delete)
 
                 val summary by remember {

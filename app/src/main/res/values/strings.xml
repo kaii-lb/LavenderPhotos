@@ -242,7 +242,7 @@
     <!-- Trash -->
     <string name="trash_bin_short">Trash</string>
     <string name="trash_bin">Trash Bin</string>
-    <string name="trash_auto_delete">Auto deletes items in trash bin after</string>
+    <string name="trash_auto_delete">Auto deletes items in trash bin after %d days</string>
     <string name="trash_days">days</string>
     <string name="trash_no_auto_delete">Items in trash bin won\'t be auto deleted</string>
     <string name="trash_auto_delete_interval">Auto delete interval</string>
