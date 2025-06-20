@@ -547,7 +547,7 @@ fun TrashedPhotoGridViewBottomBar(
             dialogComposable = {
                 ConfirmationDialogWithBody(
                     showDialog = showPermaDeleteDialog,
-                    dialogTitle = stringResource(id = R.string.media_delete_permanently_confirm, "items"),
+                    dialogTitle = stringResource(id = R.string.media_delete_permanently_confirm),
                     dialogBody = stringResource(id = R.string.action_cannot_be_undone),
                     confirmButtonLabel = stringResource(id = R.string.media_delete)
                 ) {
@@ -797,7 +797,7 @@ fun SecureFolderViewBottomAppBar(
             dialogComposable = {
                 ConfirmationDialogWithBody(
                     showDialog = showPermaDeleteDialog,
-                    dialogTitle = stringResource(id = R.string.media_delete_permanently_confirm, "items"),
+                    dialogTitle = stringResource(id = R.string.media_delete_permanently_confirm),
                     dialogBody = stringResource(id = R.string.action_cannot_be_undone),
                     confirmButtonLabel = stringResource(id = R.string.media_delete)
                 ) {

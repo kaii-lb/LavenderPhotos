@@ -170,7 +170,7 @@ fun SingleTrashedPhotoView(
             },
             title = {
                 Text(
-                    text = stringResource(id = R.string.media_delete_permanently_confirm, currentMediaItem.type.name),
+                    text = stringResource(id = R.string.media_delete_permanently_confirm),
                     fontSize = TextUnit(16f, TextUnitType.Sp)
                 )
             },

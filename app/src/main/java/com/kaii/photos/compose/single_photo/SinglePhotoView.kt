@@ -586,7 +586,7 @@ private fun BottomBar(
                         dialogComposable = {
                             ConfirmationDialog(
                                 showDialog = showDeleteDialog,
-                                dialogTitle = stringResource(id = R.string.media_delete_confirm, currentItem.type),
+                                dialogTitle = stringResource(id = R.string.media_delete_confirm),
                                 confirmButtonLabel = stringResource(id = R.string.media_delete)
                             ) {
                                 runTrashAction.value = true
@@ -647,7 +647,7 @@ private fun BottomBar(
                         dialogComposable = {
                             ConfirmationDialog(
                                 showDialog = showMoveToSecureFolderDialog,
-                                dialogTitle = stringResource(id = R.string.media_secure_confirm, currentItem.type),
+                                dialogTitle = stringResource(id = R.string.media_secure_confirm),
                                 confirmButtonLabel = stringResource(id = R.string.media_secure)
                             ) {
                                 tryGetDirPermission.value = true

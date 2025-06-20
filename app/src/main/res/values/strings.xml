@@ -78,7 +78,7 @@
     <string name="updates">Updates</string>
     <string name="updates_desc">keep the app up to date</string>
     <string name="updates_check">Check for Updates</string>
-    <string name="updates_check_desc">Notifies of new version when you open the app. Doesn not auto-install the update</string>
+    <string name="updates_check_desc">Notifies of new version when you open the app. Does not auto-install the update</string>
     <string name="updates_whats_new">What\'s new</string>
     <string name="updates_notice">Download Notice</string>
     <string name="updates_notice_desc">
@@ -238,15 +238,15 @@
     <string name="settings_about_and_updates">About &amp; Updates</string>
 
     <!-- Trash -->
-    <string name="trash">Trash</string>
+    <string name="trash_bin_short">Trash</string>
     <string name="trash_bin">Trash Bin</string>
-    <string name="trash_auto_delete">Auto delete items in trash bin after</string>
+    <string name="trash_auto_delete">Auto deletes items in trash bin after</string>
     <string name="trash_days">days</string>
     <string name="trash_no_auto_delete">Items in trash bin won\'t be auto deleted</string>
     <string name="trash_auto_delete_interval">Auto delete interval</string>
     <string name="trash_auto_delete_notice">Photos in the trash bin older than this date will be permanently deleted</string>
     <string name="trash_empty">Empty trash bin?</string>
-    <string name="trash_empty_desc">This deletes all items in the trash bin, action cannot be undone</string>
+    <string name="trash_empty_desc">This deletes all items in the trash bin, this action cannot be undone</string>
     <string name="trash_empty_confirm">Empty Out</string>
 
     <!-- Permission -->
@@ -257,7 +257,7 @@
     <string name="permissions_confirm_to_delete">Confirm to Delete</string>
     <string name="permissions_confirm_too_delete_desc">Ask for confirmation before deleting any media</string>
     <string name="permissions_overwrite_date_on_move">Overwrite Date on Move</string>
-    <string name="permissions_overwrite_date_on_move_desc">When enabled, copied/moved media shows at the top of the list</string>
+    <string name="permissions_overwrite_date_on_move_desc">When enabled, copied/moved media\'s date is set to "now", showing up as most recent</string>
     <string name="permissions_needed">Permission Needed</string>
     <string name="permissions_needed_desc">Lavender Photos needs permission to access this album. Please grant it the permission by selecting "Use This Folder" on the next screen.This is a one-time permission.</string>
     <string name="permissions_grant">Grant</string>
@@ -273,12 +273,12 @@
     <string name="media_broken">Broken Media</string>
     <string name="media_share">Share</string>
     <string name="media_delete">Delete</string>
-    <string name="media_delete_confirm">Delete this %1$s?</string>
+    <string name="media_delete_confirm">Delete this media?</string>
     <string name="media_trash_confirm">Move selected items to trash bin?</string>
     <string name="media_secure">Secure</string>
-    <string name="media_secure_confirm">Move this %1$s to Secure Folder?</string>
+    <string name="media_secure_confirm">Move this media to Secure Folder?</string>
     <string name="media_delete_permanently">Delete Permanently</string>
-    <string name="media_delete_permanently_confirm">Permanently delete this %1$s?</string>
+    <string name="media_delete_permanently_confirm">Permanently delete this media?</string>
     <string name="media_cancel">Cancel</string>
     <string name="media_restore">Restore</string>
     <string name="media_restore_confirm">Restore these items?</string>
@@ -288,7 +288,7 @@
     <string name="media_copy">Copy</string>
     <string name="media_rename">Rename</string>
     <string name="media_select">Select</string>
-    <string name="media_exif_erase">Erase EXIF date?</string>
+    <string name="media_exif_erase">Erase EXIF data?</string>
     <string name="media_exif_done">Removed EXIF data</string>
     <string name="media_exif_failed">Failed erasing EXIF data</string>
     <string name="media_erase">Erase</string>

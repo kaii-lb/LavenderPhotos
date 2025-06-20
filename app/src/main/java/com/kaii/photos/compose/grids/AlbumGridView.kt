@@ -604,7 +604,7 @@ private fun CategoryList(
                 )
 
                 Text(
-                    text = stringResource(id = R.string.trash) + " ",
+                    text = stringResource(id = R.string.trash_bin_short) + " ",
                     fontSize = TextUnit(16f, TextUnitType.Sp),
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onBackground,
