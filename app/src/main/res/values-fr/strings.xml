@@ -223,4 +223,7 @@
     <string name="albums_media_sorting_desc">Le tri des photos et des vidéos sera fait en grilles</string>
     <string name="albums_item_count">Nombre de médias</string>
     <string name="albums_non_existent">Aucun album de ce genre n\'existe</string>
+    <string name="debugging">Déboguage</string>
+    <string name="debugging_desc">Outils pour déboguer les problèmes</string>
+    <string name="logs">Rapports d\'erreur</string>
 </resources>
