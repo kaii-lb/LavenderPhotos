@@ -64,6 +64,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastAll
 import androidx.compose.ui.util.fastDistinctBy
 import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -90,7 +91,6 @@ import com.kaii.photos.helpers.MediaData
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.Screens
-import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.checkPathIsDownloads
 import com.kaii.photos.helpers.eraseExifMedia
 import com.kaii.photos.helpers.getExifDataForMedia
@@ -184,15 +184,19 @@ fun SingleAlbumDialog(
 
             val context = LocalContext.current
             if (album.paths.size == 1) {
-                val dir = album.mainPath
-                val absoluteDirPath = "$baseInternalStorageDirectory$dir"
-
                 GetDirectoryPermissionAndRun(
-                    absoluteDirPaths = listOf(absoluteDirPath),
+                    absoluteDirPaths = album.paths,
                     shouldRun = saveFileName,
                     onGranted = {
-                        if (saveFileName.value && fileName.value != dir.split("/").last()) {
-                            renameDirectory(context, absoluteDirPath, fileName.value)
+                        if (saveFileName.value && fileName.value != album.paths.first()
+                                .split("/")
+                                .last()
+                        ) {
+                            renameDirectory(
+                                context = context,
+                                absolutePath = album.paths.first(),
+                                newName = fileName.value,
+                            )
 
                             val mainViewModel = mainViewModel
                             // val newDir = dir.replace(album.name, fileName.value)
@@ -206,13 +210,13 @@ fun SingleAlbumDialog(
                             try {
                                 context.contentResolver.releasePersistableUriPermission(
                                     context.getExternalStorageContentUriFromAbsolutePath(
-                                        absoluteDirPath,
-                                        true
+                                        absolutePath = album.paths.first(),
+                                        trimDoc = true
                                     ),
                                     Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                                 )
                             } catch (e: Throwable) {
-                                Log.d(TAG, "Couldn't release permission for $absoluteDirPath")
+                                Log.d(TAG, "Couldn't release permission for ${album.paths.first()}")
                                 e.printStackTrace()
                             }
 
@@ -234,7 +238,7 @@ fun SingleAlbumDialog(
                     string = fileName,
                     doAction = saveFileName,
                     rowPosition = RowPosition.Middle,
-                    enabled = !dir.checkPathIsDownloads(),
+                    enabled = album.paths.fastAll { !it.checkPathIsDownloads() },
                     modifier = Modifier
                         .padding(8.dp, 0.dp)
                 ) {
@@ -304,7 +308,9 @@ fun SingleAlbumDialog(
                     expanded = expanded
                 ) {
                     DialogInfoText(
-                        firstText = if (!album.isCustomAlbum) stringResource(id = R.string.albums_path) else stringResource(id = R.string.albums_id),
+                        firstText = if (!album.isCustomAlbum) stringResource(id = R.string.albums_path) else stringResource(
+                            id = R.string.albums_id
+                        ),
                         secondText = if (!album.isCustomAlbum) album.mainPath else album.id.toString(),
                         iconResId = R.drawable.folder,
                     )
@@ -595,7 +601,12 @@ fun SinglePhotoInfoDialog(
                                 putExtra("mimeType", currentMediaItem.mimeType)
                             }
 
-                            context.startActivity(Intent.createChooser(intent, context.resources.getString(R.string.set_as_wallpaper)))
+                            context.startActivity(
+                                Intent.createChooser(
+                                    intent,
+                                    context.resources.getString(R.string.set_as_wallpaper)
+                                )
+                            )
                         }
                     }
 
@@ -870,7 +881,10 @@ fun SelectingMoreOptionsDialog(
     )
 
     if (showLoadingDialog) {
-        LoadingDialog(title = stringResource(id = R.string.secure_encrypting), body = stringResource(id = R.string.secure_processing))
+        LoadingDialog(
+            title = stringResource(id = R.string.secure_encrypting),
+            body = stringResource(id = R.string.secure_processing)
+        )
     }
 
     GetPermissionAndRun(

@@ -56,6 +56,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.file.Files
 import kotlin.io.path.Path
+import androidx.lifecycle.compose.currentStateAsState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -102,7 +103,8 @@ fun LockedFolderView(
         }
     }
 
-    DisposableEffect(lifecycleOwner.lifecycle.currentState, isGettingPermissions.value) {
+    val lifecycleState = lifecycleOwner.lifecycle.currentStateAsState()
+    DisposableEffect(lifecycleState.value, isGettingPermissions.value) {
         val lifecycleObserver =
             LifecycleEventObserver { _, event ->
                 when (event) {

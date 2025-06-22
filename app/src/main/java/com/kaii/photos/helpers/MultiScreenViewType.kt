@@ -26,9 +26,7 @@ object Screens {
 		val albumInfo: AlbumInfo,
 		val mediaItemId: Long,
 		val loadsFromMainViewModel: Boolean
-	) {
-		fun hasSameAlbumsAs(other: List<String>) = albumInfo.paths.toSet() == other.toSet()
-	}
+	)
 
 	@Serializable
 	data class SingleAlbumView(

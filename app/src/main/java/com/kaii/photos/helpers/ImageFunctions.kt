@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.toSize
 import androidx.core.content.FileProvider
+import androidx.core.graphics.createBitmap
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.kaii.lavender_snackbars.LavenderSnackbarController
@@ -61,7 +62,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.math.min
-import androidx.core.graphics.createBitmap
 
 private const val TAG = "IMAGE_FUNCTIONS"
 
@@ -78,7 +78,14 @@ fun permanentlyDeletePhotoList(context: Context, list: List<Uri>) {
             list
         )
 
-        (context as Activity).startIntentSenderForResult(deleteRequest.intentSender, 9997, null, 0, 0, 0)
+        (context as Activity).startIntentSenderForResult(
+            deleteRequest.intentSender,
+            9997,
+            null,
+            0,
+            0,
+            0
+        )
     }
 }
 
@@ -119,7 +126,8 @@ fun shareImage(uri: Uri, context: Context, mimeType: String? = null) {
 }
 
 fun shareSecuredImage(absolutePath: String, context: Context) {
-    val uri = FileProvider.getUriForFile(context, LAVENDER_FILE_PROVIDER_AUTHORITY, File(absolutePath))
+    val uri =
+        FileProvider.getUriForFile(context, LAVENDER_FILE_PROVIDER_AUTHORITY, File(absolutePath))
 
     val intent = Intent().apply {
         action = Intent.ACTION_SEND
@@ -189,7 +197,11 @@ fun moveImageToLockedFolder(
         )
 
         // encrypt file data and write to secure folder path
-        val iv = EncryptionManager.encryptInputStream(fileToBeHidden.inputStream(), destinationFile.outputStream())
+        val iv =
+            EncryptionManager.encryptInputStream(
+                fileToBeHidden.inputStream(),
+                destinationFile.outputStream()
+            )
 
         applicationDatabase.securedItemEntityDao().insertEntity(
             SecuredItemEntity(
@@ -225,26 +237,35 @@ suspend fun moveImageOutOfLockedFolder(
 
         val iv = media.bytes?.getIv()
         if (iv != null) {
-            EncryptionManager.decryptInputStream(fileToBeRestored.inputStream(), tempFile.outputStream(), iv)
+            EncryptionManager.decryptInputStream(
+                fileToBeRestored.inputStream(),
+                tempFile.outputStream(),
+                iv
+            )
         } else {
             fileToBeRestored.inputStream().copyTo(tempFile.outputStream())
         }
+
+        Log.d(TAG, "Base path ${originalPath.toBasePath()}")
 
         contentResolver.copyMedia(
             context = context,
             media = media.copy(
                 uri = tempFile.toUri()
             ),
-            destination = originalPath.toRelativePath().getParentFromPath(),
-            overwriteDate = false
+            destination = originalPath.getParentFromPath(),
+            overwriteDate = false,
+            basePath = originalPath.toBasePath()
         )?.let {
             fileToBeRestored.delete()
             tempFile.delete()
             applicationDatabase.securedItemEntityDao().deleteEntityBySecuredPath(media.absolutePath)
 
-            val thumbnailFile = getSecuredCacheImageForFile(file = fileToBeRestored, context = context)
+            val thumbnailFile =
+                getSecuredCacheImageForFile(file = fileToBeRestored, context = context)
             thumbnailFile.delete()
-            applicationDatabase.securedItemEntityDao().deleteEntityBySecuredPath(thumbnailFile.absolutePath)
+            applicationDatabase.securedItemEntityDao()
+                .deleteEntityBySecuredPath(thumbnailFile.absolutePath)
         }
     }
 
@@ -280,13 +301,17 @@ fun renameImage(context: Context, uri: Uri, newName: String) {
     }
 }
 
-fun renameDirectory(context: Context, absolutePath: String, newName: String) {
+fun renameDirectory(
+    context: Context,
+    absolutePath: String,
+    newName: String,
+) {
     try {
-        // val originalFile = File(absolutePath)
-        // val newFile = File(absolutePath.replace(originalFile.name, newName))
-
-        val dir = DocumentsContract.buildTreeDocumentUri(EXTERNAL_DOCUMENTS_AUTHORITY, "primary:${absolutePath.replace(baseInternalStorageDirectory, "")}")
-        // val newDir = DocumentsContract.buildTreeDocumentUri(EXTERNAL_DOCUMENTS_AUTHORITY, "primary:${absolutePath.replace(originalFile.name, newName)}")
+        val dir =
+            DocumentsContract.buildTreeDocumentUri(
+                EXTERNAL_DOCUMENTS_AUTHORITY,
+                "primary:${absolutePath.replace(baseInternalStorageDirectory, "")}"
+            )
 
         val newDirectory = DocumentFile.fromTreeUri(context, dir)
         newDirectory?.renameTo(newName)
@@ -301,6 +326,7 @@ fun moveImageListToPath(
     context: Context,
     list: List<MediaStoreData>,
     destination: String,
+    basePath: String,
     overwriteDate: Boolean
 ) {
     CoroutineScope(Dispatchers.IO).launch {
@@ -312,6 +338,7 @@ fun moveImageListToPath(
                     context = context,
                     media = media,
                     destination = destination,
+                    basePath = basePath,
                     overwriteDate = overwriteDate
                 )?.let {
                     contentResolver.delete(media.uri, null)
@@ -327,6 +354,7 @@ fun copyImageListToPath(
     context: Context,
     list: List<MediaStoreData>,
     destination: String,
+    basePath: String,
     overwriteDate: Boolean,
     overrideDisplayName: ((displayName: String) -> String)? = null
 ) {
@@ -341,6 +369,7 @@ fun copyImageListToPath(
                     media = media,
                     destination = destination,
                     overwriteDate = overwriteDate,
+                    basePath = basePath,
                     overrideDisplayName = if (overrideDisplayName != null) overrideDisplayName(media.displayName) else null
                 )
             }
@@ -356,7 +385,7 @@ suspend fun modificationsToBitmap(
     maxSize: Size,
     rotation: Float,
     textMeasurer: TextMeasurer,
-) : ImageBitmap {
+): ImageBitmap {
     val defaultTextStyle = DrawableText.Styles.Default.style
 
     val blurredImage =
@@ -541,9 +570,10 @@ suspend fun saveToFile(
                 displayName = displayName,
                 id = 0L
             ),
-            destination = original.absolutePath.replace(original.name, "").replace(baseInternalStorageDirectory, ""),
+            destination = original.absolutePath.getParentFromPath(),
             overrideDisplayName = displayName,
-            overwriteDate = true
+            overwriteDate = true,
+            basePath = absolutePath.toBasePath()
         )
 
         val contentValues = ContentValues().apply {

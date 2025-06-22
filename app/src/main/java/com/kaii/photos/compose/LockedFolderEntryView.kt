@@ -58,6 +58,7 @@ import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.appSecureFolderDir
+import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.copyImageListToPath
 import com.kaii.photos.helpers.moveImageToLockedFolder
 import com.kaii.photos.helpers.relativePath
@@ -230,6 +231,7 @@ fun LockedFolderEntryView(
                     context = context,
                     destination = context.appRestoredFilesDir,
                     overwriteDate = true,
+                    basePath = baseInternalStorageDirectory,
                     overrideDisplayName = { displayName ->
                         val extension = displayName.replaceBeforeLast(".", "")
 

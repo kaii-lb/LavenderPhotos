@@ -75,9 +75,9 @@ import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.RowPosition
-import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.copyImageListToPath
 import com.kaii.photos.helpers.moveImageListToPath
+import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.content_provider.LavenderContentProvider
@@ -267,7 +267,7 @@ fun AlbumsListItem(
     val runOnDirGranted = remember { mutableStateOf(false) }
 
     GetDirectoryPermissionAndRun(
-        absoluteDirPaths = listOf(baseInternalStorageDirectory + album.mainPath),
+        absoluteDirPaths = listOf(album.mainPath),
         shouldRun = runOnDirGranted,
         onGranted = {
             runOnUriGranted.value = true
@@ -284,10 +284,11 @@ fun AlbumsListItem(
 
             if (isMoving) {
                 moveImageListToPath(
-                    context,
-                    selectedItemsWithoutSection,
-                    album.mainPath,
-                    overwriteDate
+                    context = context,
+                    list = selectedItemsWithoutSection,
+                    destination = album.mainPath, // TODO: loop over all paths
+                    overwriteDate = overwriteDate,
+                    basePath = album.mainPath.toBasePath()
                 )
 
                 if (groupedMedia != null) {
@@ -297,12 +298,15 @@ fun AlbumsListItem(
                 }
             } else {
                 copyImageListToPath(
-                    context,
-                    selectedItemsWithoutSection,
-                    album.mainPath,
-                    overwriteDate
+                    context = context,
+                    list = selectedItemsWithoutSection,
+                    destination = album.mainPath, // TODO: loop over all paths
+                    overwriteDate = overwriteDate,
+                    basePath = album.mainPath.toBasePath()
                 )
             }
+
+            Log.d(TAG, "Base path for move copy is ${album.mainPath.toBasePath()}")
 
             selectedItemsList.clear()
         }

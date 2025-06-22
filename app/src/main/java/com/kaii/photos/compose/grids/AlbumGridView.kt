@@ -1,7 +1,7 @@
 package com.kaii.photos.compose.grids
 
 import android.content.res.Configuration
-import android.util.Log
+// import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.annotation.FloatRange
 import androidx.compose.animation.animateColorAsState
@@ -99,7 +99,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-private const val TAG = "ALBUMS_GRID_VIEW"
+// private const val TAG = "ALBUMS_GRID_VIEW"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -207,11 +207,11 @@ fun AlbumsGridView(
 
             albums.value = newList.distinctBy { it.id }
 
-            Log.d(TAG, "Mapping: $albumToThumbnailMapping")
-            Log.d(TAG, "Albums $albums")
-            Log.d(TAG, "Dirs: $listOfDirs")
-
-            Log.d(TAG, "sort mode: $sortMode and new list: $newList")
+            // Log.d(TAG, "Mapping: $albumToThumbnailMapping")
+            // Log.d(TAG, "Albums $albums")
+            // Log.d(TAG, "Dirs: $listOfDirs")
+            //
+            // Log.d(TAG, "sort mode: $sortMode and new list: $newList")
         }
     }
 

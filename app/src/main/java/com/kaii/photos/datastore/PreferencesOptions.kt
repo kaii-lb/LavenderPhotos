@@ -169,7 +169,8 @@ data class BottomBarTab(
 
 data class SQLiteQuery(
     val query: String,
-    val paths: List<String>?
+    val paths: List<String>?,
+    val includedBasePaths: List<String>?
 )
 
 @Serializable

@@ -13,6 +13,7 @@ import com.kaii.photos.database.entities.MediaEntity
 import com.kaii.photos.datastore.SQLiteQuery
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.getDateTakenForMedia
+import com.kaii.photos.helpers.getParentFromPath
 import com.kaii.photos.models.multi_album.groupPhotosBy
 
 // private const val TAG = "MULTI_ALBUM_DATA_SOURCE"
@@ -110,21 +111,22 @@ class MultiAlbumDataSource(
                     if (type == MediaType.Image) MediaStore.Images.Media.EXTERNAL_CONTENT_URI else MediaStore.Video.Media.EXTERNAL_CONTENT_URI
                 val uri = ContentUris.withAppendedId(uriParentPath, id)
 
-                data.add(
-                    MediaStoreData(
-                        type = type,
-                        id = id,
-                        uri = uri,
-                        mimeType = mimeType,
-                        dateModified = dateModified,
-                        dateTaken = dateTaken,
-                        displayName = displayName,
-                        absolutePath = absolutePath
+                if (queryString.includedBasePaths?.contains(absolutePath.getParentFromPath()) == true || queryString.includedBasePaths == null) { // null for search to work since it pulls from everywhere
+                    data.add(
+                        MediaStoreData(
+                            type = type,
+                            id = id,
+                            uri = uri,
+                            mimeType = mimeType,
+                            dateModified = dateModified,
+                            dateTaken = dateTaken,
+                            displayName = displayName,
+                            absolutePath = absolutePath
+                        )
                     )
-                )
+                }
             }
         }
-        mediaCursor.close()
 
         return groupPhotosBy(data, sortBy)
     }

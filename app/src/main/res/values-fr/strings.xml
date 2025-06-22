@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Photos</string>
-    <string name="default_homepage_photogrid_dir">DCIM/Appareil photo</string>
     <string name="first_startup_dialog_title">Chercher tous les albums de l\'appareil?</string>
     <string name="first_startup_dialog_body">Recherche tous les albums sur cet appareil et les ajoute à Lavender Photos.\nNote : si vous possédiez une ancienne version de l\'appli vos albums SERONT effacés si cette option est utilisée.</string>
     <string name="first_startup_dialog_confirm_title">Chercher!</string>

@@ -103,13 +103,13 @@ import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.ImageFunctions
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.appSecureFolderDir
-import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.checkHasFiles
 import com.kaii.photos.helpers.getSecuredCacheImageForFile
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.selectAll
 import com.kaii.photos.helpers.selectItem
 import com.kaii.photos.helpers.selectSection
+import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.helpers.unselectAll
 import com.kaii.photos.helpers.unselectItem
 import com.kaii.photos.helpers.unselectSection
@@ -159,7 +159,9 @@ fun PhotoGrid(
                     var result: Boolean? = null
 
                     albumInfo.paths.any { path ->
-                        result = Path("$baseInternalStorageDirectory$path").checkHasFiles()
+                        val basePath = path.toBasePath()
+                        Log.d(TAG, "Base Path is $basePath")
+                        result = Path(path).checkHasFiles(basePath = basePath)
                         result == true
                     }
 
@@ -203,7 +205,10 @@ fun PhotoGrid(
         }
 
         false -> {
-            FolderIsEmpty(ViewProperties.getText(id = viewProperties.emptyText, context = context), viewProperties.emptyIconResId)
+            FolderIsEmpty(
+                ViewProperties.getText(id = viewProperties.emptyText, context = context),
+                viewProperties.emptyIconResId
+            )
         }
     }
 }
@@ -668,7 +673,12 @@ fun MediaStoreItem(
         ) {
             val context = LocalContext.current
             Text(
-                text = "${ViewProperties.getText(id = viewProperties.prefix, context = context)} ${item.displayName}",
+                text = "${
+                    ViewProperties.getText(
+                        id = viewProperties.prefix,
+                        context = context
+                    )
+                } ${item.displayName}",
                 fontSize = TextUnit(16f, TextUnitType.Sp),
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground,

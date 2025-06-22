@@ -113,6 +113,7 @@ import com.kaii.photos.compose.dialogs.ExplanationDialog
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
+import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.shareImage
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.copyUriToUri

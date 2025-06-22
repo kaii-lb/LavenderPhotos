@@ -17,9 +17,9 @@ import androidx.documentfile.provider.DocumentFile
 import com.kaii.photos.helpers.EXTERNAL_DOCUMENTS_AUTHORITY
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.baseInternalStorageDirectory
-import com.kaii.photos.helpers.checkPathIsDownloads
 import com.kaii.photos.helpers.getDateTakenForMedia
 import com.kaii.photos.helpers.setDateTakenForMedia
+import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.helpers.toRelativePath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -32,10 +32,11 @@ private const val TAG = "MEDIA_STORE_UTILS"
 const val LAVENDER_FILE_PROVIDER_AUTHORITY = "com.kaii.photos.LavenderPhotos.fileprovider"
 
 /** @param media the [MediaStoreData] to copy
- * @param destination the relative path to copy [media] to */
+ * @param destination the absolute path to copy [media] to */
 suspend fun ContentResolver.copyMedia(
     context: Context,
     media: MediaStoreData,
+    basePath: String,
     destination: String,
     overwriteDate: Boolean,
     overrideDisplayName: String? = null,
@@ -55,17 +56,23 @@ suspend fun ContentResolver.copyMedia(
 
     val file = File(media.absolutePath)
     val currentTime = System.currentTimeMillis()
+    val volumeName =
+        if (basePath == baseInternalStorageDirectory) MediaStore.VOLUME_EXTERNAL
+        else basePath.replace("/storage/", "").removeSuffix("/")
 
+    Log.d(TAG, "Volumes present ${MediaStore.getExternalVolumeNames(context)}")
+
+    val relativeDestination = destination.toRelativePath().removePrefix("/")
     val storageContentUri = when {
-        destination.startsWith(Environment.DIRECTORY_DCIM) || destination.startsWith(Environment.DIRECTORY_PICTURES) || destination.startsWith(
+        relativeDestination.startsWith(Environment.DIRECTORY_DCIM) || relativeDestination.startsWith(Environment.DIRECTORY_PICTURES) || destination.startsWith(
             Environment.DIRECTORY_MOVIES
         ) -> {
-            if (media.type == MediaType.Image) MediaStore.Images.Media.EXTERNAL_CONTENT_URI else MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+            if (media.type == MediaType.Image) MediaStore.Images.Media.getContentUri(volumeName) else MediaStore.Video.Media.getContentUri(volumeName)
         }
 
-        destination.startsWith(Environment.DIRECTORY_DOCUMENTS) || destination.startsWith(
+        relativeDestination.startsWith(Environment.DIRECTORY_DOCUMENTS) || relativeDestination.startsWith(
             Environment.DIRECTORY_DOWNLOADS
-        ) -> MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL)
+        ) -> MediaStore.Files.getContentUri(volumeName)
 
         else -> null
     }
@@ -73,7 +80,7 @@ suspend fun ContentResolver.copyMedia(
     if (storageContentUri != null) {
         val contentValues = ContentValues().apply {
             put(MediaColumns.DISPLAY_NAME, file.name)
-            put(MediaColumns.RELATIVE_PATH, destination)
+            put(MediaColumns.RELATIVE_PATH, relativeDestination)
             put(MediaColumns.MIME_TYPE, media.mimeType)
         }
 
@@ -86,7 +93,7 @@ suspend fun ContentResolver.copyMedia(
             copyUriToUri(media.uri, uri)
 
             val target =
-                File(baseInternalStorageDirectory + destination.removeSuffix("/") + "/${overrideDisplayName ?: file.name}")
+                File(basePath + relativeDestination.removeSuffix("/") + "/${overrideDisplayName ?: file.name}")
 
             if (overwriteDate) {
                 target.setLastModified(currentTime)
@@ -139,6 +146,7 @@ suspend fun ContentResolver.copyMedia(
 
     try {
         val directory = DocumentFile.fromTreeUri(context, fullUriPath)
+        Log.d(TAG, "Directory URI path ${directory?.uri}")
         val fileToBeSavedTo = directory?.createFile(
             media.mimeType ?: Files.probeContentType(Path(media.absolutePath)),
             fileName
@@ -150,46 +158,62 @@ suspend fun ContentResolver.copyMedia(
             )
 
             val target =
-                File(baseInternalStorageDirectory + destination.removeSuffix("/") + "/${overrideDisplayName ?: file.name}")
+                File(destination.removeSuffix("/") + "/${overrideDisplayName ?: file.name}")
 
             if (overwriteDate) {
                 target.setLastModified(currentTime)
 
-                if (media.type == MediaType.Image) {
+                if (media.type == MediaType.Image) try {
                     setDateTakenForMedia(
                         absolutePath = target.absolutePath,
                         dateTaken = currentTime / 1000
                     )
+                } catch (e: Throwable) {
+                    Log.e(TAG, e.toString())
+                    e.printStackTrace()
                 }
 
-                update(
-                    savedToFile.uri,
-                    ContentValues().apply {
-                        put(MediaColumns.DATE_ADDED, currentTime)
-                        put(MediaColumns.DATE_TAKEN, currentTime)
-                        put(MediaColumns.DATE_MODIFIED, currentTime)
-                    },
-                    null
-                )
+                try {
+                    update(
+                        savedToFile.uri,
+                        ContentValues().apply {
+                            put(MediaColumns.DATE_ADDED, currentTime)
+                            put(MediaColumns.DATE_TAKEN, currentTime)
+                            put(MediaColumns.DATE_MODIFIED, currentTime)
+                        },
+                        null
+                    )
+                } catch (e: Throwable) {
+                    Log.e(TAG, e.toString())
+                    e.printStackTrace()
+                }
             } else {
                 target.setLastModified(media.dateTaken * 1000)
 
-                if (media.type == MediaType.Image) {
+                if (media.type == MediaType.Image) try {
                     setDateTakenForMedia(
                         absolutePath = target.absolutePath,
                         dateTaken = media.dateTaken
                     )
+                } catch (e: Throwable) {
+                    Log.e(TAG, e.toString())
+                    e.printStackTrace()
                 }
 
-                update(
-                    savedToFile.uri,
-                    ContentValues().apply {
-                        put(MediaColumns.DATE_ADDED, media.dateTaken * 1000)
-                        put(MediaColumns.DATE_TAKEN, media.dateTaken * 1000)
-                        put(MediaColumns.DATE_MODIFIED, media.dateTaken * 1000)
-                    },
-                    null
-                )
+                try {
+                    update(
+                        savedToFile.uri,
+                        ContentValues().apply {
+                            put(MediaColumns.DATE_ADDED, media.dateTaken * 1000)
+                            put(MediaColumns.DATE_TAKEN, media.dateTaken * 1000)
+                            put(MediaColumns.DATE_MODIFIED, media.dateTaken * 1000)
+                        },
+                        null
+                    )
+                } catch (e: Throwable) {
+                    Log.e(TAG, e.toString())
+                    e.printStackTrace()
+                }
             }
 
             return@withContext savedToFile.uri
@@ -220,47 +244,25 @@ fun Context.getExternalStorageContentUriFromAbsolutePath(
     trimDoc: Boolean
 ): Uri {
     val relative = absolutePath.toRelativePath()
+    val basePath = absolutePath.toBasePath().let {
+        if (it == baseInternalStorageDirectory) "primary:"
+        else it.replace("/storage/", "").replace("/", "") + ":"
+    }
 
     val needed = if (relative.trim() == "") {
         appRestoredFilesDir.toRelativePath()
     } else relative
 
-    val treeUri = DocumentsContract.buildTreeDocumentUri(EXTERNAL_DOCUMENTS_AUTHORITY, "primary:")
-    val pathId = "primary:$needed"
+    val treeUri = DocumentsContract.buildTreeDocumentUri(EXTERNAL_DOCUMENTS_AUTHORITY, basePath)
+    val pathId = "$basePath${needed.removePrefix("/")}"
 
     val documentUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, pathId).toString().let {
-        if (trimDoc) it.replace("/document/primary%3A", "")
+        if (trimDoc) it.replace("${basePath.removeSuffix(":")}%3A/document/", "")
         else it
     }
     Log.d(TAG, "Path ID for $absolutePath is $pathId, with document id $documentUri")
 
     return documentUri.toUri()
-}
-
-fun getHighestLevelParentFromAbsolutePath(absolutePath: String): String {
-    val relative = absolutePath.toRelativePath()
-    val depth =
-        if (relative.startsWith("Android") || relative.startsWith(Environment.DIRECTORY_DOWNLOADS)) 1
-        else 0
-
-    val highestParent = getHighestParentPath(absolutePath, depth)
-
-    Log.d(TAG, "Highest parent for $absolutePath is $highestParent")
-
-    return baseInternalStorageDirectory + highestParent.toString()
-}
-
-fun getHighestParentPath(absolutePath: String, depth: Int): String? {
-    val relative = absolutePath.toRelativePath()
-
-    return if (absolutePath.length > baseInternalStorageDirectory.length + 1
-        && !absolutePath.checkPathIsDownloads()
-    ) {
-        baseInternalStorageDirectory + relative.split("/")
-            .subList(fromIndex = 0, toIndex = depth + 1).joinToString("/")
-    } else {
-        null
-    }
 }
 
 fun ContentResolver.getUriFromAbsolutePath(absolutePath: String, type: MediaType): Uri? {

@@ -429,14 +429,16 @@ fun AlbumPathsDialog(
                     .align(Alignment.Center)
             )
 
-            val activityLauncher = createDirectoryPicker { path ->
-                if (path != null) {
+            val activityLauncher = createDirectoryPicker { path, basePath ->
+                if (path != null && basePath != null) {
+                    val absolutePath = basePath + path
+
                     mainViewModel.settings.AlbumsList.editInAlbumsList(
                         albumInfo = albumInfo,
                         newInfo = albumInfo.copy(
                             paths = albumInfo.paths.toMutableList().apply {
-                                if (!contains(path)) {
-                                    add(path)
+                                if (!contains(absolutePath)) {
+                                    add(absolutePath)
                                 }
                             }
                         )
@@ -583,12 +585,12 @@ fun AlbumAddChoiceDialog(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            val activityLauncher = createDirectoryPicker { path ->
-                if (path != null) mainViewModel.settings.AlbumsList.addToAlbumsList(
+            val activityLauncher = createDirectoryPicker { path, basePath ->
+                if (path != null && basePath != null) mainViewModel.settings.AlbumsList.addToAlbumsList(
                     AlbumInfo(
-                        id = path.hashCode(),
+                        id = (basePath + path).hashCode(),
                         name = path.split("/").last(),
-                        paths = listOf(path)
+                        paths = listOf(basePath + path)
                     )
                 )
             }

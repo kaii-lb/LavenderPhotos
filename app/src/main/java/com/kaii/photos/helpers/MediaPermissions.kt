@@ -155,6 +155,9 @@ fun GetDirectoryPermissionAndRun(
 
             absoluteDirPaths.forEachIndexed { index, absolutePath ->
                 Log.d(TAG, "getting permission for $absolutePath")
+
+                Log.d(TAG, "gotten permissions are ${context.contentResolver.persistedUriPermissions}")
+                Log.d(TAG, "uri of permission needed is ${context.getExternalStorageContentUriFromAbsolutePath(absolutePath, true)}")
                 val alreadyPersisted =
                     context.contentResolver.persistedUriPermissions.any {
                         val externalContentUri =
@@ -225,7 +228,7 @@ fun createPersistablePermissionLauncher(
 /** notifies user via a snackbar if adding the directory fails */
 @Composable
 fun createDirectoryPicker(
-    onGetDir: (albumPath: String?) -> Unit
+    onGetDir: (albumPath: String?, basePath: String?) -> Unit
 ): ManagedActivityResultLauncher<Uri?, Uri?> {
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -235,21 +238,25 @@ fun createDirectoryPicker(
             uri.path?.let {
                 val dir = File(it)
 
+                val basePath = dir.absolutePath.split(":").first().toBasePath().let {
+                    if (it.endsWith("primary/")) baseInternalStorageDirectory
+                    else it
+                }
                 val pathSections =
-                    dir.absolutePath.replace(baseInternalStorageDirectory, "").split(":")
+                    dir.absolutePath.replace(basePath, "").split(":")
                 val path = pathSections[pathSections.size - 1]
 
-                Log.d(TAG, "Chosen directory is $path")
+                Log.d(TAG, "Chosen directory is $path with base path $basePath")
 
-                onGetDir(path)
+                onGetDir(path, basePath)
             } ?: run {
                 Log.e(TAG, "Path for $uri does not exist, cannot add!")
-                onGetDir(null)
+                onGetDir(null, null)
             }
         },
         onFailure = {
             Log.e(TAG, "Path for album does not exist, cannot add!")
-            onGetDir(null)
+            onGetDir(null, null)
 
             coroutineScope.launch {
                 LavenderSnackbarController.pushEvent(

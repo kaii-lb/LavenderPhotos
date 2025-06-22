@@ -21,15 +21,21 @@ import kotlinx.coroutines.flow.stateIn
 
 class AlbumsViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewModel() {
     private var cancellationSignal = CancellationSignal()
-    private val mediaStoreDataSource = mutableStateOf(initDataSource(context = context, albums = albumInfo))
+    private val mediaStoreDataSource =
+        mutableStateOf(initDataSource(context = context, albums = albumInfo))
 
     val mediaFlow by derivedStateOf {
-        getMediaDataFlow().value.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
+        getMediaDataFlow().value.stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(),
+            emptyList()
+        )
     }
 
-    private fun getMediaDataFlow(): State<Flow<List<Pair<AlbumInfo, MediaStoreData>>>> = derivedStateOf {
-    	mediaStoreDataSource.value.loadMediaStoreData().flowOn(Dispatchers.IO)
-   	}
+    private fun getMediaDataFlow(): State<Flow<List<Pair<AlbumInfo, MediaStoreData>>>> =
+        derivedStateOf {
+            mediaStoreDataSource.value.loadMediaStoreData().flowOn(Dispatchers.IO)
+        }
 
     fun refresh(
         context: Context,
@@ -50,7 +56,8 @@ class AlbumsViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMo
         albumInfo = albums
         val queries = albums.map { album ->
             val query = mainViewModel.settings.MainPhotosView.getSQLiteQuery(albums = album.paths)
-            Pair(album, query)
+
+            Pair(album, query.copy(includedBasePaths = album.paths))
         }
 
         AlbumStoreDataSource(

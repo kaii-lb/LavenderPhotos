@@ -17,6 +17,7 @@ import com.bumptech.glide.util.Preconditions
 import com.bumptech.glide.util.Util
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.SQLiteQuery
+import com.kaii.photos.helpers.getParentFromPath
 import com.kaii.photos.mediastore.content_provider.LavenderContentProvider
 import com.kaii.photos.mediastore.content_provider.LavenderMediaColumns
 import kotlinx.coroutines.Dispatchers
@@ -151,7 +152,7 @@ internal constructor(
             "Can only query from a background thread"
         )
 
-        var data = MediaStoreData()
+        var data = MediaStoreData.dummyItem
         val queryArgs = Bundle().apply {
             putStringArray(
                 ContentResolver.QUERY_ARG_SORT_COLUMNS,
@@ -161,7 +162,6 @@ internal constructor(
                 ContentResolver.QUERY_ARG_SORT_DIRECTION,
                 ContentResolver.QUERY_SORT_DIRECTION_DESCENDING
             )
-            putInt(ContentResolver.QUERY_ARG_LIMIT, 1)
             putString(
                 ContentResolver.QUERY_ARG_SQL_SELECTION,
                 "((${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_IMAGE}) OR (${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_VIDEO})) ${sqlQuery.query}"
@@ -189,7 +189,7 @@ internal constructor(
             val mediaTypeColumnIndex = cursor.getColumnIndexOrThrow(FileColumns.MEDIA_TYPE)
             val displayNameIndex = cursor.getColumnIndexOrThrow(FileColumns.DISPLAY_NAME)
 
-            if (cursor.moveToFirst()) {
+            while (cursor.moveToNext() && data == MediaStoreData.dummyItem) {
                 val id = cursor.getLong(idColNum)
                 val absolutePath = cursor.getString(absolutePathColNum)
                 val mimeType = cursor.getString(mimeTypeColNum)
@@ -199,23 +199,21 @@ internal constructor(
                     if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) MediaType.Image
                     else MediaType.Video
 
-                // Log.d(TAG, "The latest media is $absolutePath for the following albums:")
-                // Log.d(TAG, sqlQuery.paths.toString())
-                data =
-                    MediaStoreData(
-                        type = type,
-                        id = id,
-                        uri = Uri.withAppendedPath(MEDIA_STORE_FILE_URI, id.toString()),
-                        mimeType = mimeType,
-                        dateModified = dateModified,
-                        dateTaken = dateModified,
-                        displayName = displayName,
-                        absolutePath = absolutePath
-                    )
+                if (sqlQuery.includedBasePaths?.contains(absolutePath.getParentFromPath()) == true) {
+                    data =
+                        MediaStoreData(
+                            type = type,
+                            id = id,
+                            uri = Uri.withAppendedPath(MEDIA_STORE_FILE_URI, id.toString()),
+                            mimeType = mimeType,
+                            dateModified = dateModified,
+                            dateTaken = dateModified,
+                            displayName = displayName,
+                            absolutePath = absolutePath
+                        )
+                }
             }
         }
-
-        mediaCursor.close()
 
         return data
     }

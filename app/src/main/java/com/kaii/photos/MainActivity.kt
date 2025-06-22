@@ -261,7 +261,8 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        val displayDateFormat by mainViewModel.settings.LookAndFeel.getDisplayDateFormat().collectAsStateWithLifecycle(initialValue = null)
+        val displayDateFormat by mainViewModel.settings.LookAndFeel.getDisplayDateFormat()
+            .collectAsStateWithLifecycle(initialValue = null)
 
         LaunchedEffect(displayDateFormat) {
             if (displayDateFormat != null) mainViewModel.setDisplayDateFormat(displayDateFormat!!)
@@ -414,7 +415,7 @@ class MainActivity : ComponentActivity() {
                                 window = window,
                                 multiAlbumViewModel = multiAlbumViewModel,
                                 mediaItemId = screen.mediaItemId,
-                                loadsFromMainViewModel = screen.loadsFromMainViewModel
+                                loadsFromMainViewModel = screen.loadsFromMainViewModel,
                             )
                         } else {
                             if (screen.albumInfo != multiAlbumViewModel.albumInfo) {
@@ -431,7 +432,7 @@ class MainActivity : ComponentActivity() {
                                 multiAlbumViewModel = multiAlbumViewModel,
                                 customAlbumViewModel = customAlbumViewModel,
                                 mediaItemId = screen.mediaItemId,
-                                loadsFromMainViewModel = screen.loadsFromMainViewModel
+                                loadsFromMainViewModel = screen.loadsFromMainViewModel,
                             )
                         }
                     }

@@ -6,6 +6,7 @@ import android.os.Environment
 import android.util.Log
 import androidx.compose.ui.util.fastDistinctBy
 import androidx.compose.ui.util.fastFilter
+import androidx.compose.ui.util.fastJoinToString
 import androidx.compose.ui.util.fastMap
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.SQLiteQuery
@@ -13,8 +14,6 @@ import com.kaii.photos.mediastore.MultiAlbumDataSource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
 import java.io.File
 import java.io.IOException
 import java.nio.file.FileVisitResult
@@ -24,14 +23,15 @@ import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import kotlin.io.path.isRegularFile
-import kotlin.random.Random
 
 private const val TAG = "DIRECTORY_FUNCTIONS"
 const val EXTERNAL_DOCUMENTS_AUTHORITY = "com.android.externalstorage.documents"
 
+// TODO: rework to use mediastore for faster lookup
 /** returns null if the folder doesn't exist ,
  * otherwise returns true if it has files, false if not */
 fun Path.checkHasFiles(
+    basePath: String,
     flipDotFileMatch: Boolean = false,
     matchSubDirs: Boolean = false
 ): Boolean? {
@@ -49,8 +49,8 @@ fun Path.checkHasFiles(
                     throw IOException("won't search path that's a subdir of ${this@checkHasFiles}")
                 }
 
-                val dataPath = baseInternalStorageDirectory + "Android/data"
-                val obbPath = baseInternalStorageDirectory + "Android/obb"
+                val dataPath = basePath + "Android/data"
+                val obbPath = basePath + "Android/obb"
                 return if (dir?.startsWith(dataPath) == true || dir?.startsWith(obbPath) == true) {
                     if (this@checkHasFiles.startsWith(dataPath) || this@checkHasFiles.startsWith(
                             obbPath
@@ -121,9 +121,11 @@ fun Path.checkHasFiles(
     return hasFiles
 }
 
-fun String.checkPathIsDownloads(): Boolean =
-    toRelativePath().startsWith(Environment.DIRECTORY_DOWNLOADS)
+fun String.checkPathIsDownloads(): Boolean = run {
+    Log.d(TAG, "Relative path to downloads " + toRelativePath())
+    toRelativePath().removePrefix("/").startsWith(Environment.DIRECTORY_DOWNLOADS)
             && toRelativePath().removeSuffix("/").endsWith(Environment.DIRECTORY_DOWNLOADS)
+}
 
 fun String.getFileNameFromPath(): String = trim().removeSuffix("/").split("/").last()
 
@@ -131,16 +133,36 @@ fun String.getParentFromPath(): String =
     trim().replace(this.getFileNameFromPath(), "").removeSuffix("/")
 
 val File.relativePath: String
-    get() = this.absolutePath.replace(baseInternalStorageDirectory, "")
+    get() = this.absolutePath.toRelativePath()
 
-fun String.toRelativePath() = trim().replace(baseInternalStorageDirectory, "")
+fun String.toRelativePath() = "/" + trim().replace(toBasePath(), "")
 
+/** only use with strings that are absolute paths*/
+fun String.toBasePath() = run {
+    val possible = trim().split("/").fastJoinToString(
+        separator = "/",
+        limit = 4,
+        truncated = ""
+    )
+
+    // Log.d(TAG, "Possible is $possible")
+
+    when {
+        possible.startsWith(baseInternalStorageDirectory) -> possible
+
+        possible.startsWith("/tree/") -> possible.replace("tree", "storage") + "/"
+
+        else -> possible.removeSuffix("/").substringBeforeLast("/") + "/"
+    }
+}
+
+/** returns the absolute paths to all the found albums */
 fun tryGetAllAlbums(context: Context): Flow<List<AlbumInfo>> = channelFlow {
     val cancellationSignal = CancellationSignal()
     val mediaStoreDataSource =
         MultiAlbumDataSource(
             context = context,
-            queryString = SQLiteQuery(query = "", paths = null),
+            queryString = SQLiteQuery(query = "", paths = null, includedBasePaths = null),
             sortBy = MediaItemSortMode.DateTaken,
             cancellationSignal = cancellationSignal
         )
@@ -149,9 +171,9 @@ fun tryGetAllAlbums(context: Context): Flow<List<AlbumInfo>> = channelFlow {
 
     mediaStoreDataSource.loadMediaStoreData().collectLatest { list ->
         val new = list.fastDistinctBy { media ->
-            media.absolutePath.getParentFromPath().toRelativePath()
+            media.absolutePath.getParentFromPath()
         }.fastMap { media ->
-            val album = media.absolutePath.getParentFromPath().toRelativePath()
+            val album = media.absolutePath.getParentFromPath()
 
             AlbumInfo(
                 name = album.split("/").last(),

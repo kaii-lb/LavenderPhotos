@@ -19,7 +19,7 @@ class SearchViewModel(context: Context, sortBy: MediaItemSortMode) : ViewModel()
     private val mediaStoreDataSource =
 				    MultiAlbumDataSource(
 				    	context = context,
-				    	queryString = SQLiteQuery(query = "", paths = null),
+				    	queryString = SQLiteQuery(query = "", paths = null, includedBasePaths = null),
 				    	sortBy = sortBy,
 				    	cancellationSignal = cancellationSignal
 				    )

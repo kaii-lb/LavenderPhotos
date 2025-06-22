@@ -326,6 +326,8 @@ fun AddTabDialog(
         Spacer(modifier = Modifier.height(16.dp))
 
         val selectedAlbums = remember { mutableStateListOf<String>() }
+        val coroutineScope = rememberCoroutineScope()
+        val context = LocalContext.current
 
         Row(
             modifier = Modifier
@@ -342,8 +344,12 @@ fun AddTabDialog(
                     .weight(1f)
             )
 
-            val activityLauncher = createDirectoryPicker { path ->
-                if (path != null) selectedAlbums.add(path)
+            val activityLauncher = createDirectoryPicker { path, basePath ->
+                if (path != null && basePath != null) {
+                    val absolutePath = basePath + path
+
+                    if (!selectedAlbums.contains(absolutePath)) selectedAlbums.add(absolutePath)
+                }
             }
 
             IconButton(
@@ -406,9 +412,6 @@ fun AddTabDialog(
         }
 
         Spacer(modifier = Modifier.height(16.dp))
-
-        val coroutineScope = rememberCoroutineScope()
-        val context = LocalContext.current
 
         FullWidthDialogButton(
             text = stringResource(id = R.string.tabs_confirm),
