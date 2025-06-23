@@ -60,8 +60,6 @@ suspend fun ContentResolver.copyMedia(
         if (basePath == baseInternalStorageDirectory) MediaStore.VOLUME_EXTERNAL
         else basePath.replace("/storage/", "").removeSuffix("/")
 
-    Log.d(TAG, "Volumes present ${MediaStore.getExternalVolumeNames(context)}")
-
     val relativeDestination = destination.toRelativePath().removePrefix("/")
     val storageContentUri = when {
         relativeDestination.startsWith(Environment.DIRECTORY_DCIM) || relativeDestination.startsWith(Environment.DIRECTORY_PICTURES) || destination.startsWith(

@@ -1,5 +1,7 @@
 package com.kaii.photos.compose.grids
 
+import android.os.FileObserver
+import android.util.Log
 import android.view.Window
 import android.view.WindowManager
 import androidx.activity.compose.BackHandler
@@ -32,6 +34,7 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.currentStateAsState
 import androidx.navigation.NavDestination.Companion.hasRoute
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.applicationDatabase
@@ -52,11 +55,13 @@ import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.multi_album.groupPhotosBy
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.file.Files
 import kotlin.io.path.Path
-import androidx.lifecycle.compose.currentStateAsState
+
+private const val TAG = "LOCKED_FOLDER_VIEW"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,13 +74,6 @@ fun LockedFolderView(
     val selectedItemsList = remember { SnapshotStateList<MediaStoreData>() }
     val navController = LocalNavController.current
 
-    window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
-
-    BackHandler {
-        window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
-        navController.popBackStack()
-    }
-
     val lifecycleOwner = LocalLifecycleOwner.current
     var lastLifecycleState by rememberSaveable {
         mutableStateOf(Lifecycle.State.STARTED)
@@ -87,10 +85,37 @@ fun LockedFolderView(
         mutableStateOf(false)
     }
 
+    val secureFolder = remember { File(context.appSecureFolderDir) }
+    val fileList = remember { mutableStateOf(secureFolder.listFiles()) }
+
+    val fileObserver = remember {
+        object : FileObserver(File(context.appSecureFolderDir), CREATE or DELETE or MODIFY or MOVED_TO or MOVED_FROM) {
+            override fun onEvent(event: Int, path: String?) {
+                // doesn't matter what event type just refresh
+                if (path != null) {
+                    fileList.value = secureFolder.listFiles()
+                    Log.d(TAG, "File path changed: $path")
+                }
+            }
+        }
+    }
+
+    BackHandler {
+        fileObserver.stopWatching()
+        window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        navController.popBackStack()
+    }
+
+    LaunchedEffect(Unit) {
+        window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        fileObserver.startWatching()
+    }
+
     LaunchedEffect(hideSecureFolder, lastLifecycleState) {
         if (hideSecureFolder
             && navController.currentBackStackEntry?.destination?.hasRoute(Screens.SingleHiddenPhotoView::class) == false
         ) {
+            fileObserver.stopWatching()
             navController.navigate(MultiScreenViewType.MainScreen.name)
         }
 
@@ -136,23 +161,20 @@ fun LockedFolderView(
         }
     }
 
-    if (hideSecureFolder) return
+    if (hideSecureFolder || fileList.value == null) return
 
-    val secureFolder = File(context.appSecureFolderDir)
-    val fileList = remember { secureFolder.listFiles() } ?: return
     val mediaStoreData = emptyList<MediaStoreData>().toMutableList()
-
     val groupedMedia = remember { mutableStateOf(mediaStoreData.toList()) }
 
     // TODO: USE APP CONTENT RESOLVER!!!!
-    LaunchedEffect(fileList, groupedMedia.value) {
+    LaunchedEffect(fileList.value, groupedMedia.value) {
         val restoredFilesDir = context.appRestoredFilesDir
         val dao = applicationDatabase.securedItemEntityDao()
 
         withContext(Dispatchers.IO) {
             mediaStoreData.clear()
 
-            fileList.forEach { file ->
+            fileList.value?.forEach { file ->
                 val mimeType = Files.probeContentType(Path(file.absolutePath))
 
                 val type =

@@ -236,14 +236,19 @@ suspend fun moveImageOutOfLockedFolder(
         val tempFile = File(context.cacheDir, fileToBeRestored.name)
 
         val iv = media.bytes?.getIv()
-        if (iv != null) {
-            EncryptionManager.decryptInputStream(
-                fileToBeRestored.inputStream(),
-                tempFile.outputStream(),
-                iv
-            )
-        } else {
-            fileToBeRestored.inputStream().copyTo(tempFile.outputStream())
+        try {
+            if (iv != null) {
+                EncryptionManager.decryptInputStream(
+                    fileToBeRestored.inputStream(),
+                    tempFile.outputStream(),
+                    iv
+                )
+            } else {
+                fileToBeRestored.inputStream().copyTo(tempFile.outputStream())
+            }
+        } catch (e: Throwable) {
+            Log.e(TAG, e.toString())
+            e.printStackTrace()
         }
 
         Log.d(TAG, "Base path ${originalPath.toBasePath()}")
@@ -257,15 +262,20 @@ suspend fun moveImageOutOfLockedFolder(
             overwriteDate = false,
             basePath = originalPath.toBasePath()
         )?.let {
-            fileToBeRestored.delete()
-            tempFile.delete()
-            applicationDatabase.securedItemEntityDao().deleteEntityBySecuredPath(media.absolutePath)
+            try {
+                fileToBeRestored.delete()
+                tempFile.delete()
+                applicationDatabase.securedItemEntityDao().deleteEntityBySecuredPath(media.absolutePath)
 
-            val thumbnailFile =
-                getSecuredCacheImageForFile(file = fileToBeRestored, context = context)
-            thumbnailFile.delete()
-            applicationDatabase.securedItemEntityDao()
-                .deleteEntityBySecuredPath(thumbnailFile.absolutePath)
+                val thumbnailFile =
+                    getSecuredCacheImageForFile(file = fileToBeRestored, context = context)
+                thumbnailFile.delete()
+                applicationDatabase.securedItemEntityDao()
+                    .deleteEntityBySecuredPath(thumbnailFile.absolutePath)
+            } catch (e: Throwable) {
+                Log.e(TAG, e.toString())
+                e.printStackTrace()
+            }
         }
     }
 
