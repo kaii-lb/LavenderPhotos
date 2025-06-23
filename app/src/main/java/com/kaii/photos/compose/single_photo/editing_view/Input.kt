@@ -27,6 +27,7 @@ import com.kaii.photos.helpers.ExtendedPaint
 import com.kaii.photos.helpers.Modification
 import com.kaii.photos.helpers.PaintType
 import com.kaii.photos.helpers.toOffset
+import kotlin.math.sqrt
 
 // private const val TAG = "EDITING_VIEW_INPUT"
 
@@ -65,10 +66,12 @@ fun Modifier.makeDrawCanvas(
                                 .minByOrNull {
                                     (centroid - getTextBoundingBox(text = it).center).getDistanceSquared()
                                 }?.let {
+                                    val dstSquared = (centroid - getTextBoundingBox(text = it).center).getDistanceSquared()
+
                                     if (checkIfClickedOnText(
                                             text = it,
                                             clickPosition = centroid,
-                                            extraPadding = it.size.width.toFloat() / 2
+                                            extraPadding = dstSquared
                                         )
                                     ) {
                                         it
