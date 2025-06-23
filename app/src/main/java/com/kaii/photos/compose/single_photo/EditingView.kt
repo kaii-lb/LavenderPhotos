@@ -2322,9 +2322,12 @@ fun AdjustTools(
                 iconResId = R.drawable.contrast,
                 selected = selectedProperty.value == SelectedImageProperties.Contrast
             ) {
-                selectedProperty.value = SelectedImageProperties.Contrast
-
-                sliderValue.floatValue = contrastValue
+                if (selectedProperty.value == SelectedImageProperties.Contrast) {
+                    sliderValue.floatValue = 0f
+                } else {
+                    selectedProperty.value = SelectedImageProperties.Contrast
+                    sliderValue.floatValue = contrastValue
+                }
             }
         }
 
@@ -2334,9 +2337,12 @@ fun AdjustTools(
                 iconResId = R.drawable.palette,
                 selected = selectedProperty.value == SelectedImageProperties.Brightness
             ) {
-                selectedProperty.value = SelectedImageProperties.Brightness
-
-                sliderValue.floatValue = brightnessValue
+                if (selectedProperty.value == SelectedImageProperties.Brightness) {
+                    sliderValue.floatValue = 0f
+                } else {
+                    selectedProperty.value = SelectedImageProperties.Brightness
+                    sliderValue.floatValue = brightnessValue
+                }
             }
         }
 
@@ -2346,9 +2352,12 @@ fun AdjustTools(
                 iconResId = R.drawable.resolution,
                 selected = selectedProperty.value == SelectedImageProperties.Saturation
             ) {
-                selectedProperty.value = SelectedImageProperties.Saturation
-
-                sliderValue.floatValue = saturationValue
+                if (selectedProperty.value == SelectedImageProperties.Saturation) {
+                    sliderValue.floatValue = 0f
+                } else {
+                    selectedProperty.value = SelectedImageProperties.Saturation
+                    sliderValue.floatValue = saturationValue
+                }
             }
         }
 
@@ -2358,9 +2367,12 @@ fun AdjustTools(
                 iconResId = R.drawable.file_is_selected_background,
                 selected = selectedProperty.value == SelectedImageProperties.BlackPoint
             ) {
-                selectedProperty.value = SelectedImageProperties.BlackPoint
-
-                sliderValue.floatValue = blackPointValue
+                if (selectedProperty.value == SelectedImageProperties.BlackPoint) {
+                    sliderValue.floatValue = 0f
+                } else {
+                    selectedProperty.value = SelectedImageProperties.BlackPoint
+                    sliderValue.floatValue = blackPointValue
+                }
             }
         }
 
@@ -2370,19 +2382,23 @@ fun AdjustTools(
                 iconResId = R.drawable.file_not_selected_background,
                 selected = selectedProperty.value == SelectedImageProperties.WhitePoint
             ) {
-                selectedProperty.value = SelectedImageProperties.WhitePoint
-
-                sliderValue.floatValue = whitePointValue
+                if (selectedProperty.value == SelectedImageProperties.WhitePoint) {
+                    sliderValue.floatValue = 0f
+                } else {
+                    selectedProperty.value = SelectedImageProperties.WhitePoint
+                    sliderValue.floatValue = whitePointValue
+                }
             }
         }
 
-        item {
-            EditingViewBottomAppBarItem(
-                text = stringResource(id = R.string.editing_shadows),
-                iconResId = R.drawable.shadow,
-                selected = selectedProperty.value == SelectedImageProperties.Shadows
-            )
-        }
+        // TODO: IMPLEMENT THIS!!!
+        // item {
+        //     EditingViewBottomAppBarItem(
+        //         text = stringResource(id = R.string.editing_shadows),
+        //         iconResId = R.drawable.shadow,
+        //         selected = selectedProperty.value == SelectedImageProperties.Shadows
+        //     )
+        // }
 
         item {
             EditingViewBottomAppBarItem(
@@ -2390,9 +2406,12 @@ fun AdjustTools(
                 iconResId = R.drawable.skillet,
                 selected = selectedProperty.value == SelectedImageProperties.Warmth
             ) {
-                selectedProperty.value = SelectedImageProperties.Warmth
-
-                sliderValue.floatValue = warmthValue
+                if (selectedProperty.value == SelectedImageProperties.Warmth) {
+                    sliderValue.floatValue = 0f
+                } else {
+                    selectedProperty.value = SelectedImageProperties.Warmth
+                    sliderValue.floatValue = warmthValue
+                }
             }
         }
 
@@ -2402,9 +2421,12 @@ fun AdjustTools(
                 iconResId = R.drawable.colors,
                 selected = selectedProperty.value == SelectedImageProperties.ColorTint
             ) {
-                selectedProperty.value = SelectedImageProperties.ColorTint
-
-                sliderValue.floatValue = colorTintValue
+                if (selectedProperty.value == SelectedImageProperties.ColorTint) {
+                    sliderValue.floatValue = -1.2f
+                } else {
+                    selectedProperty.value = SelectedImageProperties.ColorTint
+                    sliderValue.floatValue = colorTintValue
+                }
             }
         }
 
@@ -2414,9 +2436,12 @@ fun AdjustTools(
                 iconResId = R.drawable.highlights,
                 selected = selectedProperty.value == SelectedImageProperties.Highlights
             ) {
-                selectedProperty.value = SelectedImageProperties.Highlights
-
-                sliderValue.floatValue = highlightsValue
+                if (selectedProperty.value == SelectedImageProperties.Highlights) {
+                    sliderValue.floatValue = 0f
+                } else {
+                    selectedProperty.value = SelectedImageProperties.Highlights
+                    sliderValue.floatValue = highlightsValue
+                }
             }
         }
     }
