@@ -178,7 +178,8 @@ data class AlbumInfo(
     val id: Int,
     val name: String,
     val paths: List<String>,
-    val isCustomAlbum: Boolean = false
+    val isCustomAlbum: Boolean = false,
+    val isPinned: Boolean = false
 ) {
     companion object {
         fun createPathOnlyAlbum(paths: List<String>) =

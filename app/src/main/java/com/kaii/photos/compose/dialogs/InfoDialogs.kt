@@ -285,6 +285,30 @@ fun SingleAlbumDialog(
                 navController.popBackStack()
             }
 
+            var isPinned by remember { mutableStateOf(album.isPinned) }
+            DialogClickableItem(
+                text = if (isPinned) stringResource(id = R.string.albums_unpin) else stringResource(id = R.string.albums_pin),
+                iconResId = R.drawable.pin,
+                position = RowPosition.Middle,
+                modifier = Modifier
+                    .animateContentSize(
+                        animationSpec = tween(
+                            durationMillis = 500
+                        )
+                    )
+                    .height(if (!isEditingFileName.value) 42.dp else 0.dp)
+                    .padding(8.dp, 0.dp)
+            ) {
+                mainViewModel.settings.AlbumsList.editInAlbumsList(
+                    albumInfo = album,
+                    newInfo = album.copy(
+                        isPinned = !isPinned
+                    )
+                )
+
+                isPinned = !isPinned
+            }
+
             val expanded = remember { mutableStateOf(false) }
 
             Column(

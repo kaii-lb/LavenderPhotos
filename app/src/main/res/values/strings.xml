@@ -30,6 +30,8 @@
     <string name="albums_non_existent">No such albums exist</string>
     <string name="albums_already_contains_all">Album contains all items already</string>
     <string name="albums_remove">Remove album from list</string>
+    <string name="albums_pin">Pin this album</string>
+    <string name="albums_unpin">Unpin this album</string>
     <string name="albums_info">Album Info</string>
     <string name="albums_path">Path</string>
     <string name="albums_id">Id</string>

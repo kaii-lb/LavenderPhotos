@@ -205,6 +205,10 @@ fun AlbumsGridView(
                 }
             }
 
+            val pinned = newList.filter { it.isPinned }
+            newList.removeAll(pinned)
+            newList.addAll(0, pinned)
+
             albums.value = newList.distinctBy { it.id }
 
             // Log.d(TAG, "Mapping: $albumToThumbnailMapping")
