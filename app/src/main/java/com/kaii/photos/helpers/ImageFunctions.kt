@@ -260,7 +260,8 @@ suspend fun moveImageOutOfLockedFolder(
             ),
             destination = originalPath.getParentFromPath(),
             overwriteDate = false,
-            basePath = originalPath.toBasePath()
+            basePath = originalPath.toBasePath(),
+            currentVolumes = MediaStore.getExternalVolumeNames(context)
         )?.let {
             try {
                 fileToBeRestored.delete()
@@ -349,7 +350,8 @@ fun moveImageListToPath(
                     media = media,
                     destination = destination,
                     basePath = basePath,
-                    overwriteDate = overwriteDate
+                    overwriteDate = overwriteDate,
+                    currentVolumes = MediaStore.getExternalVolumeNames(context)
                 )?.let {
                     contentResolver.delete(media.uri, null)
                 }
@@ -380,7 +382,8 @@ fun copyImageListToPath(
                     destination = destination,
                     overwriteDate = overwriteDate,
                     basePath = basePath,
-                    overrideDisplayName = if (overrideDisplayName != null) overrideDisplayName(media.displayName) else null
+                    overrideDisplayName = if (overrideDisplayName != null) overrideDisplayName(media.displayName) else null,
+                    currentVolumes = MediaStore.getExternalVolumeNames(context)
                 )
             }
         }.await()
@@ -583,7 +586,8 @@ suspend fun saveToFile(
             destination = original.absolutePath.getParentFromPath(),
             overrideDisplayName = displayName,
             overwriteDate = true,
-            basePath = absolutePath.toBasePath()
+            basePath = absolutePath.toBasePath(),
+            currentVolumes = MediaStore.getExternalVolumeNames(context)
         )
 
         val contentValues = ContentValues().apply {

@@ -39,6 +39,7 @@ suspend fun ContentResolver.copyMedia(
     basePath: String,
     destination: String,
     overwriteDate: Boolean,
+    currentVolumes: Set<String>,
     overrideDisplayName: String? = null,
     setExifDateBeforeCopy: Boolean = false
 ): Uri? = withContext(Dispatchers.IO) {
@@ -58,7 +59,10 @@ suspend fun ContentResolver.copyMedia(
     val currentTime = System.currentTimeMillis()
     val volumeName =
         if (basePath == baseInternalStorageDirectory) MediaStore.VOLUME_EXTERNAL
-        else basePath.replace("/storage/", "").removeSuffix("/")
+        else currentVolumes.find {
+            val possible = basePath.replace("/storage/", "").removeSuffix("/")
+            it == possible || it == possible.lowercase()
+        }
 
     val relativeDestination = destination.toRelativePath().removePrefix("/")
     val storageContentUri = when {
@@ -75,7 +79,7 @@ suspend fun ContentResolver.copyMedia(
         else -> null
     }
 
-    if (storageContentUri != null) {
+    if (storageContentUri != null && volumeName == MediaStore.VOLUME_EXTERNAL) {
         val contentValues = ContentValues().apply {
             put(MediaColumns.DISPLAY_NAME, file.name)
             put(MediaColumns.RELATIVE_PATH, relativeDestination)
