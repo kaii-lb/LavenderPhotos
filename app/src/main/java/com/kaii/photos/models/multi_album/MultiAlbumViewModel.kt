@@ -41,9 +41,11 @@ class MultiAlbumViewModel(
 
     val mediaFlow by derivedStateOf {
         getMediaDataFlow().value.stateIn(
-            viewModelScope,
-            SharingStarted.WhileSubscribed(),
-            emptyList()
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(
+                stopTimeoutMillis = 300000
+            ),
+            initialValue = emptyList()
         )
     }
 

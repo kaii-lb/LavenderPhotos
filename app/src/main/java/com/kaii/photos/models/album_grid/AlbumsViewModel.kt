@@ -26,9 +26,11 @@ class AlbumsViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMo
 
     val mediaFlow by derivedStateOf {
         getMediaDataFlow().value.stateIn(
-            viewModelScope,
-            SharingStarted.WhileSubscribed(),
-            emptyList()
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(
+                stopTimeoutMillis = Long.MAX_VALUE
+            ),
+            initialValue = emptyList()
         )
     }
 
