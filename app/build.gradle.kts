@@ -92,7 +92,7 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer-dash:1.7.1")
     implementation("androidx.media3:media3-ui:1.7.1")
     implementation("androidx.core:core-splashscreen:1.0.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.7.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
     implementation("androidx.security:security-crypto:1.1.0-beta01")
     implementation("com.github.kittinunf.fuel:fuel:2.3.1")
@@ -105,6 +105,8 @@ dependencies {
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
     annotationProcessor("androidx.room:room-compiler:$roomVersion")
+
+    implementation("com.github.kaii-lb.LavenderImmichIntegration:library:v1.0.2")
 
 	testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
