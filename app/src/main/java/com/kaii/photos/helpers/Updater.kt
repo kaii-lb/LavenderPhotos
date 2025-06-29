@@ -44,6 +44,7 @@ class Updater(
         else githubVersionName.value
             .replace(".", "")
             .removeSuffix("-beta")
+            .removeSuffix("-beta-hotfix")
             .removePrefix("v")
             .toInt()
     }
