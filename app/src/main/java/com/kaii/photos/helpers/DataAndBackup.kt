@@ -6,7 +6,6 @@ import com.kaii.photos.MainActivity.Companion.applicationDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
@@ -17,7 +16,8 @@ import java.nio.file.Files
 import java.util.zip.Deflater
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
-import kotlin.math.exp
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 private const val TAG = "DATA_AND_BACKUP"
 
@@ -31,6 +31,7 @@ class DataAndBackupHelper {
         private const val FAV_ZIP = "Lavender_Photos_Favourites_Backup"
     }
 
+    @OptIn(ExperimentalTime::class)
     private fun getCurrentDate() = Instant.fromEpochMilliseconds(System.currentTimeMillis())
         .toLocalDateTime(TimeZone.currentSystemDefault())
         .format(LocalDateTime.Format {
@@ -38,7 +39,7 @@ class DataAndBackupHelper {
             char('_')
             hour()
             char('_')
-            dayOfMonth()
+            day()
             char('_')
             monthNumber()
             char('_')
@@ -216,7 +217,7 @@ class DataAndBackupHelper {
     ) : String? {
         val database = applicationDatabase.favouritedItemEntityDao()
 
-        val zipFile = getZipFile(context = context)
+        val zipFile = getFavZipFile(context = context)
         if (!zipFile.exists()) zipFile.parentFile?.mkdirs()
 
         val fileOutputStream = zipFile.outputStream()

@@ -342,36 +342,34 @@ private fun String.toDateListOrNull(): List<Date?> {
             var localDate = kotlinx.datetime.LocalDate(year, month, 1)
 
             val list = emptyList<Date?>().toMutableList()
-            while (localDate.dayOfWeek != kotlinx.datetime.DayOfWeek.of(days.indexOf(weekDay) + 1) && localDate.month == kotlinx.datetime.Month.of(
-                    month
-                ) && localDate.year == year
+            while (localDate.dayOfWeek != kotlinx.datetime.DayOfWeek.entries[days.indexOf(weekDay) + 1] && localDate.month == kotlinx.datetime.Month.entries[month] && localDate.year == year
             ) {
                 localDate = localDate.plus(DatePeriod.parse("P0Y1D"))
             }
             list.add(
                 try {
-                    dateFormat.parse("${localDate.dayOfMonth}/$month/$year")
+                    dateFormat.parse("${localDate.day}/$month/$year")
                 } catch (_: Throwable) {
                     null
                 }
             )
             list.add(
                 try {
-                    dateFormat.parse("${localDate.dayOfMonth + 7}/$month/$year")
+                    dateFormat.parse("${localDate.day + 7}/$month/$year")
                 } catch (_: Throwable) {
                     null
                 }
             )
             list.add(
                 try {
-                    dateFormat.parse("${localDate.dayOfMonth + 14}/$month/$year")
+                    dateFormat.parse("${localDate.day + 14}/$month/$year")
                 } catch (_: Throwable) {
                     null
                 }
             )
             list.add(
                 try {
-                    dateFormat.parse("${localDate.dayOfMonth + 21}/$month/$year")
+                    dateFormat.parse("${localDate.day + 21}/$month/$year")
                 } catch (_: Throwable) {
                     null
                 }
