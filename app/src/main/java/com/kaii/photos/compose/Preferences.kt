@@ -57,6 +57,7 @@ fun PreferencesRow(
     summary: String? = null,
     goesToOtherPage: Boolean = false,
     showBackground: Boolean = true,
+    enabled: Boolean = true,
     titleTextSize: Float = 18f,
     backgroundColor: Color = MaterialTheme.colorScheme.surfaceVariant,
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
@@ -64,12 +65,26 @@ fun PreferencesRow(
 ) {
     val (shape, _) = getDefaultShapeSpacerForPosition(position, 24.dp)
 
-    val clickable = if (action != null) {
+    val clickable = if (action != null && enabled) {
         Modifier.clickable {
             action()
         }
     } else {
         Modifier
+    }
+
+    val backgroundColor = when {
+        enabled && showBackground -> {
+            backgroundColor
+        }
+
+        !enabled && showBackground -> {
+            backgroundColor.copy(alpha = 0.6f)
+        }
+
+        else -> {
+            Color.Transparent
+        }
     }
 
     val clip = if (showBackground) Modifier.clip(shape) else Modifier
@@ -80,7 +95,7 @@ fun PreferencesRow(
             .wrapContentHeight()
             .then(clip)
             .wrapContentHeight(align = Alignment.CenterVertically)
-            .background(if (showBackground) backgroundColor else Color.Transparent)
+            .background(backgroundColor)
             .then(clickable)
             .padding(16.dp, 12.dp)
             .then(modifier),
@@ -107,7 +122,7 @@ fun PreferencesRow(
                 text = title,
                 fontSize = TextUnit(titleTextSize, TextUnitType.Sp),
                 textAlign = TextAlign.Start,
-                color = contentColor
+                color = if (enabled) contentColor else contentColor.copy(alpha = 0.5f)
             )
 
             if (summary != null) {
@@ -115,7 +130,7 @@ fun PreferencesRow(
                     text = summary,
                     fontSize = TextUnit(14f, TextUnitType.Sp),
                     textAlign = TextAlign.Start,
-                    color = contentColor.copy(alpha = 0.75f),
+                    color = if (enabled) contentColor else contentColor.copy(alpha = 0.5f),
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -126,7 +141,7 @@ fun PreferencesRow(
             Icon(
                 painter = painterResource(id = R.drawable.other_page_indicator),
                 contentDescription = "this preference row leads to another page",
-                tint = contentColor,
+                tint = if (enabled) contentColor else contentColor.copy(alpha = 0.5f),
                 modifier = Modifier
                     .size(28.dp)
             )

@@ -85,6 +85,7 @@ import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
+import com.kaii.photos.datastore.Immich
 import com.kaii.photos.datastore.User
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.GetPermissionAndRun
@@ -330,7 +331,9 @@ fun SingleAlbumDialog(
 
             var isPinned by remember { mutableStateOf(album.isPinned) }
             DialogClickableItem(
-                text = if (isPinned) stringResource(id = R.string.albums_unpin) else stringResource(id = R.string.albums_pin),
+                text = if (isPinned) stringResource(id = R.string.albums_unpin) else stringResource(
+                    id = R.string.albums_pin
+                ),
                 iconResId = R.drawable.pin,
                 position = RowPosition.Middle,
                 modifier = Modifier
@@ -618,7 +621,7 @@ fun SinglePhotoInfoDialog(
                                                 LavenderSnackbarController.pushEvent(
                                                     LavenderSnackbarEvents.MessageEvent(
                                                         message = context.resources.getString(R.string.media_exif_done),
-                                                        iconResId = R.drawable.file_is_selected_foreground,
+                                                        iconResId = R.drawable.checkmark_thin,
                                                         duration = SnackbarDuration.Short
                                                     )
                                                 )
@@ -743,10 +746,16 @@ fun MainAppDialog(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Start
             ) {
-                val storedName = mainViewModel.settings.User.getUsername()
-                    .collectAsStateWithLifecycle(initialValue = null).value ?: return@Row
+                val context = LocalContext.current
+                val user by mainViewModel.settings.Immich.getUser()
+                    .collectAsStateWithLifecycle(initialValue = null)
 
-                var originalName by remember { mutableStateOf(storedName) }
+                var originalName by remember(user) {
+                    mutableStateOf(
+                        if (user == null || user?.name == "") context.resources.getString(R.string.immich_login_unavailable)
+                        else user!!.name
+                    )
+                }
 
                 var username by remember {
                     mutableStateOf(
@@ -773,7 +782,8 @@ fun MainAppDialog(
                 var changeName by remember { mutableStateOf(false) }
                 var backPressedCallbackEnabled by remember { mutableStateOf(false) }
 
-                LaunchedEffect(key1 = changeName) {
+                // TODO: change name in immich
+                LaunchedEffect(changeName, originalName) {
                     focusManager.clearFocus()
 
                     if (!changeName && username != originalName) {

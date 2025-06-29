@@ -359,4 +359,26 @@
     <string name="look_and_feel_date_format_compressed">Compressed</string>
     <string name="look_and_feel_theme_amoled">Amoled Black</string>
     <string name="look_and_feel_theme_amoled_desc">Sets the background color to black for the power efficiency on Amoled devices</string>
+
+    <!-- Immich -->
+    <string name="immich">Immich</string>
+    <string name="immich_title">Immich Backup</string>
+    <string name="immich_desc">Backup to self-hosted Immich server</string>
+    <string name="immich_account">Immich Account</string>
+    <string name="immich_login_unavailable">Not Logged In</string>
+    <string name="immich_login_unavailable_desc">No immich account is currently connected</string>
+    <string name="immich_login_found">Logged in as: </string>
+    <string name="immich_login_found_desc">Immich backup available!</string>
+    <string name="immich_login">Login with Immich</string>
+    <string name="immich_login_confirm">Login</string>
+    <string name="immich_login_ongoing">Logging in…</string>
+    <string name="immich_login_successful">Login successful!</string>
+    <string name="immich_login_failed">Login failed</string>
+    <string name="immich_endpoint_base">Server Address</string>
+    <string name="immich_endpoint_base_desc">Link to Immich backup server</string>
+    <string name="immich_endpoint_base_placeholder">https://my.immich.server.com/</string>
+    <string name="immich_clear_endpoint">Remove Server?</string>
+    <string name="immich_clear_endpoint_desc">Are you sure you want to remove this server address?</string>
+    <string name="immich_logout">Logout?</string>
+    <string name="immich_logout_desc">Are you sure you want to logout from this account?</string>
 </resources>

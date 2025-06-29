@@ -46,9 +46,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -60,16 +62,22 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kaii.lavender.immichintegration.ApiClient
+import com.kaii.lavender.immichintegration.User
+import com.kaii.lavender.immichintegration.serialization.LoginCredentials
+import com.kaii.lavender.immichintegration.serialization.UserAvatarColors
 import com.kaii.lavender_snackbars.LavenderSnackbarController
 import com.kaii.lavender_snackbars.LavenderSnackbarEvents
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.CheckBoxButtonRow
+import com.kaii.photos.compose.ClearableTextField
 import com.kaii.photos.compose.FullWidthDialogButton
 import com.kaii.photos.compose.PreferencesRow
 import com.kaii.photos.compose.TitleCloseRow
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
+import com.kaii.photos.datastore.Immich
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.createDirectoryPicker
 import com.kaii.photos.helpers.findMinParent
@@ -77,6 +85,8 @@ import com.kaii.photos.helpers.getParentFromPath
 import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.helpers.toRelativePath
 import kotlinx.coroutines.launch
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 private const val TAG = "USER_ACTION_DIALOGS"
 
@@ -800,5 +810,137 @@ fun AddCustomAlbumDialog(
                 }
             }
         )
+    }
+}
+
+@OptIn(ExperimentalTime::class)
+@Composable
+fun ImmichLoginDialog(
+    endpointBase: String = "",
+    onDismiss: () -> Unit = {},
+) {
+    LavenderDialogBase(
+        onDismiss = onDismiss,
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(8.dp, 0.dp, 8.dp, 0.dp),
+            verticalArrangement = Arrangement.spacedBy(
+                space = 8.dp,
+                alignment = Alignment.CenterVertically
+            ),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            val email = remember { mutableStateOf("") }
+            val password = remember { mutableStateOf("") }
+
+            val focusManager = LocalFocusManager.current
+
+            TitleCloseRow(
+                title = stringResource(id = R.string.immich_login),
+                closeOffset = 16.dp,
+                onClose = onDismiss
+            )
+
+            ClearableTextField(
+                text = email,
+                placeholder = "Email", // TODO: resource this
+                modifier = Modifier,
+                icon = R.drawable.mail,
+                onConfirm = {
+                    focusManager.moveFocus(FocusDirection.Down)
+                },
+                onClear = {
+                    email.value = ""
+                }
+            )
+
+            val coroutineScope = rememberCoroutineScope()
+            val context = LocalContext.current
+
+            suspend fun login() {
+                val eventTitle =
+                    mutableStateOf(context.resources.getString(R.string.immich_login_ongoing))
+                val isLoading = mutableStateOf(true)
+
+                LavenderSnackbarController.pushEvent(
+                    LavenderSnackbarEvents.LoadingEvent(
+                        message = eventTitle.value,
+                        iconResId = R.drawable.account_circle,
+                        isLoading = isLoading
+                    )
+                )
+
+                val apiClient = ApiClient()
+                val userAuth = User(
+                    apiClient = apiClient,
+                    endpointBase = endpointBase
+                )
+
+                val response = userAuth.login(
+                    credentials = LoginCredentials(
+                        email = email.value.trim(),
+                        password = password.value.trim()
+                    )
+                )
+
+                if (response != null) {
+                    mainViewModel.settings.Immich.setUser(
+                        user = com.kaii.lavender.immichintegration.serialization.User(
+                            avatarColor = UserAvatarColors.Blue,
+                            email = response.userEmail,
+                            id = response.userId,
+                            profileImagePath = response.profileImagePath,
+                            profileChangedAt = Clock.System.now().toString(),
+                            name = response.name
+                        )
+                    )
+                    mainViewModel.settings.Immich.setBearerToken(token = response.accessToken)
+                    eventTitle.value = context.resources.getString(R.string.immich_login_successful)
+                    isLoading.value = false
+
+                    onDismiss()
+                } else {
+                    password.value = ""
+
+                    eventTitle.value = context.resources.getString(R.string.immich_login_failed)
+                    LavenderSnackbarController.pushEvent(
+                        LavenderSnackbarEvents.MessageEvent(
+                            message = context.resources.getString(R.string.immich_login_failed),
+                            duration = SnackbarDuration.Short,
+                            iconResId = R.drawable.error_2
+                        )
+                    )
+                }
+            }
+
+            ClearableTextField(
+                text = password,
+                placeholder = "Password", // TODO: resource this
+                modifier = Modifier,
+                icon = R.drawable.password,
+                onConfirm = {
+                    coroutineScope.launch {
+                        login()
+                    }
+                },
+                onClear = {
+                    password.value = ""
+                }
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            FullWidthDialogButton(
+                text = stringResource(id = R.string.immich_login_confirm),
+                color = MaterialTheme.colorScheme.primary,
+                textColor = MaterialTheme.colorScheme.onPrimary,
+                position = RowPosition.Single
+            ) {
+                coroutineScope.launch {
+                    login()
+                }
+            }
+        }
     }
 }

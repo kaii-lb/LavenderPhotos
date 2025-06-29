@@ -45,8 +45,8 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.getDefaultShapeSpacerForPosition
-import com.kaii.photos.helpers.Modification
 import com.kaii.photos.helpers.DrawableText
+import com.kaii.photos.helpers.Modification
 import com.kaii.photos.helpers.RowPosition
 import kotlinx.coroutines.launch
 
@@ -321,7 +321,7 @@ fun ClickableRow(
 
         if (selected) {
             Icon(
-                painter = painterResource(id = R.drawable.file_is_selected_foreground),
+                painter = painterResource(id = R.drawable.checkmark_thin),
                 contentDescription = stringResource(id = R.string.bottom_sheets_ratio_selected),
                 tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier

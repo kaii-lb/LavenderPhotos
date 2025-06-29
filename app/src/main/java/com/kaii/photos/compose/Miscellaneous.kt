@@ -65,8 +65,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
-import com.kaii.photos.R
 import com.kaii.photos.MainActivity.Companion.mainViewModel
+import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.SelectingMoreOptionsDialog
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
@@ -320,7 +320,7 @@ fun ShowSelectedState(
                     .align(Alignment.Center)
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.file_is_selected_foreground),
+                    painter = painterResource(id = R.drawable.checkmark_thin),
                     contentDescription = "file is selected indicator",
                     tint = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier

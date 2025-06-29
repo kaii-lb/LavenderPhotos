@@ -4,6 +4,7 @@ import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Log
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
@@ -69,22 +70,28 @@ object EncryptionManager {
         val buffer = ByteArray(cipher.blockSize * 1024 * 32)
 
         var read = 0
-        while (read > -1) {
-            read = inputStream.read(buffer)
+        while (inputStream.read(buffer).also { read = it } != -1) {
+            val processedBytes = cipher.update(buffer, 0, read)
+            processedBytes?.let {
+                outputStream.write(it)
 
-            cipher.update(buffer)?.let {
                 currentProgress += it.size / totalLength
                 progress(currentProgress)
-
-                outputStream.write(it)
                 Log.d(TAG, "Progress: $currentProgress, writing data of size $read bytes >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
             }
         }
 
-        val remaining = inputStream.readBytes()
-        if (remaining.isNotEmpty()) {
-            val lastChunk = cipher.doFinal(remaining)
-            outputStream.write(lastChunk)
+        try {
+            val finalBytes = cipher.doFinal()
+            finalBytes?.let {
+                outputStream.write(it)
+            }
+        } catch (e: Exception) {
+            Log.d(TAG, e.toString())
+            e.printStackTrace()
+        } finally {
+            inputStream.close()
+            outputStream.close()
         }
 
         outputStream.close()
@@ -126,28 +133,33 @@ object EncryptionManager {
         bytes: ByteArray,
         cipher: Cipher
     ): ByteArray {
+        val inputStream = bytes.inputStream()
+        val outputStream = ByteArrayOutputStream()
+
         val buffer = ByteArray(cipher.blockSize * 1024 * 32)
 
-        var read = 0
-        val inputStream = bytes.inputStream()
-        val output = mutableListOf<Byte>()
-
-        while (read > -1) {
-            read = inputStream.read(buffer)
-
-            cipher.update(buffer)?.let {
-                output.addAll(it.toList())
+        var read: Int
+        while (inputStream.read(buffer).also { read = it } != -1) {
+            val processedBytes = cipher.update(buffer, 0, read)
+            processedBytes?.let {
+                outputStream.write(it)
             }
         }
 
-        val remaining = inputStream.readBytes()
-        if (remaining.isNotEmpty()) {
-            val lastChunk = cipher.doFinal(remaining)
-            output.addAll(lastChunk.toList())
+        try {
+            val finalBytes = cipher.doFinal()
+            finalBytes?.let {
+                outputStream.write(it)
+            }
+        } catch (e: Exception) {
+            Log.d(TAG, e.toString())
+            e.printStackTrace()
+        } finally {
+            inputStream.close()
+            outputStream.close()
         }
-        inputStream.close()
 
-        return output.toTypedArray().toByteArray()
+        return outputStream.toByteArray()
     }
 
     fun decryptBytes(bytes: ByteArray, iv: ByteArray): ByteArray {

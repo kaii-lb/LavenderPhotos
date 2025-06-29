@@ -1626,7 +1626,7 @@ private fun EditingViewTopBar(
                     ) {
                         SelectableDropDownMenuItem(
                             text = stringResource(id = R.string.editing_overwrite_desc),
-                            iconResId = R.drawable.file_is_selected_foreground,
+                            iconResId = R.drawable.checkmark_thin,
                             isSelected = overwrite.value
                         ) {
                             dropDownExpanded = false
@@ -1636,7 +1636,7 @@ private fun EditingViewTopBar(
 
                         SelectableDropDownMenuItem(
                             text = stringResource(id = R.string.editing_save),
-                            iconResId = R.drawable.file_is_selected_foreground,
+                            iconResId = R.drawable.checkmark_thin,
                             isSelected = !overwrite.value
                         ) {
                             dropDownExpanded = false

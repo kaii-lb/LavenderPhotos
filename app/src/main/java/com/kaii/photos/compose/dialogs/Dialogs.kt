@@ -457,7 +457,7 @@ fun LavenderDialogBase(
                 .fillMaxWidth(1f)
                 .wrapContentHeight()
                 .clip(RoundedCornerShape(32.dp))
-                .background(ExtendedMaterialTheme.colorScheme.dialogSurface) // brightenColor(MaterialTheme.colorScheme.surface, 0.1f)
+                .background(ExtendedMaterialTheme.colorScheme.dialogSurface)
                 .padding(8.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
