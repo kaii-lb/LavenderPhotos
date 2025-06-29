@@ -86,6 +86,7 @@ import com.kaii.photos.compose.grids.PhotoGrid
 import com.kaii.photos.compose.grids.SearchPage
 import com.kaii.photos.compose.grids.SingleAlbumView
 import com.kaii.photos.compose.grids.TrashedPhotoGridView
+import com.kaii.photos.compose.immich.ImmichMainPage
 import com.kaii.photos.compose.rememberDeviceOrientation
 import com.kaii.photos.compose.settings.AboutPage
 import com.kaii.photos.compose.settings.DataAndBackupPage
@@ -803,6 +804,22 @@ class MainActivity : ComponentActivity() {
                         )
 
                         PrivacyAndSecurityPage()
+                    }
+
+                    composable(MultiScreenViewType.ImmichMainPage.name) {
+                        enableEdgeToEdge(
+                            navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
+                            statusBarStyle = SystemBarStyle.auto(
+                                MaterialTheme.colorScheme.surface.toArgb(),
+                                MaterialTheme.colorScheme.surface.toArgb()
+                            )
+                        )
+                        setupNextScreen(
+                            selectedItemsList,
+                            window
+                        )
+
+                        ImmichMainPage()
                     }
                 }
             }

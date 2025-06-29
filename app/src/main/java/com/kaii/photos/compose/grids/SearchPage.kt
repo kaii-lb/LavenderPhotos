@@ -39,7 +39,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
-import com.kaii.photos.compose.SearchTextField
+import com.kaii.photos.compose.ClearableTextField
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.BottomBarTab
@@ -143,14 +143,15 @@ fun SearchPage(
             }
             val placeholder = remember { placeholdersList.random() }
 
-            SearchTextField(
-                searchedForText = searchedForText,
+            ClearableTextField(
+                text = searchedForText,
                 placeholder = placeholder,
+                icon = R.drawable.search,
                 modifier = Modifier
                     .fillMaxWidth(1f)
                     .height(56.dp)
                     .padding(8.dp, 0.dp),
-                onSearch = {
+                onConfirm = {
                     if (!showLoadingSpinner) {
                         searchNow = true
                         scrollBackToTop()

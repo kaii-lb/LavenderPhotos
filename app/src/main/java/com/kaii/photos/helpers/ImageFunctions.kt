@@ -608,7 +608,7 @@ suspend fun saveToFile(
             LavenderSnackbarController.pushEvent(
                 LavenderSnackbarEvents.MessageEvent(
                     message = context.resources.getString(R.string.editing_done),
-                    iconResId = R.drawable.file_is_selected_foreground,
+                    iconResId = R.drawable.checkmark_thin,
                     duration = SnackbarDuration.Short
                 )
             )
@@ -635,7 +635,7 @@ suspend fun saveToFile(
             LavenderSnackbarController.pushEvent(
                 LavenderSnackbarEvents.MessageEvent(
                     message = context.resources.getString(R.string.editing_done),
-                    iconResId = R.drawable.file_is_selected_foreground,
+                    iconResId = R.drawable.checkmark_thin,
                     duration = SnackbarDuration.Short
                 )
             )

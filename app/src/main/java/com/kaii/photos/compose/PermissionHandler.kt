@@ -470,7 +470,7 @@ fun PermissionButton(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.file_is_selected_foreground),
+                    painter = painterResource(id = R.drawable.checkmark_thin),
                     contentDescription = name,
                     tint = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier

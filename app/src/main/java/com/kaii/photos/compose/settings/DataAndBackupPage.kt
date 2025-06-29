@@ -37,6 +37,7 @@ import com.kaii.photos.compose.PreferencesSeparatorText
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.helpers.DataAndBackupHelper
+import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.relativePath
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
@@ -59,6 +60,27 @@ fun DataAndBackupPage() {
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.Start
         ) {
+            item {
+                PreferencesSeparatorText(
+                    text = stringResource(id = R.string.immich)
+                )
+            }
+
+            item {
+                val navController = LocalNavController.current
+
+                PreferencesRow(
+                    title = stringResource(id = R.string.immich_title),
+                    iconResID = R.drawable.cloud_upload,
+                    summary = stringResource(id = R.string.immich_desc),
+                    position = RowPosition.Middle,
+                    showBackground = false,
+                    goesToOtherPage = true
+                ) {
+                    navController.navigate(MultiScreenViewType.ImmichMainPage.name)
+                }
+            }
+
             item {
                 PreferencesSeparatorText(
                     text = stringResource(id = R.string.secure_folder)

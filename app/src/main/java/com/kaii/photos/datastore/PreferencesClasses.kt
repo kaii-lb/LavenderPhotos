@@ -5,10 +5,13 @@ import android.provider.MediaStore.Files.FileColumns
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.byteArrayPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.bumptech.glide.Glide
+import com.kaii.lavender.immichintegration.serialization.User
+import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.toRelativePath
@@ -689,6 +692,63 @@ class SettingsPhotoGridImpl(
     fun setSortMode(mode: MediaItemSortMode) = viewModelScope.launch {
         context.datastore.edit {
             it[mediaSortModeKey] = mode.name
+        }
+    }
+}
+
+class SettingsImmichImpl(
+    private val context: Context,
+    private val viewModelScope: CoroutineScope
+) {
+    private val immichBearerToken = byteArrayPreferencesKey("immich_bearer_token")
+    private val immichEncryptionIV = byteArrayPreferencesKey("immich_encryption_iv")
+    private val immichUser = stringPreferencesKey("immich_user")
+    private val immichEndpointBase = stringPreferencesKey("immich_endpoint_base")
+
+    fun getBearerToken() = context.datastore.data.map { data ->
+        val encToken = data[immichBearerToken] ?: return@map ""
+        val iv = data[immichEncryptionIV] ?: return@map ""
+
+        val decToken = EncryptionManager.decryptBytes(
+            bytes = encToken,
+            iv = iv
+        )
+
+        var string = decToken.decodeToString()
+
+        Log.d(TAG, "Decrypted bearer token is: $string")
+        return@map string
+    }
+
+    fun setBearerToken(token: String) = viewModelScope.launch {
+        context.datastore.edit { data ->
+            val (encToken, iv) = EncryptionManager.encryptBytes(token.trim().encodeToByteArray())
+
+            data[immichBearerToken] = encToken
+            data[immichEncryptionIV] = iv
+        }
+    }
+
+    fun getUser() = context.datastore.data.map { data ->
+        data[immichUser]?.let {
+            if (it == "") return@map null
+            else return@map Json.decodeFromString<User>(it)
+        } ?: return@map null
+    }
+
+    fun setUser(user: User?) = viewModelScope.launch {
+        context.datastore.edit { data ->
+            data[immichUser] = if (user == null) "" else Json.encodeToString(user)
+        }
+    }
+
+    fun getEndpointBase() = context.datastore.data.map {
+        it[immichEndpointBase] ?: ""
+    }
+
+    fun setEndpointBase(endpointBase: String) = viewModelScope.launch {
+        context.datastore.edit {
+            it[immichEndpointBase] = endpointBase
         }
     }
 }

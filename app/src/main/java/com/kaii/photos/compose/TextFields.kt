@@ -1,5 +1,6 @@
 package com.kaii.photos.compose
 
+import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandHorizontally
@@ -145,7 +146,7 @@ fun TextFieldWithConfirm(
                 horizontalArrangement = Arrangement.Center
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.file_is_selected_foreground),
+                    painter = painterResource(id = R.drawable.checkmark_thin),
                     contentDescription = "Confirm text change",
                     tint = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier
@@ -157,11 +158,12 @@ fun TextFieldWithConfirm(
 }
 
 @Composable
-fun SearchTextField(
-    searchedForText: MutableState<String>,
+fun ClearableTextField(
+    text: MutableState<String>,
     placeholder: String,
+    @DrawableRes icon: Int,
     modifier: Modifier = Modifier,
-    onSearch: () -> Unit,
+    onConfirm: () -> Unit,
     onClear: () -> Unit
 ) {
     Row(
@@ -172,9 +174,9 @@ fun SearchTextField(
         val keyboardController = LocalSoftwareKeyboardController.current
 
         TextField(
-            value = searchedForText.value,
+            value = text.value,
             onValueChange = {
-                searchedForText.value = it
+                text.value = it
             },
             maxLines = 1,
             singleLine = true,
@@ -187,7 +189,7 @@ fun SearchTextField(
             prefix = {
                 Row {
                     Icon(
-                        painter = painterResource(id = R.drawable.search),
+                        painter = painterResource(id = icon),
                         contentDescription = "Search Icon",
                         modifier = Modifier
                             .size(24.dp)
@@ -214,7 +216,7 @@ fun SearchTextField(
             ),
             keyboardActions = KeyboardActions(
                 onSearch = {
-                    onSearch()
+                    onConfirm()
                     keyboardController?.hide()
                 }
             ),
@@ -243,13 +245,15 @@ fun SearchTextField(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.close),
-                    contentDescription = "Clear search query",
-                    tint = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier
-                        .size(24.dp)
-                )
+                if (text.value.isNotEmpty()) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.close),
+                        contentDescription = "Clear search query",
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier
+                            .size(24.dp)
+                    )
+                }
             }
         }
     }

@@ -309,7 +309,7 @@ fun AddTabDialog(
             ),
             trailingIcon = {
                 Icon(
-                    painter = painterResource(id = R.drawable.file_is_selected_foreground),
+                    painter = painterResource(id = R.drawable.checkmark_thin),
                     contentDescription = "Apply tab name",
                     modifier = Modifier
                         .clickable {

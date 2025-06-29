@@ -1,6 +1,7 @@
 package com.kaii.photos.compose.dialogs
 
 import android.content.res.Configuration
+import android.util.Log
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -42,9 +43,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -56,17 +59,26 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kaii.lavender.immichintegration.ApiClient
+import com.kaii.lavender.immichintegration.User
+import com.kaii.lavender.immichintegration.serialization.LoginCredentials
+import com.kaii.lavender.immichintegration.serialization.UserAvatarColors
 import com.kaii.lavender_snackbars.LavenderSnackbarController
 import com.kaii.lavender_snackbars.LavenderSnackbarEvents
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.CheckBoxButtonRow
+import com.kaii.photos.compose.ClearableTextField
 import com.kaii.photos.compose.FullWidthDialogButton
+import com.kaii.photos.compose.TitleCloseRow
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
+import com.kaii.photos.datastore.Immich
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.createDirectoryPicker
 import kotlinx.coroutines.launch
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 @Composable
 fun ConfirmationDialog(
@@ -219,12 +231,9 @@ fun TextEntryDialog(
     LavenderDialogBase(
         onDismiss = onDismiss
     ) {
-        Text(
-            text = title,
-            fontSize = TextUnit(18f, TextUnitType.Sp),
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.wrapContentSize()
+        TitleCloseRow(
+            title = title,
+            onClose = onDismiss
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -237,7 +246,8 @@ fun TextEntryDialog(
             value = text,
             onValueChange = {
                 text = it
-                showError = onValueChange(it)
+                showError = !onValueChange(it)
+                Log.d("USER_ACTION_DIALOGS", "Show error is: $showError")
             },
             maxLines = 1,
             singleLine = true,
@@ -577,7 +587,7 @@ fun AlbumAddChoiceDialog(
             )
         }
 
-        Column (
+        Column(
             modifier = Modifier
                 .fillMaxWidth(1f)
                 .wrapContentHeight()
@@ -631,18 +641,21 @@ fun AddCustomAlbumDialog(
     onDismiss: () -> Unit,
     onDismissPrev: () -> Unit
 ) {
-    val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect().collectAsStateWithLifecycle(initialValue = true)
+    val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect()
+        .collectAsStateWithLifecycle(initialValue = true)
     val albums by if (autoDetectAlbums) {
-        mainViewModel.settings.AlbumsList.getAutoDetectedAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
+        mainViewModel.settings.AlbumsList.getAutoDetectedAlbums()
+            .collectAsStateWithLifecycle(initialValue = emptyList())
     } else {
-        mainViewModel.settings.AlbumsList.getNormalAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
+        mainViewModel.settings.AlbumsList.getNormalAlbums()
+            .collectAsStateWithLifecycle(initialValue = emptyList())
     }
 
     var name by remember { mutableStateOf("") }
 
-    Box (
-       modifier = Modifier
-           .padding(8.dp, 0.dp)
+    Box(
+        modifier = Modifier
+            .padding(8.dp, 0.dp)
     ) {
         TextEntryDialog(
             title = stringResource(id = R.string.albums_custom),
@@ -669,5 +682,137 @@ fun AddCustomAlbumDialog(
                 }
             }
         )
+    }
+}
+
+@OptIn(ExperimentalTime::class)
+@Composable
+fun ImmichLoginDialog(
+    endpointBase: String = "",
+    onDismiss: () -> Unit = {},
+) {
+    LavenderDialogBase(
+        onDismiss = onDismiss,
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(8.dp, 0.dp, 8.dp, 0.dp),
+            verticalArrangement = Arrangement.spacedBy(
+                space = 8.dp,
+                alignment = Alignment.CenterVertically
+            ),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            val email = remember { mutableStateOf("") }
+            val password = remember { mutableStateOf("") }
+
+            val focusManager = LocalFocusManager.current
+
+            TitleCloseRow(
+                title = stringResource(id = R.string.immich_login),
+                closeOffset = 16.dp,
+                onClose = onDismiss
+            )
+
+            ClearableTextField(
+                text = email,
+                placeholder = "Email",
+                modifier = Modifier,
+                icon = R.drawable.mail,
+                onConfirm = {
+                    focusManager.moveFocus(FocusDirection.Down)
+                },
+                onClear = {
+                    email.value = ""
+                }
+            )
+
+            val coroutineScope = rememberCoroutineScope()
+            val context = LocalContext.current
+
+            suspend fun login() {
+                val eventTitle =
+                    mutableStateOf(context.resources.getString(R.string.immich_login_ongoing))
+                val isLoading = mutableStateOf(true)
+
+                LavenderSnackbarController.pushEvent(
+                    LavenderSnackbarEvents.LoadingEvent(
+                        message = eventTitle.value,
+                        iconResId = R.drawable.account_circle,
+                        isLoading = isLoading
+                    )
+                )
+
+                val apiClient = ApiClient()
+                val userAuth = User(
+                    apiClient = apiClient,
+                    endpointBase = endpointBase
+                )
+
+                val response = userAuth.login(
+                    credentials = LoginCredentials(
+                        email = email.value.trim(),
+                        password = password.value.trim()
+                    )
+                )
+
+                if (response != null) {
+                    mainViewModel.settings.Immich.setUser(
+                        user = com.kaii.lavender.immichintegration.serialization.User(
+                            avatarColor = UserAvatarColors.Blue,
+                            email = response.userEmail,
+                            id = response.userId,
+                            profileImagePath = response.profileImagePath,
+                            profileChangedAt = Clock.System.now().toString(),
+                            name = response.name
+                        )
+                    )
+                    mainViewModel.settings.Immich.setBearerToken(token = response.accessToken)
+                    eventTitle.value = context.resources.getString(R.string.immich_login_successful)
+                    isLoading.value = false
+
+                    onDismiss()
+                } else {
+                    password.value = ""
+
+                    eventTitle.value = context.resources.getString(R.string.immich_login_failed)
+                    LavenderSnackbarController.pushEvent(
+                        LavenderSnackbarEvents.MessageEvent(
+                            message = context.resources.getString(R.string.immich_login_failed),
+                            duration = SnackbarDuration.Short,
+                            iconResId = R.drawable.error_2
+                        )
+                    )
+                }
+            }
+
+            ClearableTextField(
+                text = password,
+                placeholder = "Password",
+                modifier = Modifier,
+                icon = R.drawable.password,
+                onConfirm = {
+                    coroutineScope.launch {
+                        login()
+                    }
+                },
+                onClear = {
+                    password.value = ""
+                }
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            FullWidthDialogButton(
+                text = stringResource(id = R.string.immich_login_confirm),
+                color = MaterialTheme.colorScheme.primary,
+                textColor = MaterialTheme.colorScheme.onPrimary,
+                position = RowPosition.Single
+            ) {
+                coroutineScope.launch {
+                    login()
+                }
+            }
+        }
     }
 }

@@ -66,8 +66,8 @@ import com.kaii.lavender_snackbars.LavenderSnackbarController
 import com.kaii.lavender_snackbars.LavenderSnackbarEvents
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
+import com.kaii.photos.compose.ClearableTextField
 import com.kaii.photos.compose.FolderIsEmpty
-import com.kaii.photos.compose.SearchTextField
 import com.kaii.photos.compose.dialogs.getDefaultShapeSpacerForPosition
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
@@ -174,9 +174,10 @@ fun MoveCopyAlbumListView(
                 modifier = Modifier
                     .fillMaxWidth(1f)
             ) {
-                SearchTextField(
-                    searchedForText = searchedForText,
+                ClearableTextField(
+                    text = searchedForText,
                     placeholder = "Search for an album's name",
+                    icon = R.drawable.search,
                     modifier = Modifier
                         .fillMaxWidth(1f)
                         .height(56.dp)
@@ -184,7 +185,7 @@ fun MoveCopyAlbumListView(
                     onClear = {
                         searchedForText.value = ""
                     },
-                    onSearch = {}
+                    onConfirm = {}
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
