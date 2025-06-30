@@ -192,7 +192,7 @@ fun MoveCopyAlbumListView(
             ) {
                 SearchTextField(
                     searchedForText = searchedForText,
-                    placeholder = "Search for an album's name",
+                    placeholder = stringResource(id = R.string.media_move_copy_list_search_bar),
                     modifier = Modifier
                         .fillMaxWidth(1f)
                         .height(56.dp)

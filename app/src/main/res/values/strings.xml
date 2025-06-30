@@ -299,9 +299,10 @@
     <string name="media_erase">Erase</string>
     <string name="media_confirm">Confirm</string>
     <string name="media_okay">Okay</string>
+    <string name="media_move_copy_list_search_bar">Search for an album</string>
 
     <!-- Search -->
-    <string name="search_photo_name">Search for a photo\'s name</string>
+    <string name="search_photo_name">Search for a photo</string>
     <string name="search_photo_date">Search for a photo\'s date</string>
     <string name="search_photo_day">Search by day</string>
 

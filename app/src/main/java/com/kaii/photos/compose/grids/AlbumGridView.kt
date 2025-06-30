@@ -1,7 +1,7 @@
 package com.kaii.photos.compose.grids
 
-import android.content.res.Configuration
 // import android.util.Log
+import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
 import androidx.annotation.FloatRange
 import androidx.compose.animation.animateColorAsState
@@ -88,6 +88,8 @@ import com.kaii.photos.datastore.AlbumSortMode
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
+import com.kaii.photos.datastore.PhotoGrid
+import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.brightenColor
@@ -109,15 +111,19 @@ fun AlbumsGridView(
     val context = LocalContext.current
     val navController = LocalNavController.current
 
-    val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect().collectAsStateWithLifecycle(initialValue = true)
+    val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect()
+        .collectAsStateWithLifecycle(initialValue = true)
     val listOfDirs by if (autoDetectAlbums) {
-        mainViewModel.settings.AlbumsList.getAutoDetectedAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
+        mainViewModel.settings.AlbumsList.getAutoDetectedAlbums()
+            .collectAsStateWithLifecycle(initialValue = emptyList())
     } else {
-        mainViewModel.settings.AlbumsList.getNormalAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
+        mainViewModel.settings.AlbumsList.getNormalAlbums()
+            .collectAsStateWithLifecycle(initialValue = emptyList())
     }
 
-    val sortMode by mainViewModel.settings.AlbumsList
-        .getAlbumSortMode()
+    val sortModeDateType by mainViewModel.settings.PhotoGrid.getSortMode()
+        .collectAsStateWithLifecycle(initialValue = MediaItemSortMode.DateTaken)
+    val sortMode by mainViewModel.settings.AlbumsList.getAlbumSortMode()
         .collectAsStateWithLifecycle(initialValue = AlbumSortMode.Custom)
 
     val sortByDescending by mainViewModel.settings.AlbumsList
@@ -162,22 +168,18 @@ fun AlbumsGridView(
                             copy.sortedByDescending { album ->
                                 cachedAlbumToThumbnailMapping.find {
                                     it.first.id == album.id
-                                }?.second?.dateModified
-                            }.toMutableList().apply {
-                                find { item -> item.mainPath == "DCIM/Camera" }?.let { cameraItem ->
-                                    remove(cameraItem)
-                                    add(0, cameraItem)
+                                }?.second?.let {
+                                    if (sortModeDateType == MediaItemSortMode.DateTaken) it.dateTaken
+                                    else it.dateModified
                                 }
                             }
                         } else {
                             copy.sortedBy { album ->
                                 cachedAlbumToThumbnailMapping.find {
                                     it.first.id == album.id
-                                }?.second?.dateModified
-                            }.toMutableList().apply {
-                                find { item -> item.mainPath == "DCIM/Camera" }?.let { cameraItem ->
-                                    remove(cameraItem)
-                                    add(0, cameraItem)
+                                }?.second?.let {
+                                    if (sortModeDateType == MediaItemSortMode.DateTaken) it.dateTaken
+                                    else it.dateModified
                                 }
                             }
                         }
@@ -325,7 +327,8 @@ fun AlbumsGridView(
                                 }
 
                             if (targetItem != null && currentLazyItem != null) {
-                                val targetItemIndex = albums.value.indexOfFirst { it.id == targetItem.key }
+                                val targetItemIndex =
+                                    albums.value.indexOfFirst { it.id == targetItem.key }
                                 val newList = albums.value.toMutableList()
                                 newList.remove(selectedItem)
                                 newList.add(targetItemIndex, selectedItem!!)
