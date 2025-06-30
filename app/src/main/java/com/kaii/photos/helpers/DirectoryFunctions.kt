@@ -123,9 +123,8 @@ fun Path.checkHasFiles(
 }
 
 fun String.checkPathIsDownloads(): Boolean = run {
-    Log.d(TAG, "Relative path to downloads " + toRelativePath())
-    toRelativePath().removePrefix("/").startsWith(Environment.DIRECTORY_DOWNLOADS)
-            && toRelativePath().removeSuffix("/").endsWith(Environment.DIRECTORY_DOWNLOADS)
+    toRelativePath(true).startsWith(Environment.DIRECTORY_DOWNLOADS)
+            && toRelativePath(true).endsWith(Environment.DIRECTORY_DOWNLOADS)
 }
 
 fun String.getFileNameFromPath(): String = trim().removeSuffix("/").split("/").last()

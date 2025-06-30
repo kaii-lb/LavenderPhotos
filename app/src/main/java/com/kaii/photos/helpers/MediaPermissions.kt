@@ -140,9 +140,8 @@ fun GetDirectoryPermissionAndRun(
     }
 
     LaunchedEffect(currentIndex) {
-        if (currentIndex >= absoluteDirPaths.size - 1 && grantedList.isNotEmpty()) onGranted(
-            grantedList.toList()
-        )
+        Log.d(TAG, "Current ${currentIndex}, total ${absoluteDirPaths.size - 1} and granted list $grantedList")
+        if (currentIndex >= absoluteDirPaths.size - 1 && grantedList.isNotEmpty()) onGranted(grantedList.toList())
         else if (currentIndex >= absoluteDirPaths.size - 1) onRejected() // grantedList IS empty
     }
 

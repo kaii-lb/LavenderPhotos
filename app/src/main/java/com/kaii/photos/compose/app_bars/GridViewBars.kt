@@ -84,6 +84,8 @@ fun SingleAlbumViewTopBar(
     currentView: MutableState<BottomBarTab>,
     onBackClick: () -> Unit
 ) {
+    var usableAlbumInfo by remember(albumInfo) { mutableStateOf(albumInfo) }
+
     val show by remember {
         derivedStateOf {
             selectedItemsList.isNotEmpty()
@@ -117,7 +119,7 @@ fun SingleAlbumViewTopBar(
                 },
                 title = {
                     Text(
-                        text = albumInfo?.name ?: "Album",
+                        text = usableAlbumInfo?.name ?: "Album",
                         fontSize = TextUnit(18f, TextUnitType.Sp),
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
@@ -129,18 +131,22 @@ fun SingleAlbumViewTopBar(
                 actions = {
                     var showPathsDialog by remember { mutableStateOf(false) }
 
-                    if (showPathsDialog && albumInfo != null) {
+                    if (showPathsDialog && usableAlbumInfo != null) {
                         AlbumPathsDialog(
-                            albumInfo = albumInfo,
+                            albumInfo = usableAlbumInfo!!,
                             onConfirm = { selectedPaths ->
-                                mainViewModel.settings.AlbumsList.editInAlbumsList(
-                                    albumInfo = albumInfo,
-                                    newInfo = albumInfo.copy(
+                                val newInfo =
+                                    usableAlbumInfo!!.copy(
                                         id = selectedPaths.hashCode(),
                                         paths = selectedPaths,
                                         isCustomAlbum = true
                                     )
+                                mainViewModel.settings.AlbumsList.editInAlbumsList(
+                                    albumInfo = usableAlbumInfo!!,
+                                    newInfo = newInfo
                                 )
+
+                                usableAlbumInfo = newInfo
                             },
                             onDismiss = {
                                 showPathsDialog = false

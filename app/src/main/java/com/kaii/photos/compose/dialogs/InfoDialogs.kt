@@ -1,6 +1,7 @@
 package com.kaii.photos.compose.dialogs
 
 import android.content.Intent
+import android.provider.MediaStore
 import android.util.Log
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
@@ -91,6 +92,7 @@ import com.kaii.photos.helpers.MediaData
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.Screens
+import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.checkPathIsDownloads
 import com.kaii.photos.helpers.eraseExifMedia
 import com.kaii.photos.helpers.getExifDataForMedia
@@ -99,6 +101,7 @@ import com.kaii.photos.helpers.moveImageToLockedFolder
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.renameDirectory
 import com.kaii.photos.helpers.renameImage
+import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
@@ -188,42 +191,52 @@ fun SingleAlbumDialog(
                     absoluteDirPaths = album.paths,
                     shouldRun = saveFileName,
                     onGranted = {
-                        if (saveFileName.value && fileName.value != album.paths.first()
-                                .split("/")
-                                .last()
-                        ) {
+                        Log.d(TAG, "Running rename ${fileName.value} ${album.name}")
+                        if (fileName.value != album.name) {
+                            Log.d(TAG, "Running rename - passed first check")
+                            val basePath = album.mainPath.toBasePath()
+                            val currentVolumes = MediaStore.getExternalVolumeNames(context)
+                            val volumeName =
+                                if (basePath == baseInternalStorageDirectory) "primary"
+                                else currentVolumes.find {
+                                    val possible = basePath.replace("/storage/", "").removeSuffix("/")
+                                    it == possible || it == possible.lowercase()
+                                }
+
                             renameDirectory(
                                 context = context,
-                                absolutePath = album.paths.first(),
+                                absolutePath = album.mainPath,
                                 newName = fileName.value,
+                                base = volumeName!!
                             )
 
-                            val mainViewModel = mainViewModel
-                            // val newDir = dir.replace(album.name, fileName.value)
-
+                            val newInfo = album.copy(
+                                name = fileName.value,
+                                paths = listOf(album.mainPath.replace(album.name, fileName.value))
+                            )
                             mainViewModel.settings.AlbumsList.editInAlbumsList(
                                 albumInfo = album,
-                                newInfo = album.copy(name = fileName.value)
+                                newInfo = newInfo
                             )
                             showDialog.value = false
 
                             try {
                                 context.contentResolver.releasePersistableUriPermission(
                                     context.getExternalStorageContentUriFromAbsolutePath(
-                                        absolutePath = album.paths.first(),
+                                        absolutePath = newInfo.mainPath,
                                         trimDoc = true
                                     ),
                                     Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                                 )
                             } catch (e: Throwable) {
-                                Log.d(TAG, "Couldn't release permission for ${album.paths.first()}")
+                                Log.d(TAG, "Couldn't release permission for ${newInfo.mainPath}")
                                 e.printStackTrace()
                             }
 
                             navController.popBackStack()
                             navController.navigate(
                                 Screens.SingleAlbumView(
-                                    albumInfo = album
+                                    albumInfo = newInfo
                                 )
                             )
 
@@ -232,6 +245,36 @@ fun SingleAlbumDialog(
                     },
                     onRejected = {}
                 )
+
+                AnimatableTextField(
+                    state = isEditingFileName,
+                    string = fileName,
+                    doAction = saveFileName,
+                    rowPosition = RowPosition.Middle,
+                    enabled = album.paths.fastAll { !it.checkPathIsDownloads() },
+                    modifier = Modifier
+                        .padding(8.dp, 0.dp)
+                ) {
+                    fileName.value = album.name
+                }
+            } else {
+                LaunchedEffect(saveFileName.value) {
+                    if (!saveFileName.value) return@LaunchedEffect
+
+                    val newInfo = album.copy(
+                        name = fileName.value
+                    )
+                    mainViewModel.settings.AlbumsList.editInAlbumsList(
+                        albumInfo = album,
+                        newInfo = newInfo
+                    )
+                    navController.popBackStack()
+                    navController.navigate(
+                        Screens.SingleAlbumView(
+                            albumInfo = newInfo
+                        )
+                    )
+                }
 
                 AnimatableTextField(
                     state = isEditingFileName,

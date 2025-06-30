@@ -315,14 +315,17 @@ fun renameImage(context: Context, uri: Uri, newName: String) {
 fun renameDirectory(
     context: Context,
     absolutePath: String,
+    base: String,
     newName: String,
 ) {
     try {
         val dir =
             DocumentsContract.buildTreeDocumentUri(
                 EXTERNAL_DOCUMENTS_AUTHORITY,
-                "primary:${absolutePath.replace(baseInternalStorageDirectory, "")}"
+                "$base:${absolutePath.toRelativePath(true)}"
             )
+
+        Log.d(TAG, "Dir is $dir")
 
         val newDirectory = DocumentFile.fromTreeUri(context, dir)
         newDirectory?.renameTo(newName)
