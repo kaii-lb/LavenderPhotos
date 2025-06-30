@@ -8,6 +8,7 @@ import androidx.compose.ui.util.fastDistinctBy
 import androidx.compose.ui.util.fastFilter
 import androidx.compose.ui.util.fastJoinToString
 import androidx.compose.ui.util.fastMap
+import androidx.compose.ui.util.fastMinByOrNull
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.SQLiteQuery
 import com.kaii.photos.mediastore.MultiAlbumDataSource
@@ -135,7 +136,8 @@ fun String.getParentFromPath(): String =
 val File.relativePath: String
     get() = this.absolutePath.toRelativePath()
 
-fun String.toRelativePath() = "/" + trim().replace(toBasePath(), "")
+fun String.toRelativePath(removePrefix: Boolean = false) =
+    (if (removePrefix) "" else "/") + trim().replace(toBasePath(), "")
 
 /** only use with strings that are absolute paths*/
 fun String.toBasePath() = run {
@@ -187,4 +189,29 @@ fun tryGetAllAlbums(context: Context): Flow<List<AlbumInfo>> = channelFlow {
         Log.d(TAG, "new albums are being added")
         emitNew(new)
     }
+}
+
+/** finds the highest level shared parent between a given set of paths */
+fun findMinParent(paths: List<String>) = run {
+    val mut = paths.toMutableList()
+    var currentMin = mut.fastMinByOrNull {
+        it.toRelativePath(true).length
+    }
+    val unique = mutableListOf<String>()
+
+    while (currentMin != null) {
+        val children = mut.filter {
+            it.startsWith(currentMin)
+        }
+
+        if (children.isNotEmpty()) {
+            mut.removeAll(children)
+            unique.add(currentMin)
+        }
+        currentMin = mut.fastMinByOrNull {
+            it.toRelativePath(true).length
+        }
+    }
+
+    unique
 }

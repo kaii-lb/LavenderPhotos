@@ -215,7 +215,7 @@ fun DialogExpandableItem(
         Column(
             modifier = Modifier
                 .wrapContentHeight()
-                .clip(RoundedCornerShape(0.dp, 0.dp, 16.dp, 16.dp))
+                // .clip(RoundedCornerShape(0.dp, 0.dp, 16.dp, 16.dp))
                 .background(darkenColor(MaterialTheme.colorScheme.surfaceVariant, 0.2f))
         ) {
             content()

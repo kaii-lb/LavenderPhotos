@@ -39,6 +39,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
@@ -295,12 +296,14 @@ fun RadioButtonRow(
 fun CheckBoxButtonRow(
     text: String,
     checked: Boolean,
+    height: Dp = 40.dp,
+    checkBoxTextSpacing: Dp = 16.dp,
     onCheckedChange: () -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth(1f)
-            .height(40.dp)
+            .height(height)
             .background(Color.Transparent)
             .padding(12.dp, 4.dp)
             .clip(RoundedCornerShape(8.dp))
@@ -317,7 +320,7 @@ fun CheckBoxButtonRow(
             }
         )
 
-        Spacer(modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(checkBoxTextSpacing))
 
         val state = rememberScrollState()
         Text(

@@ -3,7 +3,6 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.android)
     id("org.jetbrains.kotlin.plugin.parcelize")
     id("org.jetbrains.kotlin.plugin.serialization")
-    // id("org.jetbrains.kotlin.kapt")
     id("com.google.devtools.ksp")
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.baselineprofile)
@@ -27,7 +26,7 @@ android {
         }
 
         ksp {
-       		arg("room.schemaLocation", "$projectDir/schemas")
+            arg("room.schemaLocation", "$projectDir/schemas")
         }
     }
 
@@ -35,7 +34,10 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
     compileOptions {
@@ -60,7 +62,7 @@ android {
     }
 }
 
-//noinspection UseTomlInstead
+// noinspection UseTomlInstead
 dependencies {
     implementation("androidx.core:core-ktx:1.16.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.1")
@@ -80,8 +82,8 @@ dependencies {
     implementation("androidx.graphics:graphics-shapes-android:1.0.1")
     implementation("androidx.test:monitor:1.7.2")
     implementation("androidx.test.ext:junit-ktx:1.2.1")
-	implementation("com.github.bumptech.glide:glide:4.16.0")
-	implementation("com.github.bumptech.glide:compose:1.0.0-beta01")
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+    implementation("com.github.bumptech.glide:compose:1.0.0-beta01")
     implementation("com.github.bumptech.glide:ktx:1.0.0-beta01")
     implementation("androidx.activity:activity-ktx:1.10.1")
     implementation("androidx.fragment:fragment-ktx:1.8.8")
@@ -97,7 +99,7 @@ dependencies {
     implementation("androidx.security:security-crypto:1.1.0-beta01")
     implementation("com.github.kittinunf.fuel:fuel:2.3.1")
     implementation("com.github.kittinunf.fuel:fuel-json:2.3.1")
-	implementation("com.github.kaii-lb:Lavender-Snackbars:0.1.7")
+    implementation("com.github.kaii-lb:Lavender-Snackbars:0.1.7")
     implementation(libs.androidx.profileinstaller)
     "baselineProfile"(project(":baselineprofile"))
 
@@ -108,7 +110,7 @@ dependencies {
 
     implementation("com.github.kaii-lb.LavenderImmichIntegration:library:v1.0.2")
 
-	testImplementation("junit:junit:4.13.2")
+    testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
     androidTestImplementation(platform("androidx.compose:compose-bom:2025.06.01"))

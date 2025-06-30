@@ -136,7 +136,9 @@ fun SingleAlbumViewTopBar(
                                 mainViewModel.settings.AlbumsList.editInAlbumsList(
                                     albumInfo = albumInfo,
                                     newInfo = albumInfo.copy(
-                                        paths = selectedPaths
+                                        id = selectedPaths.hashCode(),
+                                        paths = selectedPaths,
+                                        isCustomAlbum = true
                                     )
                                 )
                             },

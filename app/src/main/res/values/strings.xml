@@ -27,6 +27,8 @@
     <string name="albums_media_sorting_desc">Sets the sorting of photos and videos in grids</string>
     <string name="albums_is_custom">This is a custom album</string>
     <string name="albums_custom">Custom Album</string>
+    <string name="albums_custom_desc">Add any media from anywhere</string>
+    <string name="albums_folder_desc">Load media from a folder</string>
     <string name="albums_non_existent">No such albums exist</string>
     <string name="albums_already_contains_all">Album contains all items already</string>
     <string name="albums_remove">Remove album from list</string>

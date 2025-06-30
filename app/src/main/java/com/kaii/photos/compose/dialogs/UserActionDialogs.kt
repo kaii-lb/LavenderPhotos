@@ -1,6 +1,9 @@
 package com.kaii.photos.compose.dialogs
 
+import android.content.Context
 import android.content.res.Configuration
+import android.os.storage.StorageManager
+import android.util.Log
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -11,6 +14,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -35,11 +39,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -62,11 +66,19 @@ import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.CheckBoxButtonRow
 import com.kaii.photos.compose.FullWidthDialogButton
+import com.kaii.photos.compose.PreferencesRow
+import com.kaii.photos.compose.TitleCloseRow
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.createDirectoryPicker
+import com.kaii.photos.helpers.findMinParent
+import com.kaii.photos.helpers.getParentFromPath
+import com.kaii.photos.helpers.toBasePath
+import com.kaii.photos.helpers.toRelativePath
 import kotlinx.coroutines.launch
+
+private const val TAG = "USER_ACTION_DIALOGS"
 
 @Composable
 fun ConfirmationDialog(
@@ -408,17 +420,29 @@ fun AlbumPathsDialog(
     onConfirm: (selectedPaths: List<String>) -> Unit,
     onDismiss: () -> Unit
 ) {
-    val selectedPaths = remember { mutableStateListOf<String>().apply { addAll(albumInfo.paths) } }
+    val selectedPaths = remember { albumInfo.paths.toMutableStateList() }
 
     LavenderDialogBase(
-        modifier = Modifier
-            .animateContentSize(),
         onDismiss = onDismiss
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth(1f)
         ) {
+            IconButton(
+                onClick = onDismiss,
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .padding(0.dp, 0.dp, 0.dp, 4.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.close),
+                    contentDescription = "Close this dialog",
+                    modifier = Modifier
+                        .size(24.dp)
+                )
+            }
+
             Text(
                 text = albumInfo.name,
                 fontSize = TextUnit(18f, TextUnitType.Sp),
@@ -433,16 +457,9 @@ fun AlbumPathsDialog(
                 if (path != null && basePath != null) {
                     val absolutePath = basePath + path
 
-                    mainViewModel.settings.AlbumsList.editInAlbumsList(
-                        albumInfo = albumInfo,
-                        newInfo = albumInfo.copy(
-                            paths = albumInfo.paths.toMutableList().apply {
-                                if (!contains(absolutePath)) {
-                                    add(absolutePath)
-                                }
-                            }
-                        )
-                    )
+                    if (!selectedPaths.contains(absolutePath)) selectedPaths.add(absolutePath)
+
+                    Log.d(TAG, "Path $absolutePath and selected $selectedPaths")
                 }
             }
 
@@ -465,9 +482,17 @@ fun AlbumPathsDialog(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        val groupedPaths = remember(albumInfo.paths) {
-            albumInfo.paths.groupBy {
-                (it.removeSuffix("/") + "/").split("/")[0]
+        var volumes by remember {
+            mutableStateOf(
+                selectedPaths.groupBy {
+                    it.toBasePath()
+                }
+            )
+        }
+
+        LaunchedEffect(selectedPaths.size) {
+            volumes = selectedPaths.groupBy {
+                it.toBasePath()
             }
         }
 
@@ -475,12 +500,13 @@ fun AlbumPathsDialog(
             modifier = Modifier
                 .heightIn(max = 250.dp)
                 .fillMaxWidth(1f)
+                .animateContentSize()
         ) {
             itemsIndexed(
-                items = groupedPaths.keys.toList()
-            ) { index, group ->
+                items = volumes.keys.toList()
+            ) { index, volume ->
                 val rowPosition = when {
-                    groupedPaths.size == 1 -> {
+                    volumes.size == 1 -> {
                         RowPosition.Single
                     }
 
@@ -488,7 +514,7 @@ fun AlbumPathsDialog(
                         RowPosition.Top
                     }
 
-                    index == groupedPaths.size - 1 -> {
+                    index == volumes.size - 1 -> {
                         RowPosition.Bottom
                     }
 
@@ -497,26 +523,127 @@ fun AlbumPathsDialog(
                     }
                 }
 
-                val expanded = remember { mutableStateOf(false) }
+                val expanded = remember { mutableStateOf(volumes.size == 1) }
+                val context = LocalContext.current
+                val externalVolumes = remember {
+                    val manager =
+                        context.getSystemService(Context.STORAGE_SERVICE) as StorageManager
+                    manager.storageVolumes
+                }
 
                 DialogExpandableItem(
-                    text = group,
-                    iconResId = R.drawable.edit, // TODO: change to drop down icon
+                    text = externalVolumes.find {
+                        it.directory?.absolutePath == volume.removeSuffix(
+                            "/"
+                        )
+                    }?.getDescription(context) ?: "Some Place",
+                    iconResId = R.drawable.drop_down_arrow,
                     position = rowPosition,
                     expanded = expanded
                 ) {
-                    val paths = groupedPaths[group]
-                    paths?.forEach { path ->
-                        CheckBoxButtonRow(
-                            text = path,
-                            checked = selectedPaths.contains(path)
+                    val children = volumes[volume]!!
+
+                    data class PathItem(
+                        val path: String,
+                        val children: List<PathItem>?
+                    )
+
+                    val relative = children
+                        .sortedBy { it.length }
+
+                    val uniques = run {
+                        var min = findMinParent(relative)
+                        val grouped = min
+                            .groupBy { it.getParentFromPath() }
+                            .map { (key, value) ->
+                                if (value.size > 1) key
+                                else value.first()
+                            }
+
+                        grouped
+                    }
+
+                    val hierarchy = run {
+                        val list = mutableListOf<PathItem>()
+
+                        fun buildHierarchy(path: String): PathItem {
+                            val possibleChildren = children.filter {
+                                it.toRelativePath(true).getParentFromPath() == path.toRelativePath(
+                                    true
+                                )
+                            }
+
+                            possibleChildren.forEach {
+                                buildHierarchy(it)
+                            }
+
+                            return PathItem(
+                                path = path,
+                                children = possibleChildren.map { buildHierarchy(it) }
+                            )
+                        }
+
+                        uniques.sortedBy { it.length }.forEach { path ->
+                            val item = buildHierarchy(path)
+                            list.add(item)
+                        }
+
+                        list
+                    }
+
+                    @Composable
+                    fun getChildren(item: PathItem, parent: PathItem) {
+                        Row(
+                            modifier = Modifier
+                                .wrapContentSize(),
+                            verticalAlignment = Alignment.Top,
+                            horizontalArrangement = Arrangement.Start
                         ) {
-                            if (selectedPaths.contains(path)) {
-                                selectedPaths.remove(path)
-                            } else {
-                                selectedPaths.add(path)
+                            if (parent.children != null) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.subdirectory_arrow_right),
+                                    contentDescription = "Subdirectory icon",
+                                    tint = MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .offset(x = 8.dp, y = 4.dp)
+                                )
+                            }
+
+                            Column(
+                                modifier = Modifier
+                                    .wrapContentSize()
+                                    .offset(x = (-12).dp)
+                            ) {
+                                CheckBoxButtonRow(
+                                    text = item.path.replace(parent.path, "").removePrefix("/"),
+                                    checked = selectedPaths.contains(item.path),
+                                    checkBoxTextSpacing = 0.dp,
+                                    height = 32.dp
+                                ) {
+                                    if (selectedPaths.contains(item.path)) {
+                                        selectedPaths.remove(item.path)
+                                    } else {
+                                        selectedPaths.add(item.path)
+                                    }
+                                }
+
+                                if (item.children != null) {
+                                    Column(
+                                        modifier = Modifier
+                                            .padding(start = 20.dp)
+                                    ) {
+                                        item.children.forEach { child ->
+                                            getChildren(child, item)
+                                        }
+                                    }
+                                }
                             }
                         }
+                    }
+
+                    hierarchy.forEach {
+                        getChildren(it, PathItem(it.path.toBasePath(), null))
                     }
                 }
             }
@@ -539,45 +666,20 @@ fun AlbumPathsDialog(
 
 @Composable
 fun AlbumAddChoiceDialog(
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit = {}
 ) {
     LavenderDialogBase(
-        onDismiss = onDismiss,
+        onDismiss = onDismiss
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth(1f)
-        ) {
-            IconButton(
-                onClick = {
-                    onDismiss()
-                },
-                modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .padding(0.dp, 0.dp, 0.dp, 4.dp)
-            ) {
-                Icon(
-                    painter = painterResource(
-                        id = R.drawable.close
-                    ),
-                    contentDescription = "Close this dialog",
-                    modifier = Modifier
-                        .size(24.dp)
-                )
-            }
+        TitleCloseRow(
+            title = stringResource(id = R.string.albums_type),
+            onClose = onDismiss,
+            closeOffset = 8.dp
+        )
 
-            Text(
-                text = stringResource(id = R.string.albums_type),
-                fontSize = TextUnit(18f, TextUnitType.Sp),
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier
-                    .wrapContentSize()
-                    .align(Alignment.Center)
-            )
-        }
+        Spacer(modifier = Modifier.height(4.dp))
 
-        Column (
+        Column(
             modifier = Modifier
                 .fillMaxWidth(1f)
                 .wrapContentHeight()
@@ -595,10 +697,11 @@ fun AlbumAddChoiceDialog(
                 )
             }
 
-            DialogClickableItem(
-                text = stringResource(id = R.string.albums_folder),
-                iconResId = R.drawable.albums,
-                position = RowPosition.Top
+            PreferencesRow(
+                title = stringResource(id = R.string.albums_folder),
+                summary = stringResource(id = R.string.albums_folder_desc),
+                position = RowPosition.Top,
+                iconResID = R.drawable.albums
             ) {
                 activityLauncher.launch(null)
             }
@@ -613,10 +716,11 @@ fun AlbumAddChoiceDialog(
                 )
             }
 
-            DialogClickableItem(
-                text = stringResource(id = R.string.albums_custom),
-                iconResId = R.drawable.albums,
-                position = RowPosition.Bottom
+            PreferencesRow(
+                title = stringResource(id = R.string.albums_custom),
+                summary = stringResource(id = R.string.albums_custom_desc),
+                position = RowPosition.Bottom,
+                iconResID = R.drawable.art_track
             ) {
                 showCustomAlbumDialog = true
             }
@@ -631,18 +735,21 @@ fun AddCustomAlbumDialog(
     onDismiss: () -> Unit,
     onDismissPrev: () -> Unit
 ) {
-    val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect().collectAsStateWithLifecycle(initialValue = true)
+    val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect()
+        .collectAsStateWithLifecycle(initialValue = true)
     val albums by if (autoDetectAlbums) {
-        mainViewModel.settings.AlbumsList.getAutoDetectedAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
+        mainViewModel.settings.AlbumsList.getAutoDetectedAlbums()
+            .collectAsStateWithLifecycle(initialValue = emptyList())
     } else {
-        mainViewModel.settings.AlbumsList.getNormalAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
+        mainViewModel.settings.AlbumsList.getNormalAlbums()
+            .collectAsStateWithLifecycle(initialValue = emptyList())
     }
 
     var name by remember { mutableStateOf("") }
 
-    Box (
-       modifier = Modifier
-           .padding(8.dp, 0.dp)
+    Box(
+        modifier = Modifier
+            .padding(8.dp, 0.dp)
     ) {
         TextEntryDialog(
             title = stringResource(id = R.string.albums_custom),
