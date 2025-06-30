@@ -62,7 +62,10 @@ internal constructor(
 
                             albumQueryPairs.forEach { (album, queryString) ->
                                 val item = if (album.isCustomAlbum) {
-                                    queryCustom(parentId = album.id)
+                                    val q1 = queryCustom(parentId = album.id)
+                                    val q2 = query(sqlQuery = queryString)
+
+                                    if (q1.dateModified > q2.dateModified) q1 else q2
                                 } else {
                                     query(sqlQuery = queryString)
                                 }
@@ -88,7 +91,10 @@ internal constructor(
 
                 albumQueryPairs.forEach { (album, queryString) ->
                     val item = if (album.isCustomAlbum) {
-                        queryCustom(parentId = album.id)
+                        val q1 = queryCustom(parentId = album.id)
+                        val q2 = query(sqlQuery = queryString)
+
+                        if (q1.dateModified > q2.dateModified) q1 else q2
                     } else {
                         query(sqlQuery = queryString)
                     }

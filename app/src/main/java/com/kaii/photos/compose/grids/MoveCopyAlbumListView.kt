@@ -27,6 +27,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ModalBottomSheetProperties
@@ -50,6 +51,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
@@ -106,14 +108,21 @@ fun MoveCopyAlbumListView(
         mainViewModel.settings.AlbumsList.getNormalAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
     }
 
-    if (originalAlbumsList == emptyList<String>()) return
-
     val albumsViewModel: AlbumsViewModel = viewModel(
         factory = AlbumsViewModelFactory(
-            context,
-            originalAlbumsList.filter { if (isMoving) !it.isCustomAlbum else true })
+            context = context,
+            albums = originalAlbumsList.filter { if (isMoving) !it.isCustomAlbum else true }
+        )
     )
-    val dataList by albumsViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+
+    LaunchedEffect(originalAlbumsList) {
+        albumsViewModel.refresh(
+            context = context,
+            albums = originalAlbumsList.filter { if (isMoving) !it.isCustomAlbum else true }
+        )
+    }
+
+    val albumToThumbnailMapping by albumsViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
     var albumsList by remember { mutableStateOf(originalAlbumsList) }
 
@@ -126,10 +135,17 @@ fun MoveCopyAlbumListView(
 
     val coroutineScope = rememberCoroutineScope()
 
-    LaunchedEffect(key1 = searchedForText.value) {
+    LaunchedEffect(searchedForText.value, originalAlbumsList) {
         albumsList = originalAlbumsList.filter {
             it.name.contains(searchedForText.value, true)
+        }.sortedByDescending { album ->
+            val mediaItem = albumToThumbnailMapping.find {
+                it.first.id == album.id
+            }?.second ?: MediaStoreData.dummyItem
+
+            (if (album.isCustomAlbum) 1L else 0L) or mediaItem.dateModified
         }
+
         if (albumsList.isNotEmpty()) state.scrollToItem(0)
     }
 
@@ -212,13 +228,13 @@ fun MoveCopyAlbumListView(
                         }
                     ) { index ->
                         val album = albumsList[index]
+                        val mediaItem = albumToThumbnailMapping.find {
+                            it.first.id == album.id
+                        }?.second ?: MediaStoreData.dummyItem
 
                         AlbumsListItem(
                             album = album,
-                            data =
-                                dataList.find { item ->
-                                    item.first.id == album.id
-                                }?.second ?: MediaStoreData.dummyItem,
+                            data = mediaItem,
                             position = if (index == albumsList.size - 1 && albumsList.size != 1) RowPosition.Bottom else if (albumsList.size == 1) RowPosition.Single else if (index == 0) RowPosition.Top else RowPosition.Middle,
                             selectedItemsList = selectedItemsList,
                             isMoving = isMoving,
@@ -399,6 +415,18 @@ fun AlbumsListItem(
             modifier = Modifier
                 .weight(1f)
         )
+
+        if (album.isCustomAlbum) {
+            Icon(
+                painter = painterResource(id = R.drawable.art_track),
+                contentDescription = stringResource(id = R.string.albums_is_custom),
+                tint = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier
+                    .padding(end = 2.dp)
+            )
+        }
+
+        Spacer (modifier = Modifier.width(16.dp))
     }
 
     Spacer(
