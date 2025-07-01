@@ -552,16 +552,26 @@ fun AlbumPathsDialog(
                         .sortedBy { it.length }
 
                     val uniques = run {
-                        var min = findMinParent(relative)
-                        val grouped = min
-                            .groupBy { it.getParentFromPath() }
-                            .map { (key, value) ->
-                                if (value.size > 1) key
-                                else value.first()
+                        val total = mutableListOf<String>()
+
+                        relative
+                            .groupBy { it.toRelativePath(true).substringBefore("/") }
+                            .forEach {
+                                var min = findMinParent(it.value)
+                                val grouped = min
+                                    .groupBy { it.getParentFromPath() }
+                                    .map { (key, value) ->
+                                        if (value.size > 1) key
+                                        else value.first()
+                                    }
+
+                                total.addAll(grouped)
                             }
 
-                        grouped
+                        total
                     }
+
+                    Log.d(TAG, "Uniques are $uniques")
 
                     val hierarchy = run {
                         val list = mutableListOf<PathItem>()
@@ -571,10 +581,24 @@ fun AlbumPathsDialog(
                                 it.toRelativePath(true).getParentFromPath() == path.toRelativePath(
                                     true
                                 )
-                            }
+                            }.toMutableList()
 
-                            possibleChildren.forEach {
-                                buildHierarchy(it)
+                            val possibleSubChildren = children.filter {
+                                it.toRelativePath(true)
+                                    .getParentFromPath()
+                                    .startsWith(path.toRelativePath(true))
+                            }
+                            if (possibleSubChildren.isNotEmpty()) {
+                                possibleChildren.addAll(
+                                    possibleSubChildren.filter { child ->
+                                        child !in possibleChildren && !possibleChildren.any {
+                                            it.endsWith(
+                                                child.toRelativePath(true)
+                                                    .getParentFromPath()
+                                            )
+                                        }
+                                    }
+                                )
                             }
 
                             return PathItem(

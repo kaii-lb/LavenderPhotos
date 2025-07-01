@@ -83,7 +83,8 @@ fun DialogClickableItem(
 ) {
     val (shape, spacerHeight) = getDefaultShapeSpacerForPosition(position)
 
-    val clickableModifier = if (action != null && enabled) Modifier.clickable { action() } else Modifier
+    val clickableModifier =
+        if (action != null && enabled) Modifier.clickable { action() } else Modifier
 
     Row(
         modifier = modifier
@@ -91,8 +92,8 @@ fun DialogClickableItem(
             .height(40.dp)
             .clip(shape)
             .background(
-            	if (enabled) MaterialTheme.colorScheme.surfaceVariant
-            	else darkenColor(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f), 0.1f)
+                if (enabled) MaterialTheme.colorScheme.surfaceVariant
+                else darkenColor(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f), 0.1f)
             )
             .wrapContentHeight(align = Alignment.CenterVertically)
             .then(clickableModifier)
@@ -116,7 +117,7 @@ fun DialogClickableItem(
             fontSize = TextUnit(16f, TextUnitType.Sp),
             textAlign = TextAlign.Start,
             modifier = Modifier
-            	.wrapContentSize()
+                .wrapContentSize()
         )
     }
 
@@ -131,11 +132,11 @@ fun DialogClickableItem(
 currently you need to calculate dp height of your composable manually */
 @Composable
 fun DialogExpandableItem(
-	text: String,
-	@DrawableRes iconResId: Int,
-	position: RowPosition,
-	expanded: MutableState<Boolean>,
-	content: @Composable ColumnScope.() -> Unit
+    text: String,
+    @DrawableRes iconResId: Int,
+    position: RowPosition,
+    expanded: MutableState<Boolean>,
+    content: @Composable ColumnScope.() -> Unit
 ) {
     val buttonHeight = 40.dp
 
@@ -215,7 +216,15 @@ fun DialogExpandableItem(
         Column(
             modifier = Modifier
                 .wrapContentHeight()
-                // .clip(RoundedCornerShape(0.dp, 0.dp, 16.dp, 16.dp))
+                .clip(
+                    if (position == RowPosition.Bottom || position == RowPosition.Single) RoundedCornerShape(
+                        0.dp,
+                        0.dp,
+                        16.dp,
+                        16.dp
+                    )
+                    else RoundedCornerShape(0.dp)
+                )
                 .background(darkenColor(MaterialTheme.colorScheme.surfaceVariant, 0.2f))
         ) {
             content()
@@ -240,7 +249,8 @@ fun getDefaultShapeSpacerForPosition(
 
     when (position) {
         RowPosition.Top -> {
-            shape = RoundedCornerShape(cornerRadius, cornerRadius, innerCornerRadius, innerCornerRadius)
+            shape =
+                RoundedCornerShape(cornerRadius, cornerRadius, innerCornerRadius, innerCornerRadius)
             height = spacerHeight
         }
 
@@ -250,7 +260,8 @@ fun getDefaultShapeSpacerForPosition(
         }
 
         RowPosition.Bottom -> {
-            shape = RoundedCornerShape(innerCornerRadius, innerCornerRadius, cornerRadius, cornerRadius)
+            shape =
+                RoundedCornerShape(innerCornerRadius, innerCornerRadius, cornerRadius, cornerRadius)
             height = 0.dp
         }
 
@@ -265,10 +276,10 @@ fun getDefaultShapeSpacerForPosition(
 
 @Composable
 fun AnimatableText(
-	first: String,
-	second: String,
-	state: Boolean,
-	modifier: Modifier,
+    first: String,
+    second: String,
+    state: Boolean,
+    modifier: Modifier,
 ) {
     AnimatedContent(
         targetState = state,
@@ -297,7 +308,7 @@ fun AnimatableText(
             )
         },
         modifier = modifier
-        	.wrapContentHeight()
+            .wrapContentHeight()
     ) { showFirst ->
         if (showFirst) {
             Text(
@@ -321,12 +332,12 @@ fun AnimatableText(
 
 @Composable
 fun DialogInfoText(
-	firstText: String,
-	secondText: String,
-	iconResId: Int,
-	color: Color = ExtendedMaterialTheme.colorScheme.expandableDialogBackground,
-	contentColor: Color = MaterialTheme.colorScheme.onSurface,
-	onClick: (() -> Unit)? = null
+    firstText: String,
+    secondText: String,
+    iconResId: Int,
+    color: Color = ExtendedMaterialTheme.colorScheme.expandableDialogBackground,
+    contentColor: Color = MaterialTheme.colorScheme.onSurface,
+    onClick: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
 
@@ -336,12 +347,12 @@ fun DialogInfoText(
             .background(color)
             .padding(10.dp, 4.dp)
             .clickable {
-		    	if (onClick == null) {
-		    		val clipboardManager =
-		    		    context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-		    		val clipData = ClipData.newPlainText(firstText, secondText)
-		    		clipboardManager.setPrimaryClip(clipData)
-		    	} else onClick()
+                if (onClick == null) {
+                    val clipboardManager =
+                        context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                    val clipData = ClipData.newPlainText(firstText, secondText)
+                    clipboardManager.setPrimaryClip(clipData)
+                } else onClick()
             },
         verticalAlignment = Alignment.CenterVertically
     ) {
