@@ -381,4 +381,7 @@
     <string name="immich_clear_endpoint_desc">Are you sure you want to remove this server address?</string>
     <string name="immich_logout">Logout?</string>
     <string name="immich_logout_desc">Are you sure you want to logout from this account?</string>
+    <string name="immich_albums_clear">Clear Backup Albums</string>
+    <string name="immich_albums_clear_desc">Stop backing up all albums</string>
+    <string name="immich_albums_clear_confirm">Are you sure you want to remove all albums from backup?</string>
 </resources>

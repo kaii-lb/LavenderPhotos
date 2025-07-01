@@ -86,7 +86,6 @@ import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.Immich
-import com.kaii.photos.datastore.User
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.MediaData
@@ -200,7 +199,8 @@ fun SingleAlbumDialog(
                             val volumeName =
                                 if (basePath == baseInternalStorageDirectory) "primary"
                                 else currentVolumes.find {
-                                    val possible = basePath.replace("/storage/", "").removeSuffix("/")
+                                    val possible =
+                                        basePath.replace("/storage/", "").removeSuffix("/")
                                     it == possible || it == possible.lowercase()
                                 }
 
@@ -389,6 +389,12 @@ fun SingleAlbumDialog(
                         firstText = stringResource(id = R.string.albums_item_count),
                         secondText = itemCount.toString(),
                         iconResId = R.drawable.data,
+                    )
+
+                    DialogInfoText(
+                        firstText = "Immich UUID", // TODO: translate
+                        secondText = album.immichId,
+                        iconResId = R.drawable.cloud_done,
                     )
                 }
             }
@@ -791,7 +797,7 @@ fun MainAppDialog(
                         return@LaunchedEffect
                     }
 
-                    mainViewModel.settings.User.setUsername(username)
+                    // mainViewModel.settings.User.setUsername(username)
                     originalName = username
                     changeName = false
                 }

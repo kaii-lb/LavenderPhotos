@@ -207,6 +207,33 @@ fun ImmichMainPage() {
                     )
                 }
             }
+
+            // item {
+            //     val backupAlbums by mainViewModel.settings.Immich.getServerAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
+            //
+            //     val showConfirmationDialog = remember { mutableStateOf(false) }
+            //     if (showConfirmationDialog.value) {
+            //         ConfirmationDialogWithBody(
+            //             showDialog = showConfirmationDialog,
+            //             dialogTitle = stringResource(id = R.string.immich_albums_clear),
+            //             dialogBody = stringResource(id = R.string.immich_albums_clear_confirm),
+            //             confirmButtonLabel = stringResource(id = R.string.media_confirm)
+            //         ) {
+            //             mainViewModel.settings.Immich.setBackupsAlbums(emptyList())
+            //         }
+            //     }
+            //
+            //     PreferencesRow(
+            //         title = stringResource(id = R.string.immich_albums_clear),
+            //         summary = stringResource(id = R.string.immich_albums_clear_desc),
+            //         iconResID = R.drawable.albums_clear,
+            //         position = RowPosition.Middle,
+            //         showBackground = false,
+            //         enabled = backupAlbums.isNotEmpty()
+            //     ) {
+            //         showConfirmationDialog.value = true
+            //     }
+            // }
         }
     }
 }

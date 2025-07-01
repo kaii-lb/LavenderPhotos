@@ -4,10 +4,14 @@ import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -25,7 +29,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -38,6 +44,7 @@ import androidx.compose.ui.util.fastDistinctBy
 import androidx.compose.ui.util.fastFilter
 import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kaii.lavender.immichintegration.serialization.Album
 import com.kaii.photos.MainActivity.Companion.applicationDatabase
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
@@ -50,6 +57,7 @@ import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.BottomBarTab
+import com.kaii.photos.datastore.Immich
 import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
@@ -79,6 +87,7 @@ private const val TAG = "GRID_VIEW_BARS"
 @Composable
 fun SingleAlbumViewTopBar(
     albumInfo: AlbumInfo?,
+    assetCount: Int,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     showDialog: MutableState<Boolean>,
     currentView: MutableState<BottomBarTab>,
@@ -166,6 +175,156 @@ fun SingleAlbumViewTopBar(
                             modifier = Modifier
                                 .size(24.dp)
                         )
+                    }
+
+                    val immichBackupEnabled by mainViewModel.settings.Immich.getImmichEnabled()
+                        .collectAsStateWithLifecycle(initialValue = false)
+                    val immichEndpoint by mainViewModel.settings.Immich.getEndpointBase()
+                        .collectAsStateWithLifecycle(initialValue = "")
+                    val immichToken by mainViewModel.settings.Immich.getBearerToken()
+                        .collectAsStateWithLifecycle(initialValue = "")
+                    val immichUploadedAlbums by mainViewModel.settings.Immich.getImmichUploadedAlbums()
+                        .collectAsStateWithLifecycle(initialValue = emptyList())
+
+                    var serverSideAlbums by remember { mutableStateOf(emptyList<Album>()) }
+                    var loadingBackupState by remember { mutableStateOf(false) }
+
+                    val coroutineScope = rememberCoroutineScope()
+
+                    LaunchedEffect(immichEndpoint, immichToken) {
+                        if (immichEndpoint != "" && immichToken != "") {
+                            loadingBackupState = true
+                            for (i in 0..4) {
+                                val new =
+                                    mainViewModel.settings.Immich.manualGetAlbums(
+                                        endpointBase = immichEndpoint,
+                                        bearerToken = immichToken
+                                    )
+
+                                Log.d(TAG, "Refreshing from server for ${i}th time")
+
+                                if (serverSideAlbums != new) {
+                                    serverSideAlbums = new
+                                    break
+                                }
+                            }
+                            loadingBackupState = false
+                        }
+                    }
+
+                    val isInBackup by remember {
+                        derivedStateOf {
+                            val immichId = immichUploadedAlbums.find { it.albumId == albumInfo?.id }?.immichId
+                            serverSideAlbums.any { it.id == immichId }
+                        }
+                    }
+                    val isBackedUp by remember {
+                        derivedStateOf {
+                            serverSideAlbums.find {
+                                val immichId = immichUploadedAlbums.find { it.albumId == albumInfo?.id }?.immichId
+                                it.id == immichId
+                            }?.assets?.size?.let { it >= assetCount } == true
+                        }
+                    }
+
+                    if (immichBackupEnabled && albumInfo != null) {
+                        val showDeleteConfirmationDialog = remember { mutableStateOf(false) }
+
+                        if (showDeleteConfirmationDialog.value) {
+                            ConfirmationDialogWithBody(
+                                showDialog = showDeleteConfirmationDialog,
+                                dialogTitle = "Are you sure?", // TODO: resource
+                                dialogBody = "Mark are you sure?", // TODO: resource
+                                confirmButtonLabel = "Omniman it"
+                            ) {
+                                loadingBackupState = true
+                                mainViewModel.settings.Immich.removeBackupAlbum(album = albumInfo)
+                                    .invokeOnCompletion {
+                                        mainViewModel.settings.Immich.removeImmichUploadedAlbum(albumInfo.id)
+
+                                        coroutineScope.launch {
+                                            for (i in 0..4) {
+                                                val new =
+                                                    mainViewModel.settings.Immich.manualGetAlbums(
+                                                        endpointBase = immichEndpoint,
+                                                        bearerToken = immichToken
+                                                    )
+
+                                                Log.d(TAG, "Refreshing from server for ${i}th time")
+
+                                                if (serverSideAlbums != new) {
+                                                    serverSideAlbums = new
+                                                    break
+                                                }
+                                            }
+                                            loadingBackupState = false
+                                        }
+                                    }
+                            }
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .wrapContentSize()
+                        ) {
+                            IconButton(
+                                onClick = {
+                                    if (isInBackup) {
+                                        showDeleteConfirmationDialog.value = true
+                                    } else {
+                                        loadingBackupState = true
+
+                                        mainViewModel.settings.Immich.addBackupAlbum(albumInfo = albumInfo)
+                                            .invokeOnCompletion {
+                                                coroutineScope.launch {
+                                                    for (i in 0..4) {
+                                                        val new =
+                                                            mainViewModel.settings.Immich.manualGetAlbums(
+                                                                endpointBase = immichEndpoint,
+                                                                bearerToken = immichToken
+                                                            )
+
+                                                        Log.d(TAG, "Refreshing from server for ${i}th time")
+
+                                                        if (serverSideAlbums != new) {
+                                                            serverSideAlbums = new
+                                                            Log.d(TAG, "New serverSideAlbums ${serverSideAlbums.map { it.albumName }}")
+                                                            break
+                                                        }
+                                                    }
+                                                    loadingBackupState = false
+                                                }
+                                            }
+                                    }
+                                },
+                                enabled = !loadingBackupState
+                            ) {
+                                Icon(
+                                    painter =
+                                        if (isBackedUp) painterResource(id = R.drawable.cloud_done)
+                                        else if (isInBackup) painterResource(id = R.drawable.cloud_upload)
+                                        else painterResource(id = R.drawable.cloud_off),
+                                    contentDescription = "show more options for the album view",
+                                    tint = if (!loadingBackupState) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(
+                                        alpha = 0.5f
+                                    ),
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                )
+                            }
+
+                            if (loadingBackupState) {
+                                CircularProgressIndicator(
+                                    color = MaterialTheme.colorScheme.primary,
+                                    strokeWidth = 2.dp,
+                                    strokeCap = StrokeCap.Round,
+                                    modifier = Modifier
+                                        .size(12.dp)
+                                        .align(Alignment.BottomEnd)
+                                        .offset(x = (-8).dp, y = (-10).dp)
+                                )
+                            }
+                        }
                     }
 
                     IconButton(
@@ -335,11 +494,14 @@ fun SingleAlbumViewBottomBar(
 
                         mainViewModel.launch(Dispatchers.IO) {
                             selectedItemsWithoutSection.forEach { item ->
-                                Log.d(TAG, "Removed this many rows: " + context.contentResolver.delete(
-                                    LavenderContentProvider.CONTENT_URI,
-                                    "${LavenderMediaColumns.ID} = ? AND ${LavenderMediaColumns.PARENT_ID} = ?",
-                                    arrayOf(item.customId.toString(), albumInfo.id.toString())
-                                ))
+                                Log.d(
+                                    TAG,
+                                    "Removed this many rows: " + context.contentResolver.delete(
+                                        LavenderContentProvider.CONTENT_URI,
+                                        "${LavenderMediaColumns.ID} = ? AND ${LavenderMediaColumns.PARENT_ID} = ?",
+                                        arrayOf(item.customId.toString(), albumInfo.id.toString())
+                                    )
+                                )
                             }
                             selectedItemsList.clear()
                         }
@@ -745,7 +907,8 @@ fun SecureFolderViewBottomAppBar(
                     dialogTitle = stringResource(id = R.string.media_restore_confirm),
                     confirmButtonLabel = stringResource(id = R.string.media_restore)
                 ) {
-                    loadingDialogTitle = context.resources.getString(R.string.media_restore_processing)
+                    loadingDialogTitle =
+                        context.resources.getString(R.string.media_restore_processing)
                     showLoadingDialog = true
 
                     isGettingPermissions.value = true

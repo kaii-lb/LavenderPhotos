@@ -167,6 +167,7 @@ data class BottomBarTab(
     }
 }
 
+@Serializable
 data class SQLiteQuery(
     val query: String,
     val paths: List<String>?,
@@ -179,7 +180,8 @@ data class AlbumInfo(
     val name: String,
     val paths: List<String>,
     val isCustomAlbum: Boolean = false,
-    val isPinned: Boolean = false
+    val isPinned: Boolean = false,
+    val immichId: String = ""
 ) {
     companion object {
         fun createPathOnlyAlbum(paths: List<String>) =
@@ -234,5 +236,11 @@ object AlbumInfoNavType : NavType<AlbumInfo>(
         return Uri.encode(Json.encodeToString(value))
     }
 }
+
+@Serializable
+data class ImmichBackupAlbum(
+    val albumId: Int,
+    val immichId: String
+)
 
 

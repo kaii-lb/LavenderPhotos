@@ -102,13 +102,14 @@ dependencies {
     implementation("com.github.kaii-lb:Lavender-Snackbars:0.1.7")
     implementation(libs.androidx.profileinstaller)
     "baselineProfile"(project(":baselineprofile"))
+    implementation("androidx.work:work-runtime-ktx:2.10.2")
 
     val roomVersion = "2.7.2"
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
     annotationProcessor("androidx.room:room-compiler:$roomVersion")
 
-    implementation("com.github.kaii-lb.LavenderImmichIntegration:library:v1.0.2")
+    implementation("com.github.kaii-lb.LavenderImmichIntegration:library:v1.0.3")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
