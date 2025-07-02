@@ -4,7 +4,7 @@
     <string name="finding_albums_on_device">Пошук альбомів…</string>
     <string name="add_album">Додати альбом</string>
     <string name="albums_path">Шлях</string>
-    <string name="albums_item_count">Кількість Елементів</string>
+    <string name="albums_item_count">Кількість елементів</string>
     <string name="albums_move_to">Перемістити до альбому</string>
     <string name="albums_copy_to">Скопіювати до альбому</string>
     <string name="albums_move_to_secure">Перемістити до захищеної теки</string>
@@ -14,4 +14,14 @@
     <string name="albums_add_failed">Не вдалося додати альбоми :&lt;</string>
     <string name="tabs">Вкладки</string>
     <string name="tab_non_existent">Ця вкладка не існує!</string>
+    <string name="app_name">Фото</string>
+    <string name="tabs_default">Вкладка за замовчуванням</string>
+    <string name="tabs_default_desc">Lavender Photos автоматично відкриватиме цю вкладку після запуску застосунку</string>
+    <string name="tabs_add">Додати вкладку</string>
+    <string name="tabs_name">Назва вкладки</string>
+    <string name="tabs_confirm">Додати вкладку</string>
+    <string name="tabs_max_reached">Не можна додати більше ніж 5 вкладок</string>
+    <string name="edit">Редагувати</string>
+    <string name="trash">Кошик</string>
+    <string name="trash_bin">Кошик</string>
 </resources>
