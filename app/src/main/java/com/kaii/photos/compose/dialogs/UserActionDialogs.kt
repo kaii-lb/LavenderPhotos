@@ -259,7 +259,7 @@ fun TextEntryDialog(
             value = text,
             onValueChange = {
                 text = it
-                showError = onValueChange(it)
+                showError = !onValueChange(it)
             },
             maxLines = 1,
             singleLine = true,
