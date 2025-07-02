@@ -1,3 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="albums">Альбоми</string>
+    <string name="finding_albums_on_device">Пошук альбомів…</string>
+    <string name="add_album">Додати альбом</string>
+    <string name="albums_path">Шлях</string>
+    <string name="albums_item_count">Кількість Елементів</string>
+    <string name="albums_move_to">Перемістити до альбому</string>
+    <string name="albums_copy_to">Скопіювати до альбому</string>
+    <string name="albums_move_to_secure">Перемістити до захищеної теки</string>
+    <string name="albums_name">Назва альбому</string>
+    <string name="albums_type">Тип альбому</string>
+    <string name="albums_folder">Тека альбому</string>
+    <string name="albums_add_failed">Не вдалося додати альбоми :&lt;</string>
+    <string name="tabs">Вкладки</string>
+    <string name="tab_non_existent">Ця вкладка не існує!</string>
 </resources>
