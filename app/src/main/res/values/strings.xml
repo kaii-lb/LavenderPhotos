@@ -384,4 +384,10 @@
     <string name="immich_albums_clear">Clear Backup Albums</string>
     <string name="immich_albums_clear_desc">Stop backing up all albums</string>
     <string name="immich_albums_clear_confirm">Are you sure you want to remove all albums from backup?</string>
+    <string name="immich_delete_album">Delete this album?</string>
+    <string name="immich_delete_album_desc">This cannot be undone!</string>
+    <string name="immich_delete_album_contents">Include media in deletion</string>
+    <string name="immich_album_syncing">Syncing album</string>
+    <string name="immich_album_synced">All images synced</string>
+    <string name="immich_done">done</string>
 </resources>

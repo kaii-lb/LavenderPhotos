@@ -24,6 +24,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -45,6 +46,8 @@ import androidx.compose.ui.util.fastFilter
 import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.lavender.immichintegration.serialization.Album
+import com.kaii.lavender.snackbars.LavenderSnackbarController
+import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.MainActivity.Companion.applicationDatabase
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
@@ -77,6 +80,7 @@ import com.kaii.photos.mediastore.getIv
 import com.kaii.photos.mediastore.getOriginalPath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -231,11 +235,12 @@ fun SingleAlbumViewTopBar(
                         val showDeleteConfirmationDialog = remember { mutableStateOf(false) }
 
                         if (showDeleteConfirmationDialog.value) {
+                            // TODO: add option to delete with all images in it
                             ConfirmationDialogWithBody(
                                 showDialog = showDeleteConfirmationDialog,
-                                dialogTitle = "Are you sure?", // TODO: resource
-                                dialogBody = "Mark are you sure?", // TODO: resource
-                                confirmButtonLabel = "Omniman it"
+                                dialogTitle = stringResource(id = R.string.immich_albums_clear),
+                                dialogBody = stringResource(id = R.string.immich_albums_clear_desc),
+                                confirmButtonLabel = stringResource(id = R.string.media_delete)
                             ) {
                                 loadingBackupState = true
                                 mainViewModel.settings.Immich.removeBackupAlbum(album = albumInfo)
@@ -243,7 +248,7 @@ fun SingleAlbumViewTopBar(
                                         mainViewModel.settings.Immich.removeImmichUploadedAlbum(albumInfo.id)
 
                                         coroutineScope.launch {
-                                            for (i in 0..4) {
+                                            for (i in 0..9) {
                                                 val new =
                                                     mainViewModel.settings.Immich.manualGetAlbums(
                                                         endpointBase = immichEndpoint,
@@ -256,6 +261,8 @@ fun SingleAlbumViewTopBar(
                                                     serverSideAlbums = new
                                                     break
                                                 }
+
+                                                delay(500)
                                             }
                                             loadingBackupState = false
                                         }
@@ -267,6 +274,24 @@ fun SingleAlbumViewTopBar(
                             modifier = Modifier
                                 .wrapContentSize()
                         ) {
+                            val immichUploadedCount by mainViewModel.immichUploadedMediaCount.collectAsStateWithLifecycle()
+                            val immichTotalCount by mainViewModel.immichUploadedMediaTotal.collectAsStateWithLifecycle()
+
+                            val body = remember { mutableStateOf("")}
+                            val percentage = remember { mutableFloatStateOf(0f) }
+                            val context = LocalContext.current
+
+                            LaunchedEffect(immichUploadedCount, immichTotalCount) {
+                                percentage.floatValue = immichUploadedCount.toFloat()/immichTotalCount
+
+                                body.value =
+                                    if (percentage.floatValue < 1f) {
+                                        "${immichUploadedCount}/${immichTotalCount} ${context.resources.getString(R.string.immich_done)}"
+                                    } else {
+                                        context.resources.getString(R.string.immich_album_synced)
+                                    }
+                            }
+
                             IconButton(
                                 onClick = {
                                     if (isInBackup) {
@@ -277,7 +302,16 @@ fun SingleAlbumViewTopBar(
                                         mainViewModel.settings.Immich.addBackupAlbum(albumInfo = albumInfo)
                                             .invokeOnCompletion {
                                                 coroutineScope.launch {
-                                                    for (i in 0..4) {
+                                                    LavenderSnackbarController.pushEvent(
+                                                        LavenderSnackbarEvents.ProgressEvent(
+                                                            message = context.resources.getString(R.string.immich_album_syncing),
+                                                            body = body,
+                                                            icon = R.drawable.cloud_upload,
+                                                            percentage = percentage
+                                                        )
+                                                    )
+
+                                                    for (i in 0..9) {
                                                         val new =
                                                             mainViewModel.settings.Immich.manualGetAlbums(
                                                                 endpointBase = immichEndpoint,
@@ -291,6 +325,8 @@ fun SingleAlbumViewTopBar(
                                                             Log.d(TAG, "New serverSideAlbums ${serverSideAlbums.map { it.albumName }}")
                                                             break
                                                         }
+
+                                                        delay(500)
                                                     }
                                                     loadingBackupState = false
                                                 }

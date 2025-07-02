@@ -6,7 +6,6 @@ import android.os.CancellationSignal
 import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import androidx.work.workDataOf
 import com.kaii.lavender.immichintegration.AlbumManager
 import com.kaii.lavender.immichintegration.ApiClient
 import com.kaii.lavender.immichintegration.AssetManager
@@ -14,6 +13,7 @@ import com.kaii.lavender.immichintegration.serialization.AlbumOrder
 import com.kaii.lavender.immichintegration.serialization.File
 import com.kaii.lavender.immichintegration.serialization.ModifyAlbumAsset
 import com.kaii.lavender.immichintegration.serialization.UpdateAlbumInfo
+import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.datastore.SQLiteQuery
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.mediastore.MultiAlbumDataSource
@@ -32,8 +32,6 @@ class UploadWorker(
         const val BEARER_TOKEN = "bearer_token"
         const val MEDIASTORE_QUERY = "mediastore_query"
         const val ALBUM_ID = "album_id"
-        const val UPLOADED_COUNT = "uploaded_count"
-        const val TOTAL_COUNT = "total_count"
     }
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
@@ -42,9 +40,11 @@ class UploadWorker(
                 workerParams.inputData.getString(MEDIASTORE_QUERY)
                     ?: return@withContext Result.failure()
             val endpointBase =
-                workerParams.inputData.getString(ENDPOINT_BASE) ?: return@withContext Result.failure()
+                workerParams.inputData.getString(ENDPOINT_BASE)
+                    ?: return@withContext Result.failure()
             val bearerToken =
-                workerParams.inputData.getString(BEARER_TOKEN) ?: return@withContext Result.failure()
+                workerParams.inputData.getString(BEARER_TOKEN)
+                    ?: return@withContext Result.failure()
             val albumId =
                 workerParams.inputData.getString(ALBUM_ID) ?: return@withContext Result.failure()
 
@@ -90,9 +90,17 @@ class UploadWorker(
                 else null
             }
 
-            var uploadedCount = 0
             var existingCount = 0
             val successList = mutableListOf<Pair<String, Long>>()
+
+            try {
+                val currentUploaded = mainViewModel.getImmichUploadedMediaTotal()
+                mainViewModel.setImmichUploadedMediaTotal(currentUploaded + shouldBackup.size)
+            } catch (e: Throwable) {
+                Log.e(TAG, "Couldn't update UI, mainViewModel inaccessible")
+                Log.e(TAG, e.toString())
+                e.printStackTrace()
+            }
 
             shouldBackup.forEach { item ->
                 // TODO: handle video duration
@@ -103,11 +111,28 @@ class UploadWorker(
                         file = item,
                         deviceId = Build.MODEL
                     )?.let {
-                        uploadedCount += 1
                         successList.add(Pair(it.id, item.lastModified))
+
+                        try {
+                            val currentUploaded = mainViewModel.getImmichUploadedMediaCount()
+                            mainViewModel.setImmichUploadedMediaCount(currentUploaded + 1)
+                        } catch (e: Throwable) {
+                            Log.e(TAG, "Couldn't update UI, mainViewModel inaccessible")
+                            Log.e(TAG, e.toString())
+                            e.printStackTrace()
+                        }
                     }
                 } else {
                     existingCount += 1
+
+                    try {
+                        val currentTotal = mainViewModel.getImmichUploadedMediaTotal()
+                        mainViewModel.setImmichUploadedMediaTotal(currentTotal - 1)
+                    } catch (e: Throwable) {
+                        Log.e(TAG, "Couldn't update UI, mainViewModel inaccessible")
+                        Log.e(TAG, e.toString())
+                        e.printStackTrace()
+                    }
                 }
             }
 
@@ -131,12 +156,16 @@ class UploadWorker(
                 )
             }
 
-            return@withContext Result.success(
-                workDataOf(
-                    UPLOADED_COUNT to uploadedCount,
-                    TOTAL_COUNT to shouldBackup.size
-                )
-            )
+            try {
+                val currentUploaded = mainViewModel.getImmichUploadedMediaTotal()
+                mainViewModel.setImmichUploadedMediaTotal(currentUploaded - (shouldBackup.size - existingCount))
+            } catch (e: Throwable) {
+                Log.e(TAG, "Couldn't update UI, mainViewModel inaccessible")
+                Log.e(TAG, e.toString())
+                e.printStackTrace()
+            }
+
+            return@withContext Result.success()
         } catch (e: Throwable) {
             Log.e(TAG, e.toString())
             e.printStackTrace()
