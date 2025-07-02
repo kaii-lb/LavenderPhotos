@@ -44,8 +44,8 @@ import androidx.core.content.FileProvider
 import androidx.core.graphics.createBitmap
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
-import com.kaii.lavender_snackbars.LavenderSnackbarController
-import com.kaii.lavender_snackbars.LavenderSnackbarEvents
+import com.kaii.lavender.snackbars.LavenderSnackbarController
+import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.MainActivity.Companion.applicationDatabase
 import com.kaii.photos.R
 import com.kaii.photos.database.entities.SecuredItemEntity
@@ -266,7 +266,8 @@ suspend fun moveImageOutOfLockedFolder(
             try {
                 fileToBeRestored.delete()
                 tempFile.delete()
-                applicationDatabase.securedItemEntityDao().deleteEntityBySecuredPath(media.absolutePath)
+                applicationDatabase.securedItemEntityDao()
+                    .deleteEntityBySecuredPath(media.absolutePath)
 
                 val thumbnailFile =
                     getSecuredCacheImageForFile(file = fileToBeRestored, context = context)
@@ -611,7 +612,7 @@ suspend fun saveToFile(
             LavenderSnackbarController.pushEvent(
                 LavenderSnackbarEvents.MessageEvent(
                     message = context.resources.getString(R.string.editing_done),
-                    iconResId = R.drawable.file_is_selected_foreground,
+                    icon = R.drawable.file_is_selected_foreground,
                     duration = SnackbarDuration.Short
                 )
             )
@@ -619,7 +620,7 @@ suspend fun saveToFile(
             LavenderSnackbarController.pushEvent(
                 LavenderSnackbarEvents.MessageEvent(
                     message = context.resources.getString(R.string.editing_failed),
-                    iconResId = R.drawable.error_2,
+                    icon = R.drawable.error_2,
                     duration = SnackbarDuration.Long
                 )
             )
@@ -638,7 +639,7 @@ suspend fun saveToFile(
             LavenderSnackbarController.pushEvent(
                 LavenderSnackbarEvents.MessageEvent(
                     message = context.resources.getString(R.string.editing_done),
-                    iconResId = R.drawable.file_is_selected_foreground,
+                    icon = R.drawable.file_is_selected_foreground,
                     duration = SnackbarDuration.Short
                 )
             )
@@ -646,7 +647,7 @@ suspend fun saveToFile(
             LavenderSnackbarController.pushEvent(
                 LavenderSnackbarEvents.MessageEvent(
                     message = context.resources.getString(R.string.editing_failed),
-                    iconResId = R.drawable.error_2,
+                    icon = R.drawable.error_2,
                     duration = SnackbarDuration.Long
                 )
             )

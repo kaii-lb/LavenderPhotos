@@ -154,8 +154,8 @@ import androidx.compose.ui.zIndex
 import androidx.core.graphics.applyCanvas
 import androidx.core.graphics.createBitmap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.kaii.lavender_snackbars.LavenderSnackbarController
-import com.kaii.lavender_snackbars.LavenderSnackbarEvents
+import com.kaii.lavender.snackbars.LavenderSnackbarController
+import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
@@ -822,7 +822,7 @@ fun EditingView(
                                         LavenderSnackbarController.pushEvent(
                                             LavenderSnackbarEvents.MessageEvent(
                                                 message = "Can't crop anymore D:",
-                                                iconResId = R.drawable.error_2,
+                                                icon = R.drawable.error_2,
                                                 duration = SnackbarDuration.Short
                                             )
                                         )

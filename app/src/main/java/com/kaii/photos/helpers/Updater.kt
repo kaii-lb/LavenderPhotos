@@ -4,26 +4,26 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import androidx.compose.material3.SnackbarDuration
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.core.content.FileProvider
 import androidx.navigation.NavHostController
-import com.kaii.photos.BuildConfig
-import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
-import kotlinx.coroutines.async
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.Dispatchers
 import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.fuel.json.responseJson
-import com.kaii.lavender_snackbars.LavenderSnackbarController
-import com.kaii.lavender_snackbars.LavenderSnackbarEvents
+import com.kaii.lavender.snackbars.LavenderSnackbarController
+import com.kaii.lavender.snackbars.LavenderSnackbarEvents
+import com.kaii.photos.BuildConfig
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
-import java.io.File
+import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import org.json.JSONObject
+import java.io.File
 
 private const val TAG = "UPDATER"
 
@@ -198,9 +198,9 @@ fun startupUpdateCheck(
                     LavenderSnackbarController.pushEvent(
                         LavenderSnackbarEvents.ActionEvent(
                             message = text,
-                            iconResId = R.drawable.error_2,
+                            icon = R.drawable.error_2,
                             duration = SnackbarDuration.Short,
-                            actionIconResId = R.drawable.download,
+                            actionIcon = R.drawable.download,
                             action = {
                                 navController.navigate(MultiScreenViewType.UpdatesPage.name)
                             }

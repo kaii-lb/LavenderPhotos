@@ -73,8 +73,8 @@ import androidx.navigation.NavHostController
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.load.engine.DiskCacheStrategy
-import com.kaii.lavender_snackbars.LavenderSnackbarController
-import com.kaii.lavender_snackbars.LavenderSnackbarEvents
+import com.kaii.lavender.snackbars.LavenderSnackbarController
+import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
@@ -199,7 +199,8 @@ fun SingleAlbumDialog(
                             val volumeName =
                                 if (basePath == baseInternalStorageDirectory) "primary"
                                 else currentVolumes.find {
-                                    val possible = basePath.replace("/storage/", "").removeSuffix("/")
+                                    val possible =
+                                        basePath.replace("/storage/", "").removeSuffix("/")
                                     it == possible || it == possible.lowercase()
                                 }
 
@@ -330,7 +331,9 @@ fun SingleAlbumDialog(
 
             var isPinned by remember { mutableStateOf(album.isPinned) }
             DialogClickableItem(
-                text = if (isPinned) stringResource(id = R.string.albums_unpin) else stringResource(id = R.string.albums_pin),
+                text = if (isPinned) stringResource(id = R.string.albums_unpin) else stringResource(
+                    id = R.string.albums_pin
+                ),
                 iconResId = R.drawable.pin,
                 position = RowPosition.Middle,
                 modifier = Modifier
@@ -618,7 +621,7 @@ fun SinglePhotoInfoDialog(
                                                 LavenderSnackbarController.pushEvent(
                                                     LavenderSnackbarEvents.MessageEvent(
                                                         message = context.resources.getString(R.string.media_exif_done),
-                                                        iconResId = R.drawable.file_is_selected_foreground,
+                                                        icon = R.drawable.file_is_selected_foreground,
                                                         duration = SnackbarDuration.Short
                                                     )
                                                 )
@@ -626,7 +629,7 @@ fun SinglePhotoInfoDialog(
                                                 LavenderSnackbarController.pushEvent(
                                                     LavenderSnackbarEvents.MessageEvent(
                                                         message = context.resources.getString(R.string.media_exif_failed),
-                                                        iconResId = R.drawable.error_2,
+                                                        icon = R.drawable.error_2,
                                                         duration = SnackbarDuration.Long
                                                     )
                                                 )
