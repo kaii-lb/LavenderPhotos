@@ -44,8 +44,8 @@ import androidx.core.content.FileProvider
 import androidx.core.graphics.createBitmap
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
-import com.kaii.lavender_snackbars.LavenderSnackbarController
-import com.kaii.lavender_snackbars.LavenderSnackbarEvents
+import com.kaii.lavender.snackbars.LavenderSnackbarController
+import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.MainActivity.Companion.applicationDatabase
 import com.kaii.photos.R
 import com.kaii.photos.database.entities.SecuredItemEntity
@@ -611,7 +611,7 @@ suspend fun saveToFile(
             LavenderSnackbarController.pushEvent(
                 LavenderSnackbarEvents.MessageEvent(
                     message = context.resources.getString(R.string.editing_done),
-                    iconResId = R.drawable.checkmark_thin,
+                    icon = R.drawable.checkmark_thin,
                     duration = SnackbarDuration.Short
                 )
             )
@@ -619,7 +619,7 @@ suspend fun saveToFile(
             LavenderSnackbarController.pushEvent(
                 LavenderSnackbarEvents.MessageEvent(
                     message = context.resources.getString(R.string.editing_failed),
-                    iconResId = R.drawable.error_2,
+                    icon = R.drawable.error_2,
                     duration = SnackbarDuration.Long
                 )
             )
@@ -638,7 +638,7 @@ suspend fun saveToFile(
             LavenderSnackbarController.pushEvent(
                 LavenderSnackbarEvents.MessageEvent(
                     message = context.resources.getString(R.string.editing_done),
-                    iconResId = R.drawable.checkmark_thin,
+                    icon = R.drawable.checkmark_thin,
                     duration = SnackbarDuration.Short
                 )
             )
@@ -646,7 +646,7 @@ suspend fun saveToFile(
             LavenderSnackbarController.pushEvent(
                 LavenderSnackbarEvents.MessageEvent(
                     message = context.resources.getString(R.string.editing_failed),
-                    iconResId = R.drawable.error_2,
+                    icon = R.drawable.error_2,
                     duration = SnackbarDuration.Long
                 )
             )

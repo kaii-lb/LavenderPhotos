@@ -32,8 +32,8 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.kaii.lavender_snackbars.LavenderSnackbarController
-import com.kaii.lavender_snackbars.LavenderSnackbarEvents
+import com.kaii.lavender.snackbars.LavenderSnackbarController
+import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
@@ -254,7 +254,7 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
                                 LavenderSnackbarController.pushEvent(
                                     LavenderSnackbarEvents.LoadingEvent(
                                         message = if (isAlreadyLoading.value) findingAlbums else foundAlbums,
-                                        iconResId = R.drawable.albums_search,
+                                        icon = R.drawable.albums_search,
                                         isLoading = isAlreadyLoading
                                     )
                                 )
@@ -294,7 +294,7 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
                             LavenderSnackbarEvents.MessageEvent(
                                 message = clearDone,
                                 duration = SnackbarDuration.Short,
-                                iconResId = R.drawable.albums
+                                icon = R.drawable.albums
                             )
                         )
                     }

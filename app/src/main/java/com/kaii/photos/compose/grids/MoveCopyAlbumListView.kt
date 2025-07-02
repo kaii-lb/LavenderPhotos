@@ -64,8 +64,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
-import com.kaii.lavender_snackbars.LavenderSnackbarController
-import com.kaii.lavender_snackbars.LavenderSnackbarEvents
+import com.kaii.lavender.snackbars.LavenderSnackbarController
+import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.ClearableTextField
@@ -381,7 +381,7 @@ fun AlbumsListItem(
                             LavenderSnackbarController.pushEvent(
                                 LavenderSnackbarEvents.MessageEvent(
                                     message = context.resources.getString(R.string.albums_already_contains_all),
-                                    iconResId = R.drawable.error_2,
+                                    icon = R.drawable.error_2,
                                     duration = SnackbarDuration.Short
                                 )
                             )

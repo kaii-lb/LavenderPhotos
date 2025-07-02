@@ -73,8 +73,8 @@ import androidx.navigation.NavHostController
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.load.engine.DiskCacheStrategy
-import com.kaii.lavender_snackbars.LavenderSnackbarController
-import com.kaii.lavender_snackbars.LavenderSnackbarEvents
+import com.kaii.lavender.snackbars.LavenderSnackbarController
+import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
@@ -627,7 +627,7 @@ fun SinglePhotoInfoDialog(
                                                 LavenderSnackbarController.pushEvent(
                                                     LavenderSnackbarEvents.MessageEvent(
                                                         message = context.resources.getString(R.string.media_exif_done),
-                                                        iconResId = R.drawable.checkmark_thin,
+                                                        icon = R.drawable.checkmark_thin,
                                                         duration = SnackbarDuration.Short
                                                     )
                                                 )
@@ -635,7 +635,7 @@ fun SinglePhotoInfoDialog(
                                                 LavenderSnackbarController.pushEvent(
                                                     LavenderSnackbarEvents.MessageEvent(
                                                         message = context.resources.getString(R.string.media_exif_failed),
-                                                        iconResId = R.drawable.error_2,
+                                                        icon = R.drawable.error_2,
                                                         duration = SnackbarDuration.Long
                                                     )
                                                 )

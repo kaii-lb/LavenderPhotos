@@ -25,8 +25,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.core.net.toUri
-import com.kaii.lavender_snackbars.LavenderSnackbarController
-import com.kaii.lavender_snackbars.LavenderSnackbarEvents
+import com.kaii.lavender.snackbars.LavenderSnackbarController
+import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
 import com.kaii.photos.mediastore.getExternalStorageContentUriFromAbsolutePath
@@ -261,7 +261,7 @@ fun createDirectoryPicker(
                 LavenderSnackbarController.pushEvent(
                     LavenderSnackbarEvents.MessageEvent(
                         message = context.resources.getString(R.string.albums_add_failed),
-                        iconResId = R.drawable.error_2,
+                        icon = R.drawable.error_2,
                         duration = SnackbarDuration.Short
                     )
                 )

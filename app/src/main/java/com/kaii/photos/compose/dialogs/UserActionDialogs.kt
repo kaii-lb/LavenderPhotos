@@ -66,8 +66,8 @@ import com.kaii.lavender.immichintegration.ApiClient
 import com.kaii.lavender.immichintegration.User
 import com.kaii.lavender.immichintegration.serialization.LoginCredentials
 import com.kaii.lavender.immichintegration.serialization.UserAvatarColors
-import com.kaii.lavender_snackbars.LavenderSnackbarController
-import com.kaii.lavender_snackbars.LavenderSnackbarEvents
+import com.kaii.lavender.snackbars.LavenderSnackbarController
+import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.CheckBoxButtonRow
@@ -288,7 +288,7 @@ fun TextEntryDialog(
                                         LavenderSnackbarController.pushEvent(
                                             LavenderSnackbarEvents.MessageEvent(
                                                 message = context.resources.getString(R.string.paths_should_be_relative),
-                                                iconResId = R.drawable.error_2,
+                                                icon = R.drawable.error_2,
                                                 duration = SnackbarDuration.Short
                                             )
                                         )
@@ -866,7 +866,7 @@ fun ImmichLoginDialog(
                 LavenderSnackbarController.pushEvent(
                     LavenderSnackbarEvents.LoadingEvent(
                         message = eventTitle.value,
-                        iconResId = R.drawable.account_circle,
+                        icon = R.drawable.account_circle,
                         isLoading = isLoading
                     )
                 )
@@ -908,7 +908,7 @@ fun ImmichLoginDialog(
                         LavenderSnackbarEvents.MessageEvent(
                             message = context.resources.getString(R.string.immich_login_failed),
                             duration = SnackbarDuration.Short,
-                            iconResId = R.drawable.error_2
+                            icon = R.drawable.error_2
                         )
                     )
                 }

@@ -39,16 +39,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import com.kaii.lavender_snackbars.LavenderSnackbarController
-import com.kaii.lavender_snackbars.LavenderSnackbarEvents
+import com.kaii.lavender.snackbars.LavenderSnackbarController
+import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.applicationDatabase
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
-import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.dialogs.ExplanationDialog
-import com.kaii.photos.datastore.AlbumsList
+import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.helpers.AppDirectories
@@ -73,6 +73,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.file.Files
 import kotlin.io.path.Path
+import kotlin.uuid.ExperimentalUuidApi
 
 private const val TAG = "LOCKED_FOLDER_ENTRY_VIEW"
 
@@ -152,9 +153,10 @@ fun LockedFolderEntryView(
                     showExplanationForMigration.value = true
                 } else {
                     LavenderSnackbarController.pushEvent(
+                        @OptIn(ExperimentalUuidApi::class)
                         LavenderSnackbarEvents.MessageEvent(
                             message = "Failed exporting backup!",
-                            iconResId = R.drawable.error_2,
+                            icon = R.drawable.error_2,
                             duration = SnackbarDuration.Long
                         )
                     )
@@ -265,9 +267,10 @@ fun LockedFolderEntryView(
         onRejected = {
             coroutineScope.launch {
                 LavenderSnackbarController.pushEvent(
+                    @OptIn(ExperimentalUuidApi::class)
                     LavenderSnackbarEvents.MessageEvent(
                         message = "Can't encrypt photos without permission",
-                        iconResId = R.drawable.error_2,
+                        icon = R.drawable.error_2,
                         duration = SnackbarDuration.Long
                     )
                 )

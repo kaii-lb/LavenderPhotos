@@ -66,8 +66,8 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.kaii.lavender_snackbars.LavenderSnackbarController
-import com.kaii.lavender_snackbars.LavenderSnackbarEvents
+import com.kaii.lavender.snackbars.LavenderSnackbarController
+import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.ConfirmCancelRow
@@ -442,7 +442,7 @@ fun AddTabDialog(
                         LavenderSnackbarController.pushEvent(
                             LavenderSnackbarEvents.MessageEvent(
                                 message = context.resources.getString(R.string.tabs_empty_params),
-                                iconResId = R.drawable.error_2,
+                                icon = R.drawable.error_2,
                                 duration = SnackbarDuration.Short
                             )
                         )
@@ -453,7 +453,7 @@ fun AddTabDialog(
                     LavenderSnackbarController.pushEvent(
                         LavenderSnackbarEvents.MessageEvent(
                             message = context.resources.getString(R.string.tabs_max_reached),
-                            iconResId = R.drawable.error_2,
+                            icon = R.drawable.error_2,
                             duration = SnackbarDuration.Short
                         )
                     )
@@ -650,7 +650,7 @@ fun TabCustomizationDialog(
                                     LavenderSnackbarController.pushEvent(
                                         LavenderSnackbarEvents.MessageEvent(
                                             message = context.resources.getString(R.string.tabs_min_reached),
-                                            iconResId = R.drawable.error_2,
+                                            icon = R.drawable.error_2,
                                             duration = SnackbarDuration.Short
                                         )
                                     )
@@ -664,7 +664,7 @@ fun TabCustomizationDialog(
                                     LavenderSnackbarController.pushEvent(
                                         LavenderSnackbarEvents.MessageEvent(
                                             message = context.resources.getString(R.string.tabs_max_reached),
-                                            iconResId = R.drawable.error_2,
+                                            icon = R.drawable.error_2,
                                             duration = SnackbarDuration.Short
                                         )
                                     )
@@ -694,7 +694,7 @@ fun TabCustomizationDialog(
                                 LavenderSnackbarController.pushEvent(
                                     LavenderSnackbarEvents.MessageEvent(
                                         message = context.resources.getString(R.string.tabs_min_reached),
-                                        iconResId = R.drawable.error_2,
+                                        icon = R.drawable.error_2,
                                         duration = SnackbarDuration.Short
                                     )
                                 )
@@ -733,7 +733,7 @@ fun TabCustomizationDialog(
                     LavenderSnackbarController.pushEvent(
                         LavenderSnackbarEvents.MessageEvent(
                             message = context.resources.getString(R.string.tabs_max_reached),
-                            iconResId = R.drawable.error_2,
+                            icon = R.drawable.error_2,
                             duration = SnackbarDuration.Short
                         )
                     )

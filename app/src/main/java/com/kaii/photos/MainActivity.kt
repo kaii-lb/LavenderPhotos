@@ -64,10 +64,10 @@ import androidx.navigation.toRoute
 import androidx.room.Room
 import com.bumptech.glide.Glide
 import com.bumptech.glide.MemoryCategory
-import com.kaii.lavender_snackbars.LavenderSnackbarBox
-import com.kaii.lavender_snackbars.LavenderSnackbarController
-import com.kaii.lavender_snackbars.LavenderSnackbarEvents
-import com.kaii.lavender_snackbars.LavenderSnackbarHostState
+import com.kaii.lavender.snackbars.LavenderSnackbarBox
+import com.kaii.lavender.snackbars.LavenderSnackbarController
+import com.kaii.lavender.snackbars.LavenderSnackbarEvents
+import com.kaii.lavender.snackbars.LavenderSnackbarHostState
 import com.kaii.photos.compose.ErrorPage
 import com.kaii.photos.compose.LockedFolderEntryView
 import com.kaii.photos.compose.PermissionHandler
@@ -136,6 +136,7 @@ import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlin.reflect.typeOf
+import kotlin.uuid.ExperimentalUuidApi
 
 private const val TAG = "MAIN_ACTIVITY"
 
@@ -845,9 +846,10 @@ class MainActivity : ComponentActivity() {
             ) {
                 coroutineScope.launch {
                     LavenderSnackbarController.pushEvent(
+                        @OptIn(ExperimentalUuidApi::class)
                         LavenderSnackbarEvents.LoadingEvent(
                             message = findingAlbumsOnDevice,
-                            iconResId = R.drawable.art_track,
+                            icon = R.drawable.art_track,
                             isLoading = isLoading
                         )
                     )

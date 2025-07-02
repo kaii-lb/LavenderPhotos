@@ -32,8 +32,8 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.kaii.lavender_snackbars.LavenderSnackbarController
-import com.kaii.lavender_snackbars.LavenderSnackbarEvents
+import com.kaii.lavender.snackbars.LavenderSnackbarController
+import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
@@ -134,7 +134,7 @@ fun DebuggingSettingsPage() {
                                         LavenderSnackbarController.pushEvent(
                                             LavenderSnackbarEvents.MessageEvent(
                                                 message = nologFile,
-                                                iconResId = R.drawable.no_log,
+                                                icon = R.drawable.no_log,
                                                 duration = SnackbarDuration.Short
                                             )
                                         )
@@ -242,7 +242,7 @@ fun DebuggingSettingsPage() {
                             LavenderSnackbarEvents.LoadingEvent(
                                 message = debuggingLoading,
                                 isLoading = isLoading,
-                                iconResId = R.drawable.logs
+                                icon = R.drawable.logs
                             )
                         )
 
@@ -262,7 +262,7 @@ fun DebuggingSettingsPage() {
                         LavenderSnackbarController.pushEvent(
                             LavenderSnackbarEvents.MessageEvent(
                                 message = debuggingLoading,
-                                iconResId = R.drawable.logs,
+                                icon = R.drawable.logs,
                                 duration = SnackbarDuration.Short
                             )
                         )
