@@ -79,7 +79,7 @@ class UploadWorker(
             var shouldBackup = media.mapNotNull { item ->
                 val immichFile = File(
                     path = item.absolutePath,
-                    size = java.io.File(item.absolutePath).length(),
+                    size = item.size,
                     dateCreated = item.dateTaken * 1000,
                     lastModified = item.dateModified * 1000
                 )

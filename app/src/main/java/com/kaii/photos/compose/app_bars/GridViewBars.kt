@@ -195,15 +195,16 @@ fun SingleAlbumViewTopBar(
                             }
                         }
 
-                        val deviceAssetIds = media
-                            .fastMapNotNull {
-                                if (it.type != MediaType.Section) {
-                                    val size = File(it.absolutePath).length()
-                                    "${it.displayName}-$size"
-                                } else {
-                                    null
+                        val deviceAssetIds = remember(media) {
+                            media
+                                .fastMapNotNull {
+                                    if (it.type != MediaType.Section) {
+                                        "${it.displayName}-$${it.size}"
+                                    } else {
+                                        null
+                                    }
                                 }
-                            }
+                        }
 
                         val isInBackup by remember {
                             derivedStateOf {

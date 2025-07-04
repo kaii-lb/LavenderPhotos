@@ -27,7 +27,8 @@ data class MediaStoreData(
     val absolutePath: String = "",
     var section: SectionItem = SectionItem(0L, 0),
     val bytes: ByteArray? = null,
-    val customId: Int? = null
+    val customId: Int? = null,
+    val size: Long = 0L
 ) : Parcelable {
     companion object {
         val dummyItem = MediaStoreData()

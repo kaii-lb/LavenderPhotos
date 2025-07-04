@@ -50,7 +50,6 @@ import com.kaii.photos.immich.ImmichServerSidedAlbumsState
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import kotlinx.coroutines.launch
-import java.io.File
 
 private const val TAG = "IMMICH_ALBUM_PAGE"
 
@@ -71,9 +70,8 @@ fun ImmichAlbumPage(
         .collectAsStateWithLifecycle().value
         .fastMapNotNull {
             if (it.type != MediaType.Section) {
-                val size = File(it.absolutePath).length()
                 ImmichBackupMedia(
-                    deviceAssetId = "${it.displayName}-$size", // TODO: maybe add size to MediaStoreData
+                    deviceAssetId = "${it.displayName}-${it.size}", // TODO: maybe add size to MediaStoreData
                     absolutePath = it.absolutePath
                 )
             } else {
