@@ -12,12 +12,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.MainPhotosView
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.SectionItem
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.MultiAlbumDataSource
+import com.kaii.photos.mediastore.getSQLiteQuery
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -84,7 +84,7 @@ class MultiAlbumViewModel(
         album: AlbumInfo,
         sortBy: MediaItemSortMode
     ) = run {
-        val query = mainViewModel.settings.MainPhotosView.getSQLiteQuery(album.paths)
+        val query = getSQLiteQuery(album.paths)
         Log.d(TAG, "query is $query")
 
         albumInfo = album
@@ -169,7 +169,11 @@ fun groupPhotosBy(
             }
 
             else -> {
-                formatDate(timestamp = sectionTime, sortBy = sortBy, format = mainViewModel.displayDateFormat.value)
+                formatDate(
+                    timestamp = sectionTime,
+                    sortBy = sortBy,
+                    format = mainViewModel.displayDateFormat.value
+                )
             }
         }
 

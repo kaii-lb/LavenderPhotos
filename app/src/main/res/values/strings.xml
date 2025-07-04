@@ -390,4 +390,5 @@
     <string name="immich_album_syncing">Syncing album</string>
     <string name="immich_album_synced">All images synced</string>
     <string name="immich_done">done</string>
+    <string name="immich_sync_status">Sync status:</string>
 </resources>

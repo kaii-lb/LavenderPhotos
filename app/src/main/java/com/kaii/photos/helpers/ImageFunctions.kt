@@ -605,7 +605,12 @@ suspend fun saveToFile(
                 .compress(format, 100, outputStream)
             outputStream.close()
 
-            context.contentResolver.update(newUri, contentValues, null)
+            try {
+                context.contentResolver.update(newUri, contentValues, null)
+            } catch (e: Throwable) {
+                Log.d(TAG, e.toString())
+                e.printStackTrace()
+            }
             File(absolutePath).setLastModified(currentTime)
 
             LavenderSnackbarController.pushEvent(

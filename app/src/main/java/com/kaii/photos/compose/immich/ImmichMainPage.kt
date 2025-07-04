@@ -34,6 +34,7 @@ import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
 import com.kaii.photos.compose.dialogs.ImmichLoginDialog
 import com.kaii.photos.compose.dialogs.TextEntryDialog
 import com.kaii.photos.datastore.Immich
+import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.RowPosition
 import kotlinx.coroutines.launch
 
@@ -67,9 +68,8 @@ fun ImmichMainPage() {
 
             item {
                 var showAddressDialog by remember { mutableStateOf(false) }
-                val immichEndpointBase by mainViewModel.settings.Immich.getEndpointBase()
-                    .collectAsStateWithLifecycle(initialValue = "")
-                val bearerToken by mainViewModel.settings.Immich.getBearerToken().collectAsStateWithLifecycle(initialValue = "")
+                val immichBasicInfo by mainViewModel.settings.Immich.getImmichBasicInfo()
+                    .collectAsStateWithLifecycle(initialValue = ImmichBasicInfo("", ""))
 
                 if (showAddressDialog) {
                     TextEntryDialog(
@@ -77,7 +77,12 @@ fun ImmichMainPage() {
                         placeholder = stringResource(id = R.string.immich_endpoint_base_placeholder),
                         onConfirm = { value ->
                             if (value.startsWith("https://") && Patterns.WEB_URL.matcher(value).matches()) {
-                                mainViewModel.settings.Immich.setEndpointBase(endpointBase = value) // TODO: check if we can ping server address?
+                                mainViewModel.settings.Immich.setImmichBasicInfo(
+                                    ImmichBasicInfo(
+                                        endpoint = value,
+                                        bearerToken = immichBasicInfo.bearerToken
+                                    )
+                                ) // TODO: check if we can ping server address?
                                 showAddressDialog = false
                                 true
                             } else false
@@ -103,14 +108,15 @@ fun ImmichMainPage() {
                         confirmButtonLabel = stringResource(id = R.string.media_confirm),
                     ) {
                         coroutineScope.launch {
-                            if (bearerToken == "") return@launch
+                            if (immichBasicInfo.bearerToken == "") return@launch
 
-                            mainViewModel.settings.Immich.setEndpointBase("")
                             User(
                                 apiClient = ApiClient(),
-                                endpointBase = immichEndpointBase
-                            ).logout(bearerToken = bearerToken)
-                            mainViewModel.settings.Immich.setBearerToken("")
+                                endpointBase = immichBasicInfo.endpoint
+                            ).logout(bearerToken = immichBasicInfo.bearerToken)
+                            mainViewModel.settings.Immich.setImmichBasicInfo(
+                                ImmichBasicInfo("", "")
+                            )
                             mainViewModel.settings.Immich.setUser(null)
                         }
                         showClearEndpointDialog.value = false
@@ -131,8 +137,8 @@ fun ImmichMainPage() {
                     PreferencesRow(
                         title = stringResource(id = R.string.immich_endpoint_base),
                         summary =
-                            if (immichEndpointBase == "") stringResource(id = R.string.immich_endpoint_base_desc)
-                            else immichEndpointBase,
+                            if (immichBasicInfo.endpoint == "") stringResource(id = R.string.immich_endpoint_base_desc)
+                            else immichBasicInfo.endpoint,
                         iconResID = R.drawable.data,
                         position = RowPosition.Middle,
                         showBackground = false
@@ -143,17 +149,13 @@ fun ImmichMainPage() {
             item {
                 val user by mainViewModel.settings.Immich.getUser()
                     .collectAsStateWithLifecycle(initialValue = null)
-                val endpointBase by mainViewModel.settings.Immich.getEndpointBase()
-                    .collectAsStateWithLifecycle(initialValue = "")
+                val immichBasicInfo by mainViewModel.settings.Immich.getImmichBasicInfo()
+                    .collectAsStateWithLifecycle(initialValue = ImmichBasicInfo("", ""))
                 var showLoginDialog by remember { mutableStateOf(false) }
-                val immichEndpointBase by mainViewModel.settings.Immich.getEndpointBase()
-                    .collectAsStateWithLifecycle(initialValue = "")
-                val bearerToken by mainViewModel.settings.Immich.getBearerToken()
-                    .collectAsStateWithLifecycle(initialValue = "")
 
                 if (showLoginDialog) {
                     ImmichLoginDialog(
-                        endpointBase = endpointBase
+                        endpointBase = immichBasicInfo.endpoint
                     ) {
                         showLoginDialog = false
                     }
@@ -169,13 +171,15 @@ fun ImmichMainPage() {
                         confirmButtonLabel = stringResource(id = R.string.media_confirm),
                     ) {
                         coroutineScope.launch {
-                            if (bearerToken == "") return@launch
+                            if (immichBasicInfo.bearerToken == "") return@launch
 
                             User(
                                 apiClient = ApiClient(),
-                                endpointBase = endpointBase
-                            ).logout(bearerToken = bearerToken)
-                            mainViewModel.settings.Immich.setBearerToken("")
+                                endpointBase = immichBasicInfo.endpoint
+                            ).logout(bearerToken = immichBasicInfo.bearerToken)
+                            mainViewModel.settings.Immich.setImmichBasicInfo(
+                                ImmichBasicInfo("", "")
+                            )
                             mainViewModel.settings.Immich.setUser(null)
                         }
                         showLogoutDialog.value = false
@@ -203,7 +207,7 @@ fun ImmichMainPage() {
                         iconResID = R.drawable.account_circle,
                         position = RowPosition.Middle,
                         showBackground = false,
-                        enabled = immichEndpointBase != ""
+                        enabled = immichBasicInfo.endpoint != ""
                     )
                 }
             }

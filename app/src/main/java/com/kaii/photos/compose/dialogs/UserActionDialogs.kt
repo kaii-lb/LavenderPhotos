@@ -78,6 +78,7 @@ import com.kaii.photos.compose.TitleCloseRow
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.Immich
+import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.createDirectoryPicker
 import com.kaii.photos.helpers.findMinParent
@@ -895,7 +896,12 @@ fun ImmichLoginDialog(
                             name = response.name
                         )
                     )
-                    mainViewModel.settings.Immich.setBearerToken(token = response.accessToken)
+                    mainViewModel.settings.Immich.setImmichBasicInfo(
+                        ImmichBasicInfo(
+                            endpoint = endpointBase,
+                            bearerToken = response.accessToken
+                        )
+                    )
                     eventTitle.value = context.resources.getString(R.string.immich_login_successful)
                     isLoading.value = false
 

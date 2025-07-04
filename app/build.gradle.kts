@@ -99,7 +99,6 @@ dependencies {
     implementation("androidx.security:security-crypto:1.1.0-beta01")
     implementation("com.github.kittinunf.fuel:fuel:2.3.1")
     implementation("com.github.kittinunf.fuel:fuel-json:2.3.1")
-    implementation("com.github.kaii-lb:Lavender-Snackbars:0.2.0")
     implementation(libs.androidx.profileinstaller)
     "baselineProfile"(project(":baselineprofile"))
     implementation("androidx.work:work-runtime-ktx:2.10.2")
@@ -109,7 +108,8 @@ dependencies {
     implementation("androidx.room:room-ktx:$roomVersion")
     annotationProcessor("androidx.room:room-compiler:$roomVersion")
 
-    implementation("com.github.kaii-lb.LavenderImmichIntegration:library:v1.0.3")
+    implementation("com.github.kaii-lb:Lavender-Snackbars:0.2.0")
+    implementation("com.github.kaii-lb.LavenderImmichIntegration:library:v1.0.4")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")

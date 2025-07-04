@@ -86,6 +86,7 @@ import com.kaii.photos.compose.grids.PhotoGrid
 import com.kaii.photos.compose.grids.SearchPage
 import com.kaii.photos.compose.grids.SingleAlbumView
 import com.kaii.photos.compose.grids.TrashedPhotoGridView
+import com.kaii.photos.compose.immich.ImmichAlbumPage
 import com.kaii.photos.compose.immich.ImmichMainPage
 import com.kaii.photos.compose.rememberDeviceOrientation
 import com.kaii.photos.compose.settings.AboutPage
@@ -111,6 +112,7 @@ import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.Debugging
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.Editing
+import com.kaii.photos.datastore.Immich
 import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.datastore.MainPhotosView
 import com.kaii.photos.datastore.PhotoGrid
@@ -126,6 +128,8 @@ import com.kaii.photos.helpers.startupUpdateCheck
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.custom_album.CustomAlbumViewModelFactory
+import com.kaii.photos.models.immich.ImmichViewModel
+import com.kaii.photos.models.immich.ImmichViewModelFactory
 import com.kaii.photos.models.main_activity.MainViewModel
 import com.kaii.photos.models.main_activity.MainViewModelFactory
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
@@ -148,6 +152,7 @@ class MainActivity : ComponentActivity() {
     companion object {
         lateinit var applicationDatabase: MediaDatabase
         lateinit var mainViewModel: MainViewModel
+        lateinit var immichViewModel: ImmichViewModel
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -169,6 +174,11 @@ class MainActivity : ComponentActivity() {
         setContent {
             mainViewModel = viewModel(
                 factory = MainViewModelFactory(applicationContext)
+            )
+            immichViewModel = viewModel(
+                factory = ImmichViewModelFactory(
+                    immichSettings = mainViewModel.settings.Immich
+                )
             )
 
             val continueToApp = remember {
@@ -821,6 +831,38 @@ class MainActivity : ComponentActivity() {
                         )
 
                         ImmichMainPage()
+                    }
+
+                    composable<Screens.ImmichAlbumPage>(
+                        typeMap = mapOf(
+                            typeOf<AlbumInfo>() to AlbumInfoNavType
+                        )
+                    ) {
+                        enableEdgeToEdge(
+                            navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
+                            statusBarStyle = SystemBarStyle.auto(
+                                MaterialTheme.colorScheme.surface.toArgb(),
+                                MaterialTheme.colorScheme.surface.toArgb()
+                            )
+                        )
+                        setupNextScreen(
+                            selectedItemsList,
+                            window
+                        )
+
+                        val screen: Screens.ImmichAlbumPage = it.toRoute()
+                        if (screen.albumInfo != multiAlbumViewModel.albumInfo) {
+                            multiAlbumViewModel.reinitDataSource(
+                                context = context,
+                                album = screen.albumInfo,
+                                sortMode = multiAlbumViewModel.sortBy
+                            )
+                        }
+
+                        ImmichAlbumPage(
+                            albumInfo = screen.albumInfo,
+                            multiAlbumViewModel = multiAlbumViewModel
+                        )
                     }
                 }
             }

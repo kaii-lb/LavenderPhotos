@@ -36,7 +36,6 @@ import com.kaii.photos.compose.dialogs.SingleAlbumDialog
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.mediastore.MediaStoreData
-import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import kotlinx.coroutines.Dispatchers
@@ -181,7 +180,7 @@ private fun SingleAlbumViewCommon(
         topBar = {
             SingleAlbumViewTopBar(
                 albumInfo = albumInfo,
-                assetCount = groupedMedia.value.filter { it.type != MediaType.Section }.size,
+                media = groupedMedia.value,
                 selectedItemsList = selectedItemsList,
                 showDialog = showDialog,
                 currentView = currentView

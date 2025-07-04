@@ -50,4 +50,9 @@ object Screens {
 	    val uri: String,
 	    val dateTaken: Long
 	)
+
+	@Serializable
+	data class ImmichAlbumPage(
+		val albumInfo: AlbumInfo
+	)
 }

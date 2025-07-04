@@ -13,7 +13,8 @@ import com.kaii.lavender.immichintegration.serialization.AlbumOrder
 import com.kaii.lavender.immichintegration.serialization.File
 import com.kaii.lavender.immichintegration.serialization.ModifyAlbumAsset
 import com.kaii.lavender.immichintegration.serialization.UpdateAlbumInfo
-import com.kaii.photos.MainActivity.Companion.mainViewModel
+import com.kaii.lavender.immichintegration.serialization.UploadStatus
+import com.kaii.photos.MainActivity.Companion.immichViewModel
 import com.kaii.photos.datastore.SQLiteQuery
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.mediastore.MultiAlbumDataSource
@@ -92,12 +93,16 @@ class UploadWorker(
 
             var existingCount = 0
             val successList = mutableListOf<Pair<String, Long>>()
+            val duplicateList = mutableListOf<String>()
 
             try {
-                val currentUploaded = mainViewModel.getImmichUploadedMediaTotal()
-                mainViewModel.setImmichUploadedMediaTotal(currentUploaded + shouldBackup.size)
+                immichViewModel.updatePhotoUploadProgress(
+                    uploaded = 0,
+                    total = shouldBackup.size,
+                    immichId = immichAlbum.id
+                )
             } catch (e: Throwable) {
-                Log.e(TAG, "Couldn't update UI, mainViewModel inaccessible")
+                Log.e(TAG, "Couldn't update UI, immichViewModel inaccessible")
                 Log.e(TAG, e.toString())
                 e.printStackTrace()
             }
@@ -106,16 +111,25 @@ class UploadWorker(
                 // TODO: handle video duration
                 Log.d(TAG, "Item to upload $item")
 
-                if (!immichAlbumAssetsIds.contains("${item.name}-${item.size}")) {
+                val deviceAssetId = "${item.name}-${item.size}"
+                if (!immichAlbumAssetsIds.contains(deviceAssetId)) {
                     assetManager.uploadAsset(
                         file = item,
                         deviceId = Build.MODEL
                     )?.let {
+                        Log.d(TAG, "Upload status for ${item.path} is ${it.status}")
                         successList.add(Pair(it.id, item.lastModified))
 
+                        if (it.status == UploadStatus.Duplicate) {
+                            duplicateList.add(deviceAssetId)
+                        }
+
                         try {
-                            val currentUploaded = mainViewModel.getImmichUploadedMediaCount()
-                            mainViewModel.setImmichUploadedMediaCount(currentUploaded + 1)
+                            immichViewModel.updatePhotoUploadProgress(
+                                uploaded = 1,
+                                total = 0,
+                                immichId = immichAlbum.id
+                            )
                         } catch (e: Throwable) {
                             Log.e(TAG, "Couldn't update UI, mainViewModel inaccessible")
                             Log.e(TAG, e.toString())
@@ -126,8 +140,11 @@ class UploadWorker(
                     existingCount += 1
 
                     try {
-                        val currentTotal = mainViewModel.getImmichUploadedMediaTotal()
-                        mainViewModel.setImmichUploadedMediaTotal(currentTotal - 1)
+                        immichViewModel.updatePhotoUploadProgress(
+                            uploaded = 0,
+                            total = -1,
+                            immichId = immichAlbum.id
+                        )
                     } catch (e: Throwable) {
                         Log.e(TAG, "Couldn't update UI, mainViewModel inaccessible")
                         Log.e(TAG, e.toString())
@@ -136,6 +153,7 @@ class UploadWorker(
                 }
             }
 
+            Log.d(TAG, "Success list $successList")
             if (successList.isNotEmpty()) {
                 albumManager.addAssetToAlbum(
                     albumId = albumId,
@@ -157,8 +175,18 @@ class UploadWorker(
             }
 
             try {
-                val currentUploaded = mainViewModel.getImmichUploadedMediaTotal()
-                mainViewModel.setImmichUploadedMediaTotal(currentUploaded - (shouldBackup.size - existingCount))
+                immichViewModel.updatePhotoUploadProgress(
+                    uploaded = 0,
+                    total = -(shouldBackup.size - existingCount),
+                    immichId = immichAlbum.id
+                )
+
+                immichViewModel.setDuplicateState(
+                    immichId = immichAlbum.id,
+                    state =
+                        if (duplicateList.isEmpty()) ImmichAlbumDuplicateState.DupeFree
+                        else ImmichAlbumDuplicateState.HasDupes(deviceAssetIds = duplicateList.toSet())
+                )
             } catch (e: Throwable) {
                 Log.e(TAG, "Couldn't update UI, mainViewModel inaccessible")
                 Log.e(TAG, e.toString())

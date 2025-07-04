@@ -243,4 +243,14 @@ data class ImmichBackupAlbum(
     val immichId: String
 )
 
+data class ImmichBackupMedia(
+    val deviceAssetId: String,
+    val absolutePath: String
+)
+
+@Serializable
+data class ImmichBasicInfo(
+    val endpoint: String,
+    val bearerToken: String
+)
 

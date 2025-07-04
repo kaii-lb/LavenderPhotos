@@ -36,12 +36,6 @@ class MainViewModel(context: Context) : ViewModel() {
     private val _displayDateFormat = MutableStateFlow(DisplayDateFormat.Default)
     val displayDateFormat = _displayDateFormat.asStateFlow()
 
-    private val _immichUploadedMediaCount = MutableStateFlow(0)
-    val immichUploadedMediaCount = _immichUploadedMediaCount.asStateFlow()
-
-    private val _immichUploadedMediaTotal = MutableStateFlow(0)
-    val immichUploadedMediaTotal = _immichUploadedMediaTotal.asStateFlow()
-
     fun setGroupedMedia(media: List<MediaStoreData>?) {
         _groupedMedia.value = media
     }
@@ -132,16 +126,4 @@ class MainViewModel(context: Context) : ViewModel() {
     fun setDisplayDateFormat(format: DisplayDateFormat) {
         _displayDateFormat.value = format
     }
-
-    fun setImmichUploadedMediaCount(count: Int) {
-        _immichUploadedMediaCount.value = count
-    }
-
-    fun getImmichUploadedMediaCount() = _immichUploadedMediaCount.value
-
-    fun setImmichUploadedMediaTotal(count: Int) {
-        _immichUploadedMediaTotal.value = count
-    }
-
-    fun getImmichUploadedMediaTotal() = _immichUploadedMediaTotal.value
 }

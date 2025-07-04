@@ -1,7 +1,6 @@
 package com.kaii.photos.datastore
 
 import android.content.Context
-import android.provider.MediaStore.Files.FileColumns
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -10,16 +9,11 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.bumptech.glide.Glide
-import com.kaii.lavender.immichintegration.AlbumManager
-import com.kaii.lavender.immichintegration.ApiClient
-import com.kaii.lavender.immichintegration.serialization.CreateAlbum
 import com.kaii.lavender.immichintegration.serialization.User
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.baseInternalStorageDirectory
-import com.kaii.photos.helpers.toRelativePath
 import com.kaii.photos.helpers.tryGetAllAlbums
-import com.kaii.photos.immich.SchedulingManager
 import com.kaii.photos.models.multi_album.DisplayDateFormat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -535,36 +529,6 @@ class SettingMainPhotosViewImpl(
         }
     }
 
-    /** returns the media store query and the individual paths
-     * albums needed cuz the query has ? instead of the actual paths for...reasons */
-    fun getSQLiteQuery(albums: List<String>): SQLiteQuery {
-        if (albums.isEmpty()) {
-            return SQLiteQuery(query = "AND false", paths = null, includedBasePaths = null)
-        }
-
-        albums.forEach {
-            Log.d(TAG, "Trying to get query for album: $it")
-        }
-
-        val colName = FileColumns.RELATIVE_PATH
-        val base = "($colName = ?)"
-
-        val list = mutableListOf<String>()
-        var string = base
-        val firstAlbum = albums.first().toRelativePath().removeSuffix("/").removePrefix("/")
-        list.add("$firstAlbum/")
-
-        for (i in 1..<albums.size) {
-            val album = albums[i].toRelativePath().removeSuffix("/").removePrefix("/")
-
-            string += " OR $base"
-            list.add("$album/")
-        }
-
-        val query = "AND ($string)"
-        return SQLiteQuery(query = query, paths = list, includedBasePaths = albums)
-    }
-
     private val defaultAlbumsList =
         "${baseInternalStorageDirectory}DCIM/Camera" + separator +
                 "${baseInternalStorageDirectory}Pictures" + separator +
@@ -692,32 +656,35 @@ class SettingsImmichImpl(
     private val context: Context,
     private val viewModelScope: CoroutineScope
 ) {
-    private val immichBearerToken = byteArrayPreferencesKey("immich_bearer_token")
     private val immichEncryptionIV = byteArrayPreferencesKey("immich_encryption_iv")
     private val immichUser = stringPreferencesKey("immich_user")
-    private val immichEndpointBase = stringPreferencesKey("immich_endpoint_base")
-    private val immichUploadedAlbums = stringPreferencesKey("immich_uploaded_albums")
+    private val immichEndpoint = stringPreferencesKey("immich_endpoint")
+    private val immichToken = byteArrayPreferencesKey("immich_token")
 
-    private val albumsListImpl = SettingsAlbumsListImpl(context, viewModelScope)
     val json = Json { ignoreUnknownKeys = true }
 
-    fun getBearerToken() = context.datastore.data.map { data ->
-        val encToken = data[immichBearerToken] ?: return@map ""
-        val iv = data[immichEncryptionIV] ?: return@map ""
+    fun getImmichBasicInfo() = context.datastore.data.map { data ->
+        val endpoint = data[immichEndpoint] ?: return@map ImmichBasicInfo("", "")
+        val token = data[immichToken] ?: return@map ImmichBasicInfo("", "")
+        val iv = data[immichEncryptionIV] ?: return@map ImmichBasicInfo("", "")
 
         val decToken = EncryptionManager.decryptBytes(
-            bytes = encToken,
+            bytes = token,
             iv = iv
         )
 
-        return@map decToken.decodeToString()
+        ImmichBasicInfo(
+            endpoint = endpoint,
+            bearerToken = decToken.decodeToString()
+        )
     }
 
-    fun setBearerToken(token: String) = viewModelScope.launch {
+    fun setImmichBasicInfo(immichData: ImmichBasicInfo) = viewModelScope.launch {
         context.datastore.edit { data ->
-            val (encToken, iv) = EncryptionManager.encryptBytes(token.trim().encodeToByteArray())
+            val (enc, iv) = EncryptionManager.encryptBytes(immichData.bearerToken.toByteArray())
 
-            data[immichBearerToken] = encToken
+            data[immichEndpoint] = immichData.endpoint
+            data[immichToken] = enc
             data[immichEncryptionIV] = iv
         }
     }
@@ -735,141 +702,9 @@ class SettingsImmichImpl(
         }
     }
 
-    fun getEndpointBase() = context.datastore.data.map {
-        it[immichEndpointBase] ?: ""
-    }
-
-    fun setEndpointBase(endpointBase: String) = viewModelScope.launch {
-        context.datastore.edit {
-            it[immichEndpointBase] = endpointBase
-        }
-    }
-
-    suspend fun manualGetAlbums(
-        endpointBase: String,
-        bearerToken: String
-    ) = withContext(Dispatchers.IO) {
-        val albumManager = AlbumManager(
-            apiClient = ApiClient(),
-            endpointBase = endpointBase,
-            bearerToken = bearerToken
-        )
-
-        albumManager.getAllAlbums() ?: emptyList()
-    }
-
-    fun addBackupAlbum(albumInfo: AlbumInfo) = viewModelScope.launch {
-        context.datastore.edit { data ->
-            val endpointBase = data[immichEndpointBase]!!
-            val bearerToken =
-                EncryptionManager.decryptBytes(
-                    bytes = data[immichBearerToken]!!,
-                    iv = data[immichEncryptionIV]!!
-                ).decodeToString()
-
-            val albumManager = AlbumManager(
-                apiClient = ApiClient(),
-                endpointBase = endpointBase,
-                bearerToken = bearerToken
-            )
-
-            val allAlbums = albumManager.getAllAlbums()
-            var neededAlbum = albumInfo
-
-            if (albumInfo.immichId == "" || allAlbums?.map { it.id }
-                    ?.contains(albumInfo.immichId) != true) {
-                val album = albumManager.createAlbum(
-                    album = CreateAlbum(
-                        albumName = albumInfo.name,
-                        albumUsers = emptyList(),
-                        assetIds = emptyList(),
-                        description = albumInfo.paths.joinToString(separator = "-") {
-                            it.toRelativePath(true)
-                        }
-                    )
-                )
-
-                if (album == null) {
-                    Log.e(TAG, "Unable to create immich album!")
-                    Log.e(TAG, "Album in question: $albumInfo")
-                    return@edit
-                } // TODO: signal failure
-
-                neededAlbum = albumInfo.copy(
-                    immichId = album.id
-                )
-                SettingsAlbumsListImpl(context, viewModelScope).editInAlbumsList(
-                    albumInfo = albumInfo,
-                    newInfo = neededAlbum
-                )
-            }
-
-            SchedulingManager.scheduleUploadTask(
-                context = context,
-                immichAlbumId = neededAlbum.immichId,
-                immichEndpointBase = endpointBase,
-                immichBearerToken = bearerToken,
-                mediastoreQuery = SettingMainPhotosViewImpl(context, viewModelScope).getSQLiteQuery(
-                    neededAlbum.paths
-                )
-            )
-
-            val current =
-                json.decodeFromString<List<ImmichBackupAlbum>>(data[immichUploadedAlbums] ?: "[]")
-                    .toMutableList()
-
-            val new = ImmichBackupAlbum(albumInfo.id, neededAlbum.immichId)
-            if (!current.contains(new)) current.add(new)
-
-            data[immichUploadedAlbums] = json.encodeToString(current)
-        }
-    }
-
-    fun removeBackupAlbum(album: AlbumInfo) = viewModelScope.launch {
-        context.datastore.edit { data ->
-            val endpointBase = data[immichEndpointBase]!!
-            val bearerToken =
-                EncryptionManager.decryptBytes(
-                    bytes = data[immichBearerToken]!!,
-                    iv = data[immichEncryptionIV]!!
-                ).decodeToString()
-
-            val albumManager = AlbumManager(
-                apiClient = ApiClient(),
-                endpointBase = endpointBase,
-                bearerToken = bearerToken
-            )
-
-            albumManager.deleteAlbum(albumId = album.immichId)
-
-            albumsListImpl.editInAlbumsList(
-                albumInfo = album,
-                newInfo = album.copy(
-                    immichId = ""
-                )
-            )
-        }
-    }
-
-    fun getImmichUploadedAlbums() = context.datastore.data.map { data ->
-        json.decodeFromString<List<ImmichBackupAlbum>>(data[immichUploadedAlbums] ?: "[]")
-    }
-
-    fun removeImmichUploadedAlbum(albumId: Int) = viewModelScope.launch {
-        context.datastore.edit { data ->
-            val current =
-                json.decodeFromString<List<ImmichBackupAlbum>>(data[immichUploadedAlbums] ?: "[]")
-                    .toMutableList()
-
-            current.removeIf { it.albumId == albumId }
-
-            data[immichUploadedAlbums] = json.encodeToString(current)
-        }
-    }
-
     fun getImmichEnabled() = context.datastore.data.map { data ->
         val user = data[immichUser]
-        val token = data[immichBearerToken]
+        val token = data[immichToken]
 
         user != null && user != "" && token != null && token != EncryptionManager.encryptBytes("".encodeToByteArray()).first
     }
