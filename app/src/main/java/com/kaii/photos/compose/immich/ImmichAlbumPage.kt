@@ -45,6 +45,7 @@ import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.ImmichBackupMedia
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.immich.ImmichAlbumDuplicateState
 import com.kaii.photos.immich.ImmichAlbumSyncState
 import com.kaii.photos.immich.ImmichServerSidedAlbumsState
 import com.kaii.photos.mediastore.MediaType
@@ -61,6 +62,16 @@ fun ImmichAlbumPage(
 ) {
     var dynamicAlbumInfo by remember { mutableStateOf(albumInfo) }
     val navController = LocalNavController.current
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        multiAlbumViewModel.reinitDataSource(
+            context = context,
+            album = dynamicAlbumInfo,
+            sortMode = multiAlbumViewModel.sortBy
+        )
+    }
+
     BackHandler {
         multiAlbumViewModel.cancelMediaFlow()
         navController.popBackStack()
@@ -71,7 +82,7 @@ fun ImmichAlbumPage(
         .fastMapNotNull {
             if (it.type != MediaType.Section) {
                 ImmichBackupMedia(
-                    deviceAssetId = "${it.displayName}-${it.size}", // TODO: maybe add size to MediaStoreData
+                    deviceAssetId = "${it.displayName}-${it.size}",
                     absolutePath = it.absolutePath
                 )
             } else {
@@ -79,41 +90,25 @@ fun ImmichAlbumPage(
             }
         }
 
+    Log.d(TAG, "Device asset ids $deviceAssetIds")
+
     var loadingBackupState by remember { mutableStateOf(false) }
 
     val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         loadingBackupState = true
-        immichViewModel.refreshAlbums {
-            loadingBackupState = false
-        }
+        immichViewModel.refreshAlbums()
         immichViewModel.checkSyncStatus(
             immichAlbumId = dynamicAlbumInfo.immichId,
             expectedPhotoImmichIds = deviceAssetIds.map { it.deviceAssetId }.toSet()
         )
-    }
-
-    val serverSideAlbums by immichViewModel.immichServerAlbums.collectAsStateWithLifecycle()
-    val albumState by remember {
-        derivedStateOf {
-            when (serverSideAlbums) {
-                is ImmichServerSidedAlbumsState.Synced -> {
-                    (serverSideAlbums as ImmichServerSidedAlbumsState.Synced)
-                        .albums
-                        .find {
-                            it.id == dynamicAlbumInfo.immichId
-                        }
-                }
-
-                else -> {
-                    null
-                }
-            }
+        immichViewModel.refreshDuplicateState(
+            deviceAssetIds = deviceAssetIds.fastMap { it.deviceAssetId }
+        ) {
+            loadingBackupState = false
         }
     }
-
-    Log.d(TAG, "Album state is $albumState")
 
     Scaffold(
         topBar = {
@@ -129,6 +124,9 @@ fun ImmichAlbumPage(
                         immichAlbumId = dynamicAlbumInfo.immichId,
                         expectedPhotoImmichIds = deviceAssetIds.map { it.deviceAssetId }.toSet()
                     )
+                    immichViewModel.refreshDuplicateState(
+                        deviceAssetIds = deviceAssetIds.fastMap { it.deviceAssetId }
+                    )
                     immichViewModel.refreshAlbums {
                         loadingBackupState = false
                     }
@@ -138,44 +136,41 @@ fun ImmichAlbumPage(
                 .fillMaxSize(1f)
                 .padding(innerPadding)
         ) {
-            val albumSyncState by immichViewModel.immichAlbumsSyncState.collectAsStateWithLifecycle()
-            LaunchedEffect(Unit) {
-                immichViewModel.checkSyncStatus(
-                    immichAlbumId = dynamicAlbumInfo.immichId,
-                    expectedPhotoImmichIds = deviceAssetIds.map { it.deviceAssetId }.toSet()
-                )
-            }
-
-            LaunchedEffect(albumState, serverSideAlbums) {
-                if (serverSideAlbums is ImmichServerSidedAlbumsState.Synced) {
-                    if (albumState?.id !in (serverSideAlbums as ImmichServerSidedAlbumsState.Synced).albums.map { it.id }) {
-                        dynamicAlbumInfo = dynamicAlbumInfo.copy(
-                            immichId = ""
-                        )
-                    }
-                }
-            }
-
-            val stuff by remember { derivedStateOf {
-                val possible = albumSyncState[dynamicAlbumInfo.immichId]
-
-                when (possible) {
-                    is ImmichAlbumSyncState.InSync -> {
-                        Pair(possible.ids, possible.ids)
-                    }
-
-                    is ImmichAlbumSyncState.OutOfSync -> {
-                        Pair(possible.missing, possible.extra)
+            val albumsSyncState by immichViewModel.immichAlbumsSyncState.collectAsStateWithLifecycle()
+            val serverSideAlbum = run {
+                val all by immichViewModel.immichServerAlbums.collectAsStateWithLifecycle()
+                when (all) {
+                    is ImmichServerSidedAlbumsState.Synced -> {
+                        (all as ImmichServerSidedAlbumsState.Synced).albums.find { it.id == dynamicAlbumInfo.immichId }
                     }
 
                     else -> {
-                        Pair(deviceAssetIds.fastMap { it.deviceAssetId }.toSet(), emptySet<String>())
+                        null
                     }
                 }
-            }}
-            val dupes by immichViewModel.immichAlbumsDupState.collectAsStateWithLifecycle()
+            }
 
-            val context = LocalContext.current
+            val albumSyncState by remember {
+                derivedStateOf {
+                    albumsSyncState[dynamicAlbumInfo.immichId]
+                }
+            }
+            val dupes by immichViewModel.immichAlbumsDupState.collectAsStateWithLifecycle()
+            val currentAlbumDupe by remember {
+                derivedStateOf {
+                    val state = dupes[dynamicAlbumInfo.immichId]
+                    when (state) {
+                        is ImmichAlbumDuplicateState.HasDupes -> {
+                            state.deviceAssetIds
+                        }
+
+                        else -> {
+                            emptySet()
+                        }
+                    }
+                }
+            }
+            Log.d(TAG, "Duplicates $currentAlbumDupe")
 
             LazyColumn(
                 modifier = Modifier
@@ -185,8 +180,8 @@ fun ImmichAlbumPage(
             ) {
                 item {
                     PreferencesRow(
-                        title = stringResource(id = R.string.immich_sync_status) + " " + "${deviceAssetIds.size - stuff.first.size}/${deviceAssetIds.size - dupes.size}",
-                        summary = "Duplicates: ${dupes.size}",
+                        title = stringResource(id = R.string.immich_sync_status) + " " + "${serverSideAlbum?.assetCount ?: 0}/${deviceAssetIds.size - currentAlbumDupe.size}",
+                        summary = "Duplicates: ${currentAlbumDupe.size}",
                         iconResID = R.drawable.cloud_upload,
                         position = RowPosition.Single,
                         showBackground = false
@@ -200,14 +195,51 @@ fun ImmichAlbumPage(
                     val notificationPercentage = remember { mutableFloatStateOf(0f) }
 
                     LaunchedEffect(uploadCount, uploadTotal) {
-                        if (uploadTotal != 0) notificationBody.value = "${uploadCount}/${uploadTotal} done"
+                        if (uploadTotal != 0) notificationBody.value =
+                            "${uploadCount}/${uploadTotal} done"
                         else notificationBody.value = "Operation complete!"
                         notificationPercentage.floatValue = uploadCount.toFloat() / uploadTotal
                     }
 
+                    val missingFromImmich by remember {
+                        derivedStateOf {
+                            when (albumSyncState) {
+                                is ImmichAlbumSyncState.InSync -> {
+                                    "0"
+                                }
+
+                                is ImmichAlbumSyncState.OutOfSync -> {
+                                    (albumSyncState as ImmichAlbumSyncState.OutOfSync).missing.size
+                                }
+
+                                is ImmichAlbumSyncState.Error -> "Unknown"
+
+                                else -> "Loading"
+                            }
+                        }
+                    }
+
+                    val extraInImmich by remember {
+                        derivedStateOf {
+                            when (albumSyncState) {
+                                is ImmichAlbumSyncState.InSync -> {
+                                    "0"
+                                }
+
+                                is ImmichAlbumSyncState.OutOfSync -> {
+                                    (albumSyncState as ImmichAlbumSyncState.OutOfSync).extra.size
+                                }
+
+                                is ImmichAlbumSyncState.Error -> "Unknown"
+
+                                else -> "Loading"
+                            }
+                        }
+                    }
+
                     PreferencesRow(
                         title = "Sync Album and Immich",
-                        summary = "Album: ${stuff.first.size - dupes.size}. Immich: ${albumState?.assets?.size ?: 0}",
+                        summary = "Extra in: Album: $missingFromImmich. Immich: $extraInImmich",
                         iconResID = R.drawable.cloud_upload,
                         position = RowPosition.Single,
                         showBackground = false,
@@ -222,6 +254,17 @@ fun ImmichAlbumPage(
                             dynamicAlbumInfo = dynamicAlbumInfo.copy(
                                 immichId = newId
                             )
+                            immichViewModel.refreshDuplicateState(
+                                deviceAssetIds = deviceAssetIds.fastMap { it.deviceAssetId }
+                            )
+                            immichViewModel.checkSyncStatus(
+                                immichAlbumId = newId,
+                                expectedPhotoImmichIds = deviceAssetIds.map { it.deviceAssetId }
+                                    .toSet()
+                            )
+                            immichViewModel.refreshAlbums {
+                                loadingBackupState = false
+                            }
                         }
                     }
                 }
@@ -246,6 +289,12 @@ fun ImmichAlbumPage(
                                 )
                                 loadingBackupState = false
                             }
+                            immichViewModel.refreshAlbums {
+                                loadingBackupState = false
+                            }
+                            immichViewModel.refreshDuplicateState(
+                                deviceAssetIds = deviceAssetIds.fastMap { it.deviceAssetId }
+                            )
                         }
                     }
                     PreferencesRow(

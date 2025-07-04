@@ -72,7 +72,7 @@ import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.permanentlyDeleteSecureFolderImageList
 import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareMultipleSecuredImages
-import com.kaii.photos.immich.ImmichServerSidedAlbumsState
+import com.kaii.photos.immich.ImmichAlbumSyncState
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.content_provider.LavenderContentProvider
@@ -186,66 +186,38 @@ fun SingleAlbumViewTopBar(
                     var loadingBackupState by remember { mutableStateOf(false) }
 
                     if (immichBackupEnabled && albumInfo != null) {
-                        val serverSidedAlbums by immichViewModel.immichServerAlbums.collectAsStateWithLifecycle()
-
-                        LaunchedEffect(Unit) {
-                            loadingBackupState = true
-                            immichViewModel.refreshAlbums {
-                                loadingBackupState = false
-                            }
-                        }
+                        val albumState by immichViewModel.immichAlbumsSyncState.collectAsStateWithLifecycle()
 
                         val deviceAssetIds = remember(media) {
                             media
                                 .fastMapNotNull {
                                     if (it.type != MediaType.Section) {
-                                        "${it.displayName}-$${it.size}"
+                                        "${it.displayName}-${it.size}"
                                     } else {
                                         null
                                     }
                                 }
                         }
 
-                        val isInBackup by remember {
-                            derivedStateOf {
-                                when (serverSidedAlbums) {
-                                    is ImmichServerSidedAlbumsState.Synced -> {
-                                        (serverSidedAlbums as ImmichServerSidedAlbumsState.Synced)
-                                            .albums
-                                            .any {
-                                                it.id == albumInfo.immichId
-                                            }
-                                    }
-
-                                    else -> {
-                                        false
-                                    }
-                                }
+                        LaunchedEffect(media) {
+                            loadingBackupState = true
+                            immichViewModel.checkSyncStatus(
+                                immichAlbumId = albumInfo.immichId,
+                                expectedPhotoImmichIds = deviceAssetIds.toSet()
+                            )
+                            immichViewModel.refreshDuplicateState(
+                                deviceAssetIds = media.map { "${it.displayName}-${it.size}" }
+                            ) {
+                                loadingBackupState = false
                             }
                         }
 
                         val isBackedUp by remember {
                             derivedStateOf {
-                                when (serverSidedAlbums) {
-                                    is ImmichServerSidedAlbumsState.Synced -> {
-                                        val possible =
-                                            (serverSidedAlbums as ImmichServerSidedAlbumsState.Synced)
-                                                .albums
-                                                .find {
-                                                    it.id == albumInfo.immichId
-                                                }
-
-                                        possible?.assets?.fastMap {
-                                            it.deviceAssetId
-                                        }?.all {
-                                            it in deviceAssetIds
-                                        } == true
-                                    }
-
-                                    else -> {
-                                        false
-                                    }
-                                }
+                                if (albumInfo.immichId.isEmpty()) null
+                                else if (albumState[albumInfo.immichId] is ImmichAlbumSyncState.InSync) true
+                                else if (albumState[albumInfo.immichId] is ImmichAlbumSyncState.OutOfSync) false
+                                else null
                             }
                         }
 
@@ -262,8 +234,8 @@ fun SingleAlbumViewTopBar(
                             ) {
                                 Icon(
                                     painter =
-                                        if (isBackedUp) painterResource(id = R.drawable.cloud_done)
-                                        else if (isInBackup) painterResource(id = R.drawable.cloud_upload)
+                                        if (isBackedUp == true) painterResource(id = R.drawable.cloud_done)
+                                        else if (isBackedUp == false) painterResource(id = R.drawable.cloud_upload)
                                         else painterResource(id = R.drawable.cloud_off),
                                     contentDescription = "show more options for the album view",
                                     tint = if (!loadingBackupState) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(

@@ -177,7 +177,8 @@ class MainActivity : ComponentActivity() {
             )
             immichViewModel = viewModel(
                 factory = ImmichViewModelFactory(
-                    immichSettings = mainViewModel.settings.Immich
+                    immichSettings = mainViewModel.settings.Immich,
+                    immichDuplicateEntityDao = mediaDatabase.immichDuplicateEntityDao()
                 )
             )
 

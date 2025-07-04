@@ -18,6 +18,7 @@ object SchedulingManager {
         immichEndpointBase: String,
         immichBearerToken: String,
         mediastoreQuery: SQLiteQuery,
+        lavenderAlbumId: Int
     ): UUID {
         val uploadWorkRequest: WorkRequest =
             OneTimeWorkRequestBuilder<UploadWorker>()
@@ -26,7 +27,8 @@ object SchedulingManager {
                         UploadWorker.BEARER_TOKEN to immichBearerToken,
                         UploadWorker.ENDPOINT_BASE to immichEndpointBase,
                         UploadWorker.ALBUM_ID to immichAlbumId,
-                        UploadWorker.MEDIASTORE_QUERY to Json.encodeToString(mediastoreQuery)
+                        UploadWorker.MEDIASTORE_QUERY to Json.encodeToString(mediastoreQuery),
+                        UploadWorker.LAVENDER_ALBUM_ID to lavenderAlbumId
                     )
                 )
                 .setConstraints(

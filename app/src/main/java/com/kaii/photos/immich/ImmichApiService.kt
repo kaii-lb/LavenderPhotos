@@ -9,6 +9,7 @@ import com.kaii.lavender.immichintegration.serialization.Album
 import com.kaii.lavender.immichintegration.serialization.CreateAlbum
 import com.kaii.photos.datastore.SQLiteQuery
 import kotlinx.coroutines.delay
+import kotlinx.serialization.Serializable
 
 private const val TAG = "IMMICH_API_SERVICE"
 
@@ -109,6 +110,7 @@ class ImmichApiService(
     suspend fun addAlbumToSync(
         immichId: String,
         albumName: String,
+        albumId: Int,
         currentAlbums: List<Album>,
         context: Context,
         query: SQLiteQuery
@@ -131,6 +133,7 @@ class ImmichApiService(
         }
 
         SchedulingManager.scheduleUploadTask(
+            lavenderAlbumId = albumId,
             context = context,
             immichAlbumId = newId,
             immichEndpointBase = endpoint,
@@ -176,9 +179,12 @@ sealed class ImmichServerSidedAlbumsState {
     ) : ImmichServerSidedAlbumsState()
 }
 
+@Serializable
 sealed class ImmichAlbumDuplicateState {
+    @Serializable
     object DupeFree : ImmichAlbumDuplicateState()
 
+    @Serializable
     data class HasDupes(
         val deviceAssetIds: Set<String>
     ) : ImmichAlbumDuplicateState()

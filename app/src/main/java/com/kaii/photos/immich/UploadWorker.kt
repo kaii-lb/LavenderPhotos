@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Build
 import android.os.CancellationSignal
 import android.util.Log
+import androidx.compose.ui.util.fastMap
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.kaii.lavender.immichintegration.AlbumManager
@@ -33,6 +34,7 @@ class UploadWorker(
         const val BEARER_TOKEN = "bearer_token"
         const val MEDIASTORE_QUERY = "mediastore_query"
         const val ALBUM_ID = "album_id"
+        const val LAVENDER_ALBUM_ID = "lavender_album_id"
     }
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
@@ -48,6 +50,10 @@ class UploadWorker(
                     ?: return@withContext Result.failure()
             val albumId =
                 workerParams.inputData.getString(ALBUM_ID) ?: return@withContext Result.failure()
+            val lavenderAlbumId =
+                workerParams.inputData.getInt(LAVENDER_ALBUM_ID, Int.MAX_VALUE)
+
+            if (lavenderAlbumId == Int.MAX_VALUE) return@withContext Result.failure()
 
             val apiClient = ApiClient()
             val albumManager = AlbumManager(
@@ -182,10 +188,14 @@ class UploadWorker(
                 )
 
                 immichViewModel.setDuplicateState(
+                    albumId = lavenderAlbumId,
                     immichId = immichAlbum.id,
                     state =
                         if (duplicateList.isEmpty()) ImmichAlbumDuplicateState.DupeFree
                         else ImmichAlbumDuplicateState.HasDupes(deviceAssetIds = duplicateList.toSet())
+                )
+                immichViewModel.refreshDuplicateState(
+                    deviceAssetIds = media.fastMap { "${it.displayName}-${it.size}" }
                 )
             } catch (e: Throwable) {
                 Log.e(TAG, "Couldn't update UI, mainViewModel inaccessible")

@@ -2,7 +2,6 @@ package com.kaii.photos.models.immich
 
 import android.content.Context
 import android.util.Log
-import androidx.compose.animation.core.snap
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.MutableState
@@ -13,6 +12,9 @@ import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
+import com.kaii.photos.database.daos.ImmichDuplicateEntityDao
+import com.kaii.photos.database.entities.ImmichDuplicateEntity
+import com.kaii.photos.database.entities.SetHolder
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.SettingsImmichImpl
@@ -21,6 +23,7 @@ import com.kaii.photos.immich.ImmichAlbumSyncState
 import com.kaii.photos.immich.ImmichApiService
 import com.kaii.photos.immich.ImmichServerSidedAlbumsState
 import com.kaii.photos.mediastore.getSQLiteQuery
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -29,7 +32,8 @@ import kotlinx.coroutines.launch
 private const val TAG = "IMMICH_VIEW_MODEL"
 
 class ImmichViewModel(
-    private val immichSettings: SettingsImmichImpl
+    private val immichSettings: SettingsImmichImpl,
+    private val immichDuplicateEntityDao: ImmichDuplicateEntityDao
 ) : ViewModel() {
     private val _immichUploadedMediaCount = MutableStateFlow(0)
     val immichUploadedMediaCount = _immichUploadedMediaCount.asStateFlow()
@@ -47,7 +51,7 @@ class ImmichViewModel(
 
     private val _immichAlbumsDupState: MutableStateFlow<Map<String, ImmichAlbumDuplicateState>> =
         MutableStateFlow(emptyMap())
-    val immichAlbumsDupState = _immichAlbumsSyncState.asStateFlow()
+    val immichAlbumsDupState = _immichAlbumsDupState.asStateFlow()
 
     private lateinit var immichApiService: ImmichApiService
 
@@ -119,10 +123,18 @@ class ImmichViewModel(
                 possible = immichAlbumId
             }
 
-            val result = immichApiService.checkDifference(
+            var result = immichApiService.checkDifference(
                 immichId = immichAlbumId,
                 expectedImmichIds = expectedPhotoImmichIds
             )
+
+            // if (result is ImmichAlbumSyncState.OutOfSync) {
+            //     val albumDupes = immichAlbumsDupState.value[immichAlbumId]
+            //
+            //     if (result.missing.minus(albumDupes).isEmpty()) {
+            //         result = ImmichAlbumSyncState.InSync(expectedPhotoImmichIds)
+            //     }
+            // }
 
             Log.d(TAG, "Gotten result $result")
 
@@ -186,7 +198,8 @@ class ImmichViewModel(
                     albumName = albumInfo.name,
                     currentAlbums = (_immichServerAlbums.value as ImmichServerSidedAlbumsState.Synced).albums.toList(),
                     context = context,
-                    query = getSQLiteQuery(albums = albumInfo.paths)
+                    query = getSQLiteQuery(albums = albumInfo.paths),
+                    albumId = albumInfo.id
                 )
 
                 result.onSuccess { id ->
@@ -251,10 +264,50 @@ class ImmichViewModel(
         _immichUploadedMediaTotal.value += total
     }
 
-    fun setDuplicateState(
+    fun refreshDuplicateState(
+        deviceAssetIds: List<String>,
+        onDone: () -> Unit = {}
+    ) = viewModelScope.launch(Dispatchers.IO) {
+        val states = immichDuplicateEntityDao.getAll()
+        val snapshot = _immichAlbumsDupState.value.toMutableMap()
+
+        states.forEach { state ->
+            val missing = state.dupes.set.filter { it !in deviceAssetIds }
+
+            snapshot[state.immichId] =
+                if (state.dupes.set.isEmpty()) ImmichAlbumDuplicateState.DupeFree
+                else ImmichAlbumDuplicateState.HasDupes(state.dupes.set - missing)
+        }
+
+        _immichAlbumsDupState.value = snapshot
+
+        onDone()
+    }
+
+    suspend fun setDuplicateState(
+        albumId: Int,
         immichId: String,
         state: ImmichAlbumDuplicateState
     ) {
+        // insert anyways, if there's a conflict it'll replace with new value
+        if (state is ImmichAlbumDuplicateState.HasDupes) {
+            immichDuplicateEntityDao.insertEntity(
+                ImmichDuplicateEntity(
+                    albumId = albumId,
+                    immichId = immichId,
+                    dupes = SetHolder(state.deviceAssetIds.toSet())
+                )
+            )
+        } else {
+            immichDuplicateEntityDao.insertEntity(
+                ImmichDuplicateEntity(
+                    albumId = albumId,
+                    immichId = immichId,
+                    dupes = SetHolder(emptySet())
+                )
+            )
+        }
+
         val snapshot = _immichAlbumsDupState.value.toMutableMap()
 
         snapshot[immichId] = state
