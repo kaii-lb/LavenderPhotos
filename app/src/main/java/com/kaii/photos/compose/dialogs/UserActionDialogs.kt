@@ -58,6 +58,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
@@ -843,6 +844,13 @@ fun ImmichLoginDialog(
                 placeholder = stringResource(id = R.string.immich_auth_email),
                 modifier = Modifier,
                 icon = R.drawable.mail,
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                keyboardOptions =
+                    KeyboardOptions(
+                        autoCorrectEnabled = false,
+                        keyboardType = KeyboardType.Email,
+                        imeAction = ImeAction.Search
+                    ),
                 onConfirm = {
                     focusManager.moveFocus(FocusDirection.Down)
                 },
@@ -896,7 +904,7 @@ fun ImmichLoginDialog(
 
             ClearableTextField(
                 text = password,
-                placeholder = stringResource(id = R.string.immich_auth_email),
+                placeholder = stringResource(id = R.string.immich_auth_passowrd),
                 modifier = Modifier,
                 icon = R.drawable.password,
                 onConfirm = {
@@ -904,6 +912,14 @@ fun ImmichLoginDialog(
                         login()
                     }
                 },
+                visualTransformation = PasswordVisualTransformation(mask = '\u2B24'),
+                keyboardOptions =
+                    KeyboardOptions(
+                        autoCorrectEnabled = false,
+                        keyboardType = KeyboardType.Password,
+                        imeAction = ImeAction.Search
+                    ),
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                 onClear = {
                     password.value = ""
                 }

@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -54,6 +55,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
@@ -174,6 +176,15 @@ fun ClearableTextField(
     placeholder: String,
     @DrawableRes icon: Int,
     modifier: Modifier = Modifier,
+    keyboardOptions: KeyboardOptions =
+        KeyboardOptions(
+            autoCorrectEnabled = false,
+            keyboardType = KeyboardType.Text,
+            imeAction = ImeAction.Search
+        ),
+    visualTransformation: VisualTransformation = VisualTransformation.None,
+    containerColor: Color = MaterialTheme.colorScheme.surfaceContainer,
+    contentColor: Color = MaterialTheme.colorScheme.onSurface,
     onConfirm: () -> Unit,
     onClear: () -> Unit
 ) {
@@ -209,64 +220,65 @@ fun ClearableTextField(
                     Spacer(modifier = Modifier.width(8.dp))
                 }
             },
+            suffix = {
+                if (text.value.isNotEmpty()) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.close),
+                        contentDescription = "Clear search query",
+                        tint = contentColor,
+                        modifier = Modifier
+                            .size(24.dp)
+                            .clickable {
+                                onClear()
+                            }
+                    )
+                }
+            },
             colors = TextFieldDefaults.colors(
-                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                focusedContainerColor = containerColor,
+                unfocusedContainerColor = containerColor,
                 cursorColor = MaterialTheme.colorScheme.primary,
-                focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                focusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                focusedTextColor = contentColor,
+                unfocusedTextColor = contentColor,
+                focusedPlaceholderColor = contentColor.copy(alpha = 0.4f),
+                unfocusedPlaceholderColor = contentColor.copy(alpha = 0.4f),
                 unfocusedIndicatorColor = Color.Transparent,
                 focusedIndicatorColor = Color.Transparent
             ),
-            keyboardOptions = KeyboardOptions(
-                autoCorrectEnabled = false,
-                keyboardType = KeyboardType.Text,
-                imeAction = ImeAction.Search
-            ),
+            keyboardOptions = keyboardOptions,
             keyboardActions = KeyboardActions(
                 onSearch = {
                     onConfirm()
                     keyboardController?.hide()
                 }
             ),
-            shape = RoundedCornerShape(1000.dp, 0.dp, 0.dp, 1000.dp),
+            visualTransformation = visualTransformation,
+            shape = CircleShape,
             modifier = Modifier
                 .weight(1f)
         )
 
-        Row(
-            modifier = Modifier
-                .height(56.dp)
-                .width(32.dp)
-                .clip(RoundedCornerShape(0.dp, 1000.dp, 1000.dp, 0.dp))
-                .background(MaterialTheme.colorScheme.surfaceContainer)
-                .weight(0.2f),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Row(
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(RoundedCornerShape(1000.dp))
-                    .clickable {
-                        onClear()
-                    },
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                if (text.value.isNotEmpty()) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.close),
-                        contentDescription = "Clear search query",
-                        tint = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier
-                            .size(24.dp)
-                    )
-                }
-            }
-        }
+        // Row(
+        //     modifier = Modifier
+        //         .height(56.dp)
+        //         .width(32.dp)
+        //         .clip(RoundedCornerShape(0.dp, 1000.dp, 1000.dp, 0.dp))
+        //         .background(containerColor)
+        //         .weight(0.2f),
+        //     verticalAlignment = Alignment.CenterVertically,
+        //     horizontalArrangement = Arrangement.Center
+        // ) {
+        //     Row(
+        //         modifier = Modifier
+        //             .size(36.dp)
+        //             .clip(CircleShape)
+        //             .clickable {
+        //                 onClear()
+        //             },
+        //         verticalAlignment = Alignment.CenterVertically,
+        //         horizontalArrangement = Arrangement.Center
+        //     ) {
+        // }
     }
 }
 
