@@ -36,5 +36,9 @@
     <string name="privacy_policy">Жодної! Ваші дані не залишають ваш пристрій. Жоден штучний інтелект не навчається на них, жодних алгоритмів збору інформації - нічого подібного. Lavender Photos був і завжди буде застосунком із фокусом на приватність.</string>
     <string name="i_swear_were_not_bad">ми справді не використовуємо Ваші дані</string>
     <string name="support">Підтримати нас</string>
-    <string name="support_desc">Допоможіть нам підтримувати застосунок</string>
+    <string name="support_desc">допоможіть нам підтримувати застосунок</string>
+    <string name="updates_desc">оновлюйте застосунок</string>
+    <string name="updates_check">Перевірити оновлення</string>
+    <string name="updates_check_desc">Повідомляє про нову версію під час відкриття застосунку. Оновлення не встановлюється автоматично</string>
+    <string name="updates_start">Почати оновлення</string>
 </resources>
