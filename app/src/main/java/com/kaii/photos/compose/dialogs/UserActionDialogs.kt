@@ -62,12 +62,10 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.kaii.lavender.immichintegration.ApiClient
-import com.kaii.lavender.immichintegration.UserAuth
 import com.kaii.lavender.immichintegration.serialization.LoginCredentials
-import com.kaii.lavender.immichintegration.serialization.UserAvatarColors
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
+import com.kaii.photos.MainActivity.Companion.immichViewModel
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.CheckBoxButtonRow
@@ -77,8 +75,6 @@ import com.kaii.photos.compose.PreferencesRow
 import com.kaii.photos.compose.TitleCloseRow
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
-import com.kaii.photos.datastore.Immich
-import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.createDirectoryPicker
 import com.kaii.photos.helpers.findMinParent
@@ -86,7 +82,6 @@ import com.kaii.photos.helpers.getParentFromPath
 import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.helpers.toRelativePath
 import kotlinx.coroutines.launch
-import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 private const val TAG = "USER_ACTION_DIALOGS"
@@ -817,8 +812,8 @@ fun AddCustomAlbumDialog(
 @OptIn(ExperimentalTime::class)
 @Composable
 fun ImmichLoginDialog(
-    endpointBase: String = "",
-    onDismiss: () -> Unit = {},
+    endpointBase: String,
+    onDismiss: () -> Unit,
 ) {
     LavenderDialogBase(
         onDismiss = onDismiss,
@@ -845,7 +840,7 @@ fun ImmichLoginDialog(
 
             ClearableTextField(
                 text = email,
-                placeholder = "Email", // TODO: resource this
+                placeholder = stringResource(id = R.string.immich_auth_email),
                 modifier = Modifier,
                 icon = R.drawable.mail,
                 onConfirm = {
@@ -872,57 +867,36 @@ fun ImmichLoginDialog(
                     )
                 )
 
-                val apiClient = ApiClient()
-                val userAuth = UserAuth(
-                    apiClient = apiClient,
-                    endpointBase = endpointBase
-                )
-
-                val response = userAuth.login(
+                immichViewModel.loginUser(
                     credentials = LoginCredentials(
                         email = email.value.trim(),
                         password = password.value.trim()
-                    )
-                )
+                    ),
+                    endpointBase = endpointBase
+                ).let { success ->
+                    if (success) {
+                        eventTitle.value = context.resources.getString(R.string.immich_login_successful)
+                        isLoading.value = false
 
-                if (response != null) {
-                    mainViewModel.settings.Immich.setUser(
-                        user = com.kaii.lavender.immichintegration.serialization.User(
-                            avatarColor = UserAvatarColors.Blue,
-                            email = response.userEmail,
-                            id = response.userId,
-                            profileImagePath = response.profileImagePath,
-                            profileChangedAt = Clock.System.now().toString(),
-                            name = response.name
-                        )
-                    )
-                    mainViewModel.settings.Immich.setImmichBasicInfo(
-                        ImmichBasicInfo(
-                            endpoint = endpointBase,
-                            bearerToken = response.accessToken
-                        )
-                    )
-                    eventTitle.value = context.resources.getString(R.string.immich_login_successful)
-                    isLoading.value = false
+                        onDismiss()
+                    } else {
+                        password.value = ""
 
-                    onDismiss()
-                } else {
-                    password.value = ""
-
-                    eventTitle.value = context.resources.getString(R.string.immich_login_failed)
-                    LavenderSnackbarController.pushEvent(
-                        LavenderSnackbarEvents.MessageEvent(
-                            message = context.resources.getString(R.string.immich_login_failed),
-                            duration = SnackbarDuration.Short,
-                            icon = R.drawable.error_2
+                        eventTitle.value = context.resources.getString(R.string.immich_login_failed)
+                        LavenderSnackbarController.pushEvent(
+                            LavenderSnackbarEvents.MessageEvent(
+                                message = context.resources.getString(R.string.immich_login_failed),
+                                duration = SnackbarDuration.Short,
+                                icon = R.drawable.error_2
+                            )
                         )
-                    )
+                    }
                 }
             }
 
             ClearableTextField(
                 text = password,
-                placeholder = "Password", // TODO: resource this
+                placeholder = stringResource(id = R.string.immich_auth_email),
                 modifier = Modifier,
                 icon = R.drawable.password,
                 onConfirm = {

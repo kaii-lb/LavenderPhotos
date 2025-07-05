@@ -388,7 +388,20 @@
     <string name="immich_delete_album_desc">This cannot be undone!</string>
     <string name="immich_delete_album_contents">Include media in deletion</string>
     <string name="immich_album_syncing">Syncing album</string>
-    <string name="immich_album_synced">All images synced</string>
+    <string name="immich_album_synced">All media synced</string>
     <string name="immich_done">done</string>
     <string name="immich_sync_status">Sync status:</string>
+    <string name="immich_email">Email:</string>
+    <string name="immich_set_pfp_fail">Unable to set Profile Picture</string>
+    <string name="immich_set_pfp_success">Updated profile picture!</string>
+    <string name="immich_operation_complete">Operation complete!</string>
+    <string name="immich_state_unknown">Unknown</string>
+    <string name="immich_state_loading">Loading…</string>
+    <string name="immich_sync_album">Sync Album and Immich</string>
+    <string name="immich_sync_album_out_of_sync_desc">"Extra in: Album: %1$s. Immich: %2$s"</string>
+    <string name="immich_album_delete">Delete this album?</string>
+    <string name="immich_album_delete_desc">Removes this album from Immich sync</string>
+    <string name="immich_album_delete_full">Delete Album</string>
+    <string name="immich_auth_passowrd">Password</string>
+    <string name="immich_auth_email">Email</string>
 </resources>

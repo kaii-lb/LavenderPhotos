@@ -1,14 +1,16 @@
 package com.kaii.photos.models.immich
 
-import android.content.Context
+import android.app.Application
 import android.util.Log
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.MutableState
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.application
 import androidx.lifecycle.viewModelScope
 import com.kaii.lavender.immichintegration.ApiClient
 import com.kaii.lavender.immichintegration.serialization.File
+import com.kaii.lavender.immichintegration.serialization.LoginCredentials
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.MainActivity.Companion.mainViewModel
@@ -18,7 +20,9 @@ import com.kaii.photos.database.entities.ImmichDuplicateEntity
 import com.kaii.photos.database.entities.SetHolder
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
+import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.SettingsImmichImpl
+import com.kaii.photos.helpers.appStorageDir
 import com.kaii.photos.immich.ImmichAlbumDuplicateState
 import com.kaii.photos.immich.ImmichAlbumSyncState
 import com.kaii.photos.immich.ImmichApiService
@@ -26,17 +30,20 @@ import com.kaii.photos.immich.ImmichServerSidedAlbumsState
 import com.kaii.photos.immich.ImmichUserLoginState
 import com.kaii.photos.mediastore.getSQLiteQuery
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlin.time.ExperimentalTime
 
 private const val TAG = "IMMICH_VIEW_MODEL"
 
 class ImmichViewModel(
+    application: Application,
     private val immichSettings: SettingsImmichImpl,
     private val immichDuplicateEntityDao: ImmichDuplicateEntityDao
-) : ViewModel() {
+) : AndroidViewModel(application) {
     private val _immichUploadedMediaCount = MutableStateFlow(0)
     val immichUploadedMediaCount = _immichUploadedMediaCount.asStateFlow()
 
@@ -68,7 +75,7 @@ class ImmichViewModel(
                 val endpoint = immichPrefs.endpoint
                 val token = immichPrefs.bearerToken
 
-                if (endpoint.isNotEmpty() && token.isNotEmpty()) {
+                if (endpoint.isNotEmpty() || token.isNotEmpty()) {
                     immichEndpoint = endpoint
                     immichApiService = ImmichApiService(
                         client = ApiClient(),
@@ -76,10 +83,22 @@ class ImmichViewModel(
                         token = token
                     )
                     refreshAlbums()
+                    refreshUserInfo()
                 } else {
                     Log.d(TAG, "Immich endpoint or token not configured")
-                    _immichServerAlbums.value =
-                        ImmichServerSidedAlbumsState.Error("Immich endpoint or token not configured.")
+                    immichEndpoint = ""
+                    immichApiService = ImmichApiService(
+                        client = ApiClient(),
+                        endpoint = endpoint,
+                        token = token
+                    )
+
+                    _immichServerAlbums.value = ImmichServerSidedAlbumsState.Error("Immich endpoint or token not configured.")
+                    _immichAlbumsDupState.value = emptyMap()
+                    _immichAlbumsSyncState.value = emptyMap()
+                    _immichUploadedMediaTotal.value = 0
+                    _immichUploadedMediaCount.value = 0
+                    _immichUserLoginState.value = ImmichUserLoginState.IsNotLoggedIn
                 }
             }
         }
@@ -198,7 +217,6 @@ class ImmichViewModel(
 
     fun addAlbumToSync(
         albumInfo: AlbumInfo,
-        context: Context,
         notificationBody: MutableState<String>,
         notificationPercentage: MutableFloatState,
         onDone: (newId: String) -> Unit = {}
@@ -209,7 +227,7 @@ class ImmichViewModel(
                     immichId = albumInfo.immichId,
                     albumName = albumInfo.name,
                     currentAlbums = (_immichServerAlbums.value as ImmichServerSidedAlbumsState.Synced).albums.toList(),
-                    context = context,
+                    context = application.applicationContext,
                     query = getSQLiteQuery(albums = albumInfo.paths),
                     albumId = albumInfo.id
                 )
@@ -327,17 +345,29 @@ class ImmichViewModel(
         _immichAlbumsDupState.value = snapshot
     }
 
-    fun refreshUserInfo() = viewModelScope.launch {
+    fun refreshUserInfo(
+        onDone: () -> Unit = {}
+    ) = viewModelScope.launch {
         val state = immichApiService.getUserInfo()
         if (state != null) {
-            _immichUserLoginState.value = ImmichUserLoginState.IsLoggedIn(
-                state.copy(
-                    profileImagePath = "${immichEndpoint}/api/users/${state.id}/profile-image"
-                )
-            )
+            val pfp = immichApiService.getProfilePic(state.id)
+            if (pfp != null) {
+                java.io.File(application.applicationContext.appStorageDir + "/immich_pfp.png").apply {
+                    parentFile?.mkdirs()
+                    createNewFile()
+                    outputStream().use {
+                        it.write(pfp)
+                    }
+                }
+            }
+
+            _immichUserLoginState.value =
+                ImmichUserLoginState.IsLoggedIn(state.copy(profileImagePath = application.applicationContext.appStorageDir + "/immich_pfp.png"))
         } else {
             _immichUserLoginState.value = ImmichUserLoginState.IsNotLoggedIn
         }
+
+        onDone()
     }
 
     fun setUsername(
@@ -345,7 +375,7 @@ class ImmichViewModel(
     ) = viewModelScope.launch {
         val success = immichApiService.setUsername(newName)
 
-        if (success) refreshUserInfo()
+        if (success) retryRefresh()
     }
 
     fun setProfilePic(
@@ -353,6 +383,60 @@ class ImmichViewModel(
     ) = viewModelScope.launch {
         val success = immichApiService.setProfilePic(file)
 
-        if (success) refreshUserInfo()
+        if (success) {
+            val pic = java.io.File(file.path)
+            java.io.File(application.applicationContext.appStorageDir + "/immich_pfp.png").outputStream().use {
+                it.write(pic.readBytes())
+            }
+
+            retryRefresh()
+        }
+    }
+
+    @OptIn(ExperimentalTime::class)
+    suspend fun loginUser(
+        credentials: LoginCredentials,
+        endpointBase: String
+    ): Boolean {
+        val response = immichApiService.loginUser(credentials)
+
+        if (response != null) {
+            immichSettings.setImmichBasicInfo(
+                ImmichBasicInfo(
+                    endpoint = endpointBase,
+                    bearerToken = response.accessToken
+                )
+            )
+
+            retryRefresh()
+            return true
+        } else return false
+    }
+
+    private suspend fun retryRefresh() {
+        refreshUserInfo()
+        for (i in 0..3) {
+            if (_immichUserLoginState.value is ImmichUserLoginState.IsLoggedIn) break
+            delay(1000L * (1 shl i))
+            refreshUserInfo()
+        }
+    }
+
+    @OptIn(ExperimentalTime::class)
+    suspend fun logoutUser() {
+        val response = immichApiService.logoutUser()
+
+        if (response != null) {
+            immichSettings.setImmichBasicInfo(
+                ImmichBasicInfo(
+                    endpoint = immichEndpoint,
+                    bearerToken = ""
+                )
+            )
+
+            java.io.File(application.applicationContext.appStorageDir + "/immich_pfp.png").delete()
+
+            refreshUserInfo()
+        }
     }
 }

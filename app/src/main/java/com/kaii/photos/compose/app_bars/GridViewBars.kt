@@ -59,7 +59,6 @@ import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.BottomBarTab
-import com.kaii.photos.datastore.Immich
 import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
@@ -73,6 +72,7 @@ import com.kaii.photos.helpers.permanentlyDeleteSecureFolderImageList
 import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareMultipleSecuredImages
 import com.kaii.photos.immich.ImmichAlbumSyncState
+import com.kaii.photos.immich.ImmichUserLoginState
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.content_provider.LavenderContentProvider
@@ -181,14 +181,13 @@ fun SingleAlbumViewTopBar(
                         )
                     }
 
-                    val immichBackupEnabled by mainViewModel.settings.Immich.getImmichEnabled()
-                        .collectAsStateWithLifecycle(initialValue = false)
+                    val userInfo by immichViewModel.immichUserLoginState.collectAsStateWithLifecycle()
 
-                    if (immichBackupEnabled && albumInfo != null) {
+                    if (userInfo is ImmichUserLoginState.IsLoggedIn && albumInfo != null) {
                         var loadingBackupState by remember { mutableStateOf(false) }
                         val albumState by immichViewModel.immichAlbumsSyncState.collectAsStateWithLifecycle()
 
-                        var deviceAssetIds by remember { mutableStateOf(emptyList<String>())}
+                        var deviceAssetIds by remember { mutableStateOf(emptyList<String>()) }
 
                         LaunchedEffect(media) {
                             loadingBackupState = true

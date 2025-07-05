@@ -5,11 +5,12 @@ import android.util.Log
 import androidx.compose.ui.util.fastMap
 import com.kaii.lavender.immichintegration.AlbumManager
 import com.kaii.lavender.immichintegration.ApiClient
-import com.kaii.lavender.immichintegration.TrashManager
+import com.kaii.lavender.immichintegration.UserAuth
 import com.kaii.lavender.immichintegration.UserManager
 import com.kaii.lavender.immichintegration.serialization.Album
 import com.kaii.lavender.immichintegration.serialization.CreateAlbum
 import com.kaii.lavender.immichintegration.serialization.File
+import com.kaii.lavender.immichintegration.serialization.LoginCredentials
 import com.kaii.lavender.immichintegration.serialization.UserFull
 import com.kaii.photos.datastore.SQLiteQuery
 import kotlinx.coroutines.delay
@@ -19,8 +20,8 @@ private const val TAG = "IMMICH_API_SERVICE"
 
 class ImmichApiService(
     client: ApiClient,
-    private val endpoint: String,
-    private val token: String
+    val endpoint: String,
+    val token: String
 ) {
     companion object {
         private const val MAX_RETRIES = 5
@@ -41,11 +42,10 @@ class ImmichApiService(
             bearerToken = token
         )
 
-    private val trashManager =
-        TrashManager(
+    private val userAuth =
+        UserAuth(
             apiClient = client,
-            endpointBase = endpoint,
-            bearerToken = token
+            endpointBase = endpoint
         )
 
     suspend fun getAllAlbums(): List<Album>? {
@@ -200,6 +200,24 @@ class ImmichApiService(
         e.printStackTrace()
 
         false
+    }
+
+    suspend fun loginUser(
+        credentials: LoginCredentials
+    ) = try {
+        userAuth.login(credentials)
+    } catch (e: Throwable) {
+        Log.e(TAG, e.toString())
+        e.printStackTrace()
+
+        null
+    }
+
+    suspend fun logoutUser() = try {
+        userAuth.logout(token)
+    } catch (e: Throwable) {
+        Log.e(TAG, e.toString())
+        e.printStackTrace()
     }
 }
 

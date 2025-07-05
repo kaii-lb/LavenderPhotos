@@ -196,8 +196,8 @@ fun ImmichAlbumPage(
 
                     LaunchedEffect(uploadCount, uploadTotal) {
                         if (uploadTotal != 0) notificationBody.value =
-                            "${uploadCount}/${uploadTotal} done"
-                        else notificationBody.value = "Operation complete!"
+                            "${uploadCount}/${uploadTotal} ${context.resources.getString(R.string.immich_done)}"
+                        else notificationBody.value = context.resources.getString(R.string.immich_operation_complete)
                         notificationPercentage.floatValue = uploadCount.toFloat() / uploadTotal
                     }
 
@@ -212,9 +212,9 @@ fun ImmichAlbumPage(
                                     (albumSyncState as ImmichAlbumSyncState.OutOfSync).missing.minus(currentAlbumDupe).size
                                 }
 
-                                is ImmichAlbumSyncState.Error -> "Unknown"
+                                is ImmichAlbumSyncState.Error -> context.resources.getString(R.string.immich_state_unknown)
 
-                                else -> "Loading"
+                                else -> context.resources.getString(R.string.immich_state_loading)
                             }
                         }
                     }
@@ -230,16 +230,16 @@ fun ImmichAlbumPage(
                                     (albumSyncState as ImmichAlbumSyncState.OutOfSync).extra.size
                                 }
 
-                                is ImmichAlbumSyncState.Error -> "Unknown"
+                                is ImmichAlbumSyncState.Error -> context.resources.getString(R.string.immich_state_unknown)
 
-                                else -> "Loading"
+                                else -> context.resources.getString(R.string.immich_state_loading)
                             }
                         }
                     }
 
                     PreferencesRow(
-                        title = "Sync Album and Immich",
-                        summary = "Extra in: Album: $missingFromImmich. Immich: $extraInImmich",
+                        title = stringResource(id = R.string.immich_sync_album),
+                        summary = stringResource(id = R.string.immich_sync_album_out_of_sync_desc, missingFromImmich, extraInImmich),
                         iconResID = R.drawable.cloud_upload,
                         position = RowPosition.Single,
                         showBackground = false,
@@ -247,7 +247,6 @@ fun ImmichAlbumPage(
                     ) {
                         immichViewModel.addAlbumToSync(
                             albumInfo = dynamicAlbumInfo,
-                            context = context,
                             notificationBody = notificationBody,
                             notificationPercentage = notificationPercentage
                         ) { newId ->
@@ -276,8 +275,8 @@ fun ImmichAlbumPage(
                         // TODO: add option to delete with all images in it
                         ConfirmationDialogWithBody(
                             showDialog = showDeleteConfirmationDialog,
-                            dialogTitle = stringResource(id = R.string.immich_albums_clear),
-                            dialogBody = stringResource(id = R.string.immich_albums_clear_desc),
+                            dialogTitle = stringResource(id = R.string.immich_album_delete),
+                            dialogBody = stringResource(id = R.string.immich_album_delete_desc),
                             confirmButtonLabel = stringResource(id = R.string.media_delete)
                         ) {
                             loadingBackupState = true
@@ -298,8 +297,8 @@ fun ImmichAlbumPage(
                         }
                     }
                     PreferencesRow(
-                        title = "Delete album",
-                        summary = "Removes album without removing contents",
+                        title = stringResource(id = R.string.immich_album_delete_full),
+                        summary = stringResource(id = R.string.immich_album_delete_desc),
                         iconResID = R.drawable.cloud_upload,
                         position = RowPosition.Single,
                         showBackground = false,

@@ -2,17 +2,29 @@ package com.kaii.photos.compose.immich
 
 import android.util.Patterns
 import androidx.compose.foundation.background
-import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -20,12 +32,24 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.kaii.lavender.immichintegration.ApiClient
-import com.kaii.lavender.immichintegration.UserAuth
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideImage
+import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.kaii.photos.LocalNavController
+import com.kaii.photos.MainActivity.Companion.immichViewModel
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.PreferencesRow
@@ -36,11 +60,15 @@ import com.kaii.photos.compose.dialogs.TextEntryDialog
 import com.kaii.photos.datastore.Immich
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.immich.ImmichUserLoginState
 import kotlinx.coroutines.launch
+import java.io.File
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalGlideComposeApi::class)
 @Composable
 fun ImmichMainPage() {
+    val navController = LocalNavController.current
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -49,6 +77,21 @@ fun ImmichMainPage() {
                         text = stringResource(id = R.string.immich_title),
                         fontSize = TextUnit(22f, TextUnitType.Sp)
                     )
+                },
+                navigationIcon = {
+                    IconButton(
+                        onClick = {
+                            navController.popBackStack()
+                        },
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.back_arrow),
+                            contentDescription = stringResource(id = R.string.return_to_previous_page),
+                            tint = MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier
+                                .size(24.dp)
+                        )
+                    }
                 }
             )
         }
@@ -76,10 +119,12 @@ fun ImmichMainPage() {
                         title = stringResource(id = R.string.immich_endpoint_base),
                         placeholder = stringResource(id = R.string.immich_endpoint_base_placeholder),
                         onConfirm = { value ->
-                            if (value.startsWith("https://") && Patterns.WEB_URL.matcher(value).matches()) {
+                            if ((value.startsWith("https://") || value.startsWith("http://"))
+                                && Patterns.WEB_URL.matcher(value).matches()
+                            ) {
                                 mainViewModel.settings.Immich.setImmichBasicInfo(
                                     ImmichBasicInfo(
-                                        endpoint = value,
+                                        endpoint = value.removeSuffix("/"),
                                         bearerToken = immichBasicInfo.bearerToken
                                     )
                                 ) // TODO: check if we can ping server address?
@@ -88,7 +133,8 @@ fun ImmichMainPage() {
                             } else false
                         },
                         onValueChange = { value ->
-                            value.startsWith("https://") && Patterns.WEB_URL.matcher(value).matches()
+                            (value.startsWith("https://") || value.startsWith("http://"))
+                                    && Patterns.WEB_URL.matcher(value).matches()
                             // TODO: check if we can ping server address?
                         },
                         onDismiss = {
@@ -110,54 +156,47 @@ fun ImmichMainPage() {
                         coroutineScope.launch {
                             if (immichBasicInfo.bearerToken == "") return@launch
 
-                            UserAuth(
-                                apiClient = ApiClient(),
-                                endpointBase = immichBasicInfo.endpoint
-                            ).logout(bearerToken = immichBasicInfo.bearerToken)
+                            immichViewModel.logoutUser()
                             mainViewModel.settings.Immich.setImmichBasicInfo(
                                 ImmichBasicInfo("", "")
                             )
-                            mainViewModel.settings.Immich.setUser(null)
                         }
                         showClearEndpointDialog.value = false
                     }
                 }
 
-                Box (
-                    modifier = Modifier
-                        .combinedClickable(
-                            onLongClick = {
-                                showClearEndpointDialog.value = true
-                            },
-                            onClick = {
-                                showAddressDialog = true
-                            }
-                        )
+                PreferencesRow(
+                    title = stringResource(id = R.string.immich_endpoint_base),
+                    summary =
+                        if (immichBasicInfo.endpoint == "") stringResource(id = R.string.immich_endpoint_base_desc)
+                        else immichBasicInfo.endpoint,
+                    iconResID = R.drawable.data,
+                    position = RowPosition.Middle,
+                    showBackground = false
                 ) {
-                    PreferencesRow(
-                        title = stringResource(id = R.string.immich_endpoint_base),
-                        summary =
-                            if (immichBasicInfo.endpoint == "") stringResource(id = R.string.immich_endpoint_base_desc)
-                            else immichBasicInfo.endpoint,
-                        iconResID = R.drawable.data,
-                        position = RowPosition.Middle,
-                        showBackground = false
-                    )
+                    if (immichBasicInfo.endpoint.isEmpty()) showAddressDialog = true
+                    else showClearEndpointDialog.value = true
                 }
             }
 
             item {
-                val user by mainViewModel.settings.Immich.getUser()
-                    .collectAsStateWithLifecycle(initialValue = null)
+                val userInfo by immichViewModel.immichUserLoginState.collectAsStateWithLifecycle()
                 val immichBasicInfo by mainViewModel.settings.Immich.getImmichBasicInfo()
                     .collectAsStateWithLifecycle(initialValue = ImmichBasicInfo("", ""))
                 var showLoginDialog by remember { mutableStateOf(false) }
+                var isLoadingInfo by remember { mutableStateOf(true) }
 
                 if (showLoginDialog) {
                     ImmichLoginDialog(
                         endpointBase = immichBasicInfo.endpoint
                     ) {
                         showLoginDialog = false
+                    }
+                }
+
+                LaunchedEffect(Unit) {
+                    immichViewModel.refreshUserInfo {
+                        isLoadingInfo = false
                     }
                 }
 
@@ -173,71 +212,110 @@ fun ImmichMainPage() {
                         coroutineScope.launch {
                             if (immichBasicInfo.bearerToken == "") return@launch
 
-                            UserAuth(
-                                apiClient = ApiClient(),
-                                endpointBase = immichBasicInfo.endpoint
-                            ).logout(bearerToken = immichBasicInfo.bearerToken)
-                            mainViewModel.settings.Immich.setImmichBasicInfo(
-                                ImmichBasicInfo("", "")
-                            )
-                            mainViewModel.settings.Immich.setUser(null)
+                            immichViewModel.logoutUser()
                         }
                         showLogoutDialog.value = false
                     }
                 }
 
-                Box (
+                val context = LocalContext.current
+                val title by remember {
+                    derivedStateOf {
+                        if (userInfo is ImmichUserLoginState.IsNotLoggedIn) context.resources.getString(R.string.immich_login_unavailable)
+                        else context.resources.getString(R.string.immich_login_found) + " " + (userInfo as ImmichUserLoginState.IsLoggedIn).info.name
+                    }
+                }
+                val summary by remember {
+                    derivedStateOf {
+                        if (userInfo is ImmichUserLoginState.IsNotLoggedIn) context.resources.getString(R.string.immich_login_unavailable_desc)
+                        else context.resources.getString(R.string.immich_email) + " " + (userInfo as ImmichUserLoginState.IsLoggedIn).info.email
+                    }
+                }
+
+                Row(
                     modifier = Modifier
-                        .combinedClickable(
-                            onLongClick = {
-                                showLogoutDialog.value = true
-                            },
-                            onClick = {
-                                showLoginDialog = true
+                        .fillMaxWidth(1f)
+                        .wrapContentHeight(align = Alignment.CenterVertically)
+                        .clickable {
+                            if (immichBasicInfo.endpoint != "" && !isLoadingInfo) {
+                                if (userInfo is ImmichUserLoginState.IsNotLoggedIn) showLoginDialog = true
+                                else showLogoutDialog.value = true
                             }
-                        )
+                        }
+                        .padding(16.dp, 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    PreferencesRow(
-                        title =
-                            if (user == null) stringResource(id = R.string.immich_login_unavailable)
-                            else stringResource(id = R.string.immich_login_found) + " " + user!!.name,
-                        summary =
-                            if (user == null) stringResource(id = R.string.immich_login_unavailable_desc)
-                            else stringResource(id = R.string.immich_login_found_desc),
-                        iconResID = R.drawable.account_circle,
-                        position = RowPosition.Middle,
-                        showBackground = false,
-                        enabled = immichBasicInfo.endpoint != ""
-                    )
+                    val pfpPath by remember {
+                        derivedStateOf {
+                            val file = File((userInfo as ImmichUserLoginState.IsLoggedIn).info.profileImagePath)
+                            if (file.exists()) file.absolutePath
+                            else null
+                        }
+                    }
+
+                    if (userInfo is ImmichUserLoginState.IsNotLoggedIn || pfpPath == null) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.account_circle),
+                            contentDescription = "an icon describing: $title",
+                            tint = MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier
+                                .size(28.dp)
+                        )
+                    } else {
+                        GlideImage(
+                            model = pfpPath,
+                            contentDescription = "User profile picture",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(CircleShape)
+                        ) {
+                            it.diskCacheStrategy(DiskCacheStrategy.NONE)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    Column(
+                        modifier = Modifier
+                            .wrapContentHeight()
+                            .weight(1f),
+                        verticalArrangement = Arrangement.SpaceEvenly,
+                        horizontalAlignment = Alignment.Start
+                    ) {
+                        Text(
+                            text = title,
+                            fontSize = TextUnit(18f, TextUnitType.Sp),
+                            textAlign = TextAlign.Start,
+                            color = if (immichBasicInfo.endpoint != "" && !isLoadingInfo) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(
+                                alpha = 0.5f
+                            )
+                        )
+
+                        Text(
+                            text = summary,
+                            fontSize = TextUnit(14f, TextUnitType.Sp),
+                            textAlign = TextAlign.Start,
+                            color = if (immichBasicInfo.endpoint != "" && !isLoadingInfo) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(
+                                alpha = 0.5f
+                            ),
+                            maxLines = 3,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+
+                    if (isLoadingInfo) {
+                        CircularProgressIndicator(
+                            strokeWidth = 3.dp,
+                            strokeCap = StrokeCap.Round,
+                            color = MaterialTheme.colorScheme.primary,
+                            trackColor = Color.Transparent,
+                            modifier = Modifier
+                                .size(24.dp)
+                        )
+                    }
                 }
             }
-
-            // item {
-            //     val backupAlbums by mainViewModel.settings.Immich.getServerAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
-            //
-            //     val showConfirmationDialog = remember { mutableStateOf(false) }
-            //     if (showConfirmationDialog.value) {
-            //         ConfirmationDialogWithBody(
-            //             showDialog = showConfirmationDialog,
-            //             dialogTitle = stringResource(id = R.string.immich_albums_clear),
-            //             dialogBody = stringResource(id = R.string.immich_albums_clear_confirm),
-            //             confirmButtonLabel = stringResource(id = R.string.media_confirm)
-            //         ) {
-            //             mainViewModel.settings.Immich.setBackupsAlbums(emptyList())
-            //         }
-            //     }
-            //
-            //     PreferencesRow(
-            //         title = stringResource(id = R.string.immich_albums_clear),
-            //         summary = stringResource(id = R.string.immich_albums_clear_desc),
-            //         iconResID = R.drawable.albums_clear,
-            //         position = RowPosition.Middle,
-            //         showBackground = false,
-            //         enabled = backupAlbums.isNotEmpty()
-            //     ) {
-            //         showConfirmationDialog.value = true
-            //     }
-            // }
         }
     }
 }

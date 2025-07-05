@@ -1,5 +1,6 @@
 package com.kaii.photos.compose
 
+import androidx.activity.compose.BackHandler
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
@@ -10,12 +11,14 @@ import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -32,6 +35,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,7 +45,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
@@ -52,11 +58,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.bumptech.glide.signature.ObjectKey
+import com.kaii.photos.MainActivity.Companion.immichViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.DialogClickableItem
 import com.kaii.photos.compose.dialogs.DialogExpandableItem
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.immich.ImmichUserLoginState
 import kotlinx.coroutines.delay
+import java.io.File
 
 @Composable
 fun TextFieldWithConfirm(
@@ -275,13 +286,13 @@ fun AnimatableTextField(
     val focus = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
 
-    AnimatedContent (
+    AnimatedContent(
         targetState = state.value && enabled,
         label = string.value,
         modifier = Modifier
             .then(modifier),
         transitionSpec = {
-            (expandHorizontally (
+            (expandHorizontally(
                 animationSpec = tween(
                     durationMillis = 350
                 ),
@@ -291,7 +302,7 @@ fun AnimatableTextField(
                     durationMillis = 350,
                 )
             )).togetherWith(
-                shrinkHorizontally (
+                shrinkHorizontally(
                     animationSpec = tween(
                         durationMillis = 350
                     ),
@@ -373,7 +384,7 @@ fun AnimatableTextField(
                 waitForKB = false
             }
         } else {
-            Column (
+            Column(
                 modifier = Modifier
                     .wrapContentHeight()
             ) {
@@ -388,5 +399,146 @@ fun AnimatableTextField(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun MainDialogUserInfo() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth(1f)
+            .padding(start = 12.dp, top = 0.dp, end = 12.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Start
+    ) {
+        LaunchedEffect(Unit) {
+            immichViewModel.refreshUserInfo()
+        }
+
+        val context = LocalContext.current
+        val userInfo by immichViewModel.immichUserLoginState.collectAsStateWithLifecycle()
+
+        var originalName by remember(userInfo) {
+            mutableStateOf(
+                if (userInfo is ImmichUserLoginState.IsNotLoggedIn) context.resources.getString(R.string.immich_login_unavailable)
+                else (userInfo as ImmichUserLoginState.IsLoggedIn).info.name
+            )
+        }
+        val pfpPath by remember {
+            derivedStateOf {
+                if (userInfo is ImmichUserLoginState.IsLoggedIn) {
+                    val file = File((userInfo as ImmichUserLoginState.IsLoggedIn).info.profileImagePath)
+                    if (file.exists()) file.absolutePath
+                    else R.drawable.cat_picture
+                } else R.drawable.cat_picture
+            }
+        }
+        val pfpSignature by remember {
+            derivedStateOf {
+                if (pfpPath is String) {
+                    ObjectKey(File(pfpPath as String).lastModified())
+                } else ObjectKey(0)
+            }
+        }
+
+        var username by remember {
+            mutableStateOf(
+                originalName
+            )
+        }
+
+        InvalidatableGlideImage(
+            path = pfpPath,
+            signature = pfpSignature
+        )
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        val focus = remember { FocusRequester() }
+        val focusManager = LocalFocusManager.current
+        var changeName by remember { mutableStateOf(false) }
+        var backPressedCallbackEnabled by remember { mutableStateOf(false) }
+
+        BackHandler(
+            enabled = backPressedCallbackEnabled
+        ) {
+            focusManager.clearFocus()
+        }
+
+        LaunchedEffect(changeName, originalName) {
+            focusManager.clearFocus()
+
+            if (!changeName && username != originalName) {
+                username = originalName
+                return@LaunchedEffect
+            } else if (changeName) {
+                originalName = username
+                immichViewModel.setUsername(username)
+                changeName = false
+            }
+        }
+
+        TextField(
+            value = username,
+            onValueChange = { newVal ->
+                username = newVal
+            },
+            textStyle = LocalTextStyle.current.copy(
+                fontSize = TextUnit(16f, TextUnitType.Sp),
+                textAlign = TextAlign.Start,
+                color = MaterialTheme.colorScheme.onSurface,
+            ),
+            maxLines = 1,
+            colors = TextFieldDefaults.colors().copy(
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                unfocusedIndicatorColor = Color.Transparent,
+                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                unfocusedTrailingIconColor = Color.Transparent,
+                focusedIndicatorColor = Color.Transparent,
+                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                focusedTrailingIconColor = MaterialTheme.colorScheme.onSurface,
+                disabledIndicatorColor = Color.Transparent,
+                disabledContainerColor = Color.Transparent,
+                disabledTextColor = MaterialTheme.colorScheme.onSurface
+            ),
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                capitalization = KeyboardCapitalization.None,
+                autoCorrectEnabled = false,
+                keyboardType = KeyboardType.Ascii,
+                imeAction = ImeAction.Done,
+                showKeyboardOnFocus = true
+            ),
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    focusManager.clearFocus()
+                    changeName = true
+                },
+            ),
+            trailingIcon = {
+                if (userInfo is ImmichUserLoginState.IsLoggedIn) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.checkmark_thin),
+                        contentDescription = "Confirm filename change button",
+                        modifier = Modifier
+                            .clickable(
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() },
+                            ) {
+                                focusManager.clearFocus()
+                                changeName = true
+                            }
+                    )
+                }
+            },
+            shape = RoundedCornerShape(1000.dp),
+            enabled = userInfo is ImmichUserLoginState.IsLoggedIn,
+            modifier = Modifier
+                .focusRequester(focus)
+                .onFocusChanged {
+                    backPressedCallbackEnabled = it.isFocused
+                }
+        )
     }
 }

@@ -3,12 +3,14 @@ package com.kaii.photos.mediastore
 import android.net.Uri
 import android.os.Parcelable
 import androidx.compose.runtime.Immutable
+import androidx.core.net.toUri
 import com.bumptech.glide.signature.ObjectKey
+import com.kaii.lavender.immichintegration.serialization.File
 import com.kaii.photos.helpers.SectionItem
+import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import java.util.Calendar
 import java.util.Locale
-import androidx.core.net.toUri
 
 /** A data model containing data for a single media item
  * @param dateModified is in seconds
@@ -32,6 +34,16 @@ data class MediaStoreData(
 ) : Parcelable {
     companion object {
         val dummyItem = MediaStoreData()
+    }
+
+    @IgnoredOnParcel
+    val immichFile = run {
+        File(
+            path = absolutePath,
+            dateCreated = dateTaken,
+            lastModified = dateModified,
+            size = size
+        )
     }
 
 	/** gets the date taken in days (no hours/minutes/seconds/milliseconds) */
