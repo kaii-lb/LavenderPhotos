@@ -63,7 +63,7 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.lavender.immichintegration.ApiClient
-import com.kaii.lavender.immichintegration.User
+import com.kaii.lavender.immichintegration.UserAuth
 import com.kaii.lavender.immichintegration.serialization.LoginCredentials
 import com.kaii.lavender.immichintegration.serialization.UserAvatarColors
 import com.kaii.lavender.snackbars.LavenderSnackbarController
@@ -873,7 +873,7 @@ fun ImmichLoginDialog(
                 )
 
                 val apiClient = ApiClient()
-                val userAuth = User(
+                val userAuth = UserAuth(
                     apiClient = apiClient,
                     endpointBase = endpointBase
                 )

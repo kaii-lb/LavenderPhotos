@@ -183,32 +183,34 @@ fun SingleAlbumViewTopBar(
 
                     val immichBackupEnabled by mainViewModel.settings.Immich.getImmichEnabled()
                         .collectAsStateWithLifecycle(initialValue = false)
-                    var loadingBackupState by remember { mutableStateOf(false) }
 
                     if (immichBackupEnabled && albumInfo != null) {
+                        var loadingBackupState by remember { mutableStateOf(false) }
                         val albumState by immichViewModel.immichAlbumsSyncState.collectAsStateWithLifecycle()
 
-                        val deviceAssetIds = remember(media) {
-                            media
-                                .fastMapNotNull {
-                                    if (it.type != MediaType.Section) {
-                                        "${it.displayName}-${it.size}"
-                                    } else {
-                                        null
-                                    }
-                                }
-                        }
+                        var deviceAssetIds by remember { mutableStateOf(emptyList<String>())}
 
                         LaunchedEffect(media) {
                             loadingBackupState = true
-                            immichViewModel.checkSyncStatus(
-                                immichAlbumId = albumInfo.immichId,
-                                expectedPhotoImmichIds = deviceAssetIds.toSet()
-                            )
-                            immichViewModel.refreshDuplicateState(
-                                deviceAssetIds = media.map { "${it.displayName}-${it.size}" }
-                            ) {
-                                loadingBackupState = false
+                            withContext(Dispatchers.IO) {
+                                deviceAssetIds = media
+                                    .fastMapNotNull {
+                                        if (it.type != MediaType.Section) {
+                                            "${it.displayName}-${it.size}"
+                                        } else {
+                                            null
+                                        }
+                                    }
+
+                                immichViewModel.checkSyncStatus(
+                                    immichAlbumId = albumInfo.immichId,
+                                    expectedPhotoImmichIds = deviceAssetIds.toSet()
+                                )
+                                immichViewModel.refreshDuplicateState(
+                                    deviceAssetIds = media.map { "${it.displayName}-${it.size}" }
+                                ) {
+                                    loadingBackupState = false
+                                }
                             }
                         }
 

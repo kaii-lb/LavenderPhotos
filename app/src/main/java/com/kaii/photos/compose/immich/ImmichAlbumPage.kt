@@ -209,7 +209,7 @@ fun ImmichAlbumPage(
                                 }
 
                                 is ImmichAlbumSyncState.OutOfSync -> {
-                                    (albumSyncState as ImmichAlbumSyncState.OutOfSync).missing.size
+                                    (albumSyncState as ImmichAlbumSyncState.OutOfSync).missing.minus(currentAlbumDupe).size
                                 }
 
                                 is ImmichAlbumSyncState.Error -> "Unknown"

@@ -10,9 +10,11 @@ import androidx.work.WorkerParameters
 import com.kaii.lavender.immichintegration.AlbumManager
 import com.kaii.lavender.immichintegration.ApiClient
 import com.kaii.lavender.immichintegration.AssetManager
+import com.kaii.lavender.immichintegration.TrashManager
 import com.kaii.lavender.immichintegration.serialization.AlbumOrder
 import com.kaii.lavender.immichintegration.serialization.File
 import com.kaii.lavender.immichintegration.serialization.ModifyAlbumAsset
+import com.kaii.lavender.immichintegration.serialization.RestoreFromTrash
 import com.kaii.lavender.immichintegration.serialization.UpdateAlbumInfo
 import com.kaii.lavender.immichintegration.serialization.UploadStatus
 import com.kaii.photos.MainActivity.Companion.immichViewModel
@@ -61,6 +63,11 @@ class UploadWorker(
                 endpointBase = endpointBase,
                 bearerToken = bearerToken
             )
+            val trashManager = TrashManager(
+                apiClient = apiClient,
+                endpointBase = endpointBase,
+                bearerToken = bearerToken
+            )
 
             var immichAlbum = albumManager.getAlbumInfo(albumId = albumId)!!
 
@@ -99,7 +106,7 @@ class UploadWorker(
 
             var existingCount = 0
             val successList = mutableListOf<Pair<String, Long>>()
-            val duplicateList = mutableListOf<String>()
+            val duplicateList = mutableListOf<Pair<String, String>>()
 
             try {
                 immichViewModel.updatePhotoUploadProgress(
@@ -127,7 +134,7 @@ class UploadWorker(
                         successList.add(Pair(it.id, item.lastModified))
 
                         if (it.status == UploadStatus.Duplicate) {
-                            duplicateList.add(deviceAssetId)
+                            duplicateList.add(Pair(it.id, deviceAssetId))
                         }
 
                         try {
@@ -160,24 +167,38 @@ class UploadWorker(
             }
 
             Log.d(TAG, "Success list $successList")
+            val actualDupes = duplicateList.filter {
+                assetManager.getAssetInfo(it.first)?.isTrashed == false
+            }
             if (successList.isNotEmpty()) {
-                albumManager.addAssetToAlbum(
-                    albumId = albumId,
-                    assets = ModifyAlbumAsset(
-                        ids = successList.map { it.first }
+                try {
+                    trashManager.restoreItems(
+                        ids = RestoreFromTrash(
+                            ids = duplicateList.map { it.first } - actualDupes.map { it.first }
+                        )
                     )
-                )
 
-                albumManager.updateAlbumInfo(
-                    albumId = albumId,
-                    info = UpdateAlbumInfo(
-                        albumName = immichAlbum.albumName,
-                        albumThumbnailAssetId = successList.maxBy { it.second }.first,
-                        description = immichAlbum.description,
-                        isActivityEnabled = immichAlbum.isActivityEnabled,
-                        order = immichAlbum.order ?: AlbumOrder.Descending
+                    albumManager.addAssetToAlbum(
+                        albumId = albumId,
+                        assets = ModifyAlbumAsset(
+                            ids = successList.map { it.first }
+                        )
                     )
-                )
+
+                    albumManager.updateAlbumInfo(
+                        albumId = albumId,
+                        info = UpdateAlbumInfo(
+                            albumName = immichAlbum.albumName,
+                            albumThumbnailAssetId = successList.maxBy { it.second }.first,
+                            description = immichAlbum.description,
+                            isActivityEnabled = immichAlbum.isActivityEnabled,
+                            order = immichAlbum.order ?: AlbumOrder.Descending
+                        )
+                    )
+                } catch (e: Throwable) {
+                    Log.e(TAG, e.toString())
+                    e.printStackTrace()
+                }
             }
 
             try {
@@ -192,7 +213,7 @@ class UploadWorker(
                     immichId = immichAlbum.id,
                     state =
                         if (duplicateList.isEmpty()) ImmichAlbumDuplicateState.DupeFree
-                        else ImmichAlbumDuplicateState.HasDupes(deviceAssetIds = duplicateList.toSet())
+                        else ImmichAlbumDuplicateState.HasDupes(deviceAssetIds = actualDupes.map { it.second }.toSet())
                 )
                 immichViewModel.refreshDuplicateState(
                     deviceAssetIds = media.fastMap { "${it.displayName}-${it.size}" }

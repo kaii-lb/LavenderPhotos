@@ -8,6 +8,7 @@ import androidx.compose.runtime.MutableState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.lavender.immichintegration.ApiClient
+import com.kaii.lavender.immichintegration.serialization.File
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.MainActivity.Companion.mainViewModel
@@ -22,6 +23,7 @@ import com.kaii.photos.immich.ImmichAlbumDuplicateState
 import com.kaii.photos.immich.ImmichAlbumSyncState
 import com.kaii.photos.immich.ImmichApiService
 import com.kaii.photos.immich.ImmichServerSidedAlbumsState
+import com.kaii.photos.immich.ImmichUserLoginState
 import com.kaii.photos.mediastore.getSQLiteQuery
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -53,7 +55,12 @@ class ImmichViewModel(
         MutableStateFlow(emptyMap())
     val immichAlbumsDupState = _immichAlbumsDupState.asStateFlow()
 
+    private val _immichUserLoginState: MutableStateFlow<ImmichUserLoginState> =
+        MutableStateFlow(ImmichUserLoginState.IsNotLoggedIn)
+    val immichUserLoginState = _immichUserLoginState.asStateFlow()
+
     private lateinit var immichApiService: ImmichApiService
+    private lateinit var immichEndpoint: String
 
     init {
         viewModelScope.launch {
@@ -62,6 +69,7 @@ class ImmichViewModel(
                 val token = immichPrefs.bearerToken
 
                 if (endpoint.isNotEmpty() && token.isNotEmpty()) {
+                    immichEndpoint = endpoint
                     immichApiService = ImmichApiService(
                         client = ApiClient(),
                         endpoint = endpoint,
@@ -128,13 +136,17 @@ class ImmichViewModel(
                 expectedImmichIds = expectedPhotoImmichIds
             )
 
-            // if (result is ImmichAlbumSyncState.OutOfSync) {
-            //     val albumDupes = immichAlbumsDupState.value[immichAlbumId]
-            //
-            //     if (result.missing.minus(albumDupes).isEmpty()) {
-            //         result = ImmichAlbumSyncState.InSync(expectedPhotoImmichIds)
-            //     }
-            // }
+            if (result is ImmichAlbumSyncState.OutOfSync) {
+                val albumDupes = immichAlbumsDupState.value[immichAlbumId]
+
+                if (albumDupes is ImmichAlbumDuplicateState.HasDupes && result.missing.minus(albumDupes.deviceAssetIds).isEmpty()) {
+                    result = if (result.extra.isEmpty()) {
+                        ImmichAlbumSyncState.InSync(expectedPhotoImmichIds)
+                    } else {
+                        ImmichAlbumSyncState.OutOfSync(emptySet(), result.extra)
+                    }
+                }
+            }
 
             Log.d(TAG, "Gotten result $result")
 
@@ -313,5 +325,34 @@ class ImmichViewModel(
         snapshot[immichId] = state
 
         _immichAlbumsDupState.value = snapshot
+    }
+
+    fun refreshUserInfo() = viewModelScope.launch {
+        val state = immichApiService.getUserInfo()
+        if (state != null) {
+            _immichUserLoginState.value = ImmichUserLoginState.IsLoggedIn(
+                state.copy(
+                    profileImagePath = "${immichEndpoint}/api/users/${state.id}/profile-image"
+                )
+            )
+        } else {
+            _immichUserLoginState.value = ImmichUserLoginState.IsNotLoggedIn
+        }
+    }
+
+    fun setUsername(
+        newName: String
+    ) = viewModelScope.launch {
+        val success = immichApiService.setUsername(newName)
+
+        if (success) refreshUserInfo()
+    }
+
+    fun setProfilePic(
+        file: File
+    ) = viewModelScope.launch {
+        val success = immichApiService.setProfilePic(file)
+
+        if (success) refreshUserInfo()
     }
 }

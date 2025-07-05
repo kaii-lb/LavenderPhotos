@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.lavender.immichintegration.ApiClient
-import com.kaii.lavender.immichintegration.User
+import com.kaii.lavender.immichintegration.UserAuth
 import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.PreferencesRow
@@ -110,7 +110,7 @@ fun ImmichMainPage() {
                         coroutineScope.launch {
                             if (immichBasicInfo.bearerToken == "") return@launch
 
-                            User(
+                            UserAuth(
                                 apiClient = ApiClient(),
                                 endpointBase = immichBasicInfo.endpoint
                             ).logout(bearerToken = immichBasicInfo.bearerToken)
@@ -173,7 +173,7 @@ fun ImmichMainPage() {
                         coroutineScope.launch {
                             if (immichBasicInfo.bearerToken == "") return@launch
 
-                            User(
+                            UserAuth(
                                 apiClient = ApiClient(),
                                 endpointBase = immichBasicInfo.endpoint
                             ).logout(bearerToken = immichBasicInfo.bearerToken)
