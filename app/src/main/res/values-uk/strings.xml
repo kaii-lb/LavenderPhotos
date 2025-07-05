@@ -24,4 +24,17 @@
     <string name="edit">Редагувати</string>
     <string name="trash">Кошик</string>
     <string name="trash_bin">Кошик</string>
+    <string name="albums_found">Знайти усі альбоми!</string>
+    <string name="updates_latest">Вже на останній версії</string>
+    <string name="updates_new_version_available">Доступна нова версія!</string>
+    <string name="updates_not_found">Не знайдено оновлень</string>
+    <string name="updates_whats_new">Що нового</string>
+    <string name="updates">Оновлення</string>
+    <string name="version_info">Версія</string>
+    <string name="dev_title">Розробник</string>
+    <string name="privacy_policy_title">Політика конфіденційності</string>
+    <string name="privacy_policy">Жодної! Ваші дані не залишають ваш пристрій. Жоден штучний інтелект не навчається на них, жодних алгоритмів збору інформації - нічого подібного. Lavender Photos був і завжди буде застосунком із фокусом на приватність.</string>
+    <string name="i_swear_were_not_bad">ми справді не використовуємо Ваші дані</string>
+    <string name="support">Підтримати нас</string>
+    <string name="support_desc">Допоможіть нам підтримувати застосунок</string>
 </resources>
