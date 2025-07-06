@@ -2,7 +2,7 @@ package com.kaii.photos.helpers
 
 import android.content.Context
 import android.util.Log
-import com.kaii.photos.MainActivity.Companion.applicationDatabase
+import com.kaii.photos.database.MediaDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -21,7 +21,9 @@ import kotlin.time.Instant
 
 private const val TAG = "DATA_AND_BACKUP"
 
-class DataAndBackupHelper {
+class DataAndBackupHelper(
+    private val applicationDatabase: MediaDatabase
+) {
     companion object {
         private const val EXPORT_DIR = "Exports"
         private const val UNENCRYPTED_DIR = "Lavender_Photos_Secure_Folder_Export"

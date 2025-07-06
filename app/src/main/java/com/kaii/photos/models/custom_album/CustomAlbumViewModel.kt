@@ -9,11 +9,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.MainPhotosView
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.content_provider.CustomAlbumDataSource
 import com.kaii.photos.mediastore.getSQLiteQuery
+import com.kaii.photos.models.multi_album.DisplayDateFormat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -25,7 +28,8 @@ private const val TAG = "MULTI_ALBUM_VIEW_MODEL"
 class CustomAlbumViewModel(
     context: Context,
     var albumInfo: AlbumInfo,
-    var sortBy: MediaItemSortMode
+    var sortBy: MediaItemSortMode,
+    private val displayDateFormat: DisplayDateFormat
 ) : ViewModel() {
     private var cancellationSignal = CancellationSignal()
     private val mediaStoreDataSource = mutableStateOf(initDataSource(context, albumInfo, sortBy))
@@ -83,7 +87,8 @@ class CustomAlbumViewModel(
             context = context,
             parentId = album.id,
             sortBy = sortBy,
-            cancellationSignal = cancellationSignal
+            cancellationSignal = cancellationSignal,
+            displayDateFormat = displayDateFormat
         )
     }
 }

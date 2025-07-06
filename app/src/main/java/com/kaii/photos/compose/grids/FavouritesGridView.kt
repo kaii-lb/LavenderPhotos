@@ -26,6 +26,8 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.kaii.photos.LocalAppDatabase
+import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.FavouritesViewBottomAppBar
@@ -45,24 +47,29 @@ fun FavouritesGridView(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     currentView: MutableState<BottomBarTab>
 ) {
+    val appDatabase = LocalAppDatabase.current
     val favouritesViewModel: FavouritesViewModel = viewModel(
-        factory = FavouritesViewModelFactory()
+        factory = FavouritesViewModelFactory(appDatabase)
     )
 
     val mediaStoreData =
         favouritesViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
+    val mainViewModel = LocalMainViewModel.current
+
+    val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
     val groupedMedia = remember {
         mutableStateOf(
             groupPhotosBy(
                 mediaStoreData.value,
-                MediaItemSortMode.LastModified
+                MediaItemSortMode.LastModified,
+                displayDateFormat
             )
         )
     }
 
     LaunchedEffect(mediaStoreData.value) {
-        groupedMedia.value = groupPhotosBy(mediaStoreData.value, MediaItemSortMode.LastModified)
+        groupedMedia.value = groupPhotosBy(mediaStoreData.value, MediaItemSortMode.LastModified, displayDateFormat)
     }
 
     val showBottomSheet by remember {

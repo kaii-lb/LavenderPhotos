@@ -10,7 +10,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kaii.photos.MainActivity.Companion.mainViewModel
+import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.SectionItem
@@ -34,7 +34,9 @@ private const val TAG = "MULTI_ALBUM_VIEW_MODEL"
 class MultiAlbumViewModel(
     context: Context,
     var albumInfo: AlbumInfo,
-    var sortBy: MediaItemSortMode
+    var sortBy: MediaItemSortMode,
+    private val displayDateFormat: DisplayDateFormat,
+    private val database: MediaDatabase
 ) : ViewModel() {
     private var cancellationSignal = CancellationSignal()
     private val mediaStoreDataSource = mutableStateOf(initDataSource(context, albumInfo, sortBy))
@@ -94,7 +96,9 @@ class MultiAlbumViewModel(
             context = context,
             queryString = query,
             sortBy = sortBy,
-            cancellationSignal = cancellationSignal
+            cancellationSignal = cancellationSignal,
+            displayDateFormat = displayDateFormat,
+            database = database
         )
     }
 }
@@ -102,7 +106,8 @@ class MultiAlbumViewModel(
 /** Groups photos by date */
 fun groupPhotosBy(
     media: List<MediaStoreData>,
-    sortBy: MediaItemSortMode = MediaItemSortMode.DateTaken
+    sortBy: MediaItemSortMode = MediaItemSortMode.DateTaken,
+    displayDateFormat: DisplayDateFormat
 ): List<MediaStoreData> {
     if (media.isEmpty()) return emptyList()
 
@@ -172,7 +177,7 @@ fun groupPhotosBy(
                 formatDate(
                     timestamp = sectionTime,
                     sortBy = sortBy,
-                    format = mainViewModel.displayDateFormat.value
+                    format = displayDateFormat
                 )
             }
         }

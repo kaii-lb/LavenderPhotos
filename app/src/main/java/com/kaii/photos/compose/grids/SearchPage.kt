@@ -36,8 +36,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.kaii.photos.LocalAppDatabase
+import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
-import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.ClearableTextField
 import com.kaii.photos.compose.ViewProperties
@@ -66,8 +67,11 @@ fun SearchPage(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     currentView: MutableState<BottomBarTab>
 ) {
+    val mainViewModel = LocalMainViewModel.current
+    val appDatabase = LocalAppDatabase.current
+    val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
     val searchViewModel: SearchViewModel = viewModel(
-        factory = SearchViewModelFactory(LocalContext.current, MediaItemSortMode.DateTaken)
+        factory = SearchViewModelFactory(LocalContext.current, MediaItemSortMode.DateTaken, displayDateFormat, appDatabase)
     )
     val mediaStoreDataHolder =
         searchViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
@@ -200,7 +204,8 @@ fun SearchPage(
                                             ?.let { date -> it.getDateTakenDay() == date } == true)
                     }
 
-                    groupedMedia.value = groupPhotosBy(local, MediaItemSortMode.DateTaken)
+                    // TODO: use sorting method by user preference
+                    groupedMedia.value = groupPhotosBy(local, MediaItemSortMode.DateTaken, displayDateFormat)
                     hideLoadingSpinner = true
 
                     return@launch
@@ -227,7 +232,7 @@ fun SearchPage(
                                     it.getDateTakenMonth() == calendar.timeInMillis / 1000
                         }
 
-                        groupedMedia.value = groupPhotosBy(local, MediaItemSortMode.DateTaken)
+                        groupedMedia.value = groupPhotosBy(local, MediaItemSortMode.DateTaken, displayDateFormat)
                         hideLoadingSpinner = true
 
                         return@launch
@@ -241,7 +246,7 @@ fun SearchPage(
                     isMedia && matchesFilter
                 }
 
-                groupedMedia.value = groupPhotosBy(groupedMediaLocal, MediaItemSortMode.DateTaken)
+                groupedMedia.value = groupPhotosBy(groupedMediaLocal, MediaItemSortMode.DateTaken, displayDateFormat)
                 hideLoadingSpinner = true
             }
         }

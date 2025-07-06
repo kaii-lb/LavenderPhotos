@@ -41,9 +41,9 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
+import com.kaii.photos.LocalAppDatabase
+import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
-import com.kaii.photos.MainActivity.Companion.applicationDatabase
-import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.ExplanationDialog
 import com.kaii.photos.compose.dialogs.LoadingDialog
@@ -82,6 +82,7 @@ fun LockedFolderEntryView(
     currentView: MutableState<BottomBarTab>
 ) {
     val navController = LocalNavController.current
+    val mainViewModel = LocalMainViewModel.current
 
     BackHandler(
         enabled = currentView.value == DefaultTabs.TabTypes.secure && navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name
@@ -108,6 +109,7 @@ fun LockedFolderEntryView(
 
     var rerunMigration by remember { mutableStateOf(false) }
 
+    val applicationDatabase = LocalAppDatabase.current
     // migrate from old secure folder dir to new one
     GetDirectoryPermissionAndRun(
         absoluteDirPaths = listOf(context.appRestoredFilesDir),
@@ -124,7 +126,7 @@ fun LockedFolderEntryView(
 
                 Log.d(TAG, "Exporting backup of old secure folder items")
 
-                val helper = DataAndBackupHelper()
+                val helper = DataAndBackupHelper(applicationDatabase = applicationDatabase)
                 val success = helper.exportRawSecureFolderItems(
                     context = context,
                     secureFolder = oldDir
@@ -256,6 +258,7 @@ fun LockedFolderEntryView(
                 moveImageToLockedFolder(
                     list = mediaItems,
                     context = context,
+                    applicationDatabase = applicationDatabase,
                     onDone = {
                         migrating = false
                         canOpenSecureFolder = true

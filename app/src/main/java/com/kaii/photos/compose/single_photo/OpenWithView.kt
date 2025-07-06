@@ -107,13 +107,12 @@ import com.kaii.photos.BuildConfig
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.BottomAppBarItem
-import com.kaii.photos.compose.rememberDeviceOrientation
 import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.dialogs.ExplanationDialog
+import com.kaii.photos.compose.rememberDeviceOrientation
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
-import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.shareImage
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.copyUriToUri
@@ -139,14 +138,14 @@ class OpenWithView : ComponentActivity() {
             enableEdgeToEdge(
                 navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
                 statusBarStyle =
-                if (!isSystemInDarkTheme()) {
-                    SystemBarStyle.light(
-                        MaterialTheme.colorScheme.background.toArgb(),
-                        MaterialTheme.colorScheme.background.toArgb()
-                    )
-                } else {
-                    SystemBarStyle.dark(MaterialTheme.colorScheme.background.toArgb())
-                }
+                    if (!isSystemInDarkTheme()) {
+                        SystemBarStyle.light(
+                            MaterialTheme.colorScheme.background.toArgb(),
+                            MaterialTheme.colorScheme.background.toArgb()
+                        )
+                    } else {
+                        SystemBarStyle.dark(MaterialTheme.colorScheme.background.toArgb())
+                    }
             )
 
             val followDarkTheme =
@@ -203,14 +202,14 @@ class OpenWithView : ComponentActivity() {
                             enableEdgeToEdge(
                                 navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
                                 statusBarStyle =
-                                if (!isSystemInDarkTheme()) {
-                                    SystemBarStyle.light(
-                                        MaterialTheme.colorScheme.background.toArgb(),
-                                        MaterialTheme.colorScheme.background.toArgb()
-                                    )
-                                } else {
-                                    SystemBarStyle.dark(MaterialTheme.colorScheme.background.toArgb())
-                                }
+                                    if (!isSystemInDarkTheme()) {
+                                        SystemBarStyle.light(
+                                            MaterialTheme.colorScheme.background.toArgb(),
+                                            MaterialTheme.colorScheme.background.toArgb()
+                                        )
+                                    } else {
+                                        SystemBarStyle.dark(MaterialTheme.colorScheme.background.toArgb())
+                                    }
                             )
 
                             Content(
@@ -544,27 +543,27 @@ private fun OpenWithVideoPlayer(
                 AnimatedVisibility(
                     visible = doubleTapDisplayTimeMillis < 0,
                     enter =
-                    fadeIn(
-                        animationSpec = tween(
-                            durationMillis = 300
-                        )
-                    ) + scaleIn(
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessMedium,
-                        )
-                    ),
+                        fadeIn(
+                            animationSpec = tween(
+                                durationMillis = 300
+                            )
+                        ) + scaleIn(
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMedium,
+                            )
+                        ),
                     exit =
-                    fadeOut(
-                        animationSpec = tween(
-                            durationMillis = 300
-                        )
-                    ) + scaleOut(
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessMedium,
-                        )
-                    ),
+                        fadeOut(
+                            animationSpec = tween(
+                                durationMillis = 300
+                            )
+                        ) + scaleOut(
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMedium,
+                            )
+                        ),
                     modifier = Modifier
                         .align(Alignment.Center)
                 ) {
@@ -590,27 +589,27 @@ private fun OpenWithVideoPlayer(
                 AnimatedVisibility(
                     visible = doubleTapDisplayTimeMillis > 0,
                     enter =
-                    fadeIn(
-                        animationSpec = tween(
-                            durationMillis = 300
-                        )
-                    ) + scaleIn(
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessMedium,
-                        )
-                    ),
+                        fadeIn(
+                            animationSpec = tween(
+                                durationMillis = 300
+                            )
+                        ) + scaleIn(
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMedium,
+                            )
+                        ),
                     exit =
-                    fadeOut(
-                        animationSpec = tween(
-                            durationMillis = 300
-                        )
-                    ) + scaleOut(
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessMedium,
-                        )
-                    ),
+                        fadeOut(
+                            animationSpec = tween(
+                                durationMillis = 300
+                            )
+                        ) + scaleOut(
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMedium,
+                            )
+                        ),
                     modifier = Modifier
                         .align(Alignment.Center)
                 ) {
@@ -753,17 +752,17 @@ private fun TopBar(
     AnimatedVisibility(
         visible = appBarsVisible.value,
         enter =
-        slideInVertically(
-            animationSpec = tween(
-                durationMillis = 250
-            )
-        ) { width -> -width } + fadeIn(),
+            slideInVertically(
+                animationSpec = tween(
+                    durationMillis = 250
+                )
+            ) { width -> -width } + fadeIn(),
         exit =
-        slideOutVertically(
-            animationSpec = tween(
-                durationMillis = 250
-            )
-        ) { width -> -width } + fadeOut(),
+            slideOutVertically(
+                animationSpec = tween(
+                    durationMillis = 250
+                )
+            ) { width -> -width } + fadeOut(),
     ) {
         TopAppBar(
             title = {
@@ -813,17 +812,17 @@ private fun BottomBar(
     AnimatedVisibility(
         visible = appBarsVisible.value,
         enter =
-        slideInVertically(
-            animationSpec = tween(
-                durationMillis = 250
-            )
-        ) { width -> width } + fadeIn(),
+            slideInVertically(
+                animationSpec = tween(
+                    durationMillis = 250
+                )
+            ) { width -> width } + fadeIn(),
         exit =
-        slideOutVertically(
-            animationSpec = tween(
-                durationMillis = 300
-            )
-        ) { width -> width } + fadeOut(),
+            slideOutVertically(
+                animationSpec = tween(
+                    durationMillis = 300
+                )
+            ) { width -> width } + fadeOut(),
     ) {
         val isLandscape by rememberDeviceOrientation()
 
@@ -835,12 +834,12 @@ private fun BottomBar(
                         .padding(12.dp, 0.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement =
-                    if (isLandscape)
-                        Arrangement.spacedBy(
-                            space = 48.dp,
-                            alignment = Alignment.CenterHorizontally
-                        )
-                    else Arrangement.SpaceEvenly
+                        if (isLandscape)
+                            Arrangement.spacedBy(
+                                space = 48.dp,
+                                alignment = Alignment.CenterHorizontally
+                            )
+                        else Arrangement.SpaceEvenly
                 ) {
                     BottomAppBarItem(
                         text = "Share",
@@ -866,56 +865,56 @@ private fun BottomBar(
                         iconResId = R.drawable.paintbrush,
                         cornerRadius = 32.dp,
                         action =
-                        if (mediaType == MediaType.Image) {
-                            {
-                                val extension = mimeType.split("/")[1]
-                                val currentTime = System.currentTimeMillis()
-                                val date = formatDate(
-                                    timestamp = currentTime / 1000,
-                                    sortBy = MediaItemSortMode.DateTaken,
-                                    format = DisplayDateFormat.Default
-                                )
-                                val name = context.resources.getString(R.string.edit_desc, "$date.$extension")
-                                val destination = File(Environment.DIRECTORY_PICTURES, name) // TODO: maybe move into subdir?
-
-                                val contentValues = ContentValues().apply {
-                                    put(MediaColumns.DISPLAY_NAME, name)
-                                    put(MediaColumns.DATE_MODIFIED, currentTime)
-                                    put(MediaColumns.DATE_TAKEN, currentTime)
-                                    put(MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES)
-                                    put(MediaColumns.MIME_TYPE, mimeType)
-                                }
-
-                                val contentUri = context.contentResolver.insert(
-                                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                                    contentValues
-                                )
-
-                                if (contentUri != null) {
-                                    context.contentResolver.copyUriToUri(
-                                        from = uri,
-                                        to = contentUri
+                            if (mediaType == MediaType.Image) {
+                                {
+                                    val extension = mimeType.split("/")[1]
+                                    val currentTime = System.currentTimeMillis()
+                                    val date = formatDate(
+                                        timestamp = currentTime / 1000,
+                                        sortBy = MediaItemSortMode.DateTaken,
+                                        format = DisplayDateFormat.Default
                                     )
+                                    val name = context.resources.getString(R.string.edit_desc, "$date.$extension")
+                                    val destination = File(Environment.DIRECTORY_PICTURES, name) // TODO: maybe move into subdir?
 
-                                    setBarVisibility(
-                                        visible = true,
-                                        window = window
-                                    ) {
-                                        appBarsVisible.value = it
+                                    val contentValues = ContentValues().apply {
+                                        put(MediaColumns.DISPLAY_NAME, name)
+                                        put(MediaColumns.DATE_MODIFIED, currentTime)
+                                        put(MediaColumns.DATE_TAKEN, currentTime)
+                                        put(MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES)
+                                        put(MediaColumns.MIME_TYPE, mimeType)
                                     }
 
-                                    navController.navigate(
-                                        Screens.EditingScreen(
-                                            absolutePath = destination.absolutePath,
-                                            uri = contentUri.toString(),
-                                            dateTaken = currentTime / 1000
-                                        )
+                                    val contentUri = context.contentResolver.insert(
+                                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                                        contentValues
                                     )
+
+                                    if (contentUri != null) {
+                                        context.contentResolver.copyUriToUri(
+                                            from = uri,
+                                            to = contentUri
+                                        )
+
+                                        setBarVisibility(
+                                            visible = true,
+                                            window = window
+                                        ) {
+                                            appBarsVisible.value = it
+                                        }
+
+                                        navController.navigate(
+                                            Screens.EditingScreen(
+                                                absolutePath = destination.absolutePath,
+                                                uri = contentUri.toString(),
+                                                dateTaken = currentTime / 1000
+                                            )
+                                        )
+                                    }
                                 }
+                            } else {
+                                { showNotImplementedDialog.value = true }
                             }
-                        } else {
-                            { showNotImplementedDialog.value = true }
-                        }
                     )
                 }
             }

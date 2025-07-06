@@ -80,8 +80,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
+import com.kaii.photos.LocalAppDatabase
+import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
-import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumSortMode
@@ -106,15 +107,20 @@ import kotlinx.coroutines.withContext
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AlbumsGridView(
-    currentView: MutableState<BottomBarTab>
+    currentView: MutableState<BottomBarTab>,
+    isMediaPicker: Boolean = false
 ) {
     val context = LocalContext.current
     val navController = LocalNavController.current
+    val mainViewModel = LocalMainViewModel.current
+    val appDatabase = LocalAppDatabase.current
 
     val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect()
         .collectAsStateWithLifecycle(initialValue = true)
+    val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
+
     val listOfDirs by if (autoDetectAlbums) {
-        mainViewModel.settings.AlbumsList.getAutoDetectedAlbums()
+        mainViewModel.settings.AlbumsList.getAutoDetectedAlbums(displayDateFormat, appDatabase)
             .collectAsStateWithLifecycle(initialValue = emptyList())
     } else {
         mainViewModel.settings.AlbumsList.getNormalAlbums()
@@ -376,17 +382,19 @@ fun AlbumsGridView(
             horizontalArrangement = Arrangement.Start,
             verticalArrangement = Arrangement.Top
         ) {
-            item(
-                span = { GridItemSpan(maxLineSpan) }
-            ) {
-                CategoryList(
-                    navigateToFavourites = {
-                        navController.navigate(MultiScreenViewType.FavouritesGridView.name)
-                    },
-                    navigateToTrash = {
-                        navController.navigate(MultiScreenViewType.TrashedPhotoView.name)
-                    }
-                )
+            if (!isMediaPicker) {
+                item(
+                    span = { GridItemSpan(maxLineSpan) }
+                ) {
+                    CategoryList(
+                        navigateToFavourites = {
+                            navController.navigate(MultiScreenViewType.FavouritesGridView.name)
+                        },
+                        navigateToTrash = {
+                            navController.navigate(MultiScreenViewType.TrashedPhotoView.name)
+                        }
+                    )
+                }
             }
 
             items(
@@ -630,6 +638,7 @@ private fun SortModeHeader(
     @FloatRange(0.0, 1.0) progress: Float,
     modifier: Modifier = Modifier
 ) {
+    val mainViewModel = LocalMainViewModel.current
     val tabList by mainViewModel.settings.DefaultTabs.getTabList()
         .collectAsStateWithLifecycle(initialValue = emptyList())
 

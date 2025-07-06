@@ -91,8 +91,8 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
-import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.FolderIsEmpty
 import com.kaii.photos.compose.ShowSelectedState
@@ -141,6 +141,7 @@ fun PhotoGrid(
     modifier: Modifier = Modifier,
     viewProperties: ViewProperties,
     shouldPadUp: Boolean = false,
+    isMediaPicker: Boolean = false,
     state: LazyGridState = rememberLazyGridState()
 ) {
     val context = LocalContext.current
@@ -199,7 +200,8 @@ fun PhotoGrid(
                     viewProperties = viewProperties,
                     shouldPadUp = shouldPadUp,
                     gridState = state,
-                    albumInfo = albumInfo
+                    albumInfo = albumInfo,
+                    isMediaPicker = isMediaPicker
                 )
             }
         }
@@ -221,7 +223,8 @@ fun DeviceMedia(
     viewProperties: ViewProperties,
     shouldPadUp: Boolean,
     gridState: LazyGridState,
-    albumInfo: AlbumInfo
+    albumInfo: AlbumInfo,
+    isMediaPicker: Boolean
 ) {
     var showLoadingSpinner by remember { mutableStateOf(true) }
 
@@ -237,6 +240,7 @@ fun DeviceMedia(
         showLoadingSpinner = false
     }
 
+    val mainViewModel = LocalMainViewModel.current
     LaunchedEffect(groupedMedia.value) {
         mainViewModel.setGroupedMedia(groupedMedia.value)
     }
@@ -346,36 +350,38 @@ fun DeviceMedia(
                             thumbnailSettings = Pair(cacheThumbnails, thumbnailSize),
                             isDragSelecting = isDragSelecting
                         ) {
-                            when (viewProperties.operation) {
-                                ImageFunctions.LoadNormalImage -> {
-                                    // mainViewModel.setGroupedMedia(groupedMedia.value)
+                            if (!isMediaPicker) {
+                                when (viewProperties.operation) {
+                                    ImageFunctions.LoadNormalImage -> {
+                                        // mainViewModel.setGroupedMedia(groupedMedia.value)
 
-                                    navController.navigate(
-                                        Screens.SinglePhotoView(
-                                            albumInfo = albumInfo,
-                                            mediaItemId = mediaStoreItem.id,
-                                            loadsFromMainViewModel = viewProperties == ViewProperties.SearchLoading || viewProperties == ViewProperties.SearchNotFound || viewProperties == ViewProperties.Favourites
+                                        navController.navigate(
+                                            Screens.SinglePhotoView(
+                                                albumInfo = albumInfo,
+                                                mediaItemId = mediaStoreItem.id,
+                                                loadsFromMainViewModel = viewProperties == ViewProperties.SearchLoading || viewProperties == ViewProperties.SearchNotFound || viewProperties == ViewProperties.Favourites
+                                            )
                                         )
-                                    )
-                                }
+                                    }
 
-                                ImageFunctions.LoadTrashedImage -> {
-                                    // mainViewModel.setGroupedMedia(groupedMedia.value)
-                                    navController.navigate(
-                                        Screens.SingleTrashedPhotoView(
-                                            mediaItemId = mediaStoreItem.id
+                                    ImageFunctions.LoadTrashedImage -> {
+                                        // mainViewModel.setGroupedMedia(groupedMedia.value)
+                                        navController.navigate(
+                                            Screens.SingleTrashedPhotoView(
+                                                mediaItemId = mediaStoreItem.id
+                                            )
                                         )
-                                    )
-                                }
+                                    }
 
-                                ImageFunctions.LoadSecuredImage -> {
-                                    mainViewModel.setGroupedMedia(groupedMedia.value)
+                                    ImageFunctions.LoadSecuredImage -> {
+                                        mainViewModel.setGroupedMedia(groupedMedia.value)
 
-                                    navController.navigate(
-                                        Screens.SingleHiddenPhotoView(
-                                            mediaItemId = mediaStoreItem.id
+                                        navController.navigate(
+                                            Screens.SingleHiddenPhotoView(
+                                                mediaItemId = mediaStoreItem.id
+                                            )
                                         )
-                                    )
+                                    }
                                 }
                             }
                         }

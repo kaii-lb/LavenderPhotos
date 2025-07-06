@@ -15,9 +15,9 @@ import com.github.kittinunf.fuel.json.responseJson
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.BuildConfig
-import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
+import com.kaii.photos.models.main_activity.MainViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -185,7 +185,8 @@ enum class CheckUpdateState {
 fun startupUpdateCheck(
     text: String,
     coroutineScope: CoroutineScope,
-    navController: NavHostController
+    navController: NavHostController,
+    mainViewModel: MainViewModel
 ) = mainViewModel.updater.refresh { state ->
     Log.d(TAG, "Checking for app updates...")
 

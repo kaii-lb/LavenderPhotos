@@ -34,8 +34,8 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
+import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
-import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.CheckBoxButtonRow
 import com.kaii.photos.compose.PreferencesRow
@@ -57,6 +57,8 @@ import java.io.File
 
 @Composable
 fun DebuggingSettingsPage() {
+    val mainViewModel = LocalMainViewModel.current
+
     Scaffold(
         topBar = {
             DebuggingSettingsTopBar()

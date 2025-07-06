@@ -198,7 +198,7 @@
     <string name="settings_about_and_updates">À propos &amp; Mises à jour</string>
     <string name="trash_bin_short">À supprimer</string>
     <string name="trash_bin">Corbeille</string>
-    <string name="trash_auto_delete">Supprime automatiquement les médias dans la corbeille après</string>
+    <string name="trash_auto_delete">Supprime automatiquement les médias dans la corbeille après %s</string>
     <string name="trash_days">jours</string>
     <string name="trash_no_auto_delete">Les médias dans la corbeille ne seront pas automatiquement supprimés</string>
     <string name="trash_auto_delete_interval">Intervalle de suppression automatique</string>

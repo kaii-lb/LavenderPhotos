@@ -132,6 +132,7 @@ import com.kaii.photos.models.immich.ImmichViewModel
 import com.kaii.photos.models.immich.ImmichViewModelFactory
 import com.kaii.photos.models.main_activity.MainViewModel
 import com.kaii.photos.models.main_activity.MainViewModelFactory
+import com.kaii.photos.models.multi_album.DisplayDateFormat
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModelFactory
 import com.kaii.photos.ui.theme.PhotosTheme
@@ -148,38 +149,40 @@ val LocalNavController = compositionLocalOf<NavHostController> {
     throw IllegalStateException("CompositionLocal LocalNavController not present")
 }
 
-class MainActivity : ComponentActivity() {
-    companion object {
-        lateinit var applicationDatabase: MediaDatabase
-        lateinit var mainViewModel: MainViewModel
-        lateinit var immichViewModel: ImmichViewModel
-    }
+val LocalMainViewModel = compositionLocalOf<MainViewModel> {
+    throw IllegalStateException("CompositionLocal LocalMainViewModel not present")
+}
 
+val LocalAppDatabase = compositionLocalOf<MediaDatabase> {
+    throw IllegalStateException("CompositionLocal LocalAppDatabase not present")
+}
+
+class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         installSplashScreen()
 
-        val mediaDatabase = Room.databaseBuilder(
+        val applicationDatabase = Room.databaseBuilder(
             applicationContext,
             MediaDatabase::class.java,
             "media-database"
         ).apply {
+            fallbackToDestructiveMigrationOnDowngrade(true)
             addMigrations(Migration3to4(applicationContext), Migration4to5(applicationContext))
         }.build()
-        applicationDatabase = mediaDatabase
 
         Glide.get(this).setMemoryCategory(MemoryCategory.HIGH)
 
         setContent {
-            mainViewModel = viewModel(
+            val mainViewModel: MainViewModel = viewModel(
                 factory = MainViewModelFactory(applicationContext)
             )
-            immichViewModel = viewModel(
+            val immichViewModel = viewModel(
                 factory = ImmichViewModelFactory(
                     application = application,
                     immichSettings = mainViewModel.settings.Immich,
-                    immichDuplicateEntityDao = mediaDatabase.immichDuplicateEntityDao()
+                    immichDuplicateEntityDao = applicationDatabase.immichDuplicateEntityDao()
                 )
             )
 
@@ -207,36 +210,43 @@ class MainActivity : ComponentActivity() {
                 theme = followDarkTheme,
                 dynamicColor = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
             ) {
-                AnimatedContent(
-                    targetState = continueToApp.value,
-                    transitionSpec = {
-                        (slideInHorizontally { width -> width } + fadeIn())
-                            .togetherWith(
-                                slideOutHorizontally { width -> -width } + fadeOut()
+                val navControllerLocal = rememberNavController()
+                CompositionLocalProvider(
+                    LocalNavController provides navControllerLocal,
+                    LocalMainViewModel provides mainViewModel,
+                    LocalAppDatabase provides applicationDatabase
+                ) {
+                    AnimatedContent(
+                        targetState = continueToApp.value,
+                        transitionSpec = {
+                            (slideInHorizontally { width -> width } + fadeIn())
+                                .togetherWith(
+                                    slideOutHorizontally { width -> -width } + fadeOut()
+                                )
+                                .using(
+                                    SizeTransform(clip = false)
+                                )
+                        },
+                        label = "PermissionHandlerToMainViewAnimatedContent"
+                    ) { stateValue ->
+                        if (!stateValue) {
+                            enableEdgeToEdge(
+                                navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
+                                statusBarStyle =
+                                    if (!isSystemInDarkTheme()) {
+                                        SystemBarStyle.light(
+                                            MaterialTheme.colorScheme.background.toArgb(),
+                                            MaterialTheme.colorScheme.background.toArgb()
+                                        )
+                                    } else {
+                                        SystemBarStyle.dark(MaterialTheme.colorScheme.background.toArgb())
+                                    }
                             )
-                            .using(
-                                SizeTransform(clip = false)
-                            )
-                    },
-                    label = "PermissionHandlerToMainViewAnimatedContent"
-                ) { stateValue ->
-                    if (!stateValue) {
-                        enableEdgeToEdge(
-                            navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
-                            statusBarStyle =
-                                if (!isSystemInDarkTheme()) {
-                                    SystemBarStyle.light(
-                                        MaterialTheme.colorScheme.background.toArgb(),
-                                        MaterialTheme.colorScheme.background.toArgb()
-                                    )
-                                } else {
-                                    SystemBarStyle.dark(MaterialTheme.colorScheme.background.toArgb())
-                                }
-                        )
 
-                        PermissionHandler(continueToApp)
-                    } else {
-                        SetContentForActivity()
+                            PermissionHandler(continueToApp)
+                        } else {
+                            SetContentForActivity()
+                        }
                     }
                 }
             }
@@ -248,7 +258,7 @@ class MainActivity : ComponentActivity() {
     private fun SetContentForActivity() {
         window.decorView.setBackgroundColor(MaterialTheme.colorScheme.background.toArgb())
 
-        val navControllerLocal = rememberNavController()
+        val mainViewModel = LocalMainViewModel.current
 
         val defaultTab by mainViewModel.settings.DefaultTabs.getDefaultTab()
             .collectAsStateWithLifecycle(initialValue = DefaultTabs.TabTypes.photos)
@@ -287,11 +297,14 @@ class MainActivity : ComponentActivity() {
         val currentSortMode by mainViewModel.settings.PhotoGrid.getSortMode()
             .collectAsStateWithLifecycle(initialValue = MediaItemSortMode.DateTaken)
 
+        val applicationDatabase = LocalAppDatabase.current
         val multiAlbumViewModel: MultiAlbumViewModel = viewModel(
             factory = MultiAlbumViewModelFactory(
                 context = context,
                 albumInfo = AlbumInfo.createPathOnlyAlbum(albumsList),
-                sortBy = currentSortMode
+                sortBy = currentSortMode,
+                displayDateFormat = displayDateFormat ?: DisplayDateFormat.Default,
+                database = applicationDatabase
             )
         )
 
@@ -299,13 +312,15 @@ class MainActivity : ComponentActivity() {
             factory = CustomAlbumViewModelFactory(
                 context = context,
                 albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
-                sortBy = currentSortMode
+                sortBy = currentSortMode,
+                displayDateFormat = displayDateFormat ?: DisplayDateFormat.Default
             )
         )
 
+        val navController = LocalNavController.current
         // update main photos view albums list
         LaunchedEffect(albumsList) {
-            if (navControllerLocal.currentBackStackEntry?.destination?.route != MultiScreenViewType.MainScreen.name
+            if (navController.currentBackStackEntry?.destination?.route != MultiScreenViewType.MainScreen.name
                 || multiAlbumViewModel.albumInfo.paths.toSet() == albumsList
             ) return@LaunchedEffect
 
@@ -333,539 +348,537 @@ class MainActivity : ComponentActivity() {
             LavenderSnackbarHostState()
         }
 
-        CompositionLocalProvider(LocalNavController provides navControllerLocal) {
-            LavenderSnackbarBox(snackbarHostState = snackbarHostState) {
-                NavHost(
-                    navController = navControllerLocal,
-                    startDestination = MultiScreenViewType.MainScreen.name,
-                    modifier = Modifier
-                        .fillMaxSize(1f)
-                        .background(MaterialTheme.colorScheme.background),
-                    enterTransition = {
-                        slideInHorizontally(
-                            animationSpec = tween(
-                                durationMillis = 350
+        LavenderSnackbarBox(snackbarHostState = snackbarHostState) {
+            NavHost(
+                navController = navController,
+                startDestination = MultiScreenViewType.MainScreen.name,
+                modifier = Modifier
+                    .fillMaxSize(1f)
+                    .background(MaterialTheme.colorScheme.background),
+                enterTransition = {
+                    slideInHorizontally(
+                        animationSpec = tween(
+                            durationMillis = 350
+                        )
+                    ) { width -> width } + fadeIn()
+                },
+                exitTransition = {
+                    slideOutHorizontally(
+                        animationSpec = tween(
+                            durationMillis = 350
+                        )
+                    ) { width -> -width } + fadeOut()
+                },
+                popExitTransition = {
+                    slideOutHorizontally(
+                        animationSpec = tween(
+                            durationMillis = 350
+                        )
+                    ) { width -> width } + fadeOut()
+                },
+                popEnterTransition = {
+                    slideInHorizontally(
+                        animationSpec = tween(
+                            durationMillis = 350
+                        )
+                    ) { width -> -width } + fadeIn()
+                }
+            ) {
+                composable(MultiScreenViewType.MainScreen.name) {
+                    enableEdgeToEdge(
+                        navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
+                        statusBarStyle =
+                            if (!isSystemInDarkTheme()) {
+                                SystemBarStyle.light(
+                                    MaterialTheme.colorScheme.background.toArgb(),
+                                    MaterialTheme.colorScheme.background.toArgb()
+                                )
+                            } else {
+                                SystemBarStyle.dark(MaterialTheme.colorScheme.background.toArgb())
+                            }
+                    )
+                    setupNextScreen(
+                        selectedItemsList = selectedItemsList,
+                        window = window
+                    )
+
+                    Content(currentView, showDialog, selectedItemsList, multiAlbumViewModel)
+                }
+
+                composable<Screens.SinglePhotoView>(
+                    typeMap = mapOf(
+                        typeOf<AlbumInfo>() to AlbumInfoNavType,
+                        typeOf<List<String>>() to NavType.StringListType
+                    )
+                ) {
+                    enableEdgeToEdge(
+                        navigationBarStyle = SystemBarStyle.dark(
+                            MaterialTheme.colorScheme.surfaceContainer.copy(
+                                alpha = 0.2f
+                            ).toArgb()
+                        ),
+                        statusBarStyle = SystemBarStyle.auto(
+                            MaterialTheme.colorScheme.surface.copy(alpha = 0.2f).toArgb(),
+                            MaterialTheme.colorScheme.surface.copy(alpha = 0.2f).toArgb()
+                        )
+                    )
+                    setupNextScreen(
+                        selectedItemsList,
+                        window
+                    )
+
+                    val screen: Screens.SinglePhotoView = it.toRoute()
+
+                    if (screen.albumInfo != multiAlbumViewModel.albumInfo) {
+                        multiAlbumViewModel.reinitDataSource(
+                            context = context,
+                            album = screen.albumInfo,
+                            sortMode = multiAlbumViewModel.sortBy
+                        )
+                    }
+
+                    if (!screen.albumInfo.isCustomAlbum) {
+                        SinglePhotoView(
+                            navController = navController,
+                            window = window,
+                            multiAlbumViewModel = multiAlbumViewModel,
+                            mediaItemId = screen.mediaItemId,
+                            loadsFromMainViewModel = screen.loadsFromMainViewModel,
+                        )
+                    } else {
+                        if (screen.albumInfo != multiAlbumViewModel.albumInfo) {
+                            customAlbumViewModel.reinitDataSource(
+                                context = context,
+                                album = screen.albumInfo,
+                                sortMode = customAlbumViewModel.sortBy
                             )
-                        ) { width -> width } + fadeIn()
+                        }
+
+                        SinglePhotoView(
+                            navController = navController,
+                            window = window,
+                            multiAlbumViewModel = multiAlbumViewModel,
+                            customAlbumViewModel = customAlbumViewModel,
+                            mediaItemId = screen.mediaItemId,
+                            loadsFromMainViewModel = screen.loadsFromMainViewModel,
+                        )
+                    }
+                }
+
+                composable<Screens.SingleAlbumView>(
+                    typeMap = mapOf(
+                        typeOf<AlbumInfo>() to AlbumInfoNavType,
+                        typeOf<List<String>>() to NavType.StringListType
+                    )
+                ) {
+                    enableEdgeToEdge(
+                        navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
+                        statusBarStyle = SystemBarStyle.auto(
+                            MaterialTheme.colorScheme.surface.toArgb(),
+                            MaterialTheme.colorScheme.surface.toArgb()
+                        )
+                    )
+                    setupNextScreen(
+                        selectedItemsList,
+                        window
+                    )
+
+                    val screen: Screens.SingleAlbumView = it.toRoute()
+
+                    if (screen.albumInfo != multiAlbumViewModel.albumInfo) {
+                        multiAlbumViewModel.reinitDataSource(
+                            context = context,
+                            album = screen.albumInfo,
+                            sortMode = multiAlbumViewModel.sortBy
+                        )
+                    }
+
+                    if (!screen.albumInfo.isCustomAlbum) {
+                        SingleAlbumView(
+                            albumInfo = screen.albumInfo,
+                            selectedItemsList = selectedItemsList,
+                            currentView = currentView,
+                            viewModel = multiAlbumViewModel
+                        )
+                    } else {
+                        if (screen.albumInfo != multiAlbumViewModel.albumInfo) {
+                            customAlbumViewModel.reinitDataSource(
+                                context = context,
+                                album = screen.albumInfo,
+                                sortMode = customAlbumViewModel.sortBy
+                            )
+                        }
+
+                        SingleAlbumView(
+                            albumInfo = screen.albumInfo,
+                            selectedItemsList = selectedItemsList,
+                            currentView = currentView,
+                            customViewModel = customAlbumViewModel,
+                            multiViewModel = multiAlbumViewModel
+                        )
+                    }
+                }
+
+                composable<Screens.SingleTrashedPhotoView> {
+                    enableEdgeToEdge(
+                        navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
+                        statusBarStyle = SystemBarStyle.auto(
+                            MaterialTheme.colorScheme.surface.toArgb(),
+                            MaterialTheme.colorScheme.surface.toArgb()
+                        )
+                    )
+                    setupNextScreen(
+                        selectedItemsList,
+                        window
+                    )
+
+                    val screen: Screens.SingleTrashedPhotoView = it.toRoute()
+
+                    SingleTrashedPhotoView(
+                        window = window,
+                        mediaItemId = screen.mediaItemId
+                    )
+                }
+
+                composable(MultiScreenViewType.TrashedPhotoView.name) {
+                    enableEdgeToEdge(
+                        navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
+                        statusBarStyle = SystemBarStyle.auto(
+                            MaterialTheme.colorScheme.surface.toArgb(),
+                            MaterialTheme.colorScheme.surface.toArgb()
+                        )
+                    )
+
+                    setupNextScreen(
+                        selectedItemsList,
+                        window
+                    )
+
+                    TrashedPhotoGridView(
+                        selectedItemsList = selectedItemsList,
+                        currentView = currentView
+                    )
+                }
+
+                composable(MultiScreenViewType.SecureFolder.name) {
+                    enableEdgeToEdge(
+                        navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
+                        statusBarStyle = SystemBarStyle.auto(
+                            MaterialTheme.colorScheme.surface.toArgb(),
+                            MaterialTheme.colorScheme.surface.toArgb()
+                        )
+                    )
+                    setupNextScreen(
+                        selectedItemsList,
+                        window
+                    )
+
+                    LockedFolderView(window = window, currentView = currentView)
+                }
+
+                composable<Screens.SingleHiddenPhotoView> {
+                    enableEdgeToEdge(
+                        navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
+                        statusBarStyle = SystemBarStyle.auto(
+                            MaterialTheme.colorScheme.surface.toArgb(),
+                            MaterialTheme.colorScheme.surface.toArgb()
+                        )
+                    )
+                    setupNextScreen(
+                        selectedItemsList,
+                        window
+                    )
+
+                    val screen: Screens.SingleHiddenPhotoView = it.toRoute()
+
+                    SingleHiddenPhotoView(
+                        mediaItemId = screen.mediaItemId,
+                        window = window
+                    )
+                }
+
+                composable(MultiScreenViewType.AboutAndUpdateView.name) {
+                    enableEdgeToEdge(
+                        navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.background.toArgb()),
+                        statusBarStyle = SystemBarStyle.auto(
+                            MaterialTheme.colorScheme.background.toArgb(),
+                            MaterialTheme.colorScheme.background.toArgb()
+                        )
+                    )
+                    setupNextScreen(
+                        selectedItemsList,
+                        window
+                    )
+
+                    AboutPage {
+                        navController.popBackStack()
+                    }
+                }
+
+                composable(MultiScreenViewType.FavouritesGridView.name) {
+                    enableEdgeToEdge(
+                        navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.background.toArgb()),
+                        statusBarStyle = SystemBarStyle.auto(
+                            MaterialTheme.colorScheme.background.toArgb(),
+                            MaterialTheme.colorScheme.background.toArgb()
+                        )
+                    )
+                    setupNextScreen(
+                        selectedItemsList,
+                        window
+                    )
+
+                    FavouritesGridView(
+                        selectedItemsList = selectedItemsList,
+                        currentView = currentView
+                    )
+                }
+
+                composable<Screens.EditingScreen>(
+                    enterTransition = {
+                        slideInVertically(
+                            animationSpec = tween(
+                                durationMillis = 600
+                            )
+                        ) { height -> height } + fadeIn(
+                            animationSpec = tween(
+                                durationMillis = 600
+                            )
+                        )
                     },
                     exitTransition = {
-                        slideOutHorizontally(
+                        slideOutVertically(
                             animationSpec = tween(
-                                durationMillis = 350
+                                durationMillis = 600
                             )
-                        ) { width -> -width } + fadeOut()
-                    },
-                    popExitTransition = {
-                        slideOutHorizontally(
+                        ) { height -> height } + fadeOut(
                             animationSpec = tween(
-                                durationMillis = 350
+                                durationMillis = 600
                             )
-                        ) { width -> width } + fadeOut()
+                        )
                     },
                     popEnterTransition = {
-                        slideInHorizontally(
+                        slideInVertically(
                             animationSpec = tween(
-                                durationMillis = 350
+                                durationMillis = 600
                             )
-                        ) { width -> -width } + fadeIn()
+                        ) { height -> height } + fadeIn(
+                            animationSpec = tween(
+                                durationMillis = 600
+                            )
+                        )
+                    },
+                    popExitTransition = {
+                        slideOutVertically(
+                            animationSpec = tween(
+                                durationMillis = 600
+                            )
+                        ) { height -> height } + fadeOut(
+                            animationSpec = tween(
+                                durationMillis = 600
+                            )
+                        )
                     }
                 ) {
-                    composable(MultiScreenViewType.MainScreen.name) {
-                        enableEdgeToEdge(
-                            navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
-                            statusBarStyle =
-                                if (!isSystemInDarkTheme()) {
-                                    SystemBarStyle.light(
-                                        MaterialTheme.colorScheme.background.toArgb(),
-                                        MaterialTheme.colorScheme.background.toArgb()
-                                    )
-                                } else {
-                                    SystemBarStyle.dark(MaterialTheme.colorScheme.background.toArgb())
-                                }
+                    enableEdgeToEdge(
+                        navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
+                        statusBarStyle = SystemBarStyle.auto(
+                            MaterialTheme.colorScheme.surfaceContainer.toArgb(),
+                            MaterialTheme.colorScheme.surfaceContainer.toArgb()
                         )
-                        setupNextScreen(
-                            selectedItemsList = selectedItemsList,
-                            window = window
+                    )
+                    setupNextScreen(
+                        selectedItemsList,
+                        window
+                    )
+
+                    val screen: Screens.EditingScreen = it.toRoute()
+                    val overwriteByDefault by mainViewModel.settings.Editing.getOverwriteByDefault()
+                        .collectAsStateWithLifecycle(initialValue = false)
+
+                    EditingView(
+                        absolutePath = screen.absolutePath,
+                        dateTaken = screen.dateTaken,
+                        uri = screen.uri.toUri(),
+                        window = window,
+                        overwriteByDefault = overwriteByDefault
+                    )
+                }
+
+                composable(MultiScreenViewType.SettingsMainView.name) {
+                    enableEdgeToEdge(
+                        navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.background.toArgb()),
+                        statusBarStyle = SystemBarStyle.auto(
+                            MaterialTheme.colorScheme.background.toArgb(),
+                            MaterialTheme.colorScheme.background.toArgb()
                         )
+                    )
+                    setupNextScreen(
+                        selectedItemsList,
+                        window
+                    )
 
-                        Content(currentView, showDialog, selectedItemsList, multiAlbumViewModel)
-                    }
+                    MainSettingsPage()
+                }
 
-                    composable<Screens.SinglePhotoView>(
-                        typeMap = mapOf(
-                            typeOf<AlbumInfo>() to AlbumInfoNavType,
-                            typeOf<List<String>>() to NavType.StringListType
+                composable(MultiScreenViewType.SettingsDebuggingView.name) {
+                    enableEdgeToEdge(
+                        navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.background.toArgb()),
+                        statusBarStyle = SystemBarStyle.auto(
+                            MaterialTheme.colorScheme.background.toArgb(),
+                            MaterialTheme.colorScheme.background.toArgb()
                         )
-                    ) {
-                        enableEdgeToEdge(
-                            navigationBarStyle = SystemBarStyle.dark(
-                                MaterialTheme.colorScheme.surfaceContainer.copy(
-                                    alpha = 0.2f
-                                ).toArgb()
-                            ),
-                            statusBarStyle = SystemBarStyle.auto(
-                                MaterialTheme.colorScheme.surface.copy(alpha = 0.2f).toArgb(),
-                                MaterialTheme.colorScheme.surface.copy(alpha = 0.2f).toArgb()
-                            )
+                    )
+                    setupNextScreen(
+                        selectedItemsList,
+                        window
+                    )
+
+                    DebuggingSettingsPage()
+                }
+
+                composable(MultiScreenViewType.SettingsGeneralView.name) {
+                    enableEdgeToEdge(
+                        navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.background.toArgb()),
+                        statusBarStyle = SystemBarStyle.auto(
+                            MaterialTheme.colorScheme.background.toArgb(),
+                            MaterialTheme.colorScheme.background.toArgb()
                         )
-                        setupNextScreen(
-                            selectedItemsList,
-                            window
+                    )
+                    setupNextScreen(
+                        selectedItemsList,
+                        window
+                    )
+
+                    GeneralSettingsPage(currentTab = currentView)
+                }
+
+                composable(MultiScreenViewType.SettingsMemoryAndStorageView.name) {
+                    enableEdgeToEdge(
+                        navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.background.toArgb()),
+                        statusBarStyle = SystemBarStyle.auto(
+                            MaterialTheme.colorScheme.background.toArgb(),
+                            MaterialTheme.colorScheme.background.toArgb()
                         )
+                    )
+                    setupNextScreen(
+                        selectedItemsList,
+                        window
+                    )
 
-                        val screen: Screens.SinglePhotoView = it.toRoute()
+                    MemoryAndStorageSettingsPage()
+                }
 
-                        if (screen.albumInfo != multiAlbumViewModel.albumInfo) {
-                            multiAlbumViewModel.reinitDataSource(
-                                context = context,
-                                album = screen.albumInfo,
-                                sortMode = multiAlbumViewModel.sortBy
-                            )
-                        }
-
-                        if (!screen.albumInfo.isCustomAlbum) {
-                            SinglePhotoView(
-                                navController = navControllerLocal,
-                                window = window,
-                                multiAlbumViewModel = multiAlbumViewModel,
-                                mediaItemId = screen.mediaItemId,
-                                loadsFromMainViewModel = screen.loadsFromMainViewModel,
-                            )
-                        } else {
-                            if (screen.albumInfo != multiAlbumViewModel.albumInfo) {
-                                customAlbumViewModel.reinitDataSource(
-                                    context = context,
-                                    album = screen.albumInfo,
-                                    sortMode = customAlbumViewModel.sortBy
-                                )
-                            }
-
-                            SinglePhotoView(
-                                navController = navControllerLocal,
-                                window = window,
-                                multiAlbumViewModel = multiAlbumViewModel,
-                                customAlbumViewModel = customAlbumViewModel,
-                                mediaItemId = screen.mediaItemId,
-                                loadsFromMainViewModel = screen.loadsFromMainViewModel,
-                            )
-                        }
-                    }
-
-                    composable<Screens.SingleAlbumView>(
-                        typeMap = mapOf(
-                            typeOf<AlbumInfo>() to AlbumInfoNavType,
-                            typeOf<List<String>>() to NavType.StringListType
+                composable(MultiScreenViewType.SettingsLookAndFeelView.name) {
+                    enableEdgeToEdge(
+                        navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.background.toArgb()),
+                        statusBarStyle = SystemBarStyle.auto(
+                            MaterialTheme.colorScheme.background.toArgb(),
+                            MaterialTheme.colorScheme.background.toArgb()
                         )
-                    ) {
-                        enableEdgeToEdge(
-                            navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
-                            statusBarStyle = SystemBarStyle.auto(
-                                MaterialTheme.colorScheme.surface.toArgb(),
-                                MaterialTheme.colorScheme.surface.toArgb()
-                            )
+                    )
+                    setupNextScreen(
+                        selectedItemsList,
+                        window
+                    )
+
+                    LookAndFeelSettingsPage()
+                }
+
+                composable(MultiScreenViewType.UpdatesPage.name) {
+                    enableEdgeToEdge(
+                        navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.background.toArgb()),
+                        statusBarStyle = SystemBarStyle.auto(
+                            MaterialTheme.colorScheme.background.toArgb(),
+                            MaterialTheme.colorScheme.background.toArgb()
                         )
-                        setupNextScreen(
-                            selectedItemsList,
-                            window
+                    )
+                    setupNextScreen(
+                        selectedItemsList,
+                        window
+                    )
+
+                    UpdatesPage()
+                }
+
+                composable(MultiScreenViewType.DataAndBackup.name) {
+                    enableEdgeToEdge(
+                        navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.background.toArgb()),
+                        statusBarStyle = SystemBarStyle.auto(
+                            MaterialTheme.colorScheme.background.toArgb(),
+                            MaterialTheme.colorScheme.background.toArgb()
                         )
+                    )
+                    setupNextScreen(
+                        selectedItemsList,
+                        window
+                    )
 
-                        val screen: Screens.SingleAlbumView = it.toRoute()
+                    DataAndBackupPage()
+                }
 
-                        if (screen.albumInfo != multiAlbumViewModel.albumInfo) {
-                            multiAlbumViewModel.reinitDataSource(
-                                context = context,
-                                album = screen.albumInfo,
-                                sortMode = multiAlbumViewModel.sortBy
-                            )
-                        }
-
-                        if (!screen.albumInfo.isCustomAlbum) {
-                            SingleAlbumView(
-                                albumInfo = screen.albumInfo,
-                                selectedItemsList = selectedItemsList,
-                                currentView = currentView,
-                                viewModel = multiAlbumViewModel
-                            )
-                        } else {
-                            if (screen.albumInfo != multiAlbumViewModel.albumInfo) {
-                                customAlbumViewModel.reinitDataSource(
-                                    context = context,
-                                    album = screen.albumInfo,
-                                    sortMode = customAlbumViewModel.sortBy
-                                )
-                            }
-
-                            SingleAlbumView(
-                                albumInfo = screen.albumInfo,
-                                selectedItemsList = selectedItemsList,
-                                currentView = currentView,
-                                customViewModel = customAlbumViewModel,
-                                multiViewModel = multiAlbumViewModel
-                            )
-                        }
-                    }
-
-                    composable<Screens.SingleTrashedPhotoView> {
-                        enableEdgeToEdge(
-                            navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
-                            statusBarStyle = SystemBarStyle.auto(
-                                MaterialTheme.colorScheme.surface.toArgb(),
-                                MaterialTheme.colorScheme.surface.toArgb()
-                            )
+                composable(MultiScreenViewType.PrivacyAndSecurity.name) {
+                    enableEdgeToEdge(
+                        navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.background.toArgb()),
+                        statusBarStyle = SystemBarStyle.auto(
+                            MaterialTheme.colorScheme.background.toArgb(),
+                            MaterialTheme.colorScheme.background.toArgb()
                         )
-                        setupNextScreen(
-                            selectedItemsList,
-                            window
+                    )
+                    setupNextScreen(
+                        selectedItemsList,
+                        window
+                    )
+
+                    PrivacyAndSecurityPage()
+                }
+
+                composable(MultiScreenViewType.ImmichMainPage.name) {
+                    enableEdgeToEdge(
+                        navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
+                        statusBarStyle = SystemBarStyle.auto(
+                            MaterialTheme.colorScheme.surface.toArgb(),
+                            MaterialTheme.colorScheme.surface.toArgb()
                         )
+                    )
+                    setupNextScreen(
+                        selectedItemsList,
+                        window
+                    )
 
-                        val screen: Screens.SingleTrashedPhotoView = it.toRoute()
+                    ImmichMainPage()
+                }
 
-                        SingleTrashedPhotoView(
-                            window = window,
-                            mediaItemId = screen.mediaItemId
+                composable<Screens.ImmichAlbumPage>(
+                    typeMap = mapOf(
+                        typeOf<AlbumInfo>() to AlbumInfoNavType
+                    )
+                ) {
+                    enableEdgeToEdge(
+                        navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
+                        statusBarStyle = SystemBarStyle.auto(
+                            MaterialTheme.colorScheme.surface.toArgb(),
+                            MaterialTheme.colorScheme.surface.toArgb()
                         )
-                    }
+                    )
+                    setupNextScreen(
+                        selectedItemsList,
+                        window
+                    )
 
-                    composable(MultiScreenViewType.TrashedPhotoView.name) {
-                        enableEdgeToEdge(
-                            navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
-                            statusBarStyle = SystemBarStyle.auto(
-                                MaterialTheme.colorScheme.surface.toArgb(),
-                                MaterialTheme.colorScheme.surface.toArgb()
-                            )
-                        )
-
-                        setupNextScreen(
-                            selectedItemsList,
-                            window
-                        )
-
-                        TrashedPhotoGridView(
-                            selectedItemsList = selectedItemsList,
-                            currentView = currentView
-                        )
-                    }
-
-                    composable(MultiScreenViewType.SecureFolder.name) {
-                        enableEdgeToEdge(
-                            navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
-                            statusBarStyle = SystemBarStyle.auto(
-                                MaterialTheme.colorScheme.surface.toArgb(),
-                                MaterialTheme.colorScheme.surface.toArgb()
-                            )
-                        )
-                        setupNextScreen(
-                            selectedItemsList,
-                            window
-                        )
-
-                        LockedFolderView(window = window, currentView = currentView)
-                    }
-
-                    composable<Screens.SingleHiddenPhotoView> {
-                        enableEdgeToEdge(
-                            navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
-                            statusBarStyle = SystemBarStyle.auto(
-                                MaterialTheme.colorScheme.surface.toArgb(),
-                                MaterialTheme.colorScheme.surface.toArgb()
-                            )
-                        )
-                        setupNextScreen(
-                            selectedItemsList,
-                            window
-                        )
-
-                        val screen: Screens.SingleHiddenPhotoView = it.toRoute()
-
-                        SingleHiddenPhotoView(
-                            mediaItemId = screen.mediaItemId,
-                            window = window
+                    val screen: Screens.ImmichAlbumPage = it.toRoute()
+                    if (screen.albumInfo != multiAlbumViewModel.albumInfo) {
+                        multiAlbumViewModel.reinitDataSource(
+                            context = context,
+                            album = screen.albumInfo,
+                            sortMode = multiAlbumViewModel.sortBy
                         )
                     }
 
-                    composable(MultiScreenViewType.AboutAndUpdateView.name) {
-                        enableEdgeToEdge(
-                            navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.background.toArgb()),
-                            statusBarStyle = SystemBarStyle.auto(
-                                MaterialTheme.colorScheme.background.toArgb(),
-                                MaterialTheme.colorScheme.background.toArgb()
-                            )
-                        )
-                        setupNextScreen(
-                            selectedItemsList,
-                            window
-                        )
-
-                        AboutPage {
-                            navControllerLocal.popBackStack()
-                        }
-                    }
-
-                    composable(MultiScreenViewType.FavouritesGridView.name) {
-                        enableEdgeToEdge(
-                            navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.background.toArgb()),
-                            statusBarStyle = SystemBarStyle.auto(
-                                MaterialTheme.colorScheme.background.toArgb(),
-                                MaterialTheme.colorScheme.background.toArgb()
-                            )
-                        )
-                        setupNextScreen(
-                            selectedItemsList,
-                            window
-                        )
-
-                        FavouritesGridView(
-                            selectedItemsList = selectedItemsList,
-                            currentView = currentView
-                        )
-                    }
-
-                    composable<Screens.EditingScreen>(
-                        enterTransition = {
-                            slideInVertically(
-                                animationSpec = tween(
-                                    durationMillis = 600
-                                )
-                            ) { height -> height } + fadeIn(
-                                animationSpec = tween(
-                                    durationMillis = 600
-                                )
-                            )
-                        },
-                        exitTransition = {
-                            slideOutVertically(
-                                animationSpec = tween(
-                                    durationMillis = 600
-                                )
-                            ) { height -> height } + fadeOut(
-                                animationSpec = tween(
-                                    durationMillis = 600
-                                )
-                            )
-                        },
-                        popEnterTransition = {
-                            slideInVertically(
-                                animationSpec = tween(
-                                    durationMillis = 600
-                                )
-                            ) { height -> height } + fadeIn(
-                                animationSpec = tween(
-                                    durationMillis = 600
-                                )
-                            )
-                        },
-                        popExitTransition = {
-                            slideOutVertically(
-                                animationSpec = tween(
-                                    durationMillis = 600
-                                )
-                            ) { height -> height } + fadeOut(
-                                animationSpec = tween(
-                                    durationMillis = 600
-                                )
-                            )
-                        }
-                    ) {
-                        enableEdgeToEdge(
-                            navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
-                            statusBarStyle = SystemBarStyle.auto(
-                                MaterialTheme.colorScheme.surfaceContainer.toArgb(),
-                                MaterialTheme.colorScheme.surfaceContainer.toArgb()
-                            )
-                        )
-                        setupNextScreen(
-                            selectedItemsList,
-                            window
-                        )
-
-                        val screen: Screens.EditingScreen = it.toRoute()
-                        val overwriteByDefault by mainViewModel.settings.Editing.getOverwriteByDefault()
-                            .collectAsStateWithLifecycle(initialValue = false)
-
-                        EditingView(
-                            absolutePath = screen.absolutePath,
-                            dateTaken = screen.dateTaken,
-                            uri = screen.uri.toUri(),
-                            window = window,
-                            overwriteByDefault = overwriteByDefault
-                        )
-                    }
-
-                    composable(MultiScreenViewType.SettingsMainView.name) {
-                        enableEdgeToEdge(
-                            navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.background.toArgb()),
-                            statusBarStyle = SystemBarStyle.auto(
-                                MaterialTheme.colorScheme.background.toArgb(),
-                                MaterialTheme.colorScheme.background.toArgb()
-                            )
-                        )
-                        setupNextScreen(
-                            selectedItemsList,
-                            window
-                        )
-
-                        MainSettingsPage()
-                    }
-
-                    composable(MultiScreenViewType.SettingsDebuggingView.name) {
-                        enableEdgeToEdge(
-                            navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.background.toArgb()),
-                            statusBarStyle = SystemBarStyle.auto(
-                                MaterialTheme.colorScheme.background.toArgb(),
-                                MaterialTheme.colorScheme.background.toArgb()
-                            )
-                        )
-                        setupNextScreen(
-                            selectedItemsList,
-                            window
-                        )
-
-                        DebuggingSettingsPage()
-                    }
-
-                    composable(MultiScreenViewType.SettingsGeneralView.name) {
-                        enableEdgeToEdge(
-                            navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.background.toArgb()),
-                            statusBarStyle = SystemBarStyle.auto(
-                                MaterialTheme.colorScheme.background.toArgb(),
-                                MaterialTheme.colorScheme.background.toArgb()
-                            )
-                        )
-                        setupNextScreen(
-                            selectedItemsList,
-                            window
-                        )
-
-                        GeneralSettingsPage(currentTab = currentView)
-                    }
-
-                    composable(MultiScreenViewType.SettingsMemoryAndStorageView.name) {
-                        enableEdgeToEdge(
-                            navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.background.toArgb()),
-                            statusBarStyle = SystemBarStyle.auto(
-                                MaterialTheme.colorScheme.background.toArgb(),
-                                MaterialTheme.colorScheme.background.toArgb()
-                            )
-                        )
-                        setupNextScreen(
-                            selectedItemsList,
-                            window
-                        )
-
-                        MemoryAndStorageSettingsPage()
-                    }
-
-                    composable(MultiScreenViewType.SettingsLookAndFeelView.name) {
-                        enableEdgeToEdge(
-                            navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.background.toArgb()),
-                            statusBarStyle = SystemBarStyle.auto(
-                                MaterialTheme.colorScheme.background.toArgb(),
-                                MaterialTheme.colorScheme.background.toArgb()
-                            )
-                        )
-                        setupNextScreen(
-                            selectedItemsList,
-                            window
-                        )
-
-                        LookAndFeelSettingsPage()
-                    }
-
-                    composable(MultiScreenViewType.UpdatesPage.name) {
-                        enableEdgeToEdge(
-                            navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.background.toArgb()),
-                            statusBarStyle = SystemBarStyle.auto(
-                                MaterialTheme.colorScheme.background.toArgb(),
-                                MaterialTheme.colorScheme.background.toArgb()
-                            )
-                        )
-                        setupNextScreen(
-                            selectedItemsList,
-                            window
-                        )
-
-                        UpdatesPage()
-                    }
-
-                    composable(MultiScreenViewType.DataAndBackup.name) {
-                        enableEdgeToEdge(
-                            navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.background.toArgb()),
-                            statusBarStyle = SystemBarStyle.auto(
-                                MaterialTheme.colorScheme.background.toArgb(),
-                                MaterialTheme.colorScheme.background.toArgb()
-                            )
-                        )
-                        setupNextScreen(
-                            selectedItemsList,
-                            window
-                        )
-
-                        DataAndBackupPage()
-                    }
-
-                    composable(MultiScreenViewType.PrivacyAndSecurity.name) {
-                        enableEdgeToEdge(
-                            navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.background.toArgb()),
-                            statusBarStyle = SystemBarStyle.auto(
-                                MaterialTheme.colorScheme.background.toArgb(),
-                                MaterialTheme.colorScheme.background.toArgb()
-                            )
-                        )
-                        setupNextScreen(
-                            selectedItemsList,
-                            window
-                        )
-
-                        PrivacyAndSecurityPage()
-                    }
-
-                    composable(MultiScreenViewType.ImmichMainPage.name) {
-                        enableEdgeToEdge(
-                            navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
-                            statusBarStyle = SystemBarStyle.auto(
-                                MaterialTheme.colorScheme.surface.toArgb(),
-                                MaterialTheme.colorScheme.surface.toArgb()
-                            )
-                        )
-                        setupNextScreen(
-                            selectedItemsList,
-                            window
-                        )
-
-                        ImmichMainPage()
-                    }
-
-                    composable<Screens.ImmichAlbumPage>(
-                        typeMap = mapOf(
-                            typeOf<AlbumInfo>() to AlbumInfoNavType
-                        )
-                    ) {
-                        enableEdgeToEdge(
-                            navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
-                            statusBarStyle = SystemBarStyle.auto(
-                                MaterialTheme.colorScheme.surface.toArgb(),
-                                MaterialTheme.colorScheme.surface.toArgb()
-                            )
-                        )
-                        setupNextScreen(
-                            selectedItemsList,
-                            window
-                        )
-
-                        val screen: Screens.ImmichAlbumPage = it.toRoute()
-                        if (screen.albumInfo != multiAlbumViewModel.albumInfo) {
-                            multiAlbumViewModel.reinitDataSource(
-                                context = context,
-                                album = screen.albumInfo,
-                                sortMode = multiAlbumViewModel.sortBy
-                            )
-                        }
-
-                        ImmichAlbumPage(
-                            albumInfo = screen.albumInfo,
-                            multiAlbumViewModel = multiAlbumViewModel
-                        )
-                    }
+                    ImmichAlbumPage(
+                        albumInfo = screen.albumInfo,
+                        multiAlbumViewModel = multiAlbumViewModel
+                    )
                 }
             }
         }
@@ -881,6 +894,7 @@ class MainActivity : ComponentActivity() {
             val showFirstStartupDialog = remember { mutableStateOf(false) }
             val isLoading = remember { mutableStateOf(false) }
             val findingAlbumsOnDevice = stringResource(id = R.string.finding_albums_on_device)
+            val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
 
             ConfirmationDialogWithBody(
                 dialogTitle = stringResource(id = R.string.first_startup_dialog_title),
@@ -898,7 +912,7 @@ class MainActivity : ComponentActivity() {
                         )
                     )
 
-                    mainViewModel.settings.AlbumsList.getAllAlbumsOnDevice()
+                    mainViewModel.settings.AlbumsList.getAllAlbumsOnDevice(displayDateFormat = displayDateFormat, appDatabase = applicationDatabase)
                         .cancellable()
                         .collectLatest { list ->
                             mainViewModel.settings.AlbumsList.setAlbumsList(list)
@@ -919,7 +933,8 @@ class MainActivity : ComponentActivity() {
                 startupUpdateCheck(
                     text = context.resources.getString(R.string.updates_new_version_available),
                     coroutineScope = coroutineScope,
-                    navController = navControllerLocal
+                    navController = navController,
+                    mainViewModel = mainViewModel
                 )
             }
         }
@@ -933,6 +948,8 @@ class MainActivity : ComponentActivity() {
         multiAlbumViewModel: MultiAlbumViewModel,
     ) {
         val context = LocalContext.current
+        val mainViewModel = LocalMainViewModel.current
+
         val albumsList by mainViewModel.settings.MainPhotosView.getAlbums()
             .collectAsStateWithLifecycle(initialValue = emptyList())
         val mediaStoreData =
@@ -1158,7 +1175,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private fun setupNextScreen(
+fun setupNextScreen(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     window: Window
 ) {

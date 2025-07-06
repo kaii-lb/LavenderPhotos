@@ -59,7 +59,7 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.kaii.photos.MainActivity.Companion.mainViewModel
+import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.ExplanationDialog
 import com.kaii.photos.compose.dialogs.getDefaultShapeSpacerForPosition
@@ -140,6 +140,7 @@ fun PermissionHandler(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
+                val mainViewModel = LocalMainViewModel.current
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(
                         space = 4.dp,
@@ -387,6 +388,7 @@ fun PermissionHandler(
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    val mainViewModel = LocalMainViewModel.current
                     Button(
                         onClick = {
                             continueToApp.value = true

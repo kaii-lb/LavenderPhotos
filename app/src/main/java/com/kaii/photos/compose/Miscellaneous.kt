@@ -76,8 +76,8 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.signature.ObjectKey
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
-import com.kaii.photos.MainActivity.Companion.immichViewModel
-import com.kaii.photos.MainActivity.Companion.mainViewModel
+import com.kaii.photos.R
+import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.SelectingMoreOptionsDialog
 import com.kaii.photos.datastore.BottomBarTab
@@ -385,8 +385,10 @@ fun SelectViewTopBarLeftButtons(
 @Composable
 fun SelectViewTopBarRightButtons(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
-    currentView: MutableState<BottomBarTab>
+    currentView: MutableState<BottomBarTab>,
+    isFromMediaPicker: Boolean = false
 ) {
+    val mainViewModel = LocalMainViewModel.current
     val groupedMedia = mainViewModel.groupedMedia.collectAsStateWithLifecycle(initialValue = emptyList())
 
     val selectedItemsWithoutSection by remember {
@@ -454,7 +456,7 @@ fun SelectViewTopBarRightButtons(
             )
         }
 
-        if (currentView.value != DefaultTabs.TabTypes.secure) {
+        if (currentView.value != DefaultTabs.TabTypes.secure && !isFromMediaPicker) {
             val showMoreOptionsDialog = remember { mutableStateOf(false) }
 
             if (showMoreOptionsDialog.value) {

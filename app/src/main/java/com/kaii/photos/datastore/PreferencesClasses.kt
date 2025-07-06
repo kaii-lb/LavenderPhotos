@@ -11,6 +11,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import com.bumptech.glide.Glide
 import com.kaii.lavender.immichintegration.serialization.User
 import com.kaii.photos.helpers.EncryptionManager
+import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.tryGetAllAlbums
@@ -101,10 +102,18 @@ class SettingsAlbumsListImpl(
         }
     }
 
-    fun getAutoDetectedAlbums(): Flow<List<AlbumInfo>> =
-        tryGetAllAlbums(context = context).combine(getCustomAlbums()) { first, second ->
-            first + second
-        }
+    fun getAutoDetectedAlbums(
+        displayDateFormat: DisplayDateFormat,
+        appDatabase: MediaDatabase
+    ): Flow<List<AlbumInfo>> =
+        tryGetAllAlbums(
+            context = context,
+            displayDateFormat = displayDateFormat,
+            applicationDatabase = appDatabase
+        )
+            .combine(getCustomAlbums()) { first, second ->
+                first + second
+            }
 
     fun getNormalAlbums() = channelFlow {
         val prevList = context.datastore.data.map { data ->
@@ -223,8 +232,11 @@ class SettingsAlbumsListImpl(
         )
 
     /** emits one album after the other */
-    fun getAllAlbumsOnDevice(): Flow<List<AlbumInfo>> =
-        tryGetAllAlbums(context = context)
+    fun getAllAlbumsOnDevice(
+        displayDateFormat: DisplayDateFormat,
+        appDatabase: MediaDatabase
+    ): Flow<List<AlbumInfo>> =
+        tryGetAllAlbums(context = context, displayDateFormat = displayDateFormat, applicationDatabase = appDatabase)
 }
 
 class SettingsVersionImpl(

@@ -68,7 +68,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
-import com.kaii.photos.MainActivity.Companion.mainViewModel
+import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.ConfirmCancelRow
 import com.kaii.photos.compose.FullWidthDialogButton
@@ -413,6 +413,7 @@ fun AddTabDialog(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        val mainViewModel = LocalMainViewModel.current
         FullWidthDialogButton(
             text = stringResource(id = R.string.tabs_confirm),
             color = MaterialTheme.colorScheme.primary,
@@ -494,6 +495,7 @@ fun SortModeSelectorDialog(
             }
         }
 
+        val mainViewModel = LocalMainViewModel.current
         ConfirmCancelRow(
             onConfirm = {
                 mainViewModel.settings.PhotoGrid.setSortMode(chosenSortMode)
@@ -509,6 +511,7 @@ fun DeleteIntervalDialog(
     initialValue: Int
 ) {
     var deleteInterval by remember { mutableIntStateOf(initialValue) }
+    val mainViewModel = LocalMainViewModel.current
 
     SelectableButtonListDialog(
         title = stringResource(id = R.string.trash_auto_delete_interval),
@@ -562,6 +565,7 @@ fun ThumbnailSizeDialog(
     initialValue: Int
 ) {
     var thumbnailSize by remember { mutableIntStateOf(initialValue) }
+    val mainViewModel = LocalMainViewModel.current
 
     SelectableButtonListDialog(
         title = stringResource(id = R.string.settings_storage_thumbnails_resolution),
@@ -614,6 +618,7 @@ fun TabCustomizationDialog(
     currentTab: MutableState<BottomBarTab>,
     closeDialog: () -> Unit
 ) {
+    val mainViewModel = LocalMainViewModel.current
     val tabList by mainViewModel.settings.DefaultTabs.getTabList()
         .collectAsStateWithLifecycle(initialValue = emptyList())
     val coroutineScope = rememberCoroutineScope()
@@ -799,6 +804,7 @@ fun DefaultTabSelectorDialog(
             }
         }
 
+        val mainViewModel = LocalMainViewModel.current
         ConfirmCancelRow(
             onConfirm = {
                 mainViewModel.settings.DefaultTabs.setTabList(tabListDynamic)
@@ -830,6 +836,7 @@ fun DateFormatDialog(
         ) {
             Spacer(modifier = Modifier.height(12.dp))
 
+            val mainViewModel = LocalMainViewModel.current
             val currentDate = remember {
                 Instant.now().atZone(ZoneId.systemDefault()).toLocalDateTime()
             }

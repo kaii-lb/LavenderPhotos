@@ -61,15 +61,16 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.kaii.photos.BuildConfig
-import com.kaii.photos.MainActivity.Companion.mainViewModel
+import com.kaii.photos.LocalAppDatabase
+import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.BottomAppBarItem
 import com.kaii.photos.compose.app_bars.setBarVisibility
-import com.kaii.photos.compose.rememberDeviceOrientation
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.ExplanationDialog
 import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.dialogs.SinglePhotoInfoDialog
+import com.kaii.photos.compose.rememberDeviceOrientation
 import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.GetPermissionAndRun
@@ -89,8 +90,6 @@ import com.kaii.photos.models.favourites_grid.FavouritesViewModel
 import com.kaii.photos.models.favourites_grid.FavouritesViewModelFactory
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlin.collections.distinct
-import kotlin.collections.plus
 
 private const val TAG = "SINGLE_PHOTO_VIEW"
 
@@ -103,6 +102,7 @@ fun SinglePhotoView(
     mediaItemId: Long,
     loadsFromMainViewModel: Boolean
 ) {
+    val mainViewModel = LocalMainViewModel.current
     val holderGroupedMedia: MutableState<List<MediaStoreData>?> = remember { mutableStateOf(null) }
 
     if (!loadsFromMainViewModel) {
@@ -153,6 +153,7 @@ fun SinglePhotoView(
     mediaItemId: Long,
     loadsFromMainViewModel: Boolean
 ) {
+    val mainViewModel = LocalMainViewModel.current
     val holderGroupedMedia: MutableState<List<MediaStoreData>?> = remember { mutableStateOf(null) }
 
     if (!loadsFromMainViewModel) {
@@ -359,8 +360,9 @@ private fun TopBar(
 
     val vibratorManager = rememberVibratorManager()
 
+    val applicationDatabase = LocalAppDatabase.current
     val favouritesViewModel: FavouritesViewModel = viewModel(
-        factory = FavouritesViewModelFactory()
+        factory = FavouritesViewModelFactory(applicationDatabase)
     )
 
     AnimatedVisibility(
@@ -547,6 +549,8 @@ private fun BottomBar(
                     Log.d(TAG, "CURRENT ITEM URI ${currentItem.uri}")
 
                     val coroutineScope = rememberCoroutineScope()
+                    val mainViewModel = LocalMainViewModel.current
+
                     GetPermissionAndRun(
                         uris = listOf(currentItem.uri),
                         shouldRun = runTrashAction,
@@ -609,14 +613,16 @@ private fun BottomBar(
                         onRejected = {}
                     )
 
+                    val applicationDatabase = LocalAppDatabase.current
                     GetPermissionAndRun(
                         uris = listOf(currentItem.uri),
                         shouldRun = moveToSecureFolder,
                         onGranted = {
                             mainViewModel.launch(Dispatchers.IO) {
                                 moveImageToLockedFolder(
-                                    listOf(currentItem),
-                                    context
+                                    list = listOf(currentItem),
+                                    context = context,
+                                    applicationDatabase = applicationDatabase
                                 ) {
                                     if (groupedMedia.value.isEmpty()) onZeroItemsLeft()
 

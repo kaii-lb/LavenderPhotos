@@ -1,5 +1,6 @@
 package com.kaii.photos.compose.app_bars
 
+import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
@@ -40,7 +41,7 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastMapNotNull
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.kaii.photos.MainActivity.Companion.mainViewModel
+import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.SelectViewTopBarLeftButtons
 import com.kaii.photos.compose.SelectViewTopBarRightButtons
@@ -62,7 +63,8 @@ fun MainAppTopBar(
     alternate: Boolean,
     showDialog: MutableState<Boolean>,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
-    currentView: MutableState<BottomBarTab>
+    currentView: MutableState<BottomBarTab>,
+    isFromMediaPicker: Boolean = false
 ) {
     DualFunctionTopAppBar(
         alternated = alternate,
@@ -82,7 +84,7 @@ fun MainAppTopBar(
         },
         actions = {
             AnimatedVisibility(
-                visible = currentView.value == DefaultTabs.TabTypes.albums,
+                visible = currentView.value == DefaultTabs.TabTypes.albums && !isFromMediaPicker,
                 enter = scaleIn(
                     animationSpec = spring(
                         dampingRatio = Spring.DampingRatioMediumBouncy,
@@ -117,17 +119,33 @@ fun MainAppTopBar(
                 }
             }
 
-            IconButton(
-                onClick = {
-                    showDialog.value = true
-                },
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.settings),
-                    contentDescription = stringResource(id = R.string.settings),
-                    tint = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.size(24.dp)
-                )
+            if (!isFromMediaPicker) {
+                IconButton(
+                    onClick = {
+                        showDialog.value = true
+                    },
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.settings),
+                        contentDescription = stringResource(id = R.string.settings),
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            } else {
+                val context = LocalContext.current
+                IconButton(
+                    onClick = {
+                        (context as Activity).finish()
+                    },
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.close),
+                        contentDescription = "Close media picker",
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
         },
         alternateTitle = {
@@ -136,7 +154,8 @@ fun MainAppTopBar(
         alternateActions = {
             SelectViewTopBarRightButtons(
                 selectedItemsList = selectedItemsList,
-                currentView = currentView
+                currentView = currentView,
+                isFromMediaPicker = isFromMediaPicker
             )
         },
     )
@@ -265,6 +284,7 @@ fun MainAppSelectingBottomBar(
         val showDeleteDialog = remember { mutableStateOf(false) }
         val runDeleteAction = remember { mutableStateOf(false) }
 
+        val mainViewModel = LocalMainViewModel.current
         GetPermissionAndRun(
             uris = selectedItemsWithoutSection.fastMapNotNull { it.uri },
             shouldRun = runDeleteAction,

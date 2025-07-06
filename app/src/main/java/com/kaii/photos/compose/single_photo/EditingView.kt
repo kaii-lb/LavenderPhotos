@@ -156,8 +156,8 @@ import androidx.core.graphics.createBitmap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
+import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
-import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.ColorFilterItem
 import com.kaii.photos.compose.ColorRangeSlider
@@ -300,6 +300,7 @@ fun EditingView(
 
     val selectedText: MutableState<DrawableText?> = remember { mutableStateOf(null) }
 
+    val mainViewModel = LocalMainViewModel.current
     Scaffold(
         topBar = {
             val exitOnSave by mainViewModel.settings.Editing.getExitOnSave()

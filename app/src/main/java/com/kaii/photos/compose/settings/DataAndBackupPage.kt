@@ -29,8 +29,9 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
+import com.kaii.photos.LocalAppDatabase
+import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
-import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.PreferencesRow
 import com.kaii.photos.compose.PreferencesSeparatorText
@@ -48,6 +49,9 @@ private const val TAG = "DATA_AND_BACKUP_PAGE"
 
 @Composable
 fun DataAndBackupPage() {
+    val mainViewModel = LocalMainViewModel.current
+    val appDatabase = LocalAppDatabase.current
+
     Scaffold(
         topBar = {
             DataAndBackupTopBar()
@@ -100,7 +104,7 @@ fun DataAndBackupPage() {
                     showBackground = false
                 ) {
                     mainViewModel.launch(Dispatchers.IO) {
-                        val backupHelper = DataAndBackupHelper()
+                        val backupHelper = DataAndBackupHelper(appDatabase)
 
                         isLoading.value = true
                         LavenderSnackbarController.pushEvent(
@@ -134,7 +138,7 @@ fun DataAndBackupPage() {
                     showBackground = false
                 ) {
                     mainViewModel.launch(Dispatchers.IO) {
-                        val backupHelper = DataAndBackupHelper()
+                        val backupHelper = DataAndBackupHelper(appDatabase)
 
                         isLoading.value = true
                         LavenderSnackbarController.pushEvent(
@@ -168,7 +172,7 @@ fun DataAndBackupPage() {
                     showBackground = false
                 ) {
                     mainViewModel.launch(Dispatchers.IO) {
-                        val backupHelper = DataAndBackupHelper()
+                        val backupHelper = DataAndBackupHelper(appDatabase)
 
                         isLoading.value = true
                         LavenderSnackbarController.pushEvent(
@@ -221,7 +225,7 @@ fun DataAndBackupPage() {
                     showBackground = false
                 ) {
                     mainViewModel.launch(Dispatchers.IO) {
-                        val helper = DataAndBackupHelper()
+                        val helper = DataAndBackupHelper(appDatabase)
 
                         isLoading.value = true
                         LavenderSnackbarController.pushEvent(
@@ -255,7 +259,7 @@ fun DataAndBackupPage() {
                     showBackground = false
                 ) {
                     mainViewModel.launch(Dispatchers.IO) {
-                        val helper = DataAndBackupHelper()
+                        val helper = DataAndBackupHelper(appDatabase)
 
                         isLoading.value = true
                         LavenderSnackbarController.pushEvent(

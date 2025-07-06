@@ -47,7 +47,7 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
-import com.kaii.photos.MainActivity.Companion.mainViewModel
+import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.datastore.Video
@@ -108,6 +108,7 @@ fun HorizontalImageList(
         if (!isLandscape) isTouchLocked.value = false
     }
 
+    val mainViewModel = LocalMainViewModel.current
     val shouldAutoPlay =
         if (isOpenWithView) true
         else mainViewModel.settings.Video.getShouldAutoPlay()
