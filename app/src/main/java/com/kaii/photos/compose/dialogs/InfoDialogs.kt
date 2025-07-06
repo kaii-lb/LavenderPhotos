@@ -75,8 +75,9 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
+import com.kaii.photos.LocalAppDatabase
+import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
-import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.AnimatableTextField
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
@@ -186,6 +187,8 @@ fun SingleAlbumDialog(
             val saveFileName = remember { mutableStateOf(false) }
 
             val context = LocalContext.current
+            val mainViewModel = LocalMainViewModel.current
+
             if (album.paths.size == 1) {
                 GetDirectoryPermissionAndRun(
                     absoluteDirPaths = album.paths,
@@ -746,6 +749,7 @@ fun MainAppDialog(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Start
             ) {
+                val mainViewModel = LocalMainViewModel.current
                 val storedName = mainViewModel.settings.User.getUsername()
                     .collectAsStateWithLifecycle(initialValue = null).value ?: return@Row
 
@@ -957,14 +961,17 @@ fun SelectingMoreOptionsDialog(
         )
     }
 
+    val mainViewModel = LocalMainViewModel.current
+    val appDatabase = LocalAppDatabase.current
     GetPermissionAndRun(
         uris = selectedItems.map { it.uri },
         shouldRun = moveToSecureFolder,
         onGranted = {
             mainViewModel.launch(Dispatchers.IO) {
                 moveImageToLockedFolder(
-                    selectedItems,
-                    context
+                    list = selectedItems,
+                    context = context,
+                    applicationDatabase = appDatabase
                 ) {
                     onDone()
                     showLoadingDialog = false

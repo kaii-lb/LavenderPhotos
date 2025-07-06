@@ -65,8 +65,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
+import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
-import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.compose.dialogs.SelectingMoreOptionsDialog
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
@@ -371,8 +371,10 @@ fun SelectViewTopBarLeftButtons(
 @Composable
 fun SelectViewTopBarRightButtons(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
-    currentView: MutableState<BottomBarTab>
+    currentView: MutableState<BottomBarTab>,
+    isFromMediaPicker: Boolean = false
 ) {
+    val mainViewModel = LocalMainViewModel.current
     val groupedMedia = mainViewModel.groupedMedia.collectAsStateWithLifecycle(initialValue = emptyList())
 
     val selectedItemsWithoutSection by remember {
@@ -440,7 +442,7 @@ fun SelectViewTopBarRightButtons(
             )
         }
 
-        if (currentView.value != DefaultTabs.TabTypes.secure) {
+        if (currentView.value != DefaultTabs.TabTypes.secure && !isFromMediaPicker) {
             val showMoreOptionsDialog = remember { mutableStateOf(false) }
 
             if (showMoreOptionsDialog.value) {

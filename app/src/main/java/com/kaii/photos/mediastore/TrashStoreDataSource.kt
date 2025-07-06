@@ -10,17 +10,20 @@ import android.provider.MediaStore.Files.FileColumns
 import android.provider.MediaStore.MediaColumns
 import com.bumptech.glide.util.Preconditions
 import com.bumptech.glide.util.Util
-import com.kaii.photos.MainActivity
+import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaEntity
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.getDateTakenForMedia
+import com.kaii.photos.models.multi_album.DisplayDateFormat
 import com.kaii.photos.models.multi_album.groupPhotosBy
 
 /** Loads metadata from the media store for images and videos. */
 class TrashStoreDataSource(
     context: Context,
     sortBy: MediaItemSortMode,
-    cancellationSignal: CancellationSignal
+    cancellationSignal: CancellationSignal,
+    private val displayDateFormat: DisplayDateFormat,
+    private val database: MediaDatabase
 ) : MediaStoreDataSource(
     context, "trash", sortBy, cancellationSignal
 ) {
@@ -29,7 +32,7 @@ class TrashStoreDataSource(
             arrayOf(
                 MediaColumns._ID,
                 MediaStore.Images.Media.DATA,
-				MediaColumns.DATE_TAKEN,
+                MediaColumns.DATE_TAKEN,
                 MediaColumns.DATE_MODIFIED,
                 MediaColumns.MIME_TYPE,
                 MediaColumns.DISPLAY_NAME,
@@ -39,7 +42,6 @@ class TrashStoreDataSource(
     }
 
     override fun query(): List<MediaStoreData> {
-        val database = MainActivity.applicationDatabase
         val mediaEntityDao = database.mediaEntityDao()
 
         Preconditions.checkArgument(
@@ -81,15 +83,15 @@ class TrashStoreDataSource(
 
                 val mediaStoreDateTaken = cursor.getLong(dateTakenColumn) / 1000
                 val dateTaken =
-	                if (mediaStoreDateTaken == 0L) {
-	                	if (dateModified != 0L) {
-	                		dateModified
-	                	} else {
-	                		val possibleDateTaken = mediaEntityDao.getDateTaken(id)
+                    if (mediaStoreDateTaken == 0L) {
+                        if (dateModified != 0L) {
+                            dateModified
+                        } else {
+                            val possibleDateTaken = mediaEntityDao.getDateTaken(id)
 
-	                		if (possibleDateTaken != 0L) {
-	                			possibleDateTaken
-                   			} else {
+                            if (possibleDateTaken != 0L) {
+                                possibleDateTaken
+                            } else {
                                 val taken = getDateTakenForMedia(absolutePath)
 
                                 mediaEntityDao.insertEntity(
@@ -101,11 +103,11 @@ class TrashStoreDataSource(
                                     )
                                 )
                                 taken
-	                    	}
-	                	}
-	                } else {
-	                	mediaStoreDateTaken
-	                }
+                            }
+                        }
+                    } else {
+                        mediaStoreDateTaken
+                    }
 
                 val type =
                     if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) MediaType.Image
@@ -131,6 +133,6 @@ class TrashStoreDataSource(
         }
         mediaCursor.close()
 
-        return groupPhotosBy(data, sortBy)
+        return groupPhotosBy(data, sortBy, displayDateFormat)
     }
 }

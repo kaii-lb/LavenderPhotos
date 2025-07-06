@@ -2,50 +2,50 @@ package com.kaii.photos.compose.settings
 
 import android.util.Log
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.draw.clip
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -61,14 +61,14 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
-import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.AnnotatedExplanationDialog
 import com.kaii.photos.datastore.Versions
 import com.kaii.photos.helpers.CheckUpdateState
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 private const val TAG = "UPDATE_PAGE"
 
@@ -125,6 +125,7 @@ fun UpdatesPage() {
 
 				Spacer (modifier = Modifier.height(16.dp))
 
+				val mainViewModel = LocalMainViewModel.current
 				val changelog = mainViewModel.updater.getChangelog().split("\n")
 
 				LazyColumn (
@@ -192,6 +193,7 @@ private fun TopBar() {
 			}
 		},
 		actions = {
+			val mainViewModel = LocalMainViewModel.current
 			val context = LocalContext.current
 			val showUpdateNotice by mainViewModel.settings.Versions.getShowUpdateNotice().collectAsStateWithLifecycle(false)
 			val showDialog = remember { mutableStateOf(false) }
@@ -251,6 +253,7 @@ private fun BottomBar(
 	runRefreshAction: MutableState<Boolean>
 ) {
 	val context = LocalContext.current
+	val mainViewModel = LocalMainViewModel.current
 
 	Column (
 		modifier = Modifier

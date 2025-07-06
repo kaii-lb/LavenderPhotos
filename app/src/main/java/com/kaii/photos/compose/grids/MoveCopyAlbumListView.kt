@@ -66,7 +66,8 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
-import com.kaii.photos.MainActivity.Companion.mainViewModel
+import com.kaii.photos.LocalAppDatabase
+import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.FolderIsEmpty
 import com.kaii.photos.compose.SearchTextField
@@ -101,9 +102,13 @@ fun MoveCopyAlbumListView(
     insetsPadding: WindowInsets
 ) {
     val context = LocalContext.current
+    val mainViewModel = LocalMainViewModel.current
+    val appDatabase = LocalAppDatabase.current
     val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect().collectAsStateWithLifecycle(initialValue = true)
+    val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
+
     val originalAlbumsList by if (autoDetectAlbums) {
-        mainViewModel.settings.AlbumsList.getAutoDetectedAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
+        mainViewModel.settings.AlbumsList.getAutoDetectedAlbums(displayDateFormat, appDatabase).collectAsStateWithLifecycle(initialValue = emptyList())
     } else {
         mainViewModel.settings.AlbumsList.getNormalAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
     }
@@ -291,6 +296,7 @@ fun AlbumsListItem(
         onRejected = {}
     )
 
+    val mainViewModel = LocalMainViewModel.current
     val overwriteDate by mainViewModel.settings.Permissions.getOverwriteDateOnMove().collectAsStateWithLifecycle(initialValue = true)
     GetPermissionAndRun(
         uris = selectedItemsWithoutSection.map { it.uri },

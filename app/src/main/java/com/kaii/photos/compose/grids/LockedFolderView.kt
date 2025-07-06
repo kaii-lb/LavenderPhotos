@@ -34,10 +34,12 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.currentStateAsState
 import androidx.navigation.NavDestination.Companion.hasRoute
+import com.kaii.photos.LocalAppDatabase
+import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
-import com.kaii.photos.MainActivity.Companion.applicationDatabase
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.SecureFolderViewBottomAppBar
 import com.kaii.photos.compose.app_bars.SecureFolderViewTopAppBar
@@ -55,7 +57,6 @@ import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.multi_album.groupPhotosBy
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.file.Files
@@ -166,6 +167,10 @@ fun LockedFolderView(
     val mediaStoreData = emptyList<MediaStoreData>().toMutableList()
     val groupedMedia = remember { mutableStateOf(mediaStoreData.toList()) }
 
+    val mainViewModel = LocalMainViewModel.current
+    val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
+
+    val applicationDatabase = LocalAppDatabase.current
     // TODO: USE APP CONTENT RESOLVER!!!!
     LaunchedEffect(fileList.value, groupedMedia.value) {
         val restoredFilesDir = context.appRestoredFilesDir
@@ -214,7 +219,7 @@ fun LockedFolderView(
                 mediaStoreData.add(item)
             }
 
-            groupedMedia.value = groupPhotosBy(mediaStoreData, MediaItemSortMode.LastModified)
+            groupedMedia.value = groupPhotosBy(mediaStoreData, MediaItemSortMode.LastModified, displayDateFormat)
         }
     }
 

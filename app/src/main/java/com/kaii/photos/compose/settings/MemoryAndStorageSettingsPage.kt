@@ -27,8 +27,8 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
-import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.PreferencesRow
 import com.kaii.photos.compose.PreferencesSeparatorText
@@ -42,6 +42,8 @@ import com.kaii.photos.helpers.RowPosition
 
 @Composable
 fun MemoryAndStorageSettingsPage() {
+    val mainViewModel = LocalMainViewModel.current
+
     Scaffold(
         topBar = {
             MemoryAndStorageSettingsTopBar()
@@ -68,7 +70,7 @@ fun MemoryAndStorageSettingsPage() {
                     derivedStateOf {
                         context.resources.getString(
                             R.string.trash_auto_delete,
-                            autoDeleteInterval
+                            autoDeleteInterval.toString()
                         )
                     }
                 }

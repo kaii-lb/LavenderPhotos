@@ -168,8 +168,8 @@
     <string name="settings_storage_desc">Opsi Performa dan ruang</string>
     <string name="settings_storage">Penyimpanan</string>
     <string name="settings_memory">Memori</string>
-    <string name="settings_storage_thumbnails_size">Thumbnail saat ini %1$s piksel. Nilai yang lebih tinggi menggunakan lebih banyak %2$</string>
-    <string name="settings_storage_thumbnails_max">Thumbnail ditampilkan di resolusi semaksimal mungkin. Nilai ini menggunakan paling banyak %1$</string>
+    <string name="settings_storage_thumbnails_size">Thumbnail saat ini %1$s piksel. Nilai yang lebih tinggi menggunakan lebih banyak %2$s</string>
+    <string name="settings_storage_thumbnails_max">Thumbnail ditampilkan di resolusi semaksimal mungkin. Nilai ini menggunakan paling banyak %1$s</string>
     <string name="settings_storage_thumbnails_cache">Cache Thumbnail</string>
     <string name="settings_storage_thumbnails_cache_desc">Memungkinkan untuk memuat lebih cepat dengan biaya berupa penggunaan penyimpanan</string>
     <string name="settings_storage_thumbnails_resolution">Resolusi Thumbnail</string>
@@ -179,7 +179,7 @@
     <string name="settings_clear_cache_desc">Ini akan menghapus semua cache thumbnail di perangkat ini, membebaskan penyimpanan. Pemuatan thumbnail akan memakan waktu di startup berikutnya.</string>
     <string name="trash_bin_short">Sampah</string>
     <string name="trash_bin">Keranjang Sampah</string>
-    <string name="trash_auto_delete">Otomatis hapus item di keranjang sampah setelah</string>
+    <string name="trash_auto_delete">Otomatis hapus item di keranjang sampah setelah %s</string>
     <string name="trash_days">hari</string>
     <string name="trash_no_auto_delete">Item di keranjang sampah tidak akan dihapus secara otomatis</string>
     <string name="trash_auto_delete_interval">Interval penghapusan otomatis</string>

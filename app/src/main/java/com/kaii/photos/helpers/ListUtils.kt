@@ -9,11 +9,6 @@ import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.unit.center
-import androidx.compose.ui.unit.toOffset
-import com.kaii.photos.MainActivity.Companion.mainViewModel
-import com.kaii.photos.datastore.AlbumSortMode
-import com.kaii.photos.datastore.AlbumsList
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 

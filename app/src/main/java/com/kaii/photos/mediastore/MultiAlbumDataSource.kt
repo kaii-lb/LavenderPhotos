@@ -8,12 +8,13 @@ import android.provider.MediaStore.Files.FileColumns
 import android.provider.MediaStore.MediaColumns
 import com.bumptech.glide.util.Preconditions
 import com.bumptech.glide.util.Util
-import com.kaii.photos.MainActivity
+import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaEntity
 import com.kaii.photos.datastore.SQLiteQuery
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.getDateTakenForMedia
 import com.kaii.photos.helpers.getParentFromPath
+import com.kaii.photos.models.multi_album.DisplayDateFormat
 import com.kaii.photos.models.multi_album.groupPhotosBy
 
 // private const val TAG = "MULTI_ALBUM_DATA_SOURCE"
@@ -23,7 +24,9 @@ class MultiAlbumDataSource(
     context: Context,
     private val queryString: SQLiteQuery,
     sortBy: MediaItemSortMode,
-    cancellationSignal: CancellationSignal
+    cancellationSignal: CancellationSignal,
+    private val displayDateFormat: DisplayDateFormat,
+    private val database: MediaDatabase
 ) : MediaStoreDataSource(
     context, "", sortBy, cancellationSignal,
 ) {
@@ -42,7 +45,6 @@ class MultiAlbumDataSource(
     }
 
     override fun query(): List<MediaStoreData> {
-        val database = MainActivity.applicationDatabase
         val mediaEntityDao = database.mediaEntityDao()
 
         Preconditions.checkArgument(
@@ -128,6 +130,6 @@ class MultiAlbumDataSource(
             }
         }
 
-        return groupPhotosBy(data, sortBy)
+        return groupPhotosBy(data, sortBy, displayDateFormat)
     }
 }

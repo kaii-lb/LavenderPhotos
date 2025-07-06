@@ -58,13 +58,14 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.kaii.photos.LocalAppDatabase
+import com.kaii.photos.LocalMainViewModel
+import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
-import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.compose.dialogs.SinglePhotoInfoDialog
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.setTrashedOnPhotoList
-import com.kaii.photos.LocalNavController
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.trash_bin.TrashViewModel
@@ -80,8 +81,11 @@ fun SingleTrashedPhotoView(
     mediaItemId: Long,
 ) {
     val context = LocalContext.current
+    val mainViewModel = LocalMainViewModel.current
+    val appDatabase = LocalAppDatabase.current
+    val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
     val trashViewModel: TrashViewModel = viewModel(
-        factory = TrashViewModelFactory(context = context)
+        factory = TrashViewModelFactory(context = context, displayDateFormat = displayDateFormat, appDatabase = appDatabase)
     )
     val holderGroupedMedia by trashViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
@@ -350,6 +354,8 @@ private fun BottomBar(
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
                     val runRestoreAction = remember { mutableStateOf(false) }
+                    val mainViewModel = LocalMainViewModel.current
+
                     GetPermissionAndRun(
                         uris = listOf(item.uri),
                         shouldRun = runRestoreAction,

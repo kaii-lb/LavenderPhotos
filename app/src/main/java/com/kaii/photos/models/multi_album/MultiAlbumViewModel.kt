@@ -10,14 +10,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kaii.photos.MainActivity.Companion.mainViewModel
+import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.MainPhotosView
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.SectionItem
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.MultiAlbumDataSource
+import com.kaii.photos.mediastore.getSQLiteQuery
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -34,7 +34,9 @@ private const val TAG = "MULTI_ALBUM_VIEW_MODEL"
 class MultiAlbumViewModel(
     context: Context,
     var albumInfo: AlbumInfo,
-    var sortBy: MediaItemSortMode
+    var sortBy: MediaItemSortMode,
+    private val displayDateFormat: DisplayDateFormat,
+    private val database: MediaDatabase
 ) : ViewModel() {
     private var cancellationSignal = CancellationSignal()
     private val mediaStoreDataSource = mutableStateOf(initDataSource(context, albumInfo, sortBy))
@@ -84,7 +86,7 @@ class MultiAlbumViewModel(
         album: AlbumInfo,
         sortBy: MediaItemSortMode
     ) = run {
-        val query = mainViewModel.settings.MainPhotosView.getSQLiteQuery(album.paths)
+        val query = getSQLiteQuery(album.paths)
         Log.d(TAG, "query is $query")
 
         albumInfo = album
@@ -94,7 +96,9 @@ class MultiAlbumViewModel(
             context = context,
             queryString = query,
             sortBy = sortBy,
-            cancellationSignal = cancellationSignal
+            cancellationSignal = cancellationSignal,
+            displayDateFormat = displayDateFormat,
+            database = database
         )
     }
 }
@@ -102,7 +106,8 @@ class MultiAlbumViewModel(
 /** Groups photos by date */
 fun groupPhotosBy(
     media: List<MediaStoreData>,
-    sortBy: MediaItemSortMode = MediaItemSortMode.DateTaken
+    sortBy: MediaItemSortMode = MediaItemSortMode.DateTaken,
+    displayDateFormat: DisplayDateFormat
 ): List<MediaStoreData> {
     if (media.isEmpty()) return emptyList()
 
@@ -169,7 +174,7 @@ fun groupPhotosBy(
             }
 
             else -> {
-                formatDate(timestamp = sectionTime, sortBy = sortBy, format = mainViewModel.displayDateFormat.value)
+                formatDate(timestamp = sectionTime, sortBy = sortBy, format = displayDateFormat)
             }
         }
 

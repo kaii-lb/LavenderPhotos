@@ -27,7 +27,6 @@ import com.kaii.photos.helpers.ExtendedPaint
 import com.kaii.photos.helpers.Modification
 import com.kaii.photos.helpers.PaintType
 import com.kaii.photos.helpers.toOffset
-import kotlin.math.sqrt
 
 // private const val TAG = "EDITING_VIEW_INPUT"
 

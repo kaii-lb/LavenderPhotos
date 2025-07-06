@@ -38,8 +38,8 @@ import androidx.compose.ui.util.fastDistinctBy
 import androidx.compose.ui.util.fastFilter
 import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.kaii.photos.MainActivity.Companion.applicationDatabase
-import com.kaii.photos.MainActivity.Companion.mainViewModel
+import com.kaii.photos.LocalAppDatabase
+import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.AlbumPathsDialog
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
@@ -100,6 +100,7 @@ fun SingleAlbumViewTopBar(
         label = "SingleAlbumViewTopBarAnimatedContent"
     ) { target ->
         if (!target) {
+            val mainViewModel = LocalMainViewModel.current
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainer
@@ -268,6 +269,7 @@ fun SingleAlbumViewBottomBar(
         val showDeleteDialog = remember { mutableStateOf(false) }
         val runTrashAction = remember { mutableStateOf(false) }
 
+        val mainViewModel = LocalMainViewModel.current
         GetPermissionAndRun(
             uris = selectedItemsWithoutSection.map { it.uri },
             shouldRun = runTrashAction,
@@ -493,6 +495,7 @@ fun TrashedPhotoGridViewBottomBar(
         val showRestoreDialog = remember { mutableStateOf(false) }
         val runRestoreAction = remember { mutableStateOf(false) }
 
+        val mainViewModel = LocalMainViewModel.current
         GetPermissionAndRun(
             uris = selectedItemsWithoutSection.map { it.uri },
             shouldRun = runRestoreAction,
@@ -693,6 +696,8 @@ fun SecureFolderViewBottomAppBar(
         val runRestoreAction = remember { mutableStateOf(false) }
         val restoredFilesDir = remember { context.appRestoredFilesDir }
 
+        val mainViewModel = LocalMainViewModel.current
+        val applicationDatabase = LocalAppDatabase.current
         GetDirectoryPermissionAndRun(
             absoluteDirPaths =
                 selectedItemsWithoutSection.fastMap {
@@ -712,7 +717,8 @@ fun SecureFolderViewBottomAppBar(
 
                     moveImageOutOfLockedFolder(
                         list = hasPermission,
-                        context = context
+                        context = context,
+                        applicationDatabase = applicationDatabase
                     ) {
                         showLoadingDialog = false
                         isGettingPermissions.value = false
@@ -877,6 +883,7 @@ fun FavouritesViewBottomAppBar(
     IsSelectingBottomAppBar {
         val context = LocalContext.current
         val coroutineScope = rememberCoroutineScope()
+        val applicationDatabase = LocalAppDatabase.current
         val dao = applicationDatabase.favouritedItemEntityDao()
 
         val selectedItemsWithoutSection by remember {
@@ -972,6 +979,7 @@ fun FavouritesViewBottomAppBar(
 
         val showDeleteDialog = remember { mutableStateOf(false) }
         val runTrashAction = remember { mutableStateOf(false) }
+        val mainViewModel = LocalMainViewModel.current
         val confirmToDelete by mainViewModel.settings.Permissions.getConfirmToDelete()
             .collectAsStateWithLifecycle(initialValue = true)
 

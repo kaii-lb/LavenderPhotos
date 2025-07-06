@@ -4,14 +4,14 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
-import com.kaii.photos.MainActivity.Companion.applicationDatabase
+import androidx.core.graphics.scale
 import com.kaii.photos.R
+import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.SecuredItemEntity
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import java.io.ByteArrayOutputStream
 import java.io.File
-import androidx.core.graphics.scale
 
 fun getSecuredCacheImageForFile(
     file: File,
@@ -37,6 +37,7 @@ fun addSecuredCachedMediaThumbnail(
     context: Context,
     mediaItem: MediaStoreData,
     metadataRetriever: MediaMetadataRetriever,
+    applicationDatabase: MediaDatabase,
     file: File
 ) {
     val thumbnailFile = getSecuredCacheImageForFile(file = file, context = context)

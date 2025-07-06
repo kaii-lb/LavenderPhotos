@@ -1,7 +1,6 @@
 package com.kaii.photos.datastore
 
 import android.content.Context
-import android.provider.MediaStore.Files.FileColumns
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -9,9 +8,9 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.bumptech.glide.Glide
+import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.baseInternalStorageDirectory
-import com.kaii.photos.helpers.toRelativePath
 import com.kaii.photos.helpers.tryGetAllAlbums
 import com.kaii.photos.models.multi_album.DisplayDateFormat
 import kotlinx.coroutines.CoroutineScope
@@ -100,10 +99,18 @@ class SettingsAlbumsListImpl(
         }
     }
 
-    fun getAutoDetectedAlbums(): Flow<List<AlbumInfo>> =
-        tryGetAllAlbums(context = context).combine(getCustomAlbums()) { first, second ->
-            first + second
-        }
+    fun getAutoDetectedAlbums(
+        displayDateFormat: DisplayDateFormat,
+        appDatabase: MediaDatabase
+    ): Flow<List<AlbumInfo>> =
+        tryGetAllAlbums(
+            context = context,
+            displayDateFormat = displayDateFormat,
+            applicationDatabase = appDatabase
+        )
+            .combine(getCustomAlbums()) { first, second ->
+                first + second
+            }
 
     fun getNormalAlbums() = channelFlow {
         val prevList = context.datastore.data.map { data ->
@@ -222,8 +229,11 @@ class SettingsAlbumsListImpl(
         )
 
     /** emits one album after the other */
-    fun getAllAlbumsOnDevice(): Flow<List<AlbumInfo>> =
-        tryGetAllAlbums(context = context)
+    fun getAllAlbumsOnDevice(
+        displayDateFormat: DisplayDateFormat,
+        appDatabase: MediaDatabase
+    ): Flow<List<AlbumInfo>> =
+        tryGetAllAlbums(context = context, displayDateFormat = displayDateFormat, applicationDatabase = appDatabase)
 }
 
 class SettingsVersionImpl(
@@ -538,36 +548,6 @@ class SettingMainPhotosViewImpl(
         context.datastore.edit {
             it[mainPhotosAlbumsList] = ""
         }
-    }
-
-    /** returns the media store query and the individual paths
-     * albums needed cuz the query has ? instead of the actual paths for...reasons */
-    fun getSQLiteQuery(albums: List<String>): SQLiteQuery {
-        if (albums.isEmpty()) {
-            return SQLiteQuery(query = "AND false", paths = null, includedBasePaths = null)
-        }
-
-        albums.forEach {
-            Log.d(TAG, "Trying to get query for album: $it")
-        }
-
-        val colName = FileColumns.RELATIVE_PATH
-        val base = "($colName = ?)"
-
-        val list = mutableListOf<String>()
-        var string = base
-        val firstAlbum = albums.first().toRelativePath().removeSuffix("/").removePrefix("/")
-        list.add("$firstAlbum/")
-
-        for (i in 1..<albums.size) {
-            val album = albums[i].toRelativePath().removeSuffix("/").removePrefix("/")
-
-            string += " OR $base"
-            list.add("$album/")
-        }
-
-        val query = "AND ($string)"
-        return SQLiteQuery(query = query, paths = list, includedBasePaths = albums)
     }
 
     private val defaultAlbumsList =

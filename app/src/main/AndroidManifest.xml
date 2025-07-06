@@ -47,7 +47,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Photos.Splashscreen"
         android:windowSoftInputMode="adjustResize"
-        tools:targetApi="33">
+        tools:targetApi="35">
 
         <activity
             android:name=".MainActivity"
@@ -77,6 +77,28 @@
                 <data android:mimeType="image/*" />
                 <data android:mimeType="video/*" />
                 <data android:scheme="content" />
+            </intent-filter>
+        </activity>
+        
+        <activity
+            android:label="Lavender Photos"
+            android:name=".compose.media_picker.MediaPicker"
+            android:configChanges="orientation|screenSize|density|screenLayout"
+            android:exported="true"
+            android:theme="@style/Theme.Photos">
+
+            <intent-filter>
+                <action android:name="android.intent.action.GET_CONTENT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.OPENABLE" />
+                <data android:mimeType="image/*" />
+                <data android:mimeType="video/*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.PICK" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+                <data android:mimeType="video/*" />
             </intent-filter>
         </activity>
 

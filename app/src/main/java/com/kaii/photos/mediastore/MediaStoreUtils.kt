@@ -14,6 +14,7 @@ import android.provider.MediaStore.MediaColumns
 import android.util.Log
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
+import com.kaii.photos.datastore.SQLiteQuery
 import com.kaii.photos.helpers.EXTERNAL_DOCUMENTS_AUTHORITY
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.baseInternalStorageDirectory
@@ -355,4 +356,34 @@ fun ContentResolver.getMediaStoreDataFromUri(uri: Uri): MediaStoreData? {
     }
 
     return null
+}
+
+/** returns the media store query and the individual paths
+ * albums needed cuz the query has ? instead of the actual paths for...reasons */
+fun getSQLiteQuery(albums: List<String>): SQLiteQuery {
+    if (albums.isEmpty()) {
+        return SQLiteQuery(query = "AND false", paths = null, includedBasePaths = null)
+    }
+
+    albums.forEach {
+        Log.d(TAG, "Trying to get query for album: $it")
+    }
+
+    val colName = FileColumns.RELATIVE_PATH
+    val base = "($colName = ?)"
+
+    val list = mutableListOf<String>()
+    var string = base
+    val firstAlbum = albums.first().toRelativePath().removeSuffix("/").removePrefix("/")
+    list.add("$firstAlbum/")
+
+    for (i in 1..<albums.size) {
+        val album = albums[i].toRelativePath().removeSuffix("/").removePrefix("/")
+
+        string += " OR $base"
+        list.add("$album/")
+    }
+
+    val query = "AND ($string)"
+    return SQLiteQuery(query = query, paths = list, includedBasePaths = albums)
 }

@@ -62,7 +62,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
-import com.kaii.photos.MainActivity.Companion.mainViewModel
+import com.kaii.photos.LocalAppDatabase
+import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.CheckBoxButtonRow
 import com.kaii.photos.compose.FullWidthDialogButton
@@ -711,6 +712,7 @@ fun AlbumAddChoiceDialog(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            val mainViewModel = LocalMainViewModel.current
             val activityLauncher = createDirectoryPicker { path, basePath ->
                 if (path != null && basePath != null) mainViewModel.settings.AlbumsList.addToAlbumsList(
                     AlbumInfo(
@@ -759,10 +761,14 @@ fun AddCustomAlbumDialog(
     onDismiss: () -> Unit,
     onDismissPrev: () -> Unit
 ) {
+    val mainViewModel = LocalMainViewModel.current
+    val appDatabase = LocalAppDatabase.current
     val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect()
         .collectAsStateWithLifecycle(initialValue = true)
+    val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
+
     val albums by if (autoDetectAlbums) {
-        mainViewModel.settings.AlbumsList.getAutoDetectedAlbums()
+        mainViewModel.settings.AlbumsList.getAutoDetectedAlbums(displayDateFormat, appDatabase)
             .collectAsStateWithLifecycle(initialValue = emptyList())
     } else {
         mainViewModel.settings.AlbumsList.getNormalAlbums()

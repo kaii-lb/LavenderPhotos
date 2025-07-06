@@ -46,8 +46,8 @@ import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
-import com.kaii.photos.MainActivity.Companion.applicationDatabase
 import com.kaii.photos.R
+import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.SecuredItemEntity
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.photos.mediastore.MediaStoreData
@@ -168,6 +168,7 @@ fun shareMultipleSecuredImages(
 fun moveImageToLockedFolder(
     list: List<MediaStoreData>,
     context: Context,
+    applicationDatabase: MediaDatabase,
     onDone: () -> Unit
 ) {
     val contentResolver = context.contentResolver
@@ -193,7 +194,8 @@ fun moveImageToLockedFolder(
             context = context,
             mediaItem = mediaItem,
             file = fileToBeHidden,
-            metadataRetriever = metadataRetriever
+            metadataRetriever = metadataRetriever,
+            applicationDatabase = applicationDatabase
         )
 
         // encrypt file data and write to secure folder path
@@ -222,6 +224,7 @@ fun moveImageToLockedFolder(
 suspend fun moveImageOutOfLockedFolder(
     list: List<MediaStoreData>,
     context: Context,
+    applicationDatabase: MediaDatabase,
     onDone: () -> Unit
 ) {
     val contentResolver = context.contentResolver

@@ -13,6 +13,7 @@ import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaStoreDataSource
 import com.kaii.photos.mediastore.getMediaStoreDataFromUri
+import com.kaii.photos.models.multi_album.DisplayDateFormat
 import com.kaii.photos.models.multi_album.groupPhotosBy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -28,7 +29,8 @@ class CustomAlbumDataSource(
     context: Context,
     private val parentId: Int,
     sortBy: MediaItemSortMode,
-    private val cancellationSignal: CancellationSignal
+    private val cancellationSignal: CancellationSignal,
+    private val displayDateFormat: DisplayDateFormat
 ) : MediaStoreDataSource(
     context, "", sortBy, cancellationSignal,
 ) {
@@ -111,6 +113,6 @@ class CustomAlbumDataSource(
         }
         mediaCursor.close()
 
-        return groupPhotosBy(data, sortBy)
+        return groupPhotosBy(data, sortBy, displayDateFormat)
     }
 }

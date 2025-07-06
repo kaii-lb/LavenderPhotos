@@ -2,9 +2,9 @@ package com.kaii.photos.compose.single_photo
 
 import android.annotation.SuppressLint
 import android.content.res.Configuration
+import android.util.Log
 import android.view.Window
 import android.view.WindowManager
-import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -68,37 +68,37 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.currentStateAsState
+import com.kaii.photos.LocalAppDatabase
+import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
-import com.kaii.photos.MainActivity.Companion.applicationDatabase
-import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
 import com.kaii.photos.compose.dialogs.DialogInfoText
 import com.kaii.photos.compose.dialogs.LoadingDialog
-import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.MediaData
 import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.brightenColor
 import com.kaii.photos.helpers.getDecryptCacheForFile
 import com.kaii.photos.helpers.getExifDataForMedia
+import com.kaii.photos.helpers.getParentFromPath
+import com.kaii.photos.helpers.getSecureDecryptedVideoFile
 import com.kaii.photos.helpers.moveImageOutOfLockedFolder
 import com.kaii.photos.helpers.permanentlyDeleteSecureFolderImageList
 import com.kaii.photos.helpers.shareSecuredImage
-import com.kaii.photos.helpers.getSecureDecryptedVideoFile
-import com.kaii.photos.helpers.getParentFromPath
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getIv
 import com.kaii.photos.mediastore.getOriginalPath
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import androidx.lifecycle.compose.currentStateAsState
 
 private const val TAG = "SINGLE_HIDDEN_PHOTO_VIEW"
 
@@ -112,6 +112,7 @@ fun SingleHiddenPhotoView(
 
     val lifecycleOwner = LocalLifecycleOwner.current
     val navController = LocalNavController.current
+    val mainViewModel = LocalMainViewModel.current
 
     var lastLifecycleState by rememberSaveable {
         mutableStateOf(Lifecycle.State.STARTED)
@@ -329,6 +330,7 @@ private fun TopBar(
                     )
                 }
 
+                val applicationDatabase = LocalAppDatabase.current
                 IconButton(
                     onClick = {
                         coroutineScope.launch(Dispatchers.IO) {
@@ -413,6 +415,8 @@ private fun BottomBar(
 ) {
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
+    val mainViewModel = LocalMainViewModel.current
+    val applicationDatabase = LocalAppDatabase.current
 
     val showRestoreDialog = remember { mutableStateOf(false) }
     val showDeleteDialog = remember { mutableStateOf(false) }
@@ -430,7 +434,8 @@ private fun BottomBar(
 	        mainViewModel.launch(Dispatchers.IO) {
 	            moveImageOutOfLockedFolder(
 	                list = listOf(item),
-	                context = context
+	                context = context,
+                    applicationDatabase = applicationDatabase
 	            ) {
 	                isGettingPermissions.value = false
 	                showLoadingDialog = false

@@ -8,11 +8,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.MainPhotosView
 import com.kaii.photos.mediastore.AlbumStoreDataSource
 import com.kaii.photos.mediastore.MediaStoreData
+import com.kaii.photos.mediastore.getSQLiteQuery
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -57,7 +56,7 @@ class AlbumsViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMo
     ) = run {
         albumInfo = albums
         val queries = albums.map { album ->
-            val query = mainViewModel.settings.MainPhotosView.getSQLiteQuery(albums = album.paths)
+            val query = getSQLiteQuery(albums = album.paths)
 
             Pair(album, query.copy(includedBasePaths = album.paths))
         }

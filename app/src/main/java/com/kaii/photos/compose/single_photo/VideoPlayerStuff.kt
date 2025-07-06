@@ -88,6 +88,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.compose.currentStateAsState
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.C.VIDEO_SCALING_MODE_SCALE_TO_FIT
@@ -99,9 +100,9 @@ import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.ui.PlayerView
+import com.kaii.photos.LocalAppDatabase
+import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
-import com.kaii.photos.MainActivity.Companion.applicationDatabase
-import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.rememberDeviceOrientation
@@ -118,7 +119,6 @@ import kotlin.math.roundToInt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
-import androidx.lifecycle.compose.currentStateAsState
 
 // special thanks to @bedirhansaricayir on github, helped with a LOT of performance stuff
 // https://github.com/bedirhansaricayir/Instagram-Reels-Jetpack-Compose/blob/master/app/src/main/java/com/reels/example/presentation/components/ExploreVideoPlayer.kt
@@ -407,6 +407,7 @@ fun VideoPlayer(
         var securedMediaProgress by remember { mutableFloatStateOf(0f) }
         var continueToVideo by remember { mutableStateOf(!isSecuredMedia) }
 
+        val applicationDatabase = LocalAppDatabase.current
         LaunchedEffect(Unit) {
             withContext(Dispatchers.IO) {
                 val iv = applicationDatabase.securedItemEntityDao()
@@ -488,6 +489,7 @@ fun VideoPlayer(
     )
     val playerView = rememberPlayerView(exoPlayer, context as Activity, item.absolutePath)
 
+    val mainViewModel = LocalMainViewModel.current
     val muteVideoOnStart by mainViewModel.settings.Video.getMuteOnStart()
         .collectAsStateWithLifecycle(initialValue = true)
 

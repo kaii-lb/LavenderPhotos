@@ -1,13 +1,12 @@
 package com.kaii.photos.models.favourites_grid
 
-import android.net.Uri
 import android.content.Context
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kaii.photos.MainActivity
+import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.FavouritedItemEntity
 import com.kaii.photos.mediastore.MediaStoreData
-import kotlin.io.path.Path
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,16 +17,18 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.nio.file.Files
-import androidx.core.net.toUri
+import kotlin.io.path.Path
 
-class FavouritesViewModel : ViewModel() {
-    private val dao = MainActivity.applicationDatabase.favouritedItemEntityDao()
+class FavouritesViewModel(
+    appDatabase: MediaDatabase
+) : ViewModel() {
+    private val dao = appDatabase.favouritedItemEntityDao()
 
     val mediaFlow by lazy {
         getMediaDataFlow().stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
     }
 
-	// TODO: switch to content resolver's favouriting system
+    // TODO: switch to content resolver's favouriting system
     private fun getMediaDataFlow(): Flow<List<MediaStoreData>> {
         val list = dao.getAll().flowOn(Dispatchers.IO).map { list ->
             list.map { entity ->
@@ -55,7 +56,8 @@ class FavouritesViewModel : ViewModel() {
                     id = mediaItem.id,
                     dateTaken = mediaItem.dateTaken,
                     dateModified = dateModified,
-                    mimeType = mediaItem.mimeType ?: context.contentResolver.getType(mediaItem.uri) ?: Files.probeContentType(Path(mediaItem.absolutePath)),
+                    mimeType = mediaItem.mimeType ?: context.contentResolver.getType(mediaItem.uri)
+                    ?: Files.probeContentType(Path(mediaItem.absolutePath)),
                     type = mediaItem.type,
                     absolutePath = mediaItem.absolutePath,
                     displayName = mediaItem.displayName,
