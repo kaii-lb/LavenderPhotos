@@ -13,14 +13,13 @@ import com.kaii.lavender.immichintegration.serialization.File
 import com.kaii.lavender.immichintegration.serialization.LoginCredentials
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
-import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.database.daos.ImmichDuplicateEntityDao
 import com.kaii.photos.database.entities.ImmichDuplicateEntity
 import com.kaii.photos.database.entities.SetHolder
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.ImmichBasicInfo
+import com.kaii.photos.datastore.SettingsAlbumsListImpl
 import com.kaii.photos.datastore.SettingsImmichImpl
 import com.kaii.photos.helpers.appStorageDir
 import com.kaii.photos.immich.ImmichAlbumDuplicateState
@@ -42,7 +41,8 @@ private const val TAG = "IMMICH_VIEW_MODEL"
 class ImmichViewModel(
     application: Application,
     private val immichSettings: SettingsImmichImpl,
-    private val immichDuplicateEntityDao: ImmichDuplicateEntityDao
+    private val immichDuplicateEntityDao: ImmichDuplicateEntityDao,
+    private val albumSettings: SettingsAlbumsListImpl
 ) : AndroidViewModel(application) {
     private val _immichUploadedMediaCount = MutableStateFlow(0)
     val immichUploadedMediaCount = _immichUploadedMediaCount.asStateFlow()
@@ -192,7 +192,7 @@ class ImmichViewModel(
 
             val result = immichApiService.removeAlbumFromSync(albumInfo.immichId)
             result.onSuccess { _ ->
-                mainViewModel.settings.AlbumsList.editInAlbumsList(
+                albumSettings.editInAlbumsList(
                     albumInfo = albumInfo,
                     newInfo = albumInfo.copy(
                         immichId = ""
@@ -242,7 +242,7 @@ class ImmichViewModel(
                         )
                     )
 
-                    mainViewModel.settings.AlbumsList.editInAlbumsList(
+                    albumSettings.editInAlbumsList(
                         albumInfo = albumInfo,
                         newInfo = albumInfo.copy(
                             immichId = id

@@ -47,6 +47,8 @@ import androidx.compose.ui.util.fastMapNotNull
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalAppDatabase
 import com.kaii.photos.LocalMainViewModel
+import com.kaii.photos.LocalNavController
+import com.kaii.photos.MainActivity.Companion.immichViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.AlbumPathsDialog
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
@@ -105,6 +107,7 @@ fun SingleAlbumViewTopBar(
         }
     }
 
+    val mainViewModel = LocalMainViewModel.current
     AnimatedContent(
         targetState = show,
         transitionSpec = {
@@ -113,7 +116,6 @@ fun SingleAlbumViewTopBar(
         label = "SingleAlbumViewTopBarAnimatedContent"
     ) { target ->
         if (!target) {
-            val mainViewModel = LocalMainViewModel.current
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainer
@@ -182,6 +184,7 @@ fun SingleAlbumViewTopBar(
                                     .size(24.dp)
                             )
                         }
+                    }
 
                     val userInfo by immichViewModel.immichUserLoginState.collectAsStateWithLifecycle()
 
@@ -276,8 +279,7 @@ fun SingleAlbumViewTopBar(
                                 .size(24.dp)
                         )
                     }
-                },
-                scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+                }
             )
         } else {
             IsSelectingTopBar(
@@ -431,22 +433,23 @@ fun SingleAlbumViewBottomBar(
                                 showExplanationDialog.value = true
                             }
 
-                        mainViewModel.launch(Dispatchers.IO) {
-                            selectedItemsWithoutSection.forEach { item ->
-                                Log.d(
-                                    TAG,
-                                    "Removed this many rows: " + context.contentResolver.delete(
-                                        LavenderContentProvider.CONTENT_URI,
-                                        "${LavenderMediaColumns.ID} = ? AND ${LavenderMediaColumns.PARENT_ID} = ?",
-                                        arrayOf(item.customId.toString(), albumInfo.id.toString())
+                            mainViewModel.launch(Dispatchers.IO) {
+                                selectedItemsWithoutSection.forEach { item ->
+                                    Log.d(
+                                        TAG,
+                                        "Removed this many rows: " + context.contentResolver.delete(
+                                            LavenderContentProvider.CONTENT_URI,
+                                            "${LavenderMediaColumns.ID} = ? AND ${LavenderMediaColumns.PARENT_ID} = ?",
+                                            arrayOf(item.customId.toString(), albumInfo.id.toString())
+                                        )
                                     )
-                                )
+                                }
+                                selectedItemsList.clear()
                             }
-                            selectedItemsList.clear()
                         }
                     }
-                }
-            )
+                )
+            }
         }
     } else {
         val context = LocalContext.current

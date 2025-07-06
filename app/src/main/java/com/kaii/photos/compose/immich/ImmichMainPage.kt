@@ -48,9 +48,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.immichViewModel
-import com.kaii.photos.MainActivity.Companion.mainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.PreferencesRow
 import com.kaii.photos.compose.PreferencesSeparatorText
@@ -96,6 +96,7 @@ fun ImmichMainPage() {
             )
         }
     ) { innerPadding ->
+        val mainViewModel = LocalMainViewModel.current
         LazyColumn(
             modifier = Modifier
                 .padding(innerPadding)
@@ -180,6 +181,7 @@ fun ImmichMainPage() {
             }
 
             item {
+                val mainViewModel = LocalMainViewModel.current
                 val userInfo by immichViewModel.immichUserLoginState.collectAsStateWithLifecycle()
                 val immichBasicInfo by mainViewModel.settings.Immich.getImmichBasicInfo()
                     .collectAsStateWithLifecycle(initialValue = ImmichBasicInfo("", ""))

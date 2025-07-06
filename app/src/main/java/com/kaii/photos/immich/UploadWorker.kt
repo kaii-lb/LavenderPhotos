@@ -5,6 +5,7 @@ import android.os.Build
 import android.os.CancellationSignal
 import android.util.Log
 import androidx.compose.ui.util.fastMap
+import androidx.room.Room
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.kaii.lavender.immichintegration.AlbumManager
@@ -18,9 +19,13 @@ import com.kaii.lavender.immichintegration.serialization.RestoreFromTrash
 import com.kaii.lavender.immichintegration.serialization.UpdateAlbumInfo
 import com.kaii.lavender.immichintegration.serialization.UploadStatus
 import com.kaii.photos.MainActivity.Companion.immichViewModel
+import com.kaii.photos.database.MediaDatabase
+import com.kaii.photos.database.Migration3to4
+import com.kaii.photos.database.Migration4to5
 import com.kaii.photos.datastore.SQLiteQuery
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.mediastore.MultiAlbumDataSource
+import com.kaii.photos.models.multi_album.DisplayDateFormat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -76,7 +81,16 @@ class UploadWorker(
                 context = context,
                 queryString = query,
                 sortBy = MediaItemSortMode.DateTaken,
-                cancellationSignal = CancellationSignal()
+                cancellationSignal = CancellationSignal(),
+                displayDateFormat = DisplayDateFormat.Default,
+                database = Room.databaseBuilder(
+                    applicationContext,
+                    MediaDatabase::class.java,
+                    "media-database"
+                    ).apply {
+                        fallbackToDestructiveMigrationOnDowngrade(true)
+                        addMigrations(Migration3to4(applicationContext), Migration4to5(applicationContext))
+                    }.build()
             )
 
             val media = dataSource.query()

@@ -158,6 +158,10 @@ val LocalAppDatabase = compositionLocalOf<MediaDatabase> {
 }
 
 class MainActivity : ComponentActivity() {
+    companion object {
+        lateinit var immichViewModel: ImmichViewModel
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -178,11 +182,12 @@ class MainActivity : ComponentActivity() {
             val mainViewModel: MainViewModel = viewModel(
                 factory = MainViewModelFactory(applicationContext)
             )
-            val immichViewModel = viewModel(
+            immichViewModel = viewModel(
                 factory = ImmichViewModelFactory(
                     application = application,
                     immichSettings = mainViewModel.settings.Immich,
-                    immichDuplicateEntityDao = applicationDatabase.immichDuplicateEntityDao()
+                    immichDuplicateEntityDao = applicationDatabase.immichDuplicateEntityDao(),
+                    albumsSettings = mainViewModel.settings.AlbumsList
                 )
             )
 
