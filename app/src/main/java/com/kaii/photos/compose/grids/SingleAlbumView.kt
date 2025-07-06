@@ -1,5 +1,6 @@
 package com.kaii.photos.compose.grids
 
+import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetValue
@@ -23,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -45,7 +48,8 @@ fun SingleAlbumView(
     albumInfo: AlbumInfo,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     currentView: MutableState<BottomBarTab>,
-    viewModel: MultiAlbumViewModel
+    viewModel: MultiAlbumViewModel,
+    incomingIntent: Intent? = null
 ) {
     val navController = LocalNavController.current
     val context = LocalContext.current
@@ -70,7 +74,8 @@ fun SingleAlbumView(
         albumInfo = albumInfo,
         selectedItemsList = selectedItemsList,
         currentView = currentView,
-        navController = navController
+        navController = navController,
+        incomingIntent = incomingIntent
     ) {
         if (viewModel.albumInfo.paths.toSet() != albumInfo.paths.toSet()) {
             viewModel.reinitDataSource(
@@ -87,7 +92,8 @@ fun SingleAlbumView(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     currentView: MutableState<BottomBarTab>,
     customViewModel: CustomAlbumViewModel,
-    multiViewModel: MultiAlbumViewModel
+    multiViewModel: MultiAlbumViewModel,
+    incomingIntent: Intent? = null
 ) {
     val navController = LocalNavController.current
     val context = LocalContext.current
@@ -115,7 +121,8 @@ fun SingleAlbumView(
         albumInfo = albumInfo,
         selectedItemsList = selectedItemsList,
         currentView = currentView,
-        navController = navController
+        navController = navController,
+        incomingIntent = incomingIntent
     ) {
         if (customViewModel.albumInfo != albumInfo) {
             customViewModel.reinitDataSource(
@@ -141,6 +148,7 @@ private fun SingleAlbumViewCommon(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     navController: NavHostController,
     currentView: MutableState<BottomBarTab>,
+    incomingIntent: Intent?,
     reinitDataSource: () -> Unit
 ) {
     val showDialog = remember { mutableStateOf(false) }
@@ -182,7 +190,8 @@ private fun SingleAlbumViewCommon(
                 albumInfo = albumInfo,
                 selectedItemsList = selectedItemsList,
                 showDialog = showDialog,
-                currentView = currentView
+                currentView = currentView,
+                isMediaPicker = incomingIntent != null
             ) {
                 navController.popBackStack()
             }
@@ -190,11 +199,13 @@ private fun SingleAlbumViewCommon(
         sheetContent = {
             SingleAlbumViewBottomBar(
                 albumInfo = albumInfo,
-                selectedItemsList = selectedItemsList
+                selectedItemsList = selectedItemsList,
+                incomingIntent = incomingIntent
             )
         },
         sheetPeekHeight = 0.dp,
-        sheetShape = RectangleShape
+        sheetShape = RectangleShape,
+        sheetContainerColor = if (incomingIntent != null) Color.Transparent else BottomSheetDefaults.ContainerColor
     ) { padding ->
         Column(
             modifier = Modifier
@@ -211,7 +222,8 @@ private fun SingleAlbumViewCommon(
                 albumInfo = albumInfo,
                 selectedItemsList = selectedItemsList,
                 viewProperties = ViewProperties.Album,
-                shouldPadUp = true
+                shouldPadUp = true,
+                isMediaPicker = incomingIntent != null
             )
 
             SingleAlbumDialog(

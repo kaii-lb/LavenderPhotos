@@ -21,8 +21,7 @@ import com.kaii.photos.database.entities.TrashedItemEntity
     ],
     version = 5,
     autoMigrations = [
-        AutoMigration(from = 2, to = 3),
-        // AutoMigration(from = 4, to = 5)
+        AutoMigration(from = 2, to = 3)
     ]
 )
 abstract class MediaDatabase : RoomDatabase() {

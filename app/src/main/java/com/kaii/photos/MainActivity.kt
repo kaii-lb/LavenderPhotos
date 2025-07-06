@@ -163,6 +163,7 @@ class MainActivity : ComponentActivity() {
             MediaDatabase::class.java,
             "media-database"
         ).apply {
+            fallbackToDestructiveMigrationOnDowngrade(true)
             addMigrations(Migration3to4(applicationContext), Migration4to5(applicationContext))
         }.build()
 

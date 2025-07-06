@@ -107,7 +107,8 @@ import kotlinx.coroutines.withContext
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AlbumsGridView(
-    currentView: MutableState<BottomBarTab>
+    currentView: MutableState<BottomBarTab>,
+    isMediaPicker: Boolean = false
 ) {
     val context = LocalContext.current
     val navController = LocalNavController.current
@@ -381,17 +382,19 @@ fun AlbumsGridView(
             horizontalArrangement = Arrangement.Start,
             verticalArrangement = Arrangement.Top
         ) {
-            item(
-                span = { GridItemSpan(maxLineSpan) }
-            ) {
-                CategoryList(
-                    navigateToFavourites = {
-                        navController.navigate(MultiScreenViewType.FavouritesGridView.name)
-                    },
-                    navigateToTrash = {
-                        navController.navigate(MultiScreenViewType.TrashedPhotoView.name)
-                    }
-                )
+            if (!isMediaPicker) {
+                item(
+                    span = { GridItemSpan(maxLineSpan) }
+                ) {
+                    CategoryList(
+                        navigateToFavourites = {
+                            navController.navigate(MultiScreenViewType.FavouritesGridView.name)
+                        },
+                        navigateToTrash = {
+                            navController.navigate(MultiScreenViewType.TrashedPhotoView.name)
+                        }
+                    )
+                }
             }
 
             items(

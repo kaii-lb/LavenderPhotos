@@ -1,5 +1,6 @@
 package com.kaii.photos.compose.app_bars
 
+import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
@@ -83,7 +84,7 @@ fun MainAppTopBar(
         },
         actions = {
             AnimatedVisibility(
-                visible = currentView.value == DefaultTabs.TabTypes.albums,
+                visible = currentView.value == DefaultTabs.TabTypes.albums && !isFromMediaPicker,
                 enter = scaleIn(
                     animationSpec = spring(
                         dampingRatio = Spring.DampingRatioMediumBouncy,
@@ -127,6 +128,20 @@ fun MainAppTopBar(
                     Icon(
                         painter = painterResource(R.drawable.settings),
                         contentDescription = stringResource(id = R.string.settings),
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            } else {
+                val context = LocalContext.current
+                IconButton(
+                    onClick = {
+                        (context as Activity).finish()
+                    },
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.close),
+                        contentDescription = "Close media picker",
                         tint = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.size(24.dp)
                     )

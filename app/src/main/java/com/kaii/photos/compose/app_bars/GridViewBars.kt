@@ -47,6 +47,7 @@ import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
 import com.kaii.photos.compose.dialogs.ExplanationDialog
 import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
+import com.kaii.photos.compose.media_picker.MediaPickerConfirmButton
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.BottomBarTab
@@ -82,6 +83,7 @@ fun SingleAlbumViewTopBar(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     showDialog: MutableState<Boolean>,
     currentView: MutableState<BottomBarTab>,
+    isMediaPicker: Boolean = false,
     onBackClick: () -> Unit
 ) {
     var usableAlbumInfo by remember(albumInfo) { mutableStateOf(albumInfo) }
@@ -130,57 +132,59 @@ fun SingleAlbumViewTopBar(
                     )
                 },
                 actions = {
-                    var showPathsDialog by remember { mutableStateOf(false) }
+                    if (!isMediaPicker) {
+                        var showPathsDialog by remember { mutableStateOf(false) }
 
-                    if (showPathsDialog && usableAlbumInfo != null) {
-                        AlbumPathsDialog(
-                            albumInfo = usableAlbumInfo!!,
-                            onConfirm = { selectedPaths ->
-                                val newInfo =
-                                    usableAlbumInfo!!.copy(
-                                        id = selectedPaths.hashCode(),
-                                        paths = selectedPaths,
-                                        isCustomAlbum = true
+                        if (showPathsDialog && usableAlbumInfo != null) {
+                            AlbumPathsDialog(
+                                albumInfo = usableAlbumInfo!!,
+                                onConfirm = { selectedPaths ->
+                                    val newInfo =
+                                        usableAlbumInfo!!.copy(
+                                            id = selectedPaths.hashCode(),
+                                            paths = selectedPaths,
+                                            isCustomAlbum = true
+                                        )
+                                    mainViewModel.settings.AlbumsList.editInAlbumsList(
+                                        albumInfo = usableAlbumInfo!!,
+                                        newInfo = newInfo
                                     )
-                                mainViewModel.settings.AlbumsList.editInAlbumsList(
-                                    albumInfo = usableAlbumInfo!!,
-                                    newInfo = newInfo
-                                )
 
-                                usableAlbumInfo = newInfo
+                                    usableAlbumInfo = newInfo
+                                },
+                                onDismiss = {
+                                    showPathsDialog = false
+                                }
+                            )
+                        }
+
+                        IconButton(
+                            onClick = {
+                                showPathsDialog = true
                             },
-                            onDismiss = {
-                                showPathsDialog = false
-                            }
-                        )
-                    }
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.add),
+                                contentDescription = "show more options for the album view",
+                                tint = MaterialTheme.colorScheme.onBackground,
+                                modifier = Modifier
+                                    .size(24.dp)
+                            )
+                        }
 
-                    IconButton(
-                        onClick = {
-                            showPathsDialog = true
-                        },
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.add),
-                            contentDescription = "show more options for the album view",
-                            tint = MaterialTheme.colorScheme.onBackground,
-                            modifier = Modifier
-                                .size(24.dp)
-                        )
-                    }
-
-                    IconButton(
-                        onClick = {
-                            showDialog.value = true
-                        },
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.settings),
-                            contentDescription = "show more options for the album view",
-                            tint = MaterialTheme.colorScheme.onBackground,
-                            modifier = Modifier
-                                .size(24.dp)
-                        )
+                        IconButton(
+                            onClick = {
+                                showDialog.value = true
+                            },
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.settings),
+                                contentDescription = "show more options for the album view",
+                                tint = MaterialTheme.colorScheme.onBackground,
+                                modifier = Modifier
+                                    .size(24.dp)
+                            )
+                        }
                     }
                 },
                 scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -197,158 +201,169 @@ fun SingleAlbumViewTopBar(
 @Composable
 fun SingleAlbumViewBottomBar(
     albumInfo: AlbumInfo,
-    selectedItemsList: SnapshotStateList<MediaStoreData>
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    incomingIntent: Intent? = null
 ) {
-    IsSelectingBottomAppBar {
-        val context = LocalContext.current
-        val coroutineScope = rememberCoroutineScope()
+    if (incomingIntent == null) {
+        IsSelectingBottomAppBar {
+            val context = LocalContext.current
+            val coroutineScope = rememberCoroutineScope()
 
-        val selectedItemsWithoutSection by remember {
-            derivedStateOf {
-                selectedItemsList.filter {
-                    it.type != MediaType.Section && it != MediaStoreData()
+            val selectedItemsWithoutSection by remember {
+                derivedStateOf {
+                    selectedItemsList.filter {
+                        it.type != MediaType.Section && it != MediaStoreData()
+                    }
                 }
             }
-        }
 
-        BottomAppBarItem(
-            text = "Share",
-            iconResId = R.drawable.share,
-            action = {
-                coroutineScope.launch {
-                    val hasVideos = selectedItemsWithoutSection.any {
-                        it.type == MediaType.Video
-                    }
-
-                    val intent = Intent().apply {
-                        action = Intent.ACTION_SEND_MULTIPLE
-                        type = if (hasVideos) "video/*" else "images/*"
-                    }
-
-                    val fileUris = ArrayList<Uri>()
-                    selectedItemsWithoutSection.forEach {
-                        fileUris.add(it.uri)
-                    }
-
-                    intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, fileUris)
-
-                    context.startActivity(Intent.createChooser(intent, null))
-                }
-            }
-        )
-
-        val show = remember { mutableStateOf(false) }
-        var isMoving by remember { mutableStateOf(false) }
-        MoveCopyAlbumListView(
-            show = show,
-            selectedItemsList = selectedItemsList,
-            isMoving = isMoving,
-            groupedMedia = null,
-            insetsPadding = WindowInsets.statusBars
-        )
-
-        BottomAppBarItem(
-            text = "Move",
-            iconResId = R.drawable.cut,
-            enabled = !albumInfo.isCustomAlbum,
-            action = {
-                isMoving = true
-                show.value = true
-            }
-        )
-
-        BottomAppBarItem(
-            text = "Copy",
-            iconResId = R.drawable.copy,
-            action = {
-                isMoving = false
-                show.value = true
-            }
-        )
-
-        val showDeleteDialog = remember { mutableStateOf(false) }
-        val runTrashAction = remember { mutableStateOf(false) }
-
-        val mainViewModel = LocalMainViewModel.current
-        GetPermissionAndRun(
-            uris = selectedItemsWithoutSection.map { it.uri },
-            shouldRun = runTrashAction,
-            onGranted = {
-                mainViewModel.launch(Dispatchers.IO) {
-                    setTrashedOnPhotoList(
-                        context = context,
-                        list = selectedItemsWithoutSection.map { Pair(it.uri, it.absolutePath) },
-                        trashed = true
-                    )
-
-                    selectedItemsList.clear()
-                }
-            }
-        )
-
-        val confirmToDelete by mainViewModel.settings.Permissions.getConfirmToDelete()
-            .collectAsStateWithLifecycle(initialValue = true)
-        if (!albumInfo.isCustomAlbum) {
             BottomAppBarItem(
-                text = "Delete",
-                iconResId = R.drawable.delete,
-                cornerRadius = 16.dp,
+                text = "Share",
+                iconResId = R.drawable.share,
                 action = {
-                    if (confirmToDelete) showDeleteDialog.value = true
-                    else runTrashAction.value = true
-                },
-                dialogComposable = {
-                    ConfirmationDialog(
-                        showDialog = showDeleteDialog,
-                        dialogTitle = "Move selected items to Trash Bin?",
-                        confirmButtonLabel = "Delete"
-                    ) {
-                        runTrashAction.value = true
+                    coroutineScope.launch {
+                        val hasVideos = selectedItemsWithoutSection.any {
+                            it.type == MediaType.Video
+                        }
+
+                        val intent = Intent().apply {
+                            action = Intent.ACTION_SEND_MULTIPLE
+                            type = if (hasVideos) "video/*" else "images/*"
+                        }
+
+                        val fileUris = ArrayList<Uri>()
+                        selectedItemsWithoutSection.forEach {
+                            fileUris.add(it.uri)
+                        }
+
+                        intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, fileUris)
+
+                        context.startActivity(Intent.createChooser(intent, null))
                     }
                 }
             )
-        } else {
-            val showExplanationDialog = remember { mutableStateOf(false) }
-            if (showExplanationDialog.value) {
-                ExplanationDialog(
-                    title = stringResource(id = R.string.custom_album_media_not_custom_title),
-                    explanation = stringResource(id = R.string.custom_album_media_not_custom_explanation),
-                    showDialog = showExplanationDialog
+
+            val show = remember { mutableStateOf(false) }
+            var isMoving by remember { mutableStateOf(false) }
+            MoveCopyAlbumListView(
+                show = show,
+                selectedItemsList = selectedItemsList,
+                isMoving = isMoving,
+                groupedMedia = null,
+                insetsPadding = WindowInsets.statusBars
+            )
+
+            BottomAppBarItem(
+                text = "Move",
+                iconResId = R.drawable.cut,
+                enabled = !albumInfo.isCustomAlbum,
+                action = {
+                    isMoving = true
+                    show.value = true
+                }
+            )
+
+            BottomAppBarItem(
+                text = "Copy",
+                iconResId = R.drawable.copy,
+                action = {
+                    isMoving = false
+                    show.value = true
+                }
+            )
+
+            val showDeleteDialog = remember { mutableStateOf(false) }
+            val runTrashAction = remember { mutableStateOf(false) }
+
+            val mainViewModel = LocalMainViewModel.current
+            GetPermissionAndRun(
+                uris = selectedItemsWithoutSection.map { it.uri },
+                shouldRun = runTrashAction,
+                onGranted = {
+                    mainViewModel.launch(Dispatchers.IO) {
+                        setTrashedOnPhotoList(
+                            context = context,
+                            list = selectedItemsWithoutSection.map { Pair(it.uri, it.absolutePath) },
+                            trashed = true
+                        )
+
+                        selectedItemsList.clear()
+                    }
+                }
+            )
+
+            val confirmToDelete by mainViewModel.settings.Permissions.getConfirmToDelete()
+                .collectAsStateWithLifecycle(initialValue = true)
+            if (!albumInfo.isCustomAlbum) {
+                BottomAppBarItem(
+                    text = "Delete",
+                    iconResId = R.drawable.delete,
+                    cornerRadius = 16.dp,
+                    action = {
+                        if (confirmToDelete) showDeleteDialog.value = true
+                        else runTrashAction.value = true
+                    },
+                    dialogComposable = {
+                        ConfirmationDialog(
+                            showDialog = showDeleteDialog,
+                            dialogTitle = "Move selected items to Trash Bin?",
+                            confirmButtonLabel = "Delete"
+                        ) {
+                            runTrashAction.value = true
+                        }
+                    }
+                )
+            } else {
+                val showExplanationDialog = remember { mutableStateOf(false) }
+                if (showExplanationDialog.value) {
+                    ExplanationDialog(
+                        title = stringResource(id = R.string.custom_album_media_not_custom_title),
+                        explanation = stringResource(id = R.string.custom_album_media_not_custom_explanation),
+                        showDialog = showExplanationDialog
+                    )
+                }
+
+                BottomAppBarItem(
+                    text = stringResource(id = R.string.custom_album_remove_media),
+                    iconResId = R.drawable.delete,
+                    cornerRadius = 16.dp,
+                    action = {
+                        if (confirmToDelete) showDeleteDialog.value = true
+                        else runTrashAction.value = true
+                    },
+                    dialogComposable = {
+                        ConfirmationDialog(
+                            showDialog = showDeleteDialog,
+                            dialogTitle = stringResource(id = R.string.custom_album_remove_media_desc),
+                            confirmButtonLabel = stringResource(id = R.string.custom_album_remove_media)
+                        ) {
+                            if (selectedItemsWithoutSection.any { it.customId == null }) {
+                                showExplanationDialog.value = true
+                            }
+
+                            mainViewModel.launch(Dispatchers.IO) {
+                                selectedItemsWithoutSection.forEach { item ->
+                                    Log.d(TAG, "Removed this many rows: " + context.contentResolver.delete(
+                                        LavenderContentProvider.CONTENT_URI,
+                                        "${LavenderMediaColumns.ID} = ? AND ${LavenderMediaColumns.PARENT_ID} = ?",
+                                        arrayOf(item.customId.toString(), albumInfo.id.toString())
+                                    ))
+                                }
+                                selectedItemsList.clear()
+                            }
+                        }
+                    }
                 )
             }
-
-            BottomAppBarItem(
-                text = stringResource(id = R.string.custom_album_remove_media),
-                iconResId = R.drawable.delete,
-                cornerRadius = 16.dp,
-                action = {
-                    if (confirmToDelete) showDeleteDialog.value = true
-                    else runTrashAction.value = true
-                },
-                dialogComposable = {
-                    ConfirmationDialog(
-                        showDialog = showDeleteDialog,
-                        dialogTitle = stringResource(id = R.string.custom_album_remove_media_desc),
-                        confirmButtonLabel = stringResource(id = R.string.custom_album_remove_media)
-                    ) {
-                        if (selectedItemsWithoutSection.any { it.customId == null }) {
-                            showExplanationDialog.value = true
-                        }
-
-                        mainViewModel.launch(Dispatchers.IO) {
-                            selectedItemsWithoutSection.forEach { item ->
-                                Log.d(TAG, "Removed this many rows: " + context.contentResolver.delete(
-                                    LavenderContentProvider.CONTENT_URI,
-                                    "${LavenderMediaColumns.ID} = ? AND ${LavenderMediaColumns.PARENT_ID} = ?",
-                                    arrayOf(item.customId.toString(), albumInfo.id.toString())
-                                ))
-                            }
-                            selectedItemsList.clear()
-                        }
-                    }
-                }
-            )
         }
+    } else {
+        val context = LocalContext.current
+
+        MediaPickerConfirmButton(
+            incomingIntent = incomingIntent,
+            selectedItemsList = selectedItemsList,
+            contentResolver = context.contentResolver
+        )
     }
 }
 
