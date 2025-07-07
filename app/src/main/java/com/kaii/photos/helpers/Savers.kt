@@ -2,8 +2,10 @@ package com.kaii.photos.helpers
 
 import androidx.compose.runtime.saveable.mapSaver
 import androidx.compose.ui.geometry.Offset
+import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.StoredDrawable
+import kotlinx.serialization.json.Json
 
 @Suppress("UNCHECKED_CAST") // if the type changes and this doesn't then something always went really bad
 val BottomBarTabSaver = run {
@@ -52,3 +54,35 @@ val OffsetSaver = run {
             }
         )
     }
+
+val AlbumInfoSaver = run {
+    val idKey = "id"
+    val nameKey = "name"
+    val pathsKey = "paths"
+    val isCustomKey = "is_custom"
+    val isPinnedKey = "is_pinned"
+    val immichIdKey = "immich_id"
+
+    mapSaver(
+        save = {
+            mapOf(
+                idKey to it.id,
+                nameKey to it.name,
+                pathsKey to Json.encodeToString(it.paths),
+                isCustomKey to it.isCustomAlbum,
+                isPinnedKey to it.isPinned,
+                immichIdKey to it.immichId
+            )
+        },
+        restore = {
+            AlbumInfo(
+                id = it[idKey] as Int,
+                name = it[nameKey] as String,
+                paths = Json.decodeFromString<List<String>>(it[pathsKey] as String),
+                isCustomAlbum = it[isCustomKey] as Boolean,
+                isPinned = it[isPinnedKey] as Boolean,
+                immichId = it[immichIdKey] as String
+            )
+        }
+    )
+}

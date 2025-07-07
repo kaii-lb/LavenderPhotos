@@ -9,9 +9,8 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.bumptech.glide.Glide
-import com.kaii.lavender.immichintegration.serialization.User
-import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.database.MediaDatabase
+import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.tryGetAllAlbums
@@ -669,11 +668,8 @@ class SettingsImmichImpl(
     private val viewModelScope: CoroutineScope
 ) {
     private val immichEncryptionIV = byteArrayPreferencesKey("immich_encryption_iv")
-    private val immichUser = stringPreferencesKey("immich_user")
     private val immichEndpoint = stringPreferencesKey("immich_endpoint")
     private val immichToken = byteArrayPreferencesKey("immich_token")
-
-    val json = Json { ignoreUnknownKeys = true }
 
     fun getImmichBasicInfo() = context.datastore.data.map { data ->
         val endpoint = data[immichEndpoint] ?: return@map ImmichBasicInfo("", "")
@@ -699,25 +695,5 @@ class SettingsImmichImpl(
             data[immichToken] = enc
             data[immichEncryptionIV] = iv
         }
-    }
-
-    fun getUser() = context.datastore.data.map { data ->
-        data[immichUser]?.let {
-            if (it == "") return@map null
-            else return@map json.decodeFromString<User>(it)
-        } ?: return@map null
-    }
-
-    fun setUser(user: User?) = viewModelScope.launch {
-        context.datastore.edit { data ->
-            data[immichUser] = if (user == null) "" else json.encodeToString(user)
-        }
-    }
-
-    fun getImmichEnabled() = context.datastore.data.map { data ->
-        val user = data[immichUser]
-        val token = data[immichToken]
-
-        user != null && user != "" && token != null && token != EncryptionManager.encryptBytes("".encodeToByteArray()).first
     }
 }

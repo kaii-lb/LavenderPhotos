@@ -5,10 +5,12 @@ import android.util.Log
 import androidx.compose.ui.util.fastMap
 import com.kaii.lavender.immichintegration.AlbumManager
 import com.kaii.lavender.immichintegration.ApiClient
+import com.kaii.lavender.immichintegration.AssetManager
 import com.kaii.lavender.immichintegration.UserAuth
 import com.kaii.lavender.immichintegration.UserManager
 import com.kaii.lavender.immichintegration.serialization.Album
 import com.kaii.lavender.immichintegration.serialization.CreateAlbum
+import com.kaii.lavender.immichintegration.serialization.DuplicateAsset
 import com.kaii.lavender.immichintegration.serialization.File
 import com.kaii.lavender.immichintegration.serialization.LoginCredentials
 import com.kaii.lavender.immichintegration.serialization.UserFull
@@ -46,6 +48,13 @@ class ImmichApiService(
         UserAuth(
             apiClient = client,
             endpointBase = endpoint
+        )
+
+    private val assetManager =
+        AssetManager(
+            apiClient = client,
+            endpointBase = endpoint,
+            bearerToken = token
         )
 
     suspend fun getAllAlbums(): List<Album>? {
@@ -214,10 +223,21 @@ class ImmichApiService(
     }
 
     suspend fun logoutUser() = try {
-        userAuth.logout(token)
+        userAuth.logout(token)?.successful
     } catch (e: Throwable) {
         Log.e(TAG, e.toString())
         e.printStackTrace()
+
+        false
+    }
+
+    suspend fun getDuplicateAssets() = try {
+        assetManager.getDuplicateAssets()
+    } catch (e: Throwable) {
+        Log.e(TAG, e.toString())
+        e.printStackTrace()
+
+        emptyList()
     }
 }
 
@@ -262,7 +282,7 @@ sealed class ImmichAlbumDuplicateState {
 
     @Serializable
     data class HasDupes(
-        val deviceAssetIds: Set<String>
+        val dupeAssets: Set<DuplicateAsset>
     ) : ImmichAlbumDuplicateState()
 }
 

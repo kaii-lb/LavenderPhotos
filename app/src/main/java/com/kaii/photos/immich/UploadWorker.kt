@@ -4,7 +4,6 @@ import android.content.Context
 import android.os.Build
 import android.os.CancellationSignal
 import android.util.Log
-import androidx.compose.ui.util.fastMap
 import androidx.room.Room
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
@@ -222,15 +221,8 @@ class UploadWorker(
                     immichId = immichAlbum.id
                 )
 
-                immichViewModel.setDuplicateState(
-                    albumId = lavenderAlbumId,
-                    immichId = immichAlbum.id,
-                    state =
-                        if (duplicateList.isEmpty()) ImmichAlbumDuplicateState.DupeFree
-                        else ImmichAlbumDuplicateState.HasDupes(deviceAssetIds = actualDupes.map { it.second }.toSet())
-                )
                 immichViewModel.refreshDuplicateState(
-                    deviceAssetIds = media.fastMap { "${it.displayName}-${it.size}" }
+                    immichId = immichAlbum.id
                 )
             } catch (e: Throwable) {
                 Log.e(TAG, "Couldn't update UI, mainViewModel inaccessible")

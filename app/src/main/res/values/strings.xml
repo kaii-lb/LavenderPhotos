@@ -404,4 +404,6 @@
     <string name="immich_album_delete_full">Delete Album</string>
     <string name="immich_auth_passowrd">Password</string>
     <string name="immich_auth_email">Email</string>
+    <string name="immich_continuing_in_bg">Continuing backup in background</string>
+    <string name="immich_main_dialog_sync_state">Syncing: %1$d out of %2$d</string>
 </resources>

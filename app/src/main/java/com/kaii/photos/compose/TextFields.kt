@@ -1,6 +1,9 @@
 package com.kaii.photos.compose
 
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
@@ -30,6 +33,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -40,6 +44,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -62,13 +67,17 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.signature.ObjectKey
+import com.kaii.lavender.snackbars.LavenderSnackbarController
+import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.MainActivity.Companion.immichViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.DialogClickableItem
 import com.kaii.photos.compose.dialogs.DialogExpandableItem
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.immich.ImmichUserLoginState
+import com.kaii.photos.mediastore.getMediaStoreDataFromUri
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.io.File
 
 @Composable
@@ -459,9 +468,51 @@ fun MainDialogUserInfo() {
             )
         }
 
+        val coroutineScope = rememberCoroutineScope()
+
+        val pfpPicker = rememberLauncherForActivityResult(PickVisualMedia()) { uri ->
+            var success = false
+            if (uri != null) {
+                val media = context.contentResolver.getMediaStoreDataFromUri(uri)
+
+                if (media != null) {
+                    success = true
+                    immichViewModel.setProfilePic(media.immichFile)
+                }
+            }
+
+            if (success) {
+                coroutineScope.launch {
+                    LavenderSnackbarController.pushEvent(
+                        LavenderSnackbarEvents.MessageEvent(
+                            message = context.resources.getString(R.string.immich_set_pfp_success),
+                            duration = SnackbarDuration.Short,
+                            icon = R.drawable.face
+                        )
+                    )
+                }
+            } else {
+                coroutineScope.launch {
+                    LavenderSnackbarController.pushEvent(
+                        LavenderSnackbarEvents.MessageEvent(
+                            message = context.resources.getString(R.string.immich_set_pfp_fail),
+                            duration = SnackbarDuration.Short,
+                            icon = R.drawable.error_2
+                        )
+                    )
+                }
+            }
+        }
+
         InvalidatableGlideImage(
             path = pfpPath,
-            signature = pfpSignature
+            signature = pfpSignature,
+            modifier = Modifier
+                .size(56.dp)
+                .clip(CircleShape)
+                .clickable {
+                    pfpPicker.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly))
+                }
         )
 
         Spacer(modifier = Modifier.width(8.dp))

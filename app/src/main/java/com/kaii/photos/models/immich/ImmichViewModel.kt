@@ -14,9 +14,6 @@ import com.kaii.lavender.immichintegration.serialization.LoginCredentials
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
-import com.kaii.photos.database.daos.ImmichDuplicateEntityDao
-import com.kaii.photos.database.entities.ImmichDuplicateEntity
-import com.kaii.photos.database.entities.SetHolder
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.SettingsAlbumsListImpl
@@ -41,7 +38,6 @@ private const val TAG = "IMMICH_VIEW_MODEL"
 class ImmichViewModel(
     application: Application,
     private val immichSettings: SettingsImmichImpl,
-    private val immichDuplicateEntityDao: ImmichDuplicateEntityDao,
     private val albumSettings: SettingsAlbumsListImpl
 ) : AndroidViewModel(application) {
     private val _immichUploadedMediaCount = MutableStateFlow(0)
@@ -158,7 +154,7 @@ class ImmichViewModel(
             if (result is ImmichAlbumSyncState.OutOfSync) {
                 val albumDupes = immichAlbumsDupState.value[immichAlbumId]
 
-                if (albumDupes is ImmichAlbumDuplicateState.HasDupes && result.missing.minus(albumDupes.deviceAssetIds).isEmpty()) {
+                if (albumDupes is ImmichAlbumDuplicateState.HasDupes && result.missing.minus(albumDupes.dupeAssets).isEmpty()) {
                     result = if (result.extra.isEmpty()) {
                         ImmichAlbumSyncState.InSync(expectedPhotoImmichIds)
                     } else {
@@ -295,54 +291,30 @@ class ImmichViewModel(
     }
 
     fun refreshDuplicateState(
-        deviceAssetIds: List<String>,
+        immichId: String,
         onDone: () -> Unit = {}
     ) = viewModelScope.launch(Dispatchers.IO) {
-        val states = immichDuplicateEntityDao.getAll()
+        refreshAlbums()
+
         val snapshot = _immichAlbumsDupState.value.toMutableMap()
+        val albumInfo = immichApiService.getAlbumInfo(immichId)
+        val dupes = immichApiService.getDuplicateAssets()
 
-        states.forEach { state ->
-            val missing = state.dupes.set.filter { it !in deviceAssetIds }
+        val result = albumInfo?.assets?.map { it.deviceAssetId }?.let { albumAssets ->
+            dupes?.filter {
+                it.assets.any { it.deviceAssetId in albumAssets }
+            }
+        }
 
-            snapshot[state.immichId] =
-                if (state.dupes.set.isEmpty()) ImmichAlbumDuplicateState.DupeFree
-                else ImmichAlbumDuplicateState.HasDupes(state.dupes.set - missing)
+        snapshot[immichId] = if (result != null && result.isNotEmpty() && immichId != "") {
+            ImmichAlbumDuplicateState.HasDupes(result.toSet())
+        } else {
+            ImmichAlbumDuplicateState.DupeFree
         }
 
         _immichAlbumsDupState.value = snapshot
 
         onDone()
-    }
-
-    suspend fun setDuplicateState(
-        albumId: Int,
-        immichId: String,
-        state: ImmichAlbumDuplicateState
-    ) {
-        // insert anyways, if there's a conflict it'll replace with new value
-        if (state is ImmichAlbumDuplicateState.HasDupes) {
-            immichDuplicateEntityDao.insertEntity(
-                ImmichDuplicateEntity(
-                    albumId = albumId,
-                    immichId = immichId,
-                    dupes = SetHolder(state.deviceAssetIds.toSet())
-                )
-            )
-        } else {
-            immichDuplicateEntityDao.insertEntity(
-                ImmichDuplicateEntity(
-                    albumId = albumId,
-                    immichId = immichId,
-                    dupes = SetHolder(emptySet())
-                )
-            )
-        }
-
-        val snapshot = _immichAlbumsDupState.value.toMutableMap()
-
-        snapshot[immichId] = state
-
-        _immichAlbumsDupState.value = snapshot
     }
 
     fun refreshUserInfo(
@@ -437,6 +409,22 @@ class ImmichViewModel(
             java.io.File(application.applicationContext.appStorageDir + "/immich_pfp.png").delete()
 
             refreshUserInfo()
+        }
+    }
+
+    fun refreshAllFor(
+        immichId: String,
+        expectedPhotoImmichIds: Set<String>,
+        onDone: () -> Unit
+    ) = viewModelScope.launch {
+        refreshAlbums()
+        refreshDuplicateState(immichId)
+        checkSyncStatus(
+            immichAlbumId = immichId,
+            expectedPhotoImmichIds = expectedPhotoImmichIds
+        )
+        refreshAlbums {
+            onDone()
         }
     }
 }

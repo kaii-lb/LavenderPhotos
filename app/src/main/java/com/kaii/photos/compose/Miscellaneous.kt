@@ -1,9 +1,6 @@
 package com.kaii.photos.compose
 
 import android.content.res.Configuration
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
@@ -38,7 +35,6 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -48,7 +44,6 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,7 +55,6 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
@@ -74,18 +68,13 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.signature.ObjectKey
-import com.kaii.lavender.snackbars.LavenderSnackbarController
-import com.kaii.lavender.snackbars.LavenderSnackbarEvents
-import com.kaii.photos.R
 import com.kaii.photos.LocalMainViewModel
-import com.kaii.photos.MainActivity.Companion.immichViewModel
+import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.SelectingMoreOptionsDialog
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.mediastore.getMediaStoreDataFromUri
-import kotlinx.coroutines.launch
 
 // private const val TAG = "MISCELLANEOUS"
 
@@ -268,25 +257,25 @@ fun ShowSelectedState(
     AnimatedVisibility(
         visible = showIcon,
         enter =
-        scaleIn(
-            animationSpec = tween(
-                durationMillis = 150
-            )
-        ) + fadeIn(
-            animationSpec = tween(
-                durationMillis = 150
-            )
-        ),
+            scaleIn(
+                animationSpec = tween(
+                    durationMillis = 150
+                )
+            ) + fadeIn(
+                animationSpec = tween(
+                    durationMillis = 150
+                )
+            ),
         exit =
-        scaleOut(
-            animationSpec = tween(
-                durationMillis = 150
-            )
-        ) + fadeOut(
-            animationSpec = tween(
-                durationMillis = 150
-            )
-        ),
+            scaleOut(
+                animationSpec = tween(
+                    durationMillis = 150
+                )
+            ) + fadeOut(
+                animationSpec = tween(
+                    durationMillis = 150
+                )
+            ),
         modifier = modifier
     ) {
         Box(
@@ -297,11 +286,11 @@ fun ShowSelectedState(
                 painter = painterResource(id = if (isSelected) R.drawable.file_is_selected_background else R.drawable.file_not_selected_background),
                 contentDescription = "file is selected indicator",
                 tint =
-                if (isSelected)
-                    MaterialTheme.colorScheme.primary
-                else {
-                    if (isSystemInDarkTheme()) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.background
-                },
+                    if (isSelected)
+                        MaterialTheme.colorScheme.primary
+                    else {
+                        if (isSystemInDarkTheme()) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.background
+                    },
                 modifier = Modifier
                     .size(24.dp)
                     .clip(CircleShape)
@@ -311,25 +300,25 @@ fun ShowSelectedState(
             AnimatedVisibility(
                 visible = isSelected,
                 enter =
-                scaleIn(
-                    animationSpec = tween(
-                        durationMillis = 150
-                    )
-                ) + fadeIn(
-                    animationSpec = tween(
-                        durationMillis = 150
-                    )
-                ),
+                    scaleIn(
+                        animationSpec = tween(
+                            durationMillis = 150
+                        )
+                    ) + fadeIn(
+                        animationSpec = tween(
+                            durationMillis = 150
+                        )
+                    ),
                 exit =
-                scaleOut(
-                    animationSpec = tween(
-                        durationMillis = 150
-                    )
-                ) + fadeOut(
-                    animationSpec = tween(
-                        durationMillis = 150
-                    )
-                ),
+                    scaleOut(
+                        animationSpec = tween(
+                            durationMillis = 150
+                        )
+                    ) + fadeOut(
+                        animationSpec = tween(
+                            durationMillis = 150
+                        )
+                    ),
                 modifier = Modifier
                     .align(Alignment.Center)
             ) {
@@ -412,9 +401,11 @@ fun SelectViewTopBarRightButtons(
             }
         }
 
-        val isSelectAllEnabled by remember { derivedStateOf {
-            groupedMedia.value?.size?.let { it < 5000 } == true
-        }}
+        val isSelectAllEnabled by remember {
+            derivedStateOf {
+                groupedMedia.value?.size?.let { it < 5000 } == true
+            }
+        }
 
         IconButton(
             onClick = {
@@ -500,7 +491,7 @@ fun rememberDeviceOrientation(): MutableState<Boolean> {
 
 @Composable
 fun HorizontalSeparator() {
-    Box (
+    Box(
         modifier = Modifier
             .height(1.dp)
             .padding(16.dp, 0.dp)
@@ -536,7 +527,7 @@ fun ConfirmCancelRow(
             }
         }
 
-        Spacer (modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(8.dp))
 
         FilledTonalButton( // maybe use normal button for it?
             onClick = {
@@ -550,91 +541,54 @@ fun ConfirmCancelRow(
 
 @Composable
 fun TitleCloseRow(
-	title: String,
+    title: String,
     closeOffset: Dp = 0.dp,
-	onClose: () -> Unit
+    onClose: () -> Unit
 ) {
-	Box (
-	    modifier = Modifier
-	        .fillMaxWidth(1f)
-	        .padding(8.dp, 0.dp)
-	) {
-	    Text(
-	        text = title,
-	        fontSize = TextUnit(18f, TextUnitType.Sp),
-	        color = MaterialTheme.colorScheme.onSurface,
-	        modifier = Modifier
-	            .wrapContentSize()
-	            .align(Alignment.Center)
-	    )
+    Box(
+        modifier = Modifier
+            .fillMaxWidth(1f)
+            .padding(8.dp, 0.dp)
+    ) {
+        Text(
+            text = title,
+            fontSize = TextUnit(18f, TextUnitType.Sp),
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier
+                .wrapContentSize()
+                .align(Alignment.Center)
+        )
 
 
-	    IconButton(
-	        onClick = {
-	            onClose()
-	        },
-	        modifier = Modifier
-	        	.align(Alignment.CenterEnd)
+        IconButton(
+            onClick = {
+                onClose()
+            },
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
                 .offset(x = closeOffset)
-	    ) {
-	        Icon(
-	            painter = painterResource(id = R.drawable.close),
-	            contentDescription = "Close this dialog",
-	            tint = MaterialTheme.colorScheme.onSurface
-	        )
-	    }
-	}
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.close),
+                contentDescription = "Close this dialog",
+                tint = MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
 }
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun InvalidatableGlideImage(path: Any?, signature: ObjectKey) {
-    val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
-
-    val pfpPicker = rememberLauncherForActivityResult(PickVisualMedia()) { uri ->
-        var success = false
-        if (uri != null) {
-            val media = context.contentResolver.getMediaStoreDataFromUri(uri)
-
-            if (media != null) {
-                success = true
-                immichViewModel.setProfilePic(media.immichFile)
-            }
-        }
-
-        if (success) {
-            coroutineScope.launch {
-                LavenderSnackbarController.pushEvent(
-                    LavenderSnackbarEvents.MessageEvent(
-                        message = context.resources.getString(R.string.immich_set_pfp_success),
-                        duration = SnackbarDuration.Short,
-                        icon = R.drawable.face
-                    )
-                )
-            }
-        } else {
-            coroutineScope.launch {
-                LavenderSnackbarController.pushEvent(
-                    LavenderSnackbarEvents.MessageEvent(
-                        message = context.resources.getString(R.string.immich_set_pfp_fail),
-                        duration = SnackbarDuration.Short,
-                        icon = R.drawable.error_2
-                    )
-                )
-            }
-        }
-    }
+fun InvalidatableGlideImage(
+    path: Any?,
+    signature: ObjectKey,
+    modifier: Modifier = Modifier
+) {
     GlideImage(
         model = path,
         contentDescription = "User profile picture",
         contentScale = ContentScale.Crop,
-        modifier = Modifier
-            .size(56.dp)
-            .clip(RoundedCornerShape(1000.dp))
-            .clickable {
-                pfpPicker.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly))
-            }
+        modifier = modifier
     ) {
         it
             .diskCacheStrategy(DiskCacheStrategy.NONE)

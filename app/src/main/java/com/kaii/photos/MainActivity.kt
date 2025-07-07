@@ -172,7 +172,6 @@ class MainActivity : ComponentActivity() {
             MediaDatabase::class.java,
             "media-database"
         ).apply {
-            fallbackToDestructiveMigrationOnDowngrade(true)
             addMigrations(Migration3to4(applicationContext), Migration4to5(applicationContext))
         }.build()
 
@@ -186,7 +185,6 @@ class MainActivity : ComponentActivity() {
                 factory = ImmichViewModelFactory(
                     application = application,
                     immichSettings = mainViewModel.settings.Immich,
-                    immichDuplicateEntityDao = applicationDatabase.immichDuplicateEntityDao(),
                     albumsSettings = mainViewModel.settings.AlbumsList
                 )
             )

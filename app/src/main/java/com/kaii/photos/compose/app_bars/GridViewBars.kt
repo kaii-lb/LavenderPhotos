@@ -211,7 +211,7 @@ fun SingleAlbumViewTopBar(
                                     expectedPhotoImmichIds = deviceAssetIds.toSet()
                                 )
                                 immichViewModel.refreshDuplicateState(
-                                    deviceAssetIds = media.map { "${it.displayName}-${it.size}" }
+                                    immichId = albumInfo.immichId
                                 ) {
                                     loadingBackupState = false
                                 }

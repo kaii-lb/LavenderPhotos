@@ -126,7 +126,6 @@ class MediaPicker : ComponentActivity() {
             MediaDatabase::class.java,
             "media-database"
         ).apply {
-            fallbackToDestructiveMigrationOnDowngrade(true)
             addMigrations(Migration3to4(applicationContext), Migration4to5(applicationContext))
         }.build()
 
@@ -603,11 +602,12 @@ fun MediaPickerConfirmButton(
         Button(
             onClick = {
                 if (incomingIntent.getBooleanExtra(Intent.EXTRA_ALLOW_MULTIPLE, false) == true
-                    || incomingIntent.action == Intent.ACTION_OPEN_DOCUMENT) {
+                    || incomingIntent.action == Intent.ACTION_OPEN_DOCUMENT
+                ) {
                     val uris = selectedItemsList.map { it.uri }
 
                     val resultIntent = Intent().apply {
-                        putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(uris));
+                        putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(uris))
                         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                         val clipData = ClipData.newUri(contentResolver, "Media", uris.first())
                         for (i in 1 until uris.size) {

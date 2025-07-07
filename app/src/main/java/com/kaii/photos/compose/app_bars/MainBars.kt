@@ -3,20 +3,30 @@ package com.kaii.photos.compose.app_bars
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -32,6 +42,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -41,8 +53,11 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastMapNotNull
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.bumptech.glide.signature.ObjectKey
 import com.kaii.photos.LocalMainViewModel
+import com.kaii.photos.MainActivity.Companion.immichViewModel
 import com.kaii.photos.R
+import com.kaii.photos.compose.InvalidatableGlideImage
 import com.kaii.photos.compose.SelectViewTopBarLeftButtons
 import com.kaii.photos.compose.SelectViewTopBarRightButtons
 import com.kaii.photos.compose.dialogs.AlbumAddChoiceDialog
@@ -53,10 +68,12 @@ import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.setTrashedOnPhotoList
+import com.kaii.photos.immich.ImmichUserLoginState
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.io.File
 
 @Composable
 fun MainAppTopBar(
@@ -120,17 +137,88 @@ fun MainAppTopBar(
             }
 
             if (!isFromMediaPicker) {
-                IconButton(
-                    onClick = {
-                        showDialog.value = true
-                    },
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.settings),
-                        contentDescription = stringResource(id = R.string.settings),
-                        tint = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.size(24.dp)
-                    )
+                val immichUserState by immichViewModel.immichUserLoginState.collectAsStateWithLifecycle()
+                val immichUploadCount by immichViewModel.immichUploadedMediaCount.collectAsStateWithLifecycle()
+                val immichUploadTotal by immichViewModel.immichUploadedMediaTotal.collectAsStateWithLifecycle()
+
+                if (immichUserState is ImmichUserLoginState.IsNotLoggedIn) {
+                    IconButton(
+                        onClick = {
+                            showDialog.value = true
+                        },
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.settings),
+                            contentDescription = stringResource(id = R.string.settings),
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                } else {
+                    val pfpPath by remember {
+                        derivedStateOf {
+                            if (immichUserState is ImmichUserLoginState.IsLoggedIn) {
+                                val file = File((immichUserState as ImmichUserLoginState.IsLoggedIn).info.profileImagePath)
+                                if (file.exists()) file.absolutePath
+                                else R.drawable.cat_picture
+                            } else R.drawable.cat_picture
+                        }
+                    }
+                    val pfpSignature by remember {
+                        derivedStateOf {
+                            if (pfpPath is String) {
+                                ObjectKey(File(pfpPath as String).lastModified())
+                            } else ObjectKey(0)
+                        }
+                    }
+
+                    AnimatedContent(
+                        targetState = immichUploadTotal != 0,
+                        transitionSpec = {
+                            (scaleIn() + fadeIn()).togetherWith(
+                                scaleOut() + fadeOut()
+                            ).using(SizeTransform(clip = false))
+                        },
+                        modifier = Modifier
+                            .padding(end = 4.dp)
+                            .clickable {
+                                showDialog.value = true
+                            }
+                    ) { state ->
+                        if (state) {
+                            Box(
+                                contentAlignment = Alignment.Center
+                            ) {
+                                InvalidatableGlideImage(
+                                    path = pfpPath,
+                                    signature = pfpSignature,
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .clip(CircleShape)
+                                )
+
+                                CircularProgressIndicator(
+                                    progress = {
+                                        immichUploadCount.toFloat() / immichUploadTotal
+                                    },
+                                    color = MaterialTheme.colorScheme.primary,
+                                    trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                    strokeCap = StrokeCap.Round,
+                                    strokeWidth = 3.dp,
+                                    modifier = Modifier
+                                        .size(34.dp)
+                                )
+                            }
+                        } else {
+                            InvalidatableGlideImage(
+                                path = pfpPath,
+                                signature = pfpSignature,
+                                modifier = Modifier
+                                    .size(28.dp)
+                                    .clip(CircleShape)
+                            )
+                        }
+                    }
                 }
             } else {
                 val context = LocalContext.current

@@ -13,6 +13,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -25,6 +26,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,9 +36,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMapNotNull
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kaii.lavender.snackbars.LavenderSnackbarController
+import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.immichViewModel
 import com.kaii.photos.R
@@ -44,6 +47,7 @@ import com.kaii.photos.compose.PreferencesRow
 import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.ImmichBackupMedia
+import com.kaii.photos.helpers.AlbumInfoSaver
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.immich.ImmichAlbumDuplicateState
 import com.kaii.photos.immich.ImmichAlbumSyncState
@@ -60,7 +64,11 @@ fun ImmichAlbumPage(
     albumInfo: AlbumInfo,
     multiAlbumViewModel: MultiAlbumViewModel
 ) {
-    var dynamicAlbumInfo by remember { mutableStateOf(albumInfo) }
+    var dynamicAlbumInfo by rememberSaveable(
+        stateSaver = AlbumInfoSaver
+    ) {
+        mutableStateOf(albumInfo)
+    }
     val navController = LocalNavController.current
     val context = LocalContext.current
 
@@ -72,7 +80,19 @@ fun ImmichAlbumPage(
         )
     }
 
+    val coroutineScope = rememberCoroutineScope()
     BackHandler {
+        if (immichViewModel.immichUploadedMediaTotal.value != 0) {
+            coroutineScope.launch {
+                LavenderSnackbarController.pushEvent(
+                    LavenderSnackbarEvents.MessageEvent(
+                        message = context.resources.getString(R.string.immich_continuing_in_bg),
+                        duration = SnackbarDuration.Short,
+                        icon = R.drawable.cloud_upload
+                    )
+                )
+            }
+        }
         multiAlbumViewModel.cancelMediaFlow()
         navController.popBackStack()
     }
@@ -90,21 +110,14 @@ fun ImmichAlbumPage(
             }
         }
 
-    Log.d(TAG, "Device asset ids $deviceAssetIds")
-
     var loadingBackupState by remember { mutableStateOf(false) }
 
-    val coroutineScope = rememberCoroutineScope()
-
-    LaunchedEffect(Unit) {
+    LaunchedEffect(dynamicAlbumInfo.immichId) {
         loadingBackupState = true
-        immichViewModel.refreshAlbums()
-        immichViewModel.checkSyncStatus(
-            immichAlbumId = dynamicAlbumInfo.immichId,
-            expectedPhotoImmichIds = deviceAssetIds.map { it.deviceAssetId }.toSet()
-        )
-        immichViewModel.refreshDuplicateState(
-            deviceAssetIds = deviceAssetIds.fastMap { it.deviceAssetId }
+        immichViewModel.refreshAllFor(
+            immichId = "",
+            expectedPhotoImmichIds = deviceAssetIds.map { it.deviceAssetId }
+                .toSet()
         ) {
             loadingBackupState = false
         }
@@ -120,14 +133,11 @@ fun ImmichAlbumPage(
             onRefresh = {
                 coroutineScope.launch {
                     loadingBackupState = true
-                    immichViewModel.checkSyncStatus(
-                        immichAlbumId = dynamicAlbumInfo.immichId,
-                        expectedPhotoImmichIds = deviceAssetIds.map { it.deviceAssetId }.toSet()
-                    )
-                    immichViewModel.refreshDuplicateState(
-                        deviceAssetIds = deviceAssetIds.fastMap { it.deviceAssetId }
-                    )
-                    immichViewModel.refreshAlbums {
+                    immichViewModel.refreshAllFor(
+                        immichId = "",
+                        expectedPhotoImmichIds = deviceAssetIds.map { it.deviceAssetId }
+                            .toSet()
+                    ) {
                         loadingBackupState = false
                     }
                 }
@@ -150,27 +160,25 @@ fun ImmichAlbumPage(
                 }
             }
 
+            val duplicates by immichViewModel.immichAlbumsDupState.collectAsStateWithLifecycle()
+            val currentAlbumDupes by remember {
+                derivedStateOf {
+                    val dupe = duplicates[dynamicAlbumInfo.immichId]
+                    when (dupe) {
+                        is ImmichAlbumDuplicateState.HasDupes -> {
+                            dupe.dupeAssets.flatMap { it.assets }.size - 1
+                        }
+
+                        else -> 0
+                    }
+                }
+            }
+
             val albumSyncState by remember {
                 derivedStateOf {
                     albumsSyncState[dynamicAlbumInfo.immichId]
                 }
             }
-            val dupes by immichViewModel.immichAlbumsDupState.collectAsStateWithLifecycle()
-            val currentAlbumDupe by remember {
-                derivedStateOf {
-                    val state = dupes[dynamicAlbumInfo.immichId]
-                    when (state) {
-                        is ImmichAlbumDuplicateState.HasDupes -> {
-                            state.deviceAssetIds
-                        }
-
-                        else -> {
-                            emptySet()
-                        }
-                    }
-                }
-            }
-            Log.d(TAG, "Duplicates $currentAlbumDupe")
 
             LazyColumn(
                 modifier = Modifier
@@ -180,8 +188,8 @@ fun ImmichAlbumPage(
             ) {
                 item {
                     PreferencesRow(
-                        title = stringResource(id = R.string.immich_sync_status) + " " + "${serverSideAlbum?.assetCount ?: 0}/${deviceAssetIds.size - currentAlbumDupe.size}",
-                        summary = "Duplicates: ${currentAlbumDupe.size}",
+                        title = stringResource(id = R.string.immich_sync_status) + " " + "${serverSideAlbum?.assetCount ?: 0}/${deviceAssetIds.size}",
+                        summary = "Duplicates: $currentAlbumDupes",
                         iconResID = R.drawable.cloud_upload,
                         position = RowPosition.Single,
                         showBackground = false
@@ -195,10 +203,17 @@ fun ImmichAlbumPage(
                     val notificationPercentage = remember { mutableFloatStateOf(0f) }
 
                     LaunchedEffect(uploadCount, uploadTotal) {
-                        if (uploadTotal != 0) notificationBody.value =
-                            "${uploadCount}/${uploadTotal} ${context.resources.getString(R.string.immich_done)}"
-                        else notificationBody.value = context.resources.getString(R.string.immich_operation_complete)
                         notificationPercentage.floatValue = uploadCount.toFloat() / uploadTotal
+
+                        Log.d(TAG, "Notis percentage is ${notificationPercentage.floatValue}")
+
+                        if (notificationPercentage.floatValue < 1f || notificationPercentage.floatValue.isNaN()) {
+                            val moddedTotal = if (uploadTotal == 0) "?" else uploadTotal.toString()
+                            notificationBody.value =
+                                "${uploadCount}/${moddedTotal} ${context.resources.getString(R.string.immich_done)}"
+                        } else {
+                            notificationBody.value = context.resources.getString(R.string.immich_operation_complete)
+                        }
                     }
 
                     val missingFromImmich by remember {
@@ -209,7 +224,7 @@ fun ImmichAlbumPage(
                                 }
 
                                 is ImmichAlbumSyncState.OutOfSync -> {
-                                    (albumSyncState as ImmichAlbumSyncState.OutOfSync).missing.minus(currentAlbumDupe).size
+                                    (albumSyncState as ImmichAlbumSyncState.OutOfSync).missing.size
                                 }
 
                                 is ImmichAlbumSyncState.Error -> context.resources.getString(R.string.immich_state_unknown)
@@ -250,20 +265,16 @@ fun ImmichAlbumPage(
                             notificationBody = notificationBody,
                             notificationPercentage = notificationPercentage
                         ) { newId ->
-                            dynamicAlbumInfo = dynamicAlbumInfo.copy(
-                                immichId = newId
-                            )
-                            immichViewModel.refreshDuplicateState(
-                                deviceAssetIds = deviceAssetIds.fastMap { it.deviceAssetId }
-                            )
-                            immichViewModel.checkSyncStatus(
-                                immichAlbumId = newId,
+                            immichViewModel.refreshAllFor(
+                                immichId = newId,
                                 expectedPhotoImmichIds = deviceAssetIds.map { it.deviceAssetId }
                                     .toSet()
-                            )
-                            immichViewModel.refreshAlbums {
+                            ) {
                                 loadingBackupState = false
                             }
+
+                            dynamicAlbumInfo = dynamicAlbumInfo.copy(immichId = "")
+                            dynamicAlbumInfo = dynamicAlbumInfo.copy(immichId = newId)
                         }
                     }
                 }
@@ -286,14 +297,15 @@ fun ImmichAlbumPage(
                                 dynamicAlbumInfo = dynamicAlbumInfo.copy(
                                     immichId = ""
                                 )
+
+                            }
+                            immichViewModel.refreshAllFor(
+                                immichId = "",
+                                expectedPhotoImmichIds = deviceAssetIds.map { it.deviceAssetId }
+                                    .toSet()
+                            ) {
                                 loadingBackupState = false
                             }
-                            immichViewModel.refreshAlbums {
-                                loadingBackupState = false
-                            }
-                            immichViewModel.refreshDuplicateState(
-                                deviceAssetIds = deviceAssetIds.fastMap { it.deviceAssetId }
-                            )
                         }
                     }
                     PreferencesRow(
