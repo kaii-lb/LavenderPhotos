@@ -3,7 +3,7 @@ name: Android CI
 on:
   push:
     branches:
-      - main
+      - feature/android-ci-test
 
 jobs:
   build:
