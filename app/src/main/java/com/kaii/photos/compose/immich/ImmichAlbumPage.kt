@@ -27,7 +27,6 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,7 +46,6 @@ import com.kaii.photos.compose.PreferencesRow
 import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.ImmichBackupMedia
-import com.kaii.photos.helpers.AlbumInfoSaver
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.immich.ImmichAlbumDuplicateState
 import com.kaii.photos.immich.ImmichAlbumSyncState
@@ -68,18 +66,15 @@ fun ImmichAlbumPage(
     albumInfo: AlbumInfo,
     multiAlbumViewModel: MultiAlbumViewModel
 ) {
-    var dynamicAlbumInfo by rememberSaveable(
-        stateSaver = AlbumInfoSaver
-    ) {
-        mutableStateOf(albumInfo)
-    }
+    var currentAlbumImmichId by remember { mutableStateOf(albumInfo.immichId) }
+
     val navController = LocalNavController.current
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         multiAlbumViewModel.reinitDataSource(
             context = context,
-            album = dynamicAlbumInfo,
+            album = albumInfo,
             sortMode = multiAlbumViewModel.sortBy
         )
     }
@@ -111,7 +106,7 @@ fun ImmichAlbumPage(
             deviceBackupMedia = getImmichBackupMedia(groupedMedia)
 
             immichViewModel.refreshAllFor(
-                immichId = dynamicAlbumInfo.immichId,
+                immichId = currentAlbumImmichId,
                 expectedPhotoImmichIds = deviceBackupMedia.map {
                     ImmichBackupMedia(
                         deviceAssetId = it.deviceAssetId,
@@ -127,7 +122,7 @@ fun ImmichAlbumPage(
 
     Scaffold(
         topBar = {
-            ImmichAlbumPageTopBar(album = dynamicAlbumInfo)
+            ImmichAlbumPageTopBar(album = albumInfo)
         }
     ) { innerPadding ->
         PullToRefreshBox(
@@ -136,7 +131,7 @@ fun ImmichAlbumPage(
                 coroutineScope.launch {
                     loadingBackupState = true
                     immichViewModel.refreshAllFor(
-                        immichId = dynamicAlbumInfo.immichId,
+                        immichId = currentAlbumImmichId,
                         expectedPhotoImmichIds = deviceBackupMedia.map {
                             ImmichBackupMedia(
                                 deviceAssetId = it.deviceAssetId,
@@ -158,7 +153,7 @@ fun ImmichAlbumPage(
                 val all by immichViewModel.immichServerAlbums.collectAsStateWithLifecycle()
                 when (all) {
                     is ImmichServerSidedAlbumsState.Synced -> {
-                        (all as ImmichServerSidedAlbumsState.Synced).albums.find { it.id == dynamicAlbumInfo.immichId }
+                        (all as ImmichServerSidedAlbumsState.Synced).albums.find { it.id == currentAlbumImmichId }
                     }
 
                     else -> {
@@ -169,14 +164,14 @@ fun ImmichAlbumPage(
 
             val albumSyncState by remember {
                 derivedStateOf {
-                    albumsSyncState[dynamicAlbumInfo.immichId]
+                    albumsSyncState[currentAlbumImmichId]
                 }
             }
 
             val dupes by immichViewModel.immichAlbumsDupState.collectAsStateWithLifecycle()
             val currentAlbumDupes by remember {
                 derivedStateOf {
-                    val dupe = dupes[dynamicAlbumInfo.immichId]
+                    val dupe = dupes[currentAlbumImmichId]
 
                     when (dupe) {
                         is ImmichAlbumDuplicateState.HasDupes -> {
@@ -274,26 +269,37 @@ fun ImmichAlbumPage(
                         showBackground = false,
                         enabled = !loadingBackupState
                     ) {
-                        immichViewModel.addAlbumToSync(
-                            albumInfo = dynamicAlbumInfo,
-                            notificationBody = notificationBody,
-                            notificationPercentage = notificationPercentage
-                        ) { newId ->
-                            immichViewModel.refreshAllFor(
-                                immichId = newId,
-                                expectedPhotoImmichIds = deviceBackupMedia.map {
-                                    ImmichBackupMedia(
-                                        deviceAssetId = it.deviceAssetId,
-                                        absolutePath = it.absolutePath,
-                                        checksum = it.checksum
-                                    )
-                                }.toSet()
-                            ) {
-                                loadingBackupState = false
+                        coroutineScope.launch(Dispatchers.IO) {
+                            currentAlbumImmichId = immichViewModel.addAlbumToSync(
+                                albumInfo = AlbumInfo(
+                                    id = albumInfo.id,
+                                    immichId = currentAlbumImmichId,
+                                    name = albumInfo.name,
+                                    paths = albumInfo.paths,
+                                    isCustomAlbum = albumInfo.isCustomAlbum,
+                                    isPinned = albumInfo.isPinned
+                                ),
+                                notificationBody = notificationBody,
+                                notificationPercentage = notificationPercentage
+                            )
+
+                            loadingBackupState = true
+
+                            while (albumSyncState !is ImmichAlbumSyncState.InSync) {
+                                delay(1000)
+                                immichViewModel.refreshAllFor(
+                                    immichId = currentAlbumImmichId,
+                                    expectedPhotoImmichIds = deviceBackupMedia.map {
+                                        ImmichBackupMedia(
+                                            deviceAssetId = it.deviceAssetId,
+                                            absolutePath = it.absolutePath,
+                                            checksum = it.checksum
+                                        )
+                                    }.toSet()
+                                ) {}
                             }
 
-                            dynamicAlbumInfo = dynamicAlbumInfo.copy(immichId = "")
-                            dynamicAlbumInfo = dynamicAlbumInfo.copy(immichId = newId)
+                            loadingBackupState = false
                         }
                     }
                 }
@@ -307,16 +313,20 @@ fun ImmichAlbumPage(
                             showDialog = showDeleteConfirmationDialog,
                             dialogTitle = stringResource(id = R.string.immich_album_delete),
                             dialogBody = stringResource(id = R.string.immich_album_delete_desc),
-                            confirmButtonLabel = stringResource(id = R.string.media_delete)
+                            confirmButtonLabel = stringResource(id = R.string.custom_album_remove_media)
                         ) {
                             loadingBackupState = true
                             immichViewModel.removeAlbumFromSync(
-                                albumInfo = dynamicAlbumInfo
-                            ) {
-                                dynamicAlbumInfo = dynamicAlbumInfo.copy(
-                                    immichId = ""
+                                albumInfo = AlbumInfo(
+                                    id = albumInfo.id,
+                                    immichId = currentAlbumImmichId,
+                                    name = albumInfo.name,
+                                    paths = albumInfo.paths,
+                                    isCustomAlbum = albumInfo.isCustomAlbum,
+                                    isPinned = albumInfo.isPinned
                                 )
-
+                            ) {
+                                currentAlbumImmichId = ""
                             }
                             immichViewModel.refreshAllFor(
                                 immichId = "",

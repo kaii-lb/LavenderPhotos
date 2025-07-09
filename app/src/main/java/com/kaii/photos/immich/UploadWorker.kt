@@ -110,9 +110,10 @@ class UploadWorker(
             val successList = mutableListOf<UploadingImmichAsset>()
 
             try {
+                val currentTotal = immichViewModel.immichUploadedMediaTotal.value
                 immichViewModel.updatePhotoUploadProgress(
                     uploaded = 0,
-                    total = shouldBackup.size,
+                    total = currentTotal + shouldBackup.size,
                     immichId = immichAlbum.id
                 )
             } catch (e: Throwable) {
@@ -138,9 +139,12 @@ class UploadWorker(
                     )
 
                     try {
+                        val currentCount = immichViewModel.immichUploadedMediaCount.value
+                        val currentTotal = immichViewModel.immichUploadedMediaTotal.value
+
                         immichViewModel.updatePhotoUploadProgress(
-                            uploaded = 1,
-                            total = 0,
+                            uploaded = currentCount + 1,
+                            total = currentTotal,
                             immichId = albumId
                         )
                     } catch (e: Throwable) {
@@ -196,16 +200,13 @@ class UploadWorker(
             }
 
             try {
+                val currentTotal = immichViewModel.immichUploadedMediaTotal.value
+
                 immichViewModel.updatePhotoUploadProgress(
-                    uploaded = -shouldBackup.size,
-                    total = -shouldBackup.size,
+                    uploaded = 0,
+                    total = currentTotal - shouldBackup.size,
                     immichId = immichAlbum.id
                 )
-
-                // immichViewModel.refreshDuplicateState(
-                //     immichId = immichAlbum.id,
-                //     dupes = emp
-                // )
             } catch (e: Throwable) {
                 Log.e(TAG, "Couldn't update UI, mainViewModel inaccessible")
                 Log.e(TAG, e.toString())

@@ -220,52 +220,43 @@ class ImmichViewModel(
         }
     }
 
-    fun addAlbumToSync(
+    suspend fun addAlbumToSync(
         albumInfo: AlbumInfo,
         notificationBody: MutableState<String>,
-        notificationPercentage: MutableFloatState,
-        onDone: (newId: String) -> Unit = {}
-    ) {
-        viewModelScope.launch {
-            if (_immichServerAlbums.value is ImmichServerSidedAlbumsState.Synced) {
-                val result = immichApiService.addAlbumToSync(
-                    immichId = albumInfo.immichId,
-                    albumName = albumInfo.name,
-                    currentAlbums = (_immichServerAlbums.value as ImmichServerSidedAlbumsState.Synced).albums.toList(),
-                    context = application.applicationContext,
-                    query = getSQLiteQuery(albums = albumInfo.paths),
-                    albumId = albumInfo.id
+        notificationPercentage: MutableFloatState
+    ): String {
+        val snapshot = _immichAlbumsSyncState.value.toMutableMap()
+        snapshot[albumInfo.immichId] = ImmichAlbumSyncState.Loading
+
+        if (_immichServerAlbums.value is ImmichServerSidedAlbumsState.Synced) {
+            val result = immichApiService.addAlbumToSync(
+                immichId = albumInfo.immichId,
+                albumName = albumInfo.name,
+                currentAlbums = (_immichServerAlbums.value as ImmichServerSidedAlbumsState.Synced).albums.toList(),
+                context = application.applicationContext,
+                query = getSQLiteQuery(albums = albumInfo.paths),
+                albumId = albumInfo.id
+            )
+
+            result.onSuccess { id ->
+                LavenderSnackbarController.pushEvent(
+                    LavenderSnackbarEvents.ProgressEvent(
+                        message = "Syncing albums...",
+                        body = notificationBody,
+                        icon = R.drawable.cloud_upload,
+                        percentage = notificationPercentage
+                    )
                 )
 
-                result.onSuccess { id ->
-                    LavenderSnackbarController.pushEvent(
-                        LavenderSnackbarEvents.ProgressEvent(
-                            message = "Syncing albums...",
-                            body = notificationBody,
-                            icon = R.drawable.cloud_upload,
-                            percentage = notificationPercentage
-                        )
+                albumSettings.editInAlbumsList(
+                    albumInfo = albumInfo,
+                    newInfo = albumInfo.copy(
+                        immichId = id
                     )
-
-                    albumSettings.editInAlbumsList(
-                        albumInfo = albumInfo,
-                        newInfo = albumInfo.copy(
-                            immichId = id
-                        )
-                    )
-                    refreshAlbums()
-                    onDone(id)
-                }.onFailure { throwable ->
-                    LavenderSnackbarController.pushEvent(
-                        LavenderSnackbarEvents.MessageEvent(
-                            message = "Failed uploading album",
-                            icon = R.drawable.error_2,
-                            duration = SnackbarDuration.Short
-                        )
-                    )
-                    onDone("")
-                }
-            } else {
+                )
+                refreshAlbums()
+                return id
+            }.onFailure { throwable ->
                 LavenderSnackbarController.pushEvent(
                     LavenderSnackbarEvents.MessageEvent(
                         message = "Failed uploading album",
@@ -273,9 +264,21 @@ class ImmichViewModel(
                         duration = SnackbarDuration.Short
                     )
                 )
-                onDone("")
+                return ""
             }
+        } else {
+            LavenderSnackbarController.pushEvent(
+                LavenderSnackbarEvents.MessageEvent(
+                    message = "Failed uploading album",
+                    icon = R.drawable.error_2,
+                    duration = SnackbarDuration.Short
+                )
+            )
+
+            return ""
         }
+
+        return ""
     }
 
     fun updatePhotoUploadProgress(
@@ -295,8 +298,8 @@ class ImmichViewModel(
                 )
             )
         }
-        _immichUploadedMediaCount.value += uploaded
-        _immichUploadedMediaTotal.value += total
+        _immichUploadedMediaCount.value = uploaded
+        _immichUploadedMediaTotal.value = total
     }
 
     @OptIn(ExperimentalEncodingApi::class, ExperimentalStdlibApi::class)

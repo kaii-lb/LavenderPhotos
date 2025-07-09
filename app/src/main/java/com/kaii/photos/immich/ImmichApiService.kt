@@ -165,6 +165,8 @@ class ImmichApiService(
             newId = new.id
         }
 
+        Log.d(TAG, "Ended up with new id $newId")
+
         SchedulingManager.scheduleUploadTask(
             lavenderAlbumId = albumId,
             context = context,
