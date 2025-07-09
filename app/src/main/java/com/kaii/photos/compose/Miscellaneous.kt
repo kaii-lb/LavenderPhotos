@@ -1,13 +1,18 @@
 package com.kaii.photos.compose
 
 import android.content.res.Configuration
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -30,11 +35,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -52,6 +59,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
@@ -69,12 +77,15 @@ import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.signature.ObjectKey
 import com.kaii.photos.LocalMainViewModel
+import com.kaii.photos.MainActivity.Companion.immichViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.SelectingMoreOptionsDialog
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
+import com.kaii.photos.immich.ImmichUserLoginState
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
+import java.io.File
 
 // private const val TAG = "MISCELLANEOUS"
 
@@ -594,5 +605,129 @@ fun InvalidatableGlideImage(
             .diskCacheStrategy(DiskCacheStrategy.NONE)
             .skipMemoryCache(true)
             .signature(signature)
+    }
+}
+
+@Composable
+fun AnimatedImmichBackupIcon(
+    immichUserState: ImmichUserLoginState,
+    modifier: Modifier = Modifier
+) {
+    val pfpPath by remember {
+        derivedStateOf {
+            if (immichUserState is ImmichUserLoginState.IsLoggedIn) {
+                val file = File(immichUserState.info.profileImagePath)
+                if (file.exists()) file.absolutePath
+                else R.drawable.cat_picture
+            } else R.drawable.cat_picture
+        }
+    }
+    val pfpSignature by remember {
+        derivedStateOf {
+            if (pfpPath is String) {
+                ObjectKey(File(pfpPath as String).lastModified())
+            } else ObjectKey(0)
+        }
+    }
+    val immichUploadCount by immichViewModel.immichUploadedMediaCount.collectAsStateWithLifecycle()
+    val immichUploadTotal by immichViewModel.immichUploadedMediaTotal.collectAsStateWithLifecycle()
+
+    Box(
+        modifier = modifier
+            .size(32.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        val size by animateDpAsState(
+            targetValue = if (immichUploadTotal != 0) 22.dp else 28.dp,
+            animationSpec = tween(
+                durationMillis = 400
+            )
+        )
+        InvalidatableGlideImage(
+            path = pfpPath,
+            signature = pfpSignature,
+            modifier = Modifier
+                .size(size)
+                .clip(CircleShape)
+                .zIndex(2f)
+        )
+
+        AnimatedVisibility(
+            visible = immichUploadTotal != 0,
+            enter = scaleIn(
+                animationSpec = tween(
+                    durationMillis = 400
+                )
+            ),
+            exit = scaleOut(
+                animationSpec = tween(
+                    durationMillis = 400
+                )
+            ),
+            modifier = Modifier
+                .zIndex(1f)
+        ) {
+            val percentage by animateFloatAsState(
+                targetValue = immichUploadCount.toFloat() / (if (immichUploadTotal == 0) 1 else immichUploadTotal),
+                animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec
+            )
+
+            CircularProgressIndicator(
+                progress = {
+                    percentage
+                },
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                strokeCap = StrokeCap.Round,
+                strokeWidth = 3.dp,
+                modifier = Modifier
+                    .size(32.dp)
+            )
+        }
+    }
+}
+
+@Composable
+fun AnimatedLoginIcon(
+    immichUserLoginState: ImmichUserLoginState,
+    onClick: () -> Unit
+) {
+    AnimatedContent(
+        targetState = immichUserLoginState is ImmichUserLoginState.IsLoggedIn,
+        transitionSpec = {
+            (scaleIn() + fadeIn()).togetherWith(
+                scaleOut() + fadeOut()
+            ).using(SizeTransform(clip = false))
+        },
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .padding(end = 4.dp)
+            .clickable {
+                onClick()
+            }
+    ) { state ->
+        if (state) {
+            AnimatedImmichBackupIcon(
+                immichUserState = immichUserLoginState,
+                modifier = Modifier
+                    .padding(end = 8.dp)
+                    .clickable {
+                        onClick()
+                    }
+            )
+        } else {
+            IconButton(
+                onClick = {
+                    onClick()
+                }
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.settings),
+                    contentDescription = stringResource(id = R.string.settings),
+                    tint = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        }
     }
 }
