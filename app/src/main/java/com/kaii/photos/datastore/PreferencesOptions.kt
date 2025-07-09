@@ -238,14 +238,10 @@ object AlbumInfoNavType : NavType<AlbumInfo>(
 }
 
 @Serializable
-data class ImmichBackupAlbum(
-    val albumId: Int,
-    val immichId: String
-)
-
 data class ImmichBackupMedia(
     val deviceAssetId: String,
-    val absolutePath: String
+    val absolutePath: String,
+    val checksum: String
 )
 
 @Serializable

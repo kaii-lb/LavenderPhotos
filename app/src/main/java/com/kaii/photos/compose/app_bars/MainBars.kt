@@ -138,8 +138,6 @@ fun MainAppTopBar(
 
             if (!isFromMediaPicker) {
                 val immichUserState by immichViewModel.immichUserLoginState.collectAsStateWithLifecycle()
-                val immichUploadCount by immichViewModel.immichUploadedMediaCount.collectAsStateWithLifecycle()
-                val immichUploadTotal by immichViewModel.immichUploadedMediaTotal.collectAsStateWithLifecycle()
 
                 if (immichUserState is ImmichUserLoginState.IsNotLoggedIn) {
                     IconButton(
@@ -172,6 +170,8 @@ fun MainAppTopBar(
                         }
                     }
 
+                    val immichUploadCount by immichViewModel.immichUploadedMediaCount.collectAsStateWithLifecycle()
+                    val immichUploadTotal by immichViewModel.immichUploadedMediaTotal.collectAsStateWithLifecycle()
                     AnimatedContent(
                         targetState = immichUploadTotal != 0,
                         transitionSpec = {
@@ -199,7 +199,7 @@ fun MainAppTopBar(
 
                                 CircularProgressIndicator(
                                     progress = {
-                                        immichUploadCount.toFloat() / immichUploadTotal
+                                        immichUploadCount.toFloat() / (if (immichUploadTotal == 0) 1 else immichUploadTotal)
                                     },
                                     color = MaterialTheme.colorScheme.primary,
                                     trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,

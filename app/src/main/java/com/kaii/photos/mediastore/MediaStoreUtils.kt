@@ -6,7 +6,6 @@ import android.content.ContentValues
 import android.content.Context
 import android.net.Uri
 import android.os.Environment
-import android.os.FileUtils
 import android.provider.DocumentsContract
 import android.provider.MediaStore
 import android.provider.MediaStore.Files.FileColumns
@@ -19,7 +18,6 @@ import com.kaii.photos.helpers.EXTERNAL_DOCUMENTS_AUTHORITY
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.getDateTakenForMedia
-import com.kaii.photos.helpers.setDateTakenForMedia
 import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.helpers.toRelativePath
 import kotlinx.coroutines.Dispatchers
@@ -42,19 +40,19 @@ suspend fun ContentResolver.copyMedia(
     overwriteDate: Boolean,
     currentVolumes: Set<String>,
     overrideDisplayName: String? = null,
-    setExifDateBeforeCopy: Boolean = false
+    setExifDateBeforeCopy: Boolean = false // TODO: figure out just what the hell is going on here
 ): Uri? = withContext(Dispatchers.IO) {
-    if (setExifDateBeforeCopy && media.type == MediaType.Image && !overwriteDate) {
-        try {
-            setDateTakenForMedia(
-                media.absolutePath,
-                media.dateTaken
-            )
-        } catch (e: Throwable) {
-            Log.e(TAG, "Cannot set date taken for media $media")
-            e.printStackTrace()
-        }
-    }
+    // if (setExifDateBeforeCopy && media.type == MediaType.Image && !overwriteDate) {
+    //     try {
+    //         setDateTakenForMedia(
+    //             media.absolutePath,
+    //             media.dateTaken
+    //         )
+    //     } catch (e: Throwable) {
+    //         Log.e(TAG, "Cannot set date taken for media $media")
+    //         e.printStackTrace()
+    //     }
+    // }
 
     val file = File(media.absolutePath)
     val currentTime = System.currentTimeMillis()
@@ -101,12 +99,12 @@ suspend fun ContentResolver.copyMedia(
             if (overwriteDate) {
                 target.setLastModified(currentTime)
 
-                if (media.type == MediaType.Image) {
-                    setDateTakenForMedia(
-                        absolutePath = target.absolutePath,
-                        dateTaken = currentTime / 1000
-                    )
-                }
+                // if (media.type == MediaType.Image) {
+                //     setDateTakenForMedia(
+                //         absolutePath = target.absolutePath,
+                //         dateTaken = currentTime / 1000
+                //     )
+                // }
 
                 update(
                     uri,
@@ -120,12 +118,12 @@ suspend fun ContentResolver.copyMedia(
             } else {
                 target.setLastModified(media.dateTaken * 1000)
 
-                if (media.type == MediaType.Image) {
-                    setDateTakenForMedia(
-                        absolutePath = target.absolutePath,
-                        dateTaken = media.dateTaken
-                    )
-                }
+                // if (media.type == MediaType.Image) {
+                //     setDateTakenForMedia(
+                //         absolutePath = target.absolutePath,
+                //         dateTaken = media.dateTaken
+                //     )
+                // }
 
                 update(
                     uri,
@@ -166,15 +164,15 @@ suspend fun ContentResolver.copyMedia(
             if (overwriteDate) {
                 target.setLastModified(currentTime)
 
-                if (media.type == MediaType.Image) try {
-                    setDateTakenForMedia(
-                        absolutePath = target.absolutePath,
-                        dateTaken = currentTime / 1000
-                    )
-                } catch (e: Throwable) {
-                    Log.e(TAG, e.toString())
-                    e.printStackTrace()
-                }
+                // if (media.type == MediaType.Image) try {
+                //     setDateTakenForMedia(
+                //         absolutePath = target.absolutePath,
+                //         dateTaken = currentTime / 1000
+                //     )
+                // } catch (e: Throwable) {
+                //     Log.e(TAG, e.toString())
+                //     e.printStackTrace()
+                // }
 
                 try {
                     update(
@@ -193,15 +191,15 @@ suspend fun ContentResolver.copyMedia(
             } else {
                 target.setLastModified(media.dateTaken * 1000)
 
-                if (media.type == MediaType.Image) try {
-                    setDateTakenForMedia(
-                        absolutePath = target.absolutePath,
-                        dateTaken = media.dateTaken
-                    )
-                } catch (e: Throwable) {
-                    Log.e(TAG, e.toString())
-                    e.printStackTrace()
-                }
+                // if (media.type == MediaType.Image) try {
+                //     setDateTakenForMedia(
+                //         absolutePath = target.absolutePath,
+                //         dateTaken = media.dateTaken
+                //     )
+                // } catch (e: Throwable) {
+                //     Log.e(TAG, e.toString())
+                //     e.printStackTrace()
+                // }
 
                 try {
                     update(
@@ -230,17 +228,12 @@ suspend fun ContentResolver.copyMedia(
 }
 
 fun ContentResolver.copyUriToUri(from: Uri, to: Uri) {
-    openFileDescriptor(to, "rw")?.let { toFd ->
-        openFileDescriptor(from, "r")?.let { fromFd ->
-            FileUtils.copy(fromFd.fileDescriptor, toFd.fileDescriptor)
-
-            fromFd.close()
+    openInputStream(from)?.buffered()?.use { fis ->
+        openOutputStream(to)?.buffered()?.use { fos ->
+            fis.copyTo(fos)
         }
-
-        toFd.close()
     }
 }
-
 
 fun Context.getExternalStorageContentUriFromAbsolutePath(
     absolutePath: String,

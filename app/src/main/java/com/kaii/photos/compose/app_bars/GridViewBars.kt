@@ -43,7 +43,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastDistinctBy
 import androidx.compose.ui.util.fastFilter
 import androidx.compose.ui.util.fastMap
-import androidx.compose.ui.util.fastMapNotNull
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalAppDatabase
 import com.kaii.photos.LocalMainViewModel
@@ -60,6 +59,7 @@ import com.kaii.photos.compose.media_picker.MediaPickerConfirmButton
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.BottomBarTab
+import com.kaii.photos.datastore.ImmichBackupMedia
 import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
@@ -74,6 +74,7 @@ import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareMultipleSecuredImages
 import com.kaii.photos.immich.ImmichAlbumSyncState
 import com.kaii.photos.immich.ImmichUserLoginState
+import com.kaii.photos.immich.getImmichBackupMedia
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.content_provider.LavenderContentProvider
@@ -192,33 +193,27 @@ fun SingleAlbumViewTopBar(
                         var loadingBackupState by remember { mutableStateOf(false) }
                         val albumState by immichViewModel.immichAlbumsSyncState.collectAsStateWithLifecycle()
 
-                        var deviceAssetIds by remember { mutableStateOf(emptyList<String>()) }
+                        var deviceBackupMedia by remember { mutableStateOf(emptyList<ImmichBackupMedia>()) }
 
                         LaunchedEffect(media) {
                             loadingBackupState = true
                             withContext(Dispatchers.IO) {
-                                deviceAssetIds = media
-                                    .fastMapNotNull {
-                                        if (it.type != MediaType.Section) {
-                                            "${it.displayName}-${it.size}"
-                                        } else {
-                                            null
-                                        }
-                                    }
+                                deviceBackupMedia = getImmichBackupMedia(media)
 
                                 immichViewModel.checkSyncStatus(
                                     immichAlbumId = albumInfo.immichId,
-                                    expectedPhotoImmichIds = deviceAssetIds.toSet()
+                                    expectedPhotoImmichIds = deviceBackupMedia.toSet()
                                 )
                                 immichViewModel.refreshDuplicateState(
-                                    immichId = albumInfo.immichId
+                                    immichId = albumInfo.immichId,
+                                    media = deviceBackupMedia.toSet()
                                 ) {
                                     loadingBackupState = false
                                 }
                             }
                         }
 
-                        val isBackedUp by remember {
+                        val isBackedUp by remember(albumState) {
                             derivedStateOf {
                                 if (albumInfo.immichId.isEmpty()) null
                                 else if (albumState[albumInfo.immichId] is ImmichAlbumSyncState.InSync) true

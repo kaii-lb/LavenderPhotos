@@ -15,6 +15,7 @@ import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
 import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.ImmichBackupMedia
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.SettingsAlbumsListImpl
 import com.kaii.photos.datastore.SettingsImmichImpl
@@ -31,6 +32,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.time.ExperimentalTime
 
 private const val TAG = "IMMICH_VIEW_MODEL"
@@ -127,53 +130,59 @@ class ImmichViewModel(
         }
     }
 
-    fun checkSyncStatus(immichAlbumId: String, expectedPhotoImmichIds: Set<String>) {
+    @OptIn(ExperimentalEncodingApi::class, ExperimentalStdlibApi::class)
+    fun checkSyncStatus(immichAlbumId: String, expectedPhotoImmichIds: Set<ImmichBackupMedia>) {
         viewModelScope.launch {
             var snapshot = _immichAlbumsSyncState.value.toMutableMap()
 
             var possible = snapshot.keys.find { it == immichAlbumId }
 
             if (possible == null) {
-                snapshot = snapshot
-                    .toMutableMap()
-                    .apply {
-                        put(
-                            key = immichAlbumId,
-                            value = ImmichAlbumSyncState.Loading
-                        )
-                    }
+                snapshot.put(
+                    key = immichAlbumId,
+                    value = ImmichAlbumSyncState.Loading
+                )
 
                 possible = immichAlbumId
             }
 
             var result = immichApiService.checkDifference(
                 immichId = immichAlbumId,
-                expectedImmichIds = expectedPhotoImmichIds
+                expectedImmichChecksums = expectedPhotoImmichIds.map { it.checksum }.toSet()
             )
 
             if (result is ImmichAlbumSyncState.OutOfSync) {
                 val albumDupes = immichAlbumsDupState.value[immichAlbumId]
 
-                if (albumDupes is ImmichAlbumDuplicateState.HasDupes && result.missing.minus(albumDupes.dupeAssets).isEmpty()) {
-                    result = if (result.extra.isEmpty()) {
-                        ImmichAlbumSyncState.InSync(expectedPhotoImmichIds)
-                    } else {
-                        ImmichAlbumSyncState.OutOfSync(emptySet(), result.extra)
+                if (albumDupes is ImmichAlbumDuplicateState.HasDupes) {
+                    val dupes = albumDupes.dupeAssets
+                        .map {
+                            Base64.decode(it.checksum).toHexString()
+                        }
+                        .filter {
+                            it in expectedPhotoImmichIds.map { it.checksum }
+                        }
+
+                    Log.d(TAG, "Dupes are $dupes")
+                    Log.d(TAG, "Result is $result")
+
+                    if (result.missing.minus(dupes).isEmpty()) {
+                        result = if (result.extra.isEmpty()) {
+                            ImmichAlbumSyncState.InSync(expectedPhotoImmichIds.map { it.checksum }.toSet())
+                        } else {
+                            ImmichAlbumSyncState.OutOfSync(emptySet(), result.extra)
+                        }
                     }
                 }
             }
 
             Log.d(TAG, "Gotten result $result")
 
-            snapshot = snapshot
-                .toMutableMap()
-                .apply {
-                    remove(key = immichAlbumId)
-                    put(
-                        key = immichAlbumId,
-                        value = result
-                    )
-                }
+            snapshot.remove(immichAlbumId)
+            snapshot.put(
+                key = immichAlbumId,
+                value = result
+            )
 
             _immichAlbumsSyncState.value = snapshot
         }
@@ -290,24 +299,28 @@ class ImmichViewModel(
         _immichUploadedMediaTotal.value += total
     }
 
+    @OptIn(ExperimentalEncodingApi::class, ExperimentalStdlibApi::class)
     fun refreshDuplicateState(
         immichId: String,
+        media: Set<ImmichBackupMedia>,
         onDone: () -> Unit = {}
     ) = viewModelScope.launch(Dispatchers.IO) {
         refreshAlbums()
 
         val snapshot = _immichAlbumsDupState.value.toMutableMap()
-        val albumInfo = immichApiService.getAlbumInfo(immichId)
-        val dupes = immichApiService.getDuplicateAssets()
 
-        val result = albumInfo?.assets?.map { it.deviceAssetId }?.let { albumAssets ->
-            dupes?.filter {
-                it.assets.any { it.deviceAssetId in albumAssets }
+        val dupes = media
+            .groupBy {
+                it.checksum
             }
-        }
+            .flatMap {
+                if (it.value.size > 1) it.value else emptyList()
+            }
 
-        snapshot[immichId] = if (result != null && result.isNotEmpty() && immichId != "") {
-            ImmichAlbumDuplicateState.HasDupes(result.toSet())
+        Log.d(TAG, "Dupes are ${dupes.map { it.checksum }}")
+
+        snapshot[immichId] = if (dupes.isNotEmpty() && immichId != "") {
+            ImmichAlbumDuplicateState.HasDupes(dupes)
         } else {
             ImmichAlbumDuplicateState.DupeFree
         }
@@ -414,11 +427,11 @@ class ImmichViewModel(
 
     fun refreshAllFor(
         immichId: String,
-        expectedPhotoImmichIds: Set<String>,
+        expectedPhotoImmichIds: Set<ImmichBackupMedia>,
         onDone: () -> Unit
     ) = viewModelScope.launch {
+        refreshDuplicateState(immichId, expectedPhotoImmichIds)
         refreshAlbums()
-        refreshDuplicateState(immichId)
         checkSyncStatus(
             immichAlbumId = immichId,
             expectedPhotoImmichIds = expectedPhotoImmichIds

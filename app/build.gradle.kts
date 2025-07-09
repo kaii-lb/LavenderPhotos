@@ -88,7 +88,7 @@ dependencies {
     implementation("androidx.activity:activity-ktx:1.10.1")
     implementation("androidx.fragment:fragment-ktx:1.8.8")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.1")
-    implementation("androidx.navigation:navigation-compose:2.9.0")
+    implementation("androidx.navigation:navigation-compose:2.9.1")
     implementation("androidx.datastore:datastore-preferences:1.1.7")
     implementation("androidx.media3:media3-exoplayer:1.7.1")
     implementation("androidx.media3:media3-exoplayer-dash:1.7.1")

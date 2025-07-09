@@ -4,7 +4,6 @@ import android.content.Context
 import android.os.Build
 import android.os.CancellationSignal
 import android.util.Log
-import androidx.room.Room
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.kaii.lavender.immichintegration.AlbumManager
@@ -16,11 +15,8 @@ import com.kaii.lavender.immichintegration.serialization.File
 import com.kaii.lavender.immichintegration.serialization.ModifyAlbumAsset
 import com.kaii.lavender.immichintegration.serialization.RestoreFromTrash
 import com.kaii.lavender.immichintegration.serialization.UpdateAlbumInfo
-import com.kaii.lavender.immichintegration.serialization.UploadStatus
 import com.kaii.photos.MainActivity.Companion.immichViewModel
 import com.kaii.photos.database.MediaDatabase
-import com.kaii.photos.database.Migration3to4
-import com.kaii.photos.database.Migration4to5
 import com.kaii.photos.datastore.SQLiteQuery
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.mediastore.MultiAlbumDataSource
@@ -73,6 +69,8 @@ class UploadWorker(
                 bearerToken = bearerToken
             )
 
+            val database = MediaDatabase.getInstance(context)
+
             var immichAlbum = albumManager.getAlbumInfo(albumId = albumId)!!
 
             val query = Json.decodeFromString<SQLiteQuery>(queryString)
@@ -82,14 +80,7 @@ class UploadWorker(
                 sortBy = MediaItemSortMode.DateTaken,
                 cancellationSignal = CancellationSignal(),
                 displayDateFormat = DisplayDateFormat.Default,
-                database = Room.databaseBuilder(
-                    applicationContext,
-                    MediaDatabase::class.java,
-                    "media-database"
-                    ).apply {
-                        fallbackToDestructiveMigrationOnDowngrade(true)
-                        addMigrations(Migration3to4(applicationContext), Migration4to5(applicationContext))
-                    }.build()
+                database = database
             )
 
             val media = dataSource.query()
@@ -101,7 +92,6 @@ class UploadWorker(
 
             val immichAlbumAssetsIds = immichAlbum.assets.map { it.deviceAssetId }
 
-            // TODO: check for existence outside of album
             var shouldBackup = media.mapNotNull { item ->
                 val immichFile = File(
                     path = item.absolutePath,
@@ -117,9 +107,7 @@ class UploadWorker(
                 else null
             }
 
-            var existingCount = 0
-            val successList = mutableListOf<Pair<String, Long>>()
-            val duplicateList = mutableListOf<Pair<String, String>>()
+            val successList = mutableListOf<UploadingImmichAsset>()
 
             try {
                 immichViewModel.updatePhotoUploadProgress(
@@ -137,39 +125,23 @@ class UploadWorker(
                 // TODO: handle video duration
                 Log.d(TAG, "Item to upload $item")
 
-                val deviceAssetId = "${item.name}-${item.size}"
-                if (!immichAlbumAssetsIds.contains(deviceAssetId)) {
-                    assetManager.uploadAsset(
-                        file = item,
-                        deviceId = Build.MODEL
-                    )?.let {
-                        Log.d(TAG, "Upload status for ${item.path} is ${it.status}")
-                        successList.add(Pair(it.id, item.lastModified))
-
-                        if (it.status == UploadStatus.Duplicate) {
-                            duplicateList.add(Pair(it.id, deviceAssetId))
-                        }
-
-                        try {
-                            immichViewModel.updatePhotoUploadProgress(
-                                uploaded = 1,
-                                total = 0,
-                                immichId = immichAlbum.id
-                            )
-                        } catch (e: Throwable) {
-                            Log.e(TAG, "Couldn't update UI, mainViewModel inaccessible")
-                            Log.e(TAG, e.toString())
-                            e.printStackTrace()
-                        }
-                    }
-                } else {
-                    existingCount += 1
+                assetManager.uploadAsset(
+                    file = item,
+                    deviceId = Build.MODEL
+                )?.let {
+                    Log.d(TAG, "Upload status for ${item.path} is ${it.status}")
+                    successList.add(
+                        UploadingImmichAsset(
+                            id = it.id,
+                            lastModified = item.lastModified
+                        )
+                    )
 
                     try {
                         immichViewModel.updatePhotoUploadProgress(
-                            uploaded = 0,
-                            total = -1,
-                            immichId = immichAlbum.id
+                            uploaded = 1,
+                            total = 0,
+                            immichId = albumId
                         )
                     } catch (e: Throwable) {
                         Log.e(TAG, "Couldn't update UI, mainViewModel inaccessible")
@@ -180,21 +152,30 @@ class UploadWorker(
             }
 
             Log.d(TAG, "Success list $successList")
-            val actualDupes = duplicateList.filter {
-                assetManager.getAssetInfo(it.first)?.isTrashed == false
-            }
             if (successList.isNotEmpty()) {
+                val assetInfo = successList.mapNotNull {
+                    assetManager.getAssetInfo(it.id)
+                }
+
+                val dupes = assetInfo
+                    .filter { it.duplicateId != null }
+                    .groupBy { it.duplicateId }
+
                 try {
                     trashManager.restoreItems(
                         ids = RestoreFromTrash(
-                            ids = duplicateList.map { it.first } - actualDupes.map { it.first }
+                            ids = assetInfo.filter {
+                                it.isTrashed == true
+                            }.map { it.id } - assetInfo.filter { it.duplicateId != null }
+                                .map { it.id } + dupes.keys.mapNotNull { dupes[it]?.first()?.id }
                         )
                     )
 
                     albumManager.addAssetToAlbum(
                         albumId = albumId,
                         assets = ModifyAlbumAsset(
-                            ids = successList.map { it.first }
+                            ids = successList.map { it.id } - assetInfo.filter { it.duplicateId != null }
+                                .map { it.id } + dupes.keys.mapNotNull { dupes[it]?.first()?.id }
                         )
                     )
 
@@ -202,7 +183,7 @@ class UploadWorker(
                         albumId = albumId,
                         info = UpdateAlbumInfo(
                             albumName = immichAlbum.albumName,
-                            albumThumbnailAssetId = successList.maxBy { it.second }.first,
+                            albumThumbnailAssetId = successList.maxBy { it.lastModified }.id,
                             description = immichAlbum.description,
                             isActivityEnabled = immichAlbum.isActivityEnabled,
                             order = immichAlbum.order ?: AlbumOrder.Descending
@@ -216,14 +197,15 @@ class UploadWorker(
 
             try {
                 immichViewModel.updatePhotoUploadProgress(
-                    uploaded = 0,
-                    total = -(shouldBackup.size - existingCount),
+                    uploaded = -shouldBackup.size,
+                    total = -shouldBackup.size,
                     immichId = immichAlbum.id
                 )
 
-                immichViewModel.refreshDuplicateState(
-                    immichId = immichAlbum.id
-                )
+                // immichViewModel.refreshDuplicateState(
+                //     immichId = immichAlbum.id,
+                //     dupes = emp
+                // )
             } catch (e: Throwable) {
                 Log.e(TAG, "Couldn't update UI, mainViewModel inaccessible")
                 Log.e(TAG, e.toString())
@@ -239,3 +221,8 @@ class UploadWorker(
         }
     }
 }
+
+private data class UploadingImmichAsset(
+    val id: String,
+    val lastModified: Long
+)

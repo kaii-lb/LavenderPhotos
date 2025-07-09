@@ -61,7 +61,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import androidx.room.Room
 import com.bumptech.glide.Glide
 import com.bumptech.glide.MemoryCategory
 import com.kaii.lavender.snackbars.LavenderSnackbarBox
@@ -103,8 +102,6 @@ import com.kaii.photos.compose.single_photo.SingleHiddenPhotoView
 import com.kaii.photos.compose.single_photo.SinglePhotoView
 import com.kaii.photos.compose.single_photo.SingleTrashedPhotoView
 import com.kaii.photos.database.MediaDatabase
-import com.kaii.photos.database.Migration3to4
-import com.kaii.photos.database.Migration4to5
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumInfoNavType
 import com.kaii.photos.datastore.AlbumsList
@@ -167,13 +164,7 @@ class MainActivity : ComponentActivity() {
 
         installSplashScreen()
 
-        val applicationDatabase = Room.databaseBuilder(
-            applicationContext,
-            MediaDatabase::class.java,
-            "media-database"
-        ).apply {
-            addMigrations(Migration3to4(applicationContext), Migration4to5(applicationContext))
-        }.build()
+        val applicationDatabase = MediaDatabase.getInstance(applicationContext)
 
         Glide.get(this).setMemoryCategory(MemoryCategory.HIGH)
 

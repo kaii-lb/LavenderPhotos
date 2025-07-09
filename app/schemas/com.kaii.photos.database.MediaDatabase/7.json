@@ -1,8 +1,8 @@
 {
   "formatVersion": 1,
   "database": {
-    "version": 6,
-    "identityHash": "a039406d2f1684eb72e6c221fd3ff6b2",
+    "version": 7,
+    "identityHash": "0aca62183de3a102f8d0998ffa2fc1ec",
     "entities": [
       {
         "tableName": "MediaEntity",
@@ -171,41 +171,11 @@
             "originalPath"
           ]
         }
-      },
-      {
-        "tableName": "ImmichDuplicateEntity",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`albumId` INTEGER NOT NULL, `immich_id` TEXT NOT NULL, `dupes` TEXT NOT NULL, PRIMARY KEY(`albumId`))",
-        "fields": [
-          {
-            "fieldPath": "albumId",
-            "columnName": "albumId",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "immichId",
-            "columnName": "immich_id",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "dupes",
-            "columnName": "dupes",
-            "affinity": "TEXT",
-            "notNull": true
-          }
-        ],
-        "primaryKey": {
-          "autoGenerate": false,
-          "columnNames": [
-            "albumId"
-          ]
-        }
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a039406d2f1684eb72e6c221fd3ff6b2')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '0aca62183de3a102f8d0998ffa2fc1ec')"
     ]
   }
 }

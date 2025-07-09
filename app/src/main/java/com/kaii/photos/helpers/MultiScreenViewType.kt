@@ -16,43 +16,43 @@ enum class MultiScreenViewType {
     SettingsLookAndFeelView,
     OpenWithView,
     UpdatesPage,
-	DataAndBackup,
-	PrivacyAndSecurity,
-	ImmichMainPage
+    DataAndBackup,
+    PrivacyAndSecurity,
+    ImmichMainPage
 }
 
 object Screens {
-	@Serializable
-	data class SinglePhotoView(
-		val albumInfo: AlbumInfo,
-		val mediaItemId: Long,
-		val loadsFromMainViewModel: Boolean
-	)
+    @Serializable
+    data class SinglePhotoView(
+        val albumInfo: AlbumInfo,
+        val mediaItemId: Long,
+        val loadsFromMainViewModel: Boolean
+    )
 
-	@Serializable
-	data class SingleAlbumView(
-		val albumInfo: AlbumInfo
-	)
+    @Serializable
+    data class SingleAlbumView(
+        val albumInfo: AlbumInfo
+    )
 
-	@Serializable
-	data class SingleTrashedPhotoView(
-		val mediaItemId: Long
-	)
+    @Serializable
+    data class SingleTrashedPhotoView(
+        val mediaItemId: Long
+    )
 
-	@Serializable
-	data class SingleHiddenPhotoView(
-		val mediaItemId: Long
-	)
+    @Serializable
+    data class SingleHiddenPhotoView(
+        val mediaItemId: Long
+    )
 
-	@Serializable
-	data class EditingScreen(
-	    val absolutePath: String,
-	    val uri: String,
-	    val dateTaken: Long
-	)
+    @Serializable
+    data class EditingScreen(
+        val absolutePath: String,
+        val uri: String,
+        val dateTaken: Long
+    )
 
-	@Serializable
-	data class ImmichAlbumPage(
-		val albumInfo: AlbumInfo
-	)
+    @Serializable
+    data class ImmichAlbumPage(
+        val albumInfo: AlbumInfo
+    )
 }

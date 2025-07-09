@@ -10,13 +10,15 @@ import com.kaii.lavender.immichintegration.UserAuth
 import com.kaii.lavender.immichintegration.UserManager
 import com.kaii.lavender.immichintegration.serialization.Album
 import com.kaii.lavender.immichintegration.serialization.CreateAlbum
-import com.kaii.lavender.immichintegration.serialization.DuplicateAsset
 import com.kaii.lavender.immichintegration.serialization.File
 import com.kaii.lavender.immichintegration.serialization.LoginCredentials
 import com.kaii.lavender.immichintegration.serialization.UserFull
+import com.kaii.photos.datastore.ImmichBackupMedia
 import com.kaii.photos.datastore.SQLiteQuery
 import kotlinx.coroutines.delay
 import kotlinx.serialization.Serializable
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 
 private const val TAG = "IMMICH_API_SERVICE"
 
@@ -90,7 +92,8 @@ class ImmichApiService(
     ): Album? {
         try {
             return albumManager.getAlbumInfo(
-                albumId = immichId
+                albumId = immichId,
+                withoutAssets = false
             )
         } catch (e: Throwable) {
             Log.e(TAG, e.toString())
@@ -100,25 +103,28 @@ class ImmichApiService(
         }
     }
 
+    @OptIn(ExperimentalEncodingApi::class, ExperimentalStdlibApi::class)
     suspend fun checkDifference(
         immichId: String,
-        expectedImmichIds: Set<String>
+        expectedImmichChecksums: Set<String>
     ): ImmichAlbumSyncState {
         try {
             val remoteAlbum = getAlbumInfo(immichId = immichId)
 
             if (remoteAlbum == null) return ImmichAlbumSyncState.Error("Album $immichId does not exist!")
 
-            val remotePhotoIds = remoteAlbum.assets.map { it.deviceAssetId }.toSet()
+            val remotePhotoChecksums = remoteAlbum.assets.map {
+                Base64.decode(it.checksum).toHexString()
+            }.toSet()
 
-            val isInSync = remotePhotoIds == expectedImmichIds
+            val isInSync = remotePhotoChecksums == expectedImmichChecksums
 
             return if (isInSync) {
-                ImmichAlbumSyncState.InSync(remotePhotoIds)
+                ImmichAlbumSyncState.InSync(remotePhotoChecksums)
             } else {
                 ImmichAlbumSyncState.OutOfSync(
-                    missing = expectedImmichIds.minus(remotePhotoIds),
-                    extra = remotePhotoIds.minus(expectedImmichIds)
+                    missing = expectedImmichChecksums.minus(remotePhotoChecksums),
+                    extra = remotePhotoChecksums.minus(expectedImmichChecksums)
                 )
             }
         } catch (e: Throwable) {
@@ -282,7 +288,7 @@ sealed class ImmichAlbumDuplicateState {
 
     @Serializable
     data class HasDupes(
-        val dupeAssets: Set<DuplicateAsset>
+        val dupeAssets: List<ImmichBackupMedia>
     ) : ImmichAlbumDuplicateState()
 }
 
