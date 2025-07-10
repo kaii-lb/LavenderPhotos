@@ -26,6 +26,7 @@ import java.io.File
 import java.nio.file.Files
 import kotlin.io.path.Path
 
+
 private const val TAG = "MEDIA_STORE_UTILS"
 
 const val LAVENDER_FILE_PROVIDER_AUTHORITY = "com.kaii.photos.LavenderPhotos.fileprovider"
@@ -39,21 +40,8 @@ suspend fun ContentResolver.copyMedia(
     destination: String,
     overwriteDate: Boolean,
     currentVolumes: Set<String>,
-    overrideDisplayName: String? = null,
-    setExifDateBeforeCopy: Boolean = false // TODO: figure out just what the hell is going on here
+    overrideDisplayName: String? = null
 ): Uri? = withContext(Dispatchers.IO) {
-    // if (setExifDateBeforeCopy && media.type == MediaType.Image && !overwriteDate) {
-    //     try {
-    //         setDateTakenForMedia(
-    //             media.absolutePath,
-    //             media.dateTaken
-    //         )
-    //     } catch (e: Throwable) {
-    //         Log.e(TAG, "Cannot set date taken for media $media")
-    //         e.printStackTrace()
-    //     }
-    // }
-
     val file = File(media.absolutePath)
     val currentTime = System.currentTimeMillis()
     val volumeName =
@@ -83,6 +71,7 @@ suspend fun ContentResolver.copyMedia(
             put(MediaColumns.DISPLAY_NAME, file.name)
             put(MediaColumns.RELATIVE_PATH, relativeDestination)
             put(MediaColumns.MIME_TYPE, media.mimeType)
+            put(MediaColumns.DATE_TAKEN, media.dateTaken * 1000)
         }
 
         val newUri = insert(
@@ -98,42 +87,8 @@ suspend fun ContentResolver.copyMedia(
 
             if (overwriteDate) {
                 target.setLastModified(currentTime)
-
-                // if (media.type == MediaType.Image) {
-                //     setDateTakenForMedia(
-                //         absolutePath = target.absolutePath,
-                //         dateTaken = currentTime / 1000
-                //     )
-                // }
-
-                update(
-                    uri,
-                    ContentValues().apply {
-                        put(MediaColumns.DATE_ADDED, currentTime)
-                        put(MediaColumns.DATE_TAKEN, currentTime)
-                        put(MediaColumns.DATE_MODIFIED, currentTime)
-                    },
-                    null
-                )
             } else {
                 target.setLastModified(media.dateTaken * 1000)
-
-                // if (media.type == MediaType.Image) {
-                //     setDateTakenForMedia(
-                //         absolutePath = target.absolutePath,
-                //         dateTaken = media.dateTaken
-                //     )
-                // }
-
-                update(
-                    uri,
-                    ContentValues().apply {
-                        put(MediaColumns.DATE_ADDED, media.dateTaken * 1000)
-                        put(MediaColumns.DATE_TAKEN, media.dateTaken * 1000)
-                        put(MediaColumns.DATE_MODIFIED, media.dateTaken * 1000)
-                    },
-                    null
-                )
             }
 
             return@withContext uri
@@ -152,6 +107,7 @@ suspend fun ContentResolver.copyMedia(
             media.mimeType ?: Files.probeContentType(Path(media.absolutePath)),
             fileName
         )
+
         fileToBeSavedTo?.let { savedToFile ->
             copyUriToUri(
                 from = media.uri,
@@ -163,58 +119,8 @@ suspend fun ContentResolver.copyMedia(
 
             if (overwriteDate) {
                 target.setLastModified(currentTime)
-
-                // if (media.type == MediaType.Image) try {
-                //     setDateTakenForMedia(
-                //         absolutePath = target.absolutePath,
-                //         dateTaken = currentTime / 1000
-                //     )
-                // } catch (e: Throwable) {
-                //     Log.e(TAG, e.toString())
-                //     e.printStackTrace()
-                // }
-
-                try {
-                    update(
-                        savedToFile.uri,
-                        ContentValues().apply {
-                            put(MediaColumns.DATE_ADDED, currentTime)
-                            put(MediaColumns.DATE_TAKEN, currentTime)
-                            put(MediaColumns.DATE_MODIFIED, currentTime)
-                        },
-                        null
-                    )
-                } catch (e: Throwable) {
-                    Log.e(TAG, e.toString())
-                    e.printStackTrace()
-                }
             } else {
                 target.setLastModified(media.dateTaken * 1000)
-
-                // if (media.type == MediaType.Image) try {
-                //     setDateTakenForMedia(
-                //         absolutePath = target.absolutePath,
-                //         dateTaken = media.dateTaken
-                //     )
-                // } catch (e: Throwable) {
-                //     Log.e(TAG, e.toString())
-                //     e.printStackTrace()
-                // }
-
-                try {
-                    update(
-                        savedToFile.uri,
-                        ContentValues().apply {
-                            put(MediaColumns.DATE_ADDED, media.dateTaken * 1000)
-                            put(MediaColumns.DATE_TAKEN, media.dateTaken * 1000)
-                            put(MediaColumns.DATE_MODIFIED, media.dateTaken * 1000)
-                        },
-                        null
-                    )
-                } catch (e: Throwable) {
-                    Log.e(TAG, e.toString())
-                    e.printStackTrace()
-                }
             }
 
             return@withContext savedToFile.uri

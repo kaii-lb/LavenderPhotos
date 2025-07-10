@@ -3,6 +3,7 @@ package com.kaii.photos
 import android.annotation.SuppressLint
 import android.os.Build
 import android.os.Bundle
+import android.provider.MediaStore
 import android.util.Log
 import android.view.Window
 import android.view.WindowManager
@@ -112,6 +113,7 @@ import com.kaii.photos.datastore.Editing
 import com.kaii.photos.datastore.Immich
 import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.datastore.MainPhotosView
+import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.datastore.PhotoGrid
 import com.kaii.photos.datastore.User
 import com.kaii.photos.datastore.Versions
@@ -179,6 +181,10 @@ class MainActivity : ComponentActivity() {
                     albumsSettings = mainViewModel.settings.AlbumsList
                 )
             )
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                mainViewModel.settings.Permissions.setIsMediaManager(MediaStore.canManageMedia(applicationContext))
+            }
 
             val continueToApp = remember {
                 // Manifest.permission.MANAGE_MEDIA is optional
@@ -261,11 +267,11 @@ class MainActivity : ComponentActivity() {
             stateSaver = BottomBarTabSaver
         ) { mutableStateOf(defaultTab) }
 
-        val context = LocalContext.current
         val showDialog = remember { mutableStateOf(false) }
 
         val selectedItemsList = remember { SnapshotStateList<MediaStoreData>() }
 
+        val context = LocalContext.current
         val logPath = "${context.appStorageDir}/log.txt"
         Log.d(TAG, "Log save path is $logPath")
 

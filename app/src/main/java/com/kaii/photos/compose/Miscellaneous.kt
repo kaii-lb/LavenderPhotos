@@ -702,15 +702,13 @@ fun AnimatedLoginIcon(
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .padding(end = 4.dp)
-            .clickable {
-                onClick()
-            }
     ) { state ->
         if (state) {
             AnimatedImmichBackupIcon(
                 immichUserState = immichUserLoginState,
                 modifier = Modifier
                     .padding(end = 8.dp)
+                    .clip(CircleShape)
                     .clickable {
                         onClick()
                     }

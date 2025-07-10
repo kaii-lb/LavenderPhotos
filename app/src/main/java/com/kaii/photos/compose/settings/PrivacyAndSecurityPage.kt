@@ -37,6 +37,8 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.PreferencesSeparatorText
 import com.kaii.photos.compose.PreferencesSwitchRow
 import com.kaii.photos.datastore.Permissions
+import com.kaii.photos.datastore.PhotoGrid
+import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.RowPosition
 
 @Composable
@@ -121,9 +123,12 @@ fun PrivacyAndSecurityPage() {
                     iconResID = R.drawable.clock,
                     position = RowPosition.Single,
                     showBackground = false,
-                    checked = overwriteOnMove
+                    checked = !overwriteOnMove
                 ) {
-                    mainViewModel.settings.Permissions.setOverwriteDateOnMove(it)
+                    if (!it) {
+                        mainViewModel.settings.PhotoGrid.setSortMode(mode = MediaItemSortMode.LastModified)
+                    }
+                    mainViewModel.settings.Permissions.setOverwriteDateOnMove(!it)
                 }
             }
         }

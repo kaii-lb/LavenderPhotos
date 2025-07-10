@@ -261,8 +261,8 @@
     <string name="permissions_media_management">Media Management</string>
     <string name="permissions_confirm_to_delete">Confirm to Delete</string>
     <string name="permissions_confirm_too_delete_desc">Ask for confirmation before deleting any media</string>
-    <string name="permissions_overwrite_date_on_move">Overwrite Date on Move</string>
-    <string name="permissions_overwrite_date_on_move_desc">When enabled, copied/moved media\'s date is set to "now", showing up as most recent</string>
+    <string name="permissions_overwrite_date_on_move">Preserve date on move</string>
+    <string name="permissions_overwrite_date_on_move_desc">Tries to keep the media\'s date when copying or moving</string>
     <string name="permissions_needed">Permission Needed</string>
     <string name="permissions_needed_desc">Lavender Photos needs permission to access this album. Please grant it the permission by selecting "Use This Folder" on the next screen.This is a one-time permission.</string>
     <string name="permissions_grant">Grant</string>
