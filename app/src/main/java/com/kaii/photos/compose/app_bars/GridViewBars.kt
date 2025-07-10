@@ -40,6 +40,7 @@ import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalAppDatabase
 import com.kaii.photos.LocalMainViewModel
+import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.AlbumPathsDialog
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
@@ -55,6 +56,7 @@ import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.GetPermissionAndRun
+import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.getParentFromPath
 import com.kaii.photos.helpers.moveImageOutOfLockedFolder
@@ -103,6 +105,8 @@ fun SingleAlbumViewTopBar(
     ) { target ->
         if (!target) {
             val mainViewModel = LocalMainViewModel.current
+            val navController = LocalNavController.current
+
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainer
@@ -150,6 +154,13 @@ fun SingleAlbumViewTopBar(
                                     )
 
                                     usableAlbumInfo = newInfo
+
+                                    navController.popBackStack()
+                                    navController.navigate(
+                                        Screens.SingleAlbumView(
+                                            albumInfo = newInfo
+                                        )
+                                    )
                                 },
                                 onDismiss = {
                                     showPathsDialog = false
