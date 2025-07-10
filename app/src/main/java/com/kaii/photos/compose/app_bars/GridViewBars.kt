@@ -2,7 +2,9 @@ package com.kaii.photos.compose.app_bars
 
 import android.content.Intent
 import android.net.Uri
+import android.os.CancellationSignal
 import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
@@ -108,6 +110,12 @@ fun SingleAlbumViewTopBar(
         }
     }
 
+    val cancellationSignal = remember { CancellationSignal() }
+    BackHandler {
+        cancellationSignal.cancel()
+        onBackClick()
+    }
+
     val mainViewModel = LocalMainViewModel.current
     AnimatedContent(
         targetState = show,
@@ -198,7 +206,10 @@ fun SingleAlbumViewTopBar(
                         LaunchedEffect(media) {
                             loadingBackupState = true
                             withContext(Dispatchers.IO) {
-                                deviceBackupMedia = getImmichBackupMedia(media)
+                                deviceBackupMedia = getImmichBackupMedia(
+                                    groupedMedia = media,
+                                    cancellationSignal = cancellationSignal
+                                )
 
                                 immichViewModel.checkSyncStatus(
                                     immichAlbumId = albumInfo.immichId,

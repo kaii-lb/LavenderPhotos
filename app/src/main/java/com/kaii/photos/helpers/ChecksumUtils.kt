@@ -1,8 +1,10 @@
 package com.kaii.photos.helpers
 
+import android.os.CancellationSignal
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
@@ -34,8 +36,11 @@ fun calculateSha1Checksum(file: File): String {
     return digest.digest().toHexString()
 }
 
-suspend fun calculateSha1Checksum(files: List<File>): Map<String, String> = coroutineScope {
-    val results = ConcurrentHashMap<String, String>()
+suspend fun calculateSha1Checksum(
+    files: List<File>,
+    cancellationSignal: CancellationSignal
+): Map<String, String> = coroutineScope {
+    var results = ConcurrentHashMap<String, String>()
     val jobs = mutableListOf<Job>()
 
     files.forEach { file ->
@@ -52,5 +57,14 @@ suspend fun calculateSha1Checksum(files: List<File>): Map<String, String> = coro
     }
 
     jobs.joinAll()
+
+    cancellationSignal.setOnCancelListener {
+        jobs.forEach {
+            it.cancel()
+            it.cancelChildren()
+        }
+        results = ConcurrentHashMap<String, String>()
+    }
+
     return@coroutineScope results
 }

@@ -1,5 +1,6 @@
 package com.kaii.photos.compose.immich
 
+import android.os.CancellationSignal
 import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
@@ -80,7 +81,9 @@ fun ImmichAlbumPage(
     }
 
     val coroutineScope = rememberCoroutineScope()
+    val cancellationSignal = remember { CancellationSignal() }
     BackHandler {
+        cancellationSignal.cancel()
         if (immichViewModel.immichUploadedMediaTotal.value != 0) {
             coroutineScope.launch {
                 LavenderSnackbarController.pushEvent(
@@ -103,7 +106,10 @@ fun ImmichAlbumPage(
     LaunchedEffect(groupedMedia) {
         loadingBackupState = true
         withContext(Dispatchers.IO) {
-            deviceBackupMedia = getImmichBackupMedia(groupedMedia)
+            deviceBackupMedia = getImmichBackupMedia(
+                groupedMedia = groupedMedia,
+                cancellationSignal = cancellationSignal
+            )
 
             immichViewModel.refreshAllFor(
                 immichId = currentAlbumImmichId,

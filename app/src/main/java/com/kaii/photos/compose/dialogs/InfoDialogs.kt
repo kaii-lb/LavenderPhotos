@@ -370,7 +370,7 @@ fun SingleAlbumDialog(
                     )
 
                     DialogInfoText(
-                        firstText = "Immich UUID", // TODO: translate
+                        firstText = stringResource(id = R.string.immich_uuid),
                         secondText = album.immichId,
                         iconResId = R.drawable.cloud_done,
                     )
