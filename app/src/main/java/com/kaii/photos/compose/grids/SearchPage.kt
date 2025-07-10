@@ -45,6 +45,7 @@ import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
+import com.kaii.photos.datastore.PhotoGrid
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.mediastore.MediaStoreData
@@ -70,6 +71,7 @@ fun SearchPage(
     val mainViewModel = LocalMainViewModel.current
     val appDatabase = LocalAppDatabase.current
     val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
+    val sortMode by mainViewModel.settings.PhotoGrid.getSortMode().collectAsStateWithLifecycle(initialValue = MediaItemSortMode.DateTaken)
     val searchViewModel: SearchViewModel = viewModel(
         factory = SearchViewModelFactory(LocalContext.current, MediaItemSortMode.DateTaken, displayDateFormat, appDatabase)
     )
@@ -204,8 +206,7 @@ fun SearchPage(
                                             ?.let { date -> it.getDateTakenDay() == date } == true)
                     }
 
-                    // TODO: use sorting method by user preference
-                    groupedMedia.value = groupPhotosBy(local, MediaItemSortMode.DateTaken, displayDateFormat)
+                    groupedMedia.value = groupPhotosBy(local, sortMode, displayDateFormat)
                     hideLoadingSpinner = true
 
                     return@launch

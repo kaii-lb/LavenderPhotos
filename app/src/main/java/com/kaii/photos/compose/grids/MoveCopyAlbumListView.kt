@@ -1,6 +1,7 @@
 package com.kaii.photos.compose.grids
 
 import android.content.ContentValues
+import android.net.Uri
 import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -80,6 +81,7 @@ import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.copyImageListToPath
 import com.kaii.photos.helpers.moveImageListToPath
+import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
@@ -305,11 +307,11 @@ fun AlbumsListItem(
         onGranted = {
             show.value = false
 
-            if (isMoving) {
+            if (isMoving && album.paths.size == 1) {
                 moveImageListToPath(
                     context = context,
                     list = selectedItemsWithoutSection,
-                    destination = album.mainPath, // TODO: loop over all paths
+                    destination = album.mainPath,
                     overwriteDate = overwriteDate,
                     basePath = album.mainPath.toBasePath()
                 )
@@ -320,16 +322,30 @@ fun AlbumsListItem(
                     groupedMedia.value = newList
                 }
             } else {
-                copyImageListToPath(
-                    context = context,
-                    list = selectedItemsWithoutSection,
-                    destination = album.mainPath, // TODO: loop over all paths
-                    overwriteDate = overwriteDate,
-                    basePath = album.mainPath.toBasePath()
-                )
-            }
+                val list = mutableListOf<Pair<Uri, String>>()
 
-            Log.d(TAG, "Base path for move copy is ${album.mainPath.toBasePath()}")
+                album.paths.forEach { path ->
+                    copyImageListToPath(
+                        context = context,
+                        list = selectedItemsWithoutSection,
+                        destination = path,
+                        overwriteDate = overwriteDate,
+                        basePath = path.toBasePath()
+                    ) { uri, path ->
+                        if (isMoving) {
+                            if (!list.contains(Pair(uri, path))) list.add(Pair(uri, path))
+                        }
+                    }
+                }
+
+                if (list.isNotEmpty()) {
+                    setTrashedOnPhotoList(
+                        context = context,
+                        list = list,
+                        trashed = true
+                    )
+                }
+            }
 
             selectedItemsList.clear()
         }

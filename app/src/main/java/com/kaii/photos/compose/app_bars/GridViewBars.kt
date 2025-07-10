@@ -125,6 +125,9 @@ fun SingleAlbumViewTopBar(
         label = "SingleAlbumViewTopBarAnimatedContent"
     ) { target ->
         if (!target) {
+            val mainViewModel = LocalMainViewModel.current
+            val navController = LocalNavController.current
+
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainer
@@ -164,8 +167,7 @@ fun SingleAlbumViewTopBar(
                                     val newInfo =
                                         usableAlbumInfo!!.copy(
                                             id = selectedPaths.hashCode(),
-                                            paths = selectedPaths,
-                                            isCustomAlbum = true
+                                            paths = selectedPaths
                                         )
                                     mainViewModel.settings.AlbumsList.editInAlbumsList(
                                         albumInfo = usableAlbumInfo!!,
@@ -173,6 +175,13 @@ fun SingleAlbumViewTopBar(
                                     )
 
                                     usableAlbumInfo = newInfo
+
+                                    navController.popBackStack()
+                                    navController.navigate(
+                                        Screens.SingleAlbumView(
+                                            albumInfo = newInfo
+                                        )
+                                    )
                                 },
                                 onDismiss = {
                                     showPathsDialog = false

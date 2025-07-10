@@ -63,9 +63,13 @@ internal constructor(
                             albumQueryPairs.forEach { (album, queryString) ->
                                 val item = if (album.isCustomAlbum) {
                                     val q1 = queryCustom(parentId = album.id)
-                                    val q2 = query(sqlQuery = queryString)
 
-                                    if (q1.dateModified > q2.dateModified) q1 else q2
+                                    if (album.paths.isNotEmpty()) {
+                                        val q2 = query(sqlQuery = queryString)
+                                        if (q1.dateModified > q2.dateModified) q1 else q2
+                                    } else {
+                                        q1
+                                    }
                                 } else {
                                     query(sqlQuery = queryString)
                                 }
@@ -90,11 +94,16 @@ internal constructor(
                 val result = mutableListOf<Pair<AlbumInfo, MediaStoreData>>()
 
                 albumQueryPairs.forEach { (album, queryString) ->
+                    Log.d(TAG, "PARSING ALBUM ${album.name} ${album.isCustomAlbum}")
                     val item = if (album.isCustomAlbum) {
                         val q1 = queryCustom(parentId = album.id)
-                        val q2 = query(sqlQuery = queryString)
 
-                        if (q1.dateModified > q2.dateModified) q1 else q2
+                        if (album.paths.isNotEmpty()) {
+                            val q2 = query(sqlQuery = queryString)
+                            if (q1.dateModified > q2.dateModified) q1 else q2
+                        } else {
+                            q1
+                        }
                     } else {
                         query(sqlQuery = queryString)
                     }
