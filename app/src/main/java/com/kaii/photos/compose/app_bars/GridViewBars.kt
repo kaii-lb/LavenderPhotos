@@ -142,8 +142,7 @@ fun SingleAlbumViewTopBar(
                                     val newInfo =
                                         usableAlbumInfo!!.copy(
                                             id = selectedPaths.hashCode(),
-                                            paths = selectedPaths,
-                                            isCustomAlbum = true
+                                            paths = selectedPaths
                                         )
                                     mainViewModel.settings.AlbumsList.editInAlbumsList(
                                         albumInfo = usableAlbumInfo!!,

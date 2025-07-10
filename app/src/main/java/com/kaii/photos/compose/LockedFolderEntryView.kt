@@ -242,7 +242,8 @@ fun LockedFolderEntryView(
                         val name = displayName.replace(extension, ".backup")
                         Log.d(TAG, "Final name of file is $name")
                         name
-                    }
+                    },
+                    onDone = { _, _ -> }
                 )
 
                 val path = context.appRestoredFilesDir.toRelativePath()

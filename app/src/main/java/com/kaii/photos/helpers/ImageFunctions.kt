@@ -375,7 +375,8 @@ fun copyImageListToPath(
     destination: String,
     basePath: String,
     overwriteDate: Boolean,
-    overrideDisplayName: ((displayName: String) -> String)? = null
+    overrideDisplayName: ((displayName: String) -> String)? = null,
+    onDone: (uri: Uri, path: String) -> Unit
 ) {
     CoroutineScope(Dispatchers.IO).launch {
         val contentResolver = context.contentResolver
@@ -391,7 +392,9 @@ fun copyImageListToPath(
                     basePath = basePath,
                     overrideDisplayName = if (overrideDisplayName != null) overrideDisplayName(media.displayName) else null,
                     currentVolumes = MediaStore.getExternalVolumeNames(context)
-                )
+                )?.let { uri ->
+                    onDone(uri, media.absolutePath)
+                }
             }
         }.await()
     }
