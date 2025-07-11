@@ -230,5 +230,26 @@
     <string name="media_non_existent">¡Este archivo no existe!</string>
     <string name="media_broken">Multimedia Rota</string>
     <string name="media_share">Compartir</string>
-    <string name="media_delete">Borrar</string>
+    <string name="media_delete">Eliminar</string>
+    <string name="media_delete_confirm">¿Eliminar este archivo?</string>
+    <string name="media_trash_confirm">¿Mover los elementos seleccionados a la papelera?</string>
+    <string name="media_secure">Asegurar</string>
+    <string name="media_secure_confirm">¿Mover este %1$s a la carpeta segura?</string>
+    <string name="media_delete_permanently">Eliminar Permanentemente</string>
+    <string name="media_delete_permanently_confirm">¿Eliminar permanentemente este %1$s?</string>
+    <string name="media_cancel">Cancelar</string>
+    <string name="media_restore">Restaurar</string>
+    <string name="media_restore_confirm">Restaurar estos elementos?</string>
+    <string name="media_restore_processing">Restaurando Archivos</string>
+    <string name="media_progress">Progreso:</string>
+    <string name="media_move">Mover</string>
+    <string name="media_copy">Copiar</string>
+    <string name="media_rename">Renombrar</string>
+    <string name="media_select">Seleccionar</string>
+    <string name="media_exif_erase">¿Borrar datos EXIF?</string>
+    <string name="media_exif_done">Datos EXIF eliminados</string>
+    <string name="media_exif_failed">Error al borrar datos EXIF</string>
+    <string name="media_erase">Borrar</string>
+    <string name="media_confirm">Confirmar</string>
+    <string name="media_okay">Okay</string>
 </resources>
