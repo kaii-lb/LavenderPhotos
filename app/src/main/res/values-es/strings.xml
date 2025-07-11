@@ -123,5 +123,6 @@
     <string name="video_start_muted_desc">No reproduzca audio cuando inicie la reproducción de video por primera vez</string>
     <string name="file_is_a_video">El archivo es un video</string>
     <string name="video_seek_icon_desc">Muestra la dirección que busca el usuario</string>
-    <string name="video_lock_screen">Bloquee la pantalla evitando que se toque mal</string>
+    <string name="video_lock_screen">Bloquee la pantalla evitando que se toque accidentalmente</string>
+    <string name="video_mute_toggle">Silenciar o activar el silencio de este video</string>
 </resources>
