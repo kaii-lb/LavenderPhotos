@@ -48,6 +48,7 @@ import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.PhotoGrid
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.multi_album.groupPhotosBy
@@ -180,6 +181,7 @@ fun SearchPage(
             }
         }
 
+        var hasFiles by remember { mutableStateOf(true) }
         LaunchedEffect(searchedForText.value, originalGroupedMedia.value) {
             println("ORIGINAL CHANGED REFRESHING")
             if (searchedForText.value == "") {
@@ -249,6 +251,9 @@ fun SearchPage(
 
                 groupedMedia.value = groupPhotosBy(groupedMediaLocal, MediaItemSortMode.DateTaken, displayDateFormat)
                 hideLoadingSpinner = true
+
+                delay(PhotoGridConstants.LOADING_TIME)
+                hasFiles = groupedMedia.value.isNotEmpty()
             }
         }
 
@@ -262,6 +267,7 @@ fun SearchPage(
                 selectedItemsList = selectedItemsList,
                 viewProperties = if (searchedForText.value == "") ViewProperties.SearchLoading else ViewProperties.SearchNotFound,
                 state = gridState,
+                hasFiles = hasFiles,
                 modifier = Modifier
                     .align(Alignment.Center)
             )

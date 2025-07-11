@@ -22,6 +22,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,10 +39,15 @@ import com.kaii.photos.compose.app_bars.SingleAlbumViewTopBar
 import com.kaii.photos.compose.dialogs.SingleAlbumDialog
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.BottomBarTab
+import com.kaii.photos.helpers.checkHasFiles
+import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
+import kotlin.io.path.Path
 
 @Composable
 fun SingleAlbumView(
@@ -179,6 +185,24 @@ private fun SingleAlbumViewCommon(
         reinitDataSource()
     }
 
+    var hasFiles by remember { mutableStateOf(true) }
+    LaunchedEffect(groupedMedia.value) {
+        withContext(Dispatchers.IO) {
+            hasFiles = if (!albumInfo.isCustomAlbum) {
+                var result: Boolean? = null
+
+                albumInfo.paths.any { path ->
+                    val basePath = path.toBasePath()
+
+                    result = Path(path).checkHasFiles(basePath = basePath)
+                    result == true
+                }
+
+                result == true
+            } else groupedMedia.value.isNotEmpty()
+        }
+    }
+
     BottomSheetScaffold(
         scaffoldState = scaffoldState,
         sheetDragHandle = {},
@@ -218,13 +242,24 @@ private fun SingleAlbumViewCommon(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            val media = remember { mutableStateOf(emptyList<MediaStoreData>())}
+
+            LaunchedEffect(groupedMedia.value.size) {
+                if (groupedMedia.value.isNotEmpty()) {
+                    media.value = groupedMedia.value.take(20)
+                    delay(1000)
+                    media.value = groupedMedia.value
+                }
+            }
+
             PhotoGrid(
-                groupedMedia = groupedMedia,
+                groupedMedia = media,
                 albumInfo = albumInfo,
                 selectedItemsList = selectedItemsList,
                 viewProperties = ViewProperties.Album,
                 shouldPadUp = true,
-                isMediaPicker = incomingIntent != null
+                isMediaPicker = incomingIntent != null,
+                hasFiles = hasFiles
             )
 
             SingleAlbumDialog(

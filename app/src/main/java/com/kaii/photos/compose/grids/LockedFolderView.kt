@@ -47,6 +47,7 @@ import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.appSecureFolderDir
@@ -57,6 +58,7 @@ import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.multi_album.groupPhotosBy
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.file.Files
@@ -171,6 +173,7 @@ fun LockedFolderView(
     val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
 
     val applicationDatabase = LocalAppDatabase.current
+    var hasFiles by remember { mutableStateOf(true) }
     // TODO: USE APP CONTENT RESOLVER!!!!
     LaunchedEffect(fileList.value, groupedMedia.value) {
         val restoredFilesDir = context.appRestoredFilesDir
@@ -220,6 +223,9 @@ fun LockedFolderView(
             }
 
             groupedMedia.value = groupPhotosBy(mediaStoreData, MediaItemSortMode.LastModified, displayDateFormat)
+
+            delay(PhotoGridConstants.LOADING_TIME)
+            hasFiles = groupedMedia.value.isNotEmpty()
         }
     }
 
@@ -282,7 +288,8 @@ fun LockedFolderView(
                 albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
                 selectedItemsList = selectedItemsList,
                 viewProperties = ViewProperties.SecureFolder,
-                shouldPadUp = true
+                shouldPadUp = true,
+                hasFiles = hasFiles
             )
         }
     }

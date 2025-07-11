@@ -19,6 +19,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,11 +36,13 @@ import com.kaii.photos.compose.app_bars.FavouritesViewTopAppBar
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.helpers.MediaItemSortMode
+import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.models.favourites_grid.FavouritesViewModel
 import com.kaii.photos.models.favourites_grid.FavouritesViewModelFactory
 import com.kaii.photos.models.multi_album.groupPhotosBy
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,8 +71,12 @@ fun FavouritesGridView(
         )
     }
 
+    var hasFiles by remember { mutableStateOf(true) }
     LaunchedEffect(mediaStoreData.value) {
         groupedMedia.value = groupPhotosBy(mediaStoreData.value, MediaItemSortMode.LastModified, displayDateFormat)
+
+        delay(PhotoGridConstants.LOADING_TIME)
+        hasFiles = groupedMedia.value.isNotEmpty()
     }
 
     val showBottomSheet by remember {
@@ -134,7 +141,8 @@ fun FavouritesGridView(
                 albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
                 selectedItemsList = selectedItemsList,
                 viewProperties = ViewProperties.Favourites,
-                shouldPadUp = true
+                shouldPadUp = true,
+                hasFiles = hasFiles
             )
         }
     }

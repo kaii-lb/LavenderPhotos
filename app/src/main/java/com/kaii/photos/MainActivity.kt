@@ -45,6 +45,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
@@ -121,6 +122,7 @@ import com.kaii.photos.helpers.BottomBarTabSaver
 import com.kaii.photos.helpers.LogManager
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.appStorageDir
 import com.kaii.photos.helpers.startupUpdateCheck
@@ -136,6 +138,7 @@ import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModelFactory
 import com.kaii.photos.ui.theme.PhotosTheme
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -1052,8 +1055,11 @@ class MainActivity : ComponentActivity() {
                                     )
                                 }
 
+                                var hasFiles by remember { mutableStateOf(true) }
                                 LaunchedEffect(mediaStoreData.value) {
                                     groupedMedia.value = mediaStoreData.value
+                                    delay(PhotoGridConstants.LOADING_TIME)
+                                    hasFiles = groupedMedia.value.isNotEmpty()
                                 }
 
                                 PhotoGrid(
@@ -1066,6 +1072,7 @@ class MainActivity : ComponentActivity() {
                                     ),
                                     viewProperties = ViewProperties.Album,
                                     selectedItemsList = selectedItemsList,
+                                    hasFiles = hasFiles
                                 )
                             }
 
@@ -1085,8 +1092,12 @@ class MainActivity : ComponentActivity() {
 
                                 selectedItemsList.clear()
 
+                                var hasFiles by remember { mutableStateOf(true) }
                                 LaunchedEffect(mediaStoreData.value) {
                                     groupedMedia.value = mediaStoreData.value
+
+                                    delay(PhotoGridConstants.LOADING_TIME)
+                                    hasFiles = groupedMedia.value.isNotEmpty()
                                 }
 
                                 PhotoGrid(
@@ -1094,6 +1105,7 @@ class MainActivity : ComponentActivity() {
                                     albumInfo = multiAlbumViewModel.albumInfo,
                                     viewProperties = ViewProperties.Album,
                                     selectedItemsList = selectedItemsList,
+                                    hasFiles = hasFiles
                                 )
                             }
 

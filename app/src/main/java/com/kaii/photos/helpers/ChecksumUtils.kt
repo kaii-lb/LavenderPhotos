@@ -6,10 +6,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import java.io.File
-import java.io.FileInputStream
 import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
 
@@ -27,7 +27,7 @@ fun calculateSha1Checksum(file: File): String {
     val buffer = ByteArray(1024 * 16)
     var bytesRead: Int
 
-    FileInputStream(file).buffered().use { fis ->
+    file.inputStream().buffered().use { fis ->
         while (fis.read(buffer).also { bytesRead = it } != -1) {
             digest.update(buffer, 0, bytesRead)
         }
@@ -46,6 +46,7 @@ suspend fun calculateSha1Checksum(
     files.forEach { file ->
         jobs.add(
             launch(Dispatchers.IO) {
+                ensureActive()
                 try {
                     val checksum = calculateSha1Checksum(file)
                     results[file.absolutePath] = checksum
@@ -56,7 +57,10 @@ suspend fun calculateSha1Checksum(
         )
     }
 
-    jobs.joinAll()
+    jobs.chunked(32).forEach {
+        it.joinAll()
+    }
+    // jobs.joinAll()
 
     cancellationSignal.setOnCancelListener {
         jobs.forEach {

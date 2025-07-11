@@ -102,14 +102,11 @@ import com.kaii.photos.datastore.Storage
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.ImageFunctions
 import com.kaii.photos.helpers.Screens
-import com.kaii.photos.helpers.appSecureFolderDir
-import com.kaii.photos.helpers.checkHasFiles
 import com.kaii.photos.helpers.getSecuredCacheImageForFile
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.selectAll
 import com.kaii.photos.helpers.selectItem
 import com.kaii.photos.helpers.selectSection
-import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.helpers.unselectAll
 import com.kaii.photos.helpers.unselectItem
 import com.kaii.photos.helpers.unselectSection
@@ -124,11 +121,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import kotlin.io.path.Path
 import kotlin.math.roundToInt
 
 private const val TAG = "PHOTO_GRID_VIEW"
@@ -142,76 +137,31 @@ fun PhotoGrid(
     viewProperties: ViewProperties,
     shouldPadUp: Boolean = false,
     isMediaPicker: Boolean = false,
-    state: LazyGridState = rememberLazyGridState()
+    state: LazyGridState = rememberLazyGridState(),
+    hasFiles: Boolean
 ) {
-    val context = LocalContext.current
-    var hasFiles: Boolean? by remember { mutableStateOf(null) }
-
-    LaunchedEffect(groupedMedia.value) {
-        withContext(Dispatchers.IO) {
-            hasFiles = when {
-                viewProperties == ViewProperties.SecureFolder -> {
-                    val basePath = context.appSecureFolderDir
-
-                    File(basePath).listFiles()?.isNotEmpty() == true
-                }
-
-                viewProperties == ViewProperties.Album && !albumInfo.isCustomAlbum -> {
-                    var result: Boolean? = null
-
-                    albumInfo.paths.any { path ->
-                        val basePath = path.toBasePath()
-                        Log.d(TAG, "Base Path is $basePath")
-                        result = Path(path).checkHasFiles(basePath = basePath)
-                        result == true
-                    }
-
-                    result
-                }
-
-                else -> {
-                    groupedMedia.value.isNotEmpty()
-                }
-            }
-        }
-    }
-
-    when (hasFiles) {
-        null -> {
-            Row(
-                modifier = Modifier
-                    .fillMaxSize(1f)
-                    .then(modifier)
-            ) {
-                // TODO: show loading spinner for 5 seconds
-                // if no change after 5 seconds hide and show album doesn't exist
-            }
-        }
-
-        true -> {
-            Row(
-                modifier = Modifier
-                    .fillMaxSize(1f)
-                    .then(modifier)
-            ) {
-                DeviceMedia(
-                    groupedMedia = groupedMedia,
-                    selectedItemsList = selectedItemsList,
-                    viewProperties = viewProperties,
-                    shouldPadUp = shouldPadUp,
-                    gridState = state,
-                    albumInfo = albumInfo,
-                    isMediaPicker = isMediaPicker
-                )
-            }
-        }
-
-        false -> {
-            FolderIsEmpty(
-                ViewProperties.getText(id = viewProperties.emptyText, context = context),
-                viewProperties.emptyIconResId
+    if (hasFiles) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize(1f)
+                .then(modifier)
+        ) {
+            DeviceMedia(
+                groupedMedia = groupedMedia,
+                selectedItemsList = selectedItemsList,
+                viewProperties = viewProperties,
+                shouldPadUp = shouldPadUp,
+                gridState = state,
+                albumInfo = albumInfo,
+                isMediaPicker = isMediaPicker
             )
         }
+    } else {
+        val context = LocalContext.current
+        FolderIsEmpty(
+            ViewProperties.getText(id = viewProperties.emptyText, context = context),
+            viewProperties.emptyIconResId
+        )
     }
 }
 
@@ -236,13 +186,10 @@ fun DeviceMedia(
         selectedItemsList.clear()
     }
 
-    if (groupedMedia.value.isNotEmpty()) {
-        showLoadingSpinner = false
-    }
-
     val mainViewModel = LocalMainViewModel.current
     LaunchedEffect(groupedMedia.value) {
         mainViewModel.setGroupedMedia(groupedMedia.value)
+        if (groupedMedia.value.isNotEmpty()) showLoadingSpinner = false
     }
 
     val spacerHeight by animateDpAsState(
@@ -318,6 +265,9 @@ fun DeviceMedia(
                     count = groupedMedia.value.size,
                     key = {
                         groupedMedia.value[it].uri.toString()
+                    },
+                    contentType = {
+                        groupedMedia.value[it].type
                     },
                     span = { index ->
                         if (index < groupedMedia.value.size) {

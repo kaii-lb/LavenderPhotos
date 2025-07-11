@@ -53,6 +53,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -101,6 +102,7 @@ import com.kaii.photos.datastore.PhotoGrid
 import com.kaii.photos.helpers.BottomBarTabSaver
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
@@ -113,6 +115,7 @@ import com.kaii.photos.models.multi_album.MultiAlbumViewModelFactory
 import com.kaii.photos.setupNextScreen
 import com.kaii.photos.ui.theme.PhotosTheme
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlin.reflect.typeOf
 
 private const val TAG = "LAVENDER_MEDIA_PICKER"
@@ -459,8 +462,12 @@ class MediaPicker : ComponentActivity() {
                                     LaunchedEffect(Unit) {
                                         selectedItemsList.clear()
                                     }
+                                    var hasFiles by remember { mutableStateOf(true) }
                                     LaunchedEffect(mediaStoreData.value) {
                                         groupedMedia.value = mediaStoreData.value
+
+                                        delay(PhotoGridConstants.LOADING_TIME)
+                                        hasFiles = groupedMedia.value.isNotEmpty()
                                     }
 
                                     PhotoGrid(
@@ -473,7 +480,8 @@ class MediaPicker : ComponentActivity() {
                                         ),
                                         viewProperties = ViewProperties.Album,
                                         selectedItemsList = selectedItemsList,
-                                        isMediaPicker = true
+                                        isMediaPicker = true,
+                                        hasFiles = hasFiles
                                     )
                                 }
 
@@ -495,8 +503,12 @@ class MediaPicker : ComponentActivity() {
                                         selectedItemsList.clear()
                                     }
 
+                                    var hasFiles by remember { mutableStateOf(true) }
                                     LaunchedEffect(mediaStoreData.value) {
                                         groupedMedia.value = mediaStoreData.value
+
+                                        delay(PhotoGridConstants.LOADING_TIME)
+                                        hasFiles = groupedMedia.value.isNotEmpty()
                                     }
 
                                     PhotoGrid(
@@ -504,7 +516,8 @@ class MediaPicker : ComponentActivity() {
                                         albumInfo = multiAlbumViewModel.albumInfo,
                                         viewProperties = ViewProperties.Album,
                                         selectedItemsList = selectedItemsList,
-                                        isMediaPicker = true
+                                        isMediaPicker = true,
+                                        hasFiles = hasFiles
                                     )
                                 }
 

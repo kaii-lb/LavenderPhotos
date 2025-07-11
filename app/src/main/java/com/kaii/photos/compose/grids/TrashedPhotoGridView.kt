@@ -40,12 +40,14 @@ import com.kaii.photos.compose.app_bars.TrashedPhotoGridViewTopBar
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.TrashBin
+import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.trash_bin.TrashViewModel
 import com.kaii.photos.models.trash_bin.TrashViewModelFactory
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.days
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -67,9 +69,13 @@ fun TrashedPhotoGridView(
         trashViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
     val groupedMedia = remember { mutableStateOf(mediaStoreData.value) }
+    var hasFiles by remember { mutableStateOf(true) }
 
     LaunchedEffect(mediaStoreData.value) {
         groupedMedia.value = mediaStoreData.value
+
+        delay(PhotoGridConstants.LOADING_TIME)
+        hasFiles = groupedMedia.value.isNotEmpty()
     }
 
     var triedDeletingAlready by rememberSaveable { mutableStateOf(false) }
@@ -177,7 +183,8 @@ fun TrashedPhotoGridView(
                 albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
                 selectedItemsList = selectedItemsList,
                 viewProperties = ViewProperties.Trash,
-                shouldPadUp = true
+                shouldPadUp = true,
+                hasFiles = hasFiles
             )
         }
     }

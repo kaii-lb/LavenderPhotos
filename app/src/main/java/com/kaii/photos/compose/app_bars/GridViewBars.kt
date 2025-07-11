@@ -116,7 +116,6 @@ fun SingleAlbumViewTopBar(
         onBackClick()
     }
 
-    val mainViewModel = LocalMainViewModel.current
     AnimatedContent(
         targetState = show,
         transitionSpec = {
