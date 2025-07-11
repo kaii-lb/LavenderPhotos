@@ -211,5 +211,11 @@
     <string name="trash_empty_desc">Esto elimina todos los elementos de la papelera, esta acción no se puede deshacer</string>
     <string name="trash_empty_confirm">Vacío</string>
     <string name="permissions">Permiso</string>
-    <string name="permissions_media_manager">Gestor de Multimedia</string>
+    <string name="permissions_media_manager">Administrador Multimedia</string>
+    <string name="permissions_media_manager_desc">Mejor y mas rapida papelera/eliminar/copiar/mover</string>
+    <string name="permissions_media_management">Administracion de Multimedia</string>
+    <string name="permissions_confirm_to_delete">Confirme para Eliminar</string>
+    <string name="permissions_confirm_too_delete_desc">Solicite confirmación antes de eliminar cualquier multimedia</string>
+    <string name="permissions_overwrite_date_on_move">Sobrescribir la Fecha al Mover</string>
+    <string name="permissions_overwrite_date_on_move_desc">"Cuando está habilitado, la fecha de la multimedia  copiada/movida se establece en \"ahora\", apareciendo como la más reciente"</string>
 </resources>
