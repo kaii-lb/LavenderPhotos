@@ -161,7 +161,18 @@
     <string name="editing_shadows">Sombras</string>
     <string name="editing_warmth">Calidez</string>
     <string name="editing_color_tint">Tinte de Color</string>
-    <string name="editing_highlights">Destacados</string>
+    <string name="editing_highlights">Resaltes</string>
     <string name="editing_pencil">Lápiz</string>
     <string name="editing_highlighter">Resaltador</string>
+    <string name="editing_text">Texto</string>
+    <string name="editing_blur">Desenfoque</string>
+    <string name="editing_undo_all">Deshacer todas las acciones</string>
+    <string name="editing_undo_last">Deshacer última acción</string>
+    <string name="editing_scale_paint">Cambiar el pincel o el tamaño del texto</string>
+    <string name="editing_scale_zoom">Acercar en lugar de escalar el tamaño de la fuente</string>
+    <string name="editing_scale_text">Cambiar el tamaño de fuente del texto seleccionado</string>
+    <string name="editing_done">¡Imagen editada guardada!</string>
+    <string name="editing_failed">Error al guardar la imagen editada</string>
+    <string name="settings">Ajustes</string>
+    <string name="settings_general">General</string>
 </resources>
