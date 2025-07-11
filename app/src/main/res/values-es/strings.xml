@@ -58,5 +58,26 @@
     <string name="first_startup_dialog_body">Busca todos los álbumes en este dispositivo y los agrega a Lavender Photos\nNota: Los usuarios antiguos borrarán sus álbumes si se usa esta opción.</string>
     <string name="first_startup_dialog_confirm_title">¡Busca!</string>
     <string name="albums">Albumes</string>
-    <string name="finding_albums_on_device">Encontrar álbumes…</string>
+    <string name="finding_albums_on_device">Buscando álbumes…</string>
+    <string name="albums_found">¡Todos los álbumes encontrados!</string>
+    <string name="add_album">Agregar un álbum</string>
+    <string name="direct_path_album">Usar una ruta directa para agregar un álbum</string>
+    <string name="albums_main_list">Lista de Álbumes Principales</string>
+    <string name="albums_main_list_desc">Seleccione los álbumes en los que se mostrarán sus fotos en la vista principal de fotos</string>
+    <string name="albums_main_list_selected">Los álbumes seleccionados aquí se mostrarán en la vista principal de fotos</string>
+    <string name="albums_selected">Álbumes Seleccionados</string>
+    <string name="updates_notice_desc"><![CDATA[
+            <p>Este actualizador descarga apks de<a href="https://github.com/kaii-lb/LavenderPhotos/releases">Lanzamientos de GitHub</a> lo cual
+                significa que no pasan por el cribado y las pruebas adicionales realizadas en IzzyOnDroid, F-Droid o en otro lugar
+
+                <br><br>Las compilaciones alojadas en GitHub siempre están firmadas, revisadas y verificadas por el desarrollador (kaii-lb), pero depende de usted si desea usarlas o no.
+
+                <br><br>Lavender Photos nunca se actualiza automáticamente, y solo se actualiza con el consentimiento explícito del usuario.
+            </p>
+        ]]></string>
+    <string name="updates_not_found">No Se Encontraron Actualizaciones</string>
+    <string name="updates_new_version_available">¡Nueva versión disponible!</string>
+    <string name="updates_latest">Ya en la última versión</string>
+    <string name="updates_failed">Error al buscar actualizaciones</string>
+    <string name="updates_checking">Comprobación De Actualizaciones</string>
 </resources>
