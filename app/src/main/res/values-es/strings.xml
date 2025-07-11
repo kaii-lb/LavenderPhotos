@@ -217,5 +217,18 @@
     <string name="permissions_confirm_to_delete">Confirme para Eliminar</string>
     <string name="permissions_confirm_too_delete_desc">Solicite confirmación antes de eliminar cualquier multimedia</string>
     <string name="permissions_overwrite_date_on_move">Sobrescribir la Fecha al Mover</string>
-    <string name="permissions_overwrite_date_on_move_desc">"Cuando está habilitado, la fecha de la multimedia  copiada/movida se establece en \"ahora\", apareciendo como la más reciente"</string>
+    <string name="permissions_overwrite_date_on_move_desc">Cuando está habilitado, la fecha de la multimedia copiada/movida se establece en \"ahora\", apareciendo como la más reciente</string>
+    <string name="permissions_needed">Permiso Necesario</string>
+    <string name="permissions_needed_desc">Lavender Photos necesita permiso para acceder a este álbum. Otorgue el permiso seleccionando Usar esta carpeta en la siguiente pantalla.Este es un permiso de una sola vez.</string>
+    <string name="permissions_grant">Otorgar</string>
+    <string name="media">Multimedia</string>
+    <string name="sort_indicator">Ordenar por indicador</string>
+    <string name="sort_mode">Modo de Clasificación de Multimedia</string>
+    <string name="sort_date">Fecha</string>
+    <string name="sort_name">Nombre</string>
+    <string name="sort_custom">Personalizado</string>
+    <string name="media_non_existent">¡Este archivo no existe!</string>
+    <string name="media_broken">Multimedia Rota</string>
+    <string name="media_share">Compartir</string>
+    <string name="media_delete">Borrar</string>
 </resources>
