@@ -42,6 +42,7 @@ import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.helpers.checkHasFiles
 import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.mediastore.MediaStoreData
+import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import kotlinx.coroutines.Dispatchers
@@ -267,7 +268,7 @@ private fun SingleAlbumViewCommon(
                 album = albumInfo,
                 navController = navController,
                 selectedItemsList = selectedItemsList,
-                itemCount = groupedMedia.value.size
+                itemCount = groupedMedia.value.filter { it.type != MediaType.Section }.size
             )
         }
     }
