@@ -15,6 +15,8 @@ import android.provider.MediaStore
 import android.provider.MediaStore.MediaColumns
 import android.util.Log
 import androidx.compose.material3.SnackbarDuration
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ColorFilter
@@ -350,8 +352,20 @@ fun moveImageListToPath(
     CoroutineScope(Dispatchers.IO).launch {
         val contentResolver = context.contentResolver
 
+        val body = mutableStateOf(context.resources.getString(R.string.media_operate_snackbar_body, 0, list.size))
+        val percentage = mutableFloatStateOf(0f)
+
+        LavenderSnackbarController.pushEvent(
+            LavenderSnackbarEvents.ProgressEvent(
+                message = context.resources.getString(R.string.media_move_snackbar_title),
+                body = body,
+                icon = R.drawable.cut,
+                percentage = percentage
+            )
+        )
+
         async {
-            list.forEach { media ->
+            list.forEachIndexed { index, media ->
                 contentResolver.copyMedia(
                     context = context,
                     media = media,
@@ -360,6 +374,9 @@ fun moveImageListToPath(
                     overwriteDate = overwriteDate,
                     currentVolumes = MediaStore.getExternalVolumeNames(context)
                 )?.let {
+                    body.value = context.resources.getString(R.string.media_operate_snackbar_body, index + 1, list.size)
+                    percentage.floatValue = (index + 1f) / list.size
+
                     contentResolver.delete(media.uri, null)
                 }
             }
@@ -376,14 +393,25 @@ fun copyImageListToPath(
     basePath: String,
     overwriteDate: Boolean,
     overrideDisplayName: ((displayName: String) -> String)? = null,
-    onDone: (uri: Uri, path: String) -> Unit
+    onSingleItemDone: (uri: Uri, path: String) -> Unit
 ) {
     CoroutineScope(Dispatchers.IO).launch {
         val contentResolver = context.contentResolver
 
+        val body = mutableStateOf(context.resources.getString(R.string.media_operate_snackbar_body, 0, list.size))
+        val percentage = mutableFloatStateOf(0f)
+
+        LavenderSnackbarController.pushEvent(
+            LavenderSnackbarEvents.ProgressEvent(
+                message = context.resources.getString(R.string.media_copy_snackbar_title),
+                body = body,
+                icon = R.drawable.content_paste,
+                percentage = percentage
+            )
+        )
+
         async {
-            list.forEach { media ->
-                Log.d(TAG, "Media modified date: ${media.dateModified}")
+            list.forEachIndexed { index, media ->
                 contentResolver.copyMedia(
                     context = context,
                     media = media,
@@ -393,7 +421,10 @@ fun copyImageListToPath(
                     overrideDisplayName = if (overrideDisplayName != null) overrideDisplayName(media.displayName) else null,
                     currentVolumes = MediaStore.getExternalVolumeNames(context)
                 )?.let { uri ->
-                    onDone(uri, media.absolutePath)
+                    body.value = context.resources.getString(R.string.media_operate_snackbar_body, index + 1, list.size)
+                    percentage.floatValue = (index + 1f) / list.size
+
+                    onSingleItemDone(uri, media.absolutePath)
                 }
             }
         }.await()
