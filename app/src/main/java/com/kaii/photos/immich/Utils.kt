@@ -16,9 +16,18 @@ suspend fun getImmichBackupMedia(
     val nonSectioned = groupedMedia.fastFilter { it.type != MediaType.Section }
 
     val checksums = calculateSha1Checksum(
-        files = nonSectioned.fastMap {
-            File(it.absolutePath)
-        },
+        files = nonSectioned
+            .groupBy {
+                it.size
+            }
+            .filter {
+                it.value.size > 1
+            }
+            .flatMap {
+                it.value
+            }.fastMap {
+                File(it.absolutePath)
+            },
         cancellationSignal = cancellationSignal
     )
 

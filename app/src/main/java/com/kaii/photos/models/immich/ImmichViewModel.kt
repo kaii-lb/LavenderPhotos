@@ -32,7 +32,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.time.ExperimentalTime
 
@@ -106,32 +105,36 @@ class ImmichViewModel(
     fun refreshAlbums(
         onDone: () -> Unit = {}
     ) {
-        viewModelScope.launch {
-            _immichServerAlbums.value = ImmichServerSidedAlbumsState.Loading
-            val result = immichApiService.refreshAlbums()
+        if (immichUserLoginState.value is ImmichUserLoginState.IsLoggedIn) {
+            viewModelScope.launch {
+                _immichServerAlbums.value = ImmichServerSidedAlbumsState.Loading
+                val result = immichApiService.refreshAlbums()
 
-            result.onSuccess { albums ->
-                _immichServerAlbums.value = ImmichServerSidedAlbumsState.Synced(
-                    albums = albums.toSet()
-                )
-            }.onFailure { throwable ->
-                _immichServerAlbums.value =
-                    ImmichServerSidedAlbumsState.Error(throwable.message.toString())
-                LavenderSnackbarController.pushEvent(
-                    LavenderSnackbarEvents.MessageEvent(
-                        message = "Failed refreshing albums",
-                        icon = R.drawable.error_2,
-                        duration = SnackbarDuration.Short
+                result.onSuccess { albums ->
+                    _immichServerAlbums.value = ImmichServerSidedAlbumsState.Synced(
+                        albums = albums.toSet()
                     )
-                )
-            }
+                }.onFailure { throwable ->
+                    _immichServerAlbums.value =
+                        ImmichServerSidedAlbumsState.Error(throwable.message.toString())
 
-            onDone()
+                    LavenderSnackbarController.pushEvent(
+                        LavenderSnackbarEvents.MessageEvent(
+                            message = application.applicationContext.resources.getString(R.string.immich_failed_refreshing_albums),
+                            icon = R.drawable.error_2,
+                            duration = SnackbarDuration.Short,
+                            id = throwable.hashCode()
+                        )
+                    )
+                }
+
+                onDone()
+            }
         }
     }
 
     @OptIn(ExperimentalEncodingApi::class, ExperimentalStdlibApi::class)
-    fun checkSyncStatus(immichAlbumId: String, expectedPhotoImmichIds: Set<ImmichBackupMedia>) {
+    fun checkSyncStatus(immichAlbumId: String, expectedBackupMedia: Set<ImmichBackupMedia>) {
         viewModelScope.launch {
             var snapshot = _immichAlbumsSyncState.value.toMutableMap()
 
@@ -148,29 +151,27 @@ class ImmichViewModel(
 
             var result = immichApiService.checkDifference(
                 immichId = immichAlbumId,
-                expectedImmichChecksums = expectedPhotoImmichIds.map { it.checksum }.toSet()
+                expectedImmichBackupMedia = expectedBackupMedia.toSet()
             )
 
             if (result is ImmichAlbumSyncState.OutOfSync) {
                 val albumDupes = immichAlbumsDupState.value[immichAlbumId]
 
                 if (albumDupes is ImmichAlbumDuplicateState.HasDupes) {
-                    val dupes = albumDupes.dupeAssets
-                        .map {
-                            Base64.decode(it.checksum).toHexString()
-                        }
-                        .filter {
-                            it in expectedPhotoImmichIds.map { it.checksum }
-                        }
+                    Log.d(TAG, "Gotten dupes ${albumDupes.dupeAssets.map { it.deviceAssetId }}")
+                    Log.d(TAG, "Gotten result $result")
 
-                    Log.d(TAG, "Dupes are $dupes")
-                    Log.d(TAG, "Result is $result")
-
-                    if (result.missing.minus(dupes).isEmpty()) {
+                    if (result.missing.none { it.deviceAssetId !in albumDupes.dupeAssets.map { it.deviceAssetId } }) {
                         result = if (result.extra.isEmpty()) {
-                            ImmichAlbumSyncState.InSync(expectedPhotoImmichIds.map { it.checksum }.toSet())
+                            ImmichAlbumSyncState.InSync(expectedBackupMedia)
                         } else {
-                            ImmichAlbumSyncState.OutOfSync(emptySet(), result.extra)
+                            val extras = result.missing.filter { it.checksum !in albumDupes.dupeAssets.map { it.checksum } }
+
+                            if (extras.isEmpty()) {
+                                ImmichAlbumSyncState.InSync(expectedBackupMedia)
+                            } else {
+                                ImmichAlbumSyncState.OutOfSync(emptySet(), result.extra)
+                            }
                         }
                     }
                 }
@@ -259,7 +260,7 @@ class ImmichViewModel(
             }.onFailure { throwable ->
                 LavenderSnackbarController.pushEvent(
                     LavenderSnackbarEvents.MessageEvent(
-                        message = "Failed uploading album",
+                        message = application.applicationContext.resources.getString(R.string.immich_failed_uploading_albums),
                         icon = R.drawable.error_2,
                         duration = SnackbarDuration.Short
                     )
@@ -269,7 +270,7 @@ class ImmichViewModel(
         } else {
             LavenderSnackbarController.pushEvent(
                 LavenderSnackbarEvents.MessageEvent(
-                    message = "Failed uploading album",
+                    message = application.applicationContext.resources.getString(R.string.immich_failed_uploading_albums),
                     icon = R.drawable.error_2,
                     duration = SnackbarDuration.Short
                 )
@@ -312,7 +313,9 @@ class ImmichViewModel(
 
         val snapshot = _immichAlbumsDupState.value.toMutableMap()
 
-        val dupes = media
+        val hasChecksum = media.filter { it.checksum != "" }
+
+        val dupes = hasChecksum
             .groupBy {
                 it.checksum
             }
@@ -437,7 +440,7 @@ class ImmichViewModel(
         refreshAlbums()
         checkSyncStatus(
             immichAlbumId = immichId,
-            expectedPhotoImmichIds = expectedPhotoImmichIds
+            expectedBackupMedia = expectedPhotoImmichIds
         )
         refreshAlbums {
             onDone()

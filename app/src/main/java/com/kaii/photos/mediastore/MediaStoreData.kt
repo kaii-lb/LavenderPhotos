@@ -40,8 +40,8 @@ data class MediaStoreData(
     val immichFile = run {
         File(
             path = absolutePath,
-            dateCreated = dateTaken,
-            lastModified = dateModified,
+            dateCreated = dateTaken * 1000,
+            lastModified = dateModified * 1000,
             size = size
         )
     }

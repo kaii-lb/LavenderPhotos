@@ -221,7 +221,7 @@ fun SingleAlbumViewTopBar(
 
                                 immichViewModel.checkSyncStatus(
                                     immichAlbumId = albumInfo.immichId,
-                                    expectedPhotoImmichIds = deviceBackupMedia.toSet()
+                                    expectedBackupMedia = deviceBackupMedia.toSet()
                                 )
                                 immichViewModel.refreshDuplicateState(
                                     immichId = albumInfo.immichId,

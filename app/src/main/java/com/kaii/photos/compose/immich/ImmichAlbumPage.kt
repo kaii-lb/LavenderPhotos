@@ -181,7 +181,10 @@ fun ImmichAlbumPage(
 
                     when (dupe) {
                         is ImmichAlbumDuplicateState.HasDupes -> {
-                            dupe.dupeAssets.distinctBy { it.checksum }
+                            val map = deviceBackupMedia.map { it.deviceAssetId }
+                            val needed = dupe.dupeAssets.filter { it.deviceAssetId in map }
+
+                            needed.toSet()
                         }
 
                         else -> emptySet()
@@ -196,9 +199,21 @@ fun ImmichAlbumPage(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 item {
+                    val dupeCount by remember {
+                        derivedStateOf {
+                            currentAlbumDupes.distinctBy { it.checksum }.map { it.deviceAssetId }.size
+                        }
+                    }
+                    val actualCount by remember {
+                        derivedStateOf {
+                            deviceBackupMedia.filter { it.checksum !in currentAlbumDupes.map { it.checksum } }
+                                .map { it.deviceAssetId }.size + dupeCount
+                        }
+                    }
+
                     PreferencesRow(
-                        title = stringResource(id = R.string.immich_sync_status) + " " + "${serverSideAlbum?.assetCount ?: 0}/${(deviceBackupMedia.map { it.deviceAssetId } - currentAlbumDupes.map { it.deviceAssetId }).size}",
-                        summary = "Duplicates: ${currentAlbumDupes.size}",
+                        title = stringResource(id = R.string.immich_sync_status) + " " + "${serverSideAlbum?.assetCount ?: 0}/${actualCount}",
+                        summary = "Duplicates: $dupeCount",
                         iconResID = R.drawable.cloud_upload,
                         position = RowPosition.Single,
                         showBackground = false

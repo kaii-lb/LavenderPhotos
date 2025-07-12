@@ -32,12 +32,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import com.kaii.photos.LocalAppDatabase
+import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.SingleAlbumViewBottomBar
 import com.kaii.photos.compose.app_bars.SingleAlbumViewTopBar
 import com.kaii.photos.compose.dialogs.SingleAlbumDialog
 import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.helpers.checkHasFiles
 import com.kaii.photos.helpers.toBasePath
@@ -60,6 +63,28 @@ fun SingleAlbumView(
 ) {
     val navController = LocalNavController.current
     val context = LocalContext.current
+    val mainViewModel = LocalMainViewModel.current
+    val appDatabase = LocalAppDatabase.current
+
+    val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect().collectAsStateWithLifecycle(initialValue = true)
+    val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
+
+    val customAlbums by mainViewModel.settings.AlbumsList.getCustomAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
+    val allAlbums = if (autoDetectAlbums) {
+        mainViewModel.settings.AlbumsList.getAutoDetectedAlbums(displayDateFormat, appDatabase)
+            .collectAsStateWithLifecycle(initialValue = emptyList())
+            .value + customAlbums
+    } else {
+        mainViewModel.settings.AlbumsList.getNormalAlbums()
+            .collectAsStateWithLifecycle(initialValue = emptyList())
+            .value + customAlbums
+    }
+
+    if (allAlbums.isEmpty()) return
+
+    val dynamicAlbum by remember { derivedStateOf {
+        allAlbums.first { it.id == albumInfo.id }
+    }}
 
     BackHandler(
         enabled = selectedItemsList.isEmpty()
@@ -78,16 +103,16 @@ fun SingleAlbumView(
 
     SingleAlbumViewCommon(
         groupedMedia = groupedMedia,
-        albumInfo = albumInfo,
+        albumInfo = dynamicAlbum,
         selectedItemsList = selectedItemsList,
         currentView = currentView,
         navController = navController,
         incomingIntent = incomingIntent
     ) {
-        if (viewModel.albumInfo.paths.toSet() != albumInfo.paths.toSet()) {
+        if (viewModel.albumInfo.paths.toSet() != dynamicAlbum.paths.toSet()) {
             viewModel.reinitDataSource(
                 context = context,
-                album = albumInfo
+                album = dynamicAlbum
             )
         }
     }
@@ -104,6 +129,28 @@ fun SingleAlbumView(
 ) {
     val navController = LocalNavController.current
     val context = LocalContext.current
+    val mainViewModel = LocalMainViewModel.current
+    val appDatabase = LocalAppDatabase.current
+
+    val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect().collectAsStateWithLifecycle(initialValue = true)
+    val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
+
+    val customAlbums by mainViewModel.settings.AlbumsList.getCustomAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
+    val allAlbums = if (autoDetectAlbums) {
+        mainViewModel.settings.AlbumsList.getAutoDetectedAlbums(displayDateFormat, appDatabase)
+            .collectAsStateWithLifecycle(initialValue = emptyList())
+            .value + customAlbums
+    } else {
+        mainViewModel.settings.AlbumsList.getNormalAlbums()
+            .collectAsStateWithLifecycle(initialValue = emptyList())
+            .value + customAlbums
+    }
+
+    if (allAlbums.isEmpty()) return
+
+    val dynamicAlbum by remember { derivedStateOf {
+        allAlbums.first { it.id == albumInfo.id }
+    }}
 
     BackHandler(
         enabled = selectedItemsList.isEmpty()
@@ -125,23 +172,23 @@ fun SingleAlbumView(
 
     SingleAlbumViewCommon(
         groupedMedia = groupedMedia,
-        albumInfo = albumInfo,
+        albumInfo = dynamicAlbum,
         selectedItemsList = selectedItemsList,
         currentView = currentView,
         navController = navController,
         incomingIntent = incomingIntent
     ) {
-        if (customViewModel.albumInfo != albumInfo) {
+        if (customViewModel.albumInfo != dynamicAlbum) {
             customViewModel.reinitDataSource(
                 context = context,
-                album = albumInfo
+                album = dynamicAlbum
             )
         }
 
-        if (multiViewModel.albumInfo != albumInfo) {
+        if (multiViewModel.albumInfo != dynamicAlbum) {
             multiViewModel.reinitDataSource(
                 context = context,
-                album = albumInfo
+                album = dynamicAlbum
             )
         }
     }
@@ -247,8 +294,7 @@ private fun SingleAlbumViewCommon(
 
             LaunchedEffect(groupedMedia.value.size) {
                 if (groupedMedia.value.isNotEmpty()) {
-                    media.value = groupedMedia.value.take(20)
-                    delay(1000)
+                    delay(300)
                     media.value = groupedMedia.value
                 }
             }

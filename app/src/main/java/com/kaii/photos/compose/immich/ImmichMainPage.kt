@@ -240,9 +240,8 @@ fun ImmichMainPage() {
                         .wrapContentHeight(align = Alignment.CenterVertically)
                         .clickable {
                             if (immichBasicInfo.endpoint != "" && !isLoadingInfo) {
-                                // if (userInfo is ImmichUserLoginState.IsNotLoggedIn) showLoginDialog = true
-                                // else showLogoutDialog.value = true
-                                showLoginDialog = true
+                                if (userInfo is ImmichUserLoginState.IsNotLoggedIn) showLoginDialog = true
+                                else showLogoutDialog.value = true
                             }
                         }
                         .padding(16.dp, 12.dp),

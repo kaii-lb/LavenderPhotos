@@ -5,7 +5,6 @@ import android.util.Log
 import androidx.compose.ui.util.fastMap
 import com.kaii.lavender.immichintegration.AlbumManager
 import com.kaii.lavender.immichintegration.ApiClient
-import com.kaii.lavender.immichintegration.AssetManager
 import com.kaii.lavender.immichintegration.UserAuth
 import com.kaii.lavender.immichintegration.UserManager
 import com.kaii.lavender.immichintegration.serialization.Album
@@ -28,7 +27,7 @@ class ImmichApiService(
     val token: String
 ) {
     companion object {
-        private const val MAX_RETRIES = 5
+        const val MAX_RETRIES = 5
         private const val INITIAL_BACKOFF_MS = 500
     }
 
@@ -50,13 +49,6 @@ class ImmichApiService(
         UserAuth(
             apiClient = client,
             endpointBase = endpoint
-        )
-
-    private val assetManager =
-        AssetManager(
-            apiClient = client,
-            endpointBase = endpoint,
-            bearerToken = token
         )
 
     suspend fun getAllAlbums(): List<Album>? {
@@ -106,25 +98,29 @@ class ImmichApiService(
     @OptIn(ExperimentalEncodingApi::class, ExperimentalStdlibApi::class)
     suspend fun checkDifference(
         immichId: String,
-        expectedImmichChecksums: Set<String>
+        expectedImmichBackupMedia: Set<ImmichBackupMedia>
     ): ImmichAlbumSyncState {
         try {
             val remoteAlbum = getAlbumInfo(immichId = immichId)
 
             if (remoteAlbum == null) return ImmichAlbumSyncState.Error("Album $immichId does not exist!")
 
-            val remotePhotoChecksums = remoteAlbum.assets.map {
-                Base64.decode(it.checksum).toHexString()
+            val remoteBackupMedia = remoteAlbum.assets.map {
+                ImmichBackupMedia(
+                    deviceAssetId = it.deviceAssetId,
+                    absolutePath = "",
+                    checksum = Base64.decode(it.checksum).toHexString()
+                )
             }.toSet()
 
-            val isInSync = remotePhotoChecksums == expectedImmichChecksums
+            val isInSync = remoteBackupMedia.map { it.deviceAssetId } == expectedImmichBackupMedia.map { it.deviceAssetId }
 
             return if (isInSync) {
-                ImmichAlbumSyncState.InSync(remotePhotoChecksums)
+                ImmichAlbumSyncState.InSync(expectedImmichBackupMedia)
             } else {
                 ImmichAlbumSyncState.OutOfSync(
-                    missing = expectedImmichChecksums.minus(remotePhotoChecksums),
-                    extra = remotePhotoChecksums.minus(expectedImmichChecksums)
+                    missing = expectedImmichBackupMedia.filter { it.deviceAssetId !in remoteBackupMedia.map { it.deviceAssetId } }.toSet(),
+                    extra = remoteBackupMedia.filter { it.deviceAssetId !in expectedImmichBackupMedia.map { it.deviceAssetId } }.toSet()
                 )
             }
         } catch (e: Throwable) {
@@ -238,27 +234,18 @@ class ImmichApiService(
 
         false
     }
-
-    suspend fun getDuplicateAssets() = try {
-        assetManager.getDuplicateAssets()
-    } catch (e: Throwable) {
-        Log.e(TAG, e.toString())
-        e.printStackTrace()
-
-        emptyList()
-    }
 }
 
 sealed class ImmichAlbumSyncState {
     object Loading : ImmichAlbumSyncState()
 
     data class OutOfSync(
-        val missing: Set<String>,
-        val extra: Set<String>
+        val missing: Set<ImmichBackupMedia>,
+        val extra: Set<ImmichBackupMedia>
     ) : ImmichAlbumSyncState()
 
     data class InSync(
-        val ids: Set<String>
+        val ids: Set<ImmichBackupMedia>
     ) : ImmichAlbumSyncState()
 
     data class Error(

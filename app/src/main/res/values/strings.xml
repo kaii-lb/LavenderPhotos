@@ -407,4 +407,6 @@
     <string name="immich_continuing_in_bg">Continuing backup in background</string>
     <string name="immich_main_dialog_sync_state">Syncing: %1$d out of %2$d</string>
     <string name="immich_uuid">Immich UUID</string>
+    <string name="immich_failed_refreshing_albums">Failed refreshing albums</string>
+    <string name="immich_failed_uploading_albums">Failed uploading album</string>
 </resources>
