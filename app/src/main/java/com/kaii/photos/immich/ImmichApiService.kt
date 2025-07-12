@@ -5,10 +5,12 @@ import android.util.Log
 import androidx.compose.ui.util.fastMap
 import com.kaii.lavender.immichintegration.AlbumManager
 import com.kaii.lavender.immichintegration.ApiClient
+import com.kaii.lavender.immichintegration.AssetManager
 import com.kaii.lavender.immichintegration.UserAuth
 import com.kaii.lavender.immichintegration.UserManager
 import com.kaii.lavender.immichintegration.serialization.Album
 import com.kaii.lavender.immichintegration.serialization.CreateAlbum
+import com.kaii.lavender.immichintegration.serialization.DeleteAssets
 import com.kaii.lavender.immichintegration.serialization.File
 import com.kaii.lavender.immichintegration.serialization.LoginCredentials
 import com.kaii.lavender.immichintegration.serialization.UserFull
@@ -51,6 +53,13 @@ class ImmichApiService(
             endpointBase = endpoint
         )
 
+    private val assetManager =
+        AssetManager(
+            apiClient = client,
+            endpointBase = endpoint,
+            bearerToken = token
+        )
+
     suspend fun getAllAlbums(): List<Album>? {
         try {
             return albumManager.getAllAlbums()
@@ -83,7 +92,8 @@ class ImmichApiService(
         immichId: String
     ): Album? {
         try {
-            return albumManager.getAlbumInfo(
+            return if (immichId.isEmpty()) null
+            else albumManager.getAlbumInfo(
                 albumId = immichId,
                 withoutAssets = false
             )
@@ -233,6 +243,25 @@ class ImmichApiService(
         e.printStackTrace()
 
         false
+    }
+
+    suspend fun deleteAssets(
+        deviceIds: List<String>,
+        albumId: String
+    ) = try {
+        val albumInfo = albumManager.getAlbumInfo(albumId = albumId)
+        val ids = deviceIds.mapNotNull { dev ->
+            albumInfo?.assets?.find { dev == it.deviceAssetId }?.id
+        }
+        assetManager.deleteAssets(
+            assets = DeleteAssets(
+                ids = ids,
+                force = false
+            )
+        )
+    } catch (e: Throwable) {
+        Log.e(TAG, e.toString())
+        e.printStackTrace()
     }
 }
 

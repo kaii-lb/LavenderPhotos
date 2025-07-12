@@ -134,67 +134,73 @@ class ImmichViewModel(
     }
 
     @OptIn(ExperimentalEncodingApi::class, ExperimentalStdlibApi::class)
-    fun checkSyncStatus(immichAlbumId: String, expectedBackupMedia: Set<ImmichBackupMedia>) {
-        viewModelScope.launch {
-            var snapshot = _immichAlbumsSyncState.value.toMutableMap()
+    fun checkSyncStatus(immichAlbumId: String, expectedBackupMedia: Set<ImmichBackupMedia>) = viewModelScope.launch {
+        var snapshot = _immichAlbumsSyncState.value.toMutableMap()
 
-            var possible = snapshot.keys.find { it == immichAlbumId }
+        var possible = snapshot.keys.find { it == immichAlbumId }
 
-            if (possible == null) {
-                snapshot.put(
-                    key = immichAlbumId,
-                    value = ImmichAlbumSyncState.Loading
-                )
-
-                possible = immichAlbumId
-            }
-
-            var result = immichApiService.checkDifference(
-                immichId = immichAlbumId,
-                expectedImmichBackupMedia = expectedBackupMedia.toSet()
+        if (possible == null) {
+            snapshot.put(
+                key = immichAlbumId,
+                value = ImmichAlbumSyncState.Loading
             )
 
-            if (result is ImmichAlbumSyncState.OutOfSync) {
-                val albumDupes = immichAlbumsDupState.value[immichAlbumId]
+            possible = immichAlbumId
+        }
 
-                if (albumDupes is ImmichAlbumDuplicateState.HasDupes) {
-                    Log.d(TAG, "Gotten dupes ${albumDupes.dupeAssets.map { it.deviceAssetId }}")
-                    Log.d(TAG, "Gotten result $result")
+        var result = immichApiService.checkDifference(
+            immichId = immichAlbumId,
+            expectedImmichBackupMedia = expectedBackupMedia.toSet()
+        )
 
-                    if (result.missing.none { it.deviceAssetId !in albumDupes.dupeAssets.map { it.deviceAssetId } }) {
-                        result = if (result.extra.isEmpty()) {
+        if (result is ImmichAlbumSyncState.OutOfSync) {
+            val albumDupes = immichAlbumsDupState.value[immichAlbumId]
+
+            if (albumDupes is ImmichAlbumDuplicateState.HasDupes) {
+                Log.d(TAG, "Gotten dupes ${albumDupes.dupeAssets.map { it.deviceAssetId }}")
+                Log.d(TAG, "Gotten result $result")
+
+                if (result.missing.none { it.deviceAssetId !in albumDupes.dupeAssets.map { it.deviceAssetId } }) {
+                    result = if (result.extra.isEmpty()) {
+                        ImmichAlbumSyncState.InSync(expectedBackupMedia)
+                    } else {
+                        val extras = result.missing.filter { it.checksum !in albumDupes.dupeAssets.map { it.checksum } }
+
+                        if (extras.isEmpty()) {
                             ImmichAlbumSyncState.InSync(expectedBackupMedia)
                         } else {
-                            val extras = result.missing.filter { it.checksum !in albumDupes.dupeAssets.map { it.checksum } }
-
-                            if (extras.isEmpty()) {
-                                ImmichAlbumSyncState.InSync(expectedBackupMedia)
-                            } else {
-                                ImmichAlbumSyncState.OutOfSync(emptySet(), result.extra)
-                            }
+                            ImmichAlbumSyncState.OutOfSync(emptySet(), result.extra)
                         }
                     }
                 }
             }
-
-            Log.d(TAG, "Gotten result $result")
-
-            snapshot.remove(immichAlbumId)
-            snapshot.put(
-                key = immichAlbumId,
-                value = result
-            )
-
-            _immichAlbumsSyncState.value = snapshot
         }
+
+        Log.d(TAG, "Gotten result $result")
+
+        snapshot.remove(immichAlbumId)
+        snapshot.put(
+            key = immichAlbumId,
+            value = result
+        )
+
+        _immichAlbumsSyncState.value = snapshot
     }
 
     fun removeAlbumFromSync(
         albumInfo: AlbumInfo,
+        deleteFromImmich: List<String>?,
         onDone: () -> Unit = {}
     ) {
         viewModelScope.launch {
             _immichServerAlbums.value = ImmichServerSidedAlbumsState.Loading
+
+            if (deleteFromImmich != null) {
+                immichApiService.deleteAssets(
+                    deviceIds = deleteFromImmich,
+                    albumId = albumInfo.immichId
+                )
+            }
 
             val result = immichApiService.removeAlbumFromSync(albumInfo.immichId)
             result.onSuccess { _ ->

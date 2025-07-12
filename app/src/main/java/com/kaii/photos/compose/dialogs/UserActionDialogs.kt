@@ -946,3 +946,70 @@ fun ImmichLoginDialog(
         }
     }
 }
+
+@Composable
+fun ConfirmationDialogWithCustomBody(
+    showDialog: MutableState<Boolean>,
+    title: String,
+    confirmButtonLabel: String,
+    action: () -> Unit,
+    body: @Composable (() -> Unit)
+) {
+    val localConfig = LocalConfiguration.current
+    var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
+
+    LaunchedEffect(localConfig) {
+        isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
+    }
+
+    val modifier = if (isLandscape)
+        Modifier.width(256.dp)
+    else
+        Modifier
+
+    if (showDialog.value) {
+        AlertDialog(
+            onDismissRequest = {
+                showDialog.value = false
+            },
+            modifier = modifier,
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showDialog.value = false
+                        action()
+                    }
+                ) {
+                    Text(
+                        text = confirmButtonLabel,
+                        fontSize = TextUnit(14f, TextUnitType.Sp)
+                    )
+                }
+            },
+            title = {
+                Text(
+                    text = title,
+                    fontSize = TextUnit(16f, TextUnitType.Sp)
+                )
+            },
+            text = body,
+            dismissButton = {
+                Button(
+                    onClick = {
+                        showDialog.value = false
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                    )
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.media_cancel),
+                        fontSize = TextUnit(14f, TextUnitType.Sp)
+                    )
+                }
+            },
+            shape = RoundedCornerShape(32.dp)
+        )
+    }
+}

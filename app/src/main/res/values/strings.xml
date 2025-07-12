@@ -401,6 +401,7 @@
     <string name="immich_sync_album_out_of_sync_desc">"Extra in: Album: %1$s. Immich: %2$s"</string>
     <string name="immich_album_delete">Remove this album?</string>
     <string name="immich_album_delete_desc">Removes this album from Immich sync</string>
+    <string name="immich_album_delete_include_media">Delete contents from Immich</string>
     <string name="immich_album_delete_full">Remove Album</string>
     <string name="immich_auth_passowrd">Password</string>
     <string name="immich_auth_email">Email</string>
