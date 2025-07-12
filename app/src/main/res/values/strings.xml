@@ -300,6 +300,9 @@
     <string name="media_confirm">Confirm</string>
     <string name="media_okay">Okay</string>
     <string name="media_move_copy_list_search_bar">Search for an album</string>
+    <string name="media_copy_snackbar_title">Copying media…</string>
+    <string name="media_move_snackbar_title">Moving media…</string>
+    <string name="media_operate_snackbar_body">%1$d out of %2$d done</string>
 
     <!-- Search -->
     <string name="search_photo_name">Search for a photo</string>
