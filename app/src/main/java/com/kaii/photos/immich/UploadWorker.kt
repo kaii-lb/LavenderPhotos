@@ -11,6 +11,7 @@ import com.kaii.lavender.immichintegration.ApiClient
 import com.kaii.lavender.immichintegration.AssetManager
 import com.kaii.lavender.immichintegration.TrashManager
 import com.kaii.lavender.immichintegration.serialization.AlbumOrder
+import com.kaii.lavender.immichintegration.serialization.DeleteAssets
 import com.kaii.lavender.immichintegration.serialization.File
 import com.kaii.lavender.immichintegration.serialization.ModifyAlbumAsset
 import com.kaii.lavender.immichintegration.serialization.RestoreFromTrash
@@ -19,11 +20,14 @@ import com.kaii.photos.MainActivity.Companion.immichViewModel
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.SQLiteQuery
 import com.kaii.photos.helpers.MediaItemSortMode
+import com.kaii.photos.helpers.calculateSha1Checksum
 import com.kaii.photos.mediastore.MultiAlbumDataSource
 import com.kaii.photos.models.multi_album.DisplayDateFormat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 
 private const val TAG = "LAVENDER_UPLOAD_WORKER"
 
@@ -39,6 +43,7 @@ class UploadWorker(
         const val LAVENDER_ALBUM_ID = "lavender_album_id"
     }
 
+    @OptIn(ExperimentalStdlibApi::class, ExperimentalEncodingApi::class)
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         try {
             val queryString =
@@ -99,11 +104,10 @@ class UploadWorker(
                     dateCreated = item.dateTaken * 1000,
                     lastModified = item.dateModified * 1000
                 )
-                val deviceAssetId = "${item.displayName}-${immichFile.size}"
 
                 if (immichFile.path.isEmpty()) return@mapNotNull null
 
-                if (immichAlbumAssetsIds.isEmpty() || !immichAlbumAssetsIds.contains(deviceAssetId)) immichFile
+                if (immichAlbumAssetsIds.isEmpty() || !immichAlbumAssetsIds.contains(item.deviceAssetId)) immichFile
                 else null
             }
 
@@ -175,11 +179,12 @@ class UploadWorker(
                         )
                     )
 
+                    val toBeAdded = successList.map { it.id } - assetInfo.filter { it.duplicateId != null }
+                        .map { it.id } + dupes.keys.mapNotNull { dupes[it]?.first()?.id }
                     albumManager.addAssetToAlbum(
                         albumId = albumId,
                         assets = ModifyAlbumAsset(
-                            ids = successList.map { it.id } - assetInfo.filter { it.duplicateId != null }
-                                .map { it.id } + dupes.keys.mapNotNull { dupes[it]?.first()?.id }
+                            ids = toBeAdded
                         )
                     )
 
@@ -191,6 +196,25 @@ class UploadWorker(
                             description = immichAlbum.description,
                             isActivityEnabled = immichAlbum.isActivityEnabled,
                             order = immichAlbum.order ?: AlbumOrder.Descending
+                        )
+                    )
+
+                    immichAlbum = albumManager.getAlbumInfo(albumId = albumId)!!
+
+                    val backupMedia = media.map {
+                        calculateSha1Checksum(
+                            java.io.File(it.absolutePath)
+                        )
+                    }
+
+                    val allMedia = immichAlbum.assets.filter { asset ->
+                        Base64.decode(asset.checksum).toHexString() !in backupMedia
+                    }
+
+                    assetManager.deleteAssets(
+                        assets = DeleteAssets(
+                            ids = allMedia.map { it.id },
+                            force = false
                         )
                     )
                 } catch (e: Throwable) {

@@ -160,13 +160,13 @@ class ImmichViewModel(
                 Log.d(TAG, "Gotten dupes ${albumDupes.dupeAssets.map { it.deviceAssetId }}")
                 Log.d(TAG, "Gotten result $result")
 
-                if (result.missing.none { it.deviceAssetId !in albumDupes.dupeAssets.map { it.deviceAssetId } }) {
+                if (result.missing.none { it.checksum !in albumDupes.dupeAssets.map { it.checksum } }) {
                     result = if (result.extra.isEmpty()) {
                         ImmichAlbumSyncState.InSync(expectedBackupMedia)
                     } else {
-                        val extras = result.missing.filter { it.checksum !in albumDupes.dupeAssets.map { it.checksum } }
+                        val extras = result.extra.none { it.checksum !in albumDupes.dupeAssets.map { it.checksum } }
 
-                        if (extras.isEmpty()) {
+                        if (extras) {
                             ImmichAlbumSyncState.InSync(expectedBackupMedia)
                         } else {
                             ImmichAlbumSyncState.OutOfSync(emptySet(), result.extra)
@@ -176,7 +176,7 @@ class ImmichViewModel(
             }
         }
 
-        Log.d(TAG, "Gotten result $result")
+        Log.d(TAG, "Refreshed result $result")
 
         snapshot.remove(immichAlbumId)
         snapshot.put(
