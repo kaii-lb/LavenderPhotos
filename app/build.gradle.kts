@@ -109,7 +109,7 @@ dependencies {
     annotationProcessor("androidx.room:room-compiler:$roomVersion")
 
     implementation("com.github.kaii-lb:Lavender-Snackbars:0.2.0")
-    implementation("com.github.kaii-lb.LavenderImmichIntegration:library:v1.0.7")
+    implementation("com.github.kaii-lb.LavenderImmichIntegration:library:v1.0.9")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")

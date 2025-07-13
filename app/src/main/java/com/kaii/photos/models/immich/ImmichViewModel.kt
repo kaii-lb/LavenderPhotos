@@ -24,6 +24,7 @@ import com.kaii.photos.immich.ImmichAlbumDuplicateState
 import com.kaii.photos.immich.ImmichAlbumSyncState
 import com.kaii.photos.immich.ImmichApiService
 import com.kaii.photos.immich.ImmichServerSidedAlbumsState
+import com.kaii.photos.immich.ImmichServerState
 import com.kaii.photos.immich.ImmichUserLoginState
 import com.kaii.photos.mediastore.getSQLiteQuery
 import kotlinx.coroutines.Dispatchers
@@ -63,6 +64,10 @@ class ImmichViewModel(
     private val _immichUserLoginState: MutableStateFlow<ImmichUserLoginState> =
         MutableStateFlow(ImmichUserLoginState.IsNotLoggedIn)
     val immichUserLoginState = _immichUserLoginState.asStateFlow()
+
+    private val _immichServerState: MutableStateFlow<ImmichServerState> =
+        MutableStateFlow(ImmichServerState.Loading)
+    val immichServerState = _immichServerState.asStateFlow()
 
     private lateinit var immichApiService: ImmichApiService
     private lateinit var immichEndpoint: String
@@ -450,6 +455,17 @@ class ImmichViewModel(
         )
         refreshAlbums {
             onDone()
+        }
+    }
+
+    fun refreshServerInfo() = viewModelScope.launch {
+        val info = immichApiService.getServerInfo()
+        val storage = immichApiService.getServerStorage()
+
+        if (info != null && storage != null) {
+            _immichServerState.value = ImmichServerState.HasInfo(info, storage)
+        } else {
+            _immichServerState.value = ImmichServerState.Failed
         }
     }
 }

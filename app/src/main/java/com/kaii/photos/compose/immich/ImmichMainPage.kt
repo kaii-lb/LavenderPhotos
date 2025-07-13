@@ -19,6 +19,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -52,6 +53,7 @@ import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.immichViewModel
 import com.kaii.photos.R
+import com.kaii.photos.compose.PreferenceRowWithLoadingBar
 import com.kaii.photos.compose.PreferencesRow
 import com.kaii.photos.compose.PreferencesSeparatorText
 import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
@@ -60,6 +62,7 @@ import com.kaii.photos.compose.dialogs.TextEntryDialog
 import com.kaii.photos.datastore.Immich
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.immich.ImmichServerState
 import com.kaii.photos.immich.ImmichUserLoginState
 import kotlinx.coroutines.launch
 import java.io.File
@@ -317,6 +320,84 @@ fun ImmichMainPage() {
                         )
                     }
                 }
+            }
+
+            item {
+                PreferencesSeparatorText(
+                    text = stringResource(id = R.string.immich_server)
+                )
+            }
+
+            item {
+                val serverInfo by immichViewModel.immichServerState.collectAsStateWithLifecycle()
+                val userInfo by immichViewModel.immichUserLoginState.collectAsStateWithLifecycle()
+                val context = LocalContext.current
+
+                LaunchedEffect(userInfo) {
+                    if (userInfo is ImmichUserLoginState.IsLoggedIn) immichViewModel.refreshServerInfo()
+                }
+
+                val info by remember { derivedStateOf {
+                    if (serverInfo is ImmichServerState.HasInfo) {
+                        Pair(
+                            (serverInfo as ImmichServerState.HasInfo).info.version.toString(),
+                            (serverInfo as ImmichServerState.HasInfo).info.build.toString()
+                        )
+                    } else {
+                        Pair(
+                            context.resources.getString(R.string.immich_state_unknown),
+                            context.resources.getString(R.string.immich_state_unknown)
+                        )
+                    }
+                }}
+
+                val storage by remember { derivedStateOf {
+                    if (serverInfo is ImmichServerState.HasInfo) {
+                        Pair(
+                            (serverInfo as ImmichServerState.HasInfo).storage.diskUse.toString(),
+                            (serverInfo as ImmichServerState.HasInfo).storage.diskAvailable.toString()
+                        )
+                    } else {
+                        Pair(
+                            context.resources.getString(R.string.immich_state_unknown),
+                            context.resources.getString(R.string.immich_state_unknown)
+                        )
+                    }
+                }}
+
+                PreferencesRow(
+                    title = stringResource(id = R.string.immich_server_info),
+                    summary = stringResource(id = R.string.immich_server_info_desc, info.first, info.second),
+                    iconResID = R.drawable.handyman,
+                    position = RowPosition.Middle,
+                    showBackground = false,
+                    enabled = userInfo is ImmichUserLoginState.IsLoggedIn
+                )
+
+                PreferenceRowWithLoadingBar(
+                    icon = R.drawable.storage,
+                    title = stringResource(id = R.string.immich_server_storage),
+                    body =
+                        if (serverInfo is ImmichServerState.HasInfo) {
+                            stringResource(id = R.string.immich_server_storage_desc, storage.first, storage.second)
+                        } else {
+                            stringResource(id = R.string.immich_server_info_failed)
+                        },
+                    progress = {
+                        if (serverInfo is ImmichServerState.HasInfo) {
+                            (serverInfo as ImmichServerState.HasInfo).storage.diskUsagePercentage.toFloat() / 100f
+                        } else {
+                            1f
+                        }
+                    },
+                    progressBarColor =
+                        if (serverInfo is ImmichServerState.HasInfo) {
+                            ProgressIndicatorDefaults.linearColor
+                        } else {
+                            MaterialTheme.colorScheme.error
+                        },
+                    enabled = userInfo is ImmichUserLoginState.IsLoggedIn
+                )
             }
         }
     }

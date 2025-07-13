@@ -1,5 +1,6 @@
 package com.kaii.photos.compose
 
+import androidx.annotation.DrawableRes
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -24,7 +25,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
@@ -538,6 +541,81 @@ fun PreferencesThreeStateSwitchRow(
                     .width(width - 12.dp)
                     .align(Alignment.Center)
             )
+        }
+    }
+}
+
+@Composable
+fun PreferenceRowWithLoadingBar(
+    title: String,
+    body: String,
+    @DrawableRes icon: Int,
+    progress: () -> Float,
+    progressBarColor: Color = ProgressIndicatorDefaults.linearColor,
+    enabled: Boolean = true,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth(1f)
+            .wrapContentHeight()
+            .padding(start = 16.dp, top = 0.dp, end = 16.dp, bottom = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            painter = painterResource(id = icon),
+            contentDescription = "Show storage space on immich server",
+            tint = MaterialTheme.colorScheme.onBackground.copy(alpha = if (enabled) 1f else 0.6f),
+            modifier = Modifier
+                .size(28.dp)
+        )
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        Column(
+            modifier = Modifier
+                .wrapContentHeight()
+                .fillMaxWidth(1f)
+                .padding(0.dp, 8.dp),
+            verticalArrangement = Arrangement.SpaceEvenly,
+            horizontalAlignment = Alignment.Start
+        ) {
+            Text(
+                text = title,
+                fontSize = TextUnit(18f, TextUnitType.Sp),
+                textAlign = TextAlign.Start,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = if (enabled) 1f else 0.6f)
+            )
+
+            Column (
+                modifier = Modifier
+                    .fillMaxWidth(1f),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Spacer (modifier = Modifier.height(8.dp))
+
+                LinearProgressIndicator(
+                    progress = progress,
+                    color = progressBarColor.copy(alpha = if (enabled) 1f else 0.6f),
+                    modifier = Modifier
+                        .height(14.dp)
+                        .fillMaxWidth(1f)
+                )
+
+                Spacer (modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = body,
+                    fontSize = TextUnit(14f, TextUnitType.Sp),
+                    textAlign = TextAlign.Start,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = if (enabled) 1f else 0.6f),
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .fillMaxWidth(1f)
+                )
+            }
         }
     }
 }

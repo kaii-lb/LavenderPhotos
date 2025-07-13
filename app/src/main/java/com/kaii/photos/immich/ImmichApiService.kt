@@ -6,6 +6,7 @@ import androidx.compose.ui.util.fastMap
 import com.kaii.lavender.immichintegration.AlbumManager
 import com.kaii.lavender.immichintegration.ApiClient
 import com.kaii.lavender.immichintegration.AssetManager
+import com.kaii.lavender.immichintegration.ServerManager
 import com.kaii.lavender.immichintegration.UserAuth
 import com.kaii.lavender.immichintegration.UserManager
 import com.kaii.lavender.immichintegration.serialization.Album
@@ -13,6 +14,8 @@ import com.kaii.lavender.immichintegration.serialization.CreateAlbum
 import com.kaii.lavender.immichintegration.serialization.DeleteAssets
 import com.kaii.lavender.immichintegration.serialization.File
 import com.kaii.lavender.immichintegration.serialization.LoginCredentials
+import com.kaii.lavender.immichintegration.serialization.ServerInfo
+import com.kaii.lavender.immichintegration.serialization.ServerStorage
 import com.kaii.lavender.immichintegration.serialization.UserFull
 import com.kaii.photos.datastore.ImmichBackupMedia
 import com.kaii.photos.datastore.SQLiteQuery
@@ -55,6 +58,13 @@ class ImmichApiService(
 
     private val assetManager =
         AssetManager(
+            apiClient = client,
+            endpointBase = endpoint,
+            bearerToken = token
+        )
+
+    private val serverManager =
+        ServerManager(
             apiClient = client,
             endpointBase = endpoint,
             bearerToken = token
@@ -263,6 +273,24 @@ class ImmichApiService(
         Log.e(TAG, e.toString())
         e.printStackTrace()
     }
+
+    suspend fun getServerInfo() = try {
+        serverManager.getAboutInfo()
+    } catch (e: Throwable) {
+        Log.e(TAG, e.toString())
+        e.printStackTrace()
+
+        null
+    }
+
+    suspend fun getServerStorage() = try {
+        serverManager.getStorage()
+    } catch (e: Throwable) {
+        Log.e(TAG, e.toString())
+        e.printStackTrace()
+
+        null
+    }
 }
 
 sealed class ImmichAlbumSyncState {
@@ -314,4 +342,11 @@ sealed class ImmichUserLoginState {
     data class IsLoggedIn(val info: UserFull) : ImmichUserLoginState()
 
     object IsNotLoggedIn : ImmichUserLoginState()
+}
+
+sealed class ImmichServerState {
+    data class HasInfo(val info: ServerInfo, val storage: ServerStorage) : ImmichServerState()
+
+    object Loading : ImmichServerState()
+    object Failed : ImmichServerState()
 }

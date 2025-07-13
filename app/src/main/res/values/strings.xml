@@ -415,4 +415,10 @@
     <string name="immich_uuid">Immich UUID</string>
     <string name="immich_failed_refreshing_albums">Failed refreshing albums</string>
     <string name="immich_failed_uploading_albums">Failed uploading album</string>
+    <string name="immich_server_info">Server Info</string>
+    <string name="immich_server_info_desc">Version: %1$s. Build: %2$s</string>
+    <string name="immich_server_storage">Server Storage</string>
+    <string name="immich_server_storage_desc">%1$s of %2$s used</string>
+    <string name="immich_server_info_failed">Data is not available</string>
+    <string name="immich_server">Immich Server</string>
 </resources>
