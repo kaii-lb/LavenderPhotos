@@ -82,4 +82,11 @@
     <string name="app_name_full">Lavender Photos</string>
     <string name="locked_folder_help_bottom">Захищені дані неможливо відновити, якщо Ви забули пароль або видалили відбиток пальця.</string>
     <string name="secure_folder">Захищена тека</string>
+    <string name="export_unenc_backup">Експортувати незашифровану резервну копію</string>
+    <string name="export_unenc_backup_desc">Експортує теку з усіма Вашими захищеними даними у незашифрованому вигляді</string>
+    <string name="exporting_backup">Експортування резервної копії…</string>
+    <string name="export_unenc_zip">Експортувати резервну копію у ZIP</string>
+    <string name="export_unenc_zip_desc">Створює ZIP-файл з усіма вашими захищеними даними</string>
+    <string name="export_fav_to_folder">Експортувати резервну копію у теку</string>
+    <string name="export_fav_to_folder_desc">Експортує всі Ваші обрані дані до теки</string>
 </resources>
