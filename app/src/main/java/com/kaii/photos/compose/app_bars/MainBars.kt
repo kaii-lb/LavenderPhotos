@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastMapNotNull
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kaii.photos.LocalAppDatabase
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.SelectViewTopBarLeftButtons
@@ -285,6 +286,7 @@ fun MainAppSelectingBottomBar(
         val runDeleteAction = remember { mutableStateOf(false) }
 
         val mainViewModel = LocalMainViewModel.current
+        val applicationDatabase = LocalAppDatabase.current
         GetPermissionAndRun(
             uris = selectedItemsWithoutSection.fastMapNotNull { it.uri },
             shouldRun = runDeleteAction,
@@ -292,8 +294,9 @@ fun MainAppSelectingBottomBar(
                 mainViewModel.launch(Dispatchers.IO) {
                     setTrashedOnPhotoList(
                         context = context,
-                        list = selectedItemsWithoutSection.map { Pair(it.uri, it.absolutePath) },
-                        trashed = true
+                        list = selectedItemsWithoutSection,
+                        trashed = true,
+                        appDatabase = applicationDatabase
                     )
 
                     selectedItemsList.clear()

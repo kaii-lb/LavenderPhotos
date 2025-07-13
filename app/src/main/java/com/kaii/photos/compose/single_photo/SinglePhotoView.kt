@@ -550,6 +550,7 @@ private fun BottomBar(
 
                     val coroutineScope = rememberCoroutineScope()
                     val mainViewModel = LocalMainViewModel.current
+                    val applicationDatabase = LocalAppDatabase.current
 
                     GetPermissionAndRun(
                         uris = listOf(currentItem.uri),
@@ -557,9 +558,10 @@ private fun BottomBar(
                         onGranted = {
                             mainViewModel.launch(Dispatchers.IO) {
                                 setTrashedOnPhotoList(
-                                    context,
-                                    listOf(Pair(currentItem.uri, currentItem.absolutePath)),
-                                    true
+                                    context = context,
+                                    list = listOf(currentItem),
+                                    trashed = true,
+                                    appDatabase = applicationDatabase
                                 )
 
                                 if (groupedMedia.value.isEmpty()) onZeroItemsLeft()
@@ -613,7 +615,6 @@ private fun BottomBar(
                         onRejected = {}
                     )
 
-                    val applicationDatabase = LocalAppDatabase.current
                     GetPermissionAndRun(
                         uris = listOf(currentItem.uri),
                         shouldRun = moveToSecureFolder,

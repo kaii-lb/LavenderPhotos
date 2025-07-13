@@ -243,7 +243,7 @@ fun LockedFolderEntryView(
                         Log.d(TAG, "Final name of file is $name")
                         name
                     },
-                    onSingleItemDone = { _, _ -> }
+                    onSingleItemDone = { _ -> }
                 )
 
                 val path = context.appRestoredFilesDir.toRelativePath()

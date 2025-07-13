@@ -93,7 +93,12 @@ fun permanentlyDeletePhotoList(context: Context, list: List<Uri>) {
 
 // TODO: remove from favourites
 /** @param list is a list of pairs of item uri and its absolute path */
-fun setTrashedOnPhotoList(context: Context, list: List<Pair<Uri, String>>, trashed: Boolean) {
+suspend fun setTrashedOnPhotoList(
+    context: Context,
+    list: List<MediaStoreData>,
+    trashed: Boolean,
+    appDatabase: MediaDatabase
+) {
     val contentResolver = context.contentResolver
 
     val currentTimeMillis = System.currentTimeMillis()
@@ -101,12 +106,31 @@ fun setTrashedOnPhotoList(context: Context, list: List<Pair<Uri, String>>, trash
         put(MediaColumns.IS_TRASHED, trashed)
     }
 
+    val body = mutableStateOf(context.resources.getString(R.string.media_operate_snackbar_body, 0, list.size))
+    val percentage = mutableFloatStateOf(0f)
+
+    LavenderSnackbarController.pushEvent(
+        LavenderSnackbarEvents.ProgressEvent(
+            message =
+                if (trashed) context.resources.getString(R.string.media_delete_snackbar_title)
+                else context.resources.getString(R.string.media_restore_snackbar_title),
+            body = body,
+            icon = R.drawable.content_paste,
+            percentage = percentage
+        )
+    )
+
     try {
-        list.forEach { (uri, path) ->
+        list.forEachIndexed { index, media ->
             // order is very important!
             // this WILL crash if you try to set last modified on a file that got moved from ex image.png to .trashed-{timestamp}-image.png
-            File(path).setLastModified(currentTimeMillis)
-            contentResolver.update(uri, trashedValues, null)
+            File(media.absolutePath).setLastModified(currentTimeMillis)
+            contentResolver.update(media.uri, trashedValues, null)
+
+            appDatabase.favouritedItemEntityDao().deleteEntityById(media.id)
+
+            body.value = context.resources.getString(R.string.media_operate_snackbar_body, index + 1, list.size)
+            percentage.floatValue = (index + 1f) / list.size
         }
     } catch (e: Throwable) {
         Log.e(TAG, "Setting trashed $trashed on photo list failed.")
@@ -393,7 +417,7 @@ fun copyImageListToPath(
     basePath: String,
     overwriteDate: Boolean,
     overrideDisplayName: ((displayName: String) -> String)? = null,
-    onSingleItemDone: (uri: Uri, path: String) -> Unit
+    onSingleItemDone: (media: MediaStoreData) -> Unit
 ) {
     CoroutineScope(Dispatchers.IO).launch {
         val contentResolver = context.contentResolver
@@ -405,7 +429,7 @@ fun copyImageListToPath(
             LavenderSnackbarEvents.ProgressEvent(
                 message = context.resources.getString(R.string.media_copy_snackbar_title),
                 body = body,
-                icon = R.drawable.content_paste,
+                icon = R.drawable.trash,
                 percentage = percentage
             )
         )
@@ -424,7 +448,7 @@ fun copyImageListToPath(
                     body.value = context.resources.getString(R.string.media_operate_snackbar_body, index + 1, list.size)
                     percentage.floatValue = (index + 1f) / list.size
 
-                    onSingleItemDone(uri, media.absolutePath)
+                    onSingleItemDone(media)
                 }
             }
         }.await()

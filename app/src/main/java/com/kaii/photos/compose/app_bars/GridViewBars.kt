@@ -286,6 +286,7 @@ fun SingleAlbumViewBottomBar(
             val runTrashAction = remember { mutableStateOf(false) }
 
             val mainViewModel = LocalMainViewModel.current
+            val applicationDatabase = LocalAppDatabase.current
             GetPermissionAndRun(
                 uris = selectedItemsWithoutSection.map { it.uri },
                 shouldRun = runTrashAction,
@@ -293,8 +294,9 @@ fun SingleAlbumViewBottomBar(
                     mainViewModel.launch(Dispatchers.IO) {
                         setTrashedOnPhotoList(
                             context = context,
-                            list = selectedItemsWithoutSection.map { Pair(it.uri, it.absolutePath) },
-                            trashed = true
+                            list = selectedItemsWithoutSection,
+                            trashed = true,
+                            appDatabase = applicationDatabase
                         )
 
                         selectedItemsList.clear()
@@ -521,6 +523,7 @@ fun TrashedPhotoGridViewBottomBar(
         val runRestoreAction = remember { mutableStateOf(false) }
 
         val mainViewModel = LocalMainViewModel.current
+        val applicationDatabase = LocalAppDatabase.current
         GetPermissionAndRun(
             uris = selectedItemsWithoutSection.map { it.uri },
             shouldRun = runRestoreAction,
@@ -528,8 +531,9 @@ fun TrashedPhotoGridViewBottomBar(
                 mainViewModel.launch(Dispatchers.IO) {
                     setTrashedOnPhotoList(
                         context = context,
-                        list = selectedItemsWithoutSection.map { Pair(it.uri, it.absolutePath) },
-                        trashed = false
+                        list = selectedItemsWithoutSection,
+                        trashed = false,
+                        appDatabase = applicationDatabase
                     )
 
                     selectedItemsList.clear()
@@ -1005,6 +1009,7 @@ fun FavouritesViewBottomAppBar(
         val showDeleteDialog = remember { mutableStateOf(false) }
         val runTrashAction = remember { mutableStateOf(false) }
         val mainViewModel = LocalMainViewModel.current
+
         val confirmToDelete by mainViewModel.settings.Permissions.getConfirmToDelete()
             .collectAsStateWithLifecycle(initialValue = true)
 
@@ -1015,8 +1020,9 @@ fun FavouritesViewBottomAppBar(
                 mainViewModel.launch(Dispatchers.IO) {
                     setTrashedOnPhotoList(
                         context = context,
-                        list = selectedItemsWithoutSection.map { Pair(it.uri, it.absolutePath) },
-                        trashed = true
+                        list = selectedItemsWithoutSection,
+                        trashed = true,
+                        appDatabase = applicationDatabase
                     )
 
                     selectedItemsList.clear()

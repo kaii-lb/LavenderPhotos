@@ -1,7 +1,6 @@
 package com.kaii.photos.compose.grids
 
 import android.content.ContentValues
-import android.net.Uri
 import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -110,7 +109,8 @@ fun MoveCopyAlbumListView(
     val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
 
     val originalAlbumsList by if (autoDetectAlbums) {
-        mainViewModel.settings.AlbumsList.getAutoDetectedAlbums(displayDateFormat, appDatabase).collectAsStateWithLifecycle(initialValue = emptyList())
+        mainViewModel.settings.AlbumsList.getAutoDetectedAlbums(displayDateFormat, appDatabase)
+            .collectAsStateWithLifecycle(initialValue = emptyList())
     } else {
         mainViewModel.settings.AlbumsList.getNormalAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
     }
@@ -299,6 +299,8 @@ fun AlbumsListItem(
     )
 
     val mainViewModel = LocalMainViewModel.current
+    val applicationDatabase = LocalAppDatabase.current
+    val coroutineScope = rememberCoroutineScope()
     val overwriteDate by mainViewModel.settings.Permissions.getOverwriteDateOnMove().collectAsStateWithLifecycle(initialValue = true)
     GetPermissionAndRun(
         uris = selectedItemsWithoutSection.map { it.uri },
@@ -306,51 +308,53 @@ fun AlbumsListItem(
         onGranted = {
             show.value = false
 
-            if (isMoving && album.paths.size == 1) {
-                moveImageListToPath(
-                    context = context,
-                    list = selectedItemsWithoutSection,
-                    destination = album.mainPath,
-                    overwriteDate = overwriteDate,
-                    basePath = album.mainPath.toBasePath()
-                )
-
-                if (groupedMedia != null) {
-                    val newList = groupedMedia.value.toMutableList()
-                    newList.removeAll(selectedItemsWithoutSection.toSet())
-                    groupedMedia.value = newList
-                }
-            } else {
-                val list = mutableListOf<Pair<Uri, String>>()
-
-                album.paths.forEach { path ->
-                    copyImageListToPath(
+            coroutineScope.launch {
+                if (isMoving && album.paths.size == 1) {
+                    moveImageListToPath(
                         context = context,
                         list = selectedItemsWithoutSection,
-                        destination = path,
+                        destination = album.mainPath,
                         overwriteDate = overwriteDate,
-                        basePath = path.toBasePath()
-                    ) { uri, path ->
-                        if (isMoving) {
-                            if (!list.contains(Pair(uri, path))) list.add(Pair(uri, path))
+                        basePath = album.mainPath.toBasePath()
+                    )
+
+                    if (groupedMedia != null) {
+                        val newList = groupedMedia.value.toMutableList()
+                        newList.removeAll(selectedItemsWithoutSection.toSet())
+                        groupedMedia.value = newList
+                    }
+                } else {
+                    val list = mutableListOf<MediaStoreData>()
+
+                    album.paths.forEach { path ->
+                        copyImageListToPath(
+                            context = context,
+                            list = selectedItemsWithoutSection,
+                            destination = path,
+                            overwriteDate = overwriteDate,
+                            basePath = path.toBasePath()
+                        ) { media ->
+                            if (isMoving) {
+                                if (!list.contains(media)) list.add(media)
+                            }
                         }
+                    }
+
+                    if (list.isNotEmpty()) {
+                        setTrashedOnPhotoList(
+                            context = context,
+                            list = list,
+                            trashed = true,
+                            appDatabase = applicationDatabase
+                        )
                     }
                 }
 
-                if (list.isNotEmpty()) {
-                    setTrashedOnPhotoList(
-                        context = context,
-                        list = list,
-                        trashed = true
-                    )
-                }
+                selectedItemsList.clear()
             }
-
-            selectedItemsList.clear()
         }
     )
 
-    val coroutineScope = rememberCoroutineScope()
     Row(
         modifier = modifier
             .height(88.dp)
@@ -448,7 +452,7 @@ fun AlbumsListItem(
             )
         }
 
-        Spacer (modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(16.dp))
     }
 
     Spacer(
