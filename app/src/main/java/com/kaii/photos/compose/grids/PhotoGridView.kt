@@ -835,6 +835,11 @@ fun Modifier.dragSelectionHandler(
             if (selectedItemsList.size == 1 && selectedItemsList[0] != MediaStoreData()) {
                 initialKey = groupedMedia.indexOf(selectedItemsList[0])
                 currentKey = initialKey
+
+                if (initialKey == -1) {
+                    initialKey = null
+                    currentKey = null
+                }
             } else {
                 state.getGridItemAtOffset(
                     offset,

@@ -355,6 +355,7 @@ private fun BottomBar(
                 ) {
                     val runRestoreAction = remember { mutableStateOf(false) }
                     val mainViewModel = LocalMainViewModel.current
+                    val applicationDatabase = LocalAppDatabase.current
 
                     GetPermissionAndRun(
                         uris = listOf(item.uri),
@@ -363,8 +364,9 @@ private fun BottomBar(
                         	mainViewModel.launch(Dispatchers.IO) {
 	                            setTrashedOnPhotoList(
 	                                context = context,
-	                                list = listOf(Pair(item.uri, item.absolutePath)),
-	                                trashed = false
+	                                list = listOf(item),
+	                                trashed = false,
+                                    appDatabase = applicationDatabase
 	                            )
                         	}
                         }
