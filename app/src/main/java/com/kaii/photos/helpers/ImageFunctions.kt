@@ -202,46 +202,58 @@ fun moveImageToLockedFolder(
     val metadataRetriever = MediaMetadataRetriever()
 
     list.forEach { mediaItem ->
-        // set last modified so item shows up in correct place in locked folder
-        File(mediaItem.absolutePath).setLastModified(lastModified)
-
         val fileToBeHidden = File(mediaItem.absolutePath)
         val copyToPath = context.appSecureFolderDir + "/" + fileToBeHidden.name
-        val destinationFile = File(copyToPath)
+        try {
+            // set last modified so item shows up in correct place in locked folder
+            fileToBeHidden.setLastModified(lastModified)
 
-        if (mediaItem.type == MediaType.Image) {
-            setDateTakenForMedia(
-                mediaItem.absolutePath,
-                mediaItem.dateTaken
+            val destinationFile = File(copyToPath)
+
+            if (mediaItem.type == MediaType.Image)
+                setDateTakenForMedia(
+                    mediaItem.absolutePath,
+                    mediaItem.dateTaken
+                )
+
+            addSecuredCachedMediaThumbnail(
+                context = context,
+                mediaItem = mediaItem,
+                file = fileToBeHidden,
+                metadataRetriever = metadataRetriever,
+                applicationDatabase = applicationDatabase
+            )
+
+            // encrypt file data and write to secure folder path
+            val iv =
+                EncryptionManager.encryptInputStream(
+                    fileToBeHidden.inputStream(),
+                    destinationFile.outputStream()
+                )
+
+            applicationDatabase.securedItemEntityDao().insertEntity(
+                SecuredItemEntity(
+                    originalPath = mediaItem.absolutePath,
+                    securedPath = copyToPath,
+                    iv = iv
+                )
+            )
+
+            // cleanup
+            contentResolver.delete(mediaItem.uri, null)
+            applicationDatabase.mediaEntityDao().deleteEntityById(mediaItem.id)
+        } catch (e: Throwable) {
+            Log.e(TAG, e.toString())
+            e.printStackTrace()
+
+            applicationDatabase.securedItemEntityDao().insertEntity(
+                SecuredItemEntity(
+                    originalPath = mediaItem.absolutePath,
+                    securedPath = copyToPath,
+                    iv = ByteArray(0)
+                )
             )
         }
-
-        addSecuredCachedMediaThumbnail(
-            context = context,
-            mediaItem = mediaItem,
-            file = fileToBeHidden,
-            metadataRetriever = metadataRetriever,
-            applicationDatabase = applicationDatabase
-        )
-
-        // encrypt file data and write to secure folder path
-        val iv =
-            EncryptionManager.encryptInputStream(
-                fileToBeHidden.inputStream(),
-                destinationFile.outputStream()
-            )
-
-        applicationDatabase.securedItemEntityDao().insertEntity(
-            SecuredItemEntity(
-                originalPath = mediaItem.absolutePath,
-                securedPath = copyToPath,
-                iv = iv
-            )
-        )
-
-        // cleanup
-        contentResolver.delete(mediaItem.uri, null)
-        applicationDatabase.mediaEntityDao().deleteEntityById(mediaItem.id)
     }
 
     onDone()
