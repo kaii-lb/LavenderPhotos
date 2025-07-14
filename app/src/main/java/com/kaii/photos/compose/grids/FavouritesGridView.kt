@@ -72,11 +72,16 @@ fun FavouritesGridView(
     }
 
     var hasFiles by remember { mutableStateOf(true) }
-    LaunchedEffect(mediaStoreData.value) {
-        groupedMedia.value = groupPhotosBy(mediaStoreData.value, MediaItemSortMode.LastModified, displayDateFormat)
+    val media = remember { mutableStateOf(emptyList<MediaStoreData>())}
+
+    LaunchedEffect(groupedMedia.value.size) {
+        if (groupedMedia.value.isNotEmpty()) {
+            delay(PhotoGridConstants.UPDATE_TIME)
+            media.value = groupedMedia.value
+        }
 
         delay(PhotoGridConstants.LOADING_TIME)
-        hasFiles = groupedMedia.value.isNotEmpty()
+        hasFiles = media.value.isNotEmpty()
     }
 
     val showBottomSheet by remember {
@@ -137,7 +142,7 @@ fun FavouritesGridView(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             PhotoGrid(
-                groupedMedia = groupedMedia,
+                groupedMedia = media,
                 albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
                 selectedItemsList = selectedItemsList,
                 viewProperties = ViewProperties.Favourites,

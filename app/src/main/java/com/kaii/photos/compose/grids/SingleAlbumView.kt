@@ -42,6 +42,7 @@ import com.kaii.photos.compose.dialogs.SingleAlbumDialog
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.BottomBarTab
+import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.checkHasFiles
 import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.mediastore.MediaStoreData
@@ -294,9 +295,12 @@ private fun SingleAlbumViewCommon(
 
             LaunchedEffect(groupedMedia.value.size) {
                 if (groupedMedia.value.isNotEmpty()) {
-                    delay(300)
+                    delay(PhotoGridConstants.UPDATE_TIME)
                     media.value = groupedMedia.value
                 }
+
+                delay(PhotoGridConstants.LOADING_TIME)
+                hasFiles = media.value.isNotEmpty()
             }
 
             PhotoGrid(

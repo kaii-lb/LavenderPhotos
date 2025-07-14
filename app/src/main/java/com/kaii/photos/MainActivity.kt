@@ -1056,10 +1056,14 @@ class MainActivity : ComponentActivity() {
                                 }
 
                                 var hasFiles by remember { mutableStateOf(true) }
-                                LaunchedEffect(mediaStoreData.value) {
-                                    groupedMedia.value = mediaStoreData.value
+                                LaunchedEffect(mediaStoreData.value.size) {
+                                    if (mediaStoreData.value.isNotEmpty()) {
+                                        delay(PhotoGridConstants.UPDATE_TIME)
+                                        groupedMedia.value = mediaStoreData.value
+                                    }
+
                                     delay(PhotoGridConstants.LOADING_TIME)
-                                    hasFiles = groupedMedia.value.isNotEmpty()
+                                    hasFiles = mediaStoreData.value.isNotEmpty()
                                 }
 
                                 PhotoGrid(
@@ -1093,11 +1097,15 @@ class MainActivity : ComponentActivity() {
                                 selectedItemsList.clear()
 
                                 var hasFiles by remember { mutableStateOf(true) }
-                                LaunchedEffect(mediaStoreData.value) {
-                                    groupedMedia.value = mediaStoreData.value
+
+                                LaunchedEffect(mediaStoreData.value.size) {
+                                    if (mediaStoreData.value.isNotEmpty()) {
+                                        delay(PhotoGridConstants.UPDATE_TIME)
+                                        groupedMedia.value = mediaStoreData.value
+                                    }
 
                                     delay(PhotoGridConstants.LOADING_TIME)
-                                    hasFiles = groupedMedia.value.isNotEmpty()
+                                    hasFiles = mediaStoreData.value.isNotEmpty()
                                 }
 
                                 PhotoGrid(
