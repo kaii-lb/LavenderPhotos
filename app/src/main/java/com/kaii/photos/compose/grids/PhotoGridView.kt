@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -75,12 +76,14 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
@@ -437,14 +440,22 @@ fun DeviceMedia(
                     }
                     var chosenItemIndex by remember { mutableIntStateOf(0) }
 
+                    val layoutDirection = LocalLayoutDirection.current
+
                     Slider(
-                        value = percentScrolled,
+                        value =
+                            if (layoutDirection == LayoutDirection.Rtl) 1f - percentScrolled
+                            else percentScrolled,
                         interactionSource = interactionSource,
                         onValueChange = {
                             coroutineScope.launch {
                                 if (isScrollingByHandle) {
                                     chosenItemIndex =
-                                        (it * (groupedMedia.value.size - 1)).roundToInt()
+                                        if (layoutDirection == LayoutDirection.Rtl) {
+                                            ((1f - it) * (groupedMedia.value.size - 1)).roundToInt()
+                                        } else {
+                                            (it * (groupedMedia.value.size - 1)).roundToInt()
+                                        }
                                     gridState.scrollToItem(
                                         chosenItemIndex
                                     )
@@ -457,6 +468,15 @@ fun DeviceMedia(
                                 modifier = Modifier
                                     .height(48.dp)
                                     .width(96.dp)
+                                    .rotate(
+                                        if (layoutDirection == LayoutDirection.Rtl) 180f
+                                        else 0f
+                                    )
+                                    .offset(
+                                        y =
+                                            if (layoutDirection == LayoutDirection.Rtl) (-16).dp
+                                            else 0.dp
+                                    )
                             ) {
                                 Box(
                                     modifier = Modifier
@@ -473,7 +493,6 @@ fun DeviceMedia(
                                             .size(24.dp)
                                             .align(Alignment.Center)
                                     )
-
                                 }
 
                                 Box(
@@ -482,6 +501,11 @@ fun DeviceMedia(
                                         .rotate(-90f)
                                         .graphicsLayer {
                                             translationX = -220f
+
+                                            if (layoutDirection == LayoutDirection.Rtl) {
+                                                rotationX = 180f
+                                                rotationY = 180f
+                                            }
                                         }
                                 ) {
                                     AnimatedVisibility(
