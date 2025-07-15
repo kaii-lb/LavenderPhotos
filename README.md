@@ -5,6 +5,7 @@ This is Lavender Photos, a no non-sense, smooth, and performant gallery app for 
 - Browse all your photos and videos smoothly, seperated by date
 - Add and remove albums as you wish, no arbitrary or forced selections
 - Search for an image by its name or date (in many formats!)
+- Immich integration for easy media backup
 - Trash Bin that's sorted by recently trashed
 - Full fledged favouriting system
 - A selection system that doesn't suck
