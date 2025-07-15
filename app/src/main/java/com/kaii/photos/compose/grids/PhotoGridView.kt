@@ -121,9 +121,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import kotlin.math.roundToInt
 
 private const val TAG = "PHOTO_GRID_VIEW"
@@ -510,13 +510,9 @@ fun DeviceMedia(
                                                 }
                                             }
 
-                                            // TODO: respect locale
-                                            val format =
-                                                remember { DateTimeFormatter.ofPattern("MMM yyyy") }
+                                            val format = SimpleDateFormat("MMM yyyy", Locale.getDefault())
                                             val formatted = remember(item) {
-                                                Instant.ofEpochSecond(item.dateTaken)
-                                                    .atZone(ZoneId.systemDefault())
-                                                    .toLocalDateTime().format(format)
+                                                format.format(Date(item.dateTaken * 1000))
                                             }
 
                                             Text(

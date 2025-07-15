@@ -1,6 +1,7 @@
 package com.kaii.photos.models.multi_album
 
 import android.content.Context
+import android.icu.text.SimpleDateFormat
 import android.os.CancellationSignal
 import android.util.Log
 import androidx.compose.runtime.State
@@ -10,6 +11,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kaii.photos.R
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.MediaItemSortMode
@@ -23,10 +25,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 import java.util.Calendar
+import java.util.Date
 import java.util.Locale
 
 private const val TAG = "MULTI_ALBUM_VIEW_MODEL"
@@ -107,7 +107,8 @@ class MultiAlbumViewModel(
 fun groupPhotosBy(
     media: List<MediaStoreData>,
     sortBy: MediaItemSortMode = MediaItemSortMode.DateTaken,
-    displayDateFormat: DisplayDateFormat
+    displayDateFormat: DisplayDateFormat,
+    context: Context
 ): List<MediaStoreData> {
     if (media.isEmpty()) return emptyList()
 
@@ -163,14 +164,16 @@ fun groupPhotosBy(
     val yesterday = today - daySeconds
 
     val mediaItems = mutableListOf<MediaStoreData>()
+    val todayString = context.resources.getString(R.string.today)
+    val yesterdayString = context.resources.getString(R.string.yesterday)
     sortedMap.forEach { (sectionTime, children) ->
         val sectionKey = when (sectionTime) {
             today -> {
-                "Today"
+                todayString
             }
 
             yesterday -> {
-                "Yesterday"
+                yesterdayString
             }
 
             else -> {
@@ -203,13 +206,11 @@ enum class DisplayDateFormat(val format: String) {
 
 fun formatDate(timestamp: Long, sortBy: MediaItemSortMode, format: DisplayDateFormat): String {
     return if (timestamp != 0L) {
-        val dateTimeFormat =
-            if (sortBy == MediaItemSortMode.MonthTaken) DateTimeFormatter.ofPattern("MMMM yyyy")
-            else DateTimeFormatter.ofPattern(format.format)
+        val dateFormat =
+            if (sortBy == MediaItemSortMode.MonthTaken) SimpleDateFormat("MMMM yyyy", Locale.getDefault())
+            else SimpleDateFormat(format.format, Locale.getDefault())
 
-        val localDateTime =
-            Instant.ofEpochSecond(timestamp).atZone(ZoneId.systemDefault()).toLocalDateTime()
-        val dateTimeString = localDateTime.format(dateTimeFormat)
+        val dateTimeString = dateFormat.format(Date(timestamp * 1000))
         dateTimeString.toString()
     } else {
         "Pretend there is a date here"

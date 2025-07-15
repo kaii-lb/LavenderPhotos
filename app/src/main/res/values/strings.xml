@@ -333,6 +333,8 @@
     <string name="none">None</string>
     <string name="pixels">Pixels</string>
     <string name="paths_should_be_relative">Path needs to be relative</string>
+    <string name="today">Today</string>
+    <string name="yesterday">Yesterday</string>
 
     <!-- Bottom Sheets -->
     <string name="bottom_sheets_enter_text">Enter Text</string>

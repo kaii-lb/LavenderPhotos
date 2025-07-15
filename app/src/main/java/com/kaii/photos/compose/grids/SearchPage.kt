@@ -182,6 +182,7 @@ fun SearchPage(
         }
 
         var hasFiles by remember { mutableStateOf(true) }
+        val context = LocalContext.current
         LaunchedEffect(searchedForText.value, originalGroupedMedia.value) {
             println("ORIGINAL CHANGED REFRESHING")
             if (searchedForText.value == "") {
@@ -208,7 +209,7 @@ fun SearchPage(
                                             ?.let { date -> it.getDateTakenDay() == date } == true)
                     }
 
-                    groupedMedia.value = groupPhotosBy(local, sortMode, displayDateFormat)
+                    groupedMedia.value = groupPhotosBy(local, sortMode, displayDateFormat, context)
                     hideLoadingSpinner = true
 
                     return@launch
@@ -235,7 +236,7 @@ fun SearchPage(
                                     it.getDateTakenMonth() == calendar.timeInMillis / 1000
                         }
 
-                        groupedMedia.value = groupPhotosBy(local, MediaItemSortMode.DateTaken, displayDateFormat)
+                        groupedMedia.value = groupPhotosBy(local, MediaItemSortMode.DateTaken, displayDateFormat, context)
                         hideLoadingSpinner = true
 
                         return@launch
@@ -249,7 +250,7 @@ fun SearchPage(
                     isMedia && matchesFilter
                 }
 
-                groupedMedia.value = groupPhotosBy(groupedMediaLocal, MediaItemSortMode.DateTaken, displayDateFormat)
+                groupedMedia.value = groupPhotosBy(groupedMediaLocal, MediaItemSortMode.DateTaken, displayDateFormat, context)
                 hideLoadingSpinner = true
 
                 delay(PhotoGridConstants.LOADING_TIME)

@@ -222,7 +222,7 @@ fun LockedFolderView(
                 mediaStoreData.add(item)
             }
 
-            groupedMedia.value = groupPhotosBy(mediaStoreData, MediaItemSortMode.LastModified, displayDateFormat)
+            groupedMedia.value = groupPhotosBy(mediaStoreData, MediaItemSortMode.LastModified, displayDateFormat, context)
 
             delay(PhotoGridConstants.LOADING_TIME)
             hasFiles = groupedMedia.value.isNotEmpty()

@@ -133,6 +133,6 @@ class TrashStoreDataSource(
         }
         mediaCursor.close()
 
-        return groupPhotosBy(data, sortBy, displayDateFormat)
+        return groupPhotosBy(data, sortBy, displayDateFormat, context)
     }
 }

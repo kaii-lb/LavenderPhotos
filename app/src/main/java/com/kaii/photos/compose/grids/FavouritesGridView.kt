@@ -24,6 +24,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -61,12 +62,14 @@ fun FavouritesGridView(
     val mainViewModel = LocalMainViewModel.current
 
     val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
+    val context = LocalContext.current
     val groupedMedia = remember {
         mutableStateOf(
             groupPhotosBy(
                 mediaStoreData.value,
                 MediaItemSortMode.LastModified,
-                displayDateFormat
+                displayDateFormat,
+                context
             )
         )
     }

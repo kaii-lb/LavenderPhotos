@@ -134,6 +134,6 @@ class MultiAlbumDataSource(
             }
         }
 
-        return groupPhotosBy(data, sortBy, displayDateFormat)
+        return groupPhotosBy(data, sortBy, displayDateFormat, context)
     }
 }
