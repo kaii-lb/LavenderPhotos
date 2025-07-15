@@ -145,7 +145,7 @@ fun HorizontalImageList(
     ) { index ->
         if (groupedMedia.isEmpty()) return@HorizontalPager
 
-        val shouldPlay by remember(state) {
+        val shouldPlay = remember(state) {
             derivedStateOf {
                 (abs(state.currentPageOffsetFraction) < 0.5f && state.currentPage == index)
                         || (abs(state.currentPageOffsetFraction) > 0.5f && state.currentPage == index)
@@ -154,7 +154,7 @@ fun HorizontalImageList(
 
         val mediaStoreItem = groupedMedia[index]
 
-        if (mediaStoreItem.type == MediaType.Video && shouldPlay) {
+        if (mediaStoreItem.type == MediaType.Video) {
             Box(
                 modifier = Modifier
                     .fillMaxSize(1f)
@@ -165,7 +165,8 @@ fun HorizontalImageList(
                     shouldAutoPlay = shouldAutoPlay,
                     lastWasMuted = lastVideoWasMuted,
                     isTouchLocked = isTouchLocked,
-                    window = window
+                    window = window,
+                    shouldPlay = shouldPlay
                 )
             }
         } else {

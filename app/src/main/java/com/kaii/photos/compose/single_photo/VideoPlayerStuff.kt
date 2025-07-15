@@ -57,6 +57,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -397,6 +398,7 @@ fun VideoPlayer(
     lastWasMuted: MutableState<Boolean>,
     isTouchLocked: MutableState<Boolean>,
     window: Window,
+    shouldPlay: State<Boolean>,
 ) {
     val context = LocalContext.current
     val navController = LocalNavController.current
@@ -463,6 +465,7 @@ fun VideoPlayer(
                     strokeCap = StrokeCap.Round,
                     drawStopIndicator = {},
                     modifier = Modifier
+                        .height(14.dp)
                         .fillMaxWidth(0.6f),
                 )
             }
@@ -524,8 +527,8 @@ fun VideoPlayer(
 
     val localConfig = LocalConfiguration.current
 
-    LaunchedEffect(key1 = isPlaying.value, localConfig.orientation) {
-        if (!isPlaying.value) {
+    LaunchedEffect(isPlaying.value, localConfig.orientation, shouldPlay.value) {
+        if (!isPlaying.value || !shouldPlay.value) {
             controlsVisible.value = true
             window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
@@ -554,7 +557,7 @@ fun VideoPlayer(
             isPlaying.value = false
         }
 
-        while (isPlaying.value) {
+        while (isPlaying.value && shouldPlay.value) {
             currentVideoPosition.floatValue = exoPlayer.currentPosition / 1000f
 
             delay(1000)
@@ -581,8 +584,8 @@ fun VideoPlayer(
         )
     }
 
-    LaunchedEffect(shouldAutoPlay) {
-        exoPlayer.playWhenReady = shouldAutoPlay
+    LaunchedEffect(shouldAutoPlay, shouldPlay.value) {
+        exoPlayer.playWhenReady = shouldAutoPlay && shouldPlay.value
     }
 
     Box(
