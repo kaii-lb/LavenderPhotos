@@ -430,6 +430,7 @@ class SettingsLookAndFeelImpl(
 ) {
     private val followDarkModeKey = intPreferencesKey("look_and_feel_follow_dark_mode")
     private val displayDateFormat = intPreferencesKey("look_and_feel_display_date_format")
+    private val columnSize = intPreferencesKey("look_and_feel_column_size")
 
     /** 0 is follow system
      * 1 is dark
@@ -467,6 +468,17 @@ class SettingsLookAndFeelImpl(
     fun setDisplayDateFormat(format: DisplayDateFormat) = viewModelScope.launch {
         context.datastore.edit {
             it[displayDateFormat] = DisplayDateFormat.entries.indexOf(format)
+        }
+    }
+
+    fun getColumnSize(): Flow<Int> =
+        context.datastore.data.map {
+            it[columnSize] ?: 3
+        }
+
+    fun setColumnSize(size: Int) = viewModelScope.launch {
+        context.datastore.edit {
+            it[columnSize] = size
         }
     }
 }

@@ -10,6 +10,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,9 +26,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
@@ -546,14 +545,12 @@ fun PreferencesThreeStateSwitchRow(
 }
 
 @Composable
-fun PreferenceRowWithLoadingBar(
+fun PreferenceRowWithCustomBody(
     title: String,
-    body: String,
     @DrawableRes icon: Int,
-    progress: () -> Float,
-    progressBarColor: Color = ProgressIndicatorDefaults.linearColor,
+    modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    modifier: Modifier = Modifier
+    content: @Composable ColumnScope.() -> Unit
 ) {
     Row(
         modifier = modifier
@@ -593,28 +590,7 @@ fun PreferenceRowWithLoadingBar(
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Spacer (modifier = Modifier.height(8.dp))
-
-                LinearProgressIndicator(
-                    progress = progress,
-                    color = progressBarColor.copy(alpha = if (enabled) 1f else 0.6f),
-                    modifier = Modifier
-                        .height(14.dp)
-                        .fillMaxWidth(1f)
-                )
-
-                Spacer (modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = body,
-                    fontSize = TextUnit(14f, TextUnitType.Sp),
-                    textAlign = TextAlign.Start,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = if (enabled) 1f else 0.6f),
-                    maxLines = 3,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier
-                        .fillMaxWidth(1f)
-                )
+                content()
             }
         }
     }

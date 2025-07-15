@@ -364,6 +364,8 @@
     <string name="look_and_feel_date_format_compressed">Compressed</string>
     <string name="look_and_feel_theme_amoled">Amoled Black</string>
     <string name="look_and_feel_theme_amoled_desc">Sets the background color to black for the power efficiency on Amoled devices</string>
+    <string name="look_and_feel_column_size">Column Size: %1$d</string>
+    <string name="look_and_feel_grids">Grids</string>
 
     <!-- Immich -->
     <string name="immich">Immich</string>

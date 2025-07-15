@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -18,6 +19,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Scaffold
@@ -53,7 +55,7 @@ import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.immichViewModel
 import com.kaii.photos.R
-import com.kaii.photos.compose.PreferenceRowWithLoadingBar
+import com.kaii.photos.compose.PreferenceRowWithCustomBody
 import com.kaii.photos.compose.PreferencesRow
 import com.kaii.photos.compose.PreferencesSeparatorText
 import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
@@ -374,30 +376,49 @@ fun ImmichMainPage() {
                     enabled = userInfo is ImmichUserLoginState.IsLoggedIn
                 )
 
-                PreferenceRowWithLoadingBar(
+                PreferenceRowWithCustomBody(
                     icon = R.drawable.storage,
                     title = stringResource(id = R.string.immich_server_storage),
-                    body =
-                        if (serverInfo is ImmichServerState.HasInfo) {
-                            stringResource(id = R.string.immich_server_storage_desc, storage.first, storage.second)
-                        } else {
-                            stringResource(id = R.string.immich_server_info_failed)
+                    enabled = userInfo is ImmichUserLoginState.IsLoggedIn
+                ) {
+                    Spacer (modifier = Modifier.height(8.dp))
+
+                    LinearProgressIndicator(
+                        progress = {
+                            if (serverInfo is ImmichServerState.HasInfo) {
+                                (serverInfo as ImmichServerState.HasInfo).storage.diskUsagePercentage.toFloat() / 100f
+                            } else {
+                                1f
+                            }
                         },
-                    progress = {
-                        if (serverInfo is ImmichServerState.HasInfo) {
-                            (serverInfo as ImmichServerState.HasInfo).storage.diskUsagePercentage.toFloat() / 100f
-                        } else {
-                            1f
-                        }
-                    },
-                    progressBarColor =
-                        if (serverInfo is ImmichServerState.HasInfo) {
+                        color = if (serverInfo is ImmichServerState.HasInfo) {
                             ProgressIndicatorDefaults.linearColor
                         } else {
                             MaterialTheme.colorScheme.error
-                        },
-                    enabled = userInfo is ImmichUserLoginState.IsLoggedIn
-                )
+                        }.copy(alpha = if (userInfo is ImmichUserLoginState.IsLoggedIn) 1f else 0.6f),
+                        modifier = Modifier
+                            .height(14.dp)
+                            .fillMaxWidth(1f)
+                    )
+
+                    Spacer (modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text =
+                            if (serverInfo is ImmichServerState.HasInfo) {
+                                stringResource(id = R.string.immich_server_storage_desc, storage.first, storage.second)
+                            } else {
+                                stringResource(id = R.string.immich_server_info_failed)
+                            },
+                        fontSize = TextUnit(14f, TextUnitType.Sp),
+                        textAlign = TextAlign.Start,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = if (serverInfo is ImmichServerState.HasInfo) 1f else 0.6f),
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier
+                            .fillMaxWidth(1f)
+                    )
+                }
             }
         }
     }

@@ -10,6 +10,7 @@ import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.datastore.Settings
 import com.kaii.photos.helpers.Updater
 import com.kaii.photos.mediastore.MediaStoreData
@@ -18,7 +19,9 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 private const val TAG = "MAIN_VIEW_MODEL"
@@ -35,6 +38,12 @@ class MainViewModel(context: Context) : ViewModel() {
 
     private val _displayDateFormat = MutableStateFlow(DisplayDateFormat.Default)
     val displayDateFormat = _displayDateFormat.asStateFlow()
+
+    val columnSize = settings.LookAndFeel.getColumnSize().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = 3
+    )
 
     fun setGroupedMedia(media: List<MediaStoreData>?) {
         _groupedMedia.value = media

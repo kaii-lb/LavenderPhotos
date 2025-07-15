@@ -237,13 +237,14 @@ fun DeviceMedia(
                 }
             }
 
+            val columnSize by mainViewModel.columnSize.collectAsStateWithLifecycle()
             LazyVerticalGrid(
                 state = gridState,
                 columns = GridCells.Fixed(
                     if (!isLandscape) {
-                        3
+                        columnSize
                     } else {
-                        6
+                        columnSize * 2
                     }
                 ),
                 userScrollEnabled = !isDragSelecting.value,
