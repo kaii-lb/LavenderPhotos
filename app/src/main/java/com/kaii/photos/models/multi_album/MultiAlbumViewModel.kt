@@ -36,10 +36,11 @@ class MultiAlbumViewModel(
     var albumInfo: AlbumInfo,
     var sortBy: MediaItemSortMode,
     private val displayDateFormat: DisplayDateFormat,
-    private val database: MediaDatabase
+    private val database: MediaDatabase,
+    var ignorePaths: Boolean = false
 ) : ViewModel() {
     private var cancellationSignal = CancellationSignal()
-    private val mediaStoreDataSource = mutableStateOf(initDataSource(context, albumInfo, sortBy))
+    private val mediaStoreDataSource = mutableStateOf(initDataSource(context, albumInfo, sortBy, ignorePaths))
 
     val mediaFlow by derivedStateOf {
         getMediaDataFlow().value.stateIn(
@@ -60,37 +61,45 @@ class MultiAlbumViewModel(
     fun reinitDataSource(
         context: Context,
         album: AlbumInfo,
-        sortMode: MediaItemSortMode = sortBy
+        sortMode: MediaItemSortMode = sortBy,
+        ignorePaths: Boolean = this.ignorePaths
     ) {
-        sortBy = sortMode
+        this.sortBy = sortMode
+        this.ignorePaths = ignorePaths
         if (album == albumInfo) return
 
         cancelMediaFlow()
         cancellationSignal = CancellationSignal()
-        mediaStoreDataSource.value = initDataSource(context, album, sortBy)
+        mediaStoreDataSource.value = initDataSource(context, album, sortBy, ignorePaths)
     }
 
     fun changeSortMode(
         context: Context,
         sortMode: MediaItemSortMode
     ) {
-        sortBy = sortMode
+        this.sortBy = sortMode
+        this.ignorePaths = ignorePaths
 
         cancelMediaFlow()
         cancellationSignal = CancellationSignal()
-        mediaStoreDataSource.value = initDataSource(context, albumInfo, sortBy)
+        mediaStoreDataSource.value = initDataSource(context, albumInfo, sortBy, ignorePaths)
     }
 
     private fun initDataSource(
         context: Context,
         album: AlbumInfo,
-        sortBy: MediaItemSortMode
+        sortBy: MediaItemSortMode,
+        ignorePaths: Boolean
     ) = run {
-        val query = getSQLiteQuery(album.paths)
+        val query = getSQLiteQuery(album.paths).let {
+            if (ignorePaths) it.copy(query = "", paths = null, includedBasePaths = null)
+            else it
+        }
         Log.d(TAG, "query is $query")
 
         albumInfo = album
         this.sortBy = sortBy
+        this.ignorePaths = ignorePaths
 
         MultiAlbumDataSource(
             context = context,

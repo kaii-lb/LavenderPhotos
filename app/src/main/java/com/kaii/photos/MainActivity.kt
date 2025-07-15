@@ -962,9 +962,15 @@ class MainActivity : ComponentActivity() {
         val tabList by mainViewModel.settings.DefaultTabs.getTabList()
             .collectAsStateWithLifecycle(initialValue = DefaultTabs.defaultList)
 
+        val shouldShowEverything by mainViewModel.showAllInMain.collectAsStateWithLifecycle()
+
         // faster loading if no custom tabs are present
         LaunchedEffect(tabList) {
-            if (!tabList.any { it.isCustom } && currentView.value.albumPaths.toSet() != multiAlbumViewModel.albumInfo.paths.toSet()) {
+            if (!tabList.any { it.isCustom }
+                && (currentView.value.albumPaths.toSet() != multiAlbumViewModel.albumInfo.paths.toSet()
+                        || multiAlbumViewModel.ignorePaths != shouldShowEverything
+                    )
+            ) {
                 multiAlbumViewModel.reinitDataSource(
                     context = context,
                     album = AlbumInfo(
@@ -973,7 +979,8 @@ class MainActivity : ComponentActivity() {
                         paths = currentView.value.albumPaths,
                         isCustomAlbum = currentView.value.isCustom
                     ),
-                    sortMode = multiAlbumViewModel.sortBy
+                    sortMode = multiAlbumViewModel.sortBy,
+                    ignorePaths = shouldShowEverything
                 )
 
                 groupedMedia.value = mediaStoreData.value
@@ -1081,7 +1088,9 @@ class MainActivity : ComponentActivity() {
                             }
 
                             stateValue == DefaultTabs.TabTypes.photos -> {
-                                if (albumsList.toSet() != multiAlbumViewModel.albumInfo.paths.toSet()) {
+                                if (albumsList.toSet() != multiAlbumViewModel.albumInfo.paths.toSet()
+                                    || multiAlbumViewModel.ignorePaths != shouldShowEverything
+                                ) {
                                     multiAlbumViewModel.reinitDataSource(
                                         context = context,
                                         album = AlbumInfo(
@@ -1090,7 +1099,8 @@ class MainActivity : ComponentActivity() {
                                             paths = albumsList,
                                             isCustomAlbum = false
                                         ),
-                                        sortMode = multiAlbumViewModel.sortBy
+                                        sortMode = multiAlbumViewModel.sortBy,
+                                        ignorePaths = shouldShowEverything
                                     )
                                 }
 

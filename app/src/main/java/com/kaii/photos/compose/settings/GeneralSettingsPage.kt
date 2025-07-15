@@ -173,24 +173,36 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
                 val showAlbumsSelectionDialog = remember { mutableStateOf(false) }
                 val selectedAlbums = remember { mutableStateListOf<String>() }
 
-                PreferencesRow(
+                val shouldShowEverything by mainViewModel.showAllInMain.collectAsStateWithLifecycle()
+
+                PreferencesSwitchRow(
                     title = stringResource(id = R.string.albums_main_list),
                     iconResID = R.drawable.photogrid,
                     position = RowPosition.Single,
+                    checked = shouldShowEverything,
                     showBackground = false,
-                    summary = stringResource(id = R.string.albums_main_list_desc)
-                ) {
-                    selectedAlbums.clear()
-                    selectedAlbums.addAll(
-                        mainPhotosAlbums.map {
-                            it.apply {
-                                removeSuffix("/")
-                            }
+                    summary =
+                        if (!shouldShowEverything) stringResource(id = R.string.albums_main_list_desc_1)
+                        else stringResource(id = R.string.albums_main_list_desc_2),
+                    onRowClick = { checked ->
+                        if (!shouldShowEverything) {
+                            selectedAlbums.clear()
+                            selectedAlbums.addAll(
+                                mainPhotosAlbums.map {
+                                    it.apply {
+                                        removeSuffix("/")
+                                    }
+                                }
+                            )
+                            showAlbumsSelectionDialog.value = true
+                        } else {
+                            mainViewModel.settings.MainPhotosView.setShowEverything(checked)
                         }
-                    )
-
-                    showAlbumsSelectionDialog.value = true
-                }
+                    },
+                    onSwitchClick = { checked ->
+                        mainViewModel.settings.MainPhotosView.setShowEverything(checked)
+                    }
+                )
 
                 if (showAlbumsSelectionDialog.value) {
                     SelectableButtonListDialog(

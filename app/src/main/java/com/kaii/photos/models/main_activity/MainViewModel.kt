@@ -11,6 +11,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.datastore.LookAndFeel
+import com.kaii.photos.datastore.MainPhotosView
 import com.kaii.photos.datastore.Settings
 import com.kaii.photos.helpers.Updater
 import com.kaii.photos.mediastore.MediaStoreData
@@ -43,6 +44,12 @@ class MainViewModel(context: Context) : ViewModel() {
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
         initialValue = 3
+    )
+
+    val showAllInMain = settings.MainPhotosView.getShowEverything().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = false
     )
 
     fun setGroupedMedia(media: List<MediaStoreData>?) {

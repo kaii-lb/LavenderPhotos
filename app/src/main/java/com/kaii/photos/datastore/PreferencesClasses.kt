@@ -518,6 +518,7 @@ class SettingMainPhotosViewImpl(
     private val viewModelScope: CoroutineScope
 ) {
     private val mainPhotosAlbumsList = stringPreferencesKey("main_photos_albums_list")
+    private val shouldShowEverything = booleanPreferencesKey("main_photos_show_everything")
 
     fun getAlbums(): Flow<List<String>> =
         context.datastore.data.map {
@@ -549,6 +550,17 @@ class SettingMainPhotosViewImpl(
     fun clear() = viewModelScope.launch {
         context.datastore.edit {
             it[mainPhotosAlbumsList] = ""
+        }
+    }
+
+    fun getShowEverything() =
+        context.datastore.data.map {
+            it[shouldShowEverything] == true
+        }
+
+    fun setShowEverything(value: Boolean) = viewModelScope.launch {
+        context.datastore.edit {
+            it[shouldShowEverything] = value
         }
     }
 
