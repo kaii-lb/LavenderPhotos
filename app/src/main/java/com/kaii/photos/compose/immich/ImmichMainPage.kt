@@ -1,6 +1,7 @@
 package com.kaii.photos.compose.immich
 
 import android.util.Patterns
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -383,13 +384,17 @@ fun ImmichMainPage() {
                 ) {
                     Spacer (modifier = Modifier.height(8.dp))
 
+                    val animated by animateFloatAsState(
+                        targetValue = if (serverInfo is ImmichServerState.HasInfo) {
+                            (serverInfo as ImmichServerState.HasInfo).storage.diskUsagePercentage.toFloat() / 100f
+                        } else {
+                            1f
+                        }
+                    )
+
                     LinearProgressIndicator(
                         progress = {
-                            if (serverInfo is ImmichServerState.HasInfo) {
-                                (serverInfo as ImmichServerState.HasInfo).storage.diskUsagePercentage.toFloat() / 100f
-                            } else {
-                                1f
-                            }
+                            animated
                         },
                         color = if (serverInfo is ImmichServerState.HasInfo) {
                             ProgressIndicatorDefaults.linearColor
