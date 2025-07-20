@@ -359,32 +359,16 @@ class MainActivity : ComponentActivity() {
                     .fillMaxSize(1f)
                     .background(MaterialTheme.colorScheme.background),
                 enterTransition = {
-                    slideInHorizontally(
-                        animationSpec = tween(
-                            durationMillis = 350
-                        )
-                    ) { width -> width } + fadeIn()
+                    slideInHorizontally { width -> width } + fadeIn()
                 },
                 exitTransition = {
-                    slideOutHorizontally(
-                        animationSpec = tween(
-                            durationMillis = 350
-                        )
-                    ) { width -> -width } + fadeOut()
+                    slideOutHorizontally { width -> -width } + fadeOut()
                 },
                 popExitTransition = {
-                    slideOutHorizontally(
-                        animationSpec = tween(
-                            durationMillis = 350
-                        )
-                    ) { width -> width } + fadeOut()
+                    slideOutHorizontally { width -> width } + fadeOut()
                 },
                 popEnterTransition = {
-                    slideInHorizontally(
-                        animationSpec = tween(
-                            durationMillis = 350
-                        )
-                    ) { width -> -width } + fadeIn()
+                    slideInHorizontally { width -> -width } + fadeIn()
                 }
             ) {
                 composable(MultiScreenViewType.MainScreen.name) {
@@ -639,44 +623,28 @@ class MainActivity : ComponentActivity() {
 
                 composable<Screens.EditingScreen>(
                     enterTransition = {
-                        slideInVertically(
-                            animationSpec = tween(
-                                durationMillis = 600
-                            )
-                        ) { height -> height } + fadeIn(
+                        slideInVertically { height -> height } + fadeIn(
                             animationSpec = tween(
                                 durationMillis = 600
                             )
                         )
                     },
                     exitTransition = {
-                        slideOutVertically(
-                            animationSpec = tween(
-                                durationMillis = 600
-                            )
-                        ) { height -> height } + fadeOut(
+                        slideOutVertically { height -> height } + fadeOut(
                             animationSpec = tween(
                                 durationMillis = 600
                             )
                         )
                     },
                     popEnterTransition = {
-                        slideInVertically(
-                            animationSpec = tween(
-                                durationMillis = 600
-                            )
-                        ) { height -> height } + fadeIn(
+                        slideInVertically { height -> height } + fadeIn(
                             animationSpec = tween(
                                 durationMillis = 600
                             )
                         )
                     },
                     popExitTransition = {
-                        slideOutVertically(
-                            animationSpec = tween(
-                                durationMillis = 600
-                            )
-                        ) { height -> height } + fadeOut(
+                        slideOutVertically { height -> height } + fadeOut(
                             animationSpec = tween(
                                 durationMillis = 600
                             )
