@@ -30,6 +30,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -599,11 +600,12 @@ private fun BottomBar(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SingleSecuredPhotoInfoDialog(
     showDialog: MutableState<Boolean>,
     currentMediaItem: MediaStoreData
-) {
+) { // TODO: resource the strings here
     val localConfig = LocalConfiguration.current
     var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
 
@@ -736,7 +738,8 @@ fun SingleSecuredPhotoInfoDialog(
 
                                     cachedFile
                                 } else if (cachedFile.length() < originalFile.length()) {
-                                    while (cachedFile.length() < originalFile.length()) {
+                                    val threshold = 500
+                                    while (cachedFile.length() + threshold < originalFile.length()) {
                                         delay(100)
                                     }
 
@@ -746,16 +749,17 @@ fun SingleSecuredPhotoInfoDialog(
                                 }
                             }
 
+                            showLoadingDialog = false
                             getExifDataForMedia(file.absolutePath).collect {
                                 mediaData = it
                             }
-                            showLoadingDialog = false
                         }
                     }
 
                     Column(
                         modifier = Modifier
                             .wrapContentHeight()
+                            .clip(RoundedCornerShape(16.dp))
                     ) {
                         for (key in mediaData.keys) {
                             val value = mediaData[key]
@@ -771,8 +775,6 @@ fun SingleSecuredPhotoInfoDialog(
                                 iconResId = key.iconResInt,
                             )
                         }
-
-                        Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
             }
