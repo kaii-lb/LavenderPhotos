@@ -1,20 +1,19 @@
 package com.kaii.photos.compose.single_photo
 
 import android.annotation.SuppressLint
-import android.content.res.Configuration
-import android.util.Log
 import android.view.Window
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -23,18 +22,28 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material3.BottomAppBar
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.BottomAppBarDefaults.windowInsets
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.FilledIconToggleButton
+import androidx.compose.material3.FloatingToolbarDefaults
+import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -48,7 +57,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -64,7 +73,6 @@ import com.kaii.photos.BuildConfig
 import com.kaii.photos.LocalAppDatabase
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
-import com.kaii.photos.compose.app_bars.BottomAppBarItem
 import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.ExplanationDialog
@@ -254,30 +262,18 @@ fun SinglePhotoViewCommon(
 
     Scaffold(
         topBar = {
-            val coroutineScope = rememberCoroutineScope()
-
             TopBar(
                 mediaItem = currentMediaItem.value,
                 visible = appBarsVisible.value,
                 showInfoDialog = showInfoDialog,
-                removeIfInFavGrid = {
-                    if (navController.previousBackStackEntry?.destination?.route == MultiScreenViewType.FavouritesGridView.name) {
-                        sortOutMediaMods(
-                            currentMediaItem.value,
-                            groupedMedia,
-                            coroutineScope,
-                            state
-                        ) {
-                            navController.popBackStack()
-                        }
-                    }
-                },
                 onBackClick = {
                     navController.popBackStack()
                 }
             )
         },
         bottomBar = {
+            val coroutineScope = rememberCoroutineScope()
+
             BottomBar(
                 visible = appBarsVisible.value,
                 currentItem = currentMediaItem.value,
@@ -302,7 +298,19 @@ fun SinglePhotoViewCommon(
                 },
                 onZeroItemsLeft = {
                     navController.popBackStack()
-                }
+                },
+                removeIfInFavGrid = {
+                    if (navController.previousBackStackEntry?.destination?.route == MultiScreenViewType.FavouritesGridView.name) {
+                        sortOutMediaMods(
+                            currentMediaItem.value,
+                            groupedMedia,
+                            coroutineScope,
+                            state
+                        ) {
+                            navController.popBackStack()
+                        }
+                    }
+                },
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
@@ -336,123 +344,119 @@ fun SinglePhotoViewCommon(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun TopBar(
     mediaItem: MediaStoreData,
     visible: Boolean,
     showInfoDialog: MutableState<Boolean>,
-    removeIfInFavGrid: () -> Unit,
     onBackClick: () -> Unit
 ) {
-    val context = LocalContext.current
-    val localConfig = LocalConfiguration.current
-    var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
-
-    LaunchedEffect(localConfig) {
-        isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
-    }
-
-    val color = if (isLandscape)
-        MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.4f)
-    else
-        MaterialTheme.colorScheme.surfaceContainer
-
-    val vibratorManager = rememberVibratorManager()
-
-    val applicationDatabase = LocalAppDatabase.current
-    val favouritesViewModel: FavouritesViewModel = viewModel(
-        factory = FavouritesViewModelFactory(applicationDatabase)
-    )
-
-    AnimatedVisibility(
-        visible = visible,
-        enter =
-        slideInVertically(
-            animationSpec = tween(
-                durationMillis = 350
-            )
-        ) { width -> -width } + fadeIn(),
-        exit =
-        slideOutVertically(
-            animationSpec = tween(
-                durationMillis = 400
-            )
-        ) { width -> -width } + fadeOut(),
+    Box (
+        modifier = Modifier
+            .windowInsetsPadding(WindowInsets.systemBars)
+            .padding(4.dp, 0.dp)
+            .wrapContentHeight()
+            .fillMaxWidth(1f)
     ) {
-        TopAppBar(
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = color
-            ),
-            navigationIcon = {
-                IconButton(
-                    onClick = { onBackClick() },
+        AnimatedVisibility(
+            visible = visible,
+            enter =
+                scaleIn(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    )
+                ) + fadeIn(),
+            exit =
+                scaleOut(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    )
+                ) + fadeOut(),
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+        ) {
+            Row (
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Start
+            ) {
+                FilledIconButton(
+                    onClick = onBackClick,
+                    colors = IconButtonDefaults.filledIconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer
+                    )
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.back_arrow),
                         contentDescription = stringResource(id = R.string.return_to_previous_page),
-                        tint = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier
-                            .size(24.dp)
+                        tint = MaterialTheme.colorScheme.onSurface,
                     )
                 }
-            },
-            title = {
-                Spacer(modifier = Modifier.width(8.dp))
 
+                Spacer(modifier = Modifier.width(4.dp))
+
+                val isLandscape by rememberDeviceOrientation()
                 Text(
                     text = mediaItem.displayName,
-                    fontSize = TextUnit(16f, TextUnitType.Sp),
+                    fontSize = TextUnit(14f, TextUnitType.Sp),
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier
-                        .width(if (isLandscape) 300.dp else 160.dp)
+                        .width(if (isLandscape) 300.dp else 180.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceContainer)
+                        .padding(8.dp)
                 )
-            },
-            actions = {
-                val isSelected by favouritesViewModel.isInFavourites(mediaItem.id).collectAsStateWithLifecycle()
-
-                IconButton(
-                    onClick = {
-                        vibratorManager.vibrateShort()
-
-                        if (!isSelected) {
-                            favouritesViewModel.addToFavourites(mediaItem, context)
-                        } else {
-                            favouritesViewModel.removeFromFavourites(mediaItem.id)
-                            removeIfInFavGrid()
-                        }
-                    },
-                ) {
-                    Icon(
-                        painter = painterResource(id = if (isSelected) R.drawable.favourite_filled else R.drawable.favourite),
-                        contentDescription = stringResource(id = R.string.favourites_add_this),
-                        tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier
-                            .size(24.dp)
-                            .padding(0.dp, 1.dp, 0.dp, 0.dp)
-                    )
-                }
-
-                IconButton(
-                    onClick = {
-                        showInfoDialog.value = true
-                    },
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.more_options),
-                        contentDescription = stringResource(id = R.string.show_options),
-                        tint = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier
-                            .size(24.dp)
-                    )
-                }
             }
-        )
+
+        }
+
+        AnimatedVisibility(
+            visible = visible,
+            enter =
+                scaleIn(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    )
+                ) + fadeIn(),
+            exit =
+                scaleOut(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    )
+                ) + fadeOut(),
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+        ) {
+            FilledIconToggleButton(
+                checked = showInfoDialog.value,
+                onCheckedChange = {
+                    showInfoDialog.value = true
+                },
+                shapes = IconButtonDefaults.toggleableShapes(
+                    shape = CircleShape,
+                    pressedShape = MaterialShapes.Square.toShape(),
+                    checkedShape = MaterialShapes.Square.toShape()
+                )
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.more_options),
+                    contentDescription = stringResource(id = R.string.show_options),
+                    modifier = Modifier
+                        .size(24.dp)
+                )
+            }
+        }
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun BottomBar(
     visible: Boolean,
@@ -461,15 +465,9 @@ private fun BottomBar(
     loadsFromMainViewModel: Boolean,
     state: PagerState,
     showEditingView: () -> Unit,
-    onZeroItemsLeft: () -> Unit
+    onZeroItemsLeft: () -> Unit,
+    removeIfInFavGrid: () -> Unit
 ) {
-    val isLandscape by rememberDeviceOrientation()
-
-    val color = if (isLandscape)
-        MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.4f)
-    else
-        MaterialTheme.colorScheme.surfaceContainer
-
     var showLoadingDialog by remember { mutableStateOf(false) }
 
     if (showLoadingDialog) {
@@ -479,49 +477,34 @@ private fun BottomBar(
         )
     }
 
+    val context = LocalContext.current
+
     AnimatedVisibility(
         visible = visible,
-        enter =
-        slideInVertically(
-            animationSpec = tween(
-                durationMillis = 250
+        enter = scaleIn(
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessMedium
             )
-        ) { width -> width } + fadeIn(),
-        exit =
-        slideOutVertically(
-            animationSpec = tween(
-                durationMillis = 300
-            )
-        ) { width -> width } + fadeOut(),
+        ) + fadeIn(),
+        exit = scaleOut(
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessMedium
+            ),
+            targetScale = 0.2f
+        ) + fadeOut()
     ) {
-        val context = LocalContext.current
-        BottomAppBar(
-            containerColor = color,
-            contentColor = MaterialTheme.colorScheme.onBackground,
-            contentPadding = PaddingValues(0.dp),
-            actions = {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth(1f)
-                        .padding(12.dp, 0.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement =
-                    if (isLandscape)
-                        Arrangement.spacedBy(
-                            space = 48.dp,
-                            alignment = Alignment.CenterHorizontally
-                        )
-                    else Arrangement.SpaceEvenly
-                ) {
-                    BottomAppBarItem(
-                        text = stringResource(id = R.string.media_share),
-                        iconResId = R.drawable.share,
-                        cornerRadius = 32.dp,
-                        action = {
-                            shareImage(currentItem.uri, context)
-                        }
-                    )
-
+        Box(
+            modifier = Modifier
+                .wrapContentHeight()
+                .fillMaxWidth(1f),
+            contentAlignment = Alignment.Center
+        ) {
+            HorizontalFloatingToolbar(
+                expanded = true,
+                colors = FloatingToolbarDefaults.vibrantFloatingToolbarColors(),
+                floatingActionButton = {
                     val showNotImplementedDialog = remember { mutableStateOf(false) }
 
                     if (showNotImplementedDialog.value) {
@@ -532,38 +515,73 @@ private fun BottomBar(
                         )
                     }
 
-                    BottomAppBarItem(
-                        text = "Edit",
-                        iconResId = R.drawable.paintbrush,
-                        cornerRadius = 32.dp,
-                        action = if (currentItem.type == MediaType.Image) {
-                            showEditingView
-                        } else {
-                            { showNotImplementedDialog.value = true }
+                    FloatingToolbarDefaults.VibrantFloatingActionButton(
+                        onClick = {
+                            if (currentItem.type == MediaType.Image) {
+                                showEditingView()
+                            } else {
+                                showNotImplementedDialog.value = true
+                            }
                         }
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.paintbrush),
+                            contentDescription = "Edit this media"
+                        )
+                    }
+                },
+                modifier = Modifier
+                    .windowInsetsPadding(windowInsets)
+            ) {
+                IconButton(
+                    onClick = {
+                        shareImage(currentItem.uri, context)
+                    }
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.share),
+                        contentDescription = stringResource(id = R.string.media_share)
                     )
+                }
 
-                    val showDeleteDialog = remember { mutableStateOf(false) }
-                    val runTrashAction = remember { mutableStateOf(false) }
+                // TODO: maybe restructure this
+                val showMoveToSecureFolderDialog = remember { mutableStateOf(false) }
+                val moveToSecureFolder = remember { mutableStateOf(false) }
+                val tryGetDirPermission = remember { mutableStateOf(false) }
+                val mainViewModel = LocalMainViewModel.current
+                val applicationDatabase = LocalAppDatabase.current
+                val coroutineScope = rememberCoroutineScope()
 
-                    Log.d(TAG, "CURRENT ITEM URI ${currentItem.uri}")
+                GetDirectoryPermissionAndRun(
+                    absoluteDirPaths = listOf(groupedMedia.value.firstOrNull()?.absolutePath?.toRelativePath()?.getParentFromPath() ?: ""),
+                    shouldRun = tryGetDirPermission,
+                    onGranted = {
+                        moveToSecureFolder.value = true
+                        showLoadingDialog = true
+                    },
+                    onRejected = {}
+                )
 
-                    val coroutineScope = rememberCoroutineScope()
-                    val mainViewModel = LocalMainViewModel.current
-                    val applicationDatabase = LocalAppDatabase.current
+                ConfirmationDialog(
+                    showDialog = showMoveToSecureFolderDialog,
+                    dialogTitle = stringResource(id = R.string.media_secure_confirm),
+                    confirmButtonLabel = stringResource(id = R.string.media_secure)
+                ) {
+                    tryGetDirPermission.value = true
 
-                    GetPermissionAndRun(
-                        uris = listOf(currentItem.uri),
-                        shouldRun = runTrashAction,
-                        onGranted = {
-                            mainViewModel.launch(Dispatchers.IO) {
-                                setTrashedOnPhotoList(
-                                    context = context,
-                                    list = listOf(currentItem),
-                                    trashed = true,
-                                    appDatabase = applicationDatabase
-                                )
+                    if (groupedMedia.value.isEmpty()) onZeroItemsLeft()
+                }
 
+                GetPermissionAndRun(
+                    uris = listOf(currentItem.uri),
+                    shouldRun = moveToSecureFolder,
+                    onGranted = {
+                        mainViewModel.launch(Dispatchers.IO) {
+                            moveImageToLockedFolder(
+                                list = listOf(currentItem),
+                                context = context,
+                                applicationDatabase = applicationDatabase
+                            ) {
                                 if (groupedMedia.value.isEmpty()) onZeroItemsLeft()
 
                                 if (loadsFromMainViewModel) {
@@ -576,96 +594,103 @@ private fun BottomBar(
                                         onZeroItemsLeft()
                                     }
                                 }
+
+                                showLoadingDialog = false
                             }
                         }
-                    )
+                    }
+                )
 
-                    val confirmToDelete by mainViewModel.settings.Permissions.getConfirmToDelete().collectAsStateWithLifecycle(initialValue = true)
-                    BottomAppBarItem(
-                        text = "Delete",
-                        iconResId = R.drawable.trash,
-                        cornerRadius = 32.dp,
-                        action = {
-                            if (confirmToDelete) showDeleteDialog.value = true
-                            else runTrashAction.value = true
-                        },
-                        dialogComposable = {
-                            ConfirmationDialog(
-                                showDialog = showDeleteDialog,
-                                dialogTitle = stringResource(id = R.string.media_delete_confirm),
-                                confirmButtonLabel = stringResource(id = R.string.media_delete)
-                            ) {
-                                runTrashAction.value = true
-                            }
+                IconButton(
+                    onClick = {
+                        showMoveToSecureFolderDialog.value = true
+                    }
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.locked_folder),
+                        contentDescription = stringResource(id = R.string.media_secure)
+                    )
+                }
+
+                val vibratorManager = rememberVibratorManager()
+                val favouritesViewModel: FavouritesViewModel = viewModel(
+                    factory = FavouritesViewModelFactory(applicationDatabase)
+                )
+                val isSelected by favouritesViewModel.isInFavourites(currentItem.id).collectAsStateWithLifecycle()
+
+                IconButton(
+                    onClick = {
+                        vibratorManager.vibrateShort()
+
+                        if (!isSelected) {
+                            favouritesViewModel.addToFavourites(currentItem, context)
+                        } else {
+                            favouritesViewModel.removeFromFavourites(currentItem.id)
+                            removeIfInFavGrid()
                         }
+                    }
+                ) {
+                    Icon(
+                        painter = painterResource(id = if (isSelected) R.drawable.favourite_filled else R.drawable.favourite),
+                        contentDescription = stringResource(id = R.string.favourites_add_this)
                     )
+                }
 
-                    // TODO: maybe restructure this
-                    val showMoveToSecureFolderDialog = remember { mutableStateOf(false) }
-                    val moveToSecureFolder = remember { mutableStateOf(false) }
-                    val tryGetDirPermission = remember { mutableStateOf(false) }
+                val showDeleteDialog = remember { mutableStateOf(false) }
+                val runTrashAction = remember { mutableStateOf(false) }
 
-                    GetDirectoryPermissionAndRun(
-                        absoluteDirPaths = listOf(groupedMedia.value.firstOrNull()?.absolutePath?.toRelativePath()?.getParentFromPath() ?: ""),
-                        shouldRun = tryGetDirPermission,
-                        onGranted = {
-                        	moveToSecureFolder.value = true
-                        	showLoadingDialog = true
-                        },
-                        onRejected = {}
-                    )
+                if (showDeleteDialog.value) {
+                    ConfirmationDialog(
+                        showDialog = showDeleteDialog,
+                        dialogTitle = stringResource(id = R.string.media_delete_confirm),
+                        confirmButtonLabel = stringResource(id = R.string.media_delete)
+                    ) {
+                        runTrashAction.value = true
+                    }
+                }
 
-                    GetPermissionAndRun(
-                        uris = listOf(currentItem.uri),
-                        shouldRun = moveToSecureFolder,
-                        onGranted = {
-                            mainViewModel.launch(Dispatchers.IO) {
-                                moveImageToLockedFolder(
-                                    list = listOf(currentItem),
-                                    context = context,
-                                    applicationDatabase = applicationDatabase
+                GetPermissionAndRun(
+                    uris = listOf(currentItem.uri),
+                    shouldRun = runTrashAction,
+                    onGranted = {
+                        mainViewModel.launch(Dispatchers.IO) {
+                            setTrashedOnPhotoList(
+                                context = context,
+                                list = listOf(currentItem),
+                                trashed = true,
+                                appDatabase = applicationDatabase
+                            )
+
+                            if (groupedMedia.value.isEmpty()) onZeroItemsLeft()
+
+                            if (loadsFromMainViewModel) {
+                                sortOutMediaMods(
+                                    currentItem,
+                                    groupedMedia,
+                                    coroutineScope,
+                                    state
                                 ) {
-                                    if (groupedMedia.value.isEmpty()) onZeroItemsLeft()
-
-                                    if (loadsFromMainViewModel) {
-                                        sortOutMediaMods(
-                                            currentItem,
-                                            groupedMedia,
-                                            coroutineScope,
-                                            state
-                                        ) {
-                                            onZeroItemsLeft()
-                                        }
-                                    }
-
-                                    showLoadingDialog = false
+                                    onZeroItemsLeft()
                                 }
                             }
                         }
-                    )
+                    }
+                )
 
-                    BottomAppBarItem(
-                        text = stringResource(id = R.string.media_secure),
-                        iconResId = R.drawable.locked_folder,
-                        cornerRadius = 32.dp,
-                        action = {
-                            showMoveToSecureFolderDialog.value = true
-                        },
-                        dialogComposable = {
-                            ConfirmationDialog(
-                                showDialog = showMoveToSecureFolderDialog,
-                                dialogTitle = stringResource(id = R.string.media_secure_confirm),
-                                confirmButtonLabel = stringResource(id = R.string.media_secure)
-                            ) {
-                                tryGetDirPermission.value = true
-
-                                if (groupedMedia.value.isEmpty()) onZeroItemsLeft()
-                            }
-                        }
+                val confirmToDelete by mainViewModel.settings.Permissions.getConfirmToDelete().collectAsStateWithLifecycle(initialValue = true)
+                IconButton(
+                    onClick = {
+                        if (confirmToDelete) showDeleteDialog.value = true
+                        else runTrashAction.value = true
+                    }
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.trash),
+                        contentDescription = stringResource(id = R.string.media_delete)
                     )
                 }
             }
-        )
+        }
     }
 }
 
