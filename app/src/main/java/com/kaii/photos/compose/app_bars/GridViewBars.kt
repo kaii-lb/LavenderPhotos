@@ -60,7 +60,6 @@ import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.compose.media_picker.MediaPickerConfirmButton
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
-import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.ImmichBackupMedia
 import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.helpers.EncryptionManager
@@ -98,7 +97,6 @@ fun SingleAlbumViewTopBar(
     media: List<MediaStoreData>,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     showDialog: MutableState<Boolean>,
-    currentView: MutableState<BottomBarTab>,
     isMediaPicker: Boolean = false,
     onBackClick: () -> Unit
 ) {
@@ -297,8 +295,7 @@ fun SingleAlbumViewTopBar(
             )
         } else {
             IsSelectingTopBar(
-                selectedItemsList = selectedItemsList,
-                currentView = currentView
+                selectedItemsList = selectedItemsList
             )
         }
     }
@@ -483,7 +480,6 @@ fun SingleAlbumViewBottomBar(
 fun TrashedPhotoGridViewTopBar(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     groupedMedia: List<MediaStoreData>,
-    currentView: MutableState<BottomBarTab>,
     onBackClick: () -> Unit
 ) {
     val showDialog = remember { mutableStateOf(false) }
@@ -570,7 +566,7 @@ fun TrashedPhotoGridViewTopBar(
                 }
             )
         } else {
-            IsSelectingTopBar(selectedItemsList = selectedItemsList, currentView = currentView)
+            IsSelectingTopBar(selectedItemsList = selectedItemsList)
         }
     }
 }
@@ -701,7 +697,6 @@ fun TrashedPhotoGridViewBottomBar(
 @Composable
 fun SecureFolderViewTopAppBar(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
-    currentView: MutableState<BottomBarTab>,
     onBackClicked: () -> Unit
 ) {
     val show by remember {
@@ -748,7 +743,7 @@ fun SecureFolderViewTopAppBar(
                 }
             )
         } else {
-            IsSelectingTopBar(selectedItemsList = selectedItemsList, currentView = currentView)
+            IsSelectingTopBar(selectedItemsList = selectedItemsList)
         }
     }
 }
@@ -955,7 +950,6 @@ fun SecureFolderViewBottomAppBar(
 @Composable
 fun FavouritesViewTopAppBar(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
-    currentView: MutableState<BottomBarTab>,
     onBackClick: () -> Unit
 ) {
     val show by remember {
@@ -999,7 +993,7 @@ fun FavouritesViewTopAppBar(
                 }
             )
         } else {
-            IsSelectingTopBar(selectedItemsList = selectedItemsList, currentView = currentView)
+            IsSelectingTopBar(selectedItemsList = selectedItemsList)
         }
     }
 }

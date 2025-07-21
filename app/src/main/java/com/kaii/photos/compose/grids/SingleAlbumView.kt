@@ -41,7 +41,6 @@ import com.kaii.photos.compose.app_bars.SingleAlbumViewTopBar
 import com.kaii.photos.compose.dialogs.SingleAlbumDialog
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
-import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.checkHasFiles
 import com.kaii.photos.helpers.toBasePath
@@ -58,7 +57,6 @@ import kotlin.io.path.Path
 fun SingleAlbumView(
     albumInfo: AlbumInfo,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
-    currentView: MutableState<BottomBarTab>,
     viewModel: MultiAlbumViewModel,
     incomingIntent: Intent? = null
 ) {
@@ -83,9 +81,11 @@ fun SingleAlbumView(
 
     if (allAlbums.isEmpty()) return
 
-    val dynamicAlbum by remember { derivedStateOf {
-        allAlbums.first { it.id == albumInfo.id }
-    }}
+    val dynamicAlbum by remember {
+        derivedStateOf {
+            allAlbums.first { it.id == albumInfo.id }
+        }
+    }
 
     BackHandler(
         enabled = selectedItemsList.isEmpty()
@@ -106,7 +106,6 @@ fun SingleAlbumView(
         groupedMedia = groupedMedia,
         albumInfo = dynamicAlbum,
         selectedItemsList = selectedItemsList,
-        currentView = currentView,
         navController = navController,
         incomingIntent = incomingIntent
     ) {
@@ -123,7 +122,6 @@ fun SingleAlbumView(
 fun SingleAlbumView(
     albumInfo: AlbumInfo,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
-    currentView: MutableState<BottomBarTab>,
     customViewModel: CustomAlbumViewModel,
     multiViewModel: MultiAlbumViewModel,
     incomingIntent: Intent? = null
@@ -149,9 +147,11 @@ fun SingleAlbumView(
 
     if (allAlbums.isEmpty()) return
 
-    val dynamicAlbum by remember { derivedStateOf {
-        allAlbums.first { it.id == albumInfo.id }
-    }}
+    val dynamicAlbum by remember {
+        derivedStateOf {
+            allAlbums.first { it.id == albumInfo.id }
+        }
+    }
 
     BackHandler(
         enabled = selectedItemsList.isEmpty()
@@ -175,7 +175,6 @@ fun SingleAlbumView(
         groupedMedia = groupedMedia,
         albumInfo = dynamicAlbum,
         selectedItemsList = selectedItemsList,
-        currentView = currentView,
         navController = navController,
         incomingIntent = incomingIntent
     ) {
@@ -202,7 +201,6 @@ private fun SingleAlbumViewCommon(
     albumInfo: AlbumInfo,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     navController: NavHostController,
-    currentView: MutableState<BottomBarTab>,
     incomingIntent: Intent?,
     reinitDataSource: () -> Unit
 ) {
@@ -264,7 +262,6 @@ private fun SingleAlbumViewCommon(
                 media = groupedMedia.value,
                 selectedItemsList = selectedItemsList,
                 showDialog = showDialog,
-                currentView = currentView,
                 isMediaPicker = incomingIntent != null
             ) {
                 navController.popBackStack()
@@ -291,7 +288,7 @@ private fun SingleAlbumViewCommon(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            val media = remember { mutableStateOf(emptyList<MediaStoreData>())}
+            val media = remember { mutableStateOf(emptyList<MediaStoreData>()) }
 
             LaunchedEffect(groupedMedia.value.size) {
                 if (groupedMedia.value.isNotEmpty()) {

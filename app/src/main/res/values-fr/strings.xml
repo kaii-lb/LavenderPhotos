@@ -41,7 +41,7 @@
     <string name="tabs_default_desc">Lavender Photos ouvrira automatiquement cet onglet au démarrage</string>
     <string name="tabs_customize">Personnaliser les onglets</string>
     <string name="tabs_customize_desc">Change les onglets disponibles dans la barre du bas</string>
-    <string name="tabs_navigate_to">Ouvrir la page %s$1</string>
+    <string name="tabs_navigate_to">Ouvrir la page %1$s</string>
     <string name="tabs_add">Ajouter un onglet</string>
     <string name="tabs_name">Nom de l\'onglet</string>
     <string name="tabs_albums_incl">Albums inclus</string>

@@ -326,7 +326,6 @@ class MediaPicker : ComponentActivity() {
                     SingleAlbumView(
                         albumInfo = screen.albumInfo,
                         selectedItemsList = selectedItemsList,
-                        currentView = currentView,
                         viewModel = multiAlbumViewModel,
                         incomingIntent = incomingIntent
                     )
@@ -342,7 +341,6 @@ class MediaPicker : ComponentActivity() {
                     SingleAlbumView(
                         albumInfo = screen.albumInfo,
                         selectedItemsList = selectedItemsList,
-                        currentView = currentView,
                         customViewModel = customAlbumViewModel,
                         multiViewModel = multiAlbumViewModel,
                         incomingIntent = incomingIntent

@@ -23,7 +23,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -41,14 +40,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastAll
-import androidx.compose.ui.util.fastDistinctBy
-import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
-import com.kaii.photos.LocalAppDatabase
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.immichViewModel
@@ -72,8 +68,6 @@ import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.checkPathIsDownloads
 import com.kaii.photos.helpers.eraseExifMedia
 import com.kaii.photos.helpers.getExifDataForMedia
-import com.kaii.photos.helpers.getParentFromPath
-import com.kaii.photos.helpers.moveImageToLockedFolder
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.renameDirectory
 import com.kaii.photos.helpers.renameImage
@@ -775,119 +769,6 @@ fun MainAppDialog(
                     showDialog.value = false
                     navController.navigate(MultiScreenViewType.AboutAndUpdateView.name)
                 }
-            }
-        }
-    }
-}
-
-/** always pass selected items without sections */
-@Composable
-fun SelectingMoreOptionsDialog(
-    showDialog: MutableState<Boolean>,
-    selectedItems: List<MediaStoreData>,
-    onDone: () -> Unit
-) {
-    val context = LocalContext.current
-    val isEditingFileName = remember { mutableStateOf(false) }
-
-    val isLandscape by rememberDeviceOrientation()
-
-    val modifier = if (isLandscape)
-        Modifier.width(328.dp)
-    else
-        Modifier.fillMaxWidth(1f)
-
-    val moveToSecureFolder = remember { mutableStateOf(false) }
-    val tryGetDirPermission = remember { mutableStateOf(false) }
-
-    var showLoadingDialog by remember { mutableStateOf(false) }
-
-    GetDirectoryPermissionAndRun(
-        absoluteDirPaths = selectedItems.fastMap {
-            it.absolutePath.getParentFromPath()
-        }.fastDistinctBy {
-            it
-        },
-        shouldRun = tryGetDirPermission,
-        onGranted = {
-            showLoadingDialog = true
-            moveToSecureFolder.value = true
-        },
-        onRejected = {}
-    )
-
-    if (showLoadingDialog) {
-        LoadingDialog(
-            title = stringResource(id = R.string.secure_encrypting),
-            body = stringResource(id = R.string.secure_processing)
-        )
-    }
-
-    val mainViewModel = LocalMainViewModel.current
-    val appDatabase = LocalAppDatabase.current
-    GetPermissionAndRun(
-        uris = selectedItems.map { it.uri },
-        shouldRun = moveToSecureFolder,
-        onGranted = {
-            mainViewModel.launch(Dispatchers.IO) {
-                moveImageToLockedFolder(
-                    list = selectedItems,
-                    context = context,
-                    applicationDatabase = appDatabase
-                ) {
-                    onDone()
-                    showLoadingDialog = false
-                    showDialog.value = false
-                }
-            }
-        }
-    )
-
-    LavenderDialogBase(
-        modifier = modifier,
-        onDismiss = {
-            if (!showLoadingDialog) showDialog.value = false
-            isEditingFileName.value = false
-        }
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth(1f),
-        ) {
-            IconButton(
-                onClick = {
-                    if (!showLoadingDialog) showDialog.value = false
-                    isEditingFileName.value = false
-                },
-                modifier = Modifier
-                    .align(Alignment.CenterStart)
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.close),
-                    contentDescription = "Close dialog button",
-                    modifier = Modifier
-                        .size(24.dp)
-                )
-            }
-
-            Text(
-                text = stringResource(id = R.string.more_options),
-                modifier = Modifier
-                    .align(Alignment.Center)
-            )
-        }
-
-        Column(
-            modifier = Modifier
-                .padding(12.dp)
-                .wrapContentHeight()
-        ) {
-            DialogClickableItem(
-                text = stringResource(id = R.string.albums_move_to_secure),
-                iconResId = R.drawable.locked_folder,
-                position = RowPosition.Single
-            ) {
-                if (selectedItems.isNotEmpty()) tryGetDirPermission.value = true
             }
         }
     }

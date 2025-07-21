@@ -14,7 +14,6 @@ import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,7 +34,6 @@ import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.FavouritesViewBottomAppBar
 import com.kaii.photos.compose.app_bars.FavouritesViewTopAppBar
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.mediastore.MediaStoreData
@@ -48,8 +46,7 @@ import kotlinx.coroutines.delay
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavouritesGridView(
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
-    currentView: MutableState<BottomBarTab>
+    selectedItemsList: SnapshotStateList<MediaStoreData>
 ) {
     val appDatabase = LocalAppDatabase.current
     val favouritesViewModel: FavouritesViewModel = viewModel(
@@ -75,7 +72,7 @@ fun FavouritesGridView(
     }
 
     var hasFiles by remember { mutableStateOf(true) }
-    val media = remember { mutableStateOf(emptyList<MediaStoreData>())}
+    val media = remember { mutableStateOf(emptyList<MediaStoreData>()) }
 
     LaunchedEffect(groupedMedia.value.size) {
         if (groupedMedia.value.isNotEmpty()) {
@@ -122,8 +119,7 @@ fun FavouritesGridView(
             ),
         topBar = {
             FavouritesViewTopAppBar(
-                selectedItemsList = selectedItemsList,
-                currentView = currentView
+                selectedItemsList = selectedItemsList
             ) {
                 navController.popBackStack()
             }

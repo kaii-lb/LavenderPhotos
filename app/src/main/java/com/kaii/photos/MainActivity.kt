@@ -48,6 +48,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -74,9 +75,7 @@ import com.kaii.photos.compose.LockedFolderEntryView
 import com.kaii.photos.compose.PermissionHandler
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.MainAppBottomBar
-import com.kaii.photos.compose.app_bars.MainAppSelectingBottomBar
 import com.kaii.photos.compose.app_bars.MainAppTopBar
-import com.kaii.photos.compose.app_bars.getAppBarContentTransition
 import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
 import com.kaii.photos.compose.dialogs.MainAppDialog
@@ -373,7 +372,7 @@ class MainActivity : ComponentActivity() {
             ) {
                 composable(MultiScreenViewType.MainScreen.name) {
                     enableEdgeToEdge(
-                        navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
+                        navigationBarStyle = SystemBarStyle.dark(Color.Transparent.toArgb()),
                         statusBarStyle =
                             if (!isSystemInDarkTheme()) {
                                 SystemBarStyle.light(
@@ -484,7 +483,6 @@ class MainActivity : ComponentActivity() {
                         SingleAlbumView(
                             albumInfo = screen.albumInfo,
                             selectedItemsList = selectedItemsList,
-                            currentView = currentView,
                             viewModel = multiAlbumViewModel
                         )
                     } else {
@@ -499,7 +497,6 @@ class MainActivity : ComponentActivity() {
                         SingleAlbumView(
                             albumInfo = screen.albumInfo,
                             selectedItemsList = selectedItemsList,
-                            currentView = currentView,
                             customViewModel = customAlbumViewModel,
                             multiViewModel = multiAlbumViewModel
                         )
@@ -542,8 +539,7 @@ class MainActivity : ComponentActivity() {
                     )
 
                     TrashedPhotoGridView(
-                        selectedItemsList = selectedItemsList,
-                        currentView = currentView
+                        selectedItemsList = selectedItemsList
                     )
                 }
 
@@ -560,7 +556,7 @@ class MainActivity : ComponentActivity() {
                         window
                     )
 
-                    LockedFolderView(window = window, currentView = currentView)
+                    LockedFolderView(window = window)
                 }
 
                 composable<Screens.SingleHiddenPhotoView> {
@@ -616,8 +612,7 @@ class MainActivity : ComponentActivity() {
                     )
 
                     FavouritesGridView(
-                        selectedItemsList = selectedItemsList,
-                        currentView = currentView
+                        selectedItemsList = selectedItemsList
                     )
                 }
 
@@ -937,7 +932,7 @@ class MainActivity : ComponentActivity() {
             if (!tabList.any { it.isCustom }
                 && (currentView.value.albumPaths.toSet() != multiAlbumViewModel.albumInfo.paths.toSet()
                         || multiAlbumViewModel.ignorePaths != shouldShowEverything
-                    )
+                        )
             ) {
                 multiAlbumViewModel.reinitDataSource(
                     context = context,
@@ -990,10 +985,10 @@ class MainActivity : ComponentActivity() {
             Column(
                 modifier = Modifier
                     .padding(
-                        safeDrawingPadding.first,
-                        padding.calculateTopPadding(),
-                        safeDrawingPadding.second,
-                        padding.calculateBottomPadding()
+                        start = safeDrawingPadding.first,
+                        top = padding.calculateTopPadding(),
+                        end = safeDrawingPadding.second,
+                        bottom = 0.dp
                     )
             ) {
                 MainAppDialog(showDialog, currentView, selectedItemsList)
@@ -1146,30 +1141,32 @@ class MainActivity : ComponentActivity() {
         tabs: List<BottomBarTab>,
         selectedItemsList: SnapshotStateList<MediaStoreData>
     ) {
-        val navController = LocalNavController.current
-        val show by remember {
-            derivedStateOf {
-                selectedItemsList.isNotEmpty()
-            }
-        }
-
-        AnimatedContent(
-            targetState = show && navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name,
-            transitionSpec = {
-                getAppBarContentTransition(show)
-            },
-            label = "MainBottomBarAnimatedContentView"
-        ) { state ->
-            if (!state) {
-                MainAppBottomBar(
-                    currentView = currentView,
-                    tabs = tabs,
-                    selectedItemsList = selectedItemsList
-                )
-            } else {
-                MainAppSelectingBottomBar(selectedItemsList)
-            }
-        }
+        MainAppBottomBar(
+            currentView = currentView,
+            tabs = tabs,
+            selectedItemsList = selectedItemsList
+        )
+        // val navController = LocalNavController.current
+        // val show by remember {
+        //     derivedStateOf {
+        //         selectedItemsList.isNotEmpty()
+        //     }
+        // }
+        //
+        // AnimatedContent(
+        //     targetState = show && navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name,
+        //     transitionSpec = {
+        //         getAppBarContentTransition(show)
+        //     },
+        //     label = "MainBottomBarAnimatedContentView",
+        //     contentAlignment = Alignment.Center
+        // ) { state ->
+        //     if (!state) {
+        //
+        //     } else {
+        //         MainAppSelectingBottomBar(selectedItemsList)
+        //     }
+        // }
     }
 }
 

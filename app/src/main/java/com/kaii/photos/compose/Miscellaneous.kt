@@ -79,9 +79,6 @@ import com.bumptech.glide.signature.ObjectKey
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.MainActivity.Companion.immichViewModel
 import com.kaii.photos.R
-import com.kaii.photos.compose.dialogs.SelectingMoreOptionsDialog
-import com.kaii.photos.datastore.BottomBarTab
-import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.immich.ImmichUserLoginState
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
@@ -385,19 +382,9 @@ fun SelectViewTopBarLeftButtons(
 @Composable
 fun SelectViewTopBarRightButtons(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
-    currentView: MutableState<BottomBarTab>,
-    isFromMediaPicker: Boolean = false
 ) {
     val mainViewModel = LocalMainViewModel.current
     val groupedMedia = mainViewModel.groupedMedia.collectAsStateWithLifecycle(initialValue = emptyList())
-
-    val selectedItemsWithoutSection by remember {
-        derivedStateOf {
-            selectedItemsList.filter {
-                it.type != MediaType.Section && it != MediaStoreData()
-            }
-        }
-    }
 
     Row(
         modifier = Modifier
@@ -456,33 +443,6 @@ fun SelectViewTopBarRightButtons(
                 modifier = Modifier
                     .size(24.dp)
             )
-        }
-
-        if (currentView.value != DefaultTabs.TabTypes.secure && !isFromMediaPicker) {
-            val showMoreOptionsDialog = remember { mutableStateOf(false) }
-
-            if (showMoreOptionsDialog.value) {
-                SelectingMoreOptionsDialog(
-                    showDialog = showMoreOptionsDialog,
-                    selectedItems = selectedItemsWithoutSection
-                ) {
-                    selectedItemsList.clear()
-                }
-            }
-
-            IconButton(
-                onClick = {
-                    showMoreOptionsDialog.value = true
-                },
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.more_options),
-                    contentDescription = "show more options for selected items",
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier
-                        .size(24.dp)
-                )
-            }
         }
     }
 }

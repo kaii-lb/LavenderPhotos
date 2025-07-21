@@ -54,7 +54,7 @@
     <string name="tabs_default_desc">Lavender Photos will auto-open this tab at startup</string>
     <string name="tabs_customize">Customize Tabs</string>
     <string name="tabs_customize_desc">Change what tabs are available in the bottom bar</string>
-    <string name="tabs_navigate_to">Navigate to %s$1 page</string>
+    <string name="tabs_navigate_to">Navigate to %1$s page</string>
     <string name="tabs_add">Add a Tab</string>
     <string name="tabs_name">Tab name</string>
     <string name="tabs_albums_incl">Albums Included</string>
