@@ -208,7 +208,7 @@ fun MainAppBottomBar(
                 exitDirection = FloatingToolbarExitDirection.Bottom // TODO: continue this
             ),
             leadingContent = {
-                tabs.take(4).forEach { tab ->
+                tabs.take(if (selectedItemsList.isNotEmpty()) 1 else 4).forEach { tab ->
                     ToggleButton(
                         checked = currentView.value == tab,
                         onCheckedChange = {
@@ -222,7 +222,7 @@ fun MainAppBottomBar(
                             pressedShape = CircleShape,
                             checkedShape = CircleShape
                         ),
-                        contentPadding = PaddingValues(all = 10.dp)
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 12.dp)
                     ) {
                         AnimatedVisibility(
                             visible = currentView.value == tab
@@ -262,45 +262,34 @@ fun MainAppBottomBar(
             }
 
             if (selectedItemsList.isNotEmpty()) {
-                AnimatedVisibility(
-                    visible = true,
-                    enter = scaleIn(
-                        animationSpec = tween(
-                            delayMillis = 300,
-                            durationMillis = 400
-                        )
-                    )
-                ) {
-                    IconButton(
-                        onClick = {
-                            coroutineScope.launch {
-                                val hasVideos = selectedItemsWithoutSection.any {
-                                    it.type == MediaType.Video
-                                }
-
-                                val intent = Intent().apply {
-                                    action = Intent.ACTION_SEND_MULTIPLE
-                                    type = if (hasVideos) "video/*" else "images/*"
-                                }
-
-                                val fileUris = ArrayList<Uri>()
-                                selectedItemsWithoutSection.forEach {
-                                    fileUris.add(it.uri)
-                                }
-
-                                intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, fileUris)
-
-                                context.startActivity(Intent.createChooser(intent, null))
+                IconButton(
+                    onClick = {
+                        coroutineScope.launch {
+                            val hasVideos = selectedItemsWithoutSection.any {
+                                it.type == MediaType.Video
                             }
-                        }
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.share),
-                            contentDescription = "share this image"
-                        )
-                    }
-                }
 
+                            val intent = Intent().apply {
+                                action = Intent.ACTION_SEND_MULTIPLE
+                                type = if (hasVideos) "video/*" else "images/*"
+                            }
+
+                            val fileUris = ArrayList<Uri>()
+                            selectedItemsWithoutSection.forEach {
+                                fileUris.add(it.uri)
+                            }
+
+                            intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, fileUris)
+
+                            context.startActivity(Intent.createChooser(intent, null))
+                        }
+                    }
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.share),
+                        contentDescription = "share this image"
+                    )
+                }
                 val show = remember { mutableStateOf(false) }
                 var isMoving by remember { mutableStateOf(false) }
                 MoveCopyAlbumListView(
