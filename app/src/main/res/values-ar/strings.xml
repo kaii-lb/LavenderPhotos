@@ -94,7 +94,6 @@
     <string name="data_and_backup">البيانات والنسخ الاحتياطي</string>
     <string name="favourites">المفضلة</string>
     <string name="favourites_add_this">أضف إلى المفضلات</string>
-    <string name="logs"></string>
     <string name="log_file_non_existent">لم يتم تسجيل أي ملف سجل حتى الآن.</string>
     <string name="album_add_path">إضافة مسار الألبومات</string>
     <string name="album_add">أضف ألبوم</string>
@@ -140,7 +139,6 @@
     <string name="editing_contrast">التباين</string>
     <string name="editing_brightness">سطوع</string>
     <string name="editing_saturation">التشبع</string>
-    <string name="editing_black_point"></string>
     <string name="editing_shadows">الظلال</string>
     <string name="editing_warmth">الدفء</string>
     <string name="editing_color_tint">لون الصبغة</string>
