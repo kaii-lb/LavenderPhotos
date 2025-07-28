@@ -8,4 +8,10 @@
     <string name="albums">Albumid</string>
     <string name="default_homepage_photogrid_dir">DCIM/Camera</string>
     <string name="first_startup_dialog_confirm_title">Otsi!</string>
+    <string name="albums_name">Albumi nimi</string>
+    <string name="albums_type">Albumi tüüp</string>
+    <string name="dev_title">Arendaja</string>
+    <string name="privacy_policy_title">Andmekaitse - ja privaatsusreeglid</string>
+    <string name="error_views_folder_non_existent">Kausta pole olemas</string>
+    <string name="error_views_error_page">See on veateate leht</string>
 </resources>
