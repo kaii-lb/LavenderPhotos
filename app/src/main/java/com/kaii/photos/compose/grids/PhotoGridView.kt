@@ -21,7 +21,6 @@ import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -138,8 +137,8 @@ fun PhotoGrid(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     modifier: Modifier = Modifier,
     viewProperties: ViewProperties,
-    shouldPadUp: Boolean = false,
     isMediaPicker: Boolean = false,
+    isMainPage: Boolean = false,
     state: LazyGridState = rememberLazyGridState(),
     hasFiles: Boolean
 ) {
@@ -153,10 +152,10 @@ fun PhotoGrid(
                 groupedMedia = groupedMedia,
                 selectedItemsList = selectedItemsList,
                 viewProperties = viewProperties,
-                shouldPadUp = shouldPadUp,
                 gridState = state,
                 albumInfo = albumInfo,
-                isMediaPicker = isMediaPicker
+                isMediaPicker = isMediaPicker,
+                isMainPage = isMainPage
             )
         }
     } else {
@@ -174,12 +173,21 @@ fun DeviceMedia(
     groupedMedia: MutableState<List<MediaStoreData>>,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     viewProperties: ViewProperties,
-    shouldPadUp: Boolean,
     gridState: LazyGridState,
     albumInfo: AlbumInfo,
-    isMediaPicker: Boolean
+    isMediaPicker: Boolean,
+    isMainPage: Boolean
 ) {
     var showLoadingSpinner by remember { mutableStateOf(true) }
+    if (groupedMedia.value.isNotEmpty()) {
+        showLoadingSpinner = false
+    }
+
+    val shouldPadUp by remember {
+        derivedStateOf {
+            selectedItemsList.isNotEmpty()
+        }
+    }
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -192,17 +200,7 @@ fun DeviceMedia(
     val mainViewModel = LocalMainViewModel.current
     LaunchedEffect(groupedMedia.value) {
         mainViewModel.setGroupedMedia(groupedMedia.value)
-        if (groupedMedia.value.isNotEmpty()) showLoadingSpinner = false
     }
-
-    val spacerHeight by animateDpAsState(
-        targetValue = if (selectedItemsList.isNotEmpty() && shouldPadUp) 80.dp else 0.dp,
-        animationSpec = tween(
-            durationMillis = 350,
-            delayMillis = if (selectedItemsList.isNotEmpty() && shouldPadUp) 350 else 0
-        ),
-        label = "animate spacer on bottom of photo grid"
-    )
 
     val localConfig = LocalConfiguration.current
     var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
@@ -211,131 +209,124 @@ fun DeviceMedia(
         isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
     }
 
-    BoxWithConstraints(
+    Box(
         modifier = Modifier
             .fillMaxSize(1f)
             .background(MaterialTheme.colorScheme.background)
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth(1f)
-                .height(this.maxHeight - spacerHeight)
-                .align(Alignment.TopCenter)
-        ) {
-            val cacheThumbnails by mainViewModel.settings.Storage.getCacheThumbnails()
-                .collectAsStateWithLifecycle(initialValue = false)
-            val thumbnailSize by mainViewModel.settings.Storage.getThumbnailSize()
-                .collectAsStateWithLifecycle(initialValue = 0)
+        val cacheThumbnails by mainViewModel.settings.Storage.getCacheThumbnails()
+            .collectAsStateWithLifecycle(initialValue = false)
+        val thumbnailSize by mainViewModel.settings.Storage.getThumbnailSize()
+            .collectAsStateWithLifecycle(initialValue = 0)
 
-            val scrollSpeed = remember { mutableFloatStateOf(0f) }
-            val isDragSelecting = remember { mutableStateOf(false) }
-            val localDensity = LocalDensity.current
+        val scrollSpeed = remember { mutableFloatStateOf(0f) }
+        val isDragSelecting = remember { mutableStateOf(false) }
+        val localDensity = LocalDensity.current
 
-            LaunchedEffect(scrollSpeed.floatValue) {
-                if (scrollSpeed.floatValue != 0f) {
-                    while (isActive) {
-                        gridState.scrollBy(scrollSpeed.floatValue)
-                        delay(10)
-                    }
+        LaunchedEffect(scrollSpeed.floatValue) {
+            if (scrollSpeed.floatValue != 0f) {
+                while (isActive) {
+                    gridState.scrollBy(scrollSpeed.floatValue)
+                    delay(10)
                 }
             }
+        }
 
-            val columnSize by mainViewModel.columnSize.collectAsStateWithLifecycle()
-            LazyVerticalGrid(
-                state = gridState,
-                columns = GridCells.Fixed(
-                    if (!isLandscape) {
-                        columnSize
-                    } else {
-                        columnSize * 2
-                    }
-                ),
-                userScrollEnabled = !isDragSelecting.value,
-                modifier = Modifier
-                    .fillMaxSize(1f)
-                    .align(Alignment.TopCenter)
-                    .dragSelectionHandler(
-                        state = gridState,
-                        selectedItemsList = selectedItemsList,
-                        groupedMedia = groupedMedia.value,
-                        scrollSpeed = scrollSpeed,
-                        scrollThreshold = with(localDensity) {
-                            40.dp.toPx()
-                        },
-                        isDragSelecting = isDragSelecting
-                    )
-            ) {
-                items(
-                    count = groupedMedia.value.size,
-                    key = {
-                        groupedMedia.value[it].uri.toString()
+        val columnSize by mainViewModel.columnSize.collectAsStateWithLifecycle()
+        LazyVerticalGrid(
+            state = gridState,
+            columns = GridCells.Fixed(
+                if (!isLandscape) {
+                    columnSize
+                } else {
+                    columnSize * 2
+                }
+            ),
+            userScrollEnabled = !isDragSelecting.value,
+            modifier = Modifier
+                .fillMaxSize(1f)
+                .align(Alignment.TopCenter)
+                .dragSelectionHandler(
+                    state = gridState,
+                    selectedItemsList = selectedItemsList,
+                    groupedMedia = groupedMedia.value,
+                    scrollSpeed = scrollSpeed,
+                    scrollThreshold = with(localDensity) {
+                        40.dp.toPx()
                     },
-                    contentType = {
-                        groupedMedia.value[it].type
-                    },
-                    span = { index ->
-                        if (index < groupedMedia.value.size) {
-                            val item = groupedMedia.value[index]
-                            if (item.type == MediaType.Section) {
-                                GridItemSpan(maxLineSpan)
-                            } else {
-                                GridItemSpan(1)
-                            }
+                    isDragSelecting = isDragSelecting
+                )
+        ) {
+            items(
+                count = groupedMedia.value.size,
+                key = {
+                    groupedMedia.value[it].uri.toString()
+                },
+                contentType = {
+                    groupedMedia.value[it].type
+                },
+                span = { index ->
+                    if (index < groupedMedia.value.size) {
+                        val item = groupedMedia.value[index]
+                        if (item.type == MediaType.Section) {
+                            GridItemSpan(maxLineSpan)
                         } else {
                             GridItemSpan(1)
                         }
+                    } else {
+                        GridItemSpan(1)
                     }
-                ) { i ->
-                    if (groupedMedia.value.isEmpty()) return@items
-                    val mediaStoreItem = groupedMedia.value[i]
+                }
+            ) { i ->
+                if (groupedMedia.value.isEmpty()) return@items
+                val mediaStoreItem = groupedMedia.value[i]
 
-                    Row(
-                        modifier = Modifier
-                            .wrapContentSize()
-                            .animateItem()
+                Row(
+                    modifier = Modifier
+                        .wrapContentSize()
+                        .animateItem()
+                ) {
+                    val navController = LocalNavController.current
+
+                    MediaStoreItem(
+                        item = mediaStoreItem,
+                        groupedMedia = groupedMedia,
+                        viewProperties = viewProperties,
+                        selectedItemsList = selectedItemsList,
+                        thumbnailSettings = Pair(cacheThumbnails, thumbnailSize),
+                        isDragSelecting = isDragSelecting
                     ) {
-                        val navController = LocalNavController.current
+                        if (!isMediaPicker) {
+                            when (viewProperties.operation) {
+                                ImageFunctions.LoadNormalImage -> {
+                                    // mainViewModel.setGroupedMedia(groupedMedia.value)
 
-                        MediaStoreItem(
-                            item = mediaStoreItem,
-                            groupedMedia = groupedMedia,
-                            viewProperties = viewProperties,
-                            selectedItemsList = selectedItemsList,
-                            thumbnailSettings = Pair(cacheThumbnails, thumbnailSize),
-                            isDragSelecting = isDragSelecting
-                        ) {
-                            if (!isMediaPicker) {
-                                when (viewProperties.operation) {
-                                    ImageFunctions.LoadNormalImage -> {
-                                        // mainViewModel.setGroupedMedia(groupedMedia.value)
-
-                                        navController.navigate(
-                                            Screens.SinglePhotoView(
-                                                albumInfo = albumInfo,
-                                                mediaItemId = mediaStoreItem.id,
-                                                loadsFromMainViewModel = viewProperties == ViewProperties.SearchLoading || viewProperties == ViewProperties.SearchNotFound || viewProperties == ViewProperties.Favourites
-                                            )
+                                    navController.navigate(
+                                        Screens.SinglePhotoView(
+                                            albumInfo = albumInfo,
+                                            mediaItemId = mediaStoreItem.id,
+                                            loadsFromMainViewModel = viewProperties == ViewProperties.SearchLoading || viewProperties == ViewProperties.SearchNotFound || viewProperties == ViewProperties.Favourites
                                         )
-                                    }
+                                    )
+                                }
 
-                                    ImageFunctions.LoadTrashedImage -> {
-                                        // mainViewModel.setGroupedMedia(groupedMedia.value)
-                                        navController.navigate(
-                                            Screens.SingleTrashedPhotoView(
-                                                mediaItemId = mediaStoreItem.id
-                                            )
+                                ImageFunctions.LoadTrashedImage -> {
+                                    // mainViewModel.setGroupedMedia(groupedMedia.value)
+                                    navController.navigate(
+                                        Screens.SingleTrashedPhotoView(
+                                            mediaItemId = mediaStoreItem.id
                                         )
-                                    }
+                                    )
+                                }
 
-                                    ImageFunctions.LoadSecuredImage -> {
-                                        mainViewModel.setGroupedMedia(groupedMedia.value)
+                                ImageFunctions.LoadSecuredImage -> {
+                                    mainViewModel.setGroupedMedia(groupedMedia.value)
 
-                                        navController.navigate(
-                                            Screens.SingleHiddenPhotoView(
-                                                mediaItemId = mediaStoreItem.id
-                                            )
+                                    navController.navigate(
+                                        Screens.SingleHiddenPhotoView(
+                                            mediaItemId = mediaStoreItem.id
                                         )
-                                    }
+                                    )
                                 }
                             }
                         }
@@ -343,259 +334,302 @@ fun DeviceMedia(
                 }
             }
 
-            if (showLoadingSpinner) {
+            if (shouldPadUp && !isMainPage) {
+                item(
+                    span = {
+                        GridItemSpan(maxLineSpan)
+                    }
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(1f)
+                            .height(80.dp)
+                    )
+                }
+            }
+
+            if (isMainPage) {
+                Log.d(TAG, "IS PADDING UP")
+
+                item(
+                    span = {
+                        GridItemSpan(maxLineSpan)
+                    }
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(1f)
+                            .height(120.dp)
+                    )
+                }
+            }
+        }
+
+        if (showLoadingSpinner) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(1f)
+                    .height(48.dp)
+                    .align(Alignment.TopCenter),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
                 Row(
                     modifier = Modifier
-                        .fillMaxWidth(1f)
-                        .height(48.dp)
-                        .align(Alignment.TopCenter),
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(1000.dp))
+                        .background(MaterialTheme.colorScheme.surfaceContainer),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    Row(
+                    CircularProgressIndicator(
                         modifier = Modifier
-                            .size(40.dp)
-                            .clip(RoundedCornerShape(1000.dp))
-                            .background(MaterialTheme.colorScheme.surfaceContainer),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier
-                                .size(22.dp),
-                            color = MaterialTheme.colorScheme.primary,
-                            strokeWidth = 4.dp,
-                            strokeCap = StrokeCap.Round
-                        )
+                            .size(22.dp),
+                        color = MaterialTheme.colorScheme.primary,
+                        strokeWidth = 4.dp,
+                        strokeCap = StrokeCap.Round
+                    )
+                }
+            }
+        }
+
+        val spacerHeight by animateDpAsState(
+            targetValue = if (isMainPage) 88.dp else if (shouldPadUp) 48.dp else 0.dp,
+            animationSpec = tween(
+                durationMillis = 350,
+                delayMillis = if (shouldPadUp) 350 else 0
+            ),
+            label = "animate spacer on bottom of photo grid"
+        )
+
+        // date slider
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .fillMaxHeight(1f)
+                .width(48.dp)
+                .padding(
+                    bottom = spacerHeight
+                )
+        ) {
+            var showHandle by remember { mutableStateOf(false) }
+            var isScrollingByHandle by remember { mutableStateOf(false) }
+            val interactionSource = remember { MutableInteractionSource() }
+
+            LaunchedEffect(interactionSource) {
+                interactionSource.interactions.collect { interaction ->
+                    when (interaction) {
+                        is DragInteraction.Start -> {
+                            isScrollingByHandle = true
+                        }
+
+                        is DragInteraction.Cancel -> {
+                            isScrollingByHandle = false
+                        }
+
+                        is DragInteraction.Stop -> {
+                            isScrollingByHandle = false
+                        }
+
+                        else -> {}
                     }
                 }
             }
 
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .fillMaxHeight(1f)
-                    .width(48.dp)
+            LaunchedEffect(key1 = gridState.isScrollInProgress, key2 = isScrollingByHandle) {
+                if (gridState.isScrollInProgress || isScrollingByHandle) {
+                    showHandle = true
+                } else {
+                    delay(
+                        if (selectedItemsList.isNotEmpty()) 1000 else 3000
+                    )
+                    showHandle = false
+                }
+            }
+
+            val listSize by remember {
+                derivedStateOf {
+                    groupedMedia.value.size - 1
+                }
+            }
+            val totalLeftOverItems by remember {
+                derivedStateOf {
+                    (listSize - gridState.layoutInfo.visibleItemsInfo.size).toFloat()
+                }
+            }
+
+            AnimatedVisibility(
+                visible = showHandle && !showLoadingSpinner && totalLeftOverItems > 50f,
+                modifier = Modifier.fillMaxHeight(1f),
+                enter =
+                    slideInHorizontally { width -> width },
+                exit =
+                    slideOutHorizontally { width -> width }
             ) {
-                var showHandle by remember { mutableStateOf(false) }
-                var isScrollingByHandle by remember { mutableStateOf(false) }
-                val interactionSource = remember { MutableInteractionSource() }
-
-                LaunchedEffect(interactionSource) {
-                    interactionSource.interactions.collect { interaction ->
-                        when (interaction) {
-                            is DragInteraction.Start -> {
-                                isScrollingByHandle = true
-                            }
-
-                            is DragInteraction.Cancel -> {
-                                isScrollingByHandle = false
-                            }
-
-                            is DragInteraction.Stop -> {
-                                isScrollingByHandle = false
-                            }
-
-                            else -> {}
-                        }
-                    }
-                }
-
-                LaunchedEffect(key1 = gridState.isScrollInProgress, key2 = isScrollingByHandle) {
-                    if (gridState.isScrollInProgress || isScrollingByHandle) {
-                        showHandle = true
-                    } else {
-                        delay(
-                            if (selectedItemsList.isNotEmpty()) 1000 else 3000
-                        )
-                        showHandle = false
-                    }
-                }
-
-                val listSize by remember {
+                val visibleItemIndex =
+                    remember { derivedStateOf { gridState.firstVisibleItemIndex } }
+                val percentScrolled by remember {
                     derivedStateOf {
-                        groupedMedia.value.size - 1
+                        visibleItemIndex.value / totalLeftOverItems
                     }
                 }
-                val totalLeftOverItems by remember {
-                    derivedStateOf {
-                        (listSize - gridState.layoutInfo.visibleItemsInfo.size).toFloat()
-                    }
-                }
+                var chosenItemIndex by remember { mutableIntStateOf(0) }
 
-                AnimatedVisibility(
-                    visible = showHandle && !showLoadingSpinner && totalLeftOverItems > 50f,
-                    modifier = Modifier.fillMaxHeight(1f),
-                    enter =
-                        slideInHorizontally { width -> width },
-                    exit =
-                        slideOutHorizontally { width -> width }
-                ) {
-                    val visibleItemIndex =
-                        remember { derivedStateOf { gridState.firstVisibleItemIndex } }
-                    val percentScrolled by remember {
-                        derivedStateOf {
-                            visibleItemIndex.value / totalLeftOverItems
-                        }
-                    }
-                    var chosenItemIndex by remember { mutableIntStateOf(0) }
+                val layoutDirection = LocalLayoutDirection.current
 
-                    val layoutDirection = LocalLayoutDirection.current
-
-                    Slider(
-                        value =
-                            if (layoutDirection == LayoutDirection.Rtl) 1f - percentScrolled
-                            else percentScrolled,
-                        interactionSource = interactionSource,
-                        onValueChange = {
-                            coroutineScope.launch {
-                                if (isScrollingByHandle) {
-                                    chosenItemIndex =
-                                        if (layoutDirection == LayoutDirection.Rtl) {
-                                            ((1f - it) * (groupedMedia.value.size - 1)).roundToInt()
-                                        } else {
-                                            (it * (groupedMedia.value.size - 1)).roundToInt()
-                                        }
-                                    gridState.scrollToItem(
-                                        chosenItemIndex
-                                    )
-                                }
+                Slider(
+                    value =
+                        if (layoutDirection == LayoutDirection.Rtl) 1f - percentScrolled
+                        else percentScrolled,
+                    interactionSource = interactionSource,
+                    onValueChange = {
+                        coroutineScope.launch {
+                            if (isScrollingByHandle) {
+                                chosenItemIndex =
+                                    if (layoutDirection == LayoutDirection.Rtl) {
+                                        ((1f - it) * (groupedMedia.value.size - 1)).roundToInt()
+                                    } else {
+                                        (it * (groupedMedia.value.size - 1)).roundToInt()
+                                    }
+                                gridState.scrollToItem(
+                                    chosenItemIndex
+                                )
                             }
-                        },
-                        valueRange = 0f..1f,
-                        thumb = { _ ->
+                        }
+                    },
+                    valueRange = 0f..1f,
+                    thumb = { _ ->
+                        Box(
+                            modifier = Modifier
+                                .height(48.dp)
+                                .width(96.dp)
+                                .rotate(
+                                    if (layoutDirection == LayoutDirection.Rtl) 180f
+                                    else 0f
+                                )
+                                .offset(
+                                    y =
+                                        if (layoutDirection == LayoutDirection.Rtl) (-16).dp
+                                        else 0.dp
+                                )
+                        ) {
                             Box(
                                 modifier = Modifier
-                                    .height(48.dp)
-                                    .width(96.dp)
-                                    .rotate(
-                                        if (layoutDirection == LayoutDirection.Rtl) 180f
-                                        else 0f
-                                    )
-                                    .offset(
-                                        y =
-                                            if (layoutDirection == LayoutDirection.Rtl) (-16).dp
-                                            else 0.dp
-                                    )
+                                    .size(48.dp)
+                                    .clip(RoundedCornerShape(0.dp, 0.dp, 1000.dp, 1000.dp))
+                                    .background(MaterialTheme.colorScheme.secondaryContainer)
+                                    .align(Alignment.Center)
                             ) {
-                                Box(
+                                Icon(
+                                    painter = painterResource(id = R.drawable.code),
+                                    contentDescription = "scrollbar handle",
+                                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
                                     modifier = Modifier
-                                        .size(48.dp)
-                                        .clip(RoundedCornerShape(0.dp, 0.dp, 1000.dp, 1000.dp))
-                                        .background(MaterialTheme.colorScheme.secondaryContainer)
+                                        .size(24.dp)
                                         .align(Alignment.Center)
-                                ) {
-                                    Icon(
-                                        painter = painterResource(id = R.drawable.code),
-                                        contentDescription = "scrollbar handle",
-                                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                                        modifier = Modifier
-                                            .size(24.dp)
-                                            .align(Alignment.Center)
-                                    )
-                                }
+                                )
+                            }
 
-                                Box(
-                                    modifier = Modifier
-                                        .align(Alignment.Center)
-                                        .rotate(-90f)
-                                        .graphicsLayer {
-                                            translationX = -220f
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.Center)
+                                    .rotate(-90f)
+                                    .graphicsLayer {
+                                        translationX = -220f
 
-                                            if (layoutDirection == LayoutDirection.Rtl) {
-                                                rotationX = 180f
-                                                rotationY = 180f
-                                            }
+                                        if (layoutDirection == LayoutDirection.Rtl) {
+                                            rotationX = 180f
+                                            rotationY = 180f
                                         }
+                                    }
+                            ) {
+                                AnimatedVisibility(
+                                    visible = isScrollingByHandle,
+                                    enter =
+                                        slideInHorizontally { width -> width / 4 } + fadeIn(),
+                                    exit =
+                                        slideOutHorizontally { width -> width / 4 } + fadeOut(),
+                                    modifier = Modifier
+                                        .align(Alignment.CenterStart)
+                                        .height(32.dp)
+                                        .wrapContentWidth()
                                 ) {
-                                    AnimatedVisibility(
-                                        visible = isScrollingByHandle,
-                                        enter =
-                                            slideInHorizontally { width -> width / 4 } + fadeIn(),
-                                        exit =
-                                            slideOutHorizontally { width -> width / 4 } + fadeOut(),
+                                    Box(
                                         modifier = Modifier
-                                            .align(Alignment.CenterStart)
                                             .height(32.dp)
                                             .wrapContentWidth()
+                                            .clip(RoundedCornerShape(1000.dp))
+                                            .background(MaterialTheme.colorScheme.secondaryContainer)
+                                            .padding(8.dp, 4.dp)
                                     ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .height(32.dp)
-                                                .wrapContentWidth()
-                                                .clip(RoundedCornerShape(1000.dp))
-                                                .background(MaterialTheme.colorScheme.secondaryContainer)
-                                                .padding(8.dp, 4.dp)
-                                        ) {
-                                            // last index to "reach" even the last items
-                                            val item by remember {
-                                                derivedStateOf {
-                                                    groupedMedia.value[chosenItemIndex]
-                                                }
+                                        // last index to "reach" even the last items
+                                        val item by remember {
+                                            derivedStateOf {
+                                                groupedMedia.value[chosenItemIndex]
                                             }
-
-                                            val format = SimpleDateFormat("MMM yyyy", Locale.getDefault())
-                                            val formatted = remember(item) {
-                                                format.format(Date(item.dateTaken * 1000))
-                                            }
-
-                                            Text(
-                                                text = formatted,
-                                                fontSize = TextUnit(14f, TextUnitType.Sp),
-                                                textAlign = TextAlign.Center,
-                                                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                                modifier = Modifier
-                                                    .align(Alignment.CenterStart)
-                                            )
                                         }
+
+                                        val format = SimpleDateFormat("MMM yyyy", Locale.getDefault())
+                                        val formatted = remember(item) {
+                                            format.format(Date(item.dateTaken * 1000))
+                                        }
+
+                                        Text(
+                                            text = formatted,
+                                            fontSize = TextUnit(14f, TextUnitType.Sp),
+                                            textAlign = TextAlign.Center,
+                                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                            modifier = Modifier
+                                                .align(Alignment.CenterStart)
+                                        )
                                     }
                                 }
                             }
-                        },
-                        track = {
-                            val colors = SliderDefaults.colors()
-                            SliderDefaults.Track(
-                                sliderState = it,
-                                trackInsideCornerSize = 8.dp,
-                                colors = colors.copy(
-                                    activeTickColor = Color.Transparent,
-                                    inactiveTickColor = Color.Transparent,
-                                    disabledActiveTickColor = Color.Transparent,
-                                    disabledInactiveTickColor = Color.Transparent,
+                        }
+                    },
+                    track = {
+                        val colors = SliderDefaults.colors()
+                        SliderDefaults.Track(
+                            sliderState = it,
+                            trackInsideCornerSize = 8.dp,
+                            colors = colors.copy(
+                                activeTickColor = Color.Transparent,
+                                inactiveTickColor = Color.Transparent,
+                                disabledActiveTickColor = Color.Transparent,
+                                disabledInactiveTickColor = Color.Transparent,
 
-                                    activeTrackColor = Color.Transparent,
-                                    inactiveTrackColor = Color.Transparent
-                                ),
-                                thumbTrackGapSize = 4.dp,
-                                drawTick = { _, _ -> },
-                                modifier = Modifier
-                                    .height(16.dp)
-                            )
-                        },
-                        modifier = Modifier
-                            .width(40.dp)
-                            .fillMaxHeight(1f)
-                            .graphicsLayer {
-                                rotationZ = 90f
-                                translationX = 30f
-                                transformOrigin = TransformOrigin(0f, 0f)
-                            }
-                            .layout { measurable, constraints ->
-                                val placeable = measurable.measure(
-                                    Constraints(
-                                        minWidth = constraints.minHeight,
-                                        minHeight = constraints.minWidth,
-                                        maxWidth = constraints.maxHeight,
-                                        maxHeight = constraints.maxWidth
-                                    )
+                                activeTrackColor = Color.Transparent,
+                                inactiveTrackColor = Color.Transparent
+                            ),
+                            thumbTrackGapSize = 4.dp,
+                            drawTick = { _, _ -> },
+                            modifier = Modifier
+                                .height(16.dp)
+                        )
+                    },
+                    modifier = Modifier
+                        .width(40.dp)
+                        .fillMaxHeight(1f)
+                        .graphicsLayer {
+                            rotationZ = 90f
+                            translationX = 30f
+                            transformOrigin = TransformOrigin(0f, 0f)
+                        }
+                        .layout { measurable, constraints ->
+                            val placeable = measurable.measure(
+                                Constraints(
+                                    minWidth = constraints.minHeight,
+                                    minHeight = constraints.minWidth,
+                                    maxWidth = constraints.maxHeight,
+                                    maxHeight = constraints.maxWidth
                                 )
+                            )
 
-                                layout(placeable.height, placeable.width) {
-                                    placeable.place(0, -placeable.height)
-                                }
+                            layout(placeable.height, placeable.width) {
+                                placeable.place(0, -placeable.height)
                             }
-                    )
-                }
+                        }
+                )
             }
         }
     }
@@ -729,7 +763,11 @@ fun MediaStoreItem(
                 .then(
                     if (selectedItemsList.isNotEmpty()) {
                         Modifier.clickable {
-                            onSingleClick()
+                            if (onClick == {}) {
+                                onLongClick()
+                            } else {
+                                onSingleClick()
+                            }
                         }
                     } else {
                         Modifier.combinedClickable(

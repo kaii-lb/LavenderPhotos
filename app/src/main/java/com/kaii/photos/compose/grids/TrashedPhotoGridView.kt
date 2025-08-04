@@ -2,21 +2,26 @@ package com.kaii.photos.compose.grids
 
 import android.net.Uri
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.SheetValue
-import androidx.compose.material3.rememberBottomSheetScaffoldState
-import androidx.compose.material3.rememberStandardBottomSheetState
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,8 +30,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -36,8 +41,10 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.TrashedPhotoGridViewBottomBar
 import com.kaii.photos.compose.app_bars.TrashedPhotoGridViewTopBar
+import com.kaii.photos.compose.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.TrashBin
+import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.mediastore.MediaStoreData
@@ -110,44 +117,20 @@ fun TrashedPhotoGridView(
         runAutoDeleteAction.value = true
     }
 
-    val showBottomSheet by remember {
-        derivedStateOf {
-            selectedItemsList.isNotEmpty()
-        }
-    }
-
     BackHandler(
-        enabled = showBottomSheet
+        enabled = selectedItemsList.isNotEmpty()
     ) {
         selectedItemsList.clear()
     }
 
     val navController = LocalNavController.current
     BackHandler(
-        enabled = !showBottomSheet
+        enabled = selectedItemsList.isEmpty()
     ) {
         navController.popBackStack()
     }
 
-    val sheetState = rememberStandardBottomSheetState(
-        skipHiddenState = false,
-        initialValue = SheetValue.Hidden,
-    )
-    val scaffoldState = rememberBottomSheetScaffoldState(
-        bottomSheetState = sheetState
-    )
-    LaunchedEffect(key1 = showBottomSheet) {
-        if (showBottomSheet) {
-            sheetState.expand()
-        } else {
-            sheetState.hide()
-        }
-    }
-
-    BottomSheetScaffold(
-        scaffoldState = scaffoldState,
-        sheetDragHandle = {},
-        sheetSwipeEnabled = false,
+    Scaffold(
         modifier = Modifier
             .fillMaxSize(1f),
         topBar = {
@@ -158,15 +141,42 @@ fun TrashedPhotoGridView(
                 navController.popBackStack()
             }
         },
-        sheetContent = {
-            TrashedPhotoGridViewBottomBar(selectedItemsList = selectedItemsList)
-        },
-        sheetPeekHeight = 0.dp,
-        sheetShape = RectangleShape
+        bottomBar = {
+            AnimatedVisibility(
+                visible = selectedItemsList.isNotEmpty(),
+                enter = fadeIn() + slideInHorizontally(
+                    animationSpec = AnimationConstants.expressiveSpring()
+                ),
+                exit = fadeOut() + slideOutHorizontally(
+                    animationSpec = AnimationConstants.expressiveTween()
+                )
+            ) {
+                TrashedPhotoGridViewBottomBar(selectedItemsList = selectedItemsList)
+            }
+        }
     ) { padding ->
+        val isLandscape by rememberDeviceOrientation()
+
+        val safeDrawingPadding = if (isLandscape) {
+            val safeDrawing = WindowInsets.safeDrawing.asPaddingValues()
+
+            val layoutDirection = LocalLayoutDirection.current
+            val left = safeDrawing.calculateStartPadding(layoutDirection)
+            val right = safeDrawing.calculateEndPadding(layoutDirection)
+
+            Pair(left, right)
+        } else {
+            Pair(0.dp, 0.dp)
+        }
+
         Column(
             modifier = Modifier
-                .padding(padding)
+                .padding(
+                    start = safeDrawingPadding.first,
+                    top = padding.calculateTopPadding(),
+                    end = safeDrawingPadding.second,
+                    bottom = 0.dp
+                )
                 .fillMaxSize(1f)
                 .windowInsetsPadding(
                     WindowInsets.navigationBars
@@ -179,7 +189,6 @@ fun TrashedPhotoGridView(
                 albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
                 selectedItemsList = selectedItemsList,
                 viewProperties = ViewProperties.Trash,
-                shouldPadUp = true,
                 hasFiles = hasFiles
             )
         }

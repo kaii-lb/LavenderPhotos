@@ -4,9 +4,6 @@ import android.view.Window
 import android.view.WindowInsetsController
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
@@ -49,6 +46,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.datastore.LookAndFeel
+import com.kaii.photos.helpers.AnimationConstants
 
 /** please only use dialogComposable for its intended purpose */
 @Composable
@@ -124,42 +122,26 @@ fun BottomAppBarItem(
 fun getAppBarContentTransition(slideLeft: Boolean) = run {
     if (slideLeft) {
         (slideInHorizontally(
-            animationSpec = tween(
-                durationMillis = 350
-            )
+            animationSpec = AnimationConstants.expressiveSpring()
         ) { width -> width } + fadeIn(
-            animationSpec = tween(
-                durationMillis = 350
-            )
+            animationSpec = AnimationConstants.expressiveSpring()
         )).togetherWith(
             slideOutHorizontally(
-                animationSpec = tween(
-                    durationMillis = 350
-                )
+                animationSpec = AnimationConstants.expressiveSpring()
             ) { width -> -width } + fadeOut(
-                animationSpec = tween(
-                    durationMillis = 350
-                )
+                animationSpec = AnimationConstants.expressiveSpring()
             )
         )
     } else {
         (slideInHorizontally(
-            animationSpec = tween(
-                durationMillis = 350
-            )
+            animationSpec = AnimationConstants.expressiveSpring()
         ) { width -> -width } + fadeIn(
-            animationSpec = tween(
-                durationMillis = 350
-            )
+            animationSpec = AnimationConstants.expressiveSpring()
         )).togetherWith(
             slideOutHorizontally(
-                animationSpec = tween(
-                    durationMillis = 350
-                )
+                animationSpec = AnimationConstants.expressiveSpring()
             ) { width -> width } + fadeOut(
-                animationSpec = tween(
-                    durationMillis = 350
-                )
+                animationSpec = AnimationConstants.expressiveSpring()
             )
         )
     }
@@ -216,29 +198,17 @@ fun DualFunctionTopAppBar(
                 transitionSpec = {
                     if (alternated) {
                         (slideInVertically(
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioMediumBouncy,
-                                stiffness = Spring.StiffnessMediumLow
-                            )
+                            animationSpec = AnimationConstants.expressiveSpring()
                         ) { height -> height } + fadeIn()).togetherWith(
                             slideOutVertically(
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                                    stiffness = Spring.StiffnessMediumLow
-                                )
+                                animationSpec = AnimationConstants.expressiveSpring()
                             ) { height -> -height } + fadeOut())
                     } else {
                         (slideInVertically(
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioMediumBouncy,
-                                stiffness = Spring.StiffnessMediumLow
-                            )
+                            animationSpec = AnimationConstants.expressiveSpring()
                         ) { height -> -height } + fadeIn()).togetherWith(
                             slideOutVertically(
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                                    stiffness = Spring.StiffnessMediumLow
-                                )
+                                animationSpec = AnimationConstants.expressiveSpring()
                             ) { height -> height } + fadeOut())
                     }.using(
                         SizeTransform(clip = false)
@@ -259,29 +229,17 @@ fun DualFunctionTopAppBar(
                 transitionSpec = {
                     if (alternated) {
                         (slideInVertically(
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioMediumBouncy,
-                                stiffness = Spring.StiffnessMediumLow
-                            )
+                            animationSpec = AnimationConstants.expressiveSpring()
                         ) { height -> height } + fadeIn()).togetherWith(
                             slideOutVertically(
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                                    stiffness = Spring.StiffnessMediumLow
-                                )
+                                animationSpec = AnimationConstants.expressiveSpring()
                             ) { height -> -height } + fadeOut())
                     } else {
                         (slideInVertically(
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioMediumBouncy,
-                                stiffness = Spring.StiffnessMediumLow
-                            )
+                            animationSpec = AnimationConstants.expressiveSpring()
                         ) { height -> -height } + fadeIn()).togetherWith(
                             slideOutVertically(
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                                    stiffness = Spring.StiffnessMediumLow
-                                )
+                                animationSpec = AnimationConstants.expressiveSpring()
                             ) { height -> height } + fadeOut())
                     }.using(
                         SizeTransform(clip = false)

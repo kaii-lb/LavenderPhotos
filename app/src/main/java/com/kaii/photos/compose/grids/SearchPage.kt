@@ -269,6 +269,7 @@ fun SearchPage(
                 viewProperties = if (searchedForText.value == "") ViewProperties.SearchLoading else ViewProperties.SearchNotFound,
                 state = gridState,
                 hasFiles = hasFiles,
+                isMainPage = true,
                 modifier = Modifier
                     .align(Alignment.Center)
             )

@@ -14,6 +14,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -442,6 +443,19 @@ fun AlbumsGridView(
                         )
                     )
                 }
+            }
+
+            // padding for floating bottom nav bar
+            item(
+                span = {
+                    GridItemSpan(maxLineSpan)
+                }
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(1f)
+                        .height(120.dp)
+                )
             }
         }
     }

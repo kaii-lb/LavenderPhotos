@@ -79,6 +79,7 @@ import com.bumptech.glide.signature.ObjectKey
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.MainActivity.Companion.immichViewModel
 import com.kaii.photos.R
+import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.immich.ImmichUserLoginState
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
@@ -655,8 +656,12 @@ fun AnimatedLoginIcon(
     AnimatedContent(
         targetState = immichUserLoginState is ImmichUserLoginState.IsLoggedIn,
         transitionSpec = {
-            (scaleIn() + fadeIn()).togetherWith(
-                scaleOut() + fadeOut()
+            (scaleIn(
+                animationSpec = AnimationConstants.expressiveSpring()
+            ) + fadeIn()).togetherWith(
+                scaleOut(
+                    animationSpec = AnimationConstants.expressiveSpring()
+                ) + fadeOut()
             ).using(SizeTransform(clip = false))
         },
         contentAlignment = Alignment.Center,

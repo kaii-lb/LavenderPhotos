@@ -54,7 +54,6 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.AlbumPathsDialog
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
-import com.kaii.photos.compose.dialogs.ExplanationDialog
 import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.compose.media_picker.MediaPickerConfirmButton
@@ -78,8 +77,6 @@ import com.kaii.photos.immich.ImmichUserLoginState
 import com.kaii.photos.immich.getImmichBackupMedia
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.mediastore.content_provider.LavenderContentProvider
-import com.kaii.photos.mediastore.content_provider.LavenderMediaColumns
 import com.kaii.photos.mediastore.getIv
 import com.kaii.photos.mediastore.getOriginalPath
 import kotlinx.coroutines.Dispatchers
@@ -309,160 +306,10 @@ fun SingleAlbumViewBottomBar(
 ) {
     if (incomingIntent == null) {
         IsSelectingBottomAppBar {
-            val context = LocalContext.current
-            val coroutineScope = rememberCoroutineScope()
-
-            val selectedItemsWithoutSection by remember {
-                derivedStateOf {
-                    selectedItemsList.filter {
-                        it.type != MediaType.Section && it != MediaStoreData()
-                    }
-                }
-            }
-
-            BottomAppBarItem(
-                text = "Share",
-                iconResId = R.drawable.share,
-                action = {
-                    coroutineScope.launch {
-                        val hasVideos = selectedItemsWithoutSection.any {
-                            it.type == MediaType.Video
-                        }
-
-                        val intent = Intent().apply {
-                            action = Intent.ACTION_SEND_MULTIPLE
-                            type = if (hasVideos) "video/*" else "images/*"
-                        }
-
-                        val fileUris = ArrayList<Uri>()
-                        selectedItemsWithoutSection.forEach {
-                            fileUris.add(it.uri)
-                        }
-
-                        intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, fileUris)
-
-                        context.startActivity(Intent.createChooser(intent, null))
-                    }
-                }
+            SelectingBottomBarItems(
+                albumInfo = albumInfo,
+                selectedItemsList = selectedItemsList
             )
-
-            val show = remember { mutableStateOf(false) }
-            var isMoving by remember { mutableStateOf(false) }
-            MoveCopyAlbumListView(
-                show = show,
-                selectedItemsList = selectedItemsList,
-                isMoving = isMoving,
-                groupedMedia = null,
-                insetsPadding = WindowInsets.statusBars
-            )
-
-            BottomAppBarItem(
-                text = "Move",
-                iconResId = R.drawable.cut,
-                enabled = !albumInfo.isCustomAlbum,
-                action = {
-                    isMoving = true
-                    show.value = true
-                }
-            )
-
-            BottomAppBarItem(
-                text = "Copy",
-                iconResId = R.drawable.copy,
-                action = {
-                    isMoving = false
-                    show.value = true
-                }
-            )
-
-            val showDeleteDialog = remember { mutableStateOf(false) }
-            val runTrashAction = remember { mutableStateOf(false) }
-
-            val mainViewModel = LocalMainViewModel.current
-            val applicationDatabase = LocalAppDatabase.current
-            GetPermissionAndRun(
-                uris = selectedItemsWithoutSection.map { it.uri },
-                shouldRun = runTrashAction,
-                onGranted = {
-                    mainViewModel.launch(Dispatchers.IO) {
-                        setTrashedOnPhotoList(
-                            context = context,
-                            list = selectedItemsWithoutSection,
-                            trashed = true,
-                            appDatabase = applicationDatabase
-                        )
-
-                        selectedItemsList.clear()
-                    }
-                }
-            )
-
-            val confirmToDelete by mainViewModel.settings.Permissions.getConfirmToDelete()
-                .collectAsStateWithLifecycle(initialValue = true)
-            if (!albumInfo.isCustomAlbum) {
-                BottomAppBarItem(
-                    text = "Delete",
-                    iconResId = R.drawable.delete,
-                    cornerRadius = 16.dp,
-                    action = {
-                        if (confirmToDelete) showDeleteDialog.value = true
-                        else runTrashAction.value = true
-                    },
-                    dialogComposable = {
-                        ConfirmationDialog(
-                            showDialog = showDeleteDialog,
-                            dialogTitle = "Move selected items to Trash Bin?",
-                            confirmButtonLabel = "Delete"
-                        ) {
-                            runTrashAction.value = true
-                        }
-                    }
-                )
-            } else {
-                val showExplanationDialog = remember { mutableStateOf(false) }
-                if (showExplanationDialog.value) {
-                    ExplanationDialog(
-                        title = stringResource(id = R.string.custom_album_media_not_custom_title),
-                        explanation = stringResource(id = R.string.custom_album_media_not_custom_explanation),
-                        showDialog = showExplanationDialog
-                    )
-                }
-
-                BottomAppBarItem(
-                    text = stringResource(id = R.string.custom_album_remove_media),
-                    iconResId = R.drawable.delete,
-                    cornerRadius = 16.dp,
-                    action = {
-                        if (confirmToDelete) showDeleteDialog.value = true
-                        else runTrashAction.value = true
-                    },
-                    dialogComposable = {
-                        ConfirmationDialog(
-                            showDialog = showDeleteDialog,
-                            dialogTitle = stringResource(id = R.string.custom_album_remove_media_desc),
-                            confirmButtonLabel = stringResource(id = R.string.custom_album_remove_media)
-                        ) {
-                            if (selectedItemsWithoutSection.any { it.customId == null }) {
-                                showExplanationDialog.value = true
-                            }
-
-                            mainViewModel.launch(Dispatchers.IO) {
-                                selectedItemsWithoutSection.forEach { item ->
-                                    Log.d(
-                                        TAG,
-                                        "Removed this many rows: " + context.contentResolver.delete(
-                                            LavenderContentProvider.CONTENT_URI,
-                                            "${LavenderMediaColumns.ID} = ? AND ${LavenderMediaColumns.PARENT_ID} = ?",
-                                            arrayOf(item.customId.toString(), albumInfo.id.toString())
-                                        )
-                                    )
-                                }
-                                selectedItemsList.clear()
-                            }
-                        }
-                    }
-                )
-            }
         }
     } else {
         val context = LocalContext.current
@@ -576,7 +423,6 @@ fun TrashedPhotoGridViewBottomBar(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
 ) {
     IsSelectingBottomAppBar {
-
         val context = LocalContext.current
         val coroutineScope = rememberCoroutineScope()
 
@@ -588,10 +434,8 @@ fun TrashedPhotoGridViewBottomBar(
             }
         }
 
-        BottomAppBarItem(
-            text = "Share",
-            iconResId = R.drawable.share,
-            action = {
+        IconButton(
+            onClick = {
                 coroutineScope.launch {
                     val hasVideos = selectedItemsWithoutSection.any {
                         it.type == MediaType.Video
@@ -612,7 +456,12 @@ fun TrashedPhotoGridViewBottomBar(
                     context.startActivity(Intent.createChooser(intent, null))
                 }
             }
-        )
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.share),
+                contentDescription = stringResource(id = R.string.media_share)
+            )
+        }
 
         val showRestoreDialog = remember { mutableStateOf(false) }
         val runRestoreAction = remember { mutableStateOf(false) }
@@ -636,23 +485,24 @@ fun TrashedPhotoGridViewBottomBar(
             }
         )
 
-        BottomAppBarItem(
-            text = stringResource(id = R.string.media_restore),
-            iconResId = R.drawable.untrash,
-            cornerRadius = 16.dp,
-            action = {
+        ConfirmationDialog(
+            showDialog = showRestoreDialog,
+            dialogTitle = stringResource(id = R.string.media_restore_confirm),
+            confirmButtonLabel = stringResource(id = R.string.media_restore)
+        ) {
+            runRestoreAction.value = true
+        }
+
+        IconButton(
+            onClick = {
                 showRestoreDialog.value = true
-            },
-            dialogComposable = {
-                ConfirmationDialog(
-                    showDialog = showRestoreDialog,
-                    dialogTitle = stringResource(id = R.string.media_restore_confirm),
-                    confirmButtonLabel = stringResource(id = R.string.media_restore)
-                ) {
-                    runRestoreAction.value = true
-                }
             }
-        )
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.untrash),
+                contentDescription = stringResource(id = R.string.media_restore)
+            )
+        }
 
         val showPermaDeleteDialog = remember { mutableStateOf(false) }
         val runPermaDeleteAction = remember { mutableStateOf(false) }
@@ -670,26 +520,27 @@ fun TrashedPhotoGridViewBottomBar(
             }
         }
 
-        BottomAppBarItem(
-            text = stringResource(id = R.string.media_delete),
-            iconResId = R.drawable.delete,
-            cornerRadius = 16.dp,
-            action = {
+        ConfirmationDialogWithBody(
+            showDialog = showPermaDeleteDialog,
+            dialogTitle = stringResource(id = R.string.media_delete_permanently_confirm),
+            dialogBody = stringResource(id = R.string.action_cannot_be_undone),
+            confirmButtonLabel = stringResource(id = R.string.media_delete)
+        ) {
+            runPermaDeleteAction.value = true
+        }
+
+        IconButton(
+            onClick = {
                 if (selectedItemsWithoutSection.isNotEmpty()) {
                     showPermaDeleteDialog.value = true
                 }
-            },
-            dialogComposable = {
-                ConfirmationDialogWithBody(
-                    showDialog = showPermaDeleteDialog,
-                    dialogTitle = stringResource(id = R.string.media_delete_permanently_confirm),
-                    dialogBody = stringResource(id = R.string.action_cannot_be_undone),
-                    confirmButtonLabel = stringResource(id = R.string.media_delete)
-                ) {
-                    runPermaDeleteAction.value = true
-                }
             }
-        )
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.delete),
+                contentDescription = stringResource(id = R.string.media_delete)
+            )
+        }
     }
 }
 
@@ -776,10 +627,8 @@ fun SecureFolderViewBottomAppBar(
             )
         }
 
-        BottomAppBarItem(
-            text = stringResource(id = R.string.media_share),
-            iconResId = R.drawable.share,
-            action = {
+        IconButton(
+            onClick = {
                 coroutineScope.launch(Dispatchers.IO) {
                     async {
                         loadingDialogTitle = context.resources.getString(R.string.secure_decrypting)
@@ -813,7 +662,12 @@ fun SecureFolderViewBottomAppBar(
                     }.await()
                 }
             }
-        )
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.share),
+                contentDescription = stringResource(id = R.string.media_share)
+            )
+        }
 
         val showRestoreDialog = remember { mutableStateOf(false) }
         val runRestoreAction = remember { mutableStateOf(false) }
@@ -861,28 +715,29 @@ fun SecureFolderViewBottomAppBar(
             }
         )
 
-        BottomAppBarItem(
-            text = stringResource(id = R.string.media_restore),
-            iconResId = R.drawable.unlock,
-            cornerRadius = 16.dp,
-            action = {
-                showRestoreDialog.value = true
-            },
-            dialogComposable = {
-                ConfirmationDialog(
-                    showDialog = showRestoreDialog,
-                    dialogTitle = stringResource(id = R.string.media_restore_confirm),
-                    confirmButtonLabel = stringResource(id = R.string.media_restore)
-                ) {
-                    loadingDialogTitle =
-                        context.resources.getString(R.string.media_restore_processing)
-                    showLoadingDialog = true
+        ConfirmationDialog(
+            showDialog = showRestoreDialog,
+            dialogTitle = stringResource(id = R.string.media_restore_confirm),
+            confirmButtonLabel = stringResource(id = R.string.media_restore)
+        ) {
+            loadingDialogTitle =
+                context.resources.getString(R.string.media_restore_processing)
+            showLoadingDialog = true
 
-                    isGettingPermissions.value = true
-                    runRestoreAction.value = true
-                }
+            isGettingPermissions.value = true
+            runRestoreAction.value = true
+        }
+
+        IconButton(
+            onClick = {
+                showRestoreDialog.value = true
             }
-        )
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.unlock),
+                contentDescription = stringResource(id = R.string.media_restore)
+            )
+        }
 
         val showPermaDeleteDialog = remember { mutableStateOf(false) }
         val runPermaDeleteAction = remember { mutableStateOf(false) }
@@ -925,24 +780,25 @@ fun SecureFolderViewBottomAppBar(
             }
         }
 
-        BottomAppBarItem(
-            text = stringResource(id = R.string.media_delete),
-            iconResId = R.drawable.delete,
-            cornerRadius = 16.dp,
-            action = {
+        ConfirmationDialogWithBody(
+            showDialog = showPermaDeleteDialog,
+            dialogTitle = stringResource(id = R.string.media_delete_permanently_confirm),
+            dialogBody = stringResource(id = R.string.action_cannot_be_undone),
+            confirmButtonLabel = stringResource(id = R.string.media_delete)
+        ) {
+            runPermaDeleteAction.value = true
+        }
+
+        IconButton(
+            onClick = {
                 showPermaDeleteDialog.value = true
-            },
-            dialogComposable = {
-                ConfirmationDialogWithBody(
-                    showDialog = showPermaDeleteDialog,
-                    dialogTitle = stringResource(id = R.string.media_delete_permanently_confirm),
-                    dialogBody = stringResource(id = R.string.action_cannot_be_undone),
-                    confirmButtonLabel = stringResource(id = R.string.media_delete)
-                ) {
-                    runPermaDeleteAction.value = true
-                }
             }
-        )
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.delete),
+                contentDescription = stringResource(id = R.string.media_delete)
+            )
+        }
     }
 }
 
@@ -1017,10 +873,8 @@ fun FavouritesViewBottomAppBar(
             }
         }
 
-        BottomAppBarItem(
-            text = "Share",
-            iconResId = R.drawable.share,
-            action = {
+        IconButton(
+            onClick = {
                 coroutineScope.launch {
                     val hasVideos = selectedItemsWithoutSection.any {
                         it.type == MediaType.Video
@@ -1041,7 +895,12 @@ fun FavouritesViewBottomAppBar(
                     context.startActivity(Intent.createChooser(intent, null))
                 }
             }
-        )
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.share),
+                contentDescription = stringResource(id = R.string.media_share)
+            )
+        }
 
         val show = remember { mutableStateOf(false) }
         MoveCopyAlbumListView(
@@ -1052,53 +911,57 @@ fun FavouritesViewBottomAppBar(
             insetsPadding = WindowInsets.statusBars
         )
 
-        BottomAppBarItem(
-            text = "Copy",
-            iconResId = R.drawable.copy,
-            action = {
+        IconButton(
+            onClick = {
                 show.value = true
             }
-        )
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.copy),
+                contentDescription = stringResource(id = R.string.media_copy)
+            )
+        }
 
         val showUnFavDialog = remember { mutableStateOf(false) }
-        BottomAppBarItem(
-            text = stringResource(id = R.string.custom_album_remove_media),
-            iconResId = R.drawable.unfavourite,
-            cornerRadius = 16.dp,
-            action = {
-                showUnFavDialog.value = true
-            },
-            dialogComposable = {
-                ConfirmationDialog(
-                    showDialog = showUnFavDialog,
-                    dialogTitle = stringResource(id = R.string.custom_album_remove_media_desc),
-                    confirmButtonLabel = stringResource(id = R.string.custom_album_remove_media)
-                ) {
-                    coroutineScope.launch {
-                        withContext(Dispatchers.IO) {
-                            val newList = groupedMedia.value.toMutableList()
-                            selectedItemsWithoutSection.forEach { item ->
-                                dao.deleteEntityById(item.id)
-                                newList.remove(item)
-                            }
-
-                            groupedMedia.value.filter {
-                                it.type == MediaType.Section
-                            }.forEach {
-                                val filtered = newList.filter { new ->
-                                    new.getLastModifiedDay() == it.getLastModifiedDay()
-                                }
-
-                                if (filtered.size == 1) newList.remove(it)
-                            }
-
-                            selectedItemsList.clear()
-                            groupedMedia.value = newList
-                        }
+        ConfirmationDialog(
+            showDialog = showUnFavDialog,
+            dialogTitle = stringResource(id = R.string.custom_album_remove_media_desc),
+            confirmButtonLabel = stringResource(id = R.string.custom_album_remove_media)
+        ) {
+            coroutineScope.launch {
+                withContext(Dispatchers.IO) {
+                    val newList = groupedMedia.value.toMutableList()
+                    selectedItemsWithoutSection.forEach { item ->
+                        dao.deleteEntityById(item.id)
+                        newList.remove(item)
                     }
+
+                    groupedMedia.value.filter {
+                        it.type == MediaType.Section
+                    }.forEach {
+                        val filtered = newList.filter { new ->
+                            new.getLastModifiedDay() == it.getLastModifiedDay()
+                        }
+
+                        if (filtered.size == 1) newList.remove(it)
+                    }
+
+                    selectedItemsList.clear()
+                    groupedMedia.value = newList
                 }
             }
-        )
+        }
+
+        IconButton(
+            onClick = {
+                showUnFavDialog.value = true
+            }
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.unfavourite),
+                contentDescription = stringResource(id = R.string.custom_album_remove_media)
+            )
+        }
 
         val showDeleteDialog = remember { mutableStateOf(false) }
         val runTrashAction = remember { mutableStateOf(false) }
@@ -1124,11 +987,21 @@ fun FavouritesViewBottomAppBar(
             }
         )
 
-        BottomAppBarItem(
-            text = stringResource(id = R.string.media_delete),
-            iconResId = R.drawable.delete,
-            cornerRadius = 16.dp,
-            action = {
+        ConfirmationDialog(
+            showDialog = showDeleteDialog,
+            dialogTitle = stringResource(id = R.string.media_trash_confirm),
+            confirmButtonLabel = stringResource(id = R.string.media_delete)
+        ) {
+            coroutineScope.launch {
+                selectedItemsList.forEach {
+                    dao.deleteEntityById(it.id)
+                }
+                runTrashAction.value = true
+            }
+        }
+
+        IconButton(
+            onClick = {
                 if (confirmToDelete) {
                     showDeleteDialog.value = true
                 } else {
@@ -1139,21 +1012,12 @@ fun FavouritesViewBottomAppBar(
                         runTrashAction.value = true
                     }
                 }
-            },
-            dialogComposable = {
-                ConfirmationDialog(
-                    showDialog = showDeleteDialog,
-                    dialogTitle = stringResource(id = R.string.media_trash_confirm),
-                    confirmButtonLabel = stringResource(id = R.string.media_delete)
-                ) {
-                    coroutineScope.launch {
-                        selectedItemsList.forEach {
-                            dao.deleteEntityById(it.id)
-                        }
-                        runTrashAction.value = true
-                    }
-                }
             }
-        )
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.delete),
+                contentDescription = stringResource(id = R.string.media_delete)
+            )
+        }
     }
 }

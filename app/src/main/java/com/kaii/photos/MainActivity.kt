@@ -959,7 +959,7 @@ class MainActivity : ComponentActivity() {
                 )
             },
             bottomBar = {
-                BottomBar(
+                MainAppBottomBar(
                     currentView = currentView,
                     selectedItemsList = selectedItemsList,
                     tabs = tabList
@@ -1046,7 +1046,8 @@ class MainActivity : ComponentActivity() {
                                     ),
                                     viewProperties = ViewProperties.Album,
                                     selectedItemsList = selectedItemsList,
-                                    hasFiles = hasFiles
+                                    hasFiles = hasFiles,
+                                    isMainPage = true
                                 )
                             }
 
@@ -1086,7 +1087,8 @@ class MainActivity : ComponentActivity() {
                                     albumInfo = multiAlbumViewModel.albumInfo,
                                     viewProperties = ViewProperties.Album,
                                     selectedItemsList = selectedItemsList,
-                                    hasFiles = hasFiles
+                                    hasFiles = hasFiles,
+                                    isMainPage = true
                                 )
                             }
 
@@ -1133,40 +1135,6 @@ class MainActivity : ComponentActivity() {
             selectedItemsList = selectedItemsList,
             currentView = currentView
         )
-    }
-
-    @Composable
-    private fun BottomBar(
-        currentView: MutableState<BottomBarTab>,
-        tabs: List<BottomBarTab>,
-        selectedItemsList: SnapshotStateList<MediaStoreData>
-    ) {
-        MainAppBottomBar(
-            currentView = currentView,
-            tabs = tabs,
-            selectedItemsList = selectedItemsList
-        )
-        // val navController = LocalNavController.current
-        // val show by remember {
-        //     derivedStateOf {
-        //         selectedItemsList.isNotEmpty()
-        //     }
-        // }
-        //
-        // AnimatedContent(
-        //     targetState = show && navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name,
-        //     transitionSpec = {
-        //         getAppBarContentTransition(show)
-        //     },
-        //     label = "MainBottomBarAnimatedContentView",
-        //     contentAlignment = Alignment.Center
-        // ) { state ->
-        //     if (!state) {
-        //
-        //     } else {
-        //         MainAppSelectingBottomBar(selectedItemsList)
-        //     }
-        // }
     }
 }
 

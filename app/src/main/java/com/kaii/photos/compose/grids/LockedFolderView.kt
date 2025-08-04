@@ -5,19 +5,25 @@ import android.util.Log
 import android.view.Window
 import android.view.WindowManager
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.BottomSheetScaffold
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.SheetValue
-import androidx.compose.material3.rememberBottomSheetScaffoldState
-import androidx.compose.material3.rememberStandardBottomSheetState
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,8 +32,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.lifecycle.Lifecycle
@@ -42,7 +48,9 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.SecureFolderViewBottomAppBar
 import com.kaii.photos.compose.app_bars.SecureFolderViewTopAppBar
+import com.kaii.photos.compose.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.PhotoGridConstants
@@ -226,33 +234,7 @@ fun LockedFolderView(
         }
     }
 
-    val showBottomSheet by remember {
-        derivedStateOf {
-            selectedItemsList.isNotEmpty()
-        }
-    }
-
-    val sheetState = rememberStandardBottomSheetState(
-        skipHiddenState = false,
-        initialValue = SheetValue.Hidden,
-    )
-
-    LaunchedEffect(key1 = showBottomSheet) {
-        if (showBottomSheet) {
-            sheetState.expand()
-        } else {
-            sheetState.hide()
-        }
-    }
-
-    val scaffoldState = rememberBottomSheetScaffoldState(
-        bottomSheetState = sheetState
-    )
-
-    BottomSheetScaffold(
-        scaffoldState = scaffoldState,
-        sheetDragHandle = {},
-        sheetSwipeEnabled = false,
+    Scaffold(
         topBar = {
             SecureFolderViewTopAppBar(
                 selectedItemsList = selectedItemsList
@@ -260,21 +242,48 @@ fun LockedFolderView(
                 navController.popBackStack()
             }
         },
-        sheetContent = {
-            SecureFolderViewBottomAppBar(
-                selectedItemsList = selectedItemsList,
-                groupedMedia = groupedMedia,
-                isGettingPermissions = isGettingPermissions
-            )
+        bottomBar = {
+            AnimatedVisibility(
+                visible = selectedItemsList.isNotEmpty(),
+                enter = fadeIn() + slideInHorizontally(
+                    animationSpec = AnimationConstants.expressiveSpring()
+                ),
+                exit = fadeOut() + slideOutHorizontally(
+                    animationSpec = AnimationConstants.expressiveTween()
+                )
+            ) {
+                SecureFolderViewBottomAppBar(
+                    selectedItemsList = selectedItemsList,
+                    groupedMedia = groupedMedia,
+                    isGettingPermissions = isGettingPermissions
+                )
+            }
         },
-        sheetPeekHeight = 0.dp,
-        sheetShape = RectangleShape,
         modifier = Modifier
             .fillMaxSize(1f),
     ) { padding ->
+        val isLandscape by rememberDeviceOrientation()
+
+        val safeDrawingPadding = if (isLandscape) {
+            val safeDrawing = WindowInsets.safeDrawing.asPaddingValues()
+
+            val layoutDirection = LocalLayoutDirection.current
+            val left = safeDrawing.calculateStartPadding(layoutDirection)
+            val right = safeDrawing.calculateEndPadding(layoutDirection)
+
+            Pair(left, right)
+        } else {
+            Pair(0.dp, 0.dp)
+        }
+
         Column(
             modifier = Modifier
-                .padding(padding)
+                .padding(
+                    start = safeDrawingPadding.first,
+                    top = padding.calculateTopPadding(),
+                    end = safeDrawingPadding.second,
+                    bottom = 0.dp
+                )
                 .fillMaxSize(1f),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
@@ -284,7 +293,6 @@ fun LockedFolderView(
                 albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
                 selectedItemsList = selectedItemsList,
                 viewProperties = ViewProperties.SecureFolder,
-                shouldPadUp = true,
                 hasFiles = hasFiles
             )
         }
