@@ -46,6 +46,12 @@ class MainViewModel(context: Context) : ViewModel() {
         initialValue = 3
     )
 
+    val albumColumnSize = settings.LookAndFeel.getAlbumColumnSize().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = 3
+    )
+
     val showAllInMain = settings.MainPhotosView.getShowEverything().stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,

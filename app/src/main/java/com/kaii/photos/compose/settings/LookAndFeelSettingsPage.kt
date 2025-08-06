@@ -187,6 +187,37 @@ fun LookAndFeelSettingsPage() {
                     )
                 }
             }
+
+            item {
+                val columnSize by mainViewModel.albumColumnSize.collectAsStateWithLifecycle()
+                var currentState by remember { mutableIntStateOf(columnSize) }
+
+                PreferenceRowWithCustomBody(
+                    icon = R.drawable.gallery_thumbnail,
+                    title = stringResource(id = R.string.look_and_feel_album_column_size, currentState)
+                ) {
+                    Slider(
+                        value = currentState.toFloat(),
+                        onValueChange = {
+                            currentState = it.roundToInt()
+                            mainViewModel.settings.LookAndFeel.setAlbumColumnSize(it.roundToInt())
+                        },
+                        steps = 1,
+                        valueRange = 2f..4f,
+                        thumb = {
+                            Box(
+                                modifier = Modifier
+                                    .height(16.dp)
+                                    .width(8.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.primary)
+                            )
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth(0.9f)
+                    )
+                }
+            }
         }
     }
 }

@@ -284,13 +284,14 @@ fun AlbumsGridView(
         )
 
         val coroutineScope = rememberCoroutineScope()
+        val columnSize by mainViewModel.albumColumnSize.collectAsStateWithLifecycle()
         LazyVerticalGrid(
             state = lazyGridState,
             columns = GridCells.Fixed(
                 if (!isLandscape) {
-                    2
+                    columnSize
                 } else {
-                    4
+                    columnSize * 2
                 }
             ),
             modifier = Modifier

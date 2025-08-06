@@ -431,6 +431,7 @@ class SettingsLookAndFeelImpl(
     private val followDarkModeKey = intPreferencesKey("look_and_feel_follow_dark_mode")
     private val displayDateFormat = intPreferencesKey("look_and_feel_display_date_format")
     private val columnSize = intPreferencesKey("look_and_feel_column_size")
+    private val albumColumnSize = intPreferencesKey("look_and_feel_album_column_size")
 
     /** 0 is follow system
      * 1 is dark
@@ -479,6 +480,17 @@ class SettingsLookAndFeelImpl(
     fun setColumnSize(size: Int) = viewModelScope.launch {
         context.datastore.edit {
             it[columnSize] = size
+        }
+    }
+
+    fun getAlbumColumnSize(): Flow<Int> =
+        context.datastore.data.map {
+            it[albumColumnSize] ?: 2
+        }
+
+    fun setAlbumColumnSize(size: Int) = viewModelScope.launch {
+        context.datastore.edit {
+            it[albumColumnSize] = size
         }
     }
 }
