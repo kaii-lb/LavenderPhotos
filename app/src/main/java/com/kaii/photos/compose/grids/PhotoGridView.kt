@@ -294,7 +294,8 @@ fun DeviceMedia(
                         viewProperties = viewProperties,
                         selectedItemsList = selectedItemsList,
                         thumbnailSettings = Pair(cacheThumbnails, thumbnailSize),
-                        isDragSelecting = isDragSelecting
+                        isDragSelecting = isDragSelecting,
+                        isMediaPicker = isMediaPicker
                     ) {
                         if (!isMediaPicker) {
                             when (viewProperties.operation) {
@@ -644,6 +645,7 @@ fun MediaStoreItem(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     thumbnailSettings: Pair<Boolean, Int>,
     isDragSelecting: MutableState<Boolean>,
+    isMediaPicker: Boolean,
     onClick: () -> Unit
 ) {
     val vibratorManager = rememberVibratorManager()
@@ -728,7 +730,7 @@ fun MediaStoreItem(
 
         val onSingleClick: () -> Unit = {
             vibratorManager.vibrateShort()
-            if (selectedItemsList.isNotEmpty()) {
+            if (selectedItemsList.isNotEmpty() || isMediaPicker) {
                 if (isSelected) {
                     selectedItemsList.unselectItem(item, groupedMedia.value)
                 } else {

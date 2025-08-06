@@ -198,79 +198,81 @@ fun SingleAlbumViewTopBar(
                         }
                     }
 
-                    val userInfo by immichViewModel.immichUserLoginState.collectAsStateWithLifecycle()
+                    if (!isMediaPicker) {
+                        val userInfo by immichViewModel.immichUserLoginState.collectAsStateWithLifecycle()
 
-                    if (userInfo is ImmichUserLoginState.IsLoggedIn && albumInfo != null) {
-                        var loadingBackupState by remember { mutableStateOf(false) }
-                        val albumState by immichViewModel.immichAlbumsSyncState.collectAsStateWithLifecycle()
+                        if (userInfo is ImmichUserLoginState.IsLoggedIn && albumInfo != null) {
+                            var loadingBackupState by remember { mutableStateOf(false) }
+                            val albumState by immichViewModel.immichAlbumsSyncState.collectAsStateWithLifecycle()
 
-                        var deviceBackupMedia by remember { mutableStateOf(emptyList<ImmichBackupMedia>()) }
+                            var deviceBackupMedia by remember { mutableStateOf(emptyList<ImmichBackupMedia>()) }
 
-                        LaunchedEffect(media) {
-                            loadingBackupState = true
-                            withContext(Dispatchers.IO) {
-                                deviceBackupMedia = getImmichBackupMedia(
-                                    groupedMedia = media,
-                                    cancellationSignal = cancellationSignal
-                                )
+                            LaunchedEffect(media) {
+                                loadingBackupState = true
+                                withContext(Dispatchers.IO) {
+                                    deviceBackupMedia = getImmichBackupMedia(
+                                        groupedMedia = media,
+                                        cancellationSignal = cancellationSignal
+                                    )
 
-                                immichViewModel.checkSyncStatus(
-                                    immichAlbumId = albumInfo.immichId,
-                                    expectedBackupMedia = deviceBackupMedia.toSet()
-                                )
-                                immichViewModel.refreshDuplicateState(
-                                    immichId = albumInfo.immichId,
-                                    media = deviceBackupMedia.toSet()
-                                ) {
-                                    loadingBackupState = false
+                                    immichViewModel.checkSyncStatus(
+                                        immichAlbumId = albumInfo.immichId,
+                                        expectedBackupMedia = deviceBackupMedia.toSet()
+                                    )
+                                    immichViewModel.refreshDuplicateState(
+                                        immichId = albumInfo.immichId,
+                                        media = deviceBackupMedia.toSet()
+                                    ) {
+                                        loadingBackupState = false
+                                    }
                                 }
                             }
-                        }
 
-                        val isBackedUp by remember(albumState) {
-                            derivedStateOf {
-                                if (albumInfo.immichId.isEmpty()) null
-                                else if (albumState[albumInfo.immichId] is ImmichAlbumSyncState.InSync) true
-                                else if (albumState[albumInfo.immichId] is ImmichAlbumSyncState.OutOfSync) false
-                                else null
+                            val isBackedUp by remember(albumState) {
+                                derivedStateOf {
+                                    if (albumInfo.immichId.isEmpty()) null
+                                    else if (albumState[albumInfo.immichId] is ImmichAlbumSyncState.InSync) true
+                                    else if (albumState[albumInfo.immichId] is ImmichAlbumSyncState.OutOfSync) false
+                                    else null
+                                }
                             }
-                        }
 
-                        Box(
-                            modifier = Modifier
-                                .wrapContentSize()
-                        ) {
-                            val navController = LocalNavController.current
-                            IconButton(
-                                onClick = {
-                                    navController.navigate(Screens.ImmichAlbumPage(albumInfo))
-                                },
-                                enabled = !loadingBackupState
+                            Box(
+                                modifier = Modifier
+                                    .wrapContentSize()
                             ) {
-                                Icon(
-                                    painter =
-                                        if (isBackedUp == true) painterResource(id = R.drawable.cloud_done)
-                                        else if (isBackedUp == false) painterResource(id = R.drawable.cloud_upload)
-                                        else painterResource(id = R.drawable.cloud_off),
-                                    contentDescription = "show more options for the album view",
-                                    tint = if (!loadingBackupState) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(
-                                        alpha = 0.5f
-                                    ),
-                                    modifier = Modifier
-                                        .size(24.dp)
-                                )
-                            }
+                                val navController = LocalNavController.current
+                                IconButton(
+                                    onClick = {
+                                        navController.navigate(Screens.ImmichAlbumPage(albumInfo))
+                                    },
+                                    enabled = !loadingBackupState
+                                ) {
+                                    Icon(
+                                        painter =
+                                            if (isBackedUp == true) painterResource(id = R.drawable.cloud_done)
+                                            else if (isBackedUp == false) painterResource(id = R.drawable.cloud_upload)
+                                            else painterResource(id = R.drawable.cloud_off),
+                                        contentDescription = "show more options for the album view",
+                                        tint = if (!loadingBackupState) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(
+                                            alpha = 0.5f
+                                        ),
+                                        modifier = Modifier
+                                            .size(24.dp)
+                                    )
+                                }
 
-                            if (loadingBackupState) {
-                                CircularProgressIndicator(
-                                    color = MaterialTheme.colorScheme.primary,
-                                    strokeWidth = 2.dp,
-                                    strokeCap = StrokeCap.Round,
-                                    modifier = Modifier
-                                        .size(12.dp)
-                                        .align(Alignment.BottomEnd)
-                                        .offset(x = (-8).dp, y = (-10).dp)
-                                )
+                                if (loadingBackupState) {
+                                    CircularProgressIndicator(
+                                        color = MaterialTheme.colorScheme.primary,
+                                        strokeWidth = 2.dp,
+                                        strokeCap = StrokeCap.Round,
+                                        modifier = Modifier
+                                            .size(12.dp)
+                                            .align(Alignment.BottomEnd)
+                                            .offset(x = (-8).dp, y = (-10).dp)
+                                    )
+                                }
                             }
                         }
                     }
