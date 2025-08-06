@@ -218,6 +218,21 @@ fun LookAndFeelSettingsPage() {
                     )
                 }
             }
+
+            item {
+                val useBlackBackground by mainViewModel.useBlackViewBackgroundColor.collectAsStateWithLifecycle()
+
+                PreferencesSwitchRow(
+                    title = stringResource(id = R.string.look_and_feel_use_black_background),
+                    summary = stringResource(id = R.string.look_and_feel_use_black_background_desc),
+                    position = RowPosition.Single,
+                    iconResID = R.drawable.texture,
+                    showBackground = false,
+                    checked = useBlackBackground
+                ) { checked ->
+                    mainViewModel.settings.LookAndFeel.setUseBlackBackgroundForViews(checked)
+                }
+            }
         }
     }
 }

@@ -370,6 +370,8 @@
     <string name="look_and_feel_column_size">Column Size: %1$d</string>
     <string name="look_and_feel_album_column_size">Album column Size: %1$d</string>
     <string name="look_and_feel_grids">Grids</string>
+    <string name="look_and_feel_use_black_background">Black Background for Media Views</string>
+    <string name="look_and_feel_use_black_background_desc">Image viewer/video player background will be black</string>
 
     <!-- Immich -->
     <string name="immich">Immich</string>

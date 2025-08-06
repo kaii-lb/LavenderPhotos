@@ -432,6 +432,7 @@ class SettingsLookAndFeelImpl(
     private val displayDateFormat = intPreferencesKey("look_and_feel_display_date_format")
     private val columnSize = intPreferencesKey("look_and_feel_column_size")
     private val albumColumnSize = intPreferencesKey("look_and_feel_album_column_size")
+    private val blackBackgroundForViews = booleanPreferencesKey("look_and_feel_black_background")
 
     /** 0 is follow system
      * 1 is dark
@@ -491,6 +492,17 @@ class SettingsLookAndFeelImpl(
     fun setAlbumColumnSize(size: Int) = viewModelScope.launch {
         context.datastore.edit {
             it[albumColumnSize] = size
+        }
+    }
+
+    fun getUseBlackBackgroundForViews(): Flow<Boolean> =
+        context.datastore.data.map {
+            it[blackBackgroundForViews] == true
+        }
+
+    fun setUseBlackBackgroundForViews(value: Boolean) = viewModelScope.launch {
+        context.datastore.edit {
+            it[blackBackgroundForViews] = value
         }
     }
 }

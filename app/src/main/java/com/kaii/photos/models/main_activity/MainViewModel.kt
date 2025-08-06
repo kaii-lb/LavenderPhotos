@@ -58,6 +58,12 @@ class MainViewModel(context: Context) : ViewModel() {
         initialValue = false
     )
 
+    val useBlackViewBackgroundColor = settings.LookAndFeel.getUseBlackBackgroundForViews().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = false
+    )
+
     fun setGroupedMedia(media: List<MediaStoreData>?) {
         _groupedMedia.value = media
     }
