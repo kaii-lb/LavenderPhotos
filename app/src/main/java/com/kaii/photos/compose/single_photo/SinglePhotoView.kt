@@ -11,6 +11,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -410,6 +411,9 @@ private fun TopBar(
                     modifier = Modifier
                         .width(if (isLandscape) 300.dp else 180.dp)
                         .clip(CircleShape)
+                        .clickable {
+                            showInfoDialog.value = true
+                        }
                         .background(MaterialTheme.colorScheme.surfaceContainer)
                         .padding(8.dp)
                 )
@@ -443,7 +447,7 @@ private fun TopBar(
                 },
                 shapes = IconButtonDefaults.toggleableShapes(
                     shape = CircleShape,
-                    pressedShape = MaterialShapes.Square.toShape(),
+                    pressedShape = CircleShape,
                     checkedShape = MaterialShapes.Square.toShape()
                 )
             ) {
