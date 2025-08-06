@@ -133,6 +133,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -201,7 +202,6 @@ import kotlin.math.ln
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
-import kotlin.math.roundToInt
 
 private const val TAG = "EDITING_VIEW"
 
@@ -503,15 +503,28 @@ fun EditingView(
                 }
             }
 
+            val windowInfo = LocalWindowInfo.current
             val canvasAppropriateImage by remember {
                 derivedStateOf {
-                    val imageRatio = image.width.toFloat() / image.height.toFloat()
-                    val canvasWidth = size.width * imageRatio
-                    val canvasHeight = canvasWidth / imageRatio
+                    var inSampleSize = 1
+
+                    val reqWidth = windowInfo.containerSize.width
+                    val reqHeight = windowInfo.containerSize.height
+
+                    if (image.height > reqHeight || image.width > reqWidth) {
+                        val halfHeight: Int = image.height / 2
+                        val halfWidth: Int = image.width / 2
+
+                        // Calculate the largest inSampleSize value that is a power of 2 and keeps both
+                        // height and width larger than the requested height and width.
+                        while (halfHeight / inSampleSize >= reqHeight && halfWidth / inSampleSize >= reqWidth) {
+                            inSampleSize *= 2
+                        }
+                    }
 
                     createBitmap(
-                        width = canvasWidth.roundToInt(),
-                        height = canvasHeight.roundToInt()
+                        width = image.width / inSampleSize,
+                        height = image.height / inSampleSize
                     ).applyCanvas {
                         drawBitmap(
                             image.asAndroidBitmap(),
@@ -519,8 +532,8 @@ fun EditingView(
                             RectF().apply {
                                 top = 0f
                                 left = 0f
-                                bottom = canvasHeight
-                                right = canvasWidth
+                                bottom = image.height.toFloat() / inSampleSize
+                                right = image.width.toFloat() / inSampleSize
                             },
                             null
                         )
