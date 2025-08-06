@@ -15,12 +15,10 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandIn
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.animation.shrinkOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.DragInteraction
@@ -108,6 +106,7 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.rememberDeviceOrientation
 import com.kaii.photos.datastore.Video
+import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.getSecureDecryptedVideoFile
@@ -399,6 +398,7 @@ fun VideoPlayer(
     isTouchLocked: MutableState<Boolean>,
     window: Window,
     shouldPlay: State<Boolean>,
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val navController = LocalNavController.current
@@ -436,7 +436,7 @@ fun VideoPlayer(
 
         if (!continueToVideo) {
             Column(
-                modifier = Modifier
+                modifier = modifier
                     .fillMaxSize(1f),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -596,7 +596,7 @@ fun VideoPlayer(
             factory = {
                 playerView
             },
-            modifier = Modifier
+            modifier = modifier
                 .align(Alignment.Center)
         )
 
@@ -694,6 +694,7 @@ fun VideoPlayer(
                         }
                     )
                 }
+                .then(modifier)
         )
 
         // seperate boxes to avoid touch blocking due to zindex ordering
@@ -796,23 +797,11 @@ fun VideoPlayer(
         val title = remember { File(item.absolutePath).nameWithoutExtension }
         AnimatedVisibility(
             visible = controlsVisible.value,
-            enter = expandIn(
-                animationSpec = tween(
-                    durationMillis = 350
-                )
-            ) + fadeIn(
-                animationSpec = tween(
-                    durationMillis = 350
-                )
+            enter = fadeIn(
+                animationSpec = AnimationConstants.expressiveTween()
             ),
-            exit = shrinkOut(
-                animationSpec = tween(
-                    durationMillis = 350
-                )
-            ) + fadeOut(
-                animationSpec = tween(
-                    durationMillis = 350
-                )
+            exit = fadeOut(
+                animationSpec = AnimationConstants.expressiveTween()
             ),
             modifier = Modifier
                 .fillMaxSize(1f)

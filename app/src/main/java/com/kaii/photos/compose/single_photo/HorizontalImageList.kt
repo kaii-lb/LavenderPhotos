@@ -166,7 +166,17 @@ fun HorizontalImageList(
                     lastWasMuted = lastVideoWasMuted,
                     isTouchLocked = isTouchLocked,
                     window = window,
-                    shouldPlay = shouldPlay
+                    shouldPlay = shouldPlay,
+                    modifier = Modifier
+                        .fillMaxSize(1f)
+                        .mediaModifier(
+                            scale = scale,
+                            rotation = rotation,
+                            offset = offset,
+                            window = window,
+                            appBarsVisible = appBarsVisible,
+                            item = mediaStoreItem
+                        )
                 )
             }
         } else {
@@ -278,20 +288,18 @@ fun Modifier.mediaModifier(
                 transformOrigin = TransformOrigin(0f, 0f)
             )
             .pointerInput(Unit) {
-                detectTapGestures(
-                    onTap = {
-                        if (item?.type != MediaType.Video) {
+                if (item?.type != MediaType.Video) {
+                    detectTapGestures(
+                        onTap = {
                             setBarVisibility(
                                 visible = !appBarsVisible.value,
                                 window = window
                             ) {
                                 appBarsVisible.value = it
                             }
-                        }
-                    },
+                        },
 
-                    onDoubleTap = { clickOffset ->
-                        if (item?.type != MediaType.Video) {
+                        onDoubleTap = { clickOffset ->
                             isDoubleTapToScaling = true
                             if (scale.floatValue == 1f && offset.value == Offset.Zero) {
                                 scale.floatValue = 2f
@@ -303,8 +311,8 @@ fun Modifier.mediaModifier(
                                 offset.value = Offset.Zero
                             }
                         }
-                    }
-                )
+                    )
+                }
             }
             .pointerInput(Unit) {
                 awaitEachGesture {
@@ -401,7 +409,7 @@ fun Modifier.mediaModifier(
                                 }
                             }
                         }
-                    } while (!canceled && event.changes.any { it.pressed } && item?.type != MediaType.Video)
+                    } while (!canceled && event.changes.any { it.pressed })
                 }
             })
 }

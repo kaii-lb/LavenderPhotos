@@ -114,6 +114,7 @@ import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.shareImage
+import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.copyUriToUri
 import com.kaii.photos.models.multi_album.DisplayDateFormat
@@ -306,6 +307,17 @@ private fun Content(
                     releaseExoPlayer = releaseExoPlayer,
                     isTouchLocked = isTouchLocked,
                     modifier = Modifier
+                        .fillMaxSize(1f)
+                        .mediaModifier(
+                            scale = scale,
+                            rotation = rotation,
+                            offset = offset,
+                            window = window,
+                            appBarsVisible = appBarsVisible,
+                            item = MediaStoreData(
+                                type = MediaType.Video
+                            )
+                        )
                 )
             } else {
                 GlideImage(
