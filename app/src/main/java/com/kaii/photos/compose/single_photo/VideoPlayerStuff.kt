@@ -250,6 +250,7 @@ fun VideoPlayerControls(
     }
 }
 
+@androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VideoPlayerControllerBottomControls(
@@ -318,9 +319,14 @@ fun VideoPlayerControllerBottomControls(
         LaunchedEffect(interactionSource) {
             interactionSource.interactions.collect { interaction ->
                 when (interaction) {
-                    is DragInteraction.Start -> isDraggingTimelineSlider = true
-                    is DragInteraction.Stop, is DragInteraction.Cancel -> isDraggingTimelineSlider =
-                        false
+                    is DragInteraction.Start -> {
+                        isDraggingTimelineSlider = true
+                        exoPlayer.isScrubbingModeEnabled = true
+                    }
+                    is DragInteraction.Stop, is DragInteraction.Cancel -> {
+                        isDraggingTimelineSlider = false
+                        exoPlayer.isScrubbingModeEnabled = false
+                    }
                 }
             }
         }
