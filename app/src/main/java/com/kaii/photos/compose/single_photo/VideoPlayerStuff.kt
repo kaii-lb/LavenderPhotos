@@ -125,7 +125,6 @@ import kotlin.time.Duration.Companion.seconds
 
 private const val TAG = "VIDEO_PLAYER_STUFF"
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VideoPlayerControls(
     exoPlayer: ExoPlayer,
@@ -173,151 +172,14 @@ fun VideoPlayerControls(
                 .align(Alignment.BottomCenter),
             verticalAlignment = Alignment.Top
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth(1f)
-                    .wrapContentHeight()
-                    .padding(16.dp, 0.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                val currentDurationFormatted =
-                    currentVideoPosition.floatValue.roundToInt().seconds.formatLikeANormalPerson()
-
-                // video progress
-                Row(
-                    modifier = Modifier
-                        .height(32.dp)
-                        .width(if (currentDurationFormatted.second) 72.dp else 48.dp)
-                        .clip(RoundedCornerShape(1000.dp))
-                        .background(MaterialTheme.colorScheme.secondaryContainer)
-                        .padding(4.dp, 0.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = currentDurationFormatted.first,
-                        style = TextStyle(
-                            fontSize = TextUnit(12f, TextUnitType.Sp),
-                            color = MaterialTheme.colorScheme.onBackground,
-                            textAlign = TextAlign.Center,
-                        ),
-                    )
-                }
-
-                Spacer(modifier = Modifier.width(8.dp))
-
-                val interactionSource = remember { MutableInteractionSource() }
-                var isDraggingTimelineSlider by remember { mutableStateOf(false) }
-
-                LaunchedEffect(interactionSource) {
-                    interactionSource.interactions.collect { interaction ->
-                        when (interaction) {
-                            is DragInteraction.Start -> isDraggingTimelineSlider = true
-                            is DragInteraction.Stop, is DragInteraction.Cancel -> isDraggingTimelineSlider =
-                                false
-                        }
-                    }
-                }
-
-                duration.floatValue = duration.floatValue.coerceAtLeast(0f)
-
-                // timeline slider
-                Slider(
-                    value = currentVideoPosition.floatValue,
-                    valueRange = 0f..duration.floatValue,
-                    onValueChange = { pos ->
-                        onAnyTap()
-
-                        val prev = isPlaying.value
-                        exoPlayer.seekTo(
-                            (pos * 1000f).coerceAtMost(duration.floatValue * 1000f).toLong()
-                        )
-                        isPlaying.value = prev
-                    },
-                    steps = (duration.floatValue.roundToInt() - 1).coerceAtLeast(0),
-                    thumb = {
-                        SliderDefaults.Thumb(
-                            interactionSource = interactionSource,
-                            thumbSize = DpSize(6.dp, 16.dp),
-                        )
-                    },
-                    track = { sliderState ->
-                        val colors = SliderDefaults.colors()
-
-                        SliderDefaults.Track(
-                            sliderState = sliderState,
-                            trackInsideCornerSize = 8.dp,
-                            colors = colors.copy(
-                                activeTickColor = colors.activeTrackColor,
-                                inactiveTickColor = colors.inactiveTrackColor,
-                                disabledActiveTickColor = colors.disabledActiveTrackColor,
-                                disabledInactiveTickColor = colors.disabledInactiveTrackColor,
-
-                                activeTrackColor = colors.activeTrackColor,
-                                inactiveTrackColor = colors.inactiveTrackColor,
-
-                                disabledThumbColor = colors.activeTrackColor,
-                                thumbColor = colors.activeTrackColor
-                            ),
-                            thumbTrackGapSize = 4.dp,
-                            drawTick = { _, _ -> },
-                            modifier = Modifier
-                                .height(16.dp)
-                        )
-                    },
-                    // interactionSource = interactionSource,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(32.dp)
-                )
-
-                Spacer(modifier = Modifier.width(8.dp))
-
-                val formattedDuration =
-                    duration.floatValue.roundToInt().seconds.formatLikeANormalPerson()
-
-                // total duration
-                Row(
-                    modifier = Modifier
-                        .height(32.dp)
-                        .width(if (formattedDuration.second) 72.dp else 48.dp)
-                        .clip(RoundedCornerShape(1000.dp))
-                        .background(MaterialTheme.colorScheme.secondaryContainer)
-                        .padding(4.dp, 0.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = formattedDuration.first,
-                        style = TextStyle(
-                            fontSize = TextUnit(12f, TextUnitType.Sp),
-                            color = MaterialTheme.colorScheme.onBackground,
-                            textAlign = TextAlign.Center,
-                        ),
-                    )
-                }
-
-                Spacer(modifier = Modifier.width(8.dp))
-
-                // mute button
-                FilledTonalIconButton(
-                    onClick = {
-                        isMuted.value = !isMuted.value
-
-                        onAnyTap()
-                    },
-                    modifier = Modifier
-                        .size(32.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(id = if (isMuted.value) R.drawable.volume_mute else R.drawable.volume_max),
-                        contentDescription = stringResource(id = R.string.video_mute_toggle),
-                        modifier = Modifier
-                            .size(24.dp)
-                    )
-                }
-            }
+            VideoPlayerControllerBottomControls(
+                currentVideoPosition = currentVideoPosition,
+                duration = duration,
+                isPlaying = isPlaying,
+                isMuted = isMuted,
+                exoPlayer = exoPlayer,
+                onAnyTap = onAnyTap
+            )
         }
 
         Row(
@@ -384,6 +246,181 @@ fun VideoPlayerControls(
                         .padding(2.dp, 0.dp, 0.dp, 0.dp)
                 )
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun VideoPlayerControllerBottomControls(
+    currentVideoPosition: MutableFloatState,
+    duration: MutableFloatState,
+    isPlaying: MutableState<Boolean>,
+    exoPlayer: ExoPlayer,
+    isMuted: MutableState<Boolean>,
+    showPlayPauseButton: Boolean = false,
+    onAnyTap: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth(1f)
+            .wrapContentHeight()
+            .padding(16.dp, 0.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
+    ) {
+        if (showPlayPauseButton) {
+            FilledTonalIconButton(
+                onClick = {
+                    isPlaying.value = !isPlaying.value
+                },
+                modifier = Modifier
+                    .size(32.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = if (!isPlaying.value) R.drawable.play_arrow else R.drawable.pause),
+                    contentDescription = stringResource(id = R.string.video_play_toggle)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+        }
+
+        val currentDurationFormatted =
+            currentVideoPosition.floatValue.roundToInt().seconds.formatLikeANormalPerson()
+
+        // video progress
+        Row(
+            modifier = Modifier
+                .height(32.dp)
+                .width(if (currentDurationFormatted.second) 72.dp else 48.dp)
+                .clip(RoundedCornerShape(1000.dp))
+                .background(MaterialTheme.colorScheme.secondaryContainer)
+                .padding(4.dp, 0.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = currentDurationFormatted.first,
+                style = TextStyle(
+                    fontSize = TextUnit(12f, TextUnitType.Sp),
+                    color = MaterialTheme.colorScheme.onBackground,
+                    textAlign = TextAlign.Center,
+                ),
+            )
+        }
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        val interactionSource = remember { MutableInteractionSource() }
+        var isDraggingTimelineSlider by remember { mutableStateOf(false) }
+
+        LaunchedEffect(interactionSource) {
+            interactionSource.interactions.collect { interaction ->
+                when (interaction) {
+                    is DragInteraction.Start -> isDraggingTimelineSlider = true
+                    is DragInteraction.Stop, is DragInteraction.Cancel -> isDraggingTimelineSlider =
+                        false
+                }
+            }
+        }
+
+        duration.floatValue = duration.floatValue.coerceAtLeast(0f)
+
+        // timeline slider
+        Slider(
+            value = currentVideoPosition.floatValue,
+            valueRange = 0f..duration.floatValue,
+            onValueChange = { pos ->
+                onAnyTap()
+
+                val prev = isPlaying.value
+                exoPlayer.seekTo(
+                    (pos * 1000f).coerceAtMost(duration.floatValue * 1000f).toLong()
+                )
+                isPlaying.value = prev
+            },
+            steps = (duration.floatValue.roundToInt() - 1).coerceAtLeast(0),
+            thumb = {
+                SliderDefaults.Thumb(
+                    interactionSource = interactionSource,
+                    thumbSize = DpSize(6.dp, 16.dp),
+                )
+            },
+            track = { sliderState ->
+                val colors = SliderDefaults.colors()
+
+                SliderDefaults.Track(
+                    sliderState = sliderState,
+                    trackInsideCornerSize = 8.dp,
+                    colors = colors.copy(
+                        activeTickColor = colors.activeTrackColor,
+                        inactiveTickColor = colors.inactiveTrackColor,
+                        disabledActiveTickColor = colors.disabledActiveTrackColor,
+                        disabledInactiveTickColor = colors.disabledInactiveTrackColor,
+
+                        activeTrackColor = colors.activeTrackColor,
+                        inactiveTrackColor = colors.inactiveTrackColor,
+
+                        disabledThumbColor = colors.activeTrackColor,
+                        thumbColor = colors.activeTrackColor
+                    ),
+                    thumbTrackGapSize = 4.dp,
+                    drawTick = { _, _ -> },
+                    modifier = Modifier
+                        .height(16.dp)
+                )
+            },
+            // interactionSource = interactionSource,
+            modifier = Modifier
+                .weight(1f)
+                .height(32.dp)
+        )
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        val formattedDuration =
+            duration.floatValue.roundToInt().seconds.formatLikeANormalPerson()
+
+        // total duration
+        Row(
+            modifier = Modifier
+                .height(32.dp)
+                .width(if (formattedDuration.second) 72.dp else 48.dp)
+                .clip(RoundedCornerShape(1000.dp))
+                .background(MaterialTheme.colorScheme.secondaryContainer)
+                .padding(4.dp, 0.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = formattedDuration.first,
+                style = TextStyle(
+                    fontSize = TextUnit(12f, TextUnitType.Sp),
+                    color = MaterialTheme.colorScheme.onBackground,
+                    textAlign = TextAlign.Center,
+                ),
+            )
+        }
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        // mute button
+        FilledTonalIconButton(
+            onClick = {
+                isMuted.value = !isMuted.value
+
+                onAnyTap()
+            },
+            modifier = Modifier
+                .size(32.dp)
+        ) {
+            Icon(
+                painter = painterResource(id = if (isMuted.value) R.drawable.volume_mute else R.drawable.volume_max),
+                contentDescription = stringResource(id = R.string.video_mute_toggle),
+                modifier = Modifier
+                    .size(24.dp)
+            )
         }
     }
 }
