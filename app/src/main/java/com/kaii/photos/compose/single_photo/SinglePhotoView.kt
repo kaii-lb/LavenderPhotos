@@ -71,13 +71,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import com.kaii.photos.BuildConfig
 import com.kaii.photos.LocalAppDatabase
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
-import com.kaii.photos.compose.dialogs.ExplanationDialog
 import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.dialogs.SinglePhotoInfoDialog
 import com.kaii.photos.compose.rememberDeviceOrientation
@@ -290,13 +288,22 @@ fun SinglePhotoViewCommon(
                         appBarsVisible.value = it
                     }
 
-                    navController.navigate(
-                        Screens.EditingScreen(
-                            absolutePath = currentMediaItem.value.absolutePath,
-                            uri = currentMediaItem.value.uri.toString(),
-                            dateTaken = currentMediaItem.value.dateTaken
+                    if (currentMediaItem.value.type == MediaType.Image) {
+                        navController.navigate(
+                            Screens.EditingScreen(
+                                absolutePath = currentMediaItem.value.absolutePath,
+                                uri = currentMediaItem.value.uri.toString(),
+                                dateTaken = currentMediaItem.value.dateTaken
+                            )
                         )
-                    )
+                    } else {
+                        navController.navigate(
+                            Screens.VideoEditor(
+                                uri = currentMediaItem.value.uri.toString(),
+                                absolutePath = currentMediaItem.value.absolutePath
+                            )
+                        )
+                    }
                 },
                 onZeroItemsLeft = {
                     navController.popBackStack()
@@ -511,23 +518,9 @@ private fun BottomBar(
                 expanded = true,
                 colors = FloatingToolbarDefaults.vibrantFloatingToolbarColors(),
                 floatingActionButton = {
-                    val showNotImplementedDialog = remember { mutableStateOf(false) }
-
-                    if (showNotImplementedDialog.value) {
-                        ExplanationDialog(
-                            title = stringResource(id = R.string.feature_unimplemented),
-                            explanation = stringResource(id = R.string.feature_editing_unimplemented, BuildConfig.VERSION_NAME),
-                            showDialog = showNotImplementedDialog
-                        )
-                    }
-
                     FloatingToolbarDefaults.VibrantFloatingActionButton(
                         onClick = {
-                            if (currentItem.type == MediaType.Image) {
-                                showEditingView()
-                            } else {
-                                showNotImplementedDialog.value = true
-                            }
+                            showEditingView()
                         }
                     ) {
                         Icon(

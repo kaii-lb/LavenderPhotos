@@ -55,4 +55,10 @@ object Screens {
     data class ImmichAlbumPage(
         val albumInfo: AlbumInfo
     )
+
+    @Serializable
+    data class VideoEditor(
+        val uri: String,
+        val absolutePath: String
+    )
 }

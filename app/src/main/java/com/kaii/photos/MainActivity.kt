@@ -102,6 +102,7 @@ import com.kaii.photos.compose.single_photo.EditingView
 import com.kaii.photos.compose.single_photo.SingleHiddenPhotoView
 import com.kaii.photos.compose.single_photo.SinglePhotoView
 import com.kaii.photos.compose.single_photo.SingleTrashedPhotoView
+import com.kaii.photos.compose.single_photo.editing_view.VideoEditor
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumInfoNavType
@@ -844,6 +845,27 @@ class MainActivity : ComponentActivity() {
                     ImmichAlbumPage(
                         albumInfo = screen.albumInfo,
                         multiAlbumViewModel = multiAlbumViewModel
+                    )
+                }
+
+                composable<Screens.VideoEditor> {
+                    enableEdgeToEdge(
+                        navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
+                        statusBarStyle = SystemBarStyle.auto(
+                            MaterialTheme.colorScheme.surface.toArgb(),
+                            MaterialTheme.colorScheme.surface.toArgb()
+                        )
+                    )
+                    setupNextScreen(
+                        selectedItemsList,
+                        window
+                    )
+
+                    val screen = it.toRoute<Screens.VideoEditor>()
+
+                    VideoEditor(
+                        uri = screen.uri.toUri(),
+                        absolutePath = screen.absolutePath
                     )
                 }
             }

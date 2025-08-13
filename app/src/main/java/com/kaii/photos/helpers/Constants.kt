@@ -24,3 +24,11 @@ sealed class AnimationConstants {
         )
     }
 }
+
+sealed class VideoPlayerConstants {
+    companion object {
+        const val CONTROLS_HIDE_TIMEOUT = 5000L
+        const val CONTROLS_HIDE_TIMEOUT_SHORT = 3000L
+        const val TRIM_THUMBNAIL_COUNT = 8
+    }
+}
