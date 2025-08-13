@@ -82,9 +82,6 @@ dependencies {
     implementation("androidx.graphics:graphics-shapes-android:1.0.1")
     implementation("androidx.test:monitor:1.8.0")
     implementation("androidx.test.ext:junit-ktx:1.3.0")
-    implementation("com.github.bumptech.glide:glide:4.16.0")
-    implementation("com.github.bumptech.glide:compose:1.0.0-beta01")
-    implementation("com.github.bumptech.glide:ktx:1.0.0-beta01")
     implementation("androidx.activity:activity-ktx:1.10.1")
     implementation("androidx.fragment:fragment-ktx:1.8.8")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.2")
@@ -113,6 +110,11 @@ dependencies {
     implementation("androidx.room:room-ktx:$roomVersion")
     annotationProcessor("androidx.room:room-compiler:$roomVersion")
 
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+    implementation("com.github.bumptech.glide:compose:1.0.0-beta01")
+    implementation("com.github.bumptech.glide:ktx:1.0.0-beta01")
+    implementation("com.github.bumptech.glide:avif-integration:4.16.0")
+
     implementation("com.github.kaii-lb:Lavender-Snackbars:-SNAPSHOT")
     implementation("com.github.kaii-lb.LavenderImmichIntegration:library:v1.0.9")
 
@@ -124,7 +126,7 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling:1.8.3")
     debugImplementation("androidx.compose.ui:ui-test-manifest:1.8.3")
 
-    ksp("com.github.bumptech.glide:compiler:4.16.0")
+    ksp("com.github.bumptech.glide:ksp:4.16.0")
     ksp("androidx.room:room-compiler:$roomVersion")
 }
 
