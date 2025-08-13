@@ -311,7 +311,7 @@ fun AlbumsGridView(
                                     IntRect(
                                         offset = item.offset,
                                         size = item.size
-                                    ).contains(offset.round())
+                                    ).contains(offset.round()) && !item.key.toString().startsWith("FavAndTrash")
                                 }?.let { item ->
                                     selectedItem = albums.value[item.index - 1]
                                 } ?: run { selectedItem = null }
@@ -386,7 +386,8 @@ fun AlbumsGridView(
         ) {
             if (!isMediaPicker) {
                 item(
-                    span = { GridItemSpan(maxLineSpan) }
+                    span = { GridItemSpan(maxLineSpan) },
+                    key = "FavAndTrash"
                 ) {
                     CategoryList(
                         navigateToFavourites = {
