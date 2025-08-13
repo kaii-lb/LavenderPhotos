@@ -273,6 +273,7 @@ fun SinglePhotoViewCommon(
         },
         bottomBar = {
             val coroutineScope = rememberCoroutineScope()
+            val mainViewModel = LocalMainViewModel.current
 
             BottomBar(
                 visible = appBarsVisible.value,
@@ -306,7 +307,9 @@ fun SinglePhotoViewCommon(
                     }
                 },
                 onZeroItemsLeft = {
-                    navController.popBackStack()
+                    mainViewModel.launch {
+                        navController.popBackStack()
+                    }
                 },
                 removeIfInFavGrid = {
                     if (navController.previousBackStackEntry?.destination?.route == MultiScreenViewType.FavouritesGridView.name) {
@@ -567,8 +570,6 @@ private fun BottomBar(
                     confirmButtonLabel = stringResource(id = R.string.media_secure)
                 ) {
                     tryGetDirPermission.value = true
-
-                    if (groupedMedia.value.isEmpty()) onZeroItemsLeft()
                 }
 
                 GetPermissionAndRun(
@@ -581,7 +582,7 @@ private fun BottomBar(
                                 context = context,
                                 applicationDatabase = applicationDatabase
                             ) {
-                                if (groupedMedia.value.isEmpty()) onZeroItemsLeft()
+                                if (groupedMedia.value.none { it.type != MediaType.Section }) onZeroItemsLeft()
 
                                 if (loadsFromMainViewModel) {
                                     sortOutMediaMods(
@@ -660,8 +661,6 @@ private fun BottomBar(
                                 appDatabase = applicationDatabase
                             )
 
-                            if (groupedMedia.value.isEmpty()) onZeroItemsLeft()
-
                             if (loadsFromMainViewModel) {
                                 sortOutMediaMods(
                                     currentItem,
@@ -672,6 +671,8 @@ private fun BottomBar(
                                     onZeroItemsLeft()
                                 }
                             }
+
+                            if (groupedMedia.value.all { it == currentItem }) onZeroItemsLeft()
                         }
                     }
                 )
