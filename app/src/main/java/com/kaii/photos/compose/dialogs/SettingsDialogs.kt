@@ -420,7 +420,7 @@ fun AddTabDialog(
             textColor = MaterialTheme.colorScheme.onPrimary,
             position = RowPosition.Single
         ) {
-            if (tabList.size < 5) {
+            if (tabList.size < 8) {
                 if (selectedItem != null && selectedAlbums.isNotEmpty() && tabName != "") {
                     mainViewModel.settings.DefaultTabs.setTabList(
                         tabList.toMutableList().apply {
@@ -662,7 +662,7 @@ fun TabCustomizationDialog(
                                 }
                             }
 
-                            if (tab !in tabList && tabList.size < 5) {
+                            if (tab !in tabList && tabList.size < 8) {
                                 add(tab)
                             } else if (tab !in tabList) {
                                 coroutineScope.launch {
@@ -731,7 +731,7 @@ fun TabCustomizationDialog(
             position = RowPosition.Single,
             textColor = MaterialTheme.colorScheme.onPrimary
         ) {
-            if (tabList.size < 5) {
+            if (tabList.size < 8) {
                 showDialog = true
             } else {
                 coroutineScope.launch {

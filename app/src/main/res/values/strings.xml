@@ -60,7 +60,7 @@
     <string name="tabs_albums_incl">Albums Included</string>
     <string name="tabs_confirm">Add Tab</string>
     <string name="tabs_empty_params">Tab parameters cannot be empty</string>
-    <string name="tabs_max_reached">Can\'t add more than 5 tabs</string>
+    <string name="tabs_max_reached">Can\'t add more than 8 tabs</string>
     <string name="tabs_min_reached">At least one tab needs to exist</string>
 
     <!-- Navigation -->
