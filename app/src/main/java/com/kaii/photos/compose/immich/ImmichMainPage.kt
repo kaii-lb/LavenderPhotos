@@ -43,6 +43,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
@@ -59,6 +61,7 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.PreferenceRowWithCustomBody
 import com.kaii.photos.compose.PreferencesRow
 import com.kaii.photos.compose.PreferencesSeparatorText
+import com.kaii.photos.compose.dialogs.AnnotatedExplanationDialog
 import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
 import com.kaii.photos.compose.dialogs.ImmichLoginDialog
 import com.kaii.photos.compose.dialogs.TextEntryDialog
@@ -340,33 +343,37 @@ fun ImmichMainPage() {
                     if (userInfo is ImmichUserLoginState.IsLoggedIn) immichViewModel.refreshServerInfo()
                 }
 
-                val info by remember { derivedStateOf {
-                    if (serverInfo is ImmichServerState.HasInfo) {
-                        Pair(
-                            (serverInfo as ImmichServerState.HasInfo).info.version.toString(),
-                            (serverInfo as ImmichServerState.HasInfo).info.build.toString()
-                        )
-                    } else {
-                        Pair(
-                            context.resources.getString(R.string.immich_state_unknown),
-                            context.resources.getString(R.string.immich_state_unknown)
-                        )
+                val info by remember {
+                    derivedStateOf {
+                        if (serverInfo is ImmichServerState.HasInfo) {
+                            Pair(
+                                (serverInfo as ImmichServerState.HasInfo).info.version.toString(),
+                                (serverInfo as ImmichServerState.HasInfo).info.build.toString()
+                            )
+                        } else {
+                            Pair(
+                                context.resources.getString(R.string.immich_state_unknown),
+                                context.resources.getString(R.string.immich_state_unknown)
+                            )
+                        }
                     }
-                }}
+                }
 
-                val storage by remember { derivedStateOf {
-                    if (serverInfo is ImmichServerState.HasInfo) {
-                        Pair(
-                            (serverInfo as ImmichServerState.HasInfo).storage.diskUse.toString(),
-                            (serverInfo as ImmichServerState.HasInfo).storage.diskAvailable.toString()
-                        )
-                    } else {
-                        Pair(
-                            context.resources.getString(R.string.immich_state_unknown),
-                            context.resources.getString(R.string.immich_state_unknown)
-                        )
+                val storage by remember {
+                    derivedStateOf {
+                        if (serverInfo is ImmichServerState.HasInfo) {
+                            Pair(
+                                (serverInfo as ImmichServerState.HasInfo).storage.diskUse.toString(),
+                                (serverInfo as ImmichServerState.HasInfo).storage.diskSize.toString()
+                            )
+                        } else {
+                            Pair(
+                                context.resources.getString(R.string.immich_state_unknown),
+                                context.resources.getString(R.string.immich_state_unknown)
+                            )
+                        }
                     }
-                }}
+                }
 
                 PreferencesRow(
                     title = stringResource(id = R.string.immich_server_info),
@@ -382,7 +389,7 @@ fun ImmichMainPage() {
                     title = stringResource(id = R.string.immich_server_storage),
                     enabled = userInfo is ImmichUserLoginState.IsLoggedIn
                 ) {
-                    Spacer (modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     val animated by animateFloatAsState(
                         targetValue = if (serverInfo is ImmichServerState.HasInfo) {
@@ -406,7 +413,7 @@ fun ImmichMainPage() {
                             .fillMaxWidth(1f)
                     )
 
-                    Spacer (modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
                         text =
@@ -423,6 +430,35 @@ fun ImmichMainPage() {
                         modifier = Modifier
                             .fillMaxWidth(1f)
                     )
+                }
+            }
+
+            item {
+                PreferencesSeparatorText(
+                    text = stringResource(id = R.string.help)
+                )
+            }
+
+            item {
+                val showExplanationDialog = remember { mutableStateOf(false) }
+                if (showExplanationDialog.value) {
+                    AnnotatedExplanationDialog(
+                        title = stringResource(id = R.string.immich_help_detailed),
+                        annotatedExplanation = AnnotatedString.fromHtml(
+                            htmlString = stringResource(id = R.string.immich_help_detailed_desc)
+                        ),
+                        showDialog = showExplanationDialog
+                    )
+                }
+
+                PreferencesRow(
+                    title = stringResource(id = R.string.immich_help_general),
+                    summary = stringResource(id = R.string.immich_help_general_desc),
+                    iconResID = R.drawable.help,
+                    position = RowPosition.Single,
+                    showBackground = false
+                ) {
+                    showExplanationDialog.value = true
                 }
             }
         }

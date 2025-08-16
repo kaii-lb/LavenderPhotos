@@ -341,6 +341,7 @@
     <string name="paths_should_be_relative">Path needs to be relative</string>
     <string name="today">Today</string>
     <string name="yesterday">Yesterday</string>
+    <string name="help">Help</string>
 
     <!-- Bottom Sheets -->
     <string name="bottom_sheets_enter_text">Enter Text</string>
@@ -434,4 +435,18 @@
     <string name="immich_server_storage_desc">%1$s of %2$s used</string>
     <string name="immich_server_info_failed">Data is not available</string>
     <string name="immich_server">Immich Server</string>
+    <string name="immich_help_general">What is this?</string>
+    <string name="immich_help_general_desc">Allows album-level media backup to an Immich server</string>
+    <string name="immich_help_detailed">How to use</string>
+    <string name="immich_help_detailed_desc">
+        <![CDATA[
+            <ul>
+                <li>Self-host an <a href="https://immich.app/">Immich Server</a></li>
+                <li>Specify server address in Lavender Photos</li>
+                <li>Login using Immich user account</li>
+                <li>Go to any album, click on cloud icon</li>
+                <li>Start backing up your photos!</li>
+            </ul>
+        ]]>
+    </string>
 </resources>
