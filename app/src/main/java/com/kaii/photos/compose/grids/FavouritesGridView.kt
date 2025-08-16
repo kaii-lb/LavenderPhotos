@@ -85,6 +85,10 @@ fun FavouritesGridView(
                     displayDateFormat,
                     context
                 )
+        } else {
+            groupedMedia.value = emptyList()
+            delay(PhotoGridConstants.LOADING_TIME)
+            hasFiles = false
         }
 
         delay(PhotoGridConstants.LOADING_TIME)

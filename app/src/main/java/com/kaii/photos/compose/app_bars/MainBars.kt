@@ -229,7 +229,7 @@ fun MainAppBottomBar(
                         id = currentView.value.id,
                         name = currentView.value.name,
                         paths = currentView.value.albumPaths,
-                        isCustomAlbum = currentView.value.isCustom
+                        isCustomAlbum = false
                     ),
                     selectedItemsList = selectedItemsList
                 )

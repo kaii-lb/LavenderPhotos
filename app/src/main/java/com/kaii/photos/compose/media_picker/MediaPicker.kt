@@ -465,6 +465,10 @@ class MediaPicker : ComponentActivity() {
                                         if (mediaStoreData.value.isNotEmpty()) {
                                             delay(PhotoGridConstants.UPDATE_TIME)
                                             groupedMedia.value = mediaStoreData.value
+                                        } else {
+                                            groupedMedia.value = emptyList()
+                                            delay(PhotoGridConstants.LOADING_TIME)
+                                            hasFiles = false
                                         }
 
                                         delay(PhotoGridConstants.LOADING_TIME)
@@ -509,6 +513,10 @@ class MediaPicker : ComponentActivity() {
                                         if (mediaStoreData.value.isNotEmpty()) {
                                             delay(PhotoGridConstants.UPDATE_TIME)
                                             groupedMedia.value = mediaStoreData.value
+                                        } else {
+                                            groupedMedia.value = emptyList()
+                                            delay(PhotoGridConstants.LOADING_TIME)
+                                            hasFiles = false
                                         }
 
                                         delay(PhotoGridConstants.LOADING_TIME)

@@ -300,6 +300,10 @@ private fun SingleAlbumViewCommon(
                 if (groupedMedia.value.isNotEmpty()) {
                     delay(PhotoGridConstants.UPDATE_TIME)
                     media.value = groupedMedia.value
+                } else {
+                    groupedMedia.value = emptyList()
+                    delay(PhotoGridConstants.LOADING_TIME)
+                    hasFiles = false
                 }
 
                 delay(PhotoGridConstants.LOADING_TIME)

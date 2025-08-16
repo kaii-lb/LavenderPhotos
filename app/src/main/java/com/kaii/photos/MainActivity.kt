@@ -1035,13 +1035,14 @@ class MainActivity : ComponentActivity() {
                         when {
                             stateValue.isCustom -> {
                                 if (stateValue.albumPaths.toSet() != multiAlbumViewModel.albumInfo.paths.toSet()) {
+                                    groupedMedia.value = emptyList()
                                     multiAlbumViewModel.reinitDataSource(
                                         context = context,
                                         album = AlbumInfo(
                                             id = stateValue.id,
                                             name = stateValue.name,
                                             paths = stateValue.albumPaths,
-                                            isCustomAlbum = true
+                                            isCustomAlbum = false
                                         ),
                                         sortMode = multiAlbumViewModel.sortBy
                                     )
@@ -1052,10 +1053,14 @@ class MainActivity : ComponentActivity() {
                                     if (mediaStoreData.value.isNotEmpty()) {
                                         delay(PhotoGridConstants.UPDATE_TIME)
                                         groupedMedia.value = mediaStoreData.value
+                                    } else {
+                                        groupedMedia.value = emptyList()
+                                        delay(PhotoGridConstants.LOADING_TIME)
+                                        hasFiles = false
                                     }
 
                                     delay(PhotoGridConstants.LOADING_TIME)
-                                    hasFiles = mediaStoreData.value.isNotEmpty()
+                                    hasFiles = groupedMedia.value.isNotEmpty()
                                 }
 
                                 PhotoGrid(
@@ -1064,7 +1069,7 @@ class MainActivity : ComponentActivity() {
                                         id = stateValue.id,
                                         name = stateValue.name,
                                         paths = stateValue.albumPaths,
-                                        isCustomAlbum = true
+                                        isCustomAlbum = false
                                     ),
                                     viewProperties = ViewProperties.Album,
                                     selectedItemsList = selectedItemsList,
@@ -1098,10 +1103,14 @@ class MainActivity : ComponentActivity() {
                                     if (mediaStoreData.value.isNotEmpty()) {
                                         delay(PhotoGridConstants.UPDATE_TIME)
                                         groupedMedia.value = mediaStoreData.value
+                                    } else {
+                                        groupedMedia.value = emptyList()
+                                        delay(PhotoGridConstants.LOADING_TIME)
+                                        hasFiles = false
                                     }
 
                                     delay(PhotoGridConstants.LOADING_TIME)
-                                    hasFiles = mediaStoreData.value.isNotEmpty()
+                                    hasFiles = groupedMedia.value.isNotEmpty()
                                 }
 
                                 PhotoGrid(
