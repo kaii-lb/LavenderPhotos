@@ -108,6 +108,7 @@ import com.kaii.photos.compose.rememberDeviceOrientation
 import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.EncryptionManager
+import com.kaii.photos.helpers.VideoPlayerConstants
 import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.getSecureDecryptedVideoFile
 import com.kaii.photos.mediastore.MediaStoreData
@@ -543,7 +544,7 @@ fun VideoPlayer(
     var showVideoPlayerControlsTimeout by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(showVideoPlayerControlsTimeout) {
-        delay(5000)
+        delay(VideoPlayerConstants.CONTROLS_HIDE_TIMEOUT)
         setBarVisibility(
             visible = false,
             window = window

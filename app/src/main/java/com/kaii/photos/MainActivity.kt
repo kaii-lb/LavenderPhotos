@@ -865,7 +865,8 @@ class MainActivity : ComponentActivity() {
 
                     VideoEditor(
                         uri = screen.uri.toUri(),
-                        absolutePath = screen.absolutePath
+                        absolutePath = screen.absolutePath,
+                        window = window
                     )
                 }
             }

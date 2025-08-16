@@ -155,6 +155,7 @@ import androidx.compose.ui.zIndex
 import androidx.core.graphics.applyCanvas
 import androidx.core.graphics.createBitmap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.bumptech.glide.Glide
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalMainViewModel
@@ -253,10 +254,30 @@ fun EditingView(
     val context = LocalContext.current
     val inputStream = remember { context.contentResolver.openInputStream(uri) }
 
-    val originalImage = remember { BitmapFactory.decodeStream(inputStream) }
+    var originalImage by remember { mutableStateOf(
+        if (absolutePath.endsWith(".avif")) {
+            createBitmap(512, 512, Bitmap.Config.ARGB_8888)
+        } else {
+            BitmapFactory.decodeStream(inputStream).also {
+                inputStream?.close()
+            }
+        }
+    )}
     var image by remember { mutableStateOf(originalImage.asImageBitmap()) }
 
-    inputStream?.close()
+    LaunchedEffect(uri, absolutePath) {
+        if (absolutePath.endsWith(".avif")) {
+            withContext(Dispatchers.IO) {
+                originalImage = Glide.with(context)
+                    .asBitmap()
+                    .load(uri)
+                    .submit()
+                    .get()
+
+                image = originalImage.asImageBitmap()
+            }
+        }
+    }
 
     val rotationMultiplier = remember { mutableIntStateOf(0) }
     val rotation by animateFloatAsState(

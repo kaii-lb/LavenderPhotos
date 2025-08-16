@@ -22,6 +22,8 @@ sealed class AnimationConstants {
             durationMillis = 200,
             easing = EaseInOutExpo
         )
+
+        const val DURATION = 350
     }
 }
 

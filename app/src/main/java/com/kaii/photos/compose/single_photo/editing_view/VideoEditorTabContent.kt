@@ -2,6 +2,8 @@ package com.kaii.photos.compose.single_photo.editing_view
 
 import android.graphics.Bitmap
 import android.media.MediaMetadataRetriever
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.Orientation
@@ -26,8 +28,10 @@ import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,6 +47,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.isUnspecified
+import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.VideoPlayerConstants
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -58,13 +64,8 @@ fun VideoEditorTrimContent(
     duration: MutableFloatState,
     leftPosition: MutableFloatState,
     rightPosition: MutableFloatState,
-    onSeek: (newPosition: Float) -> Unit,
-    setExoPlayerScrubbingState: (enabled: Boolean) -> Unit
+    onSeek: (newPosition: Float) -> Unit
 ) {
-    LaunchedEffect(duration.floatValue) {
-        rightPosition.floatValue = duration.floatValue
-    }
-
     val coroutineScope = rememberCoroutineScope()
     val metadata = MediaMetadataRetriever()
     val thumbnails = remember { mutableStateListOf<Bitmap>() }
@@ -146,10 +147,8 @@ fun VideoEditorTrimContent(
                 val new = leftPosition.floatValue + (change * duration.floatValue / this@BoxWithConstraints.maxWidth.toPx())
                 leftPosition.floatValue = new.coerceIn(0f, rightPosition.floatValue - (duration.floatValue * 0.2f))
 
-                if (currentPosition.floatValue < leftPosition.floatValue) {
-                    currentPosition.floatValue = leftPosition.floatValue
-                    onSeek(currentPosition.floatValue)
-                }
+                currentPosition.floatValue = leftPosition.floatValue
+                onSeek(currentPosition.floatValue)
             }
         }
         Box(
@@ -190,10 +189,8 @@ fun VideoEditorTrimContent(
                 val new = rightPosition.floatValue + (change * duration.floatValue / this@BoxWithConstraints.maxWidth.toPx())
                 rightPosition.floatValue = new.coerceIn(leftPosition.floatValue + (duration.floatValue * 0.2f), duration.floatValue)
 
-                if (currentPosition.floatValue > rightPosition.floatValue) {
-                    currentPosition.floatValue = rightPosition.floatValue
-                    onSeek(currentPosition.floatValue)
-                }
+                currentPosition.floatValue = rightPosition.floatValue
+                onSeek(currentPosition.floatValue)
             }
         }
 
@@ -267,9 +264,17 @@ fun VideoEditorTrimContent(
                 onSeek(currentPosition.floatValue)
             }
         }
+
+        var isDraggingSeekHandle by remember { mutableStateOf(false) }
+        val animatedSeekOffset by animateDpAsState(
+            targetValue = if (seekHandlePosition.isUnspecified) 0.dp else seekHandlePosition,
+            animationSpec = tween(
+                durationMillis = if (!isDraggingSeekHandle) AnimationConstants.DURATION else 0
+            )
+        )
         Box(
             modifier = Modifier
-                .offset(x = seekHandlePosition + 28.dp, y = 10.dp)
+                .offset(x = animatedSeekOffset + 28.dp, y = 10.dp)
                 .width(6.dp)
                 .height(this.maxHeight - 20.dp)
                 .clip(CircleShape)
@@ -278,10 +283,10 @@ fun VideoEditorTrimContent(
                     state = videoPositionDraggableState,
                     orientation = Orientation.Horizontal,
                     onDragStarted = {
-                        setExoPlayerScrubbingState(true)
+                        isDraggingSeekHandle = true
                     },
                     onDragStopped = {
-                        setExoPlayerScrubbingState(false)
+                        isDraggingSeekHandle = false
                     }
                 )
         )
