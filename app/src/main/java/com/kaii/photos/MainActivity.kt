@@ -165,9 +165,9 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
         installSplashScreen()
+
+        super.onCreate(savedInstanceState)
 
         val applicationDatabase = MediaDatabase.getInstance(applicationContext)
 
