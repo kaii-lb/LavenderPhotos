@@ -76,8 +76,11 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
@@ -147,6 +150,9 @@ fun PhotoGrid(
             modifier = Modifier
                 .fillMaxSize(1f)
                 .then(modifier)
+                .semantics {
+                    testTagsAsResourceId = true
+                }
         ) {
             DeviceMedia(
                 groupedMedia = groupedMedia,
@@ -244,6 +250,7 @@ fun DeviceMedia(
             ),
             userScrollEnabled = !isDragSelecting.value,
             modifier = Modifier
+                .testTag("mainlazycolumn")
                 .fillMaxSize(1f)
                 .align(Alignment.TopCenter)
                 .dragSelectionHandler(

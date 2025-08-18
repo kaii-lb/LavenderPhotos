@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.kaii.lavenderphotos.baselineprofile"
+    namespace = "com.kaii.lavender.baselineprofile"
     compileSdk = 35
 
     compileOptions {
@@ -25,7 +25,6 @@ android {
     }
 
     targetProjectPath = ":app"
-
 }
 
 // This is the configuration block for the Baseline Profile plugin.
@@ -37,7 +36,6 @@ baselineProfile {
 dependencies {
     implementation(libs.androidx.junit)
     implementation(libs.androidx.espresso.core)
-    implementation(libs.androidx.uiautomator)
     implementation(libs.androidx.benchmark.macro.junit4)
 }
 
