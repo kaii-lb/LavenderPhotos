@@ -113,4 +113,10 @@
     <string name="album_add">アルバムに追加</string>
     <string name="album_add_path_placeholder">Download/Movies</string>
     <string name="albums_main_list_selected">ここで選択したアルバムはメインのフォトビューに表示されます</string>
+    <string name="editing_brightness">明るさ</string>
+    <string name="editing_contrast">コントラスト</string>
+    <string name="editing">編集中</string>
+    <string name="editing_overwrite_on_save">上書きして保存</string>
+    <string name="editing_exit_on_save">保存して終了</string>
+    <string name="editing_exit">終了</string>
 </resources>
