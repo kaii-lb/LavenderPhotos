@@ -22,12 +22,12 @@ enum class SliderStates {
     SelectedTextScaling
 }
 
-abstract class VideoModification
-
-data class VideoTrimModification(
-    val start: Float,
-    val end: Float
-) : VideoModification()
+interface VideoModification {
+    data class VideoTrimModification(
+        val start: Float,
+        val end: Float
+    ) : VideoModification
+}
 
 @OptIn(UnstableApi::class)
 suspend fun saveVideo(
@@ -49,8 +49,8 @@ suspend fun saveVideo(
     )
 
     val trimPositions = (modifications.lastOrNull {
-        it is VideoTrimModification
-    } ?: VideoTrimModification(start = 0f, end = 0f)) as VideoTrimModification
+        it is VideoModification.VideoTrimModification
+    } ?: VideoModification.VideoTrimModification(start = 0f, end = 0f)) as VideoModification.VideoTrimModification
 
     val clippingConfiguration = MediaItem.ClippingConfiguration.Builder()
         .setStartPositionMs((trimPositions.start * 1000f).toLong())
