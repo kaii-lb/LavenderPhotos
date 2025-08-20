@@ -46,6 +46,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isUnspecified
 import com.kaii.photos.helpers.AnimationConstants
@@ -69,6 +70,7 @@ fun VideoEditorTrimContent(
     val coroutineScope = rememberCoroutineScope()
     val metadata = MediaMetadataRetriever()
     val thumbnails = remember { mutableStateListOf<Bitmap>() }
+    val windowInfo = LocalWindowInfo.current
 
     LaunchedEffect(duration.floatValue) {
         if (duration.floatValue == 0f) return@LaunchedEffect
@@ -82,8 +84,8 @@ fun VideoEditorTrimContent(
                 val new = metadata.getScaledFrameAtTime(
                     stepSize * i,
                     MediaMetadataRetriever.OPTION_PREVIOUS_SYNC,
-                    480,
-                    480
+                    windowInfo.containerSize.width / 6,
+                    windowInfo.containerSize.width / 6
                 )
 
                 new?.let { thumbnails.add(it) }

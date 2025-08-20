@@ -5,6 +5,10 @@ import android.net.Uri
 import androidx.annotation.OptIn
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.unit.dp
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.transformer.Composition
@@ -23,10 +27,29 @@ enum class SliderStates {
 }
 
 interface VideoModification {
-    data class VideoTrimModification(
+    data class Trim(
         val start: Float,
         val end: Float
     ) : VideoModification
+
+    data class Crop(
+        val top: Float,
+        val left: Float,
+        val width: Float,
+        val height: Float
+    ) : VideoModification
+}
+
+enum class SelectedCropArea {
+    TopLeftCorner,
+    TopRightCorner,
+    BottomLeftCorner,
+    BottomRightCorner,
+    TopEdge,
+    LeftEdge,
+    BottomEdge,
+    RightEdge,
+    None
 }
 
 @OptIn(UnstableApi::class)
@@ -49,8 +72,8 @@ suspend fun saveVideo(
     )
 
     val trimPositions = (modifications.lastOrNull {
-        it is VideoModification.VideoTrimModification
-    } ?: VideoModification.VideoTrimModification(start = 0f, end = 0f)) as VideoModification.VideoTrimModification
+        it is VideoModification.Trim
+    } ?: VideoModification.Trim(start = 0f, end = 0f)) as VideoModification.Trim
 
     val clippingConfiguration = MediaItem.ClippingConfiguration.Builder()
         .setStartPositionMs((trimPositions.start * 1000f).toLong())
@@ -87,4 +110,28 @@ suspend fun saveVideo(
                     absolutePath.getFileNameFromPath().substringAfter(".")
         )
     )
+}
+
+fun DrawScope.createCropRectBorderArc(
+    left: Float,
+    top: Float
+) = Path().apply {
+    val radius = 16.dp.toPx()
+    moveTo(x = left - radius / 2, y = top - radius / 2)
+
+    lineTo(x = left, y = top - radius / 2)
+
+    arcTo(
+        rect = Rect(
+            left = left - radius / 2,
+            top = top - radius / 2,
+            right = left + radius / 2,
+            bottom = top + radius / 2
+        ),
+        startAngleDegrees = 270f,
+        sweepAngleDegrees = 90f,
+        forceMoveTo = false
+    )
+
+    lineTo(x = left + radius / 2, y = top + radius / 2)
 }
