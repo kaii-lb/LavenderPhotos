@@ -30,10 +30,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.kaii.photos.R
@@ -123,6 +125,8 @@ fun VideoEditor(
     }
 
     val pagerState = rememberPagerState { 4 }
+    var containerDimens by remember { mutableStateOf(Size.Zero) }
+    var videoDimens by remember { mutableStateOf(exoPlayer.videoSize) }
 
     Scaffold(
         topBar = {
@@ -130,7 +134,12 @@ fun VideoEditor(
                 uri = uri,
                 absolutePath = absolutePath,
                 modifications = modifications,
-                lastSavedModCount = lastSavedModCount
+                lastSavedModCount = lastSavedModCount,
+                containerDimens = containerDimens,
+                videoDimens = IntSize(
+                    width = videoDimens.width,
+                    height = videoDimens.height
+                )
             )
         },
         bottomBar = {
@@ -156,12 +165,7 @@ fun VideoEditor(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth(1f)
-                    .padding(
-                        top = 12.dp,
-                        start = 8.dp,
-                        bottom = 8.dp,
-                        end = 8.dp
-                    )
+                    .padding(16.dp)
             ) {
                 val context = LocalContext.current
                 val playerView = rememberPlayerView(
@@ -185,14 +189,25 @@ fun VideoEditor(
                 if (pagerState.currentPage == 1) {
                     val localDensity = LocalDensity.current
 
+                    var tries by remember { mutableIntStateOf(0) }
+
+                    LaunchedEffect(videoDimens) {
+                        if (videoDimens.width == 0 || videoDimens.height == 0 && tries < 10) {
+                            videoDimens = exoPlayer.videoSize
+                            tries += 1
+
+                            println("VIDEO DIMENS ${videoDimens.width} and ${videoDimens.height}")
+                            delay(100)
+                        }
+                    }
+
                     CropBox(
                         containerWidth = with(localDensity) { this@BoxWithConstraints.maxWidth.toPx() },
                         containerHeight = with(localDensity) { this@BoxWithConstraints.maxHeight.toPx() },
-                        mediaWidth = exoPlayer.videoSize.width.toFloat(),
-                        mediaHeight = exoPlayer.videoSize.width.toFloat(),
+                        videoAspectRatio = videoDimens.width.toFloat() / videoDimens.height,
                         modifier = Modifier
                             .align(Alignment.Center)
-                    ) { area ->
+                    ) { area, original ->
                         modifications.add(
                             VideoModification.Crop(
                                 top = area.top,
@@ -201,6 +216,8 @@ fun VideoEditor(
                                 height = area.height
                             )
                         )
+
+                        containerDimens = original
                     }
                 }
 

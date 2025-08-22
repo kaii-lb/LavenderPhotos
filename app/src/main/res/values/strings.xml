@@ -216,6 +216,7 @@
     <string name="editing_trim">Trim</string>
     <string name="editing_export_video_loading">Exporting Video…</string>
     <string name="editing_export_video_failed">Couldn\'t export video</string>
+    <string name="editing_export_video_success">Exported Video!</string>
 
     <!-- Settings -->
     <string name="settings">Settings</string>

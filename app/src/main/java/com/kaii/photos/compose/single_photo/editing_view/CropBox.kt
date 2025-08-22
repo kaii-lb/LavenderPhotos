@@ -19,6 +19,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.StrokeCap
@@ -30,58 +31,92 @@ import androidx.compose.ui.unit.dp
 import com.kaii.photos.helpers.AnimationConstants
 import kotlin.math.abs
 
-private const val TAG = "CROP_BOX"
-
 @Composable
 fun CropBox(
     containerWidth: Float,
     containerHeight: Float,
-    mediaWidth: Float,
-    mediaHeight: Float,
+    videoAspectRatio: Float,
     modifier: Modifier = Modifier,
-    onAreaChanged: (area: Rect) -> Unit
+    onAreaChanged: (area: Rect, original: Size) -> Unit
 ) {
     val containerAspectRatio = remember {
         containerWidth / containerHeight
     }
-    val videoAspectRatio = remember {
-        mediaWidth / mediaHeight
+
+    var originalWidth by remember {
+        mutableFloatStateOf(
+            if (containerAspectRatio > videoAspectRatio) {
+                containerHeight * videoAspectRatio
+            } else {
+                containerWidth
+            }
+        )
     }
-    val originalWidth = remember {
-        if (containerAspectRatio > videoAspectRatio) {
-            containerHeight * videoAspectRatio
-        } else {
-            containerHeight / videoAspectRatio
-        }
-    }
-    val originalHeight = remember {
-        if (containerAspectRatio > videoAspectRatio) {
-            containerHeight
-        } else {
-            containerWidth
-        }
+    var originalHeight by remember {
+        mutableFloatStateOf(
+            if (containerAspectRatio > videoAspectRatio) {
+                containerHeight
+            } else {
+                containerWidth / videoAspectRatio
+            }
+        )
     }
 
-    var width by remember { mutableFloatStateOf(
-        originalWidth
-    )}
-    var height by remember { mutableFloatStateOf(
-        originalHeight
-    )}
-    var top by remember { mutableFloatStateOf(
-        (containerHeight - height) / 2
-    )}
-    var left by remember { mutableFloatStateOf(
-        (containerWidth - width) / 2
-    )}
+    var width by remember {
+        mutableFloatStateOf(
+            originalWidth
+        )
+    }
+    var height by remember {
+        mutableFloatStateOf(
+            originalHeight
+        )
+    }
+    var top by remember {
+        mutableFloatStateOf(
+            (containerHeight - height) / 2
+        )
+    }
+    var left by remember {
+        mutableFloatStateOf(
+            (containerWidth - width) / 2
+        )
+    }
 
-    LaunchedEffect(top, left, width, height) {
+    LaunchedEffect(videoAspectRatio) {
+        originalWidth =
+            if (containerAspectRatio > videoAspectRatio) {
+                containerHeight * videoAspectRatio
+            } else {
+                containerWidth
+            }
+        originalHeight =
+            if (containerAspectRatio > videoAspectRatio) {
+                containerHeight
+            } else {
+                containerWidth / videoAspectRatio
+            }
+
+        width = originalWidth
+        height = originalHeight
+
+        top = (containerHeight - height) / 2
+        left = (containerWidth - width) / 2
+
+        Log.d("CROP", "aspect $videoAspectRatio width $originalWidth height $originalHeight and top $top left $left")
+    }
+
+    LaunchedEffect(top, left, width, height, originalWidth, originalHeight) {
         onAreaChanged(
             Rect(
-                top = top,
-                left = left,
-                bottom = top + height,
-                right = left + width
+                top = top - ((containerHeight - originalHeight) / 2),
+                left = left - ((containerWidth - originalWidth) / 2),
+                bottom = top + height - ((containerHeight - originalHeight) / 2),
+                right = left + width - ((containerWidth - originalWidth) / 2)
+            ),
+            Size(
+                width = originalWidth,
+                height = originalHeight
             )
         )
     }
@@ -258,7 +293,7 @@ fun CropBox(
                         val distanceToRight = abs((left + width) - event.position.x)
                         val threshold = 40.dp.toPx()
 
-                        Log.d(TAG, "Distance to top: $distanceToTop, left: $distanceToLeft, right: $distanceToRight, bottom: $distanceToBottom")
+                        // Log.d(TAG, "Distance to top: $distanceToTop, left: $distanceToLeft, right: $distanceToRight, bottom: $distanceToBottom")
 
                         when {
                             // top left

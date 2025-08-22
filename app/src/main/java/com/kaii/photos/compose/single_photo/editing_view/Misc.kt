@@ -1,24 +1,40 @@
 package com.kaii.photos.compose.single_photo.editing_view
 
+import android.content.ContentValues
 import android.content.Context
 import android.net.Uri
+import android.provider.MediaStore.MediaColumns
+import android.util.Log
 import androidx.annotation.OptIn
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.media3.common.Effect
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MimeTypes
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.effect.Crop
+import androidx.media3.effect.Presentation
 import androidx.media3.transformer.Composition
+import androidx.media3.transformer.EditedMediaItem
+import androidx.media3.transformer.Effects
 import androidx.media3.transformer.ExportException
 import androidx.media3.transformer.ExportResult
 import androidx.media3.transformer.Transformer
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
-import com.kaii.photos.helpers.getFileNameFromPath
+import com.kaii.photos.helpers.getParentFromPath
+import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.mediastore.getUriFromAbsolutePath
+import java.io.File
+
+private const val TAG = "EDITOR_MISC"
 
 enum class SliderStates {
     FontScaling,
@@ -37,7 +53,10 @@ interface VideoModification {
         val left: Float,
         val width: Float,
         val height: Float
-    ) : VideoModification
+    ) : VideoModification {
+        val right = left + width
+        val bottom = top + height
+    }
 }
 
 enum class SelectedCropArea {
@@ -59,7 +78,9 @@ suspend fun saveVideo(
     uri: Uri,
     absolutePath: String,
     overwrite: Boolean,
-    showErrorSnackbar: () -> Unit
+    containerDimens: Size,
+    videoDimens: IntSize,
+    onFailure: () -> Unit,
 ) {
     val isLoading = mutableStateOf(true)
 
@@ -80,10 +101,68 @@ suspend fun saveVideo(
         .setEndPositionMs((trimPositions.end * 1000f).toLong())
         .build()
 
+    val effectList = mutableListOf<Effect>()
+
+    val cropArea = modifications.lastOrNull {
+        it is VideoModification.Crop
+    } as? VideoModification.Crop
+
+    if (cropArea != null) {
+        val left = (cropArea.left / containerDimens.width).coerceIn(-1f, 1f)
+        val right = (cropArea.right / containerDimens.width).coerceIn(-1f, 1f)
+        val top = (cropArea.top / containerDimens.height).coerceIn(-1f, 1f)
+        val bottom = (cropArea.bottom / containerDimens.height).coerceIn(-1f, 1f)
+
+        val normalizedLeft = (2f * left) - 1f
+        val normalizedRight = (2f * right) - 1f
+        val normalizedTop = -(2f * top) + 1f
+        val normalizedBottom = -(2f * bottom) + 1f
+
+        Log.d(TAG, "$normalizedTop $normalizedBottom ${cropArea.top / containerDimens.height} ${cropArea.bottom / containerDimens.height}")
+
+        effectList.add(
+            Crop(
+                normalizedLeft,
+                normalizedRight,
+                normalizedBottom,
+                normalizedTop
+            )
+        )
+
+        val widthPercent = right - left
+        val heightPercent = bottom - top
+
+        val newWidth = (videoDimens.width * widthPercent).toInt()
+        val newHeight = (videoDimens.height * heightPercent).toInt()
+
+        Log.d(TAG, "New width $newWidth and height $newHeight")
+
+        effectList.add(
+            Presentation.createForShortSide(if (newWidth > newHeight) newWidth else newHeight)
+        )
+    }
+
     val mediaItem = MediaItem.Builder()
         .setUri(uri)
         .setClippingConfiguration(clippingConfiguration)
         .build()
+
+    val editedMediaItem = EditedMediaItem.Builder(mediaItem)
+        .setEffects(Effects(emptyList(), effectList))
+        .build()
+
+    val file = File(absolutePath)
+
+    val dupeAdd =
+        if (!overwrite) {
+            val new = absolutePath.getParentFromPath() + "/" + file.nameWithoutExtension + "_edited.mp4"
+            if (File(new).exists()) " (1)" else ""
+        } else ""
+
+    val neededPath =
+        if (overwrite) absolutePath.replaceAfterLast(".", "mp4")
+        else absolutePath.getParentFromPath() + "/" + file.nameWithoutExtension + "_edited" + dupeAdd + ".mp4"
+
 
     val transformer = Transformer.Builder(context)
         .addListener(object : Transformer.Listener {
@@ -91,24 +170,35 @@ suspend fun saveVideo(
                 super.onCompleted(composition, exportResult)
 
                 isLoading.value = false
+
+                context.contentResolver.getUriFromAbsolutePath(absolutePath = neededPath, type = MediaType.Video)?.let { newUri ->
+                    context.contentResolver.update(
+                        newUri,
+                        ContentValues().apply {
+                            put(MediaColumns.IS_PENDING, 0)
+                        },
+                        null
+                    )
+                    context.contentResolver.notifyChange(newUri, null)
+                }
             }
 
             override fun onError(composition: Composition, exportResult: ExportResult, exportException: ExportException) {
                 super.onError(composition, exportResult, exportException)
 
-                showErrorSnackbar()
+                Log.d(TAG, exportException.message.toString())
+                exportException.printStackTrace()
+
+                onFailure()
             }
         })
+        .setVideoMimeType(MimeTypes.VIDEO_H264)
+        .setAudioMimeType(MimeTypes.AUDIO_AAC)
         .build()
 
     transformer.start(
-        mediaItem,
-        absolutePath.replace(
-            absolutePath.getFileNameFromPath(),
-            absolutePath.getFileNameFromPath().substringBefore(".") +
-                    if (!overwrite) "_edited." else "." +
-                    absolutePath.getFileNameFromPath().substringAfter(".")
-        )
+        editedMediaItem,
+        neededPath
     )
 }
 
