@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -45,6 +46,7 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FilledTonalIconToggleButton
 import androidx.compose.material3.Icon
@@ -79,6 +81,7 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpSize
@@ -113,6 +116,7 @@ import com.kaii.photos.compose.rememberDeviceOrientation
 import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.EncryptionManager
+import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.VideoPlayerConstants
 import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.getSecureDecryptedVideoFile
@@ -258,13 +262,12 @@ fun VideoPlayerControls(
 
 @androidx.annotation.OptIn(UnstableApi::class)
 @Composable
-fun VideoPlayerControllerBottomControls(
+private fun VideoPlayerControllerBottomControls(
     currentVideoPosition: MutableFloatState,
     duration: MutableFloatState,
     isPlaying: MutableState<Boolean>,
     exoPlayer: ExoPlayer,
     isMuted: MutableState<Boolean>,
-    showPlayPauseButton: Boolean = false,
     onAnyTap: () -> Unit
 ) {
     Row(
@@ -273,25 +276,8 @@ fun VideoPlayerControllerBottomControls(
             .wrapContentHeight()
             .padding(16.dp, 0.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        if (showPlayPauseButton) {
-            FilledTonalIconButton(
-                onClick = {
-                    isPlaying.value = !isPlaying.value
-                },
-                modifier = Modifier
-                    .size(32.dp)
-            ) {
-                Icon(
-                    painter = painterResource(id = if (!isPlaying.value) R.drawable.play_arrow else R.drawable.pause),
-                    contentDescription = stringResource(id = R.string.video_play_toggle)
-                )
-            }
-
-            Spacer(modifier = Modifier.width(8.dp))
-        }
-
         val currentDurationFormatted =
             currentVideoPosition.floatValue.roundToInt().seconds.formatLikeANormalPerson()
 
@@ -316,8 +302,6 @@ fun VideoPlayerControllerBottomControls(
             )
         }
 
-        Spacer(modifier = Modifier.width(8.dp))
-
         duration.floatValue = duration.floatValue.coerceAtLeast(0f)
 
         VideoPlayerSeekbar(
@@ -334,8 +318,6 @@ fun VideoPlayerControllerBottomControls(
             )
             isPlaying.value = prev
         }
-
-        Spacer(modifier = Modifier.width(8.dp))
 
         val formattedDuration =
             duration.floatValue.roundToInt().seconds.formatLikeANormalPerson()
@@ -361,8 +343,6 @@ fun VideoPlayerControllerBottomControls(
             )
         }
 
-        Spacer(modifier = Modifier.width(8.dp))
-
         // mute button
         FilledTonalIconButton(
             onClick = {
@@ -379,6 +359,37 @@ fun VideoPlayerControllerBottomControls(
                 modifier = Modifier
                     .size(24.dp)
             )
+        }
+
+        val isLandscape by rememberDeviceOrientation()
+        if (isLandscape) {
+            var currentPlaybackSpeed by remember { mutableFloatStateOf(exoPlayer.playbackParameters.speed) }
+
+            FilledTonalButton(
+                onClick = {
+                    val new =
+                        when (currentPlaybackSpeed) {
+                            1f -> 1.5f
+                            1.5f -> 2f
+                            2f -> 4f
+                            4f -> 0.5f
+                            else -> 1f
+                        }
+
+                    exoPlayer.setPlaybackSpeed(new)
+                    currentPlaybackSpeed = new
+                },
+                contentPadding = PaddingValues(horizontal = 4.dp),
+                modifier = Modifier
+                    .height(32.dp)
+                    .width(40.dp)
+            ) {
+                Text(
+                    text = "${currentPlaybackSpeed}X",
+                    fontSize = TextUnit(TextStylingConstants.SMALL_TEXT_SIZE, TextUnitType.Sp),
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
     }
 }
@@ -711,7 +722,7 @@ fun VideoPlayer(
                     enter =
                         fadeIn(
                             animationSpec = tween(
-                                durationMillis = 300
+                                durationMillis = AnimationConstants.DURATION
                             )
                         ) + scaleIn(
                             animationSpec = spring(
@@ -722,7 +733,7 @@ fun VideoPlayer(
                     exit =
                         fadeOut(
                             animationSpec = tween(
-                                durationMillis = 300
+                                durationMillis = AnimationConstants.DURATION
                             )
                         ) + scaleOut(
                             animationSpec = spring(
@@ -756,7 +767,7 @@ fun VideoPlayer(
                     enter =
                         fadeIn(
                             animationSpec = tween(
-                                durationMillis = 300
+                                durationMillis = AnimationConstants.DURATION
                             )
                         ) + scaleIn(
                             animationSpec = spring(
@@ -767,7 +778,7 @@ fun VideoPlayer(
                     exit =
                         fadeOut(
                             animationSpec = tween(
-                                durationMillis = 300
+                                durationMillis = AnimationConstants.DURATION
                             )
                         ) + scaleOut(
                             animationSpec = spring(
