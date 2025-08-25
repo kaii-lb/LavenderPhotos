@@ -52,8 +52,8 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -327,7 +327,6 @@ fun AddTabDialog(
 
         val selectedAlbums = remember { mutableStateListOf<String>() }
         val coroutineScope = rememberCoroutineScope()
-        val context = LocalContext.current
 
         Row(
             modifier = Modifier
@@ -414,6 +413,7 @@ fun AddTabDialog(
         Spacer(modifier = Modifier.height(16.dp))
 
         val mainViewModel = LocalMainViewModel.current
+        val resources = LocalResources.current
         FullWidthDialogButton(
             text = stringResource(id = R.string.tabs_confirm),
             color = MaterialTheme.colorScheme.primary,
@@ -442,7 +442,7 @@ fun AddTabDialog(
                     coroutineScope.launch {
                         LavenderSnackbarController.pushEvent(
                             LavenderSnackbarEvents.MessageEvent(
-                                message = context.resources.getString(R.string.tabs_empty_params),
+                                message = resources.getString(R.string.tabs_empty_params),
                                 icon = R.drawable.error_2,
                                 duration = SnackbarDuration.Short
                             )
@@ -453,7 +453,7 @@ fun AddTabDialog(
                 coroutineScope.launch {
                     LavenderSnackbarController.pushEvent(
                         LavenderSnackbarEvents.MessageEvent(
-                            message = context.resources.getString(R.string.tabs_max_reached),
+                            message = resources.getString(R.string.tabs_max_reached),
                             icon = R.drawable.error_2,
                             duration = SnackbarDuration.Short
                         )
@@ -636,7 +636,7 @@ fun TabCustomizationDialog(
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.Start
         ) {
-            val context = LocalContext.current
+            val resources = LocalResources.current
 
             DefaultTabs.defaultList.forEach { tab ->
                 InfoRow(
@@ -654,7 +654,7 @@ fun TabCustomizationDialog(
                                 coroutineScope.launch {
                                     LavenderSnackbarController.pushEvent(
                                         LavenderSnackbarEvents.MessageEvent(
-                                            message = context.resources.getString(R.string.tabs_min_reached),
+                                            message = resources.getString(R.string.tabs_min_reached),
                                             icon = R.drawable.error_2,
                                             duration = SnackbarDuration.Short
                                         )
@@ -668,7 +668,7 @@ fun TabCustomizationDialog(
                                 coroutineScope.launch {
                                     LavenderSnackbarController.pushEvent(
                                         LavenderSnackbarEvents.MessageEvent(
-                                            message = context.resources.getString(R.string.tabs_max_reached),
+                                            message = resources.getString(R.string.tabs_max_reached),
                                             icon = R.drawable.error_2,
                                             duration = SnackbarDuration.Short
                                         )
@@ -698,7 +698,7 @@ fun TabCustomizationDialog(
                             coroutineScope.launch {
                                 LavenderSnackbarController.pushEvent(
                                     LavenderSnackbarEvents.MessageEvent(
-                                        message = context.resources.getString(R.string.tabs_min_reached),
+                                        message = resources.getString(R.string.tabs_min_reached),
                                         icon = R.drawable.error_2,
                                         duration = SnackbarDuration.Short
                                     )
@@ -724,7 +724,7 @@ fun TabCustomizationDialog(
             )
         }
 
-        val context = LocalContext.current
+        val resources = LocalResources.current
         FullWidthDialogButton(
             text = stringResource(id = R.string.tabs_add),
             color = MaterialTheme.colorScheme.primary,
@@ -737,7 +737,7 @@ fun TabCustomizationDialog(
                 coroutineScope.launch {
                     LavenderSnackbarController.pushEvent(
                         LavenderSnackbarEvents.MessageEvent(
-                            message = context.resources.getString(R.string.tabs_max_reached),
+                            message = resources.getString(R.string.tabs_max_reached),
                             icon = R.drawable.error_2,
                             duration = SnackbarDuration.Short
                         )

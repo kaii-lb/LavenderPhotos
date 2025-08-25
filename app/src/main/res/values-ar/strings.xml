@@ -178,7 +178,7 @@
     <string name="settings_clear_cache_desc">سيؤدي هذا إلى مسح جميع ملفات الصور المصغرة على هذا الجهاز، مما يُحرر مساحة تخزينية. سيستغرق تحميل الصور المصغرة وقتًا أطول عند بدء التشغيل التالي.</string>
     <string name="settings_about_and_updates">حول وتحديثات</string>
     <string name="trash_bin">سلة المهملات</string>
-    <string name="trash_auto_delete">يقوم بحذف العناصر الموجودة في سلة المهملات تلقائيًا بعد</string>
+    <string name="trash_auto_delete">يقوم بحذف العناصر الموجودة في سلة المهملات تلقائيًا بعد %s</string>
     <string name="trash_days">أيام</string>
     <string name="trash_no_auto_delete">لن يتم حذف العناصر الموجودة في سلة المهملات تلقائيًا</string>
     <string name="trash_auto_delete_interval">فترة الحذف التلقائي</string>

@@ -57,6 +57,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -197,7 +198,8 @@ fun SingleHiddenPhotoView(
     val state = rememberPagerState {
         groupedMedia.value.size
     }
-    val context = LocalContext.current
+
+    val resources = LocalResources.current
     val currentMediaItem by remember {
         derivedStateOf {
             val index = state.layoutInfo.visiblePagesInfo.firstOrNull()?.index ?: 0
@@ -205,7 +207,7 @@ fun SingleHiddenPhotoView(
                 groupedMedia.value[index]
             } else {
                 MediaStoreData(
-                    displayName = context.resources.getString(R.string.media_broken)
+                    displayName = resources.getString(R.string.media_broken)
                 )
             }
         }

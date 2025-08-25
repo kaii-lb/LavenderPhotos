@@ -76,6 +76,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -165,9 +166,9 @@ fun PhotoGrid(
             )
         }
     } else {
-        val context = LocalContext.current
+        val resources = LocalResources.current
         FolderIsEmpty(
-            ViewProperties.getText(id = viewProperties.emptyText, context = context),
+            ViewProperties.getText(id = viewProperties.emptyText, resources = resources),
             viewProperties.emptyIconResId
         )
     }
@@ -691,12 +692,12 @@ fun MediaStoreItem(
                 }
                 .padding(16.dp, 8.dp),
         ) {
-            val context = LocalContext.current
+            val resources = LocalResources.current
             Text(
                 text = "${
                     ViewProperties.getText(
                         id = viewProperties.prefix,
-                        context = context
+                        resources = resources
                     )
                 } ${item.displayName}",
                 fontSize = TextUnit(16f, TextUnitType.Sp),

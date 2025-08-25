@@ -55,6 +55,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
@@ -437,11 +438,12 @@ fun MainDialogUserInfo() {
         }
 
         val context = LocalContext.current
+        val resources = LocalResources.current
         val userInfo by immichViewModel.immichUserLoginState.collectAsStateWithLifecycle()
 
         var originalName by remember(userInfo) {
             mutableStateOf(
-                if (userInfo is ImmichUserLoginState.IsNotLoggedIn) context.resources.getString(R.string.immich_login_unavailable)
+                if (userInfo is ImmichUserLoginState.IsNotLoggedIn) resources.getString(R.string.immich_login_unavailable)
                 else (userInfo as ImmichUserLoginState.IsLoggedIn).info.name
             )
         }
@@ -485,7 +487,7 @@ fun MainDialogUserInfo() {
                 coroutineScope.launch {
                     LavenderSnackbarController.pushEvent(
                         LavenderSnackbarEvents.MessageEvent(
-                            message = context.resources.getString(R.string.immich_set_pfp_success),
+                            message = resources.getString(R.string.immich_set_pfp_success),
                             duration = SnackbarDuration.Short,
                             icon = R.drawable.face
                         )
@@ -495,7 +497,7 @@ fun MainDialogUserInfo() {
                 coroutineScope.launch {
                     LavenderSnackbarController.pushEvent(
                         LavenderSnackbarEvents.MessageEvent(
-                            message = context.resources.getString(R.string.immich_set_pfp_fail),
+                            message = resources.getString(R.string.immich_set_pfp_fail),
                             duration = SnackbarDuration.Short,
                             icon = R.drawable.error_2
                         )

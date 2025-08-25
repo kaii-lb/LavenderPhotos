@@ -225,8 +225,7 @@ fun VideoEditorTopBar(
     modifications: SnapshotStateList<VideoModification>,
     lastSavedModCount: MutableIntState,
     containerDimens: Size,
-    videoDimens: IntSize,
-    rotation: Float
+    videoDimens: IntSize
 ) {
     val navController = LocalNavController.current
 

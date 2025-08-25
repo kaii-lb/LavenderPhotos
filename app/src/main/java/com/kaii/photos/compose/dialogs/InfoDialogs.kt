@@ -36,6 +36,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -385,6 +386,7 @@ fun SinglePhotoInfoDialog(
     moveCopyInsetsPadding: WindowInsets? = WindowInsets.statusBars
 ) {
     val context = LocalContext.current
+    val resources = LocalResources.current
     val isEditingFileName = remember { mutableStateOf(false) }
 
     val isLandscape by rememberDeviceOrientation()
@@ -598,7 +600,7 @@ fun SinglePhotoInfoDialog(
 
                                                 LavenderSnackbarController.pushEvent(
                                                     LavenderSnackbarEvents.MessageEvent(
-                                                        message = context.resources.getString(R.string.media_exif_done),
+                                                        message = resources.getString(R.string.media_exif_done),
                                                         icon = R.drawable.checkmark_thin,
                                                         duration = SnackbarDuration.Short
                                                     )
@@ -606,7 +608,7 @@ fun SinglePhotoInfoDialog(
                                             } catch (e: Throwable) {
                                                 LavenderSnackbarController.pushEvent(
                                                     LavenderSnackbarEvents.MessageEvent(
-                                                        message = context.resources.getString(R.string.media_exif_failed),
+                                                        message = resources.getString(R.string.media_exif_failed),
                                                         icon = R.drawable.error_2,
                                                         duration = SnackbarDuration.Long
                                                     )
@@ -652,7 +654,7 @@ fun SinglePhotoInfoDialog(
                             context.startActivity(
                                 Intent.createChooser(
                                     intent,
-                                    context.resources.getString(R.string.set_as_wallpaper)
+                                    resources.getString(R.string.set_as_wallpaper)
                                 )
                             )
                         }

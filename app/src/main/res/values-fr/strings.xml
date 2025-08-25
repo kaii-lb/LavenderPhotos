@@ -164,7 +164,7 @@
     <string name="settings">Paramètres</string>
     <string name="settings_general_desc">Préférences et personnalisation</string>
     <string name="settings_look_and_feel">Apparence &amp; Ressenti</string>
-    <string name="trash_auto_delete">Supprime automatiquement les médias dans la corbeille après</string>
+    <string name="trash_auto_delete">Supprime automatiquement les médias dans la corbeille après %s</string>
     <string name="trash_empty">Vider la corbeille ?</string>
     <string name="settings_look_and_feel_desc">Changez l\'apparence de l\'appli</string>
     <string name="media_delete_permanently">Supprimer définitivement</string>

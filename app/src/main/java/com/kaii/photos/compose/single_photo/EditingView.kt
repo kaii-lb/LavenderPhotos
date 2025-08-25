@@ -133,6 +133,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -1603,13 +1604,13 @@ private fun EditingViewTopBar(
                         Spacer(modifier = Modifier.width(8.dp))
                     }
 
-                    val context = LocalContext.current
+                    val resources = LocalResources.current
                     val saveButtonTitle by remember {
                         derivedStateOf {
                             if (overwrite.value) {
-                                context.resources.getString(R.string.editing_overwrite)
+                                resources.getString(R.string.editing_overwrite)
                             } else {
-                                context.resources.getString(R.string.editing_save)
+                                resources.getString(R.string.editing_save)
                             }
                         }
                     }

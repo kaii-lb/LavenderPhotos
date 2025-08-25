@@ -51,6 +51,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -273,7 +274,7 @@ fun TextEntryDialog(
                 if (showError) {
                     Row {
                         val coroutineScope = rememberCoroutineScope()
-                        val context = LocalContext.current
+                        val resources = LocalResources.current
 
                         Icon(
                             painter = painterResource(id = R.drawable.error_2),
@@ -285,7 +286,7 @@ fun TextEntryDialog(
                                     coroutineScope.launch {
                                         LavenderSnackbarController.pushEvent(
                                             LavenderSnackbarEvents.MessageEvent(
-                                                message = context.resources.getString(R.string.paths_should_be_relative),
+                                                message = resources.getString(R.string.paths_should_be_relative),
                                                 icon = R.drawable.error_2,
                                                 duration = SnackbarDuration.Short
                                             )
@@ -866,11 +867,11 @@ fun ImmichLoginDialog(
             )
 
             val coroutineScope = rememberCoroutineScope()
-            val context = LocalContext.current
+            val resources = LocalResources.current
 
             suspend fun login() {
                 val eventTitle =
-                    mutableStateOf(context.resources.getString(R.string.immich_login_ongoing))
+                    mutableStateOf(resources.getString(R.string.immich_login_ongoing))
                 val isLoading = mutableStateOf(true)
 
                 LavenderSnackbarController.pushEvent(
@@ -889,17 +890,17 @@ fun ImmichLoginDialog(
                     endpointBase = endpointBase
                 ).let { success ->
                     if (success) {
-                        eventTitle.value = context.resources.getString(R.string.immich_login_successful)
+                        eventTitle.value = resources.getString(R.string.immich_login_successful)
                         isLoading.value = false
 
                         onDismiss()
                     } else {
                         password.value = ""
 
-                        eventTitle.value = context.resources.getString(R.string.immich_login_failed)
+                        eventTitle.value = resources.getString(R.string.immich_login_failed)
                         LavenderSnackbarController.pushEvent(
                             LavenderSnackbarEvents.MessageEvent(
-                                message = context.resources.getString(R.string.immich_login_failed),
+                                message = resources.getString(R.string.immich_login_failed),
                                 duration = SnackbarDuration.Short,
                                 icon = R.drawable.error_2
                             )

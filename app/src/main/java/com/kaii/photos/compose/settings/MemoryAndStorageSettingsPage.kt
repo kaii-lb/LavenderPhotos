@@ -20,7 +20,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.TextUnit
@@ -65,10 +65,10 @@ fun MemoryAndStorageSettingsPage() {
                     .collectAsStateWithLifecycle(initialValue = 0)
                 val showDeleteIntervalDialog = remember { mutableStateOf(false) }
 
-                val context = LocalContext.current
+                val resources = LocalResources.current
                 val autoDelete by remember {
                     derivedStateOf {
-                        context.resources.getString(
+                        resources.getString(
                             R.string.trash_auto_delete,
                             autoDeleteInterval.toString()
                         )
@@ -116,7 +116,7 @@ fun MemoryAndStorageSettingsPage() {
             }
 
             item {
-                val context = LocalContext.current
+                val resources = LocalResources.current
                 val showThumbnailSizeDialog = remember { mutableStateOf(false) }
                 val thumbnailSize by mainViewModel.settings.Storage.getThumbnailSize()
                     .collectAsStateWithLifecycle(initialValue = 0)
@@ -125,21 +125,21 @@ fun MemoryAndStorageSettingsPage() {
 
                 val memoryOrStorage by remember {
                     derivedStateOf {
-                        if (cacheThumbnails) context.resources.getString(R.string.settings_storage)
-                            .lowercase() else context.resources.getString(R.string.settings_memory)
+                        if (cacheThumbnails) resources.getString(R.string.settings_storage)
+                            .lowercase() else resources.getString(R.string.settings_memory)
                             .lowercase()
                     }
                 }
                 val summary by remember {
                     derivedStateOf {
                         if (thumbnailSize != 0) {
-                            context.resources.getString(
+                            resources.getString(
                                 R.string.settings_storage_thumbnails_size,
                                 "${thumbnailSize}x${thumbnailSize}",
                                 memoryOrStorage
                             )
                         } else {
-                            context.resources.getString(
+                            resources.getString(
                                 R.string.settings_storage_thumbnails_max,
                                 memoryOrStorage
                             )

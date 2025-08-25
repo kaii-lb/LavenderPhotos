@@ -33,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -127,7 +128,7 @@ fun SearchPage(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            val context = LocalContext.current
+            val resources = LocalResources.current
             val placeholdersList = remember {
                 val month = months.random().replaceFirstChar {
                     it.uppercase()
@@ -139,11 +140,11 @@ fun SearchPage(
                 val year = (2016..2024).random()
 
                 listOf(
-                    context.resources.getString(R.string.search_photo_name),
-                    context.resources.getString(R.string.search_photo_date),
+                    resources.getString(R.string.search_photo_name),
+                    resources.getString(R.string.search_photo_date),
                     "$month $date $year",
                     "$month $year",
-                    context.resources.getString(R.string.search_photo_day),
+                    resources.getString(R.string.search_photo_day),
                     "$day $month $year",
                     "$date $month $year"
                 )

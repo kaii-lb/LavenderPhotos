@@ -82,6 +82,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -872,6 +873,7 @@ private fun BottomBar(
                         )
                     }
 
+                    val resources = LocalResources.current
                     BottomAppBarItem(
                         text = stringResource(id = R.string.edit),
                         iconResId = R.drawable.paintbrush,
@@ -886,7 +888,7 @@ private fun BottomBar(
                                         sortBy = MediaItemSortMode.DateTaken,
                                         format = DisplayDateFormat.Default
                                     )
-                                    val name = context.resources.getString(R.string.edit_desc, "$date.$extension")
+                                    val name = resources.getString(R.string.edit_desc, "$date.$extension")
                                     val destination = File(Environment.DIRECTORY_PICTURES, name) // TODO: maybe move into subdir?
 
                                     val contentValues = ContentValues().apply {

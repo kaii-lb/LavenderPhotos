@@ -35,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -609,6 +610,7 @@ fun SecureFolderViewBottomAppBar(
 ) {
     IsSelectingBottomAppBar {
         val context = LocalContext.current
+        val resources = LocalResources.current
         val coroutineScope = rememberCoroutineScope()
 
         val selectedItemsWithoutSection by remember {
@@ -620,7 +622,7 @@ fun SecureFolderViewBottomAppBar(
         }
 
         var showLoadingDialog by remember { mutableStateOf(false) }
-        var loadingDialogTitle by remember { mutableStateOf(context.resources.getString(R.string.secure_decrypting)) }
+        var loadingDialogTitle by remember { mutableStateOf(resources.getString(R.string.secure_decrypting)) }
 
         if (showLoadingDialog) {
             LoadingDialog(
@@ -633,7 +635,7 @@ fun SecureFolderViewBottomAppBar(
             onClick = {
                 coroutineScope.launch(Dispatchers.IO) {
                     async {
-                        loadingDialogTitle = context.resources.getString(R.string.secure_decrypting)
+                        loadingDialogTitle = resources.getString(R.string.secure_decrypting)
                         showLoadingDialog = true
 
                         val cachedPaths = emptyList<Pair<String, MediaType>>().toMutableList()
@@ -723,7 +725,7 @@ fun SecureFolderViewBottomAppBar(
             confirmButtonLabel = stringResource(id = R.string.media_restore)
         ) {
             loadingDialogTitle =
-                context.resources.getString(R.string.media_restore_processing)
+                resources.getString(R.string.media_restore_processing)
             showLoadingDialog = true
 
             isGettingPermissions.value = true

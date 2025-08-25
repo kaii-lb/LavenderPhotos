@@ -101,7 +101,7 @@ fun DebuggingSettingsPage() {
                 if (showLogTypeDialog.value) {
                     val logManager = remember { LogManager(context = context) }
                     val chosenPaths = remember { mutableStateListOf(logManager.previousLogPath) }
-                    val nologFile = stringResource(id = R.string.log_file_non_existent)
+                    val noLogFile = stringResource(id = R.string.log_file_non_existent)
 
                     SelectableButtonListDialog(
                         title = stringResource(id = R.string.choose_logs),
@@ -135,7 +135,7 @@ fun DebuggingSettingsPage() {
                                     coroutineScope.launch {
                                         LavenderSnackbarController.pushEvent(
                                             LavenderSnackbarEvents.MessageEvent(
-                                                message = nologFile,
+                                                message = noLogFile,
                                                 icon = R.drawable.no_log,
                                                 duration = SnackbarDuration.Short
                                             )

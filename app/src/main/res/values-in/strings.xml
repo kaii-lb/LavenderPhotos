@@ -200,7 +200,7 @@
     <string name="settings_storage_thumbnails_clear_cache">Bersihkan cache thumbnail</string>
     <string name="settings_clear_cache_desc">Ini akan menghapus semua cache thumbnail di perangkat ini, membebaskan penyimpanan. Pemuatan thumbnail akan memakan waktu di startup berikutnya.</string>
     <string name="trash_bin">Keranjang Sampah</string>
-    <string name="trash_auto_delete">Otomatis hapus item di keranjang sampah setelah</string>
+    <string name="trash_auto_delete">Otomatis hapus item di keranjang sampah setelah %s</string>
     <string name="trash_days">hari</string>
     <string name="trash_no_auto_delete">Item di keranjang sampah tidak akan dihapus secara otomatis</string>
     <string name="trash_auto_delete_interval">Interval penghapusan otomatis</string>

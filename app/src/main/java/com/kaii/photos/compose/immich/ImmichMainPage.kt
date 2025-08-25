@@ -40,7 +40,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -229,17 +229,17 @@ fun ImmichMainPage() {
                     }
                 }
 
-                val context = LocalContext.current
+                val resources = LocalResources.current
                 val title by remember {
                     derivedStateOf {
-                        if (userInfo is ImmichUserLoginState.IsNotLoggedIn) context.resources.getString(R.string.immich_login_unavailable)
-                        else context.resources.getString(R.string.immich_login_found) + " " + (userInfo as ImmichUserLoginState.IsLoggedIn).info.name
+                        if (userInfo is ImmichUserLoginState.IsNotLoggedIn) resources.getString(R.string.immich_login_unavailable)
+                        else resources.getString(R.string.immich_login_found) + " " + (userInfo as ImmichUserLoginState.IsLoggedIn).info.name
                     }
                 }
                 val summary by remember {
                     derivedStateOf {
-                        if (userInfo is ImmichUserLoginState.IsNotLoggedIn) context.resources.getString(R.string.immich_login_unavailable_desc)
-                        else context.resources.getString(R.string.immich_email) + " " + (userInfo as ImmichUserLoginState.IsLoggedIn).info.email
+                        if (userInfo is ImmichUserLoginState.IsNotLoggedIn) resources.getString(R.string.immich_login_unavailable_desc)
+                        else resources.getString(R.string.immich_email) + " " + (userInfo as ImmichUserLoginState.IsLoggedIn).info.email
                     }
                 }
 
@@ -337,7 +337,7 @@ fun ImmichMainPage() {
             item {
                 val serverInfo by immichViewModel.immichServerState.collectAsStateWithLifecycle()
                 val userInfo by immichViewModel.immichUserLoginState.collectAsStateWithLifecycle()
-                val context = LocalContext.current
+                val resources = LocalResources.current
 
                 LaunchedEffect(userInfo) {
                     if (userInfo is ImmichUserLoginState.IsLoggedIn) immichViewModel.refreshServerInfo()
@@ -352,8 +352,8 @@ fun ImmichMainPage() {
                             )
                         } else {
                             Pair(
-                                context.resources.getString(R.string.immich_state_unknown),
-                                context.resources.getString(R.string.immich_state_unknown)
+                                resources.getString(R.string.immich_state_unknown),
+                                resources.getString(R.string.immich_state_unknown)
                             )
                         }
                     }
@@ -368,8 +368,8 @@ fun ImmichMainPage() {
                             )
                         } else {
                             Pair(
-                                context.resources.getString(R.string.immich_state_unknown),
-                                context.resources.getString(R.string.immich_state_unknown)
+                                resources.getString(R.string.immich_state_unknown),
+                                resources.getString(R.string.immich_state_unknown)
                             )
                         }
                     }

@@ -23,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.core.net.toUri
 import com.kaii.lavender.snackbars.LavenderSnackbarController
@@ -230,7 +231,7 @@ fun createDirectoryPicker(
     onGetDir: (albumPath: String?, basePath: String?) -> Unit
 ): ManagedActivityResultLauncher<Uri?, Uri?> {
     val coroutineScope = rememberCoroutineScope()
-    val context = LocalContext.current
+    val resources = LocalResources.current
 
     return createPersistablePermissionLauncher(
         onGranted = { uri ->
@@ -260,7 +261,7 @@ fun createDirectoryPicker(
             coroutineScope.launch {
                 LavenderSnackbarController.pushEvent(
                     LavenderSnackbarEvents.MessageEvent(
-                        message = context.resources.getString(R.string.albums_add_failed),
+                        message = resources.getString(R.string.albums_add_failed),
                         icon = R.drawable.error_2,
                         duration = SnackbarDuration.Short
                     )

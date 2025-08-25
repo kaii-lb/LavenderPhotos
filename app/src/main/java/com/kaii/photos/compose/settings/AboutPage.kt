@@ -136,7 +136,7 @@ fun AboutPage(popBackStack: () -> Unit) {
                 position = RowPosition.Top
             ) {
                 val intent = Intent(Intent.ACTION_VIEW).apply {
-                    setData("https://github.com/kaii-lb".toUri())
+                    data = "https://github.com/kaii-lb".toUri()
                 }
 
                 context.startActivity(intent)
@@ -192,7 +192,7 @@ fun AboutPage(popBackStack: () -> Unit) {
                 position = RowPosition.Middle
             ) {
                 val intent = Intent(Intent.ACTION_VIEW).apply {
-                    setData("https://hosted.weblate.org/projects/lavender-photos/".toUri())
+                    data = "https://hosted.weblate.org/projects/lavender-photos/".toUri()
                 }
 
                 context.startActivity(intent)

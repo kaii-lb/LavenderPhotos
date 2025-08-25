@@ -51,6 +51,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -356,6 +357,7 @@ fun AlbumsListItem(
         }
     )
 
+    val resources = LocalResources.current
     Row(
         modifier = modifier
             .height(88.dp)
@@ -406,7 +408,7 @@ fun AlbumsListItem(
                         if (inserted == 0) {
                             LavenderSnackbarController.pushEvent(
                                 LavenderSnackbarEvents.MessageEvent(
-                                    message = context.resources.getString(R.string.albums_already_contains_all),
+                                    message = resources.getString(R.string.albums_already_contains_all),
                                     icon = R.drawable.error_2,
                                     duration = SnackbarDuration.Short
                                 )

@@ -42,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.TextUnit
@@ -92,13 +93,14 @@ fun ImmichAlbumPage(
 
     val coroutineScope = rememberCoroutineScope()
     val cancellationSignal = remember { CancellationSignal() }
+    val resources = LocalResources.current
     BackHandler {
         cancellationSignal.cancel()
         if (immichViewModel.immichUploadedMediaTotal.value != 0) {
             coroutineScope.launch {
                 LavenderSnackbarController.pushEvent(
                     LavenderSnackbarEvents.MessageEvent(
-                        message = context.resources.getString(R.string.immich_continuing_in_bg),
+                        message = resources.getString(R.string.immich_continuing_in_bg),
                         duration = SnackbarDuration.Short,
                         icon = R.drawable.cloud_upload
                     )
@@ -244,14 +246,14 @@ fun ImmichAlbumPage(
                             delay(delayMs.toLong())
                         }
 
-                        Log.d(TAG, "Notis percentage is ${notificationPercentage.floatValue}")
+                        Log.d(TAG, "Notification percentage is ${notificationPercentage.floatValue}")
 
                         if (notificationPercentage.floatValue < 1f) {
                             val moddedTotal = if (uploadTotal == 0) "?" else uploadTotal.toString()
                             notificationBody.value =
-                                "${uploadCount}/${moddedTotal} ${context.resources.getString(R.string.immich_done)}"
+                                "${uploadCount}/${moddedTotal} ${resources.getString(R.string.immich_done)}"
                         } else {
-                            notificationBody.value = context.resources.getString(R.string.immich_operation_complete)
+                            notificationBody.value = resources.getString(R.string.immich_operation_complete)
                             delayMs = 1000
                         }
                     }
@@ -267,9 +269,9 @@ fun ImmichAlbumPage(
                                     (albumSyncState as ImmichAlbumSyncState.OutOfSync).missing.size
                                 }
 
-                                is ImmichAlbumSyncState.Error -> context.resources.getString(R.string.immich_state_unknown)
+                                is ImmichAlbumSyncState.Error -> resources.getString(R.string.immich_state_unknown)
 
-                                else -> context.resources.getString(R.string.immich_state_loading)
+                                else -> resources.getString(R.string.immich_state_loading)
                             }
                         }
                     }
@@ -285,9 +287,9 @@ fun ImmichAlbumPage(
                                     (albumSyncState as ImmichAlbumSyncState.OutOfSync).extra.size
                                 }
 
-                                is ImmichAlbumSyncState.Error -> context.resources.getString(R.string.immich_state_unknown)
+                                is ImmichAlbumSyncState.Error -> resources.getString(R.string.immich_state_unknown)
 
-                                else -> context.resources.getString(R.string.immich_state_loading)
+                                else -> resources.getString(R.string.immich_state_loading)
                             }
                         }
                     }

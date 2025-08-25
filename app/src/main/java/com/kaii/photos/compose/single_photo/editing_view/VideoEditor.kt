@@ -164,7 +164,7 @@ fun VideoEditor(
 
     val modifications = remember { mutableStateListOf<VideoModification>() }
     val lastSavedModCount =
-        remember { mutableIntStateOf(2) } // starts at 2 cuz of below launchedeffect, and then 1 more for setting rightposition to duration
+        remember { mutableIntStateOf(2) } // starts at 2 cuz of below LaunchedEffect, and then 1 more for setting rightPosition to duration
 
     LaunchedEffect(leftTrimPosition.floatValue, rightTrimPosition.floatValue) {
         modifications.add(
@@ -193,8 +193,7 @@ fun VideoEditor(
                 videoDimens = IntSize(
                     width = videoDimens.width,
                     height = videoDimens.height
-                ),
-                rotation = rotation
+                )
             )
         },
         bottomBar = {
