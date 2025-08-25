@@ -118,6 +118,7 @@ import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.datastore.PhotoGrid
 import com.kaii.photos.datastore.User
 import com.kaii.photos.datastore.Versions
+import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.BottomBarTabSaver
 import com.kaii.photos.helpers.LogManager
 import com.kaii.photos.helpers.MediaItemSortMode
@@ -848,7 +849,44 @@ class MainActivity : ComponentActivity() {
                     )
                 }
 
-                composable<Screens.VideoEditor> {
+                composable<Screens.VideoEditor>(
+                    enterTransition = {
+                        slideInVertically(
+                            animationSpec = AnimationConstants.expressiveSpring()
+                        ) { height -> height } + fadeIn(
+                            animationSpec = tween(
+                                durationMillis = AnimationConstants.DURATION * 2
+                            )
+                        )
+                    },
+                    exitTransition = {
+                        slideOutVertically(
+                            animationSpec = AnimationConstants.expressiveSpring()
+                        ) { height -> height } + fadeOut(
+                            animationSpec = tween(
+                                durationMillis = AnimationConstants.DURATION * 2
+                            )
+                        )
+                    },
+                    popEnterTransition = {
+                        slideInVertically(
+                            animationSpec = AnimationConstants.expressiveSpring()
+                        ) { height -> height } + fadeIn(
+                            animationSpec = tween(
+                                durationMillis = AnimationConstants.DURATION * 2
+                            )
+                        )
+                    },
+                    popExitTransition = {
+                        slideOutVertically(
+                            animationSpec = AnimationConstants.expressiveSpring()
+                        ) { height -> height } + fadeOut(
+                            animationSpec = tween(
+                                durationMillis = AnimationConstants.DURATION * 2
+                            )
+                        )
+                    }
+                ) {
                     enableEdgeToEdge(
                         navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
                         statusBarStyle = SystemBarStyle.auto(

@@ -117,7 +117,7 @@ dependencies {
     implementation("com.github.bumptech.glide:ktx:1.0.0-beta01")
     implementation("com.github.bumptech.glide:avif-integration:4.16.0")
 
-    implementation("com.github.kaii-lb:Lavender-Snackbars:-SNAPSHOT")
+    implementation("com.github.kaii-lb:Lavender-Snackbars:071f602527")
     implementation("com.github.kaii-lb.LavenderImmichIntegration:library:v1.0.9")
 
     testImplementation("junit:junit:4.13.2")

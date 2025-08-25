@@ -20,6 +20,7 @@ import androidx.media3.common.MimeTypes
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.effect.Crop
 import androidx.media3.effect.Presentation
+import androidx.media3.effect.ScaleAndRotateTransformation
 import androidx.media3.transformer.Composition
 import androidx.media3.transformer.EditedMediaItem
 import androidx.media3.transformer.Effects
@@ -57,6 +58,10 @@ interface VideoModification {
         val right = left + width
         val bottom = top + height
     }
+
+    data class Rotation(
+        val degrees: Float
+    ) : VideoModification
 }
 
 enum class SelectedCropArea {
@@ -80,7 +85,7 @@ suspend fun saveVideo(
     overwrite: Boolean,
     containerDimens: Size,
     videoDimens: IntSize,
-    onFailure: () -> Unit,
+    onFailure: () -> Unit
 ) {
     val isLoading = mutableStateOf(true)
 
@@ -139,6 +144,18 @@ suspend fun saveVideo(
 
         effectList.add(
             Presentation.createForShortSide(if (newWidth > newHeight) newWidth else newHeight)
+        )
+    }
+
+    val rotation = modifications.lastOrNull {
+        it is VideoModification.Rotation
+    } as? VideoModification.Rotation
+
+    if (rotation != null) {
+        effectList.add(
+            ScaleAndRotateTransformation.Builder()
+                .setRotationDegrees(-rotation.degrees) // negative since our rotation is clockwise
+                .build()
         )
     }
 

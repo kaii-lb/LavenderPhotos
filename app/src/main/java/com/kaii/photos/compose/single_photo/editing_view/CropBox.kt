@@ -1,6 +1,5 @@
 package com.kaii.photos.compose.single_photo.editing_view
 
-import android.util.Log
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -8,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -35,8 +35,9 @@ import kotlin.math.abs
 fun CropBox(
     containerWidth: Float,
     containerHeight: Float,
-    videoAspectRatio: Float,
+    mediaAspectRatio: Float,
     modifier: Modifier = Modifier,
+    reset: MutableState<Boolean>,
     onAreaChanged: (area: Rect, original: Size) -> Unit
 ) {
     val containerAspectRatio = remember {
@@ -45,8 +46,8 @@ fun CropBox(
 
     var originalWidth by remember {
         mutableFloatStateOf(
-            if (containerAspectRatio > videoAspectRatio) {
-                containerHeight * videoAspectRatio
+            if (containerAspectRatio > mediaAspectRatio) {
+                containerHeight * mediaAspectRatio
             } else {
                 containerWidth
             }
@@ -54,10 +55,10 @@ fun CropBox(
     }
     var originalHeight by remember {
         mutableFloatStateOf(
-            if (containerAspectRatio > videoAspectRatio) {
+            if (containerAspectRatio > mediaAspectRatio) {
                 containerHeight
             } else {
-                containerWidth / videoAspectRatio
+                containerWidth / mediaAspectRatio
             }
         )
     }
@@ -83,18 +84,18 @@ fun CropBox(
         )
     }
 
-    LaunchedEffect(videoAspectRatio) {
+    LaunchedEffect(mediaAspectRatio, reset.value, containerWidth, containerHeight) {
         originalWidth =
-            if (containerAspectRatio > videoAspectRatio) {
-                containerHeight * videoAspectRatio
+            if (containerAspectRatio > mediaAspectRatio) {
+                containerHeight * mediaAspectRatio
             } else {
                 containerWidth
             }
         originalHeight =
-            if (containerAspectRatio > videoAspectRatio) {
+            if (containerAspectRatio > mediaAspectRatio) {
                 containerHeight
             } else {
-                containerWidth / videoAspectRatio
+                containerWidth / mediaAspectRatio
             }
 
         width = originalWidth
@@ -103,7 +104,7 @@ fun CropBox(
         top = (containerHeight - height) / 2
         left = (containerWidth - width) / 2
 
-        Log.d("CROP", "aspect $videoAspectRatio width $originalWidth height $originalHeight and top $top left $left")
+        reset.value = false
     }
 
     LaunchedEffect(top, left, width, height, originalWidth, originalHeight) {

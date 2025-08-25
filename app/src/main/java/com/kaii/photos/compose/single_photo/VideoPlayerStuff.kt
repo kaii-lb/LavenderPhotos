@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.res.Configuration
 import android.net.Uri
 import android.util.Log
+import android.util.Xml
 import android.view.ViewGroup
 import android.view.Window
 import android.view.WindowManager
@@ -12,7 +13,9 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -23,6 +26,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -71,6 +75,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -252,7 +257,6 @@ fun VideoPlayerControls(
 }
 
 @androidx.annotation.OptIn(UnstableApi::class)
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VideoPlayerControllerBottomControls(
     currentVideoPosition: MutableFloatState,
@@ -314,75 +318,22 @@ fun VideoPlayerControllerBottomControls(
 
         Spacer(modifier = Modifier.width(8.dp))
 
-        val interactionSource = remember { MutableInteractionSource() }
-        var isDraggingTimelineSlider by remember { mutableStateOf(false) }
-
-        LaunchedEffect(interactionSource) {
-            interactionSource.interactions.collect { interaction ->
-                when (interaction) {
-                    is DragInteraction.Start -> {
-                        isDraggingTimelineSlider = true
-                        exoPlayer.isScrubbingModeEnabled = true
-                    }
-                    is DragInteraction.Stop, is DragInteraction.Cancel -> {
-                        isDraggingTimelineSlider = false
-                        exoPlayer.isScrubbingModeEnabled = false
-                    }
-                }
-            }
-        }
-
         duration.floatValue = duration.floatValue.coerceAtLeast(0f)
 
-        // timeline slider
-        Slider(
-            value = currentVideoPosition.floatValue,
-            valueRange = 0f..duration.floatValue,
-            onValueChange = { pos ->
-                onAnyTap()
-
-                val prev = isPlaying.value
-                exoPlayer.seekTo(
-                    (pos * 1000f).coerceAtMost(duration.floatValue * 1000f).toLong()
-                )
-                isPlaying.value = prev
-            },
-            steps = (duration.floatValue.roundToInt() - 1).coerceAtLeast(0),
-            thumb = {
-                SliderDefaults.Thumb(
-                    interactionSource = interactionSource,
-                    thumbSize = DpSize(6.dp, 16.dp),
-                )
-            },
-            track = { sliderState ->
-                val colors = SliderDefaults.colors()
-
-                SliderDefaults.Track(
-                    sliderState = sliderState,
-                    trackInsideCornerSize = 8.dp,
-                    colors = colors.copy(
-                        activeTickColor = colors.activeTrackColor,
-                        inactiveTickColor = colors.inactiveTrackColor,
-                        disabledActiveTickColor = colors.disabledActiveTrackColor,
-                        disabledInactiveTickColor = colors.disabledInactiveTrackColor,
-
-                        activeTrackColor = colors.activeTrackColor,
-                        inactiveTrackColor = colors.inactiveTrackColor,
-
-                        disabledThumbColor = colors.activeTrackColor,
-                        thumbColor = colors.activeTrackColor
-                    ),
-                    thumbTrackGapSize = 4.dp,
-                    drawTick = { _, _ -> },
-                    modifier = Modifier
-                        .height(16.dp)
-                )
-            },
-            // interactionSource = interactionSource,
+        VideoPlayerSeekbar(
+            currentPosition = currentVideoPosition.floatValue,
+            duration = duration.floatValue,
             modifier = Modifier
                 .weight(1f)
-                .height(32.dp)
-        )
+        ) { pos ->
+            onAnyTap()
+
+            val prev = isPlaying.value
+            exoPlayer.seekTo(
+                (pos * 1000f).coerceAtMost(duration.floatValue * 1000f).toLong()
+            )
+            isPlaying.value = prev
+        }
 
         Spacer(modifier = Modifier.width(8.dp))
 
@@ -946,6 +897,72 @@ fun VideoPlayer(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun VideoPlayerSeekbar(
+    currentPosition: Float,
+    duration: Float,
+    modifier: Modifier = Modifier,
+    onValueChange: (position: Float) -> Unit
+) {
+    val localInteractionSource = remember { MutableInteractionSource() }
+
+    var isDraggingSlider by remember { mutableStateOf(false) }
+    LaunchedEffect(localInteractionSource.interactions) {
+        localInteractionSource.interactions.collect {
+            isDraggingSlider = it is DragInteraction.Start || it is PressInteraction.Press
+        }
+    }
+
+    val animatedPosition by animateFloatAsState(
+        targetValue = currentPosition,
+        animationSpec = tween(
+            durationMillis = if (isDraggingSlider) 0 else AnimationConstants.DURATION,
+            easing = LinearEasing
+        )
+    )
+
+    Slider(
+        value = animatedPosition,
+        valueRange = 0f..duration,
+        onValueChange = onValueChange,
+        // steps = (duration.roundToInt() - 1).coerceAtLeast(0),
+        thumb = {
+            SliderDefaults.Thumb(
+                interactionSource = localInteractionSource,
+                thumbSize = DpSize(6.dp, 16.dp),
+            )
+        },
+        track = { sliderState ->
+            val colors = SliderDefaults.colors()
+
+            SliderDefaults.Track(
+                sliderState = sliderState,
+                trackInsideCornerSize = 8.dp,
+                colors = colors.copy(
+                    activeTickColor = colors.activeTrackColor,
+                    inactiveTickColor = colors.inactiveTrackColor,
+                    disabledActiveTickColor = colors.disabledActiveTrackColor,
+                    disabledInactiveTickColor = colors.disabledInactiveTrackColor,
+
+                    activeTrackColor = colors.activeTrackColor,
+                    inactiveTrackColor = colors.inactiveTrackColor,
+
+                    disabledThumbColor = colors.activeTrackColor,
+                    thumbColor = colors.activeTrackColor
+                ),
+                thumbTrackGapSize = 4.dp,
+                drawTick = { _, _ -> },
+                modifier = Modifier
+                    .height(16.dp)
+            )
+        },
+        interactionSource = localInteractionSource,
+        modifier = modifier
+            .height(32.dp)
+    )
+}
+
 @androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun rememberExoPlayerWithLifeCycle(
@@ -1113,12 +1130,23 @@ fun getExoPlayerLifecycleObserver(
 fun rememberPlayerView(
     exoPlayer: ExoPlayer,
     activity: Activity,
-    absolutePath: String?
+    absolutePath: String?,
+    useTextureView: Boolean = false
 ): PlayerView {
     val context = LocalContext.current
+    val resources = LocalResources.current
 
     val playerView = remember {
-        PlayerView(context).apply {
+        PlayerView(
+            context,
+            if (useTextureView) resources.getXml(R.xml.custom_player_view).let {
+                it.next()
+                it.nextTag()
+                Xml.asAttributeSet(it)
+            } else {
+                null
+            }
+        ).apply {
             layoutParams = ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT

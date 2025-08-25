@@ -1,11 +1,12 @@
 package com.kaii.photos.compose.single_photo.editing_view
 
 import android.graphics.Bitmap
-import android.media.MediaMetadataRetriever
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.DraggableState
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
@@ -18,19 +19,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,50 +45,29 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isUnspecified
+import com.kaii.photos.R
+import com.kaii.photos.compose.single_photo.EditingViewBottomAppBarItem
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.VideoPlayerConstants
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlin.math.roundToInt
-import kotlin.time.Duration.Companion.seconds
 
 // private const val TAG = "VIDEO_EDITOR_TAB_CONTENT"
 
 @Composable
 fun VideoEditorTrimContent(
-    absolutePath: String,
     currentPosition: MutableFloatState,
     duration: MutableFloatState,
     leftPosition: MutableFloatState,
     rightPosition: MutableFloatState,
+    thumbnails: List<Bitmap>,
     onSeek: (newPosition: Float) -> Unit
 ) {
-    val coroutineScope = rememberCoroutineScope()
-    val metadata = MediaMetadataRetriever()
-    val thumbnails = remember { mutableStateListOf<Bitmap>() }
-    val windowInfo = LocalWindowInfo.current
-
-    LaunchedEffect(duration.floatValue) {
-        if (duration.floatValue == 0f) return@LaunchedEffect
-
-        coroutineScope.launch(Dispatchers.IO) {
-            metadata.setDataSource(absolutePath)
-
-            val stepSize = duration.floatValue.roundToInt().seconds.inWholeMicroseconds / 6
-
-            for (i in 0..(VideoPlayerConstants.TRIM_THUMBNAIL_COUNT - 1)) {
-                val new = metadata.getScaledFrameAtTime(
-                    stepSize * i,
-                    MediaMetadataRetriever.OPTION_PREVIOUS_SYNC,
-                    windowInfo.containerSize.width / 6,
-                    windowInfo.containerSize.width / 6
-                )
-
-                new?.let { thumbnails.add(it) }
-            }
+    val actualDuration by remember {
+        derivedStateOf {
+            rightPosition.floatValue - leftPosition.floatValue
         }
     }
 
@@ -98,29 +76,16 @@ fun VideoEditorTrimContent(
             .fillMaxSize(1f)
             .clip(RoundedCornerShape(16.dp))
     ) {
-        val leftHandlePosition by remember {
-            derivedStateOf {
-                this.maxWidth * leftPosition.floatValue / duration.floatValue
-            }
-        }
-        val rightHandlePosition by remember {
-            derivedStateOf {
-                this.maxWidth * rightPosition.floatValue / duration.floatValue - 24.dp
-            }
-        }
-        val seekHandlePosition by remember {
-            derivedStateOf {
-                leftHandlePosition + (rightHandlePosition - leftHandlePosition - 28.dp - 10.dp) * (currentPosition.floatValue - leftPosition.floatValue) / (rightPosition.floatValue - leftPosition.floatValue)
-            }
-        }
+        val localDensity = LocalDensity.current
+        var isDraggingManually by remember { mutableStateOf(false) }
 
-        // shows video thumbnails
         Box(
             modifier = Modifier
                 .fillMaxSize(1f)
                 .background(MaterialTheme.colorScheme.surface)
                 .padding(horizontal = 22.dp, vertical = 6.dp)
         ) {
+            // shows video thumbnails
             Row(
                 modifier = Modifier
                     .fillMaxSize(1f)
@@ -140,157 +105,257 @@ fun VideoEditorTrimContent(
                     )
                 }
             }
-        }
 
-        val localDensity = LocalDensity.current
+            BoxWithConstraints boxybox@{
+                val leftHandlePosition by remember {
+                    derivedStateOf {
+                        this@boxybox.maxWidth * leftPosition.floatValue / duration.floatValue
+                    }
+                }
+                val rightHandlePosition by remember {
+                    derivedStateOf {
+                        this@boxybox.maxWidth * rightPosition.floatValue / duration.floatValue
+                    }
+                }
+                val seekbarWidth by remember {
+                    derivedStateOf {
+                        rightHandlePosition - leftHandlePosition - 14.dp
+                    }
+                }
 
-        val leftDraggableState = rememberDraggableState { change ->
-            with(localDensity) {
-                val new = leftPosition.floatValue + (change * duration.floatValue / this@BoxWithConstraints.maxWidth.toPx())
-                leftPosition.floatValue = new.coerceIn(0f, rightPosition.floatValue - (duration.floatValue * 0.2f))
+                val seekHandlePosition by remember {
+                    derivedStateOf {
+                        leftHandlePosition + seekbarWidth * (currentPosition.floatValue - leftPosition.floatValue) / actualDuration
+                    }
+                }
 
-                currentPosition.floatValue = leftPosition.floatValue
-                onSeek(currentPosition.floatValue)
-            }
-        }
-        Box(
-            modifier = Modifier
-                .offset(x = leftHandlePosition)
-                .fillMaxHeight(1f)
-                .width(24.dp)
-                .clip(
-                    RoundedCornerShape(
-                        topStart = 16.dp,
-                        topEnd = 0.dp,
-                        bottomStart = 16.dp,
-                        bottomEnd = 0.dp
+                val videoPositionDraggableState = rememberDraggableState { change ->
+                    with(localDensity) {
+                        val new = currentPosition.floatValue + (change * actualDuration / seekbarWidth.toPx())
+                        currentPosition.floatValue = new.coerceIn(leftPosition.floatValue, rightPosition.floatValue)
+                        onSeek(currentPosition.floatValue)
+                    }
+                }
+
+                val animatedSeekOffset by animateDpAsState(
+                    targetValue = if (seekHandlePosition.isUnspecified) 0.dp else seekHandlePosition,
+                    animationSpec = tween(
+                        durationMillis = if (!isDraggingManually) AnimationConstants.DURATION else 0,
+                        easing = LinearEasing
                     )
                 )
-                .background(MaterialTheme.colorScheme.primary)
-                .draggable(
-                    state = leftDraggableState,
-                    orientation = Orientation.Horizontal,
+                // seek handle
+                Box(
+                    modifier = Modifier
+                        .offset(x = animatedSeekOffset + 4.dp, y = 4.dp)
+                        .width(6.dp)
+                        .height(this@boxybox.maxHeight - 8.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.onSurface)
+                        .draggable(
+                            state = videoPositionDraggableState,
+                            orientation = Orientation.Horizontal,
+                            onDragStarted = {
+                                isDraggingManually = true
+                            },
+                            onDragStopped = {
+                                isDraggingManually = false
+                            }
+                        )
+                )
+
+                val leftDraggableState = rememberDraggableState { change ->
+                    with(localDensity) {
+                        val new = leftPosition.floatValue + (change * duration.floatValue / this@boxybox.maxWidth.toPx())
+                        leftPosition.floatValue = new.coerceIn(0f, rightPosition.floatValue - (duration.floatValue * 0.2f))
+
+                        currentPosition.floatValue = leftPosition.floatValue
+                    }
+                }
+                LeftHandle(
+                    handlePosition = leftHandlePosition,
+                    height = this@BoxWithConstraints.maxHeight,
+                    draggableState = leftDraggableState,
+                    onDragStarted = {
+                        isDraggingManually = true
+                    },
                     onDragStopped = {
+                        isDraggingManually = false
                         currentPosition.floatValue = leftPosition.floatValue
                         onSeek(currentPosition.floatValue)
                     }
                 )
-        ) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .fillMaxHeight(0.6f)
-                    .width(8.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.onPrimary)
-            )
-        }
 
-        val rightDraggableState = rememberDraggableState { change ->
-            with(localDensity) {
-                val new = rightPosition.floatValue + (change * duration.floatValue / this@BoxWithConstraints.maxWidth.toPx())
-                rightPosition.floatValue = new.coerceIn(leftPosition.floatValue + (duration.floatValue * 0.2f), duration.floatValue)
+                val rightDraggableState = rememberDraggableState { change ->
+                    with(localDensity) {
+                        val new = rightPosition.floatValue + (change * duration.floatValue / this@boxybox.maxWidth.toPx())
+                        rightPosition.floatValue = new.coerceIn(leftPosition.floatValue + (duration.floatValue * 0.2f), duration.floatValue)
 
-                currentPosition.floatValue = rightPosition.floatValue
-                onSeek(currentPosition.floatValue)
-            }
-        }
-
-        Box(
-            modifier = Modifier
-                .offset(x = rightHandlePosition)
-                .fillMaxHeight(1f)
-                .width(24.dp)
-                .clip(
-                    RoundedCornerShape(
-                        topStart = 0.dp,
-                        topEnd = 16.dp,
-                        bottomStart = 0.dp,
-                        bottomEnd = 16.dp
-                    )
-                )
-                .background(MaterialTheme.colorScheme.primary)
-                .draggable(
-                    state = rightDraggableState,
-                    orientation = Orientation.Horizontal
-                )
-        ) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .fillMaxHeight(0.6f)
-                    .width(8.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.onPrimary)
-            )
-        }
-
-        Box(
-            modifier = Modifier
-                .offset(x = leftHandlePosition + 24.dp)
-                .width(rightHandlePosition - leftHandlePosition - 24.dp)
-                .height(this.maxHeight)
-                .graphicsLayer {
-                    compositingStrategy = CompositingStrategy.Offscreen
+                        currentPosition.floatValue = rightPosition.floatValue
+                    }
                 }
-                .drawWithContent {
-                    drawContent()
-
-                    drawRoundRect(
-                        color = Color.Blue,
-                        topLeft = with(localDensity) {
-                            Offset(
-                                x = 0f,
-                                y = 6.dp.toPx()
-                            )
-                        },
-                        size = with(localDensity) {
-                            Size(
-                                width = (rightHandlePosition - leftHandlePosition - 24.dp).toPx(),
-                                height = (this@BoxWithConstraints.maxHeight - 12.dp).toPx()
-                            )
-                        },
-                        cornerRadius = with(localDensity) {
-                            CornerRadius(8.dp.toPx(), 8.dp.toPx())
-                        },
-                        blendMode = BlendMode.DstOut,
-                    )
-                }
-                .background(MaterialTheme.colorScheme.primary)
-        )
-
-        val videoPositionDraggableState = rememberDraggableState { change ->
-            with(localDensity) {
-                val new = currentPosition.floatValue + (change * duration.floatValue / this@BoxWithConstraints.maxWidth.toPx())
-                currentPosition.floatValue = new.coerceIn(leftPosition.floatValue, rightPosition.floatValue)
-                onSeek(currentPosition.floatValue)
-            }
-        }
-
-        var isDraggingSeekHandle by remember { mutableStateOf(false) }
-        val animatedSeekOffset by animateDpAsState(
-            targetValue = if (seekHandlePosition.isUnspecified) 0.dp else seekHandlePosition,
-            animationSpec = tween(
-                durationMillis = if (!isDraggingSeekHandle) AnimationConstants.DURATION else 0
-            )
-        )
-        Box(
-            modifier = Modifier
-                .offset(x = animatedSeekOffset + 28.dp, y = 10.dp)
-                .width(6.dp)
-                .height(this.maxHeight - 20.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.onSurface)
-                .draggable(
-                    state = videoPositionDraggableState,
-                    orientation = Orientation.Horizontal,
+                RightHandle(
+                    handlePosition = rightHandlePosition,
+                    draggableState = rightDraggableState,
+                    height = this@BoxWithConstraints.maxHeight,
                     onDragStarted = {
-                        isDraggingSeekHandle = true
+                        isDraggingManually = true
                     },
                     onDragStopped = {
-                        isDraggingSeekHandle = false
+                        isDraggingManually = false
+                        currentPosition.floatValue = rightPosition.floatValue
+                        onSeek(currentPosition.floatValue)
                     }
                 )
+
+                // connector between two handles and gives "inverted rounding" on inside
+                Box(
+                    modifier = Modifier
+                        .offset(x = leftHandlePosition)
+                        .width(rightHandlePosition - leftHandlePosition)
+                        .requiredHeight(this@BoxWithConstraints.maxHeight)
+                        .graphicsLayer {
+                            compositingStrategy = CompositingStrategy.Offscreen
+                        }
+                        .drawWithContent {
+                            drawContent()
+
+                            drawRoundRect(
+                                color = Color.Blue,
+                                topLeft = with(localDensity) {
+                                    Offset(
+                                        x = 0f,
+                                        y = 6.dp.toPx()
+                                    )
+                                },
+                                size = with(localDensity) {
+                                    Size(
+                                        width = (rightHandlePosition - leftHandlePosition).toPx(),
+                                        height = (this@BoxWithConstraints.maxHeight - 12.dp).toPx()
+                                    )
+                                },
+                                cornerRadius = with(localDensity) {
+                                    CornerRadius(8.dp.toPx(), 8.dp.toPx())
+                                },
+                                blendMode = BlendMode.DstOut,
+                            )
+                        }
+                        .background(MaterialTheme.colorScheme.primary)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun LeftHandle(
+    handlePosition: Dp,
+    height: Dp,
+    draggableState: DraggableState,
+    modifier: Modifier = Modifier,
+    onDragStarted: () -> Unit,
+    onDragStopped: () -> Unit
+) {
+    Box(
+        modifier = modifier
+            .offset(x = handlePosition - 22.dp)
+            .requiredHeight(height)
+            .width(22.dp)
+            .clip(
+                RoundedCornerShape(
+                    topStart = 20.dp,
+                    topEnd = 0.dp,
+                    bottomStart = 20.dp,
+                    bottomEnd = 0.dp
+                )
+            )
+            .background(MaterialTheme.colorScheme.primary)
+            .draggable(
+                state = draggableState,
+                orientation = Orientation.Horizontal,
+                onDragStarted = { onDragStarted() },
+                onDragStopped = { onDragStopped() }
+            )
+    ) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .fillMaxHeight(0.6f)
+                .width(8.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.onPrimary)
+        )
+    }
+}
+
+@Composable
+private fun RightHandle(
+    handlePosition: Dp,
+    height: Dp,
+    draggableState: DraggableState,
+    modifier: Modifier = Modifier,
+    onDragStarted: () -> Unit,
+    onDragStopped: () -> Unit
+) {
+    Box(
+        modifier = modifier
+            .offset(x = handlePosition)
+            .requiredHeight(height)
+            .width(24.dp)
+            .clip(
+                RoundedCornerShape(
+                    topStart = 0.dp,
+                    topEnd = 20.dp,
+                    bottomStart = 0.dp,
+                    bottomEnd = 20.dp
+                )
+            )
+            .background(MaterialTheme.colorScheme.primary)
+            .draggable(
+                state = draggableState,
+                orientation = Orientation.Horizontal,
+                onDragStarted = { onDragStarted() },
+                onDragStopped = { onDragStopped() }
+            )
+    ) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .fillMaxHeight(0.6f)
+                .width(8.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.onPrimary)
+        )
+    }
+}
+
+@Composable
+fun VideoEditorCropContent(
+    onReset: () -> Unit,
+    onRotate: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxSize(1f),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        EditingViewBottomAppBarItem(
+            text = stringResource(id = R.string.editing_rotate),
+            icon = R.drawable.rotate_ccw,
+            onClick = onRotate
+        )
+
+        EditingViewBottomAppBarItem(
+            text = stringResource(id = R.string.editing_ratio),
+            icon = R.drawable.resolution,
+            onClick = onReset
+        )
+
+        EditingViewBottomAppBarItem(
+            text = stringResource(id = R.string.editing_reset),
+            icon = R.drawable.reset,
+            onClick = onReset
         )
     }
 }

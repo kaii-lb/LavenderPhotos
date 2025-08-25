@@ -1,5 +1,7 @@
 package com.kaii.photos.compose.app_bars
 
+import android.graphics.Bitmap
+import android.media.MediaMetadataRetriever
 import android.net.Uri
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
@@ -37,6 +39,7 @@ import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -50,6 +53,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntSize
@@ -58,7 +62,6 @@ import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.exoplayer.ExoPlayer
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalMainViewModel
@@ -67,11 +70,16 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.SelectableDropDownMenuItem
 import com.kaii.photos.compose.SimpleTab
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
+import com.kaii.photos.compose.single_photo.editing_view.VideoEditorCropContent
 import com.kaii.photos.compose.single_photo.editing_view.VideoEditorTrimContent
 import com.kaii.photos.compose.single_photo.editing_view.VideoModification
 import com.kaii.photos.compose.single_photo.editing_view.saveVideo
 import com.kaii.photos.datastore.Editing
+import com.kaii.photos.helpers.VideoPlayerConstants
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
+import kotlin.time.Duration.Companion.seconds
 
 @androidx.annotation.OptIn(UnstableApi::class)
 @Composable
@@ -80,9 +88,11 @@ fun VideoEditorBottomBar(
     currentPosition: MutableFloatState,
     duration: MutableFloatState,
     absolutePath: String,
-    exoPlayer: ExoPlayer,
     leftPosition: MutableFloatState,
-    rightPosition: MutableFloatState
+    rightPosition: MutableFloatState,
+    onCropReset: () -> Unit,
+    onSeek: (position: Float) -> Unit,
+    onRotate: () -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
 
@@ -139,6 +149,33 @@ fun VideoEditorBottomBar(
                 }
             }
 
+            // preload and save for all so we don't have to retrieve every time user navigates to first tab
+            val coroutineScope = rememberCoroutineScope()
+            val metadata = MediaMetadataRetriever()
+            val thumbnails = remember { mutableStateListOf<Bitmap>() }
+            val windowInfo = LocalWindowInfo.current
+
+            LaunchedEffect(duration.floatValue) {
+                if (duration.floatValue == 0f) return@LaunchedEffect
+
+                coroutineScope.launch(Dispatchers.IO) {
+                    metadata.setDataSource(absolutePath)
+
+                    val stepSize = duration.floatValue.roundToInt().seconds.inWholeMicroseconds / 6
+
+                    for (i in 0..(VideoPlayerConstants.TRIM_THUMBNAIL_COUNT - 1)) {
+                        val new = metadata.getScaledFrameAtTime(
+                            stepSize * i,
+                            MediaMetadataRetriever.OPTION_PREVIOUS_SYNC,
+                            windowInfo.containerSize.width / 6,
+                            windowInfo.containerSize.width / 6
+                        )
+
+                        new?.let { thumbnails.add(it) }
+                    }
+                }
+            }
+
             HorizontalPager(
                 state = pagerState,
                 userScrollEnabled = false,
@@ -155,16 +192,19 @@ fun VideoEditorBottomBar(
                             VideoEditorTrimContent(
                                 currentPosition = currentPosition,
                                 duration = duration,
-                                absolutePath = absolutePath,
                                 leftPosition = leftPosition,
                                 rightPosition = rightPosition,
-                                onSeek = { pos ->
-                                    exoPlayer.seekTo(
-                                        (pos * 1000f).coerceAtMost(duration.floatValue * 1000f).toLong()
-                                    )
-                                }
+                                onSeek = onSeek,
+                                thumbnails = thumbnails
                             )
                         }
+                    }
+
+                    1 -> {
+                        VideoEditorCropContent(
+                            onReset = onCropReset,
+                            onRotate = onRotate
+                        )
                     }
 
                     else -> {
@@ -185,7 +225,8 @@ fun VideoEditorTopBar(
     modifications: SnapshotStateList<VideoModification>,
     lastSavedModCount: MutableIntState,
     containerDimens: Size,
-    videoDimens: IntSize
+    videoDimens: IntSize,
+    rotation: Float
 ) {
     val navController = LocalNavController.current
 

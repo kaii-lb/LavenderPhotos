@@ -2034,7 +2034,7 @@ fun CropTools(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
-        EditingViewBottomAppBarItem(text = stringResource(id = R.string.editing_rotate), iconResId = R.drawable.rotate_ccw) {
+        EditingViewBottomAppBarItem(text = stringResource(id = R.string.editing_rotate), icon = R.drawable.rotate_ccw) {
             rotationMultiplier.intValue += 1
             changesSize.intValue += 1
         }
@@ -2047,11 +2047,11 @@ fun CropTools(
                 croppingRatio.floatValue = ratio
             }
         )
-        EditingViewBottomAppBarItem(text = stringResource(id = R.string.editing_ratio), iconResId = R.drawable.resolution) {
+        EditingViewBottomAppBarItem(text = stringResource(id = R.string.editing_ratio), icon = R.drawable.resolution) {
             showBottomSheet.value = true
         }
 
-        EditingViewBottomAppBarItem(text = stringResource(id = R.string.editing_reset), iconResId = R.drawable.reset) {
+        EditingViewBottomAppBarItem(text = stringResource(id = R.string.editing_reset), icon = R.drawable.reset) {
             resetCropping()
             changesSize.intValue += 1
         }
@@ -2354,7 +2354,7 @@ fun AdjustTools(
         item {
             EditingViewBottomAppBarItem(
                 text = stringResource(id = R.string.editing_contrast),
-                iconResId = R.drawable.contrast,
+                icon = R.drawable.contrast,
                 selected = selectedProperty.value == SelectedImageProperties.Contrast
             ) {
                 if (selectedProperty.value == SelectedImageProperties.Contrast) {
@@ -2369,7 +2369,7 @@ fun AdjustTools(
         item {
             EditingViewBottomAppBarItem(
                 text = stringResource(id = R.string.editing_brightness),
-                iconResId = R.drawable.palette,
+                icon = R.drawable.palette,
                 selected = selectedProperty.value == SelectedImageProperties.Brightness
             ) {
                 if (selectedProperty.value == SelectedImageProperties.Brightness) {
@@ -2384,7 +2384,7 @@ fun AdjustTools(
         item {
             EditingViewBottomAppBarItem(
                 text = stringResource(id = R.string.editing_saturation),
-                iconResId = R.drawable.resolution,
+                icon = R.drawable.resolution,
                 selected = selectedProperty.value == SelectedImageProperties.Saturation
             ) {
                 if (selectedProperty.value == SelectedImageProperties.Saturation) {
@@ -2399,7 +2399,7 @@ fun AdjustTools(
         item {
             EditingViewBottomAppBarItem(
                 text = stringResource(id = R.string.editing_black_point),
-                iconResId = R.drawable.file_is_selected_background,
+                icon = R.drawable.file_is_selected_background,
                 selected = selectedProperty.value == SelectedImageProperties.BlackPoint
             ) {
                 if (selectedProperty.value == SelectedImageProperties.BlackPoint) {
@@ -2414,7 +2414,7 @@ fun AdjustTools(
         item {
             EditingViewBottomAppBarItem(
                 text = stringResource(id = R.string.editing_white_point),
-                iconResId = R.drawable.file_not_selected_background,
+                icon = R.drawable.file_not_selected_background,
                 selected = selectedProperty.value == SelectedImageProperties.WhitePoint
             ) {
                 if (selectedProperty.value == SelectedImageProperties.WhitePoint) {
@@ -2438,7 +2438,7 @@ fun AdjustTools(
         item {
             EditingViewBottomAppBarItem(
                 text = stringResource(id = R.string.editing_warmth),
-                iconResId = R.drawable.skillet,
+                icon = R.drawable.skillet,
                 selected = selectedProperty.value == SelectedImageProperties.Warmth
             ) {
                 if (selectedProperty.value == SelectedImageProperties.Warmth) {
@@ -2453,7 +2453,7 @@ fun AdjustTools(
         item {
             EditingViewBottomAppBarItem(
                 text = stringResource(id = R.string.editing_color_tint),
-                iconResId = R.drawable.colors,
+                icon = R.drawable.colors,
                 selected = selectedProperty.value == SelectedImageProperties.ColorTint
             ) {
                 if (selectedProperty.value == SelectedImageProperties.ColorTint) {
@@ -2468,7 +2468,7 @@ fun AdjustTools(
         item {
             EditingViewBottomAppBarItem(
                 text = stringResource(id = R.string.editing_highlights),
-                iconResId = R.drawable.highlights,
+                icon = R.drawable.highlights,
                 selected = selectedProperty.value == SelectedImageProperties.Highlights
             ) {
                 if (selectedProperty.value == SelectedImageProperties.Highlights) {
@@ -2529,7 +2529,7 @@ fun DrawTools(
     ) {
         EditingViewBottomAppBarItem(
             text = stringResource(id = R.string.editing_pencil),
-            iconResId = R.drawable.pencil,
+            icon = R.drawable.pencil,
             selected = paint.value.type == PaintType.Pencil
         ) {
             paint.value = DrawingPaints.Pencil.copy(
@@ -2541,7 +2541,7 @@ fun DrawTools(
 
         EditingViewBottomAppBarItem(
             text = stringResource(id = R.string.editing_highlighter),
-            iconResId = R.drawable.highlighter,
+            icon = R.drawable.highlighter,
             selected = paint.value.type == PaintType.Highlighter
         ) {
             paint.value = DrawingPaints.Highlighter.copy(
@@ -2553,7 +2553,7 @@ fun DrawTools(
 
         EditingViewBottomAppBarItem(
             text = stringResource(id = R.string.editing_text),
-            iconResId = R.drawable.text,
+            icon = R.drawable.text,
             selected = paint.value.type == PaintType.Text
         ) {
             paint.value = DrawingPaints.Text.copy(
@@ -2566,7 +2566,7 @@ fun DrawTools(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             EditingViewBottomAppBarItem(
                 text = stringResource(id = R.string.editing_blur),
-                iconResId = R.drawable.light,
+                icon = R.drawable.light,
                 selected = paint.value.type == PaintType.Blur
             ) {
                 paint.value = DrawingPaints.Blur.copy(
@@ -2582,13 +2582,13 @@ fun DrawTools(
 @Composable
 fun EditingViewBottomAppBarItem(
     text: String,
-    iconResId: Int,
+    icon: Int,
     selected: Boolean = false,
     onClick: (() -> Unit)? = null
 ) {
     BottomAppBarItem(
         text = text,
-        iconResId = iconResId,
+        iconResId = icon,
         buttonWidth = 84.dp,
         buttonHeight = 56.dp,
         color = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent,
