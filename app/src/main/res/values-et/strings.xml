@@ -39,4 +39,18 @@
     <string name="updates_start">Käivita uuendamine</string>
     <string name="error_views_album_empty">See album on tühi</string>
     <string name="error_views_search_empty">Otsi fotosid!</string>
+    <string name="albums_remove">Eemalda album loendist</string>
+    <string name="albums_info">Albumi teave</string>
+    <string name="albums_path">Asukoht</string>
+    <string name="albums_id">Tunnus</string>
+    <string name="albums_item_count">Objekte</string>
+    <string name="albums_move_to">Teisalda albumisse</string>
+    <string name="albums_copy_to">Kopeeri albumisse</string>
+    <string name="albums_move_to_secure">Teisalda turvalisse albumisse</string>
+    <string name="app_name_full">Lavender - Sinu fotod</string>
+    <string name="support_desc">aita mul rakendust pidevas arenemas hoida</string>
+    <string name="support">Kasutajatugi ja toetused</string>
+    <string name="secure_folder">Turvaline kaust</string>
+    <string name="more_info">Lisateave</string>
+    <string name="not_available">Pole saadaval</string>
 </resources>
