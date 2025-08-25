@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Photos</string>
+    <string name="default_homepage_photogrid_dir">DCIM/Appareil photo</string>
     <string name="finding_albums_on_device">Recherche des albums…</string>
     <string name="first_startup_dialog_body">Recherche tous les albums sur cet appareil et les ajoute à Lavender Photos.\nNote : si vous possédiez une ancienne version de l\'appli vos albums SERONT effacés si cette option est utilisée.</string>
     <string name="add_album">Ajouter un album</string>
@@ -9,6 +10,7 @@
     <string name="first_startup_dialog_confirm_title">Chercher !</string>
     <string name="direct_path_album">Utiliser un chemin direct pour ajouter un album</string>
     <string name="albums_main_list">Liste principale d\'albums</string>
+    <string name="albums_main_list_desc">Sélectionnez les albums dont les photos seront affichées sur la vue Photo principale</string>
     <string name="albums_selected">Albums sélectionnés</string>
     <string name="albums_auto_detect">Détecter automatiquement les albums</string>
     <string name="albums_auto_detect_desc">Détecte tours les dossiers de cet appareil qui contiennent des médias et les ajoute à la vue Albums</string>
@@ -60,7 +62,7 @@
     <string name="secure_processing">Merci d\'attendre pendant que le média est traité</string>
     <string name="updates_new_version_available">Nouvelle version disponible !</string>
     <string name="updates_checking">Vérification de mise à jour</string>
-    <string name="updates_notice_desc"><![CDATA[\n            &lt;p&gt;Cet outil de mise à jour télécharge des apks depuis les &lt;a href=\"https ://github.com/kaii-lb/LavenderPhotos/releases\"&gt;GitHub Releases&lt;/a&gt; ce qui\n                veut dire qu\'ils ne passent pas par les processus de tests réalisés sur IzzyOnDroid, F-Droid ou ailleurs.\n\n                &lt;br&gt;&lt;br&gt;Les éditions du logiciel hébergées sur GitHub sont toujours signées et vérifiées par le développeur (kaii-lb), mais c\'est à vous de voir si vous voulez les utiliser ou non.\n\n                &lt;br&gt;&lt;br&gt;Lavender Photos ne fait jamais de mise à automatique, et ne se mets à jour qu\'avec votre accord explicite.\n            &lt;/p&gt;]]>;</string>
+    <string name="updates_notice_desc">"<![CDATA[\n            &lt;p&gt;Cet outil de mise à jour télécharge des apks depuis les &lt;a href=\"https ://github.com/kaii-lb/LavenderPhotos/releases\"&gt;GitHub Releases&lt;/a&gt; ce qui\n                veut dire qu\'ils ne passent pas par les processus de tests réalisés sur IzzyOnDroid, F-Droid ou ailleurs.\n\n                &lt;br&gt;&lt;br&gt;Les éditions du logiciel hébergées sur GitHub sont toujours signées et vérifiées par le développeur (kaii-lb), mais c\'est à vous de voir si vous voulez les utiliser ou non.\n\n                &lt;br&gt;&lt;br&gt;Lavender Photos ne fait jamais de mise à automatique, et ne se mets à jour qu\'avec votre accord explicite.\n            <&lt>/p>;\n        ]]>"</string>
     <string name="export_fav_to_folder">Exporter une sauvegarde dans un dossier</string>
     <string name="secure_share_media">Partager ce média sécurisé</string>
     <string name="locked_folder_help_top">Le Dossier-Cadenas est un dossier sécurisé pour vos images et vidéos sur cet appareil.\nLes médias sécurisés ne sont jamais téléversés nulle part et restent toujours sur l\'appareil, encryptés avec une clé unique propre au mot de passe de votre ou aux données d\'empreinte digitales de votre appareil.</string>
@@ -97,6 +99,7 @@
     <string name="settings_clear">Vider</string>
     <string name="settings_clear_cache_desc">Cela supprimera tous les miniatures en cache sur l\'appareil, libérant de l\'espace de stockage. Le chargement des miniatures sera plus long au prochain démarrage.</string>
     <string name="settings_about_and_updates">À propos &amp; Mises à jour</string>
+    <string name="trash">À supprimer</string>
     <string name="trash_days">jours</string>
     <string name="trash_no_auto_delete">Les médias dans la corbeille ne seront pas automatiquement supprimés</string>
     <string name="trash_empty_desc">Cela supprime tous les médias dans la corbeille, cette action ne peut être annulée</string>
@@ -164,7 +167,7 @@
     <string name="settings">Paramètres</string>
     <string name="settings_general_desc">Préférences et personnalisation</string>
     <string name="settings_look_and_feel">Apparence &amp; Ressenti</string>
-    <string name="trash_auto_delete">Supprime automatiquement les médias dans la corbeille après %s</string>
+    <string name="trash_auto_delete">Supprime automatiquement les médias dans la corbeille après</string>
     <string name="trash_empty">Vider la corbeille ?</string>
     <string name="settings_look_and_feel_desc">Changez l\'apparence de l\'appli</string>
     <string name="media_delete_permanently">Supprimer définitivement</string>

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">صور</string>
+    <string name="default_homepage_photogrid_dir">كاميرا</string>
     <string name="first_startup_dialog_title">ابحث على جميع الألبومات على الجهاز؟</string>
     <string name="first_startup_dialog_body">هذا الخيار يبحث عن كل ألبومات على هذا الجهاز ويضيفهم إلى الصور .\nملاحظة: سيتم مسح ألبومات المستخدمين القدامى إذا تم استخدام هذا الخيار.</string>
     <string name="first_startup_dialog_confirm_title">إبحث!</string>
@@ -10,6 +11,7 @@
     <string name="add_album">أضف ألبومًا</string>
     <string name="direct_path_album">استخدم مسار ملف لإضافة ألبوم</string>
     <string name="albums_main_list">قائمة الألبومات الرئيسية</string>
+    <string name="albums_main_list_desc">حدد ألبومات لتعرض صورها في النافذة الرئيسية</string>
     <string name="albums_main_list_selected">ستظهر الألبومات المحددة هنا في عرض الصورة الرئيسية</string>
     <string name="albums_selected">الألبومات المختارة</string>
     <string name="albums_auto_detect">اكتشاف الألبومات تلقائيًا</string>
@@ -177,8 +179,9 @@
     <string name="settings_clear">إمسح</string>
     <string name="settings_clear_cache_desc">سيؤدي هذا إلى مسح جميع ملفات الصور المصغرة على هذا الجهاز، مما يُحرر مساحة تخزينية. سيستغرق تحميل الصور المصغرة وقتًا أطول عند بدء التشغيل التالي.</string>
     <string name="settings_about_and_updates">حول وتحديثات</string>
+    <string name="trash">المهملات</string>
     <string name="trash_bin">سلة المهملات</string>
-    <string name="trash_auto_delete">يقوم بحذف العناصر الموجودة في سلة المهملات تلقائيًا بعد %s</string>
+    <string name="trash_auto_delete">يقوم بحذف العناصر الموجودة في سلة المهملات تلقائيًا بعد</string>
     <string name="trash_days">أيام</string>
     <string name="trash_no_auto_delete">لن يتم حذف العناصر الموجودة في سلة المهملات تلقائيًا</string>
     <string name="trash_auto_delete_interval">فترة الحذف التلقائي</string>
@@ -188,7 +191,7 @@
     <string name="trash_empty_confirm">إفراغ</string>
     <string name="permissions">إذن</string>
     <string name="permissions_media_manager">مدير الوسائط</string>
-    <string name="permissions_media_manager_desc">إزالة/حذف/نسخ/نقل — أفضل وأسرع</string>
+    <string name="permissions_media_manager_desc">إزالة/حذف/نسخ/نقل-- أفضل وأسرع</string>
     <string name="permissions_media_management">إدارة الوسائط</string>
     <string name="permissions_confirm_to_delete">تأكيد الحذف</string>
     <string name="permissions_confirm_too_delete_desc">اطلب التأكيد قبل حذف أي وسائط</string>
