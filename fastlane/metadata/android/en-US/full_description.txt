@@ -5,12 +5,14 @@
 <li>Browse all your photos smoothly, seperated by date</li>
 <li>Add and remove albums as you wish, no arbitrary or forced selections</li>
 <li>Search for an image by its name or date (in many formats!)</li>
+<li>Immich integration for safe and easy media backup</li>
 <li>Trash Bin that's sorted by recently trashed</li>
 <li>Full fledged favouriting system</li>
 <li>A selection system that doesn't suck</li>
 <li>Edit and personalize any photo, any time, without an internet connection (even works in landscape mode!)</li>
-<li>Secure sensitive photos in a (soon to be) encrypted medium, for safe keeping</li>
+<li>Secure sensitive photos in a encrypted medium, for safe keeping</li>
 <li>Find all the relevant information for a photo from one button click</li>
+<li>Privacy focused design, no chance of anything happening without your permission</li>
 <li>Copy and Move photos to albums easily</li>
 <li>Clean UI and smooth UX</li>
 <li>WAY more to come</li>
