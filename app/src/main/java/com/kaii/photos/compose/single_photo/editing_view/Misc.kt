@@ -6,6 +6,7 @@ import android.net.Uri
 import android.provider.MediaStore.MediaColumns
 import android.util.Log
 import androidx.annotation.OptIn
+import androidx.annotation.StringRes
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.geometry.Rect
@@ -241,4 +242,19 @@ fun DrawScope.createCropRectBorderArc(
     )
 
     lineTo(x = left + radius / 2, y = top + radius / 2)
+}
+
+enum class CroppingAspectRatio(
+    var ratio: Float,
+    @StringRes val title: Int
+) {
+    FreeForm(0f, R.string.bottom_sheets_freeform),
+    ByImage(-1f, R.string.bottom_sheets_image_ratio),
+    Square(1f, R.string.bottom_sheets_square),
+    SixteenByNine(16f / 9f, R.string.bottom_sheets_sixteen_by_nine),
+    NineBySixteen(9f / 16f, R.string.bottom_sheets_nine_by_sixteen),
+    NineByTwentyOne(9f / 21f, R.string.bottom_sheets_nine_by_twentyone),
+    FiveByFour(5f / 4f, R.string.bottom_sheets_five_by_four),
+    FourByThree(4f / 3f, R.string.bottom_sheets_four_by_three),
+    ThreeByTwo(3f / 2f, R.string.bottom_sheets_three_by_two)
 }

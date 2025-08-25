@@ -347,10 +347,15 @@
     <!-- Bottom Sheets -->
     <string name="bottom_sheets_enter_text">Enter Text</string>
     <string name="bottom_sheets_freeform">Freeform</string>
-    <string name="bottom_sheets_image_ratio">Image Ratio</string>
     <string name="bottom_sheets_square">Square</string>
-    <string name="bottom_sheets_vertical">vertical</string>
-    <string name="bottom_sheets_horizontal">horizontal</string>
+    <string name="bottom_sheets_image_ratio">Image Ratio</string>
+    <string name="bottom_sheets_sixteen_by_nine">16:9 (horizontal)</string>
+    <string name="bottom_sheets_nine_by_sixteen">9:16 (vertical)</string>
+    <string name="bottom_sheets_nine_by_twentyone">9:21</string>
+    <string name="bottom_sheets_five_by_four">5:4</string>
+    <string name="bottom_sheets_four_by_three">4:3</string>
+    <string name="bottom_sheets_three_by_two">3:2</string>
+
     <string name="bottom_sheets_ratio_selected">This cropping ratio is selected</string>
 
     <!-- Error Views -->

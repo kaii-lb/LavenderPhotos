@@ -24,9 +24,9 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -45,9 +45,12 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.getDefaultShapeSpacerForPosition
+import com.kaii.photos.compose.single_photo.editing_view.CroppingAspectRatio
+import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.DrawableText
 import com.kaii.photos.helpers.Modification
 import com.kaii.photos.helpers.RowPosition
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -134,21 +137,25 @@ fun SetEditingViewDrawableTextBottomSheet(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CroppingRatioBottomSheet(
-    showBottomSheet: MutableState<Boolean>,
+    show: MutableState<Boolean>,
+    ratio: CroppingAspectRatio,
     originalImageRatio: Float,
-    onSetCroppingRatio: (ratio: Float) -> Unit
+    onSetCroppingRatio: (ratio: CroppingAspectRatio) -> Unit
 ) {
-	val coroutineScope = rememberCoroutineScope()
-
-    var ratio by remember { mutableFloatStateOf(0f) }
+    val coroutineScope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true
     )
 
-    if (showBottomSheet.value) {
+    LaunchedEffect(show.value) {
+        if (show.value) sheetState.expand()
+        else sheetState.hide()
+    }
+
+    if (show.value) {
         ModalBottomSheet(
             onDismissRequest = {
-                showBottomSheet.value = false
+                show.value = false
             },
             sheetState = sheetState,
             containerColor = MaterialTheme.colorScheme.background,
@@ -162,127 +169,24 @@ fun CroppingRatioBottomSheet(
                 verticalArrangement = Arrangement.SpaceEvenly,
                 horizontalAlignment = Alignment.Start
             ) {
-                ClickableRow(
-                    title = stringResource(id = R.string.bottom_sheets_freeform),
-                    position = RowPosition.Top,
-                    selected = ratio == 0f
-                ) {
-                    ratio = 0f
-                    onSetCroppingRatio(0f)
+                CroppingAspectRatio.entries.forEachIndexed { index, entry ->
+                    if (entry == CroppingAspectRatio.ByImage) entry.ratio = originalImageRatio
 
-                    coroutineScope.launch {
-                    	sheetState.hide()
-	                    showBottomSheet.value = false
-                    }
-                }
+                    ClickableRow(
+                        title = stringResource(id = entry.title),
+                        position =
+                            if (index == 0) RowPosition.Top
+                            else if (index == CroppingAspectRatio.entries.size - 1) RowPosition.Bottom
+                            else RowPosition.Middle,
+                        selected = ratio == entry
+                    ) {
+                        onSetCroppingRatio(entry)
 
-                ClickableRow(
-                    title = stringResource(id = R.string.bottom_sheets_image_ratio),
-                    position = RowPosition.Middle,
-                    selected = ratio == originalImageRatio
-                ) {
-                    ratio = originalImageRatio
-                    onSetCroppingRatio(originalImageRatio)
-
-                    coroutineScope.launch {
-                    	sheetState.hide()
-	                    showBottomSheet.value = false
-                    }
-                }
-
-                ClickableRow(
-                    title = stringResource(id = R.string.bottom_sheets_square),
-                    position = RowPosition.Middle,
-                    selected = ratio == 1f
-                ) {
-                    ratio = 1f
-                    onSetCroppingRatio(1f)
-
-                    coroutineScope.launch {
-                    	sheetState.hide()
-	                    showBottomSheet.value = false
-                    }
-                }
-
-                ClickableRow(
-                    title = "9:21",
-                    position = RowPosition.Middle,
-                    selected = ratio == 9f / 21f
-                ) {
-                    ratio = 9f / 21f
-                    onSetCroppingRatio(9f / 21f)
-
-                    coroutineScope.launch {
-                    	sheetState.hide()
-	                    showBottomSheet.value = false
-                    }
-                }
-
-                ClickableRow(
-                    title = "9:16 (${stringResource(id = R.string.bottom_sheets_vertical)})",
-                    position = RowPosition.Middle,
-                    selected = ratio == 9f / 16f
-                ) {
-                    ratio = 9f / 16f
-                    onSetCroppingRatio(9f / 16f)
-
-                    coroutineScope.launch {
-                    	sheetState.hide()
-	                    showBottomSheet.value = false
-                    }
-                }
-
-                ClickableRow(
-                    title = "16:9 (${stringResource(id = R.string.bottom_sheets_horizontal)})",
-                    position = RowPosition.Middle,
-                    selected = ratio == 16f / 9f
-                ) {
-                    ratio = 16f / 9f
-                    onSetCroppingRatio(16f / 9f)
-
-                    coroutineScope.launch {
-                    	sheetState.hide()
-	                    showBottomSheet.value = false
-                    }
-                }
-
-                ClickableRow(
-                    title = "5:4",
-                    position = RowPosition.Middle,
-                    selected = ratio == 1.25f
-                ) {
-                    ratio = 1.25f
-                    onSetCroppingRatio(1.25f)
-                    coroutineScope.launch {
-                    	sheetState.hide()
-	                    showBottomSheet.value = false
-                    }
-                }
-
-                ClickableRow(
-                    title = "4:3",
-                    position = RowPosition.Middle,
-                    selected = ratio == 4f / 3f
-                ) {
-                    ratio = 4f / 3f
-                    onSetCroppingRatio(4f / 3f)
-                    coroutineScope.launch {
-                    	sheetState.hide()
-	                    showBottomSheet.value = false
-                    }
-                }
-
-                ClickableRow(
-                    title = "3:2",
-                    position = RowPosition.Bottom,
-                    selected = ratio == 1.5f
-                ) {
-                    ratio = 1.5f
-                    onSetCroppingRatio(1.5f)
-
-                    coroutineScope.launch {
-                    	sheetState.hide()
-	                    showBottomSheet.value = false
+                        coroutineScope.launch {
+                            delay(AnimationConstants.DURATION.toLong())
+                            sheetState.hide()
+                            show.value = false
+                        }
                     }
                 }
             }
@@ -299,7 +203,7 @@ fun ClickableRow(
 ) {
     val (shape, spacerHeight) = getDefaultShapeSpacerForPosition(position, 32.dp)
 
-    Box (
+    Box(
         modifier = Modifier
             .height(64.dp)
             .fillMaxWidth(1f)
@@ -315,8 +219,8 @@ fun ClickableRow(
             fontSize = TextUnit(18f, TextUnitType.Sp),
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier
-            	.wrapContentSize()
-            	.align(Alignment.CenterStart)
+                .wrapContentSize()
+                .align(Alignment.CenterStart)
         )
 
         if (selected) {

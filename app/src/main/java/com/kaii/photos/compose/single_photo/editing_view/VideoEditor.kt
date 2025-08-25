@@ -181,6 +181,7 @@ fun VideoEditor(
     val resetCrop = remember { mutableStateOf(false) }
 
     var rotation by remember { mutableFloatStateOf(0f) }
+    val aspectRatio = remember { mutableStateOf(CroppingAspectRatio.FreeForm) }
 
     Scaffold(
         topBar = {
@@ -204,9 +205,12 @@ fun VideoEditor(
                 absolutePath = absolutePath,
                 leftPosition = leftTrimPosition,
                 rightPosition = rightTrimPosition,
+                imageAspectRatio = videoDimens.width.toFloat() / videoDimens.height,
+                croppingAspectRatio = aspectRatio,
                 onCropReset = {
                     resetCrop.value = true
                     rotation = 0f
+                    aspectRatio.value = CroppingAspectRatio.FreeForm
 
                     modifications.add(
                         VideoModification.Rotation(
@@ -320,10 +324,11 @@ fun VideoEditor(
                         }
 
                         CropBox(
-                            containerWidth = with(localDensity) { width.toPx() - 16.dp.toPx() }, // adjust for AnimatedVisibility size for some reason??
+                            containerWidth = with(localDensity) { width.toPx() - 16.dp.toPx() }, // adjust for AnimatedVisibility size
                             containerHeight = with(localDensity) { height.toPx() - 16.dp.toPx() },
                             mediaAspectRatio = videoDimens.width.toFloat() / videoDimens.height,
                             reset = resetCrop,
+                            aspectRatio = aspectRatio,
                             modifier = Modifier
                                 .offset(16.dp, 16.dp) // adjust for top-left change from AnimatedVisibility
                         ) { area, original ->

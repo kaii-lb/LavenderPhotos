@@ -20,12 +20,15 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import com.kaii.photos.helpers.AnimationConstants
@@ -36,6 +39,7 @@ fun CropBox(
     containerWidth: Float,
     containerHeight: Float,
     mediaAspectRatio: Float,
+    aspectRatio: MutableState<CroppingAspectRatio>,
     modifier: Modifier = Modifier,
     reset: MutableState<Boolean>,
     onAreaChanged: (area: Rect, original: Size) -> Unit
@@ -122,6 +126,24 @@ fun CropBox(
         )
     }
 
+    LaunchedEffect(aspectRatio.value) {
+        if (aspectRatio.value == CroppingAspectRatio.FreeForm) return@LaunchedEffect
+
+        if (aspectRatio.value.ratio > mediaAspectRatio) {
+            if (top + height * width / aspectRatio.value.ratio <= originalHeight) {
+                width = height * aspectRatio.value.ratio
+            } else {
+                height = width / aspectRatio.value.ratio
+            }
+        } else {
+            if (left + width * height * aspectRatio.value.ratio <= originalHeight) {
+                height = width / aspectRatio.value.ratio
+            } else {
+                width = height * aspectRatio.value.ratio
+            }
+        }
+    }
+
     var selectedArea by remember { mutableStateOf(SelectedCropArea.None) }
 
     val animatedColor by animateColorAsState(
@@ -131,6 +153,37 @@ fun CropBox(
         )
     )
 
+    // shading box (gives cutout effect)
+    Box(
+        modifier = modifier
+            .size(
+                width = containerWidth.dp,
+                height = containerHeight.dp
+            )
+            .graphicsLayer {
+                compositingStrategy = CompositingStrategy.Offscreen
+            }
+            .drawWithContent {
+                drawContent()
+
+                val strokeWidth = 4.dp.toPx()
+
+                drawRect(
+                    color = Color.Black.copy(alpha = 0.6f),
+                    topLeft = Offset(((containerWidth - originalWidth) / 2), (containerHeight - originalHeight) / 2),
+                    size = Size(originalWidth, originalHeight)
+                )
+
+                drawRect(
+                    color = Color.White,
+                    topLeft = Offset(left + strokeWidth / 2, top + strokeWidth / 2),
+                    size = Size(width - strokeWidth, height - strokeWidth),
+                    blendMode = BlendMode.DstOut
+                )
+            }
+    )
+
+    // CropBox itself
     Box(
         modifier = modifier
             .size(
@@ -155,7 +208,7 @@ fun CropBox(
                     style = Stroke(
                         width = strokeWidth
                     ),
-                    color = Color.White.copy(alpha = 0.6f)
+                    color = Color.White.copy(alpha = 0.5f)
                 )
 
                 // guideline vertical left
@@ -294,28 +347,62 @@ fun CropBox(
                         val distanceToRight = abs((left + width) - event.position.x)
                         val threshold = 40.dp.toPx()
 
-                        // Log.d(TAG, "Distance to top: $distanceToTop, left: $distanceToLeft, right: $distanceToRight, bottom: $distanceToBottom")
-
                         when {
                             // top left
                             distanceToTop <= threshold && distanceToLeft <= threshold || selectedArea == SelectedCropArea.TopLeftCorner -> {
-                                val newTop = top + offset.y
-                                val newHeight = height - offset.y
+                                if (aspectRatio.value == CroppingAspectRatio.FreeForm) {
+                                    val newTop = top + offset.y
+                                    val newHeight = height - offset.y
 
-                                if (newTop >= maxTop
-                                    && newTop < (newTop + newHeight) - threshold
-                                ) {
-                                    top = newTop
-                                    height = newHeight
-                                }
+                                    if (newTop >= maxTop
+                                        && newTop < (newTop + newHeight) - threshold
+                                    ) {
+                                        top = newTop
+                                        height = newHeight
+                                    }
 
-                                val newLeft = left + offset.x
-                                val newWidth = width - offset.x
-                                if (left + offset.x >= maxLeft
-                                    && newLeft < (newLeft + newWidth) - threshold
-                                ) {
-                                    left = newLeft
-                                    width = newWidth
+                                    val newLeft = left + offset.x
+                                    val newWidth = width - offset.x
+                                    if (left + offset.x >= maxLeft
+                                        && newLeft < (newLeft + newWidth) - threshold
+                                    ) {
+                                        left = newLeft
+                                        width = newWidth
+                                    }
+                                } else {
+                                    if (abs(offset.x) >= abs(offset.y)) {
+                                        val newLeft = left + offset.x
+                                        val newWidth = width - offset.x
+
+                                        val newTop = top + offset.x / aspectRatio.value.ratio
+                                        val newHeight = newWidth / aspectRatio.value.ratio
+
+                                        val maxRight = (newLeft + newWidth) - threshold
+                                        val maxBottom = (newTop + newHeight) - threshold
+
+                                        if (newLeft >= maxLeft && newLeft <= maxRight && newTop >= maxTop && newTop <= maxBottom) {
+                                            left = newLeft
+                                            width = newWidth
+                                            top = newTop
+                                            height = newHeight
+                                        }
+                                    } else {
+                                        val newTop = top + offset.y
+                                        val newHeight = height - offset.y
+
+                                        val newLeft = left + offset.y * aspectRatio.value.ratio
+                                        val newWidth = newHeight * aspectRatio.value.ratio
+
+                                        val maxRight = (newLeft + newWidth) - threshold
+                                        val maxBottom = (newTop + newHeight) - threshold
+
+                                        if (newLeft >= maxLeft && newLeft <= maxRight && newTop >= maxTop && newTop <= maxBottom) {
+                                            left = newLeft
+                                            width = newWidth
+                                            top = newTop
+                                            height = newHeight
+                                        }
+                                    }
                                 }
 
                                 selectedArea = SelectedCropArea.TopLeftCorner
@@ -323,20 +410,52 @@ fun CropBox(
 
                             // bottom left
                             distanceToBottom <= threshold && distanceToLeft <= threshold || selectedArea == SelectedCropArea.BottomLeftCorner -> {
-                                val newHeight = height + offset.y
-                                if (top + newHeight <= (maxTop + originalHeight)
-                                    && top + newHeight > threshold
-                                ) {
-                                    height += offset.y
-                                }
+                                if (aspectRatio.value == CroppingAspectRatio.FreeForm) {
+                                    val newHeight = height + offset.y
+                                    if (top + newHeight <= (maxTop + originalHeight)
+                                        && top + newHeight > threshold
+                                    ) {
+                                        height += offset.y
+                                    }
 
-                                val newLeft = left + offset.x
-                                val newWidth = width - offset.x
-                                if (left + offset.x >= maxLeft
-                                    && newLeft < (newLeft + newWidth) - threshold
-                                ) {
-                                    left = newLeft
-                                    width = newWidth
+                                    val newLeft = left + offset.x
+                                    val newWidth = width - offset.x
+                                    if (left + offset.x >= maxLeft
+                                        && newLeft < (newLeft + newWidth) - threshold
+                                    ) {
+                                        left = newLeft
+                                        width = newWidth
+                                    }
+                                } else {
+                                    if (abs(offset.x) >= abs(offset.y)) {
+                                        val newLeft = left + offset.x
+                                        val newWidth = width - offset.x
+
+                                        val newHeight = newWidth / aspectRatio.value.ratio
+
+                                        val maxRight = (newLeft + newWidth) - threshold
+                                        val maxBottom = (top + newHeight) - threshold
+
+                                        if (newLeft >= maxLeft && newLeft <= maxRight && top + newHeight <= maxTop + originalHeight && top <= maxBottom) {
+                                            left = newLeft
+                                            width = newWidth
+                                            height = newHeight
+                                        }
+                                    } else {
+                                        val newHeight = height + offset.y
+
+                                        val newWidth = newHeight * aspectRatio.value.ratio
+                                        val newLeft = left - offset.y * aspectRatio.value.ratio
+
+                                        val maxRight = (newLeft + newWidth) - threshold
+                                        val maxBottom = (top + newHeight) - threshold
+
+                                        if (newLeft >= maxLeft && newLeft <= maxRight && top <= maxBottom && top + newHeight <= maxTop + originalHeight) {
+                                            left = newLeft
+                                            width = newWidth
+                                            height = newHeight
+                                        }
+                                    }
                                 }
 
                                 selectedArea = SelectedCropArea.BottomLeftCorner
@@ -344,21 +463,53 @@ fun CropBox(
 
                             // top right
                             distanceToTop <= threshold && distanceToRight <= threshold || selectedArea == SelectedCropArea.TopRightCorner -> {
-                                val newTop = top + offset.y
-                                val newHeight = height - offset.y
+                                if (aspectRatio.value == CroppingAspectRatio.FreeForm) {
+                                    val newTop = top + offset.y
+                                    val newHeight = height - offset.y
 
-                                if (newTop >= maxTop
-                                    && newTop < (newTop + newHeight) - threshold
-                                ) {
-                                    top = newTop
-                                    height = newHeight
-                                }
+                                    if (newTop >= maxTop
+                                        && newTop < (newTop + newHeight) - threshold
+                                    ) {
+                                        top = newTop
+                                        height = newHeight
+                                    }
 
-                                val newWidth = width + offset.x
-                                if ((left + width) + offset.x <= (maxLeft + originalWidth)
-                                    && left + newWidth > left + threshold
-                                ) {
-                                    width = newWidth
+                                    val newWidth = width + offset.x
+                                    if ((left + width) + offset.x <= (maxLeft + originalWidth)
+                                        && left + newWidth > left + threshold
+                                    ) {
+                                        width = newWidth
+                                    }
+                                } else {
+                                    if (abs(offset.x) >= abs(offset.y)) {
+                                        val newWidth = width + offset.x
+
+                                        val newHeight = newWidth / aspectRatio.value.ratio
+                                        val newTop = (top + height) - newHeight
+
+                                        val maxRight = (left + newWidth) - threshold
+                                        val maxBottom = (top + newHeight) - threshold
+
+                                        if (top >= maxTop && top <= maxBottom && left + newWidth <= maxLeft + originalWidth && left <= maxRight) {
+                                            top = newTop
+                                            width = newWidth
+                                            height = newHeight
+                                        }
+                                    } else {
+                                        val newHeight = height - offset.y
+
+                                        val newWidth = newHeight * aspectRatio.value.ratio
+                                        val newTop = (top + height) - newHeight
+
+                                        val maxRight = (left + newWidth) - threshold
+                                        val maxBottom = (top + newHeight) - threshold
+
+                                        if (left + newWidth <= maxLeft + originalWidth && left <= maxRight && newTop <= maxBottom && newTop >= maxTop) {
+                                            top = newTop
+                                            width = newWidth
+                                            height = newHeight
+                                        }
+                                    }
                                 }
 
                                 selectedArea = SelectedCropArea.TopRightCorner
@@ -366,18 +517,44 @@ fun CropBox(
 
                             // bottom right
                             distanceToBottom <= threshold && distanceToRight <= threshold || selectedArea == SelectedCropArea.BottomRightCorner -> {
-                                val newHeight = height + offset.y
-                                if (top + newHeight <= (maxTop + originalHeight)
-                                    && top + newHeight > threshold
-                                ) {
-                                    height += offset.y
-                                }
+                                if (aspectRatio.value == CroppingAspectRatio.FreeForm) {
+                                    val newHeight = height + offset.y
+                                    if (top + newHeight <= (maxTop + originalHeight)
+                                        && top + newHeight > threshold
+                                    ) {
+                                        height += offset.y
+                                    }
 
-                                val newWidth = width + offset.x
-                                if ((left + width) + offset.x <= (maxLeft + originalWidth)
-                                    && left + newWidth > left + threshold
-                                ) {
-                                    width = newWidth
+                                    val newWidth = width + offset.x
+                                    if ((left + width) + offset.x <= (maxLeft + originalWidth)
+                                        && left + newWidth > left + threshold
+                                    ) {
+                                        width = newWidth
+                                    }
+                                } else {
+                                    if (abs(offset.x) >= abs(offset.y)) {
+                                        val newWidth = width + offset.x
+                                        val newHeight = newWidth / aspectRatio.value.ratio
+
+                                        val maxRight = (left + newWidth) - threshold
+                                        val maxBottom = (top + newHeight) - threshold
+
+                                        if (top + newHeight <= maxTop + originalHeight && top <= maxBottom && left + newWidth <= maxLeft + originalWidth && left <= maxRight) {
+                                            width = newWidth
+                                            height = newHeight
+                                        }
+                                    } else {
+                                        val newHeight = height + offset.y
+                                        val newWidth = newHeight * aspectRatio.value.ratio
+
+                                        val maxRight = (left + newWidth) - threshold
+                                        val maxBottom = (top + newHeight) - threshold
+
+                                        if (top + newHeight <= maxTop + originalHeight && top <= maxBottom && left + newWidth <= maxLeft + originalWidth && left <= maxRight) {
+                                            width = newWidth
+                                            height = newHeight
+                                        }
+                                    }
                                 }
 
                                 selectedArea = SelectedCropArea.BottomRightCorner

@@ -26,6 +26,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableFloatState
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -50,6 +51,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isUnspecified
 import com.kaii.photos.R
+import com.kaii.photos.compose.CroppingRatioBottomSheet
 import com.kaii.photos.compose.single_photo.EditingViewBottomAppBarItem
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.VideoPlayerConstants
@@ -221,7 +223,7 @@ fun VideoEditorTrimContent(
                             drawContent()
 
                             drawRoundRect(
-                                color = Color.Blue,
+                                color = Color.White,
                                 topLeft = with(localDensity) {
                                     Offset(
                                         x = 0f,
@@ -331,8 +333,10 @@ private fun RightHandle(
 
 @Composable
 fun VideoEditorCropContent(
+    imageAspectRatio: Float,
+    croppingAspectRatio: MutableState<CroppingAspectRatio>,
     onReset: () -> Unit,
-    onRotate: () -> Unit
+    onRotate: () -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -346,10 +350,23 @@ fun VideoEditorCropContent(
             onClick = onRotate
         )
 
+        val showSheet = remember { mutableStateOf(false) }
+
+        CroppingRatioBottomSheet(
+            show = showSheet,
+            ratio = croppingAspectRatio.value,
+            originalImageRatio = imageAspectRatio,
+            onSetCroppingRatio = {
+                croppingAspectRatio.value = it
+            }
+        )
+
         EditingViewBottomAppBarItem(
             text = stringResource(id = R.string.editing_ratio),
             icon = R.drawable.resolution,
-            onClick = onReset
+            onClick = {
+                showSheet.value = true
+            }
         )
 
         EditingViewBottomAppBarItem(

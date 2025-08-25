@@ -175,6 +175,7 @@ import com.kaii.photos.compose.app_bars.getAppBarContentTransition
 import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.rememberDeviceOrientation
+import com.kaii.photos.compose.single_photo.editing_view.CroppingAspectRatio
 import com.kaii.photos.compose.single_photo.editing_view.SliderStates
 import com.kaii.photos.compose.single_photo.editing_view.makeDrawCanvas
 import com.kaii.photos.datastore.Editing
@@ -255,15 +256,17 @@ fun EditingView(
     val context = LocalContext.current
     val inputStream = remember { context.contentResolver.openInputStream(uri) }
 
-    var originalImage by remember { mutableStateOf(
-        if (absolutePath.endsWith(".avif")) {
-            createBitmap(512, 512, Bitmap.Config.ARGB_8888)
-        } else {
-            BitmapFactory.decodeStream(inputStream).also {
-                inputStream?.close()
+    var originalImage by remember {
+        mutableStateOf(
+            if (absolutePath.endsWith(".avif")) {
+                createBitmap(512, 512, Bitmap.Config.ARGB_8888)
+            } else {
+                BitmapFactory.decodeStream(inputStream).also {
+                    inputStream?.close()
+                }
             }
-        }
-    )}
+        )
+    }
     var image by remember { mutableStateOf(originalImage.asImageBitmap()) }
 
     LaunchedEffect(uri, absolutePath) {
@@ -2041,13 +2044,18 @@ fun CropTools(
         }
 
         val showBottomSheet = remember { mutableStateOf(false) }
+        var aspectRatio by remember { mutableStateOf(CroppingAspectRatio.FreeForm) }
+
         CroppingRatioBottomSheet(
-            showBottomSheet = showBottomSheet,
+            show = showBottomSheet,
+            ratio = aspectRatio,
             originalImageRatio = originalImageRatio,
             onSetCroppingRatio = { ratio ->
-                croppingRatio.floatValue = ratio
+                croppingRatio.floatValue = ratio.ratio
+                aspectRatio = ratio
             }
         )
+
         EditingViewBottomAppBarItem(text = stringResource(id = R.string.editing_ratio), icon = R.drawable.resolution) {
             showBottomSheet.value = true
         }

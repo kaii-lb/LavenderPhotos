@@ -37,6 +37,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.MutableIntState
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -70,6 +71,7 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.SelectableDropDownMenuItem
 import com.kaii.photos.compose.SimpleTab
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
+import com.kaii.photos.compose.single_photo.editing_view.CroppingAspectRatio
 import com.kaii.photos.compose.single_photo.editing_view.VideoEditorCropContent
 import com.kaii.photos.compose.single_photo.editing_view.VideoEditorTrimContent
 import com.kaii.photos.compose.single_photo.editing_view.VideoModification
@@ -90,6 +92,8 @@ fun VideoEditorBottomBar(
     absolutePath: String,
     leftPosition: MutableFloatState,
     rightPosition: MutableFloatState,
+    imageAspectRatio: Float,
+    croppingAspectRatio: MutableState<CroppingAspectRatio>,
     onCropReset: () -> Unit,
     onSeek: (position: Float) -> Unit,
     onRotate: () -> Unit
@@ -202,6 +206,8 @@ fun VideoEditorBottomBar(
 
                     1 -> {
                         VideoEditorCropContent(
+                            imageAspectRatio = imageAspectRatio,
+                            croppingAspectRatio = croppingAspectRatio,
                             onReset = onCropReset,
                             onRotate = onRotate
                         )
