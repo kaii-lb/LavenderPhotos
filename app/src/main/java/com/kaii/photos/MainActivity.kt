@@ -52,6 +52,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
@@ -955,10 +956,11 @@ class MainActivity : ComponentActivity() {
         }
 
         // so it only checks once
+        val resources = LocalResources.current
         LaunchedEffect(checkForUpdatesOnStartup) {
             if (checkForUpdatesOnStartup) {
                 startupUpdateCheck(
-                    text = context.resources.getString(R.string.updates_new_version_available),
+                    text = resources.getString(R.string.updates_new_version_available),
                     coroutineScope = coroutineScope,
                     navController = navController,
                     mainViewModel = mainViewModel
@@ -1087,6 +1089,10 @@ class MainActivity : ComponentActivity() {
                                     )
                                 }
 
+                                LaunchedEffect(Unit) {
+                                    selectedItemsList.clear()
+                                }
+
                                 var hasFiles by remember { mutableStateOf(true) }
                                 LaunchedEffect(mediaStoreData.value.size) {
                                     if (mediaStoreData.value.isNotEmpty()) {
@@ -1134,7 +1140,9 @@ class MainActivity : ComponentActivity() {
                                     )
                                 }
 
-                                selectedItemsList.clear()
+                                LaunchedEffect(Unit) {
+                                    selectedItemsList.clear()
+                                }
 
                                 var hasFiles by remember { mutableStateOf(true) }
 
@@ -1171,7 +1179,9 @@ class MainActivity : ComponentActivity() {
                             }
 
                             stateValue == DefaultTabs.TabTypes.search -> {
-                                selectedItemsList.clear()
+                                LaunchedEffect(Unit) {
+                                    selectedItemsList.clear()
+                                }
 
                                 SearchPage(selectedItemsList, currentView)
                             }
