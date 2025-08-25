@@ -466,8 +466,8 @@ class MediaPicker : ComponentActivity() {
                                             delay(PhotoGridConstants.UPDATE_TIME)
                                             groupedMedia.value = mediaStoreData.value
                                         } else {
-                                            groupedMedia.value = emptyList()
                                             delay(PhotoGridConstants.LOADING_TIME)
+                                            groupedMedia.value = emptyList()
                                             hasFiles = false
                                         }
 
@@ -514,8 +514,8 @@ class MediaPicker : ComponentActivity() {
                                             delay(PhotoGridConstants.UPDATE_TIME)
                                             groupedMedia.value = mediaStoreData.value
                                         } else {
-                                            groupedMedia.value = emptyList()
                                             delay(PhotoGridConstants.LOADING_TIME)
+                                            groupedMedia.value = emptyList()
                                             hasFiles = false
                                         }
 

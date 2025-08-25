@@ -1093,8 +1093,8 @@ class MainActivity : ComponentActivity() {
                                         delay(PhotoGridConstants.UPDATE_TIME)
                                         groupedMedia.value = mediaStoreData.value
                                     } else {
-                                        groupedMedia.value = emptyList()
                                         delay(PhotoGridConstants.LOADING_TIME)
+                                        groupedMedia.value = emptyList()
                                         hasFiles = false
                                     }
 
@@ -1143,8 +1143,8 @@ class MainActivity : ComponentActivity() {
                                         delay(PhotoGridConstants.UPDATE_TIME)
                                         groupedMedia.value = mediaStoreData.value
                                     } else {
-                                        groupedMedia.value = emptyList()
                                         delay(PhotoGridConstants.LOADING_TIME)
+                                        groupedMedia.value = emptyList()
                                         hasFiles = false
                                     }
 

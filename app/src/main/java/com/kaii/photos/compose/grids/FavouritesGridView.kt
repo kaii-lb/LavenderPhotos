@@ -86,8 +86,8 @@ fun FavouritesGridView(
                     context
                 )
         } else {
-            groupedMedia.value = emptyList()
             delay(PhotoGridConstants.LOADING_TIME)
+            groupedMedia.value = emptyList()
             hasFiles = false
         }
 
