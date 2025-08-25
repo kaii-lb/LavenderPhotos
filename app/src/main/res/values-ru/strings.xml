@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Фотографии</string>
-    <string name="default_homepage_photogrid_dir">DCIM/Камера</string>
     <string name="first_startup_dialog_title">Найти все альбомы на устройстве?</string>
     <string name="first_startup_dialog_body">Выполняется поиск всех альбомов на этом устройстве и добавление их в Лавандовые фото Photos.\nПримечание: при использовании этой опции альбомы старых пользователей будут удалены.</string>
     <string name="first_startup_dialog_confirm_title">Найти!</string>
@@ -11,7 +10,6 @@
     <string name="add_album">Добавить альбом</string>
     <string name="direct_path_album">Использовать прямой путь для добавления альбома</string>
     <string name="albums_main_list">Список главных альбомов</string>
-    <string name="albums_main_list_desc">Выберите альбомы, фотографии из которых будут отображаться в главном окне просмотра фотографий</string>
     <string name="albums_main_list_selected">Выбранные здесь альбомы будут отображаться в главном окне просмотра фотографий</string>
     <string name="albums_selected">Выбранные альбомы</string>
     <string name="albums_auto_detect">Автоматически определять альбомы</string>
@@ -195,7 +193,6 @@
     <string name="settings_clear">Очистить</string>
     <string name="settings_clear_cache_desc">Это удалит все кэши миниатюр на этом устройстве, освобождая хранилище. Загрузка миниатюр при следующем запуске займёт больше времени.</string>
     <string name="settings_about_and_updates">О программе и обновления</string>
-    <string name="trash">Корзина</string>
     <string name="trash_bin">Корзина</string>
     <string name="trash_auto_delete">Автоматическое удаление из корзины через</string>
     <string name="trash_days">дней</string>
