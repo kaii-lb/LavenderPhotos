@@ -235,4 +235,10 @@
     <string name="error_views_favourites_empty">Tambahkan memori berharga anda!</string>
     <string name="error_views_folder_non_existent">Folder tidak ada</string>
     <string name="error_views_error_page">Ini adalah laman error</string>
+    <string name="albums_custom">Kustom Album</string>
+    <string name="albums_remove">Hilangkan album dari daftar</string>
+    <string name="albums_info">Informasi Album</string>
+    <string name="albums_path">Jalur</string>
+    <string name="albums_id">Id</string>
+    <string name="albums_move_to">Pindahkan ke Album</string>
 </resources>
