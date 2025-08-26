@@ -622,37 +622,37 @@ class MainActivity : ComponentActivity() {
                 composable<Screens.EditingScreen>(
                     enterTransition = {
                         slideInVertically(
-                            AnimationConstants.expressiveTween(AnimationConstants.LONG_DURATION)
+                            AnimationConstants.expressiveTween(AnimationConstants.DURATION)
                         ) { height -> height } + fadeIn(
                             animationSpec = tween(
-                                durationMillis = AnimationConstants.LONG_DURATION
+                                durationMillis = AnimationConstants.DURATION_LONG
                             )
                         )
                     },
                     exitTransition = {
                         slideOutVertically(
-                            AnimationConstants.expressiveTween(AnimationConstants.LONG_DURATION)
+                            AnimationConstants.expressiveTween(AnimationConstants.DURATION)
                         ) { height -> height } + fadeOut(
                             animationSpec = tween(
-                                durationMillis = AnimationConstants.LONG_DURATION
+                                durationMillis = AnimationConstants.DURATION_LONG
                             )
                         )
                     },
                     popEnterTransition = {
                         slideInVertically(
-                            AnimationConstants.expressiveTween(AnimationConstants.LONG_DURATION)
+                            AnimationConstants.expressiveTween(AnimationConstants.DURATION)
                         ) { height -> height } + fadeIn(
                             animationSpec = tween(
-                                durationMillis = AnimationConstants.LONG_DURATION
+                                durationMillis = AnimationConstants.DURATION_LONG
                             )
                         )
                     },
                     popExitTransition = {
                         slideOutVertically(
-                            AnimationConstants.expressiveTween(AnimationConstants.LONG_DURATION)
+                            AnimationConstants.expressiveTween(AnimationConstants.DURATION)
                         ) { height -> height } + fadeOut(
                             animationSpec = tween(
-                                durationMillis = AnimationConstants.LONG_DURATION
+                                durationMillis = AnimationConstants.DURATION_LONG
                             )
                         )
                     }
@@ -861,37 +861,37 @@ class MainActivity : ComponentActivity() {
                 composable<Screens.VideoEditor>(
                     enterTransition = {
                         slideInVertically(
-                            animationSpec = AnimationConstants.expressiveTween(AnimationConstants.LONG_DURATION)
+                            animationSpec = AnimationConstants.expressiveTween(AnimationConstants.DURATION)
                         ) { height -> height } + fadeIn(
                             animationSpec = tween(
-                                durationMillis = AnimationConstants.LONG_DURATION
+                                durationMillis = AnimationConstants.DURATION_LONG
                             )
                         )
                     },
                     exitTransition = {
                         slideOutVertically(
-                            AnimationConstants.expressiveTween(AnimationConstants.LONG_DURATION)
+                            AnimationConstants.expressiveTween(AnimationConstants.DURATION)
                         ) { height -> height } + fadeOut(
                             animationSpec = tween(
-                                durationMillis = AnimationConstants.LONG_DURATION
+                                durationMillis = AnimationConstants.DURATION_LONG
                             )
                         )
                     },
                     popEnterTransition = {
                         slideInVertically(
-                            AnimationConstants.expressiveTween(AnimationConstants.LONG_DURATION)
+                            AnimationConstants.expressiveTween(AnimationConstants.DURATION)
                         ) { height -> height } + fadeIn(
                             animationSpec = tween(
-                                durationMillis = AnimationConstants.LONG_DURATION
+                                durationMillis = AnimationConstants.DURATION_LONG
                             )
                         )
                     },
                     popExitTransition = {
                         slideOutVertically(
-                            AnimationConstants.expressiveTween(AnimationConstants.LONG_DURATION)
+                            AnimationConstants.expressiveTween(AnimationConstants.DURATION)
                         ) { height -> height } + fadeOut(
                             animationSpec = tween(
-                                durationMillis = AnimationConstants.LONG_DURATION
+                                durationMillis = AnimationConstants.DURATION_LONG
                             )
                         )
                     }

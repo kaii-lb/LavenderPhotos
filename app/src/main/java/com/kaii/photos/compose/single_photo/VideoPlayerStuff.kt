@@ -546,9 +546,13 @@ fun VideoPlayer(
                     appBarsVisible.value = true
                 }
             }
+
+            exoPlayer.isScrubbingModeEnabled = true
             exoPlayer.pause()
         } else {
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
+            exoPlayer.isScrubbingModeEnabled = false
             exoPlayer.play()
         }
 

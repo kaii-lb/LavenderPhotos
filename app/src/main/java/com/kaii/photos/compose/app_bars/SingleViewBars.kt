@@ -3,6 +3,7 @@ package com.kaii.photos.compose.app_bars
 import android.graphics.Bitmap
 import android.media.MediaMetadataRetriever
 import android.net.Uri
+import android.util.Log
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.snapping.SnapPosition
@@ -71,6 +72,7 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.SelectableDropDownMenuItem
 import com.kaii.photos.compose.SimpleTab
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
+import com.kaii.photos.compose.single_photo.editing_view.BasicVideoData
 import com.kaii.photos.compose.single_photo.editing_view.CroppingAspectRatio
 import com.kaii.photos.compose.single_photo.editing_view.VideoEditorAdjustContent
 import com.kaii.photos.compose.single_photo.editing_view.VideoEditorCropContent
@@ -89,15 +91,13 @@ import kotlin.time.Duration.Companion.seconds
 fun VideoEditorBottomBar(
     pagerState: PagerState,
     currentPosition: MutableFloatState,
-    duration: MutableFloatState,
-    absolutePath: String,
+    basicData: BasicVideoData,
     leftPosition: MutableFloatState,
     rightPosition: MutableFloatState,
-    imageAspectRatio: Float,
     modifications: SnapshotStateList<VideoModification>,
     croppingAspectRatio: MutableState<CroppingAspectRatio>,
     onCropReset: () -> Unit,
-    onSeek: (position: Float) -> Unit,
+    onSeek: (Float) -> Unit,
     onRotate: () -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -161,20 +161,21 @@ fun VideoEditorBottomBar(
             val thumbnails = remember { mutableStateListOf<Bitmap>() }
             val windowInfo = LocalWindowInfo.current
 
-            LaunchedEffect(duration.floatValue) {
-                if (duration.floatValue == 0f) return@LaunchedEffect
+            LaunchedEffect(basicData) {
+                Log.d("SINGLE_VIEW_BARS", "Basic data updated $basicData")
+                if (basicData.duration <= 0f) return@LaunchedEffect
 
                 coroutineScope.launch(Dispatchers.IO) {
-                    metadata.setDataSource(absolutePath)
+                    metadata.setDataSource(basicData.absolutePath)
 
-                    val stepSize = duration.floatValue.roundToInt().seconds.inWholeMicroseconds / 6
+                    val stepSize = basicData.duration.roundToInt().seconds.inWholeMicroseconds / 6
 
                     for (i in 0..(VideoPlayerConstants.TRIM_THUMBNAIL_COUNT - 1)) {
                         val new = metadata.getScaledFrameAtTime(
                             stepSize * i,
                             MediaMetadataRetriever.OPTION_PREVIOUS_SYNC,
-                            windowInfo.containerSize.width / 6,
-                            windowInfo.containerSize.width / 6
+                            windowInfo.containerSize.width / (VideoPlayerConstants.TRIM_THUMBNAIL_COUNT - 2),
+                            windowInfo.containerSize.width / (VideoPlayerConstants.TRIM_THUMBNAIL_COUNT - 2)
                         )
 
                         new?.let { thumbnails.add(it) }
@@ -197,18 +198,18 @@ fun VideoEditorBottomBar(
                         ) {
                             VideoEditorTrimContent(
                                 currentPosition = currentPosition,
-                                duration = duration,
                                 leftPosition = leftPosition,
                                 rightPosition = rightPosition,
+                                thumbnails = thumbnails,
                                 onSeek = onSeek,
-                                thumbnails = thumbnails
+                                basicData = basicData
                             )
                         }
                     }
 
                     1 -> {
                         VideoEditorCropContent(
-                            imageAspectRatio = imageAspectRatio,
+                            imageAspectRatio = basicData.aspectRatio,
                             croppingAspectRatio = croppingAspectRatio,
                             onReset = onCropReset,
                             onRotate = onRotate
@@ -217,6 +218,7 @@ fun VideoEditorBottomBar(
 
                     2 -> {
                         VideoEditorAdjustContent(
+                            basicData = basicData,
                             modifications = modifications
                         )
                     }

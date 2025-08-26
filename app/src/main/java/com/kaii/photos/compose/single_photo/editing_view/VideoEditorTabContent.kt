@@ -31,6 +31,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
@@ -58,23 +59,26 @@ import com.kaii.photos.compose.dialogs.SliderDialog
 import com.kaii.photos.compose.single_photo.EditingViewBottomAppBarItem
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.VideoPlayerConstants
+import kotlin.math.truncate
 
 // private const val TAG = "VIDEO_EDITOR_TAB_CONTENT"
 
 @Composable
 fun VideoEditorTrimContent(
     currentPosition: MutableFloatState,
-    duration: MutableFloatState,
+    basicData: BasicVideoData,
     leftPosition: MutableFloatState,
     rightPosition: MutableFloatState,
     thumbnails: List<Bitmap>,
-    onSeek: (newPosition: Float) -> Unit
+    onSeek: (Float) -> Unit,
 ) {
     val actualDuration by remember {
         derivedStateOf {
             rightPosition.floatValue - leftPosition.floatValue
         }
     }
+
+    val duration by rememberUpdatedState(basicData.duration)
 
     BoxWithConstraints(
         modifier = Modifier
@@ -114,12 +118,12 @@ fun VideoEditorTrimContent(
             BoxWithConstraints boxybox@{
                 val leftHandlePosition by remember {
                     derivedStateOf {
-                        this@boxybox.maxWidth * leftPosition.floatValue / duration.floatValue
+                        this@boxybox.maxWidth * leftPosition.floatValue / duration
                     }
                 }
                 val rightHandlePosition by remember {
                     derivedStateOf {
-                        this@boxybox.maxWidth * rightPosition.floatValue / duration.floatValue
+                        this@boxybox.maxWidth * rightPosition.floatValue / duration
                     }
                 }
                 val seekbarWidth by remember {
@@ -171,14 +175,20 @@ fun VideoEditorTrimContent(
 
                 val leftDraggableState = rememberDraggableState { change ->
                     with(localDensity) {
-                        val new = leftPosition.floatValue + (change * duration.floatValue / this@boxybox.maxWidth.toPx())
-                        leftPosition.floatValue = new.coerceIn(0f, rightPosition.floatValue - (duration.floatValue * 0.2f))
+                        val new = leftPosition.floatValue + (change * duration / this@boxybox.maxWidth.toPx())
+                        leftPosition.floatValue = new.coerceIn(0f, rightPosition.floatValue - (duration * 0.2f))
 
                         currentPosition.floatValue = leftPosition.floatValue
                     }
                 }
+                val animatedLeftHandlePos by animateDpAsState(
+                    targetValue = if (leftHandlePosition.isUnspecified) 0.dp else leftHandlePosition,
+                    animationSpec = AnimationConstants.expressiveTween(
+                        durationMillis = if (isDraggingManually) 0 else AnimationConstants.DURATION
+                    )
+                )
                 LeftHandle(
-                    handlePosition = leftHandlePosition,
+                    handlePosition = animatedLeftHandlePos,
                     height = this@BoxWithConstraints.maxHeight,
                     draggableState = leftDraggableState,
                     onDragStarted = {
@@ -193,14 +203,20 @@ fun VideoEditorTrimContent(
 
                 val rightDraggableState = rememberDraggableState { change ->
                     with(localDensity) {
-                        val new = rightPosition.floatValue + (change * duration.floatValue / this@boxybox.maxWidth.toPx())
-                        rightPosition.floatValue = new.coerceIn(leftPosition.floatValue + (duration.floatValue * 0.2f), duration.floatValue)
+                        val new = rightPosition.floatValue + (change * duration / this@boxybox.maxWidth.toPx())
+                        rightPosition.floatValue = new.coerceIn(leftPosition.floatValue + (duration * 0.1f), duration)
 
                         currentPosition.floatValue = rightPosition.floatValue
                     }
                 }
+                val animatedRightHandlePos by animateDpAsState(
+                    targetValue = if (leftHandlePosition.isUnspecified) 32.dp else rightHandlePosition,
+                    animationSpec = AnimationConstants.expressiveTween(
+                        durationMillis = if (isDraggingManually) 0 else AnimationConstants.DURATION
+                    )
+                )
                 RightHandle(
-                    handlePosition = rightHandlePosition,
+                    handlePosition = animatedRightHandlePos,
                     draggableState = rightDraggableState,
                     height = this@BoxWithConstraints.maxHeight,
                     onDragStarted = {
@@ -216,8 +232,8 @@ fun VideoEditorTrimContent(
                 // connector between two handles and gives "inverted rounding" on inside
                 Box(
                     modifier = Modifier
-                        .offset(x = leftHandlePosition)
-                        .width(rightHandlePosition - leftHandlePosition)
+                        .offset(x = animatedLeftHandlePos)
+                        .width(animatedRightHandlePos - animatedLeftHandlePos)
                         .requiredHeight(this@BoxWithConstraints.maxHeight)
                         .graphicsLayer {
                             compositingStrategy = CompositingStrategy.Offscreen
@@ -235,7 +251,7 @@ fun VideoEditorTrimContent(
                                 },
                                 size = with(localDensity) {
                                     Size(
-                                        width = (rightHandlePosition - leftHandlePosition).toPx(),
+                                        width = (animatedRightHandlePos - animatedLeftHandlePos).toPx(),
                                         height = (this@BoxWithConstraints.maxHeight - 12.dp).toPx()
                                     )
                                 },
@@ -382,6 +398,7 @@ fun VideoEditorCropContent(
 
 @Composable
 fun VideoEditorAdjustContent(
+    basicData: BasicVideoData,
     modifications: SnapshotStateList<VideoModification>,
     modifier: Modifier = Modifier
 ) {
@@ -458,6 +475,34 @@ fun VideoEditorAdjustContent(
             icon = R.drawable.speed,
             onClick = {
                 showSpeedDialog = true
+            }
+        )
+
+        var showFrameDropDialog by remember { mutableStateOf(false) }
+        if (showFrameDropDialog) {
+            SliderDialog(
+                steps = basicData.frameRate.toInt() - 1,
+                range = 1f..truncate(basicData.frameRate),
+                startsAt = truncate(basicData.frameRate),
+                title = {
+                    resources.getString(R.string.editing_framerate, "${it.toInt()}")
+                },
+                onSetValue = {
+                    modifications.add(
+                        VideoModification.FrameDrop(it.toInt())
+                    )
+                },
+                onDismiss = {
+                    showFrameDropDialog = false
+                }
+            )
+        }
+
+        EditingViewBottomAppBarItem(
+            text = stringResource(id = R.string.fps),
+            icon = R.drawable.fps_select_60,
+            onClick = {
+                showFrameDropDialog = true
             }
         )
     }

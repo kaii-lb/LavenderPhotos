@@ -219,6 +219,7 @@
     <string name="editing_export_video_success">Exported Video!</string>
     <string name="editing_volume">Volume: %s</string>
     <string name="editing_speed">Playback Speed: %s</string>
+    <string name="editing_framerate">Frame rate: %s</string>
 
     <!-- Settings -->
     <string name="settings">Settings</string>
@@ -347,6 +348,7 @@
     <string name="help">Help</string>
     <string name="volume">Volume</string>
     <string name="wilson">Speed</string>
+    <string name="fps">FPS</string>
 
     <!-- Bottom Sheets -->
     <string name="bottom_sheets_enter_text">Enter Text</string>

@@ -123,8 +123,11 @@ fun VideoEditor(
             window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
             exoPlayer.pause()
+            exoPlayer.isScrubbingModeEnabled = true
         } else {
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
+            exoPlayer.isScrubbingModeEnabled = false
             exoPlayer.play()
         }
 
@@ -167,6 +170,7 @@ fun VideoEditor(
         remember { mutableIntStateOf(2) } // starts at 2 cuz of below LaunchedEffect, and then 1 more for setting rightPosition to duration
 
     LaunchedEffect(leftTrimPosition.floatValue, rightTrimPosition.floatValue) {
+        modifications.removeAll { it is VideoModification.Trim } // lots of these, we don't need them, tho this is kinda gross
         modifications.add(
             VideoModification.Trim(
                 start = leftTrimPosition.floatValue,
@@ -177,11 +181,42 @@ fun VideoEditor(
 
     val pagerState = rememberPagerState { 4 }
     var containerDimens by remember { mutableStateOf(Size.Zero) }
-    var videoDimens by remember { mutableStateOf(exoPlayer.videoSize) }
     val resetCrop = remember { mutableStateOf(false) }
 
     var rotation by remember { mutableFloatStateOf(0f) }
     val aspectRatio = remember { mutableStateOf(CroppingAspectRatio.FreeForm) }
+    var basicVideoData by remember { mutableStateOf(
+        BasicVideoData(
+            duration = exoPlayer.duration / 1000f,
+            width = exoPlayer.videoSize.width,
+            height = exoPlayer.videoSize.height,
+            absolutePath = absolutePath,
+            frameRate =
+                if (exoPlayer.videoFormat?.frameRate?.toInt() == -1 || exoPlayer.videoFormat?.frameRate == null) 0f
+                else exoPlayer.videoFormat!!.frameRate
+        )
+    )}
+
+    var tries by remember { mutableIntStateOf(0) }
+    LaunchedEffect(Unit) {
+        while ((basicVideoData.width == 0 || basicVideoData.height == 0 || basicVideoData.frameRate == 0f || basicVideoData.duration <= 0f)
+            && tries < 10
+        ) {
+            basicVideoData =
+                BasicVideoData(
+                    duration = duration.floatValue,
+                    frameRate =
+                        if (exoPlayer.videoFormat?.frameRate?.toInt() == -1 || exoPlayer.videoFormat?.frameRate == null) 0f
+                        else exoPlayer.videoFormat!!.frameRate,
+                    absolutePath = absolutePath,
+                    width = exoPlayer.videoSize.width,
+                    height = exoPlayer.videoSize.height
+                )
+            tries += 1
+
+            delay(100)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -192,8 +227,8 @@ fun VideoEditor(
                 lastSavedModCount = lastSavedModCount,
                 containerDimens = containerDimens,
                 videoDimens = IntSize(
-                    width = videoDimens.width,
-                    height = videoDimens.height
+                    width = basicVideoData.width,
+                    height = basicVideoData.height
                 )
             )
         },
@@ -201,11 +236,9 @@ fun VideoEditor(
             VideoEditorBottomBar(
                 pagerState = pagerState,
                 currentPosition = currentVideoPosition,
-                duration = duration,
-                absolutePath = absolutePath,
                 leftPosition = leftTrimPosition,
                 rightPosition = rightTrimPosition,
-                imageAspectRatio = videoDimens.width.toFloat() / videoDimens.height,
+                basicData = basicVideoData,
                 croppingAspectRatio = aspectRatio,
                 modifications = modifications,
                 onCropReset = {
@@ -312,22 +345,10 @@ fun VideoEditor(
                     ) {
                         val localDensity = LocalDensity.current
 
-                        var tries by remember { mutableIntStateOf(0) }
-
-                        LaunchedEffect(videoDimens) {
-                            if (videoDimens.width == 0 || videoDimens.height == 0 && tries < 10) {
-                                videoDimens = exoPlayer.videoSize
-                                tries += 1
-
-                                println("VIDEO DIMENS ${videoDimens.width} and ${videoDimens.height}")
-                                delay(100)
-                            }
-                        }
-
                         CropBox(
                             containerWidth = with(localDensity) { width.toPx() - 16.dp.toPx() }, // adjust for AnimatedVisibility size
                             containerHeight = with(localDensity) { height.toPx() - 16.dp.toPx() },
-                            mediaAspectRatio = videoDimens.width.toFloat() / videoDimens.height,
+                            mediaAspectRatio = basicVideoData.aspectRatio,
                             reset = resetCrop,
                             aspectRatio = aspectRatio,
                             modifier = Modifier

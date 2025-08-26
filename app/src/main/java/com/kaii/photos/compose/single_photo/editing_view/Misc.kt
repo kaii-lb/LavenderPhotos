@@ -24,6 +24,7 @@ import androidx.media3.common.audio.ChannelMixingMatrix
 import androidx.media3.common.audio.SonicAudioProcessor
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.effect.Crop
+import androidx.media3.effect.FrameDropEffect
 import androidx.media3.effect.Presentation
 import androidx.media3.effect.ScaleAndRotateTransformation
 import androidx.media3.effect.SpeedChangeEffect
@@ -48,6 +49,16 @@ enum class SliderStates {
     FontScaling,
     Zooming,
     SelectedTextScaling
+}
+
+data class BasicVideoData(
+    val duration: Float,
+    val frameRate: Float,
+    val absolutePath: String,
+    val width: Int,
+    val height: Int
+) {
+    val aspectRatio = width.toFloat() / height
 }
 
 interface VideoModification {
@@ -77,6 +88,33 @@ interface VideoModification {
     data class Speed(
         val multiplier: Float
     ) : VideoModification
+
+    data class FrameDrop(
+        val targetFps: Int
+    ) : VideoModification
+
+    data class Adjustment(
+        val type: MediaAdjustments,
+        val matrix: FloatArray
+    ) : VideoModification {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as Adjustment
+
+            if (type != other.type) return false
+            if (!matrix.contentEquals(other.matrix)) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = type.hashCode()
+            result = 31 * result + matrix.contentHashCode()
+            return result
+        }
+    }
 }
 
 enum class SelectedCropArea {
@@ -172,6 +210,16 @@ suspend fun saveVideo(
             ScaleAndRotateTransformation.Builder()
                 .setRotationDegrees(-rotation.degrees) // negative since our rotation is clockwise
                 .build()
+        )
+    }
+
+    val frameDrop = modifications.lastOrNull {
+        it is VideoModification.FrameDrop
+    } as? VideoModification.FrameDrop
+
+    if (frameDrop != null) {
+        effectList.add(
+            FrameDropEffect.createDefaultFrameDropEffect(frameDrop.targetFps.toFloat())
         )
     }
 
@@ -305,4 +353,16 @@ enum class CroppingAspectRatio(
     FiveByFour(5f / 4f, R.string.bottom_sheets_five_by_four),
     FourByThree(4f / 3f, R.string.bottom_sheets_four_by_three),
     ThreeByTwo(3f / 2f, R.string.bottom_sheets_three_by_two)
+}
+
+enum class MediaAdjustments {
+    Contrast,
+    Brightness,
+    Saturation,
+    BlackPoint,
+    WhitePoint,
+    Shadows,
+    Warmth,
+    ColorTint,
+    Highlights
 }

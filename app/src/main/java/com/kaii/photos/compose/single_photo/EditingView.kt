@@ -176,6 +176,7 @@ import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.rememberDeviceOrientation
 import com.kaii.photos.compose.single_photo.editing_view.CroppingAspectRatio
+import com.kaii.photos.compose.single_photo.editing_view.MediaAdjustments
 import com.kaii.photos.compose.single_photo.editing_view.SliderStates
 import com.kaii.photos.compose.single_photo.editing_view.makeDrawCanvas
 import com.kaii.photos.datastore.Editing
@@ -1831,11 +1832,11 @@ private fun EditingViewBottomBar(
             label = "Animate editing view bottom bar slider height"
         )
 
-        val selectedProperty = remember { mutableStateOf(SelectedImageProperties.Contrast) }
+        val selectedProperty = remember { mutableStateOf(MediaAdjustments.Contrast) }
         AnimatedContent(
-            targetState = selectedProperty.value != SelectedImageProperties.ColorTint,
+            targetState = selectedProperty.value != MediaAdjustments.ColorTint,
             transitionSpec = {
-                getAppBarContentTransition(selectedProperty.value == SelectedImageProperties.ColorTint)
+                getAppBarContentTransition(selectedProperty.value == MediaAdjustments.ColorTint)
             },
             label = "Animate between normal slider and color slider",
             modifier = Modifier
@@ -2067,22 +2068,10 @@ fun CropTools(
     }
 }
 
-enum class SelectedImageProperties {
-    Contrast,
-    Brightness,
-    Saturation,
-    BlackPoint,
-    WhitePoint,
-    Shadows,
-    Warmth,
-    ColorTint,
-    Highlights
-}
-
 @Composable
 fun AdjustTools(
     sliderValue: MutableFloatState,
-    selectedProperty: MutableState<SelectedImageProperties>,
+    selectedProperty: MutableState<MediaAdjustments>,
     onAdjustmentsDone: (List<Float>) -> Unit
 ) {
     var contrastValue by rememberSaveable { mutableFloatStateOf(0f) }
@@ -2154,7 +2143,7 @@ fun AdjustTools(
 
     LaunchedEffect(sliderValue.floatValue) {
         when (selectedProperty.value) {
-            SelectedImageProperties.Contrast -> run {
+            MediaAdjustments.Contrast -> run {
                 if (sliderValue.floatValue == contrastValue) return@run
 
                 val contrast = sliderValue.floatValue + 1f
@@ -2172,7 +2161,7 @@ fun AdjustTools(
                 contrastValue = sliderValue.floatValue
             }
 
-            SelectedImageProperties.Brightness -> run {
+            MediaAdjustments.Brightness -> run {
                 if (sliderValue.floatValue == brightnessValue) return@run
 
                 val brightness = sliderValue.floatValue
@@ -2190,7 +2179,7 @@ fun AdjustTools(
                 brightnessValue = sliderValue.floatValue
             }
 
-            SelectedImageProperties.Saturation -> run {
+            MediaAdjustments.Saturation -> run {
                 if (sliderValue.floatValue == saturationValue) return@run
 
                 val saturation = sliderValue.floatValue + 1f
@@ -2206,7 +2195,7 @@ fun AdjustTools(
                 saturationValue = sliderValue.floatValue
             }
 
-            SelectedImageProperties.BlackPoint -> run {
+            MediaAdjustments.BlackPoint -> run {
                 if (sliderValue.floatValue == blackPointValue) return@run
 
                 val blackPoint = 150f * -sliderValue.floatValue
@@ -2222,7 +2211,7 @@ fun AdjustTools(
                 blackPointValue = sliderValue.floatValue
             }
 
-            SelectedImageProperties.WhitePoint -> run {
+            MediaAdjustments.WhitePoint -> run {
                 if (sliderValue.floatValue == whitePointValue) return@run
 
                 val whitePoint = sliderValue.floatValue + 1f
@@ -2239,7 +2228,7 @@ fun AdjustTools(
                 whitePointValue = sliderValue.floatValue
             }
 
-            SelectedImageProperties.Warmth -> run {
+            MediaAdjustments.Warmth -> run {
                 if (sliderValue.floatValue == warmthValue) return@run
 
                 // linear equation y = ax + b
@@ -2297,7 +2286,7 @@ fun AdjustTools(
                 warmthValue = sliderValue.floatValue
             }
 
-            SelectedImageProperties.Highlights -> run {
+            MediaAdjustments.Highlights -> run {
                 if (sliderValue.floatValue == highlightsValue) return@run
 
                 val highlight = -sliderValue.floatValue
@@ -2314,7 +2303,7 @@ fun AdjustTools(
                 highlightsValue = sliderValue.floatValue
             }
 
-            SelectedImageProperties.ColorTint -> run {
+            MediaAdjustments.ColorTint -> run {
                 if (sliderValue.floatValue == colorTintValue) {
                     return@run
                 } else if (sliderValue.floatValue == -1.2f) {
@@ -2364,12 +2353,12 @@ fun AdjustTools(
             EditingViewBottomAppBarItem(
                 text = stringResource(id = R.string.editing_contrast),
                 icon = R.drawable.contrast,
-                selected = selectedProperty.value == SelectedImageProperties.Contrast
+                selected = selectedProperty.value == MediaAdjustments.Contrast
             ) {
-                if (selectedProperty.value == SelectedImageProperties.Contrast) {
+                if (selectedProperty.value == MediaAdjustments.Contrast) {
                     sliderValue.floatValue = 0f
                 } else {
-                    selectedProperty.value = SelectedImageProperties.Contrast
+                    selectedProperty.value = MediaAdjustments.Contrast
                     sliderValue.floatValue = contrastValue
                 }
             }
@@ -2379,12 +2368,12 @@ fun AdjustTools(
             EditingViewBottomAppBarItem(
                 text = stringResource(id = R.string.editing_brightness),
                 icon = R.drawable.palette,
-                selected = selectedProperty.value == SelectedImageProperties.Brightness
+                selected = selectedProperty.value == MediaAdjustments.Brightness
             ) {
-                if (selectedProperty.value == SelectedImageProperties.Brightness) {
+                if (selectedProperty.value == MediaAdjustments.Brightness) {
                     sliderValue.floatValue = 0f
                 } else {
-                    selectedProperty.value = SelectedImageProperties.Brightness
+                    selectedProperty.value = MediaAdjustments.Brightness
                     sliderValue.floatValue = brightnessValue
                 }
             }
@@ -2394,12 +2383,12 @@ fun AdjustTools(
             EditingViewBottomAppBarItem(
                 text = stringResource(id = R.string.editing_saturation),
                 icon = R.drawable.resolution,
-                selected = selectedProperty.value == SelectedImageProperties.Saturation
+                selected = selectedProperty.value == MediaAdjustments.Saturation
             ) {
-                if (selectedProperty.value == SelectedImageProperties.Saturation) {
+                if (selectedProperty.value == MediaAdjustments.Saturation) {
                     sliderValue.floatValue = 0f
                 } else {
-                    selectedProperty.value = SelectedImageProperties.Saturation
+                    selectedProperty.value = MediaAdjustments.Saturation
                     sliderValue.floatValue = saturationValue
                 }
             }
@@ -2409,12 +2398,12 @@ fun AdjustTools(
             EditingViewBottomAppBarItem(
                 text = stringResource(id = R.string.editing_black_point),
                 icon = R.drawable.file_is_selected_background,
-                selected = selectedProperty.value == SelectedImageProperties.BlackPoint
+                selected = selectedProperty.value == MediaAdjustments.BlackPoint
             ) {
-                if (selectedProperty.value == SelectedImageProperties.BlackPoint) {
+                if (selectedProperty.value == MediaAdjustments.BlackPoint) {
                     sliderValue.floatValue = 0f
                 } else {
-                    selectedProperty.value = SelectedImageProperties.BlackPoint
+                    selectedProperty.value = MediaAdjustments.BlackPoint
                     sliderValue.floatValue = blackPointValue
                 }
             }
@@ -2424,12 +2413,12 @@ fun AdjustTools(
             EditingViewBottomAppBarItem(
                 text = stringResource(id = R.string.editing_white_point),
                 icon = R.drawable.file_not_selected_background,
-                selected = selectedProperty.value == SelectedImageProperties.WhitePoint
+                selected = selectedProperty.value == MediaAdjustments.WhitePoint
             ) {
-                if (selectedProperty.value == SelectedImageProperties.WhitePoint) {
+                if (selectedProperty.value == MediaAdjustments.WhitePoint) {
                     sliderValue.floatValue = 0f
                 } else {
-                    selectedProperty.value = SelectedImageProperties.WhitePoint
+                    selectedProperty.value = MediaAdjustments.WhitePoint
                     sliderValue.floatValue = whitePointValue
                 }
             }
@@ -2440,7 +2429,7 @@ fun AdjustTools(
         //     EditingViewBottomAppBarItem(
         //         text = stringResource(id = R.string.editing_shadows),
         //         iconResId = R.drawable.shadow,
-        //         selected = selectedProperty.value == SelectedImageProperties.Shadows
+        //         selected = selectedProperty.value == MediaAdjustments.Shadows
         //     )
         // }
 
@@ -2448,12 +2437,12 @@ fun AdjustTools(
             EditingViewBottomAppBarItem(
                 text = stringResource(id = R.string.editing_warmth),
                 icon = R.drawable.skillet,
-                selected = selectedProperty.value == SelectedImageProperties.Warmth
+                selected = selectedProperty.value == MediaAdjustments.Warmth
             ) {
-                if (selectedProperty.value == SelectedImageProperties.Warmth) {
+                if (selectedProperty.value == MediaAdjustments.Warmth) {
                     sliderValue.floatValue = 0f
                 } else {
-                    selectedProperty.value = SelectedImageProperties.Warmth
+                    selectedProperty.value = MediaAdjustments.Warmth
                     sliderValue.floatValue = warmthValue
                 }
             }
@@ -2463,12 +2452,12 @@ fun AdjustTools(
             EditingViewBottomAppBarItem(
                 text = stringResource(id = R.string.editing_color_tint),
                 icon = R.drawable.colors,
-                selected = selectedProperty.value == SelectedImageProperties.ColorTint
+                selected = selectedProperty.value == MediaAdjustments.ColorTint
             ) {
-                if (selectedProperty.value == SelectedImageProperties.ColorTint) {
+                if (selectedProperty.value == MediaAdjustments.ColorTint) {
                     sliderValue.floatValue = -1.2f
                 } else {
-                    selectedProperty.value = SelectedImageProperties.ColorTint
+                    selectedProperty.value = MediaAdjustments.ColorTint
                     sliderValue.floatValue = colorTintValue
                 }
             }
@@ -2478,12 +2467,12 @@ fun AdjustTools(
             EditingViewBottomAppBarItem(
                 text = stringResource(id = R.string.editing_highlights),
                 icon = R.drawable.highlights,
-                selected = selectedProperty.value == SelectedImageProperties.Highlights
+                selected = selectedProperty.value == MediaAdjustments.Highlights
             ) {
-                if (selectedProperty.value == SelectedImageProperties.Highlights) {
+                if (selectedProperty.value == MediaAdjustments.Highlights) {
                     sliderValue.floatValue = 0f
                 } else {
-                    selectedProperty.value = SelectedImageProperties.Highlights
+                    selectedProperty.value = MediaAdjustments.Highlights
                     sliderValue.floatValue = highlightsValue
                 }
             }
