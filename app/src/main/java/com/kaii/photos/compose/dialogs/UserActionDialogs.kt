@@ -28,9 +28,13 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -39,6 +43,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -79,6 +84,7 @@ import com.kaii.photos.compose.TitleCloseRow
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.createDirectoryPicker
 import com.kaii.photos.helpers.findMinParent
 import com.kaii.photos.helpers.getParentFromPath
@@ -1012,5 +1018,81 @@ fun ConfirmationDialogWithCustomBody(
             },
             shape = RoundedCornerShape(32.dp)
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SliderDialog(
+    title: (Float) -> String,
+    steps: Int = 0,
+    range: ClosedFloatingPointRange<Float> = 0f..1f,
+    startsAt: Float = 1f,
+    onSetValue: (Float) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var sliderValue by remember { mutableFloatStateOf(startsAt) }
+
+    LavenderDialogBase(
+        onDismiss = onDismiss
+    ) {
+        Text(
+            text = title(sliderValue),
+            fontSize = TextUnit(TextStylingConstants.LARGE_TEXT_SIZE, TextUnitType.Sp)
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Slider(
+            value = sliderValue,
+            valueRange = range,
+            steps = steps,
+            onValueChange = {
+                sliderValue = it
+            },
+            track = { state ->
+                SliderDefaults.Track(
+                    sliderState = state,
+                    drawTick = { offset, color -> },
+                    modifier = Modifier
+                        .height(40.dp)
+                )
+            },
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth(1f),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(
+                alignment = Alignment.End,
+                space = 8.dp
+            )
+        ) {
+            FilledTonalButton(
+                onClick = onDismiss
+            ) {
+                Text(
+                    text = stringResource(id = R.string.media_cancel),
+                    fontSize = TextUnit(TextStylingConstants.SMALL_TEXT_SIZE, TextUnitType.Sp)
+                )
+            }
+
+            Button(
+                onClick = {
+                    onSetValue(sliderValue)
+                    onDismiss()
+                }
+            ) {
+                Text(
+                    text = stringResource(id = R.string.media_confirm),
+                    fontSize = TextUnit(TextStylingConstants.SMALL_TEXT_SIZE, TextUnitType.Sp)
+                )
+            }
+        }
     }
 }

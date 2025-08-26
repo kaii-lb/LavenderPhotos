@@ -36,6 +36,9 @@ sealed class VideoPlayerConstants {
 
 sealed class TextStylingConstants {
     companion object {
-        const val SMALL_TEXT_SIZE = 12f
+        const val EXTRA_SMALL_TEXT_SIZE = 12f
+        const val SMALL_TEXT_SIZE = 14f
+        const val MEDIUM_TEXT_SIZE = 16f
+        const val LARGE_TEXT_SIZE = 18f
     }
 }

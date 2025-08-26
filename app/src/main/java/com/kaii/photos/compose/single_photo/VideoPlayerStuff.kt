@@ -386,7 +386,7 @@ private fun VideoPlayerControllerBottomControls(
             ) {
                 Text(
                     text = "${currentPlaybackSpeed}X",
-                    fontSize = TextUnit(TextStylingConstants.SMALL_TEXT_SIZE, TextUnitType.Sp),
+                    fontSize = TextUnit(TextStylingConstants.EXTRA_SMALL_TEXT_SIZE, TextUnitType.Sp),
                     fontWeight = FontWeight.Bold
                 )
             }

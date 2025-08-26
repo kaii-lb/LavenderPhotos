@@ -18,6 +18,8 @@ import androidx.compose.ui.unit.dp
 import androidx.media3.common.Effect
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
+import androidx.media3.common.audio.ChannelMixingAudioProcessor
+import androidx.media3.common.audio.ChannelMixingMatrix
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.effect.Crop
 import androidx.media3.effect.Presentation
@@ -35,6 +37,7 @@ import com.kaii.photos.helpers.getParentFromPath
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getUriFromAbsolutePath
 import java.io.File
+import kotlin.math.pow
 
 private const val TAG = "EDITOR_MISC"
 
@@ -62,6 +65,10 @@ interface VideoModification {
 
     data class Rotation(
         val degrees: Float
+    ) : VideoModification
+
+    data class Volume(
+        val percentage: Float
     ) : VideoModification
 }
 
@@ -114,7 +121,7 @@ suspend fun saveVideo(
         it is VideoModification.Crop
     } as? VideoModification.Crop
 
-    if (cropArea != null) {
+    if (cropArea != null && !cropArea.left.isNaN() && !cropArea.right.isNaN() && !cropArea.top.isNaN() && !cropArea.bottom.isNaN()) {
         val left = (cropArea.left / containerDimens.width).coerceIn(-1f, 1f)
         val right = (cropArea.right / containerDimens.width).coerceIn(-1f, 1f)
         val top = (cropArea.top / containerDimens.height).coerceIn(-1f, 1f)
@@ -166,8 +173,24 @@ suspend fun saveVideo(
         .setClippingConfiguration(clippingConfiguration)
         .build()
 
+    val audioProcessor = ChannelMixingAudioProcessor()
+    val minDb = -40f
+    val maxDb = 0f
+
+    val volumePercentage =
+        modifications.lastOrNull {
+            it is VideoModification.Volume
+        } as? VideoModification.Volume ?: VideoModification.Volume(1f)
+
+    val dbChange = minDb + (maxDb - minDb) * volumePercentage.percentage
+    val linearGain = 10f.pow(dbChange / 20f)
+
+    audioProcessor.putChannelMixingMatrix(
+        ChannelMixingMatrix.createForConstantGain(2, 2).scaleBy(linearGain)
+    )
+
     val editedMediaItem = EditedMediaItem.Builder(mediaItem)
-        .setEffects(Effects(emptyList(), effectList))
+        .setEffects(Effects(listOf(audioProcessor), effectList))
         .build()
 
     val file = File(absolutePath)

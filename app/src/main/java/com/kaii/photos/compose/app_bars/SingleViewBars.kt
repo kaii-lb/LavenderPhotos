@@ -72,6 +72,7 @@ import com.kaii.photos.compose.SelectableDropDownMenuItem
 import com.kaii.photos.compose.SimpleTab
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.single_photo.editing_view.CroppingAspectRatio
+import com.kaii.photos.compose.single_photo.editing_view.VideoEditorAdjustContent
 import com.kaii.photos.compose.single_photo.editing_view.VideoEditorCropContent
 import com.kaii.photos.compose.single_photo.editing_view.VideoEditorTrimContent
 import com.kaii.photos.compose.single_photo.editing_view.VideoModification
@@ -96,7 +97,8 @@ fun VideoEditorBottomBar(
     croppingAspectRatio: MutableState<CroppingAspectRatio>,
     onCropReset: () -> Unit,
     onSeek: (position: Float) -> Unit,
-    onRotate: () -> Unit
+    onRotate: () -> Unit,
+    onSetVolume: (percent: Float) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
 
@@ -210,6 +212,12 @@ fun VideoEditorBottomBar(
                             croppingAspectRatio = croppingAspectRatio,
                             onReset = onCropReset,
                             onRotate = onRotate
+                        )
+                    }
+
+                    2 -> {
+                        VideoEditorAdjustContent(
+                            onSetVolume = onSetVolume
                         )
                     }
 

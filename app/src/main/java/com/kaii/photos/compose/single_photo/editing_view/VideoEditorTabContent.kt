@@ -46,12 +46,14 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isUnspecified
 import com.kaii.photos.R
 import com.kaii.photos.compose.CroppingRatioBottomSheet
+import com.kaii.photos.compose.dialogs.SliderDialog
 import com.kaii.photos.compose.single_photo.EditingViewBottomAppBarItem
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.VideoPlayerConstants
@@ -373,6 +375,47 @@ fun VideoEditorCropContent(
             text = stringResource(id = R.string.editing_reset),
             icon = R.drawable.reset,
             onClick = onReset
+        )
+    }
+}
+
+@Composable
+fun VideoEditorAdjustContent(
+    onSetVolume: (percent: Float) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxSize(1f),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        var showVolumeDialog by remember { mutableStateOf(false) }
+        val resources = LocalResources.current
+
+        if (showVolumeDialog) {
+            SliderDialog(
+                steps = 200,
+                range = 0f..200f,
+                startsAt = 100f,
+                title = {
+                    resources.getString(R.string.editing_volume, "${it.toInt()}%")
+                },
+                onSetValue = {
+                    onSetVolume(it / 100f)
+                },
+                onDismiss = {
+                    showVolumeDialog = false
+                }
+            )
+        }
+
+        EditingViewBottomAppBarItem(
+            text = stringResource(id = R.string.volume),
+            icon = R.drawable.volume_max,
+            onClick = {
+                showVolumeDialog = true
+            }
         )
     }
 }
