@@ -452,6 +452,10 @@
     <string name="immich_help_detailed">How to use</string>
     <string name="immich_help_detailed_desc">
         <![CDATA[
+            <p><a href="https://immich.app/">Immich</a> is a self hosted photo and video management solution,
+            that allows for anyone to host their own cloud backup server.
+            </p>
+            <h3 style="text-align:center;">How to Use?<h3/>
             <ul>
                 <li>Self-host an <a href="https://immich.app/">Immich Server</a></li>
                 <li>Specify server address in Lavender Photos</li>

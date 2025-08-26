@@ -443,7 +443,7 @@ fun ImmichMainPage() {
                 val showExplanationDialog = remember { mutableStateOf(false) }
                 if (showExplanationDialog.value) {
                     AnnotatedExplanationDialog(
-                        title = stringResource(id = R.string.immich_help_detailed),
+                        title = stringResource(id = R.string.immich_help_general),
                         annotatedExplanation = AnnotatedString.fromHtml(
                             htmlString = stringResource(id = R.string.immich_help_detailed_desc)
                         ),
