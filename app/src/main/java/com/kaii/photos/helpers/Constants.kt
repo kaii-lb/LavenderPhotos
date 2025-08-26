@@ -18,12 +18,13 @@ sealed class AnimationConstants {
             stiffness = 1000f
         )
 
-        fun <T> expressiveTween() = tween<T>(
-            durationMillis = 200,
+        fun <T> expressiveTween(durationMillis: Int = 200) = tween<T>(
+            durationMillis = durationMillis,
             easing = EaseInOutExpo
         )
 
         const val DURATION = 350
+        const val LONG_DURATION = 600
     }
 }
 
