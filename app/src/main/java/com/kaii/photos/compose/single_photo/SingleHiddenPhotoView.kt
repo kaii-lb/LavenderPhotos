@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
@@ -81,6 +82,7 @@ import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
 import com.kaii.photos.compose.dialogs.DialogInfoText
 import com.kaii.photos.compose.dialogs.LoadingDialog
+import com.kaii.photos.compose.rememberDeviceOrientation
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.MediaData
@@ -313,6 +315,7 @@ private fun TopBar(
             title = {
                 Spacer(modifier = Modifier.width(8.dp))
 
+                val isLandscape by rememberDeviceOrientation()
                 Text(
                     text = mediaItem.displayName,
                     fontSize = TextUnit(18f, TextUnitType.Sp),
@@ -320,7 +323,7 @@ private fun TopBar(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier
-                        .width(160.dp)
+                        .widthIn(max = if (isLandscape) 300.dp else 180.dp)
                 )
             },
             actions = {

@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
@@ -65,6 +66,7 @@ import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.SinglePhotoInfoDialog
+import com.kaii.photos.compose.rememberDeviceOrientation
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.setTrashedOnPhotoList
@@ -293,6 +295,7 @@ private fun TopBar(
                 Spacer(modifier = Modifier.width(8.dp))
 
                 val splitBy = Regex("trashed-[0-9]+-")
+                val isLandscape by rememberDeviceOrientation()
                 Text(
                     text = mediaTitle.split(splitBy).lastOrNull() ?: stringResource(id = R.string.media),
                     fontSize = TextUnit(18f, TextUnitType.Sp),
@@ -300,7 +303,7 @@ private fun TopBar(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier
-                        .width(160.dp)
+                        .widthIn(max = if (isLandscape) 300.dp else 180.dp)
                 )
             },
             actions = {

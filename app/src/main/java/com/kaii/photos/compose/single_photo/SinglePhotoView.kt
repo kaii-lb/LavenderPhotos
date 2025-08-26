@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.pager.PagerState
@@ -420,7 +421,7 @@ private fun TopBar(
                     overflow = TextOverflow.Ellipsis,
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier
-                        .width(if (isLandscape) 300.dp else 180.dp)
+                        .widthIn(max = if (isLandscape) 300.dp else 180.dp)
                         .clip(CircleShape)
                         .clickable {
                             showInfoDialog.value = true

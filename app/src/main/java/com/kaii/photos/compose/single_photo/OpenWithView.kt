@@ -47,7 +47,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomAppBar
@@ -111,6 +111,7 @@ import com.kaii.photos.compose.app_bars.BottomAppBarItem
 import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.dialogs.ExplanationDialog
 import com.kaii.photos.compose.rememberDeviceOrientation
+import com.kaii.photos.compose.single_photo.editing_view.VideoEditor
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
@@ -118,6 +119,7 @@ import com.kaii.photos.helpers.shareImage
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.copyUriToUri
+import com.kaii.photos.mediastore.getMediaStoreDataFromUri
 import com.kaii.photos.models.multi_album.DisplayDateFormat
 import com.kaii.photos.models.multi_album.formatDate
 import com.kaii.photos.ui.theme.PhotosTheme
@@ -238,6 +240,24 @@ class OpenWithView : ComponentActivity() {
                                 window = window,
                                 overwriteByDefault = false,
                                 isOpenWith = true
+                            )
+                        }
+
+                        composable<Screens.VideoEditor> {
+                            enableEdgeToEdge(
+                                navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
+                                statusBarStyle = SystemBarStyle.auto(
+                                    MaterialTheme.colorScheme.surface.toArgb(),
+                                    MaterialTheme.colorScheme.surface.toArgb()
+                                )
+                            )
+
+                            val screen = it.toRoute<Screens.VideoEditor>()
+
+                            VideoEditor(
+                                uri = screen.uri.toUri(),
+                                absolutePath = screen.absolutePath,
+                                window = window
                             )
                         }
                     }
@@ -779,6 +799,7 @@ private fun TopBar(
     ) {
         TopAppBar(
             title = {
+                val isLandscape by rememberDeviceOrientation()
                 Text(
                     text = stringResource(id = R.string.media),
                     fontSize = TextUnit(18f, TextUnitType.Sp),
@@ -786,7 +807,7 @@ private fun TopBar(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier
-                        .width(160.dp)
+                        .widthIn(max = if (isLandscape) 300.dp else 180.dp)
                 )
             },
             navigationIcon = {
@@ -878,57 +899,61 @@ private fun BottomBar(
                         text = stringResource(id = R.string.edit),
                         iconResId = R.drawable.paintbrush,
                         cornerRadius = 32.dp,
-                        action =
-                            if (mediaType == MediaType.Image) {
-                                {
-                                    val extension = mimeType.split("/")[1]
-                                    val currentTime = System.currentTimeMillis()
-                                    val date = formatDate(
-                                        timestamp = currentTime / 1000,
-                                        sortBy = MediaItemSortMode.DateTaken,
-                                        format = DisplayDateFormat.Default
-                                    )
-                                    val name = resources.getString(R.string.edit_desc, "$date.$extension")
-                                    val destination = File(Environment.DIRECTORY_PICTURES, name) // TODO: maybe move into subdir?
+                        action = {
+                            val extension = mimeType.split("/")[1]
+                            val currentTime = System.currentTimeMillis()
+                            val date = formatDate(
+                                timestamp = currentTime / 1000,
+                                sortBy = MediaItemSortMode.DateTaken,
+                                format = DisplayDateFormat.Default
+                            )
+                            val name = resources.getString(R.string.edit_desc, "$date.$extension")
+                            val destination = File(Environment.DIRECTORY_PICTURES, name) // TODO: maybe move into subdir?
 
-                                    val contentValues = ContentValues().apply {
-                                        put(MediaColumns.DISPLAY_NAME, name)
-                                        put(MediaColumns.DATE_MODIFIED, currentTime)
-                                        put(MediaColumns.DATE_TAKEN, currentTime)
-                                        put(MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES)
-                                        put(MediaColumns.MIME_TYPE, mimeType)
+                            val contentValues = ContentValues().apply {
+                                put(MediaColumns.DISPLAY_NAME, name)
+                                put(MediaColumns.DATE_MODIFIED, currentTime)
+                                put(MediaColumns.DATE_TAKEN, currentTime)
+                                put(MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES)
+                                put(MediaColumns.MIME_TYPE, mimeType)
+                            }
+
+                            val contentUri = context.contentResolver.insert(
+                                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                                contentValues
+                            )
+
+                            contentUri?.let {
+                                context.contentResolver.getMediaStoreDataFromUri(contentUri)?.absolutePath?.let { absolutePath ->
+                                    context.contentResolver.copyUriToUri(
+                                        from = uri,
+                                        to = contentUri
+                                    )
+
+                                    setBarVisibility(
+                                        visible = true,
+                                        window = window
+                                    ) {
+                                        appBarsVisible.value = it
                                     }
 
-                                    val contentUri = context.contentResolver.insert(
-                                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                                        contentValues
-                                    )
-
-                                    if (contentUri != null) {
-                                        context.contentResolver.copyUriToUri(
-                                            from = uri,
-                                            to = contentUri
-                                        )
-
-                                        setBarVisibility(
-                                            visible = true,
-                                            window = window
-                                        ) {
-                                            appBarsVisible.value = it
-                                        }
-
-                                        navController.navigate(
+                                    navController.navigate(
+                                        if (mediaType == MediaType.Image) {
                                             Screens.EditingScreen(
                                                 absolutePath = destination.absolutePath,
                                                 uri = contentUri.toString(),
                                                 dateTaken = currentTime / 1000
                                             )
-                                        )
-                                    }
+                                        } else {
+                                            Screens.VideoEditor(
+                                                uri = contentUri.toString(),
+                                                absolutePath = absolutePath
+                                            )
+                                        }
+                                    )
                                 }
-                            } else {
-                                { showNotImplementedDialog.value = true }
                             }
+                        }
                     )
                 }
             }
