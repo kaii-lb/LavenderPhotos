@@ -74,7 +74,8 @@ enum class SelectedCropArea {
     LeftEdge,
     BottomEdge,
     RightEdge,
-    None
+    None,
+    Whole
 }
 
 @OptIn(UnstableApi::class)
