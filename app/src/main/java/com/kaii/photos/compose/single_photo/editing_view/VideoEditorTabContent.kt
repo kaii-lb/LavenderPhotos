@@ -32,6 +32,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -381,7 +382,7 @@ fun VideoEditorCropContent(
 
 @Composable
 fun VideoEditorAdjustContent(
-    onSetVolume: (percent: Float) -> Unit,
+    modifications: SnapshotStateList<VideoModification>,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -402,7 +403,9 @@ fun VideoEditorAdjustContent(
                     resources.getString(R.string.editing_volume, "${it.toInt()}%")
                 },
                 onSetValue = {
-                    onSetVolume(it / 100f)
+                    modifications.add(
+                        VideoModification.Volume(it / 100f)
+                    )
                 },
                 onDismiss = {
                     showVolumeDialog = false
@@ -415,6 +418,46 @@ fun VideoEditorAdjustContent(
             icon = R.drawable.volume_max,
             onClick = {
                 showVolumeDialog = true
+            }
+        )
+
+        var showSpeedDialog by remember { mutableStateOf(false) }
+        fun getSpeed(index: Int) =
+            when (index) {
+                0 -> 0.5f
+                1 -> 1f
+                2 -> 1.5f
+                3 -> 2f
+                4 -> 4f
+                5 -> 8f
+
+                else -> 1f
+            }
+
+        if (showSpeedDialog) {
+            SliderDialog(
+                steps = 4,
+                range = 0f..5f,
+                startsAt = 1f,
+                title = {
+                    resources.getString(R.string.editing_speed, "${getSpeed(it.toInt())}X")
+                },
+                onSetValue = {
+                    modifications.add(
+                        VideoModification.Speed(getSpeed(it.toInt()))
+                    )
+                },
+                onDismiss = {
+                    showSpeedDialog = false
+                }
+            )
+        }
+
+        EditingViewBottomAppBarItem(
+            text = stringResource(id = R.string.wilson),
+            icon = R.drawable.speed,
+            onClick = {
+                showSpeedDialog = true
             }
         )
     }

@@ -94,11 +94,11 @@ fun VideoEditorBottomBar(
     leftPosition: MutableFloatState,
     rightPosition: MutableFloatState,
     imageAspectRatio: Float,
+    modifications: SnapshotStateList<VideoModification>,
     croppingAspectRatio: MutableState<CroppingAspectRatio>,
     onCropReset: () -> Unit,
     onSeek: (position: Float) -> Unit,
-    onRotate: () -> Unit,
-    onSetVolume: (percent: Float) -> Unit
+    onRotate: () -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
 
@@ -217,7 +217,7 @@ fun VideoEditorBottomBar(
 
                     2 -> {
                         VideoEditorAdjustContent(
-                            onSetVolume = onSetVolume
+                            modifications = modifications
                         )
                     }
 
@@ -338,7 +338,8 @@ fun VideoEditorTopBar(
                         onClick = {
                             lastSavedModCount.intValue = modifications.size
 
-                            coroutineScope.launch {
+                            // mainViewModel so it doesn't die if user exits before video is saved
+                            mainViewModel.launch {
                                 saveVideo(
                                     context = context,
                                     modifications = modifications,

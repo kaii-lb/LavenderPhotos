@@ -207,6 +207,7 @@ fun VideoEditor(
                 rightPosition = rightTrimPosition,
                 imageAspectRatio = videoDimens.width.toFloat() / videoDimens.height,
                 croppingAspectRatio = aspectRatio,
+                modifications = modifications,
                 onCropReset = {
                     resetCrop.value = true
                     rotation = 0f
@@ -231,11 +232,6 @@ fun VideoEditor(
                         VideoModification.Rotation(
                             degrees = rotation
                         )
-                    )
-                },
-                onSetVolume = { percent ->
-                    modifications.add(
-                        VideoModification.Volume(percent)
                     )
                 }
             )
@@ -337,6 +333,7 @@ fun VideoEditor(
                             modifier = Modifier
                                 .offset(16.dp, 16.dp) // adjust for top-left change from AnimatedVisibility
                         ) { area, original ->
+                            modifications.removeAll { it is VideoModification.Crop } // because Crop gets called a million times each movement
                             modifications.add(
                                 VideoModification.Crop(
                                     top = area.top,

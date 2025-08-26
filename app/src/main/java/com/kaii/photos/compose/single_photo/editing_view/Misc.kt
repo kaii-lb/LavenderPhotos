@@ -18,12 +18,15 @@ import androidx.compose.ui.unit.dp
 import androidx.media3.common.Effect
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
+import androidx.media3.common.audio.AudioProcessor
 import androidx.media3.common.audio.ChannelMixingAudioProcessor
 import androidx.media3.common.audio.ChannelMixingMatrix
+import androidx.media3.common.audio.SonicAudioProcessor
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.effect.Crop
 import androidx.media3.effect.Presentation
 import androidx.media3.effect.ScaleAndRotateTransformation
+import androidx.media3.effect.SpeedChangeEffect
 import androidx.media3.transformer.Composition
 import androidx.media3.transformer.EditedMediaItem
 import androidx.media3.transformer.Effects
@@ -69,6 +72,10 @@ interface VideoModification {
 
     data class Volume(
         val percentage: Float
+    ) : VideoModification
+
+    data class Speed(
+        val multiplier: Float
     ) : VideoModification
 }
 
@@ -173,6 +180,9 @@ suspend fun saveVideo(
         .setClippingConfiguration(clippingConfiguration)
         .build()
 
+    val audioEffectList = mutableListOf<AudioProcessor>()
+
+    // try to "linearize" as best as possible
     val audioProcessor = ChannelMixingAudioProcessor()
     val minDb = -40f
     val maxDb = 0f
@@ -189,8 +199,22 @@ suspend fun saveVideo(
         ChannelMixingMatrix.createForConstantGain(2, 2).scaleBy(linearGain)
     )
 
+    audioEffectList.add(audioProcessor)
+
+    val speedMultiplier =
+        modifications.lastOrNull {
+            it is VideoModification.Speed
+        } as? VideoModification.Speed
+
+    if (speedMultiplier?.multiplier != null && speedMultiplier.multiplier != 1f) {
+        effectList.add(SpeedChangeEffect(speedMultiplier.multiplier))
+        audioEffectList.add(SonicAudioProcessor().apply {
+            setSpeed(speedMultiplier.multiplier)
+        })
+    }
+
     val editedMediaItem = EditedMediaItem.Builder(mediaItem)
-        .setEffects(Effects(listOf(audioProcessor), effectList))
+        .setEffects(Effects(audioEffectList, effectList))
         .build()
 
     val file = File(absolutePath)
