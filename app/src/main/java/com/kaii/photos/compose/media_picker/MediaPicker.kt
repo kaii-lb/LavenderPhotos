@@ -105,6 +105,7 @@ import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.mediastore.MediaStoreData
+import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.custom_album.CustomAlbumViewModelFactory
 import com.kaii.photos.models.main_activity.MainViewModel
@@ -629,7 +630,9 @@ fun MediaPickerConfirmButton(
                 if (incomingIntent.getBooleanExtra(Intent.EXTRA_ALLOW_MULTIPLE, false) == true
                     || incomingIntent.action == Intent.ACTION_OPEN_DOCUMENT
                 ) {
-                    val uris = selectedItemsList.map { it.uri }
+                    val uris = selectedItemsList.filter { it.type != MediaType.Section }.map { it.uri }
+
+                    Log.d(TAG, "Selected items are $selectedItemsList")
 
                     val resultIntent = Intent().apply {
                         putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(uris))
@@ -644,9 +647,11 @@ fun MediaPickerConfirmButton(
                     activity.setResult(RESULT_OK, resultIntent)
                 } else {
                     val resultIntent = Intent().apply {
-                        data = selectedItemsList.first().uri
+                        data = selectedItemsList.first { it.type != MediaType.Section }.uri
                         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                     }
+
+                    Log.d(TAG, "Selected item is ${selectedItemsList.first { it.type != MediaType.Section }}")
 
                     activity.setResult(RESULT_OK, resultIntent)
                 }
