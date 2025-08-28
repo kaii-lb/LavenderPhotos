@@ -195,7 +195,6 @@
     <string name="settings_clear">Очистить</string>
     <string name="settings_clear_cache_desc">Это удалит все кэши миниатюр на этом устройстве, освобождая хранилище. Загрузка миниатюр при следующем запуске займёт больше времени.</string>
     <string name="settings_about_and_updates">О программе и обновления</string>
-    <string name="trash">Корзина</string>
     <string name="trash_bin">Корзина</string>
     <string name="trash_auto_delete">Автоматическое удаление из корзины через</string>
     <string name="trash_days">дней</string>
