@@ -2,4 +2,63 @@
 <resources>
     <string name="app_name">Fotos</string>
     <string name="default_homepage_photogrid_dir">DCIM/Câmera</string>
+    <string name="first_startup_dialog_title">Procurar todos os álbuns no dispositivo?</string>
+    <string name="first_startup_dialog_body">Procura todos os álbuns neste dispositivo e os importa para o Lavender Photos.\nAtenção: Usuários existentes TERÃO seus álbuns apagados se esta opção for usada.</string>
+    <string name="first_startup_dialog_confirm_title">Procurar!</string>
+    <string name="albums">Álbuns</string>
+    <string name="finding_albums_on_device">Procurando álbuns…</string>
+    <string name="albums_found">Todos os álbuns encontrados!</string>
+    <string name="add_album">Adicionar álbum</string>
+    <string name="direct_path_album">Use o caminho de uma pasta para adicionar um álbum</string>
+    <string name="albums_main_list">Lista Principal de Álbuns</string>
+    <string name="error_views_error_page">Esta é uma página de erro</string>
+    <string name="albums_selected">Álbuns Selecionados</string>
+    <string name="albums_auto_detect">Detectar álbuns automaticamente</string>
+    <string name="albums_clear_list_desc">Remover todos os álbuns, exceto Câmera e Download</string>
+    <string name="albums_media_sorting">Ordenação de Mídia</string>
+    <string name="albums_media_sorting_desc">Define a ordenação de fotos e vídeos em grades</string>
+    <string name="albums_is_custom">Este é um álbum personalizado</string>
+    <string name="albums_custom">Álbum Personalizado</string>
+    <string name="albums_already_contains_all">O álbum já contém todos os itens</string>
+    <string name="albums_remove">Remover álbum da lista</string>
+    <string name="albums_info">Informações do álbum</string>
+    <string name="albums_path">Caminho</string>
+    <string name="tab_non_existent">Esta aba não existe!</string>
+    <string name="tabs_default">Aba Padrão</string>
+    <string name="tabs_default_desc">O Lavender Photos abrirá esta aba automaticamente ao iniciar</string>
+    <string name="tabs_customize">Personalizar Abas</string>
+    <string name="tabs_customize_desc">Altere quais abas estão disponíveis na barra inferior</string>
+    <string name="tabs_navigate_to">Ir para a página %s$1</string>
+    <string name="tabs_add">Adicionar Aba</string>
+    <string name="tabs_name">Nome da aba</string>
+    <string name="tabs_albums_incl">Álbuns Inclusos</string>
+    <string name="tabs_confirm">Adicionar Aba</string>
+    <string name="tabs_empty_params">Os parâmetros da aba não podem estar vazios</string>
+    <string name="tabs_max_reached">Não é possível adicionar mais de 5 abas</string>
+    <string name="tabs_min_reached">Pelo menos uma aba precisa existir</string>
+    <string name="return_to_previous_page">Voltar para a página anterior</string>
+    <string name="app_icon">Ícone do aplicativo</string>
+    <string name="app_name_full">Lavender Photos</string>
+    <string name="dev_title">Desenvolvedor</string>
+    <string name="privacy_policy_title">política de Privacidade</string>
+    <string name="privacy_policy">Não existe! Nenhum dos seus dados vai para lugar nenhum além deste dispositivo. Nenhuma IA é treinada nele, nenhum algoritmo para coletar informações, nada. O Lavender Photos foi e sempre será um aplicativo de galeria focado em privacidade.</string>
+    <string name="i_swear_were_not_bad">nós realmente não usamos seus dados</string>
+    <string name="support">Apoio e Doações</string>
+    <string name="support_desc">me ajude a manter o aplicativo vivo</string>
+    <string name="version_info">Informações da versão</string>
+    <string name="updates">Atualizações</string>
+    <string name="updates_desc">mantenha o aplicativo atualizado</string>
+    <string name="updates_check">Verificar atualizações</string>
+    <string name="updates_check_desc">Notifica sobre uma nova versão ao abrir o aplicativo. A atualização não instala automaticamente</string>
+    <string name="updates_whats_new">O que há de novo</string>
+    <string name="updates_notice">Aviso de download</string>
+    <string name="updates_notice_desc"><![CDATA[
+<p>Este atualizador baixa os APKs diretamente do <a href="https://github.com/kaii-lb/LavenderPhotos/releases">GitHub Releases</a>, o que significa que eles não passam pela verificação e pelos testes adicionais realizados por fontes como IzzyOnDroid, F-Droid ou outras.
+
+<br><br>As versões hospedadas no GitHub são sempre assinadas e verificadas pelo desenvolvedor (kaii-lb), mas a decisão de usá-las ou não é sua.
+
+<br><br>O Lavender Photos nunca faz atualizações automáticas e somente atualiza com o consentimento explícito do usuário.
+</p>
+]]></string>
+    <string name="error_views_folder_non_existent">A pasta não existe</string>
 </resources>
