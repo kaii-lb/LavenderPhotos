@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Fotos</string>
-    <string name="default_homepage_photogrid_dir">DCIM/Kamera</string>
     <string name="first_startup_dialog_title">Alle Alben auf dem Gerät finden?</string>
     <string name="first_startup_dialog_body">Sucht nach allen Alben auf diesem Gerät und fügt sie zu Lavender Photos hinzu.\nInfo: Bei bestehenden Nutzern werden alle Alben gelöscht wenn diese Option aktiviert wird.</string>
     <string name="first_startup_dialog_confirm_title">Suche!</string>
