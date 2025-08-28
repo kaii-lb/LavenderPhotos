@@ -15,7 +15,6 @@
     <string name="add_album">Add an album</string>
     <string name="direct_path_album">Use a direct path to add an album</string>
     <string name="albums_main_list">Main Albums List</string>
-    <string name="albums_main_list_desc">Select albums that will have their photos displayed in the main photo view</string>
     <string name="albums_main_list_selected">Albums selected here will show up in the main photo view</string>
     <string name="albums_selected">Selected Albums</string>
     <string name="albums_auto_detect">Automatically detect albums</string>
