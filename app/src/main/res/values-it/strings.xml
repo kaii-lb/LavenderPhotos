@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Foto</string>
-    <string name="default_homepage_photogrid_dir">DCIM/Camera</string>
     <string name="first_startup_dialog_title">Cercare tutti gli album sul dispositivo?</string>
     <string name="first_startup_dialog_body">Cerca tutti gli album sul dispositivo e li aggiunge su Lavender Photos.\nAttenzione: Gli album dei vecchi utenti saranno cancellati se verrà usata questa opzione.</string>
     <string name="first_startup_dialog_confirm_title">Cerca!</string>
