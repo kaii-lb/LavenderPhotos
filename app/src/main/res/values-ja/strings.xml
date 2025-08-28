@@ -78,7 +78,6 @@
     <string name="media_confirm">確認</string>
     <string name="albums_found">すべてのアルバムが見つかりました！</string>
     <string name="direct_path_album">直接でパスを使用してアルバムを追加します</string>
-    <string name="albums_main_list_desc">メインのフォトビューに写真を表示するアルバムを選択します</string>
     <string name="albums_auto_detect_desc">このデバイス上のメディアを含むすべてのフォルダを検出してアルバムビューに追加します</string>
     <string name="albums_clear_list_desc">カメラとダウンロード以外のアルバムをすべて削除します</string>
     <string name="albums_media_sorting_desc">写真とビデオのグリッド内の並び順を設定します</string>
