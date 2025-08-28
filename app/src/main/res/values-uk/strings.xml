@@ -37,7 +37,7 @@
     <string name="support">Підтримати нас</string>
     <string name="support_desc">допоможіть нам підтримувати застосунок</string>
     <string name="updates_desc">оновлюйте застосунок</string>
-    <string name="updates_check">Перевірити оновлення</string>
+    <string name="updates_check">Перевіряти оновлення</string>
     <string name="updates_check_desc">Повідомляє про нову версію під час відкриття застосунку. Оновлення не встановлюється автоматично</string>
     <string name="updates_start">Почати оновлення</string>
     <string name="settings_privacy">Приватність та безпека</string>
