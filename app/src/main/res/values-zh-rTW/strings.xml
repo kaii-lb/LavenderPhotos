@@ -58,7 +58,6 @@
     <string name="secure_folder">安全資料夾</string>
     <string name="secure_sharing">分享媒體</string>
     <string name="app_name">圖片</string>
-    <string name="albums_main_list_desc">選中的相簿將會顯示在主畫面</string>
     <string name="support_desc">幫助我維護應用程式的動力</string>
     <string name="updates_check_desc">開啟應用時提醒更新。不會自動翁安裝更新</string>
     <string name="locked_folder_help_bottom">如果忘記密碼或指紋已移除則無法恢復安全數據。</string>
