@@ -272,7 +272,6 @@
     <string name="bottom_sheets_freeform">Произвольная форма</string>
     <string name="bottom_sheets_image_ratio">Соотношение сторон изображения</string>
     <string name="bottom_sheets_square">Квадрат</string>
-    <string name="bottom_sheets_vertical">По вертикали</string>
     <string name="bottom_sheets_horizontal">По горизонтали</string>
     <string name="bottom_sheets_ratio_selected">Выбран этот коэффициент обрезки</string>
     <string name="error_views_trash_empty">Здесь отображаются элементы, удалённые из альбома</string>
