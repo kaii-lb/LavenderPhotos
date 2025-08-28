@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">صور</string>
-    <string name="default_homepage_photogrid_dir">كاميرا</string>
     <string name="first_startup_dialog_title">ابحث على جميع الألبومات على الجهاز؟</string>
     <string name="first_startup_dialog_body">هذا الخيار يبحث عن كل ألبومات على هذا الجهاز ويضيفهم إلى الصور .\nملاحظة: سيتم مسح ألبومات المستخدمين القدامى إذا تم استخدام هذا الخيار.</string>
     <string name="first_startup_dialog_confirm_title">إبحث!</string>
