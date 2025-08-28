@@ -200,7 +200,6 @@
     <string name="settings_clear">Limpiar</string>
     <string name="settings_clear_cache_desc">Esto borrará todas las cachés de miniaturas en este dispositivo, liberando almacenamiento. La carga de miniaturas tardará más en el próximo inicio.</string>
     <string name="settings_about_and_updates">Acerca de y Actualizaciones</string>
-    <string name="trash">Basura</string>
     <string name="trash_bin">Papelera</string>
     <string name="trash_auto_delete">Elimina automáticamente los elementos en la papelera después de</string>
     <string name="trash_days">dias</string>
