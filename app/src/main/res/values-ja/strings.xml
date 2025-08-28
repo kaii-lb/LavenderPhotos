@@ -20,7 +20,6 @@
     <string name="media_okay">Okay</string>
     <string name="tabs">タブ</string>
     <string name="app_name">写真</string>
-    <string name="default_homepage_photogrid_dir">DCIM/Camera</string>
     <string name="first_startup_dialog_title">デバイス上のすべてのアルバムを検索しますか？</string>
     <string name="first_startup_dialog_confirm_title">検索！</string>
     <string name="albums">アルバム</string>
