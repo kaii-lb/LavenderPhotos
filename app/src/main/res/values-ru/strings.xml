@@ -11,7 +11,6 @@
     <string name="add_album">Добавить альбом</string>
     <string name="direct_path_album">Использовать прямой путь для добавления альбома</string>
     <string name="albums_main_list">Список главных альбомов</string>
-    <string name="albums_main_list_desc">Выберите альбомы, фотографии из которых будут отображаться в главном окне просмотра фотографий</string>
     <string name="albums_main_list_selected">Выбранные здесь альбомы будут отображаться в главном окне просмотра фотографий</string>
     <string name="albums_selected">Выбранные альбомы</string>
     <string name="albums_auto_detect">Автоматически определять альбомы</string>
