@@ -23,8 +23,10 @@ import androidx.media3.common.audio.ChannelMixingAudioProcessor
 import androidx.media3.common.audio.ChannelMixingMatrix
 import androidx.media3.common.audio.SonicAudioProcessor
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.effect.Contrast
 import androidx.media3.effect.Crop
 import androidx.media3.effect.FrameDropEffect
+import androidx.media3.effect.HslAdjustment
 import androidx.media3.effect.Presentation
 import androidx.media3.effect.ScaleAndRotateTransformation
 import androidx.media3.effect.SpeedChangeEffect
@@ -95,7 +97,8 @@ interface VideoModification {
 
     data class Adjustment(
         val type: MediaAdjustments,
-        val matrix: FloatArray
+        val matrix: FloatArray,
+        val value: Float
     ) : VideoModification {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
@@ -223,6 +226,18 @@ suspend fun saveVideo(
         )
     }
 
+    modifications.mapNotNull { it as? VideoModification.Adjustment }.forEach { adjustment ->
+        // TODO: find way to sync this and one in VideoEditor.kt
+        effectList.add(
+            when (adjustment.type) {
+                MediaAdjustments.Contrast -> Contrast(adjustment.value)
+                MediaAdjustments.Saturation -> HslAdjustment.Builder().adjustSaturation(adjustment.value * 100).build()
+
+                else -> Contrast(0f) // placeholder
+            }
+        )
+    }
+
     val mediaItem = MediaItem.Builder()
         .setUri(uri)
         .setClippingConfiguration(clippingConfiguration)
@@ -342,7 +357,7 @@ fun DrawScope.createCropRectBorderArc(
 
 enum class CroppingAspectRatio(
     var ratio: Float,
-    @StringRes val title: Int
+    @param:StringRes val title: Int
 ) {
     FreeForm(0f, R.string.bottom_sheets_freeform),
     ByImage(-1f, R.string.bottom_sheets_image_ratio),
@@ -361,8 +376,18 @@ enum class MediaAdjustments {
     Saturation,
     BlackPoint,
     WhitePoint,
-    Shadows,
     Warmth,
     ColorTint,
     Highlights
+}
+
+enum class VideoEditorTabs(
+    @param:StringRes val title: Int
+) {
+    Trim(R.string.editing_trim),
+    Crop(R.string.editing_crop),
+    Video(R.string.video),
+    Draw(R.string.editing_draw),
+    Adjust(R.string.editing_adjust),
+    Filters(R.string.editing_filters)
 }

@@ -2338,8 +2338,6 @@ fun AdjustTools(
 
                 colorTintValue = sliderValue.floatValue
             }
-
-            else -> {}
         }
     }
 
@@ -2382,7 +2380,7 @@ fun AdjustTools(
         item {
             EditingViewBottomAppBarItem(
                 text = stringResource(id = R.string.editing_saturation),
-                icon = R.drawable.resolution,
+                icon = R.drawable.saturation,
                 selected = selectedProperty.value == MediaAdjustments.Saturation
             ) {
                 if (selectedProperty.value == MediaAdjustments.Saturation) {

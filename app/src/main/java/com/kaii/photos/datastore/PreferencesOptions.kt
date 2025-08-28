@@ -60,8 +60,8 @@ object DefaultTabs {
 
 @Serializable
 enum class StoredDrawable(
-    @DrawableRes val filled: Int,
-    @DrawableRes val nonFilled: Int,
+    @param:DrawableRes val filled: Int,
+    @param:DrawableRes val nonFilled: Int,
     val storedId: Int
 ) {
     PhotoGrid(

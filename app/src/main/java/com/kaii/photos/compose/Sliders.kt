@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
@@ -42,13 +44,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
@@ -77,11 +80,11 @@ fun BoxWithConstraintsScope.ColorRangeSlider(
     }
 
     val sliderAnimatedValue by animateFloatAsState(
-    	targetValue = sliderValue.floatValue,
-    	animationSpec = tween(
-    		durationMillis = if (sliderValue.floatValue == -1.2f) 200 else 0
-    	),
-    	label = "animate editing adjustment color tint value change"
+        targetValue = sliderValue.floatValue,
+        animationSpec = tween(
+            durationMillis = if (sliderValue.floatValue == -1.2f) 200 else 0
+        ),
+        label = "animate editing adjustment color tint value change"
     )
 
     Row(
@@ -226,28 +229,25 @@ fun BoxWithConstraintsScope.ColorRangeSlider(
 @Composable
 fun BoxWithConstraintsScope.PopupPillSlider(
     sliderValue: MutableFloatState,
-    changesSize: MutableIntState
+    changesSize: MutableIntState,
+    popupPillHeightOffset: Dp = 0.dp,
+    enabled: Boolean = true,
+    confirmValue: () -> Unit = {}
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     var isDraggingSlider by remember { mutableStateOf(false) }
 
     LaunchedEffect(interactionSource.interactions) {
         interactionSource.interactions.collect { interaction ->
-            when (interaction) {
-                is DragInteraction.Start -> {
+            when {
+                interaction is DragInteraction.Start || interaction is PressInteraction.Press -> {
                     isDraggingSlider = true
                     changesSize.intValue += 1
                 }
 
-                is DragInteraction.Cancel -> {
+                else -> {
                     isDraggingSlider = false
                 }
-
-                is DragInteraction.Stop -> {
-                    isDraggingSlider = false
-                }
-
-                else -> {}
             }
         }
     }
@@ -282,7 +282,8 @@ fun BoxWithConstraintsScope.PopupPillSlider(
     val localDensity = LocalDensity.current
     val multiplier = sliderValue.floatValue * 0.5f + 0.5f
     val neededOffset = with(localDensity) {
-        val position = multiplier * maxWidth.toPx() - (24.dp.toPx() * sliderValue.floatValue) - (animatedPillWidth / 2).toPx() // offset by the opposite of the movement so the pill stays in the same place, then subtract half the width to center it
+        val position =
+            multiplier * maxWidth.toPx() - (24.dp.toPx() * sliderValue.floatValue) - (animatedPillWidth / 2).toPx() // offset by the opposite of the movement so the pill stays in the same place, then subtract half the width to center it
         position.coerceIn(16.dp.toPx(), (maxWidth - animatedPillWidth - 16.dp).toPx()) // -width - 16.dp because width of pill + padding
     }
 
@@ -292,7 +293,7 @@ fun BoxWithConstraintsScope.PopupPillSlider(
                 IntOffset(
                     neededOffset.toInt(),
                     with(localDensity) {
-                        ((-24).dp + animatedPillHeightOffset)
+                        ((-24).dp + animatedPillHeightOffset - popupPillHeightOffset)
                             .toPx()
                             .toInt()
                     })
@@ -325,33 +326,29 @@ fun BoxWithConstraintsScope.PopupPillSlider(
             onValueChange = {
                 sliderValue.floatValue = it / 100f
             },
+            onValueChangeFinished = confirmValue,
             valueRange = -100f..100f,
             steps = 199,
             thumb = {
-                Box(
+                SliderDefaults.Thumb(
+                    interactionSource = interactionSource,
+                    enabled = enabled,
                     modifier = Modifier
-                        .width(16.dp)
-                        .height(24.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(16.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primary)
-                            .align(Alignment.Center)
-                    )
-                }
+                        .requiredHeight(28.dp)
+                )
             },
             track = { state ->
                 SliderDefaults.Track(
                     sliderState = state,
                     drawTick = { _, _ -> },
-                    drawStopIndicator = {}
+                    drawStopIndicator = {},
+                    enabled = enabled
                 )
             },
             interactionSource = interactionSource,
+            enabled = enabled,
             modifier = Modifier
-                .fillMaxWidth(1f)
+                .weight(1f)
         )
     }
 }

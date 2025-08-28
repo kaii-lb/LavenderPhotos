@@ -15,8 +15,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -24,21 +22,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.FilledTonalIconButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableFloatState
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -52,23 +42,22 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.TextUnit
-import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.media3.common.Effect
+import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
-import com.kaii.photos.R
+import androidx.media3.effect.Contrast
+import androidx.media3.effect.HslAdjustment
+import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.compose.app_bars.VideoEditorBottomBar
 import com.kaii.photos.compose.app_bars.VideoEditorTopBar
-import com.kaii.photos.compose.single_photo.VideoPlayerSeekbar
 import com.kaii.photos.compose.single_photo.rememberExoPlayerWithLifeCycle
 import com.kaii.photos.compose.single_photo.rememberPlayerView
+import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.helpers.TextStylingConstants
 import kotlinx.coroutines.delay
 
 private const val TAG = "VIDEO_EDITOR"
@@ -82,7 +71,10 @@ fun VideoEditor(
     window: Window
 ) {
     val isPlaying = remember { mutableStateOf(false) }
-    val isMuted = remember { mutableStateOf(false) }
+
+    val mainViewModel = LocalMainViewModel.current
+    val startMuted by mainViewModel.settings.Video.getMuteOnStart().collectAsStateWithLifecycle(initialValue = true)
+    val isMuted = remember(startMuted) { mutableStateOf(startMuted) }
 
     /** In Seconds */
     val currentVideoPosition = remember { mutableFloatStateOf(0f) }
@@ -123,7 +115,11 @@ fun VideoEditor(
             window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
             exoPlayer.pause()
-            exoPlayer.isScrubbingModeEnabled = true
+
+            // so when the video is just starting it actually plays?
+            if (currentVideoPosition.floatValue != leftTrimPosition.floatValue
+                && currentVideoPosition.floatValue > leftTrimPosition.floatValue
+            ) exoPlayer.isScrubbingModeEnabled = true
         } else {
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
@@ -179,23 +175,25 @@ fun VideoEditor(
         )
     }
 
-    val pagerState = rememberPagerState { 4 }
+    val pagerState = rememberPagerState { 6 }
     var containerDimens by remember { mutableStateOf(Size.Zero) }
     val resetCrop = remember { mutableStateOf(false) }
 
     var rotation by remember { mutableFloatStateOf(0f) }
     val aspectRatio = remember { mutableStateOf(CroppingAspectRatio.FreeForm) }
-    var basicVideoData by remember { mutableStateOf(
-        BasicVideoData(
-            duration = exoPlayer.duration / 1000f,
-            width = exoPlayer.videoSize.width,
-            height = exoPlayer.videoSize.height,
-            absolutePath = absolutePath,
-            frameRate =
-                if (exoPlayer.videoFormat?.frameRate?.toInt() == -1 || exoPlayer.videoFormat?.frameRate == null) 0f
-                else exoPlayer.videoFormat!!.frameRate
+    var basicVideoData by remember {
+        mutableStateOf(
+            BasicVideoData(
+                duration = exoPlayer.duration / 1000f,
+                width = exoPlayer.videoSize.width,
+                height = exoPlayer.videoSize.height,
+                absolutePath = absolutePath,
+                frameRate =
+                    if (exoPlayer.videoFormat?.frameRate?.toInt() == -1 || exoPlayer.videoFormat?.frameRate == null) 0f
+                    else exoPlayer.videoFormat!!.frameRate
+            )
         )
-    )}
+    }
 
     var tries by remember { mutableIntStateOf(0) }
     LaunchedEffect(Unit) {
@@ -216,6 +214,43 @@ fun VideoEditor(
 
             delay(100)
         }
+    }
+
+    val effectsList = remember { mutableStateListOf<Effect>() }
+    val totalModCount = remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(totalModCount.intValue) {
+        val last = modifications.lastOrNull { it is VideoModification.Adjustment } as? VideoModification.Adjustment
+
+        if (last != null) {
+            effectsList.removeAll {
+                when (last.type) {
+                    MediaAdjustments.Contrast -> it is Contrast
+                    MediaAdjustments.Saturation -> it is HslAdjustment
+                    else -> false
+                }
+            }
+
+            effectsList.add(
+                when (last.type) {
+                    MediaAdjustments.Contrast -> Contrast(last.value)
+                    MediaAdjustments.Saturation -> HslAdjustment.Builder().adjustSaturation(last.value * 100).build()
+
+                    else -> Contrast(0f) // placeholder
+                }
+            )
+
+            exoPlayer.stop()
+            val mediaItem = MediaItem.Builder()
+                .setUri(uri)
+                .build()
+
+            exoPlayer.setMediaItem(mediaItem)
+            exoPlayer.setVideoEffects(effectsList)
+            exoPlayer.prepare()
+        }
+
+        Log.d(TAG, "last $last")
     }
 
     Scaffold(
@@ -241,6 +276,7 @@ fun VideoEditor(
                 basicData = basicVideoData,
                 croppingAspectRatio = aspectRatio,
                 modifications = modifications,
+                totalModCount = totalModCount,
                 onCropReset = {
                     resetCrop.value = true
                     rotation = 0f
@@ -372,10 +408,12 @@ fun VideoEditor(
 
             VideoEditorBottomTools(
                 pagerState = pagerState,
+                modifications = modifications,
                 isPlaying = isPlaying,
                 isMuted = isMuted,
                 currentPosition = currentVideoPosition,
                 duration = duration.floatValue,
+                totalModCount = totalModCount,
                 setPlaybackSpeed = { speed ->
                     exoPlayer.setPlaybackSpeed(speed)
                 },
@@ -392,105 +430,3 @@ fun VideoEditor(
         }
     }
 }
-
-@Composable
-private fun VideoEditorBottomTools(
-    pagerState: PagerState,
-    currentPosition: MutableFloatState,
-    duration: Float,
-    isPlaying: MutableState<Boolean>,
-    isMuted: MutableState<Boolean>,
-    modifier: Modifier = Modifier,
-    setPlaybackSpeed: (speed: Float) -> Unit,
-    onSeek: (position: Float) -> Unit
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth(1f)
-            .padding(horizontal = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Start
-    ) {
-        FilledTonalIconButton(
-            onClick = {
-                isPlaying.value = !isPlaying.value
-            },
-            modifier = Modifier
-                .size(32.dp)
-        ) {
-            Icon(
-                painter = painterResource(id = if (isPlaying.value) R.drawable.pause else R.drawable.play_arrow),
-                contentDescription = stringResource(id = R.string.video_play_toggle)
-            )
-        }
-
-        BoxWithConstraints(
-            modifier = Modifier
-                .weight(1f)
-                .padding(horizontal = 8.dp)
-        ) {
-            val animatedSeekbarWidth by animateDpAsState(
-                targetValue = if (pagerState.currentPage != 0) this.maxWidth else 0.dp
-            )
-
-            if (animatedSeekbarWidth != 0.dp) {
-                VideoPlayerSeekbar(
-                    currentPosition = currentPosition.floatValue,
-                    duration = duration,
-                    onValueChange = onSeek,
-                    modifier = Modifier
-                        .width(animatedSeekbarWidth)
-                        .align(Alignment.CenterStart)
-                )
-            }
-        }
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            FilledTonalIconButton(
-                onClick = {
-                    isMuted.value = !isMuted.value
-                },
-                modifier = Modifier
-                    .size(32.dp)
-            ) {
-                Icon(
-                    painter = painterResource(id = if (isMuted.value) R.drawable.volume_mute else R.drawable.volume_max),
-                    contentDescription = stringResource(id = R.string.video_mute_toggle)
-                )
-            }
-
-            Spacer(modifier = Modifier.width(4.dp))
-
-            var currentPlaybackSpeed by remember { mutableFloatStateOf(1f) }
-            FilledTonalButton(
-                onClick = {
-                    val new =
-                        when (currentPlaybackSpeed) {
-                            1f -> 1.5f
-                            1.5f -> 2f
-                            2f -> 4f
-                            4f -> 0.5f
-                            else -> 1f
-                        }
-
-                    setPlaybackSpeed(new)
-                    currentPlaybackSpeed = new
-                },
-                contentPadding = PaddingValues(horizontal = 4.dp),
-                modifier = Modifier
-                    .height(32.dp)
-                    .width(40.dp)
-            ) {
-                Text(
-                    text = "${currentPlaybackSpeed}X",
-                    fontSize = TextUnit(TextStylingConstants.EXTRA_SMALL_TEXT_SIZE, TextUnitType.Sp),
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
-    }
-}
-

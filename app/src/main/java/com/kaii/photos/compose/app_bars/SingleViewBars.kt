@@ -28,7 +28,7 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SecondaryTabRow
+import androidx.compose.material3.SecondaryScrollableTabRow
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SplitButtonDefaults
 import androidx.compose.material3.SplitButtonLayout
@@ -74,9 +74,11 @@ import com.kaii.photos.compose.SimpleTab
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.single_photo.editing_view.BasicVideoData
 import com.kaii.photos.compose.single_photo.editing_view.CroppingAspectRatio
+import com.kaii.photos.compose.single_photo.editing_view.TrimContent
 import com.kaii.photos.compose.single_photo.editing_view.VideoEditorAdjustContent
 import com.kaii.photos.compose.single_photo.editing_view.VideoEditorCropContent
-import com.kaii.photos.compose.single_photo.editing_view.VideoEditorTrimContent
+import com.kaii.photos.compose.single_photo.editing_view.VideoEditorProcessingContent
+import com.kaii.photos.compose.single_photo.editing_view.VideoEditorTabs
 import com.kaii.photos.compose.single_photo.editing_view.VideoModification
 import com.kaii.photos.compose.single_photo.editing_view.saveVideo
 import com.kaii.photos.datastore.Editing
@@ -86,6 +88,7 @@ import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.seconds
 
+// insane amount of vars, should probably clean up
 @androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun VideoEditorBottomBar(
@@ -96,6 +99,7 @@ fun VideoEditorBottomBar(
     rightPosition: MutableFloatState,
     modifications: SnapshotStateList<VideoModification>,
     croppingAspectRatio: MutableState<CroppingAspectRatio>,
+    totalModCount: MutableIntState,
     onCropReset: () -> Unit,
     onSeek: (Float) -> Unit,
     onRotate: () -> Unit
@@ -112,7 +116,7 @@ fun VideoEditorBottomBar(
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.Start
         ) {
-            SecondaryTabRow(
+            SecondaryScrollableTabRow(
                 selectedTabIndex = pagerState.currentPage,
                 indicator = {
                     Box(
@@ -130,27 +134,11 @@ fun VideoEditorBottomBar(
                 modifier = Modifier
                     .fillMaxWidth(1f)
             ) {
-                SimpleTab(text = stringResource(id = R.string.editing_trim), selected = pagerState.currentPage == 0) {
-                    coroutineScope.launch {
-                        pagerState.animateScrollToPage(0)
-                    }
-                }
-
-                SimpleTab(text = stringResource(id = R.string.editing_crop), selected = pagerState.currentPage == 1) {
-                    coroutineScope.launch {
-                        pagerState.animateScrollToPage(1)
-                    }
-                }
-
-                SimpleTab(text = stringResource(id = R.string.editing_adjust), selected = pagerState.currentPage == 2) {
-                    coroutineScope.launch {
-                        pagerState.animateScrollToPage(2)
-                    }
-                }
-
-                SimpleTab(text = stringResource(id = R.string.editing_draw), selected = pagerState.currentPage == 3) {
-                    coroutineScope.launch {
-                        pagerState.animateScrollToPage(3)
+                VideoEditorTabs.entries.forEach { entry ->
+                    SimpleTab(text = stringResource(id = entry.title), selected = pagerState.currentPage == VideoEditorTabs.entries.indexOf(entry)) {
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(VideoEditorTabs.entries.indexOf(entry))
+                        }
                     }
                 }
             }
@@ -190,13 +178,13 @@ fun VideoEditorBottomBar(
                 pageSize = PageSize.Fill,
             ) { index ->
                 when (index) {
-                    0 -> {
+                    VideoEditorTabs.entries.indexOf(VideoEditorTabs.Trim) -> {
                         Box(
                             modifier = Modifier
                                 .fillMaxSize(1f)
                                 .padding(8.dp)
                         ) {
-                            VideoEditorTrimContent(
+                            TrimContent(
                                 currentPosition = currentPosition,
                                 leftPosition = leftPosition,
                                 rightPosition = rightPosition,
@@ -207,7 +195,7 @@ fun VideoEditorBottomBar(
                         }
                     }
 
-                    1 -> {
+                    VideoEditorTabs.entries.indexOf(VideoEditorTabs.Crop) -> {
                         VideoEditorCropContent(
                             imageAspectRatio = basicData.aspectRatio,
                             croppingAspectRatio = croppingAspectRatio,
@@ -216,15 +204,27 @@ fun VideoEditorBottomBar(
                         )
                     }
 
-                    2 -> {
-                        VideoEditorAdjustContent(
+                    VideoEditorTabs.entries.indexOf(VideoEditorTabs.Video) -> {
+                        VideoEditorProcessingContent(
                             basicData = basicData,
                             modifications = modifications
                         )
                     }
 
+                    VideoEditorTabs.entries.indexOf(VideoEditorTabs.Adjust) -> {
+                        VideoEditorAdjustContent(
+                            modifications = modifications
+                        ) {
+                            totalModCount.intValue += 1
+                        }
+                    }
+
                     else -> {
-                        Text(text = "This definitely has been coded in")
+                        Text(
+                            text = "This definitely has been coded in",
+                            modifier = Modifier
+                                .fillMaxSize(1f)
+                        )
                     }
                 }
             }
