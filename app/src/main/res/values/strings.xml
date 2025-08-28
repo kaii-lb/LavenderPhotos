@@ -222,8 +222,6 @@
     <string name="settings_clear">Clear</string>
     <string name="settings_clear_cache_desc">This will erase all the thumbnail caches on this device, freeing up storage. Thumbnail loading will take longer on the next startup.</string>
     <string name="settings_about_and_updates">About &amp; Updates</string>
-    <!-- Trash -->
-    <string name="trash">Trash</string>
     <string name="trash_bin">Trash Bin</string>
     <string name="trash_auto_delete">Auto deletes items in trash bin after</string>
     <string name="trash_days">days</string>
