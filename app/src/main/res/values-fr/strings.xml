@@ -203,7 +203,6 @@
     <string name="error_views_trash_empty">Les médias mis à la corbeille apparaissent ici</string>
     <string name="feature_editing_unimplemented">L\'édition de vidéo n\'est pas encore implémenté dans la version %1$s de Lavender Photos. Cette fonctionnalité sera ajoutée dès que possible, merci de votre patience.</string>
     <string name="bottom_sheets_image_ratio">Format d\'image</string>
-    <string name="bottom_sheets_vertical">vertical</string>
     <string name="error_views_trash_prefix">Mis à la corbeille le</string>
     <string name="error_views_search_empty">Cherchez des photos !</string>
     <string name="bottom_sheets_square">Carré</string>
