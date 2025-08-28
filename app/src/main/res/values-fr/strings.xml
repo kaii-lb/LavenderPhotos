@@ -10,7 +10,6 @@
     <string name="first_startup_dialog_confirm_title">Chercher !</string>
     <string name="direct_path_album">Utiliser un chemin direct pour ajouter un album</string>
     <string name="albums_main_list">Liste principale d\'albums</string>
-    <string name="albums_main_list_desc">Sélectionnez les albums dont les photos seront affichées sur la vue Photo principale</string>
     <string name="albums_selected">Albums sélectionnés</string>
     <string name="albums_auto_detect">Détecter automatiquement les albums</string>
     <string name="albums_auto_detect_desc">Détecte tours les dossiers de cet appareil qui contiennent des médias et les ajoute à la vue Albums</string>
