@@ -228,7 +228,6 @@
     <string name="bottom_sheets_freeform">Довільна форма</string>
     <string name="bottom_sheets_image_ratio">Співвідношення сторін зображення</string>
     <string name="bottom_sheets_square">Квадрат</string>
-    <string name="bottom_sheets_vertical">вертикально</string>
     <string name="bottom_sheets_horizontal">горизонтально</string>
     <string name="bottom_sheets_ratio_selected">Вибрано це співвідношення сторін</string>
     <string name="error_views_trash_empty">Тут відображаються видалені елементи</string>
