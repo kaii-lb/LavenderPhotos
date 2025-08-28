@@ -74,7 +74,6 @@
     <string name="settings_theme_light">Застосунок завжди в світлій темі</string>
     <string name="settings_theme_dark">Застосунок завжди в темній темі</string>
     <string name="settings_theme_follow">Застосунок завжди в системній темі</string>
-    <string name="default_homepage_photogrid_dir">DCIM/Camera</string>
     <string name="first_startup_dialog_title">Знайти всі альбоми на пристрої?</string>
     <string name="return_to_previous_page">Повернутися на попередню сторінку</string>
     <string name="app_icon">Іконка застосунку</string>
