@@ -54,7 +54,6 @@
     <string name="updates_whats_new">Qué hay de nuevo</string>
     <string name="updates_notice">Aviso de Descarga</string>
     <string name="app_name">Fotos</string>
-    <string name="default_homepage_photogrid_dir">DCIM/Camera</string>
     <string name="first_startup_dialog_body">Busca todos los álbumes en este dispositivo y los agrega a Lavender Photos\nNota: Los usuarios antiguos borrarán sus álbumes si se usa esta opción.</string>
     <string name="first_startup_dialog_confirm_title">¡Busca!</string>
     <string name="albums">Albumes</string>
