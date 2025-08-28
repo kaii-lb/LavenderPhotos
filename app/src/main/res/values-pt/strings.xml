@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Fotos</string>
-    <string name="default_homepage_photogrid_dir">DCIM/Câmera</string>
     <string name="first_startup_dialog_title">Procurar todos os álbuns no dispositivo?</string>
     <string name="first_startup_dialog_body">Procura todos os álbuns neste dispositivo e os importa para o Lavender Photos.\nAtenção: Usuários existentes TERÃO seus álbuns apagados se esta opção for usada.</string>
     <string name="first_startup_dialog_confirm_title">Procurar!</string>
