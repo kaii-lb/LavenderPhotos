@@ -277,7 +277,6 @@
     <string name="bottom_sheets_freeform">Forma libre</string>
     <string name="bottom_sheets_image_ratio">Relación de Imagen</string>
     <string name="bottom_sheets_square">Cuadrado</string>
-    <string name="bottom_sheets_horizontal">horizontal</string>
     <string name="bottom_sheets_ratio_selected">Esta proporción de cortado esta seleccionada</string>
     <string name="error_views_trash_empty">Los elementos eliminados aparecen aquí</string>
     <string name="error_views_trash_prefix">Enviado a la Papelera</string>
