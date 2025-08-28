@@ -6,7 +6,6 @@
     <string name="add_album">Lisa album</string>
     <string name="finding_albums_on_device">Otsin albumeid…</string>
     <string name="albums">Albumid</string>
-    <string name="default_homepage_photogrid_dir">DCIM/Camera</string>
     <string name="first_startup_dialog_confirm_title">Otsi!</string>
     <string name="albums_name">Albumi nimi</string>
     <string name="albums_type">Albumi tüüp</string>
