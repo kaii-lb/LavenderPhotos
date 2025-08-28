@@ -99,7 +99,6 @@
     <string name="settings_clear">Vider</string>
     <string name="settings_clear_cache_desc">Cela supprimera tous les miniatures en cache sur l\'appareil, libérant de l\'espace de stockage. Le chargement des miniatures sera plus long au prochain démarrage.</string>
     <string name="settings_about_and_updates">À propos &amp; Mises à jour</string>
-    <string name="trash">À supprimer</string>
     <string name="trash_days">jours</string>
     <string name="trash_no_auto_delete">Les médias dans la corbeille ne seront pas automatiquement supprimés</string>
     <string name="trash_empty_desc">Cela supprime tous les médias dans la corbeille, cette action ne peut être annulée</string>
