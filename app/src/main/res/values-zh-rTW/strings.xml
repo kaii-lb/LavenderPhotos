@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="first_startup_dialog_title">尋找設備上所有的相簿？</string>
-    <string name="default_homepage_photogrid_dir">DCIM/Camera</string>
     <string name="first_startup_dialog_confirm_title">搜尋！</string>
     <string name="albums">相簿</string>
     <string name="finding_albums_on_device">尋找相簿…</string>
