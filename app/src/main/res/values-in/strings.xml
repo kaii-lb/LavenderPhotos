@@ -4,7 +4,6 @@
     <string name="add_album">Tambahkan album</string>
     <string name="direct_path_album">Gunakan jalur langsung untuk menambahkan album</string>
     <string name="albums_main_list">Daftar Album Utama</string>
-    <string name="albums_main_list_desc">Pilih album yang akan ditampilkan fotonya di layar foto utama</string>
     <string name="albums_selected">Album yang terpilih</string>
     <string name="albums_auto_detect">Deteksi album secara otomatis</string>
     <string name="albums_auto_detect_desc">Mendeteksi semua folder dengan media di perangkat ini dan menambahkannya ke layar album</string>
