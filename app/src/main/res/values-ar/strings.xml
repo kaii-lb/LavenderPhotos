@@ -261,7 +261,6 @@
     <string name="bottom_sheets_freeform">شكل حر</string>
     <string name="bottom_sheets_image_ratio">نسبة الصورة</string>
     <string name="bottom_sheets_square">مربع</string>
-    <string name="bottom_sheets_horizontal">أفقي</string>
     <string name="bottom_sheets_ratio_selected">تم تحديد نسبة القص هذه</string>
     <string name="error_views_trash_empty">تظهر العناصر المحذوفة هنا</string>
     <string name="error_views_trash_prefix">تم حذف في التاريخ</string>
