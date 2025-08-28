@@ -42,5 +42,7 @@ sealed class TextStylingConstants {
         const val SMALL_TEXT_SIZE = 14f
         const val MEDIUM_TEXT_SIZE = 16f
         const val LARGE_TEXT_SIZE = 18f
+        const val EXTRA_LARGE_TEXT_SIZE = 20f
+        const val EXTRA_EXTRA_LARGE_TEXT_SIZE = 22f
     }
 }

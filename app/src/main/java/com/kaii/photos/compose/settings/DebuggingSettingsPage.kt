@@ -48,6 +48,7 @@ import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.Debugging
 import com.kaii.photos.helpers.LogManager
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.relativePath
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
@@ -284,7 +285,7 @@ private fun DebuggingSettingsTopBar() {
         title = {
             Text(
                 text = stringResource(id = R.string.debugging),
-                fontSize = TextUnit(22f, TextUnitType.Sp)
+                fontSize = TextUnit(TextStylingConstants.EXTRA_EXTRA_LARGE_TEXT_SIZE, TextUnitType.Sp)
             )
         },
         navigationIcon = {

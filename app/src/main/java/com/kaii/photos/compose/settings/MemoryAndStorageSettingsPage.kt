@@ -39,6 +39,7 @@ import com.kaii.photos.compose.dialogs.ThumbnailSizeDialog
 import com.kaii.photos.datastore.Storage
 import com.kaii.photos.datastore.TrashBin
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.helpers.TextStylingConstants
 
 @Composable
 fun MemoryAndStorageSettingsPage() {
@@ -218,7 +219,7 @@ private fun MemoryAndStorageSettingsTopBar() {
         title = {
             Text(
                 text = stringResource(id = R.string.settings_memory_storage),
-                fontSize = TextUnit(22f, TextUnitType.Sp)
+                fontSize = TextUnit(TextStylingConstants.EXTRA_EXTRA_LARGE_TEXT_SIZE, TextUnitType.Sp)
             )
         },
         navigationIcon = {

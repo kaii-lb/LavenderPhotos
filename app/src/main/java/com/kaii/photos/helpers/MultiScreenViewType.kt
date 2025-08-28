@@ -18,7 +18,9 @@ enum class MultiScreenViewType {
     UpdatesPage,
     DataAndBackup,
     PrivacyAndSecurity,
-    ImmichMainPage
+    ImmichMainPage,
+    LicensePage,
+    ExtendedLicensePage
 }
 
 object Screens {

@@ -40,6 +40,7 @@ import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.helpers.DataAndBackupHelper
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.relativePath
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import kotlinx.coroutines.Dispatchers
@@ -306,7 +307,7 @@ private fun DataAndBackupTopBar() {
         title = {
             Text(
                 text = stringResource(id = R.string.data_and_backup),
-                fontSize = TextUnit(22f, TextUnitType.Sp)
+                fontSize = TextUnit(TextStylingConstants.EXTRA_EXTRA_LARGE_TEXT_SIZE, TextUnitType.Sp)
             )
         },
         navigationIcon = {

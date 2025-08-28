@@ -56,6 +56,7 @@ import com.kaii.photos.datastore.Versions
 import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.helpers.TextStylingConstants
 import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -441,7 +442,7 @@ private fun GeneralSettingsTopBar() {
         title = {
             Text(
                 text = stringResource(id = R.string.settings_general),
-                fontSize = TextUnit(22f, TextUnitType.Sp)
+                fontSize = TextUnit(TextStylingConstants.EXTRA_EXTRA_LARGE_TEXT_SIZE, TextUnitType.Sp)
             )
         },
         navigationIcon = {

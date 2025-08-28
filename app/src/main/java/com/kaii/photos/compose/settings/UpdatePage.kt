@@ -67,6 +67,7 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.AnnotatedExplanationDialog
 import com.kaii.photos.datastore.Versions
 import com.kaii.photos.helpers.CheckUpdateState
+import com.kaii.photos.helpers.TextStylingConstants
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -115,7 +116,7 @@ fun UpdatesPage() {
             ) {
                 Text(
                     text = stringResource(id = R.string.updates_whats_new),
-                    fontSize = TextUnit(18f, TextUnitType.Sp),
+                    fontSize = TextUnit(TextStylingConstants.LARGE_TEXT_SIZE, TextUnitType.Sp),
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier
                         .clip(CircleShape)
@@ -140,7 +141,7 @@ fun UpdatesPage() {
                         item {
                             Text(
                                 text = "${mainViewModel.updater.githubVersionName.value}:",
-                                fontSize = TextUnit(16f, TextUnitType.Sp),
+                                fontSize = TextUnit(TextStylingConstants.MEDIUM_TEXT_SIZE, TextUnitType.Sp),
                                 modifier = Modifier
                                     .padding(2.dp, 2.dp, 2.dp, 8.dp)
                             )
@@ -172,7 +173,7 @@ private fun TopBar() {
         title = {
             Text(
                 text = stringResource(id = R.string.updates),
-                fontSize = TextUnit(22f, TextUnitType.Sp)
+                fontSize = TextUnit(TextStylingConstants.EXTRA_EXTRA_LARGE_TEXT_SIZE, TextUnitType.Sp)
             )
         },
         navigationIcon = {
@@ -333,7 +334,7 @@ private fun BottomBar(
                 ) {
                     Text(
                         text = updateStatusText,
-                        fontSize = TextUnit(14f, TextUnitType.Sp),
+                        fontSize = TextUnit(TextStylingConstants.SMALL_TEXT_SIZE, TextUnitType.Sp),
                         color = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier
                             .clip(CircleShape)
@@ -370,7 +371,7 @@ private fun BottomBar(
                         ) {
                             Text(
                                 text = stringResource(id = R.string.updates_start),
-                                fontSize = TextUnit(14f, TextUnitType.Sp),
+                                fontSize = TextUnit(TextStylingConstants.SMALL_TEXT_SIZE, TextUnitType.Sp),
                             )
                         }
                     }

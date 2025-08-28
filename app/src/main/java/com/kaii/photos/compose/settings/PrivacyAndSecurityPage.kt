@@ -40,6 +40,7 @@ import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.datastore.PhotoGrid
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.helpers.TextStylingConstants
 
 @Composable
 fun PrivacyAndSecurityPage() {
@@ -144,7 +145,7 @@ private fun PrivacyAndSecuritySettingsTopBar() {
         title = {
             Text(
                 text = stringResource(id = R.string.settings_privacy),
-                fontSize = TextUnit(22f, TextUnitType.Sp)
+                fontSize = TextUnit(TextStylingConstants.EXTRA_EXTRA_LARGE_TEXT_SIZE, TextUnitType.Sp)
             )
         },
         navigationIcon = {

@@ -46,6 +46,7 @@ import com.kaii.photos.compose.PreferencesThreeStateSwitchRow
 import com.kaii.photos.compose.dialogs.DateFormatDialog
 import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.models.multi_album.DisplayDateFormat
 import java.time.Instant
 import java.time.ZoneId
@@ -246,7 +247,7 @@ private fun DebuggingSettingsTopBar() {
         title = {
             Text(
                 text = stringResource(id = R.string.settings_look_and_feel),
-                fontSize = TextUnit(22f, TextUnitType.Sp)
+                fontSize = TextUnit(TextStylingConstants.EXTRA_EXTRA_LARGE_TEXT_SIZE, TextUnitType.Sp)
             )
         },
         navigationIcon = {

@@ -93,7 +93,9 @@ import com.kaii.photos.compose.rememberDeviceOrientation
 import com.kaii.photos.compose.settings.AboutPage
 import com.kaii.photos.compose.settings.DataAndBackupPage
 import com.kaii.photos.compose.settings.DebuggingSettingsPage
+import com.kaii.photos.compose.settings.ExtendedLicensePage
 import com.kaii.photos.compose.settings.GeneralSettingsPage
+import com.kaii.photos.compose.settings.LicensePage
 import com.kaii.photos.compose.settings.LookAndFeelSettingsPage
 import com.kaii.photos.compose.settings.MainSettingsPage
 import com.kaii.photos.compose.settings.MemoryAndStorageSettingsPage
@@ -915,6 +917,38 @@ class MainActivity : ComponentActivity() {
                         absolutePath = screen.absolutePath,
                         window = window
                     )
+                }
+
+                composable(MultiScreenViewType.LicensePage.name) {
+                    enableEdgeToEdge(
+                        navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
+                        statusBarStyle = SystemBarStyle.auto(
+                            MaterialTheme.colorScheme.surface.toArgb(),
+                            MaterialTheme.colorScheme.surface.toArgb()
+                        )
+                    )
+                    setupNextScreen(
+                        selectedItemsList,
+                        window
+                    )
+
+                    LicensePage()
+                }
+
+                composable(MultiScreenViewType.ExtendedLicensePage.name) {
+                    enableEdgeToEdge(
+                        navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
+                        statusBarStyle = SystemBarStyle.auto(
+                            MaterialTheme.colorScheme.surface.toArgb(),
+                            MaterialTheme.colorScheme.surface.toArgb()
+                        )
+                    )
+                    setupNextScreen(
+                        selectedItemsList,
+                        window
+                    )
+
+                    ExtendedLicensePage()
                 }
             }
         }

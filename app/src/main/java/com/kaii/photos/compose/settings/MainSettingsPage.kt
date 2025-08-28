@@ -35,6 +35,7 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.PreferencesRow
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.helpers.TextStylingConstants
 
 @Composable
 fun MainSettingsPage() {
@@ -60,7 +61,7 @@ fun MainSettingsPage() {
                     iconResID = R.drawable.settings,
                     position = RowPosition.Top,
                     showBackground = false,
-                    titleTextSize = 20f,
+                    titleTextSize = TextStylingConstants.EXTRA_LARGE_TEXT_SIZE,
                     modifier = Modifier
                     	.padding(0.dp, 6.dp)
                 ) {
@@ -75,7 +76,7 @@ fun MainSettingsPage() {
                     iconResID = R.drawable.privacy_policy,
                     position = RowPosition.Middle,
                     showBackground = false,
-                    titleTextSize = 20f,
+                    titleTextSize = TextStylingConstants.EXTRA_LARGE_TEXT_SIZE,
                     modifier = Modifier
                     	.padding(0.dp, 6.dp)
                 ) {
@@ -90,7 +91,7 @@ fun MainSettingsPage() {
                     iconResID = R.drawable.palette,
                     position = RowPosition.Middle,
                     showBackground = false,
-                    titleTextSize = 20f,
+                    titleTextSize = TextStylingConstants.EXTRA_LARGE_TEXT_SIZE,
                     modifier = Modifier
                     	.padding(0.dp, 6.dp)
                 ) {
@@ -105,7 +106,7 @@ fun MainSettingsPage() {
                     iconResID = R.drawable.privacy_policy,
                     position = RowPosition.Middle,
                     showBackground = false,
-                    titleTextSize = 20f,
+                    titleTextSize = TextStylingConstants.EXTRA_LARGE_TEXT_SIZE,
                     modifier = Modifier
                     	.padding(0.dp, 6.dp)
                 ) {
@@ -120,7 +121,7 @@ fun MainSettingsPage() {
                     iconResID = R.drawable.memory,
                     position = RowPosition.Bottom,
                     showBackground = false,
-                    titleTextSize = 20f,
+                    titleTextSize = TextStylingConstants.EXTRA_LARGE_TEXT_SIZE,
                     modifier = Modifier
                     	.padding(0.dp, 6.dp)
                 ) {
@@ -147,7 +148,7 @@ private fun MainSettingsTopBar() {
         title = {
             Text(
                 text = stringResource(id = R.string.settings),
-                fontSize = TextUnit(22f, TextUnitType.Sp)
+                fontSize = TextUnit(TextStylingConstants.EXTRA_EXTRA_LARGE_TEXT_SIZE, TextUnitType.Sp)
             )
         },
         navigationIcon = {

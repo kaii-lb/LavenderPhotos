@@ -6,6 +6,7 @@ plugins {
     id("com.google.devtools.ksp")
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.baselineprofile)
+    id("com.mikepenz.aboutlibraries.plugin.android")
 }
 
 android {
@@ -119,6 +120,9 @@ dependencies {
 
     implementation("com.github.kaii-lb:Lavender-Snackbars:071f602527")
     implementation("com.github.kaii-lb.LavenderImmichIntegration:library:v1.0.9")
+
+    implementation("com.mikepenz:aboutlibraries:13.0.0-b01")
+    implementation("com.mikepenz:aboutlibraries-compose-m3:13.0.0-b01")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.3.0")

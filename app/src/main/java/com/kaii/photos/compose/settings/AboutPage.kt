@@ -7,11 +7,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.AlertDialog
@@ -47,6 +50,7 @@ import com.kaii.photos.compose.dialogs.ExplanationDialog
 import com.kaii.photos.compose.dialogs.FeatureNotAvailableDialog
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.helpers.TextStylingConstants
 
 private const val TAG = "ABOUT_PAGE"
 
@@ -61,156 +65,172 @@ fun AboutPage(popBackStack: () -> Unit) {
         changelog = stringResource(id = R.string.changelog)
     )
 
-    Column(
+    LazyColumn(
         modifier = Modifier
             .fillMaxSize(1f)
             .padding(8.dp)
+            .windowInsetsPadding(WindowInsets.systemBars)
             .background(MaterialTheme.colorScheme.background),
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth(1f)
-                .wrapContentHeight(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Row(
+        item {
+            Column(
                 modifier = Modifier
                     .fillMaxWidth(1f)
-                    .padding(0.dp, 24.dp, 0.dp, 0.dp)
                     .wrapContentHeight(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Start
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                IconButton(
-                    onClick = {
-                        popBackStack()
-                    }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth(1f)
+                        .wrapContentHeight(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Start
                 ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.back_arrow),
-                        contentDescription = stringResource(id = R.string.return_to_previous_page),
-                        tint = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier
-                            .size(24.dp)
-                    )
+                    IconButton(
+                        onClick = {
+                            popBackStack()
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.back_arrow),
+                            contentDescription = stringResource(id = R.string.return_to_previous_page),
+                            tint = MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier
+                                .size(24.dp)
+                        )
+                    }
                 }
+
+                GlideImage(
+                    model = R.drawable.lavender,
+                    contentDescription = stringResource(id = R.string.app_icon),
+                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onBackground),
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier
+                        .size(108.dp)
+                )
+
+                Text(
+                    text = stringResource(id = R.string.app_name_full),
+                    textAlign = TextAlign.Center,
+                    fontSize = TextUnit(TextStylingConstants.EXTRA_EXTRA_LARGE_TEXT_SIZE, TextUnitType.Sp),
+                    fontWeight = FontWeight.Bold,
+                    style = LocalTextStyle.current.copy(
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                )
             }
 
-            GlideImage(
-                model = R.drawable.lavender,
-                contentDescription = stringResource(id = R.string.app_icon),
-                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onBackground),
-                contentScale = ContentScale.Fit,
-                modifier = Modifier
-                    .size(128.dp)
-            )
-
-            Text(
-                text = stringResource(id = R.string.app_name_full),
-                textAlign = TextAlign.Center,
-                fontSize = TextUnit(22f, TextUnitType.Sp),
-                fontWeight = FontWeight.Bold,
-                style = LocalTextStyle.current.copy(
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-            )
+            Spacer(modifier = Modifier.height(8.dp))
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize(1f)
-                .padding(8.dp)
-                .background(MaterialTheme.colorScheme.background),
-            verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            PreferencesRow(
-                title = stringResource(id = R.string.dev_title),
-                summary = stringResource(id = R.string.dev_name),
-                iconResID = R.drawable.code,
-                position = RowPosition.Top
+        item {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize(1f)
+                    .padding(8.dp)
+                    .background(MaterialTheme.colorScheme.background),
+                verticalArrangement = Arrangement.Top,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                val intent = Intent(Intent.ACTION_VIEW).apply {
-                    data = "https://github.com/kaii-lb".toUri()
+                PreferencesRow(
+                    title = stringResource(id = R.string.dev_title),
+                    summary = stringResource(id = R.string.dev_name),
+                    iconResID = R.drawable.code,
+                    position = RowPosition.Top
+                ) {
+                    val intent = Intent(Intent.ACTION_VIEW).apply {
+                        data = "https://github.com/kaii-lb".toUri()
+                    }
+
+                    context.startActivity(intent)
                 }
 
-                context.startActivity(intent)
-            }
+                val showPrivacyPolicy = remember { mutableStateOf(false) }
+                if (showPrivacyPolicy.value) {
+                    ExplanationDialog(
+                        title = stringResource(id = R.string.privacy_policy_title),
+                        explanation = stringResource(id = R.string.privacy_policy),
+                        showDialog = showPrivacyPolicy,
+                    )
+                }
 
-            val showPrivacyPolicy = remember { mutableStateOf(false) }
-            if (showPrivacyPolicy.value) {
-                ExplanationDialog(
+                PreferencesRow(
                     title = stringResource(id = R.string.privacy_policy_title),
-                    explanation = stringResource(id = R.string.privacy_policy),
-                    showDialog = showPrivacyPolicy,
-                )
-            }
-
-            PreferencesRow(
-                title = stringResource(id = R.string.privacy_policy_title),
-                summary = stringResource(id = R.string.i_swear_were_not_bad),
-                iconResID = R.drawable.privacy_policy,
-                position = RowPosition.Middle
-            ) {
-                showPrivacyPolicy.value = true
-            }
-
-            val showNotImplDialog = remember { mutableStateOf(false) }
-            if (showNotImplDialog.value) {
-                FeatureNotAvailableDialog(showDialog = showNotImplDialog)
-            }
-
-            val navController = LocalNavController.current
-            PreferencesRow(
-                title = stringResource(id = R.string.updates),
-                summary = stringResource(id = R.string.updates_desc),
-                iconResID = R.drawable.update,
-                position = RowPosition.Middle,
-                goesToOtherPage = true
-            ) {
-                navController.navigate(MultiScreenViewType.UpdatesPage.name)
-            }
-
-            PreferencesRow(
-                title = stringResource(id = R.string.support),
-                summary = stringResource(id = R.string.support_desc),
-                iconResID = R.drawable.donation,
-                position = RowPosition.Middle
-            ) {
-                showNotImplDialog.value = true
-            }
-
-            PreferencesRow(
-                title = stringResource(id = R.string.translation),
-                summary = stringResource(id = R.string.translation_desc),
-                iconResID = R.drawable.globe,
-                position = RowPosition.Middle
-            ) {
-                val intent = Intent(Intent.ACTION_VIEW).apply {
-                    data = "https://hosted.weblate.org/projects/lavender-photos/".toUri()
+                    summary = stringResource(id = R.string.i_swear_were_not_bad),
+                    iconResID = R.drawable.privacy_policy,
+                    position = RowPosition.Middle
+                ) {
+                    showPrivacyPolicy.value = true
                 }
 
-                context.startActivity(intent)
-            }
+                val showNotImplDialog = remember { mutableStateOf(false) }
+                if (showNotImplDialog.value) {
+                    FeatureNotAvailableDialog(showDialog = showNotImplDialog)
+                }
 
-            val versionName = try {
-                context.packageManager.getPackageInfo(context.packageName, 0).versionName
-            } catch (e: Throwable) {
-                Log.e(TAG, e.toString())
-                "Couldn't get version number"
-            }
-            PreferencesRow(
-                title = stringResource(id = R.string.version_info),
-                summary = versionName,
-                iconResID = R.drawable.info,
-                position = RowPosition.Bottom,
-            ) {
-                showVersionInfoDialog.value = true
+                val navController = LocalNavController.current
+                PreferencesRow(
+                    title = stringResource(id = R.string.updates),
+                    summary = stringResource(id = R.string.updates_desc),
+                    iconResID = R.drawable.update,
+                    position = RowPosition.Middle,
+                    goesToOtherPage = true
+                ) {
+                    navController.navigate(MultiScreenViewType.UpdatesPage.name)
+                }
+
+                PreferencesRow(
+                    title = stringResource(id = R.string.support),
+                    summary = stringResource(id = R.string.support_desc),
+                    iconResID = R.drawable.donation,
+                    position = RowPosition.Middle
+                ) {
+                    showNotImplDialog.value = true
+                }
+
+                PreferencesRow(
+                    title = stringResource(id = R.string.translation),
+                    summary = stringResource(id = R.string.translation_desc),
+                    iconResID = R.drawable.globe,
+                    position = RowPosition.Middle
+                ) {
+                    val intent = Intent(Intent.ACTION_VIEW).apply {
+                        data = "https://hosted.weblate.org/projects/lavender-photos/".toUri()
+                    }
+
+                    context.startActivity(intent)
+                }
+
+                val versionName = remember {
+                    try {
+                        context.packageManager.getPackageInfo(context.packageName, 0).versionName
+                    } catch (e: Throwable) {
+                        Log.e(TAG, e.toString())
+                        "Couldn't get version number"
+                    }
+                }
+                PreferencesRow(
+                    title = stringResource(id = R.string.version_info),
+                    summary = versionName,
+                    iconResID = R.drawable.info,
+                    position = RowPosition.Middle,
+                ) {
+                    showVersionInfoDialog.value = true
+                }
+
+                PreferencesRow(
+                    title = stringResource(id = R.string.licenses),
+                    summary = stringResource(id = R.string.licenses_desc),
+                    iconResID = R.drawable.license,
+                    position = RowPosition.Bottom,
+                    goesToOtherPage = true
+                ) {
+                    navController.navigate(MultiScreenViewType.LicensePage.name)
+                }
             }
         }
     }
@@ -234,7 +254,7 @@ fun VersionInfoDialog(
                 ) {
                     Text(
                         text = "Close",
-                        fontSize = TextUnit(14f, TextUnitType.Sp),
+                        fontSize = TextUnit(TextStylingConstants.SMALL_TEXT_SIZE, TextUnitType.Sp),
                     )
                 }
             },
@@ -245,7 +265,7 @@ fun VersionInfoDialog(
                 ) {
                     Text(
                         text = "Changelog",
-                        fontSize = TextUnit(18f, TextUnitType.Sp),
+                        fontSize = TextUnit(TextStylingConstants.LARGE_TEXT_SIZE, TextUnitType.Sp),
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center
                     )
@@ -261,7 +281,7 @@ fun VersionInfoDialog(
                         item {
                             Text(
                                 text = changelog,
-                                fontSize = TextUnit(14f, TextUnitType.Sp),
+                                fontSize = TextUnit(TextStylingConstants.SMALL_TEXT_SIZE, TextUnitType.Sp),
                             )
                         }
                     }

@@ -7,4 +7,5 @@ plugins {
     alias(libs.plugins.compose.compiler) apply false
     alias(libs.plugins.android.test) apply false
     alias(libs.plugins.baselineprofile) apply false
+    id("com.mikepenz.aboutlibraries.plugin.android") version "13.0.0-b01" apply false
 }

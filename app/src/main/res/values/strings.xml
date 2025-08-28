@@ -79,6 +79,11 @@
     <string name="version_info">Version Info</string>
     <string name="translation">Translation</string>
     <string name="translation_desc">bring Lavender Photos worldwide!</string>
+    <string name="licenses">Licenses</string>
+    <string name="licenses_desc">open source software used</string>
+    <string name="licenses_extra">Extra Details</string>
+    <string name="licenses_extra_desc">View more detailed information on licenses</string>
+    <string name="special_thanks_to">Special thanks to:</string>
 
     <!-- Updates -->
     <string name="updates">Updates</string>
