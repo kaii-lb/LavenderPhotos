@@ -240,7 +240,6 @@
     <string name="first_startup_dialog_confirm_title">Знайти!</string>
     <string name="direct_path_album">Використайте прямий шлях для додавання альбому</string>
     <string name="albums_main_list">Основний список альбомів</string>
-    <string name="albums_main_list_desc">Виберіть альбоми, фото яких будуть показані на головній сторінці</string>
     <string name="albums_main_list_selected">Вибрані альбоми відображатимуться на головній сторінці</string>
     <string name="albums_selected">Обрані альбоми</string>
     <string name="albums_auto_detect">Автоматично визначати альбоми</string>
