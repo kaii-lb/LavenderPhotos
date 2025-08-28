@@ -307,7 +307,6 @@
     <string name="bottom_sheets_freeform">Freeform</string>
     <string name="bottom_sheets_image_ratio">Image Ratio</string>
     <string name="bottom_sheets_square">Square</string>
-    <string name="bottom_sheets_vertical">vertical</string>
     <string name="bottom_sheets_horizontal">horizontal</string>
     <string name="bottom_sheets_ratio_selected">This cropping ratio is selected</string>
     <!-- Error Views -->
