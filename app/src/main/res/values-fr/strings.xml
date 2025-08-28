@@ -143,7 +143,6 @@
     <string name="paths_should_be_relative">Le chemin doit être relatif</string>
     <string name="bottom_sheets_enter_text">Entrer le texte</string>
     <string name="bottom_sheets_freeform">Forme libre</string>
-    <string name="bottom_sheets_horizontal">horizontal</string>
     <string name="error_views_search_not_found">La recherche n\'a rien donné</string>
     <string name="error_views_secure_empty">Aucun de vos médias n\'est protégé !</string>
     <string name="error_views_secure_prefix">Sécurisé le</string>
