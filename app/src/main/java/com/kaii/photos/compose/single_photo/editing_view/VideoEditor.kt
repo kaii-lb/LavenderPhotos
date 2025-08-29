@@ -49,8 +49,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.Effect
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.effect.Contrast
-import androidx.media3.effect.HslAdjustment
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.compose.app_bars.VideoEditorBottomBar
 import com.kaii.photos.compose.app_bars.VideoEditorTopBar
@@ -223,22 +221,12 @@ fun VideoEditor(
         val last = modifications.lastOrNull { it is VideoModification.Adjustment } as? VideoModification.Adjustment
 
         if (last != null) {
+            val effect = last.toEffect()
             effectsList.removeAll {
-                when (last.type) {
-                    MediaAdjustments.Contrast -> it is Contrast
-                    MediaAdjustments.Saturation -> it is HslAdjustment
-                    else -> false
-                }
+                it::class == effect::class
             }
 
-            effectsList.add(
-                when (last.type) {
-                    MediaAdjustments.Contrast -> Contrast(last.value)
-                    MediaAdjustments.Saturation -> HslAdjustment.Builder().adjustSaturation(last.value * 100).build()
-
-                    else -> Contrast(0f) // placeholder
-                }
-            )
+            effectsList.add(last.toEffect())
 
             exoPlayer.stop()
             val mediaItem = MediaItem.Builder()

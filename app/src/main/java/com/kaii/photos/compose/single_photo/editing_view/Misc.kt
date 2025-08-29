@@ -23,10 +23,8 @@ import androidx.media3.common.audio.ChannelMixingAudioProcessor
 import androidx.media3.common.audio.ChannelMixingMatrix
 import androidx.media3.common.audio.SonicAudioProcessor
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.effect.Contrast
 import androidx.media3.effect.Crop
 import androidx.media3.effect.FrameDropEffect
-import androidx.media3.effect.HslAdjustment
 import androidx.media3.effect.Presentation
 import androidx.media3.effect.ScaleAndRotateTransformation
 import androidx.media3.effect.SpeedChangeEffect
@@ -61,63 +59,6 @@ data class BasicVideoData(
     val height: Int
 ) {
     val aspectRatio = width.toFloat() / height
-}
-
-interface VideoModification {
-    data class Trim(
-        val start: Float,
-        val end: Float
-    ) : VideoModification
-
-    data class Crop(
-        val top: Float,
-        val left: Float,
-        val width: Float,
-        val height: Float
-    ) : VideoModification {
-        val right = left + width
-        val bottom = top + height
-    }
-
-    data class Rotation(
-        val degrees: Float
-    ) : VideoModification
-
-    data class Volume(
-        val percentage: Float
-    ) : VideoModification
-
-    data class Speed(
-        val multiplier: Float
-    ) : VideoModification
-
-    data class FrameDrop(
-        val targetFps: Int
-    ) : VideoModification
-
-    data class Adjustment(
-        val type: MediaAdjustments,
-        val matrix: FloatArray,
-        val value: Float
-    ) : VideoModification {
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (javaClass != other?.javaClass) return false
-
-            other as Adjustment
-
-            if (type != other.type) return false
-            if (!matrix.contentEquals(other.matrix)) return false
-
-            return true
-        }
-
-        override fun hashCode(): Int {
-            var result = type.hashCode()
-            result = 31 * result + matrix.contentHashCode()
-            return result
-        }
-    }
 }
 
 enum class SelectedCropArea {
@@ -227,15 +168,7 @@ suspend fun saveVideo(
     }
 
     modifications.mapNotNull { it as? VideoModification.Adjustment }.forEach { adjustment ->
-        // TODO: find way to sync this and one in VideoEditor.kt
-        effectList.add(
-            when (adjustment.type) {
-                MediaAdjustments.Contrast -> Contrast(adjustment.value)
-                MediaAdjustments.Saturation -> HslAdjustment.Builder().adjustSaturation(adjustment.value * 100).build()
-
-                else -> Contrast(0f) // placeholder
-            }
-        )
+        effectList.add(adjustment.toEffect())
     }
 
     val mediaItem = MediaItem.Builder()
@@ -368,17 +301,6 @@ enum class CroppingAspectRatio(
     FiveByFour(5f / 4f, R.string.bottom_sheets_five_by_four),
     FourByThree(4f / 3f, R.string.bottom_sheets_four_by_three),
     ThreeByTwo(3f / 2f, R.string.bottom_sheets_three_by_two)
-}
-
-enum class MediaAdjustments {
-    Contrast,
-    Brightness,
-    Saturation,
-    BlackPoint,
-    WhitePoint,
-    Warmth,
-    ColorTint,
-    Highlights
 }
 
 enum class VideoEditorTabs(

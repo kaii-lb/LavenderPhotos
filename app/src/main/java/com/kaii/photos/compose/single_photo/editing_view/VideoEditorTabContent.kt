@@ -1,7 +1,6 @@
 package com.kaii.photos.compose.single_photo.editing_view
 
 import android.graphics.Bitmap
-import androidx.annotation.DrawableRes
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
@@ -22,6 +21,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -515,43 +515,36 @@ fun VideoEditorAdjustContent(
     modifier: Modifier = Modifier,
     increaseModCount: () -> Unit
 ) {
-    Row(
+    LazyRow(
         modifier = modifier
             .fillMaxSize(1f),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
-        VideoEditingBottomAppBarItem(
-            text = stringResource(id = R.string.editing_contrast),
-            icon = R.drawable.contrast,
-            modifications = modifications,
-            type = MediaAdjustments.Contrast,
-            extraOnClick = increaseModCount
-        )
+        items(
+            // .filter { it.availableOnVideos } since some effects aren't yet available for videos
+            count = MediaAdjustments.entries.filter { it.availableOnVideos }.size
+        ) { index ->
+            val entry = MediaAdjustments.entries.filter { it.availableOnVideos }[index]
 
-        VideoEditingBottomAppBarItem(
-            text = stringResource(id = R.string.editing_saturation),
-            icon = R.drawable.saturation,
-            modifications = modifications,
-            type = MediaAdjustments.Saturation,
-            extraOnClick = increaseModCount
-        )
+            VideoEditingBottomAppBarItem(
+                type = entry,
+                modifications = modifications,
+                extraOnClick = increaseModCount
+            )
+        }
     }
 }
 
 @Composable
 private fun VideoEditingBottomAppBarItem(
-    text: String,
-    @DrawableRes icon: Int,
-    modifications: SnapshotStateList<VideoModification>,
     type: MediaAdjustments,
-    startMatrix: FloatArray = FloatArray(0),
-    startValue: Float = 0f,
+    modifications: SnapshotStateList<VideoModification>,
     extraOnClick: () -> Unit
 ) {
     EditingViewBottomAppBarItem(
-        text = text,
-        icon = icon,
+        text = stringResource(id = type.title),
+        icon = type.icon,
         selected = (modifications.lastOrNull {
             it is VideoModification.Adjustment
         } as? VideoModification.Adjustment)?.type == type,
@@ -565,7 +558,7 @@ private fun VideoEditingBottomAppBarItem(
 
                 if (latest?.type == type) { // double click for reset value
                     modifications.remove(last)
-                    modifications.add(last.copy(value = startValue))
+                    modifications.add(last.copy(value = type.startValue))
                 } else {
                     modifications.remove(last) // single click for switch
                     modifications.add(last)
@@ -574,8 +567,7 @@ private fun VideoEditingBottomAppBarItem(
                 modifications.add(
                     VideoModification.Adjustment(
                         type = type,
-                        matrix = startMatrix,
-                        value = startValue
+                        value = type.startValue
                     )
                 )
             }

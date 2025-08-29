@@ -40,6 +40,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithContent
@@ -60,10 +61,13 @@ import com.kaii.photos.R
 import com.kaii.photos.helpers.getColorFromLinearGradientList
 import com.kaii.photos.helpers.gradientColorList
 
+// TODO: awful execution plz fix
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BoxWithConstraintsScope.ColorRangeSlider(
-    sliderValue: MutableFloatState
+    sliderValue: MutableFloatState,
+    enabled: Boolean = true,
+    confirmValue: () -> Unit = {}
 ) {
     val localDensity = LocalDensity.current
     val max = maxWidth
@@ -97,7 +101,8 @@ fun BoxWithConstraintsScope.ColorRangeSlider(
             .shadow(
                 elevation = 4.dp,
                 shape = CircleShape
-            ),
+            )
+            .alpha(if (enabled) 1f else 0.6f),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Start
     ) {
@@ -185,6 +190,7 @@ fun BoxWithConstraintsScope.ColorRangeSlider(
                         it.coerceAtLeast(-1f)
                     }
             },
+            onValueChangeFinished = confirmValue,
             track = {
                 Box(
                     modifier = Modifier
@@ -219,6 +225,7 @@ fun BoxWithConstraintsScope.ColorRangeSlider(
                         )
                 )
             },
+            enabled = enabled,
             modifier = Modifier
                 .fillMaxWidth(1f)
         )

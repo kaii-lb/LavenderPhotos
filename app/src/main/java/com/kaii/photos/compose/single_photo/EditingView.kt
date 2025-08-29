@@ -2215,7 +2215,6 @@ fun AdjustTools(
                 if (sliderValue.floatValue == whitePointValue) return@run
 
                 val whitePoint = sliderValue.floatValue + 1f
-
                 val floatArray = floatArrayOf(
                     whitePoint, 1f, 1f, 0f, 1f,
                     1f, whitePoint, 1f, 0f, 1f,
@@ -2290,7 +2289,6 @@ fun AdjustTools(
                 if (sliderValue.floatValue == highlightsValue) return@run
 
                 val highlight = -sliderValue.floatValue
-
                 val floatArray = floatArrayOf(
                     1 - highlight, 1f, 1f, 0f, 1f,
                     1f, 1 - highlight, 1f, 0f, 1f,

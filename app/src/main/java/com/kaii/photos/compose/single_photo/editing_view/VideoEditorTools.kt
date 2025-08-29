@@ -1,5 +1,6 @@
 package com.kaii.photos.compose.single_photo.editing_view
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -40,6 +41,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import com.kaii.photos.R
+import com.kaii.photos.compose.ColorRangeSlider
 import com.kaii.photos.compose.PopupPillSlider
 import com.kaii.photos.compose.single_photo.VideoPlayerSeekbar
 import com.kaii.photos.helpers.AnimationConstants
@@ -238,9 +240,11 @@ fun VideoEditorAdjustmentTools(
         val changesSize = remember { mutableIntStateOf(0) }
         val coroutineScope = rememberCoroutineScope()
 
-        val latestAdjustment by remember { derivedStateOf {
-            modifications.lastOrNull { it is VideoModification.Adjustment } as? VideoModification.Adjustment
-        }}
+        val latestAdjustment by remember {
+            derivedStateOf {
+                modifications.lastOrNull { it is VideoModification.Adjustment } as? VideoModification.Adjustment
+            }
+        }
 
         LaunchedEffect(latestAdjustment, totalModCount.intValue) {
             if (latestAdjustment != null) {
@@ -266,25 +270,35 @@ fun VideoEditorAdjustmentTools(
             )
         }
 
-        BoxWithConstraints(
+        AnimatedContent(
+            targetState = latestAdjustment?.type == MediaAdjustments.ColorTint,
             modifier = Modifier
                 .weight(1f)
-        ) {
-            PopupPillSlider(
-                sliderValue = sliderVal,
-                changesSize = changesSize,
-                popupPillHeightOffset = 6.dp,
-                enabled = latestAdjustment != null,
-                confirmValue = {
-                    val new = latestAdjustment!!.copy(
-                        value = sliderVal.floatValue
-                    )
+        ) { targetState ->
+            BoxWithConstraints(
+                modifier = Modifier
+                    .weight(1f)
+            ) {
+                if (targetState) {
+                    ColorRangeSlider(sliderValue = sliderVal)
+                } else {
+                    PopupPillSlider(
+                        sliderValue = sliderVal,
+                        changesSize = changesSize, // not using totalModCount since that would cook the performance
+                        popupPillHeightOffset = 6.dp,
+                        enabled = latestAdjustment != null,
+                        confirmValue = {
+                            val new = latestAdjustment!!.copy(
+                                value = sliderVal.floatValue
+                            )
 
-                    modifications.remove(latestAdjustment!!)
-                    modifications.add(new)
-                    totalModCount.intValue += 1
+                            modifications.remove(latestAdjustment!!)
+                            modifications.add(new)
+                            totalModCount.intValue += 1
+                        }
+                    )
                 }
-            )
+            }
         }
     }
 }
