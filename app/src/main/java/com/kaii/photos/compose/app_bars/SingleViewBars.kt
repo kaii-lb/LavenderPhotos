@@ -77,6 +77,7 @@ import com.kaii.photos.compose.single_photo.editing_view.CroppingAspectRatio
 import com.kaii.photos.compose.single_photo.editing_view.TrimContent
 import com.kaii.photos.compose.single_photo.editing_view.VideoEditorAdjustContent
 import com.kaii.photos.compose.single_photo.editing_view.VideoEditorCropContent
+import com.kaii.photos.compose.single_photo.editing_view.VideoEditorFilterContent
 import com.kaii.photos.compose.single_photo.editing_view.VideoEditorProcessingContent
 import com.kaii.photos.compose.single_photo.editing_view.VideoEditorTabs
 import com.kaii.photos.compose.single_photo.editing_view.VideoModification
@@ -99,7 +100,7 @@ fun VideoEditorBottomBar(
     rightPosition: MutableFloatState,
     modifications: SnapshotStateList<VideoModification>,
     croppingAspectRatio: MutableState<CroppingAspectRatio>,
-    totalModCount: MutableIntState,
+    increaseModCount: () -> Unit,
     onCropReset: () -> Unit,
     onSeek: (Float) -> Unit,
     onRotate: () -> Unit
@@ -213,10 +214,17 @@ fun VideoEditorBottomBar(
 
                     VideoEditorTabs.entries.indexOf(VideoEditorTabs.Adjust) -> {
                         VideoEditorAdjustContent(
-                            modifications = modifications
-                        ) {
-                            totalModCount.intValue += 1
-                        }
+                            modifications = modifications,
+                            increaseModCount = increaseModCount
+                        )
+                    }
+
+                    VideoEditorTabs.entries.indexOf(VideoEditorTabs.Filters) -> {
+                        VideoEditorFilterContent(
+                            thumbnails = thumbnails,
+                            modifications = modifications,
+                            increaseModCount = increaseModCount
+                        )
                     }
 
                     else -> {

@@ -45,6 +45,8 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.ImageBitmapConfig
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
@@ -55,10 +57,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isUnspecified
 import com.kaii.photos.R
+import com.kaii.photos.compose.ColorFilterItem
 import com.kaii.photos.compose.CroppingRatioBottomSheet
 import com.kaii.photos.compose.dialogs.SliderDialog
 import com.kaii.photos.compose.single_photo.EditingViewBottomAppBarItem
 import com.kaii.photos.helpers.AnimationConstants
+import com.kaii.photos.helpers.MediaColorFilters
 import com.kaii.photos.helpers.VideoPlayerConstants
 import kotlin.math.truncate
 
@@ -522,10 +526,9 @@ fun VideoEditorAdjustContent(
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         items(
-            // .filter { it.availableOnVideos } since some effects aren't yet available for videos
-            count = MediaAdjustments.entries.filter { it.availableOnVideos }.size
+            count = MediaAdjustments.entries.size
         ) { index ->
-            val entry = MediaAdjustments.entries.filter { it.availableOnVideos }[index]
+            val entry = MediaAdjustments.entries[index]
 
             VideoEditingBottomAppBarItem(
                 type = entry,
@@ -575,4 +578,48 @@ private fun VideoEditingBottomAppBarItem(
             extraOnClick()
         }
     )
+}
+
+@Composable
+fun VideoEditorFilterContent(
+    thumbnails: List<Bitmap>,
+    modifications: SnapshotStateList<VideoModification>,
+    modifier: Modifier = Modifier,
+    increaseModCount: () -> Unit
+) {
+    val image = remember(thumbnails) {
+        thumbnails.firstOrNull()?.asImageBitmap() ?: ImageBitmap(512, 512, ImageBitmapConfig.Argb8888)
+    }
+
+    LazyRow(
+        modifier = modifier
+            .fillMaxSize(1f),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        items(
+            count = MediaColorFilters.entries.size
+        ) { index ->
+            val filter = MediaColorFilters.entries[index]
+
+            ColorFilterItem(
+                text = stringResource(id = filter.title),
+                image = image,
+                colorMatrix = filter.matrix,
+                selected = (modifications.lastOrNull { it is VideoModification.Filter } as? VideoModification.Filter)?.type == filter
+            ) {
+                modifications.removeAll {
+                    it is VideoModification.Filter
+                }
+
+                modifications.add(
+                    VideoModification.Filter(
+                        type = filter
+                    )
+                )
+
+                increaseModCount()
+            }
+        }
+    }
 }

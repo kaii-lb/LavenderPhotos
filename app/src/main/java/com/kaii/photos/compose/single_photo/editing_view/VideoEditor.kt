@@ -218,25 +218,37 @@ fun VideoEditor(
     val totalModCount = remember { mutableIntStateOf(0) }
 
     LaunchedEffect(totalModCount.intValue) {
-        val last = modifications.lastOrNull { it is VideoModification.Adjustment } as? VideoModification.Adjustment
+        val last = modifications.lastOrNull()
 
-        if (last != null) {
+        if (last is VideoModification.Adjustment) {
             val effect = last.toEffect()
             effectsList.removeAll {
-                it::class == effect::class
+                if (effect is ColorMatrixEffect) it is ColorMatrixEffect && !it.isFilter
+                else it::class == effect::class
             }
 
             effectsList.add(last.toEffect())
+        } else if (last is VideoModification.Filter) {
+            effectsList.removeAll {
+                it is ColorMatrixEffect && it.isFilter
+            }
 
-            exoPlayer.stop()
-            val mediaItem = MediaItem.Builder()
-                .setUri(uri)
-                .build()
-
-            exoPlayer.setMediaItem(mediaItem)
-            exoPlayer.setVideoEffects(effectsList)
-            exoPlayer.prepare()
+            effectsList.add(
+                ColorMatrixEffect(
+                    matrix = last.type.matrix,
+                    isFilter = true
+                )
+            )
         }
+
+        exoPlayer.stop()
+        val mediaItem = MediaItem.Builder()
+            .setUri(uri)
+            .build()
+
+        exoPlayer.setMediaItem(mediaItem)
+        exoPlayer.setVideoEffects(effectsList)
+        exoPlayer.prepare()
 
         Log.d(TAG, "last $last")
     }
@@ -264,7 +276,6 @@ fun VideoEditor(
                 basicData = basicVideoData,
                 croppingAspectRatio = aspectRatio,
                 modifications = modifications,
-                totalModCount = totalModCount,
                 onCropReset = {
                     resetCrop.value = true
                     rotation = 0f
@@ -290,6 +301,9 @@ fun VideoEditor(
                             degrees = rotation
                         )
                     )
+                },
+                increaseModCount = {
+                    totalModCount.intValue += 1
                 }
             )
         }

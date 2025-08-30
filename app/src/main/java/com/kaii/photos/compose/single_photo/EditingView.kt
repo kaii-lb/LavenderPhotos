@@ -180,7 +180,6 @@ import com.kaii.photos.compose.single_photo.editing_view.MediaAdjustments
 import com.kaii.photos.compose.single_photo.editing_view.SliderStates
 import com.kaii.photos.compose.single_photo.editing_view.makeDrawCanvas
 import com.kaii.photos.datastore.Editing
-import com.kaii.photos.helpers.ColorFiltersMatrices
 import com.kaii.photos.helpers.ColorIndicator
 import com.kaii.photos.helpers.DrawableBlur
 import com.kaii.photos.helpers.DrawablePath
@@ -189,6 +188,7 @@ import com.kaii.photos.helpers.DrawingColors
 import com.kaii.photos.helpers.DrawingPaints
 import com.kaii.photos.helpers.ExtendedPaint
 import com.kaii.photos.helpers.GetPermissionAndRun
+import com.kaii.photos.helpers.MediaColorFilters
 import com.kaii.photos.helpers.Modification
 import com.kaii.photos.helpers.PaintType
 import com.kaii.photos.helpers.blur
@@ -299,7 +299,7 @@ fun EditingView(
 
     val adjustSliderValue = remember { mutableFloatStateOf(0f) }
     val colorMatrix = remember { mutableStateOf(ColorMatrix()) }
-    val currentFilter = remember { mutableStateOf(ColorFiltersMatrices["None"]!!) }
+    val currentFilter = remember { mutableStateOf(MediaColorFilters.None) }
 
     var blurredImage by remember { mutableStateOf(image) }
     LaunchedEffect(image, modifications.size, colorMatrix.value, rotation) {
@@ -1737,7 +1737,7 @@ private fun EditingViewBottomBar(
     originalImageRatio: Float,
     adjustSliderValue: MutableFloatState,
     colorMatrix: MutableState<ColorMatrix>,
-    currentFilter: MutableState<ColorMatrix>,
+    currentFilter: MutableState<MediaColorFilters>,
     image: ImageBitmap,
     window: Window,
     selectedText: MutableState<DrawableText?>,
@@ -1955,12 +1955,12 @@ private fun EditingViewBottomBar(
 
                     var adjustmentsResult by remember { mutableStateOf(emptyList<Float>()) }
 
-                    LaunchedEffect(currentFilter.value.values, adjustmentsResult) {
+                    LaunchedEffect(currentFilter.value.matrix, adjustmentsResult) {
                         if (adjustmentsResult.isEmpty()) return@LaunchedEffect
 
                         val floatArray = emptyList<Float>().toMutableList()
 
-                        val filter = currentFilter.value.values
+                        val filter = currentFilter.value.matrix.values
                         for (i in filter.indices) {
                             var item = adjustmentsResult[i]
 
@@ -2478,7 +2478,7 @@ fun AdjustTools(
 
 @Composable
 fun FiltersTools(
-    currentFilter: MutableState<ColorMatrix>,
+    currentFilter: MutableState<MediaColorFilters>,
     image: ImageBitmap,
     changesSize: MutableIntState
 ) {
@@ -2489,22 +2489,19 @@ fun FiltersTools(
             .fillMaxSize(1f)
     ) {
         items(
-            count = ColorFiltersMatrices.keys.toList().size
+            count = MediaColorFilters.entries.size
         ) { index ->
-            val key = ColorFiltersMatrices.keys.toList()[index]
-            val matrix = ColorFiltersMatrices[key]
+            val matrix = MediaColorFilters.entries[index]
 
-            if (matrix != null) {
-                ColorFilterItem(
-                    text = key,
-                    image = image,
-                    colorMatrix = matrix,
-                    selected = currentFilter.value == matrix
-                ) {
-                    currentFilter.value = matrix
+            ColorFilterItem(
+                text = matrix.name,
+                image = image,
+                colorMatrix = matrix.matrix,
+                selected = currentFilter.value == matrix
+            ) {
+                currentFilter.value = matrix
 
-                    changesSize.intValue += 1
-                }
+                changesSize.intValue += 1
             }
         }
     }

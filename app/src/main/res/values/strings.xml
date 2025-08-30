@@ -216,6 +216,30 @@
     <string name="editing_scale_text">Change font size of selected text</string>
     <string name="editing_done">Saved edited image!</string>
     <string name="editing_failed">Failed to save edited image</string>
+    <string name="editing_invert">Invert</string>
+
+    <!-- Editing Filters -->
+    <string name="filter_none">None</string>
+    <string name="filter_inverted">Inverted</string>
+    <string name="filter_vibrant">Vibrant</string>
+    <string name="filter_bw">B&amp;W</string>
+    <string name="filter_film">Filmic</string>
+    <string name="filter_grayscale">Grayscale</string>
+    <string name="filter_sepia">Sepia</string>
+    <string name="filter_bgr">BGR</string>
+    <string name="filter_warm">Warm</string>
+    <string name="filter_cool">Cool</string>
+    <string name="filter_vintage">Vintage</string>
+    <string name="filter_posterize">Posterize</string>
+    <string name="filter_glow">Glow</string>
+    <string name="filter_mushrooms">Mushrooms</string>
+    <string name="filter_solar">Solar</string>
+    <string name="filter_peachy">Peachy</string>
+    <string name="filter_pastel">Pastel</string>
+    <string name="filter_rustic">Rustic</string>
+    <string name="filter_dried">Dried</string>
+    <string name="filter_toast">Toasty</string>
+    <string name="filter_shimmer">Shimmer</string>
 
     <!-- Video Editing -->
     <string name="editing_trim">Trim</string>

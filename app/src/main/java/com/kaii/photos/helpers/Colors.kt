@@ -1,5 +1,7 @@
 package com.kaii.photos.helpers
 
+import androidx.annotation.OptIn
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -13,6 +15,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.unit.dp
+import androidx.media3.common.util.UnstableApi
+import com.kaii.photos.R
+import com.kaii.photos.compose.single_photo.editing_view.ColorMatrixEffect
 
 
 object ExtendedMaterialTheme {
@@ -131,216 +136,288 @@ fun getColorFromLinearGradientList(
 	return resolvedColor
 }
 
-val ColorFiltersMatrices = mapOf(
-	"None" to ColorMatrix(),
+enum class MediaColorFilters(
+	val matrix: ColorMatrix,
+	@param:StringRes val title: Int
+) {
+	None(
+		title = R.string.filter_none,
+		matrix = ColorMatrix()
+	),
 
-	"Inverted" to ColorMatrix(
-		floatArrayOf(
-		    -1f, 0f, 0f, 0f, 255f,
-		    0f, -1f, 0f, 0f, 255f,
-		    0f, 0f, -1f, 0f, 255f,
-		    0f, 0f, 0f, 1f, 0f
+	Inverted(
+		title = R.string.filter_inverted,
+		matrix = ColorMatrix(
+			floatArrayOf(
+				-1f, 0f, 0f, 0f, 255f,
+				0f, -1f, 0f, 0f, 255f,
+				0f, 0f, -1f, 0f, 255f,
+				0f, 0f, 0f, 1f, 0f
+			)
 		)
 	),
 
-	"Vibrant" to ColorMatrix().apply {
-		setToSaturation(1.4f)
-		set(0, 4, 1f)
-		set(1, 4, 1f)
-		set(2, 4, 1f)
-	},
-
-	"B&W" to ColorMatrix(
-		floatArrayOf(
-		    1.25f, 1.25f, 1.25f, 0f, -160f,
-		    1.25f, 1.25f, 1.25f, 0f, -160f,
-		    1.25f, 1.25f, 1.25f, 0f, -160f,
-		    0f, 0f, 0f, 1f, 0f
-		)
-	),
-
-	"Film" to ColorMatrix(
-		floatArrayOf(
-		    1.438f, -0.062f, -0.062f, 0f, -0.03f * 255f,
-		    -0.122f, 1.378f, -0.122f, 0f, 0.05f * 255f,
-		    -0.016f, -0.016f, 1.483f, 0f, -0.02f * 255f,
-		    0f, 0f, 0f, 1f, 0f
-		)
-	),
-
-	"Grayscale" to ColorMatrix().apply {
-		setToSaturation(0f)
-		set(0, 4, 1f)
-		set(1, 4, 1f)
-		set(2, 4, 1f)
-	},
-
-	"Sepia" to ColorMatrix(
-		floatArrayOf(
-		    0.393f, 0.769f, 0.189f, 0f, 0f,
-		    0.349f, 0.686f, 0.168f, 0f, 0f,
-		    0.272f, 0.534f, 0.131f, 0f, 0f,
-		    0f, 0f, 0f, 1f, 0f
-		)
-	),
-
-	"BGR" to ColorMatrix(
-		floatArrayOf(
-		    0f, 0f, 1f, 0f, 0f,
-		    0f, 1f, 0f, 0f, 0f,
-		    1f, 0f, 0f, 0f, 0f,
-		    0f, 0f, 0f, 1f, 0f
-		)
-	),
-
-	"Warm" to ColorMatrix(
-		floatArrayOf(
-		    1.3f, 0f, 0f, 0f, 0f,
-		    0.2f, 0.9f, 0f, 0f, 0f,
-		    0.2f, 0f, 0.9f, 0f, 0f,
-		    0f, 0f, 0f, 1f, 0f
-		)
-	),
-
-	"Cool" to ColorMatrix(
-		floatArrayOf(
-		    0.9f, 0f, 0.2f, 0f, 0f,
-		    0f, 0.9f, 0.2f, 0f, 0f,
-		    0f, 0f, 1.3f, 0f, 0f,
-		    0f, 0f, 0f, 1f, 0f
-		)
-	),
-
-	"Vintage" to ColorMatrix(
-		floatArrayOf(
-		    0.9f, 0.5f, 0.2f, 0f, 0f,
-		    0.4f, 0.8f, 0.2f, 0f, 0f,
-		    0.2f, 0.3f, 0.7f, 0f, 0f,
-		    0f, 0f, 0f, 1f, 0f
-		)
-	),
-
-	"Posterize" to ColorMatrix(
-		floatArrayOf(
-		    0.5f, 0f, 0f, 0f, 56f,
-		    0f, 0.5f, 0f, 0f, 56f,
-		    0f, 0f, 0.5f, 0f, 56f,
-		    0f, 0f, 0f, 1f, 0f
-		)
-	).apply {
-		setToSaturation(0.8f)
-	},
-
-	"Glow" to ColorMatrix(
-		floatArrayOf(
-		    1.6f, 0f, 0f, 0f, 0f,
-		    0f, 1.6f, 0f, 0f, 0f,
-		    0f, 0f, 1.6f, 0f, 0f,
-		    0f, 0f, 0f, 1f, 0f
-		)
-	),
-
-	"Mushroom" to ColorMatrix().apply {
-		setToRotateRed(-22f)
-		setToRotateGreen(47f)
-		setToRotateBlue(62f)
-	},
-
-	"Solar" to ColorMatrix(
-		floatArrayOf(
-		    1.2f, 0f, 0f, 0f, 0f,
-		    0f, 1f, 0f, 0f, 0f,
-		    0f, 0f, 1f, 0f, 0f,
-		    0f, 0f, 0f, 1f, 0f
-		)
-	).let {
-		val satMatrix = ColorMatrix().apply {
-			setToSaturation(1.5f)
+	Vibrant(
+		title = R.string.filter_vibrant,
+		matrix = ColorMatrix().apply {
+			setToSaturation(1.4f)
+			set(0, 4, 1f)
+			set(1, 4, 1f)
+			set(2, 4, 1f)
 		}
+	),
 
-		it[0, 0] *= satMatrix[0, 0]
-		it[1, 1] *= satMatrix[1, 1]
-		it[2, 2] *= satMatrix[2, 2]
-
-		return@let it
-	},
-
-	"Peachy" to ColorMatrix(
-		floatArrayOf(
-		    1.1f, 0.1f, 0f, 0f, 20f,
-		    0.05f, 1.05f, 0f, 0f, 10f,
-		    0f, 0.05f, 1f, 0f, 0f,
-		    0f, 0f, 0f, 1f, 0f
+	BlackAndWhite(
+		title = R.string.filter_bw,
+		matrix = ColorMatrix(
+			floatArrayOf(
+				1.25f, 1.25f, 1.25f, 0f, -160f,
+				1.25f, 1.25f, 1.25f, 0f, -160f,
+				1.25f, 1.25f, 1.25f, 0f, -160f,
+				0f, 0f, 0f, 1f, 0f
+			)
 		)
 	),
 
-	"Pastel" to ColorMatrix().let {
-		it.setToSaturation(0.8f)
-
-		it[0, 0] *= 1.1f
-		it[1, 1] *= 1.1f
-		it[2, 2] *= 1.1f
-
-		it[0, 2] *= 0.1f
-
-        it[0, 4] = 10f
-        it[1, 4] = 10f
-        it[2, 4] = 10f
-
-        return@let it
-	},
-
-	"Rustic" to ColorMatrix(
-		floatArrayOf(
-			1.65f, 0f, 0f, 0f, -45f,
-			0f, 1.65f, 0f, 0f, -45f,
-			0f, 0f, 1.65f, 0f, -45f,
-			0f, 0f, 1f, 0f, 1f
+	Film(
+		title = R.string.filter_film,
+		matrix = ColorMatrix(
+			floatArrayOf(
+				1.438f, -0.062f, -0.062f, 0f, -0.03f * 255f,
+				-0.122f, 1.378f, -0.122f, 0f, 0.05f * 255f,
+				-0.016f, -0.016f, 1.483f, 0f, -0.02f * 255f,
+				0f, 0f, 0f, 1f, 0f
+			)
 		)
 	),
 
-	"Dried" to ColorMatrix().let {
-		it.setToSaturation(0.6f)
+	Grayscale(
+		title = R.string.filter_grayscale,
+		matrix = ColorMatrix().apply {
+			setToSaturation(0f)
+			set(0, 4, 1f)
+			set(1, 4, 1f)
+			set(2, 4, 1f)
+		}
+	),
 
-		it[0, 0] *= 1.1f
-		it[1, 1] *= 1.1f
-		it[2, 2] *= 1.1f
-
-        it[0, 4] = 25f
-        it[1, 4] = 25f
-        it[2, 4] = 25f
-
-        return@let it
-	},
-
-	"Toasty" to ColorMatrix().let {
-		it.setToSaturation(0.6f)
-
-		it[0, 0] *= 1.25f
-		it[1, 0] *= 1.25f
-		it[2, 0] *= 1.25f
-
-		it[0, 1] *= 1.25f
-		it[1, 1] *= 1.25f
-		it[2, 1] *= 1.25f
-
-		it[0, 2] *= 1.25f
-		it[1, 2] *= 1.25f
-		it[2, 2] *= 1.25f
-
-        it[0, 4] = -45f
-        it[1, 4] = -45f
-        it[2, 4] = -45f
-
-        return@let it
-	},
-
-	"Shimmer" to ColorMatrix(
-		floatArrayOf(
-		    34f, 0f, 0f, 0f, -831f,
-		    0f, 9f, 0f, 0f, -831f,
-		    0f, 0f, 48f, 0f, -831f,
-		    0f, 0f, 0f, 1f, 0f
+	Sepia(
+		title = R.string.filter_sepia,
+		matrix = ColorMatrix(
+			floatArrayOf(
+				0.393f, 0.769f, 0.189f, 0f, 0f,
+				0.349f, 0.686f, 0.168f, 0f, 0f,
+				0.272f, 0.534f, 0.131f, 0f, 0f,
+				0f, 0f, 0f, 1f, 0f
+			)
 		)
 	),
-)
+
+	Warm(
+		title = R.string.filter_warm,
+		matrix = ColorMatrix(
+			floatArrayOf(
+				1.3f, 0f, 0f, 0f, 0f,
+				0.2f, 0.9f, 0f, 0f, 0f,
+				0.2f, 0f, 0.9f, 0f, 0f,
+				0f, 0f, 0f, 1f, 0f
+			)
+		)
+	),
+
+	Cool(
+		title = R.string.filter_cool,
+		matrix = ColorMatrix(
+			floatArrayOf(
+				0.9f, 0f, 0.2f, 0f, 0f,
+				0f, 0.9f, 0.2f, 0f, 0f,
+				0f, 0f, 1.3f, 0f, 0f,
+				0f, 0f, 0f, 1f, 0f
+			)
+		)
+	),
+
+	Vintage(
+		title = R.string.filter_vintage,
+		matrix = ColorMatrix(
+			floatArrayOf(
+				0.9f, 0.5f, 0.2f, 0f, 0f,
+				0.4f, 0.8f, 0.2f, 0f, 0f,
+				0.2f, 0.3f, 0.7f, 0f, 0f,
+				0f, 0f, 0f, 1f, 0f
+			)
+		)
+	),
+
+	Posterize(
+		title = R.string.filter_posterize,
+		matrix = ColorMatrix(
+			floatArrayOf(
+				0.5f, 0f, 0f, 0f, 56f,
+				0f, 0.5f, 0f, 0f, 56f,
+				0f, 0f, 0.5f, 0f, 56f,
+				0f, 0f, 0f, 1f, 0f
+			)
+		).apply {
+			setToSaturation(0.8f)
+		}
+	),
+
+	Glow(
+		title = R.string.filter_glow,
+		matrix = ColorMatrix(
+			floatArrayOf(
+				1.6f, 0f, 0f, 0f, 0f,
+				0f, 1.6f, 0f, 0f, 0f,
+				0f, 0f, 1.6f, 0f, 0f,
+				0f, 0f, 0f, 1f, 0f
+			)
+		)
+	),
+
+	Peachy(
+		title = R.string.filter_peachy,
+		matrix = ColorMatrix(
+			floatArrayOf(
+				1.1f, 0.1f, 0f, 0f, 20f,
+				0.05f, 1.05f, 0f, 0f, 10f,
+				0f, 0.05f, 1f, 0f, 0f,
+				0f, 0f, 0f, 1f, 0f
+			)
+		)
+	),
+
+	Pastel(
+		title = R.string.filter_pastel,
+		matrix = ColorMatrix().let {
+			it.setToSaturation(0.8f)
+
+			it[0, 0] *= 1.1f
+			it[1, 1] *= 1.1f
+			it[2, 2] *= 1.1f
+
+			it[0, 2] *= 0.1f
+
+			it[0, 4] = 10f
+			it[1, 4] = 10f
+			it[2, 4] = 10f
+
+			return@let it
+		}
+	),
+
+	Rustic(
+		title = R.string.filter_rustic,
+		matrix = ColorMatrix(
+			floatArrayOf(
+				1.65f, 0f, 0f, 0f, -45f,
+				0f, 1.65f, 0f, 0f, -45f,
+				0f, 0f, 1.65f, 0f, -45f,
+				0f, 0f, 1f, 0f, 1f
+			)
+		)
+	),
+
+	Dried(
+		title = R.string.filter_dried,
+		matrix = ColorMatrix().let {
+			it.setToSaturation(0.6f)
+
+			it[0, 0] *= 1.1f
+			it[1, 1] *= 1.1f
+			it[2, 2] *= 1.1f
+
+			it[0, 4] = 25f
+			it[1, 4] = 25f
+			it[2, 4] = 25f
+
+			return@let it
+		}
+	),
+
+	Toast(
+		title = R.string.filter_toast,
+		matrix = ColorMatrix().let {
+			it.setToSaturation(0.6f)
+
+			it[0, 0] *= 1.25f
+			it[1, 0] *= 1.25f
+			it[2, 0] *= 1.25f
+
+			it[0, 1] *= 1.25f
+			it[1, 1] *= 1.25f
+			it[2, 1] *= 1.25f
+
+			it[0, 2] *= 1.25f
+			it[1, 2] *= 1.25f
+			it[2, 2] *= 1.25f
+
+			it[0, 4] = -45f
+			it[1, 4] = -45f
+			it[2, 4] = -45f
+
+			return@let it
+		}
+	),
+
+	BGR(
+		title = R.string.filter_bgr,
+		matrix = ColorMatrix(
+			floatArrayOf(
+				0f, 0f, 1f, 0f, 0f,
+				0f, 1f, 0f, 0f, 0f,
+				1f, 0f, 0f, 0f, 0f,
+				0f, 0f, 0f, 1f, 0f
+			)
+		)
+	),
+
+	Mushrooms(
+		title = R.string.filter_mushrooms,
+		matrix = ColorMatrix().apply {
+			setToRotateRed(-22f)
+			setToRotateGreen(47f)
+			setToRotateBlue(62f)
+		}
+	),
+
+	Solar(
+		title = R.string.filter_solar,
+		matrix = ColorMatrix(
+			floatArrayOf(
+				1.2f, 0f, 0f, 0f, 0f,
+				0f, 1f, 0f, 0f, 0f,
+				0f, 0f, 1f, 0f, 0f,
+				0f, 0f, 0f, 1f, 0f
+			)
+		).let {
+			val satMatrix = ColorMatrix().apply {
+				setToSaturation(1.5f)
+			}
+
+			it[0, 0] *= satMatrix[0, 0]
+			it[1, 1] *= satMatrix[1, 1]
+			it[2, 2] *= satMatrix[2, 2]
+
+			return@let it
+		}
+	),
+
+	Shimmer(
+		title = R.string.filter_shimmer,
+		matrix = ColorMatrix(
+			floatArrayOf(
+				34f, 0f, 0f, 0f, -831f,
+				0f, 9f, 0f, 0f, -831f,
+				0f, 0f, 48f, 0f, -831f,
+				0f, 0f, 0f, 1f, 0f
+			)
+		)
+	);
+
+    @OptIn(UnstableApi::class)
+    fun toEffect() = ColorMatrixEffect(
+		matrix = matrix,
+		isFilter = true
+	)
+}

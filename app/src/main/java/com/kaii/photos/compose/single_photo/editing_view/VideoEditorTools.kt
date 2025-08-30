@@ -280,7 +280,19 @@ fun VideoEditorAdjustmentTools(
                     .weight(1f)
             ) {
                 if (targetState) {
-                    ColorRangeSlider(sliderValue = sliderVal)
+                    ColorRangeSlider(
+                        sliderValue = sliderVal,
+                        enabled = latestAdjustment != null,
+                        confirmValue = {
+                            val new = latestAdjustment!!.copy(
+                                value = sliderVal.floatValue
+                            )
+
+                            modifications.remove(latestAdjustment!!)
+                            modifications.add(new)
+                            totalModCount.intValue += 1
+                        }
+                    )
                 } else {
                     PopupPillSlider(
                         sliderValue = sliderVal,
