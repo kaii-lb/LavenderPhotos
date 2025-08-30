@@ -48,6 +48,22 @@ object DefaultTabs {
             icon = StoredDrawable.Search,
             id = 3
         )
+
+        val favourites = BottomBarTab(
+            name = "Favourites",
+            albumPaths = listOf("favourites_page"),
+            index = 4,
+            icon = StoredDrawable.Favourite,
+            id = 4
+        )
+
+        val trash = BottomBarTab(
+            name = "Trash",
+            albumPaths = listOf("trash_page"),
+            index = 5,
+            icon = StoredDrawable.Trash,
+            id = 5
+        )
     }
 
     val defaultList = listOf(
@@ -56,6 +72,8 @@ object DefaultTabs {
         TabTypes.albums,
         TabTypes.search
     )
+
+    val extendedList = defaultList + listOf(TabTypes.favourites, TabTypes.trash)
 }
 
 @Serializable
@@ -71,8 +89,8 @@ enum class StoredDrawable(
     ),
 
     SecureFolder(
-        filled = R.drawable.locked_folder_filled,
-        nonFilled = R.drawable.locked_folder,
+        filled = R.drawable.secure_folder_filled,
+        nonFilled = R.drawable.secure_folder,
         storedId = 2
     ),
 
@@ -128,6 +146,12 @@ enum class StoredDrawable(
         filled = R.drawable.motorsports_filled,
         nonFilled = R.drawable.motorsports,
         storedId = 13
+    ),
+
+    Trash(
+        filled = R.drawable.trash,
+        nonFilled = R.drawable.trash_filled,
+        storedId = 14
     );
 
     companion object {

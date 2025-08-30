@@ -609,7 +609,7 @@ private fun BottomBar(
                     }
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.locked_folder),
+                        painter = painterResource(id = R.drawable.secure_folder),
                         contentDescription = stringResource(id = R.string.media_secure)
                     )
                 }

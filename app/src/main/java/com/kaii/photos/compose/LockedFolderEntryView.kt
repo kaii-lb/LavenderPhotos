@@ -380,7 +380,7 @@ fun LockedFolderEntryView(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.locked_folder),
+                    painter = painterResource(id = R.drawable.secure_folder),
                     contentDescription = "Secure Folder Icon",
                     modifier = Modifier.size(72.dp)
                 )
@@ -438,7 +438,7 @@ fun LockedFolderEntryView(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Icon(
-                painter = painterResource(id = R.drawable.locked_folder),
+                painter = painterResource(id = R.drawable.secure_folder),
                 contentDescription = "Locked Folder Icon",
                 modifier = Modifier.size(72.dp)
             )

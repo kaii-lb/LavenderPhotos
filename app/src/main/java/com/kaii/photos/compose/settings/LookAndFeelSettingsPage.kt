@@ -154,6 +154,27 @@ fun LookAndFeelSettingsPage() {
 
             item {
                 PreferencesSeparatorText(
+                    text = stringResource(id = R.string.look_and_feel_nav)
+                )
+            }
+
+            item {
+                val showExtraSecure by mainViewModel.settings.LookAndFeel.getShowExtraSecureNav().collectAsStateWithLifecycle(initialValue = false)
+
+                PreferencesSwitchRow(
+                    title = stringResource(id = R.string.look_and_feel_extra_secure_nav),
+                    summary = stringResource(id = R.string.look_and_feel_extra_secure_nav_Desc),
+                    position = RowPosition.Single,
+                    iconResID = R.drawable.door_open,
+                    showBackground = false,
+                    checked = showExtraSecure
+                ) { checked ->
+                    mainViewModel.settings.LookAndFeel.setShowExtraSecureNav(checked)
+                }
+            }
+
+            item {
+                PreferencesSeparatorText(
                     text = stringResource(id = R.string.look_and_feel_grids)
                 )
             }

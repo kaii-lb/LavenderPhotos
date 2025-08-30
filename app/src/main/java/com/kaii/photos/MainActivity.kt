@@ -133,6 +133,8 @@ import com.kaii.photos.helpers.startupUpdateCheck
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.custom_album.CustomAlbumViewModelFactory
+import com.kaii.photos.models.favourites_grid.FavouritesViewModel
+import com.kaii.photos.models.favourites_grid.FavouritesViewModelFactory
 import com.kaii.photos.models.immich.ImmichViewModel
 import com.kaii.photos.models.immich.ImmichViewModelFactory
 import com.kaii.photos.models.main_activity.MainViewModel
@@ -140,6 +142,9 @@ import com.kaii.photos.models.main_activity.MainViewModelFactory
 import com.kaii.photos.models.multi_album.DisplayDateFormat
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModelFactory
+import com.kaii.photos.models.multi_album.groupPhotosBy
+import com.kaii.photos.models.trash_bin.TrashViewModel
+import com.kaii.photos.models.trash_bin.TrashViewModelFactory
 import com.kaii.photos.ui.theme.PhotosTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -1096,7 +1101,12 @@ class MainActivity : ComponentActivity() {
                         bottom = 0.dp
                     )
             ) {
-                MainAppDialog(showDialog, currentView, selectedItemsList)
+                MainAppDialog(
+                    showDialog = showDialog,
+                    currentView = currentView,
+                    selectedItemsList = selectedItemsList,
+                    mainViewModel = mainViewModel
+                )
 
                 AnimatedContent(
                     targetState = currentView.value,
@@ -1226,6 +1236,89 @@ class MainActivity : ComponentActivity() {
                                 }
 
                                 SearchPage(selectedItemsList, currentView)
+                            }
+
+                            stateValue == DefaultTabs.TabTypes.favourites -> {
+                                val appDatabase = LocalAppDatabase.current
+                                val favouritesViewModel: FavouritesViewModel = viewModel(
+                                    factory = FavouritesViewModelFactory(appDatabase)
+                                )
+
+                                val mediaStoreData by favouritesViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+
+                                val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
+                                val groupedMedia = remember {
+                                    mutableStateOf(
+                                        groupPhotosBy(
+                                            mediaStoreData,
+                                            MediaItemSortMode.LastModified,
+                                            displayDateFormat,
+                                            context
+                                        )
+                                    )
+                                }
+
+                                var hasFiles by remember { mutableStateOf(true) }
+
+                                LaunchedEffect(mediaStoreData) {
+                                    if (mediaStoreData.isNotEmpty()) {
+                                        delay(PhotoGridConstants.UPDATE_TIME)
+                                        groupedMedia.value =
+                                            groupPhotosBy(
+                                                mediaStoreData,
+                                                MediaItemSortMode.LastModified,
+                                                displayDateFormat,
+                                                context
+                                            )
+                                    } else {
+                                        delay(PhotoGridConstants.LOADING_TIME)
+                                        groupedMedia.value = emptyList()
+                                        hasFiles = false
+                                    }
+
+                                    delay(PhotoGridConstants.LOADING_TIME)
+                                    hasFiles = mediaStoreData.isNotEmpty()
+
+                                    Log.d(TAG, "Grouped media size: ${groupedMedia.value.size}")
+                                }
+
+                                PhotoGrid(
+                                    groupedMedia = groupedMedia,
+                                    albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
+                                    selectedItemsList = selectedItemsList,
+                                    viewProperties = ViewProperties.Favourites,
+                                    hasFiles = hasFiles
+                                )
+                            }
+
+                            stateValue == DefaultTabs.TabTypes.trash -> {
+                                val appDatabase = LocalAppDatabase.current
+                                val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
+
+                                val trashViewModel: TrashViewModel = viewModel(
+                                    factory = TrashViewModelFactory(context = context, displayDateFormat = displayDateFormat, appDatabase = appDatabase)
+                                )
+
+                                val mediaStoreData =
+                                    trashViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+
+                                val groupedMedia = remember { mutableStateOf(mediaStoreData.value) }
+                                var hasFiles by remember { mutableStateOf(true) }
+
+                                LaunchedEffect(mediaStoreData.value) {
+                                    groupedMedia.value = mediaStoreData.value
+
+                                    delay(PhotoGridConstants.LOADING_TIME)
+                                    hasFiles = groupedMedia.value.isNotEmpty()
+                                }
+
+                                PhotoGrid(
+                                    groupedMedia = groupedMedia,
+                                    albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
+                                    selectedItemsList = selectedItemsList,
+                                    viewProperties = ViewProperties.Trash,
+                                    hasFiles = hasFiles
+                                )
                             }
                         }
                     } else {

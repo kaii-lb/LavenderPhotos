@@ -433,6 +433,7 @@ class SettingsLookAndFeelImpl(
     private val columnSize = intPreferencesKey("look_and_feel_column_size")
     private val albumColumnSize = intPreferencesKey("look_and_feel_album_column_size")
     private val blackBackgroundForViews = booleanPreferencesKey("look_and_feel_black_background")
+    private val showExtraSecureNav = booleanPreferencesKey("look_and_feel_extra_secure")
 
     /** 0 is follow system
      * 1 is dark
@@ -503,6 +504,18 @@ class SettingsLookAndFeelImpl(
     fun setUseBlackBackgroundForViews(value: Boolean) = viewModelScope.launch {
         context.datastore.edit {
             it[blackBackgroundForViews] = value
+        }
+    }
+
+    /** shows an extra "navigate to secure page" in the main app dialog */
+    fun getShowExtraSecureNav(): Flow<Boolean> =
+        context.datastore.data.map {
+            it[showExtraSecureNav] == true
+        }
+
+    fun setShowExtraSecureNav(value: Boolean) = viewModelScope.launch {
+        context.datastore.edit {
+            it[showExtraSecureNav] = value
         }
     }
 }

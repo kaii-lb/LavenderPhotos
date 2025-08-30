@@ -59,6 +59,7 @@ import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
+import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.MediaData
@@ -79,6 +80,7 @@ import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.content_provider.LavenderContentProvider
 import com.kaii.photos.mediastore.content_provider.LavenderMediaColumns
 import com.kaii.photos.mediastore.getExternalStorageContentUriFromAbsolutePath
+import com.kaii.photos.models.main_activity.MainViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -679,7 +681,8 @@ fun SinglePhotoInfoDialog(
 fun MainAppDialog(
     showDialog: MutableState<Boolean>,
     currentView: MutableState<BottomBarTab>,
-    selectedItemsList: SnapshotStateList<MediaStoreData>
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    mainViewModel: MainViewModel
 ) {
     val vibratorManager = rememberVibratorManager()
     val navController = LocalNavController.current
@@ -752,6 +755,18 @@ fun MainAppDialog(
                 ) {
                     showDialog.value = false
                     navController.navigate(MultiScreenViewType.DataAndBackup.name)
+                }
+
+                val showExtraSecureItem by mainViewModel.settings.LookAndFeel.getShowExtraSecureNav().collectAsStateWithLifecycle(initialValue = false)
+                if (showExtraSecureItem) {
+                    DialogClickableItem(
+                        text = stringResource(id = R.string.secure_folder),
+                        iconResId = R.drawable.secure_folder,
+                        position = RowPosition.Middle,
+                    ) {
+                        showDialog.value = false
+                        currentView.value = DefaultTabs.TabTypes.secure
+                    }
                 }
 
                 DialogClickableItem(

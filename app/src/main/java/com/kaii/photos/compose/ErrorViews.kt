@@ -61,7 +61,7 @@ enum class ViewProperties(
     ),
     SecureFolder(
         emptyText = R.string.error_views_secure_empty,
-        emptyIconResId = R.drawable.locked_folder,
+        emptyIconResId = R.drawable.secure_folder,
         prefix = R.string.error_views_secure_prefix,
         operation = ImageFunctions.LoadSecuredImage
     ),

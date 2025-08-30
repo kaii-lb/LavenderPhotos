@@ -726,7 +726,7 @@ private fun OpenWithVideoPlayer(
                         .align(Alignment.Top)
                 ) {
                     Icon(
-                        painter = painterResource(id = if (isTouchLocked.value) R.drawable.locked_folder else R.drawable.unlock),
+                        painter = painterResource(id = if (isTouchLocked.value) R.drawable.secure_folder else R.drawable.unlock),
                         contentDescription = stringResource(id = R.string.video_lock_screen),
                         modifier = Modifier
                             .size(20.dp)
