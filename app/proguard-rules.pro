@@ -22,3 +22,6 @@
 
 -keep class androidx.datastore.*.** {*;}
 -keepnames class com.kaii.*.** {*;}
+-keep class androidx.media3.effect.DefaultVideoFrameProcessor$Factory$Builder {
+    public <init>();
+}
