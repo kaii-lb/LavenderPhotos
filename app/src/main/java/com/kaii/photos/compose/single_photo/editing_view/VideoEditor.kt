@@ -1,6 +1,7 @@
 package com.kaii.photos.compose.single_photo.editing_view
 
 import android.app.Activity
+import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.util.Log
 import android.view.Window
@@ -48,6 +49,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.Effect
 import androidx.media3.common.MediaItem
+import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.compose.app_bars.VideoEditorBottomBar
@@ -195,6 +197,24 @@ fun VideoEditor(
 
     var tries by remember { mutableIntStateOf(0) }
     LaunchedEffect(Unit) {
+        val metadata = MediaMetadataRetriever()
+        metadata.setDataSource(absolutePath)
+
+        // this mess is because exoplayer doesn't really know what res the video is all the time
+        val frame = metadata.frameAtTime
+        val size = if (frame == null) {
+            if (exoPlayer.videoSize == VideoSize.UNKNOWN) {
+                VideoSize(
+                    exoPlayer.videoFormat?.width ?: 1,
+                    exoPlayer.videoFormat?.height ?: 1
+                )
+            } else {
+                exoPlayer.videoSize
+            }
+        } else {
+            VideoSize(frame.width, frame.height)
+        }
+
         while ((basicVideoData.width == 0 || basicVideoData.height == 0 || basicVideoData.frameRate == 0f || basicVideoData.duration <= 0f)
             && tries < 10
         ) {
@@ -205,11 +225,12 @@ fun VideoEditor(
                         if (exoPlayer.videoFormat?.frameRate?.toInt() == -1 || exoPlayer.videoFormat?.frameRate == null) 0f
                         else exoPlayer.videoFormat!!.frameRate,
                     absolutePath = absolutePath,
-                    width = exoPlayer.videoSize.width,
-                    height = exoPlayer.videoSize.height
+                    width = size.width,
+                    height = size.height
                 )
             tries += 1
 
+            Log.d(TAG, "Video data $basicVideoData")
             delay(100)
         }
     }
@@ -249,8 +270,6 @@ fun VideoEditor(
         exoPlayer.setMediaItem(mediaItem)
         exoPlayer.setVideoEffects(effectsList)
         exoPlayer.prepare()
-
-        Log.d(TAG, "last $last")
     }
 
     Scaffold(

@@ -146,7 +146,7 @@ fun VideoEditorBottomBar(
 
             // preload and save for all so we don't have to retrieve every time user navigates to first tab
             val coroutineScope = rememberCoroutineScope()
-            val metadata = MediaMetadataRetriever()
+            val metadata = remember { MediaMetadataRetriever() }
             val thumbnails = remember { mutableStateListOf<Bitmap>() }
             val windowInfo = LocalWindowInfo.current
 

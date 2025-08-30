@@ -58,7 +58,7 @@ data class BasicVideoData(
     val width: Int,
     val height: Int
 ) {
-    val aspectRatio = width.toFloat() / height
+    val aspectRatio = if (height == 0) 1f else width.toFloat() / height
 }
 
 enum class SelectedCropArea {

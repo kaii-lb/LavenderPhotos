@@ -1,5 +1,6 @@
 package com.kaii.photos.compose.single_photo.editing_view
 
+import android.util.Log
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -33,6 +34,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import com.kaii.photos.helpers.AnimationConstants
 import kotlin.math.abs
+
+private const val TAG = "VIDEO_EDITOR_CROP_BOX"
 
 @Composable
 fun CropBox(
@@ -87,6 +90,8 @@ fun CropBox(
             (containerWidth - width) / 2
         )
     }
+
+    Log.d(TAG, "Dimensions $left $top $height $width $originalHeight $mediaAspectRatio")
 
     LaunchedEffect(mediaAspectRatio, reset.value, containerWidth, containerHeight) {
         originalWidth =
