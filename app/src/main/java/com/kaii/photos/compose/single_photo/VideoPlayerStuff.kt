@@ -74,6 +74,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -1151,6 +1152,8 @@ fun rememberPlayerView(
     val context = LocalContext.current
     val resources = LocalResources.current
 
+    val backgroundColor = MaterialTheme.colorScheme.background.toArgb()
+
     val playerView = remember {
         PlayerView(
             context,
@@ -1171,6 +1174,8 @@ fun rememberPlayerView(
             player = exoPlayer
 
             setShowBuffering(PlayerView.SHOW_BUFFERING_ALWAYS)
+
+            setBackgroundColor(backgroundColor)
         }
     }
 
