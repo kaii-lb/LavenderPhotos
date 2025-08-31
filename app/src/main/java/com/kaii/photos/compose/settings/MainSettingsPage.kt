@@ -32,7 +32,7 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
-import com.kaii.photos.compose.PreferencesRow
+import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants

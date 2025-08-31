@@ -45,7 +45,7 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
-import com.kaii.photos.compose.PreferencesRow
+import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.dialogs.ExplanationDialog
 import com.kaii.photos.compose.dialogs.FeatureNotAvailableDialog
 import com.kaii.photos.helpers.MultiScreenViewType

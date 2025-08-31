@@ -33,8 +33,8 @@ import com.kaii.photos.LocalAppDatabase
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
-import com.kaii.photos.compose.PreferencesRow
-import com.kaii.photos.compose.PreferencesSeparatorText
+import com.kaii.photos.compose.widgets.PreferencesRow
+import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.helpers.DataAndBackupHelper

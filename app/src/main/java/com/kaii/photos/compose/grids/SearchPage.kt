@@ -41,7 +41,7 @@ import com.kaii.photos.LocalAppDatabase
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
-import com.kaii.photos.compose.ClearableTextField
+import com.kaii.photos.compose.widgets.ClearableTextField
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.BottomBarTab

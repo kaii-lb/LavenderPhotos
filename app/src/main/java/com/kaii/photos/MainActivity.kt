@@ -89,7 +89,7 @@ import com.kaii.photos.compose.grids.SingleAlbumView
 import com.kaii.photos.compose.grids.TrashedPhotoGridView
 import com.kaii.photos.compose.immich.ImmichAlbumPage
 import com.kaii.photos.compose.immich.ImmichMainPage
-import com.kaii.photos.compose.rememberDeviceOrientation
+import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.compose.settings.AboutPage
 import com.kaii.photos.compose.settings.DataAndBackupPage
 import com.kaii.photos.compose.settings.DebuggingSettingsPage

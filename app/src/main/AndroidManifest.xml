@@ -80,7 +80,7 @@
         
         <activity
             android:label="Lavender Photos"
-            android:name=".compose.media_picker.MediaPicker"
+            android:name=".compose.MediaPicker"
             android:configChanges="orientation|screenSize|density|screenLayout"
             android:exported="true"
             android:theme="@style/Theme.Photos">

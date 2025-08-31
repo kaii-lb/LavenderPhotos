@@ -1,4 +1,4 @@
-package com.kaii.photos.compose
+package com.kaii.photos.compose.widgets
 
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult

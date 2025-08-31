@@ -52,12 +52,12 @@ import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.immichViewModel
 import com.kaii.photos.R
+import com.kaii.photos.compose.MediaPickerConfirmButton
 import com.kaii.photos.compose.dialogs.AlbumPathsDialog
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
 import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
-import com.kaii.photos.compose.media_picker.MediaPickerConfirmButton
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.ImmichBackupMedia

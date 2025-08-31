@@ -80,7 +80,7 @@ import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.dialogs.SinglePhotoInfoDialog
-import com.kaii.photos.compose.rememberDeviceOrientation
+import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.GetPermissionAndRun

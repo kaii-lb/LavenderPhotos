@@ -69,8 +69,8 @@ import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
-import com.kaii.photos.compose.SelectableDropDownMenuItem
-import com.kaii.photos.compose.SimpleTab
+import com.kaii.photos.compose.widgets.SelectableDropDownMenuItem
+import com.kaii.photos.compose.widgets.SimpleTab
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.single_photo.editing_view.BasicVideoData
 import com.kaii.photos.compose.single_photo.editing_view.CroppingAspectRatio

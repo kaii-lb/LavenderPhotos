@@ -65,7 +65,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.kaii.photos.R
-import com.kaii.photos.compose.ConfirmCancelRow
+import com.kaii.photos.compose.widgets.ConfirmCancelRow
 import com.kaii.photos.helpers.ExtendedMaterialTheme
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.brightenColor

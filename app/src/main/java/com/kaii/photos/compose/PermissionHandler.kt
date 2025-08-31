@@ -63,6 +63,9 @@ import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.ExplanationDialog
 import com.kaii.photos.compose.dialogs.getDefaultShapeSpacerForPosition
+import com.kaii.photos.compose.widgets.PreferencesRow
+import com.kaii.photos.compose.widgets.PreferencesSeparatorText
+import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.helpers.RowPosition
 

@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.getDefaultShapeSpacerForPosition
 import com.kaii.photos.compose.single_photo.editing_view.CroppingAspectRatio
+import com.kaii.photos.compose.widgets.TextFieldWithConfirm
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.DrawableText
 import com.kaii.photos.helpers.Modification

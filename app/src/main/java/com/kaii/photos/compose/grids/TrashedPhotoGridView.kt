@@ -41,7 +41,7 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.TrashedPhotoGridViewBottomBar
 import com.kaii.photos.compose.app_bars.TrashedPhotoGridViewTopBar
-import com.kaii.photos.compose.rememberDeviceOrientation
+import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.TrashBin
 import com.kaii.photos.helpers.AnimationConstants

@@ -57,7 +57,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isUnspecified
 import com.kaii.photos.R
-import com.kaii.photos.compose.ColorFilterItem
+import com.kaii.photos.compose.widgets.ColorFilterItem
 import com.kaii.photos.compose.CroppingRatioBottomSheet
 import com.kaii.photos.compose.dialogs.SliderDialog
 import com.kaii.photos.compose.single_photo.EditingViewBottomAppBarItem

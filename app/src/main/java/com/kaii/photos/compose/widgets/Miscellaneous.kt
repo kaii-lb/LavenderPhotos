@@ -1,4 +1,4 @@
-package com.kaii.photos.compose
+package com.kaii.photos.compose.widgets
 
 import android.content.res.Configuration
 import androidx.compose.animation.AnimatedContent

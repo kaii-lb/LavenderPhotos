@@ -34,8 +34,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
-import com.kaii.photos.compose.PreferencesSeparatorText
-import com.kaii.photos.compose.PreferencesSwitchRow
+import com.kaii.photos.compose.widgets.PreferencesSeparatorText
+import com.kaii.photos.compose.widgets.PreferencesSwitchRow
 import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.datastore.PhotoGrid
 import com.kaii.photos.helpers.MediaItemSortMode

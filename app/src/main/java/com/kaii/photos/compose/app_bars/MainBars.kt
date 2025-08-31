@@ -51,9 +51,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.MainActivity.Companion.immichViewModel
 import com.kaii.photos.R
-import com.kaii.photos.compose.AnimatedLoginIcon
-import com.kaii.photos.compose.SelectViewTopBarLeftButtons
-import com.kaii.photos.compose.SelectViewTopBarRightButtons
+import com.kaii.photos.compose.widgets.AnimatedLoginIcon
+import com.kaii.photos.compose.widgets.SelectViewTopBarLeftButtons
+import com.kaii.photos.compose.widgets.SelectViewTopBarRightButtons
 import com.kaii.photos.compose.dialogs.AlbumAddChoiceDialog
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.BottomBarTab

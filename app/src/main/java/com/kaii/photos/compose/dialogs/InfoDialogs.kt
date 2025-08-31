@@ -50,11 +50,11 @@ import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.immichViewModel
 import com.kaii.photos.R
-import com.kaii.photos.compose.AnimatableTextField
-import com.kaii.photos.compose.MainDialogUserInfo
-import com.kaii.photos.compose.TitleCloseRow
+import com.kaii.photos.compose.widgets.AnimatableTextField
+import com.kaii.photos.compose.widgets.MainDialogUserInfo
+import com.kaii.photos.compose.widgets.TitleCloseRow
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
-import com.kaii.photos.compose.rememberDeviceOrientation
+import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.BottomBarTab

@@ -42,7 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
-import com.kaii.photos.compose.PreferencesSeparatorText
+import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.TextStylingConstants
 import com.mikepenz.aboutlibraries.ui.compose.android.rememberLibraries

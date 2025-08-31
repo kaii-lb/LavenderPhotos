@@ -1,4 +1,4 @@
-package com.kaii.photos.compose.media_picker
+package com.kaii.photos.compose
 
 import android.app.Activity
 import android.app.Activity.RESULT_OK
@@ -79,8 +79,6 @@ import com.kaii.photos.LocalAppDatabase
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
-import com.kaii.photos.compose.ErrorPage
-import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.MainAppBottomBar
 import com.kaii.photos.compose.app_bars.MainAppTopBar
 import com.kaii.photos.compose.app_bars.getAppBarContentTransition
@@ -88,7 +86,7 @@ import com.kaii.photos.compose.grids.AlbumsGridView
 import com.kaii.photos.compose.grids.PhotoGrid
 import com.kaii.photos.compose.grids.SearchPage
 import com.kaii.photos.compose.grids.SingleAlbumView
-import com.kaii.photos.compose.rememberDeviceOrientation
+import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.Migration3to4
 import com.kaii.photos.database.Migration4to5

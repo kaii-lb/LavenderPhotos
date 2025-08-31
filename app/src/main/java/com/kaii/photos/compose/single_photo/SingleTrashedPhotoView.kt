@@ -66,7 +66,7 @@ import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.SinglePhotoInfoDialog
-import com.kaii.photos.compose.rememberDeviceOrientation
+import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.setTrashedOnPhotoList

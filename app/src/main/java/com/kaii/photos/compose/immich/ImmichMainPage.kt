@@ -58,9 +58,9 @@ import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.immichViewModel
 import com.kaii.photos.R
-import com.kaii.photos.compose.PreferenceRowWithCustomBody
-import com.kaii.photos.compose.PreferencesRow
-import com.kaii.photos.compose.PreferencesSeparatorText
+import com.kaii.photos.compose.widgets.PreferenceRowWithCustomBody
+import com.kaii.photos.compose.widgets.PreferencesRow
+import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.dialogs.AnnotatedExplanationDialog
 import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
 import com.kaii.photos.compose.dialogs.ImmichLoginDialog

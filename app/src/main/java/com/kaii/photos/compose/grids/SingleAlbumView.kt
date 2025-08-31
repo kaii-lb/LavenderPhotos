@@ -43,7 +43,7 @@ import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.SingleAlbumViewBottomBar
 import com.kaii.photos.compose.app_bars.SingleAlbumViewTopBar
 import com.kaii.photos.compose.dialogs.SingleAlbumDialog
-import com.kaii.photos.compose.rememberDeviceOrientation
+import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.helpers.AnimationConstants

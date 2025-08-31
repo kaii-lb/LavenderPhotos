@@ -38,10 +38,10 @@ import com.kaii.photos.LocalAppDatabase
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
-import com.kaii.photos.compose.CheckBoxButtonRow
-import com.kaii.photos.compose.PreferencesRow
-import com.kaii.photos.compose.PreferencesSeparatorText
-import com.kaii.photos.compose.PreferencesSwitchRow
+import com.kaii.photos.compose.widgets.CheckBoxButtonRow
+import com.kaii.photos.compose.widgets.PreferencesRow
+import com.kaii.photos.compose.widgets.PreferencesSeparatorText
+import com.kaii.photos.compose.widgets.PreferencesSwitchRow
 import com.kaii.photos.compose.dialogs.DefaultTabSelectorDialog
 import com.kaii.photos.compose.dialogs.SelectableButtonListDialog
 import com.kaii.photos.compose.dialogs.SortModeSelectorDialog

@@ -54,7 +54,7 @@ import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.immichViewModel
 import com.kaii.photos.R
-import com.kaii.photos.compose.PreferencesRow
+import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.dialogs.ConfirmationDialogWithCustomBody
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.ImmichBackupMedia

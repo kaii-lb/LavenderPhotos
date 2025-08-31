@@ -1,4 +1,4 @@
-package com.kaii.photos.compose
+package com.kaii.photos.compose.widgets
 
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.core.animateFloatAsState

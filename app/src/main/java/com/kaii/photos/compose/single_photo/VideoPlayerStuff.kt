@@ -113,7 +113,7 @@ import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.setBarVisibility
-import com.kaii.photos.compose.rememberDeviceOrientation
+import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.EncryptionManager

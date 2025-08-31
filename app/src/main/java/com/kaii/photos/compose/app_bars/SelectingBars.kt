@@ -43,8 +43,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalAppDatabase
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
-import com.kaii.photos.compose.SelectViewTopBarLeftButtons
-import com.kaii.photos.compose.SelectViewTopBarRightButtons
+import com.kaii.photos.compose.widgets.SelectViewTopBarLeftButtons
+import com.kaii.photos.compose.widgets.SelectViewTopBarRightButtons
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.ExplanationDialog
 import com.kaii.photos.compose.dialogs.LoadingDialog

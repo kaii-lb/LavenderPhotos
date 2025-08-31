@@ -101,7 +101,7 @@ import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.FolderIsEmpty
-import com.kaii.photos.compose.ShowSelectedState
+import com.kaii.photos.compose.widgets.ShowSelectedState
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.Storage

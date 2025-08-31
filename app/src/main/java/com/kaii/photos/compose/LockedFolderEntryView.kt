@@ -47,6 +47,7 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.ExplanationDialog
 import com.kaii.photos.compose.dialogs.LoadingDialog
+import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.BottomBarTab

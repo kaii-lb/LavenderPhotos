@@ -70,7 +70,7 @@ import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalAppDatabase
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
-import com.kaii.photos.compose.ClearableTextField
+import com.kaii.photos.compose.widgets.ClearableTextField
 import com.kaii.photos.compose.FolderIsEmpty
 import com.kaii.photos.compose.dialogs.getDefaultShapeSpacerForPosition
 import com.kaii.photos.datastore.AlbumInfo
