@@ -548,8 +548,9 @@ fun VideoPlayer(
                 }
             }
 
-            exoPlayer.isScrubbingModeEnabled = true
             exoPlayer.pause()
+
+            if (currentVideoPosition.floatValue > 0f) exoPlayer.isScrubbingModeEnabled = true
         } else {
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 

@@ -117,9 +117,7 @@ fun VideoEditor(
             exoPlayer.pause()
 
             // so when the video is just starting it actually plays?
-            if (currentVideoPosition.floatValue != leftTrimPosition.floatValue
-                && currentVideoPosition.floatValue > leftTrimPosition.floatValue
-            ) exoPlayer.isScrubbingModeEnabled = true
+            if (currentVideoPosition.floatValue > leftTrimPosition.floatValue) exoPlayer.isScrubbingModeEnabled = true
         } else {
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
