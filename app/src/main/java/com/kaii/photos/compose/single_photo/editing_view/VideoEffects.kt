@@ -137,19 +137,20 @@ enum class MediaAdjustments : ProcessingEffect {
         override val icon = R.drawable.file_is_selected_background
 
         override fun getMatrix(value: Float): FloatArray {
-            val blackPoint = 150f * -value
+            val blackPoint = 150f * value
             return floatArrayOf(
                 1f, 0f, 0f, 0f, blackPoint,
                 0f, 1f, 0f, 0f, blackPoint,
                 0f, 0f, 1f, 0f, blackPoint,
-                0f, 0f, 0f, 0f, 0f
+                0f, 0f, 0f, 1f, 0f
             )
         }
 
         override fun getVideoEffect(value: Float): Effect =
             ColorMatrixEffect(
                 matrix = ColorMatrix(getMatrix(value)),
-                isFilter = false
+                isFilter = false,
+                type = this
             )
     },
 
@@ -170,7 +171,8 @@ enum class MediaAdjustments : ProcessingEffect {
         override fun getVideoEffect(value: Float): Effect =
             ColorMatrixEffect(
                 matrix = ColorMatrix(getMatrix(value)),
-                isFilter = false
+                isFilter = false,
+                type = this
             )
     },
 
@@ -261,7 +263,8 @@ enum class MediaAdjustments : ProcessingEffect {
         override fun getVideoEffect(value: Float): Effect =
             ColorMatrixEffect(
                 matrix = ColorMatrix(getMatrix(value)),
-                isFilter = false
+                isFilter = false,
+                type = this
             )
     },
 
@@ -283,13 +286,6 @@ enum class MediaAdjustments : ProcessingEffect {
 
         override fun getVideoEffect(value: Float): Effect = RgbMatrix { _, _ -> getMatrix(value) }
     }
-}
-
-interface FilterEffect {
-    fun getMatrix(): FloatArray
-
-    @OptIn(UnstableApi::class)
-    fun getEffect(): Effect
 }
 
 @OptIn(UnstableApi::class)
@@ -387,7 +383,8 @@ class ColorMatrixGLShaderProgram(
 @UnstableApi
 class ColorMatrixEffect(
     private val matrix: ColorMatrix,
-    val isFilter: Boolean
+    val isFilter: Boolean,
+    val type: MediaAdjustments? = null
 ) : GlEffect {
     override fun toGlShaderProgram(context: Context, useHdr: Boolean): GlShaderProgram = ColorMatrixGLShaderProgram(matrix = matrix)
 

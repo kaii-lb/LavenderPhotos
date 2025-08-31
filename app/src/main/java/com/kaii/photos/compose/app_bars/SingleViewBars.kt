@@ -84,6 +84,7 @@ import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
 import androidx.core.graphics.createBitmap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.media3.common.Effect
 import androidx.media3.common.util.UnstableApi
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
@@ -272,6 +273,7 @@ fun VideoEditorTopBar(
     uri: Uri,
     absolutePath: String,
     modifications: SnapshotStateList<VideoModification>,
+    effectsList: List<Effect>,
     lastSavedModCount: MutableIntState,
     containerDimens: Size,
     videoDimens: IntSize
@@ -378,6 +380,7 @@ fun VideoEditorTopBar(
                                 saveVideo(
                                     context = context,
                                     modifications = modifications,
+                                    effectsList = effectsList,
                                     uri = uri,
                                     absolutePath = absolutePath,
                                     overwrite = overwrite,

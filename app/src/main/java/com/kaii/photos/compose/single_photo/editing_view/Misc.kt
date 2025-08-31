@@ -78,6 +78,7 @@ enum class SelectedCropArea {
 suspend fun saveVideo(
     context: Context,
     modifications: SnapshotStateList<VideoModification>,
+    effectsList: List<Effect>,
     uri: Uri,
     absolutePath: String,
     overwrite: Boolean,
@@ -104,7 +105,7 @@ suspend fun saveVideo(
         .setEndPositionMs((trimPositions.end * 1000f).toLong())
         .build()
 
-    val effectList = mutableListOf<Effect>()
+    val modList = mutableListOf<Effect>()
 
     val cropArea = modifications.lastOrNull {
         it is VideoModification.Crop
@@ -123,7 +124,7 @@ suspend fun saveVideo(
 
         Log.d(TAG, "$normalizedTop $normalizedBottom ${cropArea.top / containerDimens.height} ${cropArea.bottom / containerDimens.height}")
 
-        effectList.add(
+        modList.add(
             Crop(
                 normalizedLeft,
                 normalizedRight,
@@ -140,7 +141,7 @@ suspend fun saveVideo(
 
         Log.d(TAG, "New width $newWidth and height $newHeight")
 
-        effectList.add(
+        modList.add(
             Presentation.createForShortSide(if (newWidth > newHeight) newWidth else newHeight)
         )
     }
@@ -150,7 +151,7 @@ suspend fun saveVideo(
     } as? VideoModification.Rotation
 
     if (rotation != null) {
-        effectList.add(
+        modList.add(
             ScaleAndRotateTransformation.Builder()
                 .setRotationDegrees(-rotation.degrees) // negative since our rotation is clockwise
                 .build()
@@ -162,13 +163,9 @@ suspend fun saveVideo(
     } as? VideoModification.FrameDrop
 
     if (frameDrop != null) {
-        effectList.add(
+        modList.add(
             FrameDropEffect.createDefaultFrameDropEffect(frameDrop.targetFps.toFloat())
         )
-    }
-
-    modifications.mapNotNull { it as? VideoModification.Adjustment }.forEach { adjustment ->
-        effectList.add(adjustment.toEffect())
     }
 
     val mediaItem = MediaItem.Builder()
@@ -203,14 +200,14 @@ suspend fun saveVideo(
         } as? VideoModification.Speed
 
     if (speedMultiplier?.multiplier != null && speedMultiplier.multiplier != 1f) {
-        effectList.add(SpeedChangeEffect(speedMultiplier.multiplier))
+        modList.add(SpeedChangeEffect(speedMultiplier.multiplier))
         audioEffectList.add(SonicAudioProcessor().apply {
             setSpeed(speedMultiplier.multiplier)
         })
     }
 
     val editedMediaItem = EditedMediaItem.Builder(mediaItem)
-        .setEffects(Effects(audioEffectList, effectList))
+        .setEffects(Effects(audioEffectList, modList + effectsList))
         .build()
 
     val file = File(absolutePath)

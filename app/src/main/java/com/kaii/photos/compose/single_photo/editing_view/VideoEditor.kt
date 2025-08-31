@@ -233,20 +233,22 @@ fun VideoEditor(
         }
     }
 
-    val effectsList = remember { mutableStateListOf<Effect>() }
+    // prefill for order of application
+    val effectsList = remember { mutableStateListOf<Effect?>().apply {
+        (1..MediaAdjustments.entries.size).forEach {
+            add(null)
+        }
+    }}
     val totalModCount = remember { mutableIntStateOf(0) }
 
     LaunchedEffect(totalModCount.intValue) {
         val last = modifications.lastOrNull()
 
         if (last is VideoModification.Adjustment) {
-            val effect = last.toEffect()
-            effectsList.removeAll {
-                if (effect is ColorMatrixEffect) it is ColorMatrixEffect && !it.isFilter
-                else it::class == effect::class
-            }
-
-            effectsList.add(last.toEffect())
+            // cuz order of application matters, so just do this and have it be constant
+            val effectIndex = MediaAdjustments.entries.indexOf(last.type)
+            effectsList.add(effectIndex, last.toEffect())
+            effectsList.removeAt(effectIndex + 1) // remove null after shirting right
         } else if (last is VideoModification.Filter) {
             effectsList.removeAll {
                 it is ColorMatrixEffect && it.isFilter
@@ -266,8 +268,10 @@ fun VideoEditor(
             .build()
 
         exoPlayer.setMediaItem(mediaItem)
-        exoPlayer.setVideoEffects(effectsList)
+        exoPlayer.setVideoEffects(effectsList.mapNotNull { it })
         exoPlayer.prepare()
+
+        Log.d(TAG, "Effect list $effectsList")
     }
 
     Scaffold(
@@ -276,6 +280,7 @@ fun VideoEditor(
                 uri = uri,
                 absolutePath = absolutePath,
                 modifications = modifications,
+                effectsList = effectsList.mapNotNull { it },
                 lastSavedModCount = lastSavedModCount,
                 containerDimens = containerDimens,
                 videoDimens = IntSize(
