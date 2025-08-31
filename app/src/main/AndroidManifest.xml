@@ -100,6 +100,19 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".compose.WallpaperSetter"
+            android:label="Lavender Photos"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|density|screenLayout"
+            android:theme="@style/Theme.Photos">
+
+            <intent-filter>
+                <action android:name="android.intent.action.SET_WALLPAPER" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+        </activity>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="com.kaii.photos.LavenderPhotos.fileprovider"

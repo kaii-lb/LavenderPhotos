@@ -57,10 +57,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isUnspecified
 import com.kaii.photos.R
-import com.kaii.photos.compose.widgets.ColorFilterItem
 import com.kaii.photos.compose.CroppingRatioBottomSheet
 import com.kaii.photos.compose.dialogs.SliderDialog
 import com.kaii.photos.compose.single_photo.EditingViewBottomAppBarItem
+import com.kaii.photos.compose.widgets.ColorFilterItem
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.MediaColorFilters
 import com.kaii.photos.helpers.VideoPlayerConstants
@@ -422,7 +422,7 @@ fun VideoEditorProcessingContent(
                 range = 0f..200f,
                 startsAt = 100f,
                 title = {
-                    resources.getString(R.string.editing_volume, "${it.toInt()}%")
+                    resources.getString(R.string.editing_volume_display, "${it.toInt()}%")
                 },
                 onSetValue = {
                     modifications.add(
@@ -436,7 +436,7 @@ fun VideoEditorProcessingContent(
         }
 
         EditingViewBottomAppBarItem(
-            text = stringResource(id = R.string.volume),
+            text = stringResource(id = R.string.editing_volume),
             icon = R.drawable.volume_max,
             onClick = {
                 showVolumeDialog = true
@@ -462,7 +462,7 @@ fun VideoEditorProcessingContent(
                 range = 0f..5f,
                 startsAt = 1f,
                 title = {
-                    resources.getString(R.string.editing_speed, "${getSpeed(it.toInt())}X")
+                    resources.getString(R.string.editing_speed_display, "${getSpeed(it.toInt())}X")
                 },
                 onSetValue = {
                     modifications.add(
@@ -476,7 +476,7 @@ fun VideoEditorProcessingContent(
         }
 
         EditingViewBottomAppBarItem(
-            text = stringResource(id = R.string.wilson),
+            text = stringResource(id = R.string.editing_wilson),
             icon = R.drawable.speed,
             onClick = {
                 showSpeedDialog = true
@@ -490,7 +490,7 @@ fun VideoEditorProcessingContent(
                 range = 1f..truncate(basicData.frameRate),
                 startsAt = truncate(basicData.frameRate),
                 title = {
-                    resources.getString(R.string.editing_framerate, "${it.toInt()}")
+                    resources.getString(R.string.editing_framerate_display, "${it.toInt()}")
                 },
                 onSetValue = {
                     modifications.add(
@@ -504,7 +504,7 @@ fun VideoEditorProcessingContent(
         }
 
         EditingViewBottomAppBarItem(
-            text = stringResource(id = R.string.fps),
+            text = stringResource(id = R.string.editing_fps),
             icon = R.drawable.fps_select_60,
             onClick = {
                 showFrameDropDialog = true

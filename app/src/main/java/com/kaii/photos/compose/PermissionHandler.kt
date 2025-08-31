@@ -566,6 +566,7 @@ fun FullWidthDialogButton(
     color: Color,
     textColor: Color,
     position: RowPosition,
+    modifier: Modifier = Modifier,
     enabled: Boolean = true,
     onClick: () -> Unit
 ) {
@@ -576,7 +577,7 @@ fun FullWidthDialogButton(
     )
 
     Row(
-        modifier = Modifier
+        modifier = modifier
 			.fillMaxWidth(1f)
 			.height(48.dp)
 			.clip(shape)

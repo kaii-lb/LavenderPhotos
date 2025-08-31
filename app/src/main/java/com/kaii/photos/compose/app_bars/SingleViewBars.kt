@@ -1,25 +1,39 @@
 package com.kaii.photos.compose.app_bars
 
+import android.app.WallpaperManager
+import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Matrix
+import android.graphics.Paint
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.util.Log
+import android.view.WindowManager
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsIgnoringVisibility
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsIgnoringVisibility
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.DropdownMenu
@@ -27,6 +41,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SecondaryScrollableTabRow
 import androidx.compose.material3.SnackbarDuration
@@ -34,6 +50,7 @@ import androidx.compose.material3.SplitButtonDefaults
 import androidx.compose.material3.SplitButtonLayout
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableFloatState
@@ -50,9 +67,12 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.dropShadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalWindowInfo
@@ -62,6 +82,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
+import androidx.core.graphics.createBitmap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import com.kaii.lavender.snackbars.LavenderSnackbarController
@@ -69,9 +90,9 @@ import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
-import com.kaii.photos.compose.widgets.SelectableDropDownMenuItem
-import com.kaii.photos.compose.widgets.SimpleTab
+import com.kaii.photos.compose.FullWidthDialogButton
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
+import com.kaii.photos.compose.dialogs.WallpaperTypeDialog
 import com.kaii.photos.compose.single_photo.editing_view.BasicVideoData
 import com.kaii.photos.compose.single_photo.editing_view.CroppingAspectRatio
 import com.kaii.photos.compose.single_photo.editing_view.TrimContent
@@ -82,9 +103,13 @@ import com.kaii.photos.compose.single_photo.editing_view.VideoEditorProcessingCo
 import com.kaii.photos.compose.single_photo.editing_view.VideoEditorTabs
 import com.kaii.photos.compose.single_photo.editing_view.VideoModification
 import com.kaii.photos.compose.single_photo.editing_view.saveVideo
+import com.kaii.photos.compose.widgets.SelectableDropDownMenuItem
+import com.kaii.photos.compose.widgets.SimpleTab
 import com.kaii.photos.datastore.Editing
+import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.VideoPlayerConstants
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.seconds
@@ -411,4 +436,173 @@ fun VideoEditorTopBar(
             )
         }
     )
+}
+
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun WallpaperSetterTopBar(
+    uri: Uri,
+    mimeType: String,
+    modifier: Modifier = Modifier,
+    onDismiss: () -> Unit
+) {
+    Row(
+        modifier = modifier
+            .windowInsetsPadding(WindowInsets.statusBarsIgnoringVisibility)
+            .fillMaxWidth(1f)
+            .height(56.dp)
+            .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        FilledTonalIconButton(
+            onClick = onDismiss,
+            colors = IconButtonDefaults.filledIconButtonColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainer
+            ),
+            modifier = Modifier
+                .dropShadow(
+                    shape = CircleShape,
+                    shadow = Shadow(
+                        radius = 6.dp,
+                        color = Color.Black,
+                        spread = (-4).dp,
+                        alpha = 0.5f
+                    )
+                )
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.back_arrow),
+                contentDescription = stringResource(id = R.string.return_to_previous_page),
+                tint = MaterialTheme.colorScheme.onSurface
+            )
+        }
+
+        val context = LocalContext.current
+        val resources = LocalResources.current
+        FilledTonalIconButton(
+            onClick = {
+                val intent = Intent().apply {
+                    action = Intent.ACTION_ATTACH_DATA
+                    data = uri
+                    addCategory(Intent.CATEGORY_DEFAULT)
+                    putExtra("mimeType", mimeType)
+                }
+
+                context.startActivity(
+                    Intent.createChooser(
+                        intent,
+                        resources.getString(R.string.set_as_wallpaper)
+                    )
+                )
+            },
+            shape = MaterialShapes.Square.toShape(),
+            modifier = Modifier
+                .dropShadow(
+                    shape = RoundedCornerShape(12.dp),
+                    shadow = Shadow(
+                        radius = 6.dp,
+                        color = Color.Black,
+                        spread = (-4).dp,
+                        alpha = 0.5f
+                    )
+                )
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.more_options),
+                contentDescription = stringResource(id = R.string.show_options),
+                modifier = Modifier
+                    .size(24.dp)
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun WallpaperSetterBottomBar(
+    bitmap: Bitmap,
+    offset: Offset,
+    outerScale: Float,
+    modifier: Modifier = Modifier,
+    close: () -> Unit,
+) {
+    Row(
+        modifier = modifier
+            .windowInsetsPadding(WindowInsets.navigationBarsIgnoringVisibility)
+            .fillMaxWidth(1f)
+            .height(56.dp)
+            .padding(horizontal = 24.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
+    ) {
+        val context = LocalContext.current
+        val coroutineScope = rememberCoroutineScope()
+
+        var showDialog by remember { mutableStateOf(false) }
+
+        if (showDialog) {
+            WallpaperTypeDialog(
+                onSetWallpaperType = { wallpaperType ->
+                    coroutineScope.launch(Dispatchers.IO) {
+                        val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+                        val deviceSize = Size(
+                            width = windowManager.currentWindowMetrics.bounds.width().toFloat(),
+                            height = windowManager.currentWindowMetrics.bounds.height().toFloat()
+                        )
+
+                        val destinationBitmap = createBitmap(deviceSize.width.toInt(), deviceSize.height.toInt(), bitmap.config ?: Bitmap.Config.ARGB_8888)
+                        val canvas = Canvas(destinationBitmap)
+                        val originalAspectRatio = bitmap.width.toFloat() / bitmap.height
+                        val deviceAspectRatio = deviceSize.width.toFloat() / deviceSize.height.toFloat()
+
+                        val scale =
+                            if (originalAspectRatio >= deviceAspectRatio) deviceSize.height / bitmap.height
+                            else deviceSize.width / bitmap.width
+
+                        val centeringOffset = Offset(
+                            x = (deviceSize.width - bitmap.width * scale * outerScale) / 2f,
+                            y = (deviceSize.height - bitmap.height * scale * outerScale) / 2f
+                        )
+
+                        val matrix = Matrix().apply {
+                            postScale(scale * outerScale, scale * outerScale)
+                            postTranslate(centeringOffset.x + offset.x, centeringOffset.y + offset.y)
+                        }
+                        canvas.drawBitmap(bitmap, matrix, Paint().apply { isAntiAlias = true })
+
+                        val wallpaperManager = context.getSystemService(Context.WALLPAPER_SERVICE) as WallpaperManager
+
+                        wallpaperManager.setBitmap(destinationBitmap, null, true, wallpaperType.flag)
+
+                        delay(1000)
+
+                        close()
+                    }
+                },
+                onDismiss = {
+                    showDialog = false
+                }
+            )
+        }
+
+        FullWidthDialogButton(
+            text = stringResource(id = R.string.apply),
+            color = MaterialTheme.colorScheme.primary,
+            textColor = MaterialTheme.colorScheme.onPrimary,
+            position = RowPosition.Single,
+            modifier = Modifier
+                .dropShadow(
+                    shape = RoundedCornerShape(1000.dp),
+                    shadow = Shadow(
+                        radius = 8.dp,
+                        color = Color.Black,
+                        spread = 2.dp,
+                        alpha = 0.5f
+                    )
+                )
+        ) {
+            showDialog = true
+        }
+    }
 }

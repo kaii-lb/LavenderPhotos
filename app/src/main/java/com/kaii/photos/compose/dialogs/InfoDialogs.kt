@@ -50,10 +50,11 @@ import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.immichViewModel
 import com.kaii.photos.R
+import com.kaii.photos.compose.WallpaperSetter
+import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.compose.widgets.AnimatableTextField
 import com.kaii.photos.compose.widgets.MainDialogUserInfo
 import com.kaii.photos.compose.widgets.TitleCloseRow
-import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
@@ -646,19 +647,14 @@ fun SinglePhotoInfoDialog(
                             iconResId = R.drawable.paintbrush,
                             position = RowPosition.Middle
                         ) {
-                            val intent = Intent().apply {
-                                action = Intent.ACTION_ATTACH_DATA
+                            val intent = Intent(context, WallpaperSetter::class.java).apply {
+                                action = Intent.ACTION_SET_WALLPAPER
                                 data = currentMediaItem.uri
                                 addCategory(Intent.CATEGORY_DEFAULT)
                                 putExtra("mimeType", currentMediaItem.mimeType)
                             }
 
-                            context.startActivity(
-                                Intent.createChooser(
-                                    intent,
-                                    resources.getString(R.string.set_as_wallpaper)
-                                )
-                            )
+                            context.startActivity(intent)
                         }
                     }
 

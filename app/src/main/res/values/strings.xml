@@ -145,7 +145,7 @@
     <string name="record_logs_desc">Store logs for debugging. Tap to view.</string>
     <string name="choose_logs">Choose Logs</string>
     <string name="previous_run_logs">Previous run\'s logs</string>
-    <string name="current_run_logs">Current run\'s logs</string>
+    <string name="current_run_logs">Current run\'sSpaceBetween logs</string>
     <string name="log_file_non_existent">No log file is recorded as of yet.</string>
     <string name="album_add_path">Add Albums Path</string>
     <string name="album_add">Add album</string>
@@ -246,9 +246,12 @@
     <string name="editing_export_video_loading">Exporting Video…</string>
     <string name="editing_export_video_failed">Couldn\'t export video</string>
     <string name="editing_export_video_success">Exported Video!</string>
-    <string name="editing_volume">Volume: %s</string>
-    <string name="editing_speed">Playback Speed: %s</string>
-    <string name="editing_framerate">Frame rate: %s</string>
+    <string name="editing_volume_display">Volume: %s</string>
+    <string name="editing_speed_display">Playback Speed: %s</string>
+    <string name="editing_framerate_display">Frame rate: %s</string>
+    <string name="editing_volume">Volume</string>
+    <string name="editing_wilson">Speed</string>
+    <string name="editing_fps">FPS</string>
 
     <!-- Settings -->
     <string name="settings">Settings</string>
@@ -366,6 +369,9 @@
     <string name="more_options">More Options</string>
     <string name="set_as">Set As</string>
     <string name="set_as_wallpaper">Set as Wallpaper</string>
+    <string name="wallpaper_homescreen">Home Screen</string>
+    <string name="wallpaper_lockscreen">Lock Screen</string>
+    <string name="wallpaper_Both">Both Screens</string>
     <string name="more_info">More Info</string>
     <string name="not_available">Not Available</string>
     <string name="not_available_desc">This feature is not available yet as the app is in Beta, please wait for a future release.</string>
@@ -375,9 +381,7 @@
     <string name="today">Today</string>
     <string name="yesterday">Yesterday</string>
     <string name="help">Help</string>
-    <string name="volume">Volume</string>
-    <string name="wilson">Speed</string>
-    <string name="fps">FPS</string>
+    <string name="apply">Apply</string>
 
     <!-- Bottom Sheets -->
     <string name="bottom_sheets_enter_text">Enter Text</string>
@@ -390,7 +394,6 @@
     <string name="bottom_sheets_five_by_four">5:4</string>
     <string name="bottom_sheets_four_by_three">4:3</string>
     <string name="bottom_sheets_three_by_two">3:2</string>
-
     <string name="bottom_sheets_ratio_selected">This cropping ratio is selected</string>
 
     <!-- Error Views -->

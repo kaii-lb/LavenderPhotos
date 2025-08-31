@@ -76,9 +76,10 @@ import com.kaii.photos.LocalAppDatabase
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.MainActivity.Companion.immichViewModel
 import com.kaii.photos.R
+import com.kaii.photos.compose.FullWidthDialogButton
+import com.kaii.photos.compose.WallpaperSetter
 import com.kaii.photos.compose.widgets.CheckBoxButtonRow
 import com.kaii.photos.compose.widgets.ClearableTextField
-import com.kaii.photos.compose.FullWidthDialogButton
 import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.TitleCloseRow
 import com.kaii.photos.datastore.AlbumInfo
@@ -1093,6 +1094,54 @@ fun SliderDialog(
                     fontSize = TextUnit(TextStylingConstants.SMALL_TEXT_SIZE, TextUnitType.Sp)
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun WallpaperTypeDialog(
+    modifier: Modifier = Modifier,
+    onSetWallpaperType: (WallpaperSetter.Type) -> Unit,
+    onDismiss: () -> Unit
+) {
+    LavenderDialogBase(
+        onDismiss = onDismiss,
+        modifier = modifier
+    ) {
+        TitleCloseRow(
+            title = stringResource(id = R.string.set_as_wallpaper),
+            closeOffset = 12.dp
+        ) {
+            onDismiss()
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        PreferencesRow(
+            title = stringResource(id = R.string.wallpaper_homescreen),
+            position = RowPosition.Top,
+            iconResID = R.drawable.mobile
+        ) {
+            onSetWallpaperType(WallpaperSetter.Type.HomeScreen)
+            onDismiss()
+        }
+
+        PreferencesRow(
+            title = stringResource(id = R.string.wallpaper_lockscreen),
+            position = RowPosition.Middle,
+            iconResID = R.drawable.mobile_lock
+        ) {
+            onSetWallpaperType(WallpaperSetter.Type.LockScreen)
+            onDismiss()
+        }
+
+        PreferencesRow(
+            title = stringResource(id = R.string.wallpaper_Both),
+            position = RowPosition.Bottom,
+            iconResID = R.drawable.mobile_lock_alternate
+        ) {
+            onSetWallpaperType(WallpaperSetter.Type.Both)
+            onDismiss()
         }
     }
 }
