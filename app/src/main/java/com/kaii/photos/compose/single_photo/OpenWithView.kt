@@ -103,15 +103,14 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
-import com.bumptech.glide.signature.ObjectKey
 import com.kaii.photos.BuildConfig
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.BottomAppBarItem
 import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.dialogs.ExplanationDialog
-import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.compose.single_photo.editing_view.VideoEditor
+import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
@@ -356,8 +355,7 @@ private fun Content(
                             appBarsVisible = appBarsVisible
                         )
                 ) {
-                    it.signature(ObjectKey(uri.toString().hashCode() + mimeType.hashCode()))
-                        .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    it.diskCacheStrategy(DiskCacheStrategy.NONE)
                 }
             }
         }
