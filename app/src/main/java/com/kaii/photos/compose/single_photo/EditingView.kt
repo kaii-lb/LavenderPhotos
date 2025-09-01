@@ -5,7 +5,6 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
-import android.graphics.RectF
 import android.net.Uri
 import android.os.Build
 import android.util.Log
@@ -153,8 +152,8 @@ import androidx.compose.ui.unit.toRect
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
-import androidx.core.graphics.applyCanvas
 import androidx.core.graphics.createBitmap
+import androidx.core.graphics.scale
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.Glide
 import com.kaii.lavender.snackbars.LavenderSnackbarController
@@ -162,23 +161,23 @@ import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
-import com.kaii.photos.compose.widgets.ColorFilterItem
-import com.kaii.photos.compose.widgets.ColorRangeSlider
 import com.kaii.photos.compose.CroppingRatioBottomSheet
-import com.kaii.photos.compose.widgets.PopupPillSlider
-import com.kaii.photos.compose.widgets.SelectableDropDownMenuItem
 import com.kaii.photos.compose.SetEditingViewDrawableTextBottomSheet
-import com.kaii.photos.compose.widgets.SimpleTab
-import com.kaii.photos.compose.widgets.SplitButton
 import com.kaii.photos.compose.app_bars.BottomAppBarItem
 import com.kaii.photos.compose.app_bars.getAppBarContentTransition
 import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
-import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.compose.single_photo.editing_view.CroppingAspectRatio
 import com.kaii.photos.compose.single_photo.editing_view.MediaAdjustments
 import com.kaii.photos.compose.single_photo.editing_view.SliderStates
 import com.kaii.photos.compose.single_photo.editing_view.makeDrawCanvas
+import com.kaii.photos.compose.widgets.ColorFilterItem
+import com.kaii.photos.compose.widgets.ColorRangeSlider
+import com.kaii.photos.compose.widgets.PopupPillSlider
+import com.kaii.photos.compose.widgets.SelectableDropDownMenuItem
+import com.kaii.photos.compose.widgets.SimpleTab
+import com.kaii.photos.compose.widgets.SplitButton
+import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.Editing
 import com.kaii.photos.helpers.ColorIndicator
 import com.kaii.photos.helpers.DrawableBlur
@@ -538,32 +537,20 @@ fun EditingView(
                     val reqHeight = windowInfo.containerSize.height
 
                     if (image.height > reqHeight || image.width > reqWidth) {
-                        val halfHeight: Int = image.height / 2
-                        val halfWidth: Int = image.width / 2
-
                         // Calculate the largest inSampleSize value that is a power of 2 and keeps both
                         // height and width larger than the requested height and width.
-                        while (halfHeight / inSampleSize >= reqHeight && halfWidth / inSampleSize >= reqWidth) {
+                        while (image.height / inSampleSize >= reqHeight && image.width / inSampleSize >= reqWidth) {
                             inSampleSize *= 2
                         }
                     }
 
-                    createBitmap(
-                        width = image.width / inSampleSize,
-                        height = image.height / inSampleSize
-                    ).applyCanvas {
-                        drawBitmap(
-                            image.asAndroidBitmap(),
-                            null,
-                            RectF().apply {
-                                top = 0f
-                                left = 0f
-                                bottom = image.height.toFloat() / inSampleSize
-                                right = image.width.toFloat() / inSampleSize
-                            },
-                            null
+                    image.asAndroidBitmap()
+                        .scale(
+                            width = (image.height.toFloat() / inSampleSize).toInt(),
+                            height = (image.width.toFloat() / inSampleSize).toInt(),
+                            filter = true
                         )
-                    }.asImageBitmap()
+                        .asImageBitmap()
                 }
             }
 
