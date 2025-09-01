@@ -54,9 +54,10 @@ import com.kaii.photos.database.entities.SecuredItemEntity
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.mediastore.copyMedia
+import com.kaii.photos.mediastore.copyUriToUri
 import com.kaii.photos.mediastore.getIv
 import com.kaii.photos.mediastore.getOriginalPath
+import com.kaii.photos.mediastore.insertMedia
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -294,7 +295,7 @@ suspend fun moveImageOutOfLockedFolder(
 
         Log.d(TAG, "Base path ${originalPath.toBasePath()}")
 
-        contentResolver.copyMedia(
+        contentResolver.insertMedia(
             context = context,
             media = media.copy(
                 uri = tempFile.toUri()
@@ -302,7 +303,10 @@ suspend fun moveImageOutOfLockedFolder(
             destination = originalPath.getParentFromPath(),
             overwriteDate = false,
             basePath = originalPath.toBasePath(),
-            currentVolumes = MediaStore.getExternalVolumeNames(context)
+            currentVolumes = MediaStore.getExternalVolumeNames(context),
+            onInsert = { original, new ->
+                contentResolver.copyUriToUri(original, new)
+            }
         )?.let {
             try {
                 fileToBeRestored.delete()
@@ -401,13 +405,16 @@ fun moveImageListToPath(
 
         async {
             list.forEachIndexed { index, media ->
-                contentResolver.copyMedia(
+                contentResolver.insertMedia(
                     context = context,
                     media = media,
                     destination = destination,
                     basePath = basePath,
                     overwriteDate = overwriteDate,
-                    currentVolumes = MediaStore.getExternalVolumeNames(context)
+                    currentVolumes = MediaStore.getExternalVolumeNames(context),
+                    onInsert = { original, new ->
+                        contentResolver.copyUriToUri(original, new)
+                    }
                 )?.let {
                     body.value = context.resources.getString(R.string.media_operate_snackbar_body, index + 1, list.size)
                     percentage.floatValue = (index + 1f) / list.size
@@ -447,14 +454,17 @@ fun copyImageListToPath(
 
         async {
             list.forEachIndexed { index, media ->
-                contentResolver.copyMedia(
+                contentResolver.insertMedia(
                     context = context,
                     media = media,
                     destination = destination,
                     overwriteDate = overwriteDate,
                     basePath = basePath,
                     overrideDisplayName = if (overrideDisplayName != null) overrideDisplayName(media.displayName) else null,
-                    currentVolumes = MediaStore.getExternalVolumeNames(context)
+                    currentVolumes = MediaStore.getExternalVolumeNames(context),
+                    onInsert = { original, new ->
+                        contentResolver.copyUriToUri(original, new)
+                    }
                 )?.let { uri ->
                     body.value = context.resources.getString(R.string.media_operate_snackbar_body, index + 1, list.size)
                     percentage.floatValue = (index + 1f) / list.size
@@ -647,7 +657,7 @@ suspend fun saveToFile(
     val displayName = "${original.nameWithoutExtension}-edited"
 
     if (!overwrite) {
-        val newUri = context.contentResolver.copyMedia(
+        val newUri = context.contentResolver.insertMedia(
             context = context,
             media = MediaStoreData(
                 type = MediaType.Image,
@@ -663,7 +673,10 @@ suspend fun saveToFile(
             overrideDisplayName = displayName,
             overwriteDate = true,
             basePath = absolutePath.toBasePath(),
-            currentVolumes = MediaStore.getExternalVolumeNames(context)
+            currentVolumes = MediaStore.getExternalVolumeNames(context),
+            onInsert = { original, new ->
+                context.contentResolver.copyUriToUri(original, new)
+            }
         )
 
         val contentValues = ContentValues().apply {

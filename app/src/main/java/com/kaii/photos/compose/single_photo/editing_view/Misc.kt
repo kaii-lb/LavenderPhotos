@@ -3,6 +3,7 @@ package com.kaii.photos.compose.single_photo.editing_view
 import android.content.ContentValues
 import android.content.Context
 import android.net.Uri
+import android.provider.MediaStore
 import android.provider.MediaStore.MediaColumns
 import android.util.Log
 import androidx.annotation.OptIn
@@ -38,8 +39,13 @@ import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
 import com.kaii.photos.helpers.getParentFromPath
+import com.kaii.photos.helpers.permanentlyDeletePhotoList
+import com.kaii.photos.helpers.toBasePath
+import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.mediastore.getMediaStoreDataFromUri
 import com.kaii.photos.mediastore.getUriFromAbsolutePath
+import com.kaii.photos.mediastore.insertMedia
 import java.io.File
 import kotlin.math.pow
 
@@ -211,17 +217,45 @@ suspend fun saveVideo(
         .build()
 
     val file = File(absolutePath)
+    val uri = context.contentResolver.getUriFromAbsolutePath(absolutePath, MediaType.Video)
 
-    val dupeAdd =
+    if (uri == null) return
+
+    val media = MediaStoreData(
+        displayName = file.name,
+        absolutePath = file.absolutePath,
+        dateTaken = System.currentTimeMillis() / 1000,
+        dateModified = System.currentTimeMillis() / 1000,
+        type = MediaType.Video,
+        mimeType = "video/mp4",
+        uri = uri
+    )
+
+    val newUri =
         if (!overwrite) {
-            val new = absolutePath.getParentFromPath() + "/" + file.nameWithoutExtension + "_edited.mp4"
-            if (File(new).exists()) " (1)" else ""
-        } else ""
+            context.contentResolver.insertMedia(
+                context = context,
+                media = media,
+                destination = absolutePath.getParentFromPath(),
+                overwriteDate = true,
+                basePath = absolutePath.toBasePath(),
+                currentVolumes = MediaStore.getExternalVolumeNames(context),
+                overrideDisplayName = file.name.removeSuffix(file.extension) + "mp4",
+                onInsert = { _, _ -> }
+            )
+        } else {
+            uri
+        }
 
-    val neededPath =
-        if (overwrite) absolutePath.replaceAfterLast(".", "mp4")
-        else absolutePath.getParentFromPath() + "/" + file.nameWithoutExtension + "_edited" + dupeAdd + ".mp4"
+    if (newUri == null) return
 
+    val newMedia = context.contentResolver.getMediaStoreDataFromUri(newUri)
+    val neededPath = newMedia?.absolutePath
+    if (neededPath == null) return
+
+    // because: java.io.FileNotFoundException open failed: EEXIST (File exists)
+    // if the file exists
+    permanentlyDeletePhotoList(context = context, list = listOf(newMedia.uri))
 
     val transformer = Transformer.Builder(context)
         .addListener(object : Transformer.Listener {
@@ -230,6 +264,7 @@ suspend fun saveVideo(
 
                 isLoading.value = false
 
+                // not using newMedia.uri since we don't have access to that after deletion
                 context.contentResolver.getUriFromAbsolutePath(absolutePath = neededPath, type = MediaType.Video)?.let { newUri ->
                     context.contentResolver.update(
                         newUri,

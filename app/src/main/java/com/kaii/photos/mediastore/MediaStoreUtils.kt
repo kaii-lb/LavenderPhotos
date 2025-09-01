@@ -33,14 +33,15 @@ const val LAVENDER_FILE_PROVIDER_AUTHORITY = "com.kaii.photos.LavenderPhotos.fil
 
 /** @param media the [MediaStoreData] to copy
  * @param destination the absolute path to copy [media] to */
-suspend fun ContentResolver.copyMedia(
+suspend fun ContentResolver.insertMedia(
     context: Context,
     media: MediaStoreData,
     basePath: String,
     destination: String,
     overwriteDate: Boolean,
     currentVolumes: Set<String>,
-    overrideDisplayName: String? = null
+    overrideDisplayName: String? = null,
+    onInsert: (origin: Uri, new: Uri) -> Unit
 ): Uri? = withContext(Dispatchers.IO) {
     val file = File(media.absolutePath)
     val currentTime = System.currentTimeMillis()
@@ -52,19 +53,11 @@ suspend fun ContentResolver.copyMedia(
         }
 
     val relativeDestination = destination.toRelativePath().removePrefix("/")
-    val storageContentUri = when {
-        relativeDestination.startsWith(Environment.DIRECTORY_DCIM) || relativeDestination.startsWith(Environment.DIRECTORY_PICTURES) || destination.startsWith(
-            Environment.DIRECTORY_MOVIES
-        ) -> {
-            if (media.type == MediaType.Image) MediaStore.Images.Media.getContentUri(volumeName) else MediaStore.Video.Media.getContentUri(volumeName)
-        }
-
-        relativeDestination.startsWith(Environment.DIRECTORY_DOCUMENTS) || relativeDestination.startsWith(
-            Environment.DIRECTORY_DOWNLOADS
-        ) -> MediaStore.Files.getContentUri(volumeName)
-
-        else -> null
-    }
+    val storageContentUri = getStorageContentUri(
+        absolutePath = destination,
+        type = media.type,
+        volumeName = volumeName
+    )
 
     if (storageContentUri != null && volumeName == MediaStore.VOLUME_EXTERNAL) {
         val contentValues = ContentValues().apply {
@@ -80,15 +73,13 @@ suspend fun ContentResolver.copyMedia(
         )
 
         newUri?.let { uri ->
-            copyUriToUri(media.uri, uri)
+            onInsert(media.uri, uri)
 
-            val target =
-                File(basePath + relativeDestination.removeSuffix("/") + "/${overrideDisplayName ?: file.name}")
-
-            if (overwriteDate) {
-                target.setLastModified(currentTime)
-            } else {
-                target.setLastModified(media.dateTaken * 1000)
+            getMediaStoreDataFromUri(uri)?.let { newMedia ->
+                File(newMedia.absolutePath).setLastModified(
+                    if (overwriteDate) currentTime
+                    else media.dateTaken * 1000
+                )
             }
 
             return@withContext uri
@@ -109,18 +100,13 @@ suspend fun ContentResolver.copyMedia(
         )
 
         fileToBeSavedTo?.let { savedToFile ->
-            copyUriToUri(
-                from = media.uri,
-                to = savedToFile.uri
-            )
+            onInsert(media.uri, savedToFile.uri)
 
-            val target =
-                File(destination.removeSuffix("/") + "/${overrideDisplayName ?: file.name}")
-
-            if (overwriteDate) {
-                target.setLastModified(currentTime)
-            } else {
-                target.setLastModified(media.dateTaken * 1000)
+            getMediaStoreDataFromUri(savedToFile.uri)?.let { newMedia ->
+                File(newMedia.absolutePath).setLastModified(
+                    if (overwriteDate) currentTime
+                    else media.dateTaken * 1000
+                )
             }
 
             return@withContext savedToFile.uri
@@ -203,12 +189,8 @@ fun ContentResolver.getUriFromAbsolutePath(absolutePath: String, type: MediaType
 }
 
 fun ContentResolver.getMediaStoreDataFromUri(uri: Uri): MediaStoreData? {
-    val id = uri.lastPathSegment!!
-
-    Log.d(TAG, "ID for media is $id with uri $uri")
-
     val mediaCursor = query(
-        MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+        uri,
         arrayOf(
             MediaColumns._ID,
             MediaColumns.DATA,
@@ -216,18 +198,20 @@ fun ContentResolver.getMediaStoreDataFromUri(uri: Uri): MediaStoreData? {
             MediaColumns.MIME_TYPE,
             MediaColumns.DISPLAY_NAME
         ),
-        "${MediaColumns._ID} = ?",
-        arrayOf(id),
+        null,
+        null,
         null
     )
 
     mediaCursor?.let { cursor ->
+        val contentIdColNum = mediaCursor.getColumnIndexOrThrow(MediaColumns._ID)
         val absolutePathColNum = mediaCursor.getColumnIndexOrThrow(MediaColumns.DATA)
         val mimeTypeColNum = mediaCursor.getColumnIndexOrThrow(MediaColumns.MIME_TYPE)
         val displayNameIndex = mediaCursor.getColumnIndexOrThrow(FileColumns.DISPLAY_NAME)
         val dateModifiedColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.DATE_MODIFIED)
 
         while (cursor.moveToNext()) {
+            val contentId = cursor.getLong(contentIdColNum)
             val mimeType = cursor.getString(mimeTypeColNum)
             val absolutePath = cursor.getString(absolutePathColNum)
             val dateModified = cursor.getLong(dateModifiedColumn)
@@ -239,12 +223,16 @@ fun ContentResolver.getMediaStoreDataFromUri(uri: Uri): MediaStoreData? {
                 if (mimeType.contains("image")) MediaType.Image
                 else MediaType.Video
 
+            val uriParentPath =
+                if (type == MediaType.Image) MediaStore.Images.Media.EXTERNAL_CONTENT_URI else MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+            val contentUri = ContentUris.withAppendedId(uriParentPath, contentId)
+
             cursor.close()
 
             return MediaStoreData(
                 type = type,
-                id = id.toLong(),
-                uri = uri,
+                id = contentId,
+                uri = contentUri,
                 mimeType = mimeType,
                 dateModified = dateModified,
                 dateTaken = dateTaken,
@@ -285,4 +273,26 @@ fun getSQLiteQuery(albums: List<String>): SQLiteQuery {
 
     val query = "AND ($string)"
     return SQLiteQuery(query = query, paths = list, includedBasePaths = albums)
+}
+
+private fun getStorageContentUri(
+    absolutePath: String,
+    type: MediaType,
+    volumeName: String?
+): Uri? {
+    val relative = absolutePath.toRelativePath().removePrefix("/")
+
+    return when {
+        relative.startsWith(Environment.DIRECTORY_DCIM) || relative.startsWith(Environment.DIRECTORY_PICTURES) || absolutePath.startsWith(
+            Environment.DIRECTORY_MOVIES
+        ) -> {
+            if (type == MediaType.Image) MediaStore.Images.Media.getContentUri(volumeName) else MediaStore.Video.Media.getContentUri(volumeName)
+        }
+
+        relative.startsWith(Environment.DIRECTORY_DOCUMENTS) || relative.startsWith(
+            Environment.DIRECTORY_DOWNLOADS
+        ) -> MediaStore.Files.getContentUri(volumeName)
+
+        else -> null
+    }
 }
