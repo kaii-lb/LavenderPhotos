@@ -94,7 +94,7 @@ import com.kaii.photos.datastore.PhotoGrid
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
-import com.kaii.photos.helpers.brightenColor
+import com.kaii.photos.helpers.editing.brightenColor
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.signature
 import com.kaii.photos.models.album_grid.AlbumsViewModel

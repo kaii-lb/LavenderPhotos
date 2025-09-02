@@ -62,8 +62,11 @@ import com.kaii.photos.compose.dialogs.SliderDialog
 import com.kaii.photos.compose.single_photo.EditingViewBottomAppBarItem
 import com.kaii.photos.compose.widgets.ColorFilterItem
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.helpers.MediaColorFilters
 import com.kaii.photos.helpers.VideoPlayerConstants
+import com.kaii.photos.helpers.editing.DrawingItems
+import com.kaii.photos.helpers.editing.MediaAdjustments
+import com.kaii.photos.helpers.editing.MediaColorFilters
+import com.kaii.photos.helpers.editing.VideoModification
 import kotlin.math.truncate
 
 // private const val TAG = "VIDEO_EDITOR_TAB_CONTENT"
@@ -530,7 +533,7 @@ fun VideoEditorAdjustContent(
         ) { index ->
             val entry = MediaAdjustments.entries[index]
 
-            VideoEditingBottomAppBarItem(
+            VideoEditingAdjustmentItem(
                 type = entry,
                 modifications = modifications,
                 extraOnClick = increaseModCount
@@ -540,7 +543,7 @@ fun VideoEditorAdjustContent(
 }
 
 @Composable
-private fun VideoEditingBottomAppBarItem(
+private fun VideoEditingAdjustmentItem(
     type: MediaAdjustments,
     modifications: SnapshotStateList<VideoModification>,
     extraOnClick: () -> Unit
@@ -619,6 +622,29 @@ fun VideoEditorFilterContent(
                 )
 
                 increaseModCount()
+            }
+        }
+    }
+}
+
+@Composable
+fun VideoEditorDrawContent(modifier: Modifier = Modifier) {
+    LazyRow(
+        modifier = modifier
+            .fillMaxSize(1f),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        items(
+            count = DrawingItems.entries.size
+        ) { index ->
+            val entry = DrawingItems.entries[index]
+
+            EditingViewBottomAppBarItem(
+                text = stringResource(id = entry.title),
+                icon = entry.icon
+            ) {
+                // TODO: ...do this
             }
         }
     }

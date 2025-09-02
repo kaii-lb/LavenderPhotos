@@ -209,6 +209,7 @@
     <string name="editing_highlighter">Highlighter</string>
     <string name="editing_text">Text</string>
     <string name="editing_blur">Blur</string>
+    <string name="editing_image">Image</string>
     <string name="editing_undo_all">Undo all actions</string>
     <string name="editing_undo_last">Undo last action</string>
     <string name="editing_scale_paint">Change paintbrush or text size</string>

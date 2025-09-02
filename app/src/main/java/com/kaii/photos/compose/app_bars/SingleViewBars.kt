@@ -99,16 +99,17 @@ import com.kaii.photos.compose.single_photo.editing_view.CroppingAspectRatio
 import com.kaii.photos.compose.single_photo.editing_view.TrimContent
 import com.kaii.photos.compose.single_photo.editing_view.VideoEditorAdjustContent
 import com.kaii.photos.compose.single_photo.editing_view.VideoEditorCropContent
+import com.kaii.photos.compose.single_photo.editing_view.VideoEditorDrawContent
 import com.kaii.photos.compose.single_photo.editing_view.VideoEditorFilterContent
 import com.kaii.photos.compose.single_photo.editing_view.VideoEditorProcessingContent
 import com.kaii.photos.compose.single_photo.editing_view.VideoEditorTabs
-import com.kaii.photos.compose.single_photo.editing_view.VideoModification
 import com.kaii.photos.compose.single_photo.editing_view.saveVideo
 import com.kaii.photos.compose.widgets.SelectableDropDownMenuItem
 import com.kaii.photos.compose.widgets.SimpleTab
 import com.kaii.photos.datastore.Editing
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.VideoPlayerConstants
+import com.kaii.photos.helpers.editing.VideoModification
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -253,12 +254,8 @@ fun VideoEditorBottomBar(
                         )
                     }
 
-                    else -> {
-                        Text(
-                            text = "This definitely has been coded in",
-                            modifier = Modifier
-                                .fillMaxSize(1f)
-                        )
+                    VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw) -> {
+                        VideoEditorDrawContent()
                     }
                 }
             }

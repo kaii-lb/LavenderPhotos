@@ -20,13 +20,13 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import com.kaii.photos.compose.single_photo.checkIfClickedOnText
 import com.kaii.photos.compose.single_photo.getTextBoundingBox
-import com.kaii.photos.helpers.DrawableBlur
-import com.kaii.photos.helpers.DrawablePath
-import com.kaii.photos.helpers.DrawableText
-import com.kaii.photos.helpers.ExtendedPaint
-import com.kaii.photos.helpers.Modification
-import com.kaii.photos.helpers.PaintType
-import com.kaii.photos.helpers.toOffset
+import com.kaii.photos.helpers.editing.DrawableBlur
+import com.kaii.photos.helpers.editing.DrawablePath
+import com.kaii.photos.helpers.editing.DrawableText
+import com.kaii.photos.helpers.editing.ExtendedPaint
+import com.kaii.photos.helpers.editing.Modification
+import com.kaii.photos.helpers.editing.PaintType
+import com.kaii.photos.helpers.editing.toOffset
 
 // private const val TAG = "EDITING_VIEW_INPUT"
 

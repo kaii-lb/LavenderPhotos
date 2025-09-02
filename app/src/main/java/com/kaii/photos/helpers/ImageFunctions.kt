@@ -51,6 +51,12 @@ import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.SecuredItemEntity
+import com.kaii.photos.helpers.editing.DrawableBlur
+import com.kaii.photos.helpers.editing.DrawablePath
+import com.kaii.photos.helpers.editing.DrawableText
+import com.kaii.photos.helpers.editing.Modification
+import com.kaii.photos.helpers.editing.blur
+import com.kaii.photos.helpers.editing.toOffset
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType

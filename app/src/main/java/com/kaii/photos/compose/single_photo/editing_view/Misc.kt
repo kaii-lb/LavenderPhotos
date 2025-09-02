@@ -10,8 +10,10 @@ import androidx.annotation.OptIn
 import androidx.annotation.StringRes
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.unit.IntSize
@@ -24,8 +26,10 @@ import androidx.media3.common.audio.ChannelMixingAudioProcessor
 import androidx.media3.common.audio.ChannelMixingMatrix
 import androidx.media3.common.audio.SonicAudioProcessor
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.effect.BitmapOverlay
 import androidx.media3.effect.Crop
 import androidx.media3.effect.FrameDropEffect
+import androidx.media3.effect.OverlayEffect
 import androidx.media3.effect.Presentation
 import androidx.media3.effect.ScaleAndRotateTransformation
 import androidx.media3.effect.SpeedChangeEffect
@@ -38,6 +42,10 @@ import androidx.media3.transformer.Transformer
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
+import com.kaii.photos.helpers.editing.DrawableText
+import com.kaii.photos.helpers.editing.DrawingItems
+import com.kaii.photos.helpers.editing.ExtendedPaint
+import com.kaii.photos.helpers.editing.VideoModification
 import com.kaii.photos.helpers.getParentFromPath
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.toBasePath
@@ -212,8 +220,80 @@ suspend fun saveVideo(
         })
     }
 
+    val overlayEffects = mutableListOf<BitmapOverlay>()
+    val textOverlays =
+        modifications.mapNotNull {
+            it as? VideoModification.DrawingText
+        }
+    if (textOverlays.isNotEmpty()) {
+        textOverlays.forEach { overlay ->
+            overlayEffects.add(
+                overlay.type.toEffect(
+                    value = DrawableText(
+                        text = "Hello World!",
+                        position = Offset(0f, 0f),
+                        paint = ExtendedPaint(strokeWidth = 16f, color = Color.White),
+                        rotation = 0f,
+                        size = IntSize.Zero
+                    ),
+                    timespan = overlay.timespan,
+                    context = context
+                )
+            )
+        }
+    }
+
+    val pathOverlays =
+        modifications.mapNotNull {
+            it as? VideoModification.DrawingPath
+        }
+    if (pathOverlays.isNotEmpty()) {
+        pathOverlays.forEach { overlay ->
+            val effect =
+                if (overlay.type == DrawingItems.Pencil) {
+                    overlay.type.toEffect(
+                        value = overlay.path,
+                        timespan = overlay.timespan,
+                        context = context
+                    )
+                } else {
+                    overlay.type.toEffect(
+                        value = overlay.path,
+                        timespan = overlay.timespan,
+                        context = context
+                    )
+                }
+
+            overlayEffects.add(effect)
+        }
+    }
+
+    val bitmapOverlays =
+        modifications.mapNotNull {
+            it as? VideoModification.DrawingImage
+        }
+
+    if (bitmapOverlays.isNotEmpty()) {
+        bitmapOverlays.forEach { overlay ->
+            val effect =
+                overlay.type.toEffect(
+                    value = overlay.image,
+                    timespan = overlay.timespan,
+                    context = context
+                )
+
+            overlayEffects.add(effect)
+        }
+    }
+
+    val overlayEffectsList = listOf(
+        OverlayEffect(
+            overlayEffects.toList()
+        )
+    )
+
     val editedMediaItem = EditedMediaItem.Builder(mediaItem)
-        .setEffects(Effects(audioEffectList, modList + effectsList))
+        .setEffects(Effects(audioEffectList, modList + effectsList + overlayEffectsList))
         .build()
 
     val file = File(absolutePath)

@@ -1,4 +1,4 @@
-package com.kaii.photos.helpers
+package com.kaii.photos.helpers.editing
 
 import android.graphics.Bitmap
 import android.graphics.HardwareRenderer
@@ -7,6 +7,7 @@ import android.graphics.RenderEffect
 import android.graphics.RenderNode
 import android.hardware.HardwareBuffer
 import android.media.ImageReader
+import android.net.Uri
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
@@ -101,62 +102,6 @@ class ExtendedPaint(
     }
 }
 
-class DrawingPaints {
-    companion object {
-        val Pencil =
-            ExtendedPaint().apply {
-                type = PaintType.Pencil
-                strokeWidth = 20f
-                strokeCap = StrokeCap.Round
-                strokeJoin = StrokeJoin.Round
-                strokeMiterLimit = DefaultStrokeLineMiter
-                pathEffect = PathEffect.cornerPathEffect(50f)
-                blendMode = BlendMode.SrcOver
-                color = DrawingColors.Red
-                alpha = 1f
-            }
-
-        val Highlighter =
-            ExtendedPaint().apply {
-                type = PaintType.Highlighter
-                strokeWidth = 20f
-                strokeCap = StrokeCap.Square
-                strokeJoin = StrokeJoin.Miter
-                strokeMiterLimit = DefaultStrokeLineMiter
-                pathEffect = null
-                blendMode = BlendMode.SrcOver
-                color = DrawingColors.Red
-                alpha = 0.5f
-            }
-
-        val Text =
-            ExtendedPaint().apply {
-                type = PaintType.Text
-                strokeWidth = 20f
-                strokeCap = StrokeCap.Round
-                strokeJoin = StrokeJoin.Round
-                strokeMiterLimit = DefaultStrokeLineMiter
-                pathEffect = PathEffect.cornerPathEffect(50f)
-                blendMode = BlendMode.SrcOver
-                color = DrawingColors.Red
-                alpha = 1f
-            }
-
-        val Blur =
-            ExtendedPaint().apply {
-                type = PaintType.Blur
-                strokeWidth = 20f
-                strokeCap = StrokeCap.Round
-                strokeJoin = StrokeJoin.Round
-                strokeMiterLimit = DefaultStrokeLineMiter
-                pathEffect = PathEffect.cornerPathEffect(50f)
-                blendMode = BlendMode.SrcOver
-                color = DrawingColors.Black
-                alpha = 1f
-            }
-    }
-}
-
 abstract class Modification(open val path: Path? = null)
 
 data class DrawablePath(
@@ -168,6 +113,12 @@ data class DrawableBlur(
     override val path: Path,
     val paint: ExtendedPaint
 ) : Modification(path)
+
+data class DrawableImage(
+    val bitmapUri: Uri,
+    var rotation: Float,
+    val paint: ExtendedPaint
+) : Modification()
 
 enum class PaintType {
     Pencil,

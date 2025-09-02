@@ -58,8 +58,8 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import com.kaii.photos.R
-import com.kaii.photos.helpers.getColorFromLinearGradientList
-import com.kaii.photos.helpers.gradientColorList
+import com.kaii.photos.helpers.editing.getColorFromLinearGradientList
+import com.kaii.photos.helpers.editing.gradientColorList
 
 // TODO: awful execution plz fix
 @OptIn(ExperimentalMaterial3Api::class)

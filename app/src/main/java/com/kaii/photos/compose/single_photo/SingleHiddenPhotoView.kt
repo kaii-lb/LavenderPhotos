@@ -88,7 +88,7 @@ import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.MediaData
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.appRestoredFilesDir
-import com.kaii.photos.helpers.brightenColor
+import com.kaii.photos.helpers.editing.brightenColor
 import com.kaii.photos.helpers.getDecryptCacheForFile
 import com.kaii.photos.helpers.getExifDataForMedia
 import com.kaii.photos.helpers.getParentFromPath

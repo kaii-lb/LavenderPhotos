@@ -58,6 +58,9 @@ import com.kaii.photos.compose.single_photo.rememberExoPlayerWithLifeCycle
 import com.kaii.photos.compose.single_photo.rememberPlayerView
 import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.AnimationConstants
+import com.kaii.photos.helpers.editing.ColorMatrixEffect
+import com.kaii.photos.helpers.editing.MediaAdjustments
+import com.kaii.photos.helpers.editing.VideoModification
 import kotlinx.coroutines.delay
 
 private const val TAG = "VIDEO_EDITOR"
@@ -234,13 +237,15 @@ fun VideoEditor(
     }
 
     // prefill for order of application
-    val effectsList = remember { mutableStateListOf<Effect?>().apply {
-        (1..MediaAdjustments.entries.size).forEach {
-            add(null)
+    val effectsList = remember {
+        mutableStateListOf<Effect?>().apply {
+            (1..MediaAdjustments.entries.size).forEach {
+                add(null)
+            }
         }
-    }}
-    val totalModCount = remember { mutableIntStateOf(0) }
+    }
 
+    val totalModCount = remember { mutableIntStateOf(0) }
     LaunchedEffect(totalModCount.intValue) {
         val last = modifications.lastOrNull()
 
