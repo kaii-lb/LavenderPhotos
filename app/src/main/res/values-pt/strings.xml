@@ -60,4 +60,17 @@
 </p>
 ]]></string>
     <string name="error_views_folder_non_existent">A pasta não existe</string>
+    <string name="albums_clear_list">Limpar lista de álbuns</string>
+    <string name="albums_auto_detect_desc">Detecta todas as pastas com mídia neste dispositivo e as adiciona à tela de álbuns</string>
+    <string name="albums_clear_list_done">Lista de álbuns limpa</string>
+    <string name="albums_move_to">Mover para Álbum</string>
+    <string name="albums_copy_to">Copiar para Álbum</string>
+    <string name="albums_move_to_secure">Mover para a Pasta Segura</string>
+    <string name="albums_name">Nome do álbum</string>
+    <string name="albums_type">Tipo de álbum</string>
+    <string name="updates_start">Iniciar Atualização</string>
+    <string name="locked_folder_help_top">A Pasta Bloqueada é uma pasta segura para suas fotos e vídeos neste dispositivo.\nA mídia protegida nunca é enviada para nenhum lugar e permanece sempre no dispositivo, criptografada com uma chave única associada à senha ou aos dados de impressão digital do seu aparelho.</string>
+    <string name="locked_folder_help_bottom">Os dados protegidos não poderão ser recuperados caso a senha seja esquecida ou a impressão digital seja removida.</string>
+    <string name="secure_folder">Pasta Segura</string>
+    <string name="secure_processing">Aguarde enquanto esta mídia é processada</string>
 </resources>
