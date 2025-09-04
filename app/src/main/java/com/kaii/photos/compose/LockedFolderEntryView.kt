@@ -99,7 +99,7 @@ fun LockedFolderEntryView(
     var canOpenSecureFolder by remember { mutableStateOf(true) }
 
     var migrating by remember { mutableStateOf(false) }
-    val showExplanationForMigration = remember { mutableStateOf(false) }
+    var showExplanationForMigration by remember { mutableStateOf(false) }
 
     val newFolderDirPermission = remember { mutableStateOf(false) }
     val encryptionDirPermission = remember { mutableStateOf(false) }
@@ -153,7 +153,7 @@ fun LockedFolderEntryView(
                         }
                     }
 
-                    showExplanationForMigration.value = true
+                    showExplanationForMigration = true
                 } else {
                     LavenderSnackbarController.pushEvent(
                         @OptIn(ExperimentalUuidApi::class)
@@ -264,7 +264,7 @@ fun LockedFolderEntryView(
                     onDone = {
                         migrating = false
                         canOpenSecureFolder = true
-                        showExplanationForMigration.value = true
+                        showExplanationForMigration = true
                     }
                 )
             }
@@ -327,12 +327,13 @@ fun LockedFolderEntryView(
         return
     }
 
-    if (showExplanationForMigration.value) {
+    if (showExplanationForMigration) {
         ExplanationDialog(
             title = "Migration Notice",
-            explanation = "Secure folder is now encrypted! All your photos are now fully safe and untouchable by anyone. \n\nAs a precaution, a copy of your secured photos is now present in an export folder, you can find it in the albums page or under \"Internal Storage/Android/media/com.kaii.photos/LavenderPhotos/Exports\".",
-            showDialog = showExplanationForMigration
-        )
+            explanation = "Secure folder is now encrypted! All your photos are now fully safe and untouchable by anyone. \n\nAs a precaution, a copy of your secured photos is now present in an export folder, you can find it in the albums page or under \"Internal Storage/Android/media/com.kaii.photos/LavenderPhotos/Exports\"."
+        ) {
+            showExplanationForMigration = false
+        }
     }
 
     val prompt = BiometricPrompt.Builder(LocalContext.current)
@@ -354,15 +355,16 @@ fun LockedFolderEntryView(
         }
     }
 
-    val showHelpDialog = remember { mutableStateOf(false) }
-    if (showHelpDialog.value) {
+    var showHelpDialog by remember { mutableStateOf(false) }
+    if (showHelpDialog) {
         ExplanationDialog(
             title = "Secure Folder",
             explanation = stringResource(id = R.string.locked_folder_help_top) +
                     "\n\n" +
-                    stringResource(id = R.string.locked_folder_help_bottom),
-            showDialog = showHelpDialog
-        )
+                    stringResource(id = R.string.locked_folder_help_bottom)
+        ) {
+            showHelpDialog = false
+        }
     }
 
     val isLandscape by rememberDeviceOrientation()
@@ -416,7 +418,7 @@ fun LockedFolderEntryView(
 
                 Button(
                     onClick = {
-                        showHelpDialog.value = true
+                        showHelpDialog = true
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -464,7 +466,7 @@ fun LockedFolderEntryView(
 
             Button(
                 onClick = {
-                    showHelpDialog.value = true
+                    showHelpDialog = true
                 },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.surfaceVariant,

@@ -788,10 +788,19 @@ fun MainAppDialog(
 }
 
 @Composable
-fun FeatureNotAvailableDialog(showDialog: MutableState<Boolean>) {
+fun FeatureNotAvailableDialog(onDismiss: () -> Unit) {
     ExplanationDialog(
         title = stringResource(id = R.string.not_available),
         explanation = stringResource(id = R.string.not_available_desc),
-        showDialog = showDialog
+        onDismiss = onDismiss
+    )
+}
+
+@Composable
+fun CustomPresetExplanationDialog(onDismiss: () -> Unit) {
+    ExplanationDialog(
+        title = stringResource(id = R.string.filter_explanation_title),
+        explanation = stringResource(id = R.string.filter_explanation_desc),
+        onDismiss = onDismiss
     )
 }

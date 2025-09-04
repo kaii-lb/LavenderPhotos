@@ -197,11 +197,11 @@ private fun TopBar() {
             val mainViewModel = LocalMainViewModel.current
             val resources = LocalResources.current
             val showUpdateNotice by mainViewModel.settings.Versions.getShowUpdateNotice().collectAsStateWithLifecycle(false)
-            val showDialog = remember { mutableStateOf(false) }
+            var showDialog by remember { mutableStateOf(false) }
 
             LaunchedEffect(showUpdateNotice) {
                 if (showUpdateNotice) {
-                    showDialog.value = true
+                    showDialog = true
 
                     mainViewModel.settings.Versions.setShowUpdateNotice(false)
                 }
@@ -211,7 +211,7 @@ private fun TopBar() {
                 resources.getString(R.string.updates_notice_desc).trimIndent()
             }
 
-            if (showDialog.value) {
+            if (showDialog) {
                 AnnotatedExplanationDialog(
                     title = stringResource(id = R.string.updates_notice),
                     annotatedExplanation = AnnotatedString.fromHtml(
@@ -229,14 +229,15 @@ private fun TopBar() {
                                 color = MaterialTheme.colorScheme.primary
                             )
                         )
-                    ),
-                    showDialog = showDialog
-                )
+                    )
+                ) {
+                    showDialog = false
+                }
             }
 
             IconButton(
                 onClick = {
-                    showDialog.value = true
+                    showDialog = true
                 }
             ) {
                 Icon(

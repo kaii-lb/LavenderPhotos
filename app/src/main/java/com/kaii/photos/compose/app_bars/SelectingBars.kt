@@ -43,12 +43,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalAppDatabase
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
-import com.kaii.photos.compose.widgets.SelectViewTopBarLeftButtons
-import com.kaii.photos.compose.widgets.SelectViewTopBarRightButtons
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.ExplanationDialog
 import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
+import com.kaii.photos.compose.widgets.SelectViewTopBarLeftButtons
+import com.kaii.photos.compose.widgets.SelectViewTopBarRightButtons
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
@@ -224,13 +224,14 @@ fun RowScope.SelectingBottomBarItems(
             runDeleteAction.value = true
         }
     } else {
-        val showExplanationDialog = remember { mutableStateOf(false) }
-        if (showExplanationDialog.value) {
+        var showExplanationDialog by remember { mutableStateOf(false) }
+        if (showExplanationDialog) {
             ExplanationDialog(
                 title = stringResource(id = R.string.custom_album_media_not_custom_title),
-                explanation = stringResource(id = R.string.custom_album_media_not_custom_explanation),
-                showDialog = showExplanationDialog
-            )
+                explanation = stringResource(id = R.string.custom_album_media_not_custom_explanation)
+            ) {
+                showExplanationDialog = false
+            }
         }
 
         ConfirmationDialog(
@@ -239,7 +240,7 @@ fun RowScope.SelectingBottomBarItems(
             confirmButtonLabel = stringResource(id = R.string.custom_album_remove_media)
         ) {
             if (selectedItemsWithoutSection.any { it.customId == null }) {
-                showExplanationDialog.value = true
+                showExplanationDialog = true
             }
 
             mainViewModel.launch(Dispatchers.IO) {

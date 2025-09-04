@@ -26,8 +26,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
@@ -45,9 +47,9 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
-import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.dialogs.ExplanationDialog
 import com.kaii.photos.compose.dialogs.FeatureNotAvailableDialog
+import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
@@ -149,13 +151,14 @@ fun AboutPage(popBackStack: () -> Unit) {
                     context.startActivity(intent)
                 }
 
-                val showPrivacyPolicy = remember { mutableStateOf(false) }
-                if (showPrivacyPolicy.value) {
+                var showPrivacyPolicy by remember { mutableStateOf(false) }
+                if (showPrivacyPolicy) {
                     ExplanationDialog(
                         title = stringResource(id = R.string.privacy_policy_title),
-                        explanation = stringResource(id = R.string.privacy_policy),
-                        showDialog = showPrivacyPolicy,
-                    )
+                        explanation = stringResource(id = R.string.privacy_policy)
+                    ) {
+                        showPrivacyPolicy = false
+                    }
                 }
 
                 PreferencesRow(
@@ -164,12 +167,14 @@ fun AboutPage(popBackStack: () -> Unit) {
                     iconResID = R.drawable.privacy_policy,
                     position = RowPosition.Middle
                 ) {
-                    showPrivacyPolicy.value = true
+                    showPrivacyPolicy
                 }
 
-                val showNotImplDialog = remember { mutableStateOf(false) }
-                if (showNotImplDialog.value) {
-                    FeatureNotAvailableDialog(showDialog = showNotImplDialog)
+                var showNotImplDialog by remember { mutableStateOf(false) }
+                if (showNotImplDialog) {
+                    FeatureNotAvailableDialog {
+                        showNotImplDialog = false
+                    }
                 }
 
                 val navController = LocalNavController.current
@@ -189,7 +194,7 @@ fun AboutPage(popBackStack: () -> Unit) {
                     iconResID = R.drawable.donation,
                     position = RowPosition.Middle
                 ) {
-                    showNotImplDialog.value = true
+                    showNotImplDialog
                 }
 
                 PreferencesRow(

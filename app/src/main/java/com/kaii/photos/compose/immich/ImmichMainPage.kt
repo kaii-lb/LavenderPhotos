@@ -58,13 +58,13 @@ import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.immichViewModel
 import com.kaii.photos.R
-import com.kaii.photos.compose.widgets.PreferenceRowWithCustomBody
-import com.kaii.photos.compose.widgets.PreferencesRow
-import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.dialogs.AnnotatedExplanationDialog
 import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
 import com.kaii.photos.compose.dialogs.ImmichLoginDialog
 import com.kaii.photos.compose.dialogs.TextEntryDialog
+import com.kaii.photos.compose.widgets.PreferenceRowWithCustomBody
+import com.kaii.photos.compose.widgets.PreferencesRow
+import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.datastore.Immich
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.RowPosition
@@ -440,15 +440,16 @@ fun ImmichMainPage() {
             }
 
             item {
-                val showExplanationDialog = remember { mutableStateOf(false) }
-                if (showExplanationDialog.value) {
+                var showExplanationDialog by remember { mutableStateOf(false) }
+                if (showExplanationDialog) {
                     AnnotatedExplanationDialog(
                         title = stringResource(id = R.string.immich_help_general),
                         annotatedExplanation = AnnotatedString.fromHtml(
                             htmlString = stringResource(id = R.string.immich_help_detailed_desc)
-                        ),
-                        showDialog = showExplanationDialog
-                    )
+                        )
+                    ) {
+                        showExplanationDialog = false
+                    }
                 }
 
                 PreferencesRow(
@@ -458,7 +459,7 @@ fun ImmichMainPage() {
                     position = RowPosition.Single,
                     showBackground = false
                 ) {
-                    showExplanationDialog.value = true
+                    showExplanationDialog = true
                 }
             }
         }

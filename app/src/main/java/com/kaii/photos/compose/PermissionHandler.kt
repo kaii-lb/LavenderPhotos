@@ -112,20 +112,22 @@ fun PermissionHandler(
 
             if (showPermDeniedDialog.value) {
                 PermissionDeniedDialog(
-                    showDialog = showPermDeniedDialog,
-                    showExplanationDialog = showExplanationDialog
-                ) {
-                    onGrantPermissionClicked()
-                }
+                    showExplanationDialog = showExplanationDialog,
+                    onGrantPermissionClicked = onGrantPermissionClicked,
+                    onDismiss = {
+                        showPermDeniedDialog.value = false
+                    }
+                )
             }
 
             if (showExplanationDialog.value) {
                 ExplanationDialog(
                     title = "Permission Explanation",
                     explanation = whyButtonExplanation,
-                    showDialog = showExplanationDialog,
                     showPreviousDialog = showPermDeniedDialog
-                )
+                ) {
+                    showExplanationDialog.value = false
+                }
             }
 
             Column(
@@ -488,14 +490,12 @@ fun PermissionButton(
 
 @Composable
 fun PermissionDeniedDialog(
-    showDialog: MutableState<Boolean>,
     showExplanationDialog: MutableState<Boolean>,
-    onGrantPermissionClicked: () -> Unit
+    onGrantPermissionClicked: () -> Unit,
+    onDismiss: () -> Unit
 ) {
     Dialog(
-        onDismissRequest = {
-            showDialog.value = false
-        },
+        onDismissRequest = onDismiss,
         properties = DialogProperties(
             dismissOnClickOutside = true,
             dismissOnBackPress = true
@@ -535,8 +535,8 @@ fun PermissionDeniedDialog(
                 textColor = MaterialTheme.colorScheme.onPrimary,
                 position = RowPosition.Top
             ) {
-                showDialog.value = false
                 onGrantPermissionClicked()
+                onDismiss()
             }
 
             FullWidthDialogButton(
@@ -552,10 +552,9 @@ fun PermissionDeniedDialog(
                 text = "Dismiss",
                 color = MaterialTheme.colorScheme.surfaceContainer,
                 textColor = MaterialTheme.colorScheme.onSurface,
-                position = RowPosition.Bottom
-            ) {
-                showDialog.value = false
-            }
+                position = RowPosition.Bottom,
+                onClick = onDismiss
+            )
         }
     }
 }

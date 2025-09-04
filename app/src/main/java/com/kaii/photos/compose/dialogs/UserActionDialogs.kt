@@ -348,8 +348,8 @@ fun TextEntryDialog(
 fun ExplanationDialog(
     title: String,
     explanation: String,
-    showDialog: MutableState<Boolean>,
-    showPreviousDialog: MutableState<Boolean>? = null
+    showPreviousDialog: MutableState<Boolean>? = null,
+    onDismiss: () -> Unit
 ) {
     ExplanationDialogBase(
         title = title,
@@ -361,7 +361,7 @@ fun ExplanationDialog(
                 modifier = Modifier.wrapContentSize()
             )
         },
-        showDialog = showDialog,
+        onDismiss = onDismiss,
         showPreviousDialog = showPreviousDialog
     )
 }
@@ -370,8 +370,8 @@ fun ExplanationDialog(
 fun AnnotatedExplanationDialog(
     title: String,
     annotatedExplanation: AnnotatedString,
-    showDialog: MutableState<Boolean>,
-    showPreviousDialog: MutableState<Boolean>? = null
+    showPreviousDialog: MutableState<Boolean>? = null,
+    onDismiss: () -> Unit
 ) {
     ExplanationDialogBase(
         title = title,
@@ -383,8 +383,8 @@ fun AnnotatedExplanationDialog(
                 modifier = Modifier.wrapContentSize()
             )
         },
-        showDialog = showDialog,
-        showPreviousDialog = showPreviousDialog
+        showPreviousDialog = showPreviousDialog,
+        onDismiss = onDismiss
     )
 }
 
@@ -392,17 +392,15 @@ fun AnnotatedExplanationDialog(
 private fun ExplanationDialogBase(
     title: String,
     body: @Composable () -> Unit,
-    showDialog: MutableState<Boolean>,
-    showPreviousDialog: MutableState<Boolean>? = null
+    showPreviousDialog: MutableState<Boolean>? = null,
+    onDismiss: () -> Unit
 ) {
     showPreviousDialog?.value = false
 
     LavenderDialogBase(
         modifier = Modifier
             .animateContentSize(),
-        onDismiss = {
-            showDialog.value = false
-        }
+        onDismiss = onDismiss
     ) {
         Text(
             text = title,
@@ -424,8 +422,9 @@ private fun ExplanationDialogBase(
             textColor = MaterialTheme.colorScheme.onPrimary,
             position = RowPosition.Single
         ) {
-            showDialog.value = false
             showPreviousDialog?.value = true
+
+            onDismiss()
         }
     }
 }

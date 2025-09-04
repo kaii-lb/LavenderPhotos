@@ -882,14 +882,15 @@ private fun BottomBar(
                         }
                     )
 
-                    val showNotImplementedDialog = remember { mutableStateOf(false) }
+                    var showNotImplementedDialog by remember { mutableStateOf(false) }
 
-                    if (showNotImplementedDialog.value) {
+                    if (showNotImplementedDialog) {
                         ExplanationDialog(
                             title = stringResource(id = R.string.feature_unimplemented),
-                            explanation = stringResource(id = R.string.feature_editing_unimplemented, BuildConfig.VERSION_NAME),
-                            showDialog = showNotImplementedDialog
-                        )
+                            explanation = stringResource(id = R.string.feature_editing_unimplemented, BuildConfig.VERSION_NAME)
+                        ) {
+                            showNotImplementedDialog = false
+                        }
                     }
 
                     val resources = LocalResources.current

@@ -241,6 +241,8 @@
     <string name="filter_dried">Dried</string>
     <string name="filter_toast">Toasty</string>
     <string name="filter_shimmer">Shimmer</string>
+    <string name="filter_explanation_title">Custom Filters</string>
+    <string name="filter_explanation_desc">Save your current adjustments and selected filter as a new preset you can quickly use later!</string>
 
     <!-- Video Editing -->
     <string name="editing_trim">Trim</string>
