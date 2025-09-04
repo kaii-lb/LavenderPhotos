@@ -1,4 +1,4 @@
-package com.kaii.photos.compose.single_photo.editing_view
+package com.kaii.photos.compose.single_photo.editing_view.video_editor
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.animateDpAsState
@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import com.kaii.photos.R
 import com.kaii.photos.compose.single_photo.VideoPlayerSeekbar
+import com.kaii.photos.compose.single_photo.editing_view.VideoEditorTabs
 import com.kaii.photos.compose.widgets.ColorRangeSlider
 import com.kaii.photos.compose.widgets.PopupPillSlider
 import com.kaii.photos.helpers.AnimationConstants
@@ -61,7 +62,8 @@ fun VideoEditorBottomTools(
     totalModCount: MutableIntState,
     modifier: Modifier = Modifier,
     setPlaybackSpeed: (speed: Float) -> Unit,
-    onSeek: (position: Float) -> Unit
+    onSeek: (position: Float) -> Unit,
+    onSeekFinished: () -> Unit
 ) {
     val toolsPagerState = rememberPagerState {
         if (pagerState.currentPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Adjust)) 2
@@ -83,6 +85,7 @@ fun VideoEditorBottomTools(
                 isMuted = isMuted,
                 setPlaybackSpeed = setPlaybackSpeed,
                 onSeek = onSeek,
+                onSeekFinished = onSeekFinished,
                 modifier = Modifier
             )
         } else {
@@ -106,6 +109,7 @@ fun VideoEditorPlaybackControls(
     modifier: Modifier = Modifier,
     setPlaybackSpeed: (speed: Float) -> Unit,
     onSeek: (position: Float) -> Unit,
+    onSeekFinished: () -> Unit
 ) {
     Row(
         modifier = modifier
@@ -141,6 +145,7 @@ fun VideoEditorPlaybackControls(
                     currentPosition = currentPosition.floatValue,
                     duration = duration,
                     onValueChange = onSeek,
+                    onValueChangeFinished = onSeekFinished,
                     modifier = Modifier
                         .width(animatedSeekbarWidth)
                         .align(Alignment.CenterStart)

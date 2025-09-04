@@ -795,12 +795,3 @@ fun FeatureNotAvailableDialog(onDismiss: () -> Unit) {
         onDismiss = onDismiss
     )
 }
-
-@Composable
-fun CustomPresetExplanationDialog(onDismiss: () -> Unit) {
-    ExplanationDialog(
-        title = stringResource(id = R.string.filter_explanation_title),
-        explanation = stringResource(id = R.string.filter_explanation_desc),
-        onDismiss = onDismiss
-    )
-}

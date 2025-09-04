@@ -339,8 +339,7 @@ private class ColorMatrixGLShaderProgram(
 @UnstableApi
 class ColorMatrixEffect(
     private val matrix: ColorMatrix,
-    val isFilter: Boolean,
-    val type: MediaAdjustments? = null
+    val isFilter: Boolean
 ) : GlEffect {
     override fun toGlShaderProgram(context: Context, useHdr: Boolean): GlShaderProgram = ColorMatrixGLShaderProgram(matrix = matrix)
 

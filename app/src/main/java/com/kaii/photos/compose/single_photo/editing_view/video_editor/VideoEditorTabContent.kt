@@ -1,4 +1,4 @@
-package com.kaii.photos.compose.single_photo.editing_view
+package com.kaii.photos.compose.single_photo.editing_view.video_editor
 
 import android.graphics.Bitmap
 import androidx.compose.animation.core.LinearEasing
@@ -20,11 +20,17 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.MutableState
@@ -45,27 +51,31 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.ImageBitmapConfig
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isUnspecified
 import com.kaii.photos.R
 import com.kaii.photos.compose.CroppingRatioBottomSheet
 import com.kaii.photos.compose.dialogs.SliderDialog
 import com.kaii.photos.compose.single_photo.EditingViewBottomAppBarItem
-import com.kaii.photos.compose.widgets.ColorFilterItem
+import com.kaii.photos.compose.single_photo.editing_view.BasicVideoData
+import com.kaii.photos.compose.single_photo.editing_view.CroppingAspectRatio
 import com.kaii.photos.helpers.AnimationConstants
+import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.VideoPlayerConstants
 import com.kaii.photos.helpers.editing.DrawingItems
 import com.kaii.photos.helpers.editing.MediaAdjustments
 import com.kaii.photos.helpers.editing.MediaColorFilters
+import com.kaii.photos.helpers.editing.MediaColorFiltersImpl
 import com.kaii.photos.helpers.editing.VideoModification
 import kotlin.math.truncate
 
@@ -583,46 +593,73 @@ private fun VideoEditingAdjustmentItem(
     )
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun VideoEditorFilterContent(
-    thumbnails: List<Bitmap>,
     modifications: SnapshotStateList<VideoModification>,
     modifier: Modifier = Modifier,
-    increaseModCount: () -> Unit
+    saveEffect: (MediaColorFiltersImpl) -> Unit
 ) {
-    val image = remember(thumbnails) {
-        thumbnails.firstOrNull()?.asImageBitmap() ?: ImageBitmap(512, 512, ImageBitmapConfig.Argb8888)
+    var original by remember {
+        mutableStateOf(
+            (modifications.lastOrNull {
+                it is VideoModification.Filter
+            } as? VideoModification.Filter)?.type ?: MediaColorFilters.None
+        )
     }
 
-    LazyRow(
+    val last by remember {
+        derivedStateOf {
+            (modifications.lastOrNull { it is VideoModification.Filter } as? VideoModification.Filter)?.type ?: MediaColorFilters.None
+        }
+    }
+
+    Row(
         modifier = modifier
             .fillMaxSize(1f),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceEvenly
+        horizontalArrangement = Arrangement.spacedBy(
+            space = 8.dp,
+            alignment = Alignment.CenterHorizontally
+        )
     ) {
-        items(
-            count = MediaColorFilters.entries.size
-        ) { index ->
-            val filter = MediaColorFilters.entries[index]
+        Button(
+            onClick = {
+                saveEffect(original)
+            },
+            shapes = ButtonDefaults.shapes(
+                shape = CircleShape,
+                pressedShape = CircleShape
+            ),
+            enabled = original != last,
+            modifier = Modifier
+                .size(56.dp)
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.reset),
+                contentDescription = "close this panel"
+            )
+        }
 
-            ColorFilterItem(
-                text = stringResource(id = filter.title),
-                image = image,
-                colorMatrix = filter.matrix,
-                selected = (modifications.lastOrNull { it is VideoModification.Filter } as? VideoModification.Filter)?.type == filter
-            ) {
-                modifications.removeAll {
-                    it is VideoModification.Filter
-                }
+        Button(
+            onClick = {
+                original = last
 
-                modifications.add(
-                    VideoModification.Filter(
-                        type = filter
-                    )
-                )
-
-                increaseModCount()
-            }
+                saveEffect(last)
+            },
+            shapes = ButtonDefaults.shapes(
+                shape = CircleShape,
+                pressedShape = CircleShape
+            ),
+            enabled = original != last,
+            modifier = Modifier
+                .height(56.dp)
+                .width(108.dp)
+        ) {
+            Text(
+                text = stringResource(id = if (original != last) R.string.filter_select else R.string.filter_selected),
+                fontSize = TextUnit(TextStylingConstants.MEDIUM_TEXT_SIZE, TextUnitType.Sp)
+            )
         }
     }
 }

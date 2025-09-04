@@ -135,18 +135,25 @@ fun getColorFromLinearGradientList(
     return resolvedColor
 }
 
-enum class MediaColorFilters(
-    val matrix: ColorMatrix,
-    @param:StringRes val title: Int
-) {
-    None(
-        title = R.string.filter_none,
-        matrix = ColorMatrix()
-    ),
+interface MediaColorFiltersImpl {
+    val matrix: ColorMatrix
+    @get:StringRes val title: Int
+    @get:StringRes val description: Int
+    @get:StringRes val tag: Int
+        get() = R.string.filter
+}
 
-    Inverted(
-        title = R.string.filter_inverted,
-        matrix = ColorMatrix(
+enum class MediaColorFilters : MediaColorFiltersImpl {
+    None {
+        override val title = R.string.filter_none
+        override val description = R.string.filter_none_desc
+        override val matrix = ColorMatrix()
+    },
+
+    Inverted {
+        override val title = R.string.filter_inverted
+        override val description = R.string.filter_inverted_desc
+        override val matrix = ColorMatrix(
             floatArrayOf(
                 -1f, 0f, 0f, 0f, 255f,
                 0f, -1f, 0f, 0f, 255f,
@@ -154,21 +161,20 @@ enum class MediaColorFilters(
                 0f, 0f, 0f, 1f, 0f
             )
         )
-    ),
+    },
 
-    Vibrant(
-        title = R.string.filter_vibrant,
-        matrix = ColorMatrix().apply {
+    Vibrant {
+        override val title = R.string.filter_vibrant
+        override val description = R.string.filter_vibrant_desc
+        override val matrix = ColorMatrix().apply {
             setToSaturation(1.4f)
-            set(0, 4, 1f)
-            set(1, 4, 1f)
-            set(2, 4, 1f)
         }
-    ),
+    },
 
-    BlackAndWhite(
-        title = R.string.filter_bw,
-        matrix = ColorMatrix(
+    BlackAndWhite {
+        override val title = R.string.filter_bw
+        override val description = R.string.filter_bw_desc
+        override val matrix = ColorMatrix(
             floatArrayOf(
                 1.25f, 1.25f, 1.25f, 0f, -160f,
                 1.25f, 1.25f, 1.25f, 0f, -160f,
@@ -176,11 +182,12 @@ enum class MediaColorFilters(
                 0f, 0f, 0f, 1f, 0f
             )
         )
-    ),
+    },
 
-    Film(
-        title = R.string.filter_film,
-        matrix = ColorMatrix(
+    Film {
+        override val title = R.string.filter_film
+        override val description = R.string.filter_film_desc
+        override val matrix = ColorMatrix(
             floatArrayOf(
                 1.438f, -0.062f, -0.062f, 0f, -0.03f * 255f,
                 -0.122f, 1.378f, -0.122f, 0f, 0.05f * 255f,
@@ -188,21 +195,20 @@ enum class MediaColorFilters(
                 0f, 0f, 0f, 1f, 0f
             )
         )
-    ),
+    },
 
-    Grayscale(
-        title = R.string.filter_grayscale,
-        matrix = ColorMatrix().apply {
+    Grayscale {
+        override val title = R.string.filter_grayscale
+        override val description = R.string.filter_grayscale_desc
+        override val matrix = ColorMatrix().apply {
             setToSaturation(0f)
-            set(0, 4, 1f)
-            set(1, 4, 1f)
-            set(2, 4, 1f)
         }
-    ),
+    },
 
-    Sepia(
-        title = R.string.filter_sepia,
-        matrix = ColorMatrix(
+    Sepia {
+        override val title = R.string.filter_sepia
+        override val description = R.string.filter_sepia_desc
+        override val matrix = ColorMatrix(
             floatArrayOf(
                 0.393f, 0.769f, 0.189f, 0f, 0f,
                 0.349f, 0.686f, 0.168f, 0f, 0f,
@@ -210,11 +216,12 @@ enum class MediaColorFilters(
                 0f, 0f, 0f, 1f, 0f
             )
         )
-    ),
+    },
 
-    Warm(
-        title = R.string.filter_warm,
-        matrix = ColorMatrix(
+    Warm {
+        override val title = R.string.filter_warm
+        override val description = R.string.filter_warm_desc
+        override val matrix = ColorMatrix(
             floatArrayOf(
                 1.3f, 0f, 0f, 0f, 0f,
                 0.2f, 0.9f, 0f, 0f, 0f,
@@ -222,11 +229,12 @@ enum class MediaColorFilters(
                 0f, 0f, 0f, 1f, 0f
             )
         )
-    ),
+    },
 
-    Cool(
-        title = R.string.filter_cool,
-        matrix = ColorMatrix(
+    Cool {
+        override val title = R.string.filter_cool
+        override val description = R.string.filter_cool_desc
+        override val matrix = ColorMatrix(
             floatArrayOf(
                 0.9f, 0f, 0.2f, 0f, 0f,
                 0f, 0.9f, 0.2f, 0f, 0f,
@@ -234,11 +242,12 @@ enum class MediaColorFilters(
                 0f, 0f, 0f, 1f, 0f
             )
         )
-    ),
+    },
 
-    Vintage(
-        title = R.string.filter_vintage,
-        matrix = ColorMatrix(
+    Vintage {
+        override val title = R.string.filter_vintage
+        override val description = R.string.filter_vintage_desc
+        override val matrix = ColorMatrix(
             floatArrayOf(
                 0.9f, 0.5f, 0.2f, 0f, 0f,
                 0.4f, 0.8f, 0.2f, 0f, 0f,
@@ -246,11 +255,12 @@ enum class MediaColorFilters(
                 0f, 0f, 0f, 1f, 0f
             )
         )
-    ),
+    },
 
-    Posterize(
-        title = R.string.filter_posterize,
-        matrix = ColorMatrix(
+    Posterize {
+        override val title = R.string.filter_posterize
+        override val description = R.string.filter_posterize_desc
+        override val matrix = ColorMatrix(
             floatArrayOf(
                 0.5f, 0f, 0f, 0f, 56f,
                 0f, 0.5f, 0f, 0f, 56f,
@@ -260,11 +270,12 @@ enum class MediaColorFilters(
         ).apply {
             setToSaturation(0.8f)
         }
-    ),
+    },
 
-    Glow(
-        title = R.string.filter_glow,
-        matrix = ColorMatrix(
+    Glow {
+        override val title = R.string.filter_glow
+        override val description = R.string.filter_glow_desc
+        override val matrix = ColorMatrix(
             floatArrayOf(
                 1.6f, 0f, 0f, 0f, 0f,
                 0f, 1.6f, 0f, 0f, 0f,
@@ -272,11 +283,12 @@ enum class MediaColorFilters(
                 0f, 0f, 0f, 1f, 0f
             )
         )
-    ),
+    },
 
-    Peachy(
-        title = R.string.filter_peachy,
-        matrix = ColorMatrix(
+    Peachy {
+        override val title = R.string.filter_peachy
+        override val description = R.string.filter_peachy_desc
+        override val matrix = ColorMatrix(
             floatArrayOf(
                 1.1f, 0.1f, 0f, 0f, 20f,
                 0.05f, 1.05f, 0f, 0f, 10f,
@@ -284,11 +296,12 @@ enum class MediaColorFilters(
                 0f, 0f, 0f, 1f, 0f
             )
         )
-    ),
+    },
 
-    Pastel(
-        title = R.string.filter_pastel,
-        matrix = ColorMatrix().let {
+    Pastel {
+        override val title = R.string.filter_pastel
+        override val description = R.string.filter_pastel_desc
+        override val matrix = ColorMatrix().let {
             it.setToSaturation(0.8f)
 
             it[0, 0] *= 1.1f
@@ -303,23 +316,31 @@ enum class MediaColorFilters(
 
             return@let it
         }
-    ),
+    },
 
-    Rustic(
-        title = R.string.filter_rustic,
-        matrix = ColorMatrix(
-            floatArrayOf(
-                1.65f, 0f, 0f, 0f, -45f,
-                0f, 1.65f, 0f, 0f, -45f,
-                0f, 0f, 1.65f, 0f, -45f,
-                0f, 0f, 1f, 0f, 1f
-            )
-        )
-    ),
+    Rustic {
+        override val title = R.string.filter_rustic
+        override val description = R.string.filter_rustic_desc
 
-    Dried(
-        title = R.string.filter_dried,
-        matrix = ColorMatrix().let {
+        override val matrix = ColorMatrix().let {
+            it.setToSaturation(0.3f)
+
+            it[0, 0] *= 3.65f
+            it[1, 0] *= 3.65f
+            it[2, 0] *= 3.65f
+
+            it[0, 4] = -160f
+            it[1, 4] = -100f
+            it[2, 4] = -100f
+
+            it
+        }
+    },
+
+    Dried {
+        override val title = R.string.filter_dried
+        override val description = R.string.filter_dried_desc
+        override val matrix = ColorMatrix().let {
             it.setToSaturation(0.6f)
 
             it[0, 0] *= 1.1f
@@ -332,11 +353,12 @@ enum class MediaColorFilters(
 
             return@let it
         }
-    ),
+    },
 
-    Toast(
-        title = R.string.filter_toast,
-        matrix = ColorMatrix().let {
+    Toast {
+        override val title = R.string.filter_toast
+        override val description = R.string.filter_toast_desc
+        override val matrix = ColorMatrix().let {
             it.setToSaturation(0.6f)
 
             it[0, 0] *= 1.25f
@@ -357,11 +379,12 @@ enum class MediaColorFilters(
 
             return@let it
         }
-    ),
+    },
 
-    BGR(
-        title = R.string.filter_bgr,
-        matrix = ColorMatrix(
+    BGR {
+        override val title = R.string.filter_bgr
+        override val description = R.string.filter_bgr_desc
+        override val matrix = ColorMatrix(
             floatArrayOf(
                 0f, 0f, 1f, 0f, 0f,
                 0f, 1f, 0f, 0f, 0f,
@@ -369,20 +392,22 @@ enum class MediaColorFilters(
                 0f, 0f, 0f, 1f, 0f
             )
         )
-    ),
+    },
 
-    Mushrooms(
-        title = R.string.filter_mushrooms,
-        matrix = ColorMatrix().apply {
+    Mushrooms {
+        override val title = R.string.filter_mushrooms
+        override val description = R.string.filter_mushrooms_desc
+        override val matrix = ColorMatrix().apply {
             setToRotateRed(-22f)
             setToRotateGreen(47f)
             setToRotateBlue(62f)
         }
-    ),
+    },
 
-    Solar(
-        title = R.string.filter_solar,
-        matrix = ColorMatrix(
+    Solar {
+        override val title = R.string.filter_solar
+        override val description = R.string.filter_solar_desc
+        override val matrix = ColorMatrix(
             floatArrayOf(
                 1.2f, 0f, 0f, 0f, 0f,
                 0f, 1f, 0f, 0f, 0f,
@@ -400,11 +425,12 @@ enum class MediaColorFilters(
 
             return@let it
         }
-    ),
+    },
 
-    Shimmer(
-        title = R.string.filter_shimmer,
-        matrix = ColorMatrix(
+    Shimmer {
+        override val title = R.string.filter_shimmer
+        override val description = R.string.filter_shimmer_desc
+        override val matrix = ColorMatrix(
             floatArrayOf(
                 34f, 0f, 0f, 0f, -831f,
                 0f, 9f, 0f, 0f, -831f,
@@ -412,5 +438,5 @@ enum class MediaColorFilters(
                 0f, 0f, 0f, 1f, 0f
             )
         )
-    )
+    }
 }

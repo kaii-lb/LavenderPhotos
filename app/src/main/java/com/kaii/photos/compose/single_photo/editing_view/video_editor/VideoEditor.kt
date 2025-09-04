@@ -1,4 +1,4 @@
-package com.kaii.photos.compose.single_photo.editing_view
+package com.kaii.photos.compose.single_photo.editing_view.video_editor
 
 import android.app.Activity
 import android.media.MediaMetadataRetriever
@@ -6,11 +6,16 @@ import android.net.Uri
 import android.util.Log
 import android.view.Window
 import android.view.WindowManager
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,12 +35,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,14 +61,23 @@ import androidx.media3.common.util.UnstableApi
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.compose.app_bars.VideoEditorBottomBar
 import com.kaii.photos.compose.app_bars.VideoEditorTopBar
+import com.kaii.photos.compose.single_photo.editing_view.BasicVideoData
+import com.kaii.photos.compose.single_photo.editing_view.CropBox
+import com.kaii.photos.compose.single_photo.editing_view.CroppingAspectRatio
+import com.kaii.photos.compose.single_photo.editing_view.FilterPager
+import com.kaii.photos.compose.single_photo.editing_view.VideoEditorTabs
 import com.kaii.photos.compose.single_photo.rememberExoPlayerWithLifeCycle
 import com.kaii.photos.compose.single_photo.rememberPlayerView
 import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.editing.ColorMatrixEffect
 import com.kaii.photos.helpers.editing.MediaAdjustments
+import com.kaii.photos.helpers.editing.MediaColorFilters
 import com.kaii.photos.helpers.editing.VideoModification
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private const val TAG = "VIDEO_EDITOR"
 
@@ -179,6 +195,7 @@ fun VideoEditor(
     val pagerState = rememberPagerState { 6 }
     var containerDimens by remember { mutableStateOf(Size.Zero) }
     val resetCrop = remember { mutableStateOf(false) }
+    var isSeeking by remember { mutableStateOf(false) }
 
     var rotation by remember { mutableFloatStateOf(0f) }
     val aspectRatio = remember { mutableStateOf(CroppingAspectRatio.FreeForm) }
@@ -198,41 +215,45 @@ fun VideoEditor(
 
     var tries by remember { mutableIntStateOf(0) }
     LaunchedEffect(Unit) {
-        val metadata = MediaMetadataRetriever()
-        metadata.setDataSource(absolutePath)
+        val videoFormat = exoPlayer.videoFormat
 
-        // this mess is because exoplayer doesn't really know what res the video is all the time
-        val frame = metadata.frameAtTime
-        val size = if (frame == null) {
-            if (exoPlayer.videoSize == VideoSize.UNKNOWN) {
-                VideoSize(
-                    exoPlayer.videoFormat?.width ?: 1,
-                    exoPlayer.videoFormat?.height ?: 1
-                )
+        withContext(Dispatchers.IO) {
+            val metadata = MediaMetadataRetriever()
+            metadata.setDataSource(absolutePath)
+
+            // this mess is because exoplayer doesn't really know what res the video is all the time
+            val frame = metadata.frameAtTime
+            val size = if (frame == null) {
+                if (exoPlayer.videoSize == VideoSize.UNKNOWN) {
+                    VideoSize(
+                        exoPlayer.videoFormat?.width ?: 1,
+                        exoPlayer.videoFormat?.height ?: 1
+                    )
+                } else {
+                    exoPlayer.videoSize
+                }
             } else {
-                exoPlayer.videoSize
+                VideoSize(frame.width, frame.height)
             }
-        } else {
-            VideoSize(frame.width, frame.height)
-        }
 
-        while ((basicVideoData.width == 0 || basicVideoData.height == 0 || basicVideoData.frameRate == 0f || basicVideoData.duration <= 0f)
-            && tries < 10
-        ) {
-            basicVideoData =
-                BasicVideoData(
-                    duration = duration.floatValue,
-                    frameRate =
-                        if (exoPlayer.videoFormat?.frameRate?.toInt() == -1 || exoPlayer.videoFormat?.frameRate == null) 0f
-                        else exoPlayer.videoFormat!!.frameRate,
-                    absolutePath = absolutePath,
-                    width = size.width,
-                    height = size.height
-                )
-            tries += 1
+            while ((basicVideoData.width == 0 || basicVideoData.height == 0 || basicVideoData.frameRate == 0f || basicVideoData.duration <= 0f)
+                && tries < 10
+            ) {
+                basicVideoData =
+                    BasicVideoData(
+                        duration = duration.floatValue,
+                        frameRate =
+                            if (videoFormat?.frameRate?.toInt() == -1 || videoFormat?.frameRate == null) 0f
+                            else videoFormat.frameRate,
+                        absolutePath = absolutePath,
+                        width = size.width,
+                        height = size.height
+                    )
+                tries += 1
 
-            Log.d(TAG, "Video data $basicVideoData")
-            delay(100)
+                Log.d(TAG, "Video data $basicVideoData")
+                delay(100)
+            }
         }
     }
 
@@ -254,17 +275,6 @@ fun VideoEditor(
             val effectIndex = MediaAdjustments.entries.indexOf(last.type)
             effectsList.add(effectIndex, last.toEffect())
             effectsList.removeAt(effectIndex + 1) // remove null after shirting right
-        } else if (last is VideoModification.Filter) {
-            effectsList.removeAll {
-                it is ColorMatrixEffect && it.isFilter
-            }
-
-            effectsList.add(
-                ColorMatrixEffect(
-                    matrix = last.type.matrix,
-                    isFilter = true
-                )
-            )
         }
 
         exoPlayer.stop()
@@ -278,6 +288,15 @@ fun VideoEditor(
 
         Log.d(TAG, "Effect list $effectsList")
     }
+
+    val coroutineScope = rememberCoroutineScope()
+    val filterPagerState = rememberPagerState(
+        initialPage = MediaColorFilters.entries.indexOf(
+            (modifications.lastOrNull {
+                it is VideoModification.Filter
+            } as? VideoModification.Filter)?.type ?: MediaColorFilters.None
+        )
+    ) { MediaColorFilters.entries.size }
 
     Scaffold(
         topBar = {
@@ -331,6 +350,29 @@ fun VideoEditor(
                 },
                 increaseModCount = {
                     totalModCount.intValue += 1
+                },
+                saveEffect = { filter ->
+                    effectsList.removeAll {
+                        it is ColorMatrixEffect && it.isFilter
+                    }
+
+                    effectsList.add(
+                        ColorMatrixEffect(
+                            matrix = filter.matrix,
+                            isFilter = true
+                        )
+                    )
+
+                    totalModCount.intValue += 1
+
+                    coroutineScope.launch {
+                        filterPagerState.animateScrollToPage(
+                            MediaColorFilters.entries.indexOf(filter),
+                            animationSpec = tween(
+                                durationMillis = AnimationConstants.DURATION
+                            )
+                        )
+                    }
                 }
             )
         }
@@ -375,14 +417,46 @@ fun VideoEditor(
                         .rotate(animatedRotation)
                         .align(Alignment.Center)
                 ) {
-                    AndroidView(
-                        factory = {
-                            playerView
-                        },
-                        modifier = Modifier
-                            .fillMaxSize(1f)
-                            .align(Alignment.Center)
-                    )
+                    val isInFilterPage by remember {
+                        derivedStateOf {
+                            pagerState.currentPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Filters)
+                        }
+                    }
+
+                    AnimatedContent(
+                        targetState = isInFilterPage,
+                        transitionSpec = {
+                            (slideInHorizontally {
+                                if (isInFilterPage) it
+                                else -it
+                            } + fadeIn()
+                                    ).togetherWith(
+                                    (slideOutHorizontally {
+                                        if (isInFilterPage) -it
+                                        else it
+                                    } + fadeOut())
+                                )
+                        }
+                    ) { state ->
+                        if (state) {
+                            FilterPager(
+                                pagerState = filterPagerState,
+                                modifications = modifications,
+                                currentVideoPosition = currentVideoPosition,
+                                absolutePath = absolutePath,
+                                allowedToRefresh = isPlaying.value || isSeeking
+                            )
+                        } else {
+                            AndroidView(
+                                factory = {
+                                    playerView
+                                },
+                                modifier = Modifier
+                                    .fillMaxSize(1f)
+                                    .align(Alignment.Center)
+                            )
+                        }
+                    }
                 }
 
                 Column(
@@ -447,11 +521,17 @@ fun VideoEditor(
                     exoPlayer.setPlaybackSpeed(speed)
                 },
                 onSeek = { pos ->
+                    isSeeking = true
                     val wasPlaying = isPlaying.value
+
                     exoPlayer.seekTo(
                         (pos * 1000f).coerceAtMost(duration.floatValue * 1000f).toLong()
                     )
+
                     isPlaying.value = wasPlaying
+                },
+                onSeekFinished = {
+                    isSeeking = false
                 }
             )
 

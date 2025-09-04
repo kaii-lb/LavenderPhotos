@@ -10,10 +10,6 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.vector.DefaultStrokeLineMiter
 import androidx.media3.common.Effect
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.effect.Brightness
-import androidx.media3.effect.Contrast
-import androidx.media3.effect.HslAdjustment
-import androidx.media3.effect.RgbMatrix
 import com.kaii.photos.R
 import kotlin.math.ln
 import kotlin.math.max
@@ -95,12 +91,24 @@ enum class MediaAdjustments : ProcessingEffect {
         override val icon = R.drawable.contrast
 
         override fun getMatrix(value: Float): FloatArray {
-            return floatArrayOf(value)
+            val contrast = (1 + value) / (1.0001f - value)
+            val offset = 0.5f * (1f - contrast) * 255f
+
+            val floatArray = floatArrayOf(
+                contrast, 0f, 0f, 0f, offset,
+                0f, contrast, 0f, 0f, offset,
+                0f, 0f, contrast, 0f, offset,
+                0f, 0f, 0f, 1f, 0f
+            )
+
+            return floatArray
         }
 
-        override fun getVideoEffect(value: Float): Effect {
-            return Contrast(value)
-        }
+        override fun getVideoEffect(value: Float): Effect =
+            ColorMatrixEffect(
+                matrix = ColorMatrix(getMatrix(value)),
+                isFilter = false
+            )
     },
 
     Brightness {
@@ -108,12 +116,20 @@ enum class MediaAdjustments : ProcessingEffect {
         override val icon = R.drawable.brightness
 
         override fun getMatrix(value: Float): FloatArray {
-            return floatArrayOf(value)
+            val offset = value * 127f
+            return floatArrayOf(
+                1f, 0f, 0f, 0f, offset,
+                0f, 1f, 0f, 0f, offset,
+                0f, 0f, 1f, 0f, offset,
+                0f, 0f, 0f, 1f, 0f
+            )
         }
 
-        override fun getVideoEffect(value: Float): Effect {
-            return Brightness(value)
-        }
+        override fun getVideoEffect(value: Float): Effect =
+            ColorMatrixEffect(
+                matrix = ColorMatrix(getMatrix(value)),
+                isFilter = false
+            )
     },
 
     Saturation {
@@ -121,12 +137,17 @@ enum class MediaAdjustments : ProcessingEffect {
         override val icon = R.drawable.saturation
 
         override fun getMatrix(value: Float): FloatArray {
-            return floatArrayOf(value * 100f)
+            return ColorMatrix().let {
+                it.setToSaturation(value + 1f)
+                it.values
+            }
         }
 
-        override fun getVideoEffect(value: Float): Effect {
-            return HslAdjustment.Builder().adjustSaturation(value * 100f).build()
-        }
+        override fun getVideoEffect(value: Float): Effect =
+            ColorMatrixEffect(
+                matrix = ColorMatrix(getMatrix(value)),
+                isFilter = false
+            )
     },
 
     BlackPoint {
@@ -146,8 +167,7 @@ enum class MediaAdjustments : ProcessingEffect {
         override fun getVideoEffect(value: Float): Effect =
             ColorMatrixEffect(
                 matrix = ColorMatrix(getMatrix(value)),
-                isFilter = false,
-                type = this
+                isFilter = false
             )
     },
 
@@ -168,8 +188,7 @@ enum class MediaAdjustments : ProcessingEffect {
         override fun getVideoEffect(value: Float): Effect =
             ColorMatrixEffect(
                 matrix = ColorMatrix(getMatrix(value)),
-                isFilter = false,
-                type = this
+                isFilter = false
             )
     },
 
@@ -222,16 +241,20 @@ enum class MediaAdjustments : ProcessingEffect {
             blue /= 255f
 
             val floatArray = floatArrayOf(
-                red, 0f, 0f, 0f,
-                0f, green, 0f, 0f,
-                0f, 0f, blue, 0f,
-                0f, 0f, 0f, 1f
+                red, 0f, 0f, 0f, 0f,
+                0f, green, 0f, 0f, 0f,
+                0f, 0f, blue, 0f, 0f,
+                0f, 0f, 0f, 1f, 0f
             )
 
             return floatArray
         }
 
-        override fun getVideoEffect(value: Float): Effect = RgbMatrix { _, _ -> getMatrix(value) }
+        override fun getVideoEffect(value: Float): Effect =
+            ColorMatrixEffect(
+                matrix = ColorMatrix(getMatrix(value)),
+                isFilter = false
+            )
     },
 
     ColorTint {
@@ -260,8 +283,7 @@ enum class MediaAdjustments : ProcessingEffect {
         override fun getVideoEffect(value: Float): Effect =
             ColorMatrixEffect(
                 matrix = ColorMatrix(getMatrix(value)),
-                isFilter = false,
-                type = this
+                isFilter = false
             )
     },
 
@@ -281,6 +303,10 @@ enum class MediaAdjustments : ProcessingEffect {
             return floatArray
         }
 
-        override fun getVideoEffect(value: Float): Effect = RgbMatrix { _, _ -> getMatrix(value) }
+        override fun getVideoEffect(value: Float): Effect =
+            ColorMatrixEffect(
+                matrix = ColorMatrix(getMatrix(value)),
+                isFilter = false
+            )
     }
 }

@@ -62,9 +62,7 @@ fun BottomAppBarItem(
     showRipple: Boolean = true,
     cornerRadius: Dp = 1000.dp,
     color: Color = Color.Transparent,
-    contentColor: Color = if (enabled) MaterialTheme.colorScheme.onBackground else (MaterialTheme.colorScheme.onBackground.copy(
-        alpha = 0.6f
-    )),
+    contentColor: Color = MaterialTheme.colorScheme.onBackground,
     action: (() -> Unit)? = null,
     dialogComposable: @Composable (() -> Unit)? = null
 ) {
@@ -95,14 +93,14 @@ fun BottomAppBarItem(
                 .width(iconSize * 2.25f)
                 .clip(RoundedCornerShape(1000.dp))
                 .align(Alignment.TopCenter)
-                .background(color),
+                .background(if (enabled || color == Color.Transparent) color else color.copy(alpha = 0.6f)),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
             Icon(
                 painter = painterResource(id = iconResId),
                 contentDescription = "button",
-                tint = contentColor,
+                tint = if (enabled) contentColor else contentColor.copy(alpha = 0.6f),
                 modifier = Modifier
                     .size(iconSize)
             )
@@ -111,7 +109,7 @@ fun BottomAppBarItem(
         Text(
             text = text,
             fontSize = TextUnit(textSize, TextUnitType.Sp),
-            color = MaterialTheme.colorScheme.onSurface,
+            color = if (enabled) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
             modifier = Modifier
                 .wrapContentSize()
                 .align(Alignment.BottomCenter)

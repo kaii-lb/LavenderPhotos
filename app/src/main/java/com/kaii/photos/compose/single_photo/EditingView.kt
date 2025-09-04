@@ -2562,6 +2562,7 @@ fun EditingViewBottomAppBarItem(
     text: String,
     icon: Int,
     selected: Boolean = false,
+    enabled: Boolean = true,
     onClick: (() -> Unit)? = null
 ) {
     BottomAppBarItem(
@@ -2571,6 +2572,7 @@ fun EditingViewBottomAppBarItem(
         buttonHeight = 56.dp,
         color = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent,
         cornerRadius = 8.dp,
+        enabled = enabled,
         contentColor = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onBackground,
         action = onClick
     )

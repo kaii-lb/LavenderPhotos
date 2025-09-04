@@ -920,6 +920,7 @@ fun VideoPlayerSeekbar(
     currentPosition: Float,
     duration: Float,
     modifier: Modifier = Modifier,
+    onValueChangeFinished: () -> Unit = {},
     onValueChange: (position: Float) -> Unit
 ) {
     val localInteractionSource = remember { MutableInteractionSource() }
@@ -943,7 +944,7 @@ fun VideoPlayerSeekbar(
         value = animatedPosition,
         valueRange = 0f..duration,
         onValueChange = onValueChange,
-        // steps = (duration.roundToInt() - 1).coerceAtLeast(0),
+        onValueChangeFinished = onValueChangeFinished,
         thumb = {
             SliderDefaults.Thumb(
                 interactionSource = localInteractionSource,

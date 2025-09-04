@@ -96,19 +96,20 @@ import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.WallpaperTypeDialog
 import com.kaii.photos.compose.single_photo.editing_view.BasicVideoData
 import com.kaii.photos.compose.single_photo.editing_view.CroppingAspectRatio
-import com.kaii.photos.compose.single_photo.editing_view.TrimContent
-import com.kaii.photos.compose.single_photo.editing_view.VideoEditorAdjustContent
-import com.kaii.photos.compose.single_photo.editing_view.VideoEditorCropContent
-import com.kaii.photos.compose.single_photo.editing_view.VideoEditorDrawContent
-import com.kaii.photos.compose.single_photo.editing_view.VideoEditorFilterContent
-import com.kaii.photos.compose.single_photo.editing_view.VideoEditorProcessingContent
 import com.kaii.photos.compose.single_photo.editing_view.VideoEditorTabs
 import com.kaii.photos.compose.single_photo.editing_view.saveVideo
+import com.kaii.photos.compose.single_photo.editing_view.video_editor.TrimContent
+import com.kaii.photos.compose.single_photo.editing_view.video_editor.VideoEditorAdjustContent
+import com.kaii.photos.compose.single_photo.editing_view.video_editor.VideoEditorCropContent
+import com.kaii.photos.compose.single_photo.editing_view.video_editor.VideoEditorDrawContent
+import com.kaii.photos.compose.single_photo.editing_view.video_editor.VideoEditorFilterContent
+import com.kaii.photos.compose.single_photo.editing_view.video_editor.VideoEditorProcessingContent
 import com.kaii.photos.compose.widgets.SelectableDropDownMenuItem
 import com.kaii.photos.compose.widgets.SimpleTab
 import com.kaii.photos.datastore.Editing
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.VideoPlayerConstants
+import com.kaii.photos.helpers.editing.MediaColorFiltersImpl
 import com.kaii.photos.helpers.editing.VideoModification
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -130,7 +131,8 @@ fun VideoEditorBottomBar(
     increaseModCount: () -> Unit,
     onCropReset: () -> Unit,
     onSeek: (Float) -> Unit,
-    onRotate: () -> Unit
+    onRotate: () -> Unit,
+    saveEffect: (MediaColorFiltersImpl) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
 
@@ -248,9 +250,8 @@ fun VideoEditorBottomBar(
 
                     VideoEditorTabs.entries.indexOf(VideoEditorTabs.Filters) -> {
                         VideoEditorFilterContent(
-                            thumbnails = thumbnails,
                             modifications = modifications,
-                            increaseModCount = increaseModCount
+                            saveEffect = saveEffect
                         )
                     }
 
@@ -551,7 +552,8 @@ fun WallpaperSetterBottomBar(
                             height = windowManager.currentWindowMetrics.bounds.height().toFloat()
                         )
 
-                        val destinationBitmap = createBitmap(deviceSize.width.toInt(), deviceSize.height.toInt(), bitmap.config ?: Bitmap.Config.ARGB_8888)
+                        val destinationBitmap =
+                            createBitmap(deviceSize.width.toInt(), deviceSize.height.toInt(), bitmap.config ?: Bitmap.Config.ARGB_8888)
                         val canvas = Canvas(destinationBitmap)
                         val originalAspectRatio = bitmap.width.toFloat() / bitmap.height
                         val deviceAspectRatio = deviceSize.width.toFloat() / deviceSize.height.toFloat()

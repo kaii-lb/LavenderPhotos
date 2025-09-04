@@ -220,29 +220,52 @@
     <string name="editing_invert">Invert</string>
 
     <!-- Editing Filters -->
+    <string name="filter">Filter</string>
+    <string name="filter_custom">Custom Filter</string>
     <string name="filter_none">None</string>
+    <string name="filter_none_desc">because who needs them</string>
     <string name="filter_inverted">Inverted</string>
+    <string name="filter_inverted_desc">everything\'s flipped</string>
     <string name="filter_vibrant">Vibrant</string>
-    <string name="filter_bw">B&amp;W</string>
+    <string name="filter_vibrant_desc">life is good</string>
+    <string name="filter_bw">Black and White</string>
+    <string name="filter_bw_desc">stuck in the 50s</string>
     <string name="filter_film">Filmic</string>
+    <string name="filter_film_desc">nolan on the rise</string>
     <string name="filter_grayscale">Grayscale</string>
+    <string name="filter_grayscale_desc">sooo spooky</string>
     <string name="filter_sepia">Sepia</string>
+    <string name="filter_sepia_desc">cuttlefish. that\'s why.</string>
     <string name="filter_bgr">BGR</string>
+    <string name="filter_bgr_desc">why are you using this?</string>
     <string name="filter_warm">Warm</string>
+    <string name="filter_warm_desc">cozy vibes</string>
     <string name="filter_cool">Cool</string>
+    <string name="filter_cool_desc">winter vibes</string>
     <string name="filter_vintage">Vintage</string>
+    <string name="filter_vintage_desc">nostalgia\'s strong</string>
     <string name="filter_posterize">Posterize</string>
+    <string name="filter_posterize_desc">few color do trick</string>
     <string name="filter_glow">Glow</string>
+    <string name="filter_glow_desc">in the dark</string>
     <string name="filter_mushrooms">Mushrooms</string>
+    <string name="filter_mushrooms_desc">uhm.</string>
     <string name="filter_solar">Solar</string>
+    <string name="filter_solar_desc">CME coming your way</string>
     <string name="filter_peachy">Peachy</string>
+    <string name="filter_peachy_desc">sweet and fuzzy</string>
     <string name="filter_pastel">Pastel</string>
+    <string name="filter_pastel_desc">because i can\'t draw</string>
     <string name="filter_rustic">Rustic</string>
+    <string name="filter_rustic_desc">found in the woods</string>
     <string name="filter_dried">Dried</string>
+    <string name="filter_dried_desc">left in the sun</string>
     <string name="filter_toast">Toasty</string>
+    <string name="filter_toast_desc">nice mallard coloring</string>
     <string name="filter_shimmer">Shimmer</string>
-    <string name="filter_explanation_title">Custom Filters</string>
-    <string name="filter_explanation_desc">Save your current adjustments and selected filter as a new preset you can quickly use later!</string>
+    <string name="filter_shimmer_desc">don\'t jinx it</string>
+    <string name="filter_select">Select</string>
+    <string name="filter_selected">Selected</string>
 
     <!-- Video Editing -->
     <string name="editing_trim">Trim</string>
