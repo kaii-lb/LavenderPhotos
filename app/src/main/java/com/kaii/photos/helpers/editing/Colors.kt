@@ -135,10 +135,12 @@ fun getColorFromLinearGradientList(
     return resolvedColor
 }
 
-interface MediaColorFiltersImpl {
+private interface MediaColorFiltersImpl {
     val matrix: ColorMatrix
     @get:StringRes val title: Int
     @get:StringRes val description: Int
+
+    @Suppress("unused") // it is used, just not by MediaColorFiltersImpl directly
     @get:StringRes val tag: Int
         get() = R.string.filter
 }

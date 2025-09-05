@@ -49,7 +49,7 @@ interface VideoModification {
     ) : VideoModification
 
     data class Filter(
-        val type: MediaColorFiltersImpl
+        val type: MediaColorFilters
     ) : VideoModification
 
     data class DrawingText(

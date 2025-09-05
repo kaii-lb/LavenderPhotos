@@ -75,7 +75,6 @@ import com.kaii.photos.helpers.VideoPlayerConstants
 import com.kaii.photos.helpers.editing.DrawingItems
 import com.kaii.photos.helpers.editing.MediaAdjustments
 import com.kaii.photos.helpers.editing.MediaColorFilters
-import com.kaii.photos.helpers.editing.MediaColorFiltersImpl
 import com.kaii.photos.helpers.editing.VideoModification
 import kotlin.math.truncate
 
@@ -598,7 +597,7 @@ private fun VideoEditingAdjustmentItem(
 fun VideoEditorFilterContent(
     modifications: SnapshotStateList<VideoModification>,
     modifier: Modifier = Modifier,
-    saveEffect: (MediaColorFiltersImpl) -> Unit
+    saveEffect: (MediaColorFilters) -> Unit
 ) {
     var original by remember {
         mutableStateOf(

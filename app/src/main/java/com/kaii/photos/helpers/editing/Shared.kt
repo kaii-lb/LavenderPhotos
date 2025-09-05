@@ -2,8 +2,13 @@ package com.kaii.photos.helpers.editing
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Canvas
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
@@ -309,4 +314,19 @@ enum class MediaAdjustments : ProcessingEffect {
                 isFilter = false
             )
     }
+}
+
+fun ImageBitmap.withColorFilter(filter: ColorMatrix): ImageBitmap {
+    val holder = ImageBitmap(this.width, this.height)
+    val canvas = Canvas(holder)
+
+    canvas.drawImage(
+        image = this,
+        topLeftOffset = Offset(0f, 0f),
+        paint = Paint().apply {
+            colorFilter = ColorFilter.colorMatrix(filter)
+        }
+    )
+
+    return holder
 }

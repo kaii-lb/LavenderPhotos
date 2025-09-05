@@ -1,6 +1,9 @@
 package com.kaii.photos.compose.single_photo.editing_view
 
 import android.media.MediaMetadataRetriever
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -43,18 +46,18 @@ import androidx.compose.ui.unit.dp
 import androidx.media3.common.util.UnstableApi
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.kaii.photos.helpers.TextStylingConstants
+import com.kaii.photos.helpers.editing.MediaAdjustments
 import com.kaii.photos.helpers.editing.MediaColorFilters
-import com.kaii.photos.helpers.editing.MediaColorFiltersImpl
 import com.kaii.photos.helpers.editing.VideoModification
+import com.kaii.photos.helpers.editing.withColorFilter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun FilterShowcase(
-    image: ImageBitmap,
-    filter: MediaColorFiltersImpl,
-    extra: ColorMatrix,
+    image: ImageBitmap?,
+    filter: MediaColorFilters,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -66,20 +69,35 @@ fun FilterShowcase(
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Image(
-            bitmap = image,
-            contentDescription = stringResource(id = filter.title),
-            colorFilter = ColorFilter.colorMatrix(
-                ColorMatrix().apply {
-                    set(filter.matrix)
-                    timesAssign(extra)
-                }
-            ),
-            contentScale = ContentScale.Crop,
+        Column(
             modifier = Modifier
                 .weight(1f)
+                .fillMaxWidth(1f)
                 .clip(RoundedCornerShape(12.dp))
-        )
+                .background(MaterialTheme.colorScheme.surfaceContainerLowest),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            AnimatedVisibility(
+                visible = image != null,
+                enter = fadeIn(),
+                exit = fadeOut(),
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(1f)
+            ) {
+                Image(
+                    bitmap = image!!,
+                    contentDescription = stringResource(id = filter.title),
+                    colorFilter = ColorFilter.colorMatrix(filter.matrix),
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(1f)
+                        .clip(RoundedCornerShape(12.dp))
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -123,9 +141,8 @@ fun FilterPager(
     allowedToRefresh: Boolean,
     modifier: Modifier = Modifier
 ) {
-    var bitmap by remember { mutableStateOf(ImageBitmap(512, 512)) }
+    var bitmap: ImageBitmap? by remember { mutableStateOf(null) }
     val coroutineScope = rememberCoroutineScope()
-    var extra by remember { mutableStateOf(ColorMatrix()) }
 
     LaunchedEffect(currentVideoPosition.floatValue, allowedToRefresh) {
         if (allowedToRefresh) return@LaunchedEffect
@@ -134,15 +151,25 @@ fun FilterPager(
             val metadata = MediaMetadataRetriever()
             metadata.setDataSource(absolutePath)
 
+            // just so the image doesn't flash a million times and we don't cause a million recompositions
+            var localBitmap = ImageBitmap(8, 8)
+
             metadata.getFrameAtTime((currentVideoPosition.floatValue * 1000 * 1000).toLong())?.let {
-                bitmap = it.asImageBitmap()
+                localBitmap = it.asImageBitmap()
             }
 
-            val adjustments = modifications.mapNotNull { it as? VideoModification.Adjustment }
+            // sort by index since order of application is very important
+            val adjustments = modifications
+                .mapNotNull { it as? VideoModification.Adjustment }
+                .sortedBy {
+                    MediaAdjustments.entries.indexOf(it.type)
+                }
 
+            // apply color filters in order
             adjustments.forEach {
-                extra *= ColorMatrix(it.type.getMatrix(it.value))
+                localBitmap = localBitmap.withColorFilter(ColorMatrix(it.type.getMatrix(it.value)))
             }
+            bitmap = localBitmap
         }
     }
 
@@ -168,8 +195,7 @@ fun FilterPager(
     ) { index ->
         FilterShowcase(
             image = bitmap,
-            filter = MediaColorFilters.entries[index],
-            extra = extra
+            filter = MediaColorFilters.entries[index]
         )
     }
 }

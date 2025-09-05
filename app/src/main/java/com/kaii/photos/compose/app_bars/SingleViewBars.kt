@@ -109,7 +109,7 @@ import com.kaii.photos.compose.widgets.SimpleTab
 import com.kaii.photos.datastore.Editing
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.VideoPlayerConstants
-import com.kaii.photos.helpers.editing.MediaColorFiltersImpl
+import com.kaii.photos.helpers.editing.MediaColorFilters
 import com.kaii.photos.helpers.editing.VideoModification
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -132,7 +132,7 @@ fun VideoEditorBottomBar(
     onCropReset: () -> Unit,
     onSeek: (Float) -> Unit,
     onRotate: () -> Unit,
-    saveEffect: (MediaColorFiltersImpl) -> Unit
+    saveEffect: (MediaColorFilters) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
 
