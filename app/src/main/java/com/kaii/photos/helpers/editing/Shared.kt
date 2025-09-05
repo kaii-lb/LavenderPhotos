@@ -299,10 +299,10 @@ enum class MediaAdjustments : ProcessingEffect {
         override fun getMatrix(value: Float): FloatArray {
             val highlight = -value
             val floatArray = floatArrayOf(
-                1 - highlight, 0f, 0f, 0f,
-                0f, 1 - highlight, 0f, 0f,
-                0f, 0f, 1 - highlight, 0f,
-                0f, 0f, 0f, 1f
+                1 - highlight, 0f, 0f, 0f, 0f,
+                0f, 1 - highlight, 0f, 0f, 0f,
+                0f, 0f, 1 - highlight, 0f, 0f,
+                0f, 0f, 0f, 1f, 0f
             )
 
             return floatArray
