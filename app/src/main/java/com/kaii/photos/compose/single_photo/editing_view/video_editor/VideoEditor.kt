@@ -16,6 +16,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -48,6 +49,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.ClipOp
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntSize
@@ -66,11 +71,13 @@ import com.kaii.photos.compose.single_photo.editing_view.CropBox
 import com.kaii.photos.compose.single_photo.editing_view.CroppingAspectRatio
 import com.kaii.photos.compose.single_photo.editing_view.FilterPager
 import com.kaii.photos.compose.single_photo.editing_view.VideoEditorTabs
+import com.kaii.photos.compose.single_photo.editing_view.makeVideoDrawCanvas
 import com.kaii.photos.compose.single_photo.rememberExoPlayerWithLifeCycle
 import com.kaii.photos.compose.single_photo.rememberPlayerView
 import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.editing.ColorMatrixEffect
+import com.kaii.photos.helpers.editing.DrawingPaints
 import com.kaii.photos.helpers.editing.MediaAdjustments
 import com.kaii.photos.helpers.editing.MediaColorFilters
 import com.kaii.photos.helpers.editing.VideoModification
@@ -447,14 +454,99 @@ fun VideoEditor(
                                 allowedToRefresh = isPlaying.value || isSeeking
                             )
                         } else {
-                            AndroidView(
-                                factory = {
-                                    playerView
-                                },
+                            Box(
                                 modifier = Modifier
-                                    .fillMaxSize(1f)
-                                    .align(Alignment.Center)
-                            )
+                                    .makeVideoDrawCanvas(
+                                        modifications = modifications,
+                                        enabled = pagerState.currentPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw),
+                                        paint = DrawingPaints.Pencil
+                                    )
+                            ) {
+                                AndroidView(
+                                    factory = {
+                                        playerView
+                                    },
+                                    modifier = Modifier
+                                        .fillMaxSize(1f)
+                                        .align(Alignment.Center)
+                                )
+
+                                // find the top left of the actual video area
+                                var originalCrop by remember { mutableStateOf(VideoModification.Crop(0f, 0f, 0f, 0f)) }
+                                LaunchedEffect(modifications.lastOrNull()) {
+                                    if (originalCrop.width == 0f && originalCrop.height == 0f) {
+                                        originalCrop = modifications.lastOrNull {
+                                            it is VideoModification.Crop
+                                        } as? VideoModification.Crop ?: VideoModification.Crop(0f, 0f, 0f, 0f)
+                                    }
+                                }
+
+                                Canvas(
+                                    modifier = Modifier
+                                        .requiredSize(
+                                            width = width,
+                                            height = height
+                                        )
+                                        .align(Alignment.Center)
+                                ) {
+                                    val latestCrop = modifications.lastOrNull {
+                                        it is VideoModification.Crop
+                                    } as? VideoModification.Crop ?: VideoModification.Crop(0f, 0f, 0f, 0f)
+                                    val actualTop = (height.toPx() - originalCrop.height) / 2
+                                    val actualLeft = (width.toPx() - originalCrop.width) / 2
+
+                                    clipRect(
+                                        left = actualLeft + latestCrop.left,
+                                        top = actualTop + latestCrop.top,
+                                        right = actualLeft + latestCrop.right,
+                                        bottom = actualTop + latestCrop.bottom
+                                    ) {
+                                        modifications.forEach { modification ->
+                                            when (modification) {
+                                                is VideoModification.DrawingPath -> {
+                                                    val (_, path, _) = modification
+
+                                                    drawPath(
+                                                        path = path.path,
+                                                        style = Stroke(
+                                                            width = path.paint.strokeWidth,
+                                                            cap = path.paint.strokeCap,
+                                                            join = path.paint.strokeJoin,
+                                                            miter = path.paint.strokeMiterLimit,
+                                                            pathEffect = path.paint.pathEffect
+                                                        ),
+                                                        blendMode = path.paint.blendMode,
+                                                        color = path.paint.color,
+                                                        alpha = path.paint.alpha
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    if (pagerState.currentPage != VideoEditorTabs.entries.indexOf(VideoEditorTabs.Crop)) {
+                                        clipRect(
+                                            left = actualLeft + originalCrop.left,
+                                            top = actualTop + originalCrop.top,
+                                            right = actualLeft + originalCrop.right,
+                                            bottom = actualTop + originalCrop.bottom
+                                        ) {
+                                            clipRect(
+                                                left = actualLeft + latestCrop.left,
+                                                top = actualTop + latestCrop.top,
+                                                right = actualLeft + latestCrop.right,
+                                                bottom = actualTop + latestCrop.bottom,
+                                                clipOp = ClipOp.Difference
+                                            ) {
+                                                drawRect(
+                                                    color = Color.Black.copy(alpha = 0.6f),
+                                                    size = Size(width.toPx(), height.toPx())
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -469,7 +561,7 @@ fun VideoEditor(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     AnimatedVisibility(
-                        visible = pagerState.currentPage == 1,
+                        visible = pagerState.currentPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Crop),
                         enter = fadeIn(
                             animationSpec = AnimationConstants.expressiveTween()
                         ),
@@ -488,10 +580,10 @@ fun VideoEditor(
                             containerWidth = with(localDensity) { width.toPx() - 16.dp.toPx() }, // adjust for AnimatedVisibility size
                             containerHeight = with(localDensity) { height.toPx() - 16.dp.toPx() },
                             mediaAspectRatio = basicVideoData.aspectRatio,
-                            reset = resetCrop,
                             aspectRatio = aspectRatio,
                             modifier = Modifier
-                                .offset(16.dp, 16.dp) // adjust for top-left change from AnimatedVisibility
+                                .offset(16.dp, 16.dp), // adjust for top-left change from AnimatedVisibility
+                            reset = resetCrop,
                         ) { area, original ->
                             modifications.removeAll { it is VideoModification.Crop } // because Crop gets called a million times each movement
                             modifications.add(

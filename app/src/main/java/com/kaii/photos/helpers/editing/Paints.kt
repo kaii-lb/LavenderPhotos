@@ -7,7 +7,6 @@ import android.graphics.RenderEffect
 import android.graphics.RenderNode
 import android.hardware.HardwareBuffer
 import android.media.ImageReader
-import android.net.Uri
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
@@ -19,17 +18,11 @@ import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.NativePaint
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.PaintingStyle
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.Shader
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.vector.DefaultStrokeLineMiter
-import androidx.compose.ui.text.PlatformTextStyle
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.style.BaselineShift
-import androidx.compose.ui.text.style.LineHeightStyle
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
 import androidx.core.graphics.createBitmap
 
@@ -102,56 +95,11 @@ class ExtendedPaint(
     }
 }
 
-abstract class Modification(open val path: Path? = null)
-
-data class DrawablePath(
-    override val path: Path,
-    val paint: ExtendedPaint
-) : Modification(path)
-
-data class DrawableBlur(
-    override val path: Path,
-    val paint: ExtendedPaint
-) : Modification(path)
-
-data class DrawableImage(
-    val bitmapUri: Uri,
-    var rotation: Float,
-    val paint: ExtendedPaint
-) : Modification()
-
 enum class PaintType {
     Pencil,
     Highlighter,
     Text,
     Blur
-}
-
-data class DrawableText(
-    var text: String,
-    var position: Offset,
-    val paint: ExtendedPaint,
-    var rotation: Float,
-    var size: IntSize
-) : Modification(null) {
-    @JvmInline
-    value class Styles(val style: TextStyle) {
-        companion object {
-            val Default = Styles(
-                TextStyle(
-                    textAlign = TextAlign.Center,
-                    platformStyle = PlatformTextStyle(
-                        includeFontPadding = false
-                    ),
-                    lineHeightStyle = LineHeightStyle(
-                        trim = LineHeightStyle.Trim.Both,
-                        alignment = LineHeightStyle.Alignment.Center
-                    ),
-                    baselineShift = BaselineShift.None,
-                ),
-            )
-        }
-    }
 }
 
 fun IntSize.toOffset() : Offset = Offset(this.width.toFloat(), this.height.toFloat())

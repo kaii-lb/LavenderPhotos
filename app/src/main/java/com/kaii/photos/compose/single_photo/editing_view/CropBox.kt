@@ -45,7 +45,7 @@ fun CropBox(
     aspectRatio: MutableState<CroppingAspectRatio>,
     modifier: Modifier = Modifier,
     reset: MutableState<Boolean>,
-    onAreaChanged: (area: Rect, original: Size) -> Unit
+    onAreaChanged: (area: Rect, original: Size) -> Unit,
 ) {
     val containerAspectRatio = remember {
         containerWidth / containerHeight
@@ -91,7 +91,7 @@ fun CropBox(
         )
     }
 
-    Log.d(TAG, "Dimensions $left $top $height $width $originalHeight $mediaAspectRatio")
+    Log.d(TAG, "Dimensions $left $top $width $height $originalHeight $mediaAspectRatio")
 
     LaunchedEffect(mediaAspectRatio, reset.value, containerWidth, containerHeight) {
         originalWidth =
@@ -714,7 +714,7 @@ fun CropBox(
                             }
 
                             // center drag (whole crop box)
-                            (event.position.y in top..top+height && event.position.x in left..left+width) || selectedArea == SelectedCropArea.Whole -> {
+                            (event.position.y in top..top + height && event.position.x in left..left + width) || selectedArea == SelectedCropArea.Whole -> {
                                 if (left + offset.x >= maxLeft
                                     && left + offset.x + width <= maxLeft + originalWidth
                                 ) {

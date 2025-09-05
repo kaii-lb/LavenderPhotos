@@ -1,32 +1,58 @@
 package com.kaii.photos.compose.single_photo.editing_view
 
+import android.util.Log
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateOffsetAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.calculateCentroid
+import androidx.compose.foundation.gestures.calculateCentroidSize
+import androidx.compose.foundation.gestures.calculatePan
+import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
+import androidx.compose.ui.util.fastAny
+import androidx.compose.ui.util.fastForEach
 import com.kaii.photos.compose.single_photo.checkIfClickedOnText
 import com.kaii.photos.compose.single_photo.getTextBoundingBox
+import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.editing.DrawableBlur
 import com.kaii.photos.helpers.editing.DrawablePath
 import com.kaii.photos.helpers.editing.DrawableText
+import com.kaii.photos.helpers.editing.DrawingItems
 import com.kaii.photos.helpers.editing.ExtendedPaint
 import com.kaii.photos.helpers.editing.Modification
 import com.kaii.photos.helpers.editing.PaintType
+import com.kaii.photos.helpers.editing.VideoModification
 import com.kaii.photos.helpers.editing.toOffset
+import kotlin.math.abs
 
 // private const val TAG = "EDITING_VIEW_INPUT"
 
@@ -204,22 +230,25 @@ fun Modifier.makeDrawCanvas(
                             if (path == null) {
                                 val newPath =
                                     if (paintIsBlur) {
-                                        DrawableBlur(
+                                        val new = DrawableBlur(
                                             Path().apply {
                                                 moveTo(change.position.x, change.position.y)
                                             },
                                             paint.value
                                         )
+                                        path = new.path
+                                        new
                                     } else {
-                                        DrawablePath(
+                                        val new = DrawablePath(
                                             Path().apply {
                                                 moveTo(change.position.x, change.position.y)
                                             },
                                             paint.value
                                         )
+                                        path = new.path
+                                        new
                                     }
 
-                                path = newPath.path!!
                                 modifications.add(newPath)
                             } else {
                                 modifications.removeAll {
@@ -371,4 +400,179 @@ fun Modifier.makeDrawCanvas(
                 )
             }
         }
+}
+
+@Composable
+fun Modifier.makeVideoDrawCanvas(
+    modifications: SnapshotStateList<VideoModification>,
+    paint: ExtendedPaint,
+    enabled: Boolean
+): Modifier {
+    var zoom by remember { mutableFloatStateOf(1f) }
+    var offset by remember { mutableStateOf(Offset.Zero) }
+
+    LaunchedEffect(enabled) {
+        if (!enabled) {
+            zoom = 1f
+            offset = Offset.Zero
+        }
+    }
+
+    val animatedZoom by animateFloatAsState(
+        targetValue = zoom,
+        animationSpec = tween(
+            durationMillis = if (zoom == 1f) AnimationConstants.DURATION else 0
+        )
+    )
+
+    val animatedOffset by animateOffsetAsState(
+        targetValue = offset,
+        animationSpec = tween(
+            durationMillis = if (offset == Offset.Zero) AnimationConstants.DURATION else 0
+        )
+    )
+
+    val modifier = Modifier
+        .graphicsLayer {
+            translationX = -animatedOffset.x * animatedZoom
+            translationY = -animatedOffset.y * animatedZoom
+            scaleX = animatedZoom
+            scaleY = animatedZoom
+            transformOrigin = TransformOrigin(0f, 0f)
+        }
+        .pointerInput(enabled, paint) {
+            if (!enabled) return@pointerInput
+
+            awaitEachGesture {
+                var currentPath: VideoModification.DrawingPath? = null
+                var lastPoint = Offset.Zero
+                var hasDragged = false
+
+                val down = awaitFirstDown(requireUnconsumed = false)
+                val initialEvent = awaitPointerEvent(PointerEventPass.Initial)
+
+                Log.d("INPUT", "DOING ${initialEvent.changes.size}")
+
+                if (initialEvent.changes.size > 1) {
+                    var localZoom = 1f
+                    var pan = Offset.Zero
+                    var pastTouchSlop = false
+                    val touchSlop = viewConfiguration.touchSlop
+
+                    do {
+                        val event = awaitPointerEvent()
+                        val canceled = event.changes.fastAny { it.isConsumed }
+
+                        if (!canceled) {
+                            val zoomChange = event.calculateZoom()
+                            val panChange = event.calculatePan()
+
+                            if (!pastTouchSlop) {
+                                localZoom *= zoomChange
+                                pan += panChange
+
+                                val centroidSize = event.calculateCentroidSize(useCurrent = false)
+                                val zoomMotion = abs(1 - localZoom) * centroidSize
+                                val panMotion = pan.getDistance()
+
+                                pastTouchSlop = zoomMotion > touchSlop || panMotion > touchSlop
+                            }
+
+                            if (pastTouchSlop) {
+                                val centroid = event.calculateCentroid(useCurrent = false)
+                                if (zoomChange != 1f || panChange != Offset.Zero) {
+                                    val oldScale = zoom
+                                    val isPanning = panChange.getDistanceSquared() >= 20f
+
+                                    val newScale = if (isPanning) zoom else (zoom * zoomChange).coerceIn(1f, 5f)
+                                    val newOffset =
+                                        (offset + centroid / oldScale) - (centroid / newScale + panChange)
+
+                                    zoom = newScale
+                                    offset = if (zoom != 1f) newOffset else Offset.Zero
+                                }
+
+                                event.changes.fastForEach {
+                                    if (it.positionChanged()) {
+                                        it.consume()
+                                    }
+                                }
+                            }
+                        }
+                    } while (!canceled && event.changes.fastAny { it.pressed } && event.changes.size == 2)
+                } else {
+                    val newPath = VideoModification.DrawingPath(
+                        type = DrawingItems.Pencil,
+                        path = DrawablePath(
+                            path = Path().apply {
+                                moveTo(down.position.x, down.position.y)
+                            },
+                            paint = paint
+                        )
+                    )
+                    modifications.add(newPath)
+                    currentPath = newPath
+                    lastPoint = down.position
+
+                    do {
+                        val event = awaitPointerEvent()
+                        val canceled = event.changes.fastAny { it.isConsumed }
+                        val isUp = event.changes.fastAny { it.id == down.id && !it.pressed }
+
+                        if (isUp) {
+                            if (!hasDragged) {
+                                currentPath?.let { modifications.remove(it) }
+                                currentPath?.path?.path?.lineTo(down.position.x, down.position.y)
+                                currentPath?.let { modifications.add(it) }
+                            }
+
+                            currentPath = null
+                            lastPoint = Offset.Zero
+                            break
+                        }
+
+                        val dragChange = event.changes.firstOrNull { it.id == down.id }
+
+                        if (dragChange != null) {
+                            hasDragged = dragChange.positionChanged()
+
+                            currentPath?.let { modifications.remove(it) }
+                            currentPath?.path?.path?.apply {
+                                quadraticTo(
+                                    lastPoint.x,
+                                    lastPoint.y,
+                                    (lastPoint.x + dragChange.position.x) / 2,
+                                    (lastPoint.y + dragChange.position.y) / 2
+                                )
+                            }
+                            currentPath?.let { modifications.add(it) }
+
+                            lastPoint = dragChange.position
+                            dragChange.consume()
+                        } else {
+                            currentPath = null
+                            lastPoint = Offset.Zero
+                            break
+                        }
+                    } while (!canceled && event.changes.fastAny { it.pressed })
+                }
+            }
+        }
+    // .pointerInput(enabled, isDrawing) {
+    //     if (!enabled || isDrawing) return@pointerInput
+    //
+    //     detectTapGestures(
+    //         onDoubleTap = { centroid ->
+    //             if (zoom != 1f) {
+    //                 zoom = 1f
+    //                 offset = Offset.Zero
+    //             } else {
+    //                 offset = offset + centroid / 2f
+    //                 zoom = 2f
+    //             }
+    //         }
+    //     )
+    // }
+
+    return this.then(modifier)
 }

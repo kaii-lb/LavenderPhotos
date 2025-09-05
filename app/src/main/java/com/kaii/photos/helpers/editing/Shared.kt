@@ -1,5 +1,6 @@
 package com.kaii.photos.helpers.editing
 
+import android.net.Uri
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.ui.geometry.Offset
@@ -9,10 +10,17 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.vector.DefaultStrokeLineMiter
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.BaselineShift
+import androidx.compose.ui.text.style.LineHeightStyle
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntSize
 import androidx.media3.common.Effect
 import androidx.media3.common.util.UnstableApi
 import com.kaii.photos.R
@@ -329,4 +337,49 @@ fun ImageBitmap.withColorFilter(filter: ColorMatrix): ImageBitmap {
     )
 
     return holder
+}
+
+interface Modification
+
+data class DrawablePath(
+    val path: Path,
+    val paint: ExtendedPaint
+) : Modification
+
+data class DrawableBlur(
+    val path: Path,
+    val paint: ExtendedPaint
+) : Modification
+
+data class DrawableImage(
+    val bitmapUri: Uri,
+    var rotation: Float,
+    val paint: ExtendedPaint
+) : Modification
+
+data class DrawableText(
+    var text: String,
+    var position: Offset,
+    val paint: ExtendedPaint,
+    var rotation: Float,
+    var size: IntSize
+) : Modification {
+    @JvmInline
+    value class Styles(val style: TextStyle) {
+        companion object {
+            val Default = Styles(
+                TextStyle(
+                    textAlign = TextAlign.Center,
+                    platformStyle = PlatformTextStyle(
+                        includeFontPadding = false
+                    ),
+                    lineHeightStyle = LineHeightStyle(
+                        trim = LineHeightStyle.Trim.Both,
+                        alignment = LineHeightStyle.Alignment.Center
+                    ),
+                    baselineShift = BaselineShift.None,
+                ),
+            )
+        }
+    }
 }
