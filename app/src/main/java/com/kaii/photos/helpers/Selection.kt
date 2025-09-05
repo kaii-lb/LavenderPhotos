@@ -83,11 +83,11 @@ fun SnapshotStateList<MediaStoreData>.unselectAll(
 	grouped.keys.forEach { key ->
 		val sectionItems = grouped[key]
 
-		val section = groupedMedia.first {
+		val section = groupedMedia.firstOrNull {
 			it.type == MediaType.Section && it.section == key
 		}
 
-		remove(section)
+		section?.let { remove(it) }
 
 		sectionItems?.let {
 			removeAll(it.toSet())
