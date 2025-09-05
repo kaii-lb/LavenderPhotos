@@ -73,4 +73,12 @@
     <string name="locked_folder_help_bottom">Os dados protegidos não poderão ser recuperados caso a senha seja esquecida ou a impressão digital seja removida.</string>
     <string name="secure_folder">Pasta Segura</string>
     <string name="secure_processing">Aguarde enquanto esta mídia é processada</string>
+    <string name="video_auto_play_desc">Reproduzir vídeos assim que aparecerem na tela</string>
+    <string name="video_start_muted">Vídeos iniciam silenciados</string>
+    <string name="video_start_muted_desc">Não reproduzir o áudio ao iniciar a reprodução do vídeo</string>
+    <string name="file_is_a_video">O arquivo é um vídeo</string>
+    <string name="video_lock_screen">Bloquear a tela para evitar toques acidentais</string>
+    <string name="video_mute_toggle">Desativar ou ativar o som deste vídeo</string>
+    <string name="video_seek_back">Retroceder 5 segundos</string>
+    <string name="video_seek_front">Avançar 5 segundos</string>
 </resources>
