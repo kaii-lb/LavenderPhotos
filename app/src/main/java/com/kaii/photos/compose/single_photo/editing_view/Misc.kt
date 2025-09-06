@@ -44,7 +44,7 @@ import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
 import com.kaii.photos.helpers.editing.DrawableText
 import com.kaii.photos.helpers.editing.DrawingItems
-import com.kaii.photos.helpers.editing.ExtendedPaint
+import com.kaii.photos.helpers.editing.DrawingPaint
 import com.kaii.photos.helpers.editing.VideoModification
 import com.kaii.photos.helpers.getParentFromPath
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
@@ -232,7 +232,7 @@ suspend fun saveVideo(
                     value = DrawableText(
                         text = "Hello World!",
                         position = Offset(0f, 0f),
-                        paint = ExtendedPaint(strokeWidth = 16f, color = Color.White),
+                        paint = DrawingPaint(strokeWidth = 16f, color = Color.White),
                         rotation = 0f,
                         size = IntSize.Zero
                     ),

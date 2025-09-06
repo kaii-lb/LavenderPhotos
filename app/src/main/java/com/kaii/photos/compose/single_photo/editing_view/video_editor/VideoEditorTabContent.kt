@@ -33,7 +33,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableFloatState
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -75,6 +74,7 @@ import com.kaii.photos.helpers.VideoPlayerConstants
 import com.kaii.photos.helpers.editing.DrawingItems
 import com.kaii.photos.helpers.editing.MediaAdjustments
 import com.kaii.photos.helpers.editing.MediaColorFilters
+import com.kaii.photos.helpers.editing.VideoEditingState
 import com.kaii.photos.helpers.editing.VideoModification
 import kotlin.math.truncate
 
@@ -84,16 +84,11 @@ import kotlin.math.truncate
 fun TrimContent(
     currentPosition: MutableFloatState,
     basicData: BasicVideoData,
-    leftPosition: MutableFloatState,
-    rightPosition: MutableFloatState,
+    videoEditingState: VideoEditingState,
     thumbnails: List<Bitmap>,
     onSeek: (Float) -> Unit,
 ) {
-    val actualDuration by remember {
-        derivedStateOf {
-            rightPosition.floatValue - leftPosition.floatValue
-        }
-    }
+    val actualDuration by rememberUpdatedState(videoEditingState.endTrimPosition - videoEditingState.startTrimPosition)
 
     val duration by rememberUpdatedState(basicData.duration)
 
@@ -133,14 +128,14 @@ fun TrimContent(
             }
 
             BoxWithConstraints boxybox@{
-                val leftHandlePosition by remember {
+                val leftHandlePosition by remember(videoEditingState.startTrimPosition) {
                     derivedStateOf {
-                        this@boxybox.maxWidth * leftPosition.floatValue / duration
+                        this@boxybox.maxWidth * videoEditingState.startTrimPosition / duration
                     }
                 }
-                val rightHandlePosition by remember {
+                val rightHandlePosition by remember(videoEditingState.endTrimPosition) {
                     derivedStateOf {
-                        this@boxybox.maxWidth * rightPosition.floatValue / duration
+                        this@boxybox.maxWidth * videoEditingState.endTrimPosition / duration
                     }
                 }
                 val seekbarWidth by remember {
@@ -151,14 +146,14 @@ fun TrimContent(
 
                 val seekHandlePosition by remember {
                     derivedStateOf {
-                        leftHandlePosition + seekbarWidth * (currentPosition.floatValue - leftPosition.floatValue) / actualDuration
+                        leftHandlePosition + seekbarWidth * (currentPosition.floatValue - videoEditingState.startTrimPosition) / actualDuration
                     }
                 }
 
                 val videoPositionDraggableState = rememberDraggableState { change ->
                     with(localDensity) {
                         val new = currentPosition.floatValue + (change * actualDuration / seekbarWidth.toPx())
-                        currentPosition.floatValue = new.coerceIn(leftPosition.floatValue, rightPosition.floatValue)
+                        currentPosition.floatValue = new.coerceIn(videoEditingState.startTrimPosition, videoEditingState.endTrimPosition)
                         onSeek(currentPosition.floatValue)
                     }
                 }
@@ -192,10 +187,10 @@ fun TrimContent(
 
                 val leftDraggableState = rememberDraggableState { change ->
                     with(localDensity) {
-                        val new = leftPosition.floatValue + (change * duration / this@boxybox.maxWidth.toPx())
-                        leftPosition.floatValue = new.coerceIn(0f, rightPosition.floatValue - (duration * 0.2f))
+                        val new = videoEditingState.startTrimPosition + (change * duration / this@boxybox.maxWidth.toPx())
+                        videoEditingState.setStartTrimPosition(new)
 
-                        currentPosition.floatValue = leftPosition.floatValue
+                        currentPosition.floatValue = videoEditingState.startTrimPosition
                     }
                 }
                 val animatedLeftHandlePos by animateDpAsState(
@@ -213,17 +208,17 @@ fun TrimContent(
                     },
                     onDragStopped = {
                         isDraggingManually = false
-                        currentPosition.floatValue = leftPosition.floatValue
+                        currentPosition.floatValue = videoEditingState.startTrimPosition
                         onSeek(currentPosition.floatValue)
                     }
                 )
 
                 val rightDraggableState = rememberDraggableState { change ->
                     with(localDensity) {
-                        val new = rightPosition.floatValue + (change * duration / this@boxybox.maxWidth.toPx())
-                        rightPosition.floatValue = new.coerceIn(leftPosition.floatValue + (duration * 0.1f), duration)
+                        val new = videoEditingState.endTrimPosition + (change * duration / this@boxybox.maxWidth.toPx())
+                        videoEditingState.setEndTrimPosition(new)
 
-                        currentPosition.floatValue = rightPosition.floatValue
+                        currentPosition.floatValue = videoEditingState.endTrimPosition
                     }
                 }
                 val animatedRightHandlePos by animateDpAsState(
@@ -241,7 +236,7 @@ fun TrimContent(
                     },
                     onDragStopped = {
                         isDraggingManually = false
-                        currentPosition.floatValue = rightPosition.floatValue
+                        currentPosition.floatValue = videoEditingState.endTrimPosition
                         onSeek(currentPosition.floatValue)
                     }
                 )
@@ -370,9 +365,7 @@ private fun RightHandle(
 @Composable
 fun VideoEditorCropContent(
     imageAspectRatio: Float,
-    croppingAspectRatio: MutableState<CroppingAspectRatio>,
-    onReset: () -> Unit,
-    onRotate: () -> Unit,
+    videoEditingState: VideoEditingState
 ) {
     Row(
         modifier = Modifier
@@ -383,18 +376,18 @@ fun VideoEditorCropContent(
         EditingViewBottomAppBarItem(
             text = stringResource(id = R.string.editing_rotate),
             icon = R.drawable.rotate_ccw,
-            onClick = onRotate
+            onClick = {
+                videoEditingState.setRotation(videoEditingState.rotation + 90f)
+            }
         )
 
         val showSheet = remember { mutableStateOf(false) }
 
         CroppingRatioBottomSheet(
             show = showSheet,
-            ratio = croppingAspectRatio.value,
+            ratio = videoEditingState.croppingAspectRatio,
             originalImageRatio = imageAspectRatio,
-            onSetCroppingRatio = {
-                croppingAspectRatio.value = it
-            }
+            onSetCroppingRatio = videoEditingState::setCroppingAspectRatio
         )
 
         EditingViewBottomAppBarItem(
@@ -408,7 +401,11 @@ fun VideoEditorCropContent(
         EditingViewBottomAppBarItem(
             text = stringResource(id = R.string.editing_reset),
             icon = R.drawable.reset,
-            onClick = onReset
+            onClick = {
+                videoEditingState.setRotation(0f)
+                videoEditingState.setCroppingAspectRatio(CroppingAspectRatio.FreeForm)
+                videoEditingState.setResetCrop(true)
+            }
         )
     }
 }

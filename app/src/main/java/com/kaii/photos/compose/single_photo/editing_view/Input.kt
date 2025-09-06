@@ -47,7 +47,7 @@ import com.kaii.photos.helpers.editing.DrawableBlur
 import com.kaii.photos.helpers.editing.DrawablePath
 import com.kaii.photos.helpers.editing.DrawableText
 import com.kaii.photos.helpers.editing.DrawingItems
-import com.kaii.photos.helpers.editing.ExtendedPaint
+import com.kaii.photos.helpers.editing.DrawingPaint
 import com.kaii.photos.helpers.editing.Modification
 import com.kaii.photos.helpers.editing.PaintType
 import com.kaii.photos.helpers.editing.VideoModification
@@ -64,7 +64,7 @@ import kotlin.math.abs
 fun Modifier.makeDrawCanvas(
     allowedToDraw: State<Boolean>,
     modifications: SnapshotStateList<Modification>,
-    paint: MutableState<ExtendedPaint>,
+    paint: MutableState<DrawingPaint>,
     isDrawing: MutableState<Boolean>,
     changesSize: MutableIntState,
     rotationMultiplier: MutableIntState,
@@ -405,7 +405,7 @@ fun Modifier.makeDrawCanvas(
 @Composable
 fun Modifier.makeVideoDrawCanvas(
     modifications: SnapshotStateList<VideoModification>,
-    paint: ExtendedPaint,
+    paint: DrawingPaint,
     enabled: Boolean
 ): Modifier {
     var zoom by remember { mutableFloatStateOf(1f) }

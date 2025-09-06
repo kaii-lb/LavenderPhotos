@@ -55,7 +55,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.MutableIntState
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -95,7 +94,6 @@ import com.kaii.photos.compose.FullWidthDialogButton
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.WallpaperTypeDialog
 import com.kaii.photos.compose.single_photo.editing_view.BasicVideoData
-import com.kaii.photos.compose.single_photo.editing_view.CroppingAspectRatio
 import com.kaii.photos.compose.single_photo.editing_view.VideoEditorTabs
 import com.kaii.photos.compose.single_photo.editing_view.saveVideo
 import com.kaii.photos.compose.single_photo.editing_view.video_editor.TrimContent
@@ -110,6 +108,7 @@ import com.kaii.photos.datastore.Editing
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.VideoPlayerConstants
 import com.kaii.photos.helpers.editing.MediaColorFilters
+import com.kaii.photos.helpers.editing.VideoEditingState
 import com.kaii.photos.helpers.editing.VideoModification
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -124,14 +123,10 @@ fun VideoEditorBottomBar(
     pagerState: PagerState,
     currentPosition: MutableFloatState,
     basicData: BasicVideoData,
-    leftPosition: MutableFloatState,
-    rightPosition: MutableFloatState,
+    videoEditingState: VideoEditingState,
     modifications: SnapshotStateList<VideoModification>,
-    croppingAspectRatio: MutableState<CroppingAspectRatio>,
     increaseModCount: () -> Unit,
-    onCropReset: () -> Unit,
     onSeek: (Float) -> Unit,
-    onRotate: () -> Unit,
     saveEffect: (MediaColorFilters) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -216,8 +211,7 @@ fun VideoEditorBottomBar(
                         ) {
                             TrimContent(
                                 currentPosition = currentPosition,
-                                leftPosition = leftPosition,
-                                rightPosition = rightPosition,
+                                videoEditingState = videoEditingState,
                                 thumbnails = thumbnails,
                                 onSeek = onSeek,
                                 basicData = basicData
@@ -228,9 +222,7 @@ fun VideoEditorBottomBar(
                     VideoEditorTabs.entries.indexOf(VideoEditorTabs.Crop) -> {
                         VideoEditorCropContent(
                             imageAspectRatio = basicData.aspectRatio,
-                            croppingAspectRatio = croppingAspectRatio,
-                            onReset = onCropReset,
-                            onRotate = onRotate
+                            videoEditingState = videoEditingState
                         )
                     }
 

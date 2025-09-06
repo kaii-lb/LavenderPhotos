@@ -59,7 +59,6 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.media3.common.Effect
 import androidx.media3.common.MediaItem
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
@@ -68,7 +67,6 @@ import com.kaii.photos.compose.app_bars.VideoEditorBottomBar
 import com.kaii.photos.compose.app_bars.VideoEditorTopBar
 import com.kaii.photos.compose.single_photo.editing_view.BasicVideoData
 import com.kaii.photos.compose.single_photo.editing_view.CropBox
-import com.kaii.photos.compose.single_photo.editing_view.CroppingAspectRatio
 import com.kaii.photos.compose.single_photo.editing_view.FilterPager
 import com.kaii.photos.compose.single_photo.editing_view.VideoEditorTabs
 import com.kaii.photos.compose.single_photo.editing_view.makeVideoDrawCanvas
@@ -81,6 +79,7 @@ import com.kaii.photos.helpers.editing.DrawingPaints
 import com.kaii.photos.helpers.editing.MediaAdjustments
 import com.kaii.photos.helpers.editing.MediaColorFilters
 import com.kaii.photos.helpers.editing.VideoModification
+import com.kaii.photos.helpers.editing.rememberVideoEditingState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -114,22 +113,19 @@ fun VideoEditor(
         currentVideoPosition = currentVideoPosition
     )
 
-    val leftTrimPosition = remember { mutableFloatStateOf(0f) }
-    val rightTrimPosition = remember { mutableFloatStateOf(duration.floatValue) }
-
-    LaunchedEffect(duration.floatValue) {
-        rightTrimPosition.floatValue = duration.floatValue
-    }
+    val videoEditingState = rememberVideoEditingState(
+        duration = duration.floatValue
+    )
 
     LaunchedEffect(isMuted.value) {
         if (isMuted.value) exoPlayer.volume = 0f
         else exoPlayer.volume = 1f
     }
 
-    LaunchedEffect(leftTrimPosition.floatValue, currentVideoPosition.floatValue) {
-        if (currentVideoPosition.floatValue * 1000 < leftTrimPosition.floatValue * 1000) {
-            exoPlayer.seekTo((leftTrimPosition.floatValue * 1000).toLong())
-            currentVideoPosition.floatValue = leftTrimPosition.floatValue
+    LaunchedEffect(videoEditingState.startTrimPosition, currentVideoPosition.floatValue) {
+        if (currentVideoPosition.floatValue * 1000 < videoEditingState.startTrimPosition * 1000) {
+            exoPlayer.seekTo((videoEditingState.startTrimPosition * 1000).toLong())
+            currentVideoPosition.floatValue = videoEditingState.startTrimPosition
 
             if (isPlaying.value) exoPlayer.play()
             else exoPlayer.pause()
@@ -143,7 +139,7 @@ fun VideoEditor(
             exoPlayer.pause()
 
             // so when the video is just starting it actually plays?
-            if (currentVideoPosition.floatValue > leftTrimPosition.floatValue) exoPlayer.isScrubbingModeEnabled = true
+            if (currentVideoPosition.floatValue > videoEditingState.startTrimPosition) exoPlayer.isScrubbingModeEnabled = true
         } else {
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
@@ -152,14 +148,14 @@ fun VideoEditor(
         }
 
         currentVideoPosition.floatValue = exoPlayer.currentPosition / 1000f
-        val end = rightTrimPosition.floatValue * 1000
+        val end = videoEditingState.endTrimPosition * 1000
         val threshold = 150f
         val current = currentVideoPosition.floatValue * 1000
         if (current in (end - threshold)..(end + threshold) || current >= end) {
             delay(1000)
             exoPlayer.pause()
-            exoPlayer.seekTo((leftTrimPosition.floatValue * 1000).toLong())
-            currentVideoPosition.floatValue = leftTrimPosition.floatValue
+            exoPlayer.seekTo((videoEditingState.startTrimPosition * 1000).toLong())
+            currentVideoPosition.floatValue = videoEditingState.startTrimPosition
             Log.d(TAG, "Ending video...")
             isPlaying.value = false
         }
@@ -169,14 +165,14 @@ fun VideoEditor(
 
             // again here since exoplayer doesn't know we might be ending video early
             // because of the way it works (this is easier)
-            val end = rightTrimPosition.floatValue * 1000
+            val end = videoEditingState.endTrimPosition * 1000
             val threshold = 150f
             val current = currentVideoPosition.floatValue * 1000
             if (current in (end - threshold)..(end + threshold) || current >= end) {
                 delay(1000)
                 exoPlayer.pause()
-                exoPlayer.seekTo((leftTrimPosition.floatValue * 1000).toLong())
-                currentVideoPosition.floatValue = leftTrimPosition.floatValue
+                exoPlayer.seekTo((videoEditingState.startTrimPosition * 1000).toLong())
+                currentVideoPosition.floatValue = videoEditingState.startTrimPosition
                 Log.d(TAG, "Ending video...")
                 isPlaying.value = false
             }
@@ -189,23 +185,28 @@ fun VideoEditor(
     val lastSavedModCount =
         remember { mutableIntStateOf(2) } // starts at 2 cuz of below LaunchedEffect, and then 1 more for setting rightPosition to duration
 
-    LaunchedEffect(leftTrimPosition.floatValue, rightTrimPosition.floatValue) {
+    LaunchedEffect(videoEditingState.startTrimPosition, videoEditingState.endTrimPosition) {
         modifications.removeAll { it is VideoModification.Trim } // lots of these, we don't need them, tho this is kinda gross
         modifications.add(
             VideoModification.Trim(
-                start = leftTrimPosition.floatValue,
-                end = rightTrimPosition.floatValue
+                start = videoEditingState.startTrimPosition,
+                end = videoEditingState.endTrimPosition
+            )
+        )
+    }
+
+    LaunchedEffect(videoEditingState.rotation) {
+        modifications.add(
+            VideoModification.Rotation(
+                degrees = videoEditingState.rotation
             )
         )
     }
 
     val pagerState = rememberPagerState { 6 }
     var containerDimens by remember { mutableStateOf(Size.Zero) }
-    val resetCrop = remember { mutableStateOf(false) }
     var isSeeking by remember { mutableStateOf(false) }
 
-    var rotation by remember { mutableFloatStateOf(0f) }
-    val aspectRatio = remember { mutableStateOf(CroppingAspectRatio.FreeForm) }
     var basicVideoData by remember {
         mutableStateOf(
             BasicVideoData(
@@ -264,24 +265,16 @@ fun VideoEditor(
         }
     }
 
-    // prefill for order of application
-    val effectsList = remember {
-        mutableStateListOf<Effect?>().apply {
-            (1..MediaAdjustments.entries.size).forEach {
-                add(null)
-            }
-        }
-    }
-
     val totalModCount = remember { mutableIntStateOf(0) }
     LaunchedEffect(totalModCount.intValue) {
         val last = modifications.lastOrNull()
 
         if (last is VideoModification.Adjustment) {
-            // cuz order of application matters, so just do this and have it be constant
-            val effectIndex = MediaAdjustments.entries.indexOf(last.type)
-            effectsList.add(effectIndex, last.toEffect())
-            effectsList.removeAt(effectIndex + 1) // remove null after shirting right
+            videoEditingState.addEffect(
+                effect = last.toEffect(),
+                effectIndex = MediaAdjustments.entries.indexOf(last.type)
+            )
+
         }
 
         exoPlayer.stop()
@@ -290,10 +283,8 @@ fun VideoEditor(
             .build()
 
         exoPlayer.setMediaItem(mediaItem)
-        exoPlayer.setVideoEffects(effectsList.mapNotNull { it })
+        exoPlayer.setVideoEffects(videoEditingState.effectList)
         exoPlayer.prepare()
-
-        Log.d(TAG, "Effect list $effectsList")
     }
 
     val coroutineScope = rememberCoroutineScope()
@@ -311,7 +302,7 @@ fun VideoEditor(
                 uri = uri,
                 absolutePath = absolutePath,
                 modifications = modifications,
-                effectsList = effectsList.mapNotNull { it },
+                effectsList = videoEditingState.effectList,
                 lastSavedModCount = lastSavedModCount,
                 containerDimens = containerDimens,
                 videoDimens = IntSize(
@@ -324,46 +315,25 @@ fun VideoEditor(
             VideoEditorBottomBar(
                 pagerState = pagerState,
                 currentPosition = currentVideoPosition,
-                leftPosition = leftTrimPosition,
-                rightPosition = rightTrimPosition,
                 basicData = basicVideoData,
-                croppingAspectRatio = aspectRatio,
+                videoEditingState = videoEditingState,
                 modifications = modifications,
-                onCropReset = {
-                    resetCrop.value = true
-                    rotation = 0f
-                    aspectRatio.value = CroppingAspectRatio.FreeForm
-
-                    modifications.add(
-                        VideoModification.Rotation(
-                            degrees = 0f
-                        )
-                    )
-                },
                 onSeek = { pos ->
                     val wasPlaying = isPlaying.value
                     exoPlayer.seekTo(
-                        (pos * 1000f).coerceAtMost(rightTrimPosition.floatValue * 1000f).toLong()
+                        (pos * 1000f).coerceAtMost(videoEditingState.endTrimPosition * 1000f).toLong()
                     )
                     isPlaying.value = wasPlaying
-                },
-                onRotate = {
-                    rotation += 90f
-                    modifications.add(
-                        VideoModification.Rotation(
-                            degrees = rotation
-                        )
-                    )
                 },
                 increaseModCount = {
                     totalModCount.intValue += 1
                 },
                 saveEffect = { filter ->
-                    effectsList.removeAll {
+                    videoEditingState.removeAll {
                         it is ColorMatrixEffect && it.isFilter
                     }
 
-                    effectsList.add(
+                    videoEditingState.addEffect(
                         ColorMatrixEffect(
                             matrix = filter.matrix,
                             isFilter = true
@@ -392,7 +362,7 @@ fun VideoEditor(
             horizontalAlignment = Alignment.Start
         ) {
             val animatedRotation by animateFloatAsState(
-                targetValue = rotation
+                targetValue = videoEditingState.rotation
             )
 
             BoxWithConstraints(
@@ -410,10 +380,10 @@ fun VideoEditor(
                 )
 
                 val width by animateDpAsState(
-                    targetValue = if (rotation % 180 == 0f) this@BoxWithConstraints.maxWidth else this@BoxWithConstraints.maxHeight
+                    targetValue = if (videoEditingState.rotation % 180 == 0f) this@BoxWithConstraints.maxWidth else this@BoxWithConstraints.maxHeight
                 )
                 val height by animateDpAsState(
-                    targetValue = if (rotation % 180f == 0f) this@BoxWithConstraints.maxHeight else this@BoxWithConstraints.maxWidth
+                    targetValue = if (videoEditingState.rotation % 180f == 0f) this@BoxWithConstraints.maxHeight else this@BoxWithConstraints.maxWidth
                 )
 
                 Box(
@@ -580,10 +550,9 @@ fun VideoEditor(
                             containerWidth = with(localDensity) { width.toPx() - 16.dp.toPx() }, // adjust for AnimatedVisibility size
                             containerHeight = with(localDensity) { height.toPx() - 16.dp.toPx() },
                             mediaAspectRatio = basicVideoData.aspectRatio,
-                            aspectRatio = aspectRatio,
+                            videoEditingState = videoEditingState,
                             modifier = Modifier
                                 .offset(16.dp, 16.dp), // adjust for top-left change from AnimatedVisibility
-                            reset = resetCrop,
                         ) { area, original ->
                             modifications.removeAll { it is VideoModification.Crop } // because Crop gets called a million times each movement
                             modifications.add(

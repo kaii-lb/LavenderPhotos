@@ -31,7 +31,7 @@ import kotlin.math.pow
 class DrawingPaints {
     companion object {
         val Pencil =
-            ExtendedPaint().apply {
+            DrawingPaint().apply {
                 type = PaintType.Pencil
                 strokeWidth = 20f
                 strokeCap = StrokeCap.Companion.Round
@@ -44,7 +44,7 @@ class DrawingPaints {
             }
 
         val Highlighter =
-            ExtendedPaint().apply {
+            DrawingPaint().apply {
                 type = PaintType.Highlighter
                 strokeWidth = 20f
                 strokeCap = StrokeCap.Companion.Square
@@ -57,7 +57,7 @@ class DrawingPaints {
             }
 
         val Text =
-            ExtendedPaint().apply {
+            DrawingPaint().apply {
                 type = PaintType.Text
                 strokeWidth = 20f
                 strokeCap = StrokeCap.Companion.Round
@@ -70,7 +70,7 @@ class DrawingPaints {
             }
 
         val Blur =
-            ExtendedPaint().apply {
+            DrawingPaint().apply {
                 type = PaintType.Blur
                 strokeWidth = 20f
                 strokeCap = StrokeCap.Companion.Round
@@ -343,24 +343,24 @@ interface Modification
 
 data class DrawablePath(
     val path: Path,
-    val paint: ExtendedPaint
+    val paint: DrawingPaint
 ) : Modification
 
 data class DrawableBlur(
     val path: Path,
-    val paint: ExtendedPaint
+    val paint: DrawingPaint
 ) : Modification
 
 data class DrawableImage(
     val bitmapUri: Uri,
     var rotation: Float,
-    val paint: ExtendedPaint
+    val paint: DrawingPaint
 ) : Modification
 
 data class DrawableText(
     var text: String,
     var position: Offset,
-    val paint: ExtendedPaint,
+    val paint: DrawingPaint,
     var rotation: Float,
     var size: IntSize
 ) : Modification {

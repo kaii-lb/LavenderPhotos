@@ -184,8 +184,8 @@ import com.kaii.photos.helpers.editing.DrawableBlur
 import com.kaii.photos.helpers.editing.DrawablePath
 import com.kaii.photos.helpers.editing.DrawableText
 import com.kaii.photos.helpers.editing.DrawingColors
+import com.kaii.photos.helpers.editing.DrawingPaint
 import com.kaii.photos.helpers.editing.DrawingPaints
-import com.kaii.photos.helpers.editing.ExtendedPaint
 import com.kaii.photos.helpers.editing.MediaAdjustments
 import com.kaii.photos.helpers.editing.MediaColorFilters
 import com.kaii.photos.helpers.editing.Modification
@@ -1717,7 +1717,7 @@ private fun EditingViewTopBar(
 @Composable
 private fun EditingViewBottomBar(
     pagerState: PagerState,
-    paint: MutableState<ExtendedPaint>,
+    paint: MutableState<DrawingPaint>,
     rotationMultiplier: MutableIntState,
     changesSize: MutableIntState,
     croppingRatio: MutableFloatState,
@@ -2496,7 +2496,7 @@ fun FiltersTools(
 
 @Composable
 fun DrawTools(
-    paint: MutableState<ExtendedPaint>,
+    paint: MutableState<DrawingPaint>,
     selectedText: MutableState<DrawableText?>
 ) {
     Row(
@@ -2587,7 +2587,7 @@ val NoRippleConfiguration = RippleConfiguration(
 @Composable
 private fun BoxWithConstraintsScope.DrawActionsAndColors(
     modifications: SnapshotStateList<Modification>,
-    paint: MutableState<ExtendedPaint>,
+    paint: MutableState<DrawingPaint>,
     changesSize: MutableIntState,
     landscapeMode: Boolean = false,
     selectedText: MutableState<DrawableText?>
@@ -2864,7 +2864,7 @@ internal fun getTextBoundingBox(text: DrawableText): Rect {
 fun BoxWithConstraintsScope.DrawingControls(
     pagerState: PagerState,
     isDrawing: MutableState<Boolean>,
-    paint: MutableState<ExtendedPaint>,
+    paint: MutableState<DrawingPaint>,
     modifications: SnapshotStateList<Modification>,
     changesSize: MutableIntState,
     selectedText: MutableState<DrawableText?>,

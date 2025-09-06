@@ -28,7 +28,7 @@ import androidx.core.graphics.createBitmap
 
 private const val TAG = "PAINTS"
 
-class ExtendedPaint(
+class DrawingPaint(
     override var alpha: Float = 1.0f,
     override var blendMode: BlendMode = BlendMode.SrcOver,
     override var color: Color = DrawingColors.Black,
@@ -59,7 +59,7 @@ class ExtendedPaint(
         strokeMiterLimit: Float = this.strokeMiterLimit,
         shader: Shader? = this.shader,
         colorFilter: ColorFilter? = this.colorFilter
-    ) = ExtendedPaint().also { paint ->
+    ) = DrawingPaint().also { paint ->
         paint.color = color
         paint.strokeCap = strokeCap
         paint.strokeWidth = strokeWidth
