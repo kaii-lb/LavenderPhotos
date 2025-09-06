@@ -101,8 +101,6 @@ import com.kaii.photos.models.favourites_grid.FavouritesViewModelFactory
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import kotlinx.coroutines.Dispatchers
 
-// private const val TAG = "SINGLE_PHOTO_VIEW"
-
 @Composable
 fun SinglePhotoView(
     navController: NavHostController,

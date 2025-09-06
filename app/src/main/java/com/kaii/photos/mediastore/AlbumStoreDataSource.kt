@@ -28,7 +28,7 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.launch
 
-private const val TAG = "ALBUM_STORE_DATA_SOURCE"
+private const val TAG = "com.kaii.photos.mediastore.AlbumStoreDataSource"
 
 /** Loads metadata from the media store for images and videos. */
 class AlbumStoreDataSource

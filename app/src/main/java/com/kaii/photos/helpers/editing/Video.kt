@@ -366,3 +366,24 @@ fun ExoPlayer.applyEffects(
     setVideoEffects(effectList)
     prepare()
 }
+
+data class BasicVideoData(
+    val duration: Float,
+    val frameRate: Float,
+    val absolutePath: String,
+    val width: Int,
+    val height: Int
+) {
+    val aspectRatio = if (height == 0) 1f else width.toFloat() / height
+}
+
+enum class VideoEditorTabs(
+    @param:StringRes val title: Int
+) {
+    Trim(R.string.editing_trim),
+    Crop(R.string.editing_crop),
+    Video(R.string.video),
+    Draw(R.string.editing_draw),
+    Adjust(R.string.editing_adjust),
+    Filters(R.string.editing_filters)
+}

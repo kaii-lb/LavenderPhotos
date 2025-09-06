@@ -81,7 +81,6 @@ import com.kaii.photos.compose.WallpaperSetter
 import com.kaii.photos.compose.widgets.CheckBoxButtonRow
 import com.kaii.photos.compose.widgets.ClearableTextField
 import com.kaii.photos.compose.widgets.PreferencesRow
-import com.kaii.photos.compose.widgets.TitleCloseRow
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.helpers.RowPosition
@@ -94,7 +93,7 @@ import com.kaii.photos.helpers.toRelativePath
 import kotlinx.coroutines.launch
 import kotlin.time.ExperimentalTime
 
-private const val TAG = "USER_ACTION_DIALOGS"
+private const val TAG = "com.kaii.photos.compose.dialogs.UserActionDialogs"
 
 @Composable
 fun ConfirmationDialog(

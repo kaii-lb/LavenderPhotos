@@ -27,7 +27,7 @@ import java.nio.file.Files
 import kotlin.io.path.Path
 
 
-private const val TAG = "MEDIA_STORE_UTILS"
+private const val TAG = "com.kaii.photos.mediastore.MediaStoreUtils"
 
 const val LAVENDER_FILE_PROVIDER_AUTHORITY = "com.kaii.photos.LavenderPhotos.fileprovider"
 

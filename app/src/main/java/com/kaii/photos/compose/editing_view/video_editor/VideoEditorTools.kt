@@ -1,4 +1,4 @@
-package com.kaii.photos.compose.single_photo.editing_view.video_editor
+package com.kaii.photos.compose.editing_view.video_editor
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.animateDpAsState
@@ -41,13 +41,13 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import com.kaii.photos.R
 import com.kaii.photos.compose.single_photo.VideoPlayerSeekbar
-import com.kaii.photos.compose.single_photo.editing_view.VideoEditorTabs
 import com.kaii.photos.compose.widgets.ColorRangeSlider
 import com.kaii.photos.compose.widgets.PopupPillSlider
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.editing.MediaAdjustments
 import com.kaii.photos.helpers.editing.VideoEditingState
+import com.kaii.photos.helpers.editing.VideoEditorTabs
 import com.kaii.photos.helpers.editing.VideoModification
 import kotlinx.coroutines.launch
 

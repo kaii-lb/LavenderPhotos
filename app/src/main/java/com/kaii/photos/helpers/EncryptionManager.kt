@@ -14,7 +14,7 @@ import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.IvParameterSpec
 
-private const val TAG = "ENCRYPTION_MANAGER"
+private const val TAG = "com.kaii.photos.helpers.EncryptionManager"
 
 object EncryptionManager {
     private const val KEY_SIZE = 256

@@ -1,6 +1,5 @@
 package com.kaii.photos.compose.grids
 
-// import android.util.Log
 import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
 import androidx.annotation.FloatRange
@@ -102,8 +101,6 @@ import com.kaii.photos.models.album_grid.AlbumsViewModelFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
-// private const val TAG = "ALBUMS_GRID_VIEW"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

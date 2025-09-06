@@ -70,9 +70,9 @@ import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalAppDatabase
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
-import com.kaii.photos.compose.widgets.ClearableTextField
 import com.kaii.photos.compose.FolderIsEmpty
 import com.kaii.photos.compose.dialogs.getDefaultShapeSpacerForPosition
+import com.kaii.photos.compose.widgets.ClearableTextField
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.Permissions
@@ -92,7 +92,7 @@ import com.kaii.photos.models.album_grid.AlbumsViewModelFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-private const val TAG = "MOVE_COPY_ALBUM_LIST_VIEW"
+private const val TAG = "com.kaii.photos.compose.grids.MoveCopyAlbumListView"
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable

@@ -72,7 +72,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.math.min
 
-private const val TAG = "IMAGE_FUNCTIONS"
+private const val TAG = "com.kaii.photos.helpers.ImageFunctions"
 
 enum class ImageFunctions {
     LoadNormalImage,

@@ -1,23 +1,17 @@
-package com.kaii.photos.compose.single_photo.editing_view
+package com.kaii.photos.helpers.editing
 
 import android.content.ContentValues
 import android.content.Context
 import android.net.Uri
 import android.provider.MediaStore
-import android.provider.MediaStore.MediaColumns
 import android.util.Log
 import androidx.annotation.OptIn
-import androidx.annotation.StringRes
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.dp
 import androidx.media3.common.Effect
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
@@ -41,11 +35,6 @@ import androidx.media3.transformer.Transformer
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
-import com.kaii.photos.helpers.editing.DrawableText
-import com.kaii.photos.helpers.editing.DrawingItems
-import com.kaii.photos.helpers.editing.DrawingPaint
-import com.kaii.photos.helpers.editing.VideoEditingState
-import com.kaii.photos.helpers.editing.VideoModification
 import com.kaii.photos.helpers.getParentFromPath
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.toBasePath
@@ -57,36 +46,7 @@ import com.kaii.photos.mediastore.insertMedia
 import java.io.File
 import kotlin.math.pow
 
-private const val TAG = "EDITOR_MISC"
-
-enum class SliderStates {
-    FontScaling,
-    Zooming,
-    SelectedTextScaling
-}
-
-data class BasicVideoData(
-    val duration: Float,
-    val frameRate: Float,
-    val absolutePath: String,
-    val width: Int,
-    val height: Int
-) {
-    val aspectRatio = if (height == 0) 1f else width.toFloat() / height
-}
-
-enum class SelectedCropArea {
-    TopLeftCorner,
-    TopRightCorner,
-    BottomLeftCorner,
-    BottomRightCorner,
-    TopEdge,
-    LeftEdge,
-    BottomEdge,
-    RightEdge,
-    None,
-    Whole
-}
+private const val TAG = "com.kaii.photos.helpers.editing.FileHandling"
 
 @OptIn(UnstableApi::class)
 suspend fun saveVideo(
@@ -210,9 +170,9 @@ suspend fun saveVideo(
                     value = DrawableText(
                         text = "Hello World!",
                         position = Offset(0f, 0f),
-                        paint = DrawingPaint(strokeWidth = 16f, color = Color.White),
+                        paint = DrawingPaint(strokeWidth = 16f, color = Color.Companion.White),
                         rotation = 0f,
-                        size = IntSize.Zero
+                        size = IntSize.Companion.Zero
                     ),
                     timespan = overlay.timespan,
                     context = context
@@ -327,7 +287,7 @@ suspend fun saveVideo(
                     context.contentResolver.update(
                         newUri,
                         ContentValues().apply {
-                            put(MediaColumns.IS_PENDING, 0)
+                            put(MediaStore.MediaColumns.IS_PENDING, 0)
                         },
                         null
                     )
@@ -352,54 +312,4 @@ suspend fun saveVideo(
         editedMediaItem,
         neededPath
     )
-}
-
-fun DrawScope.createCropRectBorderArc(
-    left: Float,
-    top: Float
-) = Path().apply {
-    val radius = 16.dp.toPx()
-    moveTo(x = left - radius / 2, y = top - radius / 2)
-
-    lineTo(x = left, y = top - radius / 2)
-
-    arcTo(
-        rect = Rect(
-            left = left - radius / 2,
-            top = top - radius / 2,
-            right = left + radius / 2,
-            bottom = top + radius / 2
-        ),
-        startAngleDegrees = 270f,
-        sweepAngleDegrees = 90f,
-        forceMoveTo = false
-    )
-
-    lineTo(x = left + radius / 2, y = top + radius / 2)
-}
-
-enum class CroppingAspectRatio(
-    var ratio: Float,
-    @param:StringRes val title: Int
-) {
-    FreeForm(0f, R.string.bottom_sheets_freeform),
-    ByImage(-1f, R.string.bottom_sheets_image_ratio),
-    Square(1f, R.string.bottom_sheets_square),
-    SixteenByNine(16f / 9f, R.string.bottom_sheets_sixteen_by_nine),
-    NineBySixteen(9f / 16f, R.string.bottom_sheets_nine_by_sixteen),
-    NineByTwentyOne(9f / 21f, R.string.bottom_sheets_nine_by_twentyone),
-    FiveByFour(5f / 4f, R.string.bottom_sheets_five_by_four),
-    FourByThree(4f / 3f, R.string.bottom_sheets_four_by_three),
-    ThreeByTwo(3f / 2f, R.string.bottom_sheets_three_by_two)
-}
-
-enum class VideoEditorTabs(
-    @param:StringRes val title: Int
-) {
-    Trim(R.string.editing_trim),
-    Crop(R.string.editing_crop),
-    Video(R.string.video),
-    Draw(R.string.editing_draw),
-    Adjust(R.string.editing_adjust),
-    Filters(R.string.editing_filters)
 }

@@ -80,6 +80,8 @@ import com.kaii.photos.compose.app_bars.MainAppTopBar
 import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
 import com.kaii.photos.compose.dialogs.MainAppDialog
+import com.kaii.photos.compose.editing_view.EditingView
+import com.kaii.photos.compose.editing_view.video_editor.VideoEditor
 import com.kaii.photos.compose.grids.AlbumsGridView
 import com.kaii.photos.compose.grids.FavouritesGridView
 import com.kaii.photos.compose.grids.LockedFolderView
@@ -100,11 +102,9 @@ import com.kaii.photos.compose.settings.MainSettingsPage
 import com.kaii.photos.compose.settings.MemoryAndStorageSettingsPage
 import com.kaii.photos.compose.settings.PrivacyAndSecurityPage
 import com.kaii.photos.compose.settings.UpdatesPage
-import com.kaii.photos.compose.single_photo.EditingView
 import com.kaii.photos.compose.single_photo.SingleHiddenPhotoView
 import com.kaii.photos.compose.single_photo.SinglePhotoView
 import com.kaii.photos.compose.single_photo.SingleTrashedPhotoView
-import com.kaii.photos.compose.single_photo.editing_view.video_editor.VideoEditor
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumInfo

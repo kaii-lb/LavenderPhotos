@@ -13,7 +13,7 @@ import java.io.File
 import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
 
-private const val TAG = "CHECKSUM_UTILS"
+private const val TAG = "com.kaii.photos.helpers.ChecksumUtils"
 
 @OptIn(ExperimentalStdlibApi::class)
 fun calculateSha1Checksum(file: File): String {

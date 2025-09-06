@@ -15,7 +15,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.media3.common.Effect
 import androidx.media3.common.util.UnstableApi
-import com.kaii.photos.compose.single_photo.editing_view.CroppingAspectRatio
 import com.kaii.photos.helpers.editing.DrawingPaintState.Companion.Saver
 import com.kaii.photos.helpers.editing.VideoEditingState.Companion.Saver
 
@@ -183,7 +182,7 @@ class VideoEditingState(
     fun removeAllEffects(predicate: (Effect?) -> Boolean) = effects.removeAll { predicate(it) }
 
     companion object {
-        private const val TAG = "VIDEO_EDITING_STATE"
+        private const val TAG = "com.kaii.photos.helpers.editing.VideoEditingState"
 
         /** The default [Saver] implementation for [VideoEditingState]. */
         val Saver: Saver<VideoEditingState, *> =

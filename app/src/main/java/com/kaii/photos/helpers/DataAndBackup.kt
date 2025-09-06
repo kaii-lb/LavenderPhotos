@@ -19,7 +19,7 @@ import java.util.zip.ZipOutputStream
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
-private const val TAG = "DATA_AND_BACKUP"
+private const val TAG = "com.kaii.photos.helpers.DataAndBackup"
 
 class DataAndBackupHelper(
     private val applicationDatabase: MediaDatabase

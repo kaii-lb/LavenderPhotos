@@ -71,11 +71,8 @@ import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.FullWidthDialogButton
-import com.kaii.photos.compose.widgets.ConfirmCancelRow
-import com.kaii.photos.compose.widgets.HorizontalSeparator
 import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.RadioButtonRow
-import com.kaii.photos.compose.widgets.TitleCloseRow
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.LookAndFeel

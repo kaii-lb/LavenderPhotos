@@ -383,3 +383,31 @@ data class DrawableText(
         }
     }
 }
+
+enum class CroppingAspectRatio(
+    var ratio: Float,
+    @param:StringRes val title: Int
+) {
+    FreeForm(0f, R.string.bottom_sheets_freeform),
+    ByImage(-1f, R.string.bottom_sheets_image_ratio),
+    Square(1f, R.string.bottom_sheets_square),
+    SixteenByNine(16f / 9f, R.string.bottom_sheets_sixteen_by_nine),
+    NineBySixteen(9f / 16f, R.string.bottom_sheets_nine_by_sixteen),
+    NineByTwentyOne(9f / 21f, R.string.bottom_sheets_nine_by_twentyone),
+    FiveByFour(5f / 4f, R.string.bottom_sheets_five_by_four),
+    FourByThree(4f / 3f, R.string.bottom_sheets_four_by_three),
+    ThreeByTwo(3f / 2f, R.string.bottom_sheets_three_by_two)
+}
+
+enum class SelectedCropArea {
+    TopLeftCorner,
+    TopRightCorner,
+    BottomLeftCorner,
+    BottomRightCorner,
+    TopEdge,
+    LeftEdge,
+    BottomEdge,
+    RightEdge,
+    None,
+    Whole
+}

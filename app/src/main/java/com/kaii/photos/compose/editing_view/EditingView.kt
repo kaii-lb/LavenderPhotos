@@ -1,8 +1,9 @@
-package com.kaii.photos.compose.single_photo
+package com.kaii.photos.compose.editing_view
 
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Paint
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
 import android.net.Uri
@@ -167,10 +168,6 @@ import com.kaii.photos.compose.app_bars.BottomAppBarItem
 import com.kaii.photos.compose.app_bars.getAppBarContentTransition
 import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
-import com.kaii.photos.compose.single_photo.editing_view.CroppingAspectRatio
-import com.kaii.photos.compose.single_photo.editing_view.SliderStates
-import com.kaii.photos.compose.single_photo.editing_view.makeDrawCanvas
-import com.kaii.photos.compose.widgets.ColorFilterItem
 import com.kaii.photos.compose.widgets.ColorRangeSlider
 import com.kaii.photos.compose.widgets.PopupPillSlider
 import com.kaii.photos.compose.widgets.SelectableDropDownMenuItem
@@ -180,6 +177,7 @@ import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.Editing
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.editing.ColorIndicator
+import com.kaii.photos.helpers.editing.CroppingAspectRatio
 import com.kaii.photos.helpers.editing.DrawableBlur
 import com.kaii.photos.helpers.editing.DrawablePath
 import com.kaii.photos.helpers.editing.DrawableText
@@ -206,7 +204,7 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
 
-private const val TAG = "EDITING_VIEW"
+private const val TAG = "com.kaii.photos.compose.editing_view.EditingView"
 
 @Composable
 fun EditingView(
@@ -634,7 +632,7 @@ fun EditingView(
                                         0, 0,
                                         size.width, size.height
                                     ),
-                                    android.graphics.Paint().apply {
+                                    Paint().apply {
                                         // blendMode = BlendMode.DstIn
                                         xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_IN)
                                     }

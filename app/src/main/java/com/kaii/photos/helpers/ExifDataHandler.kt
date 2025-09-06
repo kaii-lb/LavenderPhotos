@@ -14,7 +14,7 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import kotlin.math.round
 
-private const val TAG = "EXIF_DATA_HANDLER"
+private const val TAG = "com.kaii.photos.helpers.ExifDataHandler"
 
 fun getDateTakenForMedia(absolutePath: String): Long {
     try {

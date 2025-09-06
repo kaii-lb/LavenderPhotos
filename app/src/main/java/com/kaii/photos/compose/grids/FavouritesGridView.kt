@@ -44,7 +44,7 @@ import com.kaii.photos.models.multi_album.groupPhotosBy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 
-private const val TAG = "FAVOURITES_GRID_VIEW"
+private const val TAG = "com.kaii.photos.compose.grids.FavouritesGridView"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

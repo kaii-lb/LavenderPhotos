@@ -12,12 +12,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
-private const val TAG = "LIST_UTILS"
-// fun LazyListState.getItemAtOffset(
-//     offset: Int
-// ) = layoutInfo.visibleItemsInfo.find { item ->
-//         offset in item.offset..item.offset + item.size
-//     }?.index
+private const val TAG = "com.kaii.photos.helpers.ListUtils"
 
 @Suppress("UNCHECKED_CAST")
 fun <T : Any> LazyListState.getItemAtOffset(

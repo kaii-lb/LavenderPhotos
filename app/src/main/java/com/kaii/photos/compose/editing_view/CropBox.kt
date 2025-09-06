@@ -1,4 +1,4 @@
-package com.kaii.photos.compose.single_photo.editing_view
+package com.kaii.photos.compose.editing_view
 
 import android.util.Log
 import androidx.compose.animation.animateColorAsState
@@ -24,18 +24,22 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawOutline
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import com.kaii.photos.helpers.AnimationConstants
+import com.kaii.photos.helpers.editing.CroppingAspectRatio
+import com.kaii.photos.helpers.editing.SelectedCropArea
 import com.kaii.photos.helpers.editing.VideoEditingState
 import kotlin.math.abs
 
-private const val TAG = "VIDEO_EDITOR_CROP_BOX"
+private const val TAG = "com.kaii.photos.helpers.editing.Shared"
 
 @Composable
 fun CropBox(
@@ -737,3 +741,28 @@ fun CropBox(
             }
     )
 }
+
+fun DrawScope.createCropRectBorderArc(
+    left: Float,
+    top: Float
+) = Path().apply {
+    val radius = 16.dp.toPx()
+    moveTo(x = left - radius / 2, y = top - radius / 2)
+
+    lineTo(x = left, y = top - radius / 2)
+
+    arcTo(
+        rect = Rect(
+            left = left - radius / 2,
+            top = top - radius / 2,
+            right = left + radius / 2,
+            bottom = top + radius / 2
+        ),
+        startAngleDegrees = 270f,
+        sweepAngleDegrees = 90f,
+        forceMoveTo = false
+    )
+
+    lineTo(x = left + radius / 2, y = top + radius / 2)
+}
+

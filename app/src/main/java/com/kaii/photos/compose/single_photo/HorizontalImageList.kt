@@ -73,7 +73,7 @@ import kotlin.math.cos
 import kotlin.math.roundToInt
 import kotlin.math.sin
 
-private const val TAG = "HORIZONTAL_IMAGE_LIST"
+private const val TAG = "com.kaii.photos.compose.single_photo.HorizontalImageList"
 
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalGlideComposeApi::class)

@@ -29,7 +29,7 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
-private const val TAG = "MULTI_ALBUM_VIEW_MODEL"
+private const val TAG = "com.kaii.photos.models.MultiAlbumViewModel"
 
 class MultiAlbumViewModel(
     context: Context,

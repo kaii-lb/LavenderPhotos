@@ -4,7 +4,7 @@ import android.content.Context
 import android.util.Log
 import java.io.File
 
-private const val TAG = "LOG_MANAGER"
+private const val TAG = "com.kaii.photos.helpers.LogManager"
 
 class LogManager(
 	context: Context

@@ -117,7 +117,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlin.reflect.typeOf
 
-private const val TAG = "LAVENDER_MEDIA_PICKER"
+private const val TAG = "com.kaii.photos.compose.MediaPicker"
 
 class MediaPicker : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

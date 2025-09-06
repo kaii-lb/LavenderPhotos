@@ -76,7 +76,7 @@ import java.nio.file.Files
 import kotlin.io.path.Path
 import kotlin.uuid.ExperimentalUuidApi
 
-private const val TAG = "LOCKED_FOLDER_ENTRY_VIEW"
+private const val TAG = "com.kaii.photos.compose.LockedFolderEntryView"
 
 @Composable
 fun LockedFolderEntryView(

@@ -37,7 +37,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 
-private const val TAG = "MEDIA_PERMISSIONS"
+private const val TAG = "com.kaii.photos.helpers.MediaPermissions"
 
 @Composable
 fun GetPermissionAndRun(

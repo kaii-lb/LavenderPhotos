@@ -25,7 +25,7 @@ import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.io.File
 
-private const val TAG = "UPDATER"
+private const val TAG = "com.kaii.photos.helpers.Updater"
 
 class Updater(
     private val context: Context,

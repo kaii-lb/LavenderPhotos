@@ -1,4 +1,4 @@
-package com.kaii.photos.compose.single_photo.editing_view
+package com.kaii.photos.compose.editing_view
 
 import android.util.Log
 import androidx.compose.animation.core.animateFloatAsState
@@ -40,8 +40,6 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.util.fastForEach
-import com.kaii.photos.compose.single_photo.checkIfClickedOnText
-import com.kaii.photos.compose.single_photo.getTextBoundingBox
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.editing.DrawableBlur
 import com.kaii.photos.helpers.editing.DrawablePath

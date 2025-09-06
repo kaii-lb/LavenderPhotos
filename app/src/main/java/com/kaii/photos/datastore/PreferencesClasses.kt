@@ -27,7 +27,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 
 const val separator = "|-SEPARATOR-|"
-private const val TAG = "PREFERENCES_CLASSES"
+private const val TAG = "com.kaii.photos.datastore.PreferencesClasses"
 
 class Settings(val context: Context, val viewModelScope: CoroutineScope)
 

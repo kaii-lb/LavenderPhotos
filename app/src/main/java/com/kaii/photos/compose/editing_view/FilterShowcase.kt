@@ -1,4 +1,4 @@
-package com.kaii.photos.compose.single_photo.editing_view
+package com.kaii.photos.compose.editing_view
 
 import android.media.MediaMetadataRetriever
 import androidx.compose.animation.AnimatedVisibility

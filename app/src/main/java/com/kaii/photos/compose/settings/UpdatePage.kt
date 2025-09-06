@@ -71,7 +71,7 @@ import com.kaii.photos.helpers.TextStylingConstants
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-private const val TAG = "UPDATE_PAGE"
+private const val TAG = "com.kaii.photos.compose.settings.UpdatePage"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

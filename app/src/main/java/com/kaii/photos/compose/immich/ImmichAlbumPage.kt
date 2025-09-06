@@ -54,8 +54,8 @@ import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.MainActivity.Companion.immichViewModel
 import com.kaii.photos.R
-import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.dialogs.ConfirmationDialogWithCustomBody
+import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.ImmichBackupMedia
 import com.kaii.photos.helpers.RowPosition
@@ -70,7 +70,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.io.encoding.ExperimentalEncodingApi
 
-private const val TAG = "IMMICH_ALBUM_PAGE"
+private const val TAG = "com.kaii.photos.compose.immich.ImmichAlbumPage"
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalStdlibApi::class, ExperimentalEncodingApi::class)
 @Composable

@@ -46,7 +46,7 @@ import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import kotlinx.coroutines.Dispatchers
 import java.io.File
 
-private const val TAG = "DATA_AND_BACKUP_PAGE"
+private const val TAG = "com.kaii.photos.compose.settings.DataAndBackupPage"
 
 @Composable
 fun DataAndBackupPage() {

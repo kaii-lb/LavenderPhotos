@@ -76,8 +76,6 @@ import com.kaii.photos.models.trash_bin.TrashViewModel
 import com.kaii.photos.models.trash_bin.TrashViewModelFactory
 import kotlinx.coroutines.Dispatchers
 
-// private const val TAG = "SINGLE_TRASHED_PHOTO_VIEW"
-
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun SingleTrashedPhotoView(

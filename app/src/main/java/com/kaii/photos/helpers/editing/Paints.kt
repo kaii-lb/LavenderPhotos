@@ -26,7 +26,7 @@ import androidx.compose.ui.graphics.vector.DefaultStrokeLineMiter
 import androidx.compose.ui.unit.IntSize
 import androidx.core.graphics.createBitmap
 
-private const val TAG = "PAINTS"
+private const val TAG = "com.kaii.photos.helpers.editing.Paints"
 
 class DrawingPaint(
     override var alpha: Float = 1.0f,

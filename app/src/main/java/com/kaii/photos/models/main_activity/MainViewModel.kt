@@ -25,7 +25,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-private const val TAG = "MAIN_VIEW_MODEL"
+private const val TAG = "com.kaii.photos.models.MainViewModel"
 
 class MainViewModel(context: Context) : ViewModel() {
     private val _groupedMedia = MutableStateFlow<List<MediaStoreData>?>(null)

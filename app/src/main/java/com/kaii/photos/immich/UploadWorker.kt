@@ -29,7 +29,7 @@ import kotlinx.serialization.json.Json
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
-private const val TAG = "LAVENDER_UPLOAD_WORKER"
+private const val TAG = "com.kaii.photos.immich.UploadWorker"
 
 class UploadWorker(
     private val context: Context,

@@ -21,7 +21,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 
-private const val TAG = "MULTI_ALBUM_VIEW_MODEL"
+private const val TAG = "com.kaii.photos.models.CustomAlbumViewModel"
 
 class CustomAlbumViewModel(
     context: Context,

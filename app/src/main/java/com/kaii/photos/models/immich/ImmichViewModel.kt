@@ -36,7 +36,7 @@ import kotlinx.coroutines.launch
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.time.ExperimentalTime
 
-private const val TAG = "IMMICH_VIEW_MODEL"
+private const val TAG = "com.kaii.photos.models.ImmichViewModel"
 
 class ImmichViewModel(
     application: Application,

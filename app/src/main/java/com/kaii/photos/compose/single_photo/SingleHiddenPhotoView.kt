@@ -106,7 +106,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 
-private const val TAG = "SINGLE_HIDDEN_PHOTO_VIEW"
+private const val TAG = "com.kaii.photos.compose.single_photo.SingleHiddenPhotoView"
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable

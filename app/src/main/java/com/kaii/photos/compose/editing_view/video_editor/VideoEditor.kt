@@ -1,4 +1,4 @@
-package com.kaii.photos.compose.single_photo.editing_view.video_editor
+package com.kaii.photos.compose.editing_view.video_editor
 
 import android.app.Activity
 import android.media.MediaMetadataRetriever
@@ -64,19 +64,19 @@ import androidx.media3.effect.FrameDropEffect
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.compose.app_bars.VideoEditorBottomBar
 import com.kaii.photos.compose.app_bars.VideoEditorTopBar
-import com.kaii.photos.compose.single_photo.editing_view.BasicVideoData
-import com.kaii.photos.compose.single_photo.editing_view.CropBox
-import com.kaii.photos.compose.single_photo.editing_view.FilterPager
-import com.kaii.photos.compose.single_photo.editing_view.VideoEditorTabs
-import com.kaii.photos.compose.single_photo.editing_view.makeVideoDrawCanvas
+import com.kaii.photos.compose.editing_view.CropBox
+import com.kaii.photos.compose.editing_view.FilterPager
+import com.kaii.photos.compose.editing_view.makeVideoDrawCanvas
 import com.kaii.photos.compose.single_photo.rememberExoPlayerWithLifeCycle
 import com.kaii.photos.compose.single_photo.rememberPlayerView
 import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.AnimationConstants
+import com.kaii.photos.helpers.editing.BasicVideoData
 import com.kaii.photos.helpers.editing.ColorMatrixEffect
 import com.kaii.photos.helpers.editing.DrawingPaints
 import com.kaii.photos.helpers.editing.MediaAdjustments
 import com.kaii.photos.helpers.editing.MediaColorFilters
+import com.kaii.photos.helpers.editing.VideoEditorTabs
 import com.kaii.photos.helpers.editing.VideoModification
 import com.kaii.photos.helpers.editing.applyEffects
 import com.kaii.photos.helpers.editing.rememberVideoEditingState
@@ -85,7 +85,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-private const val TAG = "VIDEO_EDITOR"
+private const val TAG = "com.kaii.photos.compose.editing_view.VideoEditor"
 
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalMaterial3Api::class)

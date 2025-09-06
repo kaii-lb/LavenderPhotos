@@ -134,7 +134,7 @@ import kotlin.time.Duration.Companion.seconds
 // special thanks to @bedirhansaricayir on github, helped with a LOT of performance stuff
 // https://github.com/bedirhansaricayir/Instagram-Reels-Jetpack-Compose/blob/master/app/src/main/java/com/reels/example/presentation/components/ExploreVideoPlayer.kt
 
-private const val TAG = "VIDEO_PLAYER_STUFF"
+private const val TAG = "com.kaii.photos.compose.single_photo.VideoPlayerStuff"
 
 @Composable
 fun VideoPlayerControls(

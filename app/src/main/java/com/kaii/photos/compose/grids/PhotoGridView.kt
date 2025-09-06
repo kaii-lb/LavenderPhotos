@@ -132,7 +132,7 @@ import java.util.Date
 import java.util.Locale
 import kotlin.math.roundToInt
 
-private const val TAG = "PHOTO_GRID_VIEW"
+private const val TAG = "com.kaii.photos.compose.grids.PhotoGridView"
 
 @Composable
 fun PhotoGrid(

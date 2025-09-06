@@ -22,8 +22,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
 
-// private const val TAG = "CUSTOM_ALBUM_DATA_SOURCE"
-
 /** Loads metadata from the media store for images and videos. */
 class CustomAlbumDataSource(
     context: Context,

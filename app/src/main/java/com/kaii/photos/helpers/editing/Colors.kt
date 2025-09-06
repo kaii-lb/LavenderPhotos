@@ -146,6 +146,7 @@ private interface MediaColorFiltersImpl {
     @get:StringRes val tag: Int
         get() = R.string.filter
 
+    @Suppress("unused")
     @OptIn(UnstableApi::class)
     fun toEffect() =
         ColorMatrixEffect(

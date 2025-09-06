@@ -63,7 +63,7 @@ import com.kaii.photos.mediastore.content_provider.LavenderMediaColumns
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-private const val TAG = "SELECTING_BARS"
+private const val TAG = "com.kaii.photos.compose.app_bars.SelectingBars"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -18,12 +18,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -33,6 +35,7 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -54,6 +57,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -65,7 +69,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.kaii.photos.R
-import com.kaii.photos.compose.widgets.ConfirmCancelRow
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.editing.ExtendedMaterialTheme
 import com.kaii.photos.helpers.editing.brightenColor
@@ -631,4 +634,92 @@ fun ReorderableRadioButtonRow(
 
         Spacer(modifier = Modifier.width(8.dp))
     }
+}
+
+@Composable
+fun ConfirmCancelRow(
+    onConfirm: () -> Unit,
+    onCancel: (() -> Unit)? = null
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth(1f)
+            .height(56.dp)
+            .padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.End
+    ) {
+        if (onCancel != null) {
+            FilledTonalButton(
+                onClick = {
+                    onCancel()
+                },
+            ) {
+                Text(
+                    text = stringResource(id = R.string.media_cancel),
+                    fontSize = TextUnit(14f, TextUnitType.Sp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        FilledTonalButton( // maybe use normal button for it?
+            onClick = {
+                onConfirm()
+            }
+        ) {
+            Text(text = stringResource(id = R.string.media_confirm))
+        }
+    }
+}
+
+@Composable
+fun TitleCloseRow(
+    title: String,
+    closeOffset: Dp = 0.dp,
+    onClose: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth(1f)
+            .padding(8.dp, 0.dp)
+    ) {
+        Text(
+            text = title,
+            fontSize = TextUnit(18f, TextUnitType.Sp),
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier
+                .wrapContentSize()
+                .align(Alignment.Center)
+        )
+
+
+        IconButton(
+            onClick = {
+                onClose()
+            },
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .offset(x = closeOffset)
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.close),
+                contentDescription = "Close this dialog",
+                tint = MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
+}
+
+@Composable
+fun HorizontalSeparator() {
+    Box(
+        modifier = Modifier
+            .height(1.dp)
+            .padding(16.dp, 0.dp)
+            .fillMaxWidth(1f)
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
+            .clip(RoundedCornerShape(1000.dp))
+    )
 }

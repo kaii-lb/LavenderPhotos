@@ -54,7 +54,6 @@ import com.kaii.photos.compose.WallpaperSetter
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.compose.widgets.AnimatableTextField
 import com.kaii.photos.compose.widgets.MainDialogUserInfo
-import com.kaii.photos.compose.widgets.TitleCloseRow
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
@@ -85,7 +84,7 @@ import com.kaii.photos.models.main_activity.MainViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-private const val TAG = "INFO_DIALOGS"
+private const val TAG = "com.kaii.photos.compose.dialogs.InfoDialogs"
 
 @Composable
 fun SingleAlbumDialog(

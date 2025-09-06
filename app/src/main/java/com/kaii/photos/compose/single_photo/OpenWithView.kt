@@ -109,7 +109,8 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.BottomAppBarItem
 import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.dialogs.ExplanationDialog
-import com.kaii.photos.compose.single_photo.editing_view.video_editor.VideoEditor
+import com.kaii.photos.compose.editing_view.EditingView
+import com.kaii.photos.compose.editing_view.video_editor.VideoEditor
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType

@@ -1,4 +1,4 @@
-package com.kaii.photos.compose.single_photo.editing_view.video_editor
+package com.kaii.photos.compose.editing_view.video_editor
 
 import android.graphics.Bitmap
 import androidx.compose.animation.core.LinearEasing
@@ -65,20 +65,18 @@ import androidx.compose.ui.unit.isUnspecified
 import com.kaii.photos.R
 import com.kaii.photos.compose.CroppingRatioBottomSheet
 import com.kaii.photos.compose.dialogs.SliderDialog
-import com.kaii.photos.compose.single_photo.EditingViewBottomAppBarItem
-import com.kaii.photos.compose.single_photo.editing_view.BasicVideoData
-import com.kaii.photos.compose.single_photo.editing_view.CroppingAspectRatio
+import com.kaii.photos.compose.editing_view.EditingViewBottomAppBarItem
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.VideoPlayerConstants
+import com.kaii.photos.helpers.editing.BasicVideoData
+import com.kaii.photos.helpers.editing.CroppingAspectRatio
 import com.kaii.photos.helpers.editing.DrawingItems
 import com.kaii.photos.helpers.editing.MediaAdjustments
 import com.kaii.photos.helpers.editing.MediaColorFilters
 import com.kaii.photos.helpers.editing.VideoEditingState
 import com.kaii.photos.helpers.editing.VideoModification
 import kotlin.math.roundToInt
-
-// private const val TAG = "VIDEO_EDITOR_TAB_CONTENT"
 
 @Composable
 fun TrimContent(

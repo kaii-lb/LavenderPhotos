@@ -54,7 +54,7 @@ import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
 
-private const val TAG = "ABOUT_PAGE"
+private const val TAG = "com.kaii.photos.compose.settings.AboutPage"
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable

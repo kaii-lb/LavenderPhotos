@@ -70,7 +70,7 @@ import java.io.File
 import java.nio.file.Files
 import kotlin.io.path.Path
 
-private const val TAG = "LOCKED_FOLDER_VIEW"
+private const val TAG = "com.kaii.photos.compose.grids.LockedFolderView"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

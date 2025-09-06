@@ -24,7 +24,7 @@ import kotlinx.serialization.Serializable
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
-private const val TAG = "IMMICH_API_SERVICE"
+private const val TAG = "com.kaii.photos.immich.ImmichApiService"
 
 class ImmichApiService(
     client: ApiClient,
