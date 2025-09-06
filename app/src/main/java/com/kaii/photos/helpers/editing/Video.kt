@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
+import android.net.Uri
 import android.opengl.GLES20
 import android.text.Spannable
 import android.text.SpannableString
@@ -24,6 +25,8 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.core.graphics.createBitmap
+import androidx.media3.common.Effect
+import androidx.media3.common.MediaItem
 import androidx.media3.common.OverlaySettings
 import androidx.media3.common.VideoFrameProcessingException
 import androidx.media3.common.util.GlProgram
@@ -37,6 +40,7 @@ import androidx.media3.effect.GlEffect
 import androidx.media3.effect.GlShaderProgram
 import androidx.media3.effect.StaticOverlaySettings
 import androidx.media3.effect.TextOverlay
+import androidx.media3.exoplayer.ExoPlayer
 import com.kaii.photos.R
 import org.intellij.lang.annotations.Language
 import kotlin.math.roundToInt
@@ -346,4 +350,19 @@ class ColorMatrixEffect(
     override fun isNoOp(inputWidth: Int, inputHeight: Int): Boolean {
         return super.isNoOp(inputWidth, inputHeight)
     }
+}
+
+@OptIn(UnstableApi::class)
+fun ExoPlayer.applyEffects(
+    uri: Uri,
+    effectList: List<Effect>
+) {
+    stop()
+    val mediaItem = MediaItem.Builder()
+        .setUri(uri)
+        .build()
+
+    setMediaItem(mediaItem)
+    setVideoEffects(effectList)
+    prepare()
 }

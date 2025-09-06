@@ -1,5 +1,6 @@
 package com.kaii.photos.helpers.editing
 
+import androidx.annotation.OptIn
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,6 +15,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.unit.dp
+import androidx.media3.common.util.UnstableApi
 import com.kaii.photos.R
 import kotlin.math.ceil
 import kotlin.math.floor
@@ -143,6 +145,13 @@ private interface MediaColorFiltersImpl {
     @Suppress("unused") // it is used, just not by MediaColorFiltersImpl directly
     @get:StringRes val tag: Int
         get() = R.string.filter
+
+    @OptIn(UnstableApi::class)
+    fun toEffect() =
+        ColorMatrixEffect(
+            matrix = matrix,
+            isFilter = true
+        )
 }
 
 enum class MediaColorFilters : MediaColorFiltersImpl {

@@ -77,13 +77,11 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
 import androidx.core.graphics.createBitmap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.media3.common.Effect
 import androidx.media3.common.util.UnstableApi
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
@@ -229,7 +227,7 @@ fun VideoEditorBottomBar(
                     VideoEditorTabs.entries.indexOf(VideoEditorTabs.Video) -> {
                         VideoEditorProcessingContent(
                             basicData = basicData,
-                            modifications = modifications
+                            videoEditingState = videoEditingState
                         )
                     }
 
@@ -263,10 +261,10 @@ fun VideoEditorTopBar(
     uri: Uri,
     absolutePath: String,
     modifications: SnapshotStateList<VideoModification>,
-    effectsList: List<Effect>,
+    basicVideoData: BasicVideoData,
+    videoEditingState: VideoEditingState,
     lastSavedModCount: MutableIntState,
-    containerDimens: Size,
-    videoDimens: IntSize
+    containerDimens: Size
 ) {
     val navController = LocalNavController.current
 
@@ -370,12 +368,12 @@ fun VideoEditorTopBar(
                                 saveVideo(
                                     context = context,
                                     modifications = modifications,
-                                    effectsList = effectsList,
+                                    videoEditingState = videoEditingState,
+                                    basicVideoData = basicVideoData,
                                     uri = uri,
                                     absolutePath = absolutePath,
                                     overwrite = overwrite,
-                                    containerDimens = containerDimens,
-                                    videoDimens = videoDimens
+                                    containerDimens = containerDimens
                                 ) {
                                     coroutineScope.launch {
                                         LavenderSnackbarController.pushEvent(

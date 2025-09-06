@@ -28,7 +28,6 @@ import androidx.media3.common.audio.SonicAudioProcessor
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.effect.BitmapOverlay
 import androidx.media3.effect.Crop
-import androidx.media3.effect.FrameDropEffect
 import androidx.media3.effect.OverlayEffect
 import androidx.media3.effect.Presentation
 import androidx.media3.effect.ScaleAndRotateTransformation
@@ -45,6 +44,7 @@ import com.kaii.photos.R
 import com.kaii.photos.helpers.editing.DrawableText
 import com.kaii.photos.helpers.editing.DrawingItems
 import com.kaii.photos.helpers.editing.DrawingPaint
+import com.kaii.photos.helpers.editing.VideoEditingState
 import com.kaii.photos.helpers.editing.VideoModification
 import com.kaii.photos.helpers.getParentFromPath
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
@@ -92,12 +92,12 @@ enum class SelectedCropArea {
 suspend fun saveVideo(
     context: Context,
     modifications: SnapshotStateList<VideoModification>,
-    effectsList: List<Effect>,
+    videoEditingState: VideoEditingState,
+    basicVideoData: BasicVideoData,
     uri: Uri,
     absolutePath: String,
     overwrite: Boolean,
     containerDimens: Size,
-    videoDimens: IntSize,
     onFailure: () -> Unit
 ) {
     val isLoading = mutableStateOf(true)
@@ -150,8 +150,8 @@ suspend fun saveVideo(
         val widthPercent = right - left
         val heightPercent = bottom - top
 
-        val newWidth = (videoDimens.width * widthPercent).toInt()
-        val newHeight = (videoDimens.height * heightPercent).toInt()
+        val newWidth = (basicVideoData.width * widthPercent).toInt()
+        val newHeight = (basicVideoData.height * heightPercent).toInt()
 
         Log.d(TAG, "New width $newWidth and height $newHeight")
 
@@ -160,25 +160,11 @@ suspend fun saveVideo(
         )
     }
 
-    val rotation = modifications.lastOrNull {
-        it is VideoModification.Rotation
-    } as? VideoModification.Rotation
-
-    if (rotation != null) {
+    if (videoEditingState.rotation != 0f) {
         modList.add(
             ScaleAndRotateTransformation.Builder()
-                .setRotationDegrees(-rotation.degrees) // negative since our rotation is clockwise
+                .setRotationDegrees(-videoEditingState.rotation) // negative since our rotation is clockwise
                 .build()
-        )
-    }
-
-    val frameDrop = modifications.lastOrNull {
-        it is VideoModification.FrameDrop
-    } as? VideoModification.FrameDrop
-
-    if (frameDrop != null) {
-        modList.add(
-            FrameDropEffect.createDefaultFrameDropEffect(frameDrop.targetFps.toFloat())
         )
     }
 
@@ -194,12 +180,7 @@ suspend fun saveVideo(
     val minDb = -40f
     val maxDb = 0f
 
-    val volumePercentage =
-        modifications.lastOrNull {
-            it is VideoModification.Volume
-        } as? VideoModification.Volume ?: VideoModification.Volume(1f)
-
-    val dbChange = minDb + (maxDb - minDb) * volumePercentage.percentage
+    val dbChange = minDb + (maxDb - minDb) * videoEditingState.volume
     val linearGain = 10f.pow(dbChange / 20f)
 
     audioProcessor.putChannelMixingMatrix(
@@ -208,15 +189,12 @@ suspend fun saveVideo(
 
     audioEffectList.add(audioProcessor)
 
-    val speedMultiplier =
-        modifications.lastOrNull {
-            it is VideoModification.Speed
-        } as? VideoModification.Speed
-
-    if (speedMultiplier?.multiplier != null && speedMultiplier.multiplier != 1f) {
-        modList.add(SpeedChangeEffect(speedMultiplier.multiplier))
+    if (videoEditingState.speed != 1f) {
+        modList.add(
+            SpeedChangeEffect(videoEditingState.speed)
+        )
         audioEffectList.add(SonicAudioProcessor().apply {
-            setSpeed(speedMultiplier.multiplier)
+            setSpeed(videoEditingState.speed)
         })
     }
 
@@ -293,7 +271,7 @@ suspend fun saveVideo(
     )
 
     val editedMediaItem = EditedMediaItem.Builder(mediaItem)
-        .setEffects(Effects(audioEffectList, modList + effectsList + overlayEffectsList))
+        .setEffects(Effects(audioEffectList, modList + videoEditingState.effectList + overlayEffectsList))
         .build()
 
     val file = File(absolutePath)

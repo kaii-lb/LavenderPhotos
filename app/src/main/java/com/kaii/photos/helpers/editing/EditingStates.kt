@@ -82,6 +82,9 @@ class VideoEditingState(
     initialEffects: List<Effect>?,
     initialCroppingAspectRatio: CroppingAspectRatio,
     initialRotation: Float,
+    initialSpeed: Float,
+    initialFrameRate: Float,
+    initialVolume: Float,
     val duration: Float,
 ) {
     var croppingAspectRatio by mutableStateOf(initialCroppingAspectRatio)
@@ -93,6 +96,12 @@ class VideoEditingState(
     var endTrimPosition by mutableFloatStateOf(duration)
         private set
     var resetCrop by mutableStateOf(false)
+        private set
+    var speed by mutableFloatStateOf(initialSpeed)
+        private set
+    var frameRate by mutableFloatStateOf(initialFrameRate)
+        private set
+    var volume by mutableFloatStateOf(initialVolume)
         private set
 
     private val effects = mutableStateListOf<Effect?>()
@@ -127,8 +136,8 @@ class VideoEditingState(
 
     @JvmName("privateSetStartTrimPosition")
     fun setStartTrimPosition(position: Float) {
-            Log.d(TAG, "Duration is $duration start $startTrimPosition wanted $position")
-            this.startTrimPosition = position.coerceIn(0f, endTrimPosition - (duration * 0.1f))
+        Log.d(TAG, "Duration is $duration start $startTrimPosition wanted $position")
+        this.startTrimPosition = position.coerceIn(0f, endTrimPosition - (duration * 0.1f))
     }
 
     @JvmName("privateSetEndTrimPosition")
@@ -141,19 +150,37 @@ class VideoEditingState(
         this.resetCrop = value
     }
 
+    @JvmName("privateSetSpeed")
+    fun setSpeed(speed: Float) {
+        this.speed = speed
+    }
+
+    @JvmName("privateSetFrameRate")
+    fun setFrameRate(fps: Float) {
+        this.frameRate = fps
+    }
+
+    @JvmName("privateSetVolume")
+    fun setVolume(volume: Float) {
+        this.volume = volume
+    }
+
     fun addEffect(effect: Effect, effectIndex: Int? = null) {
         if (effectIndex != null) {
             // cuz order of application matters, so just do this and have it be constant
             effects.add(effectIndex, effect)
             effects.removeAt(effectIndex + 1) // remove null after shirting right
         } else {
+            effects.removeAll {
+                if (it == null) false else it::class == effect::class
+            }
             effects.add(effect)
         }
 
         Log.d(TAG, "Effect list $effects")
     }
 
-    fun removeAll(predicate: (Effect?) -> Boolean) = effects.removeAll { predicate(it) }
+    fun removeAllEffects(predicate: (Effect?) -> Boolean) = effects.removeAll { predicate(it) }
 
     companion object {
         private const val TAG = "VIDEO_EDITING_STATE"
@@ -161,13 +188,16 @@ class VideoEditingState(
         /** The default [Saver] implementation for [VideoEditingState]. */
         val Saver: Saver<VideoEditingState, *> =
             listSaver(
-                save = { listOf(it.croppingAspectRatio, it.rotation, it.effects, it.duration) },
+                save = { listOf(it.croppingAspectRatio, it.rotation, it.effects, it.speed, it.volume, it.frameRate, it.duration) },
                 restore = {
                     VideoEditingState(
                         initialCroppingAspectRatio = it[0] as CroppingAspectRatio,
                         initialRotation = it[1] as Float,
                         initialEffects = (it[2] as? List<*>)?.filterIsInstance<Effect>() ?: emptyList(),
-                        duration = it[3] as Float
+                        initialSpeed = it[3] as Float,
+                        initialVolume = it[4] as Float,
+                        initialFrameRate = it[5] as Float,
+                        duration = it[6] as Float
                     )
                 },
             )
@@ -184,10 +214,13 @@ fun rememberVideoEditingState(
 ): VideoEditingState {
     return rememberSaveable(duration, saver = VideoEditingState.Saver) {
         VideoEditingState(
+            duration = duration,
             initialCroppingAspectRatio = initialCroppingAspectRatio,
             initialRotation = initialRotation,
             initialEffects = initialEffects,
-            duration = duration
+            initialVolume = 1f,
+            initialSpeed = 1f,
+            initialFrameRate = 0f
         )
     }
 }

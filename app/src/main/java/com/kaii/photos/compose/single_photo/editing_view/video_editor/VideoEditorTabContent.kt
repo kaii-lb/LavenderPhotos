@@ -76,7 +76,7 @@ import com.kaii.photos.helpers.editing.MediaAdjustments
 import com.kaii.photos.helpers.editing.MediaColorFilters
 import com.kaii.photos.helpers.editing.VideoEditingState
 import com.kaii.photos.helpers.editing.VideoModification
-import kotlin.math.truncate
+import kotlin.math.roundToInt
 
 // private const val TAG = "VIDEO_EDITOR_TAB_CONTENT"
 
@@ -413,7 +413,7 @@ fun VideoEditorCropContent(
 @Composable
 fun VideoEditorProcessingContent(
     basicData: BasicVideoData,
-    modifications: SnapshotStateList<VideoModification>,
+    videoEditingState: VideoEditingState,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -429,14 +429,12 @@ fun VideoEditorProcessingContent(
             SliderDialog(
                 steps = 200,
                 range = 0f..200f,
-                startsAt = 100f,
+                startsAt = videoEditingState.volume * 100f,
                 title = {
                     resources.getString(R.string.editing_volume_display, "${it.toInt()}%")
                 },
                 onSetValue = {
-                    modifications.add(
-                        VideoModification.Volume(it / 100f)
-                    )
+                    videoEditingState.setVolume(it / 100f)
                 },
                 onDismiss = {
                     showVolumeDialog = false
@@ -465,18 +463,28 @@ fun VideoEditorProcessingContent(
                 else -> 1f
             }
 
+        fun inverseGetSpeed(speed: Float) =
+            when (speed) {
+                0.5f -> 0f
+                1f -> 1f
+                1.5f -> 2f
+                2f -> 3f
+                4f -> 4f
+                8f -> 5f
+
+                else -> 1f
+            }
+
         if (showSpeedDialog) {
             SliderDialog(
                 steps = 4,
                 range = 0f..5f,
-                startsAt = 1f,
+                startsAt = inverseGetSpeed(videoEditingState.speed),
                 title = {
                     resources.getString(R.string.editing_speed_display, "${getSpeed(it.toInt())}X")
                 },
                 onSetValue = {
-                    modifications.add(
-                        VideoModification.Speed(getSpeed(it.toInt()))
-                    )
+                    videoEditingState.setSpeed(getSpeed(it.toInt()))
                 },
                 onDismiss = {
                     showSpeedDialog = false
@@ -495,16 +503,14 @@ fun VideoEditorProcessingContent(
         var showFrameDropDialog by remember { mutableStateOf(false) }
         if (showFrameDropDialog) {
             SliderDialog(
-                steps = basicData.frameRate.toInt() - 1,
-                range = 1f..truncate(basicData.frameRate),
-                startsAt = truncate(basicData.frameRate),
+                steps = basicData.frameRate.roundToInt() - 2,
+                range = 1f..basicData.frameRate.roundToInt().toFloat(),
+                startsAt = if (videoEditingState.frameRate == 0f) basicData.frameRate else videoEditingState.frameRate,
                 title = {
-                    resources.getString(R.string.editing_framerate_display, "${it.toInt()}")
+                    resources.getString(R.string.editing_framerate_display, "${it.roundToInt()}")
                 },
                 onSetValue = {
-                    modifications.add(
-                        VideoModification.FrameDrop(it.toInt())
-                    )
+                    videoEditingState.setFrameRate(it.roundToInt().toFloat())
                 },
                 onDismiss = {
                     showFrameDropDialog = false

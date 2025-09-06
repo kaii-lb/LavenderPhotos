@@ -29,7 +29,6 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,6 +47,7 @@ import com.kaii.photos.compose.widgets.PopupPillSlider
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.editing.MediaAdjustments
+import com.kaii.photos.helpers.editing.VideoEditingState
 import com.kaii.photos.helpers.editing.VideoModification
 import kotlinx.coroutines.launch
 
@@ -61,7 +61,7 @@ fun VideoEditorBottomTools(
     isMuted: MutableState<Boolean>,
     totalModCount: MutableIntState,
     modifier: Modifier = Modifier,
-    setPlaybackSpeed: (speed: Float) -> Unit,
+    videoEditingState: VideoEditingState,
     onSeek: (position: Float) -> Unit,
     onSeekFinished: () -> Unit
 ) {
@@ -83,7 +83,7 @@ fun VideoEditorBottomTools(
                 duration = duration,
                 isPlaying = isPlaying,
                 isMuted = isMuted,
-                setPlaybackSpeed = setPlaybackSpeed,
+                videoEditingState = videoEditingState,
                 onSeek = onSeek,
                 onSeekFinished = onSeekFinished,
                 modifier = Modifier
@@ -107,7 +107,7 @@ fun VideoEditorPlaybackControls(
     isPlaying: MutableState<Boolean>,
     isMuted: MutableState<Boolean>,
     modifier: Modifier = Modifier,
-    setPlaybackSpeed: (speed: Float) -> Unit,
+    videoEditingState: VideoEditingState,
     onSeek: (position: Float) -> Unit,
     onSeekFinished: () -> Unit
 ) {
@@ -173,11 +173,10 @@ fun VideoEditorPlaybackControls(
                 )
             }
 
-            var currentPlaybackSpeed by remember { mutableFloatStateOf(1f) }
             FilledTonalButton(
                 onClick = {
                     val new =
-                        when (currentPlaybackSpeed) {
+                        when (videoEditingState.speed) {
                             1f -> 1.5f
                             1.5f -> 2f
                             2f -> 4f
@@ -185,8 +184,7 @@ fun VideoEditorPlaybackControls(
                             else -> 1f
                         }
 
-                    setPlaybackSpeed(new)
-                    currentPlaybackSpeed = new
+                    videoEditingState.setSpeed(new)
                 },
                 contentPadding = PaddingValues(horizontal = 4.dp),
                 modifier = Modifier
@@ -194,7 +192,7 @@ fun VideoEditorPlaybackControls(
                     .width(40.dp)
             ) {
                 Text(
-                    text = "${currentPlaybackSpeed}X",
+                    text = "${videoEditingState.speed}X",
                     fontSize = TextUnit(TextStylingConstants.EXTRA_SMALL_TEXT_SIZE, TextUnitType.Sp),
                     fontWeight = FontWeight.Bold
                 )

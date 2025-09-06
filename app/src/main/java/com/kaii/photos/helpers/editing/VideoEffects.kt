@@ -1,17 +1,7 @@
 package com.kaii.photos.helpers.editing
 
-import androidx.annotation.OptIn
-import androidx.media3.common.Effect
-import androidx.media3.common.util.UnstableApi
-
 
 interface VideoModification {
-    @OptIn(UnstableApi::class)
-    fun toEffect(): Effect =
-        if (this is Adjustment) {
-            type.getVideoEffect(value)
-        } else throw IllegalArgumentException("$this cannot be mapped to ${Effect::class}!")
-
     data class Trim(
         val start: Float,
         val end: Float
@@ -27,26 +17,13 @@ interface VideoModification {
         val bottom = top + height
     }
 
-    data class Rotation(
-        val degrees: Float
-    ) : VideoModification
-
-    data class Volume(
-        val percentage: Float
-    ) : VideoModification
-
-    data class Speed(
-        val multiplier: Float
-    ) : VideoModification
-
-    data class FrameDrop(
-        val targetFps: Int
-    ) : VideoModification
-
     data class Adjustment(
         val type: MediaAdjustments,
         val value: Float
-    ) : VideoModification
+    ) : VideoModification {
+        fun toEffect() =
+            type.getVideoEffect(value)
+    }
 
     data class Filter(
         val type: MediaColorFilters

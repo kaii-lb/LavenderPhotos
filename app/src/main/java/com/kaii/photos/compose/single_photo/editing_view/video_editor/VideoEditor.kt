@@ -55,13 +55,12 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.media3.common.MediaItem
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.effect.FrameDropEffect
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.compose.app_bars.VideoEditorBottomBar
 import com.kaii.photos.compose.app_bars.VideoEditorTopBar
@@ -79,6 +78,7 @@ import com.kaii.photos.helpers.editing.DrawingPaints
 import com.kaii.photos.helpers.editing.MediaAdjustments
 import com.kaii.photos.helpers.editing.MediaColorFilters
 import com.kaii.photos.helpers.editing.VideoModification
+import com.kaii.photos.helpers.editing.applyEffects
 import com.kaii.photos.helpers.editing.rememberVideoEditingState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -195,12 +195,8 @@ fun VideoEditor(
         )
     }
 
-    LaunchedEffect(videoEditingState.rotation) {
-        modifications.add(
-            VideoModification.Rotation(
-                degrees = videoEditingState.rotation
-            )
-        )
+    LaunchedEffect(videoEditingState.speed) {
+        exoPlayer.setPlaybackSpeed(videoEditingState.speed)
     }
 
     val pagerState = rememberPagerState { 6 }
@@ -221,9 +217,9 @@ fun VideoEditor(
         )
     }
 
-    var tries by remember { mutableIntStateOf(0) }
-    LaunchedEffect(Unit) {
+    LaunchedEffect(duration.floatValue) {
         val videoFormat = exoPlayer.videoFormat
+        var tries = 0
 
         withContext(Dispatchers.IO) {
             val metadata = MediaMetadataRetriever()
@@ -244,15 +240,27 @@ fun VideoEditor(
                 VideoSize(frame.width, frame.height)
             }
 
-            while ((basicVideoData.width == 0 || basicVideoData.height == 0 || basicVideoData.frameRate == 0f || basicVideoData.duration <= 0f)
-                && tries < 10
-            ) {
+            while ((basicVideoData.duration <= 0f || basicVideoData.frameRate == 0f) && tries < 10) {
+                val frameRate = if (videoFormat?.frameRate == null || videoFormat.frameRate.toInt() == -1) {
+                    val possible = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_CAPTURE_FRAMERATE)?.toFloat()
+
+                    if (possible == null) {
+                        val frameCount = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_FRAME_COUNT)?.toFloat() ?: 0f
+
+                        frameCount / duration.floatValue
+                    } else {
+                        possible
+                    }
+                } else {
+                    videoFormat.frameRate
+                }
+
+                videoEditingState.setFrameRate(frameRate) // important!!!
+
                 basicVideoData =
                     BasicVideoData(
                         duration = duration.floatValue,
-                        frameRate =
-                            if (videoFormat?.frameRate?.toInt() == -1 || videoFormat?.frameRate == null) 0f
-                            else videoFormat.frameRate,
+                        frameRate = frameRate,
                         absolutePath = absolutePath,
                         width = size.width,
                         height = size.height
@@ -265,6 +273,31 @@ fun VideoEditor(
         }
     }
 
+    LaunchedEffect(videoEditingState.volume) {
+        exoPlayer.volume = videoEditingState.volume
+    }
+
+    LaunchedEffect(videoEditingState.frameRate) {
+        if (videoEditingState.frameRate == basicVideoData.frameRate || videoEditingState.frameRate <= 0f) {
+            videoEditingState.removeAllEffects {
+                it is FrameDropEffect
+            }
+        } else {
+            videoEditingState.addEffect(
+                FrameDropEffect.createSimpleFrameDropEffect(
+                    basicVideoData.frameRate,
+                    if (videoEditingState.frameRate >= basicVideoData.frameRate) basicVideoData.frameRate
+                    else videoEditingState.frameRate
+                )
+            )
+        }
+
+        exoPlayer.applyEffects(
+            uri = uri,
+            effectList = videoEditingState.effectList
+        )
+    }
+
     val totalModCount = remember { mutableIntStateOf(0) }
     LaunchedEffect(totalModCount.intValue) {
         val last = modifications.lastOrNull()
@@ -274,17 +307,12 @@ fun VideoEditor(
                 effect = last.toEffect(),
                 effectIndex = MediaAdjustments.entries.indexOf(last.type)
             )
-
         }
 
-        exoPlayer.stop()
-        val mediaItem = MediaItem.Builder()
-            .setUri(uri)
-            .build()
-
-        exoPlayer.setMediaItem(mediaItem)
-        exoPlayer.setVideoEffects(videoEditingState.effectList)
-        exoPlayer.prepare()
+        exoPlayer.applyEffects(
+            uri = uri,
+            effectList = videoEditingState.effectList
+        )
     }
 
     val coroutineScope = rememberCoroutineScope()
@@ -302,13 +330,10 @@ fun VideoEditor(
                 uri = uri,
                 absolutePath = absolutePath,
                 modifications = modifications,
-                effectsList = videoEditingState.effectList,
+                videoEditingState = videoEditingState,
+                basicVideoData = basicVideoData,
                 lastSavedModCount = lastSavedModCount,
-                containerDimens = containerDimens,
-                videoDimens = IntSize(
-                    width = basicVideoData.width,
-                    height = basicVideoData.height
-                )
+                containerDimens = containerDimens
             )
         },
         bottomBar = {
@@ -329,16 +354,11 @@ fun VideoEditor(
                     totalModCount.intValue += 1
                 },
                 saveEffect = { filter ->
-                    videoEditingState.removeAll {
+                    videoEditingState.removeAllEffects {
                         it is ColorMatrixEffect && it.isFilter
                     }
 
-                    videoEditingState.addEffect(
-                        ColorMatrixEffect(
-                            matrix = filter.matrix,
-                            isFilter = true
-                        )
-                    )
+                    videoEditingState.addEffect(filter.toEffect())
 
                     totalModCount.intValue += 1
 
@@ -578,9 +598,7 @@ fun VideoEditor(
                 currentPosition = currentVideoPosition,
                 duration = duration.floatValue,
                 totalModCount = totalModCount,
-                setPlaybackSpeed = { speed ->
-                    exoPlayer.setPlaybackSpeed(speed)
-                },
+                videoEditingState = videoEditingState,
                 onSeek = { pos ->
                     isSeeking = true
                     val wasPlaying = isPlaying.value
