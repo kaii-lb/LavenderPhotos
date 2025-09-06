@@ -1,12 +1,15 @@
 package com.kaii.photos.compose.editing_view
 
 import android.media.MediaMetadataRetriever
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -45,6 +48,8 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.util.UnstableApi
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.kaii.photos.compose.widgets.shimmerEffect
+import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.editing.MediaAdjustments
 import com.kaii.photos.helpers.editing.MediaColorFilters
@@ -69,23 +74,27 @@ fun FilterShowcase(
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Column(
+        AnimatedContent(
+            targetState = image != null,
+            transitionSpec = {
+                fadeIn(
+                    animationSpec = tween(
+                        durationMillis = AnimationConstants.DURATION_EXTRA_LONG
+                    )
+                ).togetherWith(
+                    fadeOut(
+                        animationSpec = tween(
+                            durationMillis = AnimationConstants.DURATION_EXTRA_LONG
+                        )
+                    )
+                )
+            },
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth(1f)
                 .clip(RoundedCornerShape(12.dp))
-                .background(MaterialTheme.colorScheme.surfaceContainerLowest),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            AnimatedVisibility(
-                visible = image != null,
-                enter = fadeIn(),
-                exit = fadeOut(),
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(1f)
-            ) {
+        ) { state ->
+            if (state) {
                 Image(
                     bitmap = image!!,
                     contentDescription = stringResource(id = filter.title),
@@ -95,6 +104,17 @@ fun FilterShowcase(
                         .weight(1f)
                         .fillMaxWidth(1f)
                         .clip(RoundedCornerShape(12.dp))
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(1f)
+                        .clip(RoundedCornerShape(12.dp))
+                        .shimmerEffect(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+                            highlightColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                        )
                 )
             }
         }

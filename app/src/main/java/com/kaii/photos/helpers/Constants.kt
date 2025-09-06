@@ -26,6 +26,7 @@ sealed class AnimationConstants {
         const val DURATION_SHORT = 200
         const val DURATION = 350
         const val DURATION_LONG = 600
+        const val DURATION_EXTRA_LONG = 900
     }
 }
 

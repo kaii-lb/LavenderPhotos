@@ -6,7 +6,10 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -47,17 +50,23 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
@@ -529,5 +538,37 @@ fun AnimatedLoginIcon(
                 )
             }
         }
+    }
+}
+
+fun Modifier.shimmerEffect(
+    containerColor: Color = Color.DarkGray,
+    highlightColor: Color = Color.Gray
+) = composed {
+    var size by remember { mutableStateOf(IntSize.Zero) }
+
+    val transition = rememberInfiniteTransition()
+    val startOffset by transition.animateFloat(
+        initialValue = -2f * size.width,
+        targetValue = 2f * size.width,
+        animationSpec = infiniteRepeatable(
+            animation = tween(
+                durationMillis = AnimationConstants.DURATION_EXTRA_LONG
+            )
+        )
+    )
+
+    background(
+        brush = Brush.linearGradient(
+            colors = listOf(
+                containerColor,
+                highlightColor,
+                containerColor
+            ),
+            start = Offset(startOffset, 0f),
+            end = Offset(startOffset + size.width, size.height.toFloat())
+        )
+    ).onGloballyPositioned {
+        size = it.size
     }
 }

@@ -3,11 +3,15 @@ package com.kaii.photos.compose.grids
 import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
 import androidx.annotation.FloatRange
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -80,20 +84,22 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.kaii.photos.LocalAppDatabase
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
+import com.kaii.photos.compose.widgets.shimmerEffect
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumSortMode
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.PhotoGrid
+import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
-import com.kaii.photos.helpers.editing.brightenColor
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.signature
 import com.kaii.photos.models.album_grid.AlbumsViewModel
@@ -508,22 +514,50 @@ private fun AlbumGridItem(
             verticalArrangement = Arrangement.SpaceEvenly,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            GlideImage(
-                model = item.uri,
-                contentDescription = item.displayName,
-                contentScale = ContentScale.Crop,
-                failure = placeholder(R.drawable.broken_image),
+            AnimatedContent(
+                targetState = item.id != 0L,
+                transitionSpec = {
+                    fadeIn(
+                        animationSpec = tween(
+                            durationMillis = AnimationConstants.DURATION_EXTRA_LONG
+                        )
+                    ).togetherWith(
+                        fadeOut(
+                            animationSpec = tween(
+                                durationMillis = AnimationConstants.DURATION_EXTRA_LONG
+                            )
+                        )
+                    )
+                },
                 modifier = Modifier
                     .aspectRatio(1f)
                     .clip(RoundedCornerShape(16.dp))
-                    .background(
-                        brightenColor(
-                            MaterialTheme.colorScheme.surfaceContainer,
-                            0.1f
-                        )
-                    ),
-            ) {
-                it.signature(item.signature())
+            ) { state ->
+                if (state) {
+                    GlideImage(
+                        model = item.uri,
+                        contentDescription = item.displayName,
+                        contentScale = ContentScale.Crop,
+                        failure = placeholder(R.drawable.broken_image),
+                        modifier = Modifier
+                            .aspectRatio(1f)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                    ) {
+                        it.signature(item.signature())
+                            .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    }
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .aspectRatio(1f)
+                            .clip(RoundedCornerShape(16.dp))
+                            .shimmerEffect(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+                                highlightColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                            )
+                    )
+                }
             }
 
             Row(
