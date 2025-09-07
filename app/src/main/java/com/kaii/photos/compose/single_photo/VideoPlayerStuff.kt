@@ -988,7 +988,8 @@ fun rememberExoPlayerWithLifeCycle(
     absolutePath: String?,
     isPlaying: MutableState<Boolean>,
     duration: MutableFloatState,
-    currentVideoPosition: MutableFloatState
+    currentVideoPosition: MutableFloatState,
+    onPlaybackStateChanged: (state: Int) -> Unit = {}
 ): ExoPlayer {
     val context = LocalContext.current
 
@@ -998,7 +999,8 @@ fun rememberExoPlayerWithLifeCycle(
             context,
             isPlaying,
             currentVideoPosition,
-            duration
+            duration,
+            onPlaybackStateChanged
         )
     }
 
@@ -1023,7 +1025,8 @@ fun createExoPlayer(
     context: Context,
     isPlaying: MutableState<Boolean>,
     currentVideoPosition: MutableFloatState,
-    duration: MutableFloatState
+    duration: MutableFloatState,
+    onPlaybackStateChanged: (state: Int) -> Unit
 ): ExoPlayer {
     val exoPlayer = ExoPlayer.Builder(context).apply {
         setLoadControl(
@@ -1079,6 +1082,8 @@ fun createExoPlayer(
     val listener = object : Player.Listener {
         override fun onPlaybackStateChanged(playbackState: Int) {
             super.onPlaybackStateChanged(playbackState)
+
+            onPlaybackStateChanged(playbackState)
 
             if (playbackState == ExoPlayer.STATE_READY) {
                 duration.floatValue = exoPlayer.duration / 1000f
@@ -1178,6 +1183,9 @@ fun rememberPlayerView(
             setShowBuffering(PlayerView.SHOW_BUFFERING_ALWAYS)
 
             setBackgroundColor(backgroundColor)
+            setShutterBackgroundColor(backgroundColor)
+            outlineSpotShadowColor = backgroundColor
+            outlineAmbientShadowColor = backgroundColor
         }
     }
 

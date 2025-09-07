@@ -549,8 +549,8 @@ fun Modifier.shimmerEffect(
 
     val transition = rememberInfiniteTransition()
     val startOffset by transition.animateFloat(
-        initialValue = -2f * size.width,
-        targetValue = 2f * size.width,
+        initialValue = -3f * size.width,
+        targetValue = 3f * size.width,
         animationSpec = infiniteRepeatable(
             animation = tween(
                 durationMillis = AnimationConstants.DURATION_EXTRA_LONG

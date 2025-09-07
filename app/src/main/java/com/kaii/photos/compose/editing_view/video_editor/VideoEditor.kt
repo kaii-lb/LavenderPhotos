@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -47,6 +48,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -62,6 +64,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.effect.FrameDropEffect
+import androidx.media3.exoplayer.ExoPlayer
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.compose.app_bars.VideoEditorBottomBar
 import com.kaii.photos.compose.app_bars.VideoEditorTopBar
@@ -70,6 +73,7 @@ import com.kaii.photos.compose.editing_view.FilterPager
 import com.kaii.photos.compose.editing_view.makeVideoDrawCanvas
 import com.kaii.photos.compose.single_photo.rememberExoPlayerWithLifeCycle
 import com.kaii.photos.compose.single_photo.rememberPlayerView
+import com.kaii.photos.compose.widgets.shimmerEffect
 import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.editing.BasicVideoData
@@ -107,6 +111,7 @@ fun VideoEditor(
     /** In Seconds */
     val currentVideoPosition = remember { mutableFloatStateOf(0f) }
     val duration = remember { mutableFloatStateOf(0f) }
+    var exoPlayerLoading by remember { mutableStateOf(true) }
 
     val exoPlayer = rememberExoPlayerWithLifeCycle(
         videoSource = uri,
@@ -114,7 +119,9 @@ fun VideoEditor(
         isPlaying = isPlaying,
         duration = duration,
         currentVideoPosition = currentVideoPosition
-    )
+    ) { playbackState ->
+        exoPlayerLoading = playbackState == ExoPlayer.STATE_BUFFERING
+    }
 
     val videoEditingState = rememberVideoEditingState(
         duration = duration.floatValue
@@ -219,6 +226,8 @@ fun VideoEditor(
             )
         )
     }
+
+    Log.d(TAG, "basic video data $basicVideoData")
 
     LaunchedEffect(duration.floatValue) {
         val videoFormat = exoPlayer.videoFormat
@@ -523,7 +532,7 @@ fun VideoEditor(
                                     },
                                     modifier = Modifier
                                         .fillMaxSize(1f)
-                                        .align(Alignment.Center)
+                                        .background(MaterialTheme.colorScheme.background)
                                 )
 
                                 val backgroundColor = MaterialTheme.colorScheme.background
@@ -564,13 +573,29 @@ fun VideoEditor(
                                         }
                                     }
 
-                                    if (pagerState.currentPage != VideoEditorTabs.entries.indexOf(VideoEditorTabs.Crop)) {
-                                        clipRect(
-                                            left = actualLeft + originalCrop.left,
-                                            top = actualTop + originalCrop.top,
-                                            right = actualLeft + originalCrop.right,
-                                            bottom = actualTop + originalCrop.bottom
-                                        ) {
+                                    clipRect(
+                                        left = 0f,
+                                        top = 0f,
+                                        right = actualLeft * 2 + originalCrop.right,
+                                        bottom = actualTop * 2 + originalCrop.bottom
+                                    ) {
+                                        if (pagerState.currentPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Crop)) {
+                                            // mask exoplayer's failure to set the background color
+                                            clipRect(
+                                                left = actualLeft + originalCrop.left,
+                                                top = actualTop + originalCrop.top,
+                                                right = actualLeft + originalCrop.right,
+                                                bottom = actualTop + originalCrop.bottom,
+                                                clipOp = ClipOp.Difference
+                                            ) {
+                                                drawRect(
+                                                    color = backgroundColor,
+                                                    size = Size(width.toPx(), height.toPx())
+                                                )
+                                            }
+                                        } else {
+                                            // mask exoplayer's failure to set the background color
+                                            // and the "unwanted" area of the cropped video
                                             clipRect(
                                                 left = actualLeft + latestCrop.left,
                                                 top = actualTop + latestCrop.top,
@@ -584,6 +609,50 @@ fun VideoEditor(
                                                 )
                                             }
                                         }
+                                    }
+                                }
+
+                                AnimatedContent(
+                                    targetState = exoPlayerLoading || basicVideoData.aspectRatio == 1f,
+                                    transitionSpec = {
+                                        fadeIn(
+                                            animationSpec = tween(
+                                                durationMillis = AnimationConstants.DURATION_LONG
+                                            )
+                                        ).togetherWith(
+                                            fadeOut(
+                                                animationSpec = tween(
+                                                    durationMillis = AnimationConstants.DURATION_LONG
+                                                )
+                                            )
+                                        )
+                                    },
+                                    modifier = Modifier
+                                        .fillMaxSize(1f)
+                                        .align(Alignment.Center)
+                                ) { state ->
+                                    if (state) {
+                                        Box(
+                                            modifier = Modifier
+                                                .requiredSize(
+                                                    width = width,
+                                                    height = height
+                                                )
+                                                .clip(RoundedCornerShape(16.dp))
+                                                .align(Alignment.Center)
+                                                .shimmerEffect(
+                                                    containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+                                                    highlightColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                                                )
+                                        )
+                                    } else {
+                                        Box(
+                                            modifier = Modifier
+                                                .requiredSize(
+                                                    width = width,
+                                                    height = height
+                                                )
+                                        )
                                     }
                                 }
                             }
@@ -601,12 +670,16 @@ fun VideoEditor(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     AnimatedVisibility(
-                        visible = pagerState.currentPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Crop),
+                        visible = pagerState.currentPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Crop) && basicVideoData.aspectRatio != -1f,
                         enter = fadeIn(
-                            animationSpec = AnimationConstants.expressiveTween()
+                            animationSpec = AnimationConstants.expressiveTween(
+                                durationMillis = AnimationConstants.DURATION_LONG
+                            )
                         ),
                         exit = fadeOut(
-                            animationSpec = AnimationConstants.expressiveTween()
+                            animationSpec = AnimationConstants.expressiveTween(
+                                durationMillis = AnimationConstants.DURATION_LONG
+                            )
                         ),
                         modifier = Modifier
                             .requiredSize(
