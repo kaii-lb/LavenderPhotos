@@ -1,6 +1,5 @@
 package com.kaii.photos.compose.editing_view
 
-import android.util.Log
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -39,16 +38,16 @@ import com.kaii.photos.helpers.editing.SelectedCropArea
 import com.kaii.photos.helpers.editing.VideoEditingState
 import kotlin.math.abs
 
-private const val TAG = "com.kaii.photos.helpers.editing.Shared"
-
 @Composable
 fun CropBox(
     containerWidth: Float,
     containerHeight: Float,
     mediaAspectRatio: Float,
     videoEditingState: VideoEditingState,
+    scale: Float,
     modifier: Modifier = Modifier,
     onAreaChanged: (area: Rect, original: Size) -> Unit,
+    onCropDone: () -> Unit
 ) {
     val containerAspectRatio = remember {
         containerWidth / containerHeight
@@ -93,8 +92,6 @@ fun CropBox(
             (containerWidth - width) / 2
         )
     }
-
-    Log.d(TAG, "Dimensions $left $top $width $height $originalHeight $mediaAspectRatio")
 
     LaunchedEffect(mediaAspectRatio, videoEditingState.resetCrop, containerWidth, containerHeight) {
         originalWidth =
@@ -174,10 +171,10 @@ fun CropBox(
             .drawWithContent {
                 drawContent()
 
-                val strokeWidth = 4.dp.toPx()
+                val strokeWidth = 4.dp.toPx() * (1f / scale)
 
                 drawRect(
-                    color = Color.Black.copy(alpha = 0.6f),
+                    color = Color.Black.copy(alpha = 0.75f),
                     topLeft = Offset(((containerWidth - originalWidth) / 2), (containerHeight - originalHeight) / 2),
                     size = Size(originalWidth, originalHeight)
                 )
@@ -201,7 +198,8 @@ fun CropBox(
             .drawWithContent {
                 drawContent()
 
-                val strokeWidth = 4.dp.toPx()
+                val strokeWidth = 4.dp.toPx() * (1f / scale)
+                val cornerRadius = 2.dp.toPx() * (1f / scale)
 
                 drawOutline(
                     outline = Outline.Rounded(
@@ -210,7 +208,7 @@ fun CropBox(
                             top = top,
                             right = left + width,
                             bottom = top + height,
-                            cornerRadius = CornerRadius(x = 2.dp.toPx(), y = 2.dp.toPx())
+                            cornerRadius = CornerRadius(x = cornerRadius, y = cornerRadius)
                         )
                     ),
                     style = Stroke(
@@ -219,6 +217,7 @@ fun CropBox(
                     color = Color.White.copy(alpha = 0.5f)
                 )
 
+                val guidelineStrokeWidth = 2.dp.toPx() * (1f / scale)
                 // guideline vertical left
                 drawLine(
                     color = animatedColor,
@@ -230,7 +229,7 @@ fun CropBox(
                         x = left + width / 3,
                         y = top + height - strokeWidth / 2
                     ),
-                    strokeWidth = 2.dp.toPx()
+                    strokeWidth = guidelineStrokeWidth
                 )
 
                 // guideline vertical right
@@ -244,7 +243,7 @@ fun CropBox(
                         x = left + width - width / 3,
                         y = top + height - strokeWidth / 2
                     ),
-                    strokeWidth = 2.dp.toPx()
+                    strokeWidth = guidelineStrokeWidth
                 )
 
                 // guideline horizontal top
@@ -258,7 +257,7 @@ fun CropBox(
                         x = left + width - strokeWidth / 2,
                         y = top + height / 3
                     ),
-                    strokeWidth = 2.dp.toPx()
+                    strokeWidth = guidelineStrokeWidth
                 )
 
                 // guideline horizontal bottom
@@ -272,10 +271,11 @@ fun CropBox(
                         x = left + width - strokeWidth / 2,
                         y = top + height - height / 3
                     ),
-                    strokeWidth = 2.dp.toPx()
+                    strokeWidth = guidelineStrokeWidth
                 )
 
-                val topLeftArc = createCropRectBorderArc(left = left, top = top)
+                val arcStrokeWidth = 6.dp.toPx() * (1f / scale)
+                val topLeftArc = createCropRectBorderArc(left = left, top = top, scale = scale)
                 val topLeftBounds = topLeftArc.getBounds()
                 val topLeftCenter = Offset(
                     x = topLeftBounds.left + topLeftBounds.width / 2,
@@ -286,13 +286,13 @@ fun CropBox(
                         color = Color.White.copy(alpha = if (selectedArea == SelectedCropArea.TopLeftCorner) 0.8f else 1f),
                         path = topLeftArc,
                         style = Stroke(
-                            width = 6.dp.toPx(),
+                            width = arcStrokeWidth,
                             cap = StrokeCap.Round
                         )
                     )
                 }
 
-                val topRightArc = createCropRectBorderArc(left = left + width, top = top)
+                val topRightArc = createCropRectBorderArc(left = left + width, top = top, scale = scale)
                 val topRightBounds = topRightArc.getBounds()
                 val topRightCenter = Offset(
                     x = topRightBounds.left + topRightBounds.width / 2,
@@ -303,13 +303,13 @@ fun CropBox(
                         color = Color.White.copy(alpha = if (selectedArea == SelectedCropArea.TopRightCorner) 0.8f else 1f),
                         path = topRightArc,
                         style = Stroke(
-                            width = 6.dp.toPx(),
+                            width = arcStrokeWidth,
                             cap = StrokeCap.Round
                         )
                     )
                 }
 
-                val bottomLeftArc = createCropRectBorderArc(left = left, top = top + height)
+                val bottomLeftArc = createCropRectBorderArc(left = left, top = top + height, scale = scale)
                 val bottomLeftBounds = bottomLeftArc.getBounds()
                 val bottomLeftCenter = Offset(
                     x = bottomLeftBounds.left + bottomLeftBounds.width / 2,
@@ -320,13 +320,13 @@ fun CropBox(
                         color = Color.White.copy(alpha = if (selectedArea == SelectedCropArea.BottomLeftCorner) 0.8f else 1f),
                         path = bottomLeftArc,
                         style = Stroke(
-                            width = 6.dp.toPx(),
+                            width = arcStrokeWidth,
                             cap = StrokeCap.Round
                         )
                     )
                 }
 
-                val bottomRightArc = createCropRectBorderArc(left = left + width, top = top + height)
+                val bottomRightArc = createCropRectBorderArc(left = left + width, top = top + height, scale = scale)
                 val bottomRightBounds = bottomRightArc.getBounds()
                 val bottomRightCenter = Offset(
                     x = bottomRightBounds.left + bottomRightBounds.width / 2,
@@ -337,13 +337,13 @@ fun CropBox(
                         color = Color.White.copy(alpha = if (selectedArea == SelectedCropArea.BottomRightCorner) 0.8f else 1f),
                         path = bottomRightArc,
                         style = Stroke(
-                            width = 6.dp.toPx(),
+                            width = arcStrokeWidth,
                             cap = StrokeCap.Round
                         )
                     )
                 }
             }
-            .pointerInput(Unit) {
+            .pointerInput(scale) {
                 val maxTop = (containerHeight - originalHeight) / 2
                 val maxLeft = (containerWidth - originalWidth) / 2
 
@@ -353,11 +353,31 @@ fun CropBox(
                         val distanceToLeft = abs(left - event.position.x)
                         val distanceToBottom = abs((top + height) - event.position.y)
                         val distanceToRight = abs((left + width) - event.position.x)
-                        val threshold = 40.dp.toPx()
+                        val threshold = 56.dp.toPx()
 
                         when {
+                            // center drag (whole crop box)
+                            (event.position.y in top + height / 3..top + height * 2 / 3 && event.position.x in left + width / 3..left + width * 2 / 3) || selectedArea == SelectedCropArea.Whole -> {
+                                if (left + offset.x >= maxLeft
+                                    && left + offset.x + width <= maxLeft + originalWidth
+                                ) {
+                                    left = left + offset.x
+                                }
+
+                                if (top + offset.y >= maxTop
+                                    && top + offset.y + height <= maxTop + originalHeight
+                                ) {
+                                    top = top + offset.y
+                                }
+
+                                selectedArea = SelectedCropArea.Whole
+                            }
+
                             // top left
-                            (distanceToTop <= threshold && selectedArea == SelectedCropArea.None) && distanceToLeft <= threshold || selectedArea == SelectedCropArea.TopLeftCorner -> {
+                            ((distanceToTop <= threshold && distanceToTop <= distanceToBottom)
+                                    && (distanceToLeft <= threshold && distanceToLeft <= distanceToRight)
+                                    && selectedArea == SelectedCropArea.None)
+                                    || selectedArea == SelectedCropArea.TopLeftCorner -> {
                                 if (videoEditingState.croppingAspectRatio == CroppingAspectRatio.FreeForm) {
                                     val newTop = top + offset.y
                                     val newHeight = height - offset.y
@@ -417,11 +437,14 @@ fun CropBox(
                             }
 
                             // bottom left
-                            (distanceToBottom <= threshold && selectedArea == SelectedCropArea.None) && distanceToLeft <= threshold || selectedArea == SelectedCropArea.BottomLeftCorner -> {
+                            ((distanceToBottom <= threshold && distanceToBottom <= distanceToTop)
+                                    && (distanceToLeft <= threshold && distanceToLeft <= distanceToRight)
+                                    && selectedArea == SelectedCropArea.None)
+                                    || selectedArea == SelectedCropArea.BottomLeftCorner -> {
                                 if (videoEditingState.croppingAspectRatio == CroppingAspectRatio.FreeForm) {
                                     val newHeight = height + offset.y
                                     if (top + newHeight <= (maxTop + originalHeight)
-                                        && top + newHeight > threshold
+                                        && newHeight > threshold
                                     ) {
                                         height += offset.y
                                     }
@@ -470,7 +493,10 @@ fun CropBox(
                             }
 
                             // top right
-                            (distanceToTop <= threshold && selectedArea == SelectedCropArea.None) && distanceToRight <= threshold || selectedArea == SelectedCropArea.TopRightCorner -> {
+                            ((distanceToTop <= threshold && distanceToTop <= distanceToBottom)
+                                    && (distanceToRight <= threshold && distanceToRight <= distanceToLeft)
+                                    && selectedArea == SelectedCropArea.None)
+                                    || selectedArea == SelectedCropArea.TopRightCorner -> {
                                 if (videoEditingState.croppingAspectRatio == CroppingAspectRatio.FreeForm) {
                                     val newTop = top + offset.y
                                     val newHeight = height - offset.y
@@ -524,11 +550,14 @@ fun CropBox(
                             }
 
                             // bottom right
-                            (distanceToBottom <= threshold && selectedArea == SelectedCropArea.None) && distanceToRight <= threshold || selectedArea == SelectedCropArea.BottomRightCorner -> {
+                            ((distanceToBottom <= threshold && distanceToBottom <= distanceToTop)
+                                    && (distanceToRight <= threshold && distanceToRight <= distanceToLeft)
+                                    && selectedArea == SelectedCropArea.None)
+                                    || selectedArea == SelectedCropArea.BottomRightCorner -> {
                                 if (videoEditingState.croppingAspectRatio == CroppingAspectRatio.FreeForm) {
                                     val newHeight = height + offset.y
                                     if (top + newHeight <= (maxTop + originalHeight)
-                                        && top + newHeight > threshold
+                                        && newHeight > threshold
                                     ) {
                                         height += offset.y
                                     }
@@ -569,7 +598,9 @@ fun CropBox(
                             }
 
                             // top edge
-                            (distanceToTop <= threshold && selectedArea == SelectedCropArea.None) || selectedArea == SelectedCropArea.TopEdge -> {
+                            ((distanceToTop <= threshold && distanceToTop <= distanceToBottom)
+                                    && selectedArea == SelectedCropArea.None)
+                                    || selectedArea == SelectedCropArea.TopEdge -> {
                                 val newTop = top + offset.y
                                 val newHeight = height - offset.y
 
@@ -607,7 +638,9 @@ fun CropBox(
                             }
 
                             // left edge
-                            (distanceToLeft <= threshold && selectedArea == SelectedCropArea.None) || selectedArea == SelectedCropArea.LeftEdge -> {
+                            ((distanceToLeft <= threshold && distanceToLeft <= distanceToRight)
+                                    && selectedArea == SelectedCropArea.None)
+                                    || selectedArea == SelectedCropArea.LeftEdge -> {
                                 val newLeft = left + offset.x
                                 val newWidth = width - offset.x
 
@@ -645,7 +678,9 @@ fun CropBox(
                             }
 
                             // bottom edge
-                            (distanceToBottom <= threshold && selectedArea == SelectedCropArea.None) || selectedArea == SelectedCropArea.BottomEdge -> {
+                            ((distanceToBottom <= threshold && distanceToBottom <= distanceToTop)
+                                    && selectedArea == SelectedCropArea.None)
+                                    || selectedArea == SelectedCropArea.BottomEdge -> {
                                 val newHeight = height + offset.y
 
                                 if (videoEditingState.croppingAspectRatio == CroppingAspectRatio.FreeForm) {
@@ -681,7 +716,9 @@ fun CropBox(
                             }
 
                             // right edge
-                            (distanceToRight <= threshold && selectedArea == SelectedCropArea.None) || selectedArea == SelectedCropArea.RightEdge -> {
+                            ((distanceToRight <= threshold && distanceToRight <= distanceToLeft)
+                                    && selectedArea == SelectedCropArea.None)
+                                    || selectedArea == SelectedCropArea.RightEdge -> {
                                 val newWidth = width + offset.x
 
                                 if (videoEditingState.croppingAspectRatio == CroppingAspectRatio.FreeForm) {
@@ -715,27 +752,11 @@ fun CropBox(
 
                                 selectedArea = SelectedCropArea.RightEdge
                             }
-
-                            // center drag (whole crop box)
-                            (event.position.y in top..top + height && event.position.x in left..left + width) || selectedArea == SelectedCropArea.Whole -> {
-                                if (left + offset.x >= maxLeft
-                                    && left + offset.x + width <= maxLeft + originalWidth
-                                ) {
-                                    left = left + offset.x
-                                }
-
-                                if (top + offset.y >= maxTop
-                                    && top + offset.y + height <= maxTop + originalHeight
-                                ) {
-                                    top = top + offset.y
-                                }
-
-                                selectedArea = SelectedCropArea.Whole
-                            }
                         }
                     },
                     onDragEnd = {
                         selectedArea = SelectedCropArea.None
+                        onCropDone()
                     }
                 )
             }
@@ -744,9 +765,10 @@ fun CropBox(
 
 fun DrawScope.createCropRectBorderArc(
     left: Float,
-    top: Float
+    top: Float,
+    scale: Float
 ) = Path().apply {
-    val radius = 16.dp.toPx()
+    val radius = 16.dp.toPx() * (1f / scale)
     moveTo(x = left - radius / 2, y = top - radius / 2)
 
     lineTo(x = left, y = top - radius / 2)

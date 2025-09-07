@@ -380,8 +380,8 @@ data class BasicVideoData(
 enum class VideoEditorTabs(
     @param:StringRes val title: Int
 ) {
-    Trim(R.string.editing_trim),
     Crop(R.string.editing_crop),
+    Trim(R.string.editing_trim),
     Video(R.string.video),
     Draw(R.string.editing_draw),
     Adjust(R.string.editing_adjust),

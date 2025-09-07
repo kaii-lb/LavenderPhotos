@@ -10,6 +10,7 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateOffsetAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -26,7 +27,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.width
@@ -48,11 +48,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ClipOp
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
@@ -84,6 +85,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.math.max
+import kotlin.math.min
 
 private const val TAG = "com.kaii.photos.compose.editing_view.VideoEditor"
 
@@ -406,6 +409,62 @@ fun VideoEditor(
                     targetValue = if (videoEditingState.rotation % 180f == 0f) this@BoxWithConstraints.maxHeight else this@BoxWithConstraints.maxWidth
                 )
 
+                val localDensity = LocalDensity.current
+                val latestCrop by remember {
+                    derivedStateOf {
+                        modifications.lastOrNull {
+                            it is VideoModification.Crop
+                        } as? VideoModification.Crop ?: VideoModification.Crop(0f, 0f, 0f, 0f)
+                    }
+                }
+
+                // find the top left of the actual video area
+                var originalCrop by remember { mutableStateOf(VideoModification.Crop(0f, 0f, 0f, 0f)) }
+                LaunchedEffect(modifications.lastOrNull()) {
+                    if (originalCrop.width == 0f && originalCrop.height == 0f) {
+                        originalCrop = modifications.lastOrNull {
+                            it is VideoModification.Crop
+                        } as? VideoModification.Crop ?: VideoModification.Crop(0f, 0f, 0f, 0f)
+                    }
+                }
+
+                val actualTop by remember {
+                    derivedStateOf {
+                        with(localDensity) {
+                            (height.toPx() - originalCrop.height) / 2
+                        }
+                    }
+                }
+                val actualLeft by remember {
+                    derivedStateOf {
+                        with(localDensity) {
+                            (width.toPx() - originalCrop.width) / 2
+                        }
+                    }
+                }
+
+                var scale by remember { mutableFloatStateOf(1f) }
+                var offset by remember { mutableStateOf(Offset.Zero) }
+                LaunchedEffect(videoEditingState.resetCrop) {
+                    if (videoEditingState.resetCrop) {
+                        scale = 1f
+                        offset = Offset.Zero
+                    }
+                }
+
+                val animatedScale by animateFloatAsState(
+                    targetValue = scale,
+                    animationSpec = tween(
+                        durationMillis = AnimationConstants.DURATION_SHORT
+                    )
+                )
+                val animatedOffset by animateOffsetAsState(
+                    targetValue = offset,
+                    animationSpec = tween(
+                        durationMillis = AnimationConstants.DURATION_SHORT
+                    )
+                )
+
                 Box(
                     modifier = Modifier
                         .width(width)
@@ -446,6 +505,12 @@ fun VideoEditor(
                         } else {
                             Box(
                                 modifier = Modifier
+                                    .graphicsLayer {
+                                        translationX = animatedOffset.x
+                                        translationY = animatedOffset.y
+                                        scaleX = animatedScale
+                                        scaleY = animatedScale
+                                    }
                                     .makeVideoDrawCanvas(
                                         modifications = modifications,
                                         enabled = pagerState.currentPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw),
@@ -461,16 +526,7 @@ fun VideoEditor(
                                         .align(Alignment.Center)
                                 )
 
-                                // find the top left of the actual video area
-                                var originalCrop by remember { mutableStateOf(VideoModification.Crop(0f, 0f, 0f, 0f)) }
-                                LaunchedEffect(modifications.lastOrNull()) {
-                                    if (originalCrop.width == 0f && originalCrop.height == 0f) {
-                                        originalCrop = modifications.lastOrNull {
-                                            it is VideoModification.Crop
-                                        } as? VideoModification.Crop ?: VideoModification.Crop(0f, 0f, 0f, 0f)
-                                    }
-                                }
-
+                                val backgroundColor = MaterialTheme.colorScheme.background
                                 Canvas(
                                     modifier = Modifier
                                         .requiredSize(
@@ -479,12 +535,6 @@ fun VideoEditor(
                                         )
                                         .align(Alignment.Center)
                                 ) {
-                                    val latestCrop = modifications.lastOrNull {
-                                        it is VideoModification.Crop
-                                    } as? VideoModification.Crop ?: VideoModification.Crop(0f, 0f, 0f, 0f)
-                                    val actualTop = (height.toPx() - originalCrop.height) / 2
-                                    val actualLeft = (width.toPx() - originalCrop.width) / 2
-
                                     clipRect(
                                         left = actualLeft + latestCrop.left,
                                         top = actualTop + latestCrop.top,
@@ -529,7 +579,7 @@ fun VideoEditor(
                                                 clipOp = ClipOp.Difference
                                             ) {
                                                 drawRect(
-                                                    color = Color.Black.copy(alpha = 0.6f),
+                                                    color = backgroundColor,
                                                     size = Size(width.toPx(), height.toPx())
                                                 )
                                             }
@@ -565,27 +615,54 @@ fun VideoEditor(
                             )
                     ) {
                         val localDensity = LocalDensity.current
+                        var lastCrop by remember { mutableStateOf(latestCrop) }
 
                         CropBox(
                             containerWidth = with(localDensity) { width.toPx() - 16.dp.toPx() }, // adjust for AnimatedVisibility size
                             containerHeight = with(localDensity) { height.toPx() - 16.dp.toPx() },
                             mediaAspectRatio = basicVideoData.aspectRatio,
                             videoEditingState = videoEditingState,
+                            scale = animatedScale,
                             modifier = Modifier
-                                .offset(16.dp, 16.dp), // adjust for top-left change from AnimatedVisibility
-                        ) { area, original ->
-                            modifications.removeAll { it is VideoModification.Crop } // because Crop gets called a million times each movement
-                            modifications.add(
-                                VideoModification.Crop(
-                                    top = area.top,
-                                    left = area.left,
-                                    width = area.width,
-                                    height = area.height
+                                .graphicsLayer {
+                                    translationX = animatedScale * 16.dp.toPx() + animatedOffset.x
+                                    translationY = animatedScale * 16.dp.toPx() + animatedOffset.y
+                                    scaleX = animatedScale
+                                    scaleY = animatedScale
+                                },
+                            onAreaChanged = { area, original ->
+                                modifications.removeAll { it is VideoModification.Crop } // because Crop gets called a million times each movement
+                                modifications.add(
+                                    VideoModification.Crop(
+                                        top = area.top,
+                                        left = area.left,
+                                        width = area.width,
+                                        height = area.height
+                                    )
                                 )
-                            )
 
-                            containerDimens = original
-                        }
+                                containerDimens = original
+                            },
+                            onCropDone = {
+                                val actualWidth = with(localDensity) { (containerDimens.width - 56.dp.toPx()) } // subtract spacing of handles
+                                val actualHeight = with(localDensity) { (containerDimens.height - 56.dp.toPx()) } // to not clip them
+                                val targetX = actualWidth / latestCrop.width
+                                val targetY = actualHeight / latestCrop.height
+
+                                scale = max(1f, min(targetX, targetY))
+
+                                lastCrop = latestCrop
+
+                                offset = Offset(
+                                    x = with(localDensity) {
+                                        scale * (-latestCrop.left + (containerDimens.width - latestCrop.width) / 2)
+                                    },
+                                    y = with(localDensity) {
+                                        scale * (-latestCrop.top + (containerDimens.height - latestCrop.height) / 2)
+                                    }
+                                )
+                            }
+                        )
                     }
                 }
             }
