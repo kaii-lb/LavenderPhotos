@@ -337,7 +337,7 @@ fun AlbumsGridView(
                                     it.key == selectedItem?.id
                                 }
 
-                            if (targetItem != null && currentLazyItem != null) {
+                            if (targetItem != null && currentLazyItem != null && targetItem.key in albums.value.map { it.id }) {
                                 val targetItemIndex =
                                     albums.value.indexOfFirst { it.id == targetItem.key }
                                 val newList = albums.value.toMutableList()
