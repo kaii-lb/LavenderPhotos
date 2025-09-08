@@ -99,7 +99,8 @@ enum class PaintType {
     Pencil,
     Highlighter,
     Text,
-    Blur
+    Blur,
+    Image
 }
 
 fun IntSize.toOffset() : Offset = Offset(this.width.toFloat(), this.height.toFloat())

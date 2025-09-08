@@ -26,10 +26,10 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+    }
 
-        ksp {
-            arg("room.schemaLocation", "$projectDir/schemas")
-        }
+    ksp {
+        arg("room.schemaLocation", "$projectDir/schemas")
     }
 
     buildTypes {
@@ -79,7 +79,7 @@ dependencies {
     implementation("androidx.compose.runtime:runtime-livedata:1.9.0")
     implementation("androidx.constraintlayout:constraintlayout:2.2.1")
     implementation("androidx.cardview:cardview:1.0.0")
-    implementation("com.google.android.material:material:1.12.0")
+    implementation("com.google.android.material:material:1.13.0")
     implementation("""androidx.compose.foundation:foundation:1.9.0""")
     implementation("androidx.graphics:graphics-shapes-android:1.0.1")
     implementation("androidx.test:monitor:1.8.0")
@@ -90,7 +90,7 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.9.3")
     implementation("androidx.datastore:datastore-preferences:1.1.7")
     implementation("androidx.core:core-splashscreen:1.0.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.7.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.7.1")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
     implementation("androidx.security:security-crypto:1.1.0")
     implementation("com.github.kittinunf.fuel:fuel:2.3.1")
@@ -112,10 +112,10 @@ dependencies {
     implementation("androidx.room:room-ktx:$roomVersion")
     annotationProcessor("androidx.room:room-compiler:$roomVersion")
 
-    implementation("com.github.bumptech.glide:glide:4.16.0")
-    implementation("com.github.bumptech.glide:compose:1.0.0-beta01")
-    implementation("com.github.bumptech.glide:ktx:1.0.0-beta01")
-    implementation("com.github.bumptech.glide:avif-integration:4.16.0")
+    implementation("com.github.bumptech.glide:glide:5.0.4")
+    implementation("com.github.bumptech.glide:compose:1.0.0-beta07")
+    implementation("com.github.bumptech.glide:ktx:1.0.0-beta07")
+    implementation("com.github.bumptech.glide:avif-integration:5.0.4")
 
     implementation("com.github.kaii-lb:Lavender-Snackbars:071f602527")
     implementation("com.github.kaii-lb.LavenderImmichIntegration:library:v1.0.9")
@@ -133,7 +133,7 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling:1.9.0")
     debugImplementation("androidx.compose.ui:ui-test-manifest:1.9.0")
 
-    ksp("com.github.bumptech.glide:ksp:4.16.0")
+    ksp("com.github.bumptech.glide:ksp:5.0.4")
     ksp("androidx.room:room-compiler:$roomVersion")
 }
 

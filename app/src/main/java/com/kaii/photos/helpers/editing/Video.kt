@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
@@ -53,8 +54,12 @@ private interface DrawingEffect {
     fun toEffect(
         value: Any,
         timespan: VideoModification.Trim?,
+        ratio: Float,
+        resolution: Size,
         context: Context
     ): BitmapOverlay
+
+    fun toDrawingPaint(): DrawingPaint
 }
 
 @OptIn(UnstableApi::class)
@@ -66,15 +71,21 @@ enum class DrawingItems : DrawingEffect {
         override fun toEffect(
             value: Any,
             timespan: VideoModification.Trim?,
+            ratio: Float,
+            resolution: Size,
             context: Context
         ): BitmapOverlay {
             if (value !is DrawablePath) throw IllegalArgumentException("${Pencil::class}.toEffect can only accept ${DrawablePath::class} as an input value")
 
             return TimePathOverlay(
                 path = value,
-                timespan = timespan
+                timespan = timespan,
+                ratio = ratio,
+                resolution = resolution
             )
         }
+
+        override fun toDrawingPaint(): DrawingPaint = DrawingPaints.Pencil
     },
 
     Highlighter {
@@ -84,15 +95,21 @@ enum class DrawingItems : DrawingEffect {
         override fun toEffect(
             value: Any,
             timespan: VideoModification.Trim?,
+            ratio: Float,
+            resolution: Size,
             context: Context
         ): BitmapOverlay {
             if (value !is DrawablePath) throw IllegalArgumentException("${Highlighter::class}.toEffect can only accept ${DrawablePath::class} as an input value")
 
             return TimePathOverlay(
                 path = value,
-                timespan = timespan
+                timespan = timespan,
+                ratio = ratio,
+                resolution = resolution
             )
         }
+
+        override fun toDrawingPaint(): DrawingPaint = DrawingPaints.Highlighter
     },
 
     Text {
@@ -102,6 +119,8 @@ enum class DrawingItems : DrawingEffect {
         override fun toEffect(
             value: Any,
             timespan: VideoModification.Trim?,
+            ratio: Float,
+            resolution: Size,
             context: Context
         ): BitmapOverlay {
             if (value !is DrawableText) throw IllegalArgumentException("${Text::class}.toEffect can only accept ${DrawableText::class} as an input value")
@@ -132,17 +151,9 @@ enum class DrawingItems : DrawingEffect {
                         .build()
             )
         }
-    },
 
-    // Blur {
-    //     override val title = R.string.editing_pencil
-    //     override val icon = R.drawable.pencil
-    //     override val paint = DrawingPaints.Pencil
-    //
-    //     override fun toEffect(): Effect {
-    //         return object : Effect {}
-    //     }
-    // },
+        override fun toDrawingPaint(): DrawingPaint = DrawingPaints.Text
+    },
 
     Image {
         override val title = R.string.editing_image
@@ -151,6 +162,8 @@ enum class DrawingItems : DrawingEffect {
         override fun toEffect(
             value: Any,
             timespan: VideoModification.Trim?,
+            ratio: Float,
+            resolution: Size,
             context: Context
         ): BitmapOverlay {
             if (value !is DrawableImage) throw IllegalArgumentException("${Image::class}.toEffect can only accept ${DrawableImage::class} as an input value")
@@ -168,41 +181,53 @@ enum class DrawingItems : DrawingEffect {
                         .build()
             )
         }
+
+        override fun toDrawingPaint(): DrawingPaint = DrawingPaints.Image
     }
 }
 
 @OptIn(UnstableApi::class)
 class TimePathOverlay(
     val path: DrawablePath,
-    private val timespan: VideoModification.Trim? = null
+    private val timespan: VideoModification.Trim? = null,
+    private val ratio: Float,
+    private val resolution: Size
 ) : CanvasOverlay(true) {
     override fun onDraw(canvas: Canvas, presentationTimeUs: Long) {
         val drawScope = CanvasDrawScope()
         val composeCanvas = androidx.compose.ui.graphics.Canvas(canvas)
 
-        val ratio = 1f // TODO: fix this
-
         if (timespan == null || presentationTimeUs / 1000f in (timespan.start * 1000)..(timespan.end * 1000)) {
+            val scaledDrawingWidth = resolution.width * ratio
+            val scaledDrawingHeight = resolution.height * ratio
+            val translateX = (canvas.width - scaledDrawingWidth) / 2f
+            val translateY = (canvas.height - scaledDrawingHeight) / 2f
+
             drawScope.draw(
-                Density(1f),
-                LayoutDirection.Ltr,
-                composeCanvas,
-                Size(512f, 512f)
+                density = Density(1f),
+                layoutDirection = LayoutDirection.Ltr,
+                canvas = composeCanvas,
+                size = Size(
+                    canvas.width.toFloat(),
+                    canvas.height.toFloat()
+                )
             ) {
-                scale(ratio, Offset(0.5f, 0.5f)) {
-                    drawPath(
-                        path = path.path,
-                        style = Stroke(
-                            width = path.paint.strokeWidth,
-                            cap = path.paint.strokeCap,
-                            join = path.paint.strokeJoin,
-                            miter = path.paint.strokeMiterLimit,
-                            pathEffect = path.paint.pathEffect
-                        ),
-                        blendMode = path.paint.blendMode,
-                        color = path.paint.color,
-                        alpha = path.paint.alpha
-                    )
+                translate(left = translateX, top = translateY) {
+                    scale(ratio, Offset(1f, 1f)) {
+                        drawPath(
+                            path = path.path,
+                            style = Stroke(
+                                width = path.paint.strokeWidth,
+                                cap = path.paint.strokeCap,
+                                join = path.paint.strokeJoin,
+                                miter = path.paint.strokeMiterLimit,
+                                pathEffect = path.paint.pathEffect
+                            ),
+                            blendMode = path.paint.blendMode,
+                            color = path.paint.color,
+                            alpha = path.paint.alpha
+                        )
+                    }
                 }
             }
         }
@@ -348,7 +373,7 @@ class ColorMatrixEffect(
     override fun toGlShaderProgram(context: Context, useHdr: Boolean): GlShaderProgram = ColorMatrixGLShaderProgram(matrix = matrix)
 
     override fun isNoOp(inputWidth: Int, inputHeight: Int): Boolean {
-        return super.isNoOp(inputWidth, inputHeight)
+        return matrix == ColorMatrix()
     }
 }
 

@@ -1,19 +1,35 @@
 package com.kaii.photos.compose.editing_view.video_editor
 
+import android.annotation.SuppressLint
 import android.graphics.Bitmap
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.DraggableState
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -22,7 +38,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -31,10 +50,13 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.ToggleButton
+import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -50,6 +72,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
@@ -71,7 +94,9 @@ import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.VideoPlayerConstants
 import com.kaii.photos.helpers.editing.BasicVideoData
 import com.kaii.photos.helpers.editing.CroppingAspectRatio
+import com.kaii.photos.helpers.editing.DrawingColors
 import com.kaii.photos.helpers.editing.DrawingItems
+import com.kaii.photos.helpers.editing.DrawingPaintState
 import com.kaii.photos.helpers.editing.MediaAdjustments
 import com.kaii.photos.helpers.editing.MediaColorFilters
 import com.kaii.photos.helpers.editing.VideoEditingState
@@ -637,7 +662,7 @@ fun VideoEditorFilterContent(
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.reset),
-                contentDescription = "close this panel"
+                contentDescription = "reset the chosen filter"
             )
         }
 
@@ -665,24 +690,324 @@ fun VideoEditorFilterContent(
 }
 
 @Composable
-fun VideoEditorDrawContent(modifier: Modifier = Modifier) {
-    LazyRow(
+fun VideoEditorDrawContent(
+    drawingPaintState: DrawingPaintState,
+    modifier: Modifier = Modifier
+) {
+    Row(
         modifier = modifier
-            .fillMaxSize(1f),
+            .fillMaxSize(1f)
+            .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceEvenly
+        horizontalArrangement = Arrangement.spacedBy(
+            space = 12.dp,
+            alignment = Alignment.CenterHorizontally
+        )
     ) {
-        items(
-            count = DrawingItems.entries.size
-        ) { index ->
-            val entry = DrawingItems.entries[index]
+        var collapsed by remember { mutableStateOf(true) }
 
-            EditingViewBottomAppBarItem(
-                text = stringResource(id = entry.title),
-                icon = entry.icon
+        if (collapsed) {
+            PaintTypeSelector(
+                drawingPaintState = drawingPaintState
+            )
+
+            Button(
+                onClick = {
+                    drawingPaintState.undoModification()
+                },
+                shape = CircleShape,
+                contentPadding = PaddingValues.Zero,
+                modifier = Modifier
+                    .size(56.dp)
             ) {
-                // TODO: ...do this
+                Icon(
+                    painter = painterResource(id = R.drawable.undo),
+                    contentDescription = "remove the last drawing"
+                )
             }
         }
+
+        AnimatedContent(
+            targetState = drawingPaintState.paintType
+        ) { state ->
+            when (state) {
+                DrawingItems.Pencil, DrawingItems.Highlighter -> {
+                    PaintColorSelector(
+                        drawingPaintState = drawingPaintState,
+                        collapsed = collapsed
+                    ) { new ->
+                        collapsed = new
+                    }
+                }
+
+                DrawingItems.Text -> {
+                    TextSelector(
+                        drawingPaintState = drawingPaintState
+                    )
+                }
+
+                DrawingItems.Image -> {
+                    ImageSelector(
+                        drawingPaintState = drawingPaintState
+                    )
+                }
+            }
+        }
+
+        Button(
+            onClick = {
+                drawingPaintState.clearModifications()
+            },
+            shape = CircleShape,
+            contentPadding = PaddingValues.Zero,
+            modifier = Modifier
+                .size(56.dp)
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.trash),
+                contentDescription = "remove all drawings"
+            )
+        }
+    }
+}
+
+@SuppressLint("ResourceType")
+@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalSharedTransitionApi::class)
+@Composable
+private fun PaintTypeSelector(
+    drawingPaintState: DrawingPaintState,
+    modifier: Modifier = Modifier
+) {
+    var collapsed by remember { mutableStateOf(true) }
+    val itemList = remember { mutableStateListOf<DrawingItems>().apply { addAll(DrawingItems.entries.toList()) } }
+    val listState = rememberLazyListState()
+
+    SharedTransitionLayout {
+        AnimatedContent(
+            targetState = collapsed,
+            transitionSpec = {
+                (expandHorizontally(expandFrom = Alignment.Start) + fadeIn()).togetherWith(
+                    shrinkHorizontally(shrinkTowards = Alignment.Start) + fadeOut()
+                )
+            },
+            modifier = Modifier
+                .wrapContentSize()
+        ) { state ->
+            if (state) {
+                Button(
+                    onClick = {
+                        collapsed = false
+                    },
+                    shape = CircleShape,
+                    contentPadding = PaddingValues.Zero,
+                    modifier = Modifier
+                        .size(56.dp)
+                        .sharedElement(
+                            sharedContentState = rememberSharedContentState(drawingPaintState.paintType),
+                            animatedVisibilityScope = this@AnimatedContent
+                        )
+                ) {
+                    Icon(
+                        painter = painterResource(id = drawingPaintState.paintType.icon),
+                        contentDescription = "set the paint type"
+                    )
+                }
+            } else {
+                LazyRow(
+                    state = listState,
+                    modifier = modifier
+                        .animateContentSize()
+                        .height(56.dp)
+                        .wrapContentWidth()
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primary),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    flingBehavior = rememberSnapFlingBehavior(lazyListState = listState)
+                ) {
+                    items(
+                        count = itemList.size
+                    ) { index ->
+                        val item = itemList[index]
+
+                        ToggleButton(
+                            checked = drawingPaintState.paintType == item,
+                            onCheckedChange = { _ ->
+                                drawingPaintState.setPaintType(item)
+                                collapsed = true
+                            },
+                            shapes = ToggleButtonDefaults.shapes(
+                                checkedShape = CircleShape
+                            ),
+                            contentPadding = PaddingValues.Zero,
+                            colors = ToggleButtonDefaults.toggleButtonColors(
+                                containerColor = Color.Transparent,
+                                contentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f)
+                            ),
+                            modifier = Modifier
+                                .size(56.dp)
+                                .sharedElement(
+                                    sharedContentState = rememberSharedContentState(item),
+                                    animatedVisibilityScope = this@AnimatedContent
+                                )
+                        ) {
+                            Icon(
+                                painter = painterResource(id = item.icon),
+                                contentDescription = "set the paint type"
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+private fun PaintColorSelector(
+    drawingPaintState: DrawingPaintState,
+    collapsed: Boolean,
+    modifier: Modifier = Modifier,
+    setCollapsed: (Boolean) -> Unit
+) {
+    SharedTransitionLayout {
+        AnimatedContent(
+            targetState = collapsed,
+            transitionSpec = {
+                (scaleIn(transformOrigin = TransformOrigin(0f, 0.5f))
+                        + expandHorizontally(expandFrom = Alignment.Start)
+                        + fadeIn()).togetherWith(
+                    scaleOut(transformOrigin = TransformOrigin(0.5f, 0.5f))
+                            + shrinkHorizontally(shrinkTowards = Alignment.CenterHorizontally)
+                            + fadeOut()
+                )
+            },
+            modifier = modifier
+                .height(56.dp)
+        ) { state ->
+            if (state) {
+                Button(
+                    onClick = {
+                        setCollapsed(false)
+                    },
+                    shape = CircleShape,
+                    contentPadding = PaddingValues(8.dp),
+                    modifier = Modifier
+                        .width(96.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize(1f)
+                            .clip(CircleShape)
+                            .background(drawingPaintState.color)
+                            .sharedElement(
+                                sharedContentState = rememberSharedContentState(drawingPaintState.color),
+                                animatedVisibilityScope = this@AnimatedContent
+                            )
+                    )
+                }
+            } else {
+                LazyRow(
+                    modifier = Modifier
+                        .fillMaxSize(1f),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(
+                        space = 8.dp,
+                        alignment = Alignment.CenterHorizontally
+                    )
+                ) {
+                    items(
+                        count = DrawingColors.colorList.size
+                    ) { index ->
+                        val color = DrawingColors.colorList[index]
+                        val animatedCornerRadius by animateDpAsState(
+                            targetValue = if (drawingPaintState.color == color) 100.dp else 0.dp
+                        )
+
+                        Box(
+                            modifier = Modifier
+                                .size(56.dp)
+                                .clip(RoundedCornerShape(8.dp + animatedCornerRadius))
+                                .background(if (drawingPaintState.color == color) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceBright)
+                                .sharedElement(
+                                    sharedContentState = rememberSharedContentState(color),
+                                    animatedVisibilityScope = this@AnimatedContent
+                                )
+                                .clickable {
+                                    drawingPaintState.setColor(color)
+                                    setCollapsed(true)
+                                }
+                                .padding(6.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize(1f)
+                                    .clip(RoundedCornerShape(4.dp + animatedCornerRadius))
+                                    .background(color)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ImageSelector(
+    drawingPaintState: DrawingPaintState,
+    modifier: Modifier = Modifier
+) {
+    Button(
+        onClick = {
+            // TODO: handle image thing
+        },
+        shape = CircleShape,
+        modifier = modifier
+            .height(56.dp)
+            .wrapContentWidth()
+    ) {
+        Icon(
+            painter = painterResource(id = R.drawable.image_arrow_up),
+            contentDescription = "upload an image"
+        )
+
+        Spacer(modifier = Modifier.width(4.dp))
+
+        Text(
+            text = stringResource(id = R.string.editing_upload_image),
+            fontSize = TextUnit(TextStylingConstants.MEDIUM_TEXT_SIZE, TextUnitType.Sp)
+        )
+    }
+}
+
+@Composable
+private fun TextSelector(
+    drawingPaintState: DrawingPaintState,
+    modifier: Modifier = Modifier
+) {
+    Button(
+        onClick = {
+            // TODO: handle text thing
+        },
+        shape = CircleShape,
+        modifier = modifier
+            .height(56.dp)
+            .wrapContentWidth()
+    ) {
+        Icon(
+            painter = painterResource(id = R.drawable.edit),
+            contentDescription = "add text",
+            modifier = Modifier
+                .size(24.dp) // shrink cuz icon too big in comparison to text
+        )
+
+        Spacer(modifier = Modifier.width(4.dp))
+
+        Text(
+            text = stringResource(id = R.string.editing_text),
+            fontSize = TextUnit(TextStylingConstants.MEDIUM_TEXT_SIZE, TextUnitType.Sp)
+        )
     }
 }

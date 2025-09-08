@@ -103,6 +103,7 @@ import com.kaii.photos.datastore.Editing
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.VideoPlayerConstants
 import com.kaii.photos.helpers.editing.BasicVideoData
+import com.kaii.photos.helpers.editing.DrawingPaintState
 import com.kaii.photos.helpers.editing.MediaColorFilters
 import com.kaii.photos.helpers.editing.VideoEditingState
 import com.kaii.photos.helpers.editing.VideoEditorTabs
@@ -122,6 +123,7 @@ fun VideoEditorBottomBar(
     currentPosition: MutableFloatState,
     basicData: BasicVideoData,
     videoEditingState: VideoEditingState,
+    drawingPaintState: DrawingPaintState,
     modifications: SnapshotStateList<VideoModification>,
     increaseModCount: () -> Unit,
     onSeek: (Float) -> Unit,
@@ -246,7 +248,9 @@ fun VideoEditorBottomBar(
                     }
 
                     VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw) -> {
-                        VideoEditorDrawContent()
+                        VideoEditorDrawContent(
+                            drawingPaintState = drawingPaintState
+                        )
                     }
                 }
             }
@@ -263,8 +267,10 @@ fun VideoEditorTopBar(
     modifications: SnapshotStateList<VideoModification>,
     basicVideoData: BasicVideoData,
     videoEditingState: VideoEditingState,
+    drawingPaintState: DrawingPaintState,
     lastSavedModCount: MutableIntState,
-    containerDimens: Size
+    containerDimens: Size,
+    canvasSize: Size
 ) {
     val navController = LocalNavController.current
 
@@ -367,13 +373,16 @@ fun VideoEditorTopBar(
                             mainViewModel.launch {
                                 saveVideo(
                                     context = context,
-                                    modifications = modifications,
+                                    modifications = modifications + drawingPaintState.modifications.map {
+                                        it as VideoModification
+                                    },
                                     videoEditingState = videoEditingState,
                                     basicVideoData = basicVideoData,
                                     uri = uri,
                                     absolutePath = absolutePath,
                                     overwrite = overwrite,
-                                    containerDimens = containerDimens
+                                    containerDimens = containerDimens,
+                                    canvasSize = canvasSize
                                 ) {
                                     coroutineScope.launch {
                                         LavenderSnackbarController.pushEvent(
@@ -546,7 +555,7 @@ fun WallpaperSetterBottomBar(
                             createBitmap(deviceSize.width.toInt(), deviceSize.height.toInt(), bitmap.config ?: Bitmap.Config.ARGB_8888)
                         val canvas = Canvas(destinationBitmap)
                         val originalAspectRatio = bitmap.width.toFloat() / bitmap.height
-                        val deviceAspectRatio = deviceSize.width.toFloat() / deviceSize.height.toFloat()
+                        val deviceAspectRatio = deviceSize.width / deviceSize.height
 
                         val scale =
                             if (originalAspectRatio >= deviceAspectRatio) deviceSize.height / bitmap.height

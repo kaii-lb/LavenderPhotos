@@ -29,22 +29,22 @@ interface VideoModification {
         val type: MediaColorFilters
     ) : VideoModification
 
-    data class DrawingText(
-        val type: DrawingItems,
-        val text: DrawableText,
-        val timespan: Trim? = null
-    ) : VideoModification
-
     data class DrawingPath(
-        val type: DrawingItems,
-        val path: DrawablePath,
+        override val type: DrawingItems,
+        override val path: DrawablePath,
         val timespan: Trim? = null
-    ) : VideoModification
+    ) : VideoModification, SharedModification.DrawingPath
+
+    data class DrawingText(
+        override val type: DrawingItems,
+        override val text: DrawableText,
+        val timespan: Trim? = null
+    ) : VideoModification, SharedModification.DrawingText
 
     data class DrawingImage(
-        val type: DrawingItems,
-        val image: DrawableImage,
+        override val type: DrawingItems,
+        override val image: DrawableImage,
         val timespan: Trim? = null
-    ) : VideoModification
+    ) : VideoModification, SharedModification.DrawingImage
 }
 

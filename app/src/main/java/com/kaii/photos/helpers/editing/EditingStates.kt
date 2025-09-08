@@ -13,13 +13,14 @@ import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.media3.common.Effect
 import androidx.media3.common.util.UnstableApi
 import com.kaii.photos.helpers.editing.DrawingPaintState.Companion.Saver
 import com.kaii.photos.helpers.editing.VideoEditingState.Companion.Saver
 
 class DrawingPaintState(
-    initialPaintType: PaintType,
+    initialPaintType: DrawingItems,
     initialStrokeWidth: Float,
     initialColor: Color
 ) {
@@ -29,9 +30,17 @@ class DrawingPaintState(
         private set
     var color by mutableStateOf(initialColor)
         private set
+    val modifications = mutableStateListOf<SharedModification>()
+
+    val paint by derivedStateOf {
+        paintType.toDrawingPaint().copy(
+            color = color,
+            strokeWidth = strokeWidth
+        )
+    }
 
     @JvmName("privateSetPaintType")
-    fun setPaintType(paintType: PaintType) {
+    fun setPaintType(paintType: DrawingItems) {
         this.paintType = paintType
     }
 
@@ -45,16 +54,24 @@ class DrawingPaintState(
         this.color = color
     }
 
+    fun undoModification() {
+        modifications.removeLastOrNull()
+    }
+
+    fun clearModifications() {
+        modifications.clear()
+    }
+
     companion object {
         /** The default [Saver] implementation for [DrawingPaintState]. */
         val Saver: Saver<DrawingPaintState, *> =
             listSaver(
-                save = { listOf(it.paintType, it.strokeWidth, it.color) },
+                save = { listOf(it.paintType, it.strokeWidth, it.color.toArgb()) },
                 restore = {
                     DrawingPaintState(
-                        initialPaintType = it[0] as PaintType,
+                        initialPaintType = it[0] as DrawingItems,
                         initialStrokeWidth = it[1] as Float,
-                        initialColor = it[2] as Color
+                        initialColor = Color(it[2] as Int)
                     )
                 },
             )
@@ -63,7 +80,7 @@ class DrawingPaintState(
 
 @Composable
 fun rememberDrawingPaintState(
-    initialPaintType: PaintType = PaintType.Pencil,
+    initialPaintType: DrawingItems = DrawingItems.Pencil,
     initialStrokeWidth: Float = 20f,
     initialColor: Color = DrawingColors.Red
 ): DrawingPaintState {
@@ -109,7 +126,7 @@ class VideoEditingState(
     init {
         if (initialEffects == null) {
             // prefill for order of application
-            (1..MediaAdjustments.entries.size).forEach {
+            (1..MediaAdjustments.entries.size).forEach { _ ->
                 effects.add(null)
             }
         } else {
@@ -117,7 +134,7 @@ class VideoEditingState(
             effects.addAll(initialEffects)
 
             // prefill for order of application
-            (effects.size..12).forEach {
+            (effects.size..12).forEach { _ ->
                 effects.add(null)
             }
         }

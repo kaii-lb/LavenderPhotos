@@ -46,6 +46,7 @@ import com.kaii.photos.helpers.editing.DrawablePath
 import com.kaii.photos.helpers.editing.DrawableText
 import com.kaii.photos.helpers.editing.DrawingItems
 import com.kaii.photos.helpers.editing.DrawingPaint
+import com.kaii.photos.helpers.editing.DrawingPaintState
 import com.kaii.photos.helpers.editing.Modification
 import com.kaii.photos.helpers.editing.PaintType
 import com.kaii.photos.helpers.editing.VideoModification
@@ -250,12 +251,18 @@ fun Modifier.makeDrawCanvas(
                                 modifications.add(newPath)
                             } else {
                                 modifications.removeAll {
-                                    if (it is DrawablePath) {
-                                        it.path == path && it.paint == paint.value
-                                    } else if (it is DrawableBlur) {
-                                        it.path == path && it.paint == paint.value
-                                    } else {
-                                        false
+                                    when (it) {
+                                        is DrawablePath -> {
+                                            it.path == path && it.paint == paint.value
+                                        }
+
+                                        is DrawableBlur -> {
+                                            it.path == path && it.paint == paint.value
+                                        }
+
+                                        else -> {
+                                            false
+                                        }
                                     }
                                 }
                             }
@@ -402,8 +409,7 @@ fun Modifier.makeDrawCanvas(
 
 @Composable
 fun Modifier.makeVideoDrawCanvas(
-    modifications: SnapshotStateList<VideoModification>,
-    paint: DrawingPaint,
+    drawingPaintState: DrawingPaintState,
     enabled: Boolean
 ): Modifier {
     var zoom by remember { mutableFloatStateOf(1f) }
@@ -438,12 +444,12 @@ fun Modifier.makeVideoDrawCanvas(
             scaleY = animatedZoom
             transformOrigin = TransformOrigin(0f, 0f)
         }
-        .pointerInput(enabled, paint) {
+        .pointerInput(enabled, drawingPaintState.paintType, drawingPaintState.color) {
             if (!enabled) return@pointerInput
 
             awaitEachGesture {
-                var currentPath: VideoModification.DrawingPath? = null
-                var lastPoint = Offset.Zero
+                var currentPath: VideoModification.DrawingPath
+                var lastPoint: Offset
                 var hasDragged = false
 
                 val down = awaitFirstDown(requireUnconsumed = false)
@@ -505,10 +511,10 @@ fun Modifier.makeVideoDrawCanvas(
                             path = Path().apply {
                                 moveTo(down.position.x, down.position.y)
                             },
-                            paint = paint
+                            paint = drawingPaintState.paint
                         )
                     )
-                    modifications.add(newPath)
+                    drawingPaintState.modifications.add(newPath)
                     currentPath = newPath
                     lastPoint = down.position
 
@@ -519,13 +525,11 @@ fun Modifier.makeVideoDrawCanvas(
 
                         if (isUp) {
                             if (!hasDragged) {
-                                currentPath?.let { modifications.remove(it) }
-                                currentPath?.path?.path?.lineTo(down.position.x, down.position.y)
-                                currentPath?.let { modifications.add(it) }
+                                currentPath.let { drawingPaintState.modifications.remove(it) }
+                                currentPath.path.path.lineTo(down.position.x, down.position.y)
+                                currentPath.let { drawingPaintState.modifications.add(it) }
                             }
 
-                            currentPath = null
-                            lastPoint = Offset.Zero
                             break
                         }
 
@@ -534,8 +538,8 @@ fun Modifier.makeVideoDrawCanvas(
                         if (dragChange != null) {
                             hasDragged = dragChange.positionChanged()
 
-                            currentPath?.let { modifications.remove(it) }
-                            currentPath?.path?.path?.apply {
+                            currentPath.let { drawingPaintState.modifications.remove(it) }
+                            currentPath.path.path.apply {
                                 quadraticTo(
                                     lastPoint.x,
                                     lastPoint.y,
@@ -543,13 +547,11 @@ fun Modifier.makeVideoDrawCanvas(
                                     (lastPoint.y + dragChange.position.y) / 2
                                 )
                             }
-                            currentPath?.let { modifications.add(it) }
+                            currentPath.let { drawingPaintState.modifications.add(it) }
 
                             lastPoint = dragChange.position
                             dragChange.consume()
                         } else {
-                            currentPath = null
-                            lastPoint = Offset.Zero
                             break
                         }
                     } while (!canceled && event.changes.fastAny { it.pressed })

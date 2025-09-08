@@ -80,6 +80,16 @@ object DrawingColors {
 
     /** lavender purple */
     val Purple = Color(red = 204, green = 204, blue = 255)
+
+    val colorList = listOf(
+        White,
+        Black,
+        Red,
+        Yellow,
+        Green,
+        Blue,
+        Purple
+    )
 }
 
 @Composable

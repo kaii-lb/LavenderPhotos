@@ -7,10 +7,8 @@ import android.provider.MediaStore
 import android.util.Log
 import androidx.annotation.OptIn
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.IntSize
 import androidx.media3.common.Effect
 import androidx.media3.common.MediaItem
@@ -44,6 +42,7 @@ import com.kaii.photos.mediastore.getMediaStoreDataFromUri
 import com.kaii.photos.mediastore.getUriFromAbsolutePath
 import com.kaii.photos.mediastore.insertMedia
 import java.io.File
+import kotlin.math.max
 import kotlin.math.pow
 
 private const val TAG = "com.kaii.photos.helpers.editing.FileHandling"
@@ -51,13 +50,14 @@ private const val TAG = "com.kaii.photos.helpers.editing.FileHandling"
 @OptIn(UnstableApi::class)
 suspend fun saveVideo(
     context: Context,
-    modifications: SnapshotStateList<VideoModification>,
+    modifications: List<VideoModification>,
     videoEditingState: VideoEditingState,
     basicVideoData: BasicVideoData,
     uri: Uri,
     absolutePath: String,
     overwrite: Boolean,
     containerDimens: Size,
+    canvasSize: Size,
     onFailure: () -> Unit
 ) {
     val isLoading = mutableStateOf(true)
@@ -158,6 +158,14 @@ suspend fun saveVideo(
         })
     }
 
+    val ratio =
+        max(
+            basicVideoData.width / containerDimens.width,
+            basicVideoData.height / containerDimens.height
+        ) / (containerDimens.width / containerDimens.height)
+
+    Log.d(TAG, "Ratio $ratio other ${containerDimens.width / containerDimens.height}")
+
     val overlayEffects = mutableListOf<BitmapOverlay>()
     val textOverlays =
         modifications.mapNotNull {
@@ -168,14 +176,16 @@ suspend fun saveVideo(
             overlayEffects.add(
                 overlay.type.toEffect(
                     value = DrawableText(
-                        text = "Hello World!",
+                        text = overlay.text.text,
                         position = Offset(0f, 0f),
-                        paint = DrawingPaint(strokeWidth = 16f, color = Color.Companion.White),
-                        rotation = 0f,
+                        paint = DrawingPaint(strokeWidth = overlay.text.paint.strokeWidth, color = overlay.text.paint.color),
+                        rotation = overlay.text.rotation,
                         size = IntSize.Companion.Zero
                     ),
                     timespan = overlay.timespan,
-                    context = context
+                    ratio = ratio,
+                    context = context,
+                    resolution = canvasSize
                 )
             )
         }
@@ -192,13 +202,17 @@ suspend fun saveVideo(
                     overlay.type.toEffect(
                         value = overlay.path,
                         timespan = overlay.timespan,
-                        context = context
+                        ratio = ratio,
+                        context = context,
+                        resolution = canvasSize
                     )
                 } else {
                     overlay.type.toEffect(
                         value = overlay.path,
                         timespan = overlay.timespan,
-                        context = context
+                        ratio = ratio,
+                        context = context,
+                        resolution = canvasSize
                     )
                 }
 
@@ -217,7 +231,9 @@ suspend fun saveVideo(
                 overlay.type.toEffect(
                     value = overlay.image,
                     timespan = overlay.timespan,
-                    context = context
+                    ratio = ratio,
+                    context = context,
+                    resolution = canvasSize
                 )
 
             overlayEffects.add(effect)

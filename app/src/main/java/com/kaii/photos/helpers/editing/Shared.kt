@@ -6,6 +6,7 @@ import androidx.annotation.StringRes
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Canvas
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.ImageBitmap
@@ -79,6 +80,19 @@ class DrawingPaints {
                 pathEffect = PathEffect.Companion.cornerPathEffect(50f)
                 blendMode = BlendMode.Companion.SrcOver
                 color = DrawingColors.Black
+                alpha = 1f
+            }
+
+        val Image =
+            DrawingPaint().apply {
+                type = PaintType.Image
+                strokeWidth = 100f
+                strokeCap = StrokeCap.Companion.Round
+                strokeJoin = StrokeJoin.Companion.Round
+                strokeMiterLimit = DefaultStrokeLineMiter
+                pathEffect = PathEffect.Companion.cornerPathEffect(50f)
+                blendMode = BlendMode.Companion.SrcOver
+                color = Color.Transparent
                 alpha = 1f
             }
     }
@@ -410,4 +424,21 @@ enum class SelectedCropArea {
     RightEdge,
     None,
     Whole
+}
+
+interface SharedModification {
+    interface DrawingText : SharedModification {
+        val type: DrawingItems
+        val text: DrawableText
+    }
+
+    interface DrawingPath : SharedModification {
+        val type: DrawingItems
+        val path: DrawablePath
+    }
+
+    interface DrawingImage : SharedModification {
+        val type: DrawingItems
+        val image: DrawableImage
+    }
 }

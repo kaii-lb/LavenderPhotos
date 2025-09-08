@@ -78,12 +78,12 @@ import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.editing.BasicVideoData
 import com.kaii.photos.helpers.editing.ColorMatrixEffect
-import com.kaii.photos.helpers.editing.DrawingPaints
 import com.kaii.photos.helpers.editing.MediaAdjustments
 import com.kaii.photos.helpers.editing.MediaColorFilters
 import com.kaii.photos.helpers.editing.VideoEditorTabs
 import com.kaii.photos.helpers.editing.VideoModification
 import com.kaii.photos.helpers.editing.applyEffects
+import com.kaii.photos.helpers.editing.rememberDrawingPaintState
 import com.kaii.photos.helpers.editing.rememberVideoEditingState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -126,6 +126,7 @@ fun VideoEditor(
     val videoEditingState = rememberVideoEditingState(
         duration = duration.floatValue
     )
+    val drawingPaintState = rememberDrawingPaintState()
 
     LaunchedEffect(isMuted.value) {
         if (isMuted.value) exoPlayer.volume = 0f
@@ -336,6 +337,8 @@ fun VideoEditor(
         )
     ) { MediaColorFilters.entries.size }
 
+
+    var canvasSize by remember { mutableStateOf(Size.Zero) }
     Scaffold(
         topBar = {
             VideoEditorTopBar(
@@ -343,9 +346,11 @@ fun VideoEditor(
                 absolutePath = absolutePath,
                 modifications = modifications,
                 videoEditingState = videoEditingState,
+                drawingPaintState = drawingPaintState,
                 basicVideoData = basicVideoData,
                 lastSavedModCount = lastSavedModCount,
-                containerDimens = containerDimens
+                containerDimens = containerDimens,
+                canvasSize = canvasSize
             )
         },
         bottomBar = {
@@ -354,6 +359,7 @@ fun VideoEditor(
                 currentPosition = currentVideoPosition,
                 basicData = basicVideoData,
                 videoEditingState = videoEditingState,
+                drawingPaintState = drawingPaintState,
                 modifications = modifications,
                 onSeek = { pos ->
                     val wasPlaying = isPlaying.value
@@ -419,6 +425,10 @@ fun VideoEditor(
                 )
 
                 val localDensity = LocalDensity.current
+                canvasSize = with(localDensity) {
+                    Size(width.toPx(), height.toPx())
+                }
+
                 val latestCrop by remember {
                     derivedStateOf {
                         modifications.lastOrNull {
@@ -521,9 +531,8 @@ fun VideoEditor(
                                         scaleY = animatedScale
                                     }
                                     .makeVideoDrawCanvas(
-                                        modifications = modifications,
-                                        enabled = pagerState.currentPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw),
-                                        paint = DrawingPaints.Pencil
+                                        drawingPaintState = drawingPaintState,
+                                        enabled = pagerState.currentPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw)
                                     )
                             ) {
                                 AndroidView(
@@ -550,7 +559,7 @@ fun VideoEditor(
                                         right = actualLeft + latestCrop.right,
                                         bottom = actualTop + latestCrop.bottom
                                     ) {
-                                        modifications.forEach { modification ->
+                                        drawingPaintState.modifications.forEach { modification ->
                                             when (modification) {
                                                 is VideoModification.DrawingPath -> {
                                                     val (_, path, _) = modification
@@ -613,7 +622,7 @@ fun VideoEditor(
                                 }
 
                                 AnimatedContent(
-                                    targetState = exoPlayerLoading || basicVideoData.aspectRatio == 1f,
+                                    targetState = exoPlayerLoading || basicVideoData.aspectRatio == -1f,
                                     transitionSpec = {
                                         fadeIn(
                                             animationSpec = tween(
@@ -688,7 +697,6 @@ fun VideoEditor(
                             )
                     ) {
                         val localDensity = LocalDensity.current
-                        var lastCrop by remember { mutableStateOf(latestCrop) }
 
                         CropBox(
                             containerWidth = with(localDensity) { width.toPx() - 16.dp.toPx() }, // adjust for AnimatedVisibility size
@@ -723,8 +731,6 @@ fun VideoEditor(
                                 val targetY = actualHeight / latestCrop.height
 
                                 scale = max(1f, min(targetX, targetY))
-
-                                lastCrop = latestCrop
 
                                 offset = Offset(
                                     x = with(localDensity) {
