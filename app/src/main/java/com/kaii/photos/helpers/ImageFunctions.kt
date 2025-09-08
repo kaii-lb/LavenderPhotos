@@ -158,6 +158,26 @@ fun shareImage(uri: Uri, context: Context, mimeType: String? = null) {
     context.startActivity(chooserIntent)
 }
 
+fun shareMultipleImages(
+    uris: List<Uri>,
+    context: Context,
+    hasVideos: Boolean
+) {
+    val intent = Intent().apply {
+        action = Intent.ACTION_SEND_MULTIPLE
+        type = if (hasVideos) "video/*" else "image/*"
+    }
+
+    val fileUris = ArrayList<Uri>()
+    uris.forEach {
+        fileUris.add(it)
+    }
+
+    intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, fileUris)
+
+    context.startActivity(Intent.createChooser(intent, null))
+}
+
 fun shareSecuredImage(absolutePath: String, context: Context) {
     val uri =
         FileProvider.getUriForFile(context, LAVENDER_FILE_PROVIDER_AUTHORITY, File(absolutePath))
@@ -183,7 +203,7 @@ fun shareMultipleSecuredImages(
 
     val intent = Intent().apply {
         action = Intent.ACTION_SEND_MULTIPLE
-        type = if (hasVideos) "video/*" else "images/*"
+        type = if (hasVideos) "video/*" else "image/*"
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
 

@@ -1,7 +1,6 @@
 package com.kaii.photos.compose.app_bars
 
 import android.content.Intent
-import android.net.Uri
 import android.os.CancellationSignal
 import android.util.Log
 import androidx.activity.compose.BackHandler
@@ -72,6 +71,7 @@ import com.kaii.photos.helpers.moveImageOutOfLockedFolder
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.permanentlyDeleteSecureFolderImageList
 import com.kaii.photos.helpers.setTrashedOnPhotoList
+import com.kaii.photos.helpers.shareMultipleImages
 import com.kaii.photos.helpers.shareMultipleSecuredImages
 import com.kaii.photos.immich.ImmichAlbumSyncState
 import com.kaii.photos.immich.ImmichUserLoginState
@@ -251,9 +251,11 @@ fun SingleAlbumViewTopBar(
                                 ) {
                                     Icon(
                                         painter =
-                                            if (isBackedUp == true) painterResource(id = R.drawable.cloud_done)
-                                            else if (isBackedUp == false) painterResource(id = R.drawable.cloud_upload)
-                                            else painterResource(id = R.drawable.cloud_off),
+                                            when (isBackedUp) {
+                                                true -> painterResource(id = R.drawable.cloud_done)
+                                                false -> painterResource(id = R.drawable.cloud_upload)
+                                                else -> painterResource(id = R.drawable.cloud_off)
+                                            },
                                         contentDescription = "show more options for the album view",
                                         tint = if (!loadingBackupState) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(
                                             alpha = 0.5f
@@ -440,23 +442,11 @@ fun TrashedPhotoGridViewBottomBar(
         IconButton(
             onClick = {
                 coroutineScope.launch {
-                    val hasVideos = selectedItemsWithoutSection.any {
-                        it.type == MediaType.Video
-                    }
-
-                    val intent = Intent().apply {
-                        action = Intent.ACTION_SEND_MULTIPLE
-                        type = if (hasVideos) "video/*" else "images/*"
-                    }
-
-                    val fileUris = ArrayList<Uri>()
-                    selectedItemsWithoutSection.forEach {
-                        fileUris.add(it.uri)
-                    }
-
-                    intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, fileUris)
-
-                    context.startActivity(Intent.createChooser(intent, null))
+                    shareMultipleImages(
+                        uris = selectedItemsWithoutSection.map { it.uri },
+                        context = context,
+                        hasVideos = selectedItemsWithoutSection.any { it.type == MediaType.Video }
+                    )
                 }
             }
         ) {
@@ -880,23 +870,11 @@ fun FavouritesViewBottomAppBar(
         IconButton(
             onClick = {
                 coroutineScope.launch {
-                    val hasVideos = selectedItemsWithoutSection.any {
-                        it.type == MediaType.Video
-                    }
-
-                    val intent = Intent().apply {
-                        action = Intent.ACTION_SEND_MULTIPLE
-                        type = if (hasVideos) "video/*" else "images/*"
-                    }
-
-                    val fileUris = ArrayList<Uri>()
-                    selectedItemsWithoutSection.forEach {
-                        fileUris.add(it.uri)
-                    }
-
-                    intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, fileUris)
-
-                    context.startActivity(Intent.createChooser(intent, null))
+                    shareMultipleImages(
+                        uris = selectedItemsWithoutSection.map { it.uri },
+                        context = context,
+                        hasVideos = selectedItemsWithoutSection.any { it.type == MediaType.Video }
+                    )
                 }
             }
         ) {

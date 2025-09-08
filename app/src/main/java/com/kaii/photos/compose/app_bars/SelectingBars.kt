@@ -1,7 +1,5 @@
 package com.kaii.photos.compose.app_bars
 
-import android.content.Intent
-import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.RowScope
@@ -56,6 +54,7 @@ import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.getParentFromPath
 import com.kaii.photos.helpers.moveImageToLockedFolder
 import com.kaii.photos.helpers.setTrashedOnPhotoList
+import com.kaii.photos.helpers.shareMultipleImages
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.content_provider.LavenderContentProvider
@@ -129,23 +128,11 @@ fun RowScope.SelectingBottomBarItems(
     IconButton(
         onClick = {
             coroutineScope.launch {
-                val hasVideos = selectedItemsWithoutSection.any {
-                    it.type == MediaType.Video
-                }
-
-                val intent = Intent().apply {
-                    action = Intent.ACTION_SEND_MULTIPLE
-                    type = if (hasVideos) "video/*" else "images/*"
-                }
-
-                val fileUris = ArrayList<Uri>()
-                selectedItemsWithoutSection.forEach {
-                    fileUris.add(it.uri)
-                }
-
-                intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, fileUris)
-
-                context.startActivity(Intent.createChooser(intent, null))
+                shareMultipleImages(
+                    uris = selectedItemsWithoutSection.map { it.uri },
+                    context = context,
+                    hasVideos = selectedItemsWithoutSection.any { it.type == MediaType.Video }
+                )
             }
         }
     ) {
