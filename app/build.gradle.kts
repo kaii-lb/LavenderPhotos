@@ -97,6 +97,7 @@ dependencies {
     implementation("com.github.kittinunf.fuel:fuel-json:2.3.1")
     implementation(libs.androidx.profileinstaller)
     implementation("androidx.work:work-runtime-ktx:2.10.3")
+    implementation(libs.androidx.documentfile)
     "baselineProfile"(project(":baselineprofile"))
 
     val media3Version = "1.8.0"
@@ -117,7 +118,7 @@ dependencies {
     implementation("com.github.bumptech.glide:ktx:1.0.0-beta07")
     implementation("com.github.bumptech.glide:avif-integration:5.0.4")
 
-    implementation("com.github.kaii-lb:Lavender-Snackbars:071f602527")
+    implementation("com.github.kaii-lb:Lavender-Snackbars:b79cb851bc")
     implementation("com.github.kaii-lb.LavenderImmichIntegration:library:v1.0.9")
 
     implementation("com.mikepenz:aboutlibraries:13.0.0-b01")
