@@ -17,7 +17,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -52,12 +51,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.ClipOp
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -66,8 +66,10 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.effect.FrameDropEffect
 import androidx.media3.exoplayer.ExoPlayer
 import com.kaii.photos.LocalMainViewModel
+import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.VideoEditorBottomBar
 import com.kaii.photos.compose.app_bars.VideoEditorTopBar
+import com.kaii.photos.compose.dialogs.TextEntryDialog
 import com.kaii.photos.compose.editing_view.CropBox
 import com.kaii.photos.compose.editing_view.FilterPager
 import com.kaii.photos.compose.editing_view.makeVideoDrawCanvas
@@ -78,6 +80,7 @@ import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.editing.BasicVideoData
 import com.kaii.photos.helpers.editing.ColorMatrixEffect
+import com.kaii.photos.helpers.editing.DrawableText
 import com.kaii.photos.helpers.editing.MediaAdjustments
 import com.kaii.photos.helpers.editing.MediaColorFilters
 import com.kaii.photos.helpers.editing.VideoEditorTabs
@@ -524,6 +527,51 @@ fun VideoEditor(
                                 allowedToRefresh = isPlaying.value || isSeeking
                             )
                         } else {
+                            var showTextDialog by remember { mutableStateOf(false) }
+                            val textMeasurer = rememberTextMeasurer()
+                            var tapPosition by remember { mutableStateOf(Offset.Zero) }
+
+                            if (showTextDialog) {
+                                TextEntryDialog(
+                                    title = stringResource(id = R.string.editing_text),
+                                    placeholder = stringResource(id = R.string.bottom_sheets_enter_text),
+                                    onValueChange = { input ->
+                                        input.isNotBlank()
+                                    },
+                                    onConfirm = { input ->
+                                        if (input.isNotBlank()) {
+                                            val size = textMeasurer.measure(
+                                                text = input,
+                                                style = DrawableText.Styles.Default.copy(
+                                                    color = drawingPaintState.paint.color,
+                                                    fontSize = TextUnit(drawingPaintState.paint.strokeWidth, TextUnitType.Sp)
+                                                )
+                                            ).size
+
+                                            val newText = VideoModification.DrawingText(
+                                                text = DrawableText(
+                                                    text = input,
+                                                    position = Offset(tapPosition.x, tapPosition.y),
+                                                    paint = drawingPaintState.paint,
+                                                    rotation = 0f,
+                                                    size = size
+                                                )
+                                            )
+
+                                            drawingPaintState.modifications.add(newText)
+
+                                            showTextDialog = false
+                                            true
+                                        } else {
+                                            false
+                                        }
+                                    },
+                                    onDismiss = {
+                                        showTextDialog = false
+                                    }
+                                )
+                            }
+
                             Box(
                                 modifier = Modifier
                                     .graphicsLayer {
@@ -534,8 +582,13 @@ fun VideoEditor(
                                     }
                                     .makeVideoDrawCanvas(
                                         drawingPaintState = drawingPaintState,
+                                        textMeasurer = textMeasurer,
+                                        currentVideoPosition = currentVideoPosition,
                                         enabled = pagerState.currentPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw)
-                                    )
+                                    ) { position ->
+                                        tapPosition = position
+                                        showTextDialog = true
+                                    }
                             ) {
                                 AndroidView(
                                     factory = {
@@ -546,82 +599,16 @@ fun VideoEditor(
                                         .background(MaterialTheme.colorScheme.background)
                                 )
 
-                                val backgroundColor = MaterialTheme.colorScheme.background
-                                Canvas(
-                                    modifier = Modifier
-                                        .requiredSize(
-                                            width = width,
-                                            height = height
-                                        )
-                                        .align(Alignment.Center)
-                                ) {
-                                    clipRect(
-                                        left = actualLeft + latestCrop.left,
-                                        top = actualTop + latestCrop.top,
-                                        right = actualLeft + latestCrop.right,
-                                        bottom = actualTop + latestCrop.bottom
-                                    ) {
-                                        drawingPaintState.modifications.forEach { modification ->
-                                            when (modification) {
-                                                is VideoModification.DrawingPath -> {
-                                                    val (_, path, _) = modification
-
-                                                    drawPath(
-                                                        path = path.path,
-                                                        style = Stroke(
-                                                            width = path.paint.strokeWidth,
-                                                            cap = path.paint.strokeCap,
-                                                            join = path.paint.strokeJoin,
-                                                            miter = path.paint.strokeMiterLimit,
-                                                            pathEffect = path.paint.pathEffect
-                                                        ),
-                                                        blendMode = path.paint.blendMode,
-                                                        color = path.paint.color,
-                                                        alpha = path.paint.alpha
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    clipRect(
-                                        left = 0f,
-                                        top = 0f,
-                                        right = actualLeft * 2 + originalCrop.right,
-                                        bottom = actualTop * 2 + originalCrop.bottom
-                                    ) {
-                                        if (pagerState.currentPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Crop)) {
-                                            // mask exoplayer's failure to set the background color
-                                            clipRect(
-                                                left = actualLeft + originalCrop.left,
-                                                top = actualTop + originalCrop.top,
-                                                right = actualLeft + originalCrop.right,
-                                                bottom = actualTop + originalCrop.bottom,
-                                                clipOp = ClipOp.Difference
-                                            ) {
-                                                drawRect(
-                                                    color = backgroundColor,
-                                                    size = Size(width.toPx(), height.toPx())
-                                                )
-                                            }
-                                        } else {
-                                            // mask exoplayer's failure to set the background color
-                                            // and the "unwanted" area of the cropped video
-                                            clipRect(
-                                                left = actualLeft + latestCrop.left,
-                                                top = actualTop + latestCrop.top,
-                                                right = actualLeft + latestCrop.right,
-                                                bottom = actualTop + latestCrop.bottom,
-                                                clipOp = ClipOp.Difference
-                                            ) {
-                                                drawRect(
-                                                    color = backgroundColor,
-                                                    size = Size(width.toPx(), height.toPx())
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
+                                PreviewCanvas(
+                                    drawingPaintState = drawingPaintState,
+                                    actualLeft = actualLeft,
+                                    actualTop = actualTop,
+                                    latestCrop = latestCrop,
+                                    originalCrop = originalCrop,
+                                    pagerState = pagerState,
+                                    width = width,
+                                    height = height
+                                )
 
                                 AnimatedContent(
                                     targetState = exoPlayerLoading || basicVideoData.aspectRatio == -1f,

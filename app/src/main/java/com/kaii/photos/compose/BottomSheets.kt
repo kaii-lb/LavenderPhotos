@@ -91,7 +91,7 @@ fun SetEditingViewDrawableTextBottomSheet(
             val height = remember(hasSavedName) { if (imeHeight > 72.dp || hasSavedName) imeHeight - 96.dp else 72.dp }
 
             val localTextStyle = LocalTextStyle.current
-            val defaultStyle = DrawableText.Styles.Default.style
+            val defaultStyle = DrawableText.Styles.Default
 
             TextFieldWithConfirm(
                 text = text,
@@ -176,9 +176,11 @@ fun CroppingRatioBottomSheet(
                     ClickableRow(
                         title = stringResource(id = entry.title),
                         position =
-                            if (index == 0) RowPosition.Top
-                            else if (index == CroppingAspectRatio.entries.size - 1) RowPosition.Bottom
-                            else RowPosition.Middle,
+                            when (index) {
+                                0 -> RowPosition.Top
+                                CroppingAspectRatio.entries.size - 1 -> RowPosition.Bottom
+                                else -> RowPosition.Middle
+                            },
                         selected = ratio == entry
                     ) {
                         onSetCroppingRatio(entry)

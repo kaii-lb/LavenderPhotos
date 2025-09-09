@@ -519,7 +519,7 @@ fun EditingView(
                 label = "Animate size of preview image in crop mode"
             )
 
-            val defaultTextStyle = DrawableText.Styles.Default.style
+            val defaultTextStyle = DrawableText.Styles.Default
             val canDraw = remember {
                 derivedStateOf {
                     pagerState.currentPage == 3
@@ -2870,7 +2870,7 @@ fun BoxWithConstraintsScope.DrawingControls(
 ) {
     val textMeasurer = rememberTextMeasurer()
     val localTextStyle = LocalTextStyle.current
-    val defaultTextStyle = DrawableText.Styles.Default.style
+    val defaultTextStyle = DrawableText.Styles.Default
 
     val isLandscape by rememberDeviceOrientation()
 
@@ -2953,12 +2953,18 @@ fun BoxWithConstraintsScope.DrawingControls(
                         if (sliderState != SliderStates.SelectedTextScaling) selectedText.value =
                             null
 
-                        sliderVal = if (sliderState == SliderStates.FontScaling) {
-                            paint.value.strokeWidth / 128f
-                        } else if (sliderState == SliderStates.Zooming) {
-                            manualScale.floatValue
-                        } else {
-                            selectedText.value!!.paint.strokeWidth / 128f
+                        sliderVal = when (sliderState) {
+                            SliderStates.FontScaling -> {
+                                paint.value.strokeWidth / 128f
+                            }
+
+                            SliderStates.Zooming -> {
+                                manualScale.floatValue
+                            }
+
+                            else -> {
+                                selectedText.value!!.paint.strokeWidth / 128f
+                            }
                         }
                     },
                     colors = IconButtonDefaults.iconButtonColors(

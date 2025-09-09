@@ -7,9 +7,8 @@ import android.provider.MediaStore
 import android.util.Log
 import androidx.annotation.OptIn
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.text.TextMeasurer
 import androidx.media3.common.Effect
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
@@ -58,6 +57,7 @@ suspend fun saveVideo(
     overwrite: Boolean,
     containerDimens: Size,
     canvasSize: Size,
+    textMeasurer: TextMeasurer,
     onFailure: () -> Unit
 ) {
     val isLoading = mutableStateOf(true)
@@ -175,17 +175,12 @@ suspend fun saveVideo(
         textOverlays.forEach { overlay ->
             overlayEffects.add(
                 overlay.type.toEffect(
-                    value = DrawableText(
-                        text = overlay.text.text,
-                        position = Offset(0f, 0f),
-                        paint = DrawingPaint(strokeWidth = overlay.text.paint.strokeWidth, color = overlay.text.paint.color),
-                        rotation = overlay.text.rotation,
-                        size = IntSize.Companion.Zero
-                    ),
+                    value = overlay,
                     timespan = overlay.timespan,
                     ratio = ratio,
                     context = context,
-                    resolution = canvasSize
+                    resolution = canvasSize,
+                    textMeasurer = textMeasurer
                 )
             )
         }
@@ -204,7 +199,8 @@ suspend fun saveVideo(
                         timespan = overlay.timespan,
                         ratio = ratio,
                         context = context,
-                        resolution = canvasSize
+                        resolution = canvasSize,
+                        textMeasurer = textMeasurer
                     )
                 } else {
                     overlay.type.toEffect(
@@ -212,7 +208,8 @@ suspend fun saveVideo(
                         timespan = overlay.timespan,
                         ratio = ratio,
                         context = context,
-                        resolution = canvasSize
+                        resolution = canvasSize,
+                        textMeasurer = textMeasurer
                     )
                 }
 
@@ -233,7 +230,8 @@ suspend fun saveVideo(
                     timespan = overlay.timespan,
                     ratio = ratio,
                     context = context,
-                    resolution = canvasSize
+                    resolution = canvasSize,
+                    textMeasurer = textMeasurer
                 )
 
             overlayEffects.add(effect)

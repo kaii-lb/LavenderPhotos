@@ -1,6 +1,5 @@
 package com.kaii.photos.compose.editing_view
 
-import android.util.Log
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateOffsetAsState
 import androidx.compose.animation.core.tween
@@ -9,6 +8,7 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.calculateCentroid
 import androidx.compose.foundation.gestures.calculateCentroidSize
 import androidx.compose.foundation.gestures.calculatePan
+import androidx.compose.foundation.gestures.calculateRotation
 import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
@@ -32,12 +32,16 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
+import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.util.fastForEach
 import com.kaii.photos.helpers.AnimationConstants
@@ -47,10 +51,13 @@ import com.kaii.photos.helpers.editing.DrawableText
 import com.kaii.photos.helpers.editing.DrawingItems
 import com.kaii.photos.helpers.editing.DrawingPaint
 import com.kaii.photos.helpers.editing.DrawingPaintState
+import com.kaii.photos.helpers.editing.DrawingTextKeyframe
 import com.kaii.photos.helpers.editing.Modification
 import com.kaii.photos.helpers.editing.PaintType
 import com.kaii.photos.helpers.editing.VideoModification
+import com.kaii.photos.helpers.editing.checkTapInText
 import com.kaii.photos.helpers.editing.toOffset
+import kotlin.math.PI
 import kotlin.math.abs
 
 // private const val TAG = "EDITING_VIEW_INPUT"
@@ -73,7 +80,7 @@ fun Modifier.makeDrawCanvas(
 ): Modifier {
     val textMeasurer = rememberTextMeasurer()
     val localTextStyle = LocalTextStyle.current
-    val defaultTextStyle = DrawableText.Styles.Default.style
+    val defaultTextStyle = DrawableText.Styles.Default
 
     var lastPoint = Offset.Unspecified
     var lastText: DrawableText? = null
@@ -410,7 +417,10 @@ fun Modifier.makeDrawCanvas(
 @Composable
 fun Modifier.makeVideoDrawCanvas(
     drawingPaintState: DrawingPaintState,
-    enabled: Boolean
+    currentVideoPosition: MutableFloatState,
+    textMeasurer: TextMeasurer,
+    enabled: Boolean,
+    addText: (position: Offset) -> Unit
 ): Modifier {
     var zoom by remember { mutableFloatStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
@@ -448,20 +458,16 @@ fun Modifier.makeVideoDrawCanvas(
             if (!enabled) return@pointerInput
 
             awaitEachGesture {
-                var currentPath: VideoModification.DrawingPath
-                var lastPoint: Offset
-                var hasDragged = false
-
                 val down = awaitFirstDown(requireUnconsumed = false)
                 val initialEvent = awaitPointerEvent(PointerEventPass.Initial)
-
-                Log.d("INPUT", "DOING ${initialEvent.changes.size}")
 
                 if (initialEvent.changes.size > 1) {
                     var localZoom = 1f
                     var pan = Offset.Zero
+                    var localRotation = 0f
                     var pastTouchSlop = false
                     val touchSlop = viewConfiguration.touchSlop
+                    var currentText: VideoModification.DrawingText? = null
 
                     do {
                         val event = awaitPointerEvent()
@@ -470,21 +476,90 @@ fun Modifier.makeVideoDrawCanvas(
                         if (!canceled) {
                             val zoomChange = event.calculateZoom()
                             val panChange = event.calculatePan()
+                            val rotationChange = event.calculateRotation()
 
                             if (!pastTouchSlop) {
                                 localZoom *= zoomChange
                                 pan += panChange
+                                localRotation += rotationChange
 
                                 val centroidSize = event.calculateCentroidSize(useCurrent = false)
                                 val zoomMotion = abs(1 - localZoom) * centroidSize
                                 val panMotion = pan.getDistance()
+                                val rotationMotion = abs(localRotation * PI.toFloat() * centroidSize / 180f)
 
-                                pastTouchSlop = zoomMotion > touchSlop || panMotion > touchSlop
+                                pastTouchSlop = zoomMotion > touchSlop || rotationMotion > touchSlop || panMotion > touchSlop
                             }
 
                             if (pastTouchSlop) {
                                 val centroid = event.calculateCentroid(useCurrent = false)
-                                if (zoomChange != 1f || panChange != Offset.Zero) {
+
+                                var tappedOnText = drawingPaintState.modifications.find {
+                                    it as? VideoModification.DrawingText != null
+                                            && it.text.checkTapInText(
+                                        tapPosition = centroid,
+                                        padding = 0f
+                                    )
+                                }
+
+                                if (currentText != null) tappedOnText = currentText
+                                else if (tappedOnText != null) currentText = tappedOnText as VideoModification.DrawingText
+
+                                if (tappedOnText != null) {
+                                    drawingPaintState.modifications.remove(tappedOnText)
+
+                                    val strokeWidth = (tappedOnText.text.paint.strokeWidth * zoomChange).coerceIn(1f, 128f)
+                                    val newSize = textMeasurer.measure(
+                                        text = tappedOnText.text.text,
+                                        style = DrawableText.Styles.Default.copy(
+                                            color = drawingPaintState.paint.color,
+                                            fontSize = TextUnit(strokeWidth, TextUnitType.Sp)
+                                        )
+                                    ).size
+
+                                    val positon = tappedOnText.text.position - (newSize.toOffset() - tappedOnText.text.size.toOffset()) / 2f
+                                    val keyframe =
+                                        if (drawingPaintState.recordKeyframes) {
+                                            DrawingTextKeyframe(
+                                                position = positon,
+                                                size = newSize,
+                                                color = drawingPaintState.color,
+                                                time = currentVideoPosition.floatValue * 1000f,
+                                                strokeWidth = strokeWidth,
+                                                rotation = tappedOnText.text.rotation + rotationChange
+                                            )
+                                        } else {
+                                            null
+                                        }
+
+                                    val keyframeList =
+                                        if (keyframe != null) {
+                                            (currentText?.keyframes ?: emptyList()).toMutableList().apply {
+                                                removeAll {
+                                                    it.time == keyframe.time
+                                                }
+                                                add(keyframe)
+                                            }
+                                        } else {
+                                            currentText?.keyframes
+                                        }
+
+                                    tappedOnText = tappedOnText.copy(
+                                        text = tappedOnText.text.copy(
+                                            size = newSize,
+                                            paint = tappedOnText.text.paint.copy(
+                                                color = drawingPaintState.color,
+                                                strokeWidth = strokeWidth
+                                            ),
+                                            position = positon,
+                                            rotation = tappedOnText.text.rotation + rotationChange
+                                        ),
+                                        keyframes = keyframeList
+                                    )
+
+                                    drawingPaintState.modifications.add(tappedOnText)
+                                    currentText = tappedOnText
+                                } else if (zoomChange != 1f || panChange != Offset.Zero) {
                                     val oldScale = zoom
                                     val isPanning = panChange.getDistanceSquared() >= 20f
 
@@ -505,56 +580,92 @@ fun Modifier.makeVideoDrawCanvas(
                         }
                     } while (!canceled && event.changes.fastAny { it.pressed } && event.changes.size == 2)
                 } else {
-                    val newPath = VideoModification.DrawingPath(
-                        type = DrawingItems.Pencil,
-                        path = DrawablePath(
-                            path = Path().apply {
-                                moveTo(down.position.x, down.position.y)
-                            },
-                            paint = drawingPaintState.paint
-                        )
-                    )
-                    drawingPaintState.modifications.add(newPath)
-                    currentPath = newPath
-                    lastPoint = down.position
+                    when (drawingPaintState.paintType) {
+                        DrawingItems.Text -> {
+                            var currentText: VideoModification.DrawingText? = null
 
-                    do {
-                        val event = awaitPointerEvent()
-                        val canceled = event.changes.fastAny { it.isConsumed }
-                        val isUp = event.changes.fastAny { it.id == down.id && !it.pressed }
-
-                        if (isUp) {
-                            if (!hasDragged) {
-                                currentPath.let { drawingPaintState.modifications.remove(it) }
-                                currentPath.path.path.lineTo(down.position.x, down.position.y)
-                                currentPath.let { drawingPaintState.modifications.add(it) }
-                            }
-
-                            break
-                        }
-
-                        val dragChange = event.changes.firstOrNull { it.id == down.id }
-
-                        if (dragChange != null) {
-                            hasDragged = dragChange.positionChanged()
-
-                            currentPath.let { drawingPaintState.modifications.remove(it) }
-                            currentPath.path.path.apply {
-                                quadraticTo(
-                                    lastPoint.x,
-                                    lastPoint.y,
-                                    (lastPoint.x + dragChange.position.x) / 2,
-                                    (lastPoint.y + dragChange.position.y) / 2
+                            val tappedOnText = drawingPaintState.modifications.find {
+                                it as? VideoModification.DrawingText != null
+                                        && it.text.checkTapInText(
+                                    tapPosition = down.position,
+                                    padding = 16.dp.toPx()
                                 )
                             }
-                            currentPath.let { drawingPaintState.modifications.add(it) }
 
-                            lastPoint = dragChange.position
-                            dragChange.consume()
-                        } else {
-                            break
+                            if (tappedOnText != null) {
+                                currentText = tappedOnText as VideoModification.DrawingText
+                            } else {
+                                addText(down.position)
+                            }
+
+                            do {
+                                val event = awaitPointerEvent()
+                                val canceled = event.changes.fastAny { it.isConsumed }
+
+                                val dragChange = event.changes.firstOrNull { it.id == down.id }
+
+                                if (dragChange != null) {
+                                    if (currentText != null) {
+                                        drawingPaintState.modifications.remove(currentText)
+
+                                        val position = dragChange.position - currentText.text.size.toOffset() / 2f
+                                        val keyframe =
+                                            if (drawingPaintState.recordKeyframes) {
+                                                DrawingTextKeyframe(
+                                                    position = position,
+                                                    size = currentText.text.size,
+                                                    color = drawingPaintState.color,
+                                                    time = currentVideoPosition.floatValue * 1000f,
+                                                    strokeWidth = drawingPaintState.strokeWidth,
+                                                    rotation = currentText.text.rotation
+                                                )
+                                            } else {
+                                                null
+                                            }
+
+                                        val keyframeList =
+                                            if (keyframe != null) {
+                                                (currentText.keyframes ?: emptyList()).toMutableList().apply {
+                                                    removeAll {
+                                                        it.time == keyframe.time
+                                                    }
+                                                    add(keyframe)
+                                                }
+                                            } else {
+                                                currentText.keyframes
+                                            }
+
+                                        currentText = currentText.copy(
+                                            text = currentText.text.copy(
+                                                position = position,
+                                                paint = currentText.text.paint.copy(
+                                                    color = drawingPaintState.color
+                                                )
+                                            ),
+                                            keyframes = keyframeList
+                                        )
+
+                                        drawingPaintState.modifications.add(currentText)
+                                    }
+
+                                    dragChange.consume()
+                                } else {
+                                    break
+                                }
+                            } while (!canceled && event.changes.fastAny { it.pressed })
                         }
-                    } while (!canceled && event.changes.fastAny { it.pressed })
+
+                        DrawingItems.Image -> {
+
+                        }
+
+                        else -> {
+                            handlePencilHighlighterDrawing(
+                                drawingPaintState = drawingPaintState,
+                                down = down
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -575,4 +686,64 @@ fun Modifier.makeVideoDrawCanvas(
     // }
 
     return this.then(modifier)
+}
+
+private suspend fun AwaitPointerEventScope.handlePencilHighlighterDrawing(
+    drawingPaintState: DrawingPaintState,
+    down: PointerInputChange
+) {
+    var currentPath: VideoModification.DrawingPath
+    var lastPoint: Offset
+    var hasDragged = false
+
+    val newPath = VideoModification.DrawingPath(
+        type = DrawingItems.Pencil,
+        path = DrawablePath(
+            path = Path().apply {
+                moveTo(down.position.x, down.position.y)
+            },
+            paint = drawingPaintState.paint
+        )
+    )
+    drawingPaintState.modifications.add(newPath)
+    currentPath = newPath
+    lastPoint = down.position
+
+    do {
+        val event = awaitPointerEvent()
+        val canceled = event.changes.fastAny { it.isConsumed }
+        val isUp = event.changes.fastAny { it.id == down.id && !it.pressed }
+
+        if (isUp) {
+            if (!hasDragged) {
+                drawingPaintState.modifications.remove(currentPath)
+                currentPath.path.path.lineTo(down.position.x, down.position.y)
+                drawingPaintState.modifications.add(currentPath)
+            }
+
+            break
+        }
+
+        val dragChange = event.changes.firstOrNull { it.id == down.id }
+
+        if (dragChange != null) {
+            hasDragged = dragChange.positionChanged()
+
+            drawingPaintState.modifications.remove(currentPath)
+            currentPath.path.path.apply {
+                quadraticTo(
+                    lastPoint.x,
+                    lastPoint.y,
+                    (lastPoint.x + dragChange.position.x) / 2,
+                    (lastPoint.y + dragChange.position.y) / 2
+                )
+            }
+            drawingPaintState.modifications.add(currentPath)
+
+            lastPoint = dragChange.position
+            dragChange.consume()
+        } else {
+            break
+        }
+    } while (!canceled && event.changes.fastAny { it.pressed })
 }

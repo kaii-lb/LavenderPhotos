@@ -4,27 +4,26 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.PorterDuff
 import android.net.Uri
 import android.opengl.GLES20
-import android.text.Spannable
-import android.text.SpannableString
-import android.text.style.AbsoluteSizeSpan
-import android.text.style.BackgroundColorSpan
-import android.text.style.ForegroundColorSpan
-import android.util.TypedValue
 import androidx.annotation.OptIn
 import androidx.annotation.StringRes
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
-import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.TextUnitType
 import androidx.core.graphics.createBitmap
 import androidx.media3.common.Effect
 import androidx.media3.common.MediaItem
@@ -40,11 +39,9 @@ import androidx.media3.effect.CanvasOverlay
 import androidx.media3.effect.GlEffect
 import androidx.media3.effect.GlShaderProgram
 import androidx.media3.effect.StaticOverlaySettings
-import androidx.media3.effect.TextOverlay
 import androidx.media3.exoplayer.ExoPlayer
 import com.kaii.photos.R
 import org.intellij.lang.annotations.Language
-import kotlin.math.roundToInt
 
 private interface DrawingEffect {
     @get:StringRes val title: Int
@@ -56,7 +53,8 @@ private interface DrawingEffect {
         timespan: VideoModification.Trim?,
         ratio: Float,
         resolution: Size,
-        context: Context
+        context: Context,
+        textMeasurer: TextMeasurer
     ): BitmapOverlay
 
     fun toDrawingPaint(): DrawingPaint
@@ -73,7 +71,8 @@ enum class DrawingItems : DrawingEffect {
             timespan: VideoModification.Trim?,
             ratio: Float,
             resolution: Size,
-            context: Context
+            context: Context,
+            textMeasurer: TextMeasurer
         ): BitmapOverlay {
             if (value !is DrawablePath) throw IllegalArgumentException("${Pencil::class}.toEffect can only accept ${DrawablePath::class} as an input value")
 
@@ -97,7 +96,8 @@ enum class DrawingItems : DrawingEffect {
             timespan: VideoModification.Trim?,
             ratio: Float,
             resolution: Size,
-            context: Context
+            context: Context,
+            textMeasurer: TextMeasurer
         ): BitmapOverlay {
             if (value !is DrawablePath) throw IllegalArgumentException("${Highlighter::class}.toEffect can only accept ${DrawablePath::class} as an input value")
 
@@ -121,34 +121,17 @@ enum class DrawingItems : DrawingEffect {
             timespan: VideoModification.Trim?,
             ratio: Float,
             resolution: Size,
-            context: Context
+            context: Context,
+            textMeasurer: TextMeasurer
         ): BitmapOverlay {
-            if (value !is DrawableText) throw IllegalArgumentException("${Text::class}.toEffect can only accept ${DrawableText::class} as an input value")
+            if (value !is VideoModification.DrawingText) throw IllegalArgumentException("${Text::class}.toEffect can only accept ${VideoModification.DrawingText::class} as an input value")
 
             return TimedTextOverlay(
-                text = SpannableString.valueOf(
-                    value.text
-                ).apply {
-                    setSpan(ForegroundColorSpan(value.paint.color.toArgb()), 0, value.text.length, Spannable.SPAN_INCLUSIVE_INCLUSIVE)
-                    setSpan(BackgroundColorSpan(Color.Transparent.toArgb()), 0, value.text.length, Spannable.SPAN_INCLUSIVE_INCLUSIVE)
-                    setSpan(
-                        AbsoluteSizeSpan(
-                            TypedValue.applyDimension(
-                                TypedValue.COMPLEX_UNIT_SP,
-                                value.paint.strokeWidth,
-                                context.resources.displayMetrics
-                            ).roundToInt()
-                        ),
-                        0,
-                        value.text.length,
-                        Spannable.SPAN_INCLUSIVE_INCLUSIVE
-                    )
-                },
-                timespan = timespan,
-                overlaySettings =
-                    StaticOverlaySettings.Builder()
-                        .setRotationDegrees(value.rotation)
-                        .build()
+                drawingText = value,
+                ratio = ratio,
+                resolution = resolution,
+                textMeasurer = textMeasurer,
+                timespan = timespan
             )
         }
 
@@ -164,7 +147,8 @@ enum class DrawingItems : DrawingEffect {
             timespan: VideoModification.Trim?,
             ratio: Float,
             resolution: Size,
-            context: Context
+            context: Context,
+            textMeasurer: TextMeasurer
         ): BitmapOverlay {
             if (value !is DrawableImage) throw IllegalArgumentException("${Image::class}.toEffect can only accept ${DrawableImage::class} as an input value")
 
@@ -236,24 +220,71 @@ class TimePathOverlay(
 
 @OptIn(UnstableApi::class)
 class TimedTextOverlay(
-    private val text: SpannableString,
-    private val overlaySettings: StaticOverlaySettings,
+    private val drawingText: VideoModification.DrawingText,
+    private val ratio: Float,
+    private val resolution: Size,
+    private val textMeasurer: TextMeasurer,
     private val timespan: VideoModification.Trim? = null
-) : TextOverlay() {
-    private val emptyBitmap = createBitmap(1, 1, Bitmap.Config.ARGB_8888)
+) : CanvasOverlay(true) {
+    override fun onDraw(canvas: Canvas, presentationTimeUs: Long) {
+        val drawScope = CanvasDrawScope()
+        canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR) // clear canvas from previous state
+        val composeCanvas = androidx.compose.ui.graphics.Canvas(canvas)
 
-    override fun getText(presentationTimeUs: Long): SpannableString = text
-    override fun getOverlaySettings(presentationTimeUs: Long): OverlaySettings = overlaySettings
+        if (timespan == null || presentationTimeUs / 1000f in (timespan.start * 1000)..(timespan.end * 1000)) {
+            val scaledDrawingWidth = resolution.width * ratio
+            val scaledDrawingHeight = resolution.height * ratio
+            val translateX = (canvas.width - scaledDrawingWidth) / 2f
+            val translateY = (canvas.height - scaledDrawingHeight) / 2f
+            var text = drawingText.text
 
-    override fun getBitmap(presentationTimeUs: Long): Bitmap {
-        return if (timespan != null) {
-            if (presentationTimeUs / 1000f in (timespan.start * 1000)..(timespan.end * 1000)) {
-                super.getBitmap(presentationTimeUs)
-            } else {
-                emptyBitmap
+            val keyframes = drawingText.keyframes
+
+            if (keyframes != null) {
+                val keyframe = interpolateKeyframes(
+                    keyframes = keyframes,
+                    timeMs = presentationTimeUs / 1000f
+                )
+
+                if (keyframe != null) {
+                    text = text.copy(
+                        position = keyframe.position,
+                        paint = text.paint.copy(
+                            color = keyframe.color,
+                            strokeWidth = keyframe.strokeWidth
+                        ),
+                        rotation = keyframe.rotation,
+                        size = keyframe.size
+                    )
+                }
             }
-        } else {
-            super.getBitmap(presentationTimeUs)
+
+            drawScope.draw(
+                density = Density(1f),
+                layoutDirection = LayoutDirection.Ltr,
+                canvas = composeCanvas,
+                size = Size(
+                    canvas.width.toFloat(),
+                    canvas.height.toFloat()
+                )
+            ) {
+                translate(left = translateX, top = translateY) {
+                    scale(ratio, Offset(0f, 0f)) {
+                        rotate(text.rotation, text.position + text.size.toOffset() / 2f) {
+                            drawText(
+                                textMeasurer = textMeasurer,
+                                text = text.text,
+                                topLeft = text.position,
+                                style = DrawableText.Styles.Default.copy(
+                                    color = text.paint.color,
+                                    fontSize = TextUnit(text.paint.strokeWidth * ratio, TextUnitType.Sp)
+                                ),
+                                blendMode = text.paint.blendMode
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }

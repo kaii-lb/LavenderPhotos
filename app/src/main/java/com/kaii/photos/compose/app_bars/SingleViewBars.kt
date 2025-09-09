@@ -77,6 +77,7 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
@@ -364,6 +365,7 @@ fun VideoEditorTopBar(
                     val context = LocalContext.current
                     val resources = LocalResources.current
                     val coroutineScope = rememberCoroutineScope()
+                    val textMeasurer = rememberTextMeasurer()
 
                     SplitButtonDefaults.LeadingButton(
                         onClick = {
@@ -382,7 +384,8 @@ fun VideoEditorTopBar(
                                     absolutePath = absolutePath,
                                     overwrite = overwrite,
                                     containerDimens = containerDimens,
-                                    canvasSize = canvasSize
+                                    canvasSize = canvasSize,
+                                    textMeasurer = textMeasurer
                                 ) {
                                     coroutineScope.launch {
                                         LavenderSnackbarController.pushEvent(

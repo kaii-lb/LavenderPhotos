@@ -31,6 +31,9 @@ class DrawingPaintState(
         private set
     var color by mutableStateOf(initialColor)
         private set
+    var recordKeyframes by mutableStateOf(false)
+        private set
+
     val modifications = mutableStateListOf<SharedModification>()
 
     val paint by derivedStateOf {
@@ -53,6 +56,11 @@ class DrawingPaintState(
     @JvmName("privateSetColor")
     fun setColor(color: Color) {
         this.color = color
+    }
+
+    @JvmName("privateSetRecordKeyframes")
+    fun setRecordKeyframes(record: Boolean) {
+        this.recordKeyframes = record
     }
 
     fun undoModification() {

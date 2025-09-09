@@ -511,7 +511,7 @@ suspend fun modificationsToBitmap(
     rotation: Float,
     textMeasurer: TextMeasurer,
 ): ImageBitmap {
-    val defaultTextStyle = DrawableText.Styles.Default.style
+    val defaultTextStyle = DrawableText.Styles.Default
 
     val blurredImage =
         if (modifications.any { it is DrawableBlur } && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {

@@ -731,42 +731,38 @@ fun VideoEditorDrawContent(
             targetState = drawingPaintState.paintType
         ) { state ->
             when (state) {
-                DrawingItems.Pencil, DrawingItems.Highlighter -> {
-                    PaintColorSelector(
-                        drawingPaintState = drawingPaintState,
-                        collapsed = collapsed
-                    ) { new ->
-                        collapsed = new
-                    }
-                }
-
-                DrawingItems.Text -> {
-                    TextSelector(
-                        drawingPaintState = drawingPaintState
-                    )
-                }
-
                 DrawingItems.Image -> {
                     ImageSelector(
                         drawingPaintState = drawingPaintState
                     )
                 }
+
+                else -> {
+                    PaintColorSelector(
+                        drawingPaintState = drawingPaintState,
+                        collapsed = collapsed
+                    ) {
+                        collapsed = it
+                    }
+                }
             }
         }
 
-        Button(
-            onClick = {
-                drawingPaintState.clearModifications()
-            },
-            shape = CircleShape,
-            contentPadding = PaddingValues.Zero,
-            modifier = Modifier
-                .size(56.dp)
-        ) {
-            Icon(
-                painter = painterResource(id = R.drawable.trash),
-                contentDescription = "remove all drawings"
-            )
+        if (collapsed) {
+            Button(
+                onClick = {
+                    drawingPaintState.clearModifications()
+                },
+                shape = CircleShape,
+                contentPadding = PaddingValues.Zero,
+                modifier = Modifier
+                    .size(56.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.trash),
+                    contentDescription = "remove all drawings"
+                )
+            }
         }
     }
 }
@@ -977,36 +973,6 @@ private fun ImageSelector(
 
         Text(
             text = stringResource(id = R.string.editing_upload_image),
-            fontSize = TextUnit(TextStylingConstants.MEDIUM_TEXT_SIZE, TextUnitType.Sp)
-        )
-    }
-}
-
-@Composable
-private fun TextSelector(
-    drawingPaintState: DrawingPaintState,
-    modifier: Modifier = Modifier
-) {
-    Button(
-        onClick = {
-            // TODO: handle text thing
-        },
-        shape = CircleShape,
-        modifier = modifier
-            .height(56.dp)
-            .wrapContentWidth()
-    ) {
-        Icon(
-            painter = painterResource(id = R.drawable.edit),
-            contentDescription = "add text",
-            modifier = Modifier
-                .size(24.dp) // shrink cuz icon too big in comparison to text
-        )
-
-        Spacer(modifier = Modifier.width(4.dp))
-
-        Text(
-            text = stringResource(id = R.string.editing_text),
             fontSize = TextUnit(TextStylingConstants.MEDIUM_TEXT_SIZE, TextUnitType.Sp)
         )
     }

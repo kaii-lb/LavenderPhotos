@@ -381,7 +381,7 @@ data class DrawableText(
     @JvmInline
     value class Styles(val style: TextStyle) {
         companion object {
-            val Default = Styles(
+            val Default =
                 TextStyle(
                     textAlign = TextAlign.Center,
                     platformStyle = PlatformTextStyle(
@@ -392,8 +392,7 @@ data class DrawableText(
                         alignment = LineHeightStyle.Alignment.Center
                     ),
                     baselineShift = BaselineShift.None,
-                ),
-            )
+                )
         }
     }
 }
@@ -442,3 +441,10 @@ interface SharedModification {
         val image: DrawableImage
     }
 }
+
+fun DrawableText.checkTapInText(
+    tapPosition: Offset,
+    padding: Float
+) =
+    tapPosition.x in position.x - padding / 2 - size.width..position.x + padding / 2 + size.width
+            && tapPosition.y in position.y - padding - size.height..position.y + padding + size.height

@@ -16,6 +16,7 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.FilledTonalIconToggleButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -213,7 +214,8 @@ fun VideoEditorPlaybackControls(
             val animatedWidth by animateDpAsState(
                 targetValue =
                     if (pagerState.currentPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Adjust)
-                        || pagerState.currentPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw)) 32.dp
+                        || pagerState.currentPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw)
+                    ) 32.dp
                     else 0.dp,
                 animationSpec = AnimationConstants.expressiveSpring()
             )
@@ -261,10 +263,12 @@ fun VideoEditorAdjustmentTools(
             }
         }
 
-        val sliderVal = remember(currentEditorPage) { mutableFloatStateOf(
-        if (currentEditorPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw)) drawingPaintState.strokeWidth / 100f
+        val sliderVal = remember(currentEditorPage) {
+            mutableFloatStateOf(
+                if (currentEditorPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw)) drawingPaintState.strokeWidth / 100f
                 else latestAdjustment?.value ?: 1f
-        )}
+            )
+        }
 
         val changesSize = remember { mutableIntStateOf(0) }
         val coroutineScope = rememberCoroutineScope()
@@ -343,6 +347,28 @@ fun VideoEditorAdjustmentTools(
                     )
                 }
             }
+        }
+
+        val animatedWidth by animateDpAsState(
+            targetValue =
+                if (currentEditorPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw)) 32.dp
+                else 0.dp,
+            animationSpec = AnimationConstants.expressiveSpring()
+        )
+
+        FilledTonalIconToggleButton(
+            checked = drawingPaintState.recordKeyframes,
+            onCheckedChange = {
+                drawingPaintState.setRecordKeyframes(it)
+            },
+            modifier = Modifier
+                .height(32.dp)
+                .width(animatedWidth)
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.animation),
+                contentDescription = "toggle ability to record keyframes"
+            )
         }
     }
 }

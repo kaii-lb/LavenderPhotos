@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -304,8 +305,8 @@ fun TextEntryDialog(
                 }
             },
             colors = TextFieldDefaults.colors(
-                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                 cursorColor = MaterialTheme.colorScheme.primary,
                 focusedTextColor = MaterialTheme.colorScheme.onSurface,
                 unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
@@ -324,7 +325,7 @@ fun TextEntryDialog(
                     keyboardController?.hide()
                 }
             ),
-            shape = RoundedCornerShape(24.dp),
+            shape = CircleShape,
             modifier = Modifier
                 .fillMaxWidth(1f)
         )
@@ -570,8 +571,8 @@ fun AlbumPathsDialog(
 
                         relative
                             .groupBy { it.toRelativePath(true).substringBefore("/") }
-                            .forEach {
-                                var min = findMinParent(it.value)
+                            .forEach { group ->
+                                val min = findMinParent(group.value)
                                 val grouped = min
                                     .groupBy { it.getParentFromPath() }
                                     .map { (key, value) ->
