@@ -758,6 +758,7 @@ fun VideoEditor(
                 duration = duration.floatValue,
                 totalModCount = totalModCount,
                 videoEditingState = videoEditingState,
+                drawingPaintState = drawingPaintState,
                 onSeek = { pos ->
                     isSeeking = true
                     val wasPlaying = isPlaying.value

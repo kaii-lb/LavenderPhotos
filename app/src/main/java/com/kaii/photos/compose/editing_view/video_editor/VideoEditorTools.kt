@@ -45,6 +45,7 @@ import com.kaii.photos.compose.widgets.ColorRangeSlider
 import com.kaii.photos.compose.widgets.PopupPillSlider
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.TextStylingConstants
+import com.kaii.photos.helpers.editing.DrawingPaintState
 import com.kaii.photos.helpers.editing.MediaAdjustments
 import com.kaii.photos.helpers.editing.VideoEditingState
 import com.kaii.photos.helpers.editing.VideoEditorTabs
@@ -60,14 +61,22 @@ fun VideoEditorBottomTools(
     isPlaying: MutableState<Boolean>,
     isMuted: MutableState<Boolean>,
     totalModCount: MutableIntState,
-    modifier: Modifier = Modifier,
     videoEditingState: VideoEditingState,
+    drawingPaintState: DrawingPaintState,
+    modifier: Modifier = Modifier,
     onSeek: (position: Float) -> Unit,
     onSeekFinished: () -> Unit
 ) {
-    val toolsPagerState = rememberPagerState {
-        if (pagerState.currentPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Adjust)) 2
-        else 1
+    val toolsPagerState = rememberPagerState { 2 }
+
+    LaunchedEffect(pagerState.currentPage) {
+        if (pagerState.currentPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Adjust)
+            || pagerState.currentPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw)
+        ) {
+            toolsPagerState.animateScrollToPage(1)
+        } else {
+            toolsPagerState.animateScrollToPage(0)
+        }
     }
 
     HorizontalPager(
@@ -90,9 +99,11 @@ fun VideoEditorBottomTools(
             )
         } else {
             VideoEditorAdjustmentTools(
-                modifications = modifications,
                 state = toolsPagerState,
-                totalModCount = totalModCount
+                totalModCount = totalModCount,
+                modifications = modifications,
+                drawingPaintState = drawingPaintState,
+                currentEditorPage = pagerState.currentPage
             )
         }
     }
@@ -201,7 +212,8 @@ fun VideoEditorPlaybackControls(
             val coroutineScope = rememberCoroutineScope()
             val animatedWidth by animateDpAsState(
                 targetValue =
-                    if (pagerState.currentPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Adjust)) 32.dp
+                    if (pagerState.currentPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Adjust)
+                        || pagerState.currentPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw)) 32.dp
                     else 0.dp,
                 animationSpec = AnimationConstants.expressiveSpring()
             )
@@ -232,6 +244,8 @@ fun VideoEditorAdjustmentTools(
     state: PagerState,
     totalModCount: MutableIntState,
     modifications: SnapshotStateList<VideoModification>,
+    currentEditorPage: Int,
+    drawingPaintState: DrawingPaintState,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -241,15 +255,19 @@ fun VideoEditorAdjustmentTools(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Start
     ) {
-        val sliderVal = remember { mutableFloatStateOf(1f) }
-        val changesSize = remember { mutableIntStateOf(0) }
-        val coroutineScope = rememberCoroutineScope()
-
         val latestAdjustment by remember {
             derivedStateOf {
                 modifications.lastOrNull { it is VideoModification.Adjustment } as? VideoModification.Adjustment
             }
         }
+
+        val sliderVal = remember(currentEditorPage) { mutableFloatStateOf(
+        if (currentEditorPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw)) drawingPaintState.strokeWidth / 100f
+                else latestAdjustment?.value ?: 1f
+        )}
+
+        val changesSize = remember { mutableIntStateOf(0) }
+        val coroutineScope = rememberCoroutineScope()
 
         LaunchedEffect(latestAdjustment, totalModCount.intValue) {
             if (latestAdjustment != null) {
@@ -303,15 +321,24 @@ fun VideoEditorAdjustmentTools(
                         sliderValue = sliderVal,
                         changesSize = changesSize, // not using totalModCount since that would cook the performance
                         popupPillHeightOffset = 6.dp,
-                        enabled = latestAdjustment != null,
+                        enabled = latestAdjustment != null || currentEditorPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw),
+                        range =
+                            if (currentEditorPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw)) 0f..100f
+                            else -100f..100f,
                         confirmValue = {
-                            val new = latestAdjustment!!.copy(
-                                value = sliderVal.floatValue
-                            )
+                            if (currentEditorPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw)) {
+                                // set brush width
+                                drawingPaintState.setStrokeWidth(sliderVal.floatValue)
+                            } else {
+                                // set adjustment values
+                                val new = latestAdjustment!!.copy(
+                                    value = sliderVal.floatValue
+                                )
 
-                            modifications.remove(latestAdjustment!!)
-                            modifications.add(new)
-                            totalModCount.intValue += 1
+                                modifications.remove(latestAdjustment!!)
+                                modifications.add(new)
+                                totalModCount.intValue += 1
+                            }
                         }
                     )
                 }

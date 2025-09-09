@@ -238,6 +238,7 @@ fun BoxWithConstraintsScope.PopupPillSlider(
     sliderValue: MutableFloatState,
     changesSize: MutableIntState,
     popupPillHeightOffset: Dp = 0.dp,
+    range: ClosedFloatingPointRange<Float> = -100f..100f,
     enabled: Boolean = true,
     confirmValue: () -> Unit = {}
 ) {
@@ -287,10 +288,12 @@ fun BoxWithConstraintsScope.PopupPillSlider(
     )
 
     val localDensity = LocalDensity.current
-    val multiplier = sliderValue.floatValue * 0.5f + 0.5f
+    val multiplier = ((sliderValue.floatValue * 100f) / (range.endInclusive - range.start)) - (range.start / 200)
+    val multiplier2 = multiplier * 2 - 1
+
     val neededOffset = with(localDensity) {
         val position =
-            multiplier * maxWidth.toPx() - (24.dp.toPx() * sliderValue.floatValue) - (animatedPillWidth / 2).toPx() // offset by the opposite of the movement so the pill stays in the same place, then subtract half the width to center it
+            multiplier * maxWidth.toPx() - (24.dp.toPx() * multiplier2) - (animatedPillWidth / 2).toPx() // offset by the opposite of the movement so the pill stays in the same place, then subtract half the width to center it
         position.coerceIn(16.dp.toPx(), (maxWidth - animatedPillWidth - 16.dp).toPx()) // -width - 16.dp because width of pill + padding
     }
 
@@ -334,7 +337,7 @@ fun BoxWithConstraintsScope.PopupPillSlider(
                 sliderValue.floatValue = it / 100f
             },
             onValueChangeFinished = confirmValue,
-            valueRange = -100f..100f,
+            valueRange = range,
             steps = 199,
             thumb = {
                 SliderDefaults.Thumb(
