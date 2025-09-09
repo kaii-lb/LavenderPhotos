@@ -137,7 +137,7 @@ fun VideoEditorPlaybackControls(
                 .padding(horizontal = 8.dp)
         ) {
             val animatedSeekbarWidth by animateDpAsState(
-                targetValue = if (pagerState.currentPage != 0) this.maxWidth else 0.dp
+                targetValue = if (pagerState.currentPage != VideoEditorTabs.entries.indexOf(VideoEditorTabs.Trim)) this.maxWidth else 0.dp
             )
 
             if (animatedSeekbarWidth != 0.dp) {

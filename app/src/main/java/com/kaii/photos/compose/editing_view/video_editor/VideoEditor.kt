@@ -120,7 +120,9 @@ fun VideoEditor(
         duration = duration,
         currentVideoPosition = currentVideoPosition
     ) { playbackState ->
-        exoPlayerLoading = playbackState == ExoPlayer.STATE_BUFFERING
+        if (exoPlayerLoading) {
+            exoPlayerLoading = playbackState == ExoPlayer.STATE_BUFFERING
+        }
     }
 
     val videoEditingState = rememberVideoEditingState(
@@ -655,6 +657,7 @@ fun VideoEditor(
                                                 )
                                         )
                                     } else {
+                                        // just fill the size so it doesn't scale down
                                         Box(
                                             modifier = Modifier
                                                 .requiredSize(
