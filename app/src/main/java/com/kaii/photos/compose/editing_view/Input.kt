@@ -663,7 +663,10 @@ private suspend fun AwaitPointerEventScope.handleTextDrawing(
         drawingPaintState.setSelectedText(tappedOnText)
     } else {
         if (drawingPaintState.selectedText == null) {
-            drawingPaintState.setRecordKeyframes(false)
+            drawingPaintState.setRecordKeyframes(
+                record = false,
+                currentTime = currentVideoPosition.floatValue
+            )
             addText(down.position)
         } else {
             drawingPaintState.setSelectedText(null)

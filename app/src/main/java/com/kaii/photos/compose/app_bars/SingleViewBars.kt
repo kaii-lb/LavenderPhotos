@@ -250,7 +250,8 @@ fun VideoEditorBottomBar(
 
                     VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw) -> {
                         VideoEditorDrawContent(
-                            drawingPaintState = drawingPaintState
+                            drawingPaintState = drawingPaintState,
+                            currentTime = currentPosition.floatValue
                         )
                     }
                 }

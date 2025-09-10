@@ -52,7 +52,9 @@ class DrawingPaintState(
     }
 
     @JvmName("privateSetStrokeWidth")
-    fun setStrokeWidth(strokeWidth: Float, textMeasurer: TextMeasurer) {
+    fun setStrokeWidth(strokeWidth: Float, textMeasurer: TextMeasurer, currentTime: Float) {
+        this.strokeWidth = strokeWidth
+
         if (this.selectedText != null) {
             if (this.selectedText is VideoModification.DrawingText) {
                 val drawingText = this.selectedText as VideoModification.DrawingText
@@ -65,7 +67,7 @@ class DrawingPaintState(
                     text = drawingText.text.text,
                     style = DrawableText.Styles.Default.copy(
                         color = drawingText.text.paint.color,
-                        fontSize = drawingText.text.paint.strokeWidth.sp
+                        fontSize = strokeWidth.sp
                     )
                 ).size
 
@@ -77,19 +79,20 @@ class DrawingPaintState(
                             ),
                             size = newSize,
                             position = drawingText.text.position - (newSize.toOffset() - drawingText.text.size.toOffset()) / 2f
-                        )
+                        ),
+                        keyframes =  getKeyframes(drawingText, currentTime)
                     )
 
                 modifications.add(new)
                 this.selectedText = new
             } // TODO: for images
         }
-
-        this.strokeWidth = strokeWidth
     }
 
     @JvmName("privateSetColor")
-    fun setColor(color: Color) {
+    fun setColor(color: Color, currentTime: Float) {
+        this.color = color
+
         if (this.selectedText != null) {
             if (this.selectedText is VideoModification.DrawingText) {
                 val drawingText = this.selectedText as VideoModification.DrawingText
@@ -104,20 +107,37 @@ class DrawingPaintState(
                             paint = drawingText.text.paint.copy(
                                 color = color
                             )
-                        )
+                        ),
+                        keyframes =  getKeyframes(drawingText, currentTime)
                     )
 
                 modifications.add(new)
                 this.selectedText = new
             } // TODO: for images
         }
-
-        this.color = color
     }
 
     @JvmName("privateSetRecordKeyframes")
-    fun setRecordKeyframes(record: Boolean) {
+    fun setRecordKeyframes(record: Boolean, currentTime: Float) {
         this.recordKeyframes = record
+
+        if (this.selectedText is VideoModification.DrawingText) {
+            val drawingText = this.selectedText as VideoModification.DrawingText
+
+            modifications.removeAll {
+                it == drawingText
+            }
+
+            val new =
+                drawingText.copy(
+                    keyframes =  getKeyframes(drawingText, currentTime)
+                )
+
+            Log.d("VIDEO", "keyframes are ${new.keyframes}")
+
+            modifications.add(new)
+            this.selectedText = new
+        } // TODO: for images
     }
 
     @JvmName("privateSetSelectedText")
@@ -133,6 +153,47 @@ class DrawingPaintState(
         modifications.clear()
         this.selectedText = null
     }
+
+    private fun getKeyframes(
+        drawingText: VideoModification.DrawingText,
+        currentTime: Float
+    ) =
+        if (this.recordKeyframes && drawingText.keyframes != null) {
+            drawingText.keyframes.toMutableList().apply {
+                val last = lastOrNull()
+
+                if (last == null || last.time == currentTime * 1000f
+                    || last.strokeWidth == this@DrawingPaintState.strokeWidth
+                    || last.color == this@DrawingPaintState.color
+                    || last.position == drawingText.text.position
+                    || last.rotation == drawingText.text.rotation
+                ) {
+                    removeLastOrNull()
+                }
+
+                add(
+                    DrawingTextKeyframe(
+                        position = drawingText.text.position,
+                        strokeWidth = drawingText.text.paint.strokeWidth,
+                        rotation = drawingText.text.rotation,
+                        color = this@DrawingPaintState.color,
+                        time = currentTime * 1000f
+                    )
+                )
+            }
+        } else if (this.recordKeyframes) {
+            listOf(
+                DrawingTextKeyframe(
+                    position = drawingText.text.position,
+                    strokeWidth = drawingText.text.paint.strokeWidth,
+                    rotation = drawingText.text.rotation,
+                    color = this@DrawingPaintState.color,
+                    time = currentTime * 1000f
+                )
+            )
+        } else {
+            drawingText.keyframes
+        }
 
     companion object {
         /** The default [Saver] implementation for [DrawingPaintState]. */

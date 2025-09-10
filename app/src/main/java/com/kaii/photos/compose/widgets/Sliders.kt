@@ -240,7 +240,8 @@ fun BoxWithConstraintsScope.PopupPillSlider(
     popupPillHeightOffset: Dp = 0.dp,
     range: ClosedFloatingPointRange<Float> = -100f..100f,
     enabled: Boolean = true,
-    confirmValue: () -> Unit = {}
+    confirmValue: () -> Unit = {},
+    onValueChange: () -> Unit = {}
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     var isDraggingSlider by remember { mutableStateOf(false) }
@@ -334,6 +335,7 @@ fun BoxWithConstraintsScope.PopupPillSlider(
         Slider(
             value = sliderValue.floatValue * 100f,
             onValueChange = {
+                onValueChange()
                 sliderValue.floatValue = it / 100f
             },
             onValueChangeFinished = confirmValue,

@@ -107,7 +107,8 @@ fun VideoEditorBottomTools(
                 totalModCount = totalModCount,
                 modifications = modifications,
                 drawingPaintState = drawingPaintState,
-                currentEditorPage = pagerState.currentPage
+                currentEditorPage = pagerState.currentPage,
+                currentVideoPosition = currentPosition.floatValue
             )
         }
     }
@@ -250,6 +251,7 @@ fun VideoEditorAdjustmentTools(
     totalModCount: MutableIntState,
     modifications: SnapshotStateList<VideoModification>,
     currentEditorPage: Int,
+    currentVideoPosition: Float,
     drawingPaintState: DrawingPaintState,
     modifier: Modifier = Modifier
 ) {
@@ -326,17 +328,6 @@ fun VideoEditorAdjustmentTools(
                 } else {
                     val textMeasurer = rememberTextMeasurer()
 
-                    LaunchedEffect(sliderVal.floatValue) {
-                        // to update the preview immediately
-                        if (currentEditorPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw)) {
-                            // set brush width
-                            drawingPaintState.setStrokeWidth(
-                                strokeWidth = sliderVal.floatValue * 128f,
-                                textMeasurer = textMeasurer
-                            )
-                        }
-                    }
-
                     PopupPillSlider(
                         sliderValue = sliderVal,
                         changesSize = changesSize, // not using totalModCount since that would cook the performance
@@ -350,7 +341,8 @@ fun VideoEditorAdjustmentTools(
                                 // set brush width
                                 drawingPaintState.setStrokeWidth(
                                     strokeWidth = sliderVal.floatValue * 128f,
-                                    textMeasurer = textMeasurer
+                                    textMeasurer = textMeasurer,
+                                    currentTime = currentVideoPosition
                                 )
                             } else {
                                 // set adjustment values
@@ -361,6 +353,17 @@ fun VideoEditorAdjustmentTools(
                                 modifications.remove(latestAdjustment!!)
                                 modifications.add(new)
                                 totalModCount.intValue += 1
+                            }
+                        },
+                        onValueChange = {
+                            // to update the preview immediately
+                            if (currentEditorPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw)) {
+                                // set brush width
+                                drawingPaintState.setStrokeWidth(
+                                    strokeWidth = sliderVal.floatValue * 128f,
+                                    textMeasurer = textMeasurer,
+                                    currentTime = currentVideoPosition
+                                )
                             }
                         }
                     )
@@ -406,7 +409,10 @@ fun VideoEditorAdjustmentTools(
         FilledTonalIconToggleButton(
             checked = drawingPaintState.recordKeyframes,
             onCheckedChange = {
-                drawingPaintState.setRecordKeyframes(it)
+                drawingPaintState.setRecordKeyframes(
+                    record = it,
+                    currentTime = currentVideoPosition
+                )
             },
             modifier = Modifier
                 .height(32.dp)

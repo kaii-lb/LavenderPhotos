@@ -692,6 +692,7 @@ fun VideoEditorFilterContent(
 @Composable
 fun VideoEditorDrawContent(
     drawingPaintState: DrawingPaintState,
+    currentTime: Float,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -740,7 +741,8 @@ fun VideoEditorDrawContent(
                 else -> {
                     PaintColorSelector(
                         drawingPaintState = drawingPaintState,
-                        collapsed = collapsed
+                        collapsed = collapsed,
+                        currentTime = currentTime
                     ) {
                         collapsed = it
                     }
@@ -865,6 +867,7 @@ private fun PaintTypeSelector(
 private fun PaintColorSelector(
     drawingPaintState: DrawingPaintState,
     collapsed: Boolean,
+    currentTime: Float,
     modifier: Modifier = Modifier,
     setCollapsed: (Boolean) -> Unit
 ) {
@@ -932,7 +935,7 @@ private fun PaintColorSelector(
                                     animatedVisibilityScope = this@AnimatedContent
                                 )
                                 .clickable {
-                                    drawingPaintState.setColor(color)
+                                    drawingPaintState.setColor(color, currentTime)
                                     setCollapsed(true)
                                 }
                                 .padding(6.dp)
