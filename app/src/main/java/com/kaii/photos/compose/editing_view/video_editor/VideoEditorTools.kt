@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -47,6 +48,7 @@ import com.kaii.photos.compose.widgets.ColorRangeSlider
 import com.kaii.photos.compose.widgets.PopupPillSlider
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.TextStylingConstants
+import com.kaii.photos.helpers.editing.DrawingItems
 import com.kaii.photos.helpers.editing.DrawingPaintState
 import com.kaii.photos.helpers.editing.MediaAdjustments
 import com.kaii.photos.helpers.editing.VideoEditingState
@@ -366,9 +368,37 @@ fun VideoEditorAdjustmentTools(
             }
         }
 
-        val animatedWidth by animateDpAsState(
+        val animatedDeleteWidth by animateDpAsState(
             targetValue =
-                if (currentEditorPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw)) 32.dp
+                // no check for paintType since selectedText == null implies
+                // paintType != Text or no text to delete
+                if (currentEditorPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw)
+                    && drawingPaintState.selectedText != null
+                ) 32.dp
+                else 0.dp,
+            animationSpec = AnimationConstants.expressiveSpring()
+        )
+
+        FilledTonalIconButton(
+            onClick = {
+                drawingPaintState.modifications.remove(drawingPaintState.selectedText!!)
+                drawingPaintState.setSelectedText(null)
+            },
+            modifier = Modifier
+                .height(32.dp)
+                .width(animatedDeleteWidth)
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.ink_eraser),
+                contentDescription = "delete this text"
+            )
+        }
+
+        if (animatedDeleteWidth >= 5.dp) Spacer(modifier = Modifier.width(8.dp))
+
+        val animatedKeyframeWidth by animateDpAsState(
+            targetValue =
+                if (currentEditorPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw) && drawingPaintState.paintType == DrawingItems.Text) 32.dp
                 else 0.dp,
             animationSpec = AnimationConstants.expressiveSpring()
         )
@@ -380,7 +410,7 @@ fun VideoEditorAdjustmentTools(
             },
             modifier = Modifier
                 .height(32.dp)
-                .width(animatedWidth)
+                .width(animatedKeyframeWidth)
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.animation),
