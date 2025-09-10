@@ -17,8 +17,7 @@ import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.TextUnit
-import androidx.compose.ui.unit.TextUnitType
+import androidx.compose.ui.unit.sp
 import com.kaii.photos.helpers.editing.DrawableText
 import com.kaii.photos.helpers.editing.DrawingPaintState
 import com.kaii.photos.helpers.editing.VideoEditorTabs
@@ -78,13 +77,17 @@ fun BoxScope.PreviewCanvas(
 
                         rotate(text.rotation, text.position + text.size.toOffset() / 2f) {
                             translate(text.position.x, text.position.y) {
-                                drawText(
-                                    textMeasurer = textMeasurer,
+                                val textLayout = textMeasurer.measure(
                                     text = text.text,
                                     style = DrawableText.Styles.Default.copy(
                                         color = text.paint.color,
-                                        fontSize = TextUnit(text.paint.strokeWidth, TextUnitType.Sp)
+                                        fontSize = text.paint.strokeWidth.sp
                                     ),
+                                    softWrap = false
+                                )
+
+                                drawText(
+                                    textLayoutResult = textLayout,
                                     blendMode = text.paint.blendMode
                                 )
 

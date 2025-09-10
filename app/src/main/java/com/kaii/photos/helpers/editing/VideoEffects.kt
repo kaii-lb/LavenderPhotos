@@ -3,9 +3,6 @@ package com.kaii.photos.helpers.editing
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.lerp
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.roundToIntSize
-import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.util.lerp
 import kotlin.math.abs
 
@@ -63,8 +60,7 @@ data class DrawingTextKeyframe(
     val strokeWidth: Float,
     val rotation: Float,
     val color: Color,
-    val time: Float,
-    val size: IntSize
+    val time: Float
 )
 
 fun interpolateKeyframes(
@@ -100,19 +96,22 @@ fun interpolateKeyframes(
                 (timeMs - keyframe1.time) / (keyframe2.time - keyframe1.time)
             }
 
+            // don't lerp color, only change color when we reach the intended timestamp
+            val color = if (timeMs >= keyframe2.time) keyframe2.color else keyframe1.color
+
             return if (diff1 <= diff2) {
                 keyframe1.copy(
                     position = lerp(keyframe1.position, keyframe2.position, t),
                     rotation = lerp(keyframe1.rotation, keyframe2.rotation, t),
-                    size = lerp(keyframe1.size.toSize(), keyframe2.size.toSize(), t).roundToIntSize(),
-                    strokeWidth = lerp(keyframe1.strokeWidth, keyframe2.strokeWidth, t)
+                    strokeWidth = lerp(keyframe1.strokeWidth, keyframe2.strokeWidth, t),
+                    color = color
                 )
             } else {
                 keyframe2.copy(
                     position = lerp(keyframe1.position, keyframe2.position, t),
                     rotation = lerp(keyframe1.rotation, keyframe2.rotation, t),
-                    size = lerp(keyframe1.size.toSize(), keyframe2.size.toSize(), t).roundToIntSize(),
-                    strokeWidth = lerp(keyframe1.strokeWidth, keyframe2.strokeWidth, t)
+                    strokeWidth = lerp(keyframe1.strokeWidth, keyframe2.strokeWidth, t),
+                    color = color
                 )
             }
         }

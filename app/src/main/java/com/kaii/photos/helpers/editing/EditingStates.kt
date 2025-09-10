@@ -1,7 +1,6 @@
 package com.kaii.photos.helpers.editing
 
 import android.util.Log
-import androidx.annotation.FloatRange
 import androidx.annotation.OptIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -49,8 +48,8 @@ class DrawingPaintState(
     }
 
     @JvmName("privateSetStrokeWidth")
-    fun setStrokeWidth(@FloatRange(0.0, 1.0) strokeWidth: Float) {
-        this.strokeWidth = strokeWidth * 128f
+    fun setStrokeWidth(strokeWidth: Float) {
+        this.strokeWidth = strokeWidth
     }
 
     @JvmName("privateSetColor")

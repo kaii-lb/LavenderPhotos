@@ -164,8 +164,6 @@ suspend fun saveVideo(
             basicVideoData.height / containerDimens.height
         ) / (containerDimens.width / containerDimens.height)
 
-    Log.d(TAG, "Ratio $ratio other ${containerDimens.width / containerDimens.height}")
-
     val overlayEffects = mutableListOf<BitmapOverlay>()
     val textOverlays =
         modifications.mapNotNull {

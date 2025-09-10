@@ -332,7 +332,7 @@ fun VideoEditorAdjustmentTools(
                         confirmValue = {
                             if (currentEditorPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw)) {
                                 // set brush width
-                                drawingPaintState.setStrokeWidth(sliderVal.floatValue)
+                                drawingPaintState.setStrokeWidth(sliderVal.floatValue * 128f)
                             } else {
                                 // set adjustment values
                                 val new = latestAdjustment!!.copy(

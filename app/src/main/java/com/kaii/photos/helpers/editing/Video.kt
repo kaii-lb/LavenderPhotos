@@ -22,8 +22,7 @@ import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
-import androidx.compose.ui.unit.TextUnit
-import androidx.compose.ui.unit.TextUnitType
+import androidx.compose.ui.unit.sp
 import androidx.core.graphics.createBitmap
 import androidx.media3.common.Effect
 import androidx.media3.common.MediaItem
@@ -128,10 +127,10 @@ enum class DrawingItems : DrawingEffect {
 
             return TimedTextOverlay(
                 drawingText = value,
-                ratio = ratio,
                 resolution = resolution,
                 textMeasurer = textMeasurer,
-                timespan = timespan
+                timespan = timespan,
+                ratio = ratio
             )
         }
 
@@ -187,6 +186,7 @@ class TimePathOverlay(
             val translateX = (canvas.width - scaledDrawingWidth) / 2f
             val translateY = (canvas.height - scaledDrawingHeight) / 2f
 
+            // optimize to not draw again since canvas doesn't change always
             drawScope.draw(
                 density = Density(1f),
                 layoutDirection = LayoutDirection.Ltr,
@@ -221,8 +221,8 @@ class TimePathOverlay(
 @OptIn(UnstableApi::class)
 class TimedTextOverlay(
     private val drawingText: VideoModification.DrawingText,
-    private val ratio: Float,
     private val resolution: Size,
+    private val ratio: Float,
     private val textMeasurer: TextMeasurer,
     private val timespan: VideoModification.Trim? = null
 ) : CanvasOverlay(true) {
@@ -232,11 +232,11 @@ class TimedTextOverlay(
         val composeCanvas = androidx.compose.ui.graphics.Canvas(canvas)
 
         if (timespan == null || presentationTimeUs / 1000f in (timespan.start * 1000)..(timespan.end * 1000)) {
+            var text = drawingText.text
             val scaledDrawingWidth = resolution.width * ratio
             val scaledDrawingHeight = resolution.height * ratio
             val translateX = (canvas.width - scaledDrawingWidth) / 2f
             val translateY = (canvas.height - scaledDrawingHeight) / 2f
-            var text = drawingText.text
 
             val keyframes = drawingText.keyframes
 
@@ -253,12 +253,12 @@ class TimedTextOverlay(
                             color = keyframe.color,
                             strokeWidth = keyframe.strokeWidth
                         ),
-                        rotation = keyframe.rotation,
-                        size = keyframe.size
+                        rotation = keyframe.rotation
                     )
                 }
             }
 
+            // optimize to not draw again since canvas doesn't change always
             drawScope.draw(
                 density = Density(1f),
                 layoutDirection = LayoutDirection.Ltr,
@@ -269,16 +269,20 @@ class TimedTextOverlay(
                 )
             ) {
                 translate(left = translateX, top = translateY) {
-                    scale(ratio, Offset(0f, 0f)) {
+                    scale(ratio, Offset(1f, 1f)) {
                         rotate(text.rotation, text.position + text.size.toOffset() / 2f) {
-                            drawText(
-                                textMeasurer = textMeasurer,
+                            val textLayout = textMeasurer.measure(
                                 text = text.text,
-                                topLeft = text.position,
                                 style = DrawableText.Styles.Default.copy(
                                     color = text.paint.color,
-                                    fontSize = TextUnit(text.paint.strokeWidth * ratio, TextUnitType.Sp)
+                                    fontSize = text.paint.strokeWidth.sp
                                 ),
+                                softWrap = false
+                            )
+
+                            drawText(
+                                textLayoutResult = textLayout,
+                                topLeft = text.position,
                                 blendMode = text.paint.blendMode
                             )
                         }

@@ -454,7 +454,7 @@ fun Modifier.makeVideoDrawCanvas(
             scaleY = animatedZoom
             transformOrigin = TransformOrigin(0f, 0f)
         }
-        .pointerInput(enabled, drawingPaintState.paintType, drawingPaintState.color) {
+        .pointerInput(enabled, drawingPaintState.paintType, drawingPaintState.color, drawingPaintState.recordKeyframes) {
             if (!enabled) return@pointerInput
 
             awaitEachGesture {
@@ -517,12 +517,13 @@ fun Modifier.makeVideoDrawCanvas(
                                         )
                                     ).size
 
+                                    drawingPaintState.setStrokeWidth(strokeWidth)
+
                                     val positon = tappedOnText.text.position - (newSize.toOffset() - tappedOnText.text.size.toOffset()) / 2f
                                     val keyframe =
                                         if (drawingPaintState.recordKeyframes) {
                                             DrawingTextKeyframe(
                                                 position = positon,
-                                                size = newSize,
                                                 color = drawingPaintState.color,
                                                 time = currentVideoPosition.floatValue * 1000f,
                                                 strokeWidth = strokeWidth,
@@ -583,6 +584,7 @@ fun Modifier.makeVideoDrawCanvas(
                     when (drawingPaintState.paintType) {
                         DrawingItems.Text -> {
                             var currentText: VideoModification.DrawingText? = null
+                            var touchOffset = Offset.Zero
 
                             val tappedOnText = drawingPaintState.modifications.find {
                                 it as? VideoModification.DrawingText != null
@@ -594,6 +596,7 @@ fun Modifier.makeVideoDrawCanvas(
 
                             if (tappedOnText != null) {
                                 currentText = tappedOnText as VideoModification.DrawingText
+                                touchOffset = down.position - currentText.text.position
                             } else {
                                 addText(down.position)
                             }
@@ -608,12 +611,11 @@ fun Modifier.makeVideoDrawCanvas(
                                     if (currentText != null) {
                                         drawingPaintState.modifications.remove(currentText)
 
-                                        val position = dragChange.position - currentText.text.size.toOffset() / 2f
+                                        val position = dragChange.position - touchOffset
                                         val keyframe =
                                             if (drawingPaintState.recordKeyframes) {
                                                 DrawingTextKeyframe(
                                                     position = position,
-                                                    size = currentText.text.size,
                                                     color = drawingPaintState.color,
                                                     time = currentVideoPosition.floatValue * 1000f,
                                                     strokeWidth = drawingPaintState.strokeWidth,
