@@ -8,8 +8,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ClipOp
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.rotate
@@ -17,7 +19,9 @@ import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.toSize
 import com.kaii.photos.helpers.editing.DrawableText
 import com.kaii.photos.helpers.editing.DrawingPaintState
 import com.kaii.photos.helpers.editing.VideoEditorTabs
@@ -91,18 +95,18 @@ fun BoxScope.PreviewCanvas(
                                     blendMode = text.paint.blendMode
                                 )
 
-                                // if (selectedText.value == modification) {
-                                //     drawRoundRect(
-                                //         color = textPaint.color,
-                                //         topLeft = textSize.toOffset().copy(y = 0f) * -0.05f,
-                                //         cornerRadius = CornerRadius(16.dp.toPx() * textPaint.strokeWidth / 128f),
-                                //         size = textSize.toSize() * 1.1f,
-                                //         style = Stroke(
-                                //             width = textPaint.strokeWidth / 2,
-                                //             cap = StrokeCap.Round
-                                //         )
-                                //     )
-                                // }
+                                if (drawingPaintState.selectedText == modification) {
+                                    drawRoundRect(
+                                        color = text.paint.color,
+                                        topLeft = text.size.toOffset().copy(y = 0f) * -0.1f / 2f,
+                                        cornerRadius = CornerRadius(16.dp.toPx() * text.paint.strokeWidth / 128f),
+                                        size = text.size.toSize() * 1.1f,
+                                        style = Stroke(
+                                            width = text.paint.strokeWidth / 2,
+                                            cap = StrokeCap.Round
+                                        )
+                                    )
+                                }
                             }
                         }
                     }

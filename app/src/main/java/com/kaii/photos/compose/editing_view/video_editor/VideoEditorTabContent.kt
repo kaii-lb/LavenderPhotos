@@ -830,6 +830,7 @@ private fun PaintTypeSelector(
                             checked = drawingPaintState.paintType == item,
                             onCheckedChange = { _ ->
                                 drawingPaintState.setPaintType(item)
+                                drawingPaintState.setSelectedText(null)
                                 collapsed = true
                             },
                             shapes = ToggleButtonDefaults.shapes(

@@ -14,6 +14,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.unit.sp
 import androidx.media3.common.Effect
 import androidx.media3.common.util.UnstableApi
 import com.kaii.photos.helpers.editing.DrawingPaintState.Companion.Saver
@@ -32,6 +34,8 @@ class DrawingPaintState(
         private set
     var recordKeyframes by mutableStateOf(false)
         private set
+    var selectedText: SharedModification.DrawingText? by mutableStateOf(null)
+        private set
 
     val modifications = mutableStateListOf<SharedModification>()
 
@@ -48,12 +52,66 @@ class DrawingPaintState(
     }
 
     @JvmName("privateSetStrokeWidth")
-    fun setStrokeWidth(strokeWidth: Float) {
+    fun setStrokeWidth(strokeWidth: Float, textMeasurer: TextMeasurer) {
+        if (this.selectedText != null) {
+            if (this.selectedText is VideoModification.DrawingText) {
+                val drawingText = this.selectedText as VideoModification.DrawingText
+
+                modifications.removeAll {
+                    it == drawingText
+                }
+
+                val newSize = textMeasurer.measure(
+                    text = drawingText.text.text,
+                    style = DrawableText.Styles.Default.copy(
+                        color = drawingText.text.paint.color,
+                        fontSize = drawingText.text.paint.strokeWidth.sp
+                    )
+                ).size
+
+                val new =
+                    drawingText.copy(
+                        text = drawingText.text.copy(
+                            paint = drawingText.text.paint.copy(
+                                strokeWidth = strokeWidth
+                            ),
+                            size = newSize,
+                            position = drawingText.text.position - (newSize.toOffset() - drawingText.text.size.toOffset()) / 2f
+                        )
+                    )
+
+                modifications.add(new)
+                this.selectedText = new
+            } // TODO: for images
+        }
+
         this.strokeWidth = strokeWidth
     }
 
     @JvmName("privateSetColor")
     fun setColor(color: Color) {
+        if (this.selectedText != null) {
+            if (this.selectedText is VideoModification.DrawingText) {
+                val drawingText = this.selectedText as VideoModification.DrawingText
+
+                modifications.removeAll {
+                    it == drawingText
+                }
+
+                val new =
+                    drawingText.copy(
+                        text = drawingText.text.copy(
+                            paint = drawingText.text.paint.copy(
+                                color = color
+                            )
+                        )
+                    )
+
+                modifications.add(new)
+                this.selectedText = new
+            } // TODO: for images
+        }
+
         this.color = color
     }
 
@@ -62,12 +120,18 @@ class DrawingPaintState(
         this.recordKeyframes = record
     }
 
+    @JvmName("privateSetSelectedText")
+    fun setSelectedText(text: SharedModification.DrawingText?) {
+        this.selectedText = text
+    }
+
     fun undoModification() {
         modifications.removeLastOrNull()
     }
 
     fun clearModifications() {
         modifications.clear()
+        this.selectedText = null
     }
 
     companion object {

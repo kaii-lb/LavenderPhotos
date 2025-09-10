@@ -446,5 +446,5 @@ fun DrawableText.checkTapInText(
     tapPosition: Offset,
     padding: Float
 ) =
-    tapPosition.x in position.x - padding / 2 - size.width..position.x + padding / 2 + size.width
-            && tapPosition.y in position.y - padding - size.height..position.y + padding + size.height
+    tapPosition.x in position.x - padding / 2..position.x + padding / 2 + size.width // not subtracting on left or top since position is from top left
+            && tapPosition.y in position.y - padding..position.y + padding + size.height

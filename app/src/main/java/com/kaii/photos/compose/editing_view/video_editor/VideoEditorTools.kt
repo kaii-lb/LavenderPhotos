@@ -37,6 +37,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
@@ -321,6 +322,19 @@ fun VideoEditorAdjustmentTools(
                         }
                     )
                 } else {
+                    val textMeasurer = rememberTextMeasurer()
+
+                    LaunchedEffect(sliderVal.floatValue) {
+                        // to update the preview immediately
+                        if (currentEditorPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw)) {
+                            // set brush width
+                            drawingPaintState.setStrokeWidth(
+                                strokeWidth = sliderVal.floatValue * 128f,
+                                textMeasurer = textMeasurer
+                            )
+                        }
+                    }
+
                     PopupPillSlider(
                         sliderValue = sliderVal,
                         changesSize = changesSize, // not using totalModCount since that would cook the performance
@@ -332,7 +346,10 @@ fun VideoEditorAdjustmentTools(
                         confirmValue = {
                             if (currentEditorPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw)) {
                                 // set brush width
-                                drawingPaintState.setStrokeWidth(sliderVal.floatValue * 128f)
+                                drawingPaintState.setStrokeWidth(
+                                    strokeWidth = sliderVal.floatValue * 128f,
+                                    textMeasurer = textMeasurer
+                                )
                             } else {
                                 // set adjustment values
                                 val new = latestAdjustment!!.copy(
