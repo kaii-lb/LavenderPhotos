@@ -138,7 +138,7 @@ class MediaPicker : ComponentActivity() {
         setContent {
             val selectedItemsList = remember { mutableStateListOf<MediaStoreData>() }
             val mainViewModel: MainViewModel = viewModel(
-                factory = MainViewModelFactory(applicationContext)
+                factory = MainViewModelFactory(applicationContext, emptyList())
             )
 
             val initial =

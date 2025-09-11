@@ -71,7 +71,7 @@ class WallpaperSetter : ComponentActivity() {
 
         setContent {
             val mainViewModel: MainViewModel = viewModel(
-                factory = MainViewModelFactory(applicationContext)
+                factory = MainViewModelFactory(applicationContext, emptyList())
             )
             val initial =
                 when (AppCompatDelegate.getDefaultNightMode()) {

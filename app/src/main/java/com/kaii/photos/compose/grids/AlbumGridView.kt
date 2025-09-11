@@ -80,7 +80,6 @@ import androidx.compose.ui.unit.round
 import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
@@ -102,8 +101,6 @@ import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.signature
-import com.kaii.photos.models.album_grid.AlbumsViewModel
-import com.kaii.photos.models.album_grid.AlbumsViewModelFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -142,14 +139,14 @@ fun AlbumsGridView(
 
     val albums = remember { mutableStateOf(listOfDirs) }
 
-    val albumsViewModel: AlbumsViewModel = viewModel(
-        factory = AlbumsViewModelFactory(
-            context = context,
-            albums = albums.value
-        )
-    )
+    // val albumsViewModel: AlbumsViewModel = viewModel(
+    //     factory = AlbumsViewModelFactory(
+    //         context = context,
+    //         albums = albums.value
+    //     )
+    // )
 
-    val albumToThumbnailMapping by albumsViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+    val albumToThumbnailMapping by mainViewModel.albumsMediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
     val cachedAlbumToThumbnailMapping =
         remember { mutableStateListOf<Pair<AlbumInfo, MediaStoreData>>() }
 
@@ -158,8 +155,8 @@ fun AlbumsGridView(
             val newList = mutableListOf<AlbumInfo>()
 
             // if the albums actually changed, not just the order then refresh
-            if (albumsViewModel.albumInfo.toSet() != listOfDirs.toSet()) {
-                albumsViewModel.refresh(
+            if (mainViewModel.albumInfo.toSet() != listOfDirs.toSet()) {
+                mainViewModel.refreshAlbums(
                     context = context,
                     albums = listOfDirs
                 )
