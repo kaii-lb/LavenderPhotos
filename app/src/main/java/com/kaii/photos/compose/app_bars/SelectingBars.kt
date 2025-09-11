@@ -53,6 +53,7 @@ import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.getParentFromPath
 import com.kaii.photos.helpers.moveImageToLockedFolder
+import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareMultipleImages
 import com.kaii.photos.mediastore.MediaStoreData
@@ -182,17 +183,26 @@ fun RowScope.SelectingBottomBarItems(
 
     val mainViewModel = LocalMainViewModel.current
     val applicationDatabase = LocalAppDatabase.current
+    val doNotTrash by mainViewModel.settings.Permissions.getDoNotTrash().collectAsStateWithLifecycle(initialValue = true)
+
     GetPermissionAndRun(
         uris = selectedItemsWithoutSection.fastMapNotNull { it.uri },
         shouldRun = runDeleteAction,
         onGranted = {
             mainViewModel.launch(Dispatchers.IO) {
-                setTrashedOnPhotoList(
-                    context = context,
-                    list = selectedItemsWithoutSection,
-                    trashed = true,
-                    appDatabase = applicationDatabase
-                )
+                if (doNotTrash) {
+                    permanentlyDeletePhotoList(
+                        context = context,
+                        list = selectedItemsWithoutSection.fastMap { it.uri }
+                    )
+                } else {
+                    setTrashedOnPhotoList(
+                        context = context,
+                        list = selectedItemsWithoutSection,
+                        trashed = true,
+                        appDatabase = applicationDatabase
+                    )
+                }
 
                 selectedItemsList.clear()
             }
@@ -205,7 +215,7 @@ fun RowScope.SelectingBottomBarItems(
     if (!albumInfo.isCustomAlbum) {
         ConfirmationDialog(
             showDialog = showDeleteDialog,
-            dialogTitle = stringResource(id = R.string.media_trash_confirm),
+            dialogTitle = stringResource(id = if (doNotTrash) R.string.media_delete_permanently_confirm else R.string.media_trash_confirm),
             confirmButtonLabel = stringResource(id = R.string.media_delete)
         ) {
             runDeleteAction.value = true

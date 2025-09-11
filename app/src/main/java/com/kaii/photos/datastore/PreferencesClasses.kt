@@ -308,6 +308,7 @@ class SettingsPermissionsImpl(
     private val isMediaManagerKey = booleanPreferencesKey("is_media_manager")
     private val confirmToDelete = booleanPreferencesKey("confirm_to_delete")
     private val overwriteDateOnMoveKey = booleanPreferencesKey("overwrite_data_on_move")
+    private val doNotTrashKey = booleanPreferencesKey("permissions_do_not_trash")
 
     fun getIsMediaManager(): Flow<Boolean> =
         context.datastore.data.map {
@@ -339,6 +340,17 @@ class SettingsPermissionsImpl(
     fun setOverwriteDateOnMove(value: Boolean) = viewModelScope.launch {
         context.datastore.edit {
             it[overwriteDateOnMoveKey] = value
+        }
+    }
+
+    fun getDoNotTrash(): Flow<Boolean> =
+        context.datastore.data.map {
+            it[doNotTrashKey] == true
+        }
+
+    fun setDoNotTrash(value: Boolean) = viewModelScope.launch {
+        context.datastore.edit {
+            it[doNotTrashKey] = value
         }
     }
 }
@@ -558,8 +570,8 @@ class SettingMainPhotosViewImpl(
     private val shouldShowEverything = booleanPreferencesKey("main_photos_show_everything")
 
     fun getAlbums(): Flow<List<String>> =
-        context.datastore.data.map {
-            val string = it[mainPhotosAlbumsList] ?: defaultAlbumsList
+        context.datastore.data.map { data ->
+            val string = data[mainPhotosAlbumsList] ?: defaultAlbumsList
 
             val list = mutableListOf<String>()
             string.split(separator).forEach { album ->

@@ -324,7 +324,7 @@
     <string name="trash_empty_desc">This deletes all items in the trash bin, this action cannot be undone</string>
     <string name="trash_empty_confirm">Empty Out</string>
 
-    <!-- Permission -->
+    <!-- Permissions -->
     <string name="permissions">Permission</string>
     <string name="permissions_media_manager">Media Manager</string>
     <string name="permissions_media_manager_desc">Better and faster trash/delete/copy/move</string>
@@ -336,6 +336,8 @@
     <string name="permissions_needed">Permission Needed</string>
     <string name="permissions_needed_desc">Lavender Photos needs permission to access this album. Please grant it the permission by selecting "Use This Folder" on the next screen.This is a one-time permission.</string>
     <string name="permissions_grant">Grant</string>
+    <string name="permissions_do_not_trash">Don\'t use Trash Bin</string>
+    <string name="permissions_do_not_trash_desc">Immediately and permanently delete items without moving to Trash Bin first</string>
 
     <!-- Media -->
     <string name="media">Media</string>

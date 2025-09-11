@@ -951,18 +951,26 @@ fun FavouritesViewBottomAppBar(
 
         val confirmToDelete by mainViewModel.settings.Permissions.getConfirmToDelete()
             .collectAsStateWithLifecycle(initialValue = true)
+        val doNotTrash by mainViewModel.settings.Permissions.getDoNotTrash().collectAsStateWithLifecycle(initialValue = true)
 
         GetPermissionAndRun(
             uris = selectedItemsWithoutSection.map { it.uri },
             shouldRun = runTrashAction,
             onGranted = {
                 mainViewModel.launch(Dispatchers.IO) {
-                    setTrashedOnPhotoList(
-                        context = context,
-                        list = selectedItemsWithoutSection,
-                        trashed = true,
-                        appDatabase = applicationDatabase
-                    )
+                    if (doNotTrash) {
+                        permanentlyDeletePhotoList(
+                            context = context,
+                            list = selectedItemsWithoutSection.fastMap { it.uri }
+                        )
+                    } else {
+                        setTrashedOnPhotoList(
+                            context = context,
+                            list = selectedItemsWithoutSection,
+                            trashed = true,
+                            appDatabase = applicationDatabase
+                        )
+                    }
 
                     selectedItemsList.clear()
                 }
@@ -971,7 +979,7 @@ fun FavouritesViewBottomAppBar(
 
         ConfirmationDialog(
             showDialog = showDeleteDialog,
-            dialogTitle = stringResource(id = R.string.media_trash_confirm),
+            dialogTitle = stringResource(id = if (doNotTrash) R.string.media_delete_permanently_confirm else R.string.media_trash_confirm),
             confirmButtonLabel = stringResource(id = R.string.media_delete)
         ) {
             coroutineScope.launch {

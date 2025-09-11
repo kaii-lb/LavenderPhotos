@@ -132,6 +132,21 @@ fun PrivacyAndSecurityPage() {
                     mainViewModel.settings.Permissions.setOverwriteDateOnMove(!it)
                 }
             }
+
+            item {
+                val doNotTrash by mainViewModel.settings.Permissions.getDoNotTrash().collectAsStateWithLifecycle(initialValue = true)
+
+                PreferencesSwitchRow(
+                    title = stringResource(id = R.string.permissions_do_not_trash),
+                    summary = stringResource(id = R.string.permissions_do_not_trash_desc),
+                    iconResID = R.drawable.delete_forever,
+                    position = RowPosition.Single,
+                    showBackground = false,
+                    checked = doNotTrash
+                ) {
+                    mainViewModel.settings.Permissions.setDoNotTrash(it)
+                }
+            }
         }
     }
 }

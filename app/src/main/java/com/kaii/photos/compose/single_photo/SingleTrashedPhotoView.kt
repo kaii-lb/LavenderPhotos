@@ -258,17 +258,17 @@ private fun TopBar(
     AnimatedVisibility(
         visible = visible,
         enter =
-        slideInVertically(
-            animationSpec = tween(
-                durationMillis = 250
-            )
-        ) { width -> -width } + fadeIn(),
+            slideInVertically(
+                animationSpec = tween(
+                    durationMillis = 250
+                )
+            ) { width -> -width } + fadeIn(),
         exit =
-        slideOutVertically(
-            animationSpec = tween(
-                durationMillis = 250
-            )
-        ) { width -> -width } + fadeOut(),
+            slideOutVertically(
+                animationSpec = tween(
+                    durationMillis = 250
+                )
+            ) { width -> -width } + fadeOut(),
     ) {
         TopAppBar(
             colors = TopAppBarDefaults.topAppBarColors(
@@ -334,17 +334,17 @@ private fun BottomBar(
     AnimatedVisibility(
         visible = visible,
         enter =
-        slideInVertically(
-            animationSpec = tween(
-                durationMillis = 250
-            )
-        ) { width -> width } + fadeIn(),
+            slideInVertically(
+                animationSpec = tween(
+                    durationMillis = 250
+                )
+            ) { width -> width } + fadeIn(),
         exit =
-        slideOutVertically(
-            animationSpec = tween(
-                durationMillis = 250
-            )
-        ) { width -> width } + fadeOut(),
+            slideOutVertically(
+                animationSpec = tween(
+                    durationMillis = 250
+                )
+            ) { width -> width } + fadeOut(),
     ) {
         BottomAppBar(
             containerColor = MaterialTheme.colorScheme.surfaceContainer,
@@ -366,14 +366,14 @@ private fun BottomBar(
                         uris = listOf(item.uri),
                         shouldRun = runRestoreAction,
                         onGranted = {
-                        	mainViewModel.launch(Dispatchers.IO) {
-	                            setTrashedOnPhotoList(
-	                                context = context,
-	                                list = listOf(item),
-	                                trashed = false,
+                            mainViewModel.launch(Dispatchers.IO) {
+                                setTrashedOnPhotoList(
+                                    context = context,
+                                    list = listOf(item),
+                                    trashed = false,
                                     appDatabase = applicationDatabase
-	                            )
-                        	}
+                                )
+                            }
                         }
                     )
 

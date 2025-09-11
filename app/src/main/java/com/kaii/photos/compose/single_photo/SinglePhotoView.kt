@@ -88,6 +88,7 @@ import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.getParentFromPath
 import com.kaii.photos.helpers.moveImageToLockedFolder
+import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareImage
@@ -639,10 +640,11 @@ private fun BottomBar(
                 val showDeleteDialog = remember { mutableStateOf(false) }
                 val runTrashAction = remember { mutableStateOf(false) }
 
+                val doNotTrash by mainViewModel.settings.Permissions.getDoNotTrash().collectAsStateWithLifecycle(initialValue = true)
                 if (showDeleteDialog.value) {
                     ConfirmationDialog(
                         showDialog = showDeleteDialog,
-                        dialogTitle = stringResource(id = R.string.media_delete_confirm),
+                        dialogTitle = stringResource(id = if (doNotTrash) R.string.media_delete_permanently_confirm else R.string.media_delete_confirm),
                         confirmButtonLabel = stringResource(id = R.string.media_delete)
                     ) {
                         runTrashAction.value = true
@@ -654,12 +656,19 @@ private fun BottomBar(
                     shouldRun = runTrashAction,
                     onGranted = {
                         mainViewModel.launch(Dispatchers.IO) {
-                            setTrashedOnPhotoList(
-                                context = context,
-                                list = listOf(currentItem),
-                                trashed = true,
-                                appDatabase = applicationDatabase
-                            )
+                            if (doNotTrash) {
+                                permanentlyDeletePhotoList(
+                                    context = context,
+                                    list = listOf(currentItem.uri)
+                                )
+                            } else {
+                                setTrashedOnPhotoList(
+                                    context = context,
+                                    list = listOf(currentItem),
+                                    trashed = true,
+                                    appDatabase = applicationDatabase
+                                )
+                            }
 
                             if (loadsFromMainViewModel) {
                                 sortOutMediaMods(

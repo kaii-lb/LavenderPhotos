@@ -81,6 +81,7 @@ import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.copyImageListToPath
 import com.kaii.photos.helpers.moveImageListToPath
+import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.mediastore.MediaStoreData
@@ -304,6 +305,8 @@ fun AlbumsListItem(
     val applicationDatabase = LocalAppDatabase.current
     val coroutineScope = rememberCoroutineScope()
     val overwriteDate by mainViewModel.settings.Permissions.getOverwriteDateOnMove().collectAsStateWithLifecycle(initialValue = true)
+    val doNotTrash by mainViewModel.settings.Permissions.getDoNotTrash().collectAsStateWithLifecycle(initialValue = true)
+
     GetPermissionAndRun(
         uris = selectedItemsWithoutSection.map { it.uri },
         shouldRun = runOnUriGranted,
@@ -343,12 +346,19 @@ fun AlbumsListItem(
                     }
 
                     if (list.isNotEmpty()) {
-                        setTrashedOnPhotoList(
-                            context = context,
-                            list = list,
-                            trashed = true,
-                            appDatabase = applicationDatabase
-                        )
+                        if (doNotTrash) {
+                            permanentlyDeletePhotoList(
+                                context = context,
+                                list = list.fastMap { it.uri }
+                            )
+                        } else {
+                            setTrashedOnPhotoList(
+                                context = context,
+                                list = list,
+                                trashed = true,
+                                appDatabase = applicationDatabase
+                            )
+                        }
                     }
                 }
 
