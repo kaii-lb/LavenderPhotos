@@ -4,6 +4,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.lerp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.roundToIntSize
+import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.util.lerp
 import kotlin.math.abs
 
@@ -75,7 +77,7 @@ interface DrawingKeyframe {
     ) : DrawingKeyframe
 }
 
-fun interpolateKeyframes(
+fun interpolateTextKeyframes(
     keyframes: List<DrawingKeyframe.DrawingTextKeyframe>,
     timeMs: Float
 ): DrawingKeyframe.DrawingTextKeyframe? {
@@ -124,6 +126,60 @@ fun interpolateKeyframes(
                     rotation = lerp(keyframe1.rotation, keyframe2.rotation, t),
                     strokeWidth = lerp(keyframe1.strokeWidth, keyframe2.strokeWidth, t),
                     color = color
+                )
+            }
+        }
+        i++
+    }
+
+    return null
+}
+
+fun interpolateImageKeyframes(
+    keyframes: List<DrawingKeyframe.DrawingImageKeyframe>,
+    timeMs: Float
+): DrawingKeyframe.DrawingImageKeyframe? {
+    if (keyframes.isEmpty()) {
+        return null
+    }
+
+    val sortedKeyframes = keyframes.sortedBy { it.time }
+
+    if (timeMs <= sortedKeyframes.first().time) {
+        return sortedKeyframes.first()
+    }
+
+    if (timeMs >= sortedKeyframes.last().time) {
+        return sortedKeyframes.last()
+    }
+
+    var i = 0
+    while (i < sortedKeyframes.size - 1) {
+        val keyframe1 = sortedKeyframes[i]
+        val keyframe2 = sortedKeyframes[i + 1]
+
+        if (timeMs >= keyframe1.time && timeMs <= keyframe2.time) {
+            val diff1 = abs(timeMs - keyframe1.time)
+            val diff2 = abs(timeMs - keyframe2.time)
+
+            val t = if (keyframe1.time == keyframe2.time) {
+                0f
+            } else {
+                (timeMs - keyframe1.time) / (keyframe2.time - keyframe1.time)
+            }
+
+
+            return if (diff1 <= diff2) {
+                keyframe1.copy(
+                    position = lerp(keyframe1.position, keyframe2.position, t),
+                    rotation = lerp(keyframe1.rotation, keyframe2.rotation, t),
+                    size = lerp(keyframe1.size.toSize(), keyframe2.size.toSize(), t).roundToIntSize()
+                )
+            } else {
+                keyframe2.copy(
+                    position = lerp(keyframe1.position, keyframe2.position, t),
+                    rotation = lerp(keyframe1.rotation, keyframe2.rotation, t),
+                    size = lerp(keyframe1.size.toSize(), keyframe2.size.toSize(), t).roundToIntSize()
                 )
             }
         }

@@ -1,7 +1,6 @@
 package com.kaii.photos.helpers.editing
 
 import android.content.Context
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
@@ -13,6 +12,9 @@ import androidx.annotation.StringRes
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
@@ -22,11 +24,10 @@ import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.round
 import androidx.compose.ui.unit.sp
-import androidx.core.graphics.createBitmap
 import androidx.media3.common.Effect
 import androidx.media3.common.MediaItem
-import androidx.media3.common.OverlaySettings
 import androidx.media3.common.VideoFrameProcessingException
 import androidx.media3.common.util.GlProgram
 import androidx.media3.common.util.GlUtil
@@ -37,7 +38,6 @@ import androidx.media3.effect.BitmapOverlay
 import androidx.media3.effect.CanvasOverlay
 import androidx.media3.effect.GlEffect
 import androidx.media3.effect.GlShaderProgram
-import androidx.media3.effect.StaticOverlaySettings
 import androidx.media3.exoplayer.ExoPlayer
 import com.kaii.photos.R
 import org.intellij.lang.annotations.Language
@@ -149,19 +149,18 @@ enum class DrawingItems : DrawingEffect {
             context: Context,
             textMeasurer: TextMeasurer
         ): BitmapOverlay {
-            if (value !is DrawableImage) throw IllegalArgumentException("${Image::class}.toEffect can only accept ${DrawableImage::class} as an input value")
+            if (value !is VideoModification.DrawingImage) throw IllegalArgumentException("${Image::class}.toEffect can only accept ${VideoModification.DrawingImage::class} as an input value")
 
-            val bitmap = context.contentResolver.openInputStream(value.bitmapUri).use {
+            val bitmap = context.contentResolver.openInputStream(value.image.bitmapUri).use {
                 BitmapFactory.decodeStream(it)
             }
 
             return TimedBitmapOverlay(
-                bitmap = bitmap,
-                timespan = timespan,
-                overlaySettings =
-                    StaticOverlaySettings.Builder()
-                        .setRotationDegrees(value.rotation)
-                        .build()
+                bitmap = bitmap.asImageBitmap(),
+                drawingImage = value,
+                resolution = resolution,
+                ratio = ratio,
+                timespan = timespan
             )
         }
 
@@ -241,7 +240,7 @@ class TimedTextOverlay(
             val keyframes = drawingText.keyframes
 
             if (keyframes != null) {
-                val keyframe = interpolateKeyframes(
+                val keyframe = interpolateTextKeyframes(
                     keyframes = keyframes,
                     timeMs = presentationTimeUs / 1000f
                 )
@@ -295,16 +294,66 @@ class TimedTextOverlay(
 
 @OptIn(UnstableApi::class)
 class TimedBitmapOverlay(
-    private val bitmap: Bitmap,
-    private val overlaySettings: StaticOverlaySettings,
+    private val bitmap: ImageBitmap,
+    private val drawingImage: VideoModification.DrawingImage,
+    private val resolution: Size,
+    private val ratio: Float,
     private val timespan: VideoModification.Trim? = null
-) : BitmapOverlay() {
-    private val emptyBitmap = createBitmap(1, 1, Bitmap.Config.ARGB_8888)
-    override fun getOverlaySettings(presentationTimeUs: Long): OverlaySettings = overlaySettings
+) : CanvasOverlay(true) {
+    override fun onDraw(canvas: Canvas, presentationTimeUs: Long) {
+        val drawScope = CanvasDrawScope()
+        canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR) // clear canvas from previous state
+        val composeCanvas = androidx.compose.ui.graphics.Canvas(canvas)
 
-    override fun getBitmap(presentationTimeUs: Long): Bitmap {
-        return if (timespan == null || presentationTimeUs / 1000f in (timespan.start * 1000)..(timespan.end * 1000)) bitmap
-        else emptyBitmap
+        if (timespan == null || presentationTimeUs / 1000f in (timespan.start * 1000)..(timespan.end * 1000)) {
+            var image = drawingImage.image
+            val scaledDrawingWidth = resolution.width * ratio
+            val scaledDrawingHeight = resolution.height * ratio
+            val translateX = (canvas.width - scaledDrawingWidth) / 2f
+            val translateY = (canvas.height - scaledDrawingHeight) / 2f
+
+            val keyframes = drawingImage.keyframes
+
+            if (keyframes != null) {
+                val keyframe = interpolateImageKeyframes(
+                    keyframes = keyframes,
+                    timeMs = presentationTimeUs / 1000f
+                )
+
+                if (keyframe != null) {
+                    image = image.copy(
+                        position = keyframe.position,
+                        rotation = keyframe.rotation,
+                        size = keyframe.size
+                    )
+                }
+            }
+
+            // optimize to not draw again since canvas doesn't change always
+            drawScope.draw(
+                density = Density(1f),
+                layoutDirection = LayoutDirection.Ltr,
+                canvas = composeCanvas,
+                size = Size(
+                    canvas.width.toFloat(),
+                    canvas.height.toFloat()
+                )
+            ) {
+                translate(left = translateX, top = translateY) {
+                    scale(ratio, Offset(1f, 1f)) {
+                        rotate(image.rotation, image.position + image.size.toOffset() / 2f) {
+                            drawImage(
+                                image = bitmap,
+                                dstSize = image.size,
+                                dstOffset = image.position.round(),
+                                filterQuality = FilterQuality.High,
+                                blendMode = image.paint.blendMode
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 

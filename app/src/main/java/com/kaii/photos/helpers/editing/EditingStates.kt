@@ -1,6 +1,5 @@
 package com.kaii.photos.helpers.editing
 
-import android.util.Log
 import androidx.annotation.OptIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -80,7 +79,21 @@ class DrawingPaintState(
                             size = newSize,
                             position = drawingText.text.position - (newSize.toOffset() - drawingText.text.size.toOffset()) / 2f
                         ),
-                        keyframes =  getKeyframes(drawingText, currentTime)
+                        keyframes = getTextKeyframes(drawingText, currentTime)
+                    )
+
+                modifications.add(new)
+                this.selectedItem = new
+            } else if (this.selectedItem is VideoModification.DrawingImage) {
+                val drawingImage = this.selectedItem as VideoModification.DrawingImage
+
+                modifications.removeAll {
+                    it == drawingImage
+                }
+
+                val new =
+                    drawingImage.copy(
+                        keyframes = getImageKeyframes(drawingImage, currentTime)
                     )
 
                 modifications.add(new)
@@ -108,7 +121,21 @@ class DrawingPaintState(
                                 color = color
                             )
                         ),
-                        keyframes =  getKeyframes(drawingText, currentTime)
+                        keyframes = getTextKeyframes(drawingText, currentTime)
+                    )
+
+                modifications.add(new)
+                this.selectedItem = new
+            } else if (this.selectedItem is VideoModification.DrawingImage) {
+                val drawingImage = this.selectedItem as VideoModification.DrawingImage
+
+                modifications.removeAll {
+                    it == drawingImage
+                }
+
+                val new =
+                    drawingImage.copy(
+                        keyframes = getImageKeyframes(drawingImage, currentTime)
                     )
 
                 modifications.add(new)
@@ -130,10 +157,22 @@ class DrawingPaintState(
 
             val new =
                 drawingText.copy(
-                    keyframes =  getKeyframes(drawingText, currentTime)
+                    keyframes = getTextKeyframes(drawingText, currentTime)
                 )
 
-            Log.d("VIDEO", "keyframes are ${new.keyframes}")
+            modifications.add(new)
+            this.selectedItem = new
+        } else if (this.selectedItem is VideoModification.DrawingImage) {
+            val drawingImage = this.selectedItem as VideoModification.DrawingImage
+
+            modifications.removeAll {
+                it == drawingImage
+            }
+
+            val new =
+                drawingImage.copy(
+                    keyframes = getImageKeyframes(drawingImage, currentTime)
+                )
 
             modifications.add(new)
             this.selectedItem = new
@@ -160,7 +199,7 @@ class DrawingPaintState(
         this.selectedItem = null
     }
 
-    private fun getKeyframes(
+    private fun getTextKeyframes(
         drawingText: VideoModification.DrawingText,
         currentTime: Float
     ) =
@@ -199,6 +238,44 @@ class DrawingPaintState(
             )
         } else {
             drawingText.keyframes
+        }
+
+    private fun getImageKeyframes(
+        drawingImage: VideoModification.DrawingImage,
+        currentTime: Float
+    ) =
+        if (this.recordKeyframes && drawingImage.keyframes != null) {
+            drawingImage.keyframes.toMutableList().apply {
+                val last = lastOrNull()
+
+                if (last == null || last.time == currentTime * 1000f
+                    || last.size == drawingImage.image.size
+                    || last.position == drawingImage.image.position
+                    || last.rotation == drawingImage.image.rotation
+                ) {
+                    removeLastOrNull()
+                }
+
+                add(
+                    DrawingKeyframe.DrawingImageKeyframe(
+                        position = drawingImage.image.position,
+                        size = drawingImage.image.size,
+                        rotation = drawingImage.image.rotation,
+                        time = currentTime * 1000f
+                    )
+                )
+            }
+        } else if (this.recordKeyframes) {
+            listOf(
+                DrawingKeyframe.DrawingImageKeyframe(
+                    position = drawingImage.image.position,
+                    size = drawingImage.image.size,
+                    rotation = drawingImage.image.rotation,
+                    time = currentTime * 1000f
+                )
+            )
+        } else {
+            drawingImage.keyframes
         }
 
     companion object {
@@ -291,7 +368,6 @@ class VideoEditingState(
 
     @JvmName("privateSetStartTrimPosition")
     fun setStartTrimPosition(position: Float) {
-        Log.d(TAG, "Duration is $duration start $startTrimPosition wanted $position")
         this.startTrimPosition = position.coerceIn(0f, endTrimPosition - (duration * 0.1f))
     }
 
@@ -331,14 +407,12 @@ class VideoEditingState(
             }
             effects.add(effect)
         }
-
-        Log.d(TAG, "Effect list $effects")
     }
 
     fun removeAllEffects(predicate: (Effect?) -> Boolean) = effects.removeAll { predicate(it) }
 
     companion object {
-        private const val TAG = "com.kaii.photos.helpers.editing.VideoEditingState"
+        // private const val TAG = "com.kaii.photos.helpers.editing.VideoEditingState"
 
         /** The default [Saver] implementation for [VideoEditingState]. */
         val Saver: Saver<VideoEditingState, *> =

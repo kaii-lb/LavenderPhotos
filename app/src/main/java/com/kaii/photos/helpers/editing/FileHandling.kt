@@ -96,8 +96,6 @@ suspend fun saveVideo(
         val normalizedTop = -(2f * top) + 1f
         val normalizedBottom = -(2f * bottom) + 1f
 
-        Log.d(TAG, "$normalizedTop $normalizedBottom ${cropArea.top / containerDimens.height} ${cropArea.bottom / containerDimens.height}")
-
         modList.add(
             Crop(
                 normalizedLeft,
@@ -112,8 +110,6 @@ suspend fun saveVideo(
 
         val newWidth = (basicVideoData.width * widthPercent).toInt()
         val newHeight = (basicVideoData.height * heightPercent).toInt()
-
-        Log.d(TAG, "New width $newWidth and height $newHeight")
 
         modList.add(
             Presentation.createForShortSide(if (newWidth > newHeight) newWidth else newHeight)
@@ -224,7 +220,7 @@ suspend fun saveVideo(
         bitmapOverlays.forEach { overlay ->
             val effect =
                 overlay.type.toEffect(
-                    value = overlay.image,
+                    value = overlay,
                     timespan = overlay.timespan,
                     ratio = ratio,
                     context = context,
