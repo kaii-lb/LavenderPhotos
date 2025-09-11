@@ -29,8 +29,10 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -327,6 +329,11 @@ fun VideoEditorAdjustmentTools(
                     )
                 } else {
                     val textMeasurer = rememberTextMeasurer()
+                    var isDragging by remember { mutableStateOf(false) }
+
+                    LaunchedEffect(drawingPaintState.strokeWidth) {
+                        if (!isDragging) sliderVal.floatValue = drawingPaintState.strokeWidth / 128f
+                    }
 
                     PopupPillSlider(
                         sliderValue = sliderVal,
@@ -337,6 +344,7 @@ fun VideoEditorAdjustmentTools(
                             if (currentEditorPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw)) 0f..100f
                             else -100f..100f,
                         confirmValue = {
+                            isDragging = false
                             if (currentEditorPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw)) {
                                 // set brush width
                                 drawingPaintState.setStrokeWidth(
@@ -356,6 +364,7 @@ fun VideoEditorAdjustmentTools(
                             }
                         },
                         onValueChange = {
+                            isDragging = true
                             // to update the preview immediately
                             if (currentEditorPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw)) {
                                 // set brush width
@@ -373,10 +382,10 @@ fun VideoEditorAdjustmentTools(
 
         val animatedDeleteWidth by animateDpAsState(
             targetValue =
-                // no check for paintType since selectedText == null implies
-                // paintType != Text or no text to delete
+                // no check for paintType since selectedItem == null implies
+                // paintType != Text|Image or no text/image to delete
                 if (currentEditorPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw)
-                    && drawingPaintState.selectedText != null
+                    && drawingPaintState.selectedItem != null
                 ) 32.dp
                 else 0.dp,
             animationSpec = AnimationConstants.expressiveSpring()
@@ -384,8 +393,8 @@ fun VideoEditorAdjustmentTools(
 
         FilledTonalIconButton(
             onClick = {
-                drawingPaintState.modifications.remove(drawingPaintState.selectedText!!)
-                drawingPaintState.setSelectedText(null)
+                drawingPaintState.modifications.remove(drawingPaintState.selectedItem!!)
+                drawingPaintState.setSelectedItem(null)
             },
             modifier = Modifier
                 .height(32.dp)
@@ -401,7 +410,10 @@ fun VideoEditorAdjustmentTools(
 
         val animatedKeyframeWidth by animateDpAsState(
             targetValue =
-                if (currentEditorPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw) && drawingPaintState.paintType == DrawingItems.Text) 32.dp
+                if (currentEditorPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw)
+                    && (drawingPaintState.paintType == DrawingItems.Text
+                            || drawingPaintState.paintType == DrawingItems.Image)
+                ) 32.dp
                 else 0.dp,
             animationSpec = AnimationConstants.expressiveSpring()
         )

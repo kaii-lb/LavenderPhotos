@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.Color
@@ -367,8 +368,10 @@ data class DrawableBlur(
 
 data class DrawableImage(
     val bitmapUri: Uri,
-    var rotation: Float,
-    val paint: DrawingPaint
+    val paint: DrawingPaint,
+    val rotation: Float,
+    val position: Offset,
+    val size: IntSize
 ) : Modification
 
 data class DrawableText(
@@ -448,3 +451,13 @@ fun DrawableText.checkTapInText(
 ) =
     tapPosition.x in position.x - padding / 2..position.x + padding / 2 + size.width // not subtracting on left or top since position is from top left
             && tapPosition.y in position.y - padding..position.y + padding + size.height
+
+fun DrawableImage.checkTapInBitmap(
+    tapPosition: Offset,
+    padding: Float
+) =
+    tapPosition.x in position.x - padding / 2..position.x + padding / 2 + size.width // not subtracting on left or top since position is from top left
+            && tapPosition.y in position.y - padding..position.y + padding + size.height
+
+
+fun Size.toOffset() = Offset(x = this.width, y = this.height)

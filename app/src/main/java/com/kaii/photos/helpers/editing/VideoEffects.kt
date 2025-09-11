@@ -3,6 +3,7 @@ package com.kaii.photos.helpers.editing
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.lerp
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.util.lerp
 import kotlin.math.abs
 
@@ -44,29 +45,40 @@ interface VideoModification {
     data class DrawingText(
         override val type: DrawingItems = DrawingItems.Text,
         override val text: DrawableText,
-        val keyframes: List<DrawingTextKeyframe>? = null,
+        val keyframes: List<DrawingKeyframe.DrawingTextKeyframe>? = null,
         val timespan: Trim? = null
     ) : VideoModification, SharedModification.DrawingText
 
     data class DrawingImage(
         override val type: DrawingItems = DrawingItems.Image,
         override val image: DrawableImage,
+        val keyframes: List<DrawingKeyframe.DrawingImageKeyframe>? = null,
         val timespan: Trim? = null
     ) : VideoModification, SharedModification.DrawingImage
 }
 
-data class DrawingTextKeyframe(
-    val position: Offset,
-    val strokeWidth: Float,
-    val rotation: Float,
-    val color: Color,
-    val time: Float
-)
+
+interface DrawingKeyframe {
+    data class DrawingTextKeyframe(
+        val position: Offset,
+        val strokeWidth: Float,
+        val rotation: Float,
+        val color: Color,
+        val time: Float
+    ) : DrawingKeyframe
+
+    data class DrawingImageKeyframe(
+        val position: Offset,
+        val size: IntSize,
+        val rotation: Float,
+        val time: Float
+    ) : DrawingKeyframe
+}
 
 fun interpolateKeyframes(
-    keyframes: List<DrawingTextKeyframe>,
+    keyframes: List<DrawingKeyframe.DrawingTextKeyframe>,
     timeMs: Float
-): DrawingTextKeyframe? {
+): DrawingKeyframe.DrawingTextKeyframe? {
     if (keyframes.isEmpty()) {
         return null
     }

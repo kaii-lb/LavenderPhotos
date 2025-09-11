@@ -2,6 +2,10 @@ package com.kaii.photos.compose.editing_view.video_editor
 
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
@@ -49,16 +53,19 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
@@ -72,19 +79,24 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isUnspecified
+import com.kaii.lavender.snackbars.LavenderSnackbarController
+import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
 import com.kaii.photos.compose.CroppingRatioBottomSheet
 import com.kaii.photos.compose.dialogs.SliderDialog
@@ -94,6 +106,7 @@ import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.VideoPlayerConstants
 import com.kaii.photos.helpers.editing.BasicVideoData
 import com.kaii.photos.helpers.editing.CroppingAspectRatio
+import com.kaii.photos.helpers.editing.DrawableImage
 import com.kaii.photos.helpers.editing.DrawingColors
 import com.kaii.photos.helpers.editing.DrawingItems
 import com.kaii.photos.helpers.editing.DrawingPaintState
@@ -101,6 +114,7 @@ import com.kaii.photos.helpers.editing.MediaAdjustments
 import com.kaii.photos.helpers.editing.MediaColorFilters
 import com.kaii.photos.helpers.editing.VideoEditingState
 import com.kaii.photos.helpers.editing.VideoModification
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 @Composable
@@ -832,7 +846,7 @@ private fun PaintTypeSelector(
                             checked = drawingPaintState.paintType == item,
                             onCheckedChange = { _ ->
                                 drawingPaintState.setPaintType(item)
-                                drawingPaintState.setSelectedText(null)
+                                drawingPaintState.setSelectedItem(null)
                                 collapsed = true
                             },
                             shapes = ToggleButtonDefaults.shapes(
@@ -959,25 +973,113 @@ private fun ImageSelector(
     drawingPaintState: DrawingPaintState,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    val resources = LocalResources.current
+    val coroutineScope = rememberCoroutineScope()
+
+    var image: ImageBitmap? by remember { mutableStateOf(null)}
+    LaunchedEffect(drawingPaintState.selectedItem) {
+        if (drawingPaintState.selectedItem is VideoModification.DrawingImage) {
+            context.contentResolver.openInputStream(
+                (drawingPaintState.selectedItem as VideoModification.DrawingImage).image.bitmapUri
+            ).use { inputStream ->
+                image = BitmapFactory.decodeStream(
+                    inputStream
+                ).asImageBitmap()
+            }
+        }
+    }
+
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            val size = context.contentResolver.openInputStream(uri).use { inputStream ->
+                image = BitmapFactory.decodeStream(
+                    inputStream
+                ).asImageBitmap()
+
+                IntSize(image!!.width, image!!.height)
+            }
+
+            drawingPaintState.setSelectedItem(
+                VideoModification.DrawingImage(
+                    image = DrawableImage(
+                        bitmapUri = uri,
+                        paint = drawingPaintState.paint,
+                        rotation = 0f,
+                        position = Offset.Zero,
+                        size = size
+                    )
+                )
+            )
+        } else {
+            coroutineScope.launch {
+                LavenderSnackbarController.pushEvent(
+                    LavenderSnackbarEvents.MessageEvent(
+                        message = resources.getString(R.string.editing_upload_image_failed),
+                        icon = R.drawable.broken_image,
+                        duration = SnackbarDuration.Short
+                    )
+                )
+            }
+        }
+    }
+
     Button(
         onClick = {
-            // TODO: handle image thing
+            if (drawingPaintState.selectedItem != null) {
+                drawingPaintState.setSelectedItem(null)
+            } else {
+                launcher.launch(
+                    PickVisualMediaRequest(
+                        mediaType = ActivityResultContracts.PickVisualMedia.ImageOnly
+                    )
+                )
+            }
         },
         shape = CircleShape,
+        contentPadding = PaddingValues(
+            horizontal = if (drawingPaintState.selectedItem != null && image != null) 8.dp else 20.dp,
+            vertical = 8.dp
+        ),
         modifier = modifier
+            .animateContentSize()
             .height(56.dp)
             .wrapContentWidth()
     ) {
-        Icon(
-            painter = painterResource(id = R.drawable.image_arrow_up),
-            contentDescription = "upload an image"
-        )
+        AnimatedContent(
+            targetState = drawingPaintState.selectedItem != null && image != null
+        ) { state ->
+            if (state) {
+                Image(
+                    bitmap = image!!,
+                    contentDescription = "preview selected image",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .width(80.dp)
+                )
+            } else {
+                Row(
+                    modifier = Modifier
+                        .wrapContentWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.image_arrow_up),
+                        contentDescription = "upload an image"
+                    )
 
-        Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
 
-        Text(
-            text = stringResource(id = R.string.editing_upload_image),
-            fontSize = TextUnit(TextStylingConstants.MEDIUM_TEXT_SIZE, TextUnitType.Sp)
-        )
+                    Text(
+                        text = stringResource(id = R.string.editing_upload_image),
+                        fontSize = TextUnit(TextStylingConstants.MEDIUM_TEXT_SIZE, TextUnitType.Sp)
+                    )
+                }
+            }
+        }
     }
 }

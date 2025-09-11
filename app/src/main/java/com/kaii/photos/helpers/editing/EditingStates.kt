@@ -34,7 +34,7 @@ class DrawingPaintState(
         private set
     var recordKeyframes by mutableStateOf(false)
         private set
-    var selectedText: SharedModification.DrawingText? by mutableStateOf(null)
+    var selectedItem: SharedModification? by mutableStateOf(null)
         private set
 
     val modifications = mutableStateListOf<SharedModification>()
@@ -55,9 +55,9 @@ class DrawingPaintState(
     fun setStrokeWidth(strokeWidth: Float, textMeasurer: TextMeasurer, currentTime: Float) {
         this.strokeWidth = strokeWidth
 
-        if (this.selectedText != null) {
-            if (this.selectedText is VideoModification.DrawingText) {
-                val drawingText = this.selectedText as VideoModification.DrawingText
+        if (this.selectedItem != null) {
+            if (this.selectedItem is VideoModification.DrawingText) {
+                val drawingText = this.selectedItem as VideoModification.DrawingText
 
                 modifications.removeAll {
                     it == drawingText
@@ -84,7 +84,7 @@ class DrawingPaintState(
                     )
 
                 modifications.add(new)
-                this.selectedText = new
+                this.selectedItem = new
             } // TODO: for images
         }
     }
@@ -93,9 +93,9 @@ class DrawingPaintState(
     fun setColor(color: Color, currentTime: Float) {
         this.color = color
 
-        if (this.selectedText != null) {
-            if (this.selectedText is VideoModification.DrawingText) {
-                val drawingText = this.selectedText as VideoModification.DrawingText
+        if (this.selectedItem != null) {
+            if (this.selectedItem is VideoModification.DrawingText) {
+                val drawingText = this.selectedItem as VideoModification.DrawingText
 
                 modifications.removeAll {
                     it == drawingText
@@ -112,7 +112,7 @@ class DrawingPaintState(
                     )
 
                 modifications.add(new)
-                this.selectedText = new
+                this.selectedItem = new
             } // TODO: for images
         }
     }
@@ -121,8 +121,8 @@ class DrawingPaintState(
     fun setRecordKeyframes(record: Boolean, currentTime: Float) {
         this.recordKeyframes = record
 
-        if (this.selectedText is VideoModification.DrawingText) {
-            val drawingText = this.selectedText as VideoModification.DrawingText
+        if (this.selectedItem is VideoModification.DrawingText) {
+            val drawingText = this.selectedItem as VideoModification.DrawingText
 
             modifications.removeAll {
                 it == drawingText
@@ -136,13 +136,19 @@ class DrawingPaintState(
             Log.d("VIDEO", "keyframes are ${new.keyframes}")
 
             modifications.add(new)
-            this.selectedText = new
+            this.selectedItem = new
         } // TODO: for images
     }
 
     @JvmName("privateSetSelectedText")
-    fun setSelectedText(text: SharedModification.DrawingText?) {
-        this.selectedText = text
+    fun setSelectedItem(text: SharedModification?) {
+        if (text is VideoModification.DrawingText) {
+            this.color = text.text.paint.color
+            this.strokeWidth = text.text.paint.strokeWidth
+            this.paintType = text.type
+        }
+
+        this.selectedItem = text
     }
 
     fun undoModification() {
@@ -151,7 +157,7 @@ class DrawingPaintState(
 
     fun clearModifications() {
         modifications.clear()
-        this.selectedText = null
+        this.selectedItem = null
     }
 
     private fun getKeyframes(
@@ -172,7 +178,7 @@ class DrawingPaintState(
                 }
 
                 add(
-                    DrawingTextKeyframe(
+                    DrawingKeyframe.DrawingTextKeyframe(
                         position = drawingText.text.position,
                         strokeWidth = drawingText.text.paint.strokeWidth,
                         rotation = drawingText.text.rotation,
@@ -183,7 +189,7 @@ class DrawingPaintState(
             }
         } else if (this.recordKeyframes) {
             listOf(
-                DrawingTextKeyframe(
+                DrawingKeyframe.DrawingTextKeyframe(
                     position = drawingText.text.position,
                     strokeWidth = drawingText.text.paint.strokeWidth,
                     rotation = drawingText.text.rotation,

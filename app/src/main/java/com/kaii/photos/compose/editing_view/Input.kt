@@ -29,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
@@ -42,7 +43,9 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.roundToIntSize
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.util.fastForEach
 import com.kaii.photos.helpers.AnimationConstants
@@ -50,12 +53,13 @@ import com.kaii.photos.helpers.editing.DrawableBlur
 import com.kaii.photos.helpers.editing.DrawablePath
 import com.kaii.photos.helpers.editing.DrawableText
 import com.kaii.photos.helpers.editing.DrawingItems
+import com.kaii.photos.helpers.editing.DrawingKeyframe
 import com.kaii.photos.helpers.editing.DrawingPaint
 import com.kaii.photos.helpers.editing.DrawingPaintState
-import com.kaii.photos.helpers.editing.DrawingTextKeyframe
 import com.kaii.photos.helpers.editing.Modification
 import com.kaii.photos.helpers.editing.PaintType
 import com.kaii.photos.helpers.editing.VideoModification
+import com.kaii.photos.helpers.editing.checkTapInBitmap
 import com.kaii.photos.helpers.editing.checkTapInText
 import com.kaii.photos.helpers.editing.toOffset
 import kotlin.math.PI
@@ -469,6 +473,7 @@ fun Modifier.makeVideoDrawCanvas(
                     var pastTouchSlop = false
                     val touchSlop = viewConfiguration.touchSlop
                     val currentText: MutableState<VideoModification.DrawingText?> = mutableStateOf(null)
+                    val currentImage: MutableState<VideoModification.DrawingImage?> = mutableStateOf(null)
 
                     do {
                         val event = awaitPointerEvent()
@@ -506,6 +511,17 @@ fun Modifier.makeVideoDrawCanvas(
                                 if (currentText.value != null) tappedOnText.value = currentText.value
                                 else if (tappedOnText.value != null) currentText.value = tappedOnText.value as VideoModification.DrawingText
 
+                                val tappedOnImage = mutableStateOf(drawingPaintState.modifications.find {
+                                    it as? VideoModification.DrawingImage != null
+                                            && it.image.checkTapInBitmap(
+                                        tapPosition = centroid,
+                                        padding = 0f
+                                    ) && drawingPaintState.paintType == DrawingItems.Image // check if were in image mode
+                                } as? VideoModification.DrawingImage)
+
+                                if (currentImage.value != null) tappedOnImage.value = currentImage.value
+                                else if (tappedOnImage.value != null) currentImage.value = tappedOnImage.value as VideoModification.DrawingImage
+
                                 if (tappedOnText.value != null) {
                                     handleTextTransform(
                                         drawingPaintState = drawingPaintState,
@@ -515,6 +531,15 @@ fun Modifier.makeVideoDrawCanvas(
                                         textMeasurer = textMeasurer,
                                         currentVideoPosition = currentVideoPosition,
                                         currentText = currentText
+                                    )
+                                } else if (tappedOnImage.value != null) {
+                                    handleImageTransform(
+                                        drawingPaintState = drawingPaintState,
+                                        tappedOnImage = tappedOnImage,
+                                        zoomChange = zoomChange,
+                                        rotationChange = rotationChange,
+                                        currentVideoPosition = currentVideoPosition,
+                                        currentImage = currentImage
                                     )
                                 } else if (zoomChange != 1f || panChange != Offset.Zero) {
                                     val oldScale = zoom
@@ -541,6 +566,7 @@ fun Modifier.makeVideoDrawCanvas(
                         DrawingItems.Text -> {
                             handleTextDrawing(
                                 drawingPaintState = drawingPaintState,
+                                initialDown = initialEvent.changes.first(),
                                 down = down,
                                 currentVideoPosition = currentVideoPosition,
                                 addText = addText
@@ -548,7 +574,12 @@ fun Modifier.makeVideoDrawCanvas(
                         }
 
                         DrawingItems.Image -> {
-
+                            handleImageDrawing(
+                                drawingPaintState = drawingPaintState,
+                                initialDown = initialEvent.changes.first(),
+                                down = down,
+                                currentVideoPosition = currentVideoPosition,
+                            )
                         }
 
                         else -> {
@@ -642,6 +673,7 @@ private suspend fun AwaitPointerEventScope.handlePencilHighlighterDrawing(
 
 private suspend fun AwaitPointerEventScope.handleTextDrawing(
     drawingPaintState: DrawingPaintState,
+    initialDown: PointerInputChange,
     down: PointerInputChange,
     currentVideoPosition: MutableFloatState,
     addText: (Offset) -> Unit
@@ -658,18 +690,22 @@ private suspend fun AwaitPointerEventScope.handleTextDrawing(
     }
 
     if (tappedOnText != null) {
-        currentText = tappedOnText as VideoModification.DrawingText
-        touchOffset = down.position - currentText.text.position
-        drawingPaintState.setSelectedText(tappedOnText)
+        if (tappedOnText == drawingPaintState.selectedItem && initialDown.position == down.position) {
+            drawingPaintState.setSelectedItem(null)
+        } else {
+            currentText = tappedOnText as VideoModification.DrawingText
+            touchOffset = down.position - currentText.text.position
+            drawingPaintState.setSelectedItem(tappedOnText)
+        }
     } else {
-        if (drawingPaintState.selectedText == null) {
+        if (drawingPaintState.selectedItem == null) {
             drawingPaintState.setRecordKeyframes(
                 record = false,
                 currentTime = currentVideoPosition.floatValue
             )
             addText(down.position)
         } else {
-            drawingPaintState.setSelectedText(null)
+            drawingPaintState.setSelectedItem(null)
         }
     }
 
@@ -686,7 +722,7 @@ private suspend fun AwaitPointerEventScope.handleTextDrawing(
                 val position = dragChange.position - touchOffset
                 val keyframe =
                     if (drawingPaintState.recordKeyframes) {
-                        DrawingTextKeyframe(
+                        DrawingKeyframe.DrawingTextKeyframe(
                             position = position,
                             color = currentText.text.paint.color,
                             time = currentVideoPosition.floatValue * 1000f,
@@ -720,7 +756,7 @@ private suspend fun AwaitPointerEventScope.handleTextDrawing(
                 )
 
                 drawingPaintState.modifications.add(currentText)
-                drawingPaintState.setSelectedText(currentText)
+                drawingPaintState.setSelectedItem(currentText)
             }
 
             dragChange.consume()
@@ -755,7 +791,7 @@ private fun handleTextTransform(
     val positon = tappedOnText.value!!.text.position - (newSize.toOffset() - tappedOnText.value!!.text.size.toOffset()) / 2f
     val keyframe =
         if (drawingPaintState.recordKeyframes) {
-            DrawingTextKeyframe(
+            DrawingKeyframe.DrawingTextKeyframe(
                 position = positon,
                 color = tappedOnText.value!!.text.paint.color,
                 time = currentVideoPosition.floatValue * 1000f,
@@ -793,6 +829,170 @@ private fun handleTextTransform(
         )
 
     drawingPaintState.modifications.add(tappedOnText.value!!)
-    drawingPaintState.setSelectedText(tappedOnText.value!!)
+    drawingPaintState.setSelectedItem(tappedOnText.value!!)
     currentText.value = tappedOnText.value!!
+}
+
+private suspend fun AwaitPointerEventScope.handleImageDrawing(
+    drawingPaintState: DrawingPaintState,
+    initialDown: PointerInputChange,
+    down: PointerInputChange,
+    currentVideoPosition: MutableFloatState,
+) {
+    var currentImage: VideoModification.DrawingImage? = null
+    var touchOffset = Offset.Zero
+
+    val tappedOnImage = drawingPaintState.modifications.find {
+        it as? VideoModification.DrawingImage != null
+                && it.image.checkTapInBitmap(
+            tapPosition = down.position,
+            padding = 16.dp.toPx()
+        )
+    }
+
+    if (tappedOnImage != null) {
+        if (tappedOnImage == drawingPaintState.selectedItem && initialDown.position == down.position) {
+            drawingPaintState.setSelectedItem(null)
+        } else {
+            currentImage = tappedOnImage as VideoModification.DrawingImage
+            touchOffset = down.position - currentImage.image.position
+            drawingPaintState.setSelectedItem(tappedOnImage)
+        }
+    } else {
+        if (drawingPaintState.selectedItem is VideoModification.DrawingImage) {
+            val selectedImage = drawingPaintState.selectedItem as VideoModification.DrawingImage
+            val aspectRatio = selectedImage.image.size.width.toFloat() / selectedImage.image.size.height
+
+            val width = size.width.toFloat() / 3
+            val newSize = Size(width, width / aspectRatio)
+
+            val item =
+                selectedImage.copy(
+                    image = selectedImage.image.copy(
+                        position = down.position - newSize.toOffset() / 2f,
+                        size = newSize.roundToIntSize()
+                    )
+                )
+
+            drawingPaintState.modifications.add(item)
+
+            drawingPaintState.setSelectedItem(item)
+
+            drawingPaintState.setRecordKeyframes(
+                record = false,
+                currentTime = currentVideoPosition.floatValue
+            )
+        } else {
+            drawingPaintState.setSelectedItem(null)
+        }
+    }
+
+    do {
+        val event = awaitPointerEvent()
+        val canceled = event.changes.fastAny { it.isConsumed }
+
+        val dragChange = event.changes.firstOrNull { it.id == down.id }
+
+        if (dragChange != null) {
+            if (currentImage != null) {
+                drawingPaintState.modifications.remove(currentImage)
+
+                val position = dragChange.position - touchOffset
+                val keyframe =
+                    if (drawingPaintState.recordKeyframes) {
+                        DrawingKeyframe.DrawingImageKeyframe(
+                            position = position,
+                            time = currentVideoPosition.floatValue * 1000f,
+                            rotation = currentImage.image.rotation,
+                            size = currentImage.image.size
+                        )
+                    } else {
+                        null
+                    }
+
+                val keyframeList =
+                    if (keyframe != null) {
+                        (currentImage.keyframes ?: emptyList()).toMutableList().apply {
+                            removeAll {
+                                it.time == keyframe.time
+                            }
+                            add(keyframe)
+                        }
+                    } else {
+                        currentImage.keyframes
+                    }
+
+                currentImage = currentImage.copy(
+                    image = currentImage.image.copy(
+                        position = position,
+                        paint = currentImage.image.paint.copy(
+                            color = currentImage.image.paint.color
+                        )
+                    ),
+                    keyframes = keyframeList
+                )
+
+                drawingPaintState.modifications.add(currentImage)
+                drawingPaintState.setSelectedItem(currentImage)
+            }
+
+            dragChange.consume()
+        } else {
+            break
+        }
+    } while (!canceled && event.changes.fastAny { it.pressed })
+}
+
+private fun handleImageTransform(
+    drawingPaintState: DrawingPaintState,
+    tappedOnImage: MutableState<VideoModification.DrawingImage?>,
+    zoomChange: Float,
+    rotationChange: Float,
+    currentVideoPosition: MutableFloatState,
+    currentImage: MutableState<VideoModification.DrawingImage?>
+) {
+    if (tappedOnImage.value == null) return
+
+    drawingPaintState.modifications.remove(tappedOnImage.value!!)
+
+    val newSize = (tappedOnImage.value!!.image.size.toSize() * zoomChange).roundToIntSize()
+
+    val positon = tappedOnImage.value!!.image.position - (newSize.toOffset() - tappedOnImage.value!!.image.size.toOffset()) / 2f
+    val keyframe =
+        if (drawingPaintState.recordKeyframes) {
+            DrawingKeyframe.DrawingImageKeyframe(
+                position = positon,
+                time = currentVideoPosition.floatValue * 1000f,
+                rotation = tappedOnImage.value!!.image.rotation + rotationChange,
+                size = newSize
+            )
+        } else {
+            null
+        }
+
+    val keyframeList =
+        if (keyframe != null) {
+            (currentImage.value?.keyframes ?: emptyList()).toMutableList().apply {
+                removeAll {
+                    it.time == keyframe.time
+                }
+                add(keyframe)
+            }
+        } else {
+            currentImage.value?.keyframes
+        }
+
+    tappedOnImage.value =
+        tappedOnImage.value!!.copy(
+            image = tappedOnImage.value!!.image.copy(
+                size = newSize,
+                position = positon,
+                rotation = tappedOnImage.value!!.image.rotation + rotationChange
+            ),
+            keyframes = keyframeList
+        )
+
+    drawingPaintState.modifications.add(tappedOnImage.value!!)
+    drawingPaintState.setSelectedItem(tappedOnImage.value!!)
+    currentImage.value = tappedOnImage.value!!
 }
