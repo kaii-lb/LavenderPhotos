@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.Saver
@@ -317,6 +318,7 @@ class VideoEditingState(
     initialSpeed: Float,
     initialFrameRate: Float,
     initialVolume: Float,
+    initialBitrate: Int,
     val duration: Float,
 ) {
     var croppingAspectRatio by mutableStateOf(initialCroppingAspectRatio)
@@ -334,6 +336,8 @@ class VideoEditingState(
     var frameRate by mutableFloatStateOf(initialFrameRate)
         private set
     var volume by mutableFloatStateOf(initialVolume)
+        private set
+    var bitrate by mutableIntStateOf(initialBitrate)
         private set
 
     private val effects = mutableStateListOf<Effect?>()
@@ -396,6 +400,11 @@ class VideoEditingState(
         this.volume = volume
     }
 
+    @JvmName("privateSetBitrate")
+    fun setBitrate(bitrate: Int) {
+        this.bitrate = bitrate
+    }
+
     fun addEffect(effect: Effect, effectIndex: Int? = null) {
         if (effectIndex != null) {
             // cuz order of application matters, so just do this and have it be constant
@@ -417,7 +426,7 @@ class VideoEditingState(
         /** The default [Saver] implementation for [VideoEditingState]. */
         val Saver: Saver<VideoEditingState, *> =
             listSaver(
-                save = { listOf(it.croppingAspectRatio, it.rotation, it.effects, it.speed, it.volume, it.frameRate, it.duration) },
+                save = { listOf(it.croppingAspectRatio, it.rotation, it.effects, it.speed, it.volume, it.frameRate, it.bitrate, it.duration) },
                 restore = {
                     VideoEditingState(
                         initialCroppingAspectRatio = it[0] as CroppingAspectRatio,
@@ -426,7 +435,8 @@ class VideoEditingState(
                         initialSpeed = it[3] as Float,
                         initialVolume = it[4] as Float,
                         initialFrameRate = it[5] as Float,
-                        duration = it[6] as Float
+                        initialBitrate = it[6] as Int,
+                        duration = it[7] as Float
                     )
                 },
             )
@@ -449,7 +459,8 @@ fun rememberVideoEditingState(
             initialEffects = initialEffects,
             initialVolume = 1f,
             initialSpeed = 1f,
-            initialFrameRate = 0f
+            initialFrameRate = 0f,
+            initialBitrate = 0
         )
     }
 }

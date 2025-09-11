@@ -100,6 +100,7 @@ import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
 import com.kaii.photos.compose.CroppingRatioBottomSheet
 import com.kaii.photos.compose.dialogs.SliderDialog
+import com.kaii.photos.compose.dialogs.TextEntryDialog
 import com.kaii.photos.compose.editing_view.EditingViewBottomAppBarItem
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.TextStylingConstants
@@ -560,6 +561,35 @@ fun VideoEditorProcessingContent(
             icon = R.drawable.fps_select_60,
             onClick = {
                 showFrameDropDialog = true
+            }
+        )
+
+        var showBitrateDialog by remember { mutableStateOf(false) }
+        if (showBitrateDialog) {
+            TextEntryDialog(
+                title = stringResource(id = R.string.editing_bitrate),
+                placeholder = stringResource(id = R.string.editing_bitrate_unit),
+                onConfirm = {
+                    val success = it.toIntOrNull() != null && it.toInt() > 0
+                    if (success) videoEditingState.setBitrate(it.toInt())
+
+                    showBitrateDialog = false
+                    success
+                },
+                onValueChange = {
+                    it.toIntOrNull() != null && it.toInt() > 0
+                },
+                onDismiss = {
+                    showBitrateDialog = false
+                }
+            )
+        }
+
+        EditingViewBottomAppBarItem(
+            text = stringResource(id = R.string.editing_bitrate),
+            icon = R.drawable.deblur,
+            onClick = {
+                showBitrateDialog = true
             }
         )
     }

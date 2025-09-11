@@ -481,7 +481,8 @@ data class BasicVideoData(
     val frameRate: Float,
     val absolutePath: String,
     val width: Int,
-    val height: Int
+    val height: Int,
+    val bitrate: Int
 ) {
     val aspectRatio = if (height == 0) -1f else width.toFloat() / height
 }

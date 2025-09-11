@@ -24,11 +24,13 @@ import androidx.media3.effect.Presentation
 import androidx.media3.effect.ScaleAndRotateTransformation
 import androidx.media3.effect.SpeedChangeEffect
 import androidx.media3.transformer.Composition
+import androidx.media3.transformer.DefaultEncoderFactory
 import androidx.media3.transformer.EditedMediaItem
 import androidx.media3.transformer.Effects
 import androidx.media3.transformer.ExportException
 import androidx.media3.transformer.ExportResult
 import androidx.media3.transformer.Transformer
+import androidx.media3.transformer.VideoEncoderSettings
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
@@ -314,6 +316,15 @@ suspend fun saveVideo(
         })
         .setVideoMimeType(MimeTypes.VIDEO_H264)
         .setAudioMimeType(MimeTypes.AUDIO_AAC)
+        .setEncoderFactory(
+            DefaultEncoderFactory.Builder(context)
+                .setRequestedVideoEncoderSettings(
+                    VideoEncoderSettings.Builder()
+                        .setBitrate(videoEditingState.bitrate)
+                        .build()
+                )
+                .build()
+        )
         .build()
 
     transformer.start(

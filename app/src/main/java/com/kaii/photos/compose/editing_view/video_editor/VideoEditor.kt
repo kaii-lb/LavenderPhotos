@@ -226,6 +226,7 @@ fun VideoEditor(
                 width = exoPlayer.videoSize.width,
                 height = exoPlayer.videoSize.height,
                 absolutePath = absolutePath,
+                bitrate = exoPlayer.videoFormat?.bitrate ?: 0,
                 frameRate =
                     if (exoPlayer.videoFormat?.frameRate?.toInt() == -1 || exoPlayer.videoFormat?.frameRate == null) 0f
                     else exoPlayer.videoFormat!!.frameRate
@@ -275,11 +276,22 @@ fun VideoEditor(
 
                 videoEditingState.setFrameRate(frameRate) // important!!!
 
+                val bitrate = if (videoFormat?.bitrate == null || videoFormat.bitrate == -1) {
+                    val possible = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE)?.toInt()
+
+                    possible ?: -1 // -1 basically give up and go for highest
+                } else {
+                    videoFormat.bitrate
+                }
+
+                videoEditingState.setBitrate(bitrate * 2) // * 2 since with markup and effects and stuff the normal simply isn't enough
+
                 basicVideoData =
                     BasicVideoData(
                         duration = duration.floatValue,
                         frameRate = frameRate,
                         absolutePath = absolutePath,
+                        bitrate = bitrate,
                         width = size.width,
                         height = size.height
                     )
