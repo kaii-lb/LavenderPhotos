@@ -126,6 +126,16 @@ suspend fun saveVideo(
         )
     }
 
+    val filter = modifications.lastOrNull {
+        it is VideoModification.Filter
+    } as? VideoModification.Filter
+
+    if (filter != null) {
+        modList.add(
+            filter.type.toEffect()
+        )
+    }
+
     val mediaItem = MediaItem.Builder()
         .setUri(uri)
         .setClippingConfiguration(clippingConfiguration)

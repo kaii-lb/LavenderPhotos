@@ -34,8 +34,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.editing.CroppingAspectRatio
+import com.kaii.photos.helpers.editing.MediaEditingState
 import com.kaii.photos.helpers.editing.SelectedCropArea
-import com.kaii.photos.helpers.editing.VideoEditingState
 import kotlin.math.abs
 
 @Composable
@@ -43,7 +43,7 @@ fun CropBox(
     containerWidth: Float,
     containerHeight: Float,
     mediaAspectRatio: Float,
-    videoEditingState: VideoEditingState,
+    editingState: MediaEditingState,
     scale: Float,
     modifier: Modifier = Modifier,
     onAreaChanged: (area: Rect, original: Size) -> Unit,
@@ -93,7 +93,7 @@ fun CropBox(
         )
     }
 
-    LaunchedEffect(mediaAspectRatio, videoEditingState.resetCrop, containerWidth, containerHeight) {
+    LaunchedEffect(mediaAspectRatio, editingState.resetCrop, containerWidth, containerHeight) {
         originalWidth =
             if (containerAspectRatio > mediaAspectRatio) {
                 containerHeight * mediaAspectRatio
@@ -113,7 +113,7 @@ fun CropBox(
         top = (containerHeight - height) / 2
         left = (containerWidth - width) / 2
 
-        videoEditingState.setResetCrop(false)
+        editingState.resetCrop(false)
     }
 
     LaunchedEffect(top, left, width, height, originalWidth, originalHeight) {
@@ -131,20 +131,20 @@ fun CropBox(
         )
     }
 
-    LaunchedEffect(videoEditingState.croppingAspectRatio) {
-        if (videoEditingState.croppingAspectRatio == CroppingAspectRatio.FreeForm) return@LaunchedEffect
+    LaunchedEffect(editingState.croppingAspectRatio) {
+        if (editingState.croppingAspectRatio == CroppingAspectRatio.FreeForm) return@LaunchedEffect
 
-        if (videoEditingState.croppingAspectRatio.ratio > mediaAspectRatio) {
-            if (top + height * width / videoEditingState.croppingAspectRatio.ratio <= originalHeight) {
-                width = height * videoEditingState.croppingAspectRatio.ratio
+        if (editingState.croppingAspectRatio.ratio > mediaAspectRatio) {
+            if (top + height * width / editingState.croppingAspectRatio.ratio <= originalHeight) {
+                width = height * editingState.croppingAspectRatio.ratio
             } else {
-                height = width / videoEditingState.croppingAspectRatio.ratio
+                height = width / editingState.croppingAspectRatio.ratio
             }
         } else {
-            if (left + width * height * videoEditingState.croppingAspectRatio.ratio <= originalHeight) {
-                height = width / videoEditingState.croppingAspectRatio.ratio
+            if (left + width * height * editingState.croppingAspectRatio.ratio <= originalHeight) {
+                height = width / editingState.croppingAspectRatio.ratio
             } else {
-                width = height * videoEditingState.croppingAspectRatio.ratio
+                width = height * editingState.croppingAspectRatio.ratio
             }
         }
     }
@@ -378,7 +378,7 @@ fun CropBox(
                                     && (distanceToLeft <= threshold && distanceToLeft <= distanceToRight)
                                     && selectedArea == SelectedCropArea.None)
                                     || selectedArea == SelectedCropArea.TopLeftCorner -> {
-                                if (videoEditingState.croppingAspectRatio == CroppingAspectRatio.FreeForm) {
+                                if (editingState.croppingAspectRatio == CroppingAspectRatio.FreeForm) {
                                     val newTop = top + offset.y
                                     val newHeight = height - offset.y
 
@@ -402,8 +402,8 @@ fun CropBox(
                                         val newLeft = left + offset.x
                                         val newWidth = width - offset.x
 
-                                        val newTop = top + offset.x / videoEditingState.croppingAspectRatio.ratio
-                                        val newHeight = newWidth / videoEditingState.croppingAspectRatio.ratio
+                                        val newTop = top + offset.x / editingState.croppingAspectRatio.ratio
+                                        val newHeight = newWidth / editingState.croppingAspectRatio.ratio
 
                                         val maxRight = (newLeft + newWidth) - threshold
                                         val maxBottom = (newTop + newHeight) - threshold
@@ -418,8 +418,8 @@ fun CropBox(
                                         val newTop = top + offset.y
                                         val newHeight = height - offset.y
 
-                                        val newLeft = left + offset.y * videoEditingState.croppingAspectRatio.ratio
-                                        val newWidth = newHeight * videoEditingState.croppingAspectRatio.ratio
+                                        val newLeft = left + offset.y * editingState.croppingAspectRatio.ratio
+                                        val newWidth = newHeight * editingState.croppingAspectRatio.ratio
 
                                         val maxRight = (newLeft + newWidth) - threshold
                                         val maxBottom = (newTop + newHeight) - threshold
@@ -441,7 +441,7 @@ fun CropBox(
                                     && (distanceToLeft <= threshold && distanceToLeft <= distanceToRight)
                                     && selectedArea == SelectedCropArea.None)
                                     || selectedArea == SelectedCropArea.BottomLeftCorner -> {
-                                if (videoEditingState.croppingAspectRatio == CroppingAspectRatio.FreeForm) {
+                                if (editingState.croppingAspectRatio == CroppingAspectRatio.FreeForm) {
                                     val newHeight = height + offset.y
                                     if (top + newHeight <= (maxTop + originalHeight)
                                         && newHeight > threshold
@@ -462,7 +462,7 @@ fun CropBox(
                                         val newLeft = left + offset.x
                                         val newWidth = width - offset.x
 
-                                        val newHeight = newWidth / videoEditingState.croppingAspectRatio.ratio
+                                        val newHeight = newWidth / editingState.croppingAspectRatio.ratio
 
                                         val maxRight = (newLeft + newWidth) - threshold
                                         val maxBottom = (top + newHeight) - threshold
@@ -475,8 +475,8 @@ fun CropBox(
                                     } else {
                                         val newHeight = height + offset.y
 
-                                        val newWidth = newHeight * videoEditingState.croppingAspectRatio.ratio
-                                        val newLeft = left - offset.y * videoEditingState.croppingAspectRatio.ratio
+                                        val newWidth = newHeight * editingState.croppingAspectRatio.ratio
+                                        val newLeft = left - offset.y * editingState.croppingAspectRatio.ratio
 
                                         val maxRight = (newLeft + newWidth) - threshold
                                         val maxBottom = (top + newHeight) - threshold
@@ -497,7 +497,7 @@ fun CropBox(
                                     && (distanceToRight <= threshold && distanceToRight <= distanceToLeft)
                                     && selectedArea == SelectedCropArea.None)
                                     || selectedArea == SelectedCropArea.TopRightCorner -> {
-                                if (videoEditingState.croppingAspectRatio == CroppingAspectRatio.FreeForm) {
+                                if (editingState.croppingAspectRatio == CroppingAspectRatio.FreeForm) {
                                     val newTop = top + offset.y
                                     val newHeight = height - offset.y
 
@@ -518,7 +518,7 @@ fun CropBox(
                                     if (abs(offset.x) >= abs(offset.y)) {
                                         val newWidth = width + offset.x
 
-                                        val newHeight = newWidth / videoEditingState.croppingAspectRatio.ratio
+                                        val newHeight = newWidth / editingState.croppingAspectRatio.ratio
                                         val newTop = (top + height) - newHeight
 
                                         val maxRight = (left + newWidth) - threshold
@@ -532,7 +532,7 @@ fun CropBox(
                                     } else {
                                         val newHeight = height - offset.y
 
-                                        val newWidth = newHeight * videoEditingState.croppingAspectRatio.ratio
+                                        val newWidth = newHeight * editingState.croppingAspectRatio.ratio
                                         val newTop = (top + height) - newHeight
 
                                         val maxRight = (left + newWidth) - threshold
@@ -554,7 +554,7 @@ fun CropBox(
                                     && (distanceToRight <= threshold && distanceToRight <= distanceToLeft)
                                     && selectedArea == SelectedCropArea.None)
                                     || selectedArea == SelectedCropArea.BottomRightCorner -> {
-                                if (videoEditingState.croppingAspectRatio == CroppingAspectRatio.FreeForm) {
+                                if (editingState.croppingAspectRatio == CroppingAspectRatio.FreeForm) {
                                     val newHeight = height + offset.y
                                     if (top + newHeight <= (maxTop + originalHeight)
                                         && newHeight > threshold
@@ -571,7 +571,7 @@ fun CropBox(
                                 } else {
                                     if (abs(offset.x) >= abs(offset.y)) {
                                         val newWidth = width + offset.x
-                                        val newHeight = newWidth / videoEditingState.croppingAspectRatio.ratio
+                                        val newHeight = newWidth / editingState.croppingAspectRatio.ratio
 
                                         val maxRight = (left + newWidth) - threshold
                                         val maxBottom = (top + newHeight) - threshold
@@ -582,7 +582,7 @@ fun CropBox(
                                         }
                                     } else {
                                         val newHeight = height + offset.y
-                                        val newWidth = newHeight * videoEditingState.croppingAspectRatio.ratio
+                                        val newWidth = newHeight * editingState.croppingAspectRatio.ratio
 
                                         val maxRight = (left + newWidth) - threshold
                                         val maxBottom = (top + newHeight) - threshold
@@ -604,7 +604,7 @@ fun CropBox(
                                 val newTop = top + offset.y
                                 val newHeight = height - offset.y
 
-                                if (videoEditingState.croppingAspectRatio == CroppingAspectRatio.FreeForm) {
+                                if (editingState.croppingAspectRatio == CroppingAspectRatio.FreeForm) {
                                     if (newTop >= maxTop
                                         && newTop < (newTop + newHeight) - threshold
                                     ) {
@@ -612,7 +612,7 @@ fun CropBox(
                                         height = newHeight
                                     }
                                 } else {
-                                    val newWidth = newHeight * videoEditingState.croppingAspectRatio.ratio
+                                    val newWidth = newHeight * editingState.croppingAspectRatio.ratio
 
                                     val maxBottom = newTop + newHeight - threshold
                                     val maxRight = left + newWidth - threshold
@@ -644,7 +644,7 @@ fun CropBox(
                                 val newLeft = left + offset.x
                                 val newWidth = width - offset.x
 
-                                if (videoEditingState.croppingAspectRatio == CroppingAspectRatio.FreeForm) {
+                                if (editingState.croppingAspectRatio == CroppingAspectRatio.FreeForm) {
                                     if (left + offset.x >= maxLeft
                                         && newLeft < (newLeft + newWidth) - threshold
                                     ) {
@@ -652,7 +652,7 @@ fun CropBox(
                                         width = newWidth
                                     }
                                 } else {
-                                    val newHeight = newWidth / videoEditingState.croppingAspectRatio.ratio
+                                    val newHeight = newWidth / editingState.croppingAspectRatio.ratio
 
                                     val maxBottom = top + newHeight - threshold
                                     val maxRight = newLeft + newWidth - threshold
@@ -683,14 +683,14 @@ fun CropBox(
                                     || selectedArea == SelectedCropArea.BottomEdge -> {
                                 val newHeight = height + offset.y
 
-                                if (videoEditingState.croppingAspectRatio == CroppingAspectRatio.FreeForm) {
+                                if (editingState.croppingAspectRatio == CroppingAspectRatio.FreeForm) {
                                     if (top + newHeight <= (maxTop + originalHeight)
                                         && top + newHeight > threshold
                                     ) {
                                         height += offset.y
                                     }
                                 } else {
-                                    val newWidth = newHeight * videoEditingState.croppingAspectRatio.ratio
+                                    val newWidth = newHeight * editingState.croppingAspectRatio.ratio
 
                                     val maxBottom = top + newHeight - threshold
                                     val maxRight = left + newWidth - threshold
@@ -721,14 +721,14 @@ fun CropBox(
                                     || selectedArea == SelectedCropArea.RightEdge -> {
                                 val newWidth = width + offset.x
 
-                                if (videoEditingState.croppingAspectRatio == CroppingAspectRatio.FreeForm) {
+                                if (editingState.croppingAspectRatio == CroppingAspectRatio.FreeForm) {
                                     if ((left + width) + offset.x <= (maxLeft + originalWidth)
                                         && left + newWidth > left + threshold
                                     ) {
                                         width = newWidth
                                     }
                                 } else {
-                                    val newHeight = newWidth / videoEditingState.croppingAspectRatio.ratio
+                                    val newHeight = newWidth / editingState.croppingAspectRatio.ratio
 
                                     val maxBottom = top + newHeight - threshold
                                     val maxRight = left + newWidth - threshold

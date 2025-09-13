@@ -92,11 +92,12 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.FullWidthDialogButton
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.WallpaperTypeDialog
+import com.kaii.photos.compose.editing_view.SharedEditorDrawContent
+import com.kaii.photos.compose.editing_view.SharedEditorFilterContent
+import com.kaii.photos.compose.editing_view.image_editor.ImageEditorAdjustContent
+import com.kaii.photos.compose.editing_view.video_editor.SharedEditorCropContent
 import com.kaii.photos.compose.editing_view.video_editor.TrimContent
 import com.kaii.photos.compose.editing_view.video_editor.VideoEditorAdjustContent
-import com.kaii.photos.compose.editing_view.video_editor.VideoEditorCropContent
-import com.kaii.photos.compose.editing_view.video_editor.VideoEditorDrawContent
-import com.kaii.photos.compose.editing_view.video_editor.VideoEditorFilterContent
 import com.kaii.photos.compose.editing_view.video_editor.VideoEditorProcessingContent
 import com.kaii.photos.compose.widgets.SelectableDropDownMenuItem
 import com.kaii.photos.compose.widgets.SimpleTab
@@ -104,7 +105,11 @@ import com.kaii.photos.datastore.Editing
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.VideoPlayerConstants
 import com.kaii.photos.helpers.editing.BasicVideoData
+import com.kaii.photos.helpers.editing.CroppingAspectRatio
 import com.kaii.photos.helpers.editing.DrawingPaintState
+import com.kaii.photos.helpers.editing.ImageEditingState
+import com.kaii.photos.helpers.editing.ImageEditorTabs
+import com.kaii.photos.helpers.editing.ImageModification
 import com.kaii.photos.helpers.editing.MediaColorFilters
 import com.kaii.photos.helpers.editing.VideoEditingState
 import com.kaii.photos.helpers.editing.VideoEditorTabs
@@ -170,7 +175,6 @@ fun VideoEditorBottomBar(
             }
 
             // preload and save for all so we don't have to retrieve every time user navigates to first tab
-            val coroutineScope = rememberCoroutineScope()
             val metadata = remember { MediaMetadataRetriever() }
             val thumbnails = remember { mutableStateListOf<Bitmap>() }
             val windowInfo = LocalWindowInfo.current
@@ -221,9 +225,17 @@ fun VideoEditorBottomBar(
                     }
 
                     VideoEditorTabs.entries.indexOf(VideoEditorTabs.Crop) -> {
-                        VideoEditorCropContent(
+                        SharedEditorCropContent(
                             imageAspectRatio = basicData.aspectRatio,
-                            videoEditingState = videoEditingState
+                            croppingAspectRatio = videoEditingState.croppingAspectRatio,
+                            rotation = videoEditingState.rotation,
+                            setCroppingAspectRatio = videoEditingState::setCroppingAspectRatio,
+                            setRotation = videoEditingState::setRotation,
+                            resetCrop = {
+                                videoEditingState.setRotation(0f)
+                                videoEditingState.setCroppingAspectRatio(CroppingAspectRatio.FreeForm)
+                                videoEditingState.resetCrop(true)
+                            }
                         )
                     }
 
@@ -242,14 +254,14 @@ fun VideoEditorBottomBar(
                     }
 
                     VideoEditorTabs.entries.indexOf(VideoEditorTabs.Filters) -> {
-                        VideoEditorFilterContent(
-                            modifications = modifications,
+                        SharedEditorFilterContent(
+                            modifications = drawingPaintState.modifications,
                             saveEffect = saveEffect
                         )
                     }
 
                     VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw) -> {
-                        VideoEditorDrawContent(
+                        SharedEditorDrawContent(
                             drawingPaintState = drawingPaintState,
                             currentTime = currentPosition.floatValue
                         )
@@ -610,4 +622,254 @@ fun WallpaperSetterBottomBar(
             showDialog = true
         }
     }
+}
+
+@Composable
+fun ImageEditorBottomBar(
+    modifications: SnapshotStateList<ImageModification>,
+    originalAspectRatio: Float,
+    imageEditingState: ImageEditingState,
+    drawingPaintState: DrawingPaintState,
+    pagerState: PagerState,
+    modifier: Modifier = Modifier,
+    increaseModCount: () -> Unit,
+    saveEffect: (MediaColorFilters) -> Unit
+) {
+    val coroutineScope = rememberCoroutineScope()
+
+    BottomAppBar(
+        modifier = modifier
+            .height(160.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize(1f),
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.Start
+        ) {
+            SecondaryScrollableTabRow(
+                selectedTabIndex = pagerState.currentPage,
+                indicator = {
+                    Box(
+                        modifier = Modifier
+                            .tabIndicatorOffset(selectedTabIndex = pagerState.currentPage, matchContentSize = false)
+                            .padding(4.dp)
+                            .fillMaxHeight(1f)
+                            .clip(RoundedCornerShape(100.dp))
+                            .background(MaterialTheme.colorScheme.primary)
+                            .zIndex(1f)
+                    )
+                },
+                divider = {},
+                containerColor = Color.Transparent,
+                modifier = Modifier
+                    .fillMaxWidth(1f)
+            ) {
+                ImageEditorTabs.entries.forEach { entry ->
+                    SimpleTab(text = stringResource(id = entry.title), selected = pagerState.currentPage == ImageEditorTabs.entries.indexOf(entry)) {
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(ImageEditorTabs.entries.indexOf(entry))
+                        }
+                    }
+                }
+            }
+
+            HorizontalPager(
+                state = pagerState,
+                userScrollEnabled = false,
+                snapPosition = SnapPosition.Center,
+                pageSize = PageSize.Fill,
+            ) { index ->
+                when (index) {
+                    ImageEditorTabs.entries.indexOf(ImageEditorTabs.Crop) -> {
+                        SharedEditorCropContent(
+                            imageAspectRatio = originalAspectRatio,
+                            croppingAspectRatio = imageEditingState.croppingAspectRatio,
+                            rotation = imageEditingState.rotation,
+                            setCroppingAspectRatio = imageEditingState::setCroppingAspectRatio,
+                            setRotation = imageEditingState::setRotation,
+                            resetCrop = {
+                                imageEditingState.resetCrop(true)
+                            }
+                        )
+                    }
+
+                    ImageEditorTabs.entries.indexOf(ImageEditorTabs.Adjust) -> {
+                        ImageEditorAdjustContent(
+                            modifications = modifications,
+                            increaseModCount = increaseModCount
+                        )
+                    }
+
+                    ImageEditorTabs.entries.indexOf(ImageEditorTabs.Filters) -> {
+                        SharedEditorFilterContent(
+                            modifications = drawingPaintState.modifications,
+                            saveEffect = saveEffect
+                        )
+                    }
+
+                    ImageEditorTabs.entries.indexOf(ImageEditorTabs.Draw) -> {
+                        SharedEditorDrawContent(
+                            drawingPaintState = drawingPaintState,
+                            currentTime = 0f
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun ImageEditorTopBar(
+    modifications: List<ImageModification>,
+    lastSavedModCount: MutableIntState
+) {
+    val navController = LocalNavController.current
+
+    TopAppBar(
+        title = {},
+        navigationIcon = {
+            Box(
+                modifier = Modifier
+                    .padding(8.dp, 0.dp, 0.dp, 0.dp)
+            ) {
+                val showDialog = remember { mutableStateOf(false) }
+
+                if (showDialog.value) {
+                    ConfirmationDialog(
+                        showDialog = showDialog,
+                        dialogTitle = stringResource(id = R.string.editing_discard_desc),
+                        confirmButtonLabel = stringResource(id = R.string.editing_discard)
+                    ) {
+                        navController.popBackStack()
+                    }
+                }
+                FilledTonalIconButton(
+                    onClick = {
+                        if (lastSavedModCount.intValue < modifications.size) {
+                            showDialog.value = true
+                        } else {
+                            navController.popBackStack()
+                        }
+                    },
+                    enabled = true,
+                    modifier = Modifier
+                        .height(40.dp)
+                        .width(56.dp)
+                        .align(Alignment.Center)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.close),
+                        contentDescription = stringResource(id = R.string.editing_close_desc),
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier
+                            .size(24.dp)
+                    )
+                }
+            }
+        },
+        actions = {
+            var showDropDown by remember { mutableStateOf(false) }
+
+            val mainViewModel = LocalMainViewModel.current
+            val overwriteByDefault by mainViewModel.settings.Editing.getOverwriteByDefault().collectAsStateWithLifecycle(initialValue = false)
+            var overwrite by remember { mutableStateOf(false) }
+
+            LaunchedEffect(overwriteByDefault) {
+                overwrite = overwriteByDefault
+            }
+
+            DropdownMenu(
+                expanded = showDropDown,
+                onDismissRequest = {
+                    showDropDown = false
+                },
+                shape = RoundedCornerShape(24.dp),
+                properties = PopupProperties(
+                    dismissOnClickOutside = true,
+                    dismissOnBackPress = true
+                ),
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                shadowElevation = 8.dp
+            ) {
+                SelectableDropDownMenuItem(
+                    text = stringResource(id = R.string.editing_overwrite_desc),
+                    iconResId = R.drawable.checkmark_thin,
+                    isSelected = false
+                ) {
+                    overwrite = true
+                    showDropDown = false
+                }
+
+                SelectableDropDownMenuItem(
+                    text = stringResource(id = R.string.editing_save),
+                    iconResId = R.drawable.checkmark_thin,
+                    isSelected = true
+                ) {
+                    overwrite = false
+                    showDropDown = false
+                }
+            }
+
+            SplitButtonLayout(
+                leadingButton = {
+                    val resources = LocalResources.current
+
+                    SplitButtonDefaults.LeadingButton(
+                        onClick = {
+                            lastSavedModCount.intValue = modifications.size
+
+                            // mainViewModel so it doesn't die if user exits before video is saved
+                            mainViewModel.launch {
+                                LavenderSnackbarController.pushEvent(
+                                    event = LavenderSnackbarEvents.MessageEvent(
+                                        message = resources.getString(R.string.editing_export_video_failed),
+                                        icon = R.drawable.error_2,
+                                        duration = SnackbarDuration.Short
+                                    )
+                                )
+                            }
+                        }
+                    ) {
+                        Text(
+                            text =
+                                if (overwrite) stringResource(id = R.string.editing_overwrite)
+                                else stringResource(id = R.string.editing_save)
+                        )
+                    }
+                },
+                trailingButton = {
+                    // TODO: remove when material expressive is not broken like this
+                    // HACKY workaround for a random trigger by onCheckedChange of TrailingButton
+                    var openedTimes by remember { mutableIntStateOf(0) }
+
+                    SplitButtonDefaults.TrailingButton(
+                        checked = showDropDown,
+                        onCheckedChange = {
+                            openedTimes += 1
+                            if (openedTimes % 2 != 0) {
+                                showDropDown = !showDropDown
+                            }
+                        }
+                    ) {
+                        val rotation: Float by animateFloatAsState(
+                            targetValue = if (showDropDown) 180f else 0f
+                        )
+
+                        Icon(
+                            painter = painterResource(id = R.drawable.drop_down_arrow),
+                            modifier = Modifier
+                                .size(SplitButtonDefaults.TrailingIconSize)
+                                .graphicsLayer {
+                                    rotationZ = rotation
+                                },
+                            contentDescription = "Dropdown icon"
+                        )
+                    }
+                }
+            )
+        }
+    )
 }

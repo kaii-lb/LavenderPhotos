@@ -71,7 +71,7 @@ import com.kaii.photos.compose.app_bars.VideoEditorBottomBar
 import com.kaii.photos.compose.app_bars.VideoEditorTopBar
 import com.kaii.photos.compose.dialogs.TextEntryDialog
 import com.kaii.photos.compose.editing_view.CropBox
-import com.kaii.photos.compose.editing_view.FilterPager
+import com.kaii.photos.compose.editing_view.VideoFilterPage
 import com.kaii.photos.compose.editing_view.makeVideoDrawCanvas
 import com.kaii.photos.compose.single_photo.rememberExoPlayerWithLifeCycle
 import com.kaii.photos.compose.single_photo.rememberPlayerView
@@ -131,7 +131,9 @@ fun VideoEditor(
     val videoEditingState = rememberVideoEditingState(
         duration = duration.floatValue
     )
-    val drawingPaintState = rememberDrawingPaintState()
+    val drawingPaintState = rememberDrawingPaintState(
+        isVideo = true
+    )
 
     LaunchedEffect(isMuted.value) {
         if (isMuted.value) exoPlayer.volume = 0f
@@ -215,7 +217,7 @@ fun VideoEditor(
         exoPlayer.setPlaybackSpeed(videoEditingState.speed)
     }
 
-    val pagerState = rememberPagerState { 6 }
+    val pagerState = rememberPagerState { VideoEditorTabs.entries.size }
     var containerDimens by remember { mutableStateOf(Size.Zero) }
     var isSeeking by remember { mutableStateOf(false) }
 
@@ -531,9 +533,9 @@ fun VideoEditor(
                         }
                     ) { state ->
                         if (state) {
-                            FilterPager(
+                            VideoFilterPage(
                                 pagerState = filterPagerState,
-                                modifications = modifications,
+                                drawingPaintState = drawingPaintState,
                                 currentVideoPosition = currentVideoPosition,
                                 absolutePath = absolutePath,
                                 allowedToRefresh = isPlaying.value || isSeeking
@@ -704,7 +706,7 @@ fun VideoEditor(
                             containerWidth = with(localDensity) { width.toPx() - 16.dp.toPx() }, // adjust for AnimatedVisibility size
                             containerHeight = with(localDensity) { height.toPx() - 16.dp.toPx() },
                             mediaAspectRatio = basicVideoData.aspectRatio,
-                            videoEditingState = videoEditingState,
+                            editingState = videoEditingState,
                             scale = animatedScale,
                             modifier = Modifier
                                 .graphicsLayer {

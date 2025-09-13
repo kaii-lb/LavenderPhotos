@@ -80,7 +80,7 @@ import com.kaii.photos.compose.app_bars.MainAppTopBar
 import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
 import com.kaii.photos.compose.dialogs.MainAppDialog
-import com.kaii.photos.compose.editing_view.EditingView
+import com.kaii.photos.compose.editing_view.image_editor.ImageEditor
 import com.kaii.photos.compose.editing_view.video_editor.VideoEditor
 import com.kaii.photos.compose.grids.AlbumsGridView
 import com.kaii.photos.compose.grids.FavouritesGridView
@@ -680,12 +680,12 @@ class MainActivity : ComponentActivity() {
                     val overwriteByDefault by mainViewModel.settings.Editing.getOverwriteByDefault()
                         .collectAsStateWithLifecycle(initialValue = false)
 
-                    EditingView(
-                        absolutePath = screen.absolutePath,
-                        dateTaken = screen.dateTaken,
+                    ImageEditor(
                         uri = screen.uri.toUri(),
-                        window = window,
-                        overwriteByDefault = overwriteByDefault
+                        absolutePath = screen.absolutePath,
+                        // window = window,
+                        // dateTaken = screen.dateTaken,
+                        // overwriteByDefault = overwriteByDefault
                     )
                 }
 

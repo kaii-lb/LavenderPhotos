@@ -12,6 +12,7 @@ import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.TextMeasurer
@@ -19,12 +20,14 @@ import androidx.compose.ui.unit.sp
 import androidx.media3.common.Effect
 import androidx.media3.common.util.UnstableApi
 import com.kaii.photos.helpers.editing.DrawingPaintState.Companion.Saver
+import com.kaii.photos.helpers.editing.ImageEditingState.Companion.Saver
 import com.kaii.photos.helpers.editing.VideoEditingState.Companion.Saver
 
 class DrawingPaintState(
     initialPaintType: DrawingItems,
     initialStrokeWidth: Float,
-    initialColor: Color
+    initialColor: Color,
+    val isVideo: Boolean
 ) {
     var paintType by mutableStateOf(initialPaintType)
         private set
@@ -182,7 +185,7 @@ class DrawingPaintState(
 
     @JvmName("privateSetSelectedText")
     fun setSelectedItem(text: SharedModification?) {
-        if (text is VideoModification.DrawingText) {
+        if (text is SharedModification.DrawingText) {
             this.color = text.text.paint.color
             this.strokeWidth = text.text.paint.strokeWidth
             this.paintType = text.type
@@ -283,12 +286,13 @@ class DrawingPaintState(
         /** The default [Saver] implementation for [DrawingPaintState]. */
         val Saver: Saver<DrawingPaintState, *> =
             listSaver(
-                save = { listOf(it.paintType, it.strokeWidth, it.color.toArgb()) },
+                save = { listOf(it.paintType, it.strokeWidth, it.color.toArgb(), it.isVideo) },
                 restore = {
                     DrawingPaintState(
                         initialPaintType = it[0] as DrawingItems,
                         initialStrokeWidth = it[1] as Float,
-                        initialColor = Color(it[2] as Int)
+                        initialColor = Color(it[2] as Int),
+                        isVideo = it[3] as Boolean
                     )
                 },
             )
@@ -297,17 +301,27 @@ class DrawingPaintState(
 
 @Composable
 fun rememberDrawingPaintState(
+    isVideo: Boolean,
     initialPaintType: DrawingItems = DrawingItems.Pencil,
     initialStrokeWidth: Float = 20f,
     initialColor: Color = DrawingColors.Red
 ): DrawingPaintState {
     return rememberSaveable(saver = DrawingPaintState.Saver) {
         DrawingPaintState(
+            isVideo = isVideo,
             initialPaintType = initialPaintType,
             initialStrokeWidth = initialStrokeWidth,
             initialColor = initialColor
         )
     }
+}
+
+
+interface MediaEditingState {
+    var croppingAspectRatio: CroppingAspectRatio
+    var resetCrop: Boolean
+
+    fun resetCrop(value: Boolean)
 }
 
 @OptIn(UnstableApi::class)
@@ -320,16 +334,15 @@ class VideoEditingState(
     initialVolume: Float,
     initialBitrate: Int,
     val duration: Float,
-) {
-    var croppingAspectRatio by mutableStateOf(initialCroppingAspectRatio)
-        private set
+) : MediaEditingState {
+    override var croppingAspectRatio by mutableStateOf(initialCroppingAspectRatio)
+    override var resetCrop by mutableStateOf(false)
+
     var rotation by mutableFloatStateOf(initialRotation)
         private set
     var startTrimPosition by mutableFloatStateOf(0f)
         private set
     var endTrimPosition by mutableFloatStateOf(duration)
-        private set
-    var resetCrop by mutableStateOf(false)
         private set
     var speed by mutableFloatStateOf(initialSpeed)
         private set
@@ -341,7 +354,7 @@ class VideoEditingState(
         private set
 
     private val effects = mutableStateListOf<Effect?>()
-    val effectList by derivedStateOf { effects.toList().mapNotNull { it } }
+    val effectList by derivedStateOf { effects.mapNotNull { it } }
 
     init {
         if (initialEffects == null) {
@@ -380,8 +393,7 @@ class VideoEditingState(
         this.endTrimPosition = position.coerceIn(startTrimPosition + (duration * 0.1f), duration)
     }
 
-    @JvmName("privateSetResetCrop")
-    fun setResetCrop(value: Boolean) {
+    override fun resetCrop(value: Boolean) {
         this.resetCrop = value
     }
 
@@ -431,7 +443,7 @@ class VideoEditingState(
                     VideoEditingState(
                         initialCroppingAspectRatio = it[0] as CroppingAspectRatio,
                         initialRotation = it[1] as Float,
-                        initialEffects = (it[2] as? List<*>)?.filterIsInstance<Effect>() ?: emptyList(),
+                        initialEffects = emptyList(), // TODO: fix saver crashing (it[2] as? List<*>)?.filterIsInstance<Effect>() ?: emptyList(),
                         initialSpeed = it[3] as Float,
                         initialVolume = it[4] as Float,
                         initialFrameRate = it[5] as Float,
@@ -461,6 +473,124 @@ fun rememberVideoEditingState(
             initialSpeed = 1f,
             initialFrameRate = 0f,
             initialBitrate = 0
+        )
+    }
+}
+
+@OptIn(UnstableApi::class)
+class ImageEditingState(
+    initialCroppingAspectRatio: CroppingAspectRatio,
+    initialRotation: Float,
+    initialScale: Float,
+    initialOffset: Offset,
+    initialModifications: List<ImageModification>
+) : MediaEditingState {
+    override var croppingAspectRatio by mutableStateOf(initialCroppingAspectRatio)
+    override var resetCrop by mutableStateOf(false)
+
+    var rotation by mutableFloatStateOf(initialRotation)
+        private set
+    var scale by mutableFloatStateOf(initialScale)
+        private set
+    var offset by mutableStateOf(initialOffset)
+        private set
+
+    private val modifications = mutableStateListOf<ImageModification?>()
+    val modificationList by derivedStateOf { modifications.mapNotNull { it } }
+
+    init {
+        if (initialModifications.isEmpty()) {
+            // prefill for order of application
+            (1..MediaAdjustments.entries.size).forEach { _ ->
+                modifications.add(null)
+            }
+        } else {
+            modifications.clear()
+            modifications.addAll(initialModifications)
+
+            // prefill for order of application
+            (modifications.size..12).forEach { _ ->
+                modifications.add(null)
+            }
+        }
+    }
+
+    @JvmName("privateSetCroppingAspectRatio")
+    fun setCroppingAspectRatio(ratio: CroppingAspectRatio) {
+        this.croppingAspectRatio = ratio
+    }
+
+    @JvmName("privateSetRotation")
+    fun setRotation(angle: Float) {
+        this.rotation = angle
+    }
+
+    @JvmName("privateSetScale")
+    fun setScale(scale: Float) {
+        this.scale = scale
+    }
+
+    @JvmName("privateSetOffset")
+    fun setOffset(offset: Offset) {
+        this.offset = offset
+    }
+
+    override fun resetCrop(value: Boolean) {
+        this.scale = 1f
+        this.offset = Offset.Zero
+        this.resetCrop = value
+    }
+
+    fun addModification(mod: ImageModification, modIndex: Int? = null) {
+        if (modIndex != null) {
+            // cuz order of application matters, so just do this and have it be constant
+            modifications.add(modIndex, mod)
+            modifications.removeAt(modIndex + 1) // remove null after shirting right
+        } else {
+            modifications.removeAll {
+                if (it == null) false else it::class == mod::class
+            }
+            modifications.add(mod)
+        }
+    }
+
+    fun removeModifications(predicate: (ImageModification?) -> Boolean) = modifications.removeAll { predicate(it) }
+
+    companion object {
+        // private const val TAG = "com.kaii.photos.helpers.editing.ImageEditingState"
+
+        /** The default [Saver] implementation for [ImageEditingState]. */
+        val Saver: Saver<ImageEditingState, *> =
+            listSaver(
+                save = { listOf(it.croppingAspectRatio, it.rotation, it.scale, it.offset.x, it.offset.y, it.modificationList) },
+                restore = {
+                    ImageEditingState(
+                        initialCroppingAspectRatio = it[0] as CroppingAspectRatio,
+                        initialRotation = it[1] as Float,
+                        initialScale = it[2] as Float,
+                        initialOffset = Offset(it[3] as Float, it[4] as Float),
+                        initialModifications = emptyList(), // TODO: fix saver crashing (it[5] as? List<*>)?.filterIsInstance<ImageModification>() ?: emptyList()
+                    )
+                },
+            )
+    }
+}
+
+@OptIn(UnstableApi::class)
+@Composable
+fun rememberImageEditingState(
+    initialCroppingAspectRatio: CroppingAspectRatio = CroppingAspectRatio.FreeForm,
+    initialRotation: Float = 0f,
+    initialScale: Float = 1f,
+    initialOffset: Offset = Offset.Zero
+): ImageEditingState {
+    return rememberSaveable(saver = ImageEditingState.Saver) {
+        ImageEditingState(
+            initialCroppingAspectRatio = initialCroppingAspectRatio,
+            initialRotation = initialRotation,
+            initialScale = initialScale,
+            initialOffset = initialOffset,
+            initialModifications = emptyList()
         )
     }
 }

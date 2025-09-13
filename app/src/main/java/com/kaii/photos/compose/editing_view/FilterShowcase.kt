@@ -51,8 +51,11 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.kaii.photos.compose.widgets.shimmerEffect
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.TextStylingConstants
+import com.kaii.photos.helpers.editing.DrawingPaintState
+import com.kaii.photos.helpers.editing.ImageModification
 import com.kaii.photos.helpers.editing.MediaAdjustments
 import com.kaii.photos.helpers.editing.MediaColorFilters
+import com.kaii.photos.helpers.editing.SharedModification
 import com.kaii.photos.helpers.editing.VideoModification
 import com.kaii.photos.helpers.editing.withColorFilter
 import kotlinx.coroutines.Dispatchers
@@ -151,14 +154,13 @@ fun FilterShowcase(
     }
 }
 
-@androidx.annotation.OptIn(UnstableApi::class)
 @Composable
-fun FilterPager(
-    pagerState: PagerState,
-    modifications: SnapshotStateList<VideoModification>,
+fun VideoFilterPage(
+    drawingPaintState: DrawingPaintState,
     currentVideoPosition: MutableFloatState,
     absolutePath: String,
     allowedToRefresh: Boolean,
+    pagerState: PagerState,
     modifier: Modifier = Modifier
 ) {
     var bitmap: ImageBitmap? by remember { mutableStateOf(null) }
@@ -179,7 +181,7 @@ fun FilterPager(
             }
 
             // sort by index since order of application is very important
-            val adjustments = modifications
+            val adjustments = drawingPaintState.modifications
                 .mapNotNull { it as? VideoModification.Adjustment }
                 .sortedBy {
                     MediaAdjustments.entries.indexOf(it.type)
@@ -194,16 +196,55 @@ fun FilterPager(
     }
 
     LaunchedEffect(pagerState.currentPage) {
-        modifications.removeAll {
+        drawingPaintState.modifications.removeAll {
             it is VideoModification.Filter
         }
-        modifications.add(
+        drawingPaintState.modifications.add(
             VideoModification.Filter(
                 type = MediaColorFilters.entries[pagerState.currentPage]
             )
         )
     }
 
+    FilterPager(
+        bitmap = bitmap,
+        pagerState = pagerState,
+        modifier = modifier
+    )
+}
+
+@Composable
+fun ImageFilterPage(
+    image: ImageBitmap,
+    modifications: SnapshotStateList<SharedModification>,
+    pagerState: PagerState,
+    modifier: Modifier = Modifier
+) {
+    LaunchedEffect(pagerState.currentPage) {
+        modifications.removeAll {
+            it is ImageModification.Filter
+        }
+        modifications.add(
+            ImageModification.Filter(
+                type = MediaColorFilters.entries[pagerState.currentPage]
+            )
+        )
+    }
+
+    FilterPager(
+        bitmap = image,
+        pagerState = pagerState,
+        modifier = modifier
+    )
+}
+
+@androidx.annotation.OptIn(UnstableApi::class)
+@Composable
+private fun FilterPager(
+    bitmap: ImageBitmap?,
+    pagerState: PagerState,
+    modifier: Modifier = Modifier
+) {
     HorizontalPager(
         state = pagerState,
         pageSpacing = 12.dp,

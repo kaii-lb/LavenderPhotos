@@ -37,6 +37,7 @@ import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMapNotNull
 import com.kaii.photos.helpers.editing.DrawableText
 import com.kaii.photos.helpers.editing.DrawingPaintState
+import com.kaii.photos.helpers.editing.SharedModification
 import com.kaii.photos.helpers.editing.VideoEditorTabs
 import com.kaii.photos.helpers.editing.VideoModification
 import com.kaii.photos.helpers.editing.toOffset
@@ -48,8 +49,8 @@ fun BoxScope.PreviewCanvas(
     drawingPaintState: DrawingPaintState,
     actualLeft: Float,
     actualTop: Float,
-    latestCrop: VideoModification.Crop,
-    originalCrop: VideoModification.Crop,
+    latestCrop: SharedModification.Crop,
+    originalCrop: SharedModification.Crop,
     pagerState: PagerState,
     width: Dp,
     height: Dp

@@ -2,6 +2,7 @@ package com.kaii.photos.helpers.editing
 
 import android.net.Uri
 import androidx.annotation.DrawableRes
+import androidx.annotation.OptIn
 import androidx.annotation.StringRes
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -102,7 +103,7 @@ class DrawingPaints {
 private interface ProcessingEffect {
     fun getMatrix(value: Float): FloatArray
 
-    @androidx.annotation.OptIn(UnstableApi::class)
+    @OptIn(UnstableApi::class)
     fun getVideoEffect(value: Float): Effect
 
     @get:StringRes val title: Int
@@ -112,7 +113,7 @@ private interface ProcessingEffect {
         get() = 0f
 }
 
-@androidx.annotation.OptIn(UnstableApi::class)
+@OptIn(UnstableApi::class)
 enum class MediaAdjustments : ProcessingEffect {
     Contrast {
         override val title = R.string.editing_contrast
@@ -442,6 +443,23 @@ interface SharedModification {
     interface DrawingImage : SharedModification {
         val type: DrawingItems
         val image: DrawableImage
+    }
+
+    interface Crop : SharedModification {
+        val top: Float
+        val left: Float
+        val width: Float
+        val height: Float
+
+        val right: Float
+            get() = left + width
+
+        val bottom: Float
+            get() = top + height
+    }
+
+    interface Filter : SharedModification {
+        val type: MediaColorFilters
     }
 }
 

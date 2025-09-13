@@ -497,3 +497,12 @@ enum class VideoEditorTabs(
     Adjust(R.string.editing_adjust),
     Filters(R.string.editing_filters)
 }
+
+enum class ImageEditorTabs(
+    @param:StringRes val title: Int
+) {
+    Crop(R.string.editing_crop),
+    Draw(R.string.editing_draw),
+    Adjust(R.string.editing_adjust),
+    Filters(R.string.editing_filters)
+}

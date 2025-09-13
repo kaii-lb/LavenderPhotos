@@ -10,21 +10,18 @@ import androidx.compose.ui.util.lerp
 import kotlin.math.abs
 
 
-interface VideoModification {
+interface VideoModification : SharedModification {
     data class Trim(
         val start: Float,
         val end: Float
     ) : VideoModification
 
     data class Crop(
-        val top: Float,
-        val left: Float,
-        val width: Float,
-        val height: Float
-    ) : VideoModification {
-        val right = left + width
-        val bottom = top + height
-    }
+        override val top: Float,
+        override val left: Float,
+        override val width: Float,
+        override val height: Float
+    ) : VideoModification, SharedModification.Crop
 
     data class Adjustment(
         val type: MediaAdjustments,
@@ -35,8 +32,8 @@ interface VideoModification {
     }
 
     data class Filter(
-        val type: MediaColorFilters
-    ) : VideoModification
+        override val type: MediaColorFilters
+    ) : VideoModification, SharedModification.Filter
 
     data class DrawingPath(
         override val type: DrawingItems,
