@@ -339,7 +339,9 @@ fun VideoEditorAdjustmentTools(
                         sliderValue = sliderVal,
                         changesSize = changesSize, // not using totalModCount since that would cook the performance
                         popupPillHeightOffset = 6.dp,
-                        enabled = latestAdjustment != null || currentEditorPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw),
+                        enabled = latestAdjustment != null
+                                || (currentEditorPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw)
+                                && drawingPaintState.paintType != DrawingItems.Image),
                         range =
                             if (currentEditorPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw)) 0f..100f
                             else -100f..100f,

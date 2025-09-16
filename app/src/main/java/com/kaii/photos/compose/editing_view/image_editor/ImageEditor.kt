@@ -22,9 +22,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.pager.rememberPagerState
@@ -35,6 +38,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -60,19 +64,28 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.scale
 import com.bumptech.glide.Glide
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.ImageEditorBottomBar
 import com.kaii.photos.compose.app_bars.ImageEditorTopBar
+import com.kaii.photos.compose.dialogs.TextEntryDialog
 import com.kaii.photos.compose.editing_view.CropBox
 import com.kaii.photos.compose.editing_view.ImageFilterPage
+import com.kaii.photos.compose.editing_view.makeVideoDrawCanvas
 import com.kaii.photos.compose.editing_view.video_editor.PreviewCanvas
 import com.kaii.photos.compose.widgets.shimmerEffect
 import com.kaii.photos.helpers.AnimationConstants
+import com.kaii.photos.helpers.editing.DrawableText
 import com.kaii.photos.helpers.editing.ImageEditorTabs
 import com.kaii.photos.helpers.editing.ImageModification
 import com.kaii.photos.helpers.editing.MediaAdjustments
@@ -147,11 +160,13 @@ fun ImageEditor(
 
             originalImage = bitmap
                 .scale(
-                    width = (bitmap.height.toFloat() / inSampleSize).toInt(),
-                    height = (bitmap.width.toFloat() / inSampleSize).toInt(),
+                    width = (bitmap.width.toFloat() / inSampleSize).toInt(),
+                    height = (bitmap.height.toFloat() / inSampleSize).toInt(),
                     filter = true
                 )
                 .asImageBitmap()
+
+            moddedImage = originalImage
         }
     }
 
@@ -162,7 +177,8 @@ fun ImageEditor(
             val canvas = Canvas(bitmap)
             val drawScope = CanvasDrawScope()
 
-            val sorted = (modifications + drawingPaintState.modifications).sortedBy { mod ->
+            val mods = modifications + drawingPaintState.modifications
+            val sorted = mods.sortedBy { mod ->
                 if (mod is ImageModification.Adjustment) {
                     MediaAdjustments.entries.indexOf(mod.type)
                 } else {
@@ -264,7 +280,7 @@ fun ImageEditor(
 
             val latestCrop by remember {
                 derivedStateOf {
-                    modifications.lastOrNull {
+                    imageEditingState.modificationList.lastOrNull {
                         it is ImageModification.Crop
                     } as? ImageModification.Crop ?: ImageModification.Crop(0f, 0f, 0f, 0f)
                 }
@@ -272,9 +288,9 @@ fun ImageEditor(
 
             // find the top left of the actual video area
             var originalCrop by remember { mutableStateOf(ImageModification.Crop(0f, 0f, 0f, 0f)) }
-            LaunchedEffect(modifications.lastOrNull()) {
+            LaunchedEffect(imageEditingState.modificationList.lastOrNull()) {
                 if (originalCrop.width == 0f && originalCrop.height == 0f) {
-                    originalCrop = modifications.lastOrNull {
+                    originalCrop = imageEditingState.modificationList.lastOrNull {
                         it is ImageModification.Crop
                     } as? ImageModification.Crop ?: ImageModification.Crop(0f, 0f, 0f, 0f)
                 }
@@ -294,6 +310,22 @@ fun ImageEditor(
                 val isInFilterPage by remember {
                     derivedStateOf {
                         pagerState.currentPage == ImageEditorTabs.entries.indexOf(ImageEditorTabs.Filters)
+                    }
+                }
+
+                val width by animateDpAsState(
+                    targetValue = if (imageEditingState.rotation % 180 == 0f) this@BoxWithConstraints.maxWidth else this@BoxWithConstraints.maxHeight
+                )
+                val height by animateDpAsState(
+                    targetValue = if (imageEditingState.rotation % 180f == 0f) this@BoxWithConstraints.maxHeight else this@BoxWithConstraints.maxWidth
+                )
+
+                val imageSize by remember {
+                    derivedStateOf {
+                        DpSize(
+                            width = width,
+                            height = width / (moddedImage.width.toFloat() / moddedImage.height)
+                        )
                     }
                 }
 
@@ -317,7 +349,7 @@ fun ImageEditor(
                     if (state) {
                         Box(
                             modifier = Modifier
-                                .padding(8.dp)
+                                .padding(16.dp)
                         ) {
                             ImageFilterPage(
                                 image = originalImage,
@@ -326,47 +358,103 @@ fun ImageEditor(
                             )
                         }
                     } else {
+                        val textMeasurer = rememberTextMeasurer()
+                        var showTextDialog by remember { mutableStateOf(false) }
+                        var tapPosition by remember { mutableStateOf(Offset.Zero) }
+
+                        if (showTextDialog) {
+                            TextEntryDialog(
+                                title = stringResource(id = R.string.editing_text),
+                                placeholder = stringResource(id = R.string.bottom_sheets_enter_text),
+                                onValueChange = { input ->
+                                    input.isNotBlank()
+                                },
+                                onConfirm = { input ->
+                                    if (input.isNotBlank()) {
+                                        val size = textMeasurer.measure(
+                                            text = input,
+                                            style = DrawableText.Styles.Default.copy(
+                                                color = drawingPaintState.paint.color,
+                                                fontSize = TextUnit(drawingPaintState.paint.strokeWidth, TextUnitType.Sp)
+                                            )
+                                        ).size
+
+                                        val newText = ImageModification.DrawingText(
+                                            text = DrawableText(
+                                                text = input,
+                                                position = Offset(tapPosition.x, tapPosition.y),
+                                                paint = drawingPaintState.paint,
+                                                rotation = 0f,
+                                                size = size
+                                            )
+                                        )
+
+                                        drawingPaintState.modifications.add(newText)
+                                        totalModCount.intValue += 1
+
+                                        showTextDialog = false
+                                        true
+                                    } else {
+                                        false
+                                    }
+                                },
+                                onDismiss = {
+                                    showTextDialog = false
+                                }
+                            )
+                        }
+
                         Box(
                             modifier = Modifier
+                                .fillMaxSize(1f)
                                 .graphicsLayer {
                                     translationX = animatedOffset.x
                                     translationY = animatedOffset.y
                                     scaleX = animatedScale
                                     scaleY = animatedScale
                                 }
-                            // .makeVideoDrawCanvas(
-                            //     drawingPaintState = drawingPaintState,
-                            //     textMeasurer = textMeasurer,
-                            //     currentVideoPosition = currentVideoPosition,
-                            //     enabled = pagerState.currentPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw)
-                            // ) { position ->
-                            //     tapPosition = position
-                            //     showTextDialog = true
-                            // }
+                                .makeVideoDrawCanvas(
+                                    drawingPaintState = drawingPaintState,
+                                    textMeasurer = textMeasurer,
+                                    currentVideoPosition = remember { mutableFloatStateOf(0f) },
+                                    enabled = pagerState.currentPage == ImageEditorTabs.entries.indexOf(ImageEditorTabs.Draw),
+                                    addText = { position ->
+                                        tapPosition = position
+                                        showTextDialog = true
+                                    }
+                                )
                         ) {
                             Image(
                                 bitmap = moddedImage,
                                 contentDescription = "Preview the image",
                                 contentScale = ContentScale.Fit,
                                 modifier = Modifier
-                                    .requiredSize(
-                                        width = this@BoxWithConstraints.maxWidth,
-                                        height = this@BoxWithConstraints.maxHeight
-                                    )
+                                    .size(imageSize)
                                     .background(MaterialTheme.colorScheme.background)
+                                    .align(Alignment.Center)
                             )
 
-                            val width by animateDpAsState(
-                                targetValue = if (imageEditingState.rotation % 180 == 0f) this@BoxWithConstraints.maxWidth else this@BoxWithConstraints.maxHeight
-                            )
-                            val height by animateDpAsState(
-                                targetValue = if (imageEditingState.rotation % 180f == 0f) this@BoxWithConstraints.maxHeight else this@BoxWithConstraints.maxWidth
-                            )
+                            val localDensity = LocalDensity.current
+                            val actualTop by remember {
+                                derivedStateOf {
+                                    with(localDensity) {
+                                        (height.toPx() - imageSize.height.toPx()) / 2
+                                    }
+                                }
+                            }
+
+                            val actualLeft by remember {
+                                derivedStateOf {
+                                    with(localDensity) {
+                                        (width.toPx() - imageSize.width.toPx()) / 2
+                                    }
+                                }
+                            }
 
                             PreviewCanvas(
                                 drawingPaintState = drawingPaintState,
-                                actualLeft = 0f,
-                                actualTop = 0f,
+                                actualLeft = actualLeft,
+                                actualTop = actualTop,
                                 latestCrop = latestCrop,
                                 originalCrop = originalCrop,
                                 pagerState = pagerState,
@@ -390,7 +478,8 @@ fun ImageEditor(
                                     )
                                 },
                                 modifier = Modifier
-                                    .fillMaxSize(1f)
+                                    .width(width)
+                                    .height(height)
                                     .align(Alignment.Center)
                             ) { state ->
                                 if (state) {
@@ -437,15 +526,15 @@ fun ImageEditor(
                     ),
                     modifier = Modifier
                         .requiredSize(
-                            width = maxWidth + 32.dp, // so the CropBox handles don't clip
-                            height = maxHeight + 32.dp
+                            width = width + 32.dp, // so the CropBox handles don't clip
+                            height = height + 32.dp
                         )
                 ) {
                     val localDensity = LocalDensity.current
 
                     CropBox(
-                        containerWidth = with(localDensity) { maxWidth.toPx() },
-                        containerHeight = with(localDensity) { maxHeight.toPx() },
+                        containerWidth = with(localDensity) { width.toPx() },
+                        containerHeight = with(localDensity) { height.toPx() },
                         mediaAspectRatio = moddedImage.width.toFloat() / moddedImage.height,
                         editingState = imageEditingState,
                         scale = animatedScale,
@@ -475,15 +564,16 @@ fun ImageEditor(
                             val targetX = actualWidth / latestCrop.width
                             val targetY = actualHeight / latestCrop.height
 
-                            imageEditingState.setScale(max(1f, min(targetX, targetY)))
+                            val scale = max(1f, min(targetX, targetY))
+                            imageEditingState.setScale(scale)
 
                             imageEditingState.setOffset(
                                 Offset(
                                     x = with(localDensity) {
-                                        imageEditingState.scale * (-latestCrop.left + (containerDimens.width - latestCrop.width) / 2)
+                                        scale * (-latestCrop.left + (containerDimens.width - latestCrop.width) / 2)
                                     },
                                     y = with(localDensity) {
-                                        imageEditingState.scale * (-latestCrop.top + (containerDimens.height - latestCrop.height) / 2)
+                                        scale * (-latestCrop.top + (containerDimens.height - latestCrop.height) / 2)
                                     }
                                 )
                             )
@@ -494,8 +584,8 @@ fun ImageEditor(
                 AnimatedVisibility(
                     visible = pagerState.currentPage == ImageEditorTabs.entries.indexOf(ImageEditorTabs.Adjust)
                             || pagerState.currentPage == ImageEditorTabs.entries.indexOf(ImageEditorTabs.Draw),
-                    enter = fadeIn() + slideInVertically(),
-                    exit = fadeOut() + slideOutVertically(),
+                    enter = fadeIn() + slideInVertically { it },
+                    exit = fadeOut() + slideOutVertically { it },
                     modifier = Modifier
                         .offset(y = 4.dp)
                         .fillMaxWidth(1f)

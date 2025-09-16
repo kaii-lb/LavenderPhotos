@@ -39,7 +39,6 @@ import com.kaii.photos.helpers.editing.DrawableText
 import com.kaii.photos.helpers.editing.DrawingPaintState
 import com.kaii.photos.helpers.editing.SharedModification
 import com.kaii.photos.helpers.editing.VideoEditorTabs
-import com.kaii.photos.helpers.editing.VideoModification
 import com.kaii.photos.helpers.editing.toOffset
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -65,7 +64,7 @@ fun BoxScope.PreviewCanvas(
         withContext(Dispatchers.IO) {
             val new = drawingPaintState.modifications
                 .fastMapNotNull { mod ->
-                    mod as? VideoModification.DrawingImage
+                    mod as? SharedModification.DrawingImage
                 }
                 .fastMap { mod ->
                     context.contentResolver.openInputStream(mod.image.bitmapUri).use { inputStream ->
@@ -93,8 +92,8 @@ fun BoxScope.PreviewCanvas(
         ) {
             drawingPaintState.modifications.forEach { modification ->
                 when (modification) {
-                    is VideoModification.DrawingPath -> {
-                        val (_, path, _) = modification
+                    is SharedModification.DrawingPath -> {
+                        val path = modification.path
 
                         drawPath(
                             path = path.path,
@@ -111,8 +110,8 @@ fun BoxScope.PreviewCanvas(
                         )
                     }
 
-                    is VideoModification.DrawingText -> {
-                        val (_, text, _) = modification
+                    is SharedModification.DrawingText -> {
+                        val text = modification.text
 
                         rotate(text.rotation, text.position + text.size.toOffset() / 2f) {
                             translate(text.position.x, text.position.y) {
@@ -146,8 +145,8 @@ fun BoxScope.PreviewCanvas(
                         }
                     }
 
-                    is VideoModification.DrawingImage -> {
-                        val (_, image, _) = modification
+                    is SharedModification.DrawingImage -> {
+                        val image = modification.image
 
                         rotate(image.rotation, image.position + image.size.toOffset() / 2f) {
                             translate(image.position.x, image.position.y) {
@@ -199,16 +198,17 @@ fun BoxScope.PreviewCanvas(
             } else {
                 // mask exoplayer's failure to set the background color
                 // and the "unwanted" area of the cropped video
+                // add some extra pixels to avoid "white lines" on the very edges
                 clipRect(
-                    left = actualLeft + latestCrop.left,
-                    top = actualTop + latestCrop.top,
-                    right = actualLeft + latestCrop.right,
-                    bottom = actualTop + latestCrop.bottom,
+                    left = actualLeft + latestCrop.left - 5,
+                    top = actualTop + latestCrop.top - 5,
+                    right = actualLeft + latestCrop.right + 5,
+                    bottom = actualTop + latestCrop.bottom + 5,
                     clipOp = ClipOp.Difference
                 ) {
                     drawRect(
                         color = backgroundColor,
-                        size = Size(width.toPx(), height.toPx())
+                        size = Size(width.toPx() + 10, height.toPx() + 10)
                     )
                 }
             }

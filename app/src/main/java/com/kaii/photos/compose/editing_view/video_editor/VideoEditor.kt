@@ -598,11 +598,12 @@ fun VideoEditor(
                                         drawingPaintState = drawingPaintState,
                                         textMeasurer = textMeasurer,
                                         currentVideoPosition = currentVideoPosition,
-                                        enabled = pagerState.currentPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw)
-                                    ) { position ->
-                                        tapPosition = position
-                                        showTextDialog = true
-                                    }
+                                        enabled = pagerState.currentPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw),
+                                        addText = { position ->
+                                            tapPosition = position
+                                            showTextDialog = true
+                                        }
+                                    )
                             ) {
                                 AndroidView(
                                     factory = {

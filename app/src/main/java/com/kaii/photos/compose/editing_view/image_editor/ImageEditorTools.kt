@@ -23,6 +23,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import com.kaii.photos.compose.widgets.ColorRangeSlider
 import com.kaii.photos.compose.widgets.PopupPillSlider
+import com.kaii.photos.helpers.editing.DrawingItems
 import com.kaii.photos.helpers.editing.DrawingPaintState
 import com.kaii.photos.helpers.editing.ImageEditorTabs
 import com.kaii.photos.helpers.editing.ImageModification
@@ -99,7 +100,9 @@ fun ImageEditorAdjustmentTools(
                         sliderValue = sliderVal,
                         changesSize = changesSize, // not using totalModCount since that would cook the performance
                         popupPillHeightOffset = 6.dp,
-                        enabled = latestAdjustment != null || currentEditorPage == ImageEditorTabs.entries.indexOf(ImageEditorTabs.Draw),
+                        enabled = latestAdjustment != null
+                                || (currentEditorPage == ImageEditorTabs.entries.indexOf(ImageEditorTabs.Draw)
+                                && drawingPaintState.paintType != DrawingItems.Image),
                         range =
                             if (currentEditorPage == ImageEditorTabs.entries.indexOf(ImageEditorTabs.Draw)) 0f..100f
                             else -100f..100f,
