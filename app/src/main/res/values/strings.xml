@@ -216,6 +216,7 @@
     <string name="editing_scale_paint">Change paintbrush or text size</string>
     <string name="editing_scale_zoom">Zoom in instead of scaling font size</string>
     <string name="editing_scale_text">Change font size of selected text</string>
+    <string name="editing_saving">Saving edited image</string>
     <string name="editing_done">Saved edited image!</string>
     <string name="editing_failed">Failed to save edited image</string>
     <string name="editing_invert">Invert</string>

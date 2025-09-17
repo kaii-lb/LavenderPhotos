@@ -724,7 +724,10 @@ fun ImageEditorBottomBar(
 @Composable
 fun ImageEditorTopBar(
     modifications: List<ImageModification>,
-    lastSavedModCount: MutableIntState
+    lastSavedModCount: MutableIntState,
+    overwrite: Boolean,
+    setOverwrite: (Boolean) -> Unit,
+    saveImage: suspend () -> Unit
 ) {
     val navController = LocalNavController.current
 
@@ -775,10 +778,9 @@ fun ImageEditorTopBar(
 
             val mainViewModel = LocalMainViewModel.current
             val overwriteByDefault by mainViewModel.settings.Editing.getOverwriteByDefault().collectAsStateWithLifecycle(initialValue = false)
-            var overwrite by remember { mutableStateOf(false) }
 
             LaunchedEffect(overwriteByDefault) {
-                overwrite = overwriteByDefault
+                setOverwrite(overwriteByDefault)
             }
 
             DropdownMenu(
@@ -799,7 +801,7 @@ fun ImageEditorTopBar(
                     iconResId = R.drawable.checkmark_thin,
                     isSelected = false
                 ) {
-                    overwrite = true
+                    setOverwrite(true)
                     showDropDown = false
                 }
 
@@ -808,28 +810,20 @@ fun ImageEditorTopBar(
                     iconResId = R.drawable.checkmark_thin,
                     isSelected = true
                 ) {
-                    overwrite = false
+                    setOverwrite(false)
                     showDropDown = false
                 }
             }
 
             SplitButtonLayout(
                 leadingButton = {
-                    val resources = LocalResources.current
-
                     SplitButtonDefaults.LeadingButton(
                         onClick = {
                             lastSavedModCount.intValue = modifications.size
 
-                            // mainViewModel so it doesn't die if user exits before video is saved
+                            // mainViewModel so it doesn't die if user exits before image is saved
                             mainViewModel.launch {
-                                LavenderSnackbarController.pushEvent(
-                                    event = LavenderSnackbarEvents.MessageEvent(
-                                        message = resources.getString(R.string.editing_export_video_failed),
-                                        icon = R.drawable.error_2,
-                                        duration = SnackbarDuration.Short
-                                    )
-                                )
+                                saveImage()
                             }
                         }
                     ) {

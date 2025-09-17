@@ -1,4 +1,4 @@
-package com.kaii.photos.compose.editing_view.video_editor
+package com.kaii.photos.compose.editing_view
 
 import android.graphics.BitmapFactory
 import android.net.Uri

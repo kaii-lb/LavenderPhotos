@@ -8,7 +8,6 @@ import android.view.Window
 import android.view.WindowManager
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateOffsetAsState
 import androidx.compose.animation.core.tween
@@ -49,6 +48,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.graphicsLayer
@@ -71,6 +71,7 @@ import com.kaii.photos.compose.app_bars.VideoEditorBottomBar
 import com.kaii.photos.compose.app_bars.VideoEditorTopBar
 import com.kaii.photos.compose.dialogs.TextEntryDialog
 import com.kaii.photos.compose.editing_view.CropBox
+import com.kaii.photos.compose.editing_view.PreviewCanvas
 import com.kaii.photos.compose.editing_view.VideoFilterPage
 import com.kaii.photos.compose.editing_view.makeVideoDrawCanvas
 import com.kaii.photos.compose.single_photo.rememberExoPlayerWithLifeCycle
@@ -436,14 +437,27 @@ fun VideoEditor(
                     useTextureView = true
                 )
 
-                val width by animateDpAsState(
-                    targetValue = if (videoEditingState.rotation % 180 == 0f) this@BoxWithConstraints.maxWidth else this@BoxWithConstraints.maxHeight
-                )
-                val height by animateDpAsState(
-                    targetValue = if (videoEditingState.rotation % 180f == 0f) this@BoxWithConstraints.maxHeight else this@BoxWithConstraints.maxWidth
-                )
+                val width = this@BoxWithConstraints.maxWidth
+                val height = this@BoxWithConstraints.maxHeight
 
                 val localDensity = LocalDensity.current
+                val rotationScale by animateFloatAsState(
+                    targetValue =
+                        with(localDensity) {
+                            if (videoEditingState.rotation % 180f == 0f) {
+                                min(
+                                    width.toPx() / containerDimens.width,
+                                    height.toPx() / containerDimens.height
+                                )
+                            } else {
+                                min(
+                                    width.toPx() / containerDimens.height,
+                                    height.toPx() / containerDimens.width
+                                )
+                            } * 0.9f
+                        }
+                )
+
                 canvasSize = with(localDensity) {
                     Size(width.toPx(), height.toPx())
                 }
@@ -509,6 +523,7 @@ fun VideoEditor(
                         .height(height)
                         .padding(8.dp)
                         .rotate(animatedRotation)
+                        .scale(rotationScale)
                         .align(Alignment.Center)
                 ) {
                     val isInFilterPage by remember {
@@ -610,7 +625,8 @@ fun VideoEditor(
                                         playerView
                                     },
                                     modifier = Modifier
-                                        .fillMaxSize(1f)
+                                        .width(width)
+                                        .height(height)
                                         .background(MaterialTheme.colorScheme.background)
                                 )
 
@@ -678,7 +694,6 @@ fun VideoEditor(
                     modifier = Modifier
                         .width(width)
                         .height(height)
-                        .rotate(animatedRotation)
                         .align(Alignment.Center),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -708,8 +723,10 @@ fun VideoEditor(
                             containerHeight = with(localDensity) { height.toPx() - 16.dp.toPx() },
                             mediaAspectRatio = basicVideoData.aspectRatio,
                             editingState = videoEditingState,
-                            scale = animatedScale,
+                            scale = animatedScale * rotationScale,
                             modifier = Modifier
+                                .rotate(animatedRotation)
+                                .scale(rotationScale)
                                 .graphicsLayer {
                                     translationX = animatedScale * 16.dp.toPx() + animatedOffset.x
                                     translationY = animatedScale * 16.dp.toPx() + animatedOffset.y
