@@ -89,9 +89,11 @@ fun SingleAlbumView(
 
     val dynamicAlbum by remember {
         derivedStateOf {
-            allAlbums.first { it.id == albumInfo.id }
+            allAlbums.firstOrNull { it.id == albumInfo.id }
         }
     }
+
+    if (dynamicAlbum == null) return
 
     BackHandler(
         enabled = selectedItemsList.isEmpty()
@@ -110,15 +112,15 @@ fun SingleAlbumView(
 
     SingleAlbumViewCommon(
         groupedMedia = groupedMedia,
-        albumInfo = dynamicAlbum,
+        albumInfo = dynamicAlbum!!,
         selectedItemsList = selectedItemsList,
         navController = navController,
         incomingIntent = incomingIntent
     ) {
-        if (viewModel.albumInfo.paths.toSet() != dynamicAlbum.paths.toSet()) {
+        if (viewModel.albumInfo.paths.toSet() != dynamicAlbum!!.paths.toSet()) {
             viewModel.reinitDataSource(
                 context = context,
-                album = dynamicAlbum
+                album = dynamicAlbum!!
             )
         }
     }
@@ -155,9 +157,11 @@ fun SingleAlbumView(
 
     val dynamicAlbum by remember {
         derivedStateOf {
-            allAlbums.first { it.id == albumInfo.id }
+            allAlbums.firstOrNull { it.id == albumInfo.id }
         }
     }
+
+    if (dynamicAlbum == null) return
 
     BackHandler(
         enabled = selectedItemsList.isEmpty()
@@ -179,7 +183,7 @@ fun SingleAlbumView(
 
     SingleAlbumViewCommon(
         groupedMedia = groupedMedia,
-        albumInfo = dynamicAlbum,
+        albumInfo = dynamicAlbum!!,
         selectedItemsList = selectedItemsList,
         navController = navController,
         incomingIntent = incomingIntent
@@ -187,14 +191,14 @@ fun SingleAlbumView(
         if (customViewModel.albumInfo != dynamicAlbum) {
             customViewModel.reinitDataSource(
                 context = context,
-                album = dynamicAlbum
+                album = dynamicAlbum!!
             )
         }
 
         if (multiViewModel.albumInfo != dynamicAlbum) {
             multiViewModel.reinitDataSource(
                 context = context,
-                album = dynamicAlbum
+                album = dynamicAlbum!!
             )
         }
     }
