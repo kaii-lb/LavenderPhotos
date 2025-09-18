@@ -93,8 +93,6 @@ fun SingleAlbumView(
         }
     }
 
-    if (dynamicAlbum == null) return
-
     BackHandler(
         enabled = selectedItemsList.isEmpty()
     ) {
@@ -110,18 +108,20 @@ fun SingleAlbumView(
         groupedMedia.value = mediaStoreData
     }
 
-    SingleAlbumViewCommon(
-        groupedMedia = groupedMedia,
-        albumInfo = dynamicAlbum!!,
-        selectedItemsList = selectedItemsList,
-        navController = navController,
-        incomingIntent = incomingIntent
-    ) {
-        if (viewModel.albumInfo.paths.toSet() != dynamicAlbum!!.paths.toSet()) {
-            viewModel.reinitDataSource(
-                context = context,
-                album = dynamicAlbum!!
-            )
+    if (dynamicAlbum != null) {
+        SingleAlbumViewCommon(
+            groupedMedia = groupedMedia,
+            albumInfo = dynamicAlbum!!,
+            selectedItemsList = selectedItemsList,
+            navController = navController,
+            incomingIntent = incomingIntent
+        ) {
+            if (viewModel.albumInfo.paths.toSet() != dynamicAlbum!!.paths.toSet()) {
+                viewModel.reinitDataSource(
+                    context = context,
+                    album = dynamicAlbum!!
+                )
+            }
         }
     }
 }
@@ -161,8 +161,6 @@ fun SingleAlbumView(
         }
     }
 
-    if (dynamicAlbum == null) return
-
     BackHandler(
         enabled = selectedItemsList.isEmpty()
     ) {
@@ -181,25 +179,27 @@ fun SingleAlbumView(
         groupedMedia.value = (customMediaStoreData + multiMediaStoreData).distinctBy { it.uri }
     }
 
-    SingleAlbumViewCommon(
-        groupedMedia = groupedMedia,
-        albumInfo = dynamicAlbum!!,
-        selectedItemsList = selectedItemsList,
-        navController = navController,
-        incomingIntent = incomingIntent
-    ) {
-        if (customViewModel.albumInfo != dynamicAlbum) {
-            customViewModel.reinitDataSource(
-                context = context,
-                album = dynamicAlbum!!
-            )
-        }
+    if (dynamicAlbum != null) {
+        SingleAlbumViewCommon(
+            groupedMedia = groupedMedia,
+            albumInfo = dynamicAlbum!!,
+            selectedItemsList = selectedItemsList,
+            navController = navController,
+            incomingIntent = incomingIntent
+        ) {
+            if (customViewModel.albumInfo != dynamicAlbum) {
+                customViewModel.reinitDataSource(
+                    context = context,
+                    album = dynamicAlbum!!
+                )
+            }
 
-        if (multiViewModel.albumInfo != dynamicAlbum) {
-            multiViewModel.reinitDataSource(
-                context = context,
-                album = dynamicAlbum!!
-            )
+            if (multiViewModel.albumInfo != dynamicAlbum) {
+                multiViewModel.reinitDataSource(
+                    context = context,
+                    album = dynamicAlbum!!
+                )
+            }
         }
     }
 }
