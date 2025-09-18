@@ -17,11 +17,6 @@ interface ImageModification {
         override val type: MediaColorFilters
     ) : ImageModification, SharedModification.Filter
 
-    data class DrawingPath(
-        override val type: DrawingItems,
-        override val path: DrawablePath
-    ) : ImageModification, SharedModification.DrawingPath
-
     data class DrawingText(
         override val type: DrawingItems = DrawingItems.Text,
         override val text: DrawableText

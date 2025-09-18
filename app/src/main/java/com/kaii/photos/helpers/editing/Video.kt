@@ -51,7 +51,7 @@ private interface DrawingEffect {
         value: Any,
         timespan: VideoModification.Trim?,
         ratio: Float,
-        resolution: Size,
+        externalCanvasSize: Size,
         context: Context,
         textMeasurer: TextMeasurer
     ): BitmapOverlay
@@ -69,7 +69,7 @@ enum class DrawingItems : DrawingEffect {
             value: Any,
             timespan: VideoModification.Trim?,
             ratio: Float,
-            resolution: Size,
+            externalCanvasSize: Size,
             context: Context,
             textMeasurer: TextMeasurer
         ): BitmapOverlay {
@@ -79,7 +79,7 @@ enum class DrawingItems : DrawingEffect {
                 path = value,
                 timespan = timespan,
                 ratio = ratio,
-                resolution = resolution
+                externalCanvasSize = externalCanvasSize
             )
         }
 
@@ -94,7 +94,7 @@ enum class DrawingItems : DrawingEffect {
             value: Any,
             timespan: VideoModification.Trim?,
             ratio: Float,
-            resolution: Size,
+            externalCanvasSize: Size,
             context: Context,
             textMeasurer: TextMeasurer
         ): BitmapOverlay {
@@ -104,7 +104,7 @@ enum class DrawingItems : DrawingEffect {
                 path = value,
                 timespan = timespan,
                 ratio = ratio,
-                resolution = resolution
+                externalCanvasSize = externalCanvasSize
             )
         }
 
@@ -119,7 +119,7 @@ enum class DrawingItems : DrawingEffect {
             value: Any,
             timespan: VideoModification.Trim?,
             ratio: Float,
-            resolution: Size,
+            externalCanvasSize: Size,
             context: Context,
             textMeasurer: TextMeasurer
         ): BitmapOverlay {
@@ -127,7 +127,7 @@ enum class DrawingItems : DrawingEffect {
 
             return TimedTextOverlay(
                 drawingText = value,
-                resolution = resolution,
+                externalCanvasSize = externalCanvasSize,
                 textMeasurer = textMeasurer,
                 timespan = timespan,
                 ratio = ratio
@@ -145,7 +145,7 @@ enum class DrawingItems : DrawingEffect {
             value: Any,
             timespan: VideoModification.Trim?,
             ratio: Float,
-            resolution: Size,
+            externalCanvasSize: Size,
             context: Context,
             textMeasurer: TextMeasurer
         ): BitmapOverlay {
@@ -158,7 +158,7 @@ enum class DrawingItems : DrawingEffect {
             return TimedBitmapOverlay(
                 bitmap = bitmap.asImageBitmap(),
                 drawingImage = value,
-                resolution = resolution,
+                externalCanvasSize = externalCanvasSize,
                 ratio = ratio,
                 timespan = timespan
             )
@@ -173,15 +173,15 @@ class TimePathOverlay(
     val path: DrawablePath,
     private val timespan: VideoModification.Trim? = null,
     private val ratio: Float,
-    private val resolution: Size
+    private val externalCanvasSize: Size
 ) : CanvasOverlay(true) {
     override fun onDraw(canvas: Canvas, presentationTimeUs: Long) {
         val drawScope = CanvasDrawScope()
         val composeCanvas = androidx.compose.ui.graphics.Canvas(canvas)
 
         if (timespan == null || presentationTimeUs / 1000f in (timespan.start * 1000)..(timespan.end * 1000)) {
-            val scaledDrawingWidth = resolution.width * ratio
-            val scaledDrawingHeight = resolution.height * ratio
+            val scaledDrawingWidth = externalCanvasSize.width * ratio
+            val scaledDrawingHeight = externalCanvasSize.height * ratio
             val translateX = (canvas.width - scaledDrawingWidth) / 2f
             val translateY = (canvas.height - scaledDrawingHeight) / 2f
 
@@ -220,7 +220,7 @@ class TimePathOverlay(
 @OptIn(UnstableApi::class)
 class TimedTextOverlay(
     private val drawingText: VideoModification.DrawingText,
-    private val resolution: Size,
+    private val externalCanvasSize: Size,
     private val ratio: Float,
     private val textMeasurer: TextMeasurer,
     private val timespan: VideoModification.Trim? = null
@@ -232,8 +232,8 @@ class TimedTextOverlay(
 
         if (timespan == null || presentationTimeUs / 1000f in (timespan.start * 1000)..(timespan.end * 1000)) {
             var text = drawingText.text
-            val scaledDrawingWidth = resolution.width * ratio
-            val scaledDrawingHeight = resolution.height * ratio
+            val scaledDrawingWidth = externalCanvasSize.width * ratio
+            val scaledDrawingHeight = externalCanvasSize.height * ratio
             val translateX = (canvas.width - scaledDrawingWidth) / 2f
             val translateY = (canvas.height - scaledDrawingHeight) / 2f
 
@@ -296,7 +296,7 @@ class TimedTextOverlay(
 class TimedBitmapOverlay(
     private val bitmap: ImageBitmap,
     private val drawingImage: VideoModification.DrawingImage,
-    private val resolution: Size,
+    private val externalCanvasSize: Size,
     private val ratio: Float,
     private val timespan: VideoModification.Trim? = null
 ) : CanvasOverlay(true) {
@@ -307,8 +307,8 @@ class TimedBitmapOverlay(
 
         if (timespan == null || presentationTimeUs / 1000f in (timespan.start * 1000)..(timespan.end * 1000)) {
             var image = drawingImage.image
-            val scaledDrawingWidth = resolution.width * ratio
-            val scaledDrawingHeight = resolution.height * ratio
+            val scaledDrawingWidth = externalCanvasSize.width * ratio
+            val scaledDrawingHeight = externalCanvasSize.height * ratio
             val translateX = (canvas.width - scaledDrawingWidth) / 2f
             val translateY = (canvas.height - scaledDrawingHeight) / 2f
 

@@ -60,6 +60,7 @@ import androidx.media3.transformer.VideoEncoderSettings
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
+import com.kaii.photos.helpers.appStorageDir
 import com.kaii.photos.helpers.getParentFromPath
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.toBasePath
@@ -68,9 +69,9 @@ import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getMediaStoreDataFromUri
 import com.kaii.photos.mediastore.getUriFromAbsolutePath
 import com.kaii.photos.mediastore.insertMedia
+import kotlinx.coroutines.delay
 import java.io.File
 import kotlin.math.max
-import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
@@ -110,41 +111,6 @@ suspend fun saveVideo(
         .build()
 
     val modList = mutableListOf<Effect>()
-
-    val cropArea = modifications.lastOrNull {
-        it is VideoModification.Crop
-    } as? VideoModification.Crop
-
-    if (cropArea != null && !cropArea.left.isNaN() && !cropArea.right.isNaN() && !cropArea.top.isNaN() && !cropArea.bottom.isNaN()) {
-        val left = (cropArea.left / containerDimens.width).coerceIn(-1f, 1f)
-        val right = (cropArea.right / containerDimens.width).coerceIn(-1f, 1f)
-        val top = (cropArea.top / containerDimens.height).coerceIn(-1f, 1f)
-        val bottom = (cropArea.bottom / containerDimens.height).coerceIn(-1f, 1f)
-
-        val normalizedLeft = (2f * left) - 1f
-        val normalizedRight = (2f * right) - 1f
-        val normalizedTop = -(2f * top) + 1f
-        val normalizedBottom = -(2f * bottom) + 1f
-
-        modList.add(
-            Crop(
-                normalizedLeft,
-                normalizedRight,
-                normalizedBottom,
-                normalizedTop
-            )
-        )
-
-        val widthPercent = right - left
-        val heightPercent = bottom - top
-
-        val newWidth = (basicVideoData.width * widthPercent).toInt()
-        val newHeight = (basicVideoData.height * heightPercent).toInt()
-
-        modList.add(
-            Presentation.createForShortSide(if (newWidth > newHeight) newWidth else newHeight)
-        )
-    }
 
     if (videoEditingState.rotation != 0f) {
         modList.add(
@@ -198,7 +164,7 @@ suspend fun saveVideo(
         max(
             basicVideoData.width / containerDimens.width,
             basicVideoData.height / containerDimens.height
-        ) / (containerDimens.width / containerDimens.height)
+        )
 
     val overlayEffects = mutableListOf<BitmapOverlay>()
     val textOverlays =
@@ -213,7 +179,7 @@ suspend fun saveVideo(
                     timespan = overlay.timespan,
                     ratio = ratio,
                     context = context,
-                    resolution = canvasSize,
+                    externalCanvasSize = canvasSize,
                     textMeasurer = textMeasurer
                 )
             )
@@ -233,7 +199,7 @@ suspend fun saveVideo(
                         timespan = overlay.timespan,
                         ratio = ratio,
                         context = context,
-                        resolution = canvasSize,
+                        externalCanvasSize = canvasSize,
                         textMeasurer = textMeasurer
                     )
                 } else {
@@ -242,7 +208,7 @@ suspend fun saveVideo(
                         timespan = overlay.timespan,
                         ratio = ratio,
                         context = context,
-                        resolution = canvasSize,
+                        externalCanvasSize = canvasSize,
                         textMeasurer = textMeasurer
                     )
                 }
@@ -264,7 +230,7 @@ suspend fun saveVideo(
                     timespan = overlay.timespan,
                     ratio = ratio,
                     context = context,
-                    resolution = canvasSize,
+                    externalCanvasSize = canvasSize,
                     textMeasurer = textMeasurer
                 )
 
@@ -297,41 +263,26 @@ suspend fun saveVideo(
         uri = uri
     )
 
-    val newUri =
-        if (!overwrite) {
-            context.contentResolver.insertMedia(
-                context = context,
-                media = media,
-                destination = absolutePath.getParentFromPath(),
-                overwriteDate = true,
-                basePath = absolutePath.toBasePath(),
-                currentVolumes = MediaStore.getExternalVolumeNames(context),
-                overrideDisplayName = file.name.removeSuffix(file.extension) + "mp4",
-                onInsert = { _, _ -> }
-            )
-        } else {
-            uri
-        }
+    val tempPath = context.appStorageDir + "/cache/${media.displayName}"
 
-    if (newUri == null) return
+    val tempFile = File(tempPath)
+    if (tempFile.exists()) tempFile.delete()
+    if (tempFile.parentFile?.exists() != true) tempFile.parentFile?.mkdirs()
+    tempFile.createNewFile()
 
-    val newMedia = context.contentResolver.getMediaStoreDataFromUri(newUri)
-    val neededPath = newMedia?.absolutePath
-    if (neededPath == null) return
-
-    // because: java.io.FileNotFoundException open failed: EEXIST (File exists)
-    // if the file exists
-    permanentlyDeletePhotoList(context = context, list = listOf(newMedia.uri))
-
+    var completions = 0
     val transformer = Transformer.Builder(context)
         .addListener(object : Transformer.Listener {
             override fun onCompleted(composition: Composition, exportResult: ExportResult) {
                 super.onCompleted(composition, exportResult)
 
-                isLoading.value = false
+                if (completions >= 1) {
+                    tempFile.delete()
+                    isLoading.value = false
+                }
 
                 // not using newMedia.uri since we don't have access to that after deletion
-                context.contentResolver.getUriFromAbsolutePath(absolutePath = neededPath, type = MediaType.Video)?.let { newUri ->
+                context.contentResolver.getUriFromAbsolutePath(absolutePath = tempPath, type = MediaType.Video)?.let { newUri ->
                     context.contentResolver.update(
                         newUri,
                         ContentValues().apply {
@@ -341,6 +292,8 @@ suspend fun saveVideo(
                     )
                     context.contentResolver.notifyChange(newUri, null)
                 }
+
+                completions += 1
             }
 
             override fun onError(composition: Composition, exportResult: ExportResult, exportException: ExportException) {
@@ -365,9 +318,99 @@ suspend fun saveVideo(
         )
         .build()
 
+
+    // TODO: SEVERELY inefficient please fix
     transformer.start(
         editedMediaItem,
-        neededPath
+        tempPath
+    )
+
+    while (completions == 0) {
+        delay(1000)
+    }
+
+    modList.clear()
+
+    val cropArea = modifications.lastOrNull {
+        it is VideoModification.Crop
+    } as? VideoModification.Crop
+
+    if (cropArea != null && !cropArea.left.isNaN() && !cropArea.right.isNaN() && !cropArea.top.isNaN() && !cropArea.bottom.isNaN()) {
+        val left = (cropArea.left / containerDimens.width).coerceIn(-1f, 1f)
+        val right = (cropArea.right / containerDimens.width).coerceIn(-1f, 1f)
+        val top = (cropArea.top / containerDimens.height).coerceIn(-1f, 1f)
+        val bottom = (cropArea.bottom / containerDimens.height).coerceIn(-1f, 1f)
+
+        val normalizedLeft = (2f * left) - 1f
+        val normalizedRight = (2f * right) - 1f
+        val normalizedTop = -(2f * top) + 1f
+        val normalizedBottom = -(2f * bottom) + 1f
+
+        modList.add(
+            Crop(
+                normalizedLeft,
+                normalizedRight,
+                normalizedBottom,
+                normalizedTop
+            )
+        )
+
+        val widthPercent = right - left
+        val heightPercent = bottom - top
+
+        val newWidth = (basicVideoData.width * widthPercent).toInt()
+        val newHeight = (basicVideoData.height * heightPercent).toInt()
+
+        modList.add(
+            Presentation.createForShortSide(if (newWidth > newHeight) newWidth else newHeight)
+        )
+    }
+
+    val mediaUri = context.contentResolver.getUriFromAbsolutePath(tempFile.absolutePath, MediaType.Video)
+    if (mediaUri == null) {
+        isLoading.value = false
+        return
+    }
+
+    val finalMediaItem = MediaItem.Builder()
+        .setUri(mediaUri)
+        .build()
+
+    val finalEditedMediaItem = EditedMediaItem.Builder(finalMediaItem)
+        .setEffects(Effects(emptyList(), modList))
+        .build()
+
+    val newUri = if (!overwrite) {
+        context.contentResolver.insertMedia(
+            context = context,
+            media = media.copy(
+                uri = mediaUri,
+                absolutePath = tempFile.absolutePath
+            ),
+            destination = absolutePath.getParentFromPath(),
+            overwriteDate = true,
+            basePath = absolutePath.toBasePath(),
+            currentVolumes = MediaStore.getExternalVolumeNames(context),
+            overrideDisplayName = file.name.removeSuffix(file.extension) + "mp4",
+            onInsert = { _, _ -> }
+        )
+    } else {
+        mediaUri
+    }
+
+    if (newUri == null) return
+
+    val newMedia = context.contentResolver.getMediaStoreDataFromUri(newUri)
+    val newPath = newMedia?.absolutePath
+    if (newPath == null) return
+
+    // because: java.io.FileNotFoundException open failed: EEXIST (File exists)
+    // if the file exists
+    permanentlyDeletePhotoList(context = context, list = listOf(newMedia.uri))
+
+    transformer.start(
+        finalEditedMediaItem,
+        newPath
     )
 }
 
@@ -404,28 +447,9 @@ suspend fun saveImage(
             }
         }
 
-    val crop =
-        imageEditingState.modificationList.lastOrNull {
-            it is ImageModification.Crop
-        } as? ImageModification.Crop ?: ImageModification.Crop(0f, 0f, 0f, 0f)
-
-    val left = (crop.left / containerDimens.width)
-    val top = (crop.top / containerDimens.height)
-    val width = (crop.width / containerDimens.width)
-    val height = (crop.height / containerDimens.height)
-
-    val bitmap = Bitmap
-        .createBitmap(
-            image.asAndroidBitmap(),
-            (left * image.width).roundToInt(),
-            (top * image.height).roundToInt(),
-            (width * image.width).roundToInt(),
-            (height * image.height).roundToInt()
-        )
+    val bitmap = image.asAndroidBitmap()
         .copy(Bitmap.Config.ARGB_8888, true)
         .asImageBitmap()
-
-    val ratio = min(bitmap.width / containerDimens.width, bitmap.height / containerDimens.height)
 
     val adjustmentCanvas = Canvas(bitmap)
     val mods = modifications + drawingPaintState.modifications
@@ -464,6 +488,15 @@ suspend fun saveImage(
 
     val canvas = Canvas(bitmap)
 
+    val ratio =
+        max(
+            image.width.toFloat() / containerDimens.width,
+            image.height.toFloat() / containerDimens.height
+        )
+
+    val translateX = -(actualLeft * ratio)
+    val translateY = -(actualTop * ratio)
+
     drawScope.draw(
         density = Density(1f),
         layoutDirection = LayoutDirection.Ltr,
@@ -473,84 +506,86 @@ suspend fun saveImage(
             height = bitmap.height.toFloat()
         )
     ) {
-        scale(scale = ratio, pivot = Offset.Zero) {
-            drawingPaintState.modifications.forEach { modification ->
-                when (modification) {
-                    is SharedModification.DrawingPath -> {
-                        val path = modification.path
+        translate(left = translateX, top = translateY) {
+            scale(scale = ratio, pivot = Offset.Zero) {
+                drawingPaintState.modifications.forEach { modification ->
+                    when (modification) {
+                        is SharedModification.DrawingPath -> {
+                            val path = modification.path
 
-                        drawPath(
-                            path = path.path,
-                            style = Stroke(
-                                width = path.paint.strokeWidth,
-                                cap = path.paint.strokeCap,
-                                join = path.paint.strokeJoin,
-                                miter = path.paint.strokeMiterLimit,
-                                pathEffect = path.paint.pathEffect
-                            ),
-                            blendMode = path.paint.blendMode,
-                            color = path.paint.color,
-                            alpha = path.paint.alpha
-                        )
-                    }
+                            drawPath(
+                                path = path.path,
+                                style = Stroke(
+                                    width = path.paint.strokeWidth,
+                                    cap = path.paint.strokeCap,
+                                    join = path.paint.strokeJoin,
+                                    miter = path.paint.strokeMiterLimit,
+                                    pathEffect = path.paint.pathEffect
+                                ),
+                                blendMode = path.paint.blendMode,
+                                color = path.paint.color,
+                                alpha = path.paint.alpha
+                            )
+                        }
 
-                    is SharedModification.DrawingText -> {
-                        val text = modification.text
+                        is SharedModification.DrawingText -> {
+                            val text = modification.text
 
-                        rotate(text.rotation, text.position + text.size.toOffset() / 2f) {
-                            translate(text.position.x, text.position.y) {
-                                val textLayout = textMeasurer.measure(
-                                    text = text.text,
-                                    style = DrawableText.Styles.Default.copy(
-                                        color = text.paint.color,
-                                        fontSize = text.paint.strokeWidth.sp
-                                    ),
-                                    softWrap = false
-                                )
-
-                                drawText(
-                                    textLayoutResult = textLayout,
-                                    blendMode = text.paint.blendMode
-                                )
-
-                                if (drawingPaintState.selectedItem == modification) {
-                                    drawRoundRect(
-                                        color = text.paint.color,
-                                        topLeft = text.size.toOffset().copy(y = 0f) * -0.1f / 2f,
-                                        cornerRadius = CornerRadius(16.dp.toPx() * text.paint.strokeWidth / 128f),
-                                        size = text.size.toSize() * 1.1f,
-                                        style = Stroke(
-                                            width = text.paint.strokeWidth / 2,
-                                            cap = StrokeCap.Round
-                                        )
+                            rotate(text.rotation, text.position + text.size.toOffset() / 2f) {
+                                translate(text.position.x, text.position.y) {
+                                    val textLayout = textMeasurer.measure(
+                                        text = text.text,
+                                        style = DrawableText.Styles.Default.copy(
+                                            color = text.paint.color,
+                                            fontSize = text.paint.strokeWidth.sp
+                                        ),
+                                        softWrap = false
                                     )
+
+                                    drawText(
+                                        textLayoutResult = textLayout,
+                                        blendMode = text.paint.blendMode
+                                    )
+
+                                    if (drawingPaintState.selectedItem == modification) {
+                                        drawRoundRect(
+                                            color = text.paint.color,
+                                            topLeft = text.size.toOffset().copy(y = 0f) * -0.1f / 2f,
+                                            cornerRadius = CornerRadius(16.dp.toPx() * text.paint.strokeWidth / 128f),
+                                            size = text.size.toSize() * 1.1f,
+                                            style = Stroke(
+                                                width = text.paint.strokeWidth / 2,
+                                                cap = StrokeCap.Round
+                                            )
+                                        )
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    is SharedModification.DrawingImage -> {
-                        val image = modification.image
+                        is SharedModification.DrawingImage -> {
+                            val image = modification.image
 
-                        rotate(image.rotation, image.position + image.size.toOffset() / 2f) {
-                            translate(image.position.x, image.position.y) {
-                                drawImage(
-                                    image = images.firstOrNull { it.first == image.bitmapUri }?.second ?: ImageBitmap(512, 512),
-                                    dstSize = image.size,
-                                    filterQuality = FilterQuality.Medium,
-                                    blendMode = image.paint.blendMode
-                                )
-
-                                if (drawingPaintState.selectedItem == modification) {
-                                    drawRoundRect(
-                                        color = image.paint.color,
-                                        cornerRadius = CornerRadius(16.dp.toPx() * image.paint.strokeWidth / 128f),
-                                        size = image.size.toSize(),
-                                        style = Stroke(
-                                            width = image.paint.strokeWidth / 2,
-                                            cap = StrokeCap.Round
-                                        )
+                            rotate(image.rotation, image.position + image.size.toOffset() / 2f) {
+                                translate(image.position.x, image.position.y) {
+                                    drawImage(
+                                        image = images.firstOrNull { it.first == image.bitmapUri }?.second ?: ImageBitmap(512, 512),
+                                        dstSize = image.size,
+                                        filterQuality = FilterQuality.Medium,
+                                        blendMode = image.paint.blendMode
                                     )
+
+                                    if (drawingPaintState.selectedItem == modification) {
+                                        drawRoundRect(
+                                            color = image.paint.color,
+                                            cornerRadius = CornerRadius(16.dp.toPx() * image.paint.strokeWidth / 128f),
+                                            size = image.size.toSize(),
+                                            style = Stroke(
+                                                width = image.paint.strokeWidth / 2,
+                                                cap = StrokeCap.Round
+                                            )
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -559,6 +594,25 @@ suspend fun saveImage(
             }
         }
     }
+
+    val crop =
+        imageEditingState.modificationList.lastOrNull {
+            it is ImageModification.Crop
+        } as? ImageModification.Crop ?: ImageModification.Crop(0f, 0f, 0f, 0f)
+
+    val left = (crop.left / containerDimens.width)
+    val top = (crop.top / containerDimens.height)
+    val width = (crop.width / containerDimens.width)
+    val height = (crop.height / containerDimens.height)
+
+    val cropped = Bitmap
+        .createBitmap(
+            bitmap.asAndroidBitmap(),
+            (left * bitmap.width).roundToInt(),
+            (top * bitmap.height).roundToInt(),
+            (width * bitmap.width).roundToInt(),
+            (height * bitmap.height).roundToInt()
+        )
 
     val file = File(absolutePath)
     val uri = context.contentResolver.getUriFromAbsolutePath(absolutePath, MediaType.Image)
@@ -634,7 +688,7 @@ suspend fun saveImage(
     }
 
     context.contentResolver.openOutputStream(newMedia.uri)?.use { outputStream ->
-        bitmap.asAndroidBitmap().compress(
+        cropped.compress(
             Bitmap.CompressFormat.PNG,
             100,
             outputStream
