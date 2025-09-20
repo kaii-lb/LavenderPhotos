@@ -109,9 +109,10 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.BottomAppBarItem
 import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.dialogs.ExplanationDialog
-import com.kaii.photos.compose.editing_view.EditingView
+import com.kaii.photos.compose.editing_view.image_editor.ImageEditor
 import com.kaii.photos.compose.editing_view.video_editor.VideoEditor
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
+import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
@@ -222,7 +223,44 @@ class OpenWithView : ComponentActivity() {
                             )
                         }
 
-                        composable<Screens.EditingScreen> {
+                        composable<Screens.ImageEditor>(
+                            enterTransition = {
+                                slideInVertically(
+                                    AnimationConstants.expressiveTween(AnimationConstants.DURATION)
+                                ) { height -> height } + fadeIn(
+                                    animationSpec = tween(
+                                        durationMillis = AnimationConstants.DURATION_LONG
+                                    )
+                                )
+                            },
+                            exitTransition = {
+                                slideOutVertically(
+                                    AnimationConstants.expressiveTween(AnimationConstants.DURATION)
+                                ) { height -> height } + fadeOut(
+                                    animationSpec = tween(
+                                        durationMillis = AnimationConstants.DURATION_LONG
+                                    )
+                                )
+                            },
+                            popEnterTransition = {
+                                slideInVertically(
+                                    AnimationConstants.expressiveTween(AnimationConstants.DURATION)
+                                ) { height -> height } + fadeIn(
+                                    animationSpec = tween(
+                                        durationMillis = AnimationConstants.DURATION_LONG
+                                    )
+                                )
+                            },
+                            popExitTransition = {
+                                slideOutVertically(
+                                    AnimationConstants.expressiveTween(AnimationConstants.DURATION)
+                                ) { height -> height } + fadeOut(
+                                    animationSpec = tween(
+                                        durationMillis = AnimationConstants.DURATION_LONG
+                                    )
+                                )
+                            }
+                        ) {
                             enableEdgeToEdge(
                                 navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
                                 statusBarStyle = SystemBarStyle.auto(
@@ -231,19 +269,52 @@ class OpenWithView : ComponentActivity() {
                                 )
                             )
 
-                            val screen: Screens.EditingScreen = it.toRoute()
+                            val screen: Screens.ImageEditor = it.toRoute()
 
-                            EditingView(
-                                absolutePath = screen.absolutePath,
-                                dateTaken = screen.dateTaken,
+                            ImageEditor(
                                 uri = screen.uri.toUri(),
-                                window = window,
-                                overwriteByDefault = false,
-                                isOpenWith = true
+                                absolutePath = screen.absolutePath
                             )
                         }
 
-                        composable<Screens.VideoEditor> {
+                        composable<Screens.VideoEditor>(
+                            enterTransition = {
+                                slideInVertically(
+                                    animationSpec = AnimationConstants.expressiveTween(AnimationConstants.DURATION)
+                                ) { height -> height } + fadeIn(
+                                    animationSpec = tween(
+                                        durationMillis = AnimationConstants.DURATION_LONG
+                                    )
+                                )
+                            },
+                            exitTransition = {
+                                slideOutVertically(
+                                    AnimationConstants.expressiveTween(AnimationConstants.DURATION)
+                                ) { height -> height } + fadeOut(
+                                    animationSpec = tween(
+                                        durationMillis = AnimationConstants.DURATION_LONG
+                                    )
+                                )
+                            },
+                            popEnterTransition = {
+                                slideInVertically(
+                                    AnimationConstants.expressiveTween(AnimationConstants.DURATION)
+                                ) { height -> height } + fadeIn(
+                                    animationSpec = tween(
+                                        durationMillis = AnimationConstants.DURATION_LONG
+                                    )
+                                )
+                            },
+                            popExitTransition = {
+                                slideOutVertically(
+                                    AnimationConstants.expressiveTween(AnimationConstants.DURATION)
+                                ) { height -> height } + fadeOut(
+                                    animationSpec = tween(
+                                        durationMillis = AnimationConstants.DURATION_LONG
+                                    )
+                                )
+                            }
+                        ) {
                             enableEdgeToEdge(
                                 navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
                                 statusBarStyle = SystemBarStyle.auto(
@@ -939,7 +1010,7 @@ private fun BottomBar(
 
                                     navController.navigate(
                                         if (mediaType == MediaType.Image) {
-                                            Screens.EditingScreen(
+                                            Screens.ImageEditor(
                                                 absolutePath = destination.absolutePath,
                                                 uri = contentUri.toString(),
                                                 dateTaken = currentTime / 1000

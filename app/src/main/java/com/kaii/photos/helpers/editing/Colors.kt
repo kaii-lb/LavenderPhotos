@@ -2,19 +2,10 @@ package com.kaii.photos.helpers.editing
 
 import androidx.annotation.OptIn
 import androidx.annotation.StringRes
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorMatrix
-import androidx.compose.ui.unit.dp
 import androidx.media3.common.util.UnstableApi
 import com.kaii.photos.R
 import kotlinx.serialization.Serializable
@@ -91,61 +82,31 @@ object DrawingColors {
         Blue,
         Purple
     )
-}
 
-@Composable
-fun ColorIndicator(
-    color: Color,
-    selected: Boolean,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .size(40.dp)
-            .clip(CircleShape)
-            .background(
-                if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
-                else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f)
-            )
-            .clickable {
-                onClick()
-            }
-            .then(modifier)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(32.dp)
-                .clip(CircleShape)
-                .background(color)
-                .align(Alignment.Center)
-        )
-    }
-}
-
-val gradientColorList = listOf(
-    Color.Blue,
-    Color.Red,
-    Color.Green,
-    Color.Yellow
-)
-
-fun getColorFromLinearGradientList(
-    value: Float,
-    colorList: List<Color>
-): Color {
-    val positionInList = (colorList.size - 1f) * value
-    val lowerColor = colorList[floor(positionInList).toInt()]
-    val upperColor = colorList[ceil(positionInList).toInt()]
-    val mixRatio = positionInList - colorList.indexOf(lowerColor)
-
-    val resolvedColor = Color(
-        red = lowerColor.red * (1 - mixRatio) + upperColor.red * mixRatio,
-        green = lowerColor.green * (1 - mixRatio) + upperColor.green * mixRatio,
-        blue = lowerColor.blue * (1 - mixRatio) + upperColor.blue * mixRatio
+    val gradientColorList = listOf(
+        Color.Blue,
+        Color.Red,
+        Color.Green,
+        Color.Yellow
     )
 
-    return resolvedColor
+    fun getColorFromLinearGradientList(
+        value: Float,
+        colorList: List<Color>
+    ): Color {
+        val positionInList = (colorList.size - 1f) * value
+        val lowerColor = colorList[floor(positionInList).toInt()]
+        val upperColor = colorList[ceil(positionInList).toInt()]
+        val mixRatio = positionInList - colorList.indexOf(lowerColor)
+
+        val resolvedColor = Color(
+            red = lowerColor.red * (1 - mixRatio) + upperColor.red * mixRatio,
+            green = lowerColor.green * (1 - mixRatio) + upperColor.green * mixRatio,
+            blue = lowerColor.blue * (1 - mixRatio) + upperColor.blue * mixRatio
+        )
+
+        return resolvedColor
+    }
 }
 
 @Serializable

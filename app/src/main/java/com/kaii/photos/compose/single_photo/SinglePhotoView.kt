@@ -292,7 +292,7 @@ fun SinglePhotoViewCommon(
 
                     if (currentMediaItem.value.type == MediaType.Image) {
                         navController.navigate(
-                            Screens.EditingScreen(
+                            Screens.ImageEditor(
                                 absolutePath = currentMediaItem.value.absolutePath,
                                 uri = currentMediaItem.value.uri.toString(),
                                 dateTaken = currentMediaItem.value.dateTaken

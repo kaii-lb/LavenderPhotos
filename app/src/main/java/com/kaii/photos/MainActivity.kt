@@ -113,7 +113,6 @@ import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.Debugging
 import com.kaii.photos.datastore.DefaultTabs
-import com.kaii.photos.datastore.Editing
 import com.kaii.photos.datastore.Immich
 import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.datastore.MainPhotosView
@@ -626,7 +625,7 @@ class MainActivity : ComponentActivity() {
                     )
                 }
 
-                composable<Screens.EditingScreen>(
+                composable<Screens.ImageEditor>(
                     enterTransition = {
                         slideInVertically(
                             AnimationConstants.expressiveTween(AnimationConstants.DURATION)
@@ -676,16 +675,11 @@ class MainActivity : ComponentActivity() {
                         window
                     )
 
-                    val screen: Screens.EditingScreen = it.toRoute()
-                    val overwriteByDefault by mainViewModel.settings.Editing.getOverwriteByDefault()
-                        .collectAsStateWithLifecycle(initialValue = false)
+                    val screen: Screens.ImageEditor = it.toRoute()
 
                     ImageEditor(
                         uri = screen.uri.toUri(),
-                        absolutePath = screen.absolutePath,
-                        // window = window,
-                        // dateTaken = screen.dateTaken,
-                        // overwriteByDefault = overwriteByDefault
+                        absolutePath = screen.absolutePath
                     )
                 }
 

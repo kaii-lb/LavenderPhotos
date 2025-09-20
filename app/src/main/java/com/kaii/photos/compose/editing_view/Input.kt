@@ -10,23 +10,15 @@ import androidx.compose.foundation.gestures.calculateCentroidSize
 import androidx.compose.foundation.gestures.calculatePan
 import androidx.compose.foundation.gestures.calculateRotation
 import androidx.compose.foundation.gestures.calculateZoom
-import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectTransformGestures
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableFloatState
-import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -39,9 +31,6 @@ import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.text.TextMeasurer
-import androidx.compose.ui.text.rememberTextMeasurer
-import androidx.compose.ui.unit.TextUnit
-import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.roundToIntSize
 import androidx.compose.ui.unit.sp
@@ -49,16 +38,12 @@ import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.util.fastForEach
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.helpers.editing.DrawableBlur
 import com.kaii.photos.helpers.editing.DrawablePath
 import com.kaii.photos.helpers.editing.DrawableText
 import com.kaii.photos.helpers.editing.DrawingItems
 import com.kaii.photos.helpers.editing.DrawingKeyframe
-import com.kaii.photos.helpers.editing.DrawingPaint
 import com.kaii.photos.helpers.editing.DrawingPaintState
 import com.kaii.photos.helpers.editing.ImageModification
-import com.kaii.photos.helpers.editing.Modification
-import com.kaii.photos.helpers.editing.PaintType
 import com.kaii.photos.helpers.editing.SharedModification
 import com.kaii.photos.helpers.editing.VideoModification
 import com.kaii.photos.helpers.editing.checkTapInBitmap
@@ -66,360 +51,6 @@ import com.kaii.photos.helpers.editing.checkTapInText
 import com.kaii.photos.helpers.editing.toOffset
 import kotlin.math.PI
 import kotlin.math.abs
-
-// private const val TAG = "EDITING_VIEW_INPUT"
-
-/** @param allowedToDraw no drawing happens if this is false
- * @param modifications a list of [Modification] which is all the new [DrawablePath]s or [DrawableText]s drawn
- * @param paint the paint to draw with
- * @param isDrawing is the user drawing right now? */
-@Composable
-fun Modifier.makeDrawCanvas(
-    allowedToDraw: State<Boolean>,
-    modifications: SnapshotStateList<Modification>,
-    paint: MutableState<DrawingPaint>,
-    isDrawing: MutableState<Boolean>,
-    changesSize: MutableIntState,
-    rotationMultiplier: MutableIntState,
-    manualScale: MutableFloatState,
-    manualOffset: MutableState<Offset>,
-    selectedText: MutableState<DrawableText?>
-): Modifier {
-    val textMeasurer = rememberTextMeasurer()
-    val localTextStyle = LocalTextStyle.current
-    val defaultTextStyle = DrawableText.Styles.Default
-
-    var lastPoint = Offset.Unspecified
-    var lastText: DrawableText? = null
-
-    return this
-        .pointerInput(Unit) {
-            if (allowedToDraw.value) {
-                var selectedTextInGesture: DrawableText? = null
-
-                detectTransformGestures { centroid, pan, zoom, rotation ->
-                    if (paint.value.type == PaintType.Text) {
-                        val tappedOnText =
-                            modifications.filterIsInstance<DrawableText>()
-                                .minByOrNull {
-                                    (centroid - getTextBoundingBox(text = it).center).getDistanceSquared()
-                                }?.let {
-                                    val dstSquared = (centroid - getTextBoundingBox(text = it).center).getDistanceSquared()
-
-                                    if (checkIfClickedOnText(
-                                            text = it,
-                                            clickPosition = centroid,
-                                            extraPadding = dstSquared
-                                        )
-                                    ) {
-                                        it
-                                    } else null
-                                }
-
-                        tappedOnText?.let {
-                            selectedTextInGesture = it
-                        }
-
-                        selectedTextInGesture?.let { text ->
-                            val index =
-                                modifications.indexOf(text)
-
-                            if (index < modifications.size && index >= 0) {
-                                modifications.removeAt(index)
-
-                                // move topLeft of textbox to the text's position
-                                // basically de-centers the text so we can center it to that position with the new size
-                                val oldPosition =
-                                    text.position + (text.size.toOffset() / 2f)
-                                val newWidth = text.paint.strokeWidth * zoom
-
-                                val textLayout = textMeasurer.measure(
-                                    text = text.text,
-                                    style = localTextStyle.copy(
-                                        color = paint.value.color,
-                                        fontSize = TextUnit(
-                                            newWidth,
-                                            TextUnitType.Sp
-                                        ),
-                                        textAlign = defaultTextStyle.textAlign,
-                                        platformStyle = defaultTextStyle.platformStyle,
-                                        lineHeightStyle = defaultTextStyle.lineHeightStyle,
-                                        baselineShift = defaultTextStyle.baselineShift
-                                    )
-                                )
-
-                                val zoomedText = text.copy(
-                                    paint = text.paint.copy(
-                                        strokeWidth = newWidth
-                                    ),
-                                    size = textLayout.size,
-                                    position = oldPosition - (textLayout.size.toOffset() / 2f), // move from old topLeft to new center
-                                    rotation = if (zoom != 1f) text.rotation + rotation else text.rotation
-                                )
-
-                                modifications.add(index, zoomedText)
-                            }
-                        }
-                    }
-
-                    selectedText.value = null
-                }
-            }
-        }
-        .pointerInput(Unit) {
-            if (allowedToDraw.value) {
-                var touchOffset: Offset = Offset.Zero
-
-                detectDragGestures(
-                    onDragStart = { position ->
-                        if (paint.value.type == PaintType.Text) {
-                            val tappedOnText =
-                                modifications.filterIsInstance<DrawableText>().minByOrNull {
-                                    (position - getTextBoundingBox(text = it).center).getDistanceSquared()
-                                }?.let {
-                                    if (checkIfClickedOnText(
-                                            text = it,
-                                            clickPosition = position
-                                        )
-                                    ) {
-                                        it
-                                    } else null
-                                }
-
-                            if (tappedOnText != null) {
-                                lastText = tappedOnText
-                                lastText!!.position.let {
-                                    touchOffset = position - it
-                                }
-                            } else {
-                                lastText = null
-                            }
-                        } else {
-                            val path = Path().apply {
-                                moveTo(position.x, position.y)
-                            }
-
-                            modifications.add(
-                                if (paint.value.type == PaintType.Blur) {
-                                    DrawableBlur(
-                                        path,
-                                        paint.value
-                                    )
-                                } else {
-                                    DrawablePath(
-                                        path,
-                                        paint.value
-                                    )
-                                }
-                            )
-
-                            lastPoint = position
-                        }
-                        isDrawing.value = true
-                        changesSize.intValue += 1
-                        selectedText.value = null
-                    },
-
-                    onDrag = { change, difference ->
-                        if (paint.value.type == PaintType.Text) {
-                            if (lastText != null && modifications.remove(lastText!!)) {
-                                lastText!!.position += (change.position - lastText!!.position - touchOffset)
-                                modifications.add(lastText!!)
-                            }
-
-                            isDrawing.value = true
-                        } else {
-                            val paintIsBlur = paint.value.type == PaintType.Blur
-
-                            var path =
-                                (modifications.findLast {
-                                    if (paintIsBlur) it is DrawableBlur
-                                    else it is DrawablePath
-                                })?.let {
-                                    if (it is DrawableBlur) it.path
-                                    else (it as DrawablePath).path
-                                }
-
-                            if (path == null) {
-                                val newPath =
-                                    if (paintIsBlur) {
-                                        val new = DrawableBlur(
-                                            Path().apply {
-                                                moveTo(change.position.x, change.position.y)
-                                            },
-                                            paint.value
-                                        )
-                                        path = new.path
-                                        new
-                                    } else {
-                                        val new = DrawablePath(
-                                            Path().apply {
-                                                moveTo(change.position.x, change.position.y)
-                                            },
-                                            paint.value
-                                        )
-                                        path = new.path
-                                        new
-                                    }
-
-                                modifications.add(newPath)
-                            } else {
-                                modifications.removeAll {
-                                    when (it) {
-                                        is DrawablePath -> {
-                                            it.path == path && it.paint == paint.value
-                                        }
-
-                                        is DrawableBlur -> {
-                                            it.path == path && it.paint == paint.value
-                                        }
-
-                                        else -> {
-                                            false
-                                        }
-                                    }
-                                }
-                            }
-
-                            path.quadraticTo(
-                                lastPoint.x,
-                                lastPoint.y,
-                                (lastPoint.x + change.position.x) / 2,
-                                (lastPoint.y + change.position.y) / 2
-                            )
-
-                            modifications.add(
-                                if (paintIsBlur) {
-                                    DrawableBlur(
-                                        path,
-                                        paint.value
-                                    )
-                                } else {
-                                    DrawablePath(
-                                        path,
-                                        paint.value
-                                    )
-                                }
-                            )
-
-                            lastPoint = change.position
-                        }
-
-                        isDrawing.value = true
-                        changesSize.intValue += 1
-                        selectedText.value = null
-                    },
-
-                    onDragEnd = {
-                        isDrawing.value = false
-                        changesSize.intValue += 1
-                        selectedText.value = null
-                    },
-
-                    onDragCancel = {
-                        isDrawing.value = false
-                        changesSize.intValue += 1
-                        selectedText.value = null
-                    }
-                )
-            }
-        }
-        .pointerInput(Unit) {
-            if (allowedToDraw.value) {
-                detectDragGesturesAfterLongPress { change, offset ->
-                    manualOffset.value += (offset * manualScale.floatValue)
-                    selectedText.value = null
-                }
-            }
-        }
-        .pointerInput(Unit) {
-            if (allowedToDraw.value) {
-                detectTapGestures(
-                    onTap = { position ->
-                        if (paint.value.type == PaintType.Text) {
-                            val tappedOnText =
-                                modifications.filterIsInstance<DrawableText>().minByOrNull {
-                                    (position - getTextBoundingBox(text = it).center).getDistanceSquared()
-                                }?.let {
-                                    if (checkIfClickedOnText(
-                                            text = it,
-                                            clickPosition = position
-                                        )
-                                    ) {
-                                        it
-                                    } else null
-                                }
-
-                            if (tappedOnText == null) {
-                                val textLayout = textMeasurer.measure(
-                                    text = "text",
-                                    style = localTextStyle.copy(
-                                        color = paint.value.color,
-                                        fontSize = TextUnit(
-                                            paint.value.strokeWidth,
-                                            TextUnitType.Sp
-                                        ),
-                                        textAlign = defaultTextStyle.textAlign,
-                                        platformStyle = defaultTextStyle.platformStyle,
-                                        lineHeightStyle = defaultTextStyle.lineHeightStyle,
-                                        baselineShift = defaultTextStyle.baselineShift
-                                    )
-                                )
-
-                                val text = DrawableText(
-                                    text = "text",
-                                    position = Offset(
-                                        position.x - textLayout.size.width / 2f,
-                                        position.y - textLayout.size.height / 2f
-                                    ),
-                                    paint = paint.value,
-                                    rotation = 90f * rotationMultiplier.intValue,
-                                    size = textLayout.size
-                                )
-
-                                modifications.add(text)
-                                lastText = text
-                            } else {
-                                if (selectedText.value == tappedOnText) selectedText.value = null else selectedText.value = tappedOnText
-                                lastText = tappedOnText
-                            }
-                        } else {
-                            val path = Path().apply {
-                                moveTo(position.x, position.y)
-                            }
-
-                            modifications.add(
-                                if (paint.value.type == PaintType.Blur) {
-                                    DrawableBlur(
-                                        path,
-                                        paint.value
-                                    )
-                                } else {
-                                    DrawablePath(
-                                        path.apply {
-                                            lineTo(position.x + 1, position.y + 1)
-                                        },
-                                        paint.value
-                                    )
-                                }
-                            )
-
-                            lastPoint = position
-                            selectedText.value = null
-                        }
-
-                        changesSize.intValue += 1
-                    },
-
-                    onDoubleTap = {
-                        selectedText.value = null
-                        manualScale.floatValue = 0f
-                        manualOffset.value = Offset.Zero
-                    }
-                )
-            }
-        }
-}
 
 @Composable
 fun Modifier.makeVideoDrawCanvas(
@@ -854,16 +485,16 @@ private fun handleTextTransform(
     } else {
         tappedOnText.value =
             (tappedOnText.value as ImageModification.DrawingText).copy(
-            text = tappedOnText.value!!.text.copy(
-                size = newSize,
-                paint = tappedOnText.value!!.text.paint.copy(
-                    color = tappedOnText.value!!.text.paint.color,
-                    strokeWidth = strokeWidth
-                ),
-                position = positon,
-                rotation = tappedOnText.value!!.text.rotation + rotationChange
+                text = tappedOnText.value!!.text.copy(
+                    size = newSize,
+                    paint = tappedOnText.value!!.text.paint.copy(
+                        color = tappedOnText.value!!.text.paint.color,
+                        strokeWidth = strokeWidth
+                    ),
+                    position = positon,
+                    rotation = tappedOnText.value!!.text.rotation + rotationChange
+                )
             )
-        )
     }
 
     drawingPaintState.modifications.add(tappedOnText.value!!)

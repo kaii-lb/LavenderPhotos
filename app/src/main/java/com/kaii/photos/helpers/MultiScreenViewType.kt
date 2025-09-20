@@ -47,7 +47,7 @@ object Screens {
     )
 
     @Serializable
-    data class EditingScreen(
+    data class ImageEditor(
         val absolutePath: String,
         val uri: String,
         val dateTaken: Long

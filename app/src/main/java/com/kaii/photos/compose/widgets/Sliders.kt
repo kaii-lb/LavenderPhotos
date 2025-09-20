@@ -58,8 +58,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import com.kaii.photos.R
-import com.kaii.photos.helpers.editing.getColorFromLinearGradientList
-import com.kaii.photos.helpers.editing.gradientColorList
+import com.kaii.photos.helpers.editing.DrawingColors
 
 // TODO: awful execution plz fix
 @OptIn(ExperimentalMaterial3Api::class)
@@ -76,9 +75,9 @@ fun BoxWithConstraintsScope.ColorRangeSlider(
 
     val resolvedColor by remember {
         derivedStateOf {
-            getColorFromLinearGradientList(
-                value = (sliderValue.floatValue * 0.5f + 0.5f).coerceIn(0f, gradientColorList.size - 1f),
-                colorList = gradientColorList
+            DrawingColors.getColorFromLinearGradientList(
+                value = (sliderValue.floatValue * 0.5f + 0.5f).coerceIn(0f, DrawingColors.gradientColorList.size - 1f),
+                colorList = DrawingColors.gradientColorList
             )
         }
     }
@@ -132,7 +131,7 @@ fun BoxWithConstraintsScope.ColorRangeSlider(
                     drawContent()
                     drawRect(
                         brush = Brush.horizontalGradient(
-                            colors = gradientColorList
+                            colors = DrawingColors.gradientColorList
                         ),
                         blendMode = BlendMode.SrcAtop
                     )

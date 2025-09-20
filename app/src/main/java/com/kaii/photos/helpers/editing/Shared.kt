@@ -300,9 +300,9 @@ enum class MediaAdjustments : ProcessingEffect {
             }
 
             val tint =
-                (value * 0.5f + 0.5f).coerceIn(0f, gradientColorList.size - 1f)
+                (value * 0.5f + 0.5f).coerceIn(0f, DrawingColors.gradientColorList.size - 1f)
 
-            val resolvedColor = getColorFromLinearGradientList(tint, gradientColorList)
+            val resolvedColor = DrawingColors.getColorFromLinearGradientList(tint, DrawingColors.gradientColorList)
 
             return floatArrayOf(
                 0.6f, 0.2f, 0.2f, 0f, 0.2f * resolvedColor.red * 255f,
