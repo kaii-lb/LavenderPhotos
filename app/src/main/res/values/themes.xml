@@ -8,7 +8,7 @@
         <item name="postSplashScreenTheme">@style/Theme.Photos</item>
 
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_adaptive</item>
-        <item name="windowSplashScreenIconBackgroundColor">?attr/colorPrimary</item>
+        <item name="windowSplashScreenIconBackgroundColor">?attr/backgroundColor</item>
         <item name="windowSplashScreenBackground">?attr/backgroundColor</item>
     </style>
 </resources>

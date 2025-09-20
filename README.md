@@ -1,20 +1,23 @@
 # Lavender Photos!
 This is Lavender Photos, a no non-sense, smooth, and performant gallery app for Android!
 
+<img src="/assets/images/Banner.png" alt="banner" style="width=100%">
+
 # Features
-- Browse all your photos and videos smoothly, seperated by date
+- Browse all your photos and videos smoothly, separated by date
 - Add and remove albums as you wish, no arbitrary or forced selections
 - Search for an image by its name or date (in many formats!)
-- Immich integration for safe and easy media backup
+- Immich integration for safe and easy cloud media backup
 - Trash Bin that's sorted by recently trashed
 - Full fledged favouriting system
 - A selection system that doesn't suck
-- Edit and personalize any photo, any time, without an internet connection (even works in landscape mode!)
+- Edit and personalize any photo or video, any time, without an internet connection
 - Secure sensitive photos in an encrypted medium, for safe keeping
 - Find all the relevant information for a photo from one button click
 - Copy and Move photos to albums easily
 - Clean UI and smooth UX
 - Privacy focused design, no chance of anything happening without your permission
+- Customizable to your heart's content
 - WAY more to come
 
 # Help us translate
@@ -22,10 +25,10 @@ Lavender Photos is meant to be accessible for all, and contributing a translatio
 Our [Weblate](https://hosted.weblate.org/projects/lavender-photos/) instance is a great place to start.
 
 # Screenshots
-  Main View                 |  Albums                   |
-:--------------------------:|:-------------------------:|
-![](/assets/images/main.png)|![](/assets/images/albums.png)
-
-  Secure Folder            |  Favourites & Trash       |  Search                  |
-:-------------------------:|:-------------------------:|:-------------------------:
-  ![](/assets/images/locked.png)|![](/assets/images/favtrash.png)|![](/assets/images/search.png)
+|             Main View             |                Albums                | Cloud                                 |
+|:---------------------------------:|:------------------------------------:|:--------------------------------------|
+|   ![](/assets/images/Main.png)    |    ![](/assets/images/Albums.png)    | ![](/assets/images/Cloud.png)         |
+|           Secure Folder           |              Favourites              | Search                                |
+|  ![](/assets/images/Secure.png)   |  ![](/assets/images/Favourites.png)  | ![](/assets/images/Search.png)        |
+|              Privacy              |                Trash                 | Look & Feel                           |
+|  ![](/assets/images/Privacy.png)  |    ![](/assets/images/Trash.png)     | ![](/assets/images/LookAndFeel.png)   |
