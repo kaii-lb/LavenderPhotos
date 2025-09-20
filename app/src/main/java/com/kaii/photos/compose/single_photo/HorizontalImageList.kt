@@ -426,17 +426,16 @@ fun sortOutMediaMods(
         val size = groupedMedia.value.size - 1
         val scrollIndex = groupedMedia.value.indexOf(item)
 
-        val newMedia = groupedMedia.value.toList().toMutableList()
+        val newMedia = groupedMedia.value.toMutableList()
         newMedia.removeAt(scrollIndex)
+
+        groupedMedia.value = newMedia
 
         if (size == 0) {
             popBackStackAction()
         } else {
             state.animateScrollToPage((scrollIndex).coerceIn(0, size))
-//            state.scrollToPage((scrollIndex).coerceIn(0, size))
         }
-
-        groupedMedia.value = newMedia
     }
 }
 

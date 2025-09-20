@@ -89,7 +89,9 @@ fun SingleAlbumView(
 
     val dynamicAlbum by remember {
         derivedStateOf {
-            allAlbums.firstOrNull { it.id == albumInfo.id }
+            allAlbums.first {
+                it.id == albumInfo.id
+            }
         }
     }
 
@@ -108,20 +110,18 @@ fun SingleAlbumView(
         groupedMedia.value = mediaStoreData
     }
 
-    if (dynamicAlbum != null) {
-        SingleAlbumViewCommon(
-            groupedMedia = groupedMedia,
-            albumInfo = dynamicAlbum!!,
-            selectedItemsList = selectedItemsList,
-            navController = navController,
-            incomingIntent = incomingIntent
-        ) {
-            if (viewModel.albumInfo.paths.toSet() != dynamicAlbum!!.paths.toSet()) {
-                viewModel.reinitDataSource(
-                    context = context,
-                    album = dynamicAlbum!!
-                )
-            }
+    SingleAlbumViewCommon(
+        groupedMedia = groupedMedia,
+        albumInfo = dynamicAlbum,
+        selectedItemsList = selectedItemsList,
+        navController = navController,
+        incomingIntent = incomingIntent
+    ) {
+        if (viewModel.albumInfo.paths.toSet() != dynamicAlbum.paths.toSet()) {
+            viewModel.reinitDataSource(
+                context = context,
+                album = dynamicAlbum
+            )
         }
     }
 }
@@ -157,7 +157,7 @@ fun SingleAlbumView(
 
     val dynamicAlbum by remember {
         derivedStateOf {
-            allAlbums.firstOrNull { it.id == albumInfo.id }
+            allAlbums.first { it.id == albumInfo.id }
         }
     }
 
@@ -179,27 +179,25 @@ fun SingleAlbumView(
         groupedMedia.value = (customMediaStoreData + multiMediaStoreData).distinctBy { it.uri }
     }
 
-    if (dynamicAlbum != null) {
-        SingleAlbumViewCommon(
-            groupedMedia = groupedMedia,
-            albumInfo = dynamicAlbum!!,
-            selectedItemsList = selectedItemsList,
-            navController = navController,
-            incomingIntent = incomingIntent
-        ) {
-            if (customViewModel.albumInfo != dynamicAlbum) {
-                customViewModel.reinitDataSource(
-                    context = context,
-                    album = dynamicAlbum!!
-                )
-            }
+    SingleAlbumViewCommon(
+        groupedMedia = groupedMedia,
+        albumInfo = dynamicAlbum,
+        selectedItemsList = selectedItemsList,
+        navController = navController,
+        incomingIntent = incomingIntent
+    ) {
+        if (customViewModel.albumInfo != dynamicAlbum) {
+            customViewModel.reinitDataSource(
+                context = context,
+                album = dynamicAlbum
+            )
+        }
 
-            if (multiViewModel.albumInfo != dynamicAlbum) {
-                multiViewModel.reinitDataSource(
-                    context = context,
-                    album = dynamicAlbum!!
-                )
-            }
+        if (multiViewModel.albumInfo != dynamicAlbum) {
+            multiViewModel.reinitDataSource(
+                context = context,
+                album = dynamicAlbum
+            )
         }
     }
 }

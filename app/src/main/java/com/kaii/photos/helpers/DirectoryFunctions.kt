@@ -187,7 +187,7 @@ fun tryGetAllAlbums(
             AlbumInfo(
                 name = album.split("/").last(),
                 paths = listOf(album),
-                id = media.absolutePath.hashCode()
+                id = album.hashCode()
             )
         }.fastFilter {
             it.name != "" && it.paths.isNotEmpty()
