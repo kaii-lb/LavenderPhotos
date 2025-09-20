@@ -336,7 +336,9 @@ fun SelectViewTopBarRightButtons(
 
         val isSelectAllEnabled by remember {
             derivedStateOf {
-                groupedMedia.value?.size?.let { it < 5000 } == true
+                groupedMedia.value?.filter {
+                    it.type != MediaType.Section
+                }?.size?.let { it < 2000 } == true
             }
         }
 
