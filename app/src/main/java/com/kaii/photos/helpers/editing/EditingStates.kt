@@ -22,6 +22,7 @@ import androidx.media3.common.util.UnstableApi
 import com.kaii.photos.helpers.editing.DrawingPaintState.Companion.Saver
 import com.kaii.photos.helpers.editing.ImageEditingState.Companion.Saver
 import com.kaii.photos.helpers.editing.VideoEditingState.Companion.Saver
+import kotlinx.serialization.json.Json
 
 class DrawingPaintState(
     initialPaintType: DrawingItems,
@@ -59,8 +60,8 @@ class DrawingPaintState(
         this.strokeWidth = strokeWidth
 
         if (this.selectedItem != null) {
-            if (this.selectedItem is VideoModification.DrawingText) {
-                val drawingText = this.selectedItem as VideoModification.DrawingText
+            if (this.selectedItem is SharedModification.DrawingText) {
+                val drawingText = this.selectedItem as SharedModification.DrawingText
 
                 modifications.removeAll {
                     it == drawingText
@@ -74,20 +75,36 @@ class DrawingPaintState(
                     )
                 ).size
 
-                val new =
-                    drawingText.copy(
-                        text = drawingText.text.copy(
-                            paint = drawingText.text.paint.copy(
-                                strokeWidth = strokeWidth
+                if (drawingText is VideoModification.DrawingText) {
+                    val new =
+                        drawingText.copy(
+                            text = drawingText.text.copy(
+                                paint = drawingText.text.paint.copy(
+                                    strokeWidth = strokeWidth
+                                ),
+                                size = newSize,
+                                position = drawingText.text.position - (newSize.toOffset() - drawingText.text.size.toOffset()) / 2f
                             ),
-                            size = newSize,
-                            position = drawingText.text.position - (newSize.toOffset() - drawingText.text.size.toOffset()) / 2f
-                        ),
-                        keyframes = getTextKeyframes(drawingText, currentTime)
-                    )
+                            keyframes = getTextKeyframes(drawingText, currentTime)
+                        )
 
-                modifications.add(new)
-                this.selectedItem = new
+                    modifications.add(new)
+                    this.selectedItem = new
+                } else if (drawingText is ImageModification.DrawingText) {
+                    val new =
+                        drawingText.copy(
+                            text = drawingText.text.copy(
+                                paint = drawingText.text.paint.copy(
+                                    strokeWidth = strokeWidth
+                                ),
+                                size = newSize,
+                                position = drawingText.text.position - (newSize.toOffset() - drawingText.text.size.toOffset()) / 2f
+                            )
+                        )
+
+                    modifications.add(new)
+                    this.selectedItem = new
+                }
             } else if (this.selectedItem is VideoModification.DrawingImage) {
                 val drawingImage = this.selectedItem as VideoModification.DrawingImage
 
@@ -102,7 +119,7 @@ class DrawingPaintState(
 
                 modifications.add(new)
                 this.selectedItem = new
-            } // TODO: for images
+            }
         }
     }
 
@@ -111,25 +128,39 @@ class DrawingPaintState(
         this.color = color
 
         if (this.selectedItem != null) {
-            if (this.selectedItem is VideoModification.DrawingText) {
-                val drawingText = this.selectedItem as VideoModification.DrawingText
+            if (this.selectedItem is SharedModification.DrawingText) {
+                val drawingText = this.selectedItem as SharedModification.DrawingText
 
                 modifications.removeAll {
                     it == drawingText
                 }
 
-                val new =
-                    drawingText.copy(
-                        text = drawingText.text.copy(
-                            paint = drawingText.text.paint.copy(
-                                color = color
-                            )
-                        ),
-                        keyframes = getTextKeyframes(drawingText, currentTime)
-                    )
+                if (drawingText is VideoModification.DrawingText) {
+                    val new =
+                        drawingText.copy(
+                            text = drawingText.text.copy(
+                                paint = drawingText.text.paint.copy(
+                                    color = color
+                                )
+                            ),
+                            keyframes = getTextKeyframes(drawingText, currentTime)
+                        )
 
-                modifications.add(new)
-                this.selectedItem = new
+                    modifications.add(new)
+                    this.selectedItem = new
+                } else if (drawingText is ImageModification.DrawingText) {
+                    val new =
+                        drawingText.copy(
+                            text = drawingText.text.copy(
+                                paint = drawingText.text.paint.copy(
+                                    color = color
+                                )
+                            )
+                        )
+
+                    modifications.add(new)
+                    this.selectedItem = new
+                }
             } else if (this.selectedItem is VideoModification.DrawingImage) {
                 val drawingImage = this.selectedItem as VideoModification.DrawingImage
 
@@ -144,7 +175,7 @@ class DrawingPaintState(
 
                 modifications.add(new)
                 this.selectedItem = new
-            } // TODO: for images
+            }
         }
     }
 
@@ -562,14 +593,14 @@ class ImageEditingState(
         /** The default [Saver] implementation for [ImageEditingState]. */
         val Saver: Saver<ImageEditingState, *> =
             listSaver(
-                save = { listOf(it.croppingAspectRatio, it.rotation, it.scale, it.offset.x, it.offset.y, it.modificationList) },
+                save = { listOf(it.croppingAspectRatio, it.rotation, it.scale, it.offset.x, it.offset.y, Json.encodeToString(it.modificationList)) },
                 restore = {
                     ImageEditingState(
                         initialCroppingAspectRatio = it[0] as CroppingAspectRatio,
                         initialRotation = it[1] as Float,
                         initialScale = it[2] as Float,
                         initialOffset = Offset(it[3] as Float, it[4] as Float),
-                        initialModifications = emptyList(), // TODO: fix saver crashing (it[5] as? List<*>)?.filterIsInstance<ImageModification>() ?: emptyList()
+                        initialModifications = Json.decodeFromString(it[5] as String),
                     )
                 },
             )

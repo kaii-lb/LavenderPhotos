@@ -1,11 +1,21 @@
 package com.kaii.photos.helpers.editing
 
-interface ImageModification {
+import androidx.compose.runtime.Immutable
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
+@Immutable
+@Serializable
+sealed interface ImageModification {
+    @Immutable
+    @Serializable
     data class Adjustment(
-        val type: MediaAdjustments,
+        @SerialName("media_adjustment_type") val type: MediaAdjustments,
         val value: Float
     ) : ImageModification
 
+    @Immutable
+    @Serializable
     data class Crop(
         override val top: Float,
         override val left: Float,
@@ -13,17 +23,23 @@ interface ImageModification {
         override val height: Float
     ) : ImageModification, SharedModification.Crop
 
+    @Immutable
+    @Serializable
     data class Filter(
-        override val type: MediaColorFilters
+        @SerialName("media_color_filter_type") override val type: MediaColorFilters
     ) : ImageModification, SharedModification.Filter
 
+    @Immutable
+    @Serializable
     data class DrawingText(
-        override val type: DrawingItems = DrawingItems.Text,
+        @SerialName("drawing_item_type") override val type: DrawingItems = DrawingItems.Text,
         override val text: DrawableText
     ) : ImageModification, SharedModification.DrawingText
 
+    @Immutable
+    @Serializable
     data class DrawingImage(
-        override val type: DrawingItems = DrawingItems.Image,
+        @SerialName("drawing_item_type") override val type: DrawingItems = DrawingItems.Image,
         override val image: DrawableImage
     ) : ImageModification, SharedModification.DrawingImage
 }

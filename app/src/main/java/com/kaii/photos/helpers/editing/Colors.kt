@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.util.UnstableApi
 import com.kaii.photos.R
+import kotlinx.serialization.Serializable
 import kotlin.math.ceil
 import kotlin.math.floor
 
@@ -147,7 +148,8 @@ fun getColorFromLinearGradientList(
     return resolvedColor
 }
 
-private interface MediaColorFiltersImpl {
+@Serializable
+private sealed interface MediaColorFiltersImpl {
     val matrix: ColorMatrix
     @get:StringRes val title: Int
     @get:StringRes val description: Int
@@ -165,6 +167,7 @@ private interface MediaColorFiltersImpl {
         )
 }
 
+@Serializable
 enum class MediaColorFilters : MediaColorFiltersImpl {
     None {
         override val title = R.string.filter_none

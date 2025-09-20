@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.annotation.DrawableRes
 import androidx.annotation.OptIn
 import androidx.annotation.StringRes
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
@@ -27,6 +28,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.media3.common.Effect
 import androidx.media3.common.util.UnstableApi
 import com.kaii.photos.R
+import kotlinx.serialization.Serializable
 import kotlin.math.ln
 import kotlin.math.max
 import kotlin.math.pow
@@ -34,69 +36,69 @@ import kotlin.math.pow
 class DrawingPaints {
     companion object {
         val Pencil =
-            DrawingPaint().apply {
-                type = PaintType.Pencil
-                strokeWidth = 20f
-                strokeCap = StrokeCap.Companion.Round
-                strokeJoin = StrokeJoin.Companion.Round
-                strokeMiterLimit = DefaultStrokeLineMiter
-                pathEffect = PathEffect.Companion.cornerPathEffect(50f)
-                blendMode = BlendMode.Companion.SrcOver
-                color = DrawingColors.Red
+            DrawingPaint(
+                type = PaintType.Pencil,
+                strokeWidth = 20f,
+                strokeCap = StrokeCap.Companion.Round,
+                strokeJoin = StrokeJoin.Companion.Round,
+                strokeMiterLimit = DefaultStrokeLineMiter,
+                pathEffect = PathEffect.Companion.cornerPathEffect(50f),
+                blendMode = BlendMode.Companion.SrcOver,
+                color = DrawingColors.Red,
                 alpha = 1f
-            }
+            )
 
         val Highlighter =
-            DrawingPaint().apply {
-                type = PaintType.Highlighter
-                strokeWidth = 20f
-                strokeCap = StrokeCap.Companion.Square
-                strokeJoin = StrokeJoin.Companion.Miter
-                strokeMiterLimit = DefaultStrokeLineMiter
-                pathEffect = null
-                blendMode = BlendMode.Companion.SrcOver
-                color = DrawingColors.Red
-                alpha = 0.5f
-            }
+            DrawingPaint(
+                type = PaintType.Highlighter,
+                strokeWidth = 20f,
+                strokeCap = StrokeCap.Companion.Square,
+                strokeJoin = StrokeJoin.Companion.Miter,
+                strokeMiterLimit = DefaultStrokeLineMiter,
+                pathEffect = null,
+                blendMode = BlendMode.Companion.SrcOver,
+                color = DrawingColors.Red,
+                alpha = 0.5f,
+            )
 
         val Text =
-            DrawingPaint().apply {
-                type = PaintType.Text
-                strokeWidth = 20f
-                strokeCap = StrokeCap.Companion.Round
-                strokeJoin = StrokeJoin.Companion.Round
-                strokeMiterLimit = DefaultStrokeLineMiter
-                pathEffect = PathEffect.Companion.cornerPathEffect(50f)
-                blendMode = BlendMode.Companion.SrcOver
-                color = DrawingColors.Red
+            DrawingPaint(
+                type = PaintType.Text,
+                strokeWidth = 20f,
+                strokeCap = StrokeCap.Companion.Round,
+                strokeJoin = StrokeJoin.Companion.Round,
+                strokeMiterLimit = DefaultStrokeLineMiter,
+                pathEffect = PathEffect.Companion.cornerPathEffect(50f),
+                blendMode = BlendMode.Companion.SrcOver,
+                color = DrawingColors.Red,
                 alpha = 1f
-            }
+            )
 
         val Blur =
-            DrawingPaint().apply {
-                type = PaintType.Blur
-                strokeWidth = 20f
-                strokeCap = StrokeCap.Companion.Round
-                strokeJoin = StrokeJoin.Companion.Round
-                strokeMiterLimit = DefaultStrokeLineMiter
-                pathEffect = PathEffect.Companion.cornerPathEffect(50f)
-                blendMode = BlendMode.Companion.SrcOver
-                color = DrawingColors.Black
+            DrawingPaint(
+                type = PaintType.Blur,
+                strokeWidth = 20f,
+                strokeCap = StrokeCap.Companion.Round,
+                strokeJoin = StrokeJoin.Companion.Round,
+                strokeMiterLimit = DefaultStrokeLineMiter,
+                pathEffect = PathEffect.Companion.cornerPathEffect(50f),
+                blendMode = BlendMode.Companion.SrcOver,
+                color = DrawingColors.Black,
                 alpha = 1f
-            }
+            )
 
         val Image =
-            DrawingPaint().apply {
-                type = PaintType.Image
-                strokeWidth = 100f
-                strokeCap = StrokeCap.Companion.Round
-                strokeJoin = StrokeJoin.Companion.Round
-                strokeMiterLimit = DefaultStrokeLineMiter
-                pathEffect = PathEffect.Companion.cornerPathEffect(50f)
-                blendMode = BlendMode.Companion.SrcOver
-                color = Color.Transparent
+            DrawingPaint(
+                type = PaintType.Image,
+                strokeWidth = 100f,
+                strokeCap = StrokeCap.Companion.Round,
+                strokeJoin = StrokeJoin.Companion.Round,
+                strokeMiterLimit = DefaultStrokeLineMiter,
+                pathEffect = PathEffect.Companion.cornerPathEffect(50f),
+                blendMode = BlendMode.Companion.SrcOver,
+                color = Color.Transparent,
                 alpha = 1f
-            }
+            )
     }
 }
 
@@ -113,6 +115,7 @@ private interface ProcessingEffect {
         get() = 0f
 }
 
+@Serializable
 @OptIn(UnstableApi::class)
 enum class MediaAdjustments : ProcessingEffect {
     Contrast {
@@ -357,30 +360,39 @@ fun ImageBitmap.withColorFilter(filter: ColorMatrix): ImageBitmap {
 
 interface Modification
 
+@Immutable
+@Serializable
 data class DrawablePath(
     val path: Path,
     val paint: DrawingPaint
 ) : Modification
 
+@Immutable
+@Serializable
 data class DrawableBlur(
     val path: Path,
     val paint: DrawingPaint
 ) : Modification
 
+@Immutable
+@Serializable
 data class DrawableImage(
-    val bitmapUri: Uri,
+    @Serializable(with = UriSerializer::class) val bitmapUri: Uri,
     val paint: DrawingPaint,
     val rotation: Float,
-    val position: Offset,
-    val size: IntSize
+    @Serializable(with = OffsetSerializer::class) val position: Offset,
+    @Serializable(with = IntSizeSerializer::class) val size: IntSize,
+    val isAvif: Boolean
 ) : Modification
 
+@Immutable
+@Serializable
 data class DrawableText(
-    var text: String,
-    var position: Offset,
+    val text: String,
+    @Serializable(with = OffsetSerializer::class) val position: Offset,
     val paint: DrawingPaint,
-    var rotation: Float,
-    var size: IntSize
+    val rotation: Float,
+    @Serializable(with = IntSizeSerializer::class) val size: IntSize
 ) : Modification {
     @JvmInline
     value class Styles(val style: TextStyle) {
@@ -401,6 +413,7 @@ data class DrawableText(
     }
 }
 
+@Immutable
 enum class CroppingAspectRatio(
     var ratio: Float,
     @param:StringRes val title: Int
@@ -416,6 +429,7 @@ enum class CroppingAspectRatio(
     ThreeByTwo(3f / 2f, R.string.bottom_sheets_three_by_two)
 }
 
+@Immutable
 enum class SelectedCropArea {
     TopLeftCorner,
     TopRightCorner,
@@ -429,22 +443,27 @@ enum class SelectedCropArea {
     Whole
 }
 
+@Immutable
 interface SharedModification {
+    @Immutable
     interface DrawingText : SharedModification {
         val type: DrawingItems
         val text: DrawableText
     }
 
+    @Immutable
     interface DrawingPath : SharedModification {
         val type: DrawingItems
         val path: DrawablePath
     }
 
+    @Immutable
     interface DrawingImage : SharedModification {
         val type: DrawingItems
         val image: DrawableImage
     }
 
+    @Immutable
     interface Crop : SharedModification {
         val top: Float
         val left: Float
@@ -458,6 +477,7 @@ interface SharedModification {
             get() = top + height
     }
 
+    @Immutable
     interface Filter : SharedModification {
         val type: MediaColorFilters
     }
