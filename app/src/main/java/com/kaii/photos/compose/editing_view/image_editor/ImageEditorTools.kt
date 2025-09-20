@@ -1,11 +1,16 @@
 package com.kaii.photos.compose.editing_view.image_editor
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableIntState
@@ -19,10 +24,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
+import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.ColorRangeSlider
 import com.kaii.photos.compose.widgets.PopupPillSlider
+import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.editing.DrawingItems
 import com.kaii.photos.helpers.editing.DrawingPaintState
 import com.kaii.photos.helpers.editing.ImageEditorTabs
@@ -153,6 +161,32 @@ fun ImageEditorAdjustmentTools(
                     )
                 }
             }
+        }
+
+        val animatedDeleteWidth by animateDpAsState(
+            targetValue =
+                // no check for paintType since selectedItem == null implies
+                // paintType != Text|Image or no text/image to delete
+                if (currentEditorPage == ImageEditorTabs.entries.indexOf(ImageEditorTabs.Draw)
+                    && drawingPaintState.selectedItem != null
+                ) 32.dp
+                else 0.dp,
+            animationSpec = AnimationConstants.expressiveSpring()
+        )
+
+        FilledTonalIconButton(
+            onClick = {
+                drawingPaintState.modifications.remove(drawingPaintState.selectedItem!!)
+                drawingPaintState.setSelectedItem(null)
+            },
+            modifier = Modifier
+                .height(32.dp)
+                .width(animatedDeleteWidth)
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.ink_eraser),
+                contentDescription = "delete this text/image"
+            )
         }
     }
 }
