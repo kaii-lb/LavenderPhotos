@@ -192,7 +192,7 @@
     <string name="settings_storage_desc">性能与空间选项</string>
     <string name="settings_storage">存储</string>
     <string name="settings_memory">内存</string>
-    <string name="settings_storage_thumbnails_size">当前缩略图尺寸为 %1$s 像素。数值越高，占用的 %2$s 越多。</string>
+    <string name="settings_storage_thumbnails_size">当前缩略图尺寸为 %1$s 像素。数值越高，占用的 %2$s 越多</string>
     <string name="settings_storage_thumbnails_max">当前缩略图以最高可用分辨率显示，此设置会占用最多的 %1$s</string>
     <string name="settings_storage_thumbnails_cache">缓存缩略图</string>
     <string name="settings_storage_thumbnails_cache_desc">通过缓存缩略图加快加载速度，但需要占用更多存储空间</string>
@@ -210,7 +210,7 @@
     <string name="trash_auto_delete_interval">自动删除间隔</string>
     <string name="trash_auto_delete_notice">回收站中早于此时间的照片将被永久删除</string>
     <string name="trash_empty">清空回收站？</string>
-    <string name="trash_empty_desc">此操作将删除回收站中的所有项目，且无法撤销。</string>
+    <string name="trash_empty_desc">此操作将删除回收站中的所有项目，且无法撤销</string>
     <string name="trash_empty_confirm">清空</string>
     <string name="permissions">权限</string>
     <string name="permissions_media_manager">媒体管理</string>
@@ -219,7 +219,7 @@
     <string name="permissions_confirm_to_delete">确认删除</string>
     <string name="permissions_confirm_too_delete_desc">删除任何媒体前请求确认</string>
     <string name="permissions_overwrite_date_on_move">移动时覆盖日期</string>
-    <string name="permissions_overwrite_date_on_move_desc">启用后，移动或复制的媒体文件日期将设置为当前时间，并显示为最新项目。</string>
+    <string name="permissions_overwrite_date_on_move_desc">启用后，移动或复制的媒体文件日期将设置为当前时间，并显示为最新项目</string>
     <string name="permissions_needed">需要权限</string>
     <string name="permissions_needed_desc">Lavender 图库 需要获取访问此相册的权限。请在下一界面选择「使用此文件夹」以授予权限。此授权仅需进行一次。</string>
     <string name="permissions_grant">授予</string>
