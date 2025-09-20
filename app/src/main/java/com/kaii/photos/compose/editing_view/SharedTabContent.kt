@@ -2,6 +2,7 @@ package com.kaii.photos.compose.editing_view
 
 import android.annotation.SuppressLint
 import android.graphics.BitmapFactory
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -10,6 +11,7 @@ import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -66,15 +68,20 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.scale
+import com.bumptech.glide.Glide
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
+import com.kaii.photos.compose.widgets.shimmerEffect
+import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.editing.DrawableImage
 import com.kaii.photos.helpers.editing.DrawingColors
@@ -84,7 +91,10 @@ import com.kaii.photos.helpers.editing.ImageModification
 import com.kaii.photos.helpers.editing.MediaColorFilters
 import com.kaii.photos.helpers.editing.SharedModification
 import com.kaii.photos.helpers.editing.VideoModification
+import com.kaii.photos.mediastore.getMediaStoreDataFromUri
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -429,29 +439,41 @@ private fun ImageSelector(
 ) {
     val context = LocalContext.current
     val resources = LocalResources.current
+    val windowInfo = LocalWindowInfo.current
     val coroutineScope = rememberCoroutineScope()
 
     var image: ImageBitmap? by remember { mutableStateOf(null) }
+    var imageUri: Uri? by remember { mutableStateOf(null) }
+    var wantedUri: Uri? by remember { mutableStateOf(null) }
+
     LaunchedEffect(drawingPaintState.selectedItem) {
-        if (drawingPaintState.isVideo) {
-            if (drawingPaintState.selectedItem is VideoModification.DrawingImage) {
-                context.contentResolver.openInputStream(
-                    (drawingPaintState.selectedItem as VideoModification.DrawingImage).image.bitmapUri
-                ).use { inputStream ->
-                    image = BitmapFactory.decodeStream(
-                        inputStream
-                    ).asImageBitmap()
+        withContext(Dispatchers.IO) {
+            if (drawingPaintState.selectedItem is SharedModification.DrawingImage
+                && imageUri != (drawingPaintState.selectedItem as SharedModification.DrawingImage).image.bitmapUri
+            ) {
+                val drawingImage = (drawingPaintState.selectedItem as SharedModification.DrawingImage)
+                imageUri = drawingImage.image.bitmapUri
+
+                val bitmap = if (drawingImage.image.isAvif) {  // avif won't load on some android distros, so use glide for that
+                    Glide.with(context)
+                        .asBitmap()
+                        .load(drawingImage.image.bitmapUri)
+                        .submit()
+                        .get()
+                } else {
+                    context.contentResolver.openInputStream(drawingImage.image.bitmapUri).use { inputStream ->
+                        BitmapFactory.decodeStream(inputStream)
+                    }
                 }
-            }
-        } else {
-            if (drawingPaintState.selectedItem is ImageModification.DrawingImage) {
-                context.contentResolver.openInputStream(
-                    (drawingPaintState.selectedItem as ImageModification.DrawingImage).image.bitmapUri
-                ).use { inputStream ->
-                    image = BitmapFactory.decodeStream(
-                        inputStream
-                    ).asImageBitmap()
-                }
+
+                image = bitmap
+                    .scale(
+                        width = windowInfo.containerSize.width / 4,
+                        height = ((windowInfo.containerSize.width / 4) * (bitmap.width.toFloat() / bitmap.height)).toInt()
+                    )
+                    .asImageBitmap()
+
+                wantedUri = imageUri
             }
         }
     }
@@ -460,13 +482,22 @@ private fun ImageSelector(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
         if (uri != null) {
-            val size = context.contentResolver.openInputStream(uri).use { inputStream ->
-                image = BitmapFactory.decodeStream(
-                    inputStream
-                ).asImageBitmap()
+            wantedUri = uri
 
-                IntSize(image!!.width, image!!.height)
+            val size = context.contentResolver.openInputStream(uri).use { inputStream ->
+                val options = BitmapFactory.Options().apply {
+                    inJustDecodeBounds = true
+                }
+                BitmapFactory.decodeStream(
+                    inputStream,
+                    null,
+                    options
+                )
+
+                IntSize(options.outWidth, options.outHeight)
             }
+
+            val isAvif = context.contentResolver.getMediaStoreDataFromUri(uri)?.absolutePath?.endsWith(".avif") == true
 
             drawingPaintState.setSelectedItem(
                 if (drawingPaintState.isVideo) {
@@ -476,7 +507,8 @@ private fun ImageSelector(
                             paint = drawingPaintState.paint,
                             rotation = 0f,
                             position = Offset.Zero,
-                            size = size
+                            size = size,
+                            isAvif = isAvif
                         )
                     )
                 } else {
@@ -486,7 +518,8 @@ private fun ImageSelector(
                             paint = drawingPaintState.paint,
                             rotation = 0f,
                             position = Offset.Zero,
-                            size = size
+                            size = size,
+                            isAvif = isAvif
                         )
                     )
                 }
@@ -530,14 +563,47 @@ private fun ImageSelector(
             targetState = drawingPaintState.selectedItem != null && image != null
         ) { state ->
             if (state) {
-                Image(
-                    bitmap = image!!,
-                    contentDescription = "preview selected image",
-                    contentScale = ContentScale.Crop,
+                AnimatedContent(
+                    targetState = wantedUri == imageUri,
+                    transitionSpec = {
+                        fadeIn(
+                            animationSpec = tween(
+                                durationMillis = AnimationConstants.DURATION
+                            )
+                        ).togetherWith(
+                            fadeOut(
+                                animationSpec = tween(
+                                    durationMillis = AnimationConstants.DURATION
+                                )
+                            )
+                        )
+                    },
                     modifier = Modifier
                         .clip(CircleShape)
-                        .width(80.dp)
-                )
+                        .height(56.dp)
+                        .width(80.dp),
+                    contentAlignment = Alignment.Center
+                ) { state ->
+                    if (state) {
+                        Image(
+                            bitmap = image!!,
+                            contentDescription = "preview selected image",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .width(80.dp)
+                        )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .width(80.dp)
+                                .height(56.dp)
+                                .shimmerEffect(
+                                    containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+                                    highlightColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                                )
+                        )
+                    }
+                }
             } else {
                 Row(
                     modifier = Modifier

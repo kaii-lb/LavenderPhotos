@@ -9,10 +9,8 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
@@ -27,14 +25,18 @@ import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.toSize
+import androidx.compose.ui.util.fastFilter
 import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMapNotNull
+import androidx.core.graphics.scale
+import com.bumptech.glide.Glide
 import com.kaii.photos.helpers.editing.DrawableText
 import com.kaii.photos.helpers.editing.DrawingPaintState
 import com.kaii.photos.helpers.editing.SharedModification
@@ -58,21 +60,67 @@ fun BoxScope.PreviewCanvas(
     val textMeasurer = rememberTextMeasurer()
 
     val context = LocalContext.current
-    var images by remember { mutableStateOf(emptyList<Pair<Uri, ImageBitmap>>()) }
+    val images = remember { mutableStateListOf<Pair<Uri, ImageBitmap>>() }
 
+    val windowInfo = LocalWindowInfo.current
     LaunchedEffect(drawingPaintState.modifications.lastOrNull()) {
         withContext(Dispatchers.IO) {
-            val new = drawingPaintState.modifications
+            val mods = drawingPaintState.modifications
+            val uris = images.map { it.first }
+            val new = mods
                 .fastMapNotNull { mod ->
                     mod as? SharedModification.DrawingImage
                 }
+                .fastFilter { mod ->
+                    mod.image.bitmapUri !in uris
+                }
                 .fastMap { mod ->
-                    context.contentResolver.openInputStream(mod.image.bitmapUri).use { inputStream ->
-                        Pair(mod.image.bitmapUri, BitmapFactory.decodeStream(inputStream).asImageBitmap())
+                    val bitmap = if (mod.image.isAvif) {  // avif won't load on some android distros, so use glide for that
+                        Glide.with(context)
+                            .asBitmap()
+                            .load(mod.image.bitmapUri)
+                            .submit()
+                            .get()
+                    } else {
+                        context.contentResolver.openInputStream(mod.image.bitmapUri).use { inputStream ->
+                            BitmapFactory.decodeStream(inputStream)
+                        }
                     }
+
+                    var inSampleSize = 1
+
+                    val reqWidth = windowInfo.containerSize.width
+                    val reqHeight = windowInfo.containerSize.height
+
+                    if (bitmap.height > reqHeight || bitmap.width > reqWidth) {
+                        // Calculate the largest inSampleSize value that is a power of 2 and keeps both
+                        // height and width larger than the requested height and width.
+                        while (bitmap.height / inSampleSize >= reqHeight || bitmap.width / inSampleSize >= reqWidth) {
+                            inSampleSize *= 2
+                        }
+                    }
+
+                    val image = bitmap
+                        .scale(
+                            width = bitmap.width / inSampleSize,
+                            height = bitmap.height / inSampleSize,
+                            filter = true
+                        )
+                        .asImageBitmap()
+
+                    Pair(mod.image.bitmapUri, image)
                 }
 
-            images = new
+            val newUris = mods
+                .fastMapNotNull { mod ->
+                    (mod as? SharedModification.DrawingImage)?.image?.bitmapUri
+                }
+            val toBeRemoved = images
+                .fastFilter {
+                    it.first !in newUris
+                }
+            images.removeAll(toBeRemoved)
+            images.addAll(new)
         }
     }
 
@@ -153,7 +201,7 @@ fun BoxScope.PreviewCanvas(
                                 drawImage(
                                     image = images.firstOrNull { it.first == image.bitmapUri }?.second ?: ImageBitmap(512, 512),
                                     dstSize = image.size,
-                                    filterQuality = FilterQuality.Medium,
+                                    filterQuality = FilterQuality.Low,
                                     blendMode = image.paint.blendMode
                                 )
 
