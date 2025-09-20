@@ -1,5 +1,6 @@
 package com.kaii.photos.helpers
 
+import android.app.Activity.RESULT_CANCELED
 import android.app.Activity.RESULT_OK
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -52,7 +53,7 @@ fun GetPermissionAndRun(
 
     val launcher =
         rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
-            if (result.resultCode == RESULT_OK) {
+            if (result.resultCode == RESULT_OK || result.resultCode == RESULT_CANCELED) {
                 onGranted()
             } else {
                 onRejected()
@@ -235,8 +236,8 @@ fun createDirectoryPicker(
 
     return createPersistablePermissionLauncher(
         onGranted = { uri ->
-            uri.path?.let {
-                val dir = File(it)
+            uri.path?.let { uriPath ->
+                val dir = File(uriPath)
 
                 val basePath = dir.absolutePath.split(":").first().toBasePath().let {
                     if (it.endsWith("primary/")) baseInternalStorageDirectory

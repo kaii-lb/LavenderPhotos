@@ -92,7 +92,6 @@ import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareImage
-import com.kaii.photos.helpers.toRelativePath
 import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
@@ -497,7 +496,7 @@ private fun BottomBar(
     val context = LocalContext.current
 
     AnimatedVisibility(
-        visible = visible,
+        visible = visible || showLoadingDialog,
         enter = scaleIn(
             animationSpec = spring(
                 dampingRatio = Spring.DampingRatioMediumBouncy,
@@ -556,11 +555,13 @@ private fun BottomBar(
                 val coroutineScope = rememberCoroutineScope()
 
                 GetDirectoryPermissionAndRun(
-                    absoluteDirPaths = listOf(groupedMedia.value.firstOrNull()?.absolutePath?.toRelativePath()?.getParentFromPath() ?: ""),
+                    absoluteDirPaths = listOf(
+                        currentItem.absolutePath.getParentFromPath()
+                    ),
                     shouldRun = tryGetDirPermission,
                     onGranted = {
-                        moveToSecureFolder.value = true
                         showLoadingDialog = true
+                        moveToSecureFolder.value = true
                     },
                     onRejected = {}
                 )
@@ -590,10 +591,9 @@ private fun BottomBar(
                                         currentItem,
                                         groupedMedia,
                                         coroutineScope,
-                                        state
-                                    ) {
-                                        onZeroItemsLeft()
-                                    }
+                                        state,
+                                        onZeroItemsLeft
+                                    )
                                 }
 
                                 showLoadingDialog = false
