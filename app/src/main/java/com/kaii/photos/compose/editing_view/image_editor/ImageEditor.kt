@@ -155,7 +155,7 @@ fun ImageEditor(
             if (bitmap.height > reqHeight || bitmap.width > reqWidth) {
                 // Calculate the largest inSampleSize value that is a power of 2 and keeps both
                 // height and width larger than the requested height and width.
-                while (bitmap.height / inSampleSize >= reqHeight && bitmap.width / inSampleSize >= reqWidth) {
+                while (bitmap.height / inSampleSize >= reqHeight || bitmap.width / inSampleSize >= reqWidth) {
                     inSampleSize *= 2
                 }
             }
