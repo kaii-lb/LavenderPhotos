@@ -70,8 +70,6 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.kaii.photos.R
 import com.kaii.photos.helpers.RowPosition
-import com.kaii.photos.helpers.editing.ExtendedMaterialTheme
-import com.kaii.photos.helpers.editing.brightenColor
 import com.kaii.photos.helpers.editing.darkenColor
 import kotlinx.coroutines.delay
 
@@ -228,7 +226,7 @@ fun DialogExpandableItem(
                     )
                     else RoundedCornerShape(0.dp)
                 )
-                .background(darkenColor(MaterialTheme.colorScheme.surfaceVariant, 0.2f))
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
         ) {
             content()
         }
@@ -338,7 +336,7 @@ fun DialogInfoText(
     firstText: String,
     secondText: String,
     iconResId: Int,
-    color: Color = ExtendedMaterialTheme.colorScheme.expandableDialogBackground,
+    color: Color = MaterialTheme.colorScheme.surfaceContainerHigh,
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
     onClick: (() -> Unit)? = null
 ) {
@@ -460,7 +458,7 @@ fun LavenderDialogBase(
                 .fillMaxWidth(1f)
                 .wrapContentHeight()
                 .clip(RoundedCornerShape(32.dp))
-                .background(ExtendedMaterialTheme.colorScheme.dialogSurface)
+                .background(MaterialTheme.colorScheme.surfaceContainerLow)
                 .padding(8.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
@@ -535,7 +533,7 @@ fun SelectableButtonListDialog(
                 .fillMaxWidth(1f)
                 .wrapContentHeight()
                 .clip(RoundedCornerShape(32.dp))
-                .background(brightenColor(MaterialTheme.colorScheme.surface, 0.1f))
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
                 .padding(8.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally

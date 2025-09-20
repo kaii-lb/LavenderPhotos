@@ -2,8 +2,6 @@ package com.kaii.photos.helpers.editing
 
 import androidx.annotation.OptIn
 import androidx.annotation.StringRes
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.media3.common.util.UnstableApi
@@ -11,33 +9,6 @@ import com.kaii.photos.R
 import kotlinx.serialization.Serializable
 import kotlin.math.ceil
 import kotlin.math.floor
-
-
-object ExtendedMaterialTheme {
-    val colorScheme: ExtendedColorScheme
-        @Composable
-        get() = ExtendedColorScheme(
-            dialogSurface = brightenColor(MaterialTheme.colorScheme.surface, 0.05f),
-            expandableDialogBackground = darkenColor(MaterialTheme.colorScheme.surfaceVariant, 0.2f)
-        )
-}
-
-data class ExtendedColorScheme(
-    val dialogSurface: Color,
-    val expandableDialogBackground: Color
-)
-
-fun brightenColor(color: Color, percentage: Float): Color {
-    val r = (color.red * 255).toInt()
-    val g = (color.green * 255).toInt()
-    val b = (color.blue * 255).toInt()
-
-    val newR = (r + (255 - r) * percentage).toInt().coerceIn(0, 255)
-    val newG = (g + (255 - g) * percentage).toInt().coerceIn(0, 255)
-    val newB = (b + (255 - b) * percentage).toInt().coerceIn(0, 255)
-
-    return Color(newR, newG, newB)
-}
 
 fun darkenColor(color: Color, percentage: Float): Color {
     val r = (color.red * 255).toInt()

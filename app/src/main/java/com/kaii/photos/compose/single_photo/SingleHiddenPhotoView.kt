@@ -88,7 +88,6 @@ import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.MediaData
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.appRestoredFilesDir
-import com.kaii.photos.helpers.editing.brightenColor
 import com.kaii.photos.helpers.getDecryptCacheForFile
 import com.kaii.photos.helpers.getExifDataForMedia
 import com.kaii.photos.helpers.getParentFromPath
@@ -127,7 +126,7 @@ fun SingleHiddenPhotoView(
         mutableStateOf(false)
     }
     val isGettingPermissions = rememberSaveable {
-    	mutableStateOf(false)
+        mutableStateOf(false)
     }
 
     LaunchedEffect(hideSecureFolder) {
@@ -283,17 +282,17 @@ private fun TopBar(
     AnimatedVisibility(
         visible = visible,
         enter =
-        slideInVertically(
-            animationSpec = tween(
-                durationMillis = 250
-            )
-        ) { width -> -width } + fadeIn(),
+            slideInVertically(
+                animationSpec = tween(
+                    durationMillis = 250
+                )
+            ) { width -> -width } + fadeIn(),
         exit =
-        slideOutVertically(
-            animationSpec = tween(
-                durationMillis = 250
-            )
-        ) { width -> -width } + fadeOut(),
+            slideOutVertically(
+                animationSpec = tween(
+                    durationMillis = 250
+                )
+            ) { width -> -width } + fadeOut(),
     ) {
         TopAppBar(
             colors = TopAppBarDefaults.topAppBarColors(
@@ -440,29 +439,29 @@ private fun BottomBar(
         absoluteDirPaths = listOf(item.bytes?.getOriginalPath()?.getParentFromPath() ?: context.appRestoredFilesDir),
         shouldRun = runRestoreAction,
         onGranted = { _ ->
-	        mainViewModel.launch(Dispatchers.IO) {
-	            moveImageOutOfLockedFolder(
-	                list = listOf(item),
-	                context = context,
+            mainViewModel.launch(Dispatchers.IO) {
+                moveImageOutOfLockedFolder(
+                    list = listOf(item),
+                    context = context,
                     applicationDatabase = applicationDatabase
-	            ) {
-	                isGettingPermissions.value = false
-	                showLoadingDialog = false
-	            }
+                ) {
+                    isGettingPermissions.value = false
+                    showLoadingDialog = false
+                }
 
-	            sortOutMediaMods(
-	                item,
-	                groupedMedia,
-	                coroutineScope,
-	                state
-	            ) {
-	                popBackStack()
-	            }
-	        }
+                sortOutMediaMods(
+                    item,
+                    groupedMedia,
+                    coroutineScope,
+                    state
+                ) {
+                    popBackStack()
+                }
+            }
         },
         onRejected = {
-        	isGettingPermissions.value = false
-        	showLoadingDialog = false
+            isGettingPermissions.value = false
+            showLoadingDialog = false
         }
     )
 
@@ -502,17 +501,17 @@ private fun BottomBar(
     AnimatedVisibility(
         visible = visible,
         enter =
-        slideInVertically(
-            animationSpec = tween(
-                durationMillis = 250
-            )
-        ) { width -> width } + fadeIn(),
+            slideInVertically(
+                animationSpec = tween(
+                    durationMillis = 250
+                )
+            ) { width -> width } + fadeIn(),
         exit =
-        slideOutVertically(
-            animationSpec = tween(
-                durationMillis = 250
-            )
-        ) { width -> width } + fadeOut(),
+            slideOutVertically(
+                animationSpec = tween(
+                    durationMillis = 250
+                )
+            ) { width -> width } + fadeOut(),
     ) {
 
         BottomAppBar(
@@ -640,7 +639,7 @@ fun SingleSecuredPhotoInfoDialog(
                     .then(modifier)
                     .wrapContentHeight()
                     .clip(RoundedCornerShape(32.dp))
-                    .background(brightenColor(MaterialTheme.colorScheme.surface, 0.1f))
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
                     .padding(4.dp),
             ) {
                 Box(

@@ -84,7 +84,6 @@ import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MediaItemSortMode.Companion.presentableName
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.createDirectoryPicker
-import com.kaii.photos.helpers.editing.ExtendedMaterialTheme
 import com.kaii.photos.models.multi_album.DisplayDateFormat
 import com.kaii.photos.reorderable_lists.ReorderableItem
 import com.kaii.photos.reorderable_lists.ReorderableLazyList
@@ -225,8 +224,8 @@ fun AddTabDialog(
                     .background(
                         brush = Brush.horizontalGradient(
                             colors = listOf(
-                                ExtendedMaterialTheme.colorScheme.dialogSurface,
-                                ExtendedMaterialTheme.colorScheme.dialogSurface,
+                                MaterialTheme.colorScheme.surfaceContainerLow,
+                                MaterialTheme.colorScheme.surfaceContainerLow,
                                 Color.Transparent
                             )
                         )
@@ -242,8 +241,8 @@ fun AddTabDialog(
                         brush = Brush.horizontalGradient(
                             colors = listOf(
                                 Color.Transparent,
-                                ExtendedMaterialTheme.colorScheme.dialogSurface,
-                                ExtendedMaterialTheme.colorScheme.dialogSurface
+                                MaterialTheme.colorScheme.surfaceContainerLow,
+                                MaterialTheme.colorScheme.surfaceContainerLow
                             )
                         )
                     )
