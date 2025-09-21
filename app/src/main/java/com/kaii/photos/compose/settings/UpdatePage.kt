@@ -127,7 +127,7 @@ fun UpdatesPage() {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 val mainViewModel = LocalMainViewModel.current
-                val changelog = mainViewModel.updater.getChangelog().split("\n")
+                val changelog = mainViewModel.updater.getChangelog()//.split("\n")
 
                 LazyColumn(
                     modifier = Modifier
@@ -137,24 +137,13 @@ fun UpdatesPage() {
                         .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f))
                         .padding(12.dp)
                 ) {
-                    if (changelog.size > 1) {
-                        item {
-                            Text(
-                                text = "${mainViewModel.updater.githubVersionName.value}:",
-                                fontSize = TextUnit(TextStylingConstants.MEDIUM_TEXT_SIZE, TextUnitType.Sp),
-                                modifier = Modifier
-                                    .padding(2.dp, 2.dp, 2.dp, 8.dp)
-                            )
-                        }
-                    }
-
-                    items(
-                        count = changelog.size
-                    ) { index ->
-                        val item = changelog[index]
-
+                    item {
                         Text(
-                            text = item,
+                            text = AnnotatedString.fromHtml(
+                                changelog
+                                    .replace("<p>", "<br><br><p>")
+                                    .replace("##", "<br><br>##")
+                            ),
                             fontSize = TextUnit(14f, TextUnitType.Sp),
                             modifier = Modifier
                                 .padding(2.dp)
