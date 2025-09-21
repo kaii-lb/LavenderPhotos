@@ -1030,12 +1030,18 @@ class MainActivity : ComponentActivity() {
             .collectAsStateWithLifecycle(initialValue = DefaultTabs.defaultList)
 
         val shouldShowEverything by mainViewModel.showAllInMain.collectAsStateWithLifecycle()
+        val navController = LocalNavController.current
 
         // faster loading if no custom tabs are present
-        LaunchedEffect(tabList) {
+        LaunchedEffect(tabList, shouldShowEverything, navController.currentBackStackEntry?.destination?.route) {
+            val showEverything =
+                shouldShowEverything
+                        && currentView.value == DefaultTabs.TabTypes.photos
+                        && navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name
+
             if (!tabList.any { it.isCustom }
                 && (currentView.value.albumPaths.toSet() != multiAlbumViewModel.albumInfo.paths.toSet()
-                        || multiAlbumViewModel.ignorePaths != shouldShowEverything
+                        || multiAlbumViewModel.ignorePaths != showEverything
                         )
             ) {
                 multiAlbumViewModel.reinitDataSource(
@@ -1047,7 +1053,7 @@ class MainActivity : ComponentActivity() {
                         isCustomAlbum = currentView.value.isCustom
                     ),
                     sortMode = multiAlbumViewModel.sortBy,
-                    ignorePaths = shouldShowEverything
+                    ignorePaths = showEverything
                 )
 
                 groupedMedia.value = mediaStoreData.value
