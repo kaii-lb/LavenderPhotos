@@ -9,11 +9,12 @@
 <li>Trash Bin that's sorted by recently trashed</li>
 <li>Full fledged favouriting system</li>
 <li>A selection system that doesn't suck</li>
-<li>Edit and personalize any photo, any time, without an internet connection (even works in landscape mode!)</li>
+<li>Edit and personalize any photo or video, any time, without an internet connection (even works in landscape mode!)</li>
 <li>Secure sensitive photos in a encrypted medium, for safe keeping</li>
 <li>Find all the relevant information for a photo from one button click</li>
 <li>Privacy focused design, no chance of anything happening without your permission</li>
 <li>Copy and Move photos to albums easily</li>
 <li>Clean UI and smooth UX</li>
+<li>Customizable to your heart's content</li>
 <li>WAY more to come</li>
 </ul>
