@@ -91,10 +91,7 @@ class MultiAlbumViewModel(
         sortBy: MediaItemSortMode,
         ignorePaths: Boolean
     ) = run {
-        val query = getSQLiteQuery(album.paths).let {
-            if (ignorePaths) it.copy(query = "", paths = null, includedBasePaths = null)
-            else it
-        }
+        val query = getSQLiteQuery(album.paths)
         Log.d(TAG, "query is $query")
 
         albumInfo = album

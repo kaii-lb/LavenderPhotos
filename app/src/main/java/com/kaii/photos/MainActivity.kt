@@ -55,6 +55,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastMap
 import androidx.core.net.toUri
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -305,14 +306,32 @@ class MainActivity : ComponentActivity() {
 
         val albumsList by mainViewModel.settings.MainPhotosView.getAlbums()
             .collectAsStateWithLifecycle(initialValue = emptyList())
+
+        val shouldShowEverything by mainViewModel.showAllInMain.collectAsStateWithLifecycle()
+        val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect()
+            .collectAsStateWithLifecycle(initialValue = true)
+        val applicationDatabase = LocalAppDatabase.current
+        val allAlbums by if (autoDetectAlbums) {
+            mainViewModel.settings.AlbumsList.getAutoDetectedAlbums(displayDateFormat ?: DisplayDateFormat.Default, applicationDatabase)
+                .collectAsStateWithLifecycle(initialValue = emptyList())
+        } else {
+            mainViewModel.settings.AlbumsList.getNormalAlbums()
+                .collectAsStateWithLifecycle(initialValue = emptyList())
+        }
+
         val currentSortMode by mainViewModel.settings.PhotoGrid.getSortMode()
             .collectAsStateWithLifecycle(initialValue = MediaItemSortMode.DateTaken)
 
-        val applicationDatabase = LocalAppDatabase.current
         val multiAlbumViewModel: MultiAlbumViewModel = viewModel(
             factory = MultiAlbumViewModelFactory(
                 context = context,
-                albumInfo = AlbumInfo.createPathOnlyAlbum(albumsList),
+                albumInfo = AlbumInfo.createPathOnlyAlbum(
+                    if (shouldShowEverything) {
+                        allAlbums.flatMap { album -> album.paths.fastMap { it.removeSuffix("/") } } - albumsList
+                    } else {
+                        albumsList
+                    }
+                ),
                 sortBy = currentSortMode,
                 displayDateFormat = displayDateFormat ?: DisplayDateFormat.Default,
                 database = applicationDatabase
@@ -330,16 +349,25 @@ class MainActivity : ComponentActivity() {
 
         val navController = LocalNavController.current
         // update main photos view albums list
-        LaunchedEffect(albumsList) {
+        LaunchedEffect(albumsList, allAlbums) {
+            val albums =
+                if (shouldShowEverything) {
+                    allAlbums.flatMap { album -> album.paths.fastMap { it.removeSuffix("/") } } - albumsList
+                } else {
+                    albumsList
+                }
+
+            Log.d(TAG, "query ALBUMS $albums")
+
             if (navController.currentBackStackEntry?.destination?.route != MultiScreenViewType.MainScreen.name
-                || multiAlbumViewModel.albumInfo.paths.toSet() == albumsList
+                || multiAlbumViewModel.albumInfo.paths.toSet() == albums.toSet()
             ) return@LaunchedEffect
 
             Log.d(TAG, "Refreshing main photos view")
-            Log.d(TAG, "In view model: ${multiAlbumViewModel.albumInfo.paths} new: $albumsList")
+            Log.d(TAG, "In view model: ${multiAlbumViewModel.albumInfo.paths} new: $albums")
             multiAlbumViewModel.reinitDataSource(
                 context = context,
-                album = AlbumInfo.createPathOnlyAlbum(albumsList),
+                album = AlbumInfo.createPathOnlyAlbum(albums),
                 sortMode = currentSortMode
             )
         }
@@ -1022,6 +1050,22 @@ class MainActivity : ComponentActivity() {
 
         val albumsList by mainViewModel.settings.MainPhotosView.getAlbums()
             .collectAsStateWithLifecycle(initialValue = emptyList())
+
+        val shouldShowEverything by mainViewModel.showAllInMain.collectAsStateWithLifecycle()
+        val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect()
+            .collectAsStateWithLifecycle(initialValue = true)
+
+        val applicationDatabase = LocalAppDatabase.current
+        val displayDateFormat by mainViewModel.settings.LookAndFeel.getDisplayDateFormat().collectAsStateWithLifecycle(initialValue = DisplayDateFormat.Default)
+
+        val allAlbums by if (autoDetectAlbums) {
+            mainViewModel.settings.AlbumsList.getAutoDetectedAlbums(displayDateFormat, applicationDatabase)
+                .collectAsStateWithLifecycle(initialValue = emptyList())
+        } else {
+            mainViewModel.settings.AlbumsList.getNormalAlbums()
+                .collectAsStateWithLifecycle(initialValue = emptyList())
+        }
+
         val mediaStoreData =
             multiAlbumViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
         val groupedMedia = remember { mutableStateOf(mediaStoreData.value) }
@@ -1029,7 +1073,6 @@ class MainActivity : ComponentActivity() {
         val tabList by mainViewModel.settings.DefaultTabs.getTabList()
             .collectAsStateWithLifecycle(initialValue = DefaultTabs.defaultList)
 
-        val shouldShowEverything by mainViewModel.showAllInMain.collectAsStateWithLifecycle()
         val navController = LocalNavController.current
 
         // faster loading if no custom tabs are present
@@ -1041,8 +1084,7 @@ class MainActivity : ComponentActivity() {
 
             if (!tabList.any { it.isCustom }
                 && (currentView.value.albumPaths.toSet() != multiAlbumViewModel.albumInfo.paths.toSet()
-                        || multiAlbumViewModel.ignorePaths != showEverything
-                        )
+                        || multiAlbumViewModel.ignorePaths != showEverything)
             ) {
                 multiAlbumViewModel.reinitDataSource(
                     context = context,
@@ -1176,7 +1218,14 @@ class MainActivity : ComponentActivity() {
                             }
 
                             stateValue == DefaultTabs.TabTypes.photos -> {
-                                if (albumsList.toSet() != multiAlbumViewModel.albumInfo.paths.toSet()
+                                val albums =
+                                    if (shouldShowEverything) {
+                                        allAlbums.flatMap { album -> album.paths.fastMap { it.removeSuffix("/") } } - albumsList
+                                    } else {
+                                        albumsList
+                                    }
+
+                                if (albums.toSet() != multiAlbumViewModel.albumInfo.paths.toSet()
                                     || multiAlbumViewModel.ignorePaths != shouldShowEverything
                                 ) {
                                     multiAlbumViewModel.reinitDataSource(
@@ -1184,7 +1233,7 @@ class MainActivity : ComponentActivity() {
                                         album = AlbumInfo(
                                             id = stateValue.id,
                                             name = stateValue.name,
-                                            paths = albumsList,
+                                            paths = albums,
                                             isCustomAlbum = false
                                         ),
                                         sortMode = multiAlbumViewModel.sortBy,

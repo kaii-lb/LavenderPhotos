@@ -252,10 +252,6 @@ fun getSQLiteQuery(albums: List<String>): SQLiteQuery {
         return SQLiteQuery(query = "AND false", paths = null, includedBasePaths = null)
     }
 
-    albums.forEach {
-        Log.d(TAG, "Trying to get query for album: $it")
-    }
-
     val colName = FileColumns.RELATIVE_PATH
     val base = "($colName = ?)"
 

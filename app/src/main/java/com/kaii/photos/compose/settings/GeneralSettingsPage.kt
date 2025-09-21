@@ -38,14 +38,14 @@ import com.kaii.photos.LocalAppDatabase
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
-import com.kaii.photos.compose.widgets.CheckBoxButtonRow
-import com.kaii.photos.compose.widgets.PreferencesRow
-import com.kaii.photos.compose.widgets.PreferencesSeparatorText
-import com.kaii.photos.compose.widgets.PreferencesSwitchRow
 import com.kaii.photos.compose.dialogs.DefaultTabSelectorDialog
 import com.kaii.photos.compose.dialogs.SelectableButtonListDialog
 import com.kaii.photos.compose.dialogs.SortModeSelectorDialog
 import com.kaii.photos.compose.dialogs.TabCustomizationDialog
+import com.kaii.photos.compose.widgets.CheckBoxButtonRow
+import com.kaii.photos.compose.widgets.PreferencesRow
+import com.kaii.photos.compose.widgets.PreferencesSeparatorText
+import com.kaii.photos.compose.widgets.PreferencesSwitchRow
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
@@ -186,19 +186,15 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
                         if (!shouldShowEverything) stringResource(id = R.string.albums_main_list_desc_1)
                         else stringResource(id = R.string.albums_main_list_desc_2),
                     onRowClick = { checked ->
-                        if (!shouldShowEverything) {
-                            selectedAlbums.clear()
-                            selectedAlbums.addAll(
-                                mainPhotosAlbums.map {
-                                    it.apply {
-                                        removeSuffix("/")
-                                    }
+                        selectedAlbums.clear()
+                        selectedAlbums.addAll(
+                            mainPhotosAlbums.map {
+                                it.apply {
+                                    removeSuffix("/")
                                 }
-                            )
-                            showAlbumsSelectionDialog.value = true
-                        } else {
-                            mainViewModel.settings.MainPhotosView.setShowEverything(checked)
-                        }
+                            }
+                        )
+                        showAlbumsSelectionDialog.value = true
                     },
                     onSwitchClick = { checked ->
                         mainViewModel.settings.MainPhotosView.setShowEverything(checked)
@@ -208,7 +204,9 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
                 if (showAlbumsSelectionDialog.value) {
                     SelectableButtonListDialog(
                         title = stringResource(id = R.string.albums_selected),
-                        body = stringResource(id = R.string.albums_main_list_selected),
+                        body =
+                            if (!shouldShowEverything) stringResource(id = R.string.albums_main_list_selected)
+                            else stringResource(id = R.string.albums_main_list_selected_inverse),
                         showDialog = showAlbumsSelectionDialog,
                         onConfirm = {
                             mainViewModel.settings.MainPhotosView.clear()
@@ -232,7 +230,7 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
                                         text = associatedAlbum.name,
                                         checked = selectedAlbums.contains(associatedAlbum.mainPath)
                                     ) {
-                                        if (selectedAlbums.contains(associatedAlbum.mainPath) && selectedAlbums.size > 1) {
+                                        if ((selectedAlbums.contains(associatedAlbum.mainPath) && selectedAlbums.size > 1) || shouldShowEverything) {
                                             selectedAlbums.remove(associatedAlbum.mainPath)
                                         } else {
                                             selectedAlbums.add(associatedAlbum.mainPath)

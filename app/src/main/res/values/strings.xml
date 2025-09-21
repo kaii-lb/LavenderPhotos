@@ -426,8 +426,9 @@
     <string name="direct_path_album">Use a direct path to add an album</string>
     <string name="albums_main_list">Show All in Main</string>
     <string name="albums_main_list_desc_1">Selected albums will have their photos displayed in the main photos view</string>
-    <string name="albums_main_list_desc_2">Everything is shown in main photos view</string>
+    <string name="albums_main_list_desc_2">Selected albums will be blacklisted from showing in the main photos view</string>
     <string name="albums_main_list_selected">Albums selected here will show up in the main photo view</string>
+    <string name="albums_main_list_selected_inverse">Albums selected here will not show up in the main photo view</string>
     <string name="albums_selected">Selected Albums</string>
     <string name="albums_auto_detect">Auto detect albums</string>
     <string name="albums_auto_detect_desc">Detects all the folders with media on this device and add them to the albums view</string>
