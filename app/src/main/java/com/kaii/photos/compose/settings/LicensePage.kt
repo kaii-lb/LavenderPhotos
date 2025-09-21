@@ -45,7 +45,7 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.TextStylingConstants
-import com.mikepenz.aboutlibraries.ui.compose.android.rememberLibraries
+import com.mikepenz.aboutlibraries.ui.compose.android.produceLibraries
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 import com.mikepenz.aboutlibraries.ui.compose.util.author
 import com.mikepenz.aboutlibraries.ui.compose.util.htmlReadyLicenseContent
@@ -283,7 +283,7 @@ fun ExtendedLicensePage() {
             )
         }
     ) { innerPadding ->
-        val libraries by rememberLibraries(R.raw.aboutlibraries)
+        val libraries by produceLibraries(R.raw.aboutlibraries)
 
         LibrariesContainer(
             libraries = libraries,
