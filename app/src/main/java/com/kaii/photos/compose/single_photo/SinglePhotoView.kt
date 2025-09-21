@@ -273,6 +273,7 @@ fun SinglePhotoViewCommon(
         },
         bottomBar = {
             val coroutineScope = rememberCoroutineScope()
+            val mainViewModel = LocalMainViewModel.current
 
             BottomBar(
                 visible = appBarsVisible.value,
@@ -306,7 +307,9 @@ fun SinglePhotoViewCommon(
                     }
                 },
                 onZeroItemsLeft = {
-                    navController.popBackStack()
+                    mainViewModel.launch {
+                        navController.popBackStack()
+                    }
                 },
                 removeIfInFavGrid = {
                     if (navController.previousBackStackEntry?.destination?.route == MultiScreenViewType.FavouritesGridView.name) {
