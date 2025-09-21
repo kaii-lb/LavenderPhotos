@@ -140,17 +140,13 @@ class ImmichViewModel(
 
     @OptIn(ExperimentalEncodingApi::class, ExperimentalStdlibApi::class)
     fun checkSyncStatus(immichAlbumId: String, expectedBackupMedia: Set<ImmichBackupMedia>) = viewModelScope.launch {
-        var snapshot = _immichAlbumsSyncState.value.toMutableMap()
+        val snapshot = _immichAlbumsSyncState.value.toMutableMap()
 
-        var possible = snapshot.keys.find { it == immichAlbumId }
-
-        if (possible == null) {
+        if (snapshot.keys.find { it == immichAlbumId } == null) {
             snapshot.put(
                 key = immichAlbumId,
                 value = ImmichAlbumSyncState.Loading
             )
-
-            possible = immichAlbumId
         }
 
         var result = immichApiService.checkDifference(
@@ -165,11 +161,11 @@ class ImmichViewModel(
                 Log.d(TAG, "Gotten dupes ${albumDupes.dupeAssets.map { it.deviceAssetId }}")
                 Log.d(TAG, "Gotten result $result")
 
-                if (result.missing.none { it.checksum !in albumDupes.dupeAssets.map { it.checksum } }) {
+                if (result.missing.none { media -> media.checksum !in albumDupes.dupeAssets.map { it.checksum } }) {
                     result = if (result.extra.isEmpty()) {
                         ImmichAlbumSyncState.InSync(expectedBackupMedia)
                     } else {
-                        val extras = result.extra.none { it.checksum !in albumDupes.dupeAssets.map { it.checksum } }
+                        val extras = result.extra.none { media -> media.checksum !in albumDupes.dupeAssets.map { it.checksum } }
 
                         if (extras) {
                             ImmichAlbumSyncState.InSync(expectedBackupMedia)

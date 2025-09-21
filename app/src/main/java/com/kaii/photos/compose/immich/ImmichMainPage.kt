@@ -164,9 +164,10 @@ fun ImmichMainPage() {
                         confirmButtonLabel = stringResource(id = R.string.media_confirm),
                     ) {
                         coroutineScope.launch {
-                            if (immichBasicInfo.bearerToken == "") return@launch
+                            if (immichBasicInfo.bearerToken != "") {
+                                immichViewModel.logoutUser()
+                            }
 
-                            immichViewModel.logoutUser()
                             mainViewModel.settings.Immich.setImmichBasicInfo(
                                 ImmichBasicInfo("", "")
                             )
@@ -363,8 +364,8 @@ fun ImmichMainPage() {
                     derivedStateOf {
                         if (serverInfo is ImmichServerState.HasInfo) {
                             Pair(
-                                (serverInfo as ImmichServerState.HasInfo).storage.diskUse.toString(),
-                                (serverInfo as ImmichServerState.HasInfo).storage.diskSize.toString()
+                                (serverInfo as ImmichServerState.HasInfo).storage.diskUse,
+                                (serverInfo as ImmichServerState.HasInfo).storage.diskSize
                             )
                         } else {
                             Pair(
