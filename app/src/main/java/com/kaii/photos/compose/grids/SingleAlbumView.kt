@@ -87,10 +87,18 @@ fun SingleAlbumView(
 
     if (allAlbums.isEmpty()) return
 
+    var lastDynamicAlbum by remember {
+        mutableStateOf(
+            albumInfo
+        )
+    }
     val dynamicAlbum by remember {
         derivedStateOf {
-            allAlbums.first {
+            (allAlbums.firstOrNull {
                 it.id == albumInfo.id
+            } ?: lastDynamicAlbum).let {
+                lastDynamicAlbum = it
+                it
             }
         }
     }
