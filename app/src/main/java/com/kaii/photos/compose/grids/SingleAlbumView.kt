@@ -75,14 +75,18 @@ fun SingleAlbumView(
     val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
 
     val customAlbums by mainViewModel.settings.AlbumsList.getCustomAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
+
+    // used to save pinned albums incase of auto detecting
+    val normalAlbums = mainViewModel.settings.AlbumsList.getNormalAlbums()
+        .collectAsStateWithLifecycle(initialValue = emptyList())
+        .value + customAlbums
+
     val allAlbums = if (autoDetectAlbums) {
         mainViewModel.settings.AlbumsList.getAutoDetectedAlbums(displayDateFormat, appDatabase)
             .collectAsStateWithLifecycle(initialValue = emptyList())
             .value + customAlbums
     } else {
-        mainViewModel.settings.AlbumsList.getNormalAlbums()
-            .collectAsStateWithLifecycle(initialValue = emptyList())
-            .value + customAlbums
+        normalAlbums
     }
 
     if (allAlbums.isEmpty()) return
@@ -94,11 +98,9 @@ fun SingleAlbumView(
     }
     val dynamicAlbum by remember {
         derivedStateOf {
-            (allAlbums.firstOrNull {
-                it.id == albumInfo.id
-            } ?: lastDynamicAlbum).let {
+            (normalAlbums.firstOrNull { it.id == albumInfo.id } ?: allAlbums.firstOrNull { it.id == albumInfo.id } ?: lastDynamicAlbum).let {
                 lastDynamicAlbum = it
-                it
+                lastDynamicAlbum
             }
         }
     }
@@ -151,21 +153,33 @@ fun SingleAlbumView(
     val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
 
     val customAlbums by mainViewModel.settings.AlbumsList.getCustomAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
+
+    // used to save pinned albums incase of auto detecting
+    val normalAlbums = mainViewModel.settings.AlbumsList.getNormalAlbums()
+        .collectAsStateWithLifecycle(initialValue = emptyList())
+        .value + customAlbums
+
     val allAlbums = if (autoDetectAlbums) {
         mainViewModel.settings.AlbumsList.getAutoDetectedAlbums(displayDateFormat, appDatabase)
             .collectAsStateWithLifecycle(initialValue = emptyList())
             .value + customAlbums
     } else {
-        mainViewModel.settings.AlbumsList.getNormalAlbums()
-            .collectAsStateWithLifecycle(initialValue = emptyList())
-            .value + customAlbums
+        normalAlbums
     }
 
     if (allAlbums.isEmpty()) return
 
+    var lastDynamicAlbum by remember {
+        mutableStateOf(
+            albumInfo
+        )
+    }
     val dynamicAlbum by remember {
         derivedStateOf {
-            allAlbums.first { it.id == albumInfo.id }
+            (normalAlbums.firstOrNull { it.id == albumInfo.id } ?: allAlbums.firstOrNull { it.id == albumInfo.id } ?: lastDynamicAlbum).let {
+                lastDynamicAlbum = it
+                lastDynamicAlbum
+            }
         }
     }
 

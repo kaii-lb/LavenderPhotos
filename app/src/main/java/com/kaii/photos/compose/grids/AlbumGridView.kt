@@ -78,6 +78,9 @@ import androidx.compose.ui.unit.center
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.compose.ui.unit.toOffset
+import androidx.compose.ui.util.fastDistinctBy
+import androidx.compose.ui.util.fastFilter
+import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
@@ -120,12 +123,15 @@ fun AlbumsGridView(
         .collectAsStateWithLifecycle(initialValue = true)
     val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
 
+    // used to save pinned albums incase of auto detecting
+    val normalAlbums = mainViewModel.settings.AlbumsList.getNormalAlbums()
+        .collectAsStateWithLifecycle(initialValue = emptyList())
+
     val listOfDirs by if (autoDetectAlbums) {
         mainViewModel.settings.AlbumsList.getAutoDetectedAlbums(displayDateFormat, appDatabase)
             .collectAsStateWithLifecycle(initialValue = emptyList())
     } else {
-        mainViewModel.settings.AlbumsList.getNormalAlbums()
-            .collectAsStateWithLifecycle(initialValue = emptyList())
+        normalAlbums
     }
 
     val sortModeDateType by mainViewModel.settings.PhotoGrid.getSortMode()
@@ -139,18 +145,11 @@ fun AlbumsGridView(
 
     val albums = remember { mutableStateOf(listOfDirs) }
 
-    // val albumsViewModel: AlbumsViewModel = viewModel(
-    //     factory = AlbumsViewModelFactory(
-    //         context = context,
-    //         albums = albums.value
-    //     )
-    // )
-
     val albumToThumbnailMapping by mainViewModel.albumsMediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
     val cachedAlbumToThumbnailMapping =
         remember { mutableStateListOf<Pair<AlbumInfo, MediaStoreData>>() }
 
-    LaunchedEffect(listOfDirs, sortMode, sortByDescending, albumToThumbnailMapping) {
+    LaunchedEffect(listOfDirs, normalAlbums, sortMode, sortByDescending, albumToThumbnailMapping) {
         withContext(Dispatchers.IO) {
             val newList = mutableListOf<AlbumInfo>()
 
@@ -214,23 +213,23 @@ fun AlbumsGridView(
                 }
             }
 
-            val pinned = newList.filter { it.isPinned }
-            newList.removeAll(pinned)
-            newList.addAll(0, pinned)
+            val pinnedInNormal = normalAlbums.value.fastFilter { it.isPinned }
+            val pinnedInNormalIds = pinnedInNormal.fastMap { it.id }
 
-            albums.value = newList.distinctBy { it.id }
+            // remove all auto detected pinned albums
+            newList.removeAll {
+                it.id in pinnedInNormalIds
+            }
 
-            // Log.d(TAG, "Mapping: $albumToThumbnailMapping")
-            // Log.d(TAG, "Albums $albums")
-            // Log.d(TAG, "Dirs: $listOfDirs")
-            //
-            // Log.d(TAG, "sort mode: $sortMode and new list: $newList")
+            newList.addAll(0, pinnedInNormal)
+
+            albums.value = newList.fastDistinctBy { it.id }
         }
     }
 
-    // update the list to reflect custom order (doesn't matter for other sorting modes)
+    // update the list to reflect custom order
     LaunchedEffect(albums.value) {
-        if (albums.value.isNotEmpty()) mainViewModel.settings.AlbumsList.setAlbumsList(albums.value)
+        if (albums.value.isNotEmpty() && sortMode == AlbumSortMode.Custom) mainViewModel.settings.AlbumsList.setAlbumsList(albums.value)
     }
 
     BackHandler(
