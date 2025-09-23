@@ -89,6 +89,7 @@ suspend fun saveVideo(
     containerDimens: Size,
     canvasSize: Size,
     textMeasurer: TextMeasurer,
+    isFromOpenWithView: Boolean,
     onFailure: () -> Unit
 ) {
     val isLoading = mutableStateOf(true)
@@ -278,6 +279,12 @@ suspend fun saveVideo(
 
                 if (completions >= 1) {
                     tempFile.delete()
+
+                    val newFile = File(absolutePath)
+                    if (isFromOpenWithView && newFile.exists()) {
+                        newFile.delete()
+                    }
+
                     isLoading.value = false
                 }
 
@@ -380,7 +387,7 @@ suspend fun saveVideo(
         .setEffects(Effects(emptyList(), modList))
         .build()
 
-    val newUri = if (!overwrite) {
+    val newUri = if (!overwrite && !isFromOpenWithView) {
         context.contentResolver.insertMedia(
             context = context,
             media = media.copy(
@@ -425,7 +432,8 @@ suspend fun saveImage(
     textMeasurer: TextMeasurer,
     actualLeft: Float,
     actualTop: Float,
-    overwrite: Boolean
+    overwrite: Boolean,
+    isFromOpenWithView: Boolean
 ) {
     val isLoading = mutableStateOf(true)
 
@@ -642,7 +650,7 @@ suspend fun saveImage(
     )
 
     val newUri =
-        if (!overwrite) {
+        if (!overwrite && !isFromOpenWithView) {
             context.contentResolver.insertMedia(
                 context = context,
                 media = media,

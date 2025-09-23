@@ -284,7 +284,8 @@ fun VideoEditorTopBar(
     drawingPaintState: DrawingPaintState,
     lastSavedModCount: MutableIntState,
     containerDimens: Size,
-    canvasSize: Size
+    canvasSize: Size,
+    isFromOpenWithView: Boolean
 ) {
     val navController = LocalNavController.current
 
@@ -398,7 +399,8 @@ fun VideoEditorTopBar(
                                     overwrite = overwrite,
                                     containerDimens = containerDimens,
                                     canvasSize = canvasSize,
-                                    textMeasurer = textMeasurer
+                                    textMeasurer = textMeasurer,
+                                    isFromOpenWithView = isFromOpenWithView
                                 ) {
                                     coroutineScope.launch {
                                         LavenderSnackbarController.pushEvent(

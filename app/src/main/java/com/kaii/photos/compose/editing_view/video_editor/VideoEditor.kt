@@ -104,7 +104,8 @@ private const val TAG = "com.kaii.photos.compose.editing_view.VideoEditor"
 fun VideoEditor(
     uri: Uri,
     absolutePath: String,
-    window: Window
+    window: Window,
+    isFromOpenWithView: Boolean
 ) {
     val isPlaying = remember { mutableStateOf(false) }
 
@@ -370,7 +371,8 @@ fun VideoEditor(
                 basicVideoData = basicVideoData,
                 lastSavedModCount = lastSavedModCount,
                 containerDimens = containerDimens,
-                canvasSize = canvasSize
+                canvasSize = canvasSize,
+                isFromOpenWithView = isFromOpenWithView
             )
         },
         bottomBar = {

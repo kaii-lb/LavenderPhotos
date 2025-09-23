@@ -104,7 +104,8 @@ import kotlin.math.min
 @Composable
 fun ImageEditor(
     uri: Uri,
-    absolutePath: String
+    absolutePath: String,
+    isFromOpenWithView: Boolean
 ) {
     val imageEditingState = rememberImageEditingState()
     val drawingPaintState = rememberDrawingPaintState(
@@ -250,7 +251,8 @@ fun ImageEditor(
                         textMeasurer = textMeasurer,
                         actualLeft = actualStarts.first,
                         actualTop = actualStarts.second,
-                        overwrite = overwrite
+                        overwrite = overwrite,
+                        isFromOpenWithView = isFromOpenWithView
                     )
                 }
             )

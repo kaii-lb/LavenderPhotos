@@ -707,7 +707,8 @@ class MainActivity : ComponentActivity() {
 
                     ImageEditor(
                         uri = screen.uri.toUri(),
-                        absolutePath = screen.absolutePath
+                        absolutePath = screen.absolutePath,
+                        isFromOpenWithView = false
                     )
                 }
 
@@ -942,7 +943,8 @@ class MainActivity : ComponentActivity() {
                     VideoEditor(
                         uri = screen.uri.toUri(),
                         absolutePath = screen.absolutePath,
-                        window = window
+                        window = window,
+                        isFromOpenWithView = false
                     )
                 }
 
