@@ -339,8 +339,8 @@ fun AlbumsListItem(
                             overwriteDate = overwriteDate,
                             basePath = path.toBasePath()
                         ) { media ->
-                            if (isMoving) {
-                                if (!list.contains(media)) list.add(media)
+                            if (isMoving && !list.contains(media)) {
+                                list.add(media)
                             }
                         }
                     }
