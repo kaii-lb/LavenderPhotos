@@ -519,7 +519,7 @@ fun VideoEditorProcessingContent(
         if (showBitrateDialog) {
             TextEntryDialog(
                 title = stringResource(id = R.string.editing_bitrate),
-                placeholder = stringResource(id = R.string.editing_bitrate_unit),
+                placeholder = "${videoEditingState.bitrate} ${stringResource(id = R.string.editing_bitrate_unit)}",
                 onConfirm = {
                     val success = it.toIntOrNull() != null && it.toInt() > 0
                     if (success) videoEditingState.setBitrate(it.toInt())

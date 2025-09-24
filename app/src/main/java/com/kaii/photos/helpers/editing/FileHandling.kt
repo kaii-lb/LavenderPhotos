@@ -319,7 +319,10 @@ suspend fun saveVideo(
             DefaultEncoderFactory.Builder(context)
                 .setRequestedVideoEncoderSettings(
                     VideoEncoderSettings.Builder()
-                        .setBitrate(videoEditingState.bitrate)
+                        .setBitrate(
+                            if (videoEditingState.bitrate == 0) 1_200_000
+                            else videoEditingState.bitrate
+                        )
                         .build()
                 )
                 .build()
