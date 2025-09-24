@@ -113,10 +113,12 @@ fun GetDirectoryPermissionAndRun(
     val launcher = createPersistablePermissionLauncher(
         onGranted = { _ ->
             grantedList.add(absoluteDirPaths[currentIndex])
+            shouldRun.value = false
             currentIndex += 1
         },
 
         onFailure = {
+            shouldRun.value = false
             currentIndex += 1
         }
     )
@@ -125,7 +127,10 @@ fun GetDirectoryPermissionAndRun(
         showDialog = showNoPermissionForDirDialog,
         dialogTitle = stringResource(id = R.string.permissions_needed),
         dialogBody = stringResource(id = R.string.permissions_needed_desc),
-        confirmButtonLabel = stringResource(id = R.string.permissions_grant)
+        confirmButtonLabel = stringResource(id = R.string.permissions_grant),
+        onCancel = {
+            shouldRun.value = false
+        }
     ) {
         if (currentIndex < absoluteDirPaths.size) {
             val uri = context.getExternalStorageContentUriFromAbsolutePath(
@@ -142,9 +147,17 @@ fun GetDirectoryPermissionAndRun(
     }
 
     LaunchedEffect(currentIndex) {
+        if (currentIndex <= 0) return@LaunchedEffect
+
         Log.d(TAG, "Current ${currentIndex}, total ${absoluteDirPaths.size - 1} and granted list $grantedList")
-        if (currentIndex >= absoluteDirPaths.size - 1 && grantedList.isNotEmpty()) onGranted(grantedList.toList())
-        else if (currentIndex >= absoluteDirPaths.size - 1) onRejected() // grantedList IS empty
+        if (currentIndex >= absoluteDirPaths.size - 1 && grantedList.isNotEmpty()) {
+            onGranted(grantedList.toList())
+            currentIndex = 0
+        }
+        else if (currentIndex >= absoluteDirPaths.size - 1) {
+            onRejected()
+            currentIndex = 0
+        } // grantedList IS empty
     }
 
     LaunchedEffect(shouldRun.value, absoluteDirPaths) {
