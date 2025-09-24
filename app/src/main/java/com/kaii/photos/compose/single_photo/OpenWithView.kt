@@ -106,6 +106,8 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.kaii.lavender.snackbars.LavenderSnackbarBox
+import com.kaii.lavender.snackbars.LavenderSnackbarController
+import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.lavender.snackbars.LavenderSnackbarHostState
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
@@ -130,6 +132,7 @@ import com.kaii.photos.models.main_activity.MainViewModelFactory
 import com.kaii.photos.models.multi_album.DisplayDateFormat
 import com.kaii.photos.models.multi_album.formatDate
 import com.kaii.photos.ui.theme.PhotosTheme
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 
 class OpenWithView : ComponentActivity() {
@@ -981,62 +984,82 @@ private fun BottomBar(
                     )
 
                     val resources = LocalResources.current
+                    val mainViewModel = LocalMainViewModel.current
                     BottomAppBarItem(
                         text = stringResource(id = R.string.edit),
                         iconResId = R.drawable.paintbrush,
                         cornerRadius = 32.dp,
                         action = {
-                            val extension = mimeType.split("/")[1]
-                            val currentTime = System.currentTimeMillis()
-                            val date = formatDate(
-                                timestamp = currentTime / 1000,
-                                sortBy = MediaItemSortMode.DateTaken,
-                                format = DisplayDateFormat.Default
-                            )
-                            val name = resources.getString(R.string.edit_desc, "$date.$extension")
+                            mainViewModel.launch(Dispatchers.IO) {
+                                val isLoading = mutableStateOf(true)
 
-                            val contentValues = ContentValues().apply {
-                                put(MediaColumns.DISPLAY_NAME, name)
-                                put(MediaColumns.DATE_MODIFIED, currentTime)
-                                put(MediaColumns.DATE_TAKEN, currentTime)
-                                put(MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES)
-                                put(MediaColumns.MIME_TYPE, mimeType)
-                            }
-
-                            val contentUri = context.contentResolver.insert(
-                                if (mediaType == MediaType.Image) MediaStore.Images.Media.EXTERNAL_CONTENT_URI
-                                else MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
-                                contentValues
-                            )
-
-                            contentUri?.let {
-                                context.contentResolver.getMediaStoreDataFromUri(contentUri)?.absolutePath?.let { absolutePath ->
-                                    context.contentResolver.copyUriToUri(
-                                        from = uri,
-                                        to = contentUri
+                                LavenderSnackbarController.pushEvent(
+                                    LavenderSnackbarEvents.LoadingEvent(
+                                        message = resources.getString(
+                                            if (mediaType == MediaType.Image) R.string.editing_open_with_copying_image
+                                                else R.string.editing_open_with_copying_video
+                                        ),
+                                        icon =
+                                            if (mediaType == MediaType.Image) R.drawable.edit
+                                            else R.drawable.movie_edit,
+                                        isLoading = isLoading
                                     )
+                                )
 
-                                    setBarVisibility(
-                                        visible = true,
-                                        window = window
-                                    ) {
-                                        appBarsVisible.value = it
-                                    }
+                                val extension = mimeType.split("/")[1]
+                                val currentTime = System.currentTimeMillis()
+                                val date = formatDate(
+                                    timestamp = currentTime / 1000,
+                                    sortBy = MediaItemSortMode.DateTaken,
+                                    format = DisplayDateFormat.Default
+                                )
+                                val name = resources.getString(R.string.edit_desc, "$date.$extension")
 
-                                    navController.navigate(
-                                        if (mediaType == MediaType.Image) {
-                                            Screens.ImageEditor(
-                                                absolutePath = absolutePath,
-                                                uri = contentUri.toString(),
-                                                dateTaken = currentTime / 1000
-                                            )
-                                        } else {
-                                            Screens.VideoEditor(
-                                                uri = contentUri.toString(),
-                                                absolutePath = absolutePath
-                                            )
+                                val contentValues = ContentValues().apply {
+                                    put(MediaColumns.DISPLAY_NAME, name)
+                                    put(MediaColumns.DATE_MODIFIED, currentTime)
+                                    put(MediaColumns.DATE_TAKEN, currentTime)
+                                    put(MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES)
+                                    put(MediaColumns.MIME_TYPE, mimeType)
+                                }
+
+                                val contentUri = context.contentResolver.insert(
+                                    if (mediaType == MediaType.Image) MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+                                    else MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+                                    contentValues
+                                )
+
+                                contentUri?.let {
+                                    context.contentResolver.getMediaStoreDataFromUri(contentUri)?.absolutePath?.let { absolutePath ->
+                                        context.contentResolver.copyUriToUri(
+                                            from = uri,
+                                            to = contentUri
+                                        )
+
+                                        setBarVisibility(
+                                            visible = true,
+                                            window = window
+                                        ) {
+                                            appBarsVisible.value = it
                                         }
-                                    )
+
+                                        isLoading.value = false
+
+                                        navController.navigate(
+                                            if (mediaType == MediaType.Image) {
+                                                Screens.ImageEditor(
+                                                    absolutePath = absolutePath,
+                                                    uri = contentUri.toString(),
+                                                    dateTaken = currentTime / 1000
+                                                )
+                                            } else {
+                                                Screens.VideoEditor(
+                                                    uri = contentUri.toString(),
+                                                    absolutePath = absolutePath
+                                                )
+                                            }
+                                        )
+                                    }
                                 }
                             }
                         }

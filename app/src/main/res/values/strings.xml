@@ -635,6 +635,8 @@
     <string name="editing_upload_image_failed">Couldn\'t pick image</string>
     <string name="editing_bitrate">Bitrate</string>
     <string name="editing_bitrate_unit">Bits per second</string>
+    <string name="editing_open_with_copying_video">Processing video…</string>
+    <string name="editing_open_with_copying_image">Processing image…</string>
 
     <!-- Editing Filters -->
     <string name="filter">Filter</string>
