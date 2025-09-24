@@ -2,8 +2,6 @@ package com.kaii.photos.compose.app_bars
 
 import android.app.Activity
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.Arrangement
@@ -13,13 +11,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingToolbarDefaults
@@ -32,7 +31,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -49,12 +47,13 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.MainActivity.Companion.immichViewModel
 import com.kaii.photos.R
+import com.kaii.photos.compose.dialogs.AlbumAddChoiceDialog
 import com.kaii.photos.compose.widgets.AnimatedLoginIcon
 import com.kaii.photos.compose.widgets.SelectViewTopBarLeftButtons
 import com.kaii.photos.compose.widgets.SelectViewTopBarRightButtons
-import com.kaii.photos.compose.dialogs.AlbumAddChoiceDialog
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
@@ -158,11 +157,8 @@ fun MainAppBottomBar(
     tabs: List<BottomBarTab>,
     selectedItemsList: SnapshotStateList<MediaStoreData>
 ) {
-    var expanded by remember { mutableStateOf(true) }
-
-    LaunchedEffect(selectedItemsList.size) {
-        expanded = selectedItemsList.isEmpty()
-    }
+    val mainViewModel = LocalMainViewModel.current
+    val mainTab by mainViewModel.settings.DefaultTabs.getDefaultTab().collectAsStateWithLifecycle(initialValue = DefaultTabs.TabTypes.photos)
 
     Box(
         modifier = Modifier
@@ -172,137 +168,83 @@ fun MainAppBottomBar(
             .padding(all = 8.dp),
         contentAlignment = Alignment.Center
     ) {
+        val state = rememberLazyListState(
+            initialFirstVisibleItemIndex =
+                tabs.indexOf(
+                    if (mainTab == DefaultTabs.TabTypes.secure) DefaultTabs.TabTypes.photos else mainTab
+                )
+        )
+
         HorizontalFloatingToolbar(
-            expanded = expanded,
+            expanded = false,
             collapsedShadowElevation = 12.dp,
             expandedShadowElevation = 12.dp,
             scrollBehavior = FloatingToolbarDefaults.exitAlwaysScrollBehavior(
                 exitDirection = FloatingToolbarExitDirection.Bottom // TODO: continue this
             ),
-            leadingContent = {
-                tabs.take(if (selectedItemsList.isNotEmpty()) 1 else 4).forEach { tab ->
-                    ToggleButton(
-                        checked = currentView.value == tab,
-                        onCheckedChange = {
-                            if (currentView.value != tab) {
-                                selectedItemsList.clear()
-                                currentView.value = tab
-                            }
-                        },
-                        shapes = ToggleButtonDefaults.shapes(
-                            shape = null,
-                            pressedShape = CircleShape,
-                            checkedShape = CircleShape
+            content = {
+                if (selectedItemsList.isNotEmpty()) {
+                    SelectingBottomBarItems(
+                        albumInfo = AlbumInfo(
+                            id = currentView.value.id,
+                            name = currentView.value.name,
+                            paths = currentView.value.albumPaths,
+                            isCustomAlbum = false
                         ),
-                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 12.dp)
+                        selectedItemsList = selectedItemsList
+                    )
+                } else {
+                    LazyRow(
+                        state = state
                     ) {
-                        AnimatedVisibility(
-                            visible = currentView.value == tab
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Center
+                        items(
+                            count = tabs.size
+                        ) { index ->
+                            val tab = tabs[index]
+
+                            ToggleButton(
+                                checked = currentView.value == tab,
+                                onCheckedChange = {
+                                    if (currentView.value != tab) {
+                                        selectedItemsList.clear()
+                                        currentView.value = tab
+                                    }
+                                },
+                                shapes = ToggleButtonDefaults.shapes(
+                                    shape = null,
+                                    pressedShape = CircleShape,
+                                    checkedShape = CircleShape
+                                ),
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 12.dp)
                             ) {
-                                Icon(
-                                    painter = painterResource(id = tab.icon.filled),
-                                    contentDescription = stringResource(id = R.string.tabs_navigate_to, tab.name)
+                                AnimatedVisibility(
+                                    visible = currentView.value == tab
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.Center
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(id = tab.icon.filled),
+                                            contentDescription = stringResource(id = R.string.tabs_navigate_to, tab.name)
+                                        )
+
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                    }
+                                }
+
+                                Text(
+                                    text = tab.name,
+                                    fontSize = TextUnit(14f, TextUnitType.Sp),
+                                    fontWeight = FontWeight.Medium
                                 )
 
-                                Spacer(modifier = Modifier.width(4.dp))
+                                Spacer(modifier = Modifier.width(2.dp))
                             }
                         }
-
-                        Text(
-                            text = tab.name,
-                            fontSize = TextUnit(14f, TextUnitType.Sp),
-                            fontWeight = FontWeight.Medium
-                        )
-
-                        Spacer(modifier = Modifier.width(2.dp))
                     }
                 }
             }
-        ) {
-            if (selectedItemsList.isNotEmpty()) {
-                SelectingBottomBarItems(
-                    albumInfo = AlbumInfo(
-                        id = currentView.value.id,
-                        name = currentView.value.name,
-                        paths = currentView.value.albumPaths,
-                        isCustomAlbum = false
-                    ),
-                    selectedItemsList = selectedItemsList
-                )
-            } else if (!expanded) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    tabs.drop(4).forEach { tab ->
-                        val height by animateDpAsState(
-                            targetValue = if (expanded) 0.dp else 48.dp,
-                            animationSpec = tween(
-                                delayMillis = 300
-                            )
-                        )
-
-                        ToggleButton(
-                            checked = currentView.value == tab,
-                            onCheckedChange = {
-                                if (currentView.value != tab) {
-                                    selectedItemsList.clear()
-                                    currentView.value = tab
-                                }
-                            },
-                            shapes = ToggleButtonDefaults.shapes(
-                                shape = null,
-                                pressedShape = CircleShape,
-                                checkedShape = CircleShape
-                            ),
-                            contentPadding = PaddingValues(all = 10.dp),
-                            modifier = Modifier
-                                .height(height)
-                        ) {
-                            AnimatedVisibility(
-                                visible = currentView.value == tab
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.Center
-                                ) {
-                                    Icon(
-                                        painter = painterResource(id = tab.icon.filled),
-                                        contentDescription = stringResource(id = R.string.tabs_navigate_to, tab.name)
-                                    )
-
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                }
-                            }
-
-                            Text(
-                                text = tab.name,
-                                fontSize = TextUnit(14f, TextUnitType.Sp),
-                                fontWeight = FontWeight.Medium
-                            )
-
-                            Spacer(modifier = Modifier.width(2.dp))
-                        }
-                    }
-                }
-            }
-
-            if (tabs.size > 4 && selectedItemsList.isEmpty()) {
-                IconButton(
-                    onClick = {
-                        expanded = !expanded
-                    }
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.other_page_indicator),
-                        contentDescription = "Show more tabs"
-                    )
-                }
-            }
-        }
+        )
     }
 }
