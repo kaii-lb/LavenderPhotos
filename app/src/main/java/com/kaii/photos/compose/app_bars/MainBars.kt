@@ -1,9 +1,15 @@
 package com.kaii.photos.compose.app_bars
 
 import android.app.Activity
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -39,6 +45,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -182,64 +189,84 @@ fun MainAppBottomBar(
             scrollBehavior = FloatingToolbarDefaults.exitAlwaysScrollBehavior(
                 exitDirection = FloatingToolbarExitDirection.Bottom // TODO: continue this
             ),
+            modifier = Modifier
+                .animateContentSize(),
             content = {
-                if (selectedItemsList.isNotEmpty()) {
-                    SelectingBottomBarItems(
-                        albumInfo = AlbumInfo(
-                            id = currentView.value.id,
-                            name = currentView.value.name,
-                            paths = currentView.value.albumPaths,
-                            isCustomAlbum = false
-                        ),
-                        selectedItemsList = selectedItemsList
-                    )
-                } else {
-                    LazyRow(
-                        state = state
-                    ) {
-                        items(
-                            count = tabs.size
-                        ) { index ->
-                            val tab = tabs[index]
-
-                            ToggleButton(
-                                checked = currentView.value == tab,
-                                onCheckedChange = {
-                                    if (currentView.value != tab) {
-                                        selectedItemsList.clear()
-                                        currentView.value = tab
-                                    }
-                                },
-                                shapes = ToggleButtonDefaults.shapes(
-                                    shape = null,
-                                    pressedShape = CircleShape,
-                                    checkedShape = CircleShape
+                AnimatedContent(
+                    targetState = selectedItemsList.isNotEmpty(),
+                    transitionSpec = {
+                        (slideInHorizontally() + fadeIn()).togetherWith(
+                            scaleOut(
+                                transformOrigin = TransformOrigin(1f, 0.5f)
+                            ) + fadeOut()
+                        )
+                    }
+                ) { animationState ->
+                    if (animationState) {
+                        Row(
+                            modifier = Modifier
+                                .wrapContentHeight(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            SelectingBottomBarItems(
+                                albumInfo = AlbumInfo(
+                                    id = currentView.value.id,
+                                    name = currentView.value.name,
+                                    paths = currentView.value.albumPaths,
+                                    isCustomAlbum = false
                                 ),
-                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 12.dp)
-                            ) {
-                                AnimatedVisibility(
-                                    visible = currentView.value == tab
+                                selectedItemsList = selectedItemsList
+                            )
+                        }
+                    } else {
+                        LazyRow(
+                            state = state
+                        ) {
+                            items(
+                                count = tabs.size
+                            ) { index ->
+                                val tab = tabs[index]
+
+                                ToggleButton(
+                                    checked = currentView.value == tab,
+                                    onCheckedChange = {
+                                        if (currentView.value != tab) {
+                                            selectedItemsList.clear()
+                                            currentView.value = tab
+                                        }
+                                    },
+                                    shapes = ToggleButtonDefaults.shapes(
+                                        shape = null,
+                                        pressedShape = CircleShape,
+                                        checkedShape = CircleShape
+                                    ),
+                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 12.dp)
                                 ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.Center
+                                    AnimatedVisibility(
+                                        visible = currentView.value == tab
                                     ) {
-                                        Icon(
-                                            painter = painterResource(id = tab.icon.filled),
-                                            contentDescription = stringResource(id = R.string.tabs_navigate_to, tab.name)
-                                        )
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.Center
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(id = tab.icon.filled),
+                                                contentDescription = stringResource(id = R.string.tabs_navigate_to, tab.name)
+                                            )
 
-                                        Spacer(modifier = Modifier.width(4.dp))
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                        }
                                     }
+
+                                    Text(
+                                        text = tab.name,
+                                        fontSize = TextUnit(14f, TextUnitType.Sp),
+                                        fontWeight = FontWeight.Medium
+                                    )
+
+                                    Spacer(modifier = Modifier.width(2.dp))
                                 }
-
-                                Text(
-                                    text = tab.name,
-                                    fontSize = TextUnit(14f, TextUnitType.Sp),
-                                    fontWeight = FontWeight.Medium
-                                )
-
-                                Spacer(modifier = Modifier.width(2.dp))
                             }
                         }
                     }
