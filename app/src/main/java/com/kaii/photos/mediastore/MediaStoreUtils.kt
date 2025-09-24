@@ -102,11 +102,16 @@ suspend fun ContentResolver.insertMedia(
         fileToBeSavedTo?.let { savedToFile ->
             onInsert(media.uri, savedToFile.uri)
 
-            getMediaStoreDataFromUri(savedToFile.uri)?.let { newMedia ->
-                File(newMedia.absolutePath).setLastModified(
-                    if (overwriteDate) currentTime
-                    else media.dateTaken * 1000
-                )
+            try {
+                getMediaStoreDataFromUri(savedToFile.uri)?.let { newMedia ->
+                    File(newMedia.absolutePath).setLastModified(
+                        if (overwriteDate) currentTime
+                        else media.dateTaken * 1000
+                    )
+                }
+            } catch (e: Throwable) {
+                Log.e(TAG, e.toString())
+                e.printStackTrace()
             }
 
             return@withContext savedToFile.uri
@@ -193,10 +198,11 @@ fun ContentResolver.getMediaStoreDataFromUri(uri: Uri): MediaStoreData? {
         uri,
         arrayOf(
             MediaColumns._ID,
-            MediaColumns.DATA,
+            FileColumns.DATA,
             MediaColumns.DATE_MODIFIED,
             MediaColumns.MIME_TYPE,
-            MediaColumns.DISPLAY_NAME
+            MediaColumns.DISPLAY_NAME,
+            MediaColumns.DATE_TAKEN
         ),
         null,
         null,
@@ -209,6 +215,7 @@ fun ContentResolver.getMediaStoreDataFromUri(uri: Uri): MediaStoreData? {
         val mimeTypeColNum = mediaCursor.getColumnIndexOrThrow(MediaColumns.MIME_TYPE)
         val displayNameIndex = mediaCursor.getColumnIndexOrThrow(FileColumns.DISPLAY_NAME)
         val dateModifiedColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.DATE_MODIFIED)
+        val dateTakenColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.DATE_TAKEN)
 
         while (cursor.moveToNext()) {
             val contentId = cursor.getLong(contentIdColNum)
@@ -217,7 +224,21 @@ fun ContentResolver.getMediaStoreDataFromUri(uri: Uri): MediaStoreData? {
             val dateModified = cursor.getLong(dateModifiedColumn)
             val displayName = cursor.getString(displayNameIndex)
 
-            val dateTaken = getDateTakenForMedia(absolutePath)
+            Log.d(TAG, "Searching absolute path $absolutePath")
+
+            val mediaStoreDateTaken = cursor.getLong(dateTakenColumn) / 1000
+            val dateTaken =
+                if (mediaStoreDateTaken == 0L) {
+                    if (dateModified != 0L) {
+                        dateModified
+                    } else if (mimeType.startsWith("image")) {
+                        getDateTakenForMedia(absolutePath)
+                    } else {
+                        System.currentTimeMillis() / 1000
+                    }
+                } else {
+                    mediaStoreDateTaken
+                }
 
             val type =
                 if (mimeType.contains("image")) MediaType.Image

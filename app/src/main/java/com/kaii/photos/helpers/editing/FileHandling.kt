@@ -61,6 +61,7 @@ import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
 import com.kaii.photos.helpers.appStorageDir
+import com.kaii.photos.helpers.copyImageListToPath
 import com.kaii.photos.helpers.getParentFromPath
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.toBasePath
@@ -335,6 +336,9 @@ suspend fun saveVideo(
     while (completions == 0) {
         delay(1000)
     }
+    delay(1000)
+
+    Log.d(TAG, "Cached video $tempPath exists ${File(tempPath).exists()}")
 
     modList.clear()
 
@@ -387,37 +391,59 @@ suspend fun saveVideo(
         .setEffects(Effects(emptyList(), modList))
         .build()
 
-    val newUri = if (!overwrite && !isFromOpenWithView) {
-        context.contentResolver.insertMedia(
-            context = context,
-            media = media.copy(
-                uri = mediaUri,
-                absolutePath = tempFile.absolutePath
-            ),
-            destination = absolutePath.getParentFromPath(),
-            overwriteDate = true,
-            basePath = absolutePath.toBasePath(),
-            currentVolumes = MediaStore.getExternalVolumeNames(context),
-            overrideDisplayName = file.name.removeSuffix(file.extension) + "mp4",
-            onInsert = { _, _ -> }
-        )
-    } else {
-        mediaUri
-    }
+    val tempPathCrop = context.appStorageDir + "/cache/crop-${media.displayName}"
 
-    if (newUri == null) return
-
-    val newMedia = context.contentResolver.getMediaStoreDataFromUri(newUri)
-    val newPath = newMedia?.absolutePath
-    if (newPath == null) return
-
-    // because: java.io.FileNotFoundException open failed: EEXIST (File exists)
-    // if the file exists
-    permanentlyDeletePhotoList(context = context, list = listOf(newMedia.uri))
+    val tempFileCrop = File(tempPathCrop)
+    if (tempFileCrop.exists()) tempFileCrop.delete()
+    if (tempFileCrop.parentFile?.exists() != true) tempFileCrop.parentFile?.mkdirs()
+    tempFileCrop.createNewFile()
 
     transformer.start(
         finalEditedMediaItem,
-        newPath
+        tempFileCrop.absolutePath
+    )
+
+    // wait again while that does its thing
+    while (completions == 1) {
+        delay(1000)
+    }
+    delay(1000)
+
+    val newUri = context.contentResolver.getUriFromAbsolutePath(tempFileCrop.absolutePath, MediaType.Video)
+
+    if (newUri == null) {
+        isLoading.value = false
+        return
+    }
+
+    if (overwrite) {
+        permanentlyDeletePhotoList(
+            context = context,
+            list = listOf(
+                media.uri
+            )
+        )
+    }
+
+    copyImageListToPath(
+        context = context,
+        list = listOf(
+            media.copy(
+                uri = newUri,
+                absolutePath = tempFileCrop.absolutePath,
+                mimeType = "video/mp4"
+            )
+        ),
+        destination = absolutePath.getParentFromPath(),
+        basePath = absolutePath.toBasePath(),
+        overwriteDate = false,
+        overrideDisplayName = {
+            it.replaceFirst("crop-", "")
+        },
+        onSingleItemDone = { data ->
+            permanentlyDeletePhotoList(context, listOf(data.uri))
+            if (tempFile.exists()) tempFile.delete()
+        }
     )
 }
 
