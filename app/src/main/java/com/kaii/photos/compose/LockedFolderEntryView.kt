@@ -7,7 +7,6 @@ import android.net.Uri
 import android.os.CancellationSignal
 import android.util.Log
 import android.widget.Toast
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -24,7 +23,6 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -50,8 +48,6 @@ import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
-import com.kaii.photos.datastore.BottomBarTab
-import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.helpers.AppDirectories
 import com.kaii.photos.helpers.DataAndBackupHelper
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
@@ -79,17 +75,9 @@ import kotlin.uuid.ExperimentalUuidApi
 private const val TAG = "com.kaii.photos.compose.LockedFolderEntryView"
 
 @Composable
-fun LockedFolderEntryView(
-    currentView: MutableState<BottomBarTab>
-) {
+fun LockedFolderEntryView() {
     val navController = LocalNavController.current
     val mainViewModel = LocalMainViewModel.current
-
-    BackHandler(
-        enabled = currentView.value == DefaultTabs.TabTypes.secure && navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name
-    ) {
-        currentView.value = DefaultTabs.TabTypes.photos
-    }
 
     val context = LocalContext.current
     val cancellationSignal = CancellationSignal()

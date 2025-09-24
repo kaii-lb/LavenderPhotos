@@ -10,6 +10,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatDelegate
@@ -65,6 +66,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastFilter
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
@@ -92,6 +94,7 @@ import com.kaii.photos.database.Migration3to4
 import com.kaii.photos.database.Migration4to5
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumInfoNavType
+import com.kaii.photos.datastore.Behaviour
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.LookAndFeel
@@ -106,11 +109,16 @@ import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.custom_album.CustomAlbumViewModelFactory
+import com.kaii.photos.models.favourites_grid.FavouritesViewModel
+import com.kaii.photos.models.favourites_grid.FavouritesViewModelFactory
 import com.kaii.photos.models.main_activity.MainViewModel
 import com.kaii.photos.models.main_activity.MainViewModelFactory
 import com.kaii.photos.models.multi_album.DisplayDateFormat
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModelFactory
+import com.kaii.photos.models.multi_album.groupPhotosBy
+import com.kaii.photos.models.trash_bin.TrashViewModel
+import com.kaii.photos.models.trash_bin.TrashViewModelFactory
 import com.kaii.photos.setupNextScreen
 import com.kaii.photos.ui.theme.PhotosTheme
 import kotlinx.coroutines.Dispatchers
@@ -414,6 +422,18 @@ class MediaPicker : ComponentActivity() {
                 Pair(0.dp, 0.dp)
             }
 
+            val exitImmediately by mainViewModel.settings.Behaviour.getExitImmediately().collectAsStateWithLifecycle(initialValue = false)
+            val mainPage by mainViewModel.settings.DefaultTabs.getDefaultTab().collectAsStateWithLifecycle(initialValue = DefaultTabs.TabTypes.photos)
+            val navController = LocalNavController.current
+
+            BackHandler(
+                enabled = navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name
+                        && !exitImmediately
+                        && currentView.value != mainPage
+            ) {
+                currentView.value = mainPage
+            }
+
             Box {
                 Column(
                     modifier = Modifier
@@ -544,7 +564,94 @@ class MediaPicker : ComponentActivity() {
                                         selectedItemsList.clear()
                                     }
 
-                                    SearchPage(selectedItemsList, currentView)
+                                    SearchPage(selectedItemsList)
+                                }
+
+                                stateValue == DefaultTabs.TabTypes.favourites -> {
+                                    val appDatabase = LocalAppDatabase.current
+                                    val favouritesViewModel: FavouritesViewModel = viewModel(
+                                        factory = FavouritesViewModelFactory(appDatabase)
+                                    )
+
+                                    val mediaStoreData by favouritesViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+
+                                    val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
+                                    val groupedMedia = remember {
+                                        mutableStateOf(
+                                            groupPhotosBy(
+                                                mediaStoreData,
+                                                MediaItemSortMode.LastModified,
+                                                displayDateFormat,
+                                                context
+                                            )
+                                        )
+                                    }
+
+                                    var hasFiles by remember { mutableStateOf(true) }
+
+                                    LaunchedEffect(mediaStoreData) {
+                                        if (mediaStoreData.isNotEmpty()) {
+                                            delay(PhotoGridConstants.UPDATE_TIME)
+                                            groupedMedia.value =
+                                                groupPhotosBy(
+                                                    mediaStoreData,
+                                                    MediaItemSortMode.LastModified,
+                                                    displayDateFormat,
+                                                    context
+                                                )
+                                        } else {
+                                            delay(PhotoGridConstants.LOADING_TIME)
+                                            groupedMedia.value = emptyList()
+                                            hasFiles = false
+                                        }
+
+                                        delay(PhotoGridConstants.LOADING_TIME)
+                                        hasFiles = mediaStoreData.isNotEmpty()
+
+                                        Log.d(TAG, "Grouped media size: ${groupedMedia.value.size}")
+                                    }
+
+                                    PhotoGrid(
+                                        groupedMedia = groupedMedia,
+                                        albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
+                                        selectedItemsList = selectedItemsList,
+                                        viewProperties = ViewProperties.Favourites,
+                                        hasFiles = hasFiles
+                                    )
+                                }
+
+                                stateValue == DefaultTabs.TabTypes.trash -> {
+                                    val appDatabase = LocalAppDatabase.current
+                                    val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
+
+                                    val trashViewModel: TrashViewModel = viewModel(
+                                        factory = TrashViewModelFactory(
+                                            context = context,
+                                            displayDateFormat = displayDateFormat,
+                                            appDatabase = appDatabase
+                                        )
+                                    )
+
+                                    val mediaStoreData =
+                                        trashViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+
+                                    val groupedMedia = remember { mutableStateOf(mediaStoreData.value) }
+                                    var hasFiles by remember { mutableStateOf(true) }
+
+                                    LaunchedEffect(mediaStoreData.value) {
+                                        groupedMedia.value = mediaStoreData.value
+
+                                        delay(PhotoGridConstants.LOADING_TIME)
+                                        hasFiles = groupedMedia.value.isNotEmpty()
+                                    }
+
+                                    PhotoGrid(
+                                        groupedMedia = groupedMedia,
+                                        albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
+                                        selectedItemsList = selectedItemsList,
+                                        viewProperties = ViewProperties.Trash,
+                                        hasFiles = hasFiles
+                                    )
                                 }
                             }
                         } else {
@@ -570,7 +677,7 @@ class MediaPicker : ComponentActivity() {
                     if (!state) {
                         MainAppBottomBar(
                             currentView = currentView,
-                            tabs = tabs.filter { it != DefaultTabs.TabTypes.secure },
+                            tabs = tabs.fastFilter { it != DefaultTabs.TabTypes.secure },
                             selectedItemsList = selectedItemsList
                         )
                     } else {
@@ -625,7 +732,7 @@ fun MediaPickerConfirmButton(
     ) {
         Button(
             onClick = {
-                if (incomingIntent.getBooleanExtra(Intent.EXTRA_ALLOW_MULTIPLE, false) == true
+                if (incomingIntent.getBooleanExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
                     || incomingIntent.action == Intent.ACTION_OPEN_DOCUMENT
                 ) {
                     val uris = selectedItemsList.filter { it.type != MediaType.Section }.map { it.uri }

@@ -1,7 +1,6 @@
 package com.kaii.photos.compose.grids
 
 import android.content.res.Configuration
-import androidx.activity.compose.BackHandler
 import androidx.annotation.FloatRange
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
@@ -230,12 +229,6 @@ fun AlbumsGridView(
     // update the list to reflect custom order
     LaunchedEffect(albums.value) {
         if (albums.value.isNotEmpty() && sortMode == AlbumSortMode.Custom) mainViewModel.settings.AlbumsList.setAlbumsList(albums.value)
-    }
-
-    BackHandler(
-        enabled = currentView.value == DefaultTabs.TabTypes.albums && navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name
-    ) {
-        currentView.value = DefaultTabs.TabTypes.photos
     }
 
     Column(

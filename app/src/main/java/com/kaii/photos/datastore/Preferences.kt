@@ -48,3 +48,6 @@ val Settings.PhotoGrid: SettingsPhotoGridImpl
 
 val Settings.Immich: SettingsImmichImpl
     get() = SettingsImmichImpl(context, viewModelScope)
+
+val Settings.Behaviour: SettingsBehaviourImpl
+    get() = SettingsBehaviourImpl(context, viewModelScope)

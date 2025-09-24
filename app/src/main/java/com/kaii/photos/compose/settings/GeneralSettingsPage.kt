@@ -49,11 +49,9 @@ import com.kaii.photos.compose.widgets.PreferencesSwitchRow
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
-import com.kaii.photos.datastore.Editing
 import com.kaii.photos.datastore.MainPhotosView
 import com.kaii.photos.datastore.PhotoGrid
 import com.kaii.photos.datastore.Versions
-import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
@@ -77,84 +75,6 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.Start
         ) {
-            item {
-                PreferencesSeparatorText(stringResource(id = R.string.video))
-            }
-
-            item {
-                val shouldAutoPlay by mainViewModel.settings.Video.getShouldAutoPlay()
-                    .collectAsStateWithLifecycle(initialValue = true)
-                val muteOnStart by mainViewModel.settings.Video.getMuteOnStart()
-                    .collectAsStateWithLifecycle(initialValue = false)
-
-                PreferencesSwitchRow(
-                    title = stringResource(id = R.string.video_auto_play),
-                    summary = stringResource(id = R.string.video_auto_play_desc),
-                    iconResID = R.drawable.auto_play,
-                    checked = shouldAutoPlay,
-                    position = RowPosition.Single,
-                    showBackground = false,
-                    onRowClick = null,
-                    onSwitchClick = { checked ->
-                        mainViewModel.settings.Video.setShouldAutoPlay(checked)
-                    }
-                )
-
-                PreferencesSwitchRow(
-                    title = stringResource(id = R.string.video_start_muted),
-                    summary = stringResource(id = R.string.video_start_muted_desc),
-                    iconResID = R.drawable.volume_mute,
-                    checked = muteOnStart,
-                    position = RowPosition.Single,
-                    showBackground = false,
-                    onRowClick = null,
-                    onSwitchClick = { checked ->
-                        mainViewModel.settings.Video.setMuteOnStart(checked)
-                    }
-                )
-            }
-
-
-            item {
-                PreferencesSeparatorText(stringResource(id = R.string.editing))
-            }
-
-            item {
-                val overwriteByDefault by mainViewModel.settings.Editing.getOverwriteByDefault()
-                    .collectAsStateWithLifecycle(initialValue = false)
-
-                PreferencesSwitchRow(
-                    title = stringResource(id = R.string.editing_overwrite_on_save),
-                    summary = stringResource(id = R.string.editing_overwrite_on_save_desc),
-                    iconResID = R.drawable.storage,
-                    checked = overwriteByDefault,
-                    position = RowPosition.Single,
-                    showBackground = false,
-                    onRowClick = null,
-                    onSwitchClick = { checked ->
-                        mainViewModel.settings.Editing.setOverwriteByDefault(checked)
-                    }
-                )
-            }
-
-            item {
-                val exitOnSave by mainViewModel.settings.Editing.getExitOnSave()
-                    .collectAsStateWithLifecycle(initialValue = false)
-
-                PreferencesSwitchRow(
-                    title = stringResource(id = R.string.editing_exit_on_save),
-                    summary = stringResource(id = R.string.editing_exit_on_save_desc),
-                    iconResID = R.drawable.exit,
-                    checked = exitOnSave,
-                    position = RowPosition.Single,
-                    showBackground = false,
-                    onRowClick = null,
-                    onSwitchClick = { checked ->
-                        mainViewModel.settings.Editing.setExitOnSave(checked)
-                    }
-                )
-            }
-
             item {
                 PreferencesSeparatorText(stringResource(id = R.string.albums))
             }

@@ -476,6 +476,7 @@
 
     <!-- Navigation -->
     <string name="return_to_previous_page">Return to previous page</string>
+    <string name="navigation">Navigation</string>
 
     <!-- App -->
     <string name="app_icon">App Icon</string>
@@ -728,6 +729,10 @@
     <string name="settings_clear">Clear</string>
     <string name="settings_clear_cache_desc">This will erase all the thumbnail caches on this device, freeing up storage. Thumbnail loading will take longer on the next startup.</string>
     <string name="settings_about_and_updates">About &amp; Updates</string>
+    <string name="settings_behaviour">Behaviour</string>
+    <string name="settings_behaviour_desc">Change how the app works</string>
+    <string name="settings_navigation_exit_immediately">Exit Immediately</string>
+    <string name="settings_navigation_exit_immediately_desc">Skips going back to the main photos view when pressing the back button</string>
 
     <!-- Trash -->
     <string name="trash_bin_short">Trash</string>

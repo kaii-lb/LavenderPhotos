@@ -9,6 +9,7 @@ import android.view.Window
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatDelegate
@@ -93,6 +94,7 @@ import com.kaii.photos.compose.grids.TrashedPhotoGridView
 import com.kaii.photos.compose.immich.ImmichAlbumPage
 import com.kaii.photos.compose.immich.ImmichMainPage
 import com.kaii.photos.compose.settings.AboutPage
+import com.kaii.photos.compose.settings.BehaviourSettingsPage
 import com.kaii.photos.compose.settings.DataAndBackupPage
 import com.kaii.photos.compose.settings.DebuggingSettingsPage
 import com.kaii.photos.compose.settings.ExtendedLicensePage
@@ -111,6 +113,7 @@ import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumInfoNavType
 import com.kaii.photos.datastore.AlbumsList
+import com.kaii.photos.datastore.Behaviour
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.Debugging
 import com.kaii.photos.datastore.DefaultTabs
@@ -792,6 +795,22 @@ class MainActivity : ComponentActivity() {
                     LookAndFeelSettingsPage()
                 }
 
+                composable(MultiScreenViewType.SettingsBehaviourView.name) {
+                    enableEdgeToEdge(
+                        navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.background.toArgb()),
+                        statusBarStyle = SystemBarStyle.auto(
+                            MaterialTheme.colorScheme.background.toArgb(),
+                            MaterialTheme.colorScheme.background.toArgb()
+                        )
+                    )
+                    setupNextScreen(
+                        selectedItemsList,
+                        window
+                    )
+
+                    BehaviourSettingsPage()
+                }
+
                 composable(MultiScreenViewType.UpdatesPage.name) {
                     enableEdgeToEdge(
                         navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.background.toArgb()),
@@ -1136,6 +1155,16 @@ class MainActivity : ComponentActivity() {
                 Pair(0.dp, 0.dp)
             }
 
+            val exitImmediately by mainViewModel.settings.Behaviour.getExitImmediately().collectAsStateWithLifecycle(initialValue = false)
+            val mainPage by mainViewModel.settings.DefaultTabs.getDefaultTab().collectAsStateWithLifecycle(initialValue = DefaultTabs.TabTypes.photos)
+            BackHandler(
+                enabled = navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name
+                        && !exitImmediately
+                        && currentView.value != mainPage
+            ) {
+                currentView.value = mainPage
+            }
+
             Column(
                 modifier = Modifier
                     .padding(
@@ -1220,12 +1249,13 @@ class MainActivity : ComponentActivity() {
                             }
 
                             stateValue == DefaultTabs.TabTypes.photos -> {
-                                val albums =
+                                val albums by remember { derivedStateOf {
                                     if (shouldShowEverything) {
                                         allAlbums.flatMap { album -> album.paths.fastMap { it.removeSuffix("/") } } - albumsList
                                     } else {
                                         albumsList
                                     }
+                                }}
 
                                 if (albums.toSet() != multiAlbumViewModel.albumInfo.paths.toSet()
                                     || multiAlbumViewModel.ignorePaths != shouldShowEverything
@@ -1273,9 +1303,7 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
 
-                            stateValue == DefaultTabs.TabTypes.secure -> LockedFolderEntryView(
-                                currentView
-                            )
+                            stateValue == DefaultTabs.TabTypes.secure -> LockedFolderEntryView()
 
                             stateValue == DefaultTabs.TabTypes.albums -> {
                                 AlbumsGridView(currentView)
@@ -1286,7 +1314,7 @@ class MainActivity : ComponentActivity() {
                                     selectedItemsList.clear()
                                 }
 
-                                SearchPage(selectedItemsList, currentView)
+                                SearchPage(selectedItemsList)
                             }
 
                             stateValue == DefaultTabs.TabTypes.favourites -> {

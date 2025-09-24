@@ -770,3 +770,20 @@ class SettingsImmichImpl(
         }
     }
 }
+
+class SettingsBehaviourImpl(
+    private val context: Context,
+    private val viewModelScope: CoroutineScope
+) {
+    private val exitImmediately = booleanPreferencesKey("behaviour_exit_immediately")
+
+    fun getExitImmediately() = context.datastore.data.map {
+        it[exitImmediately] == true
+    }
+
+    fun setExitImmediately(value: Boolean) = viewModelScope.launch {
+        context.datastore.edit {
+            it[exitImmediately] = value
+        }
+    }
+}
