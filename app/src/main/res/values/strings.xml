@@ -3,6 +3,38 @@
     <string name="app_name">Photos</string>
     <string name="changelog"><![CDATA[
     <p>
+    <h2>v1.1.0!:</h2>
+    <b><h4>- Added Features:</h4></b>
+    <p>
+        <br>- Added simplified chinese translation
+        <br>- Ability to blacklist albums when using "show all in main"
+        <br>- Pin albums even when "auto detect albums" is enabled
+        <br>- Toggle to immediately exit app on start page and not in photo view
+        <br>- Show loading snackbars in OpenWithView
+    </p>
+    <br>
+    <br>
+    <b><h4>- Improvements:</h4></b>
+    <p>
+        <br>- Ask for directory permission before editing file
+        <br>- Increase default video editor export bitrate
+        <br>- Make main navigation bar side-scrollable
+        <br>- New app icon
+        <br>- Albums in AlbumGridView now require long press to drag
+    </p>
+    <br>
+    <br>
+    <b><h4>- Fixed Bugs:</h4></b>
+    <p>
+        <br>- Inability to clear Immich server address if not logged in
+        <br>- Show everything in main shows everything everywhere
+        <br>- Update page\'s formatting being broken
+        <br>- Crash when deleting all media in an album
+        <br>- Crash when editing media from OpenWithView
+        <br>- Saving videos in non-standard directories would cause an infinite hang
+    </p>
+    <br>
+    <br>
     <h2>v1.0.0!:</h2>
     <br>
     <b><h4>- New Look!</h4></b>
