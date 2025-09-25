@@ -52,4 +52,55 @@
     <string name="secure_folder">Turvaline kaust</string>
     <string name="more_info">Lisateave</string>
     <string name="not_available">Pole saadaval</string>
+    <string name="direct_path_album">Kasuta albumi lisamiseks täpset asukohta</string>
+    <string name="albums_main_list">Albumite põhiline loend</string>
+    <string name="albums_main_list_selected">Siia valitud albumid saavad olema nähtavad põhilises fotovaates</string>
+    <string name="albums_selected">Valitud albumid</string>
+    <string name="albums_auto_detect">Tuvasta albumid automaatselt</string>
+    <string name="albums_auto_detect_desc">Tuvastab selle seadme meediafailidega kaustad ja lisab need albumite vaatesse</string>
+    <string name="albums_clear_list">Tühjenda albumite loend</string>
+    <string name="albums_clear_list_desc">Eemalda kõik albumid, välja arvatud Kaamera ja Allalaadimiste kaustad</string>
+    <string name="albums_clear_list_done">Albumite loend on tühjendatud</string>
+    <string name="tabs">Vahekaardid</string>
+    <string name="tab_non_existent">Seda vahekaarti pole olemas!</string>
+    <string name="tabs_default">Vaikimisi vahekaart</string>
+    <string name="tabs_default_desc">Käivitamisel avab Lavender Photos automaatselt selle vahekaardi</string>
+    <string name="tabs_customize">Kohenda vahekaarte</string>
+    <string name="tabs_customize_desc">Lisa ja muuda alumisel ribal kuvatavaid vahekaarte</string>
+    <string name="tabs_navigate_to">Mine lehele: %s$1</string>
+    <string name="albums_non_existent">Selliseid albumeid ei leidu</string>
+    <string name="albums_already_contains_all">Albumis juba on kõik objektid olemas</string>
+    <string name="albums_add_failed">Albumite hulka lisamine ei õnnestunud :&lt;</string>
+    <string name="albums_folder">Albumkaust</string>
+    <string name="privacy_policy">Seda tegelikult pole! Sinu andmed ei lahku selle rakenduse kaudu siit nutiseadmest. Seda ei kasutata tehisaru koolitamiseks ning meil pole algoritme teabe rehitsemiseks, tõesti mitte midagi. Lavender Photos on alati olnud privaatsuskeskne galeriirakendus.</string>
+    <string name="i_swear_were_not_bad">me tõesti ei kasuta sinu andmeid</string>
+    <string name="updates_notice">Teade allalaadimise kohta</string>
+    <string name="secure_processing">Palun oota, kuni meedium on töötlemisel</string>
+    <string name="secure_share_media">Jaga seda turvalist meediumi</string>
+    <string name="secure_encrypting">Failid on krüptimisel</string>
+    <string name="secure_decrypting">Failid on dekrüptimisel</string>
+    <string name="export_unenc_backup">Ekspordi krüptimata varukoopia</string>
+    <string name="favourites">Lemmikud</string>
+    <string name="data_and_backup">Andmed ja varundus</string>
+    <string name="favourites_add_this">Märgi see meedium lemmikuks</string>
+    <string name="debugging">Veaotsing</string>
+    <string name="debugging_desc">Tarvikud vigade otsimiseks</string>
+    <string name="logs">Logid</string>
+    <string name="record_logs">Salvesta logisid</string>
+    <string name="record_logs_desc">Salvesta logid veaotsingu eesmärgil. Vaatamiseks klõpsi.</string>
+    <string name="choose_logs">Vali logid</string>
+    <string name="previous_run_logs">Eelmise käivituse logid</string>
+    <string name="current_run_logs">Selle käivituse logid</string>
+    <string name="log_file_non_existent">Ühtegi logifaili pole veel salvestatud.</string>
+    <string name="album_add_path">Lisa albumite asukoht</string>
+    <string name="album_add">Lisa album</string>
+    <string name="updates_notice_desc"><![CDATA[
+            <p>See rakenduse uuendaja laadib apk-failid <a href="https://github.com/kaii-lb/LavenderPhotos/releases">GitHubist (GitHub Releases)</a>, mis
+                tähendab, et neid ei kontrollita ega testita nii, nagu IzzyOnDroid, F-Droid või muud rakendustepoed seda teevad.
+
+                <br><br>GitHubist laaditud failid on alati allkirjastatud, kontrollitud ja verifitseeritud arendaja poolt (kaii-lb) ning nende kasutamine saab olla vaid sinu otsus.
+
+                <br><br>Lavender Photos ei kasuta automaatset uuendamist ning alati uuendab vaid siis, kui oled seda konkreetselt lubanud.
+            </p>
+        ]]></string>
 </resources>
