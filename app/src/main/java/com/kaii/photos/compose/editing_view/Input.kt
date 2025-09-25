@@ -160,6 +160,7 @@ fun Modifier.makeVideoDrawCanvas(
                                         drawingPaintState = drawingPaintState,
                                         tappedOnText = tappedOnText,
                                         zoomChange = zoomChange,
+                                        panChange = panChange,
                                         rotationChange = rotationChange,
                                         textMeasurer = textMeasurer,
                                         currentVideoPosition = currentVideoPosition,
@@ -170,20 +171,20 @@ fun Modifier.makeVideoDrawCanvas(
                                         drawingPaintState = drawingPaintState,
                                         tappedOnImage = tappedOnImage,
                                         zoomChange = zoomChange,
+                                        panChange = panChange,
                                         rotationChange = rotationChange,
                                         currentVideoPosition = currentVideoPosition,
                                         currentImage = currentImage
                                     )
                                 } else if (zoomChange != 1f || panChange != Offset.Zero) {
                                     val oldScale = zoom
-                                    val isPanning = panChange.getDistanceSquared() >= 20f
 
-                                    val newScale = if (isPanning) zoom else (zoom * zoomChange).coerceIn(1f, 5f)
+                                    val newScale = (zoom * zoomChange).coerceIn(1f, 5f)
                                     val newOffset =
                                         (offset + centroid / oldScale) - (centroid / newScale + panChange)
 
                                     zoom = newScale
-                                    offset = if (zoom != 1f) newOffset else Offset.Zero
+                                    offset = newOffset
                                 }
 
                                 event.changes.fastForEach {
@@ -225,21 +226,6 @@ fun Modifier.makeVideoDrawCanvas(
                 }
             }
         }
-    // .pointerInput(enabled, isDrawing) {
-    //     if (!enabled || isDrawing) return@pointerInput
-    //
-    //     detectTapGestures(
-    //         onDoubleTap = { centroid ->
-    //             if (zoom != 1f) {
-    //                 zoom = 1f
-    //                 offset = Offset.Zero
-    //             } else {
-    //                 offset = offset + centroid / 2f
-    //                 zoom = 2f
-    //             }
-    //         }
-    //     )
-    // }
 
     return this.then(modifier)
 }
@@ -353,6 +339,8 @@ private suspend fun AwaitPointerEventScope.handleTextDrawing(
                 drawingPaintState.modifications.remove(currentText)
 
                 val position = dragChange.position - touchOffset
+                if (drawingPaintState.strokeWidth != currentText.text.paint.strokeWidth) return
+
                 val keyframe =
                     if (drawingPaintState.recordKeyframes) {
                         DrawingKeyframe.DrawingTextKeyframe(
@@ -420,6 +408,7 @@ private fun handleTextTransform(
     drawingPaintState: DrawingPaintState,
     tappedOnText: MutableState<SharedModification.DrawingText?>,
     zoomChange: Float,
+    panChange: Offset,
     rotationChange: Float,
     textMeasurer: TextMeasurer,
     currentVideoPosition: MutableFloatState,
@@ -430,6 +419,8 @@ private fun handleTextTransform(
     drawingPaintState.modifications.remove(tappedOnText.value!!)
 
     val strokeWidth = (tappedOnText.value!!.text.paint.strokeWidth * zoomChange).coerceIn(1f, 128f)
+    if (drawingPaintState.strokeWidth != tappedOnText.value!!.text.paint.strokeWidth) return
+
     val newSize = textMeasurer.measure(
         text = tappedOnText.value!!.text.text,
         style = DrawableText.Styles.Default.copy(
@@ -477,7 +468,7 @@ private fun handleTextTransform(
                         color = tappedOnText.value!!.text.paint.color,
                         strokeWidth = strokeWidth
                     ),
-                    position = positon,
+                    position = positon + panChange,
                     rotation = tappedOnText.value!!.text.rotation + rotationChange
                 ),
                 keyframes = keyframeList
@@ -491,7 +482,7 @@ private fun handleTextTransform(
                         color = tappedOnText.value!!.text.paint.color,
                         strokeWidth = strokeWidth
                     ),
-                    position = positon,
+                    position = positon + panChange,
                     rotation = tappedOnText.value!!.text.rotation + rotationChange
                 )
             )
@@ -640,6 +631,7 @@ private fun handleImageTransform(
     drawingPaintState: DrawingPaintState,
     tappedOnImage: MutableState<SharedModification.DrawingImage?>,
     zoomChange: Float,
+    panChange: Offset,
     rotationChange: Float,
     currentVideoPosition: MutableFloatState,
     currentImage: MutableState<SharedModification.DrawingImage?>
@@ -684,7 +676,7 @@ private fun handleImageTransform(
             (currentImage.value as VideoModification.DrawingImage).copy(
                 image = tappedOnImage.value!!.image.copy(
                     size = newSize,
-                    position = positon,
+                    position = positon + panChange,
                     rotation = tappedOnImage.value!!.image.rotation + rotationChange
                 ),
                 keyframes = keyframeList
@@ -694,7 +686,7 @@ private fun handleImageTransform(
             (currentImage.value as ImageModification.DrawingImage).copy(
                 image = tappedOnImage.value!!.image.copy(
                     size = newSize,
-                    position = positon,
+                    position = positon + panChange,
                     rotation = tappedOnImage.value!!.image.rotation + rotationChange
                 )
             )
