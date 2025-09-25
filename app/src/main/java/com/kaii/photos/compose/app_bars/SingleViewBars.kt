@@ -562,7 +562,7 @@ fun WallpaperSetterBottomBar(
 
         if (showDialog) {
             WallpaperTypeDialog(
-                onSetWallpaperType = { wallpaperType ->
+                onSetWallpaperType = { wallpaperType, scrollable ->
                     coroutineScope.launch(Dispatchers.IO) {
                         val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
                         val deviceSize = Size(
@@ -570,8 +570,14 @@ fun WallpaperSetterBottomBar(
                             height = windowManager.currentWindowMetrics.bounds.height().toFloat()
                         )
 
+                        val wallpaperWidth = if (scrollable) deviceSize.width * 2f else deviceSize.width
                         val destinationBitmap =
-                            createBitmap(deviceSize.width.toInt(), deviceSize.height.toInt(), bitmap.config ?: Bitmap.Config.ARGB_8888)
+                            createBitmap(
+                                wallpaperWidth.toInt(),
+                                deviceSize.height.toInt(),
+                                bitmap.config ?: Bitmap.Config.ARGB_8888
+                            )
+
                         val canvas = Canvas(destinationBitmap)
                         val originalAspectRatio = bitmap.width.toFloat() / bitmap.height
                         val deviceAspectRatio = deviceSize.width / deviceSize.height

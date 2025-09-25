@@ -82,6 +82,7 @@ import com.kaii.photos.compose.WallpaperSetter
 import com.kaii.photos.compose.widgets.CheckBoxButtonRow
 import com.kaii.photos.compose.widgets.ClearableTextField
 import com.kaii.photos.compose.widgets.PreferencesRow
+import com.kaii.photos.compose.widgets.PreferencesSwitchRow
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.helpers.RowPosition
@@ -1102,7 +1103,7 @@ fun SliderDialog(
 @Composable
 fun WallpaperTypeDialog(
     modifier: Modifier = Modifier,
-    onSetWallpaperType: (WallpaperSetter.Type) -> Unit,
+    onSetWallpaperType: (WallpaperSetter.Type, Boolean) -> Unit,
     onDismiss: () -> Unit
 ) {
     LavenderDialogBase(
@@ -1118,30 +1119,49 @@ fun WallpaperTypeDialog(
 
         Spacer(modifier = Modifier.height(12.dp))
 
+        var scrollable by remember { mutableStateOf(false) }
+
+        PreferencesSwitchRow(
+            title = stringResource(id = R.string.wallpaper_scrollable),
+            iconResID = R.drawable.vertical_split,
+            position = RowPosition.Single,
+            checked = scrollable
+        ) {
+            scrollable = it
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
         PreferencesRow(
             title = stringResource(id = R.string.wallpaper_homescreen),
             position = RowPosition.Top,
-            iconResID = R.drawable.mobile
+            iconResID = R.drawable.mobile,
+            modifier = Modifier
+                .height(36.dp)
         ) {
-            onSetWallpaperType(WallpaperSetter.Type.HomeScreen)
+            onSetWallpaperType(WallpaperSetter.Type.HomeScreen, scrollable)
             onDismiss()
         }
 
         PreferencesRow(
             title = stringResource(id = R.string.wallpaper_lockscreen),
             position = RowPosition.Middle,
-            iconResID = R.drawable.mobile_lock
+            iconResID = R.drawable.mobile_lock,
+            modifier = Modifier
+                .height(36.dp)
         ) {
-            onSetWallpaperType(WallpaperSetter.Type.LockScreen)
+            onSetWallpaperType(WallpaperSetter.Type.LockScreen, scrollable)
             onDismiss()
         }
 
         PreferencesRow(
             title = stringResource(id = R.string.wallpaper_Both),
             position = RowPosition.Bottom,
-            iconResID = R.drawable.mobile_lock_alternate
+            iconResID = R.drawable.mobile_lock_alternate,
+            modifier = Modifier
+                .height(36.dp)
         ) {
-            onSetWallpaperType(WallpaperSetter.Type.Both)
+            onSetWallpaperType(WallpaperSetter.Type.Both, scrollable)
             onDismiss()
         }
     }

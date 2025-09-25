@@ -856,6 +856,7 @@
     <string name="wallpaper_homescreen">Home Screen</string>
     <string name="wallpaper_lockscreen">Lock Screen</string>
     <string name="wallpaper_Both">Both Screens</string>
+    <string name="wallpaper_scrollable">Scrollable</string>
     <string name="more_info">More Info</string>
     <string name="not_available">Not Available</string>
     <string name="not_available_desc">This feature is not available yet as the app is in Beta, please wait for a future release.</string>
