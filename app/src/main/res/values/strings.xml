@@ -2,6 +2,13 @@
     <!-- Basic -->
     <string name="app_name">Photos</string>
     <string name="changelog"><![CDATA[
+    <u><h2>v1.1.6!:</h2></u>
+    <br>
+    <b><h4>- Fixed Bugs:</h4></b>
+    <p>
+        - Crash when editing from OpenWithView
+    </p>
+    <br>
     <u><h2>v1.1.5!:</h2></u>
     <br>
     <b><h4>- Added Features:</h4></b>
