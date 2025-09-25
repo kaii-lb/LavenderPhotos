@@ -145,10 +145,13 @@ fun VideoEditor(
     LaunchedEffect(videoEditingState.startTrimPosition, currentVideoPosition.floatValue) {
         if (currentVideoPosition.floatValue * 1000 < videoEditingState.startTrimPosition * 1000) {
             exoPlayer.seekTo((videoEditingState.startTrimPosition * 1000).toLong())
-            currentVideoPosition.floatValue = videoEditingState.startTrimPosition
+            currentVideoPosition.floatValue = exoPlayer.currentPosition / 1000f
 
-            if (isPlaying.value) exoPlayer.play()
-            else exoPlayer.pause()
+            if (isPlaying.value) {
+                exoPlayer.play()
+            } else {
+                exoPlayer.pause()
+            }
         }
     }
 
@@ -157,13 +160,9 @@ fun VideoEditor(
             window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
             exoPlayer.pause()
-
-            // so when the video is just starting it actually plays?
-            if (currentVideoPosition.floatValue > videoEditingState.startTrimPosition) exoPlayer.isScrubbingModeEnabled = true
         } else {
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
-            exoPlayer.isScrubbingModeEnabled = false
             exoPlayer.play()
         }
 
