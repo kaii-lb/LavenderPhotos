@@ -137,9 +137,13 @@ fun VideoEditor(
         isVideo = true
     )
 
-    LaunchedEffect(isMuted.value) {
+    LaunchedEffect(isMuted.value, exoPlayerLoading) {
         if (isMuted.value) exoPlayer.volume = 0f
         else exoPlayer.volume = 1f
+    }
+
+    LaunchedEffect(startMuted) {
+        isMuted.value = startMuted
     }
 
     LaunchedEffect(videoEditingState.startTrimPosition, currentVideoPosition.floatValue) {
