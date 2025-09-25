@@ -33,6 +33,9 @@ import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FloatingToolbarDefaults
+import androidx.compose.material3.FloatingToolbarExitDirection
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -49,12 +52,17 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastMap
 import androidx.core.net.toUri
@@ -1059,6 +1067,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @OptIn(ExperimentalMaterial3ExpressiveApi::class)
     @Composable
     private fun Content(
         currentView: MutableState<BottomBarTab>,
@@ -1123,6 +1132,9 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        val scrollBehaviour = FloatingToolbarDefaults.exitAlwaysScrollBehavior(
+            exitDirection = FloatingToolbarExitDirection.Bottom
+        )
         Scaffold(
             topBar = {
                 TopBar(
@@ -1135,11 +1147,36 @@ class MainActivity : ComponentActivity() {
                 MainAppBottomBar(
                     currentView = currentView,
                     selectedItemsList = selectedItemsList,
-                    tabs = tabList
+                    tabs = tabList,
+                    scrollBehaviour = scrollBehaviour
                 )
             },
             modifier = Modifier
                 .fillMaxSize(1f)
+                .nestedScroll(
+                    object : NestedScrollConnection {
+                        override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset =
+                            scrollBehaviour.onPostScroll(
+                                if (selectedItemsList.isEmpty()) consumed else Offset.Zero,
+                                if (selectedItemsList.isEmpty()) available else Offset.Zero,
+                                source)
+
+                        override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset =
+                            scrollBehaviour.onPreScroll(
+                                if (selectedItemsList.isEmpty()) available else Offset.Zero,
+                                source
+                            )
+
+                        override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity =
+                            scrollBehaviour.onPostFling(
+                                if (selectedItemsList.isEmpty()) consumed else Velocity.Zero,
+                                available
+                            )
+
+                        override suspend fun onPreFling(available: Velocity): Velocity =
+                            scrollBehaviour.onPreFling(if (selectedItemsList.isEmpty()) available else Velocity.Zero)
+                    }
+                )
         ) { padding ->
             val isLandscape by rememberDeviceOrientation()
 

@@ -3,7 +3,8 @@ package com.kaii.photos.compose.app_bars
 import android.app.Activity
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -19,7 +20,6 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
@@ -30,8 +30,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FloatingToolbarDefaults
-import androidx.compose.material3.FloatingToolbarExitDirection
+import androidx.compose.material3.FloatingToolbarScrollBehavior
 import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -48,6 +47,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -167,35 +168,46 @@ fun MainAppTopBar(
 fun MainAppBottomBar(
     currentView: MutableState<BottomBarTab>,
     tabs: List<BottomBarTab>,
-    selectedItemsList: SnapshotStateList<MediaStoreData>
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    scrollBehaviour: FloatingToolbarScrollBehavior
 ) {
     val mainViewModel = LocalMainViewModel.current
     val mainTab by mainViewModel.settings.DefaultTabs.getDefaultTab().collectAsStateWithLifecycle(initialValue = DefaultTabs.TabTypes.photos)
+
+    val state = rememberLazyListState(
+        initialFirstVisibleItemIndex =
+            tabs.indexOf(
+                if (mainTab == DefaultTabs.TabTypes.secure) DefaultTabs.TabTypes.photos else mainTab
+            )
+    )
 
     Box(
         modifier = Modifier
             .wrapContentHeight()
             .fillMaxWidth(1f)
-            .windowInsetsPadding(WindowInsets.systemBars)
-            .padding(all = 8.dp),
-        contentAlignment = Alignment.Center
     ) {
-        val state = rememberLazyListState(
-            initialFirstVisibleItemIndex =
-                tabs.indexOf(
-                    if (mainTab == DefaultTabs.TabTypes.secure) DefaultTabs.TabTypes.photos else mainTab
-                )
+        val animatedShadowColor by animateColorAsState(
+            targetValue = if (scrollBehaviour.state.offset == 0f) Color.Black else Color.Black.copy(alpha = 0f),
+            animationSpec = tween(
+                durationMillis = AnimationConstants.DURATION
+            )
         )
 
         HorizontalFloatingToolbar(
             expanded = false,
-            collapsedShadowElevation = 12.dp,
-            expandedShadowElevation = 12.dp,
-            scrollBehavior = FloatingToolbarDefaults.exitAlwaysScrollBehavior(
-                exitDirection = FloatingToolbarExitDirection.Bottom // TODO: continue this
-            ),
+            collapsedShadowElevation = 0.dp,
+            expandedShadowElevation = 0.dp,
+            scrollBehavior = scrollBehaviour,
             modifier = Modifier
-                .animateContentSize(),
+                .align(Alignment.Center)
+                .windowInsetsPadding(WindowInsets.systemBars)
+                .shadow(
+                    elevation = 12.dp,
+                    shape = CircleShape,
+                    clip = false,
+                    ambientColor = animatedShadowColor,
+                    spotColor = animatedShadowColor
+                ),
             content = {
                 AnimatedContent(
                     targetState = selectedItemsList.isNotEmpty(),

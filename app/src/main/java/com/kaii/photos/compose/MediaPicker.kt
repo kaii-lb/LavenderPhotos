@@ -41,6 +41,9 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FloatingToolbarDefaults
+import androidx.compose.material3.FloatingToolbarExitDirection
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -58,13 +61,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastFilter
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -357,6 +365,7 @@ class MediaPicker : ComponentActivity() {
         }
     }
 
+    @OptIn(ExperimentalMaterial3ExpressiveApi::class)
     @Composable
     private fun MainWindow(
         currentView: MutableState<BottomBarTab>,
@@ -397,6 +406,9 @@ class MediaPicker : ComponentActivity() {
             }
         }
 
+        val scrollBehaviour = FloatingToolbarDefaults.exitAlwaysScrollBehavior(
+            exitDirection = FloatingToolbarExitDirection.Bottom
+        )
         Scaffold(
             topBar = {
                 TopBar(
@@ -407,6 +419,30 @@ class MediaPicker : ComponentActivity() {
             },
             modifier = Modifier
                 .fillMaxSize(1f)
+                .nestedScroll(
+                    object : NestedScrollConnection {
+                        override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset =
+                            scrollBehaviour.onPostScroll(
+                                if (selectedItemsList.isEmpty()) consumed else Offset.Zero,
+                                if (selectedItemsList.isEmpty()) available else Offset.Zero,
+                                source)
+
+                        override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset =
+                            scrollBehaviour.onPreScroll(
+                                if (selectedItemsList.isEmpty()) available else Offset.Zero,
+                                source
+                            )
+
+                        override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity =
+                            scrollBehaviour.onPostFling(
+                                if (selectedItemsList.isEmpty()) consumed else Velocity.Zero,
+                                available
+                            )
+
+                        override suspend fun onPreFling(available: Velocity): Velocity =
+                            scrollBehaviour.onPreFling(if (selectedItemsList.isEmpty()) available else Velocity.Zero)
+                    }
+                )
         ) { padding ->
             val isLandscape by rememberDeviceOrientation()
 
@@ -678,7 +714,8 @@ class MediaPicker : ComponentActivity() {
                         MainAppBottomBar(
                             currentView = currentView,
                             tabs = tabs.fastFilter { it != DefaultTabs.TabTypes.secure },
-                            selectedItemsList = selectedItemsList
+                            selectedItemsList = selectedItemsList,
+                            scrollBehaviour = scrollBehaviour
                         )
                     } else {
                         MediaPickerConfirmButton(
