@@ -16,11 +16,14 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyRow
@@ -47,6 +50,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -220,8 +225,15 @@ fun MainAppBottomBar(
                             )
                         }
                     } else {
+                        val windowInfo = LocalWindowInfo.current
+                        val localDensity = LocalDensity.current
+
                         LazyRow(
-                            state = state
+                            state = state,
+                            modifier = Modifier
+                                .widthIn(max = with(localDensity) {
+                                    windowInfo.containerSize.width.toDp() * 0.9f
+                                })
                         ) {
                             items(
                                 count = tabs.size
@@ -241,18 +253,24 @@ fun MainAppBottomBar(
                                         pressedShape = CircleShape,
                                         checkedShape = CircleShape
                                     ),
-                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 12.dp)
+                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 12.dp),
+                                    modifier = Modifier
+                                        .height(48.dp)
                                 ) {
                                     AnimatedVisibility(
                                         visible = currentView.value == tab
                                     ) {
                                         Row(
+                                            modifier = Modifier
+                                                .fillMaxHeight(1f),
                                             verticalAlignment = Alignment.CenterVertically,
                                             horizontalArrangement = Arrangement.Center
                                         ) {
                                             Icon(
                                                 painter = painterResource(id = tab.icon.filled),
-                                                contentDescription = stringResource(id = R.string.tabs_navigate_to, tab.name)
+                                                contentDescription = stringResource(id = R.string.tabs_navigate_to, tab.name),
+                                                modifier = Modifier
+                                                    .size(24.dp)
                                             )
 
                                             Spacer(modifier = Modifier.width(4.dp))
