@@ -2,7 +2,23 @@
     <!-- Basic -->
     <string name="app_name">Photos</string>
     <string name="changelog"><![CDATA[
+    <u><h2>v1.1.5!:</h2></u>
+    <br>
+    <b><h4>- Added Features:</h4></b>
     <p>
+        - Hide navigation bar while scrolling
+        <br>- Zoom text/images while moving them in editors
+        <br>- Scrollable wallpapers in wallpaper setter
+        <br>- Added polish translation, updated simplified chinese
+    </p>
+    <br>
+    <b><h4>- Fixed Bugs:</h4></b>
+    <p>
+        - Video editor not respecting start videos muted option
+        <br>- Inability to play video in video editor after trimming it
+        <br>- Navigation bar tab text being misaligned
+    </p>
+    <br>
     <h2>v1.1.0!:</h2>
     <b><h4>- Added Features:</h4></b>
     <p>
