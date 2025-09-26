@@ -60,6 +60,7 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastFilter
 import androidx.compose.ui.util.fastMap
+import androidx.compose.ui.util.fastMapNotNull
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
@@ -80,6 +81,7 @@ import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.copyImageListToPath
+import com.kaii.photos.helpers.getParentFromPath
 import com.kaii.photos.helpers.moveImageListToPath
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.setTrashedOnPhotoList
@@ -144,7 +146,24 @@ fun MoveCopyAlbumListView(
 
     val coroutineScope = rememberCoroutineScope()
 
-    LaunchedEffect(searchedForText.value, originalAlbumsList) {
+    LaunchedEffect(searchedForText.value, originalAlbumsList, selectedItemsList.lastOrNull()) {
+        val commonParent = run {
+            // find common ancestors, if there's only one hide it (below code)
+            // if not do nothing
+            val grouped = selectedItemsList
+                .filter {
+                    it.type != MediaType.Section
+                }
+                .groupBy {
+                    it.absolutePath.getParentFromPath()
+                }
+
+            Log.d(TAG, "Grouped $grouped")
+
+            if (grouped.keys.size == 1) grouped.keys.first()
+            else null
+        }
+
         albumsList = originalAlbumsList.filter {
             it.name.contains(searchedForText.value, true)
         }.sortedByDescending { album ->
@@ -153,6 +172,10 @@ fun MoveCopyAlbumListView(
             }?.second ?: MediaStoreData.dummyItem
 
             (if (album.isCustomAlbum) 1L else 0L) or mediaItem.dateModified
+        }.fastMapNotNull { album ->
+            // check if just moving/copying to a folder or custom album and hide the "same album" that the media came from if so
+            if ((album.paths.size == 1 && album.mainPath != commonParent) || album.isCustomAlbum) album
+            else null
         }
 
         if (albumsList.isNotEmpty()) state.scrollToItem(0)
@@ -161,8 +184,6 @@ fun MoveCopyAlbumListView(
     LaunchedEffect(show.value) {
         searchedForText.value = ""
     }
-
-    Log.d("MOVE_COPY_ALBUMS_LIST", albumsList.toString())
 
     if (show.value) {
         ModalBottomSheet(
