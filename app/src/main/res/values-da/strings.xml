@@ -58,4 +58,27 @@
     <string name="i_swear_were_not_bad">vi bruger virkeligt ikke dit data</string>
     <string name="support">Støtte &amp; Donationer</string>
     <string name="support_desc">hjælp mig med at holde appen i live</string>
+    <string name="version_info">Versions-information</string>
+    <string name="updates">Opdateringer</string>
+    <string name="updates_desc">hold appen opdateret</string>
+    <string name="updates_check">Tjek om der er opdateringer</string>
+    <string name="updates_check_desc">Notificerer om nye opdateringer når du åbner appen. Installerer ikke opdateringen</string>
+    <string name="updates_whats_new">Hvad er nyt</string>
+    <string name="updates_notice">Download Note</string>
+    <string name="updates_notice_desc"><![CDATA[
+            <p>Denne updater downloader apk'er fra <a href="https://github.com/kaii-lb/LavenderPhotos/releases">GitHub Releases</a> hvilket
+                betyder at de ikke bliver kontrolleret eller testet af IzzyOnDroid, F-Droid eller andre steder.
+
+                <br><br>Versionerne hosted på GitHub er altid signeret, tjekket, og verificeret af udvikleren (kaii-lb), men det er dit valg om du vil bruge dem eller ej.
+
+                <br><br>Lavender Photos vil aldrig opdatere automatisk, og opdaterer kun med udtrykkelig samtykke fra brugeren.
+            </p>
+        ]]></string>
+    <string name="updates_not_found">Ingen Opdateringer Fundet</string>
+    <string name="updates_new_version_available">Ny version tilgængelig!</string>
+    <string name="updates_latest">Allerede på nyeste version</string>
+    <string name="updates_failed">Kunne ikke tjekke efter nye opdateringer</string>
+    <string name="updates_checking">Tjekker Efter Opdateringer</string>
+    <string name="updates_start">Start Opdatering</string>
+    <string name="locked_folder_help_top">Låst Mappe er en sikker mappe for dine billeder og videoer på denne enhed.\nDe låste medier bliver aldrig uploaded noget sted og forbliver altid på din enhed, krypteret med en unik nøgle beskyttet af din enheds password eller fingeraftryks-data.</string>
 </resources>
