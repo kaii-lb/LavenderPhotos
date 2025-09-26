@@ -1159,7 +1159,8 @@ fun rememberPlayerView(
     val context = LocalContext.current
     val resources = LocalResources.current
 
-    val backgroundColor = MaterialTheme.colorScheme.background.toArgb()
+    val useBlackBackground by LocalMainViewModel.current.useBlackViewBackgroundColor.collectAsStateWithLifecycle()
+    val backgroundColor = if (useBlackBackground) Color.Black.toArgb() else MaterialTheme.colorScheme.background.toArgb()
 
     val playerView = remember {
         PlayerView(
