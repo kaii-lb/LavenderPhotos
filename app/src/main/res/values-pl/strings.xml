@@ -17,7 +17,7 @@
     <string name="albums_clear_list">Wyczyść listę albumów</string>
     <string name="albums_clear_list_desc">Usuń wszystkie albumy oprócz „Aparat” i „Pobrane”</string>
     <string name="albums_clear_list_done">Lista usuniętych albumów</string>
-    <string name="albums_media_sorting">Sortowanie mediów</string>
+    <string name="albums_media_sorting">Sortowanie multimediów</string>
     <string name="albums_media_sorting_desc">Ustawia sortowanie zdjęć i filmów w siatkach</string>
     <string name="albums_is_custom">To jest album niestandardowy</string>
     <string name="albums_custom">Album niestandardowy</string>
@@ -59,14 +59,14 @@
     <string name="support_desc">pomóż mi utrzymać aplikację przy życiu</string>
     <string name="version_info">Informacje o wersji</string>
     <string name="updates">Aktualizacje</string>
-    <string name="updates_desc">aktualizuj aplikację</string>
+    <string name="updates_desc">aktualizuj aplikację na bieżąco</string>
     <string name="updates_check">Sprawdź aktualizacje</string>
     <string name="updates_check_desc">Powiadamia o nowej wersji po otwarciu aplikacji. Nie instaluje automatycznie aktualizacji</string>
     <string name="updates_whats_new">Co nowego</string>
     <string name="updates_notice">Pobierz powiadomienie</string>
     <string name="updates_not_found">Nie znaleziono aktualizacji</string>
-    <string name="updates_new_version_available">Nowa wersja dostępna!</string>
-    <string name="updates_latest">Już w najnowszej wersji</string>
+    <string name="updates_new_version_available">Nowa wersja jest dostępna!</string>
+    <string name="updates_latest">Jest już w najnowszej wersji</string>
     <string name="updates_failed">Nie udało się sprawdzić aktualizacji</string>
     <string name="updates_checking">Sprawdzanie aktualizacji</string>
     <string name="updates_start">Rozpocznij aktualizację</string>
@@ -74,7 +74,7 @@
     <string name="locked_folder_help_bottom">Zabezpieczonych danych nie można odzyskać, jeśli zapomniano hasła lub usunięto odcisk palca.</string>
     <string name="secure_folder">Bezpieczny folder</string>
     <string name="secure_sharing">Udostępnianie multimediów</string>
-    <string name="secure_processing">Poczekaj, aż te media zostaną przetworzone</string>
+    <string name="secure_processing">Poczekaj, aż te multimedia zostaną przetworzone</string>
     <string name="secure_share_media">Udostępnij te zabezpieczone multimedia</string>
     <string name="secure_encrypting">Szyfrowanie plików</string>
     <string name="secure_decrypting">Odszyfrowywanie plików</string>
@@ -104,9 +104,9 @@
     <string name="video">Wideo</string>
     <string name="video_auto_play">Automatyczne odtwarzanie filmów</string>
     <string name="video_auto_play_desc">Rozpocznij odtwarzanie filmów natychmiast po ich wyświetleniu na ekranie</string>
-    <string name="video_start_muted">Odtwórz filmy wyciszone</string>
+    <string name="video_start_muted">Odtwórz filmy z wyciszeniem</string>
     <string name="video_start_muted_desc">Nie odtwarzaj dźwięku podczas pierwszego odtwarzania filmu</string>
-    <string name="file_is_a_video">Plik jest wideo</string>
+    <string name="file_is_a_video">Plik jest filmem</string>
     <string name="video_lock_screen">Zablokuj ekran, aby zapobiec przypadkowemu dotknięciu</string>
     <string name="video_mute_toggle">Wyłącz lub włącz dźwięk tego filmu</string>
     <string name="video_seek_back">Przewiń do tyłu o 5 sekund</string>
@@ -140,12 +140,12 @@
     <string name="editing_contrast">Kontrast</string>
     <string name="editing_brightness">Jasność</string>
     <string name="editing_saturation">Nasycenie</string>
-    <string name="editing_black_point">Czarny Punkt</string>
-    <string name="editing_white_point">Biały Punkt</string>
+    <string name="editing_black_point">Czarny pkt.</string>
+    <string name="editing_white_point">Biały punkt</string>
     <string name="editing_shadows">Cienie</string>
     <string name="editing_warmth">Ciepło</string>
     <string name="editing_color_tint">Barwa</string>
-    <string name="editing_highlights">Podświetlenie</string>
+    <string name="editing_highlights">Podświetl.</string>
     <string name="editing_pencil">Ołówek</string>
     <string name="editing_highlighter">Zakreślacz</string>
     <string name="editing_text">Tekst</string>
@@ -203,7 +203,7 @@
     <string name="permissions_overwrite_date_on_move_desc">Po włączeniu data skopiowanych/przeniesionych multimediów jest ustawiana na „aktualną”, wyświetlając się jako najnowsza</string>
     <string name="permissions_needed">Wymagane pozwolenie</string>
     <string name="permissions_needed_desc">Lavender Photos potrzebuje pozwolenia na dostęp do tego albumu. Udziel pozwolenia, wybierając opcję „Użyj tego folderu” na następnym ekranie. To pozwolenie jest jednorazowe.</string>
-    <string name="permissions_grant">Dotacja</string>
+    <string name="permissions_grant">Zezwól</string>
     <string name="sort_indicator">Sortuj według wskaźnika</string>
     <string name="sort_mode">Tryb sortowania multimediów</string>
     <string name="sort_date">Data</string>
@@ -217,7 +217,7 @@
     <string name="media_secure">Bezpieczny</string>
     <string name="media_secure_confirm">Przenieść %1$s do bezpiecznego folderu?</string>
     <string name="media_delete_permanently">Usuń trwale</string>
-    <string name="media_delete_permanently_confirm">Czy trwale usunąć ten %1$s?</string>
+    <string name="media_delete_permanently_confirm">Czy trwale usunąć %1$s ?</string>
     <string name="media_cancel">Anuluj</string>
     <string name="media_restore">Przywróć</string>
     <string name="media_restore_confirm">Przywrócić te elementy?</string>
@@ -268,4 +268,18 @@
     <string name="error_views_favourites_empty">Dodaj swoje najcenniejsze wspomnienia!</string>
     <string name="error_views_folder_non_existent">Folder nie istnieje</string>
     <string name="error_views_error_page">To jest strona błędu</string>
+    <string name="updates_notice_desc"><![CDATA[
+            <p>Ten aktualizator pobiera pliki APK z serwisu <a href="https://github.com/kaii-lb/LavenderPhotos/releases">GitHub Releases</a>, co
+                oznacza, że nie przechodzą one dodatkowej kontroli i testów przeprowadzanych przez IzzyOnDroid, F-Droid lub inne podmioty.
+
+                <br><br>Kompilacje hostowane na GitHub są zawsze podpisywane, sprawdzane i weryfikowane przez programistę (kaii-lb), ale to użytkownik decyduje, czy chce z nich korzystać, czy nie.
+
+                <br><br>Lavender Photos nigdy nie wykonuje automatycznych aktualizacji i aktualizuje się wyłącznie za wyraźną zgodą użytkownika.
+            </p>
+        ]]></string>
+    <string name="previous_run_logs">Dzienniki z poprzednich logów</string>
+    <string name="current_run_logs">Aktualne dzienniki logów</string>
+    <string name="log_file_non_existent">Jeszcze nie zapisano żadnego pliku loga.</string>
+    <string name="debugging_spawn_message_snackbar_desc">Na przykład wycofać funkcję i nie dodać jej odpowiednika :D</string>
+    <string name="media_share">Udostępnij</string>
 </resources>
