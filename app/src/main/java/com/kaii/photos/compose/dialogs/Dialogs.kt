@@ -66,10 +66,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.kaii.photos.R
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.editing.darkenColor
 import kotlinx.coroutines.delay
 
@@ -720,4 +722,74 @@ fun HorizontalSeparator() {
             .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
             .clip(RoundedCornerShape(1000.dp))
     )
+}
+
+@Composable
+fun TallDialogInfoRow(
+    title: String,
+    info: String,
+    @DrawableRes icon: Int,
+    position: RowPosition,
+    modifier: Modifier = Modifier,
+    containerColor: Color = MaterialTheme.colorScheme.surfaceContainer,
+    contentColor: Color = MaterialTheme.colorScheme.onSurface,
+    onClick: () -> Unit
+) {
+    val (shape, spacerHeight) = remember(position) {
+        getDefaultShapeSpacerForPosition(position, 24.dp)
+    }
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth(1f)
+            .height(64.dp)
+            .clip(shape)
+            .background(containerColor)
+            .clickable {
+                onClick()
+            }
+            .padding(12.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth(1f),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
+        ) {
+            Icon(
+                painter = painterResource(id = icon),
+                contentDescription = "$title: $info",
+                tint = contentColor
+            )
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Text(
+                text = title,
+                fontSize = TextStylingConstants.MEDIUM_TEXT_SIZE.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = contentColor
+            )
+
+            Spacer(modifier = Modifier.width(4.dp))
+
+            Text(
+                text = info,
+                fontSize = TextStylingConstants.MEDIUM_TEXT_SIZE.sp,
+                fontWeight = FontWeight.Normal,
+                color = contentColor,
+                maxLines = 1,
+                modifier = Modifier
+                    .horizontalScroll(rememberScrollState())
+            )
+        }
+
+        Spacer(
+            modifier = Modifier
+                .height(spacerHeight)
+                .background(MaterialTheme.colorScheme.surface)
+        )
+    }
 }

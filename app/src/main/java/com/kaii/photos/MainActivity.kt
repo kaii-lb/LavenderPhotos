@@ -553,10 +553,14 @@ class MainActivity : ComponentActivity() {
 
                 composable<Screens.SingleTrashedPhotoView> {
                     enableEdgeToEdge(
-                        navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
+                        navigationBarStyle = SystemBarStyle.dark(
+                            MaterialTheme.colorScheme.surfaceContainer.copy(
+                                alpha = 0.2f
+                            ).toArgb()
+                        ),
                         statusBarStyle = SystemBarStyle.auto(
-                            MaterialTheme.colorScheme.surface.toArgb(),
-                            MaterialTheme.colorScheme.surface.toArgb()
+                            MaterialTheme.colorScheme.surface.copy(alpha = 0.2f).toArgb(),
+                            MaterialTheme.colorScheme.surface.copy(alpha = 0.2f).toArgb()
                         )
                     )
                     setupNextScreen(
@@ -609,10 +613,14 @@ class MainActivity : ComponentActivity() {
 
                 composable<Screens.SingleHiddenPhotoView> {
                     enableEdgeToEdge(
-                        navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
+                        navigationBarStyle = SystemBarStyle.dark(
+                            MaterialTheme.colorScheme.surfaceContainer.copy(
+                                alpha = 0.2f
+                            ).toArgb()
+                        ),
                         statusBarStyle = SystemBarStyle.auto(
-                            MaterialTheme.colorScheme.surface.toArgb(),
-                            MaterialTheme.colorScheme.surface.toArgb()
+                            MaterialTheme.colorScheme.surface.copy(alpha = 0.2f).toArgb(),
+                            MaterialTheme.colorScheme.surface.copy(alpha = 0.2f).toArgb()
                         )
                     )
                     setupNextScreen(

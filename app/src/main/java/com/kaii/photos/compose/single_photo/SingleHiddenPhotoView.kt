@@ -1,45 +1,45 @@
 package com.kaii.photos.compose.single_photo
 
 import android.annotation.SuppressLint
-import android.content.res.Configuration
 import android.util.Log
 import android.view.Window
 import android.view.WindowManager
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.BottomAppBar
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.BottomAppBarDefaults.windowInsets
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FloatingToolbarDefaults
+import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -56,19 +56,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -78,18 +72,16 @@ import com.kaii.photos.LocalAppDatabase
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
+import com.kaii.photos.compose.app_bars.SingleViewTopBar
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
-import com.kaii.photos.compose.dialogs.DialogInfoText
 import com.kaii.photos.compose.dialogs.LoadingDialog
-import com.kaii.photos.compose.widgets.rememberDeviceOrientation
+import com.kaii.photos.compose.dialogs.SingleSecurePhotoInfoDialog
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
-import com.kaii.photos.helpers.MediaData
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.getDecryptCacheForFile
-import com.kaii.photos.helpers.getExifDataForMedia
 import com.kaii.photos.helpers.getParentFromPath
 import com.kaii.photos.helpers.getSecureDecryptedVideoFile
 import com.kaii.photos.helpers.moveImageOutOfLockedFolder
@@ -97,12 +89,9 @@ import com.kaii.photos.helpers.permanentlyDeleteSecureFolderImageList
 import com.kaii.photos.helpers.shareSecuredImage
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.mediastore.getIv
 import com.kaii.photos.mediastore.getOriginalPath
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.io.File
 
 private const val TAG = "com.kaii.photos.compose.single_photo.SingleHiddenPhotoView"
@@ -172,8 +161,6 @@ fun SingleHiddenPhotoView(
 
     if (hideSecureFolder) return
 
-    // val mediaItem = mainViewModel.selectedMediaData.collectAsState(initial = null).value ?: return
-
     val holderGroupedMedia =
         mainViewModel.groupedMedia.collectAsState(initial = null).value ?: return
 
@@ -214,13 +201,18 @@ fun SingleHiddenPhotoView(
         }
     }
 
-    val showInfoDialog = remember { mutableStateOf(false) }
+    var showInfoDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
-            TopBar(currentMediaItem, appBarsVisible.value, showInfoDialog) {
-                navController.popBackStack()
-            }
+            SingleViewTopBar(
+                mediaItem = currentMediaItem,
+                visible = appBarsVisible.value,
+                showInfoDialog = showInfoDialog,
+                expandInfoDialog = {
+                    showInfoDialog = true
+                }
+            )
         },
         bottomBar = {
             BottomBar(
@@ -255,10 +247,13 @@ fun SingleHiddenPhotoView(
             )
         }
 
-        SingleSecuredPhotoInfoDialog(
-            showDialog = showInfoDialog,
-            currentMediaItem = currentMediaItem
-        )
+        if (showInfoDialog) {
+            SingleSecurePhotoInfoDialog(
+                currentMediaItem = currentMediaItem
+            ) {
+                showInfoDialog = false
+            }
+        }
     }
 
     val coroutineScope = rememberCoroutineScope()
@@ -271,147 +266,7 @@ fun SingleHiddenPhotoView(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun TopBar(
-    mediaItem: MediaStoreData,
-    visible: Boolean,
-    showInfoDialog: MutableState<Boolean>,
-    popBackStack: () -> Unit
-) {
-    AnimatedVisibility(
-        visible = visible,
-        enter =
-            slideInVertically(
-                animationSpec = tween(
-                    durationMillis = 250
-                )
-            ) { width -> -width } + fadeIn(),
-        exit =
-            slideOutVertically(
-                animationSpec = tween(
-                    durationMillis = 250
-                )
-            ) { width -> -width } + fadeOut(),
-    ) {
-        TopAppBar(
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer
-            ),
-            navigationIcon = {
-                IconButton(
-                    onClick = { popBackStack() },
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.back_arrow),
-                        contentDescription = stringResource(id = R.string.return_to_previous_page),
-                        tint = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier
-                            .size(24.dp)
-                    )
-                }
-            },
-            title = {
-                Spacer(modifier = Modifier.width(8.dp))
-
-                val isLandscape by rememberDeviceOrientation()
-                Text(
-                    text = mediaItem.displayName,
-                    fontSize = TextUnit(18f, TextUnitType.Sp),
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier
-                        .widthIn(max = if (isLandscape) 300.dp else 180.dp)
-                )
-            },
-            actions = {
-                val coroutineScope = rememberCoroutineScope()
-                val context = LocalContext.current
-
-                var showLoadingDialog by remember { mutableStateOf(false) }
-
-                if (showLoadingDialog) {
-                    LoadingDialog(
-                        title = stringResource(id = R.string.secure_sharing),
-                        body = stringResource(id = R.string.secure_processing)
-                    )
-                }
-
-                val applicationDatabase = LocalAppDatabase.current
-                IconButton(
-                    onClick = {
-                        coroutineScope.launch(Dispatchers.IO) {
-                            showLoadingDialog = true
-
-                            val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(mediaItem.absolutePath)
-                            if (iv == null) {
-                                Log.e(TAG, "IV for ${mediaItem.displayName} was null, aborting")
-                                return@launch
-                            }
-
-                            val originalFile = File(mediaItem.absolutePath)
-
-                            val cachedFile =
-                                if (mediaItem.type == MediaType.Video) {
-                                    getSecureDecryptedVideoFile(originalFile.name, context)
-                                } else {
-                                    getDecryptCacheForFile(originalFile, context)
-                                }
-
-                            if (!cachedFile.exists()) {
-                                if (mediaItem.type == MediaType.Video) {
-                                    EncryptionManager.decryptVideo(
-                                        absolutePath = originalFile.absolutePath,
-                                        context = context,
-                                        iv = iv,
-                                        progress = {}
-                                    )
-                                } else {
-                                    EncryptionManager.decryptInputStream(
-                                        inputStream = originalFile.inputStream(),
-                                        outputStream = cachedFile.outputStream(),
-                                        iv = iv
-                                    )
-                                }
-                            }
-
-                            showLoadingDialog = false
-
-                            shareSecuredImage(
-                                absolutePath = cachedFile.absolutePath,
-                                context = context
-                            )
-                        }
-                    }
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.share),
-                        contentDescription = stringResource(id = R.string.secure_share_media),
-                        tint = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier
-                            .size(24.dp)
-                    )
-                }
-
-                IconButton(
-                    onClick = {
-                        showInfoDialog.value = true
-                    },
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.more_options),
-                        contentDescription = stringResource(id = R.string.show_options),
-                        tint = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier
-                            .size(24.dp)
-                    )
-                }
-            }
-        )
-    }
-}
-
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun BottomBar(
     visible: Boolean,
@@ -498,291 +353,165 @@ private fun BottomBar(
         }
     }
 
-    AnimatedVisibility(
-        visible = visible,
-        enter =
-            slideInVertically(
-                animationSpec = tween(
-                    durationMillis = 250
-                )
-            ) { width -> width } + fadeIn(),
-        exit =
-            slideOutVertically(
-                animationSpec = tween(
-                    durationMillis = 250
-                )
-            ) { width -> width } + fadeOut(),
+    Box(
+        modifier = Modifier
+            .windowInsetsPadding(WindowInsets.systemBars)
+            .padding(4.dp, 0.dp)
+            .wrapContentHeight()
+            .fillMaxWidth(1f),
+        contentAlignment = Alignment.Center
     ) {
+        AnimatedVisibility(
+            visible = visible || showLoadingDialog,
+            enter = scaleIn(
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessMedium
+                )
+            ) + fadeIn(),
+            exit = scaleOut(
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessMedium
+                ),
+                targetScale = 0.2f
+            ) + fadeOut()
+        ) {
+            HorizontalFloatingToolbar(
+                expanded = true,
+                colors = FloatingToolbarDefaults.vibrantFloatingToolbarColors(),
+                floatingActionButton = {
+                    FloatingToolbarDefaults.VibrantFloatingActionButton(
+                        onClick = {
+                            coroutineScope.launch(Dispatchers.IO) {
+                                showLoadingDialog = true
 
-        BottomAppBar(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-            contentColor = MaterialTheme.colorScheme.onBackground,
-            contentPadding = PaddingValues(0.dp),
-            actions = {
+                                val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(item.absolutePath)
+                                if (iv == null) {
+                                    Log.e(TAG, "IV for ${item.displayName} was null, aborting")
+                                    return@launch
+                                }
+
+                                val originalFile = File(item.absolutePath)
+
+                                val cachedFile =
+                                    if (item.type == MediaType.Video) {
+                                        getSecureDecryptedVideoFile(originalFile.name, context)
+                                    } else {
+                                        getDecryptCacheForFile(originalFile, context)
+                                    }
+
+                                if (!cachedFile.exists()) {
+                                    if (item.type == MediaType.Video) {
+                                        EncryptionManager.decryptVideo(
+                                            absolutePath = originalFile.absolutePath,
+                                            context = context,
+                                            iv = iv,
+                                            progress = {}
+                                        )
+                                    } else {
+                                        EncryptionManager.decryptInputStream(
+                                            inputStream = originalFile.inputStream(),
+                                            outputStream = cachedFile.outputStream(),
+                                            iv = iv
+                                        )
+                                    }
+                                }
+
+                                showLoadingDialog = false
+
+                                shareSecuredImage(
+                                    absolutePath = cachedFile.absolutePath,
+                                    context = context
+                                )
+                            }
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.share),
+                            contentDescription = "share this media"
+                        )
+                    }
+                },
+                modifier = Modifier
+                    .windowInsetsPadding(windowInsets)
+            ) {
                 Row(
                     modifier = Modifier
-                        .fillMaxWidth(1f)
-                        .padding(12.dp, 0.dp),
+                        .wrapContentWidth()
+                        .clip(CircleShape)
+                        .clickable {
+                            showRestoreDialog.value = true
+                        }
+                        .padding(horizontal = 8.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    OutlinedButton(
-                        onClick = {
-                            showRestoreDialog.value = true
-                        },
+                    Icon(
+                        painter = painterResource(id = R.drawable.unlock),
+                        contentDescription = "Restore Image Button",
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier
-                            .weight(1f)
-                            .height(48.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(1f),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceEvenly
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.unlock),
-                                contentDescription = "Restore Image Button",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier
-                                    .size(22.dp)
-                            )
+                            .size(22.dp)
+                    )
 
-                            Spacer(
-                                modifier = Modifier
-                                    .width(8.dp)
-                            )
-
-                            Text(
-                                text = "Restore",
-                                fontSize = TextUnit(16f, TextUnitType.Sp),
-                                textAlign = TextAlign.Center,
-                                color = MaterialTheme.colorScheme.onBackground,
-                                modifier = Modifier
-                                    .fillMaxWidth(1f)
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    OutlinedButton(
-                        onClick = {
-                            showDeleteDialog.value = true
-                        },
+                    Spacer(
                         modifier = Modifier
-                            .weight(1f)
-                            .height(48.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(1f),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceEvenly
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.trash),
-                                contentDescription = "Permanently Delete Image Button",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier
-                                    .size(22.dp)
-                            )
-
-                            Spacer(
-                                modifier = Modifier
-                                    .width(8.dp)
-                            )
-
-                            Text(
-                                text = "Delete",
-                                fontSize = TextUnit(16f, TextUnitType.Sp),
-                                textAlign = TextAlign.Center,
-                                color = MaterialTheme.colorScheme.onBackground,
-                                modifier = Modifier
-                                    .fillMaxWidth(1f)
-                            )
-                        }
-                    }
-                }
-            }
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-fun SingleSecuredPhotoInfoDialog(
-    showDialog: MutableState<Boolean>,
-    currentMediaItem: MediaStoreData
-) { // TODO: resource the strings here
-    val localConfig = LocalConfiguration.current
-    var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
-
-    LaunchedEffect(localConfig) {
-        isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
-    }
-
-    val modifier = if (isLandscape)
-        Modifier.width(256.dp)
-    else
-        Modifier.fillMaxWidth(0.85f)
-
-    if (showDialog.value) {
-        Dialog(
-            onDismissRequest = {
-                showDialog.value = false
-            },
-            properties = DialogProperties(
-                usePlatformDefaultWidth = false
-            ),
-        ) {
-            Column(
-                modifier = Modifier
-                    .then(modifier)
-                    .wrapContentHeight()
-                    .clip(RoundedCornerShape(32.dp))
-                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                    .padding(4.dp),
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(1f),
-                ) {
-                    IconButton(
-                        onClick = {
-                            showDialog.value = false
-                        },
-                        modifier = Modifier
-                            .align(Alignment.CenterStart)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.close),
-                            contentDescription = "Close dialog button",
-                            modifier = Modifier
-                                .size(24.dp)
-                        )
-                    }
+                            .width(8.dp)
+                    )
 
                     Text(
-                        text = "Info",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = TextUnit(18f, TextUnitType.Sp),
+                        text = "Restore",
+                        fontSize = TextUnit(16f, TextUnitType.Sp),
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier
-                            .align(Alignment.Center)
+                            .fillMaxWidth(1f)
                     )
                 }
 
-                Column(
+                Spacer(modifier = Modifier.width(3.dp))
+                Spacer(
                     modifier = Modifier
-                        .padding(12.dp)
-                        .wrapContentHeight()
+                        .width(2.dp)
+                        .height(36.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.3f))
+                )
+                Spacer(modifier = Modifier.width(3.dp))
+
+                Row(
+                    modifier = Modifier
+                        .wrapContentWidth()
+                        .clip(CircleShape)
+                        .clickable {
+                            showDeleteDialog.value = true
+                        }
+                        .padding(horizontal = 8.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    var mediaData by remember {
-                        mutableStateOf(
-                            emptyMap<MediaData, Any>()
-                        )
-                    }
-
-                    var showLoadingDialog by remember { mutableStateOf(false) }
-                    if (showLoadingDialog) {
-                        LoadingDialog(
-                            title = "Getting file info",
-                            body = "Please wait..."
-                        )
-                    }
-
-                    val context = LocalContext.current
-                    LaunchedEffect(Unit) {
-                        withContext(Dispatchers.IO) {
-                            showLoadingDialog = true
-
-                            val file = if (currentMediaItem.type == MediaType.Video) {
-                                val originalFile = File(currentMediaItem.absolutePath)
-                                val cachedFile = getSecureDecryptedVideoFile(
-                                    name = currentMediaItem.displayName,
-                                    context = context
-                                )
-
-                                if (!cachedFile.exists()) {
-                                    val iv = currentMediaItem.bytes?.getIv()
-
-                                    if (iv == null) {
-                                        Log.e(TAG, "IV for ${currentMediaItem.displayName} was null, aborting")
-                                        return@withContext
-                                    }
-                                    EncryptionManager.decryptVideo(
-                                        absolutePath = originalFile.absolutePath,
-                                        iv = iv,
-                                        context = context,
-                                        progress = {}
-                                    )
-                                } else if (cachedFile.length() < originalFile.length()) {
-                                    while (cachedFile.length() < originalFile.length()) {
-                                        delay(100)
-                                    }
-
-                                    cachedFile
-                                } else {
-                                    cachedFile
-                                }
-                            } else {
-                                val originalFile = File(currentMediaItem.absolutePath)
-                                val cachedFile = getDecryptCacheForFile(
-                                    file = originalFile,
-                                    context = context
-                                )
-
-                                if (!cachedFile.exists()) {
-                                    val iv = currentMediaItem.bytes?.getIv()
-
-                                    if (iv == null) {
-                                        Log.e(TAG, "IV for ${currentMediaItem.displayName} was null, aborting")
-                                        return@withContext
-                                    }
-                                    EncryptionManager.decryptInputStream(
-                                        inputStream = originalFile.inputStream(),
-                                        outputStream = cachedFile.outputStream(),
-                                        iv = iv
-                                    )
-
-                                    cachedFile
-                                } else if (cachedFile.length() < originalFile.length()) {
-                                    val threshold = 500
-                                    while (cachedFile.length() + threshold < originalFile.length()) {
-                                        delay(100)
-                                    }
-
-                                    cachedFile
-                                } else {
-                                    cachedFile
-                                }
-                            }
-
-                            showLoadingDialog = false
-                            getExifDataForMedia(file.absolutePath).collect {
-                                mediaData = it
-                            }
-                        }
-                    }
-
-                    Column(
+                    Icon(
+                        painter = painterResource(id = R.drawable.trash),
+                        contentDescription = "Permanently Delete Image Button",
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier
-                            .wrapContentHeight()
-                            .clip(RoundedCornerShape(16.dp))
-                    ) {
-                        for (key in mediaData.keys) {
-                            val value = mediaData[key]
+                            .size(22.dp)
+                    )
 
-                            val splitBy = Regex("(?=[A-Z])")
-                            val split = key.toString().split(splitBy)
-                            // println("SPLIT IS $split")
-                            val name = if (split.size >= 3) "${split[1]} ${split[2]}" else key.toString()
+                    Spacer(
+                        modifier = Modifier
+                            .width(8.dp)
+                    )
 
-                            DialogInfoText(
-                                firstText = name,
-                                secondText = value.toString(),
-                                iconResId = key.iconResInt,
-                            )
-                        }
-                    }
+                    Text(
+                        text = "Delete",
+                        fontSize = TextUnit(16f, TextUnitType.Sp),
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier
+                            .fillMaxWidth(1f)
+                    )
                 }
             }
         }

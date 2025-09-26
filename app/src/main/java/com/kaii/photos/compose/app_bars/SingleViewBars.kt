@@ -11,14 +11,23 @@ import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.util.Log
 import android.view.WindowManager
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,8 +37,11 @@ import androidx.compose.foundation.layout.navigationBarsIgnoringVisibility
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsIgnoringVisibility
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.PagerState
@@ -39,6 +51,8 @@ import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.FilledIconToggleButton
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
@@ -77,8 +91,11 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
 import androidx.core.graphics.createBitmap
@@ -101,8 +118,10 @@ import com.kaii.photos.compose.editing_view.video_editor.VideoEditorAdjustConten
 import com.kaii.photos.compose.editing_view.video_editor.VideoEditorProcessingContent
 import com.kaii.photos.compose.widgets.SelectableDropDownMenuItem
 import com.kaii.photos.compose.widgets.SimpleTab
+import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.Editing
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.VideoPlayerConstants
 import com.kaii.photos.helpers.editing.BasicVideoData
 import com.kaii.photos.helpers.editing.CroppingAspectRatio
@@ -115,6 +134,7 @@ import com.kaii.photos.helpers.editing.VideoEditingState
 import com.kaii.photos.helpers.editing.VideoEditorTabs
 import com.kaii.photos.helpers.editing.VideoModification
 import com.kaii.photos.helpers.editing.saveVideo
+import com.kaii.photos.mediastore.MediaStoreData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -877,4 +897,122 @@ fun ImageEditorTopBar(
             )
         }
     )
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun SingleViewTopBar(
+    mediaItem: MediaStoreData,
+    visible: Boolean,
+    showInfoDialog: Boolean,
+    expandInfoDialog: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .windowInsetsPadding(WindowInsets.systemBars)
+            .padding(4.dp, 0.dp)
+            .wrapContentHeight()
+            .fillMaxWidth(1f)
+    ) {
+        AnimatedVisibility(
+            visible = visible,
+            enter =
+                scaleIn(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    )
+                ) + fadeIn(),
+            exit =
+                scaleOut(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    )
+                ) + fadeOut(),
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Start
+            ) {
+                val navController = LocalNavController.current
+                FilledIconButton(
+                    onClick = {
+                        navController.popBackStack()
+                    },
+                    colors = IconButtonDefaults.filledIconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer
+                    )
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.back_arrow),
+                        contentDescription = stringResource(id = R.string.return_to_previous_page),
+                        tint = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(4.dp))
+
+                val isLandscape by rememberDeviceOrientation()
+                Text(
+                    text = mediaItem.displayName,
+                    fontSize = TextStylingConstants.SMALL_TEXT_SIZE.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier
+                        .widthIn(max = if (isLandscape) 300.dp else 180.dp)
+                        .clip(CircleShape)
+                        .clickable {
+                            expandInfoDialog()
+                        }
+                        .background(MaterialTheme.colorScheme.surfaceContainer)
+                        .padding(8.dp)
+                )
+            }
+
+        }
+
+        AnimatedVisibility(
+            visible = visible,
+            enter =
+                scaleIn(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    )
+                ) + fadeIn(),
+            exit =
+                scaleOut(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    )
+                ) + fadeOut(),
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+        ) {
+            FilledIconToggleButton(
+                checked = showInfoDialog,
+                onCheckedChange = {
+                    expandInfoDialog()
+                },
+                shapes = IconButtonDefaults.toggleableShapes(
+                    shape = CircleShape,
+                    pressedShape = CircleShape,
+                    checkedShape = MaterialShapes.Square.toShape()
+                )
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.more_options),
+                    contentDescription = stringResource(id = R.string.show_options),
+                    modifier = Modifier
+                        .size(24.dp)
+                )
+            }
+        }
+    }
 }

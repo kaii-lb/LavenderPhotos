@@ -586,6 +586,8 @@
     <string name="secure_share_media">Share this secured media</string>
     <string name="secure_encrypting">Encrypting Files</string>
     <string name="secure_decrypting">Decrypting Files</string>
+    <string name="secure_getting_file_info">Getting file info…</string>
+    <string name="secure_please_wait">Please wait…</string>
 
     <!-- Data and Backup -->
     <string name="export_unenc_backup">Export Unencrypted Backup</string>
@@ -842,7 +844,7 @@
     <string name="media_copy">Copy</string>
     <string name="media_rename">Rename</string>
     <string name="media_select">Select</string>
-    <string name="media_exif_erase">Erase EXIF data?</string>
+    <string name="media_exif_erase">Erase EXIF data</string>
     <string name="media_exif_done">Removed EXIF data</string>
     <string name="media_exif_failed">Failed erasing EXIF data</string>
     <string name="media_erase">Erase</string>
@@ -854,6 +856,8 @@
     <string name="media_delete_snackbar_title">Deleting media…</string>
     <string name="media_restore_snackbar_title">Restoring media…</string>
     <string name="media_operate_snackbar_body">%1$d out of %2$d done</string>
+    <string name="media_tools">Tools</string>
+    <string name="media_information">Information</string>
 
     <!-- Search -->
     <string name="search_photo_name">Search for a photo</string>

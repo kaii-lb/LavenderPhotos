@@ -66,6 +66,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
@@ -243,6 +244,7 @@ fun ConfirmationDialogWithBody(
 fun TextEntryDialog(
     title: String,
     placeholder: String? = null,
+    startValue: String = "",
     onConfirm: (text: String) -> Boolean,
     onValueChange: (text: String) -> Boolean,
     onDismiss: () -> Unit
@@ -261,7 +263,7 @@ fun TextEntryDialog(
         Spacer(modifier = Modifier.height(24.dp))
 
         val keyboardController = LocalSoftwareKeyboardController.current
-        var text by remember { mutableStateOf("") }
+        var text by remember { mutableStateOf(startValue) }
         var showError by remember { mutableStateOf(false) }
 
         TextField(
@@ -276,7 +278,9 @@ fun TextEntryDialog(
                 if (placeholder != null) {
                     Text(
                         text = placeholder,
-                        fontSize = TextUnit(16f, TextUnitType.Sp)
+                        fontSize = TextUnit(16f, TextUnitType.Sp),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             },
