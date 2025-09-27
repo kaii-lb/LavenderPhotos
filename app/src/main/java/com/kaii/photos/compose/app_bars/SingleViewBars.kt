@@ -590,7 +590,21 @@ fun WallpaperSetterBottomBar(
                             height = windowManager.currentWindowMetrics.bounds.height().toFloat()
                         )
 
-                        val wallpaperWidth = if (scrollable) deviceSize.width * 2f else deviceSize.width
+                        val originalAspectRatio = bitmap.width.toFloat() / bitmap.height
+                        val deviceAspectRatio = deviceSize.width / deviceSize.height
+                        val scale =
+                            if (originalAspectRatio >= deviceAspectRatio) deviceSize.height / bitmap.height
+                            else deviceSize.width / bitmap.width
+
+                        val wallpaperWidth = if (scrollable) {
+                            // deviceSize.width * 2f
+                            deviceSize.width * outerScale + offset.x * (1f / scale)
+                        } else {
+                            deviceSize.width
+                        }
+
+                        Log.d("SINGLE_VIEW_BARS", "${bitmap.width} $scale $outerScale $offset $wallpaperWidth")
+
                         val destinationBitmap =
                             createBitmap(
                                 wallpaperWidth.toInt(),
@@ -599,12 +613,6 @@ fun WallpaperSetterBottomBar(
                             )
 
                         val canvas = Canvas(destinationBitmap)
-                        val originalAspectRatio = bitmap.width.toFloat() / bitmap.height
-                        val deviceAspectRatio = deviceSize.width / deviceSize.height
-
-                        val scale =
-                            if (originalAspectRatio >= deviceAspectRatio) deviceSize.height / bitmap.height
-                            else deviceSize.width / bitmap.width
 
                         val centeringOffset = Offset(
                             x = (deviceSize.width - bitmap.width * scale * outerScale) / 2f,
