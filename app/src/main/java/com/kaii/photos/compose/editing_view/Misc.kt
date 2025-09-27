@@ -17,7 +17,6 @@ fun EditingViewBottomAppBarItem(
     BottomAppBarItem(
         text = text,
         iconResId = icon,
-        buttonWidth = 84.dp,
         buttonHeight = 56.dp,
         color = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent,
         cornerRadius = 8.dp,

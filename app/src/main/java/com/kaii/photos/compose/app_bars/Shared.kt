@@ -20,9 +20,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -38,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
@@ -54,7 +57,6 @@ fun BottomAppBarItem(
     text: String,
     iconResId: Int,
     modifier: Modifier = Modifier,
-    buttonWidth: Dp = 64.dp,
     buttonHeight: Dp = 56.dp,
     iconSize: Dp = 24.dp,
     textSize: Float = 14f,
@@ -81,7 +83,8 @@ fun BottomAppBarItem(
 
     Box(
         modifier = Modifier
-            .width(buttonWidth)
+            .wrapContentWidth()
+            .padding(horizontal = 8.dp)
             .height(buttonHeight)
             .clip(RoundedCornerShape(cornerRadius))
             .then(clickModifier)
@@ -110,6 +113,8 @@ fun BottomAppBarItem(
             text = text,
             fontSize = TextUnit(textSize, TextUnitType.Sp),
             color = if (enabled) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
             modifier = Modifier
                 .wrapContentSize()
                 .align(Alignment.BottomCenter)
