@@ -39,7 +39,9 @@ class MultiAlbumDataSource(
                 MediaColumns.DISPLAY_NAME,
                 FileColumns.MEDIA_TYPE,
                 MediaColumns.IS_FAVORITE,
-                MediaColumns.SIZE
+                MediaColumns.SIZE,
+                MediaColumns.WIDTH,
+                MediaColumns.HEIGHT
             )
     }
 
@@ -68,6 +70,8 @@ class MultiAlbumDataSource(
         val dateModifiedColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.DATE_MODIFIED)
         val dateTakenColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.DATE_TAKEN)
         val sizeColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.SIZE)
+        val widthColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.WIDTH)
+        val heightColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.HEIGHT)
 
         mediaCursor.use { cursor ->
             while (cursor.moveToNext()) {
@@ -77,6 +81,8 @@ class MultiAlbumDataSource(
                 val dateModified = cursor.getLong(dateModifiedColumn)
                 val displayName = cursor.getString(displayNameIndex)
                 val size = cursor.getLong(sizeColumn)
+                val width = cursor.getInt(widthColumn)
+                val height = cursor.getInt(heightColumn)
 
                 val mediaStoreDateTaken = cursor.getLong(dateTakenColumn) / 1000
                 val dateTaken =
@@ -125,7 +131,9 @@ class MultiAlbumDataSource(
                             dateTaken = dateTaken,
                             displayName = displayName,
                             absolutePath = absolutePath,
-                            size = size
+                            size = size,
+                            width = width,
+                            height = height
                         )
                     )
                 }

@@ -37,7 +37,9 @@ class TrashStoreDataSource(
                 MediaColumns.MIME_TYPE,
                 MediaColumns.DISPLAY_NAME,
                 FileColumns.MEDIA_TYPE,
-                MediaColumns.IS_TRASHED
+                MediaColumns.IS_TRASHED,
+                MediaColumns.WIDTH,
+                MediaColumns.HEIGHT
             )
     }
 
@@ -73,6 +75,8 @@ class TrashStoreDataSource(
             val displayNameIndex = cursor.getColumnIndexOrThrow(FileColumns.DISPLAY_NAME)
             val dateModifiedColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATE_MODIFIED)
             val dateTakenColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.DATE_TAKEN)
+            val widthColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.WIDTH)
+            val heightColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.HEIGHT)
 
             while (cursor.moveToNext()) {
                 val id = cursor.getLong(idColNum)
@@ -80,6 +84,8 @@ class TrashStoreDataSource(
                 val absolutePath = cursor.getString(absolutePathColNum)
                 val dateModified = cursor.getLong(dateModifiedColumn)
                 val displayName = cursor.getString(displayNameIndex)
+                val width = cursor.getInt(widthColumn)
+                val height = cursor.getInt(heightColumn)
 
                 val mediaStoreDateTaken = cursor.getLong(dateTakenColumn) / 1000
                 val dateTaken =
@@ -126,7 +132,9 @@ class TrashStoreDataSource(
                         dateModified = dateModified,
                         dateTaken = dateTaken,
                         displayName = displayName,
-                        absolutePath = absolutePath
+                        absolutePath = absolutePath,
+                        width = width,
+                        height = height
                     )
                 )
             }

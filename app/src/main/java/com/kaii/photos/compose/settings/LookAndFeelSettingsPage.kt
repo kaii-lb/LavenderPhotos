@@ -38,12 +38,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
+import com.kaii.photos.compose.dialogs.DateFormatDialog
 import com.kaii.photos.compose.widgets.PreferenceRowWithCustomBody
 import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.PreferencesSwitchRow
 import com.kaii.photos.compose.widgets.PreferencesThreeStateSwitchRow
-import com.kaii.photos.compose.dialogs.DateFormatDialog
 import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
@@ -80,9 +80,11 @@ fun LookAndFeelSettingsPage() {
 
                 PreferencesThreeStateSwitchRow(
                     title =
-                        if (followDarkMode == 0) stringResource(id = R.string.settings_Auto_theme)
-                        else if (followDarkMode == 1 || followDarkMode == 3) stringResource(id = R.string.settings_dark_theme)
-                        else stringResource(id = R.string.settings_light_theme),
+                        when (followDarkMode) {
+                            0 -> stringResource(id = R.string.settings_Auto_theme)
+                            1, 3 -> stringResource(id = R.string.settings_dark_theme)
+                            else -> stringResource(id = R.string.settings_light_theme)
+                        },
                     summary = stringResource(id = DarkThemeSetting.entries[if (followDarkMode == 3) 1 else followDarkMode].descriptionId),
                     iconResID = R.drawable.palette,
                     currentPosition = if (followDarkMode == 3) 1 else followDarkMode,
@@ -184,7 +186,7 @@ fun LookAndFeelSettingsPage() {
                 var currentState by remember { mutableIntStateOf(columnSize) }
 
                 PreferenceRowWithCustomBody(
-                    icon = R.drawable.dashboard,
+                    icon = R.drawable.grid_view,
                     title = stringResource(id = R.string.look_and_feel_column_size, currentState)
                 ) {
                     Slider(
@@ -239,6 +241,25 @@ fun LookAndFeelSettingsPage() {
                             .fillMaxWidth(0.9f)
                     )
                 }
+            }
+
+            item {
+                val useStaggeredGrids by mainViewModel.settings.LookAndFeel.getUseStaggeredGrid().collectAsStateWithLifecycle(initialValue = false)
+
+                PreferencesSwitchRow(
+                    title = stringResource(id = R.string.look_and_feel_staggered_grids),
+                    summary = stringResource(id = R.string.look_and_feel_staggered_grids_desc),
+                    position = RowPosition.Single,
+                    iconResID = R.drawable.dashboard,
+                    showBackground = false,
+                    checked = useStaggeredGrids
+                ) { checked ->
+                    mainViewModel.settings.LookAndFeel.setUseStaggeredGrid(checked)
+                }
+            }
+
+            item {
+                PreferencesSeparatorText(stringResource(id = R.string.settings_views))
             }
 
             item {

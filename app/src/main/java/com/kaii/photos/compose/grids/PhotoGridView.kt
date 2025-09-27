@@ -21,6 +21,7 @@ import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -33,11 +34,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyGridState
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
+import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -104,6 +105,7 @@ import com.kaii.photos.compose.FolderIsEmpty
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.widgets.ShowSelectedState
 import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.datastore.Storage
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.ImageFunctions
@@ -143,7 +145,7 @@ fun PhotoGrid(
     viewProperties: ViewProperties,
     isMediaPicker: Boolean = false,
     isMainPage: Boolean = false,
-    state: LazyGridState = rememberLazyGridState(),
+    state: LazyStaggeredGridState = rememberLazyStaggeredGridState(),
     hasFiles: Boolean
 ) {
     if (hasFiles) {
@@ -180,7 +182,7 @@ fun DeviceMedia(
     groupedMedia: MutableState<List<MediaStoreData>>,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     viewProperties: ViewProperties,
-    gridState: LazyGridState,
+    gridState: LazyStaggeredGridState,
     albumInfo: AlbumInfo,
     isMediaPicker: Boolean,
     isMainPage: Boolean
@@ -216,7 +218,7 @@ fun DeviceMedia(
         isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
     }
 
-    Box(
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize(1f)
             .background(MaterialTheme.colorScheme.background)
@@ -240,15 +242,17 @@ fun DeviceMedia(
         }
 
         val columnSize by mainViewModel.columnSize.collectAsStateWithLifecycle()
-        LazyVerticalGrid(
+        val useStaggeredGrid by mainViewModel.settings.LookAndFeel.getUseStaggeredGrid().collectAsStateWithLifecycle(initialValue = false)
+        LazyVerticalStaggeredGrid(
             state = gridState,
-            columns = GridCells.Fixed(
-                if (!isLandscape) {
-                    columnSize
+            columns =
+                if (useStaggeredGrid) {
+                    StaggeredGridCells.Adaptive(
+                        (this@BoxWithConstraints.maxWidth - 24.dp) / columnSize
+                    )
                 } else {
-                    columnSize * 2
-                }
-            ),
+                    StaggeredGridCells.Fixed(if (isLandscape) columnSize * 2 else columnSize)
+                },
             userScrollEnabled = !isDragSelecting.value,
             modifier = Modifier
                 .testTag("mainlazycolumn")
@@ -268,7 +272,7 @@ fun DeviceMedia(
             items(
                 count = groupedMedia.value.size,
                 key = {
-                    groupedMedia.value[it].uri.toString()
+                    groupedMedia.value[it].absolutePath + groupedMedia.value[it].displayName
                 },
                 contentType = {
                     groupedMedia.value[it].type
@@ -277,12 +281,17 @@ fun DeviceMedia(
                     if (index < groupedMedia.value.size) {
                         val item = groupedMedia.value[index]
                         if (item.type == MediaType.Section) {
-                            GridItemSpan(maxLineSpan)
+                            StaggeredGridItemSpan.FullLine
                         } else {
-                            GridItemSpan(1)
+                            val selected = index % 11 == 0 || index % 23 == 0
+                            if (selected && useStaggeredGrid) {
+                                StaggeredGridItemSpan.FullLine
+                            } else {
+                                StaggeredGridItemSpan.SingleLane
+                            }
                         }
                     } else {
-                        GridItemSpan(1)
+                        StaggeredGridItemSpan.SingleLane
                     }
                 }
             ) { i ->
@@ -303,7 +312,9 @@ fun DeviceMedia(
                         selectedItemsList = selectedItemsList,
                         thumbnailSettings = Pair(cacheThumbnails, thumbnailSize),
                         isDragSelecting = isDragSelecting,
-                        isMediaPicker = isMediaPicker
+                        isMediaPicker = isMediaPicker,
+                        useStaggeredGrid = useStaggeredGrid,
+                        fullWidth = i % 11 == 0 || i % 23 == 0
                     ) {
                         if (!isMediaPicker) {
                             when (viewProperties.operation) {
@@ -345,9 +356,7 @@ fun DeviceMedia(
 
             if (shouldPadUp && !isMainPage) {
                 item(
-                    span = {
-                        GridItemSpan(maxLineSpan)
-                    }
+                    span = StaggeredGridItemSpan.FullLine
                 ) {
                     Box(
                         modifier = Modifier
@@ -358,12 +367,8 @@ fun DeviceMedia(
             }
 
             if (isMainPage) {
-                Log.d(TAG, "IS PADDING UP")
-
                 item(
-                    span = {
-                        GridItemSpan(maxLineSpan)
-                    }
+                    span = StaggeredGridItemSpan.FullLine
                 ) {
                     Box(
                         modifier = Modifier
@@ -373,6 +378,139 @@ fun DeviceMedia(
                 }
             }
         }
+        // LazyVerticalGrid(
+        //     state = gridState,
+        //     columns = GridCells.Fixed(
+        //         if (!isLandscape) {
+        //             columnSize
+        //         } else {
+        //             columnSize * 2
+        //         }
+        //     ),
+        //     userScrollEnabled = !isDragSelecting.value,
+        //     modifier = Modifier
+        //         .testTag("mainlazycolumn")
+        //         .fillMaxSize(1f)
+        //         .align(Alignment.TopCenter)
+        //         .dragSelectionHandler(
+        //             state = gridState,
+        //             selectedItemsList = selectedItemsList,
+        //             groupedMedia = groupedMedia.value,
+        //             scrollSpeed = scrollSpeed,
+        //             scrollThreshold = with(localDensity) {
+        //                 40.dp.toPx()
+        //             },
+        //             isDragSelecting = isDragSelecting
+        //         )
+        // ) {
+        //     items(
+        //         count = groupedMedia.value.size,
+        //         key = {
+        //             groupedMedia.value[it].uri.toString()
+        //         },
+        //         contentType = {
+        //             groupedMedia.value[it].type
+        //         },
+        //         span = { index ->
+        //             if (index < groupedMedia.value.size) {
+        //                 val item = groupedMedia.value[index]
+        //                 if (item.type == MediaType.Section) {
+        //                     GridItemSpan(maxLineSpan)
+        //                 } else {
+        //                     GridItemSpan(1)
+        //                 }
+        //             } else {
+        //                 GridItemSpan(1)
+        //             }
+        //         }
+        //     ) { i ->
+        //         if (groupedMedia.value.isEmpty()) return@items
+        //         val mediaStoreItem = groupedMedia.value[i]
+        //
+        //         Row(
+        //             modifier = Modifier
+        //                 .wrapContentSize()
+        //                 .animateItem()
+        //         ) {
+        //             val navController = LocalNavController.current
+        //
+        //             MediaStoreItem(
+        //                 item = mediaStoreItem,
+        //                 groupedMedia = groupedMedia,
+        //                 viewProperties = viewProperties,
+        //                 selectedItemsList = selectedItemsList,
+        //                 thumbnailSettings = Pair(cacheThumbnails, thumbnailSize),
+        //                 isDragSelecting = isDragSelecting,
+        //                 isMediaPicker = isMediaPicker
+        //             ) {
+        //                 if (!isMediaPicker) {
+        //                     when (viewProperties.operation) {
+        //                         ImageFunctions.LoadNormalImage -> {
+        //                             // mainViewModel.setGroupedMedia(groupedMedia.value)
+        //
+        //                             navController.navigate(
+        //                                 Screens.SinglePhotoView(
+        //                                     albumInfo = albumInfo,
+        //                                     mediaItemId = mediaStoreItem.id,
+        //                                     loadsFromMainViewModel = viewProperties == ViewProperties.SearchLoading || viewProperties == ViewProperties.SearchNotFound || viewProperties == ViewProperties.Favourites
+        //                                 )
+        //                             )
+        //                         }
+        //
+        //                         ImageFunctions.LoadTrashedImage -> {
+        //                             // mainViewModel.setGroupedMedia(groupedMedia.value)
+        //                             navController.navigate(
+        //                                 Screens.SingleTrashedPhotoView(
+        //                                     mediaItemId = mediaStoreItem.id
+        //                                 )
+        //                             )
+        //                         }
+        //
+        //                         ImageFunctions.LoadSecuredImage -> {
+        //                             mainViewModel.setGroupedMedia(groupedMedia.value)
+        //
+        //                             navController.navigate(
+        //                                 Screens.SingleHiddenPhotoView(
+        //                                     mediaItemId = mediaStoreItem.id
+        //                                 )
+        //                             )
+        //                         }
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //     }
+        //
+        //     if (shouldPadUp && !isMainPage) {
+        //         item(
+        //             span = {
+        //                 GridItemSpan(maxLineSpan)
+        //             }
+        //         ) {
+        //             Box(
+        //                 modifier = Modifier
+        //                     .fillMaxWidth(1f)
+        //                     .height(80.dp)
+        //             )
+        //         }
+        //     }
+        //
+        //     if (isMainPage) {
+        //         Log.d(TAG, "IS PADDING UP")
+        //
+        //         item(
+        //             span = {
+        //                 GridItemSpan(maxLineSpan)
+        //             }
+        //         ) {
+        //             Box(
+        //                 modifier = Modifier
+        //                     .fillMaxWidth(1f)
+        //                     .height(120.dp)
+        //             )
+        //         }
+        //     }
+        // }
 
         if (showLoadingSpinner) {
             Row(
@@ -654,7 +792,9 @@ fun MediaStoreItem(
     thumbnailSettings: Pair<Boolean, Int>,
     isDragSelecting: MutableState<Boolean>,
     isMediaPicker: Boolean,
-    onClick: () -> Unit
+    useStaggeredGrid: Boolean,
+    fullWidth: Boolean,
+    onClick: () -> Unit,
 ) {
     val vibratorManager = rememberVibratorManager()
 
@@ -766,7 +906,10 @@ fun MediaStoreItem(
 
         Box(
             modifier = Modifier
-                .aspectRatio(1f)
+                .aspectRatio(
+                    if (useStaggeredGrid && item.width.toFloat() / item.height in 0.5f..3f) item.width.toFloat() / item.height
+                    else 1f
+                )
                 .padding(2.dp)
                 .clip(RoundedCornerShape(0.dp))
                 .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
@@ -845,7 +988,7 @@ fun MediaStoreItem(
                             if (thumbnailSettings.first) DiskCacheStrategy.ALL
                             else DiskCacheStrategy.NONE
                         )
-                        .override(thumbnailSettings.second)
+                        .override(if (fullWidth) thumbnailSettings.second * 3 else thumbnailSettings.second)
                 }
             }
 
@@ -877,7 +1020,7 @@ fun MediaStoreItem(
 }
 
 private fun Modifier.dragSelectionHandler(
-    state: LazyGridState,
+    state: LazyStaggeredGridState,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     groupedMedia: List<MediaStoreData>,
     scrollSpeed: MutableFloatState,
@@ -987,7 +1130,7 @@ private fun Modifier.dragSelectionHandler(
 
 @Suppress("UNCHECKED_CAST")
         /** make sure [T] is the same type as state keys */
-fun <T : Any> LazyGridState.getGridItemAtOffset(
+fun <T : Any> LazyStaggeredGridState.getGridItemAtOffset(
     offset: Offset,
     keys: List<T>,
     numberOfHorizontalItems: Int
