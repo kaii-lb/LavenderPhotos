@@ -96,9 +96,7 @@ import com.kaii.photos.datastore.AlbumSortMode
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
-import com.kaii.photos.datastore.PhotoGrid
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.mediastore.MediaStoreData
@@ -133,8 +131,6 @@ fun AlbumsGridView(
         normalAlbums
     }
 
-    val sortModeDateType by mainViewModel.settings.PhotoGrid.getSortMode()
-        .collectAsStateWithLifecycle(initialValue = MediaItemSortMode.DateTaken)
     val sortMode by mainViewModel.settings.AlbumsList.getAlbumSortMode()
         .collectAsStateWithLifecycle(initialValue = AlbumSortMode.Custom)
 
@@ -173,19 +169,13 @@ fun AlbumsGridView(
                             copy.sortedByDescending { album ->
                                 cachedAlbumToThumbnailMapping.find {
                                     it.first.id == album.id
-                                }?.second?.let {
-                                    if (sortModeDateType == MediaItemSortMode.DateTaken) it.dateTaken
-                                    else it.dateModified
-                                }
+                                }?.second?.dateModified
                             }
                         } else {
                             copy.sortedBy { album ->
                                 cachedAlbumToThumbnailMapping.find {
                                     it.first.id == album.id
-                                }?.second?.let {
-                                    if (sortModeDateType == MediaItemSortMode.DateTaken) it.dateTaken
-                                    else it.dateModified
-                                }
+                                }?.second?.dateModified
                             }
                         }
                     )
