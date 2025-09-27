@@ -948,7 +948,7 @@ fun VideoPlayerSeekbar(
         thumb = {
             SliderDefaults.Thumb(
                 interactionSource = localInteractionSource,
-                thumbSize = DpSize(6.dp, 16.dp),
+                thumbSize = DpSize(6.dp, 20.dp),
             )
         },
         track = { sliderState ->
@@ -972,7 +972,7 @@ fun VideoPlayerSeekbar(
                 thumbTrackGapSize = 4.dp,
                 drawTick = { _, _ -> },
                 modifier = Modifier
-                    .height(16.dp)
+                    .height(20.dp)
             )
         },
         interactionSource = localInteractionSource,
@@ -1066,11 +1066,7 @@ fun createExoPlayer(
             videoScalingMode = VIDEO_SCALING_MODE_SCALE_TO_FIT
             repeatMode = ExoPlayer.REPEAT_MODE_ONE
 
-            val defaultDataSourceFactory = DefaultDataSource.Factory(context)
-            val dataSourceFactory = DefaultDataSource.Factory(
-                context,
-                defaultDataSourceFactory
-            )
+            val dataSourceFactory = DefaultDataSource.Factory(context)
 
             val source = ProgressiveMediaSource.Factory(dataSourceFactory)
                 .createMediaSource(MediaItem.fromUri(videoSource))
