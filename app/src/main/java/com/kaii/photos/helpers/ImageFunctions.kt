@@ -423,6 +423,7 @@ fun copyImageListToPath(
     destination: String,
     basePath: String,
     overwriteDate: Boolean,
+    showProgressSnackbar: Boolean = true,
     overrideDisplayName: ((displayName: String) -> String)? = null,
     onSingleItemDone: (media: MediaStoreData) -> Unit
 ) {
@@ -432,14 +433,16 @@ fun copyImageListToPath(
         val body = mutableStateOf(context.resources.getString(R.string.media_operate_snackbar_body, 0, list.size))
         val percentage = mutableFloatStateOf(0f)
 
-        LavenderSnackbarController.pushEvent(
-            LavenderSnackbarEvents.ProgressEvent(
-                message = context.resources.getString(R.string.media_copy_snackbar_title),
-                body = body,
-                icon = R.drawable.trash,
-                percentage = percentage
+        if (showProgressSnackbar) {
+            LavenderSnackbarController.pushEvent(
+                LavenderSnackbarEvents.ProgressEvent(
+                    message = context.resources.getString(R.string.media_copy_snackbar_title),
+                    body = body,
+                    icon = R.drawable.trash,
+                    percentage = percentage
+                )
             )
-        )
+        }
 
         async {
             list.forEachIndexed { index, media ->

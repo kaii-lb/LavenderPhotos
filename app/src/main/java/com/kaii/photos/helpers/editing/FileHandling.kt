@@ -9,6 +9,7 @@ import android.provider.MediaStore
 import android.util.Log
 import androidx.annotation.OptIn
 import androidx.compose.material3.SnackbarDuration
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -55,6 +56,7 @@ import androidx.media3.transformer.EditedMediaItem
 import androidx.media3.transformer.Effects
 import androidx.media3.transformer.ExportException
 import androidx.media3.transformer.ExportResult
+import androidx.media3.transformer.ProgressHolder
 import androidx.media3.transformer.Transformer
 import androidx.media3.transformer.VideoEncoderSettings
 import com.kaii.lavender.snackbars.LavenderSnackbarController
@@ -93,13 +95,18 @@ suspend fun saveVideo(
     isFromOpenWithView: Boolean,
     onFailure: () -> Unit
 ) {
-    val isLoading = mutableStateOf(true)
+    // 100 * 2 for each of the transformer.start's, and 40 for the copying
+    val totalPercentage = 120f * 2
+    val percentage = mutableFloatStateOf(0f)
+    val progressHolder = ProgressHolder()
+    val body = mutableStateOf(context.resources.getString(R.string.editing_export_video_loading_body, 0, 3))
 
     LavenderSnackbarController.pushEvent(
-        LavenderSnackbarEvents.LoadingEvent(
+        LavenderSnackbarEvents.ProgressEvent(
             message = context.resources.getString(R.string.editing_export_video_loading),
+            body = body,
             icon = R.drawable.videocam,
-            isLoading = isLoading
+            percentage = percentage
         )
     )
 
@@ -253,7 +260,11 @@ suspend fun saveVideo(
     val file = File(absolutePath)
     val uri = context.contentResolver.getUriFromAbsolutePath(absolutePath, MediaType.Video)
 
-    if (uri == null) return
+    if (uri == null) {
+        percentage.floatValue = 1f
+        onFailure()
+        return
+    }
 
     val media = MediaStoreData(
         displayName = file.name,
@@ -285,8 +296,6 @@ suspend fun saveVideo(
                     if (isFromOpenWithView && newFile.exists()) {
                         newFile.delete()
                     }
-
-                    isLoading.value = false
                 }
 
                 // not using newMedia.uri since we don't have access to that after deletion
@@ -337,11 +346,15 @@ suspend fun saveVideo(
     )
 
     while (completions == 0) {
+        transformer.getProgress(progressHolder)
+        percentage.floatValue = (progressHolder.progress / totalPercentage)
+
+        body.value = context.resources.getString(R.string.editing_export_video_loading_body, 1, 3)
+
         delay(1000)
     }
+    progressHolder.progress = 0 // reset for second operation
     delay(1000)
-
-    Log.d(TAG, "Cached video $tempPath exists ${File(tempPath).exists()}")
 
     modList.clear()
 
@@ -382,7 +395,8 @@ suspend fun saveVideo(
 
     val mediaUri = context.contentResolver.getUriFromAbsolutePath(tempFile.absolutePath, MediaType.Video)
     if (mediaUri == null) {
-        isLoading.value = false
+        percentage.floatValue = 1f
+        onFailure()
         return
     }
 
@@ -408,6 +422,13 @@ suspend fun saveVideo(
 
     // wait again while that does its thing
     while (completions == 1) {
+        transformer.getProgress(progressHolder)
+        percentage.floatValue = (100f / 240f) + (progressHolder.progress / totalPercentage) // (100f / 240f) since the previous "half" was done
+
+        if (percentage.floatValue >= 0.5f) {
+            body.value = context.resources.getString(R.string.editing_export_video_loading_body, 2, 3)
+        }
+
         delay(1000)
     }
     delay(1000)
@@ -415,7 +436,8 @@ suspend fun saveVideo(
     val newUri = context.contentResolver.getUriFromAbsolutePath(tempFileCrop.absolutePath, MediaType.Video)
 
     if (newUri == null) {
-        isLoading.value = false
+        percentage.floatValue = 1f
+        onFailure()
         return
     }
 
@@ -440,12 +462,16 @@ suspend fun saveVideo(
         destination = absolutePath.getParentFromPath(),
         basePath = absolutePath.toBasePath(),
         overwriteDate = false,
+        showProgressSnackbar = false,
         overrideDisplayName = {
             it.replaceFirst("crop-", "")
         },
         onSingleItemDone = { data ->
             permanentlyDeletePhotoList(context, listOf(data.uri))
             if (tempFile.exists()) tempFile.delete()
+
+            body.value = context.resources.getString(R.string.editing_export_video_loading_body, 3, 3)
+            percentage.floatValue = 1f
         }
     )
 }
