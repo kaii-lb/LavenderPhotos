@@ -52,6 +52,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
@@ -245,6 +246,7 @@ fun TextEntryDialog(
     title: String,
     placeholder: String? = null,
     startValue: String = "",
+    errorMessage: String? = null,
     onConfirm: (text: String) -> Boolean,
     onValueChange: (text: String) -> Boolean,
     onDismiss: () -> Unit
@@ -264,13 +266,13 @@ fun TextEntryDialog(
 
         val keyboardController = LocalSoftwareKeyboardController.current
         var text by remember { mutableStateOf(startValue) }
-        var showError by remember { mutableStateOf(false) }
+        var showError by remember { mutableStateOf(!onValueChange(text)) }
 
         TextField(
             value = text,
             onValueChange = {
                 text = it
-                showError = !onValueChange(it)
+                showError = !onValueChange(it.trim())
             },
             maxLines = 1,
             singleLine = true,
@@ -286,27 +288,31 @@ fun TextEntryDialog(
             },
             suffix = {
                 if (showError) {
-                    Row {
-                        val coroutineScope = rememberCoroutineScope()
-                        val resources = LocalResources.current
+                    val coroutineScope = rememberCoroutineScope()
+                    val resources = LocalResources.current
 
+                    Row(
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .clickable {
+                                coroutineScope.launch {
+                                    LavenderSnackbarController.pushEvent(
+                                        LavenderSnackbarEvents.MessageEvent(
+                                            message = errorMessage ?: resources.getString(R.string.paths_should_be_relative),
+                                            icon = R.drawable.error_2,
+                                            duration = SnackbarDuration.Short
+                                        )
+                                    )
+                                }
+                            }
+                            .padding(4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
                         Icon(
                             painter = painterResource(id = R.drawable.error_2),
                             contentDescription = "Error",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier
-                                .size(24.dp)
-                                .clickable {
-                                    coroutineScope.launch {
-                                        LavenderSnackbarController.pushEvent(
-                                            LavenderSnackbarEvents.MessageEvent(
-                                                message = resources.getString(R.string.paths_should_be_relative),
-                                                icon = R.drawable.error_2,
-                                                duration = SnackbarDuration.Short
-                                            )
-                                        )
-                                    }
-                                }
+                            tint = MaterialTheme.colorScheme.primary
                         )
                     }
                 }
@@ -335,6 +341,7 @@ fun TextEntryDialog(
             shape = CircleShape,
             modifier = Modifier
                 .fillMaxWidth(1f)
+                .height(56.dp)
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -346,7 +353,7 @@ fun TextEntryDialog(
             position = RowPosition.Single,
             enabled = !showError
         ) {
-            showError = !onConfirm(text)
+            showError = !onConfirm(text.trim())
         }
     }
 }

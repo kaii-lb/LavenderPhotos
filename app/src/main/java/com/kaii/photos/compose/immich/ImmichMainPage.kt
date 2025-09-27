@@ -121,6 +121,7 @@ fun ImmichMainPage() {
 
             item {
                 var showAddressDialog by remember { mutableStateOf(false) }
+                val resources = LocalResources.current
                 val immichBasicInfo by mainViewModel.settings.Immich.getImmichBasicInfo()
                     .collectAsStateWithLifecycle(initialValue = ImmichBasicInfo("", ""))
 
@@ -128,23 +129,29 @@ fun ImmichMainPage() {
                     TextEntryDialog(
                         title = stringResource(id = R.string.immich_endpoint_base),
                         placeholder = stringResource(id = R.string.immich_endpoint_base_placeholder),
+                        errorMessage = resources.getString(R.string.immich_server_url_invalid),
                         onConfirm = { value ->
                             if ((value.startsWith("https://") || value.startsWith("http://"))
-                                && Patterns.WEB_URL.matcher(value).matches()
+                                && ((Regex("(?<=:)[0-9]+$").containsMatchIn(value) && value.count { it == ':' } <= 2)
+                                        || Patterns.WEB_URL.matcher(value).matches()
+                                        )
                             ) {
+                                // TODO: check if we can ping server address?
                                 mainViewModel.settings.Immich.setImmichBasicInfo(
                                     ImmichBasicInfo(
                                         endpoint = value.removeSuffix("/"),
                                         bearerToken = immichBasicInfo.bearerToken
                                     )
-                                ) // TODO: check if we can ping server address?
+                                )
                                 showAddressDialog = false
                                 true
                             } else false
                         },
                         onValueChange = { value ->
                             (value.startsWith("https://") || value.startsWith("http://"))
-                                    && Patterns.WEB_URL.matcher(value).matches()
+                                    && ((Regex("(?<=:)[0-9]+$").containsMatchIn(value) && value.count { it == ':' } <= 2)
+                                    || Patterns.WEB_URL.matcher(value).matches()
+                                    )
                             // TODO: check if we can ping server address?
                         },
                         onDismiss = {

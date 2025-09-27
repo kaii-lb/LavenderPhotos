@@ -1016,4 +1016,5 @@
             </ul>
         ]]>
     </string>
+    <string name="immich_server_url_invalid">Invalid Url!</string>
 </resources>
