@@ -776,6 +776,7 @@ class SettingsBehaviourImpl(
     private val viewModelScope: CoroutineScope
 ) {
     private val exitImmediately = booleanPreferencesKey("behaviour_exit_immediately")
+    private val rotateInViews = booleanPreferencesKey("behaviour_rotate_in_views")
 
     fun getExitImmediately() = context.datastore.data.map {
         it[exitImmediately] == true
@@ -784,6 +785,16 @@ class SettingsBehaviourImpl(
     fun setExitImmediately(value: Boolean) = viewModelScope.launch {
         context.datastore.edit {
             it[exitImmediately] = value
+        }
+    }
+
+    fun getRotateInViews() = context.datastore.data.map {
+        it[rotateInViews] != false
+    }
+
+    fun setRotateInViews(value: Boolean) = viewModelScope.launch {
+        context.datastore.edit {
+            it[rotateInViews] = value
         }
     }
 }

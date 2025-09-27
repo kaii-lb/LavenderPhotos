@@ -790,6 +790,9 @@
     <string name="settings_behaviour_desc">Change how the app works</string>
     <string name="settings_navigation_exit_immediately">Exit Immediately</string>
     <string name="settings_navigation_exit_immediately_desc">Skips going back to the main photos view when pressing the back button</string>
+    <string name="settings_views">Views</string>
+    <string name="settings_rotate_in_views">Allow Rotation</string>
+    <string name="settings_rotate_in_views_desc">Enables rotation by gesture when viewing media</string>
 
     <!-- Trash -->
     <string name="trash_bin_short">Trash</string>

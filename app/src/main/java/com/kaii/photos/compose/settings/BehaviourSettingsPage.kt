@@ -50,6 +50,28 @@ fun BehaviourSettingsPage() {
             horizontalAlignment = Alignment.Start
         ) {
             item {
+                PreferencesSeparatorText(stringResource(id = R.string.settings_views))
+            }
+
+            item {
+                val rotateInViews by mainViewModel.settings.Behaviour.getRotateInViews()
+                    .collectAsStateWithLifecycle(initialValue = true)
+
+                PreferencesSwitchRow(
+                    title = stringResource(id = R.string.settings_rotate_in_views),
+                    summary = stringResource(id = R.string.settings_rotate_in_views_desc),
+                    iconResID = R.drawable.rotate_ccw,
+                    checked = rotateInViews,
+                    position = RowPosition.Single,
+                    showBackground = false,
+                    onRowClick = null,
+                    onSwitchClick = { checked ->
+                        mainViewModel.settings.Behaviour.setRotateInViews(checked)
+                    }
+                )
+            }
+
+            item {
                 PreferencesSeparatorText(stringResource(id = R.string.video))
             }
 

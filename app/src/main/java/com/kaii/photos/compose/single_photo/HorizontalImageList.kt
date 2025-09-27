@@ -50,6 +50,7 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.setBarVisibility
+import com.kaii.photos.datastore.Behaviour
 import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.OffsetSaver
@@ -251,6 +252,10 @@ fun Modifier.mediaModifier(
     val vibratorManager = rememberVibratorManager()
     var isDoubleTapToScaling by remember { mutableStateOf(false) }
 
+    val mainViewModel = LocalMainViewModel.current
+    val rotateInViews by mainViewModel.settings.Behaviour.getRotateInViews()
+        .collectAsStateWithLifecycle(initialValue = true)
+
     val animatedScale by animateFloatAsState(
         targetValue = scale.floatValue,
         animationSpec = tween(
@@ -362,7 +367,7 @@ fun Modifier.mediaModifier(
                                 val centroid = event.calculateCentroid()
 
                                 // ignore rotation if user is moving or zooming, QOL thing
-                                val actualRotation = if (panZoomLock) 0f else rotationChange
+                                val actualRotation = if (panZoomLock || !rotateInViews) 0f else rotationChange
 
                                 if (actualRotation != 0f || zoomChange != 1f || offsetChange != Offset.Zero) {
                                     val oldScale = scale.floatValue
