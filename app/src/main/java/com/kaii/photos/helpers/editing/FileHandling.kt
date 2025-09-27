@@ -66,6 +66,7 @@ import com.kaii.photos.helpers.appStorageDir
 import com.kaii.photos.helpers.copyImageListToPath
 import com.kaii.photos.helpers.getParentFromPath
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
+import com.kaii.photos.helpers.setDateTakenForMedia
 import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
@@ -710,11 +711,23 @@ suspend fun saveImage(
                 context = context,
                 media = media,
                 destination = absolutePath.getParentFromPath(),
-                overwriteDate = true,
                 basePath = absolutePath.toBasePath(),
                 currentVolumes = MediaStore.getExternalVolumeNames(context),
                 overrideDisplayName = file.name.removeSuffix(file.extension) + "mp4",
-                onInsert = { _, _ -> }
+                onInsert = { _, new ->
+                    context.contentResolver.getMediaStoreDataFromUri(new)?.let { newMedia ->
+                        val date = System.currentTimeMillis()
+
+                        File(newMedia.absolutePath).setLastModified(date)
+
+                        if (newMedia.type == MediaType.Image) {
+                            setDateTakenForMedia(
+                                absolutePath = newMedia.absolutePath,
+                                dateTaken = date
+                            )
+                        }
+                    }
+                }
             )
         } else {
             uri
@@ -756,6 +769,19 @@ suspend fun saveImage(
             100,
             outputStream
         )
+
+        context.contentResolver.getMediaStoreDataFromUri(newMedia.uri)?.let { newMedia ->
+            val date = System.currentTimeMillis()
+
+            File(newMedia.absolutePath).setLastModified(date)
+
+            if (newMedia.type == MediaType.Image) {
+                setDateTakenForMedia(
+                    absolutePath = newMedia.absolutePath,
+                    dateTaken = date
+                )
+            }
+        }
     } ?: run {
         isLoading.value = false
 

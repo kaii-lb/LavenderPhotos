@@ -38,13 +38,11 @@ suspend fun ContentResolver.insertMedia(
     media: MediaStoreData,
     basePath: String,
     destination: String,
-    overwriteDate: Boolean,
     currentVolumes: Set<String>,
     overrideDisplayName: String? = null,
     onInsert: (origin: Uri, new: Uri) -> Unit
 ): Uri? = withContext(Dispatchers.IO) {
     val file = File(media.absolutePath)
-    val currentTime = System.currentTimeMillis()
     val volumeName =
         if (basePath == baseInternalStorageDirectory) MediaStore.VOLUME_EXTERNAL
         else currentVolumes.find {
@@ -75,13 +73,6 @@ suspend fun ContentResolver.insertMedia(
         newUri?.let { uri ->
             onInsert(media.uri, uri)
 
-            getMediaStoreDataFromUri(uri)?.let { newMedia ->
-                File(newMedia.absolutePath).setLastModified(
-                    if (overwriteDate) currentTime
-                    else media.dateTaken * 1000
-                )
-            }
-
             return@withContext uri
         }
 
@@ -101,18 +92,6 @@ suspend fun ContentResolver.insertMedia(
 
         fileToBeSavedTo?.let { savedToFile ->
             onInsert(media.uri, savedToFile.uri)
-
-            try {
-                getMediaStoreDataFromUri(savedToFile.uri)?.let { newMedia ->
-                    File(newMedia.absolutePath).setLastModified(
-                        if (overwriteDate) currentTime
-                        else media.dateTaken * 1000
-                    )
-                }
-            } catch (e: Throwable) {
-                Log.e(TAG, e.toString())
-                e.printStackTrace()
-            }
 
             return@withContext savedToFile.uri
         }

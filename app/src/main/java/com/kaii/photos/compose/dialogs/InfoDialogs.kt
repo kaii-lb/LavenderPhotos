@@ -713,21 +713,6 @@ fun SinglePhotoInfoDialog(
 
                             IconButton(
                                 onClick = {
-                                    isMoving = false
-                                    show.value = true
-                                },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(48.dp)
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.copy),
-                                    contentDescription = "copy this media"
-                                )
-                            }
-
-                            IconButton(
-                                onClick = {
                                     isMoving = true
                                     show.value = true
                                 },
@@ -738,6 +723,21 @@ fun SinglePhotoInfoDialog(
                                 Icon(
                                     painter = painterResource(id = R.drawable.cut),
                                     contentDescription = "move this media"
+                                )
+                            }
+
+                            IconButton(
+                                onClick = {
+                                    isMoving = false
+                                    show.value = true
+                                },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(48.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.copy),
+                                    contentDescription = "copy this media"
                                 )
                             }
                         }

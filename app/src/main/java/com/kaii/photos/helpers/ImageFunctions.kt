@@ -25,6 +25,7 @@ import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.copyUriToUri
 import com.kaii.photos.mediastore.getIv
+import com.kaii.photos.mediastore.getMediaStoreDataFromUri
 import com.kaii.photos.mediastore.getOriginalPath
 import com.kaii.photos.mediastore.insertMedia
 import kotlinx.coroutines.CoroutineScope
@@ -255,6 +256,7 @@ suspend fun moveImageOutOfLockedFolder(
 ) {
     val contentResolver = context.contentResolver
     val restoredFilesDir = context.appRestoredFilesDir
+    val currentDate = System.currentTimeMillis()
 
     list.forEach { media ->
         val fileToBeRestored = File(media.absolutePath)
@@ -288,11 +290,32 @@ suspend fun moveImageOutOfLockedFolder(
                 uri = tempFile.toUri()
             ),
             destination = originalPath.getParentFromPath(),
-            overwriteDate = false,
             basePath = originalPath.toBasePath(),
             currentVolumes = MediaStore.getExternalVolumeNames(context),
             onInsert = { original, new ->
-                contentResolver.copyUriToUri(original, new)
+                context.contentResolver.getMediaStoreDataFromUri(new)?.let { newMedia ->
+                    val date = media.dateTaken * 1000
+
+                    File(newMedia.absolutePath).setLastModified(currentDate)
+
+                    if (newMedia.type == MediaType.Image) {
+                        setDateTakenForMedia(
+                            absolutePath = newMedia.absolutePath,
+                            dateTaken = date
+                        )
+                    }
+
+                    contentResolver.copyUriToUri(original, new)
+
+                    File(newMedia.absolutePath).setLastModified(date)
+
+                    if (newMedia.type == MediaType.Image) {
+                        setDateTakenForMedia(
+                            absolutePath = newMedia.absolutePath,
+                            dateTaken = date
+                        )
+                    }
+                }
             }
         )?.let {
             try {
@@ -391,16 +414,40 @@ fun moveImageListToPath(
         )
 
         async {
+            val currentDate = System.currentTimeMillis()
             list.forEachIndexed { index, media ->
                 contentResolver.insertMedia(
                     context = context,
                     media = media,
                     destination = destination,
                     basePath = basePath,
-                    overwriteDate = overwriteDate,
                     currentVolumes = MediaStore.getExternalVolumeNames(context),
                     onInsert = { original, new ->
-                        contentResolver.copyUriToUri(original, new)
+                        context.contentResolver.getMediaStoreDataFromUri(new)?.let { newMedia ->
+                            val date =
+                                if (overwriteDate) currentDate
+                                else media.dateTaken * 1000
+
+                            File(newMedia.absolutePath).setLastModified(currentDate)
+
+                            if (newMedia.type == MediaType.Image) {
+                                setDateTakenForMedia(
+                                    absolutePath = newMedia.absolutePath,
+                                    dateTaken = date
+                                )
+                            }
+
+                            contentResolver.copyUriToUri(original, new)
+
+                            File(newMedia.absolutePath).setLastModified(currentDate)
+
+                            if (newMedia.type == MediaType.Image) {
+                                setDateTakenForMedia(
+                                    absolutePath = newMedia.absolutePath,
+                                    dateTaken = date
+                                )
+                            }
+                        }
                     }
                 )?.let {
                     body.value = context.resources.getString(R.string.media_operate_snackbar_body, index + 1, list.size)
@@ -445,17 +492,41 @@ fun copyImageListToPath(
         }
 
         async {
+            val currentDate = System.currentTimeMillis()
             list.forEachIndexed { index, media ->
                 contentResolver.insertMedia(
                     context = context,
                     media = media,
                     destination = destination,
-                    overwriteDate = overwriteDate,
                     basePath = basePath,
                     overrideDisplayName = if (overrideDisplayName != null) overrideDisplayName(media.displayName) else null,
                     currentVolumes = MediaStore.getExternalVolumeNames(context),
                     onInsert = { original, new ->
-                        contentResolver.copyUriToUri(original, new)
+                        context.contentResolver.getMediaStoreDataFromUri(new)?.let { newMedia ->
+                            val date =
+                                if (overwriteDate) currentDate
+                                else media.dateTaken * 1000
+
+                            File(newMedia.absolutePath).setLastModified(currentDate)
+
+                            if (newMedia.type == MediaType.Image) {
+                                setDateTakenForMedia(
+                                    absolutePath = newMedia.absolutePath,
+                                    dateTaken = date
+                                )
+                            }
+
+                            contentResolver.copyUriToUri(original, new)
+
+                            File(newMedia.absolutePath).setLastModified(currentDate)
+
+                            if (newMedia.type == MediaType.Image) {
+                                setDateTakenForMedia(
+                                    absolutePath = newMedia.absolutePath,
+                                    dateTaken = date
+                                )
+                            }
+                        }
                     }
                 )?.let { uri ->
                     body.value = context.resources.getString(R.string.media_operate_snackbar_body, index + 1, list.size)
