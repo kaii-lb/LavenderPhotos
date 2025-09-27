@@ -32,3 +32,7 @@ Our [Weblate](https://hosted.weblate.org/projects/lavender-photos/) instance is 
 |  ![](/assets/images/Secure.png)   |  ![](/assets/images/Favourites.png)  | ![](/assets/images/Search.png)        |
 |              Privacy              |                Trash                 | Look & Feel                           |
 |  ![](/assets/images/Privacy.png)  |    ![](/assets/images/Trash.png)     | ![](/assets/images/LookAndFeel.png)   |
+
+# Verification
+- Package name: com.kaii.photos
+- Signing hash: B2:6E:8A:CD:20:D2:BD:B5:1D:EE:0D:F9:65:AA:40:BD:86:43:D3:F8:95:E8:25:A0:CD:DF:51:FE:27:5B:3E:C1
