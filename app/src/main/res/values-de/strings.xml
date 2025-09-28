@@ -83,4 +83,10 @@
     <string name="export_unenc_backup_desc">Exportiert einen Ordner mit all Ihren gesicherten Objekten, unverschlüsselt</string>
     <string name="exporting_backup">Exportiere Sicherung…</string>
     <string name="export_raw_backup">RAW-Sicherung exportieren</string>
+    <string name="export_fav_to_folder_desc">Exportiert all deine Favoriten in einen Ordner</string>
+    <string name="export_fav_to_zip_desc">Exportiert all deine Favoriten in eine ZIP-Datei</string>
+    <string name="data_and_backup">Daten und Backup</string>
+    <string name="favourites">Favoriten</string>
+    <string name="favourites_add_this">Zu Favoriten hinzufügen</string>
+    <string name="debugging"></string>
 </resources>
