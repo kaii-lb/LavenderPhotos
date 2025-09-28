@@ -61,6 +61,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
@@ -1140,9 +1141,20 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        val windowInfo = LocalWindowInfo.current
         val scrollBehaviour = FloatingToolbarDefaults.exitAlwaysScrollBehavior(
             exitDirection = FloatingToolbarExitDirection.Bottom
         )
+        LaunchedEffect(selectedItemsList.lastOrNull()) {
+            if (selectedItemsList.isNotEmpty()) {
+                scrollBehaviour.onPostScroll(
+                    Offset(x = 0f, y = windowInfo.containerSize.height.toFloat()),
+                    Offset.Zero,
+                    source = NestedScrollSource.SideEffect
+                )
+            }
+        }
+
         Scaffold(
             topBar = {
                 TopBar(
