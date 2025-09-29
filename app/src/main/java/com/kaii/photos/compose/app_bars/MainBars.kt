@@ -84,14 +84,22 @@ fun MainAppTopBar(
     DualFunctionTopAppBar(
         alternated = alternate,
         title = {
+            val split = stringResource(id = R.string.app_name_full).split(" ")
+
+            val firstName = split.first()
+
+            val secondName =
+                if (split.size >= 2) split[1]
+                else ""
+
             Row {
                 Text(
-                    text = stringResource(id = R.string.app_name_full).split(" ").first() + " ",
+                    text = "$firstName ",
                     fontWeight = FontWeight.Bold,
                     fontSize = TextUnit(22f, TextUnitType.Sp)
                 )
                 Text(
-                    text = stringResource(id = R.string.app_name_full).split(" ")[1], // second part
+                    text = secondName,
                     fontWeight = FontWeight.Normal,
                     fontSize = TextUnit(22f, TextUnitType.Sp)
                 )
