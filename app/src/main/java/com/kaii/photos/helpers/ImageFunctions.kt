@@ -293,9 +293,9 @@ suspend fun moveImageOutOfLockedFolder(
             basePath = originalPath.toBasePath(),
             currentVolumes = MediaStore.getExternalVolumeNames(context),
             onInsert = { original, new ->
-                context.contentResolver.getMediaStoreDataFromUri(new)?.let { newMedia ->
-                    val date = media.dateTaken * 1000
+                val date = media.dateTaken * 1000
 
+                context.contentResolver.getMediaStoreDataFromUri(new)?.let { newMedia ->
                     File(newMedia.absolutePath).setLastModified(currentDate)
 
                     if (newMedia.type == MediaType.Image) {
@@ -304,10 +304,10 @@ suspend fun moveImageOutOfLockedFolder(
                             dateTaken = date
                         )
                     }
-
-                    contentResolver.copyUriToUri(original, new)
-
-                    File(newMedia.absolutePath).setLastModified(date)
+                }
+                contentResolver.copyUriToUri(original, new)
+                context.contentResolver.getMediaStoreDataFromUri(new)?.let { newMedia ->
+                    File(newMedia.absolutePath).setLastModified(currentDate)
 
                     if (newMedia.type == MediaType.Image) {
                         setDateTakenForMedia(
@@ -423,11 +423,11 @@ fun moveImageListToPath(
                     basePath = basePath,
                     currentVolumes = MediaStore.getExternalVolumeNames(context),
                     onInsert = { original, new ->
-                        context.contentResolver.getMediaStoreDataFromUri(new)?.let { newMedia ->
-                            val date =
-                                if (overwriteDate) currentDate
-                                else media.dateTaken * 1000
+                        val date =
+                            if (overwriteDate) currentDate
+                            else media.dateTaken * 1000
 
+                        context.contentResolver.getMediaStoreDataFromUri(new)?.let { newMedia ->
                             File(newMedia.absolutePath).setLastModified(currentDate)
 
                             if (newMedia.type == MediaType.Image) {
@@ -436,9 +436,11 @@ fun moveImageListToPath(
                                     dateTaken = date
                                 )
                             }
+                        }
 
-                            contentResolver.copyUriToUri(original, new)
+                        contentResolver.copyUriToUri(original, new)
 
+                        context.contentResolver.getMediaStoreDataFromUri(new)?.let { newMedia ->
                             File(newMedia.absolutePath).setLastModified(currentDate)
 
                             if (newMedia.type == MediaType.Image) {
@@ -502,11 +504,11 @@ fun copyImageListToPath(
                     overrideDisplayName = if (overrideDisplayName != null) overrideDisplayName(media.displayName) else null,
                     currentVolumes = MediaStore.getExternalVolumeNames(context),
                     onInsert = { original, new ->
-                        context.contentResolver.getMediaStoreDataFromUri(new)?.let { newMedia ->
-                            val date =
-                                if (overwriteDate) currentDate
-                                else media.dateTaken * 1000
+                        val date =
+                            if (overwriteDate) currentDate
+                            else media.dateTaken * 1000
 
+                        context.contentResolver.getMediaStoreDataFromUri(new)?.let { newMedia ->
                             File(newMedia.absolutePath).setLastModified(currentDate)
 
                             if (newMedia.type == MediaType.Image) {
@@ -515,9 +517,11 @@ fun copyImageListToPath(
                                     dateTaken = date
                                 )
                             }
+                        }
 
-                            contentResolver.copyUriToUri(original, new)
+                        contentResolver.copyUriToUri(original, new)
 
+                        context.contentResolver.getMediaStoreDataFromUri(new)?.let { newMedia ->
                             File(newMedia.absolutePath).setLastModified(currentDate)
 
                             if (newMedia.type == MediaType.Image) {

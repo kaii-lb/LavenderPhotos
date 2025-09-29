@@ -199,11 +199,13 @@ fun ContentResolver.getMediaStoreDataFromUri(uri: Uri): MediaStoreData? {
         while (cursor.moveToNext()) {
             val contentId = cursor.getLong(contentIdColNum)
             val mimeType = cursor.getString(mimeTypeColNum)
-            val absolutePath = cursor.getString(absolutePathColNum)
+            val absolutePath: String? = cursor.getString(absolutePathColNum)
             val dateModified = cursor.getLong(dateModifiedColumn)
             val displayName = cursor.getString(displayNameIndex)
 
             Log.d(TAG, "Searching absolute path $absolutePath")
+
+            if (absolutePath == null) return null
 
             val mediaStoreDateTaken = cursor.getLong(dateTakenColumn) / 1000
             val dateTaken =
