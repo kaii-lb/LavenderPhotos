@@ -15,7 +15,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -93,7 +93,6 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.compose.ui.unit.toIntRect
-import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
@@ -249,12 +248,12 @@ fun DeviceMedia(
             columns =
                 if (useStaggeredGrid) {
                     StaggeredGridCells.Adaptive(
-                        this@BoxWithConstraints.maxWidth / (if (isLandscape) columnSize * 2 else columnSize)
+                        (this@BoxWithConstraints.maxWidth - 24.dp) / columnSize
                     )
                 } else {
                     StaggeredGridCells.Fixed(if (isLandscape) columnSize * 2 else columnSize)
                 },
-            userScrollEnabled = !isDragSelecting.value || selectedItemsList.isEmpty(),
+            userScrollEnabled = !isDragSelecting.value,
             modifier = Modifier
                 .testTag("mainlazycolumn")
                 .fillMaxSize(1f)
@@ -273,7 +272,7 @@ fun DeviceMedia(
             items(
                 count = groupedMedia.value.size,
                 key = {
-                    groupedMedia.value[it].absolutePath + "|" + groupedMedia.value[it].displayName
+                    groupedMedia.value[it].absolutePath + groupedMedia.value[it].displayName
                 },
                 contentType = {
                     groupedMedia.value[it].type
@@ -1041,16 +1040,14 @@ private fun Modifier.dragSelectionHandler(
 
     Log.d(TAG, "grid displays $numberOfHorizontalItems horizontal items")
 
-    detectDragGesturesAfterLongPress(
+    detectDragGestures(
         onDragStart = { offset ->
             isDragSelecting.value = true
 
             if (selectedItemsList.isNotEmpty()) {
                 state.getGridItemAtOffset(
                     offset,
-                    groupedMedia.fastMap { item ->
-                        item.absolutePath + "|" + item.displayName
-                    },
+                    groupedMedia.map { it.uri.toString() },
                     numberOfHorizontalItems
                 )?.let { key ->
                     val item = groupedMedia[key]
@@ -1092,9 +1089,7 @@ private fun Modifier.dragSelectionHandler(
 
                 state.getGridItemAtOffset(
                     change.position,
-                    groupedMedia.fastMap { item ->
-                        item.absolutePath + "|" + item.displayName
-                    },
+                    groupedMedia.map { it.uri.toString() },
                     numberOfHorizontalItems
                 )?.let { key ->
                     if (currentKey != key) {
@@ -1134,8 +1129,8 @@ private fun Modifier.dragSelectionHandler(
 }
 
 @Suppress("UNCHECKED_CAST")
-/** make sure [T] is the same type as state keys */
-private fun <T : Any> LazyStaggeredGridState.getGridItemAtOffset(
+        /** make sure [T] is the same type as state keys */
+fun <T : Any> LazyStaggeredGridState.getGridItemAtOffset(
     offset: Offset,
     keys: List<T>,
     numberOfHorizontalItems: Int
