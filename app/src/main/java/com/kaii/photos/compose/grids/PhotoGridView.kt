@@ -3,35 +3,29 @@ package com.kaii.photos.compose.grids
 import android.content.res.Configuration
 import android.util.Log
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.scrollBy
-import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
@@ -44,8 +38,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -54,29 +46,22 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.TransformOrigin
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -84,10 +69,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntRect
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
@@ -103,6 +85,7 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.FolderIsEmpty
 import com.kaii.photos.compose.ViewProperties
+import com.kaii.photos.compose.widgets.FloatingScrollbar
 import com.kaii.photos.compose.widgets.ShowSelectedState
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.LookAndFeel
@@ -127,12 +110,7 @@ import com.kaii.photos.mediastore.signature
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import kotlin.math.roundToInt
 
 private const val TAG = "com.kaii.photos.compose.grids.PhotoGridView"
 
@@ -197,8 +175,6 @@ fun DeviceMedia(
             selectedItemsList.isNotEmpty()
         }
     }
-
-    val coroutineScope = rememberCoroutineScope()
 
     BackHandler(
         enabled = selectedItemsList.isNotEmpty()
@@ -378,139 +354,6 @@ fun DeviceMedia(
                 }
             }
         }
-        // LazyVerticalGrid(
-        //     state = gridState,
-        //     columns = GridCells.Fixed(
-        //         if (!isLandscape) {
-        //             columnSize
-        //         } else {
-        //             columnSize * 2
-        //         }
-        //     ),
-        //     userScrollEnabled = !isDragSelecting.value,
-        //     modifier = Modifier
-        //         .testTag("mainlazycolumn")
-        //         .fillMaxSize(1f)
-        //         .align(Alignment.TopCenter)
-        //         .dragSelectionHandler(
-        //             state = gridState,
-        //             selectedItemsList = selectedItemsList,
-        //             groupedMedia = groupedMedia.value,
-        //             scrollSpeed = scrollSpeed,
-        //             scrollThreshold = with(localDensity) {
-        //                 40.dp.toPx()
-        //             },
-        //             isDragSelecting = isDragSelecting
-        //         )
-        // ) {
-        //     items(
-        //         count = groupedMedia.value.size,
-        //         key = {
-        //             groupedMedia.value[it].uri.toString()
-        //         },
-        //         contentType = {
-        //             groupedMedia.value[it].type
-        //         },
-        //         span = { index ->
-        //             if (index < groupedMedia.value.size) {
-        //                 val item = groupedMedia.value[index]
-        //                 if (item.type == MediaType.Section) {
-        //                     GridItemSpan(maxLineSpan)
-        //                 } else {
-        //                     GridItemSpan(1)
-        //                 }
-        //             } else {
-        //                 GridItemSpan(1)
-        //             }
-        //         }
-        //     ) { i ->
-        //         if (groupedMedia.value.isEmpty()) return@items
-        //         val mediaStoreItem = groupedMedia.value[i]
-        //
-        //         Row(
-        //             modifier = Modifier
-        //                 .wrapContentSize()
-        //                 .animateItem()
-        //         ) {
-        //             val navController = LocalNavController.current
-        //
-        //             MediaStoreItem(
-        //                 item = mediaStoreItem,
-        //                 groupedMedia = groupedMedia,
-        //                 viewProperties = viewProperties,
-        //                 selectedItemsList = selectedItemsList,
-        //                 thumbnailSettings = Pair(cacheThumbnails, thumbnailSize),
-        //                 isDragSelecting = isDragSelecting,
-        //                 isMediaPicker = isMediaPicker
-        //             ) {
-        //                 if (!isMediaPicker) {
-        //                     when (viewProperties.operation) {
-        //                         ImageFunctions.LoadNormalImage -> {
-        //                             // mainViewModel.setGroupedMedia(groupedMedia.value)
-        //
-        //                             navController.navigate(
-        //                                 Screens.SinglePhotoView(
-        //                                     albumInfo = albumInfo,
-        //                                     mediaItemId = mediaStoreItem.id,
-        //                                     loadsFromMainViewModel = viewProperties == ViewProperties.SearchLoading || viewProperties == ViewProperties.SearchNotFound || viewProperties == ViewProperties.Favourites
-        //                                 )
-        //                             )
-        //                         }
-        //
-        //                         ImageFunctions.LoadTrashedImage -> {
-        //                             // mainViewModel.setGroupedMedia(groupedMedia.value)
-        //                             navController.navigate(
-        //                                 Screens.SingleTrashedPhotoView(
-        //                                     mediaItemId = mediaStoreItem.id
-        //                                 )
-        //                             )
-        //                         }
-        //
-        //                         ImageFunctions.LoadSecuredImage -> {
-        //                             mainViewModel.setGroupedMedia(groupedMedia.value)
-        //
-        //                             navController.navigate(
-        //                                 Screens.SingleHiddenPhotoView(
-        //                                     mediaItemId = mediaStoreItem.id
-        //                                 )
-        //                             )
-        //                         }
-        //                     }
-        //                 }
-        //             }
-        //         }
-        //     }
-        //
-        //     if (shouldPadUp && !isMainPage) {
-        //         item(
-        //             span = {
-        //                 GridItemSpan(maxLineSpan)
-        //             }
-        //         ) {
-        //             Box(
-        //                 modifier = Modifier
-        //                     .fillMaxWidth(1f)
-        //                     .height(80.dp)
-        //             )
-        //         }
-        //     }
-        //
-        //     if (isMainPage) {
-        //         Log.d(TAG, "IS PADDING UP")
-        //
-        //         item(
-        //             span = {
-        //                 GridItemSpan(maxLineSpan)
-        //             }
-        //         ) {
-        //             Box(
-        //                 modifier = Modifier
-        //                     .fillMaxWidth(1f)
-        //                     .height(120.dp)
-        //             )
-        //         }
-        //     }
-        // }
 
         if (showLoadingSpinner) {
             Row(
@@ -540,8 +383,14 @@ fun DeviceMedia(
             }
         }
 
-        val spacerHeight by animateDpAsState(
-            targetValue = if (isMainPage) 88.dp else if (shouldPadUp) 48.dp else 0.dp,
+        val spacerHeight = animateDpAsState(
+            targetValue =
+                with(localDensity) {
+                    WindowInsets.navigationBars.getBottom(localDensity).toDp() +
+                            if (isMainPage) 128.dp
+                            else if (shouldPadUp) 64.dp
+                            else 8.dp
+                },
             animationSpec = tween(
                 durationMillis = 350,
                 delayMillis = if (shouldPadUp) 350 else 0
@@ -549,235 +398,17 @@ fun DeviceMedia(
             label = "animate spacer on bottom of photo grid"
         )
 
-        // date slider
         Box(
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .fillMaxHeight(1f)
-                .width(48.dp)
-                .padding(
-                    bottom = spacerHeight
-                )
+                .wrapContentWidth()
         ) {
-            var showHandle by remember { mutableStateOf(false) }
-            var isScrollingByHandle by remember { mutableStateOf(false) }
-            val interactionSource = remember { MutableInteractionSource() }
-
-            LaunchedEffect(interactionSource) {
-                interactionSource.interactions.collect { interaction ->
-                    when (interaction) {
-                        is DragInteraction.Start -> {
-                            isScrollingByHandle = true
-                        }
-
-                        is DragInteraction.Cancel -> {
-                            isScrollingByHandle = false
-                        }
-
-                        is DragInteraction.Stop -> {
-                            isScrollingByHandle = false
-                        }
-
-                        else -> {}
-                    }
-                }
-            }
-
-            LaunchedEffect(key1 = gridState.isScrollInProgress, key2 = isScrollingByHandle) {
-                if (gridState.isScrollInProgress || isScrollingByHandle) {
-                    showHandle = true
-                } else {
-                    delay(
-                        if (selectedItemsList.isNotEmpty()) 1000 else 3000
-                    )
-                    showHandle = false
-                }
-            }
-
-            val listSize by remember {
-                derivedStateOf {
-                    groupedMedia.value.size - 1
-                }
-            }
-            val totalLeftOverItems by remember {
-                derivedStateOf {
-                    (listSize - gridState.layoutInfo.visibleItemsInfo.size).toFloat()
-                }
-            }
-
-            AnimatedVisibility(
-                visible = showHandle && !showLoadingSpinner && totalLeftOverItems > 50f,
-                modifier = Modifier.fillMaxHeight(1f),
-                enter =
-                    slideInHorizontally { width -> width },
-                exit =
-                    slideOutHorizontally { width -> width }
-            ) {
-                val visibleItemIndex =
-                    remember { derivedStateOf { gridState.firstVisibleItemIndex } }
-                val percentScrolled by remember {
-                    derivedStateOf {
-                        visibleItemIndex.value / totalLeftOverItems
-                    }
-                }
-                var chosenItemIndex by remember { mutableIntStateOf(0) }
-
-                val layoutDirection = LocalLayoutDirection.current
-
-                Slider(
-                    value =
-                        if (layoutDirection == LayoutDirection.Rtl) 1f - percentScrolled
-                        else percentScrolled,
-                    interactionSource = interactionSource,
-                    onValueChange = {
-                        coroutineScope.launch {
-                            if (isScrollingByHandle) {
-                                chosenItemIndex =
-                                    if (layoutDirection == LayoutDirection.Rtl) {
-                                        ((1f - it) * (groupedMedia.value.size - 1)).roundToInt()
-                                    } else {
-                                        (it * (groupedMedia.value.size - 1)).roundToInt()
-                                    }
-                                gridState.scrollToItem(
-                                    chosenItemIndex
-                                )
-                            }
-                        }
-                    },
-                    valueRange = 0f..1f,
-                    thumb = { _ ->
-                        Box(
-                            modifier = Modifier
-                                .height(48.dp)
-                                .width(96.dp)
-                                .rotate(
-                                    if (layoutDirection == LayoutDirection.Rtl) 180f
-                                    else 0f
-                                )
-                                .offset(
-                                    y =
-                                        if (layoutDirection == LayoutDirection.Rtl) (-16).dp
-                                        else 0.dp
-                                )
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(48.dp)
-                                    .clip(RoundedCornerShape(0.dp, 0.dp, 1000.dp, 1000.dp))
-                                    .background(MaterialTheme.colorScheme.secondaryContainer)
-                                    .align(Alignment.Center)
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.code),
-                                    contentDescription = "scrollbar handle",
-                                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                                    modifier = Modifier
-                                        .size(24.dp)
-                                        .align(Alignment.Center)
-                                )
-                            }
-
-                            Box(
-                                modifier = Modifier
-                                    .align(Alignment.Center)
-                                    .rotate(-90f)
-                                    .graphicsLayer {
-                                        translationX = -220f
-
-                                        if (layoutDirection == LayoutDirection.Rtl) {
-                                            rotationX = 180f
-                                            rotationY = 180f
-                                        }
-                                    }
-                            ) {
-                                AnimatedVisibility(
-                                    visible = isScrollingByHandle,
-                                    enter =
-                                        slideInHorizontally { width -> width / 4 } + fadeIn(),
-                                    exit =
-                                        slideOutHorizontally { width -> width / 4 } + fadeOut(),
-                                    modifier = Modifier
-                                        .align(Alignment.CenterStart)
-                                        .height(32.dp)
-                                        .wrapContentWidth()
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .height(32.dp)
-                                            .wrapContentWidth()
-                                            .clip(RoundedCornerShape(1000.dp))
-                                            .background(MaterialTheme.colorScheme.secondaryContainer)
-                                            .padding(8.dp, 4.dp)
-                                    ) {
-                                        // last index to "reach" even the last items
-                                        val item by remember {
-                                            derivedStateOf {
-                                                groupedMedia.value[chosenItemIndex]
-                                            }
-                                        }
-
-                                        val format = SimpleDateFormat("MMM yyyy", Locale.getDefault())
-                                        val formatted = remember(item) {
-                                            format.format(Date(item.dateTaken * 1000))
-                                        }
-
-                                        Text(
-                                            text = formatted,
-                                            fontSize = TextUnit(14f, TextUnitType.Sp),
-                                            textAlign = TextAlign.Center,
-                                            color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                            modifier = Modifier
-                                                .align(Alignment.CenterStart)
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    track = {
-                        val colors = SliderDefaults.colors()
-                        SliderDefaults.Track(
-                            sliderState = it,
-                            trackInsideCornerSize = 8.dp,
-                            colors = colors.copy(
-                                activeTickColor = Color.Transparent,
-                                inactiveTickColor = Color.Transparent,
-                                disabledActiveTickColor = Color.Transparent,
-                                disabledInactiveTickColor = Color.Transparent,
-
-                                activeTrackColor = Color.Transparent,
-                                inactiveTrackColor = Color.Transparent
-                            ),
-                            thumbTrackGapSize = 4.dp,
-                            drawTick = { _, _ -> },
-                            modifier = Modifier
-                                .height(16.dp)
-                        )
-                    },
-                    modifier = Modifier
-                        .width(40.dp)
-                        .fillMaxHeight(1f)
-                        .graphicsLayer {
-                            rotationZ = 90f
-                            translationX = 30f
-                            transformOrigin = TransformOrigin(0f, 0f)
-                        }
-                        .layout { measurable, constraints ->
-                            val placeable = measurable.measure(
-                                Constraints(
-                                    minWidth = constraints.minHeight,
-                                    minHeight = constraints.minWidth,
-                                    maxWidth = constraints.maxHeight,
-                                    maxHeight = constraints.maxWidth
-                                )
-                            )
-
-                            layout(placeable.height, placeable.width) {
-                                placeable.place(0, -placeable.height)
-                            }
-                        }
-                )
-            }
+            FloatingScrollbar(
+                gridState = gridState,
+                spacerHeight = spacerHeight,
+                groupedMedia = groupedMedia
+            )
         }
     }
 }

@@ -1,18 +1,26 @@
 package com.kaii.photos.compose.widgets
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
+import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.BoxWithConstraintsScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -21,6 +29,8 @@ import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -33,10 +43,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.MutableIntState
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,21 +59,35 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import com.kaii.photos.R
+import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.editing.DrawingColors
+import com.kaii.photos.mediastore.MediaStoreData
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import kotlin.math.roundToInt
 
 // TODO: awful execution plz fix
 @OptIn(ExperimentalMaterial3Api::class)
@@ -362,4 +391,190 @@ fun BoxWithConstraintsScope.PopupPillSlider(
                 .weight(1f)
         )
     }
+}
+
+@Composable
+fun FloatingScrollbar(
+    gridState: LazyStaggeredGridState,
+    spacerHeight: State<Dp>,
+    groupedMedia: MutableState<List<MediaStoreData>>,
+    modifier: Modifier = Modifier
+) {
+    val coroutineScope = rememberCoroutineScope()
+
+    val totalItems by remember {
+        derivedStateOf {
+            gridState.layoutInfo.totalItemsCount
+        }
+    }
+
+    val isScrolling by gridState.interactionSource.collectIsDraggedAsState()
+    var isDraggingHandle by remember { mutableStateOf(false) }
+    var targetIndex by remember { mutableIntStateOf(0) }
+
+    var showHandle by remember { mutableStateOf(false) }
+    LaunchedEffect(isScrolling, isDraggingHandle) {
+        if (isScrolling || isDraggingHandle) {
+            showHandle = true
+        } else {
+            delay(AnimationConstants.DURATION_EXTRA_LONG * 2L)
+            showHandle = false
+        }
+    }
+
+    var totalDrag by remember { mutableFloatStateOf(targetIndex.toFloat() / totalItems) }
+    var maxHeight by remember { mutableIntStateOf(0) }
+    val localDensity = LocalDensity.current
+
+    LaunchedEffect(gridState.firstVisibleItemIndex, totalItems) {
+        if (!isDraggingHandle) {
+            // update totalDrag for when the user scrolls the grid not the scrollbar
+            // this prevents "jumping" of the scrollbar
+            with(localDensity) {
+                val scrollbarHeight = maxHeight - spacerHeight.value.toPx()
+                totalDrag = (gridState.firstVisibleItemIndex.toFloat() / totalItems) * scrollbarHeight
+            }
+        }
+    }
+
+    AnimatedVisibility(
+        visible = showHandle,
+        enter = slideInHorizontally { width -> width },
+        exit = slideOutHorizontally { width -> width }
+    ) {
+        BoxWithConstraints(
+            modifier = modifier
+                .fillMaxHeight(1f)
+                .onGloballyPositioned {
+                    maxHeight = it.size.height
+                }
+        ) {
+            val thumbHeight = 48.dp
+            val thumbPosition by remember(spacerHeight) {
+                derivedStateOf {
+                    (this@BoxWithConstraints.maxHeight - spacerHeight.value) * (gridState.firstVisibleItemIndex.toFloat() / totalItems)
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight(1f)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .offset(
+                            x = 8.dp,
+                            y = thumbPosition
+                        )
+                        .height(thumbHeight)
+                        .width(48.dp)
+                        .clip(
+                            RoundedCornerShape(
+                                topStart = 1000.dp,
+                                bottomStart = 1000.dp,
+                                topEnd = 0.dp,
+                                bottomEnd = 0.dp
+                            )
+                        )
+                        .background(MaterialTheme.colorScheme.secondaryContainer)
+                        .pointerInput(Unit) {
+                            detectVerticalDragGestures(
+                                onDragStart = { offset ->
+                                    isDraggingHandle = true
+                                },
+                                onVerticalDrag = { change, dragAmount ->
+                                    val scrollbarHeight = maxHeight - spacerHeight.value.toPx()
+
+                                    totalDrag += dragAmount
+
+                                    targetIndex = ((totalDrag / scrollbarHeight) * totalItems).roundToInt().coerceIn(0, groupedMedia.value.size - 1)
+
+                                    coroutineScope.launch {
+                                        gridState.scrollToItem(
+                                            index = targetIndex,
+                                            scrollOffset = 0
+                                        )
+                                    }
+                                },
+                                onDragEnd = {
+                                    isDraggingHandle = false
+                                },
+                                onDragCancel = {
+                                    isDraggingHandle = false
+                                }
+                            )
+                        }
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.code),
+                        contentDescription = "scrollbar handle",
+                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                        modifier = Modifier
+                            .offset(x = (-2).dp)
+                            .size(24.dp)
+                            .rotate(90f)
+                            .align(Alignment.Center)
+                    )
+                }
+
+                val layoutDirection = LocalLayoutDirection.current
+                Box(
+                    modifier = Modifier
+                        .offset(
+                            x = 8.dp,
+                            y = thumbPosition + 8.dp
+                        )
+                        .graphicsLayer {
+                            translationX =
+                                if (layoutDirection == LayoutDirection.Rtl) 220f
+                                else -220f
+                        }
+                ) {
+                    AnimatedVisibility(
+                        visible = isDraggingHandle,
+                        enter =
+                            slideInHorizontally { width -> width / 4 } + fadeIn(),
+                        exit =
+                            slideOutHorizontally { width -> width / 4 } + fadeOut(),
+                        modifier = Modifier
+                            .align(Alignment.CenterStart)
+                            .height(32.dp)
+                            .wrapContentWidth()
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .height(32.dp)
+                                .wrapContentWidth()
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.secondaryContainer)
+                                .padding(8.dp, 4.dp)
+                        ) {
+                            // last index to "reach" even the last items
+                            val item by remember {
+                                derivedStateOf {
+                                    groupedMedia.value.getOrNull(targetIndex) ?: MediaStoreData()
+                                }
+                            }
+
+                            val format = remember { SimpleDateFormat("MMM yyyy", Locale.getDefault()) }
+                            val formatted = remember(item) {
+                                format.format(Date(item.dateTaken * 1000))
+                            }
+
+                            Text(
+                                text = formatted,
+                                fontSize = TextUnit(14f, TextUnitType.Sp),
+                                textAlign = TextAlign.Center,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                modifier = Modifier
+                                    .align(Alignment.CenterStart)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 }

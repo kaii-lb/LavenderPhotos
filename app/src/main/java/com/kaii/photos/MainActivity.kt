@@ -1165,24 +1165,24 @@ class MainActivity : ComponentActivity() {
                     object : NestedScrollConnection {
                         override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset =
                             scrollBehaviour.onPostScroll(
-                                if (selectedItemsList.isEmpty()) consumed else Offset.Zero,
-                                if (selectedItemsList.isEmpty()) available else Offset.Zero,
+                                consumed,
+                                available,
                                 source)
 
                         override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset =
                             scrollBehaviour.onPreScroll(
-                                if (selectedItemsList.isEmpty()) available else Offset.Zero,
+                                available,
                                 source
                             )
 
                         override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity =
                             scrollBehaviour.onPostFling(
-                                if (selectedItemsList.isEmpty()) consumed else Velocity.Zero,
+                                consumed,
                                 available
                             )
 
                         override suspend fun onPreFling(available: Velocity): Velocity =
-                            scrollBehaviour.onPreFling(if (selectedItemsList.isEmpty()) available else Velocity.Zero)
+                            scrollBehaviour.onPreFling(available)
                     }
                 )
         ) { padding ->
