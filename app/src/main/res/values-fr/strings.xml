@@ -119,7 +119,7 @@
     <string name="media_move">Déplacer</string>
     <string name="media_rename">Renommer</string>
     <string name="media_select">Sélectionner</string>
-    <string name="media_exif_erase">Effacer les données EXIF ?</string>
+    <string name="media_exif_erase">Effacer les données EXIF ?</string>
     <string name="media_exif_done">Données EXIF effacées</string>
     <string name="media_exif_failed">Échec de la suppression des données EXIF</string>
     <string name="media_okay">D\'acc</string>
