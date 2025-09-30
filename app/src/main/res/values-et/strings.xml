@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Fotod</string>
+    <string name="first_startup_dialog_title">Kas tuvastad nutiseadmest kõik albumid?</string>
+    <string name="albums_found">Tuvastasin kõik albumid!</string>
+    <string name="add_album">Lisa album</string>
+    <string name="finding_albums_on_device">Otsin albumeid…</string>
+    <string name="albums">Albumid</string>
+    <string name="first_startup_dialog_confirm_title">Otsi!</string>
+    <string name="albums_name">Albumi nimi</string>
+    <string name="albums_type">Albumi tüüp</string>
+    <string name="dev_title">Arendaja</string>
+    <string name="privacy_policy_title">Andmekaitse - ja privaatsusreeglid</string>
+    <string name="error_views_folder_non_existent">Kausta pole olemas</string>
+    <string name="error_views_error_page">See on veateate leht</string>
+    <string name="albums_media_sorting">Meedia järjestamine</string>
+    <string name="albums_media_sorting_desc">Määrab fotode ja videote järjestuse ruudustikus</string>
+    <string name="tabs_add">Lisa vahekaart</string>
+    <string name="tabs_name">Vahekaardi nimi</string>
+    <string name="tabs_albums_incl">Sealhulgas albumid</string>
+    <string name="tabs_confirm">Lisa vahekaart</string>
+    <string name="tabs_empty_params">Vahekaardi parameetrid ei saa jääda tühjaks</string>
+    <string name="tabs_max_reached">Sa ei saa lisada üle viie vahekaardi</string>
+    <string name="tabs_min_reached">Olemas peab olema vähemalt üks vahekaart</string>
+    <string name="return_to_previous_page">Tagasi eelmisele lehele</string>
+    <string name="app_icon">Rakenduse ikoon</string>
+    <string name="version_info">Versiooniteave</string>
+    <string name="updates">Uuendused</string>
+    <string name="updates_desc">hoia rakendus uuendatuna</string>
+    <string name="updates_check">Kontrolli uuendusi</string>
+    <string name="updates_check_desc">Teavitab rakenduse avamisel uuenduse olemasolust, kuid ei paigalda seda</string>
+    <string name="updates_whats_new">Mida on meil uut</string>
+    <string name="updates_not_found">Uuendusi ei leidu</string>
+    <string name="updates_new_version_available">Saadaval on uus versioon!</string>
+    <string name="updates_latest">Sa kasutad juba viimast versiooni</string>
+    <string name="updates_failed">Uuenduste kontrollimine ei õnnestunud</string>
+    <string name="updates_checking">Kontrollin uuendusi</string>
+    <string name="updates_start">Käivita uuendamine</string>
+    <string name="error_views_album_empty">See album on tühi</string>
+    <string name="error_views_search_empty">Otsi fotosid!</string>
+    <string name="albums_remove">Eemalda album loendist</string>
+    <string name="albums_info">Albumi teave</string>
+    <string name="albums_path">Asukoht</string>
+    <string name="albums_id">Tunnus</string>
+    <string name="albums_item_count">Objekte</string>
+    <string name="albums_move_to">Teisalda albumisse</string>
+    <string name="albums_copy_to">Kopeeri albumisse</string>
+    <string name="albums_move_to_secure">Teisalda turvalisse albumisse</string>
+    <string name="app_name_full">Lavender - Sinu fotod</string>
+    <string name="support_desc">aita mul rakendust pidevas arenemas hoida</string>
+    <string name="support">Kasutajatugi ja toetused</string>
+    <string name="secure_folder">Turvaline kaust</string>
+    <string name="more_info">Lisateave</string>
+    <string name="not_available">Pole saadaval</string>
+    <string name="direct_path_album">Kasuta albumi lisamiseks täpset asukohta</string>
+    <string name="albums_main_list">Albumite põhiline loend</string>
+    <string name="albums_main_list_selected">Siia valitud albumid saavad olema nähtavad põhilises fotovaates</string>
+    <string name="albums_selected">Valitud albumid</string>
+    <string name="albums_auto_detect">Tuvasta albumid automaatselt</string>
+    <string name="albums_auto_detect_desc">Tuvastab selle seadme meediafailidega kaustad ja lisab need albumite vaatesse</string>
+    <string name="albums_clear_list">Tühjenda albumite loend</string>
+    <string name="albums_clear_list_desc">Eemalda kõik albumid, välja arvatud Kaamera ja Allalaadimiste kaustad</string>
+    <string name="albums_clear_list_done">Albumite loend on tühjendatud</string>
+    <string name="tabs">Vahekaardid</string>
+    <string name="tab_non_existent">Seda vahekaarti pole olemas!</string>
+    <string name="tabs_default">Vaikimisi vahekaart</string>
+    <string name="tabs_default_desc">Käivitamisel avab Lavender Photos automaatselt selle vahekaardi</string>
+    <string name="tabs_customize">Kohenda vahekaarte</string>
+    <string name="tabs_customize_desc">Lisa ja muuda alumisel ribal kuvatavaid vahekaarte</string>
+    <string name="tabs_navigate_to">Mine lehele: %s$1</string>
+    <string name="albums_non_existent">Selliseid albumeid ei leidu</string>
+    <string name="albums_already_contains_all">Albumis juba on kõik objektid olemas</string>
+    <string name="albums_add_failed">Albumite hulka lisamine ei õnnestunud :&lt;</string>
+    <string name="albums_folder">Albumkaust</string>
+    <string name="privacy_policy">Seda tegelikult pole! Sinu andmed ei lahku selle rakenduse kaudu siit nutiseadmest. Seda ei kasutata tehisaru koolitamiseks ning meil pole algoritme teabe rehitsemiseks, tõesti mitte midagi. Lavender Photos on alati olnud privaatsuskeskne galeriirakendus.</string>
+    <string name="i_swear_were_not_bad">me tõesti ei kasuta sinu andmeid</string>
+    <string name="updates_notice">Teade allalaadimise kohta</string>
+    <string name="secure_processing">Palun oota, kuni meedium on töötlemisel</string>
+    <string name="secure_share_media">Jaga seda turvalist meediumi</string>
+    <string name="secure_encrypting">Failid on krüptimisel</string>
+    <string name="secure_decrypting">Failid on dekrüptimisel</string>
+    <string name="export_unenc_backup">Ekspordi krüptimata varukoopia</string>
+    <string name="favourites">Lemmikud</string>
+    <string name="data_and_backup">Andmed ja varundus</string>
+    <string name="favourites_add_this">Märgi see meedium lemmikuks</string>
+    <string name="debugging">Veaotsing</string>
+    <string name="debugging_desc">Tarvikud vigade otsimiseks</string>
+    <string name="logs">Logid</string>
+    <string name="record_logs">Salvesta logisid</string>
+    <string name="record_logs_desc">Salvesta logid veaotsingu eesmärgil. Vaatamiseks klõpsi.</string>
+    <string name="choose_logs">Vali logid</string>
+    <string name="previous_run_logs">Eelmise käivituse logid</string>
+    <string name="current_run_logs">Selle käivituse logid</string>
+    <string name="log_file_non_existent">Ühtegi logifaili pole veel salvestatud.</string>
+    <string name="album_add_path">Lisa albumite asukoht</string>
+    <string name="album_add">Lisa album</string>
+    <string name="updates_notice_desc"><![CDATA[
+            <p>See rakenduse uuendaja laadib apk-failid <a href="https://github.com/kaii-lb/LavenderPhotos/releases">GitHubist (GitHub Releases)</a>, mis
+                tähendab, et neid ei kontrollita ega testita nii, nagu IzzyOnDroid, F-Droid või muud rakendustepoed seda teevad.
+
+                <br><br>GitHubist laaditud failid on alati allkirjastatud, kontrollitud ja verifitseeritud arendaja poolt (kaii-lb) ning nende kasutamine saab olla vaid sinu otsus.
+
+                <br><br>Lavender Photos ei kasuta automaatset uuendamist ning alati uuendab vaid siis, kui oled seda konkreetselt lubanud.
+            </p>
+        ]]></string>
+</resources>

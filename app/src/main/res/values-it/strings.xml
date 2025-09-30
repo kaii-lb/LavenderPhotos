@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Foto</string>
+    <string name="first_startup_dialog_title">Cercare tutti gli album sul dispositivo?</string>
+    <string name="first_startup_dialog_body">Cerca tutti gli album sul dispositivo e li aggiunge su Lavender Photos.\nAttenzione: Gli album dei vecchi utenti saranno cancellati se verrà usata questa opzione.</string>
+    <string name="first_startup_dialog_confirm_title">Cerca!</string>
+    <string name="albums">Album</string>
+    <string name="finding_albums_on_device">Cercando gli album…</string>
+    <string name="albums_found">Tutti gli album trovati!</string>
+    <string name="add_album">Aggiungi album</string>
+    <string name="direct_path_album">Usa percorso per aggiungere un album</string>
+    <string name="albums_main_list">Lista degli album principali</string>
+    <string name="albums_main_list_selected">Gli album selezionati qui verranno visualizzati nella vista foto principale</string>
+    <string name="albums_selected">Album selezionati</string>
+    <string name="albums_auto_detect">Rileva album automaticamente</string>
+    <string name="albums_auto_detect_desc">Rileva tutte le cartelle del dispositivo con dei media e le aggiunge alla vista album</string>
+    <string name="albums_clear_list">Resetta lista album</string>
+    <string name="albums_clear_list_desc">Rimuovi tutti gli album ad eccezione di Camera e Download</string>
+    <string name="albums_clear_list_done">Lista album resettata</string>
+    <string name="albums_media_sorting">Riordinamento media</string>
+</resources>
