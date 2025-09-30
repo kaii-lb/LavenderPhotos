@@ -55,8 +55,10 @@ fun GetPermissionAndRun(
         rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
             if (result.resultCode == RESULT_OK || result.resultCode == RESULT_CANCELED) {
                 onGranted()
+                shouldRun.value = false
             } else {
                 onRejected()
+                shouldRun.value = false
             }
         }
 

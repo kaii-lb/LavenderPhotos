@@ -385,12 +385,32 @@ private fun BottomBar(
             contentAlignment = Alignment.Center
         ) {
             val getDirPerm = remember { mutableStateOf(false) }
+            val getMediaPerm = remember { mutableStateOf(false) }
             val coroutineScope = rememberCoroutineScope()
             val resources = LocalResources.current
 
             GetDirectoryPermissionAndRun(
                 absoluteDirPaths = listOf(currentItem.absolutePath.getParentFromPath()),
                 shouldRun = getDirPerm,
+                onGranted = {
+                    getMediaPerm.value = true
+                },
+                onRejected = {
+                    coroutineScope.launch {
+                        LavenderSnackbarController.pushEvent(
+                            LavenderSnackbarEvents.MessageEvent(
+                                message = resources.getString(R.string.permissions_needed),
+                                icon = R.drawable.shield_lock,
+                                duration = SnackbarDuration.Short
+                            )
+                        )
+                    }
+                }
+            )
+
+            GetPermissionAndRun(
+                uris = listOf(currentItem.uri),
+                shouldRun = getMediaPerm,
                 onGranted = {
                     showEditingView()
                 },
