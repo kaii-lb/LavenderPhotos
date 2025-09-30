@@ -678,7 +678,9 @@ private fun Modifier.dragSelectionHandler(
             if (selectedItemsList.isNotEmpty()) {
                 state.getGridItemAtOffset(
                     offset,
-                    groupedMedia.map { it.uri.toString() },
+                    groupedMedia.map {
+                        it.absolutePath + it.displayName
+                    },
                     numberOfHorizontalItems
                 )?.let { key ->
                     val item = groupedMedia[key]
@@ -720,7 +722,9 @@ private fun Modifier.dragSelectionHandler(
 
                 state.getGridItemAtOffset(
                     change.position,
-                    groupedMedia.map { it.uri.toString() },
+                    groupedMedia.map {
+                        it.absolutePath + it.displayName
+                    },
                     numberOfHorizontalItems
                 )?.let { key ->
                     if (currentKey != key) {
