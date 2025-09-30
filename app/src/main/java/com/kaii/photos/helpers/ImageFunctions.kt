@@ -1,9 +1,11 @@
 package com.kaii.photos.helpers
 
 import android.app.Activity
+import android.app.RecoverableSecurityException
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
+import android.content.IntentSender
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.provider.DocumentsContract
@@ -352,18 +354,28 @@ fun permanentlyDeleteSecureFolderImageList(list: List<String>, context: Context)
     }
 }
 
-fun renameImage(context: Context, uri: Uri, newName: String) {
-    CoroutineScope(Dispatchers.IO).launch {
-        async {
-            val contentResolver = context.contentResolver
+/** returns null if the operation succeeded, otherwise lets the caller handle the [RecoverableSecurityException] */
+fun renameImage(context: Context, uri: Uri, newName: String): IntentSender? {
+    val contentResolver = context.contentResolver
 
-            val contentValues = ContentValues().apply {
-                put(MediaColumns.DISPLAY_NAME, newName)
-            }
+    val contentValues = ContentValues().apply {
+        put(MediaColumns.DISPLAY_NAME, newName)
+    }
 
-            contentResolver.update(uri, contentValues, null)
-            contentResolver.notifyChange(uri, null)
-        }.await()
+    try {
+        contentResolver.update(uri, contentValues, null)
+        contentResolver.notifyChange(uri, null)
+
+        return null
+    } catch (securityException: SecurityException) {
+        Log.e(TAG, securityException.toString())
+        securityException.printStackTrace()
+
+        val recoverableSecurityException = securityException as? RecoverableSecurityException ?:
+            throw RuntimeException(securityException.message, securityException)
+
+        val intentSender = recoverableSecurityException.userAction.actionIntent.intentSender
+        return intentSender
     }
 }
 

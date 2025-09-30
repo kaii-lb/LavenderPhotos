@@ -2,6 +2,7 @@ package com.kaii.photos.helpers
 
 import android.app.Activity.RESULT_CANCELED
 import android.app.Activity.RESULT_OK
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -10,6 +11,7 @@ import android.provider.MediaStore
 import android.util.Log
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.ActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.SnackbarDuration
@@ -155,8 +157,7 @@ fun GetDirectoryPermissionAndRun(
         if (currentIndex >= absoluteDirPaths.size - 1 && grantedList.isNotEmpty()) {
             onGranted(grantedList.toList())
             currentIndex = 0
-        }
-        else if (currentIndex >= absoluteDirPaths.size - 1) {
+        } else if (currentIndex >= absoluteDirPaths.size - 1) {
             onRejected()
             currentIndex = 0
         } // grantedList IS empty
@@ -287,3 +288,47 @@ fun createDirectoryPicker(
     )
 }
 
+class MediaRenamer(
+    private val context: Context,
+    private val launcher: ManagedActivityResultLauncher<IntentSenderRequest, ActivityResult>,
+    private val setName: (String) -> Unit
+) {
+    fun rename(newName: String, uri: Uri) {
+        setName(newName)
+
+        val intentSender = renameImage(
+            context = context,
+            uri = uri,
+            newName = newName
+        )
+
+        if (intentSender != null) {
+            val request = IntentSenderRequest.Builder(intentSender).build()
+            launcher.launch(request)
+        }
+    }
+}
+
+@Composable
+fun rememberMediaRenamer(
+    uri: Uri,
+    onFailure: () -> Unit
+): MediaRenamer {
+    val context = LocalContext.current
+    var name by remember { mutableStateOf("") }
+
+    val launcher =
+        rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+            if (result.resultCode == RESULT_OK || result.resultCode == RESULT_CANCELED) {
+                renameImage(
+                    context = context,
+                    uri = uri,
+                    newName = name
+                )
+            } else {
+                onFailure()
+            }
+        }
+
+    return remember { MediaRenamer(context = context, launcher = launcher, setName = { name = it }) }
+}

@@ -98,9 +98,9 @@ import com.kaii.photos.helpers.eraseExifMedia
 import com.kaii.photos.helpers.getDecryptCacheForFile
 import com.kaii.photos.helpers.getExifDataForMedia
 import com.kaii.photos.helpers.getSecureDecryptedVideoFile
+import com.kaii.photos.helpers.rememberMediaRenamer
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.renameDirectory
-import com.kaii.photos.helpers.renameImage
 import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaStoreData
@@ -644,13 +644,29 @@ fun SinglePhotoInfoDialog(
                             )
                         }
                         val saveFileName = remember { mutableStateOf(false) }
-                        var currentFileName by remember { mutableStateOf(currentMediaItem.displayName) }
+                        var currentFileName by remember { mutableStateOf(originalFileName) }
+
+                        val resources = LocalResources.current
+                        val mediaRenamer = rememberMediaRenamer(uri = currentMediaItem.uri) {
+                            coroutineScope.launch {
+                                LavenderSnackbarController.pushEvent(
+                                    LavenderSnackbarEvents.MessageEvent(
+                                        message = resources.getString(R.string.permissions_needed),
+                                        icon = R.drawable.error_2,
+                                        duration = SnackbarDuration.Short
+                                    )
+                                )
+                            }
+                        }
 
                         GetPermissionAndRun(
                             uris = listOf(currentMediaItem.uri),
                             shouldRun = saveFileName,
                             onGranted = {
-                                renameImage(context, currentMediaItem.uri, currentFileName)
+                                mediaRenamer.rename(
+                                    newName = "${currentFileName}.${file.extension}",
+                                    uri = currentMediaItem.uri
+                                )
 
                                 originalFileName = currentFileName
                             }
@@ -663,7 +679,7 @@ fun SinglePhotoInfoDialog(
                                 placeholder = originalFileName,
                                 startValue = originalFileName,
                                 onConfirm = { newName ->
-                                    val valid = newName.split(".").last() != originalFileName.split(".").last()
+                                    val valid = newName != originalFileName
 
                                     if (valid) {
                                         currentFileName = newName
@@ -674,7 +690,7 @@ fun SinglePhotoInfoDialog(
                                     valid
                                 },
                                 onValueChange = { newName ->
-                                    newName.split(".").last() != originalFileName.split(".").last()
+                                    newName != originalFileName
                                 },
                                 onDismiss = {
                                     showRenameDialog = false
