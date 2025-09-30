@@ -425,7 +425,8 @@ class MediaPicker : ComponentActivity() {
                             scrollBehaviour.onPostScroll(
                                 if (selectedItemsList.isEmpty()) consumed else Offset.Zero,
                                 if (selectedItemsList.isEmpty()) available else Offset.Zero,
-                                source)
+                                source
+                            )
 
                         override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset =
                             scrollBehaviour.onPreScroll(
@@ -707,15 +708,15 @@ class MediaPicker : ComponentActivity() {
                     },
                     label = "MainBottomBarAnimatedContentView",
                     modifier = Modifier
-                        .windowInsetsPadding(WindowInsets.safeDrawing)
                         .align(Alignment.BottomCenter)
+                        .padding(bottom = 16.dp)
                 ) { state ->
                     if (!state) {
                         MainAppBottomBar(
                             currentView = currentView,
                             tabs = tabs.fastFilter { it != DefaultTabs.TabTypes.secure },
                             selectedItemsList = selectedItemsList,
-                            scrollBehaviour = scrollBehaviour
+                            scrollBehaviour = scrollBehaviour,
                         )
                     } else {
                         MediaPickerConfirmButton(
@@ -805,7 +806,7 @@ fun MediaPickerConfirmButton(
             modifier = Modifier
                 .width(160.dp)
                 .height(52.dp)
-                .align(Alignment.Center)
+                .align(Alignment.BottomCenter)
         ) {
             Text(
                 text = stringResource(id = R.string.media_confirm),
