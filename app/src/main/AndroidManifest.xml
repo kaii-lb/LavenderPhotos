@@ -46,7 +46,8 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Photos.Splashscreen"
         android:windowSoftInputMode="adjustResize"
-        tools:targetApi="35">
+        tools:targetApi="35"
+        android:usesCleartextTraffic="true">
 
         <activity
             android:name=".MainActivity"
