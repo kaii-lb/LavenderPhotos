@@ -585,19 +585,7 @@ fun SinglePhotoInfoDialog(
                     }
                 }
 
-                var mediaData by remember {
-                    mutableStateOf(
-                        emptyMap<MediaData, Any>()
-                    )
-                }
-
-                LaunchedEffect(currentMediaItem) {
-                    withContext(Dispatchers.IO) {
-                        getExifDataForMedia(currentMediaItem.absolutePath).collect {
-                            mediaData = it
-                        }
-                    }
-                }
+                val mediaData by getExifDataForMedia(currentMediaItem.absolutePath).collectAsStateWithLifecycle(initialValue = emptyMap(), context = Dispatchers.IO)
 
                 Column(
                     modifier = Modifier
