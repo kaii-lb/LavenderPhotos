@@ -1,0 +1,42 @@
+name: Android CI
+
+on:
+  push:
+    branches:
+      - feature/android-ci-test
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: 'gradle'
+
+    - name: Grant execute permission to gradlew
+      run: chmod +x gradlew
+
+    - name: Build Release APK
+      run: ./gradlew assembleRelease
+
+    - name: Decode Signing Key
+      run: echo "${{ secrets.KEYSTORE_KEY }}" | base64 --decode > app/release.keystore
+
+    - name: Sign Release APK
+      run: chmod +x ./apksigner/apksigner && ./apksigner/apksigner sign --ks app/release.keystore --ks-key-alias "${{ secrets.KEYSTORE_ALIAS }}" --ks-pass pass:"${{ secrets.KEYSTORE_PASS }}" --in app/build/outputs/apk/release/app-release-unsigned.apk --out photos_signed_release.apk
+
+    - name: Clean Up
+      run: shred -u app/release.keystore
+
+    - name: Upload APK as Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: lavender-photos-nightly-signed.apk
+        path: photos_signed_release.apk
