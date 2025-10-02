@@ -17,7 +17,6 @@ import com.kaii.lavender.immichintegration.serialization.ModifyAlbumAsset
 import com.kaii.lavender.immichintegration.serialization.RestoreFromTrash
 import com.kaii.lavender.immichintegration.serialization.UpdateAlbumInfo
 import com.kaii.photos.MainActivity.Companion.immichViewModel
-import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.SQLiteQuery
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.calculateSha1Checksum
@@ -74,8 +73,6 @@ class UploadWorker(
                 bearerToken = bearerToken
             )
 
-            val database = MediaDatabase.getInstance(context)
-
             var immichAlbum = albumManager.getAlbumInfo(albumId = albumId)!!
 
             val query = Json.decodeFromString<SQLiteQuery>(queryString)
@@ -84,8 +81,7 @@ class UploadWorker(
                 queryString = query,
                 sortBy = MediaItemSortMode.DateTaken,
                 cancellationSignal = CancellationSignal(),
-                displayDateFormat = DisplayDateFormat.Default,
-                database = database
+                displayDateFormat = DisplayDateFormat.Default
             )
 
             val media = dataSource.query()
@@ -97,7 +93,7 @@ class UploadWorker(
 
             val immichAlbumAssetsIds = immichAlbum.assets.map { it.deviceAssetId }
 
-            var shouldBackup = media.mapNotNull { item ->
+            val shouldBackup = media.mapNotNull { item ->
                 val immichFile = File(
                     path = item.absolutePath,
                     size = item.size,
@@ -173,7 +169,7 @@ class UploadWorker(
                     trashManager.restoreItems(
                         ids = RestoreFromTrash(
                             ids = assetInfo.filter {
-                                it.isTrashed == true
+                                it.isTrashed
                             }.map { it.id } - assetInfo.filter { it.duplicateId != null }
                                 .map { it.id } + dupes.keys.mapNotNull { dupes[it]?.first()?.id }
                         )

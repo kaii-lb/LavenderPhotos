@@ -12,7 +12,6 @@ import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.R
-import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.SectionItem
@@ -36,7 +35,6 @@ class MultiAlbumViewModel(
     var albumInfo: AlbumInfo,
     var sortBy: MediaItemSortMode,
     private val displayDateFormat: DisplayDateFormat,
-    private val database: MediaDatabase,
     var ignorePaths: Boolean = false
 ) : ViewModel() {
     private var cancellationSignal = CancellationSignal()
@@ -103,8 +101,7 @@ class MultiAlbumViewModel(
             queryString = query,
             sortBy = sortBy,
             cancellationSignal = cancellationSignal,
-            displayDateFormat = displayDateFormat,
-            database = database
+            displayDateFormat = displayDateFormat
         )
     }
 }

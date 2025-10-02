@@ -321,9 +321,9 @@ class MainActivity : ComponentActivity() {
         val shouldShowEverything by mainViewModel.showAllInMain.collectAsStateWithLifecycle()
         val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect()
             .collectAsStateWithLifecycle(initialValue = true)
-        val applicationDatabase = LocalAppDatabase.current
+
         val allAlbums by if (autoDetectAlbums) {
-            mainViewModel.settings.AlbumsList.getAutoDetectedAlbums(displayDateFormat ?: DisplayDateFormat.Default, applicationDatabase)
+            mainViewModel.settings.AlbumsList.getAutoDetectedAlbums(displayDateFormat ?: DisplayDateFormat.Default)
                 .collectAsStateWithLifecycle(initialValue = emptyList())
         } else {
             mainViewModel.settings.AlbumsList.getNormalAlbums()
@@ -344,8 +344,7 @@ class MainActivity : ComponentActivity() {
                     }
                 ),
                 sortBy = currentSortMode,
-                displayDateFormat = displayDateFormat ?: DisplayDateFormat.Default,
-                database = applicationDatabase
+                displayDateFormat = displayDateFormat ?: DisplayDateFormat.Default
             )
         )
 
@@ -1046,7 +1045,7 @@ class MainActivity : ComponentActivity() {
                         )
                     )
 
-                    mainViewModel.settings.AlbumsList.getAllAlbumsOnDevice(displayDateFormat = displayDateFormat, appDatabase = applicationDatabase)
+                    mainViewModel.settings.AlbumsList.getAllAlbumsOnDevice(displayDateFormat = displayDateFormat)
                         .cancellable()
                         .collectLatest { list ->
                             mainViewModel.settings.AlbumsList.setAlbumsList(list)
@@ -1093,11 +1092,11 @@ class MainActivity : ComponentActivity() {
         val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect()
             .collectAsStateWithLifecycle(initialValue = true)
 
-        val applicationDatabase = LocalAppDatabase.current
-        val displayDateFormat by mainViewModel.settings.LookAndFeel.getDisplayDateFormat().collectAsStateWithLifecycle(initialValue = DisplayDateFormat.Default)
+        val displayDateFormat by mainViewModel.settings.LookAndFeel.getDisplayDateFormat()
+            .collectAsStateWithLifecycle(initialValue = DisplayDateFormat.Default)
 
         val allAlbums by if (autoDetectAlbums) {
-            mainViewModel.settings.AlbumsList.getAutoDetectedAlbums(displayDateFormat, applicationDatabase)
+            mainViewModel.settings.AlbumsList.getAutoDetectedAlbums(displayDateFormat)
                 .collectAsStateWithLifecycle(initialValue = emptyList())
         } else {
             mainViewModel.settings.AlbumsList.getNormalAlbums()
@@ -1167,7 +1166,8 @@ class MainActivity : ComponentActivity() {
                             scrollBehaviour.onPostScroll(
                                 consumed,
                                 available,
-                                source)
+                                source
+                            )
 
                         override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset =
                             scrollBehaviour.onPreScroll(
@@ -1294,13 +1294,15 @@ class MainActivity : ComponentActivity() {
                             }
 
                             stateValue == DefaultTabs.TabTypes.photos -> {
-                                val albums by remember { derivedStateOf {
-                                    if (shouldShowEverything) {
-                                        allAlbums.flatMap { album -> album.paths.fastMap { it.removeSuffix("/") } } - albumsList
-                                    } else {
-                                        albumsList
+                                val albums by remember {
+                                    derivedStateOf {
+                                        if (shouldShowEverything) {
+                                            allAlbums.flatMap { album -> album.paths.fastMap { it.removeSuffix("/") } } - albumsList
+                                        } else {
+                                            albumsList
+                                        }
                                     }
-                                }}
+                                }
 
                                 if (albums.toSet() != multiAlbumViewModel.albumInfo.paths.toSet()
                                     || multiAlbumViewModel.ignorePaths != shouldShowEverything
@@ -1416,11 +1418,10 @@ class MainActivity : ComponentActivity() {
                             }
 
                             stateValue == DefaultTabs.TabTypes.trash -> {
-                                val appDatabase = LocalAppDatabase.current
                                 val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
 
                                 val trashViewModel: TrashViewModel = viewModel(
-                                    factory = TrashViewModelFactory(context = context, displayDateFormat = displayDateFormat, appDatabase = appDatabase)
+                                    factory = TrashViewModelFactory(context = context, displayDateFormat = displayDateFormat)
                                 )
 
                                 val mediaStoreData =

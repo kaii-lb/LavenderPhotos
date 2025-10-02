@@ -141,7 +141,8 @@ import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.seconds
 
-// insane amount of vars, should probably clean up
+private const val TAG = "com.kaii.photos.compose.app_bars.SingleViewBars"
+
 @androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun VideoEditorBottomBar(
@@ -200,7 +201,7 @@ fun VideoEditorBottomBar(
             val windowInfo = LocalWindowInfo.current
 
             LaunchedEffect(basicData) {
-                Log.d("SINGLE_VIEW_BARS", "Basic data updated $basicData")
+                Log.d(TAG, "Basic data updated $basicData")
                 if (basicData.duration <= 0f) return@LaunchedEffect
 
                 coroutineScope.launch(Dispatchers.IO) {
@@ -603,7 +604,7 @@ fun WallpaperSetterBottomBar(
                             deviceSize.width
                         }
 
-                        Log.d("SINGLE_VIEW_BARS", "${bitmap.width} $scale $outerScale $offset $wallpaperWidth")
+                        Log.d(TAG, "${bitmap.width} $scale $outerScale $offset $wallpaperWidth")
 
                         val destinationBitmap =
                             createBitmap(

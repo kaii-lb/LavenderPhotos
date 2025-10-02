@@ -108,12 +108,12 @@ fun MoveCopyAlbumListView(
 ) {
     val context = LocalContext.current
     val mainViewModel = LocalMainViewModel.current
-    val appDatabase = LocalAppDatabase.current
+
     val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect().collectAsStateWithLifecycle(initialValue = true)
     val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
 
     val originalAlbumsList by if (autoDetectAlbums) {
-        mainViewModel.settings.AlbumsList.getAutoDetectedAlbums(displayDateFormat, appDatabase)
+        mainViewModel.settings.AlbumsList.getAutoDetectedAlbums(displayDateFormat = displayDateFormat)
             .collectAsStateWithLifecycle(initialValue = emptyList())
     } else {
         mainViewModel.settings.AlbumsList.getNormalAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
@@ -334,7 +334,7 @@ fun AlbumsListItem(
         onGranted = {
             show.value = false
 
-            coroutineScope.launch {
+            mainViewModel.launch(Dispatchers.IO) {
                 if (isMoving && album.paths.size == 1) {
                     moveImageListToPath(
                         context = context,

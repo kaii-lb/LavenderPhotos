@@ -4,7 +4,6 @@ import android.content.Context
 import android.os.CancellationSignal
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.SQLiteQuery
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.mediastore.MediaStoreData
@@ -17,21 +16,19 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 
 class SearchViewModel(
-	context: Context,
-	sortBy: MediaItemSortMode,
-	displayDateFormat: DisplayDateFormat,
-	database: MediaDatabase
+    context: Context,
+    sortBy: MediaItemSortMode,
+    displayDateFormat: DisplayDateFormat
 ) : ViewModel() {
-	private val cancellationSignal = CancellationSignal()
+    private val cancellationSignal = CancellationSignal()
     private val mediaStoreDataSource =
-				    MultiAlbumDataSource(
-				    	context = context,
-				    	queryString = SQLiteQuery(query = "", paths = null, includedBasePaths = null),
-				    	sortBy = sortBy,
-				    	cancellationSignal = cancellationSignal,
-						displayDateFormat = displayDateFormat,
-						database = database
-				    )
+        MultiAlbumDataSource(
+            context = context,
+            queryString = SQLiteQuery(query = "", paths = null, includedBasePaths = null),
+            sortBy = sortBy,
+            cancellationSignal = cancellationSignal,
+            displayDateFormat = displayDateFormat
+        )
 
     val mediaFlow by lazy {
         getMediaDataFlow().stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())

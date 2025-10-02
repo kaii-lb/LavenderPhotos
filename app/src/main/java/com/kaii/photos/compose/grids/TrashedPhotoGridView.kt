@@ -35,7 +35,6 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.kaii.photos.LocalAppDatabase
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.ViewProperties
@@ -62,11 +61,10 @@ fun TrashedPhotoGridView(
 ) {
     val context = LocalContext.current
     val mainViewModel = LocalMainViewModel.current
-    val appDatabase = LocalAppDatabase.current
     val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
 
     val trashViewModel: TrashViewModel = viewModel(
-        factory = TrashViewModelFactory(context = context, displayDateFormat = displayDateFormat, appDatabase = appDatabase)
+        factory = TrashViewModelFactory(context = context, displayDateFormat = displayDateFormat)
     )
 
     val mediaStoreData =
@@ -127,6 +125,7 @@ fun TrashedPhotoGridView(
     BackHandler(
         enabled = selectedItemsList.isEmpty()
     ) {
+        trashViewModel.cancelMediaSource()
         navController.popBackStack()
     }
 

@@ -205,14 +205,12 @@ class MediaPicker : ComponentActivity() {
             .collectAsStateWithLifecycle(initialValue = MediaItemSortMode.DateTaken)
 
         val context = LocalContext.current
-        val applicationDatabase = LocalAppDatabase.current
         val multiAlbumViewModel: MultiAlbumViewModel = viewModel(
             factory = MultiAlbumViewModelFactory(
                 context = context,
                 albumInfo = AlbumInfo.createPathOnlyAlbum(albumsList),
                 sortBy = currentSortMode,
-                displayDateFormat = displayDateFormat ?: DisplayDateFormat.Default,
-                database = applicationDatabase
+                displayDateFormat = displayDateFormat ?: DisplayDateFormat.Default
             )
         )
 
@@ -658,14 +656,12 @@ class MediaPicker : ComponentActivity() {
                                 }
 
                                 stateValue == DefaultTabs.TabTypes.trash -> {
-                                    val appDatabase = LocalAppDatabase.current
                                     val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
 
                                     val trashViewModel: TrashViewModel = viewModel(
                                         factory = TrashViewModelFactory(
                                             context = context,
-                                            displayDateFormat = displayDateFormat,
-                                            appDatabase = appDatabase
+                                            displayDateFormat = displayDateFormat
                                         )
                                     )
 

@@ -35,7 +35,6 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.kaii.photos.LocalAppDatabase
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.ViewProperties
@@ -64,12 +63,17 @@ fun SearchPage(
     selectedItemsList: SnapshotStateList<MediaStoreData>
 ) {
     val mainViewModel = LocalMainViewModel.current
-    val appDatabase = LocalAppDatabase.current
     val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
     val sortMode by mainViewModel.settings.PhotoGrid.getSortMode().collectAsStateWithLifecycle(initialValue = MediaItemSortMode.DateTaken)
+
     val searchViewModel: SearchViewModel = viewModel(
-        factory = SearchViewModelFactory(LocalContext.current, MediaItemSortMode.DateTaken, displayDateFormat, appDatabase)
+        factory = SearchViewModelFactory(
+            context = LocalContext.current,
+            sortBy = sortMode,
+            displayDateFormat = displayDateFormat
+        )
     )
+
     val mediaStoreDataHolder =
         searchViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
@@ -166,7 +170,7 @@ fun SearchPage(
 
         var hasFiles by remember { mutableStateOf(true) }
         val context = LocalContext.current
-        LaunchedEffect(searchedForText.value, originalGroupedMedia.value) {
+        LaunchedEffect(searchedForText.value, originalGroupedMedia.value, sortMode) {
             println("ORIGINAL CHANGED REFRESHING")
             if (searchedForText.value == "") {
                 groupedMedia.value = originalGroupedMedia.value

@@ -9,7 +9,6 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.bumptech.glide.Glide
-import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.baseInternalStorageDirectory
@@ -102,13 +101,11 @@ class SettingsAlbumsListImpl(
     }
 
     fun getAutoDetectedAlbums(
-        displayDateFormat: DisplayDateFormat,
-        appDatabase: MediaDatabase
+        displayDateFormat: DisplayDateFormat
     ): Flow<List<AlbumInfo>> =
         tryGetAllAlbums(
             context = context,
-            displayDateFormat = displayDateFormat,
-            applicationDatabase = appDatabase
+            displayDateFormat = displayDateFormat
         )
             .combine(getCustomAlbums()) { first, second ->
                 first + second
@@ -232,10 +229,9 @@ class SettingsAlbumsListImpl(
 
     /** emits one album after the other */
     fun getAllAlbumsOnDevice(
-        displayDateFormat: DisplayDateFormat,
-        appDatabase: MediaDatabase
+        displayDateFormat: DisplayDateFormat
     ): Flow<List<AlbumInfo>> =
-        tryGetAllAlbums(context = context, displayDateFormat = displayDateFormat, applicationDatabase = appDatabase)
+        tryGetAllAlbums(context = context, displayDateFormat = displayDateFormat)
 }
 
 class SettingsVersionImpl(

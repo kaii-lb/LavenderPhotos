@@ -88,10 +88,10 @@ fun SingleTrashedPhotoView(
 ) {
     val context = LocalContext.current
     val mainViewModel = LocalMainViewModel.current
-    val appDatabase = LocalAppDatabase.current
+
     val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
     val trashViewModel: TrashViewModel = viewModel(
-        factory = TrashViewModelFactory(context = context, displayDateFormat = displayDateFormat, appDatabase = appDatabase)
+        factory = TrashViewModelFactory(context = context, displayDateFormat = displayDateFormat)
     )
     val holderGroupedMedia by trashViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 

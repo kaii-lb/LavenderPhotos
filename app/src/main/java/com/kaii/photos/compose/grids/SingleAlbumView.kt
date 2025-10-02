@@ -36,7 +36,6 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import com.kaii.photos.LocalAppDatabase
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.ViewProperties
@@ -69,7 +68,6 @@ fun SingleAlbumView(
     val navController = LocalNavController.current
     val context = LocalContext.current
     val mainViewModel = LocalMainViewModel.current
-    val appDatabase = LocalAppDatabase.current
 
     val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect().collectAsStateWithLifecycle(initialValue = true)
     val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
@@ -82,7 +80,7 @@ fun SingleAlbumView(
         .value + customAlbums
 
     val allAlbums = if (autoDetectAlbums) {
-        mainViewModel.settings.AlbumsList.getAutoDetectedAlbums(displayDateFormat, appDatabase)
+        mainViewModel.settings.AlbumsList.getAutoDetectedAlbums(displayDateFormat = displayDateFormat)
             .collectAsStateWithLifecycle(initialValue = emptyList())
             .value + customAlbums
     } else {
@@ -147,7 +145,6 @@ fun SingleAlbumView(
     val navController = LocalNavController.current
     val context = LocalContext.current
     val mainViewModel = LocalMainViewModel.current
-    val appDatabase = LocalAppDatabase.current
 
     val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect().collectAsStateWithLifecycle(initialValue = true)
     val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
@@ -160,7 +157,7 @@ fun SingleAlbumView(
         .value + customAlbums
 
     val allAlbums = if (autoDetectAlbums) {
-        mainViewModel.settings.AlbumsList.getAutoDetectedAlbums(displayDateFormat, appDatabase)
+        mainViewModel.settings.AlbumsList.getAutoDetectedAlbums(displayDateFormat = displayDateFormat)
             .collectAsStateWithLifecycle(initialValue = emptyList())
             .value + customAlbums
     } else {

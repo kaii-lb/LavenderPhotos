@@ -34,7 +34,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
-import com.kaii.photos.LocalAppDatabase
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
@@ -80,13 +79,15 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
             }
 
             item {
-                val appDatabase = LocalAppDatabase.current
                 val mainPhotosAlbums by mainViewModel.settings.MainPhotosView.getAlbums()
                     .collectAsStateWithLifecycle(initialValue = emptyList())
+
                 val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
                 val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect().collectAsStateWithLifecycle(initialValue = true)
+
                 val allAlbums by if (autoDetectAlbums) {
-                    mainViewModel.settings.AlbumsList.getAutoDetectedAlbums(displayDateFormat, appDatabase).collectAsStateWithLifecycle(initialValue = emptyList())
+                    mainViewModel.settings.AlbumsList.getAutoDetectedAlbums(displayDateFormat = displayDateFormat)
+                        .collectAsStateWithLifecycle(initialValue = emptyList())
                 } else {
                     mainViewModel.settings.AlbumsList.getNormalAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
                 }
@@ -174,7 +175,7 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
                 val foundAlbums = stringResource(id = R.string.albums_found)
 
                 val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
-                val appDatabase = LocalAppDatabase.current
+
                 PreferencesSwitchRow(
                     title = stringResource(id = R.string.albums_auto_detect),
                     summary = stringResource(id = R.string.albums_auto_detect_desc),
@@ -197,7 +198,7 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
                                     )
                                 )
 
-                                mainViewModel.settings.AlbumsList.getAllAlbumsOnDevice(displayDateFormat, appDatabase)
+                                mainViewModel.settings.AlbumsList.getAllAlbumsOnDevice(displayDateFormat = displayDateFormat)
                                     .cancellable()
                                     .collectLatest { list ->
                                         mainViewModel.settings.AlbumsList.setAlbumsList(customAlbums + list)

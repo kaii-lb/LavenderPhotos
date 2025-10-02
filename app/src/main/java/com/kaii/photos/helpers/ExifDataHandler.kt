@@ -1,6 +1,7 @@
 package com.kaii.photos.helpers
 
 import android.graphics.BitmapFactory
+import android.icu.text.SimpleDateFormat
 import android.media.MediaMetadataRetriever
 import android.util.Log
 import androidx.exifinterface.media.ExifInterface
@@ -12,6 +13,8 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.util.Date
+import java.util.Locale
 import kotlin.math.round
 
 private const val TAG = "com.kaii.photos.helpers.ExifDataHandler"
@@ -46,20 +49,19 @@ fun getDateTakenForMedia(absolutePath: String): Long {
 fun setDateTakenForMedia(absolutePath: String, dateTaken: Long) {
     try {
         val exifInterface = ExifInterface(absolutePath)
-        val exifDateTimeFormat = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss")
 
-        val localDateTime =
-            Instant.ofEpochSecond(dateTaken).atZone(ZoneId.systemDefault()).toLocalDateTime()
-        val datetime = localDateTime.format(exifDateTimeFormat)
+        val newDateString = SimpleDateFormat("yyyy:MM:dd HH:mm:ss", Locale.getDefault()).format(Date(dateTaken))
+
+        Log.d(TAG, "NEW DATE STRING $newDateString")
 
         exifInterface.setAttribute(
             ExifInterface.TAG_DATETIME,
-            datetime
+            newDateString
         )
 
         exifInterface.setAttribute(
             ExifInterface.TAG_DATETIME_ORIGINAL,
-            datetime
+            newDateString
         )
 
         exifInterface.saveAttributes()

@@ -9,7 +9,6 @@ import androidx.compose.ui.util.fastFilter
 import androidx.compose.ui.util.fastJoinToString
 import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMinByOrNull
-import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.SQLiteQuery
 import com.kaii.photos.mediastore.MultiAlbumDataSource
@@ -162,8 +161,7 @@ fun String.toBasePath() = run {
 /** returns the absolute paths to all the found albums */
 fun tryGetAllAlbums(
     context: Context,
-    displayDateFormat: DisplayDateFormat,
-    applicationDatabase: MediaDatabase
+    displayDateFormat: DisplayDateFormat
 ): Flow<List<AlbumInfo>> = channelFlow {
     val cancellationSignal = CancellationSignal()
     val mediaStoreDataSource =
@@ -172,8 +170,7 @@ fun tryGetAllAlbums(
             queryString = SQLiteQuery(query = "", paths = null, includedBasePaths = null),
             sortBy = MediaItemSortMode.DateTaken,
             cancellationSignal = cancellationSignal,
-            displayDateFormat = displayDateFormat,
-            database = applicationDatabase
+            displayDateFormat = displayDateFormat
         )
 
     suspend fun emitNew(list: List<AlbumInfo>) = send(list)

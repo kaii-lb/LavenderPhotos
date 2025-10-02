@@ -2,14 +2,13 @@ package com.kaii.photos.mediastore
 
 import android.content.ContentUris
 import android.content.Context
+import android.media.MediaMetadataRetriever
 import android.os.CancellationSignal
 import android.provider.MediaStore
 import android.provider.MediaStore.Files.FileColumns
 import android.provider.MediaStore.MediaColumns
 import com.bumptech.glide.util.Preconditions
 import com.bumptech.glide.util.Util
-import com.kaii.photos.database.MediaDatabase
-import com.kaii.photos.database.entities.MediaEntity
 import com.kaii.photos.datastore.SQLiteQuery
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.getDateTakenForMedia
@@ -23,8 +22,7 @@ class MultiAlbumDataSource(
     private val queryString: SQLiteQuery,
     sortBy: MediaItemSortMode,
     cancellationSignal: CancellationSignal,
-    private val displayDateFormat: DisplayDateFormat,
-    private val database: MediaDatabase
+    private val displayDateFormat: DisplayDateFormat
 ) : MediaStoreDataSource(
     context, "", sortBy, cancellationSignal,
 ) {
@@ -34,6 +32,7 @@ class MultiAlbumDataSource(
                 MediaColumns._ID,
                 MediaColumns.DATA,
                 MediaColumns.DATE_TAKEN,
+                MediaColumns.DATE_ADDED,
                 MediaColumns.DATE_MODIFIED,
                 MediaColumns.MIME_TYPE,
                 MediaColumns.DISPLAY_NAME,
@@ -46,8 +45,6 @@ class MultiAlbumDataSource(
     }
 
     override fun query(): List<MediaStoreData> {
-        val mediaEntityDao = database.mediaEntityDao()
-
         Preconditions.checkArgument(
             Util.isOnBackgroundThread(),
             "Can only query from a background thread"
@@ -69,52 +66,42 @@ class MultiAlbumDataSource(
         val displayNameIndex = mediaCursor.getColumnIndexOrThrow(FileColumns.DISPLAY_NAME)
         val dateModifiedColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.DATE_MODIFIED)
         val dateTakenColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.DATE_TAKEN)
+        val dateAddedColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.DATE_ADDED)
         val sizeColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.SIZE)
         val widthColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.WIDTH)
         val heightColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.HEIGHT)
+
+        val metadataRetriever = MediaMetadataRetriever()
 
         mediaCursor.use { cursor ->
             while (cursor.moveToNext()) {
                 val id = cursor.getLong(idColNum)
                 val mimeType = cursor.getString(mimeTypeColNum)
                 val absolutePath = cursor.getString(absolutePathColNum)
+                val mediaStoreDateTaken = cursor.getLong(dateTakenColumn)
+                val dateAdded = cursor.getLong(dateAddedColumn)
                 val dateModified = cursor.getLong(dateModifiedColumn)
                 val displayName = cursor.getString(displayNameIndex)
                 val size = cursor.getLong(sizeColumn)
                 val width = cursor.getInt(widthColumn)
                 val height = cursor.getInt(heightColumn)
 
-                val mediaStoreDateTaken = cursor.getLong(dateTakenColumn) / 1000
-                val dateTaken =
-                    if (mediaStoreDateTaken == 0L) {
-                        if (dateModified != 0L) {
-                            dateModified
-                        } else {
-                            val possibleDateTaken = mediaEntityDao.getDateTaken(id)
-
-                            if (possibleDateTaken != 0L) {
-                                possibleDateTaken
-                            } else {
-                                val taken = getDateTakenForMedia(absolutePath)
-
-                                mediaEntityDao.insertEntity(
-                                    MediaEntity(
-                                        id = id,
-                                        mimeType = mimeType,
-                                        dateTaken = taken,
-                                        displayName = displayName
-                                    )
-                                )
-                                taken
-                            }
-                        }
-                    } else {
-                        mediaStoreDateTaken
-                    }
-
                 val type =
                     if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) MediaType.Image
                     else MediaType.Video
+
+                val dateTaken =
+                    when {
+                        mediaStoreDateTaken > 0L -> mediaStoreDateTaken / 1000
+
+                        mediaStoreDateTaken == -1L && type == MediaType.Image -> getDateTakenForMedia(absolutePath)
+
+                        dateAdded > 0L -> dateAdded
+
+                        else -> {
+                            dateModified
+                        }
+                    }
 
                 val uriParentPath =
                     if (type == MediaType.Image) MediaStore.Images.Media.EXTERNAL_CONTENT_URI else MediaStore.Video.Media.EXTERNAL_CONTENT_URI
@@ -137,38 +124,10 @@ class MultiAlbumDataSource(
                         )
                     )
                 }
-
-                // if (queryString.isInverted || queryString.basePaths == null) { // null for search to work since it pulls from everywhere
-                //     data.add(
-                //         MediaStoreData(
-                //             type = type,
-                //             id = id,
-                //             uri = uri,
-                //             mimeType = mimeType,
-                //             dateModified = dateModified,
-                //             dateTaken = dateTaken,
-                //             displayName = displayName,
-                //             absolutePath = absolutePath,
-                //             size = size
-                //         )
-                //     )
-                // } else if (queryString.basePaths.contains(absolutePath.getParentFromPath())) {
-                //     data.add(
-                //         MediaStoreData(
-                //             type = type,
-                //             id = id,
-                //             uri = uri,
-                //             mimeType = mimeType,
-                //             dateModified = dateModified,
-                //             dateTaken = dateTaken,
-                //             displayName = displayName,
-                //             absolutePath = absolutePath,
-                //             size = size
-                //         )
-                //     )
-                // }
             }
         }
+
+        metadataRetriever.release()
 
         return groupPhotosBy(data, sortBy, displayDateFormat, context)
     }

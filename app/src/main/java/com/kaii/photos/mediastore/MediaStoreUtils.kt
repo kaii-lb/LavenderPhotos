@@ -18,6 +18,7 @@ import com.kaii.photos.helpers.EXTERNAL_DOCUMENTS_AUTHORITY
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.getDateTakenForMedia
+import com.kaii.photos.helpers.setDateTakenForMedia
 import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.helpers.toRelativePath
 import kotlinx.coroutines.Dispatchers
@@ -39,6 +40,7 @@ suspend fun ContentResolver.insertMedia(
     basePath: String,
     destination: String,
     currentVolumes: Set<String>,
+    overwriteDate: Boolean = false,
     overrideDisplayName: String? = null,
     onInsert: (origin: Uri, new: Uri) -> Unit
 ): Uri? = withContext(Dispatchers.IO) {
@@ -57,12 +59,36 @@ suspend fun ContentResolver.insertMedia(
         volumeName = volumeName
     )
 
+    if (!overwriteDate) {
+        update(
+            media.uri,
+            ContentValues().apply {
+                put(MediaColumns.DATE_ADDED, media.dateTaken / 1000)
+                put(MediaColumns.DATE_MODIFIED, media.dateTaken / 1000)
+                put(MediaColumns.DATE_TAKEN, media.dateTaken)
+            },
+            null
+        )
+
+        if (media.type == MediaType.Image) {
+            setDateTakenForMedia(
+                absolutePath = media.absolutePath,
+                dateTaken = media.dateTaken * 1000
+            )
+        }
+
+        File(media.absolutePath).setLastModified(media.dateTaken * 1000)
+    }
+
     if (storageContentUri != null && volumeName == MediaStore.VOLUME_EXTERNAL) {
         val contentValues = ContentValues().apply {
             put(MediaColumns.DISPLAY_NAME, file.name)
             put(MediaColumns.RELATIVE_PATH, relativeDestination)
             put(MediaColumns.MIME_TYPE, media.mimeType)
-            put(MediaColumns.DATE_TAKEN, media.dateTaken * 1000)
+            put(MediaColumns.DATE_ADDED, media.dateTaken)
+            put(MediaColumns.DATE_MODIFIED, media.dateTaken)
+            put(MediaColumns.DATE_ADDED, media.dateTaken * 1000)
+            put(MediaColumns.IS_PENDING, 1)
         }
 
         val newUri = insert(
@@ -70,10 +96,15 @@ suspend fun ContentResolver.insertMedia(
             contentValues
         )
 
-        newUri?.let { uri ->
-            onInsert(media.uri, uri)
+        newUri?.let { contentUri ->
+            onInsert(media.uri, contentUri)
 
-            return@withContext uri
+            contentValues.clear()
+            contentValues.put(MediaColumns.IS_PENDING, 0)
+
+            update(contentUri, contentValues, null, null)
+
+            return@withContext contentUri
         }
 
         return@withContext null
@@ -85,10 +116,18 @@ suspend fun ContentResolver.insertMedia(
     try {
         val directory = DocumentFile.fromTreeUri(context, fullUriPath)
         Log.d(TAG, "Directory URI path ${directory?.uri}")
-        val fileToBeSavedTo = directory?.createFile(
+
+        val createdFile = directory?.createFile(
             media.mimeType ?: Files.probeContentType(Path(media.absolutePath)),
             fileName
         )
+
+        if (createdFile == null) {
+            Log.e(TAG, "Unable to create document file for directory $destination and file ${file.absolutePath}")
+            return@withContext null
+        }
+
+        val fileToBeSavedTo = DocumentFile.fromSingleUri(context, createdFile.uri)
 
         fileToBeSavedTo?.let { savedToFile ->
             onInsert(media.uri, savedToFile.uri)
@@ -181,7 +220,7 @@ fun ContentResolver.getMediaStoreDataFromUri(uri: Uri): MediaStoreData? {
             MediaColumns.DATE_MODIFIED,
             MediaColumns.MIME_TYPE,
             MediaColumns.DISPLAY_NAME,
-            MediaColumns.DATE_TAKEN
+            MediaColumns.DATE_ADDED
         ),
         null,
         null,
@@ -194,7 +233,7 @@ fun ContentResolver.getMediaStoreDataFromUri(uri: Uri): MediaStoreData? {
         val mimeTypeColNum = mediaCursor.getColumnIndexOrThrow(MediaColumns.MIME_TYPE)
         val displayNameIndex = mediaCursor.getColumnIndexOrThrow(FileColumns.DISPLAY_NAME)
         val dateModifiedColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.DATE_MODIFIED)
-        val dateTakenColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.DATE_TAKEN)
+        val dateTakenColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.DATE_ADDED)
 
         while (cursor.moveToNext()) {
             val contentId = cursor.getLong(contentIdColNum)
@@ -207,7 +246,7 @@ fun ContentResolver.getMediaStoreDataFromUri(uri: Uri): MediaStoreData? {
 
             if (absolutePath == null) return null
 
-            val mediaStoreDateTaken = cursor.getLong(dateTakenColumn) / 1000
+            val mediaStoreDateTaken = cursor.getLong(dateTakenColumn)
             val dateTaken =
                 if (mediaStoreDateTaken == 0L) {
                     if (dateModified != 0L) {

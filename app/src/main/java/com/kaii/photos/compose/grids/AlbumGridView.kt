@@ -86,7 +86,6 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
-import com.kaii.photos.LocalAppDatabase
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
@@ -114,7 +113,6 @@ fun AlbumsGridView(
     val context = LocalContext.current
     val navController = LocalNavController.current
     val mainViewModel = LocalMainViewModel.current
-    val appDatabase = LocalAppDatabase.current
 
     val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect()
         .collectAsStateWithLifecycle(initialValue = true)
@@ -125,7 +123,7 @@ fun AlbumsGridView(
         .collectAsStateWithLifecycle(initialValue = emptyList())
 
     val listOfDirs by if (autoDetectAlbums) {
-        mainViewModel.settings.AlbumsList.getAutoDetectedAlbums(displayDateFormat, appDatabase)
+        mainViewModel.settings.AlbumsList.getAutoDetectedAlbums(displayDateFormat = displayDateFormat)
             .collectAsStateWithLifecycle(initialValue = emptyList())
     } else {
         normalAlbums

@@ -15,7 +15,6 @@ import android.util.Log
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.core.content.FileProvider
-import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
@@ -27,13 +26,8 @@ import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.copyUriToUri
 import com.kaii.photos.mediastore.getIv
-import com.kaii.photos.mediastore.getMediaStoreDataFromUri
 import com.kaii.photos.mediastore.getOriginalPath
 import com.kaii.photos.mediastore.insertMedia
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
 import java.io.File
 
 private const val TAG = "com.kaii.photos.helpers.ImageFunctions"
@@ -188,7 +182,6 @@ fun moveImageToLockedFolder(
     applicationDatabase: MediaDatabase,
     onDone: () -> Unit
 ) {
-    val contentResolver = context.contentResolver
     val lastModified = System.currentTimeMillis()
     val metadataRetriever = MediaMetadataRetriever()
 
@@ -201,11 +194,12 @@ fun moveImageToLockedFolder(
 
             val destinationFile = File(copyToPath)
 
-            if (mediaItem.type == MediaType.Image)
+            if (mediaItem.type == MediaType.Image) {
                 setDateTakenForMedia(
                     mediaItem.absolutePath,
-                    mediaItem.dateTaken
+                    mediaItem.dateTaken * 1000
                 )
+            }
 
             addSecuredCachedMediaThumbnail(
                 context = context,
@@ -231,7 +225,10 @@ fun moveImageToLockedFolder(
             )
 
             // cleanup
-            contentResolver.delete(mediaItem.uri, null)
+            permanentlyDeletePhotoList(
+                context = context,
+                list = listOf(mediaItem.uri)
+            )
             applicationDatabase.mediaEntityDao().deleteEntityById(mediaItem.id)
         } catch (e: Throwable) {
             Log.e(TAG, e.toString())
@@ -258,7 +255,6 @@ suspend fun moveImageOutOfLockedFolder(
 ) {
     val contentResolver = context.contentResolver
     val restoredFilesDir = context.appRestoredFilesDir
-    val currentDate = System.currentTimeMillis()
 
     list.forEach { media ->
         val fileToBeRestored = File(media.absolutePath)
@@ -289,35 +285,18 @@ suspend fun moveImageOutOfLockedFolder(
         contentResolver.insertMedia(
             context = context,
             media = media.copy(
-                uri = tempFile.toUri()
+                uri = FileProvider.getUriForFile(
+                    context,
+                    LAVENDER_FILE_PROVIDER_AUTHORITY,
+                    tempFile
+                )
             ),
             destination = originalPath.getParentFromPath(),
             basePath = originalPath.toBasePath(),
             currentVolumes = MediaStore.getExternalVolumeNames(context),
+            overwriteDate = true,
             onInsert = { original, new ->
-                val date = media.dateTaken * 1000
-
-                context.contentResolver.getMediaStoreDataFromUri(new)?.let { newMedia ->
-                    File(newMedia.absolutePath).setLastModified(currentDate)
-
-                    if (newMedia.type == MediaType.Image) {
-                        setDateTakenForMedia(
-                            absolutePath = newMedia.absolutePath,
-                            dateTaken = date
-                        )
-                    }
-                }
                 contentResolver.copyUriToUri(original, new)
-                context.contentResolver.getMediaStoreDataFromUri(new)?.let { newMedia ->
-                    File(newMedia.absolutePath).setLastModified(currentDate)
-
-                    if (newMedia.type == MediaType.Image) {
-                        setDateTakenForMedia(
-                            absolutePath = newMedia.absolutePath,
-                            dateTaken = date
-                        )
-                    }
-                }
             }
         )?.let {
             try {
@@ -371,8 +350,8 @@ fun renameImage(context: Context, uri: Uri, newName: String): IntentSender? {
         Log.e(TAG, securityException.toString())
         securityException.printStackTrace()
 
-        val recoverableSecurityException = securityException as? RecoverableSecurityException ?:
-            throw RuntimeException(securityException.message, securityException)
+        val recoverableSecurityException =
+            securityException as? RecoverableSecurityException ?: throw RuntimeException(securityException.message, securityException)
 
         val intentSender = recoverableSecurityException.userAction.actionIntent.intentSender
         return intentSender
@@ -403,82 +382,52 @@ fun renameDirectory(
 }
 
 /** @param destination where to move said files to, should be relative*/
-fun moveImageListToPath(
+suspend fun moveImageListToPath(
     context: Context,
     list: List<MediaStoreData>,
     destination: String,
     basePath: String,
     overwriteDate: Boolean
 ) {
-    CoroutineScope(Dispatchers.IO).launch {
-        val contentResolver = context.contentResolver
+    val contentResolver = context.contentResolver
 
-        val body = mutableStateOf(context.resources.getString(R.string.media_operate_snackbar_body, 0, list.size))
-        val percentage = mutableFloatStateOf(0f)
+    val body = mutableStateOf(context.resources.getString(R.string.media_operate_snackbar_body, 0, list.size))
+    val percentage = mutableFloatStateOf(0f)
 
-        LavenderSnackbarController.pushEvent(
-            LavenderSnackbarEvents.ProgressEvent(
-                message = context.resources.getString(R.string.media_move_snackbar_title),
-                body = body,
-                icon = R.drawable.cut,
-                percentage = percentage
-            )
+    LavenderSnackbarController.pushEvent(
+        LavenderSnackbarEvents.ProgressEvent(
+            message = context.resources.getString(R.string.media_move_snackbar_title),
+            body = body,
+            icon = R.drawable.cut,
+            percentage = percentage
         )
+    )
 
-        async {
-            val currentDate = System.currentTimeMillis()
-            list.forEachIndexed { index, media ->
-                contentResolver.insertMedia(
-                    context = context,
-                    media = media,
-                    destination = destination,
-                    basePath = basePath,
-                    currentVolumes = MediaStore.getExternalVolumeNames(context),
-                    onInsert = { original, new ->
-                        val date =
-                            if (overwriteDate) currentDate
-                            else media.dateTaken * 1000
-
-                        context.contentResolver.getMediaStoreDataFromUri(new)?.let { newMedia ->
-                            File(newMedia.absolutePath).setLastModified(currentDate)
-
-                            if (newMedia.type == MediaType.Image) {
-                                setDateTakenForMedia(
-                                    absolutePath = newMedia.absolutePath,
-                                    dateTaken = date
-                                )
-                            }
-                        }
-
-                        contentResolver.copyUriToUri(original, new)
-
-                        context.contentResolver.getMediaStoreDataFromUri(new)?.let { newMedia ->
-                            File(newMedia.absolutePath).setLastModified(currentDate)
-
-                            if (newMedia.type == MediaType.Image) {
-                                setDateTakenForMedia(
-                                    absolutePath = newMedia.absolutePath,
-                                    dateTaken = date
-                                )
-                            }
-                        }
-                    }
-                )?.let {
-                    body.value = context.resources.getString(R.string.media_operate_snackbar_body, index + 1, list.size)
-                    percentage.floatValue = (index + 1f) / list.size
-
-                    contentResolver.delete(media.uri, null)
-                }
+    list.forEachIndexed { index, media ->
+        contentResolver.insertMedia(
+            context = context,
+            media = media,
+            destination = destination,
+            basePath = basePath,
+            currentVolumes = MediaStore.getExternalVolumeNames(context),
+            overwriteDate = overwriteDate,
+            onInsert = { original, new ->
+                contentResolver.copyUriToUri(original, new)
             }
+        )?.let {
+            body.value = context.resources.getString(R.string.media_operate_snackbar_body, index + 1, list.size)
+            percentage.floatValue = (index + 1f) / list.size
 
-            percentage.floatValue = 1f
-        }.await()
+            contentResolver.delete(media.uri, null)
+        }
     }
+
+    percentage.floatValue = 1f
 }
 
 /** @param destination where to copy said files to, should be relative
 @param overrideDisplayName should not contain file extension */
-fun copyImageListToPath(
+suspend fun copyImageListToPath(
     context: Context,
     list: List<MediaStoreData>,
     destination: String,
@@ -488,71 +437,41 @@ fun copyImageListToPath(
     overrideDisplayName: ((displayName: String) -> String)? = null,
     onSingleItemDone: (media: MediaStoreData) -> Unit
 ) {
-    CoroutineScope(Dispatchers.IO).launch {
-        val contentResolver = context.contentResolver
+    val contentResolver = context.contentResolver
 
-        val body = mutableStateOf(context.resources.getString(R.string.media_operate_snackbar_body, 0, list.size))
-        val percentage = mutableFloatStateOf(0f)
+    val body = mutableStateOf(context.resources.getString(R.string.media_operate_snackbar_body, 0, list.size))
+    val percentage = mutableFloatStateOf(0f)
 
-        if (showProgressSnackbar) {
-            LavenderSnackbarController.pushEvent(
-                LavenderSnackbarEvents.ProgressEvent(
-                    message = context.resources.getString(R.string.media_copy_snackbar_title),
-                    body = body,
-                    icon = R.drawable.trash,
-                    percentage = percentage
-                )
+    if (showProgressSnackbar) {
+        LavenderSnackbarController.pushEvent(
+            LavenderSnackbarEvents.ProgressEvent(
+                message = context.resources.getString(R.string.media_copy_snackbar_title),
+                body = body,
+                icon = R.drawable.trash,
+                percentage = percentage
             )
-        }
-
-        async {
-            val currentDate = System.currentTimeMillis()
-            list.forEachIndexed { index, media ->
-                contentResolver.insertMedia(
-                    context = context,
-                    media = media,
-                    destination = destination,
-                    basePath = basePath,
-                    overrideDisplayName = if (overrideDisplayName != null) overrideDisplayName(media.displayName) else null,
-                    currentVolumes = MediaStore.getExternalVolumeNames(context),
-                    onInsert = { original, new ->
-                        val date =
-                            if (overwriteDate) currentDate
-                            else media.dateTaken * 1000
-
-                        context.contentResolver.getMediaStoreDataFromUri(new)?.let { newMedia ->
-                            File(newMedia.absolutePath).setLastModified(currentDate)
-
-                            if (newMedia.type == MediaType.Image) {
-                                setDateTakenForMedia(
-                                    absolutePath = newMedia.absolutePath,
-                                    dateTaken = date
-                                )
-                            }
-                        }
-
-                        contentResolver.copyUriToUri(original, new)
-
-                        context.contentResolver.getMediaStoreDataFromUri(new)?.let { newMedia ->
-                            File(newMedia.absolutePath).setLastModified(currentDate)
-
-                            if (newMedia.type == MediaType.Image) {
-                                setDateTakenForMedia(
-                                    absolutePath = newMedia.absolutePath,
-                                    dateTaken = date
-                                )
-                            }
-                        }
-                    }
-                )?.let { uri ->
-                    body.value = context.resources.getString(R.string.media_operate_snackbar_body, index + 1, list.size)
-                    percentage.floatValue = (index + 1f) / list.size
-
-                    onSingleItemDone(media)
-                }
-
-                percentage.floatValue = 1f
-            }
-        }.await()
+        )
     }
+
+    list.forEachIndexed { index, media ->
+        contentResolver.insertMedia(
+            context = context,
+            media = media,
+            destination = destination,
+            basePath = basePath,
+            overrideDisplayName = if (overrideDisplayName != null) overrideDisplayName(media.displayName) else null,
+            currentVolumes = MediaStore.getExternalVolumeNames(context),
+            overwriteDate = overwriteDate,
+            onInsert = { original, new ->
+                contentResolver.copyUriToUri(original, new)
+            }
+        )?.let {
+            body.value = context.resources.getString(R.string.media_operate_snackbar_body, index + 1, list.size)
+            percentage.floatValue = (index + 1f) / list.size
+
+            onSingleItemDone(media)
+        }
+    }
+
+    percentage.floatValue = 1f
 }
