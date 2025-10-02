@@ -1,4 +1,4 @@
-name: Android CI
+name: Main CI
 
 on:
   push:
@@ -26,8 +26,17 @@ jobs:
     - name: Build Release APK
       run: ./gradlew assembleRelease
 
+    - name: Decode Signing Key
+      run: echo "${{ secrets.KEYSTORE_KEY }}" | base64 --decode > app/release.keystore
+
+    - name: Sign Release APK
+      run: chmod +x ./apksigner/apksigner && ./apksigner/apksigner sign --ks app/release.keystore --ks-key-alias "${{ secrets.KEYSTORE_ALIAS }}" --ks-pass pass:"${{ secrets.KEYSTORE_PASS }}" --in app/build/outputs/apk/release/app-release-unsigned.apk --out photos_signed_release.apk
+
+    - name: Clean Up
+      run: shred -u app/release.keystore
+
     - name: Upload APK as Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: lavender-photos-nightly.apk
-        path: app/build/outputs/apk/release/app-release-unsigned.apk
+        name: lavender-photos-nightly-signed.apk
+        path: photos_signed_release.apk
