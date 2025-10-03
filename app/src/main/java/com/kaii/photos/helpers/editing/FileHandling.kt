@@ -64,13 +64,13 @@ import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
 import com.kaii.photos.helpers.appStorageDir
 import com.kaii.photos.helpers.copyImageListToPath
+import com.kaii.photos.helpers.getDateTakenForMedia
 import com.kaii.photos.helpers.getParentFromPath
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.setDateTakenForMedia
 import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.mediastore.getMediaStoreDataFromUri
 import com.kaii.photos.mediastore.getUriFromAbsolutePath
 import com.kaii.photos.mediastore.insertMedia
 import kotlinx.coroutines.delay
@@ -698,7 +698,7 @@ suspend fun saveImage(
     val media = MediaStoreData(
         displayName = file.name,
         absolutePath = file.absolutePath,
-        dateTaken = System.currentTimeMillis() / 1000,
+        dateTaken = getDateTakenForMedia(absolutePath = absolutePath),
         dateModified = System.currentTimeMillis() / 1000,
         type = MediaType.Image,
         mimeType = "image/png",
@@ -713,21 +713,8 @@ suspend fun saveImage(
                 destination = absolutePath.getParentFromPath(),
                 basePath = absolutePath.toBasePath(),
                 currentVolumes = MediaStore.getExternalVolumeNames(context),
-                overrideDisplayName = file.name.removeSuffix(file.extension) + "mp4",
-                onInsert = { _, new ->
-                    context.contentResolver.getMediaStoreDataFromUri(new)?.let { newMedia ->
-                        val date = System.currentTimeMillis()
-
-                        File(newMedia.absolutePath).setLastModified(date)
-
-                        if (newMedia.type == MediaType.Image) {
-                            setDateTakenForMedia(
-                                absolutePath = newMedia.absolutePath,
-                                dateTaken = date
-                            )
-                        }
-                    }
-                }
+                overrideDisplayName = file.name.removeSuffix(file.extension) + "png",
+                onInsert = { _, _ -> }
             )
         } else {
             uri
@@ -747,44 +734,24 @@ suspend fun saveImage(
         return
     }
 
-    val newMedia = context.contentResolver.getMediaStoreDataFromUri(newUri)
-    val neededPath = newMedia?.absolutePath
-    if (neededPath == null) {
-        isLoading.value = false
-
-        LavenderSnackbarController.pushEvent(
-            LavenderSnackbarEvents.MessageEvent(
-                message = context.resources.getString(R.string.editing_failed),
-                icon = R.drawable.broken_image,
-                duration = SnackbarDuration.Short
-            )
-        )
-
-        return
-    }
-
-    context.contentResolver.openOutputStream(newMedia.uri)?.use { outputStream ->
+    val wroteData = context.contentResolver.openOutputStream(newUri)?.use { outputStream ->
         cropped.compress(
             Bitmap.CompressFormat.PNG,
             100,
             outputStream
         )
+    } != null
 
-        context.contentResolver.getMediaStoreDataFromUri(newMedia.uri)?.let { newMedia ->
-            val date = System.currentTimeMillis()
+    val wroteExif = context.contentResolver.openFileDescriptor(newUri, "rw")?.use { fd ->
+        setDateTakenForMedia(
+            fd = fd.fileDescriptor,
+            dateTaken = if (overwrite) media.dateTaken * 1000 else System.currentTimeMillis()
+        )
+    } != null
 
-            File(newMedia.absolutePath).setLastModified(date)
-
-            if (newMedia.type == MediaType.Image) {
-                setDateTakenForMedia(
-                    absolutePath = newMedia.absolutePath,
-                    dateTaken = date
-                )
-            }
-        }
-    } ?: run {
+    if (wroteExif && wroteData) {
         isLoading.value = false
-
+    } else {
         LavenderSnackbarController.pushEvent(
             LavenderSnackbarEvents.MessageEvent(
                 message = context.resources.getString(R.string.editing_failed),
@@ -793,6 +760,4 @@ suspend fun saveImage(
             )
         )
     }
-
-    isLoading.value = false
 }

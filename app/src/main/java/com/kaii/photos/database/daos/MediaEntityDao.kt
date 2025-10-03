@@ -3,14 +3,14 @@ package com.kaii.photos.database.daos
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
-import androidx.room.Query
 import androidx.room.OnConflictStrategy
+import androidx.room.Query
 import com.kaii.photos.database.entities.MediaEntity
 
 @Dao
 interface MediaEntityDao {
     @Query("SELECT * FROM mediaentity WHERE id LIKE :id")
-    fun getFromId(id: Long) : MediaEntity
+    fun getFromId(id: Long) : MediaEntity?
 
     @Query("SELECT date_taken FROM mediaentity WHERE id = :id")
     fun getDateTaken(id: Long) : Long
@@ -26,6 +26,9 @@ interface MediaEntityDao {
 
     @Query("SELECT * FROM mediaentity WHERE display_name = :displayName")
     fun getFromDisplayName(displayName: String) : List<MediaEntity>
+
+    @Query("SELECT * from mediaentity")
+    fun getAll(): List<MediaEntity>
 
 	// maybe try ignore and see performance difference?
     @Insert(onConflict = OnConflictStrategy.REPLACE)

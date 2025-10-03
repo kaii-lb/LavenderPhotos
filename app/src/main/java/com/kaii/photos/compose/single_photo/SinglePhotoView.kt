@@ -62,11 +62,13 @@ import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.dialogs.SinglePhotoInfoDialog
+import com.kaii.photos.database.entities.MediaEntity
 import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
+import com.kaii.photos.helpers.getDateTakenForMedia
 import com.kaii.photos.helpers.getParentFromPath
 import com.kaii.photos.helpers.moveImageToLockedFolder
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
@@ -82,6 +84,7 @@ import com.kaii.photos.models.favourites_grid.FavouritesViewModelFactory
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun SinglePhotoView(
@@ -234,6 +237,29 @@ fun SinglePhotoViewCommon(
         }
     }
 
+    val mediaDao = LocalAppDatabase.current.mediaEntityDao()
+    LaunchedEffect(currentMediaItem.value) {
+        withContext(Dispatchers.IO) {
+            val media = currentMediaItem.value
+
+            val date = getDateTakenForMedia(
+                absolutePath = media.absolutePath
+            )
+
+            if (date != media.dateTaken) {
+                mediaDao.deleteEntityById(id = mediaItemId)
+                mediaDao.insertEntity(
+                    MediaEntity(
+                        id = mediaItemId,
+                        dateTaken = date,
+                        mimeType = media.mimeType ?: "image/png",
+                        displayName = media.displayName
+                    )
+                )
+            }
+        }
+    }
+
     var showInfoDialog by remember { mutableStateOf(false) }
 
     BackHandler(
@@ -264,28 +290,30 @@ fun SinglePhotoViewCommon(
                 loadsFromMainViewModel = loadsFromMainViewModel,
                 state = state,
                 showEditingView = {
-                    setBarVisibility(
-                        visible = true,
-                        window = window
-                    ) {
-                        appBarsVisible.value = it
-                    }
+                    mainViewModel.launch {
+                        setBarVisibility(
+                            visible = true,
+                            window = window
+                        ) {
+                            appBarsVisible.value = it
+                        }
 
-                    if (currentMediaItem.value.type == MediaType.Image) {
-                        navController.navigate(
-                            Screens.ImageEditor(
-                                absolutePath = currentMediaItem.value.absolutePath,
-                                uri = currentMediaItem.value.uri.toString(),
-                                dateTaken = currentMediaItem.value.dateTaken
+                        if (currentMediaItem.value.type == MediaType.Image) {
+                            navController.navigate(
+                                Screens.ImageEditor(
+                                    absolutePath = currentMediaItem.value.absolutePath,
+                                    uri = currentMediaItem.value.uri.toString(),
+                                    dateTaken = currentMediaItem.value.dateTaken
+                                )
                             )
-                        )
-                    } else {
-                        navController.navigate(
-                            Screens.VideoEditor(
-                                uri = currentMediaItem.value.uri.toString(),
-                                absolutePath = currentMediaItem.value.absolutePath
+                        } else {
+                            navController.navigate(
+                                Screens.VideoEditor(
+                                    uri = currentMediaItem.value.uri.toString(),
+                                    absolutePath = currentMediaItem.value.absolutePath
+                                )
                             )
-                        )
+                        }
                     }
                 },
                 onZeroItemsLeft = {

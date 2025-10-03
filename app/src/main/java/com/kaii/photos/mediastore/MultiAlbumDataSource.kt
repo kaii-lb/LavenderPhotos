@@ -73,13 +73,14 @@ class MultiAlbumDataSource(
         val heightColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.HEIGHT)
 
         val dao = MediaDatabase.getInstance(context).mediaEntityDao()
+        val allEntities = dao.getAll()
 
         mediaCursor.use { cursor ->
             while (cursor.moveToNext()) {
                 val id = cursor.getLong(idColNum)
                 val mimeType = cursor.getString(mimeTypeColNum)
                 val absolutePath = cursor.getString(absolutePathColNum)
-                val mediaStoreDateTaken = cursor.getLong(dateTakenColumn)
+                val mediaStoreDateTaken = cursor.getLong(dateTakenColumn) / 1000
                 val dateAdded = cursor.getLong(dateAddedColumn)
                 val dateModified = cursor.getLong(dateModifiedColumn)
                 val displayName = cursor.getString(displayNameIndex)
@@ -91,28 +92,26 @@ class MultiAlbumDataSource(
                     if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) MediaType.Image
                     else MediaType.Video
 
+                val possibleDateTaken = allEntities.find { it.id == id }?.dateTaken
+
                 val dateTaken =
                     when {
-                        mediaStoreDateTaken > 0L -> mediaStoreDateTaken / 1000
+                        possibleDateTaken != null && possibleDateTaken > 0L -> possibleDateTaken
 
-                        mediaStoreDateTaken <= 0L && type == MediaType.Image -> {
-                            val possibleDateTaken = dao.getDateTaken(id)
+                        mediaStoreDateTaken > 0L -> mediaStoreDateTaken
 
-                            if (possibleDateTaken > 0) {
-                                possibleDateTaken
-                            } else {
-                                getDateTakenForMedia(absolutePath).let { exifDateTaken ->
-                                    dao.insertEntity(
-                                        MediaEntity(
-                                            id = id,
-                                            dateTaken = exifDateTaken,
-                                            mimeType = mimeType,
-                                            displayName = displayName
-                                        )
+                        type == MediaType.Image -> {
+                            getDateTakenForMedia(absolutePath).let { exifDateTaken ->
+                                dao.insertEntity(
+                                    MediaEntity(
+                                        id = id,
+                                        dateTaken = exifDateTaken,
+                                        mimeType = mimeType,
+                                        displayName = displayName
                                     )
+                                )
 
-                                    exifDateTaken
-                                }
+                                exifDateTaken
                             }
                         }
 

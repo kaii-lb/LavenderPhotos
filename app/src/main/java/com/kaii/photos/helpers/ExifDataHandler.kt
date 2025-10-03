@@ -9,6 +9,7 @@ import com.kaii.photos.R
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import java.io.File
+import java.io.FileDescriptor
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -19,6 +20,7 @@ import kotlin.math.round
 
 private const val TAG = "com.kaii.photos.helpers.ExifDataHandler"
 
+/** in epoch seconds */
 fun getDateTakenForMedia(absolutePath: String): Long {
     try {
         val exifInterface = ExifInterface(absolutePath)
@@ -41,14 +43,15 @@ fun getDateTakenForMedia(absolutePath: String): Long {
         return dateTimeSinceEpoch
     } catch (e: Throwable) {
         Log.e(TAG, e.toString())
+        e.printStackTrace()
         return 0L
     }
 }
 
 /** @param dateTaken is in seconds since epoch */
-fun setDateTakenForMedia(absolutePath: String, dateTaken: Long) {
+fun setDateTakenForMedia(fd: FileDescriptor, dateTaken: Long) {
     try {
-        val exifInterface = ExifInterface(absolutePath)
+        val exifInterface = ExifInterface(fd)
 
         val newDateString = SimpleDateFormat("yyyy:MM:dd HH:mm:ss", Locale.getDefault()).format(Date(dateTaken))
 
@@ -164,146 +167,152 @@ fun getExifDataForMedia(absolutePath: String): Flow<Map<MediaData, Any>> = flow 
         )
     } catch (e: Throwable) {
         Log.e(TAG, e.toString())
+        e.printStackTrace()
         emit(emptyMap())
     }
 }
 
 fun eraseExifMedia(absolutePath: String) {
-    val exifInterface = ExifInterface(absolutePath)
+    try {
+        val exifInterface = ExifInterface(absolutePath)
 
-    exifInterface.setLatLong(0.0, 0.0)
+        exifInterface.setLatLong(0.0, 0.0)
 
-    exifInterface.setAttribute(
-        ExifInterface.TAG_MODEL,
-        null
-    )
+        exifInterface.setAttribute(
+            ExifInterface.TAG_MODEL,
+            null
+        )
 
-    exifInterface.setAttribute(
-        ExifInterface.TAG_F_NUMBER,
-        null
-    )
+        exifInterface.setAttribute(
+            ExifInterface.TAG_F_NUMBER,
+            null
+        )
 
-    exifInterface.setAttribute(
-        ExifInterface.TAG_DATETIME,
-        null
-    )
+        exifInterface.setAttribute(
+            ExifInterface.TAG_DATETIME,
+            null
+        )
 
-    exifInterface.setAttribute(
-        ExifInterface.TAG_DATETIME_ORIGINAL,
-        null
-    )
+        exifInterface.setAttribute(
+            ExifInterface.TAG_DATETIME_ORIGINAL,
+            null
+        )
 
-    exifInterface.setAttribute(
-        ExifInterface.TAG_SHUTTER_SPEED_VALUE,
-        null
-    )
+        exifInterface.setAttribute(
+            ExifInterface.TAG_SHUTTER_SPEED_VALUE,
+            null
+        )
 
-    exifInterface.setAttribute(
-        ExifInterface.TAG_EXPOSURE_TIME,
-        null
-    )
+        exifInterface.setAttribute(
+            ExifInterface.TAG_EXPOSURE_TIME,
+            null
+        )
 
-    exifInterface.setAttribute(
-        ExifInterface.TAG_ARTIST,
-        null
-    )
+        exifInterface.setAttribute(
+            ExifInterface.TAG_ARTIST,
+            null
+        )
 
-    exifInterface.setAttribute(
-        ExifInterface.TAG_CAMERA_OWNER_NAME,
-        null
-    )
+        exifInterface.setAttribute(
+            ExifInterface.TAG_CAMERA_OWNER_NAME,
+            null
+        )
 
-    exifInterface.setAttribute(
-        ExifInterface.TAG_DEVICE_SETTING_DESCRIPTION,
-        null
-    )
+        exifInterface.setAttribute(
+            ExifInterface.TAG_DEVICE_SETTING_DESCRIPTION,
+            null
+        )
 
-    exifInterface.setAttribute(
-        ExifInterface.TAG_GPS_ALTITUDE,
-        null
-    )
+        exifInterface.setAttribute(
+            ExifInterface.TAG_GPS_ALTITUDE,
+            null
+        )
 
-    exifInterface.setAttribute(
-        ExifInterface.TAG_GPS_LONGITUDE,
-        null
-    )
+        exifInterface.setAttribute(
+            ExifInterface.TAG_GPS_LONGITUDE,
+            null
+        )
 
-    exifInterface.setAttribute(
-        ExifInterface.TAG_GPS_LATITUDE,
-        null
-    )
+        exifInterface.setAttribute(
+            ExifInterface.TAG_GPS_LATITUDE,
+            null
+        )
 
-    exifInterface.setAttribute(
-        ExifInterface.LATITUDE_NORTH,
-        null
-    )
+        exifInterface.setAttribute(
+            ExifInterface.LATITUDE_NORTH,
+            null
+        )
 
-    exifInterface.setAttribute(
-        ExifInterface.LATITUDE_SOUTH,
-        null
-    )
+        exifInterface.setAttribute(
+            ExifInterface.LATITUDE_SOUTH,
+            null
+        )
 
-    exifInterface.setAttribute(
-        ExifInterface.LONGITUDE_EAST,
-        null
-    )
+        exifInterface.setAttribute(
+            ExifInterface.LONGITUDE_EAST,
+            null
+        )
 
-    exifInterface.setAttribute(
-        ExifInterface.LONGITUDE_WEST,
-        null
-    )
+        exifInterface.setAttribute(
+            ExifInterface.LONGITUDE_WEST,
+            null
+        )
 
-    exifInterface.setAttribute(
-        ExifInterface.TAG_USER_COMMENT,
-        null
-    )
+        exifInterface.setAttribute(
+            ExifInterface.TAG_USER_COMMENT,
+            null
+        )
 
-    exifInterface.setAttribute(
-        ExifInterface.TAG_ORF_THUMBNAIL_IMAGE,
-        null
-    )
+        exifInterface.setAttribute(
+            ExifInterface.TAG_ORF_THUMBNAIL_IMAGE,
+            null
+        )
 
-    exifInterface.setAttribute(
-        ExifInterface.TAG_THUMBNAIL_IMAGE_LENGTH,
-        null
-    )
+        exifInterface.setAttribute(
+            ExifInterface.TAG_THUMBNAIL_IMAGE_LENGTH,
+            null
+        )
 
-    exifInterface.setAttribute(
-        ExifInterface.TAG_THUMBNAIL_IMAGE_WIDTH,
-        null
-    )
+        exifInterface.setAttribute(
+            ExifInterface.TAG_THUMBNAIL_IMAGE_WIDTH,
+            null
+        )
 
-    exifInterface.setAttribute(
-        ExifInterface.TAG_DATETIME_DIGITIZED,
-        null
-    )
+        exifInterface.setAttribute(
+            ExifInterface.TAG_DATETIME_DIGITIZED,
+            null
+        )
 
-    exifInterface.setAttribute(
-        ExifInterface.TAG_IMAGE_DESCRIPTION,
-        null
-    )
+        exifInterface.setAttribute(
+            ExifInterface.TAG_IMAGE_DESCRIPTION,
+            null
+        )
 
-    exifInterface.setAttribute(
-        ExifInterface.TAG_MAKE,
-        null
-    )
+        exifInterface.setAttribute(
+            ExifInterface.TAG_MAKE,
+            null
+        )
 
-    exifInterface.setAttribute(
-        ExifInterface.TAG_MAKER_NOTE,
-        null
-    )
+        exifInterface.setAttribute(
+            ExifInterface.TAG_MAKER_NOTE,
+            null
+        )
 
-    exifInterface.setAttribute(
-        ExifInterface.TAG_LENS_MAKE,
-        null
-    )
+        exifInterface.setAttribute(
+            ExifInterface.TAG_LENS_MAKE,
+            null
+        )
 
-    exifInterface.setAttribute(
-        ExifInterface.TAG_LENS_MODEL,
-        null
-    )
+        exifInterface.setAttribute(
+            ExifInterface.TAG_LENS_MODEL,
+            null
+        )
 
-    exifInterface.saveAttributes()
+        exifInterface.saveAttributes()
+    } catch (e: Throwable) {
+        Log.e(TAG, e.toString())
+        e.printStackTrace()
+    }
 }
 
 enum class MediaData(val iconResInt: Int) {

@@ -60,21 +60,28 @@ suspend fun ContentResolver.insertMedia(
     )
 
     if (!overwriteDate) {
-        update(
-            media.uri,
-            ContentValues().apply {
-                put(MediaColumns.DATE_ADDED, media.dateTaken / 1000)
-                put(MediaColumns.DATE_MODIFIED, media.dateTaken / 1000)
-                put(MediaColumns.DATE_TAKEN, media.dateTaken)
-            },
-            null
-        )
+        try {
+            update(
+                media.uri,
+                ContentValues().apply {
+                    put(MediaColumns.DATE_ADDED, media.dateTaken / 1000)
+                    put(MediaColumns.DATE_MODIFIED, media.dateTaken / 1000)
+                    put(MediaColumns.DATE_TAKEN, media.dateTaken)
+                },
+                null
+            )
+        } catch (e: Throwable) {
+            Log.e(TAG, e.toString())
+            e.printStackTrace()
+        }
 
         if (media.type == MediaType.Image) {
-            setDateTakenForMedia(
-                absolutePath = media.absolutePath,
-                dateTaken = media.dateTaken * 1000
-            )
+            openFileDescriptor(media.uri, "rw")?.use { fd ->
+                setDateTakenForMedia(
+                    fd = fd.fileDescriptor,
+                    dateTaken = media.dateTaken * 1000
+                )
+            }
         }
 
         File(media.absolutePath).setLastModified(media.dateTaken * 1000)
@@ -82,13 +89,12 @@ suspend fun ContentResolver.insertMedia(
 
     if (storageContentUri != null && volumeName == MediaStore.VOLUME_EXTERNAL) {
         val contentValues = ContentValues().apply {
-            put(MediaColumns.DISPLAY_NAME, file.name)
+            put(MediaColumns.DISPLAY_NAME, overrideDisplayName ?: file.name)
             put(MediaColumns.RELATIVE_PATH, relativeDestination)
             put(MediaColumns.MIME_TYPE, media.mimeType)
             put(MediaColumns.DATE_ADDED, media.dateTaken)
             put(MediaColumns.DATE_MODIFIED, media.dateTaken)
             put(MediaColumns.DATE_ADDED, media.dateTaken * 1000)
-            put(MediaColumns.IS_PENDING, 1)
         }
 
         val newUri = insert(
@@ -98,11 +104,6 @@ suspend fun ContentResolver.insertMedia(
 
         newUri?.let { contentUri ->
             onInsert(media.uri, contentUri)
-
-            contentValues.clear()
-            contentValues.put(MediaColumns.IS_PENDING, 0)
-
-            update(contentUri, contentValues, null, null)
 
             return@withContext contentUri
         }

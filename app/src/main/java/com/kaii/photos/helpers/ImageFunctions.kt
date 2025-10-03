@@ -195,10 +195,12 @@ fun moveImageToLockedFolder(
             val destinationFile = File(copyToPath)
 
             if (mediaItem.type == MediaType.Image) {
-                setDateTakenForMedia(
-                    mediaItem.absolutePath,
-                    mediaItem.dateTaken * 1000
-                )
+                context.contentResolver.openFileDescriptor(mediaItem.uri, "rw")?.use { fd ->
+                    setDateTakenForMedia(
+                        fd = fd.fileDescriptor,
+                        dateTaken = mediaItem.dateTaken * 1000
+                    )
+                }
             }
 
             addSecuredCachedMediaThumbnail(
