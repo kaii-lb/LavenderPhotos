@@ -37,8 +37,6 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.PreferencesSwitchRow
 import com.kaii.photos.datastore.Permissions
-import com.kaii.photos.datastore.PhotoGrid
-import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
 
@@ -126,9 +124,6 @@ fun PrivacyAndSecurityPage() {
                     showBackground = false,
                     checked = !overwriteOnMove
                 ) {
-                    if (!it) {
-                        mainViewModel.settings.PhotoGrid.setSortMode(mode = MediaItemSortMode.LastModified)
-                    }
                     mainViewModel.settings.Permissions.setOverwriteDateOnMove(!it)
                 }
             }

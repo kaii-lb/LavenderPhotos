@@ -488,13 +488,17 @@ fun FloatingScrollbar(
 
                                     totalDrag += dragAmount
 
-                                    targetIndex = ((totalDrag / scrollbarHeight) * totalItems).roundToInt().coerceIn(0, groupedMedia.value.size - 1)
+                                    val newIndex = (totalDrag / scrollbarHeight) * totalItems
 
-                                    coroutineScope.launch {
-                                        gridState.scrollToItem(
-                                            index = targetIndex,
-                                            scrollOffset = 0
-                                        )
+                                    if (!newIndex.isNaN()) {
+                                        targetIndex = newIndex.roundToInt().coerceIn(0, groupedMedia.value.size - 1)
+
+                                        coroutineScope.launch {
+                                            gridState.scrollToItem(
+                                                index = targetIndex,
+                                                scrollOffset = 0
+                                            )
+                                        }
                                     }
                                 },
                                 onDragEnd = {

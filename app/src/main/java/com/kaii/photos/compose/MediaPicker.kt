@@ -75,6 +75,7 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastFilter
+import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
@@ -102,6 +103,7 @@ import com.kaii.photos.database.Migration3to4
 import com.kaii.photos.database.Migration4to5
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumInfoNavType
+import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.Behaviour
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
@@ -113,6 +115,8 @@ import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.Screens
+import com.kaii.photos.helpers.checkHasFiles
+import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
@@ -131,6 +135,8 @@ import com.kaii.photos.setupNextScreen
 import com.kaii.photos.ui.theme.PhotosTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
+import kotlin.io.path.Path
 import kotlin.reflect.typeOf
 
 private const val TAG = "com.kaii.photos.compose.MediaPicker"
@@ -469,6 +475,21 @@ class MediaPicker : ComponentActivity() {
                 currentView.value = mainPage
             }
 
+            val shouldShowEverything by mainViewModel.showAllInMain.collectAsStateWithLifecycle()
+            val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect()
+                .collectAsStateWithLifecycle(initialValue = true)
+
+            val displayDateFormat by mainViewModel.settings.LookAndFeel.getDisplayDateFormat()
+                .collectAsStateWithLifecycle(initialValue = DisplayDateFormat.Default)
+
+            val allAlbums by if (autoDetectAlbums) {
+                mainViewModel.settings.AlbumsList.getAutoDetectedAlbums(displayDateFormat)
+                    .collectAsStateWithLifecycle(initialValue = emptyList())
+            } else {
+                mainViewModel.settings.AlbumsList.getNormalAlbums()
+                    .collectAsStateWithLifecycle(initialValue = emptyList())
+            }
+
             Box {
                 Column(
                     modifier = Modifier
@@ -516,6 +537,14 @@ class MediaPicker : ComponentActivity() {
                                     }
                                     var hasFiles by remember { mutableStateOf(true) }
                                     LaunchedEffect(mediaStoreData.value.size) {
+                                        withContext(Dispatchers.IO) {
+                                            hasFiles = stateValue.albumPaths.any { path ->
+                                                Path(path).checkHasFiles(
+                                                    basePath = path.toBasePath()
+                                                ) == true
+                                            }
+                                        }
+
                                         if (mediaStoreData.value.isNotEmpty()) {
                                             delay(PhotoGridConstants.UPDATE_TIME)
                                             groupedMedia.value = mediaStoreData.value
@@ -545,16 +574,29 @@ class MediaPicker : ComponentActivity() {
                                 }
 
                                 stateValue == DefaultTabs.TabTypes.photos -> {
-                                    if (albumsList.toSet() != multiAlbumViewModel.albumInfo.paths.toSet()) {
+                                    val albums by remember {
+                                        derivedStateOf {
+                                            if (shouldShowEverything) {
+                                                allAlbums.flatMap { album -> album.paths.fastMap { it.removeSuffix("/") } } - albumsList
+                                            } else {
+                                                albumsList
+                                            }
+                                        }
+                                    }
+
+                                    if (albums.toSet() != multiAlbumViewModel.albumInfo.paths.toSet()
+                                        || multiAlbumViewModel.ignorePaths != shouldShowEverything
+                                    ) {
                                         multiAlbumViewModel.reinitDataSource(
                                             context = context,
                                             album = AlbumInfo(
                                                 id = stateValue.id,
                                                 name = stateValue.name,
-                                                paths = albumsList,
+                                                paths = albums,
                                                 isCustomAlbum = false
                                             ),
-                                            sortMode = multiAlbumViewModel.sortBy
+                                            sortMode = multiAlbumViewModel.sortBy,
+                                            ignorePaths = shouldShowEverything
                                         )
                                     }
 
@@ -564,17 +606,25 @@ class MediaPicker : ComponentActivity() {
 
                                     var hasFiles by remember { mutableStateOf(true) }
                                     LaunchedEffect(mediaStoreData.value.size) {
+                                        if (albums.isNotEmpty()) {
+                                            withContext(Dispatchers.IO) {
+                                                hasFiles = albums.any { path ->
+                                                    Path(path).checkHasFiles(
+                                                        basePath = path.toBasePath()
+                                                    ) == true
+                                                }
+                                            }
+                                        }
+
                                         if (mediaStoreData.value.isNotEmpty()) {
                                             delay(PhotoGridConstants.UPDATE_TIME)
                                             groupedMedia.value = mediaStoreData.value
-                                        } else {
+                                        } else if (!hasFiles) {
                                             delay(PhotoGridConstants.LOADING_TIME)
                                             groupedMedia.value = emptyList()
-                                            hasFiles = false
                                         }
 
                                         delay(PhotoGridConstants.LOADING_TIME)
-                                        hasFiles = mediaStoreData.value.isNotEmpty()
                                     }
 
                                     PhotoGrid(

@@ -2,13 +2,14 @@ package com.kaii.photos.mediastore
 
 import android.content.ContentUris
 import android.content.Context
-import android.media.MediaMetadataRetriever
 import android.os.CancellationSignal
 import android.provider.MediaStore
 import android.provider.MediaStore.Files.FileColumns
 import android.provider.MediaStore.MediaColumns
 import com.bumptech.glide.util.Preconditions
 import com.bumptech.glide.util.Util
+import com.kaii.photos.database.MediaDatabase
+import com.kaii.photos.database.entities.MediaEntity
 import com.kaii.photos.datastore.SQLiteQuery
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.getDateTakenForMedia
@@ -71,7 +72,7 @@ class MultiAlbumDataSource(
         val widthColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.WIDTH)
         val heightColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.HEIGHT)
 
-        val metadataRetriever = MediaMetadataRetriever()
+        val dao = MediaDatabase.getInstance(context).mediaEntityDao()
 
         mediaCursor.use { cursor ->
             while (cursor.moveToNext()) {
@@ -94,7 +95,26 @@ class MultiAlbumDataSource(
                     when {
                         mediaStoreDateTaken > 0L -> mediaStoreDateTaken / 1000
 
-                        mediaStoreDateTaken == -1L && type == MediaType.Image -> getDateTakenForMedia(absolutePath)
+                        mediaStoreDateTaken <= 0L && type == MediaType.Image -> {
+                            val possibleDateTaken = dao.getDateTaken(id)
+
+                            if (possibleDateTaken > 0) {
+                                possibleDateTaken
+                            } else {
+                                getDateTakenForMedia(absolutePath).let { exifDateTaken ->
+                                    dao.insertEntity(
+                                        MediaEntity(
+                                            id = id,
+                                            dateTaken = exifDateTaken,
+                                            mimeType = mimeType,
+                                            displayName = displayName
+                                        )
+                                    )
+
+                                    exifDateTaken
+                                }
+                            }
+                        }
 
                         dateAdded > 0L -> dateAdded
 
@@ -126,8 +146,6 @@ class MultiAlbumDataSource(
                 }
             }
         }
-
-        metadataRetriever.release()
 
         return groupPhotosBy(data, sortBy, displayDateFormat, context)
     }

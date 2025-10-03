@@ -75,6 +75,7 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.compose.ui.unit.toIntRect
+import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
@@ -229,7 +230,7 @@ fun DeviceMedia(
                 } else {
                     StaggeredGridCells.Fixed(if (isLandscape) columnSize * 2 else columnSize)
                 },
-            userScrollEnabled = !isDragSelecting.value,
+            userScrollEnabled = !isDragSelecting.value || selectedItemsList.isEmpty(),
             modifier = Modifier
                 .testTag("mainlazycolumn")
                 .fillMaxSize(1f)
@@ -678,7 +679,7 @@ private fun Modifier.dragSelectionHandler(
             if (selectedItemsList.isNotEmpty()) {
                 state.getGridItemAtOffset(
                     offset,
-                    groupedMedia.map {
+                    groupedMedia.fastMap {
                         it.absolutePath + it.displayName
                     },
                     numberOfHorizontalItems
@@ -722,7 +723,7 @@ private fun Modifier.dragSelectionHandler(
 
                 state.getGridItemAtOffset(
                     change.position,
-                    groupedMedia.map {
+                    groupedMedia.fastMap {
                         it.absolutePath + it.displayName
                     },
                     numberOfHorizontalItems

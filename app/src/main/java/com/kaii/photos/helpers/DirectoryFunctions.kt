@@ -26,7 +26,7 @@ import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import kotlin.io.path.isRegularFile
 
-private const val TAG = "DIRECTORY_FUNCTIONS"
+private const val TAG = "com.kaii.photos.helpers.DirectoryFunctions"
 const val EXTERNAL_DOCUMENTS_AUTHORITY = "com.android.externalstorage.documents"
 
 // TODO: rework to use mediastore for faster lookup

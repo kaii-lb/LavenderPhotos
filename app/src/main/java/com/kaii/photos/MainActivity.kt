@@ -140,7 +140,9 @@ import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.appStorageDir
+import com.kaii.photos.helpers.checkHasFiles
 import com.kaii.photos.helpers.startupUpdateCheck
+import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.custom_album.CustomAlbumViewModelFactory
@@ -162,10 +164,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlin.io.path.Path
 import kotlin.reflect.typeOf
 import kotlin.uuid.ExperimentalUuidApi
 
-private const val TAG = "MAIN_ACTIVITY"
+private const val TAG = "com.kaii.photos.MainActivity"
 
 val LocalNavController = compositionLocalOf<NavHostController> {
     throw IllegalStateException("CompositionLocal LocalNavController not present")
@@ -1265,17 +1269,23 @@ class MainActivity : ComponentActivity() {
 
                                 var hasFiles by remember { mutableStateOf(true) }
                                 LaunchedEffect(mediaStoreData.value.size) {
+                                    withContext(Dispatchers.IO) {
+                                        hasFiles = stateValue.albumPaths.any { path ->
+                                            Path(path).checkHasFiles(
+                                                basePath = path.toBasePath()
+                                            ) == true
+                                        }
+                                    }
+
                                     if (mediaStoreData.value.isNotEmpty()) {
                                         delay(PhotoGridConstants.UPDATE_TIME)
                                         groupedMedia.value = mediaStoreData.value
                                     } else {
                                         delay(PhotoGridConstants.LOADING_TIME)
                                         groupedMedia.value = emptyList()
-                                        hasFiles = false
                                     }
 
                                     delay(PhotoGridConstants.LOADING_TIME)
-                                    hasFiles = groupedMedia.value.isNotEmpty()
                                 }
 
                                 PhotoGrid(
@@ -1325,19 +1335,26 @@ class MainActivity : ComponentActivity() {
                                 }
 
                                 var hasFiles by remember { mutableStateOf(true) }
-
                                 LaunchedEffect(mediaStoreData.value.size) {
+                                    if (albums.isNotEmpty()) {
+                                        withContext(Dispatchers.IO) {
+                                            hasFiles = albums.any { path ->
+                                                Path(path).checkHasFiles(
+                                                    basePath = path.toBasePath()
+                                                ) == true
+                                            }
+                                        }
+                                    }
+
                                     if (mediaStoreData.value.isNotEmpty()) {
                                         delay(PhotoGridConstants.UPDATE_TIME)
                                         groupedMedia.value = mediaStoreData.value
-                                    } else {
+                                    } else if (!hasFiles) {
                                         delay(PhotoGridConstants.LOADING_TIME)
                                         groupedMedia.value = emptyList()
-                                        hasFiles = false
                                     }
 
                                     delay(PhotoGridConstants.LOADING_TIME)
-                                    hasFiles = groupedMedia.value.isNotEmpty()
                                 }
 
                                 PhotoGrid(
