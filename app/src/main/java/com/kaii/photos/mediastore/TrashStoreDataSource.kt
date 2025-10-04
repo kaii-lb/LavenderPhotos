@@ -10,6 +10,8 @@ import android.provider.MediaStore.Files.FileColumns
 import android.provider.MediaStore.MediaColumns
 import com.bumptech.glide.util.Preconditions
 import com.bumptech.glide.util.Util
+import com.kaii.photos.database.MediaDatabase
+import com.kaii.photos.database.entities.MediaEntity
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.getDateTakenForMedia
 import com.kaii.photos.models.multi_album.DisplayDateFormat
@@ -62,6 +64,9 @@ class TrashStoreDataSource(
             null
         ) ?: return data
 
+        val dao = MediaDatabase.getInstance(context).mediaEntityDao()
+        val allEntities = dao.getAll()
+
         mediaCursor.use { cursor ->
             val idColNum = cursor.getColumnIndexOrThrow(MediaColumns._ID)
             val absolutePathColNum =
@@ -90,11 +95,28 @@ class TrashStoreDataSource(
                     if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) MediaType.Image
                     else MediaType.Video
 
+                val possibleDateTaken = allEntities.find { it.id == id }?.dateTaken
+
                 val dateTaken =
                     when {
-                        mediaStoreDateTaken > 0L -> mediaStoreDateTaken / 1000
+                        possibleDateTaken != null && possibleDateTaken > 0L -> possibleDateTaken
 
-                        mediaStoreDateTaken == -1L && type == MediaType.Image -> getDateTakenForMedia(absolutePath)
+                        mediaStoreDateTaken > 0L -> mediaStoreDateTaken
+
+                        type == MediaType.Image -> {
+                            getDateTakenForMedia(absolutePath).let { exifDateTaken ->
+                                dao.insertEntity(
+                                    MediaEntity(
+                                        id = id,
+                                        dateTaken = exifDateTaken,
+                                        mimeType = mimeType,
+                                        displayName = displayName
+                                    )
+                                )
+
+                                exifDateTaken
+                            }
+                        }
 
                         dateAdded > 0L -> dateAdded
 
