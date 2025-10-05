@@ -71,7 +71,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.lavender.immichintegration.serialization.LoginCredentials
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
@@ -789,19 +788,6 @@ fun AddCustomAlbumDialog(
     onDismissPrev: () -> Unit
 ) {
     val mainViewModel = LocalMainViewModel.current
-    val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect()
-        .collectAsStateWithLifecycle(initialValue = true)
-    val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
-
-    val albums by if (autoDetectAlbums) {
-        mainViewModel.settings.AlbumsList.getAutoDetectedAlbums(displayDateFormat)
-            .collectAsStateWithLifecycle(initialValue = emptyList())
-    } else {
-        mainViewModel.settings.AlbumsList.getNormalAlbums()
-            .collectAsStateWithLifecycle(initialValue = emptyList())
-    }
-
-    var name by remember { mutableStateOf("") }
 
     Box(
         modifier = Modifier
@@ -812,24 +798,20 @@ fun AddCustomAlbumDialog(
             placeholder = stringResource(id = R.string.albums_name),
             onDismiss = onDismiss,
             onValueChange = { text ->
-                name = text
-                name in albums.map { it.name }
+                text.isNotEmpty()
             },
             onConfirm = { text ->
-                if (text in albums.map { it.name }) false
-                else {
-                    val albumInfo = AlbumInfo(
-                        id = text.hashCode(),
-                        paths = emptyList(),
-                        name = text,
-                        isCustomAlbum = true
-                    )
+                val albumInfo = AlbumInfo(
+                    id = text.hashCode(),
+                    paths = emptyList(),
+                    name = text,
+                    isCustomAlbum = true
+                )
 
-                    mainViewModel.settings.AlbumsList.addToAlbumsList(albumInfo)
-                    onDismissPrev()
+                mainViewModel.settings.AlbumsList.addToAlbumsList(albumInfo)
+                onDismissPrev()
 
-                    true
-                }
+                text.isNotEmpty()
             }
         )
     }
