@@ -46,7 +46,6 @@ import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.checkHasFiles
 import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.mediastore.MediaStoreData
@@ -54,7 +53,6 @@ import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlin.io.path.Path
 
@@ -238,7 +236,7 @@ private fun SingleAlbumViewCommon(
     }
 
     var hasFiles by remember { mutableStateOf(true) }
-    LaunchedEffect(groupedMedia.value) {
+    LaunchedEffect(groupedMedia.value.lastOrNull()) {
         withContext(Dispatchers.IO) {
             hasFiles = if (!albumInfo.isCustomAlbum) {
                 var result: Boolean? = null
@@ -315,24 +313,8 @@ private fun SingleAlbumViewCommon(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            val media = remember { mutableStateOf(emptyList<MediaStoreData>()) }
-
-            LaunchedEffect(groupedMedia.value.size) {
-                if (groupedMedia.value.isNotEmpty()) {
-                    delay(PhotoGridConstants.UPDATE_TIME)
-                    media.value = groupedMedia.value
-                } else {
-                    delay(PhotoGridConstants.LOADING_TIME)
-                    groupedMedia.value = emptyList()
-                    hasFiles = false
-                }
-
-                delay(PhotoGridConstants.LOADING_TIME)
-                hasFiles = media.value.isNotEmpty()
-            }
-
             PhotoGrid(
-                groupedMedia = media,
+                groupedMedia = groupedMedia,
                 albumInfo = albumInfo,
                 selectedItemsList = selectedItemsList,
                 viewProperties = ViewProperties.Album,

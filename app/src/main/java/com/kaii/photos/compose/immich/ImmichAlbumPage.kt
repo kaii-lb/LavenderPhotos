@@ -87,7 +87,7 @@ fun ImmichAlbumPage(
         multiAlbumViewModel.reinitDataSource(
             context = context,
             album = albumInfo,
-            sortMode = multiAlbumViewModel.sortBy
+            sortMode = multiAlbumViewModel.sortMode
         )
     }
 

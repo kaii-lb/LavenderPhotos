@@ -337,7 +337,7 @@ class MediaPicker : ComponentActivity() {
                     multiAlbumViewModel.reinitDataSource(
                         context = context,
                         album = screen.albumInfo,
-                        sortMode = multiAlbumViewModel.sortBy
+                        sortMode = multiAlbumViewModel.sortMode
                     )
                 }
 
@@ -353,7 +353,7 @@ class MediaPicker : ComponentActivity() {
                         customAlbumViewModel.reinitDataSource(
                             context = context,
                             album = screen.albumInfo,
-                            sortMode = customAlbumViewModel.sortBy
+                            sortMode = customAlbumViewModel.sortMode
                         )
                     }
 
@@ -403,7 +403,7 @@ class MediaPicker : ComponentActivity() {
                         paths = currentView.value.albumPaths,
                         isCustomAlbum = currentView.value.isCustom
                     ),
-                    sortMode = multiAlbumViewModel.sortBy
+                    sortMode = multiAlbumViewModel.sortMode
                 )
 
                 groupedMedia.value = mediaStoreData.value
@@ -528,7 +528,7 @@ class MediaPicker : ComponentActivity() {
                                                 paths = stateValue.albumPaths,
                                                 isCustomAlbum = true
                                             ),
-                                            sortMode = multiAlbumViewModel.sortBy
+                                            sortMode = multiAlbumViewModel.sortMode
                                         )
                                     }
 
@@ -584,9 +584,7 @@ class MediaPicker : ComponentActivity() {
                                         }
                                     }
 
-                                    if (albums.toSet() != multiAlbumViewModel.albumInfo.paths.toSet()
-                                        || multiAlbumViewModel.ignorePaths != shouldShowEverything
-                                    ) {
+                                    if (albums.toSet() != multiAlbumViewModel.albumInfo.paths.toSet()) {
                                         multiAlbumViewModel.reinitDataSource(
                                             context = context,
                                             album = AlbumInfo(
@@ -595,8 +593,7 @@ class MediaPicker : ComponentActivity() {
                                                 paths = albums,
                                                 isCustomAlbum = false
                                             ),
-                                            sortMode = multiAlbumViewModel.sortBy,
-                                            ignorePaths = shouldShowEverything
+                                            sortMode = multiAlbumViewModel.sortMode
                                         )
                                     }
 

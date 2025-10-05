@@ -26,11 +26,11 @@ private const val TAG = "com.kaii.photos.models.CustomAlbumViewModel"
 class CustomAlbumViewModel(
     context: Context,
     var albumInfo: AlbumInfo,
-    var sortBy: MediaItemSortMode,
-    private val displayDateFormat: DisplayDateFormat
+    var sortMode: MediaItemSortMode,
+    var displayDateFormat: DisplayDateFormat
 ) : ViewModel() {
     private var cancellationSignal = CancellationSignal()
-    private val mediaStoreDataSource = mutableStateOf(initDataSource(context, albumInfo, sortBy))
+    private val mediaStoreDataSource = mutableStateOf(initDataSource(context, albumInfo, sortMode, displayDateFormat))
 
     val mediaFlow by derivedStateOf {
         getMediaDataFlow().value.stateIn(
@@ -49,43 +49,63 @@ class CustomAlbumViewModel(
     fun reinitDataSource(
         context: Context,
         album: AlbumInfo,
-        sortMode: MediaItemSortMode = sortBy
+        sortMode: MediaItemSortMode = this.sortMode,
+        displayDateFormat: DisplayDateFormat = this.displayDateFormat
     ) {
-        sortBy = sortMode
+        this.sortMode = sortMode
+        this.displayDateFormat = displayDateFormat
+
         if (album == albumInfo) return
 
         cancelMediaFlow()
         cancellationSignal = CancellationSignal()
-        mediaStoreDataSource.value = initDataSource(context, album, sortBy)
+        mediaStoreDataSource.value = initDataSource(context, album, this.sortMode, this.displayDateFormat)
     }
 
     fun changeSortMode(
         context: Context,
         sortMode: MediaItemSortMode
     ) {
-        sortBy = sortMode
+        if (this.sortMode == sortMode) return
+
+        this.sortMode = sortMode
 
         cancelMediaFlow()
         cancellationSignal = CancellationSignal()
-        mediaStoreDataSource.value = initDataSource(context, albumInfo, sortBy)
+        mediaStoreDataSource.value = initDataSource(context, this.albumInfo, this.sortMode, this.displayDateFormat)
+    }
+
+    fun changeDisplayDateFormat(
+        context: Context,
+        displayDateFormat: DisplayDateFormat
+    ) {
+        if (this.displayDateFormat == displayDateFormat) return
+
+        this.displayDateFormat = displayDateFormat
+
+        cancelMediaFlow()
+        cancellationSignal = CancellationSignal()
+        mediaStoreDataSource.value = initDataSource(context, this.albumInfo, this.sortMode, displayDateFormat)
     }
 
     private fun initDataSource(
         context: Context,
         album: AlbumInfo,
-        sortBy: MediaItemSortMode
+        sortBy: MediaItemSortMode,
+        displayDateFormat: DisplayDateFormat
     ) = run {
         val query = getSQLiteQuery(album.paths)
         Log.d(TAG, "query is $query")
 
         this.albumInfo = album
-        this.sortBy = sortBy
+        this.sortMode = sortBy
+        this.displayDateFormat = displayDateFormat
 
         CustomAlbumDataSource(
             context = context,
             parentId = album.id,
             sortBy = sortBy,
-            cancellationSignal = cancellationSignal,
+            cancellationSignal = this.cancellationSignal,
             displayDateFormat = displayDateFormat
         )
     }

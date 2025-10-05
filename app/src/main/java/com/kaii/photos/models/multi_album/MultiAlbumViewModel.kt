@@ -20,6 +20,7 @@ import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.MultiAlbumDataSource
 import com.kaii.photos.mediastore.getSQLiteQuery
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flowOn
@@ -33,12 +34,11 @@ private const val TAG = "com.kaii.photos.models.MultiAlbumViewModel"
 class MultiAlbumViewModel(
     context: Context,
     var albumInfo: AlbumInfo,
-    var sortBy: MediaItemSortMode,
-    private val displayDateFormat: DisplayDateFormat,
-    var ignorePaths: Boolean = false
+    var sortMode: MediaItemSortMode,
+    var displayDateFormat: DisplayDateFormat
 ) : ViewModel() {
     private var cancellationSignal = CancellationSignal()
-    private val mediaStoreDataSource = mutableStateOf(initDataSource(context, albumInfo, sortBy, ignorePaths))
+    private val mediaStoreDataSource = mutableStateOf(initDataSource(context, albumInfo, sortMode, displayDateFormat))
 
     val mediaFlow by derivedStateOf {
         getMediaDataFlow().value.stateIn(
@@ -50,8 +50,10 @@ class MultiAlbumViewModel(
         )
     }
 
+
+    @OptIn(ExperimentalCoroutinesApi::class)
     private fun getMediaDataFlow(): State<Flow<List<MediaStoreData>>> = derivedStateOf {
-        mediaStoreDataSource.value.loadMediaStoreData().flowOn(Dispatchers.IO)
+        mediaStoreDataSource.value.loadMediaStoreData().flowOn(Dispatchers.IO)//.flatMapMerge { it.flowOn(Dispatchers.IO) }.flowOn(Dispatchers.IO)
     }
 
     fun cancelMediaFlow() = cancellationSignal.cancel()
@@ -59,42 +61,57 @@ class MultiAlbumViewModel(
     fun reinitDataSource(
         context: Context,
         album: AlbumInfo,
-        sortMode: MediaItemSortMode = sortBy,
-        ignorePaths: Boolean = this.ignorePaths
+        sortMode: MediaItemSortMode = this.sortMode,
+        displayDateFormat: DisplayDateFormat = this.displayDateFormat
     ) {
-        this.sortBy = sortMode
-        this.ignorePaths = ignorePaths
+        this.sortMode = sortMode
+        this.displayDateFormat = displayDateFormat
+
         if (album == albumInfo) return
 
         cancelMediaFlow()
         cancellationSignal = CancellationSignal()
-        mediaStoreDataSource.value = initDataSource(context, album, sortBy, ignorePaths)
+        mediaStoreDataSource.value = initDataSource(context, album, this.sortMode, displayDateFormat)
     }
 
     fun changeSortMode(
         context: Context,
         sortMode: MediaItemSortMode
     ) {
-        this.sortBy = sortMode
-        this.ignorePaths = ignorePaths
+        if (this.sortMode == sortMode) return
+
+        this.sortMode = sortMode
 
         cancelMediaFlow()
         cancellationSignal = CancellationSignal()
-        mediaStoreDataSource.value = initDataSource(context, albumInfo, sortBy, ignorePaths)
+        mediaStoreDataSource.value = initDataSource(context, albumInfo, this.sortMode, this.displayDateFormat)
+    }
+
+    fun changeDisplayDateFormat(
+        context: Context,
+        displayDateFormat: DisplayDateFormat
+    ) {
+        if (this.displayDateFormat == displayDateFormat) return
+
+        this.displayDateFormat = displayDateFormat
+
+        cancelMediaFlow()
+        cancellationSignal = CancellationSignal()
+        mediaStoreDataSource.value = initDataSource(context, albumInfo, sortMode, displayDateFormat)
     }
 
     private fun initDataSource(
         context: Context,
         album: AlbumInfo,
         sortBy: MediaItemSortMode,
-        ignorePaths: Boolean
+        displayDateFormat: DisplayDateFormat
     ) = run {
         val query = getSQLiteQuery(album.paths)
         Log.d(TAG, "query is $query")
 
         albumInfo = album
-        this.sortBy = sortBy
-        this.ignorePaths = ignorePaths
+        this.sortMode = sortBy
+        this.displayDateFormat = displayDateFormat
 
         MultiAlbumDataSource(
             context = context,

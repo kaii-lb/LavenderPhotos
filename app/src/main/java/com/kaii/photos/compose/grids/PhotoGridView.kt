@@ -167,8 +167,10 @@ fun DeviceMedia(
     isMainPage: Boolean
 ) {
     var showLoadingSpinner by remember { mutableStateOf(true) }
-    if (groupedMedia.value.isNotEmpty()) {
-        showLoadingSpinner = false
+
+    LaunchedEffect(groupedMedia.value.size) {
+        Log.d(TAG, "First child count ${groupedMedia.value.firstOrNull()?.section?.childCount}")
+        showLoadingSpinner = !groupedMedia.value.firstOrNull()?.section?.childCount.let { it != null && it != 0 }
     }
 
     val shouldPadUp by remember {
