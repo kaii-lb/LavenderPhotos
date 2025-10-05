@@ -425,115 +425,122 @@ fun TrashedPhotoGridViewTopBar(
 
 @Composable
 fun TrashedPhotoGridViewBottomBar(
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    selectedItemsList: SnapshotStateList<MediaStoreData>
 ) {
     IsSelectingBottomAppBar {
-        val context = LocalContext.current
-        val coroutineScope = rememberCoroutineScope()
+        TrashPhotoGridBottomBarItems(selectedItemsList = selectedItemsList)
+    }
+}
 
-        val selectedItemsWithoutSection by remember {
-            derivedStateOf {
-                selectedItemsList.filter {
-                    it.type != MediaType.Section && it != MediaStoreData()
-                }
+@Composable
+fun TrashPhotoGridBottomBarItems(
+    selectedItemsList: SnapshotStateList<MediaStoreData>
+) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
+    val selectedItemsWithoutSection by remember {
+        derivedStateOf {
+            selectedItemsList.filter {
+                it.type != MediaType.Section && it != MediaStoreData()
             }
         }
+    }
 
-        IconButton(
-            onClick = {
-                coroutineScope.launch {
-                    shareMultipleImages(
-                        uris = selectedItemsWithoutSection.map { it.uri },
-                        context = context,
-                        hasVideos = selectedItemsWithoutSection.any { it.type == MediaType.Video }
-                    )
-                }
+    IconButton(
+        onClick = {
+            coroutineScope.launch {
+                shareMultipleImages(
+                    uris = selectedItemsWithoutSection.map { it.uri },
+                    context = context,
+                    hasVideos = selectedItemsWithoutSection.any { it.type == MediaType.Video }
+                )
             }
-        ) {
-            Icon(
-                painter = painterResource(id = R.drawable.share),
-                contentDescription = stringResource(id = R.string.media_share)
-            )
         }
-
-        val showRestoreDialog = remember { mutableStateOf(false) }
-        val runRestoreAction = remember { mutableStateOf(false) }
-
-        val mainViewModel = LocalMainViewModel.current
-        val applicationDatabase = LocalAppDatabase.current
-        GetPermissionAndRun(
-            uris = selectedItemsWithoutSection.map { it.uri },
-            shouldRun = runRestoreAction,
-            onGranted = {
-                mainViewModel.launch(Dispatchers.IO) {
-                    setTrashedOnPhotoList(
-                        context = context,
-                        list = selectedItemsWithoutSection,
-                        trashed = false,
-                        appDatabase = applicationDatabase
-                    )
-
-                    selectedItemsList.clear()
-                }
-            }
+    ) {
+        Icon(
+            painter = painterResource(id = R.drawable.share),
+            contentDescription = stringResource(id = R.string.media_share)
         )
+    }
 
-        ConfirmationDialog(
-            showDialog = showRestoreDialog,
-            dialogTitle = stringResource(id = R.string.media_restore_confirm),
-            confirmButtonLabel = stringResource(id = R.string.media_restore)
-        ) {
-            runRestoreAction.value = true
-        }
+    val showRestoreDialog = remember { mutableStateOf(false) }
+    val runRestoreAction = remember { mutableStateOf(false) }
 
-        IconButton(
-            onClick = {
-                showRestoreDialog.value = true
-            }
-        ) {
-            Icon(
-                painter = painterResource(id = R.drawable.untrash),
-                contentDescription = stringResource(id = R.string.media_restore)
-            )
-        }
-
-        val showPermaDeleteDialog = remember { mutableStateOf(false) }
-        val runPermaDeleteAction = remember { mutableStateOf(false) }
-
-        LaunchedEffect(runPermaDeleteAction.value) {
-            if (runPermaDeleteAction.value) {
-                permanentlyDeletePhotoList(
-                    context,
-                    selectedItemsWithoutSection.map { it.uri }
+    val mainViewModel = LocalMainViewModel.current
+    val applicationDatabase = LocalAppDatabase.current
+    GetPermissionAndRun(
+        uris = selectedItemsWithoutSection.map { it.uri },
+        shouldRun = runRestoreAction,
+        onGranted = {
+            mainViewModel.launch(Dispatchers.IO) {
+                setTrashedOnPhotoList(
+                    context = context,
+                    list = selectedItemsWithoutSection,
+                    trashed = false,
+                    appDatabase = applicationDatabase
                 )
 
                 selectedItemsList.clear()
-
-                runPermaDeleteAction.value = false
             }
         }
+    )
 
-        ConfirmationDialogWithBody(
-            showDialog = showPermaDeleteDialog,
-            dialogTitle = stringResource(id = R.string.media_delete_permanently_confirm),
-            dialogBody = stringResource(id = R.string.action_cannot_be_undone),
-            confirmButtonLabel = stringResource(id = R.string.media_delete)
-        ) {
-            runPermaDeleteAction.value = true
+    ConfirmationDialog(
+        showDialog = showRestoreDialog,
+        dialogTitle = stringResource(id = R.string.media_restore_confirm),
+        confirmButtonLabel = stringResource(id = R.string.media_restore)
+    ) {
+        runRestoreAction.value = true
+    }
+
+    IconButton(
+        onClick = {
+            showRestoreDialog.value = true
         }
+    ) {
+        Icon(
+            painter = painterResource(id = R.drawable.untrash),
+            contentDescription = stringResource(id = R.string.media_restore)
+        )
+    }
 
-        IconButton(
-            onClick = {
-                if (selectedItemsWithoutSection.isNotEmpty()) {
-                    showPermaDeleteDialog.value = true
-                }
-            }
-        ) {
-            Icon(
-                painter = painterResource(id = R.drawable.delete),
-                contentDescription = stringResource(id = R.string.media_delete)
+    val showPermaDeleteDialog = remember { mutableStateOf(false) }
+    val runPermaDeleteAction = remember { mutableStateOf(false) }
+
+    LaunchedEffect(runPermaDeleteAction.value) {
+        if (runPermaDeleteAction.value) {
+            permanentlyDeletePhotoList(
+                context,
+                selectedItemsWithoutSection.map { it.uri }
             )
+
+            selectedItemsList.clear()
+
+            runPermaDeleteAction.value = false
         }
+    }
+
+    ConfirmationDialogWithBody(
+        showDialog = showPermaDeleteDialog,
+        dialogTitle = stringResource(id = R.string.media_delete_permanently_confirm),
+        dialogBody = stringResource(id = R.string.action_cannot_be_undone),
+        confirmButtonLabel = stringResource(id = R.string.media_delete)
+    ) {
+        runPermaDeleteAction.value = true
+    }
+
+    IconButton(
+        onClick = {
+            if (selectedItemsWithoutSection.isNotEmpty()) {
+                showPermaDeleteDialog.value = true
+            }
+        }
+    ) {
+        Icon(
+            painter = painterResource(id = R.drawable.delete),
+            contentDescription = stringResource(id = R.string.media_delete)
+        )
     }
 }
 
@@ -854,160 +861,171 @@ fun FavouritesViewBottomAppBar(
     groupedMedia: MutableState<List<MediaStoreData>>
 ) {
     IsSelectingBottomAppBar {
-        val context = LocalContext.current
-        val coroutineScope = rememberCoroutineScope()
-        val applicationDatabase = LocalAppDatabase.current
-        val dao = applicationDatabase.favouritedItemEntityDao()
+        FavouritesBottomAppBarItems(
+            selectedItemsList = selectedItemsList,
+            groupedMedia = groupedMedia
+        )
+    }
+}
 
-        val selectedItemsWithoutSection by remember {
-            derivedStateOf {
-                selectedItemsList.filter {
-                    it.type != MediaType.Section
-                }
+@Composable
+fun FavouritesBottomAppBarItems(
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    groupedMedia: MutableState<List<MediaStoreData>>
+) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val applicationDatabase = LocalAppDatabase.current
+    val dao = applicationDatabase.favouritedItemEntityDao()
+
+    val selectedItemsWithoutSection by remember {
+        derivedStateOf {
+            selectedItemsList.filter {
+                it.type != MediaType.Section
             }
         }
+    }
 
-        IconButton(
-            onClick = {
-                coroutineScope.launch {
-                    shareMultipleImages(
-                        uris = selectedItemsWithoutSection.map { it.uri },
+    IconButton(
+        onClick = {
+            coroutineScope.launch {
+                shareMultipleImages(
+                    uris = selectedItemsWithoutSection.map { it.uri },
+                    context = context,
+                    hasVideos = selectedItemsWithoutSection.any { it.type == MediaType.Video }
+                )
+            }
+        }
+    ) {
+        Icon(
+            painter = painterResource(id = R.drawable.share),
+            contentDescription = stringResource(id = R.string.media_share)
+        )
+    }
+
+    val show = remember { mutableStateOf(false) }
+    MoveCopyAlbumListView(
+        show = show,
+        selectedItemsList = selectedItemsList,
+        isMoving = false,
+        groupedMedia = null,
+        insetsPadding = WindowInsets.statusBars
+    )
+
+    IconButton(
+        onClick = {
+            show.value = true
+        }
+    ) {
+        Icon(
+            painter = painterResource(id = R.drawable.copy),
+            contentDescription = stringResource(id = R.string.media_copy)
+        )
+    }
+
+    val showUnFavDialog = remember { mutableStateOf(false) }
+    ConfirmationDialog(
+        showDialog = showUnFavDialog,
+        dialogTitle = stringResource(id = R.string.custom_album_remove_media_desc),
+        confirmButtonLabel = stringResource(id = R.string.custom_album_remove_media)
+    ) {
+        coroutineScope.launch {
+            withContext(Dispatchers.IO) {
+                val newList = groupedMedia.value.toMutableList()
+                selectedItemsWithoutSection.forEach { item ->
+                    dao.deleteEntityById(item.id)
+                    newList.remove(item)
+                }
+
+                groupedMedia.value.filter {
+                    it.type == MediaType.Section
+                }.forEach {
+                    val filtered = newList.filter { new ->
+                        new.getLastModifiedDay() == it.getLastModifiedDay()
+                    }
+
+                    if (filtered.size == 1) newList.remove(it)
+                }
+
+                selectedItemsList.clear()
+                groupedMedia.value = newList
+            }
+        }
+    }
+
+    IconButton(
+        onClick = {
+            showUnFavDialog.value = true
+        }
+    ) {
+        Icon(
+            painter = painterResource(id = R.drawable.unfavourite),
+            contentDescription = stringResource(id = R.string.custom_album_remove_media)
+        )
+    }
+
+    val showDeleteDialog = remember { mutableStateOf(false) }
+    val runTrashAction = remember { mutableStateOf(false) }
+    val mainViewModel = LocalMainViewModel.current
+
+    val confirmToDelete by mainViewModel.settings.Permissions.getConfirmToDelete()
+        .collectAsStateWithLifecycle(initialValue = true)
+    val doNotTrash by mainViewModel.settings.Permissions.getDoNotTrash().collectAsStateWithLifecycle(initialValue = true)
+
+    GetPermissionAndRun(
+        uris = selectedItemsWithoutSection.map { it.uri },
+        shouldRun = runTrashAction,
+        onGranted = {
+            mainViewModel.launch(Dispatchers.IO) {
+                if (doNotTrash) {
+                    permanentlyDeletePhotoList(
                         context = context,
-                        hasVideos = selectedItemsWithoutSection.any { it.type == MediaType.Video }
+                        list = selectedItemsWithoutSection.fastMap { it.uri }
+                    )
+                } else {
+                    setTrashedOnPhotoList(
+                        context = context,
+                        list = selectedItemsWithoutSection,
+                        trashed = true,
+                        appDatabase = applicationDatabase
                     )
                 }
-            }
-        ) {
-            Icon(
-                painter = painterResource(id = R.drawable.share),
-                contentDescription = stringResource(id = R.string.media_share)
-            )
-        }
 
-        val show = remember { mutableStateOf(false) }
-        MoveCopyAlbumListView(
-            show = show,
-            selectedItemsList = selectedItemsList,
-            isMoving = false,
-            groupedMedia = null,
-            insetsPadding = WindowInsets.statusBars
+                selectedItemsList.clear()
+            }
+        }
+    )
+
+    ConfirmationDialog(
+        showDialog = showDeleteDialog,
+        dialogTitle = stringResource(id = if (doNotTrash) R.string.media_delete_permanently_confirm else R.string.media_trash_confirm),
+        confirmButtonLabel = stringResource(id = R.string.media_delete)
+    ) {
+        coroutineScope.launch {
+            selectedItemsList.forEach {
+                dao.deleteEntityById(it.id)
+            }
+            runTrashAction.value = true
+        }
+    }
+
+    IconButton(
+        onClick = {
+            if (confirmToDelete) {
+                showDeleteDialog.value = true
+            } else {
+                coroutineScope.launch {
+                    selectedItemsList.forEach {
+                        dao.deleteEntityById(it.id)
+                    }
+                    runTrashAction.value = true
+                }
+            }
+        }
+    ) {
+        Icon(
+            painter = painterResource(id = R.drawable.delete),
+            contentDescription = stringResource(id = R.string.media_delete)
         )
-
-        IconButton(
-            onClick = {
-                show.value = true
-            }
-        ) {
-            Icon(
-                painter = painterResource(id = R.drawable.copy),
-                contentDescription = stringResource(id = R.string.media_copy)
-            )
-        }
-
-        val showUnFavDialog = remember { mutableStateOf(false) }
-        ConfirmationDialog(
-            showDialog = showUnFavDialog,
-            dialogTitle = stringResource(id = R.string.custom_album_remove_media_desc),
-            confirmButtonLabel = stringResource(id = R.string.custom_album_remove_media)
-        ) {
-            coroutineScope.launch {
-                withContext(Dispatchers.IO) {
-                    val newList = groupedMedia.value.toMutableList()
-                    selectedItemsWithoutSection.forEach { item ->
-                        dao.deleteEntityById(item.id)
-                        newList.remove(item)
-                    }
-
-                    groupedMedia.value.filter {
-                        it.type == MediaType.Section
-                    }.forEach {
-                        val filtered = newList.filter { new ->
-                            new.getLastModifiedDay() == it.getLastModifiedDay()
-                        }
-
-                        if (filtered.size == 1) newList.remove(it)
-                    }
-
-                    selectedItemsList.clear()
-                    groupedMedia.value = newList
-                }
-            }
-        }
-
-        IconButton(
-            onClick = {
-                showUnFavDialog.value = true
-            }
-        ) {
-            Icon(
-                painter = painterResource(id = R.drawable.unfavourite),
-                contentDescription = stringResource(id = R.string.custom_album_remove_media)
-            )
-        }
-
-        val showDeleteDialog = remember { mutableStateOf(false) }
-        val runTrashAction = remember { mutableStateOf(false) }
-        val mainViewModel = LocalMainViewModel.current
-
-        val confirmToDelete by mainViewModel.settings.Permissions.getConfirmToDelete()
-            .collectAsStateWithLifecycle(initialValue = true)
-        val doNotTrash by mainViewModel.settings.Permissions.getDoNotTrash().collectAsStateWithLifecycle(initialValue = true)
-
-        GetPermissionAndRun(
-            uris = selectedItemsWithoutSection.map { it.uri },
-            shouldRun = runTrashAction,
-            onGranted = {
-                mainViewModel.launch(Dispatchers.IO) {
-                    if (doNotTrash) {
-                        permanentlyDeletePhotoList(
-                            context = context,
-                            list = selectedItemsWithoutSection.fastMap { it.uri }
-                        )
-                    } else {
-                        setTrashedOnPhotoList(
-                            context = context,
-                            list = selectedItemsWithoutSection,
-                            trashed = true,
-                            appDatabase = applicationDatabase
-                        )
-                    }
-
-                    selectedItemsList.clear()
-                }
-            }
-        )
-
-        ConfirmationDialog(
-            showDialog = showDeleteDialog,
-            dialogTitle = stringResource(id = if (doNotTrash) R.string.media_delete_permanently_confirm else R.string.media_trash_confirm),
-            confirmButtonLabel = stringResource(id = R.string.media_delete)
-        ) {
-            coroutineScope.launch {
-                selectedItemsList.forEach {
-                    dao.deleteEntityById(it.id)
-                }
-                runTrashAction.value = true
-            }
-        }
-
-        IconButton(
-            onClick = {
-                if (confirmToDelete) {
-                    showDeleteDialog.value = true
-                } else {
-                    coroutineScope.launch {
-                        selectedItemsList.forEach {
-                            dao.deleteEntityById(it.id)
-                        }
-                        runTrashAction.value = true
-                    }
-                }
-            }
-        ) {
-            Icon(
-                painter = painterResource(id = R.drawable.delete),
-                contentDescription = stringResource(id = R.string.media_delete)
-            )
-        }
     }
 }

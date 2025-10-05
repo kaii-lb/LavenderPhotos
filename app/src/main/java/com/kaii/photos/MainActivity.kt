@@ -1159,7 +1159,8 @@ class MainActivity : ComponentActivity() {
                     currentView = currentView,
                     selectedItemsList = selectedItemsList,
                     tabs = tabList,
-                    scrollBehaviour = scrollBehaviour
+                    scrollBehaviour = scrollBehaviour,
+                    groupedMedia = groupedMedia
                 )
             },
             modifier = Modifier
@@ -1269,14 +1270,19 @@ class MainActivity : ComponentActivity() {
 
                                 var hasFiles by remember { mutableStateOf(true) }
                                 LaunchedEffect(mediaStoreData.value.size) {
-                                    groupedMedia.value = mediaStoreData.value
-
                                     withContext(Dispatchers.IO) {
                                         hasFiles = stateValue.albumPaths.any { path ->
                                             Path(path).checkHasFiles(
                                                 basePath = path.toBasePath()
                                             ) == true
                                         }
+                                    }
+
+                                    if (mediaStoreData.value.isEmpty()) {
+                                        delay(PhotoGridConstants.LOADING_TIME)
+                                        groupedMedia.value = mediaStoreData.value
+                                    } else {
+                                        groupedMedia.value = mediaStoreData.value
                                     }
                                 }
 
@@ -1325,8 +1331,6 @@ class MainActivity : ComponentActivity() {
 
                                 var hasFiles by remember { mutableStateOf(true) }
                                 LaunchedEffect(mediaStoreData.value.size) {
-                                    groupedMedia.value = mediaStoreData.value
-
                                     if (albums.isNotEmpty()) {
                                         withContext(Dispatchers.IO) {
                                             hasFiles = albums.any { path ->
@@ -1335,6 +1339,13 @@ class MainActivity : ComponentActivity() {
                                                 ) == true
                                             }
                                         }
+                                    }
+
+                                    if (mediaStoreData.value.isEmpty()) {
+                                        delay(PhotoGridConstants.LOADING_TIME)
+                                        groupedMedia.value = mediaStoreData.value
+                                    } else {
+                                        groupedMedia.value = mediaStoreData.value
                                     }
                                 }
 

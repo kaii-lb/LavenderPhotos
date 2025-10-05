@@ -46,6 +46,7 @@ import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.helpers.AnimationConstants
+import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.checkHasFiles
 import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.mediastore.MediaStoreData
@@ -53,6 +54,7 @@ import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlin.io.path.Path
 
@@ -113,7 +115,12 @@ fun SingleAlbumView(
     val groupedMedia = remember { mutableStateOf(mediaStoreData) }
 
     LaunchedEffect(mediaStoreData) {
-        groupedMedia.value = mediaStoreData
+        if (mediaStoreData.isEmpty()) {
+            delay(PhotoGridConstants.LOADING_TIME)
+            groupedMedia.value = mediaStoreData
+        } else {
+            groupedMedia.value = mediaStoreData
+        }
     }
 
     SingleAlbumViewCommon(
@@ -193,7 +200,14 @@ fun SingleAlbumView(
     val groupedMedia = remember { mutableStateOf(customMediaStoreData + multiMediaStoreData) }
 
     LaunchedEffect(customMediaStoreData, multiMediaStoreData) {
-        groupedMedia.value = (customMediaStoreData + multiMediaStoreData).distinctBy { it.uri }
+        val mixed = (customMediaStoreData + multiMediaStoreData).distinctBy { it.uri }
+
+        if (mixed.isEmpty()) {
+            delay(PhotoGridConstants.LOADING_TIME)
+            groupedMedia.value = mixed
+        } else {
+            groupedMedia.value = mixed
+        }
     }
 
     SingleAlbumViewCommon(

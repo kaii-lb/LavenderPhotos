@@ -177,6 +177,7 @@ fun MainAppBottomBar(
     currentView: MutableState<BottomBarTab>,
     tabs: List<BottomBarTab>,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
+    groupedMedia: MutableState<List<MediaStoreData>>,
     scrollBehaviour: FloatingToolbarScrollBehavior
 ) {
     val mainViewModel = LocalMainViewModel.current
@@ -234,15 +235,31 @@ fun MainAppBottomBar(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Center
                         ) {
-                            SelectingBottomBarItems(
-                                albumInfo = AlbumInfo(
-                                    id = currentView.value.id,
-                                    name = currentView.value.name,
-                                    paths = currentView.value.albumPaths,
-                                    isCustomAlbum = false
-                                ),
-                                selectedItemsList = selectedItemsList
-                            )
+                            when (currentView.value) {
+                                DefaultTabs.TabTypes.trash -> {
+                                    TrashPhotoGridBottomBarItems(
+                                        selectedItemsList = selectedItemsList
+                                    )
+                                }
+                                DefaultTabs.TabTypes.favourites -> {
+                                    FavouritesBottomAppBarItems(
+                                        selectedItemsList = selectedItemsList,
+                                        groupedMedia = groupedMedia
+                                    )
+                                }
+
+                                else -> {
+                                    SelectingBottomBarItems(
+                                        albumInfo = AlbumInfo(
+                                            id = currentView.value.id,
+                                            name = currentView.value.name,
+                                            paths = currentView.value.albumPaths,
+                                            isCustomAlbum = false
+                                        ),
+                                        selectedItemsList = selectedItemsList
+                                    )
+                                }
+                            }
                         }
                     } else {
                         val windowInfo = LocalWindowInfo.current

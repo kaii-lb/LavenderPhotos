@@ -760,6 +760,7 @@ class MediaPicker : ComponentActivity() {
                             tabs = tabs.fastFilter { it != DefaultTabs.TabTypes.secure },
                             selectedItemsList = selectedItemsList,
                             scrollBehaviour = scrollBehaviour,
+                            groupedMedia = groupedMedia
                         )
                     } else {
                         MediaPickerConfirmButton(
