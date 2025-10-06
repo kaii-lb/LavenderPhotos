@@ -4,6 +4,8 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
+import androidx.core.content.res.ResourcesCompat
+import androidx.core.graphics.drawable.toBitmap
 import androidx.core.graphics.scale
 import com.kaii.photos.R
 import com.kaii.photos.database.MediaDatabase
@@ -42,13 +44,15 @@ fun addSecuredCachedMediaThumbnail(
 ) {
     val thumbnailFile = getSecuredCacheImageForFile(file = file, context = context)
 
+    if (thumbnailFile.parentFile?.exists() == false) thumbnailFile.parentFile?.mkdirs()
+
     val thumbnail =
         if (mediaItem.type == MediaType.Video) {
             metadataRetriever.setDataSource(context, mediaItem.uri)
 
             metadataRetriever.getScaledFrameAtTime(
-                1000000L,
-                MediaMetadataRetriever.OPTION_PREVIOUS_SYNC,
+                -1L,
+                MediaMetadataRetriever.OPTION_CLOSEST,
                 1024,
                 1024
             )
@@ -66,9 +70,9 @@ fun addSecuredCachedMediaThumbnail(
 
             bytes.toByteArray()
         } else {
-            val image = BitmapFactory.decodeResource(context.resources, R.drawable.broken_image)
+            val image = ResourcesCompat.getDrawable(context.resources, R.drawable.broken_image, null)?.toBitmap()
             val bytes = ByteArrayOutputStream()
-            image.compress(Bitmap.CompressFormat.PNG, 100, bytes)
+            image?.compress(Bitmap.CompressFormat.PNG, 100, bytes)
 
             bytes.toByteArray()
         }
