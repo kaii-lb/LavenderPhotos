@@ -9,10 +9,10 @@
     <string name="albums_found">已找到全部相册！</string>
     <string name="add_album">添加一个相册</string>
     <string name="direct_path_album">使用绝对路径添加相册</string>
-    <string name="albums_main_list">主相册列表</string>
+    <string name="albums_main_list">主页面全部显示</string>
     <string name="albums_main_list_selected">在此选择的相册将显示于主照片视图中</string>
     <string name="albums_selected">已选相册</string>
-    <string name="albums_auto_detect">自动检测相册</string>
+    <string name="albums_auto_detect">自动识别相册</string>
     <string name="albums_auto_detect_desc">检测本设备上所有包含媒体文件的文件夹，并添加至相册视图</string>
     <string name="albums_clear_list">清除相册列表</string>
     <string name="albums_clear_list_desc">清除Camera与Download外的所有相册</string>
@@ -40,13 +40,13 @@
     <string name="tabs_default_desc">薰衣草图库将在启动时自动打开此标签页</string>
     <string name="tabs_customize">自定义标签页</string>
     <string name="tabs_customize_desc">更改底栏中可用的标签页</string>
-    <string name="tabs_navigate_to">前往 %s$1 页面</string>
+    <string name="tabs_navigate_to">跳转至 %1$s 页面</string>
     <string name="tabs_add">添加一个标签页</string>
     <string name="tabs_name">标签页名称</string>
     <string name="tabs_albums_incl">包含的相册</string>
     <string name="tabs_confirm">添加标签页</string>
     <string name="tabs_empty_params">标签页参数不能为空</string>
-    <string name="tabs_max_reached">不能添加超过5个标签页</string>
+    <string name="tabs_max_reached">不能添加超过8个标签页</string>
     <string name="tabs_min_reached">至少存在一个标签页</string>
     <string name="return_to_previous_page">返回上一级页面</string>
     <string name="app_icon">App图标</string>
@@ -60,7 +60,472 @@
     <string name="version_info">版本信息</string>
     <string name="updates">更新</string>
     <string name="updates_desc">保持应用为最新版本</string>
-    <string name="changelog">版本 v0.9.6\n- 新增功能：支持将整个文件夹添加到自定义相册中\n- 修复问题：自定义标签页无法加载\n- 优化限制：当相册内项目超过 5000 项时，禁用“全选”功能（避免因 Android 限制导致崩溃）\n\n版本 v0.9.5\n- 新增功能：在横向照片浏览中，为双击缩放和重置操作添加动画效果\n- 新增功能：支持创建自定义相册（非基于文件夹）\n- 新增功能：在相册信息对话框中显示项目数量\n- 修复问题：编辑视图中文本缩放功能异常\n- 修复问题：默认标签页拖拽排序时卡顿\n- 新增功能：可切换照片复制时是否保留原始日期\n- 修复问题：在编辑视图中，使用画笔前若先使用模糊工具会导致崩溃\n- 优化体验：文本缩放/旋转/移动操作不再难用\n- 修复问题：“点击绘制”功能失效（原先总出现在左上角，现已正常）\n- 优化体验：提升编辑视图底部栏图标的颜色对比度\n- 新增功能：支持调整已添加文本的大小和颜色（点击文本即可选中）\n- 新增功能：支持在编辑视图的画笔模式下缩放画布\n- 优化体验：增大编辑视图模糊画笔的半径（模糊效果更强）\n\n版本 v0.9.4\n- 修复问题：主工具栏图标颜色显示异常\n- 新增功能：支持将收藏内容导出为 ZIP 文件或文件夹\n- 修复问题：视频播放器双击快进/快退在快速点击时方向判断错误\n- 优化体验：路径显示视图支持横向滚动\n- 新增功能：支持自定义排序模式\n- 修复问题：启动时“检查更新”功能被重复触发多次\n- 新增功能：编辑失败或成功时显示提示条（Snackbar）\n- 新增功能：删除操作前可设置确认开关\n- 修复问题：回收站未始终按“最近删除”排序\n- 修复问题：用户移动或复制文件后退出视图时，不再丢失文件\n- 完成功能：相册信息功能完整实现\n- 新增功能：为“删除确认”、“媒体排序”、“检查更新”等功能添加图标\n- 修复问题：视频播放器双击快进提示条显示在其他 UI 下方\n- 代码优化：清理并改进代码结构\n- 新增功能：支持发送上一次运行的日志\n- 优化体验：视频播放器双击快进现仅首次需双击，之后单击即可跳转\n- 优化体验：自动检测相册功能现在发现即添加\n- 修复问题：若关联相册被移除，可能导致加密项目无法恢复\n- 新增功能：支持从搜索页面批量加密照片\n- 修复问题：双击快进功能不再阻塞其他 UI 交互\n- 新增功能：新增 EXIF 数据擦除工具\n- 新增功能：Android 12 及以上系统支持基础模糊工具（编辑视图）\n- 新增功能：编辑视图支持“保存后自动退出”开关\n- 修复问题：安全文件夹中“幽灵媒体”问题\n- 优化体验：加密媒体加载对话框在加密过程中不再随应用栏一同消失\n\n版本 v0.9.3\n- 优化体验：为 Drawable 资源使用稳定标识符\n- 新增功能：添加更新信息提示\n- 新增功能：支持关闭“启动时检查更新”\n- 新增功能：支持完全自定义标签页\n- 重构功能：彻底重写迁移逻辑\n- 优化体验：统一对话框配色\n- 修复问题：MediaStore 未正确刷新\n- 优化体验：改进媒体尺寸显示方式\n- 新增功能：支持将安全文件夹内容导出为 ZIP 文件\n\n版本 v0.9.2\n- 修复问题：横向图片列表中偶发崩溃\n- 修复问题：更新器界面不显示进度\n- 修复问题：更新器无法安装包\n- 修复问题：移动/复制到相册列表时不显示缩略图\n- 修复问题：单相册对话框的对齐与溢出问题\n- 新增功能：新增数据与备份功能\n- 修复问题：迁移到加密照片功能不再损坏\n- 新增功能：支持自定义默认标签页\n\n版本 v0.9.1\n- 修复问题：加密媒体信息对话框显示异常\n- 优化体验：改进拖拽选择行为\n- 修复问题：调试设置中“添加相册”功能失效\n- 新增功能：支持自定义相册排序\n- 性能提升：相册加载速度大幅提升\n- 新增功能：动态相册重排序（最近修改的相册置顶）\n- 新增功能：支持自动检测相册\n- 新增功能：全应用引入 Lavender 提示条（Snackbar）\n- 优化体验：改进迁移到加密安全文件夹的流程\n- 新增功能：视频播放器支持双击快进/快退\n- 其他：多项性能优化\n\n版本 v0.9.0\n- 新增功能：解密后加载文件元数据至信息对话框\n- 新增功能：内置应用更新器\n- 重构功能：彻底重写媒体加载系统，支持同时加载多个相册\n- 新增功能：相册网格视图顶部栏添加图标\n- 修复问题：打开相册时的卡顿峰值\n- 性能优化：极致优化，大幅提升性能\n- 修复问题：加密/解密加载对话框异常\n- 修复问题：安全文件夹缩略图未始终加载\n- 修复问题：因 Glide 缓存加密图像可能导致的安全漏洞\n- 优化体验：视频播放器静音时不再暂停其他音乐\n- 新增功能：加密视频播放前显示加载界面\n- 优化体验：统一选择模式顶部栏样式\n- 修复问题：isPreV083 行为异常\n- 修复问题：“用其他应用打开”视图无法被调用\n- 修复问题：在空列表时点击“移至安全文件夹”不再无限挂起\n- 修复问题：终于解决 Android 11 和 12 的启动问题\n\n版本 v0.8.9\n- 新增功能：安全照片支持 AES 加密\n- 新增功能：手动添加路径时显示错误图标\n- 修复问题：安全文件夹加载界面异常\n- 修复问题：浅色主题下部分元素不一致、不协调\n- 优化体验：视频播放器记住上次静音状态\n- 新增功能：安全文件夹和权限界面支持横屏友好布局\n- 新增功能：支持“通过 Lavender Photos 打开”\n- 移除功能：移除备用相册选择方式\n- 新增功能：为耗时操作添加加载对话框\n\n版本 v0.8.8\n- 移除权限：移除 MANAGE_EXTERNAL_STORAGE 权限\n- 重构功能：彻底重写文件处理系统\n- 优化体验：更改主应用顶部栏动画\n- 性能提升：整体性能改进\n- 修复问题：加密媒体项目时的问题\n- 修复问题：滚动卡顿\n- 修复问题：点击收藏视图项目时崩溃\n- 修复问题：从 v0.8.3 迁移旧相册失败\n- 优化体验：统一说明对话框样式\n- 修复问题：加载含非图像文件的相册时应用不再冻结\n- 修复问题：日志保存时重构应用文件夹结构\n- 新增功能：支持从安全文件夹分享文件\n- 重要提示：请手动删除内部存储中的 “Lavender Photos” 文件夹\n\n版本 v0.8.7-Hotfix\n- 修复问题：搜索结果未正确显示项目\n- 修复问题：ExoPlayer 在后台时不再自动关闭\n- 优化体验：改进 Logcat 行为\n- 修复问题：权限界面 UI 异常\n- 新增功能：提供多种添加相册方式（直至找到更优方案）\n- 修复问题：图片网格为空时崩溃\n- 性能优化：拖拽选择速度大幅提升，行为更佳\n\n版本 v0.8.7\n- 修复问题：连续播放多个视频后视频播放器崩溃\n- 修复问题：应用切换至竖屏时触摸锁定不再卡住\n- 新增功能：支持视频自动播放设置\n- 新增功能：支持视频启动时静音设置\n- 优化体验：为原占位符设置的选项添加正式图标\n- 新增功能：支持应用主题选择器\n- 新增功能：首次启动时提供默认相册列表\n- 优化说明：明确“管理所有文件”权限用途\n- 新增功能：编辑视图中支持高光和色彩色调调整\n- 新增功能：添加迷你隐私政策声明\n- 新增功能：编辑视图中支持图像滤镜\n- 新增功能：新增“默认覆盖保存”编辑选项\n- 新增功能：支持在图片网格中拖拽选择\n- 新增功能：选择复选框添加动画效果\n- 优化体验：视频播放器工具栏现仅通过“更多选项”按钮显示，避免烦人的点击/双击冲突\n\n版本 v0.8.6\n- 重构功能：彻底重构数据存储层，大幅提升性能与可扩展性\n- 新增功能：支持设置回收站自动删除时间间隔\n- 修复问题：Android 11 设备隐藏应用栏时可能崩溃\n- 修复问题：安全文件夹内照片分享功能异常\n- 优化体验：设置界面视觉升级\n- 性能优化：空文件夹检测更快，应用整体感觉更流畅\n- 修复问题：视频分辨率信息显示异常\n- 新增功能：支持设置缩略图尺寸与缓存\n- 新增功能：支持清除缩略图缓存\n- 修复问题：主页面横屏行为异常\n- 修复问题：主屏幕页面切换时抖动\n- 修复问题：不含图像或视频的文件夹不再无限加载\n- 修复问题：“管理所有文件”权限按钮无效\n- 新增功能：为权限添加说明文本\n- 优化体验：加密照片现在保留原始日期及其他信息\n\n版本 v0.8.5\n- 修复问题：视频播放器在旋转屏幕时完全重新获取数据\n- 优化体验：移动/复制弹窗不再超出状态栏\n- 新增功能：离开应用时安全文件夹自动锁定\n- 修复问题：即使文件夹存在也无法访问\n- 优化体验：SinglePhotoView 图片列表动态更新以匹配当前媒体\n- 修复并新增：修复亮度调节，并新增白点调节功能\n- 新增功能：横屏视频播放器支持触摸锁定\n- 优化体验：视频播放器控件 5 秒后自动隐藏\n- 优化体验：退出并重新进入应用后视频播放器自动恢复播放\n\n版本 v0.8.4\n- 修复问题：权限处理异常\n- 优化体验：媒体查询更快更优\n- 新增功能：搜索栏随机占位符\n- 优化体验：照片“拍摄日期”显示更易读\n- 新增功能：新增权限与调试日志设置项\n\n版本 v0.8.3\n- 修复问题：相册名称含逗号时行为异常\n- 优化功能：通过内容解析器正确删除/移至回收站媒体\n- 新增功能：编辑视图调整滑块新增数值指示器\n- 新增功能：支持覆盖原文件保存编辑（而非另存副本）\n- 优化逻辑：检查是否为媒体管理器，并正确删除内容\n- 修复问题：当应用为媒体管理器时无法恢复回收站文件\n- 优化体验：新编辑的照片现在能正常显示于系统相册\n- 修复问题：编辑视图调整功能此前未生效（Oops！）\n\n版本 v0.8.2\n- 新增功能：编辑视图支持对比度/亮度/饱和度调整\n- 新增功能：编辑视图支持黑场与色温（白平衡）调整\n\n版本 v0.8.1\n- 修复问题：收藏视图顶部内边距过大\n- 修复问题：加载或卸载 HorizontalImageList 且媒体变化时崩溃\n- 修复问题：添加已存在的相册时崩溃\n- 修复问题：视频播放结束时未重置到 0 秒\n- 修复问题：视频播放有时停在总时长减一秒处\n- 新增功能：编辑视图支持手势旋转和缩放文本\n- 修复问题：搜索页查看图片后滚动位置重置\n\n版本 v0.8.0\n- 新增功能：支持裁剪图片\n- 新增功能：支持多种裁剪比例\n- 优化体验：改进保存与撤销功能\n\n版本 v0.7.9\n- 修复问题：编辑视图中旋转图片时缩放异常\n- 修复问题：屏幕旋转时视频自动播放异常\n- 修复问题：视频播放器进度条时间未始终跳转至结尾\n- 修复问题：视频播放器当前时间与总时间显示略有偏差\n\n版本 v0.7.8**（全部变更均在编辑视图中）\n\n- 新增功能：支持在图片上绘图\n- 新增功能：支持在图片上添加文字\n- 新增功能：支持旋转图片\n- 新增功能：支持调整绘图与文字的大小\n- 新增功能：支持更改绘图与文字的颜色\n- 优化体验：编辑视图现支持横屏使用\n\n版本 v0.7.7\n- 小幅更新：优化相册视图中新图片的显示效果\n\n版本 v0.7.6\n- 修复问题：复制或移动对话框的动画与间距\n- 修复问题：收藏视图间距异常\n\n版本 v0.7.5\n- 新增功能：新增编辑视图（暂无功能）\n- 新增功能：支持正确的缩放/平移/旋转操作\n\n版本 v0.7.3\n- 新增功能：安全文件夹与回收站中添加信息对话框\n- 新增功能：智能相册排序\n- 新增功能：支持按“添加日期”搜索\n- 优化体验：退出页面后关闭数据流\n- 修复问题：图片网格中“今天”和“昨天”标签显示异常\n- 优化体验：加密项目还原时返回原始位置\n- 修复问题：安全文件夹中日期显示错误（此前所有项目均显示为“今日加密”）\n- 修复问题：部分媒体未显示分辨率\n\n版本 v0.7.2\n- 重构功能：彻底重写删除/复制/移动/回收站系统\n- 优化体验：回收站现与系统其他部分协同工作\n- 优化体验：图片网格流畅度大幅提升\n- 修复问题：相册不再显示子文件夹中的照片\n- 性能优化：多项性能与体验改进\n\n版本 v0.7.0\n- 优化体验：搜索功能改进\n- 新增功能：选择模式下支持复制与移动\n- 性能优化：大幅提升大批量选择删除/恢复的速度\n- 优化体验：在无底部栏的视图中进入选择模式时过渡更平滑\n\n版本 v0.6.9\n- 新增功能：支持收藏媒体\n- 优化体验：改进滚动条行为\n- 优化体验：安全文件夹按最近加密时间排序\n- 代码优化：大量代码清理与性能改进\n- 优化体验：整体响应速度提升\n- 修复问题：浅色模式下导航栏颜色异常\n- 优化体验：操作配有正确图标与对话框\n- 新增功能：所有网格视图均支持选择\n- 优化体验：视频播放器体验更佳\n\n版本 v0.6.6\n- 新增功能：网格视图中添加滚动条\n- 性能优化：重大性能提升\n- 新增功能：支持从网格中选择项目\n- 修复问题：显示底部栏时卡顿\n- 新增功能：现可清空回收站\n- 性能优化：搜索速度无限加快\n- 修复问题：单图视图在旋转屏幕后重置\n- 修复问题：搜索页不支持选择项目\n</string>
+    <string name="changelog"><![CDATA[
+    <u><h2>v1.1.6!:</h2></u>
+    <br>
+    <b><h4>- Fixed Bugs:</h4></b>
+    <p>
+        - Crash when editing from OpenWithView
+    </p>
+    <br>
+    <u><h2>v1.1.5!:</h2></u>
+    <br>
+    <b><h4>- Added Features:</h4></b>
+    <p>
+        - Hide navigation bar while scrolling
+        <br>- Zoom text/images while moving them in editors
+        <br>- Scrollable wallpapers in wallpaper setter
+        <br>- Added polish translation, updated simplified chinese
+    </p>
+    <br>
+    <b><h4>- Fixed Bugs:</h4></b>
+    <p>
+        - Video editor not respecting start videos muted option
+        <br>- Inability to play video in video editor after trimming it
+        <br>- Navigation bar tab text being misaligned
+    </p>
+    <br>
+    <h2>v1.1.0!:</h2>
+    <b><h4>- Added Features:</h4></b>
+    <p>
+        <br>- Added simplified chinese translation
+        <br>- Ability to blacklist albums when using "show all in main"
+        <br>- Pin albums even when "auto detect albums" is enabled
+        <br>- Toggle to immediately exit app on start page and not in photo view
+        <br>- Show loading snackbars in OpenWithView
+    </p>
+    <br>
+    <br>
+    <b><h4>- Improvements:</h4></b>
+    <p>
+        <br>- Ask for directory permission before editing file
+        <br>- Increase default video editor export bitrate
+        <br>- Make main navigation bar side-scrollable
+        <br>- New app icon
+        <br>- Albums in AlbumGridView now require long press to drag
+    </p>
+    <br>
+    <br>
+    <b><h4>- Fixed Bugs:</h4></b>
+    <p>
+        <br>- Inability to clear Immich server address if not logged in
+        <br>- Show everything in main shows everything everywhere
+        <br>- Update page\'s formatting being broken
+        <br>- Crash when deleting all media in an album
+        <br>- Crash when editing media from OpenWithView
+        <br>- Saving videos in non-standard directories would cause an infinite hang
+    </p>
+    <br>
+    <br>
+    <h2>v1.0.0!:</h2>
+    <br>
+    <b><h4>- New Look!</h4></b>
+    <br>
+    <p>
+        Lavender Photos has moved to <a href="https://m3.material.io/">Material Expressive</a>!
+        A new look, with more fluid, dynamic and fun animations brings the app to life
+    </p>
+    <br>
+    <p>
+        <b><h4>- New Image and Video Editors!</h4></b>
+        <br>- Refreshed look for the image editor, and a video editor has been implemented
+        <br>- Significantly improved editing experience
+        <br>- Crop, adjust, markup and filter your images
+        <br>- Change bitrate. framerate, speed or volume of your videos, as well as everything mentioned in the image editor
+        <br>- Overlay text and images on both images and videos
+        <br>- Animate text and images on video
+    </p>
+    <br>
+    <br>
+    <p>
+        <b><h4>- Added Features:</h4></b>
+        <br>- Change column count of the Album View
+        <br>- Toggle black background for media views
+        <br>- Zoom on videos
+        <br>- Click on media title to open info dialog
+        <br>- Avif image loading
+        <br>- New app icon
+        <br>- Arabic, spanish, russian, turkish and ukrainian translations
+        <br>- Increased custom tab limit
+        <br>- Immich help and info dialogs
+        <br>- Retain albums on uninstall
+        <br>- Open source licenses page
+        <br>- Tabs for Favourites and Trash views
+        <br>- In-app wallpaper setter
+        <br>- Smoother loading effects
+        <br>- Immediately and permanently delete media instead of moving to trash first
+        <br>- Video player playback speed control
+    </p>
+    <br>
+    <br>
+    <p>
+        <b><h4>-Fixed Bugs:</h4></b>
+        <br>- Slow secure photo decryption
+        <br>- Crash when loading high resolution images in image editor
+        <br>- Crash when swiping horizontally on Favourites or Trash button in Albums View
+        <br>- Crash when deleting first media in an album and navigating back with Auto Detect Albums turned on
+        <br>- Crash when deleting last media in an album and navigating back
+        <br>- Corrected some-times broken custom tabs
+        <br>- Splash screen now always displays correctly
+        <br>- Certain grid views not retaining scroll position when navigating away from them
+        <br>- Some items getting erroneously cleared when trying to drag select
+        <br>- MediaPicker not reporting back correct items
+        <br>- Open with Lavender Photos now displays the correct version of all images
+        <br>- Corrected inaccurate application of adjustments in image editor
+        <br>- Highlights adjustment being broken
+        <br>- Crash when drag selecting over a Section
+        <br>- Sharing multiple images now properly shows all app targets
+        <br>- Inability to secure items from a single photo view on some android versions
+        <br>- Crash when selecting more than 2000 items on android 16+
+    </p>
+    <br>
+    <br>
+    <p>
+        <b><h4>-Performance Improvements:</h4></b>
+        <br>- Too many to log here
+    </p>
+    <br>
+    <br>
+    <br>
+    v0.9.9-beta:
+        <br>- Make album path dialog actually usable
+        <br>- Fixed custom albums not having thumbnails and MoveCopyAlbumListView.kt not having ANY thumbnails at all
+        <br>- Unable to rename albums and album info not immediately updating
+        <br>- Added sort albums by lastmodified or datetaken depending on user choice
+        <br>- Handle error in TextEntryDialog correctly
+        <br>- Added media picker activity
+        <br>- Added Immich backup integration for albums
+        <br>- Add background sync indicator around pfp pic in top bar and main dialog
+        <br>- Change "overwrite data on copy" to "try to keep date on copy", since keeping date isn\'t always guaranteed
+        <br>- Added ability to copy or move files into albums with multiple paths, custom albums remain unaffected
+        <br>- Don\'t crash when loading thumbnails for custom albums without paths
+        <br>- Sort search media by user preference
+        <br>- A lot of smoothness and performance improvements to anything with a PhotoGridView.kt
+        <br>- Fixed album info item count included sections, it shouldn\'t
+        <br>- Added progress snackbar for copying, moving or deleting media
+        <br>- Don\'t crash when dragging to select on an item that doesn\'t exist
+        <br>- Add Immich server info to Immich Main Page
+        <br>- Add album sync with immich page to album top bar
+        <br>- Crashing on secure folder view when unable to export backup due to no IV data present
+        <br>- Fix some photogridviews not remembering their position when being navigated back to from another page
+        <br>- Fix v0.9.8-beta-hotfix changelog missing
+        <br>- Make video loading much smoother
+        <br>- Added a setting to control grid column size
+        <br>- Respeect locale in grid view separators
+        <br>- PhotoGridView.kt scrollbars now respect layout direction (rtl or ltr)
+        <br>- Added ability to show everything in main photos view
+        <br>
+        <br>v0.9.8-beta-hotfix:
+        <br>- hotfix to fix issue with izzyondroid checks
+        <br>- increase overall app smoothness (media loading is smoother)
+        <br>- fix issue where updater would crash when release has "-hotfix" in name
+        <br>
+        <br>v0.9.7-beta:
+        <br>- Sub-second full device album search added
+        <br>- Added translations for Indonesian and French
+        <br>- Fixed issue where album grid items would flicker infinitely
+        <br>- Fixed issue where you couldn\'t use custom albums for custom stuff
+        <br>- No longer ask everytime for permissions to move/copy to album after user already gave permissions once
+        <br>- Added date format selector
+        <br>- Handle memory leak because of stupid compose state stuff
+        <br>- Added amoled theme
+        <br>- Added translation notice to about page
+        <br>- Significant performance improvements
+        <br>- Dependencies version bump
+        <br>- No longer crash when directory to data &amp; backup export paths doesn\'t exist
+        <br>- Blurring now accounts for filters, adjustments and drawing in editing view
+        <br>- Added external volume support (sdcard, etc)
+        <br>- Added ability to reset an editing adjustments value by tapping it again
+        <br>- Make text scaling in editing view more responsive
+        <br>- Added ability to pin albums to top of album list
+        <br>
+        <br>v0.9.6-beta:
+        <br>- Added ability to include entire folders in custom albums
+        <br>- Fixed custom tabs not loading
+        <br>- Select-All disabled for albums with over 5000 items (fixes crash because of android limitation)
+        <br>
+        <br>v0.9.5-beta:
+        <br>- Added animation to double tap to zoom and reset in horizontal photo views
+        <br>- Added custom albums (non folder based)
+        <br>- Added item count to album info dialog
+        <br>- Fixed editing view text zooming
+        <br>- Fixed jank in default tab reordering
+        <br>- Added toggle switch for photo copy dates
+        <br>- Fixed issue where drawing with paint after blur would cause a crash in editing view
+        <br>- Text scaling/rotating/moving doesn\'t suck anymore
+        <br>- Fixed tap to draw not working (used to always show up in top left corner, now works normally)
+        <br>- Color contrast improvements for bottom bar items in editing view
+        <br>- Added ability to resize and change color of already set text in editing view (tap on text to select it)
+        <br>- Added ability to zoom in editing view paint mode
+        <br>- Increased editing view blur brush radius (more blurring)
+        <br>
+        <br>v0.9.4-beta:
+        <br>- Fixed icon colors for main bars
+        <br>- Added export favourites to zipfile or folder
+        <br>- Fix videoplayer doubletap to skip not correctly changing direction in case of quicktaps
+        <br>- Made paths horizontally scrollable in path-displaying views
+        <br>- Added sort mode customizer
+        <br>- Fixed check for update on startup running multiple times
+        <br>- Added snackbars for editing failure and success
+        <br>- Add confirm to delete toggle
+        <br>- Fixed trash not always sorting by most recently trashed
+        <br>- No more missing files if user moves or copies and exits view
+        <br>- Finished album info implementation
+        <br>- Added icons for confirm to delete\, media sorting\, and check for updates
+        <br>- Fixed videoplayer doubletap to seek showing underneath other UI
+        <br>- Code cleanup and improvement
+        <br>- Added ability to send previous run\'s logs
+        <br>- Videoplayer doubletap to skip now only needs doubletap on initial try and then its single tap to skip
+        <br>- Autodetect albums now adds albums as it finds them
+        <br>- Fixed irrecoverable secured item issue if it\'s associated album is removed from lavender photos
+        <br>- Added bulk encrypting photos from search page
+        <br>- Fix doubletap to skip blocking other UI
+        <br>- Added exif data eraser
+        <br>- Added basic blur tool in editing view for android 12 and above
+        <br>- Added exit on save toggle for editing view
+        <br>- Fixed secure folder ghost media issue
+        <br>- Securing media loading dialog no longer disappear with app bars while media is still being secured
+        <br>
+        <br>v0.9.3-beta:
+        <br>- Use stable identifiers for drawables
+        <br>- Add update info notice
+        <br>- Added option to disable check updates on startup
+        <br>- Added fully customizable tabs
+        <br>- Entirely rework migration logic
+        <br>- Unified dialog colors
+        <br>- Fix mediastore not refreshing correctly
+        <br>- Better media size display
+        <br>- Add export secure folder to zip file
+        <br>
+        <br>v0.9.2-beta:
+        <br>- Fixed erroneous crash in horizontal image list
+        <br>- Fixed updater view not showing progress
+        <br>- Fixed updater not installing packages
+        <br>- Fixed move copy to albums list not showing thumbnails
+        <br>- Fixed alignment and overflow issues with single album dialogs
+        <br>- Added data and backup
+        <br>- Migration to encrypted photos is no longer broken
+        <br>- Added default tab customization
+        <br>
+        <br>v0.9.1-beta:
+        <br>- Fix dialog info for secured media
+        <br>- Better drag to select behaviour
+        <br>- Fixed add albums from debugging settings
+        <br>- Added custom album sorting
+        <br>- Much faster album loading
+        <br>- Dynamic album reordering so last modified albums are on top
+        <br>- Added automatic album detection
+        <br>- Added Lavender Snackbars to app
+        <br>- Better migration to encrypted secure folder
+        <br>- Double tap to skip is now supported in videoplayer
+        <br>- Misc performance improvements
+        <br>
+        <br>v0.9.0-beta:
+        <br>- Load file metadata into info dialog after decryption
+        <br>- Added in-app updater
+        <br>- Reworked entire media loading system to allow for multiple albums to be loaded
+        <br>- Added \+ icon to album grid view top bar
+        <br>- Fixed lag spike when opening an album
+        <br>- Extreme optimizations and performance gains
+        <br>- Fix loading dialogs for encryption and decryption
+        <br>- Fix secure folder thumbnails not always loading
+        <br>- Fix possible security flaw due to glide caching secured images
+        <br>- Videoplayer no longer pauses music if its muted
+        <br>- Added loading screen for encrypted videos
+        <br>- Unified selecting top bar
+        <br>- Fixed isPreV083 behaviour
+        <br>- Fixed open with view not being open withable
+        <br>- Don\'t forever hang if clicking move to secure folder from selecting top bar while list is empty
+        <br>- Finally fixed android 11 and 12 boot issues
+        <br>
+        <br>v0.8.9-beta:
+        <br>- Added AES encryption for secured photos
+        <br>- Added error icon for manual add path
+        <br>- Fix loading screen on secure folder
+        <br>- Fixed elements in light theme not being consistent and cohesive
+        <br>- Video player remembers last mute state
+        <br>- Added landscape friendly views for secure folder and permission screen
+        <br>- Added open with Lavender Photos
+        <br>- Removed alternative pick albums
+        <br>- Added loading dialogs for actions that take time
+        <br>
+        <br>v0.8.8-beta:
+        <br>- Removed MANAGE_EXTERNAL_STORAGE permission
+        <br>- Reworked entire file handling system
+        <br>- Changed main app top bar animation
+        <br>- Improved performance
+        <br>- Fixed issues with securing media items
+        <br>- Fixed scrolling lagginess
+        <br>- Fixed favourites view crashing when tapping an item
+        <br>- Fixed porting previous albums from v0\.8\.3 to higher versions
+        <br>- Make explanation dialogs consistent
+        <br>- Stop app from freezing when loading albums with files other than images
+        <br>- Fix log saving\, restructure app folders
+        <br>- Added file sharing from secure folder
+        <br>- Note\: Please delete the Lavender Photos folder from Internal Storage
+        <br>
+        <br>v0.8.7-beta-hotfix:
+        <br>- Fix search not displaying correct items
+        <br>- Exoplayer no longer shuts off after background-ing the app
+        <br>- Better logcat behaviour
+        <br>- Fixed permission screen UI
+        <br>- Added multiple ways of adding albums until a better way is found
+        <br>- Fixed crash when photogrid is empty
+        <br>- MUCH faster drag to select with better behaviour
+        <br>
+        <br>v0.8.7-beta:
+        <br>- Fix videoplayer crashing after playing multiple videos in a row
+        <br>- Touch lock no longer gets stuck if app switches to portrait mode
+        <br>- Add video autoplay setting
+        <br>- Add video mute on startup setting
+        <br>- Set icons for settings that were using placeholders
+        <br>- Added app theme selector
+        <br>- Add default album list for first app launch
+        <br>- Clarified Manage All Files permission purpose
+        <br>- Add highlights and color tint adjustments in editing view
+        <br>- Add mini privacy policy statement
+        <br>- Add image filters in editing view
+        <br>- New option to overwrite by default when editing
+        <br>- Added drag to select in photo grids
+        <br>- Animate select checkmark
+        <br>- In video player app bars now only show when clicking the more options button\, no more annoying click and double click
+        <br>
+        <br>v0.8.6-beta:
+        <br>- Completely refactored datastore for MUCH better performance and scalability
+        <br>- Added trash bin auto delete interval settings
+        <br>- Fix possible crash on android 11 devices when trying to hide app bars
+        <br>- Fixed photo sharing in secure folder
+        <br>- Enhanced settings look
+        <br>- Faster empty folder checks\, app will feel slightly faster
+        <br>- Fixed video resolution info
+        <br>- Added thumbnail size and cache settings
+        <br>- Added clear thumbnail cache setting
+        <br>- Fixed landscape behaviour for main page
+        <br>- Fixed jitter when switching pages in main screen
+        <br>- Folders that don\'t contain images or videos won\'t be stuck on loading forever now
+        <br>- Fixed Manage All Files permission button not working
+        <br>- Added explanations to permissions
+        <br>- Secured photos now maintain their original date and other info
+        <br>
+        <br>
+        <br>v0.8.5-beta:
+        <br>- Fix videoplayer completely refetching data when changing orientation
+        <br>- Move/Copy popup doesn\'t go past statusbar now
+        <br>- Secure folder locks when leaving the app temporarily
+        <br>- Fixed inaccessible folders even if they exist
+        <br>- SinglePhotoView photo list now updates dynamically to match present media
+        <br>- Fixed brightness adjustment and added whitepoint adjustment
+        <br>- Landscape videoplayer now has lock touch option
+        <br>- Videoplayer controls automatically hide after 5 seconds
+        <br>- Videoplayer will resume playback after exiting and reentering app
+        <br>
+        <br>v0.8.4-beta:
+        <br>- Fix permission handling
+        <br>- Better and faster media queries
+        <br>- Add random search bar placeholders
+        <br>- More readable date taken for photos
+        <br>- Added settings for permissions and debugging with logs
+        <br>
+        <br>v0.8.3:
+        <br>- Fixed wrong behaviour when album name contains a comma
+        <br>- Properly trash and delete media with content resolver
+        <br>- Added value indicator for adjustments slider in editing view
+        <br>- Add option to overwrite instead of save a new copy for edits
+        <br>- Check if not media manager and delete stuff properly too
+        <br>- Fix not being able to un-trash files when app is media manager
+        <br>- Newly edited photos now show up in system normally
+        <br>- Editing view adjustment actually take effect now (oups)
+        <br>
+        <br>v0.8.2:
+        <br>- Added contrast/brightness/saturation adjustments to editing view
+        <br>- Added blackpoint and warmth (color temperature) adjustments to editing view
+        <br>
+        <br>v0.8.1:
+        <br>- Fixed favourite view excessive top padding
+        <br>- Fixed crash when loading or unloading HorizontalImageList and media changes
+        <br>- Fixed crash when adding new albums that already where added
+        <br>- Fixed video playback not resetting to 0 when reaching end
+        <br>- Fixed video playback sometimes only going to one second less than the video duration
+        <br>- Added rotating and resizing text by gestures in editing view
+        <br>- Fix search page resetting scroll position when viewing an image
+        <br>
+        <br>v0.8.0:
+        <br>- Cropping added
+        <br>- Added cropping ratios
+        <br>- Better save and undo functionality
+        <br>
+        <br>v0.7.9-beta:
+        <br>- Fix erroneous scaling when rotating images in editing view
+        <br>- Fix video autoplay when changing orientation
+        <br>- Fix videoplayer seekbar time not always going to end
+        <br>- Fix videoplayer current and end times being slightly off
+        <br>
+        <br>v0.7.8-beta:
+        <br>- All the below changes are in editing view
+        <br>- Added drawing on images
+        <br>- Added drawing text on images
+        <br>- Added rotating images
+        <br>- Added size change for drawing and text
+        <br>- Added color change for drawing and text
+        <br>- Make editing view usable in landscape mode
+        <br>
+        <br>v0.7.7-beta:
+        <br>- Minor update better showing of new images in albums view
+        <br>
+        <br>v0.7.6-beta:
+        <br>- Fixed animation and spacing on copy or move dialog
+        <br>- Fixed spacing on favourties view
+        <br>
+        <br>v0.7.5-beta:
+        <br>- Added editing view (no functionality)
+        <br>- Added proper zooming/panning/rotating
+        <br>
+        <br>v0.7.3-beta:
+        <br>- Added info dialogs in secure folder and trash
+        <br>- Intelligent album sorting
+        <br>- Search by date added
+        <br>- Close data streams after exiting a page
+        <br>- Fixed today and yesterday tags in photo grid
+        <br>- Secured items now go back to original place
+        <br>- Fixed dates in secure folder (were broken showing everything as if it were secured today)
+        <br>- Fixed resolution not showing on all media
+        <br>
+        <br>v0.7.2-beta:
+        <br>-Complete rework of delete/copy/move/trash system
+        <br>- Trash interoperates with rest of system now
+        <br>- Much more fluidity to grids
+        <br>- Albums no longer show photos from subfolders
+        <br>- Performance improvements and quality of life stuff
+        <br>
+        <br>v0.7.0-beta:
+        <br>- Search improvements
+        <br>- Copy and move added in selection
+        <br>- Speed improvements to large selection deletion/restoration
+        <br>- Smoother transitions to selecting in views with no bottom bar
+        <br>
+        <br>v0.6.9-beta:
+        <br>- Added favouriting media
+        <br>- Improved scrollbars behaviour
+        <br>- Sort secure folder by recency
+        <br>- Lots of code cleanup and misc performance improvements
+        <br>- General responsiveness improvements
+        <br>- Fixed navigation bar colors in light mode
+        <br>- Proper icons and dialogs for actions
+        <br>- Selection available in every gridview
+        <br>- Videoplayer experience is better
+        <br>
+        <br>v0.6.6-beta
+        <br>- Added scrollbars to grids
+        <br>- Major performance improvements
+        <br>- Added selecting items from grid
+        <br>- Fix lag when showing bottom bars
+        <br>- Can clear trash bin now
+        <br>- Infinitely faster search
+        <br>- Fix single photo view resetting on rotation change
+        <br>- Fix search not allowing selection
+        <br>
+    </p>
+    ]]></string>
     <string name="albums_id">Id</string>
     <string name="updates_check">检查更新</string>
     <string name="updates_check_desc">应用启动时检查新版本，需手动安装</string>
@@ -109,7 +574,7 @@
     <string name="record_logs_desc">存储日志用于调试，点击查看。</string>
     <string name="choose_logs">选择日志</string>
     <string name="previous_run_logs">上次运行的日志</string>
-    <string name="current_run_logs">本次运行的日志</string>
+    <string name="current_run_logs">当前运行的日志</string>
     <string name="log_file_non_existent">目前尚未记录任何日志文件。</string>
     <string name="album_add_path">添加相册路径</string>
     <string name="album_add">添加相册</string>
@@ -204,7 +669,7 @@
     <string name="settings_clear_cache_desc">此操作将清除设备上的所有缩略图缓存以释放存储空间，下次启动时加载缩略图将会需要更长时间。</string>
     <string name="settings_about_and_updates">关于与更新</string>
     <string name="trash_bin">回收站</string>
-    <string name="trash_auto_delete">之后自动清理回收站项目</string>
+    <string name="trash_auto_delete">回收站在 %s 天后自动删除项目</string>
     <string name="trash_days">天</string>
     <string name="trash_no_auto_delete">回收站中的项目将不会自动删除</string>
     <string name="trash_auto_delete_interval">自动删除间隔</string>
@@ -218,8 +683,8 @@
     <string name="permissions_media_management">媒体管理</string>
     <string name="permissions_confirm_to_delete">确认删除</string>
     <string name="permissions_confirm_too_delete_desc">删除任何媒体前请求确认</string>
-    <string name="permissions_overwrite_date_on_move">移动时覆盖日期</string>
-    <string name="permissions_overwrite_date_on_move_desc">启用后，移动或复制的媒体文件日期将设置为当前时间，并显示为最新项目</string>
+    <string name="permissions_overwrite_date_on_move">移动时保留原日期</string>
+    <string name="permissions_overwrite_date_on_move_desc">在复制或移动媒体文件时，尝试保留其原始日期信息</string>
     <string name="permissions_needed">需要权限</string>
     <string name="permissions_needed_desc">薰衣草图库需要获取访问此相册的权限。请在下一界面选择「使用此文件夹」以授予权限。此授权仅需进行一次。</string>
     <string name="permissions_grant">授予</string>
@@ -236,9 +701,9 @@
     <string name="media_delete_confirm">删除该媒体？</string>
     <string name="media_trash_confirm">是否将选中项移至回收站？</string>
     <string name="media_secure">安全</string>
-    <string name="media_secure_confirm">是否将此 %1$s 移动至安全文件夹？</string>
+    <string name="media_secure_confirm">是否将此媒体移动到安全文件夹？</string>
     <string name="media_delete_permanently">永久删除</string>
-    <string name="media_delete_permanently_confirm">永久删除此 %1$s？</string>
+    <string name="media_delete_permanently_confirm">确定要永久删除此媒体吗？</string>
     <string name="media_cancel">取消</string>
     <string name="media_restore">恢复</string>
     <string name="media_restore_confirm">恢复这些项目？</string>
@@ -248,13 +713,13 @@
     <string name="media_copy">复制</string>
     <string name="media_rename">重命名</string>
     <string name="media_select">选择</string>
-    <string name="media_exif_erase">清除EXIF数据？</string>
+    <string name="media_exif_erase">清除EXIF数据</string>
     <string name="media_exif_done">已清除EXIF数据</string>
     <string name="media_exif_failed">清除EXIF数据失败</string>
     <string name="media_erase">清除</string>
     <string name="media_confirm">确认</string>
     <string name="media_okay">确定</string>
-    <string name="search_photo_name">搜索照片名称</string>
+    <string name="search_photo_name">搜索照片</string>
     <string name="search_photo_date">搜索照片的日期</string>
     <string name="search_photo_day">按日搜索</string>
     <string name="feature_unimplemented">未实现</string>
@@ -283,11 +748,219 @@
     <string name="error_views_trash_empty">已删除的项目将显示在此处</string>
     <string name="error_views_trash_prefix">删除于</string>
     <string name="error_views_album_empty">此相册为空</string>
-    <string name="error_views_search_empty">快搜索照片吧！</string>
+    <string name="error_views_search_empty">搜索照片吧！</string>
     <string name="error_views_search_not_found">未找到匹配项</string>
     <string name="error_views_secure_empty">您的媒体尚未受保护！</string>
     <string name="error_views_secure_prefix">保护于</string>
     <string name="error_views_favourites_empty">珍藏您最珍贵的回忆！</string>
     <string name="error_views_folder_non_existent">文件夹不存在</string>
     <string name="error_views_error_page">这是一个错误页面</string>
+    <string name="albums_main_list_desc_1">所选相册的照片将在主照片视图中显示</string>
+    <string name="albums_main_list_desc_2">所选相册将不会在主照片界面中显示</string>
+    <string name="albums_main_list_selected_inverse">所选相册不会在主照片界面中显示</string>
+    <string name="albums_custom_desc">添加任意位置的媒体文件</string>
+    <string name="albums_folder_desc">从文件夹加载媒体文件</string>
+    <string name="albums_pin">置顶此相册</string>
+    <string name="albums_unpin">取消置顶此相册</string>
+    <string name="navigation">导航</string>
+    <string name="translation">翻译</string>
+    <string name="translation_desc">让薰衣草图库走向全球！</string>
+    <string name="licenses">许可证</string>
+    <string name="licenses_desc">使用的开源软件</string>
+    <string name="licenses_extra">额外详情</string>
+    <string name="licenses_extra_desc">查看许可证详情</string>
+    <string name="special_thanks_to">特别感谢：</string>
+    <string name="secure_getting_file_info">正在获取文件信息…</string>
+    <string name="secure_please_wait">请稍候…</string>
+    <string name="editing_image">图片</string>
+    <string name="editing_erase">清除</string>
+    <string name="editing_saving">正在保存已编辑图像</string>
+    <string name="editing_invert">反色</string>
+    <string name="editing_upload_image">选择</string>
+    <string name="editing_upload_image_failed">无法选取图片</string>
+    <string name="editing_bitrate">码率</string>
+    <string name="editing_bitrate_unit">比特/秒</string>
+    <string name="editing_open_with_copying_video">正在处理视频…</string>
+    <string name="editing_open_with_copying_image">正在处理图像…</string>
+    <string name="filter">滤镜</string>
+    <string name="filter_custom">自定义滤镜</string>
+    <string name="filter_none">无</string>
+    <string name="filter_none_desc">反正用不上</string>
+    <string name="filter_inverted">反色</string>
+    <string name="filter_inverted_desc">全部反转</string>
+    <string name="filter_vibrant">鲜亮</string>
+    <string name="filter_vibrant_desc">生活多美好</string>
+    <string name="filter_bw">黑白</string>
+    <string name="filter_bw_desc">回溯五十年代</string>
+    <string name="filter_film">胶片</string>
+    <string name="filter_film_desc">诺兰附体</string>
+    <string name="filter_grayscale">灰度</string>
+    <string name="filter_grayscale_desc">真是阴森森啊</string>
+    <string name="filter_sepia">怀旧</string>
+    <string name="filter_sepia_desc">乌贼的墨汁戏法。</string>
+    <string name="filter_bgr">色彩反序</string>
+    <string name="filter_bgr_desc">为何使用此功能？</string>
+    <string name="filter_warm">暖色</string>
+    <string name="filter_warm_desc">温馨惬意</string>
+    <string name="filter_cool">冷色</string>
+    <string name="filter_cool_desc">冰雪气息</string>
+    <string name="filter_vintage">复古</string>
+    <string name="filter_vintage_desc">旧梦重温</string>
+    <string name="filter_posterize">色调分离</string>
+    <string name="filter_posterize_desc">妙用少量色彩</string>
+    <string name="filter_glow">发光</string>
+    <string name="filter_glow_desc">暗夜生辉</string>
+    <string name="filter_mushrooms">蘑菇</string>
+    <string name="filter_mushrooms_desc">呃.</string>
+    <string name="filter_solar">过曝</string>
+    <string name="filter_solar_desc">日冕物质扑面而来</string>
+    <string name="filter_peachy">蜜桃</string>
+    <string name="filter_peachy_desc">当蜜桃成熟时</string>
+    <string name="filter_pastel">柔彩</string>
+    <string name="filter_pastel_desc">因为我不会画画</string>
+    <string name="filter_rustic">质朴</string>
+    <string name="filter_rustic_desc">林间拾遗</string>
+    <string name="filter_dried">枯色</string>
+    <string name="filter_dried_desc">晾晒印记</string>
+    <string name="filter_toast">暖烘</string>
+    <string name="filter_toast_desc">羽色温润</string>
+    <string name="filter_shimmer">微光</string>
+    <string name="filter_shimmer_desc">别立flag</string>
+    <string name="filter_select">选择</string>
+    <string name="filter_selected">已选</string>
+    <string name="editing_trim">裁剪</string>
+    <string name="editing_export_video_loading">正在导出视频…</string>
+    <string name="editing_export_video_loading_body">第 %1$d 步，共 %2$d 步</string>
+    <string name="editing_export_video_failed">无法导出视频</string>
+    <string name="editing_export_video_success">视频导出成功！</string>
+    <string name="editing_volume_display">音量：%s</string>
+    <string name="editing_speed_display">播放速度：%s</string>
+    <string name="editing_framerate_display">帧率：%s</string>
+    <string name="editing_volume">音量</string>
+    <string name="editing_wilson">速度</string>
+    <string name="editing_fps">帧率</string>
+    <string name="settings_light_theme">浅色主题</string>
+    <string name="settings_Auto_theme">自动主题</string>
+    <string name="settings_behaviour">行为</string>
+    <string name="settings_behaviour_desc">自定义应用行为方式</string>
+    <string name="settings_navigation_exit_immediately">直接退出</string>
+    <string name="settings_navigation_exit_immediately_desc">按下返回键时跳过主照片界面直接退出</string>
+    <string name="settings_views">视图</string>
+    <string name="settings_rotate_in_views">允许旋转</string>
+    <string name="settings_rotate_in_views_desc">查看媒体时启用手势旋转功能</string>
+    <string name="trash_bin_short">回收站</string>
+    <string name="permissions_do_not_trash">不使用回收站</string>
+    <string name="permissions_do_not_trash_desc">直接永久删除，不经过回收站</string>
+    <string name="media_move_copy_list_search_bar">搜索相册</string>
+    <string name="media_copy_snackbar_title">正在复制媒体…</string>
+    <string name="media_move_snackbar_title">正在移动媒体…</string>
+    <string name="media_delete_snackbar_title">正在删除媒体…</string>
+    <string name="media_restore_snackbar_title">正在恢复媒体文件…</string>
+    <string name="media_operate_snackbar_body">已处理 %1$d 项，共 %2$d 项</string>
+    <string name="media_tools">工具</string>
+    <string name="media_information">信息</string>
+    <string name="wallpaper_homescreen">主屏幕</string>
+    <string name="wallpaper_lockscreen">锁屏</string>
+    <string name="wallpaper_Both">双屏幕</string>
+    <string name="wallpaper_scrollable">可滚动</string>
+    <string name="today">今日</string>
+    <string name="yesterday">昨日</string>
+    <string name="help">帮助</string>
+    <string name="apply">同意</string>
+    <string name="bottom_sheets_sixteen_by_nine">16:9 (横向)</string>
+    <string name="bottom_sheets_nine_by_sixteen">9:16 (纵向)</string>
+    <string name="bottom_sheets_nine_by_twentyone">9:21</string>
+    <string name="bottom_sheets_five_by_four">5:4</string>
+    <string name="bottom_sheets_four_by_three">4:3</string>
+    <string name="bottom_sheets_three_by_two">3:2</string>
+    <string name="look_and_feel_styling_separator">风格</string>
+    <string name="look_and_feel_date_format">日期格式</string>
+    <string name="look_and_feel_date_format_desc">调整日期显示格式</string>
+    <string name="look_and_feel_date_format_default">默认</string>
+    <string name="look_and_feel_date_format_short">简写</string>
+    <string name="look_and_feel_date_format_compressed">紧凑</string>
+    <string name="look_and_feel_theme_amoled">AMOLED 黑色</string>
+    <string name="look_and_feel_theme_amoled_desc">将背景设为黑色，以便在 AMOLED 设备上实现节能效果</string>
+    <string name="look_and_feel_column_size">列宽：%1$d</string>
+    <string name="look_and_feel_album_column_size">相册列宽：%1$d</string>
+    <string name="look_and_feel_grids">网格布局</string>
+    <string name="look_and_feel_use_black_background">媒体界面黑色背景</string>
+    <string name="look_and_feel_use_black_background_desc">图片查看器/视频播放器背景将显示为黑色</string>
+    <string name="look_and_feel_nav">导航</string>
+    <string name="look_and_feel_extra_secure_nav">额外安全文件夹入口</string>
+    <string name="look_and_feel_extra_secure_nav_Desc">在应用主对话框中显示安全文件夹导航选项</string>
+    <string name="look_and_feel_staggered_grids">启用瀑布流布局</string>
+    <string name="look_and_feel_staggered_grids_desc">实验性功能。网格根据媒体宽高比自适应调整尺寸。</string>
+    <string name="immich">Immich</string>
+    <string name="immich_title">Immich 备份</string>
+    <string name="immich_desc">备份至自托管Immich服务器</string>
+    <string name="immich_account">Immich 账户</string>
+    <string name="immich_login_unavailable">未登录</string>
+    <string name="immich_login_unavailable_desc">未连接到 Immich 账户</string>
+    <string name="immich_login_found">当前登录：</string>
+    <string name="immich_login_found_desc">Immich 可备份！</string>
+    <string name="immich_login">Immich 登录</string>
+    <string name="immich_login_confirm">登录</string>
+    <string name="immich_login_ongoing">登录中…</string>
+    <string name="immich_login_successful">登录成功！</string>
+    <string name="immich_login_failed">登录失败</string>
+    <string name="immich_endpoint_base">服务器地址</string>
+    <string name="immich_endpoint_base_desc">连接 Immich 备份服务器</string>
+    <string name="immich_endpoint_base_placeholder">https://my.immich.server.com/</string>
+    <string name="immich_clear_endpoint">删除服务器？</string>
+    <string name="immich_clear_endpoint_desc">确定要删除该服务器地址吗？</string>
+    <string name="immich_logout">退出账户？</string>
+    <string name="immich_logout_desc">确定要退出此账户吗？</string>
+    <string name="immich_albums_clear">清空备份相册</string>
+    <string name="immich_albums_clear_desc">停止备份所有相册</string>
+    <string name="immich_albums_clear_confirm">确定要移除所有备份相册吗？</string>
+    <string name="immich_delete_album">删除此相册？</string>
+    <string name="immich_delete_album_desc">此操作无法撤销！</string>
+    <string name="immich_delete_album_contents">同时删除媒体文件</string>
+    <string name="immich_album_syncing">正在同步相册</string>
+    <string name="immich_album_synced">所有媒体已同步</string>
+    <string name="immich_done">完成</string>
+    <string name="immich_sync_status">同步状态：</string>
+    <string name="immich_email">邮箱：</string>
+    <string name="immich_set_pfp_fail">无法设置头像</string>
+    <string name="immich_set_pfp_success">头像更新成功！</string>
+    <string name="immich_operation_complete">操作完成！</string>
+    <string name="immich_state_unknown">未知</string>
+    <string name="immich_state_loading">加载中…</string>
+    <string name="immich_sync_album">相册同步与Immich</string>
+    <string name="immich_sync_album_out_of_sync_desc">差异内容：相册：%1$s，Immich：%2$s</string>
+    <string name="immich_album_delete">删除此相册？</string>
+    <string name="immich_album_delete_desc">从Immich同步中移除此相册</string>
+    <string name="immich_album_delete_include_media">从Immich删除内容</string>
+    <string name="immich_album_delete_full">移除相册</string>
+    <string name="immich_auth_passowrd">密码</string>
+    <string name="immich_auth_email">邮箱</string>
+    <string name="immich_continuing_in_bg">正在后台继续备份</string>
+    <string name="immich_main_dialog_sync_state">正在同步：第 %1$d 项，共 %2$d 项</string>
+    <string name="immich_uuid">Immich UUID</string>
+    <string name="immich_failed_refreshing_albums">更新相册失败</string>
+    <string name="immich_failed_uploading_albums">上传相册失败</string>
+    <string name="immich_server_info">服务器信息</string>
+    <string name="immich_server_info_desc">版本：%1$s，构建：%2$s</string>
+    <string name="immich_server_storage">服务器存储</string>
+    <string name="immich_server_storage_desc">已用 %1$s / 总计 %2$s</string>
+    <string name="immich_server_info_failed">暂无数据</string>
+    <string name="immich_server">Immich 服务器</string>
+    <string name="immich_help_general">这是什么？</string>
+    <string name="immich_help_general_desc">允许将相册级别的媒体文件备份至 Immich 服务器</string>
+    <string name="immich_help_detailed">如何使用</string>
+    <string name="immich_help_detailed_desc"><![CDATA[
+            <p><a href="https://immich.app/  ">Immich</a> 是一个自托管的照片和视频管理解决方案，  
+            任何人都可以用它来搭建自己的云备份服务器。  
+            </p>
+            <h3 style="text-align:center;">如何使用？<h3/>
+            <ul>
+                <li>自托管一个 <a href="https://immich.app/  ">Immich 服务器</a></li>
+                <li>在薰衣草图库中指定服务器地址</li>
+                <li>使用 Immich 用户账户登录</li>
+                <li>进入任意相册，点击云图标</li>
+                <li>开始备份你的照片！</li>
+            </ul>
+        ]]></string>
+    <string name="immich_server_url_invalid">URL无效！</string>
 </resources>
