@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="albums_auto_detect">Detectar álbumes automáticamente</string>
+    <string name="albums_auto_detect">Auto detectar álbumes</string>
     <string name="albums_auto_detect_desc">Detecta todas las carpetas con medios en este dispositivo y las agrega a la vista álbumes</string>
     <string name="albums_clear_list">Borrar lista de álbumes</string>
     <string name="albums_clear_list_desc">Elimine todos los álbumes excepto por Cámara y Descargas</string>
@@ -29,13 +29,13 @@
     <string name="tabs_default_desc">Lavender Photos abrirá automáticamente esta pestaña al inicio</string>
     <string name="tabs_customize">Personalizar Pestañas</string>
     <string name="tabs_customize_desc">Cambie qué pestañas están disponibles en la barra inferior</string>
-    <string name="tabs_navigate_to">Navegue a la página %s$1</string>
+    <string name="tabs_navigate_to">Navegue a la página %1$s</string>
     <string name="tabs_add">Agregar una Pestaña</string>
     <string name="tabs_name">Nombre de la pestaña</string>
     <string name="tabs_albums_incl">Álbumes Incluidos</string>
     <string name="tabs_confirm">Agregar Pestaña</string>
     <string name="tabs_empty_params">Los parámetros de la pestaña no pueden estar vacíos</string>
-    <string name="tabs_max_reached">No se pueden agregar más de 5 pestañas</string>
+    <string name="tabs_max_reached">No se pueden agregar más de 8 pestañas</string>
     <string name="tabs_min_reached">Debe existir al menos una pestaña</string>
     <string name="return_to_previous_page">Volver a la página anterior</string>
     <string name="app_icon">Icono de la Aplicación</string>
@@ -61,7 +61,7 @@
     <string name="albums_found">¡Todos los álbumes encontrados!</string>
     <string name="add_album">Agregar un álbum</string>
     <string name="direct_path_album">Usar una ruta directa para agregar un álbum</string>
-    <string name="albums_main_list">Lista de Álbumes Principales</string>
+    <string name="albums_main_list">Mostrar Todo en Principal</string>
     <string name="albums_main_list_selected">Los álbumes seleccionados aquí se mostrarán en la vista principal de fotos</string>
     <string name="albums_selected">Álbumes Seleccionados</string>
     <string name="updates_notice_desc"><![CDATA[
@@ -199,7 +199,7 @@
     <string name="settings_clear_cache_desc">Esto borrará todas las cachés de miniaturas en este dispositivo, liberando almacenamiento. La carga de miniaturas tardará más en el próximo inicio.</string>
     <string name="settings_about_and_updates">Acerca de y Actualizaciones</string>
     <string name="trash_bin">Papelera</string>
-    <string name="trash_auto_delete">Elimina automáticamente los elementos en la papelera después de</string>
+    <string name="trash_auto_delete">Auto elimina los elementos en la papelera después de %s días</string>
     <string name="trash_days">días</string>
     <string name="trash_no_auto_delete">Los elementos en la papelera no se eliminarán automáticamente</string>
     <string name="trash_auto_delete_interval">Intervalo de borrado automático</string>
@@ -213,8 +213,8 @@
     <string name="permissions_media_management">Administración de Multimedia</string>
     <string name="permissions_confirm_to_delete">Confirme para Eliminar</string>
     <string name="permissions_confirm_too_delete_desc">Solicite confirmación antes de eliminar cualquier multimedia</string>
-    <string name="permissions_overwrite_date_on_move">Sobrescribir la Fecha al Mover</string>
-    <string name="permissions_overwrite_date_on_move_desc">Cuando está habilitado, la fecha de la multimedia copiada/movida se establece en \"ahora\", apareciendo como la más reciente</string>
+    <string name="permissions_overwrite_date_on_move">Preservar la fecha al mover</string>
+    <string name="permissions_overwrite_date_on_move_desc">Intenta mantener la fecha de los medios al copiar o mover</string>
     <string name="permissions_needed">Permiso Necesario</string>
     <string name="permissions_needed_desc">Lavender Photos necesita permiso para acceder a este álbum. Otorgue el permiso seleccionando Usar esta carpeta en la siguiente pantalla.Este es un permiso de una sola vez.</string>
     <string name="permissions_grant">Otorgar</string>
@@ -231,9 +231,9 @@
     <string name="media_delete_confirm">¿Eliminar este archivo?</string>
     <string name="media_trash_confirm">¿Mover los elementos seleccionados a la papelera?</string>
     <string name="media_secure">Asegurar</string>
-    <string name="media_secure_confirm">¿Mover este %1$s a la carpeta segura?</string>
+    <string name="media_secure_confirm">¿Mover este medio a la Carpeta Segura?</string>
     <string name="media_delete_permanently">Eliminar Permanentemente</string>
-    <string name="media_delete_permanently_confirm">¿Eliminar permanentemente este %1$s?</string>
+    <string name="media_delete_permanently_confirm">¿Eliminar permanentemente este medio?</string>
     <string name="media_cancel">Cancelar</string>
     <string name="media_restore">Restaurar</string>
     <string name="media_restore_confirm">Restaurar estos elementos?</string>
@@ -243,13 +243,13 @@
     <string name="media_copy">Copiar</string>
     <string name="media_rename">Renombrar</string>
     <string name="media_select">Seleccionar</string>
-    <string name="media_exif_erase">¿Borrar datos EXIF?</string>
+    <string name="media_exif_erase">Borrar datos EXIF</string>
     <string name="media_exif_done">Datos EXIF eliminados</string>
     <string name="media_exif_failed">Error al borrar datos EXIF</string>
     <string name="media_erase">Borrar</string>
     <string name="media_confirm">Confirmar</string>
     <string name="media_okay">Ok</string>
-    <string name="search_photo_name">Buscar el nombre de una foto</string>
+    <string name="search_photo_name">Buscar una foto</string>
     <string name="search_photo_date">Buscar la fecha de una foto</string>
     <string name="search_photo_day">Buscar por día</string>
     <string name="feature_unimplemented">Sin implementar</string>
@@ -285,9 +285,682 @@
     <string name="error_views_favourites_empty">¡Añade tus recuerdos más preciados!</string>
     <string name="error_views_folder_non_existent">La carpeta no existe</string>
     <string name="error_views_error_page">Esta es una página de error</string>
-    <string name="changelog">v0.9.6:\n- Se agregó la capacidad de incluir carpetas enteras en álbumes personalizados.\n- Se corrigio que las pestañas personalizadas no se cargaban\n- Seleccionar Todo deshabilitado para álbumes con más de 5000 elementos (corrige el bloqueo debido a la limitación de Android)\n\nv0.9.5:\n- Se agregó animación para tocar dos veces para ampliar y para restablecer en vistas horizontales de fotos\n- Se agregaron álbumes personalizados (no basados en carpetas)\n- Se agregó el recuento de elementos al cuadro de diálogo de información del álbum\n- Corregido zoom en el texto de la vista de edición\n- Corregido Jank en el reordenado de la pestaña por defecto\n- Se agregó un interruptor para las fechas al copiar fotos\n- Se solucionó el problema por el cual dibujar con pintura después de desenfocar causaba un crasheo en la vista de edición.\n- Escalar/rotar/mover texto ya no apesta\n- Se corrigió que tocar para dibujar no funcionara (solía aparecer siempre en la esquina superior izquierda, ahora funciona normalmente)\n- Mejoras de contraste de color para los elementos de la barra inferior en la vista de edición\n- Se agregó la capacidad de cambiar el tamaño y cambiar el color del texto ya establecido en la vista de edición (toque el texto para seleccionarlo)\n- Se agregó la capacidad de hacer zoom en el modo de pintura de la vista de edición\n- Aumento del radio del pincel de desenfoque de la vista de edición (más desenfoque)\n\nv0.9.4:\n- Colores de iconos fijos para las barras principales\n- Se agregaron exportar favoritos a un archivo zip o carpeta\n- Corregido el doble toque del reproductor de video para omitir el cual no cambiaba de dirección correctamente en caso de toques rápidos\n- Rutas hechas desplazables horizontalmente en vistas de visualización de rutas\n- Añadido personalizador de modo de clasificación\n- Se corrigió la comprobación de actualización al inicio ejecutándose varias veces\n- Añadidas barras de informacion para cuando falla y se completa la edicion\n- Agregado interruptor para confirmar para eliminar\n- Se corrigió que la basura no siempre se clasificara según los borrados más reciente\n- No más archivos faltantes si el usuario mueve o copia y sale de la vista\n- Implementación de la información del álbum terminada\n- Iconos agregados para confirmar para eliminar la clasificación de medios y buscar actualizaciones\n- Se corrigió el doble toque del reproductor de video para buscar que se muestre debajo de otra interfaz de usuario\n- Limpieza y mejora del código\n- Se agregó la capacidad de enviar registros de ejecuciones anteriores.\n- El doble toque en el reproductor de video para omitir ahora solo necesita doble toque en el intento inicial y luego es un toque único para omitir\n- Detectar álbumes automáticamente ahora agrega álbumes a medida que los encuentra\n- Solucionado el problema del elemento protegido irrecuperable si su álbum asociado se elimina de Lavender Photos\n- Se agregó cifrado masivo de fotos desde la página de búsqueda\n- Corregido el doble toque para omitir el bloqueo de otra interfaz de usuario\n- Añadido borrador de datos exif\n- Se agregó la herramienta básica de desenfoque en la vista de edición para Android 12 y versiones posteriores.\n- Se agregó un interruptor para salir al guardar para la vista de edicion\n- Solucionado el problema de la multimedia fantasma de la carpeta segura\n- El diálogo de carga de multimedia protegida ya no desaparece con las barras de aplicaciones mientras la multimedia aún esta protegida\n\nv0.9.3:\n- Usado identificadores estables para elementos dibujables\n- Agregado aviso de información de actualización\n- Opción agregada para deshabilitar las actualizaciones de verificación al inicio\n- Pestañas totalmente personalizables agregadas\n- Reelaborada completamente la lógica de migración\n- Colores de diálogo unificados\n- Arreglado mediastore no se actualizándose correctamente\n- Mejor visualización del tamaño de la multimedia\n- Agregado exportación de carpeta segura a archivo zip\n\nv0.9.2:\n- Se corrigió un bloqueo erróneo en la lista de imágenes horizontales\n- Se corrigió la vista del actualizador que no mostraba el progreso\n- Se corrigió que el actualizador no instalaba paquetes\n- Corregido mover copiar a la lista de álbumes no mostraba miniaturas\n- Se corrigieron problemas de alineación y desbordamiento con los diálogos de un solo álbum.\n- Agregado Datos y Respaldo\n- La migración a fotos cifradas ya no está rota\n- Se agregó personalización de pestaña predeterminada\n\nv0.9.1:\n- Corregida la información de diálogo para la multimedia protegida\n- Mejor comportamiento de arrastre para seleccionar\n- Corregido agregar álbumes desde la configuración de depuración\n- Se agregó clasificación personalizada de álbumes\n- Carga de álbumes mucho más rápida\n- Reordenación dinámica de álbumes para que los últimos álbumes modificados estén en la parte superior\n- Se agregó detección automática de álbumes\n- Se agregaron barras de informacion de Lavender a la aplicación\n- Mejor migración a carpeta segura encriptada\n- Tocar dos veces para omitir ahora es compatible con el reproductor de video\n- Mejoras de rendimiento misceláneas\n\nv0.9.0:\n- Carga los metadatos del archivo en el cuadro de diálogo de información después del descifrado\n- Se agregó un actualizador en la aplicación\n- Sistema de carga de multimedia completamente reelaborado para permitir la carga de varios álbumes\n- Icono agregado a la barra superior de la vista de cuadrícula del álbum\n- Se corrigió el pico de lag al abrir un álbum\n- Optimizaciones extremas y ganancias de rendimiento\n- Corregidos los cuadros de diálogo de carga para cifrado y descifrado\n- Corregidas las miniaturas de carpetas seguras que no siempre se cargaban\n- Solucionado un posible defecto de seguridad debido al almacenamiento en caché de imágenes seguras de glide\n- el reproductor de videos ya no pausa la música si está silenciada\n- Pantalla de carga agregada para videos encriptados\n- Barra superior de selección unificada\n- Corregido el comportamiento de isPreV083\n- Arreglado abrir con la vista no funcionando\n- Ya no se cuelga para siempre si hace clic en mover a carpeta segura desde la barra superior de selección mientras la lista está vacía\n- Finalmente solucionó los problemas de arranque de Android 11 y 12\n\nv0.8.9:\n- Se agregó cifrado AES para fotos seguras\n- Icono de error agregado para agregar ruta manual\n- Corregida la pantalla de carga en la carpeta segura\n- Arreglados elementos en el tema de la luz que no son consistentes y cohesivos\n- El reproductor de video recuerda el último estado de silencio\n- Se agregaron vistas amigables con el paisaje para la carpeta segura y la pantalla de permisos.\n- Agregado abrir con Lavender Photos\n- Álbumes de selección alternativa eliminados\n- Se agregaron diálogos de carga para acciones que requieren tiempo.\n\nv0.8.8:\n- Se eliminó el permiso MANAGE_EXTERNAL_STORAGE\n- Sistema de manejo de archivos completo reelaborado\n- Animación de la barra superior de la aplicación principal modificada\n- Rendimiento mejorado\n- Se corrigieron problemas con la protección de elementos multimedia\n- Arreglado retraso de desplazamiento\n- Se corrigió el crasheo de la vista de favoritos al tocar un elemento\n- Corregido el puerto de álbumes anteriores de v083 a versiones superiores\n- Hecho que los diálogos de explicación sean coherentes\n- Evite que la aplicación se congele al cargar álbumes con archivos que no sean imágenes\n- Arreglar el guardado de registros reestructurar las carpetas de la aplicación\n- Se agregó el uso compartido de archivos desde una carpeta segura\n- Nota Elimine la carpeta Lavender Photos del Almacenamiento Interno\n\nv0.8.7-Hotfix:\n- Se corrige que la búsqueda no muestra los elementos correctos\n- Exoplayer ya no se apaga después de poner la aplicación en segundo plano\n- Mejor comportamiento de logcat\n- Interfaz de usuario de la pantalla de permisos corregida\n- Se agregaron múltiples formas de agregar álbumes hasta que se encuentre una mejor manera.\n- Solucionado el crasheo cuando photogrid estába vacío\n- Arrastrar para seleccionar MUCHO mas rápido y con mejor comportamiento\n\nv0.8.7:\n- Solucionado el bloqueo del reproductor de videos después de reproducir varios videos seguidos\n- El bloqueo táctil ya no se atasca si la aplicación cambia al modo vertical\n- Agregada configuración de reproducción automática de video\n- Agregado empezar video silenciado en la configuración\n- Establecer iconos para la configuración que usaba marcadores de posición\n- Selector de tema de aplicación agregado\n- Agregar lista de álbumes predeterminada para el primer inicio de la aplicación\n- Se aclaró El propósito del permiso Administrar todos los archivos\n- Agregue resaltados y ajustes de tinte de color en la vista de edición\n- Agregar mini declaración de política de privacidad\n- Agregar filtros de imagen en la vista de edición\n- Nueva opción para sobrescribir de forma predeterminada al editar\n- Arrastre agregado para seleccionar en cuadrículas de fotos\n- Se ha animado la marca de verificación para la selección\n- En el reproductor de video, las barras de la aplicación ahora solo se muestran al hacer clic en el botón Más opciones, no más clics molestos y doble clic.\n\nv0.8.6:\n- Almacén de datos completamente refactorizado para un rendimiento y escalabilidad mucho mejores\n- Se agregó la configuración de intervalo de eliminación automática de la papelera\n- Solucionado un posible bloqueo en dispositivos Android 11 al intentar ocultar las barras de aplicaciones\n- Se corrigió el uso compartido de fotos en una carpeta segura\n- Aspecto de configuración mejorado\n- La aplicación de verificación de carpetas vacías más rápida se sentirá un poco más rápida\n- Información de resolución de video fija\n- Se agregó tamaño de miniatura y configuración de caché\n- Se agregó la configuración borrar caché de miniaturas\n- Arreglado comportamiento del paisaje para la página principal\n- Arreglado jitter al cambiar de página en la pantalla principal\n- Las carpetas que no contengan imágenes o videos no se atascarán en la carga para siempre ahora\n- Solucionado El botón de permiso Administrar todos los archivos que no funciona\n- Se agregaron explicaciones a los permisos.\n- Las fotos protegidas ahora mantienen su fecha original y otra información\n\nv0.8.5:\n- Corregido el reproductor de video recuperando completamente los datos al cambiar la orientación\n- La ventana emergente Mover/Copiar no pasa la barra de estado ahora\n- La carpeta segura se bloquea al salir de la aplicación temporalmente\n- Carpetas inaccesibles fijas incluso si existen\n- La lista de fotos de SinglePhotoView ahora se actualiza dinámicamente para coincidir con los medios actuales\n- Ajuste de brillo fijo y ajuste de punto blanco agregado\n- El reproductor de video horizontal ahora tiene la opción de bloqueo táctil\n- Los controles del reproductor de video se ocultan automáticamente después de 5 segundos\n- El reproductor de video reanudará la reproducción después de salir y volver a ingresar a la aplicación\n\nv0.8.4:\n- Corregido el manejo de permisos\n- Consultas de multimedia mejor y más rápida\n- Agregar marcadores de posición de barra de búsqueda aleatorios\n- Fecha más legible tomada para las fotos\n- Se agregaron configuraciones para permisos y depuración con registros.\n\nv0.8.3:\n- Se corrigió el comportamiento incorrecto cuando el nombre del álbum contenía una coma\n- Elimine y elimine correctamente la multimedia con el solucionador de contenido\n- Indicador de valor agregado para el control deslizante de ajustes en la vista de edición\n- Agregue la opción de sobrescribir en lugar de guardar una nueva copia para editarla\n- Verificado si no es el administrador de medios y elimine las cosas correctamente también\n- Se corrige que no se pueden eliminar archivos de la papelera cuando la aplicación es el administrador de medios\n- Las fotos recién editadas ahora aparecen normalmente en el sistema\n- El ajuste de la vista de edición realmente surte efecto ahora (ups)\n\nv0.8.2:\n- Se agregaron ajustes de contraste/brillo/saturación a la vista de edición.\n- Se agregaron ajustes de punto negro y calidez (temperatura de color) a la vista de edición.\n\nv0.8.1:\n- Se corrigió el relleno superior excesivo de la vista favorita\n- Se corrigió el crasheo al cargar o descargar la lista de imágenes horizontales y los cambios de medios\n- Solucionado el crasheo al agregar nuevos álbumes que ya estaban agregados\n- Arreglada la reproducción de video no se restablece a 0 al llegar al final\n- Se corrigió la reproducción de video que a veces solo duraba un segundo menos que la duración del video.\n- Se agregó rotación y cambio de tamaño del texto mediante gestos en la vista de edición.\n- Arreglado restablecer la posición de desplazamiento de la página de búsqueda al ver una imagen\n\nv0.8.0:\n- Recorte añadido\n- Radio de cortes añadidos\n- Mejor funcionalidad para guardar y deshacer\n\nv0.7.9:\n- Arreglado escalado erróneo al rotar imágenes en la vista de edición\n- Arreglada la reproducción automática de video al cambiar la orientación\n- Arreglado el tiempo de la barra de búsqueda del reproductor de videos no siempre terminará\n- Arreglado que la hora actual y final del reproductor de video estén ligeramente apagadas\n\nv0.7.8:\n- Todos los cambios a continuación están en la vista de edición\n- Agregado dibujar en imágenes\n- Se agregó texto de dibujo en las imágenes.\n- Se agregaron imágenes giratorias\n- Añadido cambio de tamaño para dibujo y texto.\n- Se agregó cambio de color para dibujo y texto.\n- Hecho que la vista de edición se pueda utilizar en modo horizontal\n\nv0.7.7:\n- Actualización menor que muestra mejor las nuevas imágenes en la vista de álbumes\n\nv0.7.6:\n- Arreglado animación y espaciado en el cuadro de diálogo copiar o mover\n- Arreglado espaciado en la vista favoritos\n\nv0.7.5:\n- Vista de edición agregada (sin funcionalidad)\n- Añadido zoom/panorámica/rotación adecuados\n\nv0.7.3:\n- Cuadros de diálogo de información agregados en carpeta segura y papelera\n- Clasificación inteligente de álbumes\n- Buscar por fecha añadida\n- Cerrar flujos de datos después de salir de una página\n- Se corrigieron las etiquetas de hoy y ayer en la cuadrícula de fotos\n- Los artículos asegurados ahora vuelven a su lugar original\n- Arregladas las fechas en carpeta segura (estaban rotas mostrando todo como si estuviera asegurado hoy)\n- Arreglado problema donde la resolución no se mostraba en todos los archivos\n\nv0.7.2:\n- Reelaboración completa del sistema de eliminación/copia/movimiento/papelera\n- La papelera interactúa con el resto del sistema ahora\n- Mucha más fluidez a las cuadriculas\n- Los álbumes ya no muestran fotos de subcarpetas\n- Mejoras de rendimiento y calidad de vida\n\nv0.7.0:\n- Mejoras en la búsqueda\n- Copiar y mover agregado en la selección\n- Mejoras en la velocidad de eliminación/restauración de selecciones grandes\n- Transiciones más suaves para seleccionar en vistas sin barra inferior\n\nv0.6.9:\n- Medios favoritos agregados\n- Comportamiento mejorado de las barras de desplazamiento\n- Ordenar carpeta segura por actualidad\n- Mucha limpieza de código y mejoras de rendimiento misceláneas\n- Mejoras generales de la capacidad de respuesta\n- Colores fijos de la barra de navegación en modo claro\n- Iconos y diálogos adecuados para las acciones\n- Selección disponible en cada vista de cuadrícula\n- La experiencia del reproductor de video es mejor\n\nv0.6.6\n- Se agregaron barras de desplazamiento a las cuadrículas\n- Mejoras importantes en el rendimiento\n- Se agregó la selección de elementos de la cuadrícula\n- Corregido el retraso al mostrar las barras inferiores\n- Puede limpiar la papelera ahora\n- Búsqueda infinitamente más rápida\n- Corregido el restablecimiento de la vista de una sola foto al cambiar la rotación\n- Corrigido que la búsqueda no permitia la selección.\n</string>
+    <string name="changelog"><![CDATA[
+    <u><h2>v1.1.6!:</h2></u>
+    <br>
+    <b><h4>- Errores Corregidos:</h4></b>
+    <p>
+        - Cierre inesperado al editar desde OpenWithView
+    </p>
+    <br>
+    <u><h2>v1.1.5!:</h2></u>
+    <br>
+    <b><h4>- Funcionalidades Añadidas:</h4></b>
+    <p>
+        - Ocultar la barra de navegación al desplazar
+        <br>- Acercar texto/imágenes mientras se mueven en los editores
+        <br>- Fondos de pantalla desplazables en el configurador de fondos de pantalla
+        <br>- Añadida traducción al polaco, actualizada la traducción al chino simplificado
+    </p>
+    <br>
+    <b><h4>- Errores Corregidos:</h4></b>
+    <p>
+        - El editor de video no respetaba la opción de iniciar videos silenciados
+        <br>- Imposibilidad de reproducir el video en el editor de video después de recortarlo
+        <br>- Texto de la pestaña de la barra de navegación desalineado
+    </p>
+    <br>
+    <h2>v1.1.0!:</h2>
+    <b><h4>- Funcionalidades Añadidas:</h4></b>
+    <p>
+        <br>- Añadida traducción al chino simplificado
+        <br>- Opción para poner álbumes en la lista negra al usar "mostrar todo en principal"
+        <br>- Fijar álbumes incluso cuando la "detección automática de álbumes" está activada
+        <br>- Alternar para salir inmediatamente de la aplicación en la página de inicio y no en la vista de fotos
+        <br>- Mostrar *snackbars* de carga en OpenWithView
+    </p>
+    <br>
+    <br>
+    <b><h4>- Mejoras:</h4></b>
+    <p>
+        <br>- Pedir permiso de directorio antes de editar un archivo
+        <br>- Aumentar la tasa de bits de exportación predeterminada del editor de video
+        <br>- Hacer que la barra de navegación principal sea desplazable lateralmente
+        <br>- Nuevo ícono de la aplicación
+        <br>- Los álbumes en AlbumGridView ahora requieren una pulsación larga para arrastrar
+    </p>
+    <br>
+    <br>
+    <b><h4>- Errores Corregidos:</h4></b>
+    <p>
+        <br>- Imposibilidad de borrar la dirección del servidor Immich si no se ha iniciado sesión
+        <br>- Mostrar todo en la vista principal muestra todo en todas partes
+        <br>- Formato de la página de actualización roto
+        <br>- Cierre inesperado al eliminar todo el contenido multimedia en un álbum
+        <br>- Cierre inesperado al editar contenido multimedia desde OpenWithView
+        <br>- Guardar videos en directorios no estándar causaba un cuelgue infinito
+    </p>
+    <br>
+    <br>
+    <h2>v1.0.0!:</h2>
+    <br>
+    <b><h4>- ¡Nuevo Aspecto!</h4></b>
+    <br>
+    <p>
+        ¡Lavender Photos se ha movido a <a href="https://m3.material.io/">Material Expressive</a>!
+        Un nuevo aspecto, con animaciones más fluidas, dinámicas y divertidas que dan vida a la aplicación
+    </p>
+    <br>
+    <p>
+        <b><h4>- ¡Nuevos Editores de Imagen y Video!</h4></b>
+        <br>- Aspecto renovado para el editor de imágenes y se ha implementado un editor de video
+        <br>- Experiencia de edición significativamente mejorada
+        <br>- Recorta, ajusta, marca y filtra tus imágenes
+        <br>- Cambia la tasa de bits, la velocidad de fotogramas, la velocidad o el volumen de tus videos, así como todo lo mencionado en el editor de imágenes
+        <br>- Superponer texto e imágenes tanto en imágenes como en videos
+        <br>- Animar texto e imágenes en video
+    </p>
+    <br>
+    <br>
+    <p>
+        <b><h4>- Funcionalidades Añadidas:</h4></b>
+        <br>- Cambiar el número de columnas de la Vista de Álbumes
+        <br>- Alternar fondo negro para vistas multimedia
+        <br>- Zoom en videos
+        <br>- Haz clic en el título del medio para abrir el diálogo de información
+        <br>- Carga de imágenes Avif
+        <br>- Nuevo ícono de la aplicación
+        <br>- Traducciones al árabe, español, ruso, turco y ucraniano
+        <br>- Aumento del límite de pestañas personalizadas
+        <br>- Diálogos de ayuda e información de Immich
+        <br>- Retener álbumes al desinstalar
+        <br>- Página de licencias de código abierto
+        <br>- Pestañas para las vistas de Favoritos y Papelera
+        <br>- Configurador de fondos de pantalla dentro de la aplicación
+        <br>- Efectos de carga más suaves
+        <br>- Eliminar contenido multimedia de forma inmediata y permanente en lugar de moverlo primero a la papelera
+        <br>- Control de velocidad de reproducción del reproductor de video
+    </p>
+    <br>
+    <br>
+    <p>
+        <b><h4>- Errores Corregidos:</h4></b>
+        <br>- Desencriptación lenta de fotos seguras
+        <br>- Cierre inesperado al cargar imágenes de alta resolución en el editor de imágenes
+        <br>- Cierre inesperado al deslizar horizontalmente sobre el botón de Favoritos o Papelera en la Vista de Álbumes
+        <br>- Cierre inesperado al eliminar el primer medio en un álbum y navegar hacia atrás con la Detección Automática de Álbumes activada
+        <br>- Cierre inesperado al eliminar el último medio en un álbum y navegar hacia atrás
+        <br>- Se corrigieron algunas pestañas personalizadas a veces rotas
+        <br>- La pantalla de bienvenida ahora siempre se muestra correctamente
+        <br>- Ciertas vistas de cuadrícula no retenían la posición de desplazamiento al navegar fuera de ellas
+        <br>- Algunos elementos se borraban erróneamente al intentar arrastrar para seleccionar
+        <br>- MediaPicker no reportaba los elementos correctos
+        <br>- Abrir con Lavender Photos ahora muestra la versión correcta de todas las imágenes
+        <br>- Aplicación corregida e inexacta de ajustes en el editor de imágenes
+        <br>- El ajuste de reflejos estaba roto
+        <br>- Cierre inesperado al arrastrar la selección sobre una Sección
+        <br>- Compartir varias imágenes ahora muestra correctamente todos los destinos de la aplicación
+        <br>- Imposibilidad de asegurar elementos desde una vista de foto única en algunas versiones de Android
+        <br>- Cierre inesperado al seleccionar más de 2000 elementos en Android 16+
+    </p>
+    <br>
+    <br>
+    <p>
+        <b><h4>- Mejoras de Rendimiento:</h4></b>
+        <br>- Demasiadas para registrarlas aquí
+    </p>
+    <br>
+    <br>
+    <br>
+    v0.9.9-beta:
+        <br>- Hacer que el diálogo de ruta del álbum sea realmente utilizable
+        <br>- Se corrigió que los álbumes personalizados no tuvieran miniaturas y que MoveCopyAlbumListView.kt no tuviera NINGUNA miniatura en absoluto
+        <br>- Imposibilidad de renombrar álbumes y la información del álbum no se actualizaba inmediatamente
+        <br>- Se agregó la opción de ordenar álbumes por última modificación o fecha de toma, según la elección del usuario
+        <br>- Manejar el error en TextEntryDialog correctamente
+        <br>- Se agregó la actividad de selección de medios (*media picker*)
+        <br>- Se agregó la integración de copia de seguridad de Immich para álbumes
+        <br>- Agregar indicador de sincronización en segundo plano alrededor de la foto de perfil en la barra superior y el diálogo principal
+        <br>- Cambiar "sobrescribir datos al copiar" a "intentar mantener la fecha al copiar", ya que mantener la fecha no siempre está garantizado
+        <br>- Se agregó la capacidad de copiar o mover archivos a álbumes con múltiples rutas, los álbumes personalizados no se ven afectados
+        <br>- No cerrar inesperadamente al cargar miniaturas para álbumes personalizados sin rutas
+        <br>- Ordenar la búsqueda de medios por preferencia del usuario
+        <br>- Muchas mejoras de fluidez y rendimiento en cualquier cosa con un PhotoGridView.kt
+        <br>- Se corrigió que el conteo de elementos de información del álbum incluyera secciones, lo cual no debería
+        <br>- Se agregó *snackbar* de progreso para copiar, mover o eliminar medios
+        <br>- No cerrar inesperadamente al arrastrar para seleccionar sobre un elemento que no existe
+        <br>- Agregar información del servidor Immich a la página principal de Immich
+        <br>- Agregar sincronización de álbumes con la página Immich a la barra superior del álbum
+        <br>- Cierre inesperado en la vista de carpeta segura cuando no se puede exportar la copia de seguridad debido a la ausencia de datos IV
+        <br>- Solucionar que algunas *photogridviews* no recordaran su posición al navegar de vuelta desde otra página
+        <br>- Solucionar que faltara el registro de cambios v0.9.8-beta-hotfix
+        <br>- Hacer que la carga de video sea mucho más fluida
+        <br>- Se agregó una configuración para controlar el tamaño de la columna de la cuadrícula
+        <br>- Respetar la configuración regional en los separadores de la vista de cuadrícula
+        <br>- Las barras de desplazamiento de PhotoGridView.kt ahora respetan la dirección del diseño (rtl o ltr)
+        <br>- Se agregó la capacidad de mostrar todo en la vista principal de fotos
+        <br>
+        <br>v0.9.8-beta-hotfix:
+        <br>- *Hotfix* para solucionar el problema con las comprobaciones de izzyondroid
+        <br>- Aumentar la fluidez general de la aplicación (la carga de medios es más fluida)
+        <br>- Solucionar problema por el que el actualizador fallaba cuando la versión tenía "-hotfix" en el nombre
+        <br>
+        <br>v0.9.7-beta:
+        <br>- Se agregó búsqueda de álbumes de dispositivo completo en menos de un segundo
+        <br>- Se agregaron traducciones para indonesio y francés
+        <br>- Se solucionó un problema por el que los elementos de la cuadrícula de álbumes parpadeaban infinitamente
+        <br>- Se solucionó un problema por el que no se podían usar álbumes personalizados para cosas personalizadas
+        <br>- Ya no se pide permiso cada vez para mover/copiar a un álbum después de que el usuario ya haya dado permiso una vez
+        <br>- Se agregó selector de formato de fecha
+        <br>- Manejar la pérdida de memoria debido a la estúpida configuración de estado de *compose*
+        <br>- Se agregó tema amoled
+        <br>- Se agregó aviso de traducción a la página "Acerca de"
+        <br>- Mejoras significativas de rendimiento
+        <br>- Aumento de la versión de dependencias
+        <br>- Ya no hay cierre inesperado cuando el directorio a las rutas de exportación de datos y copia de seguridad no existe
+        <br>- El desenfoque ahora tiene en cuenta los filtros, ajustes y dibujos en la vista de edición
+        <br>- Se agregó soporte de volumen externo (tarjeta sd, etc.)
+        <br>- Se agregó la capacidad de restablecer un valor de ajuste de edición tocándolo de nuevo
+        <br>- Hacer que el escalado de texto en la vista de edición sea más receptivo
+        <br>- Se agregó la capacidad de fijar álbumes en la parte superior de la lista de álbumes
+        <br>
+        <br>v0.9.6-beta:
+        <br>- Se agregó la capacidad de incluir carpetas enteras en álbumes personalizados
+        <br>- Se corrigió que las pestañas personalizadas no cargaran
+        <br>- Deshabilitar la opción "Seleccionar todo" para álbumes con más de 5000 elementos (soluciona el cierre inesperado debido a la limitación de Android)
+        <br>
+        <br>v0.9.5-beta:
+        <br>- Se agregó animación para doble toque para acercar y restablecer en vistas de fotos horizontales
+        <br>- Se agregaron álbumes personalizados (no basados en carpetas)
+        <br>- Se agregó conteo de elementos al diálogo de información del álbum
+        <br>- Se corrigió el zoom de texto en la vista de edición
+        <br>- Se corrigió el *jank* en la reordenación de pestañas predeterminadas
+        <br>- Se agregó un interruptor de palanca para las fechas de copia de fotos
+        <br>- Se solucionó un problema por el que dibujar con pintura después del desenfoque causaba un cierre inesperado en la vista de edición
+        <br>- El escalado/rotación/movimiento de texto ya no es malo
+        <br>- Se corrigió que tocar para dibujar no funcionara (solía aparecer siempre en la esquina superior izquierda, ahora funciona normalmente)
+        <br>- Mejoras de contraste de color para los elementos de la barra inferior en la vista de edición
+        <br>- Se agregó la capacidad de cambiar el tamaño y el color del texto ya establecido en la vista de edición (tocar el texto para seleccionarlo)
+        <br>- Se agregó la capacidad de hacer zoom en el modo de pintura de la vista de edición
+        <br>- Aumento del radio del pincel de desenfoque de la vista de edición (más desenfoque)
+        <br>
+        <br>v0.9.4-beta:
+        <br>- Se corrigieron los colores de los íconos para las barras principales
+        <br>- Se agregó la exportación de favoritos a un archivo zip o carpeta
+        <br>- Solucionar que el doble toque para saltar del reproductor de video no cambiara correctamente de dirección en caso de toques rápidos
+        <br>- Se hicieron las rutas desplazables horizontalmente en las vistas que muestran rutas
+        <br>- Se agregó un personalizador de modo de ordenación
+        <br>- Se corrigió que la verificación de actualización al inicio se ejecutara varias veces
+        <br>- Se agregaron *snackbars* para fallos y éxitos de edición
+        <br>- Agregar alternar para confirmar la eliminación
+        <br>- Se corrigió que la papelera no siempre ordenara por el más recientemente eliminado
+        <br>- No más archivos perdidos si el usuario mueve o copia y sale de la vista
+        <br>- Implementación finalizada de la información del álbum
+        <br>- Se agregaron íconos para confirmar la eliminación, la ordenación de medios y la verificación de actualizaciones
+        <br>- Se corrigió que el doble toque para buscar del reproductor de video se mostrara debajo de otra interfaz de usuario
+        <br>- Limpieza y mejora de código
+        <br>- Se agregó la capacidad de enviar los registros de la ejecución anterior
+        <br>- El doble toque para saltar del reproductor de video ahora solo necesita doble toque en el intento inicial y luego es un solo toque para saltar
+        <br>- La detección automática de álbumes ahora agrega álbumes a medida que los encuentra
+        <br>- Se corrigió un problema de elemento asegurado irrecuperable si su álbum asociado se eliminaba de Lavender Photos
+        <br>- Se agregó el cifrado masivo de fotos desde la página de búsqueda
+        <br>- Solucionar que el doble toque para saltar bloqueara otra interfaz de usuario
+        <br>- Se agregó un borrador de datos exif
+        <br>- Se agregó una herramienta básica de desenfoque en la vista de edición para Android 12 y superior
+        <br>- Se agregó la opción de salir al guardar para la vista de edición
+        <br>- Se corrigió el problema de medios fantasma de la carpeta segura
+        <br>- El diálogo de carga de medios seguros ya no desaparece con las barras de la aplicación mientras el medio aún se está asegurando
+        <br>
+        <br>v0.9.3-beta:
+        <br>- Usar identificadores estables para *drawables*
+        <br>- Agregar aviso de información de actualización
+        <br>- Se agregó una opción para deshabilitar la verificación de actualizaciones al inicio
+        <br>- Se agregaron pestañas totalmente personalizables
+        <br>- Reelaborar por completo la lógica de migración
+        <br>- Colores de diálogo unificados
+        <br>- Solucionar que *mediastore* no se actualizara correctamente
+        <br>- Mejor visualización del tamaño del medio
+        <br>- Agregar exportación de carpeta segura a archivo zip
+        <br>
+        <br>v0.9.2-beta:
+        <br>- Se corrigió el cierre inesperado erróneo en la lista de imágenes horizontales
+        <br>- Se corrigió que la vista del actualizador no mostrara progreso
+        <br>- Se corrigió que el actualizador no instalara paquetes
+        <br>- Se corrigió que mover/copiar a la lista de álbumes no mostrara miniaturas
+        <br>- Se corrigieron problemas de alineación y desbordamiento con diálogos de álbum único
+        <br>- Se agregaron datos y copia de seguridad
+        <br>- La migración a fotos encriptadas ya no está rota
+        <br>- Se agregó la personalización de pestañas predeterminadas
+        <br>
+        <br>v0.9.1-beta:
+        <br>- Solucionar información de diálogo para medios asegurados
+        <br>- Mejor comportamiento de arrastrar para seleccionar
+        <br>- Se corrigió la adición de álbumes desde la configuración de depuración
+        <br>- Se agregó la ordenación de álbumes personalizados
+        <br>- Carga de álbumes mucho más rápida
+        <br>- Reordenación dinámica de álbumes para que los álbumes modificados más recientemente estén arriba
+        <br>- Se agregó la detección automática de álbumes
+        <br>- Se agregaron *Lavender Snackbars* a la aplicación
+        <br>- Mejor migración a carpeta segura encriptada
+        <br>- El doble toque para saltar ahora es compatible con el reproductor de video
+        <br>- Varias mejoras de rendimiento
+        <br>
+        <br>v0.9.0-beta:
+        <br>- Cargar metadatos de archivos en el diálogo de información después de la desencriptación
+        <br>- Se agregó un actualizador dentro de la aplicación
+        <br>- Se reelaboró todo el sistema de carga de medios para permitir que se carguen varios álbumes
+        <br>- Se agregó el ícono + a la barra superior de la vista de cuadrícula de álbumes
+        <br>- Se corrigió el pico de retraso al abrir un álbum
+        <br>- Optimizaciones extremas y mejoras de rendimiento
+        <br>- Solucionar diálogos de carga para cifrado y descifrado
+        <br>- Solucionar que las miniaturas de carpetas seguras no siempre cargaran
+        <br>- Solucionar posible fallo de seguridad debido al almacenamiento en caché de imágenes seguras por parte de *glide*
+        <br>- El reproductor de video ya no pausa la música si está silenciado
+        <br>- Se agregó una pantalla de carga para videos encriptados
+        <br>- Barra superior de selección unificada
+        <br>- Se corrigió el comportamiento de *isPreV083*
+        <br>- Se corrigió que la vista "Abrir con" no pudiera abrirse con
+        <br>- No colgar indefinidamente si se hace clic en mover a la carpeta segura desde la barra superior de selección mientras la lista está vacía
+        <br>- Finalmente se corrigieron los problemas de arranque de Android 11 y 12
+        <br>
+        <br>v0.8.9-beta:
+        <br>- Se agregó cifrado AES para fotos seguras
+        <br>- Se agregó un ícono de error para la ruta de adición manual
+        <br>- Solucionar pantalla de carga en carpeta segura
+        <br>- Se corrigió que los elementos en el tema claro no fueran consistentes y cohesivos
+        <br>- El reproductor de video recuerda el último estado de silencio
+        <br>- Se agregaron vistas amigables con el paisaje para la carpeta segura y la pantalla de permisos
+        <br>- Se agregó "Abrir con Lavender Photos"
+        <br>- Se eliminó la opción alternativa de seleccionar álbumes
+        <br>- Se agregaron diálogos de carga para acciones que tardan tiempo
+        <br>
+        <br>v0.8.8-beta:
+        <br>- Se eliminó el permiso *MANAGE\_EXTERNAL\_STORAGE*
+        <br>- Se reelaboró todo el sistema de manejo de archivos
+        <br>- Se cambió la animación de la barra superior de la aplicación principal
+        <br>- Rendimiento mejorado
+        <br>- Se corrigieron problemas al asegurar elementos multimedia
+        <br>- Se corrigió el retraso al desplazar
+        <br>- Se corrigió el cierre inesperado de la vista de favoritos al tocar un elemento
+        <br>- Se corrigió la transferencia de álbumes anteriores de v0.8.3 a versiones superiores
+        <br>- Hacer que los diálogos de explicación sean consistentes
+        <br>- Evitar que la aplicación se congele al cargar álbumes con archivos que no sean imágenes
+        <br>- Solucionar el guardado de registros, reestructurar las carpetas de la aplicación
+        <br>- Se agregó la opción de compartir archivos desde la carpeta segura
+        <br>- Nota: Elimine la carpeta Lavender Photos del Almacenamiento Interno
+        <br>
+        <br>v0.8.7-beta-hotfix:
+        <br>- Solucionar que la búsqueda no mostrara los elementos correctos
+        <br>- Exoplayer ya no se apaga después de enviar la aplicación a segundo plano
+        <br>- Mejor comportamiento de *logcat*
+        <br>- Se corrigió la interfaz de usuario de la pantalla de permisos
+        <br>- Se agregaron múltiples formas de agregar álbumes hasta que se encuentre una mejor
+        <br>- Se corrigió el cierre inesperado cuando la cuadrícula de fotos está vacía
+        <br>- Arrastrar para seleccionar MUCHO más rápido con mejor comportamiento
+        <br>
+        <br>v0.8.7-beta:
+        <br>- Solucionar que el reproductor de video fallara después de reproducir varios videos seguidos
+        <br>- El bloqueo táctil ya no se atasca si la aplicación cambia al modo vertical
+        <br>- Agregar configuración de reproducción automática de video
+        <br>- Agregar configuración de silencio de video al inicio
+        <br>- Establecer íconos para configuraciones que usaban marcadores de posición
+        <br>- Se agregó selector de tema de la aplicación
+        <br>- Agregar lista de álbumes predeterminada para el primer inicio de la aplicación
+        <br>- Se aclaró el propósito del permiso "Administrar todos los archivos"
+        <br>- Agregar ajustes de reflejos y tinte de color en la vista de edición
+        <br>- Agregar una mini declaración de política de privacidad
+        <br>- Agregar filtros de imagen en la vista de edición
+        <br>- Nueva opción para sobrescribir por defecto al editar
+        <br>- Se agregó arrastrar para seleccionar en cuadrículas de fotos
+        <br>- Animar la marca de verificación de selección
+        <br>- En el reproductor de video, las barras de la aplicación ahora solo se muestran al hacer clic en el botón de más opciones, no más clics molestos y doble clics
+        <br>
+        <br>v0.8.6-beta:
+        <br>- Almacén de datos completamente refactorizado para un rendimiento y escalabilidad MUCHO mejores
+        <br>- Se agregaron configuraciones de intervalo de eliminación automática de la papelera
+        <br>- Solucionar posible cierre inesperado en dispositivos Android 11 al intentar ocultar las barras de la aplicación
+        <br>- Se corrigió el uso compartido de fotos en la carpeta segura
+        <br>- Aspecto de la configuración mejorado
+        <br>- Comprobaciones de carpetas vacías más rápidas, la aplicación se sentirá ligeramente más rápida
+        <br>- Se corrigió la información de resolución de video
+        <br>- Se agregaron configuraciones de tamaño de miniaturas y caché
+        <br>- Se agregó la configuración para borrar la caché de miniaturas
+        <br>- Se corrigió el comportamiento del paisaje para la página principal
+        <br>- Se corrigió la inestabilidad al cambiar de página en la pantalla principal
+        <br>- Las carpetas que no contienen imágenes o videos ya no se quedarán atascadas en la carga para siempre
+        <br>- Se corrigió que el botón de permiso "Administrar todos los archivos" no funcionara
+        <br>- Se agregaron explicaciones a los permisos
+        <br>- Las fotos seguras ahora mantienen su fecha original y otra información
+        <br>
+        <br>
+        <br>v0.8.5-beta:
+        <br>- Solucionar que el reproductor de video volviera a obtener datos por completo al cambiar la orientación
+        <br>- La ventana emergente de Mover/Copiar ya no pasa la barra de estado
+        <br>- La carpeta segura se bloquea al salir temporalmente de la aplicación
+        <br>- Se corrigieron carpetas inaccesibles incluso si existen
+        <br>- La lista de fotos de *SinglePhotoView* ahora se actualiza dinámicamente para que coincida con el medio presente
+        <br>- Se corrigió el ajuste de brillo y se agregó el ajuste de punto blanco
+        <br>- El reproductor de video en paisaje ahora tiene la opción de bloqueo táctil
+        <br>- Los controles del reproductor de video se ocultan automáticamente después de 5 segundos
+        <br>- El reproductor de video reanudará la reproducción después de salir y volver a ingresar a la aplicación
+        <br>
+        <br>v0.8.4-beta:
+        <br>- Solucionar el manejo de permisos
+        <br>- Consultas de medios mejores y más rápidas
+        <br>- Agregar marcadores de posición de barra de búsqueda aleatorios
+        <br>- Fecha de toma más legible para las fotos
+        <br>- Se agregaron configuraciones para permisos y depuración con registros
+        <br>
+        <br>v0.8.3:
+        <br>- Se corrigió el comportamiento incorrecto cuando el nombre del álbum contiene una coma
+        <br>- Eliminar y enviar correctamente a la papelera los medios con el *content resolver*
+        <br>- Se agregó un indicador de valor para el control deslizante de ajustes en la vista de edición
+        <br>- Agregar opción para sobrescribir en lugar de guardar una nueva copia para las ediciones
+        <br>- Comprobar si no es administrador de medios y eliminar cosas correctamente también
+        <br>- Solucionar la imposibilidad de recuperar archivos de la papelera cuando la aplicación es el administrador de medios
+        <br>- Las fotos recién editadas ahora aparecen en el sistema normalmente
+        <br>- El ajuste de la vista de edición ahora realmente surte efecto (¡oops!)
+        <br>
+        <br>v0.8.2:
+        <br>- Se agregaron ajustes de contraste/brillo/saturación a la vista de edición
+        <br>- Se agregaron ajustes de punto negro y calidez (temperatura de color) a la vista de edición
+        <br>
+        <br>v0.8.1:
+        <br>- Se corrigió el relleno superior excesivo de la vista de favoritos
+        <br>- Se corrigió el cierre inesperado al cargar o descargar *HorizontalImageList* y cambiar los medios
+        <br>- Se corrigió el cierre inesperado al agregar nuevos álbumes que ya se habían agregado
+        <br>- Se corrigió que la reproducción de video no se restableciera a 0 al llegar al final
+        <br>- Se corrigió que la reproducción de video a veces solo llegaba a un segundo menos que la duración del video
+        <br>- Se agregó rotación y cambio de tamaño de texto mediante gestos en la vista de edición
+        <br>- Solucionar que la página de búsqueda restableciera la posición de desplazamiento al ver una imagen
+        <br>
+        <br>v0.8.0:
+        <br>- Recorte agregado
+        <br>- Se agregaron proporciones de recorte
+        <br>- Mejor funcionalidad de guardar y deshacer
+        <br>
+        <br>v0.7.9-beta:
+        <br>- Solucionar el escalado erróneo al rotar imágenes en la vista de edición
+        <br>- Solucionar la reproducción automática de video al cambiar la orientación
+        <br>- Solucionar que el tiempo de la barra de búsqueda del reproductor de video no siempre llegara al final
+        <br>- Solucionar que la hora actual y final del reproductor de video estuvieran ligeramente desviadas
+        <br>
+        <br>v0.7.8-beta:
+        <br>- Todos los cambios a continuación están en la vista de edición
+        <br>- Se agregó el dibujo en imágenes
+        <br>- Se agregó el dibujo de texto en imágenes
+        <br>- Se agregó la rotación de imágenes
+        <br>- Se agregó el cambio de tamaño para dibujar y texto
+        <br>- Se agregó el cambio de color para dibujar y texto
+        <br>- Hacer que la vista de edición sea utilizable en modo paisaje
+        <br>
+        <br>v0.7.7-beta:
+        <br>- Actualización menor que muestra mejor las nuevas imágenes en la vista de álbumes
+        <br>
+        <br>v0.7.6-beta:
+        <br>- Se corrigió la animación y el espaciado en el diálogo de copiar o mover
+        <br>- Se corrigió el espaciado en la vista de favoritos
+        <br>
+        <br>v0.7.5-beta:
+        <br>- Se agregó la vista de edición (sin funcionalidad)
+        <br>- Se agregó zoom/panorámica/rotación adecuados
+        <br>
+        <br>v0.7.3-beta:
+        <br>- Se agregaron diálogos de información en la carpeta segura y la papelera
+        <br>- Ordenación inteligente de álbumes
+        <br>- Búsqueda por fecha de adición
+        <br>- Cerrar transmisiones de datos después de salir de una página
+        <br>- Se corrigieron las etiquetas de hoy y ayer en la cuadrícula de fotos
+        <br>- Los elementos asegurados ahora vuelven a su lugar original
+        <br>- Se corrigieron las fechas en la carpeta segura (estaban rotas y mostraban todo como si hubiera sido asegurado hoy)
+        <br>- Se corrigió que la resolución no se mostrara en todos los medios
+        <br>
+        <br>v0.7.2-beta:
+        <br>- Reelaboración completa del sistema de eliminar/copiar/mover/papelera
+        <br>- La papelera ahora interactúa con el resto del sistema
+        <br>- Mucha más fluidez en las cuadrículas
+        <br>- Los álbumes ya no muestran fotos de subcarpetas
+        <br>- Mejoras de rendimiento y cosas de calidad de vida
+        <br>
+        <br>v0.7.0-beta:
+        <br>- Mejoras de búsqueda
+        <br>- Se agregaron copiar y mover en la selección
+        <br>- Mejoras de velocidad en la eliminación/restauración de selecciones grandes
+        <br>- Transiciones más fluidas a la selección en vistas sin barra inferior
+        <br>
+        <br>v0.6.9-beta:
+        <br>- Se agregó la opción de marcar medios como favoritos
+        <br>- Comportamiento de las barras de desplazamiento mejorado
+        <br>- Ordenar la carpeta segura por antigüedad
+        <br>- Mucha limpieza de código y varias mejoras de rendimiento
+        <br>- Mejoras generales de capacidad de respuesta
+        <br>- Se corrigieron los colores de la barra de navegación en modo claro
+        <br>- Íconos y diálogos adecuados para las acciones
+        <br>- Selección disponible en cada vista de cuadrícula
+        <br>- La experiencia del reproductor de video es mejor
+        <br>
+        <br>v0.6.6-beta
+        <br>- Se agregaron barras de desplazamiento a las cuadrículas
+        <br>- Mayores mejoras de rendimiento
+        <br>- Se agregó la selección de elementos de la cuadrícula
+        <br>- Solucionar el retraso al mostrar las barras inferiores
+        <br>- Ahora se puede vaciar la papelera
+        <br>- Búsqueda infinitamente más rápida
+        <br>- Solucionar que la vista de foto única se restableciera al cambiar la rotación
+        <br>- Solucionar que la búsqueda no permitiera la selección
+        <br>
+    </p>
+    ]]></string>
     <string name="first_startup_dialog_title">¿Buscar todos los álbumes en el dispositivo?</string>
     <string name="debugging_spawn_loading_snackbar">Generar carga de barra de información</string>
     <string name="debugging_spawn_loading_snackbar_desc">Depure la barra de información de Lavender cada vez que compose decida hacer algo estúpido</string>
     <string name="debugging_spawn_message_snackbar">Generar un mensaje de información</string>
+    <string name="albums_main_list_desc_1">Los álbumes seleccionados mostrarán sus fotos en la vista principal de fotos</string>
+    <string name="albums_main_list_desc_2">Los álbumes seleccionados se incluirán en la lista negra para que no se muestren en la vista principal de fotos</string>
+    <string name="albums_main_list_selected_inverse">Los álbumes seleccionados aquí no aparecerán en la vista principal de fotos</string>
+    <string name="albums_custom_desc">Agregue cualquier medio desde cualquier lugar</string>
+    <string name="albums_folder_desc">Cargar medios desde una carpeta</string>
+    <string name="albums_pin">Anclar este álbum</string>
+    <string name="albums_unpin">Desanclar este álbum</string>
+    <string name="navigation">Navegación</string>
+    <string name="translation">Traducción</string>
+    <string name="translation_desc">¡Lleva Lavender Photos a todo el mundo!</string>
+    <string name="licenses">Licencias</string>
+    <string name="licenses_desc">software de código abierto utilizado</string>
+    <string name="licenses_extra">Detalles Extra</string>
+    <string name="licenses_extra_desc">Ver información más detallada sobre licencias</string>
+    <string name="special_thanks_to">Un agradecimiento especial a:</string>
+    <string name="secure_getting_file_info">Obteniendo información del archivo…</string>
+    <string name="secure_please_wait">Por favor espere…</string>
+    <string name="editing_image">Imagen</string>
+    <string name="editing_erase">Borrar</string>
+    <string name="editing_saving">Guardando imagen editada</string>
+    <string name="editing_invert">Invertir</string>
+    <string name="editing_upload_image">Elige</string>
+    <string name="editing_upload_image_failed">No se pudo elegir la imagen</string>
+    <string name="editing_bitrate">Tasa de Bits</string>
+    <string name="editing_bitrate_unit">Bits por segundo</string>
+    <string name="editing_open_with_copying_video">Procesando video…</string>
+    <string name="editing_open_with_copying_image">Procesando imagen…</string>
+    <string name="filter">Filtro</string>
+    <string name="filter_custom">Filtro Personalizado</string>
+    <string name="filter_none">Ninguno</string>
+    <string name="filter_none_desc">porque quién los necesita</string>
+    <string name="filter_inverted">Invertido</string>
+    <string name="filter_mushrooms_desc">uhm.</string>
+    <string name="filter_mushrooms">Setas</string>
+    <string name="filter_glow_desc">en la oscuridad</string>
+    <string name="filter_glow">Brillo</string>
+    <string name="filter_posterize_desc">pocos colores hacen truco</string>
+    <string name="filter_film">Fílmico</string>
+    <string name="filter_inverted_desc">todo al revés</string>
+    <string name="filter_vibrant">Vibrante</string>
+    <string name="filter_vibrant_desc">la vida es buena</string>
+    <string name="filter_bw">Blanco y Negro</string>
+    <string name="filter_bw_desc">atrapado en los 50s</string>
+    <string name="filter_film_desc">nolan en el ascenso</string>
+    <string name="filter_grayscale">Escala de grises</string>
+    <string name="filter_grayscale_desc">taaaan espeluznante</string>
+    <string name="filter_sepia">Sepia</string>
+    <string name="filter_sepia_desc">sepia. por eso.</string>
+    <string name="filter_bgr">BGR</string>
+    <string name="filter_bgr_desc">¿por qué estás usando esto?</string>
+    <string name="filter_warm">Caliente</string>
+    <string name="filter_warm_desc">vibra acogedora</string>
+    <string name="filter_cool">Frío</string>
+    <string name="filter_cool_desc">vibra invernal</string>
+    <string name="filter_vintage">Vintage</string>
+    <string name="filter_vintage_desc">la nostalgia es fuerte</string>
+    <string name="filter_posterize">Posterizar</string>
+    <string name="filter_solar">Solar</string>
+    <string name="filter_solar_desc">CME viniendo a tu manera</string>
+    <string name="filter_peachy">Melocotón</string>
+    <string name="filter_peachy_desc">dulce y difuso</string>
+    <string name="filter_pastel">Pastel</string>
+    <string name="filter_pastel_desc">porque no puedo dibujar</string>
+    <string name="filter_rustic">Rústico</string>
+    <string name="filter_rustic_desc">encontrado en el bosque</string>
+    <string name="filter_dried">Seco</string>
+    <string name="filter_dried_desc">dejado en el sol</string>
+    <string name="filter_toast">Tostado</string>
+    <string name="filter_toast_desc">bonito colorante de ánade real</string>
+    <string name="filter_shimmer">Brillar</string>
+    <string name="filter_shimmer_desc">no lo arruines</string>
+    <string name="filter_select">Seleccione</string>
+    <string name="filter_selected">Seleccionado</string>
+    <string name="editing_trim">Recortar</string>
+    <string name="editing_export_video_loading">Exportando Video…</string>
+    <string name="editing_export_video_loading_body">Paso %1$d de %2$d</string>
+    <string name="editing_export_video_failed">No se pudo exportar el video</string>
+    <string name="editing_export_video_success">¡Video Exportado!</string>
+    <string name="editing_volume_display">Volumen: %s</string>
+    <string name="editing_speed_display">Velocidad de reproducción: %s</string>
+    <string name="editing_framerate_display">Velocidad de fotogramas: %s</string>
+    <string name="editing_volume">Volumen</string>
+    <string name="editing_wilson">Velocidad</string>
+    <string name="editing_fps">FPS</string>
+    <string name="settings_light_theme">Tema Claro</string>
+    <string name="settings_Auto_theme">Tema Auto</string>
+    <string name="settings_behaviour">Comportamiento</string>
+    <string name="settings_behaviour_desc">Cambia como funciona la app</string>
+    <string name="settings_navigation_exit_immediately">Salir Inmediatamente</string>
+    <string name="settings_navigation_exit_immediately_desc">Omite volver a la vista principal de fotos al presionar el botón Atrás</string>
+    <string name="settings_views">Vistas</string>
+    <string name="settings_rotate_in_views">Permitir Rotación</string>
+    <string name="settings_rotate_in_views_desc">Permite la rotación por gestos al ver medios</string>
+    <string name="trash_bin_short">Basura</string>
+    <string name="permissions_do_not_trash">No usar la Papelera</string>
+    <string name="permissions_do_not_trash_desc">Elimine elementos de forma inmediata y permanente sin moverse primero a la Papelera</string>
+    <string name="media_move_copy_list_search_bar">Buscar un álbum</string>
+    <string name="media_copy_snackbar_title">Copiando medios…</string>
+    <string name="media_move_snackbar_title">Moviendo medios…</string>
+    <string name="media_delete_snackbar_title">Borrando medios…</string>
+    <string name="media_restore_snackbar_title">Restaurando medios…</string>
+    <string name="media_operate_snackbar_body">%1$d de %2$d hecho</string>
+    <string name="media_tools">Herramientas</string>
+    <string name="media_information">Información</string>
+    <string name="wallpaper_homescreen">Pantalla de Inicio</string>
+    <string name="wallpaper_lockscreen">Pantalla de Bloqueo</string>
+    <string name="wallpaper_Both">Ambas Pantallas</string>
+    <string name="wallpaper_scrollable">Desplazable</string>
+    <string name="today">Hoy</string>
+    <string name="yesterday">Ayer</string>
+    <string name="help">Ayuda</string>
+    <string name="apply">Aplicar</string>
+    <string name="bottom_sheets_sixteen_by_nine">16:9 (horizontal)</string>
+    <string name="bottom_sheets_nine_by_sixteen">9:16 (vertical)</string>
+    <string name="bottom_sheets_nine_by_twentyone">9:21</string>
+    <string name="bottom_sheets_five_by_four">5:4</string>
+    <string name="bottom_sheets_four_by_three">4:3</string>
+    <string name="bottom_sheets_three_by_two">3:2</string>
+    <string name="look_and_feel_styling_separator">Estilismo</string>
+    <string name="look_and_feel_date_format">Formato de Fecha</string>
+    <string name="look_and_feel_date_format_desc">Cambia cómo se muestran las fechas</string>
+    <string name="look_and_feel_date_format_default">Por defecto</string>
+    <string name="look_and_feel_date_format_short">Corta</string>
+    <string name="look_and_feel_date_format_compressed">Comprimida</string>
+    <string name="look_and_feel_theme_amoled">Negro Amoled</string>
+    <string name="look_and_feel_theme_amoled_desc">Establece el color de fondo en negro para la eficiencia energética en dispositivos Amoled</string>
+    <string name="look_and_feel_column_size">Tamaño de columna: %1$d</string>
+    <string name="look_and_feel_album_column_size">Tamaño de columna de álbum: %1$d</string>
+    <string name="look_and_feel_grids">Rejillas</string>
+    <string name="look_and_feel_use_black_background">Fondo Negro para la Vista de Medios</string>
+    <string name="look_and_feel_use_black_background_desc">El fondo del visor de imágenes/reproductor de video será negro</string>
+    <string name="look_and_feel_nav">Navegación</string>
+    <string name="look_and_feel_extra_secure_nav">Entrada Extra de Carpeta Segura</string>
+    <string name="look_and_feel_extra_secure_nav_Desc">Muestra una opción para navegar a la Carpeta segura desde el cuadro de diálogo principal de la app</string>
+    <string name="look_and_feel_staggered_grids">Usar Cuadrícula Escalonada</string>
+    <string name="look_and_feel_staggered_grids_desc">Experimental. La cuadrícula clasifica automáticamente los medios en función de su relación de aspecto.</string>
+    <string name="immich">Immich</string>
+    <string name="immich_title">Copia de Seguridad de Immich</string>
+    <string name="immich_desc">Copia de seguridad en el servidor Immich autohospedado</string>
+    <string name="immich_account">Cuenta Immich</string>
+    <string name="immich_login_unavailable">No Ha Iniciado Sesión</string>
+    <string name="immich_login_unavailable_desc">Ninguna cuenta de immich está conectada actualmente</string>
+    <string name="immich_login_found">Conectado como:</string>
+    <string name="immich_login_found_desc">Copia de seguridad Immich disponible!</string>
+    <string name="immich_login">Iniciar sesión con Immich</string>
+    <string name="immich_login_confirm">Iniciar sesión</string>
+    <string name="immich_login_ongoing">Iniciando sesión…</string>
+    <string name="immich_login_successful">Inicio de sesión exitoso!</string>
+    <string name="immich_login_failed">Error de inicio de sesión</string>
+    <string name="immich_endpoint_base">Dirección del Servidor</string>
+    <string name="immich_endpoint_base_desc">Enlace al servidor de respaldo Immich</string>
+    <string name="immich_endpoint_base_placeholder">https://my.immich.server.com/</string>
+    <string name="immich_clear_endpoint">¿Eliminar Servidor?</string>
+    <string name="immich_clear_endpoint_desc">¿Está seguro de que desea eliminar esta dirección de servidor?</string>
+    <string name="immich_logout">¿Cerrar sesión?</string>
+    <string name="immich_logout_desc">¿Está seguro de que desea cerrar sesión en esta cuenta?</string>
+    <string name="immich_albums_clear">Borrar Álbumes de Respaldo</string>
+    <string name="immich_albums_clear_desc">Dejar de hacer copias de seguridad de todos los álbumes</string>
+    <string name="immich_albums_clear_confirm">¿Está seguro de que desea eliminar todos los álbumes de la copia de seguridad?</string>
+    <string name="immich_delete_album">¿Borrar este álbum?</string>
+    <string name="immich_delete_album_desc">¡Esto no se puede deshacer!</string>
+    <string name="immich_delete_album_contents">Incluir medios en la eliminación</string>
+    <string name="immich_album_syncing">Sincronizando álbum</string>
+    <string name="immich_album_synced">Todos los medios sincronizados</string>
+    <string name="immich_done">hecho</string>
+    <string name="immich_sync_status">Estado de sincronización:</string>
+    <string name="immich_email">Email:</string>
+    <string name="immich_set_pfp_fail">No se pudo establecer la imagen de Perfil</string>
+    <string name="immich_set_pfp_success">¡Foto de perfil actualizada!</string>
+    <string name="immich_operation_complete">¡Operación completa!</string>
+    <string name="immich_state_unknown">Desconocido</string>
+    <string name="immich_state_loading">Cargando…</string>
+    <string name="immich_sync_album">Sincronizar Álbum e Immich</string>
+    <string name="immich_sync_album_out_of_sync_desc">Extra en: Álbum: %1$s. Immich: %2$s</string>
+    <string name="immich_album_delete">¿Eliminar este álbum?</string>
+    <string name="immich_album_delete_desc">Elimina este álbum de Immich sync</string>
+    <string name="immich_album_delete_include_media">Eliminar contenido de Immich</string>
+    <string name="immich_album_delete_full">Eliminar Álbum</string>
+    <string name="immich_auth_passowrd">Contraseña</string>
+    <string name="immich_auth_email">Email</string>
+    <string name="immich_continuing_in_bg">Continuando copia de seguridad en segundo plano</string>
+    <string name="immich_main_dialog_sync_state">Sincronizando: %1$d de %2$d</string>
+    <string name="immich_uuid">Immich UUID</string>
+    <string name="immich_failed_refreshing_albums">Error refrescando álbumes</string>
+    <string name="immich_failed_uploading_albums">Error cargando álbum</string>
+    <string name="immich_server_info">Info del Servidor</string>
+    <string name="immich_server_info_desc">Versión: %1$s. Compilación: %2$s</string>
+    <string name="immich_server_storage">Almacenamiento en Servidor</string>
+    <string name="immich_server_storage_desc">%1$s de %2$s usado</string>
+    <string name="immich_server_info_failed">Los datos no están disponibles</string>
+    <string name="immich_server">Servidor Immich</string>
+    <string name="immich_help_general">¿Qué es esto?</string>
+    <string name="immich_help_general_desc">Permite la copia de seguridad de medios a nivel de álbum en un servidor Immich</string>
+    <string name="immich_help_detailed">Cómo usar</string>
+    <string name="immich_help_detailed_desc"><![CDATA[
+            <p><a href="https://immich.app/">Immich</a> es una solución de gestión de fotos y videos autohospedada,
+            eso permite que cualquiera pueda alojar su propio servidor de respaldo en la nube.
+            </p>
+            <h3 style="text-align:center;">¿Como Usar?<h3/>
+            <ul>
+                <li>Autohospedar un <a href="https://immich.app/">Servidor de Immich</a></li>
+                <li>Especifique la dirección del servidor Lavender Photos</li>
+                <li>Inicie sesión con la cuenta de usuario de Immich</li>
+                <li>Vaya a cualquier álbum, haga clic en el icono de la nube</li>
+                <li>¡Comience a hacer copias de seguridad de sus fotos!</li>
+            </ul>
+        ]]></string>
+    <string name="immich_server_url_invalid">¡Url Inválida!</string>
 </resources>
