@@ -71,6 +71,7 @@ import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -119,8 +120,10 @@ import com.kaii.photos.compose.editing_view.video_editor.VideoEditorProcessingCo
 import com.kaii.photos.compose.widgets.SelectableDropDownMenuItem
 import com.kaii.photos.compose.widgets.SimpleTab
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
+import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.Editing
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.VideoPlayerConstants
 import com.kaii.photos.helpers.editing.BasicVideoData
@@ -306,9 +309,11 @@ fun VideoEditorTopBar(
     lastSavedModCount: MutableIntState,
     containerDimens: Size,
     canvasSize: Size,
-    isFromOpenWithView: Boolean
+    isFromOpenWithView: Boolean,
+    albumInfo: AlbumInfo?
 ) {
     val navController = LocalNavController.current
+    var navMediaId by remember { mutableLongStateOf(-1L) }
 
     TopAppBar(
         title = {},
@@ -332,8 +337,16 @@ fun VideoEditorTopBar(
                     onClick = {
                         if (lastSavedModCount.intValue < modifications.size) {
                             showDialog.value = true
-                        } else {
-                            navController.popBackStack()
+                        } else if (!isFromOpenWithView) {
+                            navController.popBackStack(Screens.SinglePhotoView::class, true)
+                            navController.navigate(
+                                Screens.SinglePhotoView(
+                                    albumInfo = albumInfo!!,
+                                    mediaItemId = navMediaId,
+                                    loadsFromMainViewModel = false,
+                                    previousMediaItemId = uri.lastPathSegment?.toLongOrNull()
+                                )
+                            )
                         }
                     },
                     enabled = true,
@@ -379,7 +392,7 @@ fun VideoEditorTopBar(
                 SelectableDropDownMenuItem(
                     text = stringResource(id = R.string.editing_overwrite_desc),
                     iconResId = R.drawable.checkmark_thin,
-                    isSelected = false
+                    isSelected = overwrite
                 ) {
                     overwrite = true
                     showDropDown = false
@@ -388,7 +401,7 @@ fun VideoEditorTopBar(
                 SelectableDropDownMenuItem(
                     text = stringResource(id = R.string.editing_save),
                     iconResId = R.drawable.checkmark_thin,
-                    isSelected = true
+                    isSelected = !overwrite
                 ) {
                     overwrite = false
                     showDropDown = false
@@ -402,13 +415,15 @@ fun VideoEditorTopBar(
                     val coroutineScope = rememberCoroutineScope()
                     val textMeasurer = rememberTextMeasurer()
 
+                    val exitOnSave by mainViewModel.settings.Editing.getExitOnSave().collectAsStateWithLifecycle(initialValue = false)
                     SplitButtonDefaults.LeadingButton(
                         onClick = {
                             lastSavedModCount.intValue = modifications.size
 
                             // mainViewModel so it doesn't die if user exits before video is saved
+                            // not using Dispatchers.IO since transformer needs to be on main thread
                             mainViewModel.launch {
-                                saveVideo(
+                                navMediaId = saveVideo(
                                     context = context,
                                     modifications = modifications + drawingPaintState.modifications.map {
                                         it as VideoModification
@@ -432,6 +447,18 @@ fun VideoEditorTopBar(
                                             )
                                         )
                                     }
+                                }
+
+                                if (exitOnSave && navMediaId != -1L && !isFromOpenWithView) {
+                                    navController.popBackStack(Screens.SinglePhotoView::class, true)
+                                    navController.navigate(
+                                        Screens.SinglePhotoView(
+                                            albumInfo = albumInfo!!,
+                                            mediaItemId = navMediaId,
+                                            loadsFromMainViewModel = false,
+                                            previousMediaItemId = uri.lastPathSegment?.toLongOrNull()
+                                        )
+                                    )
                                 }
                             }
                         }
@@ -766,7 +793,8 @@ fun ImageEditorTopBar(
     overwrite: Boolean,
     isFromOpenWithView: Boolean,
     setOverwrite: (Boolean) -> Unit,
-    saveImage: suspend () -> Unit
+    saveImage: suspend () -> Unit,
+    navigateBack: () -> Unit
 ) {
     val navController = LocalNavController.current
 
@@ -793,7 +821,7 @@ fun ImageEditorTopBar(
                         if (lastSavedModCount.intValue < modifications.size) {
                             showDialog.value = true
                         } else {
-                            navController.popBackStack()
+                            navigateBack()
                         }
                     },
                     enabled = true,
@@ -838,7 +866,7 @@ fun ImageEditorTopBar(
                 SelectableDropDownMenuItem(
                     text = stringResource(id = R.string.editing_overwrite_desc),
                     iconResId = R.drawable.checkmark_thin,
-                    isSelected = false
+                    isSelected = overwrite
                 ) {
                     setOverwrite(true)
                     showDropDown = false
@@ -847,7 +875,7 @@ fun ImageEditorTopBar(
                 SelectableDropDownMenuItem(
                     text = stringResource(id = R.string.editing_save),
                     iconResId = R.drawable.checkmark_thin,
-                    isSelected = true
+                    isSelected = !overwrite
                 ) {
                     setOverwrite(false)
                     showDropDown = false
@@ -861,7 +889,7 @@ fun ImageEditorTopBar(
                             lastSavedModCount.intValue = modifications.size
 
                             // mainViewModel so it doesn't die if user exits before image is saved
-                            mainViewModel.launch {
+                            mainViewModel.launch(Dispatchers.IO) {
                                 saveImage()
                             }
                         }

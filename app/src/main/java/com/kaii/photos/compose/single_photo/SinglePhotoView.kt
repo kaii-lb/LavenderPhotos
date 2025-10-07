@@ -4,8 +4,10 @@ import android.annotation.SuppressLint
 import android.view.Window
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -63,7 +65,9 @@ import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.dialogs.SinglePhotoInfoDialog
 import com.kaii.photos.database.entities.MediaEntity
+import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.Permissions
+import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.MultiScreenViewType
@@ -93,6 +97,8 @@ fun SinglePhotoView(
     multiAlbumViewModel: MultiAlbumViewModel,
     customAlbumViewModel: CustomAlbumViewModel,
     mediaItemId: Long,
+    previousMediaItemId: Long?,
+    albumInfo: AlbumInfo,
     loadsFromMainViewModel: Boolean
 ) {
     val mainViewModel = LocalMainViewModel.current
@@ -133,7 +139,9 @@ fun SinglePhotoView(
         navController = navController,
         window = window,
         mediaItemId = mediaItemId,
+        previousMediaItemId = previousMediaItemId,
         groupedMedia = groupedMedia,
+        albumInfo = albumInfo,
         loadsFromMainViewModel = loadsFromMainViewModel
     )
 }
@@ -144,6 +152,8 @@ fun SinglePhotoView(
     window: Window,
     multiAlbumViewModel: MultiAlbumViewModel,
     mediaItemId: Long,
+    previousMediaItemId: Long?,
+    albumInfo: AlbumInfo,
     loadsFromMainViewModel: Boolean
 ) {
     val mainViewModel = LocalMainViewModel.current
@@ -184,6 +194,8 @@ fun SinglePhotoView(
         window = window,
         mediaItemId = mediaItemId,
         groupedMedia = groupedMedia,
+        albumInfo = albumInfo,
+        previousMediaItemId = previousMediaItemId,
         loadsFromMainViewModel = loadsFromMainViewModel
     )
 }
@@ -194,14 +206,16 @@ fun SinglePhotoViewCommon(
     navController: NavHostController,
     window: Window,
     mediaItemId: Long,
+    previousMediaItemId: Long?,
     groupedMedia: MutableState<List<MediaStoreData>>,
+    albumInfo: AlbumInfo,
     loadsFromMainViewModel: Boolean
 ) {
     var currentMediaItemIndex by rememberSaveable {
         mutableIntStateOf(
             groupedMedia.value.indexOf(
-                groupedMedia.value.first {
-                    it.id == mediaItemId
+                groupedMedia.value.firstOrNull {
+                    it.id == mediaItemId || it.id == previousMediaItemId
                 }
             )
         )
@@ -220,6 +234,33 @@ fun SinglePhotoViewCommon(
 
     LaunchedEffect(key1 = state.currentPage) {
         currentMediaItemIndex = state.currentPage
+    }
+
+    var lastGroupedMediaSize by remember { mutableIntStateOf(groupedMedia.value.size) }
+    val editedMediaItemIndex by remember(groupedMedia.value.size) {
+        derivedStateOf {
+            groupedMedia.value.indexOf(
+                groupedMedia.value.find {
+                    it.id == mediaItemId
+                }
+            )
+        }
+    }
+
+    LaunchedEffect(editedMediaItemIndex) {
+        // if user is not scrolling, move to edited media
+        if (editedMediaItemIndex != -1 && previousMediaItemId != null) {
+            val index = if (groupedMedia.value.size == lastGroupedMediaSize) editedMediaItemIndex else editedMediaItemIndex - 1
+            state.animateScrollToPage(
+                page = index,
+                animationSpec = tween(
+                    durationMillis = AnimationConstants.DURATION,
+                    easing = FastOutSlowInEasing
+                )
+            )
+
+            lastGroupedMediaSize = groupedMedia.value.size
+        }
     }
 
     val appBarsVisible = remember { mutableStateOf(true) }
@@ -303,14 +344,16 @@ fun SinglePhotoViewCommon(
                                 Screens.ImageEditor(
                                     absolutePath = currentMediaItem.value.absolutePath,
                                     uri = currentMediaItem.value.uri.toString(),
-                                    dateTaken = currentMediaItem.value.dateTaken
+                                    dateTaken = currentMediaItem.value.dateTaken,
+                                    albumInfo = albumInfo
                                 )
                             )
                         } else {
                             navController.navigate(
                                 Screens.VideoEditor(
                                     uri = currentMediaItem.value.uri.toString(),
-                                    absolutePath = currentMediaItem.value.absolutePath
+                                    absolutePath = currentMediaItem.value.absolutePath,
+                                    albumInfo = albumInfo
                                 )
                             )
                         }

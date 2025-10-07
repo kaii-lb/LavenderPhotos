@@ -77,6 +77,7 @@ import com.kaii.photos.compose.editing_view.makeVideoDrawCanvas
 import com.kaii.photos.compose.single_photo.rememberExoPlayerWithLifeCycle
 import com.kaii.photos.compose.single_photo.rememberPlayerView
 import com.kaii.photos.compose.widgets.shimmerEffect
+import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.editing.BasicVideoData
@@ -104,6 +105,7 @@ private const val TAG = "com.kaii.photos.compose.editing_view.VideoEditor"
 fun VideoEditor(
     uri: Uri,
     absolutePath: String,
+    albumInfo: AlbumInfo?,
     window: Window,
     isFromOpenWithView: Boolean
 ) {
@@ -375,7 +377,8 @@ fun VideoEditor(
                 lastSavedModCount = lastSavedModCount,
                 containerDimens = containerDimens,
                 canvasSize = canvasSize,
-                isFromOpenWithView = isFromOpenWithView
+                isFromOpenWithView = isFromOpenWithView,
+                albumInfo = albumInfo
             )
         },
         bottomBar = {

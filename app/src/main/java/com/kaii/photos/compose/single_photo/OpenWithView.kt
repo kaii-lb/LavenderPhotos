@@ -117,6 +117,8 @@ import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.editing_view.image_editor.ImageEditor
 import com.kaii.photos.compose.editing_view.video_editor.VideoEditor
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
+import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.AlbumInfoNavType
 import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.MediaItemSortMode
@@ -134,6 +136,7 @@ import com.kaii.photos.models.multi_album.formatDate
 import com.kaii.photos.ui.theme.PhotosTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlin.reflect.typeOf
 
 class OpenWithView : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -250,6 +253,9 @@ class OpenWithView : ComponentActivity() {
                             }
 
                             composable<Screens.ImageEditor>(
+                                typeMap = mapOf(
+                                    typeOf<AlbumInfo>() to AlbumInfoNavType
+                                ),
                                 enterTransition = {
                                     slideInVertically(
                                         AnimationConstants.expressiveTween(AnimationConstants.DURATION)
@@ -300,6 +306,7 @@ class OpenWithView : ComponentActivity() {
                                 ImageEditor(
                                     uri = screen.uri.toUri(),
                                     absolutePath = screen.absolutePath,
+                                    albumInfo = null,
                                     isFromOpenWithView = true
                                 )
                             }
@@ -356,7 +363,8 @@ class OpenWithView : ComponentActivity() {
                                     uri = screen.uri.toUri(),
                                     absolutePath = screen.absolutePath,
                                     window = window,
-                                    isFromOpenWithView = true
+                                    isFromOpenWithView = true,
+                                    albumInfo = null
                                 )
                             }
                         }
@@ -1051,12 +1059,14 @@ private fun BottomBar(
                                                     Screens.ImageEditor(
                                                         absolutePath = absolutePath,
                                                         uri = contentUri.toString(),
-                                                        dateTaken = currentTime / 1000
+                                                        dateTaken = currentTime / 1000,
+                                                        albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList())
                                                     )
                                                 } else {
                                                     Screens.VideoEditor(
                                                         uri = contentUri.toString(),
-                                                        absolutePath = absolutePath
+                                                        absolutePath = absolutePath,
+                                                        albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList())
                                                     )
                                                 }
                                             )

@@ -38,6 +38,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -75,6 +76,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.Glide
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.kaii.photos.LocalMainViewModel
+import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.ImageEditorBottomBar
 import com.kaii.photos.compose.app_bars.ImageEditorTopBar
@@ -84,8 +86,10 @@ import com.kaii.photos.compose.editing_view.ImageFilterPage
 import com.kaii.photos.compose.editing_view.PreviewCanvas
 import com.kaii.photos.compose.editing_view.makeVideoDrawCanvas
 import com.kaii.photos.compose.widgets.shimmerEffect
+import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.Editing
 import com.kaii.photos.helpers.AnimationConstants
+import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.editing.DrawableText
 import com.kaii.photos.helpers.editing.ImageEditorTabs
 import com.kaii.photos.helpers.editing.ImageModification
@@ -105,7 +109,8 @@ import kotlin.math.min
 fun ImageEditor(
     uri: Uri,
     absolutePath: String,
-    isFromOpenWithView: Boolean
+    isFromOpenWithView: Boolean,
+    albumInfo: AlbumInfo?
 ) {
     val imageEditingState = rememberImageEditingState()
     val drawingPaintState = rememberDrawingPaintState(
@@ -232,6 +237,10 @@ fun ImageEditor(
                 overwrite = overwriteByDefault
             }
 
+            val exitOnSave by mainViewModel.settings.Editing.getExitOnSave().collectAsStateWithLifecycle(initialValue = false)
+            val navController = LocalNavController.current
+
+            var navMediaId by remember { mutableLongStateOf(-1L) }
             ImageEditorTopBar(
                 modifications = imageEditingState.modificationList,
                 lastSavedModCount = lastSavedModCount,
@@ -241,7 +250,7 @@ fun ImageEditor(
                     overwrite = it
                 },
                 saveImage = {
-                    saveImage(
+                    navMediaId = saveImage(
                         context = context,
                         image = originalImage,
                         containerDimens = containerDimens,
@@ -255,6 +264,31 @@ fun ImageEditor(
                         overwrite = overwrite,
                         isFromOpenWithView = isFromOpenWithView
                     )
+
+                    if (exitOnSave && navMediaId != -1L && !isFromOpenWithView) mainViewModel.launch { // need to be on main thread
+                        navController.popBackStack(Screens.SinglePhotoView::class, true)
+                        navController.navigate(
+                            Screens.SinglePhotoView(
+                                albumInfo = albumInfo!!,
+                                mediaItemId = navMediaId,
+                                loadsFromMainViewModel = false,
+                                previousMediaItemId = uri.lastPathSegment?.toLongOrNull()
+                            )
+                        )
+                    }
+                },
+                navigateBack = {
+                    if (!isFromOpenWithView) {
+                        navController.popBackStack(Screens.SinglePhotoView::class, true)
+                        navController.navigate(
+                            Screens.SinglePhotoView(
+                                albumInfo = albumInfo!!,
+                                mediaItemId = navMediaId,
+                                loadsFromMainViewModel = false,
+                                previousMediaItemId = uri.lastPathSegment?.toLongOrNull()
+                            )
+                        )
+                    }
                 }
             )
         },
@@ -362,7 +396,7 @@ fun ImageEditor(
 
             val rotationScale by animateFloatAsState(
                 targetValue =
-                    with (localDensity) {
+                    with(localDensity) {
                         if (imageEditingState.rotation % 180f == 0f) {
                             min(
                                 width.toPx() / imageSize.width.toPx(),

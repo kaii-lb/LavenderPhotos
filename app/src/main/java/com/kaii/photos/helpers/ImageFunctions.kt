@@ -438,7 +438,7 @@ suspend fun copyImageListToPath(
     showProgressSnackbar: Boolean = true,
     overrideDisplayName: ((displayName: String) -> String)? = null,
     onSingleItemDone: (media: MediaStoreData) -> Unit
-) {
+): MutableList<Uri> {
     val contentResolver = context.contentResolver
 
     val body = mutableStateOf(context.resources.getString(R.string.media_operate_snackbar_body, 0, list.size))
@@ -455,6 +455,8 @@ suspend fun copyImageListToPath(
         )
     }
 
+    val newUris = mutableListOf<Uri>()
+
     list.forEachIndexed { index, media ->
         contentResolver.insertMedia(
             context = context,
@@ -466,6 +468,7 @@ suspend fun copyImageListToPath(
             overwriteDate = overwriteDate,
             onInsert = { original, new ->
                 contentResolver.copyUriToUri(original, new)
+                newUris.add(new)
             }
         )?.let {
             body.value = context.resources.getString(R.string.media_operate_snackbar_body, index + 1, list.size)
@@ -476,4 +479,6 @@ suspend fun copyImageListToPath(
     }
 
     percentage.floatValue = 1f
+
+    return newUris
 }

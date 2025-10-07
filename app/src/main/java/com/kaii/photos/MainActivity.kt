@@ -487,6 +487,8 @@ class MainActivity : ComponentActivity() {
                             window = window,
                             multiAlbumViewModel = multiAlbumViewModel,
                             mediaItemId = screen.mediaItemId,
+                            previousMediaItemId = screen.previousMediaItemId,
+                            albumInfo = screen.albumInfo,
                             loadsFromMainViewModel = screen.loadsFromMainViewModel,
                         )
                     } else {
@@ -504,6 +506,8 @@ class MainActivity : ComponentActivity() {
                             multiAlbumViewModel = multiAlbumViewModel,
                             customAlbumViewModel = customAlbumViewModel,
                             mediaItemId = screen.mediaItemId,
+                            previousMediaItemId = screen.previousMediaItemId,
+                            albumInfo = screen.albumInfo,
                             loadsFromMainViewModel = screen.loadsFromMainViewModel,
                         )
                     }
@@ -683,6 +687,9 @@ class MainActivity : ComponentActivity() {
                 }
 
                 composable<Screens.ImageEditor>(
+                    typeMap = mapOf(
+                        typeOf<AlbumInfo>() to AlbumInfoNavType
+                    ),
                     enterTransition = {
                         slideInVertically(
                             AnimationConstants.expressiveTween(AnimationConstants.DURATION)
@@ -737,7 +744,8 @@ class MainActivity : ComponentActivity() {
                     ImageEditor(
                         uri = screen.uri.toUri(),
                         absolutePath = screen.absolutePath,
-                        isFromOpenWithView = false
+                        isFromOpenWithView = false,
+                        albumInfo = screen.albumInfo
                     )
                 }
 
@@ -934,6 +942,9 @@ class MainActivity : ComponentActivity() {
                 }
 
                 composable<Screens.VideoEditor>(
+                    typeMap = mapOf(
+                        typeOf<AlbumInfo>() to AlbumInfoNavType
+                    ),
                     enterTransition = {
                         slideInVertically(
                             animationSpec = AnimationConstants.expressiveTween(AnimationConstants.DURATION)
@@ -988,6 +999,7 @@ class MainActivity : ComponentActivity() {
                     VideoEditor(
                         uri = screen.uri.toUri(),
                         absolutePath = screen.absolutePath,
+                        albumInfo = screen.albumInfo,
                         window = window,
                         isFromOpenWithView = false
                     )

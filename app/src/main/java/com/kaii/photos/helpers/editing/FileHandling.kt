@@ -81,6 +81,7 @@ import kotlin.math.roundToInt
 
 private const val TAG = "com.kaii.photos.helpers.editing.FileHandling"
 
+/** return the id of the newly created video, or -1 if an error occurs */
 @OptIn(UnstableApi::class)
 suspend fun saveVideo(
     context: Context,
@@ -95,7 +96,7 @@ suspend fun saveVideo(
     textMeasurer: TextMeasurer,
     isFromOpenWithView: Boolean,
     onFailure: () -> Unit
-) {
+): Long {
     // 100 * 2 for each of the transformer.start's, and 40 for the copying
     val totalPercentage = 120f * 2
     val percentage = mutableFloatStateOf(0f)
@@ -264,7 +265,7 @@ suspend fun saveVideo(
     if (uri == null) {
         percentage.floatValue = 1f
         onFailure()
-        return
+        return -1L
     }
 
     val media = MediaStoreData(
@@ -398,7 +399,7 @@ suspend fun saveVideo(
     if (mediaUri == null) {
         percentage.floatValue = 1f
         onFailure()
-        return
+        return -1L
     }
 
     val finalMediaItem = MediaItem.Builder()
@@ -439,7 +440,7 @@ suspend fun saveVideo(
     if (newUri == null) {
         percentage.floatValue = 1f
         onFailure()
-        return
+        return -1L
     }
 
     if (overwrite) {
@@ -451,7 +452,7 @@ suspend fun saveVideo(
         )
     }
 
-    copyImageListToPath(
+    return copyImageListToPath(
         context = context,
         list = listOf(
             media.copy(
@@ -474,9 +475,10 @@ suspend fun saveVideo(
             body.value = context.resources.getString(R.string.editing_export_video_loading_body, 3, 3)
             percentage.floatValue = 1f
         }
-    )
+    ).first().lastPathSegment?.toLongOrNull() ?: -1L
 }
 
+/** return the id of the newly created image, or -1 if an error occurs */
 suspend fun saveImage(
     context: Context,
     image: ImageBitmap,
@@ -490,7 +492,7 @@ suspend fun saveImage(
     actualTop: Float,
     overwrite: Boolean,
     isFromOpenWithView: Boolean
-) {
+): Long {
     val isLoading = mutableStateOf(true)
 
     LavenderSnackbarController.pushEvent(
@@ -692,7 +694,7 @@ suspend fun saveImage(
             )
         )
 
-        return
+        return -1L
     }
 
     val media = MediaStoreData(
@@ -731,7 +733,7 @@ suspend fun saveImage(
             )
         )
 
-        return
+        return -1L
     }
 
     val wroteData = context.contentResolver.openOutputStream(newUri)?.use { outputStream ->
@@ -760,4 +762,6 @@ suspend fun saveImage(
             )
         )
     }
+
+    return newUri.lastPathSegment?.toLongOrNull() ?: -1L
 }
