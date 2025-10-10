@@ -18,9 +18,9 @@ import com.kaii.photos.models.multi_album.DisplayDateFormat
 import com.kaii.photos.models.multi_album.groupPhotosBy
 
 /** Loads metadata from the media store for images and videos. */
-class MultiAlbumDataSource(
+class NonStreamingDataSource(
     context: Context,
-    private val queryString: SQLiteQuery,
+    private val sqliteQuery: SQLiteQuery,
     sortBy: MediaItemSortMode,
     cancellationSignal: CancellationSignal,
     private val displayDateFormat: DisplayDateFormat
@@ -53,8 +53,8 @@ class MultiAlbumDataSource(
             context.contentResolver.query(
                 MEDIA_STORE_FILE_URI,
                 PROJECTION,
-                "((${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_IMAGE}) OR (${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_VIDEO})) ${queryString.query}",
-                queryString.paths?.toTypedArray(),
+                "((${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_IMAGE}) OR (${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_VIDEO})) ${sqliteQuery.query}",
+                sqliteQuery.paths?.toTypedArray(),
                 null,
             ) ?: return data
 
@@ -120,7 +120,7 @@ class MultiAlbumDataSource(
                     if (type == MediaType.Image) MediaStore.Images.Media.EXTERNAL_CONTENT_URI else MediaStore.Video.Media.EXTERNAL_CONTENT_URI
                 val uri = ContentUris.withAppendedId(uriParentPath, id)
 
-                if (queryString.includedBasePaths?.contains(absolutePath.getParentFromPath()) == true || queryString.includedBasePaths == null) {
+                if (sqliteQuery.basePaths?.contains(absolutePath.getParentFromPath()) == true || sqliteQuery.basePaths == null) {
                     data.add(
                         MediaStoreData(
                             type = type,

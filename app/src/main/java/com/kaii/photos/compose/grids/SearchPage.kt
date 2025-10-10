@@ -66,10 +66,11 @@ fun SearchPage(
     val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
     val sortMode by mainViewModel.settings.PhotoGrid.getSortMode().collectAsStateWithLifecycle(initialValue = MediaItemSortMode.DateTaken)
 
+    val context = LocalContext.current
     val searchViewModel: SearchViewModel = viewModel(
         factory = SearchViewModelFactory(
-            context = LocalContext.current,
-            sortBy = sortMode,
+            context = context,
+            sortMode = sortMode,
             displayDateFormat = displayDateFormat
         )
     )

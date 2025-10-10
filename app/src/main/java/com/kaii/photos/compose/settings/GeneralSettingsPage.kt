@@ -31,6 +31,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
@@ -79,23 +80,13 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
             }
 
             item {
-                val mainPhotosAlbums by mainViewModel.settings.MainPhotosView.getAlbums()
-                    .collectAsStateWithLifecycle(initialValue = emptyList())
+                val allAlbums by mainViewModel.allAvailableAlbums.collectAsStateWithLifecycle()
+                val mainPhotosPaths by mainViewModel.mainPhotosAlbums.collectAsStateWithLifecycle()
+                val shouldShowEverything by mainViewModel.settings.MainPhotosView.getShowEverything()
+                    .collectAsStateWithLifecycle(initialValue = false)
 
-                val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
-                val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect().collectAsStateWithLifecycle(initialValue = true)
-
-                val allAlbums by if (autoDetectAlbums) {
-                    mainViewModel.settings.AlbumsList.getAutoDetectedAlbums(displayDateFormat = displayDateFormat)
-                        .collectAsStateWithLifecycle(initialValue = emptyList())
-                } else {
-                    mainViewModel.settings.AlbumsList.getNormalAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
-                }
-
-                val showAlbumsSelectionDialog = remember { mutableStateOf(false) }
                 val selectedAlbums = remember { mutableStateListOf<String>() }
-
-                val shouldShowEverything by mainViewModel.showAllInMain.collectAsStateWithLifecycle()
+                val showAlbumsSelectionDialog = remember { mutableStateOf(false) }
 
                 PreferencesSwitchRow(
                     title = stringResource(id = R.string.albums_main_list),
@@ -106,15 +97,18 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
                     summary =
                         if (!shouldShowEverything) stringResource(id = R.string.albums_main_list_desc_1)
                         else stringResource(id = R.string.albums_main_list_desc_2),
-                    onRowClick = { checked ->
+                    onRowClick = {
                         selectedAlbums.clear()
                         selectedAlbums.addAll(
-                            mainPhotosAlbums.map {
-                                it.apply {
-                                    removeSuffix("/")
-                                }
+                            if (shouldShowEverything) {
+                                val flat = allAlbums.flatMap { it.paths }.fastMap { it.removeSuffix("/") }
+
+                                flat - mainPhotosPaths.fastMap { it.removeSuffix("/") }
+                            } else {
+                                mainPhotosPaths.fastMap { it.removeSuffix("/") }
                             }
                         )
+
                         showAlbumsSelectionDialog.value = true
                     },
                     onSwitchClick = { checked ->
@@ -133,7 +127,7 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
                             mainViewModel.settings.MainPhotosView.clear()
 
                             selectedAlbums.forEach { album ->
-                                mainViewModel.settings.MainPhotosView.addAlbum(album.removeSuffix("/"))
+                                mainViewModel.settings.MainPhotosView.addAlbum(album)
                             }
                         },
                         buttons = {
@@ -151,10 +145,10 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
                                         text = associatedAlbum.name,
                                         checked = selectedAlbums.contains(associatedAlbum.mainPath)
                                     ) {
-                                        if ((selectedAlbums.contains(associatedAlbum.mainPath) && selectedAlbums.size > 1) || shouldShowEverything) {
-                                            selectedAlbums.remove(associatedAlbum.mainPath)
+                                        if (selectedAlbums.contains(associatedAlbum.mainPath) && (selectedAlbums.size > 1 || shouldShowEverything)) {
+                                            selectedAlbums.remove(associatedAlbum.mainPath.removeSuffix("/"))
                                         } else {
-                                            selectedAlbums.add(associatedAlbum.mainPath)
+                                            selectedAlbums.add(associatedAlbum.mainPath.removeSuffix("/"))
                                         }
                                     }
                                 }

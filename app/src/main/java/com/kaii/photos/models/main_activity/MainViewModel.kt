@@ -12,9 +12,11 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.datastore.MainPhotosView
 import com.kaii.photos.datastore.Settings
@@ -25,10 +27,13 @@ import com.kaii.photos.mediastore.getSQLiteQuery
 import com.kaii.photos.models.multi_album.DisplayDateFormat
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -60,12 +65,6 @@ class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMode
         initialValue = 3
     )
 
-    val showAllInMain = settings.MainPhotosView.getShowEverything().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = false
-    )
-
     val useBlackViewBackgroundColor = settings.LookAndFeel.getUseBlackBackgroundForViews().stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
@@ -76,12 +75,10 @@ class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMode
     private val albumMediaStoreDataSource =
         mutableStateOf(initDataSource(context = context, albums = albumInfo))
 
-    val albumsMediaFlow by derivedStateOf {
+    val albumsThumbnailMediaFlow by derivedStateOf {
         getAlbumsDataFlow().value.stateIn(
             scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(
-                stopTimeoutMillis = Long.MAX_VALUE
-            ),
+            started = SharingStarted.Eagerly,
             initialValue = emptyList()
         )
     }
@@ -89,6 +86,55 @@ class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMode
     private fun getAlbumsDataFlow() =
         derivedStateOf {
             albumMediaStoreDataSource.value.loadMediaStoreData().flowOn(Dispatchers.IO)
+        }
+
+    val allAvailableAlbums =
+        getAllAvailableAlbums().stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = emptyList()
+        )
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun getAllAvailableAlbums(): Flow<List<AlbumInfo>> =
+        settings.AlbumsList.getAutoDetect().combine(_displayDateFormat) { autoDetectAlbums, dateFormat ->
+            if (autoDetectAlbums) {
+                settings.AlbumsList.getAutoDetectedAlbums(dateFormat)
+            } else {
+                settings.AlbumsList.getNormalAlbums()
+            }
+        }
+            .flatMapConcat { it }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.Eagerly,
+                initialValue = emptyList()
+            )
+
+    private val _mainPhotosAlbums = settings.MainPhotosView.getAlbums()
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val mainPhotosAlbums =
+        getMainPhotosAlbums().stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = emptyList()
+        )
+
+    private fun getMainPhotosAlbums() =
+        allAvailableAlbums.combine(
+            combine(
+                settings.MainPhotosView.getShowEverything(),
+                _mainPhotosAlbums
+            ) { showAll, mainPaths -> Pair(showAll, mainPaths) }
+        ) { albums, pair ->
+            if (pair.first) {
+                albums.fastMap { albumInfo ->
+                    albumInfo.paths.fastMap { it.removeSuffix("/") }
+                }.flatMap { it } - pair.second
+            } else {
+                pair.second
+            }
         }
 
     fun refreshAlbums(
@@ -111,7 +157,7 @@ class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMode
         val queries = albums.map { album ->
             val query = getSQLiteQuery(albums = album.paths)
 
-            Pair(album, query.copy(includedBasePaths = album.paths))
+            Pair(album, query.copy(basePaths = album.paths))
         }
 
         AlbumStoreDataSource(

@@ -97,10 +97,12 @@ import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.signature
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -114,20 +116,11 @@ fun AlbumsGridView(
     val navController = LocalNavController.current
     val mainViewModel = LocalMainViewModel.current
 
-    val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect()
-        .collectAsStateWithLifecycle(initialValue = true)
-    val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
-
-    // used to save pinned albums incase of auto detecting
+    // used to save pinned albums in-case of auto detecting
     val normalAlbums = mainViewModel.settings.AlbumsList.getNormalAlbums()
         .collectAsStateWithLifecycle(initialValue = emptyList())
 
-    val listOfDirs by if (autoDetectAlbums) {
-        mainViewModel.settings.AlbumsList.getAutoDetectedAlbums(displayDateFormat = displayDateFormat)
-            .collectAsStateWithLifecycle(initialValue = emptyList())
-    } else {
-        normalAlbums
-    }
+    val listOfDirs by mainViewModel.allAvailableAlbums.collectAsStateWithLifecycle()
 
     val sortMode by mainViewModel.settings.AlbumsList.getAlbumSortMode()
         .collectAsStateWithLifecycle(initialValue = AlbumSortMode.Custom)
@@ -138,7 +131,7 @@ fun AlbumsGridView(
 
     val albums = remember { mutableStateOf(listOfDirs) }
 
-    val albumToThumbnailMapping by mainViewModel.albumsMediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+    val albumToThumbnailMapping by mainViewModel.albumsThumbnailMediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
     val cachedAlbumToThumbnailMapping =
         remember { mutableStateListOf<Pair<AlbumInfo, MediaStoreData>>() }
 
@@ -214,9 +207,12 @@ fun AlbumsGridView(
         }
     }
 
-    // update the list to reflect custom order
     LaunchedEffect(albums.value) {
-        if (albums.value.isNotEmpty() && sortMode == AlbumSortMode.Custom) mainViewModel.settings.AlbumsList.setAlbumsList(albums.value)
+        // delay to avoid glitchy-ness when removing albums
+        delay(PhotoGridConstants.LOADING_TIME_SHORT)
+
+        // update the list to reflect custom order
+        mainViewModel.settings.AlbumsList.setAlbumsList(albums.value)
     }
 
     Column(
@@ -386,22 +382,22 @@ fun AlbumsGridView(
                     albums.value[key].id
                 },
             ) { index ->
-                val neededDir = albums.value[index]
+                val albumInfo = albums.value[index]
                 val mediaItem = cachedAlbumToThumbnailMapping.find {
-                    it.first.id == neededDir.id
+                    it.first.id == albumInfo.id
                 }?.second ?: MediaStoreData.dummyItem
 
                 AlbumGridItem(
-                    album = neededDir,
+                    album = albumInfo,
                     item = mediaItem,
-                    isSelected = selectedItem == neededDir,
+                    isSelected = selectedItem == albumInfo,
                     modifier = Modifier
                         .zIndex(
-                            if (selectedItem == neededDir) 1f
+                            if (selectedItem == albumInfo) 1f
                             else 0f
                         )
                         .graphicsLayer {
-                            if (selectedItem == neededDir) {
+                            if (selectedItem == albumInfo) {
                                 translationX = itemOffset.x
                                 translationY = itemOffset.y
                             }
@@ -415,13 +411,13 @@ fun AlbumsGridView(
                                 durationMillis = 250
                             ),
                             placementSpec =
-                                if (selectedItem == neededDir) null // if is selected don't animate so no weird snapping back and forth happens
+                                if (selectedItem == albumInfo) null // if is selected don't animate so no weird snapping back and forth happens
                                 else tween(durationMillis = 250)
                         )
                 ) {
                     navController.navigate(
                         Screens.SingleAlbumView(
-                            albumInfo = neededDir
+                            albumInfo = albumInfo
                         )
                     )
                 }

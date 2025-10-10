@@ -75,7 +75,6 @@ import com.kaii.photos.compose.FolderIsEmpty
 import com.kaii.photos.compose.dialogs.getDefaultShapeSpacerForPosition
 import com.kaii.photos.compose.widgets.ClearableTextField
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.GetPermissionAndRun
@@ -109,15 +108,7 @@ fun MoveCopyAlbumListView(
     val context = LocalContext.current
     val mainViewModel = LocalMainViewModel.current
 
-    val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect().collectAsStateWithLifecycle(initialValue = true)
-    val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
-
-    val originalAlbumsList by if (autoDetectAlbums) {
-        mainViewModel.settings.AlbumsList.getAutoDetectedAlbums(displayDateFormat = displayDateFormat)
-            .collectAsStateWithLifecycle(initialValue = emptyList())
-    } else {
-        mainViewModel.settings.AlbumsList.getNormalAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
-    }
+    val originalAlbumsList by mainViewModel.allAvailableAlbums.collectAsStateWithLifecycle()
 
     val albumsViewModel: AlbumsViewModel = viewModel(
         factory = AlbumsViewModelFactory(

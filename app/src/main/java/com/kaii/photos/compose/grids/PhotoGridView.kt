@@ -3,6 +3,7 @@ package com.kaii.photos.compose.grids
 import android.content.res.Configuration
 import android.util.Log
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -13,7 +14,6 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -32,8 +32,8 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -55,7 +55,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
@@ -87,10 +86,13 @@ import com.kaii.photos.compose.FolderIsEmpty
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.widgets.FloatingScrollbar
 import com.kaii.photos.compose.widgets.ShowSelectedState
+import com.kaii.photos.compose.widgets.shimmerEffect
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.Storage
+import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.ImageFunctions
+import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.getSecuredCacheImageForFile
 import com.kaii.photos.helpers.rememberVibratorManager
@@ -110,6 +112,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
+import kotlin.random.Random
 
 private const val TAG = "com.kaii.photos.compose.grids.PhotoGridView"
 
@@ -164,13 +167,6 @@ fun DeviceMedia(
     isMediaPicker: Boolean,
     isMainPage: Boolean
 ) {
-    var showLoadingSpinner by remember { mutableStateOf(true) }
-
-    LaunchedEffect(groupedMedia.value.size) {
-        Log.d(TAG, "First child count ${groupedMedia.value.firstOrNull()?.section?.childCount}")
-        showLoadingSpinner = !groupedMedia.value.firstOrNull()?.section?.childCount.let { it != null && it != 0 }
-    }
-
     val shouldPadUp by remember {
         derivedStateOf {
             selectedItemsList.isNotEmpty()
@@ -219,6 +215,18 @@ fun DeviceMedia(
         }
 
         val columnSize by mainViewModel.columnSize.collectAsStateWithLifecycle()
+
+        var showPlaceholderItems by remember { mutableStateOf(false) }
+        LaunchedEffect(Unit) {
+            delay(PhotoGridConstants.UPDATE_TIME / 2) // mini delay to avoid clipping the top most element
+            showPlaceholderItems = true
+        }
+        LaunchedEffect(groupedMedia.value.size) {
+            if (groupedMedia.value.isNotEmpty()) delay(PhotoGridConstants.UPDATE_TIME)
+
+            showPlaceholderItems = !groupedMedia.value.firstOrNull()?.section?.childCount.let { it != null && it != 0 }
+        }
+
         LazyVerticalGrid(
             state = gridState,
             columns = GridCells.Fixed(
@@ -243,13 +251,39 @@ fun DeviceMedia(
                     isDragSelecting = isDragSelecting
                 )
         ) {
+            if (showPlaceholderItems) {
+                items(
+                    count = PhotoGridConstants.placeholderItems.size,
+                    contentType = { index ->
+                        PhotoGridConstants.placeholderItems[index].type
+                    },
+                    key = { index ->
+                        PhotoGridConstants.placeholderItems[index].id
+                    },
+                    span = { index ->
+                        if (index < PhotoGridConstants.placeholderItems.size) {
+                            val item = PhotoGridConstants.placeholderItems[index]
+                            if (item.type == MediaType.Section) {
+                                GridItemSpan(maxLineSpan)
+                            } else {
+                                GridItemSpan(1)
+                            }
+                        } else {
+                            GridItemSpan(1)
+                        }
+                    }
+                ) { i ->
+                    LoadingMediaStoreItem(item = PhotoGridConstants.placeholderItems[i])
+                }
+            }
+
             items(
                 count = groupedMedia.value.size,
-                key = {
-                    groupedMedia.value[it].uri.toString()
+                key = { index ->
+                    groupedMedia.value[index].uri.toString()
                 },
-                contentType = {
-                    groupedMedia.value[it].type
+                contentType = { index ->
+                    groupedMedia.value[index].type
                 },
                 span = { index ->
                     if (index < groupedMedia.value.size) {
@@ -264,10 +298,9 @@ fun DeviceMedia(
                     }
                 }
             ) { i ->
-                if (groupedMedia.value.isEmpty()) return@items
                 val mediaStoreItem = groupedMedia.value[i]
 
-                Row(
+                Box(
                     modifier = Modifier
                         .wrapContentSize()
                         .animateItem()
@@ -337,8 +370,6 @@ fun DeviceMedia(
             }
 
             if (isMainPage) {
-                Log.d(TAG, "IS PADDING UP")
-
                 item(
                     span = {
                         GridItemSpan(maxLineSpan)
@@ -348,34 +379,6 @@ fun DeviceMedia(
                         modifier = Modifier
                             .fillMaxWidth(1f)
                             .height(120.dp)
-                    )
-                }
-            }
-        }
-
-        if (showLoadingSpinner) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth(1f)
-                    .height(48.dp)
-                    .align(Alignment.TopCenter),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Row(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(1000.dp))
-                        .background(MaterialTheme.colorScheme.surfaceContainer),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier
-                            .size(22.dp),
-                        color = MaterialTheme.colorScheme.primary,
-                        strokeWidth = 4.dp,
-                        strokeCap = StrokeCap.Round
                     )
                 }
             }
@@ -413,7 +416,7 @@ fun DeviceMedia(
 
 @OptIn(ExperimentalGlideComposeApi::class, ExperimentalFoundationApi::class)
 @Composable
-fun MediaStoreItem(
+private fun MediaStoreItem(
     item: MediaStoreData,
     groupedMedia: MutableState<List<MediaStoreData>>,
     viewProperties: ViewProperties,
@@ -535,7 +538,6 @@ fun MediaStoreItem(
             modifier = Modifier
                 .aspectRatio(1f)
                 .padding(2.dp)
-                .clip(RoundedCornerShape(0.dp))
                 .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
                 .then(
                     if (selectedItemsList.isNotEmpty()) {
@@ -640,6 +642,59 @@ fun MediaStoreItem(
                     .align(Alignment.TopEnd)
             )
         }
+    }
+}
+
+@Composable
+private fun LoadingMediaStoreItem(
+    item: MediaStoreData
+) {
+    var showColors by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        delay(10) // to avoid a pop-in effect
+        showColors = true
+    }
+
+    val highlightColor by animateColorAsState(
+        targetValue = if (showColors) MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f) else Color.Transparent,
+        animationSpec = tween(
+            durationMillis = 0
+        )
+    )
+
+    if (item.type == MediaType.Section) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(1f)
+                .height(56.dp)
+                .background(Color.Transparent)
+                .padding(16.dp, 8.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .fillMaxWidth(Random.nextFloat() * 0.5f + 0.5f)
+                    .height(24.dp)
+                    .clip(CircleShape)
+                    .shimmerEffect(
+                        containerColor = Color.Transparent,
+                        highlightColor = highlightColor,
+                        durationMillis = AnimationConstants.DURATION_EXTRA_LONG * 3,
+                        delayMillis = -PhotoGridConstants.UPDATE_TIME.toInt() * 2
+                    )
+            )
+        }
+    } else {
+        Box(
+            modifier = Modifier
+                .aspectRatio(1f)
+                .padding(2.dp)
+                .shimmerEffect(
+                    containerColor = Color.Transparent,
+                    highlightColor = highlightColor,
+                    durationMillis = AnimationConstants.DURATION_EXTRA_LONG * 2
+                )
+        )
     }
 }
 

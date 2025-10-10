@@ -195,7 +195,7 @@ data class BottomBarTab(
 data class SQLiteQuery(
     val query: String,
     val paths: List<String>?,
-    val includedBasePaths: List<String>?
+    val basePaths: List<String>?
 )
 
 @Serializable
@@ -208,13 +208,11 @@ data class AlbumInfo(
     val immichId: String = ""
 ) {
     companion object {
-        fun createPathOnlyAlbum(paths: List<String>) =
-            AlbumInfo(name = "", id = 0, isCustomAlbum = false, paths = paths)
+        fun createPathOnlyAlbum(paths: List<String>) = AlbumInfo(id = 0, name = "", paths = paths)
     }
 
-    val mainPath = run {
-        paths.firstOrNull() ?: ""
-    }
+    val mainPath
+        get() = paths.firstOrNull() ?: ""
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -225,7 +223,7 @@ data class AlbumInfo(
         if (id != other.id) return false
         if (isCustomAlbum != other.isCustomAlbum) return false
         if (name != other.name) return false
-        if (paths.toSet() != other.paths.toSet()) return false
+        if (paths.toSet() != other.paths.toSet()) return false // as a set since we don't care about the order
         if (mainPath != other.mainPath) return false
 
         return true

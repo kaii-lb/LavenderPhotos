@@ -214,7 +214,7 @@ internal constructor(
                     if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) MediaType.Image
                     else MediaType.Video
 
-                if (sqlQuery.includedBasePaths?.contains(absolutePath.getParentFromPath()) == true) {
+                if (sqlQuery.basePaths?.contains(absolutePath.getParentFromPath()) == true) {
                     data =
                         MediaStoreData(
                             type = type,

@@ -3,7 +3,6 @@ package com.kaii.photos.models.multi_album
 import android.content.Context
 import android.icu.text.SimpleDateFormat
 import android.os.CancellationSignal
-import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -17,19 +16,20 @@ import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.SectionItem
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.mediastore.MultiAlbumDataSource
+import com.kaii.photos.mediastore.StreamingDataSource
 import com.kaii.photos.mediastore.getSQLiteQuery
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
-private const val TAG = "com.kaii.photos.models.MultiAlbumViewModel"
+// private const val TAG = "com.kaii.photos.models.MultiAlbumViewModel"
 
 class MultiAlbumViewModel(
     context: Context,
@@ -50,10 +50,9 @@ class MultiAlbumViewModel(
         )
     }
 
-
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun getMediaDataFlow(): State<Flow<List<MediaStoreData>>> = derivedStateOf {
-        mediaStoreDataSource.value.loadMediaStoreData().flowOn(Dispatchers.IO)//.flatMapMerge { it.flowOn(Dispatchers.IO) }.flowOn(Dispatchers.IO)
+        mediaStoreDataSource.value.loadMediaStoreData().flowOn(Dispatchers.IO).flatMapMerge { it.flowOn(Dispatchers.IO) }.flowOn(Dispatchers.IO)
     }
 
     fun cancelMediaFlow() = cancellationSignal.cancel()
@@ -107,15 +106,14 @@ class MultiAlbumViewModel(
         displayDateFormat: DisplayDateFormat
     ) = run {
         val query = getSQLiteQuery(album.paths)
-        Log.d(TAG, "query is $query")
 
         albumInfo = album
         this.sortMode = sortBy
         this.displayDateFormat = displayDateFormat
 
-        MultiAlbumDataSource(
+        StreamingDataSource(
             context = context,
-            queryString = query,
+            sqliteQuery = query,
             sortBy = sortBy,
             cancellationSignal = cancellationSignal,
             displayDateFormat = displayDateFormat

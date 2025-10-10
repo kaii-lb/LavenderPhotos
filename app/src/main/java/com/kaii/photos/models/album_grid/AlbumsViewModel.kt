@@ -58,7 +58,7 @@ class AlbumsViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMo
         val queries = albums.map { album ->
             val query = getSQLiteQuery(albums = album.paths)
 
-            Pair(album, query.copy(includedBasePaths = album.paths))
+            Pair(album, query.copy(basePaths = album.paths))
         }
 
         AlbumStoreDataSource(

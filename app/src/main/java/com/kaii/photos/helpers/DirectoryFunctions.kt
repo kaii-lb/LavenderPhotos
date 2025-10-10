@@ -11,11 +11,14 @@ import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMinByOrNull
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.SQLiteQuery
-import com.kaii.photos.mediastore.MultiAlbumDataSource
+import com.kaii.photos.mediastore.StreamingDataSource
 import com.kaii.photos.models.multi_album.DisplayDateFormat
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.flatMapMerge
+import kotlinx.coroutines.flow.flowOn
 import java.io.File
 import java.io.IOException
 import java.nio.file.FileVisitResult
@@ -159,15 +162,16 @@ fun String.toBasePath() = run {
 }
 
 /** returns the absolute paths to all the found albums */
+@OptIn(ExperimentalCoroutinesApi::class)
 fun tryGetAllAlbums(
     context: Context,
     displayDateFormat: DisplayDateFormat
 ): Flow<List<AlbumInfo>> = channelFlow {
     val cancellationSignal = CancellationSignal()
     val mediaStoreDataSource =
-        MultiAlbumDataSource(
+        StreamingDataSource(
             context = context,
-            queryString = SQLiteQuery(query = "", paths = null, includedBasePaths = null),
+            sqliteQuery = SQLiteQuery(query = "", paths = null, basePaths = null),
             sortBy = MediaItemSortMode.DateTaken,
             cancellationSignal = cancellationSignal,
             displayDateFormat = displayDateFormat
@@ -175,7 +179,7 @@ fun tryGetAllAlbums(
 
     suspend fun emitNew(list: List<AlbumInfo>) = send(list)
 
-    mediaStoreDataSource.loadMediaStoreData().collectLatest { list ->
+    mediaStoreDataSource.loadMediaStoreData().flatMapMerge { it.flowOn(Dispatchers.IO) }.collect { list ->
         val new = list.fastDistinctBy { media ->
             media.absolutePath.getParentFromPath()
         }.fastMap { media ->

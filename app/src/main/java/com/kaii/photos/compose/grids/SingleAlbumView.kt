@@ -69,23 +69,8 @@ fun SingleAlbumView(
     val context = LocalContext.current
     val mainViewModel = LocalMainViewModel.current
 
-    val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect().collectAsStateWithLifecycle(initialValue = true)
-    val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
-
-    val customAlbums by mainViewModel.settings.AlbumsList.getCustomAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
-
-    // used to save pinned albums incase of auto detecting
-    val normalAlbums = mainViewModel.settings.AlbumsList.getNormalAlbums()
-        .collectAsStateWithLifecycle(initialValue = emptyList())
-        .value + customAlbums
-
-    val allAlbums = if (autoDetectAlbums) {
-        mainViewModel.settings.AlbumsList.getAutoDetectedAlbums(displayDateFormat = displayDateFormat)
-            .collectAsStateWithLifecycle(initialValue = emptyList())
-            .value + customAlbums
-    } else {
-        normalAlbums
-    }
+    val allAlbums by mainViewModel.allAvailableAlbums.collectAsStateWithLifecycle()
+    val normalAlbums by mainViewModel.settings.AlbumsList.getNormalAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
 
     if (allAlbums.isEmpty()) return
 
@@ -116,7 +101,7 @@ fun SingleAlbumView(
 
     LaunchedEffect(mediaStoreData) {
         if (mediaStoreData.isEmpty()) {
-            delay(PhotoGridConstants.LOADING_TIME)
+            delay(PhotoGridConstants.UPDATE_TIME)
             groupedMedia.value = mediaStoreData
         } else {
             groupedMedia.value = mediaStoreData
@@ -151,23 +136,8 @@ fun SingleAlbumView(
     val context = LocalContext.current
     val mainViewModel = LocalMainViewModel.current
 
-    val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect().collectAsStateWithLifecycle(initialValue = true)
-    val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
-
-    val customAlbums by mainViewModel.settings.AlbumsList.getCustomAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
-
-    // used to save pinned albums incase of auto detecting
-    val normalAlbums = mainViewModel.settings.AlbumsList.getNormalAlbums()
-        .collectAsStateWithLifecycle(initialValue = emptyList())
-        .value + customAlbums
-
-    val allAlbums = if (autoDetectAlbums) {
-        mainViewModel.settings.AlbumsList.getAutoDetectedAlbums(displayDateFormat = displayDateFormat)
-            .collectAsStateWithLifecycle(initialValue = emptyList())
-            .value + customAlbums
-    } else {
-        normalAlbums
-    }
+    val allAlbums by mainViewModel.allAvailableAlbums.collectAsStateWithLifecycle()
+    val normalAlbums by mainViewModel.settings.AlbumsList.getNormalAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
 
     if (allAlbums.isEmpty()) return
 
@@ -203,7 +173,7 @@ fun SingleAlbumView(
         val mixed = (customMediaStoreData + multiMediaStoreData).distinctBy { it.uri }
 
         if (mixed.isEmpty()) {
-            delay(PhotoGridConstants.LOADING_TIME)
+            delay(PhotoGridConstants.UPDATE_TIME)
             groupedMedia.value = mixed
         } else {
             groupedMedia.value = mixed

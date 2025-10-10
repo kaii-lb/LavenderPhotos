@@ -20,7 +20,7 @@ import com.kaii.photos.MainActivity.Companion.immichViewModel
 import com.kaii.photos.datastore.SQLiteQuery
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.calculateSha1Checksum
-import com.kaii.photos.mediastore.MultiAlbumDataSource
+import com.kaii.photos.mediastore.NonStreamingDataSource
 import com.kaii.photos.models.multi_album.DisplayDateFormat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -76,9 +76,9 @@ class UploadWorker(
             var immichAlbum = albumManager.getAlbumInfo(albumId = albumId)!!
 
             val query = Json.decodeFromString<SQLiteQuery>(queryString)
-            val dataSource = MultiAlbumDataSource(
+            val dataSource = NonStreamingDataSource(
                 context = context,
-                queryString = query,
+                sqliteQuery = query,
                 sortBy = MediaItemSortMode.DateTaken,
                 cancellationSignal = CancellationSignal(),
                 displayDateFormat = DisplayDateFormat.Default

@@ -545,7 +545,9 @@ fun AnimatedLoginIcon(
 
 fun Modifier.shimmerEffect(
     containerColor: Color = Color.DarkGray,
-    highlightColor: Color = Color.Gray
+    highlightColor: Color = Color.Gray,
+    durationMillis: Int = AnimationConstants.DURATION_EXTRA_LONG,
+    delayMillis: Int = 0
 ) = composed {
     var size by remember { mutableStateOf(IntSize.Zero) }
 
@@ -555,7 +557,8 @@ fun Modifier.shimmerEffect(
         targetValue = 3f * size.width,
         animationSpec = infiniteRepeatable(
             animation = tween(
-                durationMillis = AnimationConstants.DURATION_EXTRA_LONG
+                durationMillis = durationMillis,
+                delayMillis = delayMillis
             )
         )
     )

@@ -10,6 +10,7 @@ import android.provider.MediaStore
 import android.provider.MediaStore.Files.FileColumns
 import android.provider.MediaStore.MediaColumns
 import android.util.Log
+import androidx.compose.ui.util.fastFirstOrNull
 import androidx.core.net.toUri
 import com.bumptech.glide.util.Preconditions
 import com.bumptech.glide.util.Util
@@ -19,7 +20,7 @@ import com.kaii.photos.datastore.SQLiteQuery
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.SectionItem
 import com.kaii.photos.helpers.getDateTakenForMedia
-import com.kaii.photos.helpers.getParentFromPath
+import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.mediastore.MediaStoreDataSource.Companion.MEDIA_STORE_FILE_URI
 import com.kaii.photos.models.multi_album.DisplayDateFormat
 import com.kaii.photos.models.multi_album.formatDate
@@ -31,10 +32,12 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.launch
 
+private const val TAG = "com.kaii.photos.models.multi_album.MultiAlbumViewModel"
+
 /** Loads metadata from the media store for images and videos. */
 class StreamingDataSource(
     private val context: Context,
-    private val queryString: SQLiteQuery,
+    private val sqliteQuery: SQLiteQuery,
     private val sortBy: MediaItemSortMode,
     private val cancellationSignal: CancellationSignal,
     private val displayDateFormat: DisplayDateFormat
@@ -51,9 +54,7 @@ class StreamingDataSource(
                 MediaColumns.DISPLAY_NAME,
                 FileColumns.MEDIA_TYPE,
                 MediaColumns.IS_FAVORITE,
-                MediaColumns.SIZE,
-                MediaColumns.WIDTH,
-                MediaColumns.HEIGHT
+                MediaColumns.SIZE
             )
     }
 
@@ -87,7 +88,7 @@ class StreamingDataSource(
                 cancel("Cancelling MediaStoreDataSource channel because of exit signal...")
                 channel.close()
             } catch (e: Throwable) {
-                Log.e("MEDIA_STORE_DATASOURCE", e.toString())
+                Log.e(TAG, e.toString())
             }
         }
 
@@ -106,9 +107,9 @@ class StreamingDataSource(
             context.contentResolver.query(
                 MEDIA_STORE_FILE_URI,
                 PROJECTION,
-                "((${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_IMAGE}) OR (${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_VIDEO}))",
-                null,
-                "${MediaColumns.DATE_TAKEN} DESC",
+                "((${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_IMAGE}) OR (${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_VIDEO})) ${sqliteQuery.query}",
+                sqliteQuery.paths?.toTypedArray(),
+                "${MediaColumns.DATE_ADDED} DESC",
             )
 
         var map = mutableMapOf<MediaStoreData, MutableList<MediaStoreData>>()
@@ -123,8 +124,6 @@ class StreamingDataSource(
             val dateTakenColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.DATE_TAKEN)
             val dateAddedColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.DATE_ADDED)
             val sizeColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.SIZE)
-            val widthColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.WIDTH)
-            val heightColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.HEIGHT)
 
             val dao = MediaDatabase.getInstance(context).mediaEntityDao()
             val allEntities = dao.getAll()
@@ -138,14 +137,12 @@ class StreamingDataSource(
                 val dateModified = cursor.getLong(dateModifiedColumn)
                 val displayName = cursor.getString(displayNameIndex)
                 val size = cursor.getLong(sizeColumn)
-                val width = cursor.getInt(widthColumn)
-                val height = cursor.getInt(heightColumn)
 
                 val type =
                     if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) MediaType.Image
                     else MediaType.Video
 
-                val possibleDateTaken = allEntities.find { it.id == id }?.dateTaken
+                val possibleDateTaken = allEntities.fastFirstOrNull { it.id == id }?.dateTaken
 
                 val dateTaken =
                     when {
@@ -179,7 +176,7 @@ class StreamingDataSource(
                     if (type == MediaType.Image) MediaStore.Images.Media.EXTERNAL_CONTENT_URI else MediaStore.Video.Media.EXTERNAL_CONTENT_URI
                 val uri = ContentUris.withAppendedId(uriParentPath, id)
 
-                if (queryString.includedBasePaths?.contains(absolutePath.getParentFromPath()) == true || queryString.includedBasePaths == null) {
+                if (sqliteQuery.basePaths?.contains(absolutePath.toBasePath()) == true || sqliteQuery.basePaths == null) {
                     val new =
                         MediaStoreData(
                             type = type,
@@ -190,9 +187,7 @@ class StreamingDataSource(
                             dateTaken = dateTaken,
                             displayName = displayName,
                             absolutePath = absolutePath,
-                            size = size,
-                            width = width,
-                            height = height
+                            size = size
                         )
 
                     val day =
@@ -235,9 +230,22 @@ class StreamingDataSource(
                             }
                         )
 
-                        trySend(map.flatMap { keyVal ->
-                            listOf(keyVal.key) + keyVal.value.sortedBy { it.dateTaken }
-                        })
+                        if (map.keys.size in 5..10) {
+                            map.keys.forEach { key ->
+                                key.section = SectionItem(
+                                    date = key.dateTaken,
+                                    childCount = map[key]?.size ?: 0
+                                )
+
+                                map[key]?.onEach {
+                                    it.section = key.section
+                                }
+                            }
+
+                            send(map.flatMap { keyVal ->
+                                listOf(keyVal.key) + keyVal.value.sortedByDescending { it.dateTaken }
+                            })
+                        }
                     } else {
                         map[key]?.add(new)
                     }
@@ -257,7 +265,7 @@ class StreamingDataSource(
         }
 
         trySend(map.flatMap { keyVal ->
-            listOf(keyVal.key) + keyVal.value.sortedBy { it.dateTaken }
+            listOf(keyVal.key) + keyVal.value.sortedByDescending { it.dateTaken }
         })
 
         awaitClose {}

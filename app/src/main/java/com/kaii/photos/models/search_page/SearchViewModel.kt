@@ -19,15 +19,15 @@ import kotlinx.coroutines.flow.stateIn
 
 class SearchViewModel(
     context: Context,
-    sortBy: MediaItemSortMode,
+    sortMode: MediaItemSortMode,
     displayDateFormat: DisplayDateFormat
 ) : ViewModel() {
     private val cancellationSignal = CancellationSignal()
     private val mediaStoreDataSource =
         StreamingDataSource(
             context = context,
-            queryString = SQLiteQuery(query = "", paths = null, includedBasePaths = null),
-            sortBy = sortBy,
+            sqliteQuery = SQLiteQuery(query = "", paths = null, basePaths = null),
+            sortBy = sortMode,
             cancellationSignal = cancellationSignal,
             displayDateFormat = displayDateFormat
         )

@@ -291,7 +291,7 @@ fun ContentResolver.getMediaStoreDataFromUri(uri: Uri): MediaStoreData? {
  * albums needed cuz the query has ? instead of the actual paths for...reasons */
 fun getSQLiteQuery(albums: List<String>): SQLiteQuery {
     if (albums.isEmpty()) {
-        return SQLiteQuery(query = "", paths = null, includedBasePaths = null)
+        return SQLiteQuery(query = "", paths = null, basePaths = null)
     }
 
     val colName = FileColumns.RELATIVE_PATH
@@ -310,7 +310,7 @@ fun getSQLiteQuery(albums: List<String>): SQLiteQuery {
     }
 
     val query = "AND ($string)"
-    return SQLiteQuery(query = query, paths = list, includedBasePaths = albums)
+    return SQLiteQuery(query = query, paths = list, basePaths = albums.map { it.toBasePath() }.distinct())
 }
 
 private fun getStorageContentUri(
