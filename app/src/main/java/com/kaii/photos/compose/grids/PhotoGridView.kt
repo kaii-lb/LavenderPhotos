@@ -15,7 +15,6 @@ import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
@@ -28,11 +27,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
-import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
-import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
-import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
-import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -89,7 +88,6 @@ import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.widgets.FloatingScrollbar
 import com.kaii.photos.compose.widgets.ShowSelectedState
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.datastore.Storage
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.ImageFunctions
@@ -124,7 +122,7 @@ fun PhotoGrid(
     viewProperties: ViewProperties,
     isMediaPicker: Boolean = false,
     isMainPage: Boolean = false,
-    state: LazyStaggeredGridState = rememberLazyStaggeredGridState(),
+    state: LazyGridState = rememberLazyGridState(),
     hasFiles: Boolean
 ) {
     if (hasFiles) {
@@ -161,7 +159,7 @@ fun DeviceMedia(
     groupedMedia: MutableState<List<MediaStoreData>>,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     viewProperties: ViewProperties,
-    gridState: LazyStaggeredGridState,
+    gridState: LazyGridState,
     albumInfo: AlbumInfo,
     isMediaPicker: Boolean,
     isMainPage: Boolean
@@ -197,7 +195,7 @@ fun DeviceMedia(
         isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
     }
 
-    BoxWithConstraints(
+    Box(
         modifier = Modifier
             .fillMaxSize(1f)
             .background(MaterialTheme.colorScheme.background)
@@ -221,18 +219,15 @@ fun DeviceMedia(
         }
 
         val columnSize by mainViewModel.columnSize.collectAsStateWithLifecycle()
-        val useStaggeredGrid by mainViewModel.settings.LookAndFeel.getUseStaggeredGrid().collectAsStateWithLifecycle(initialValue = false)
-        LazyVerticalStaggeredGrid(
+        LazyVerticalGrid(
             state = gridState,
-            columns =
-                if (useStaggeredGrid) {
-                    StaggeredGridCells.Adaptive(
-                        (this@BoxWithConstraints.maxWidth - 24.dp) / columnSize
-                    )
+            columns = GridCells.Fixed(
+                if (isLandscape) {
+                    columnSize * 2
                 } else {
-                    StaggeredGridCells.Fixed(if (isLandscape) columnSize * 2 else columnSize)
-                },
-            userScrollEnabled = !isDragSelecting.value || selectedItemsList.isEmpty(),
+                    columnSize
+                }
+            ),
             modifier = Modifier
                 .testTag("mainlazycolumn")
                 .fillMaxSize(1f)
@@ -251,7 +246,7 @@ fun DeviceMedia(
             items(
                 count = groupedMedia.value.size,
                 key = {
-                    groupedMedia.value[it].absolutePath + groupedMedia.value[it].displayName
+                    groupedMedia.value[it].uri.toString()
                 },
                 contentType = {
                     groupedMedia.value[it].type
@@ -260,17 +255,12 @@ fun DeviceMedia(
                     if (index < groupedMedia.value.size) {
                         val item = groupedMedia.value[index]
                         if (item.type == MediaType.Section) {
-                            StaggeredGridItemSpan.FullLine
+                            GridItemSpan(maxLineSpan)
                         } else {
-                            val selected = index % 11 == 0 || index % 23 == 0
-                            if (selected && useStaggeredGrid) {
-                                StaggeredGridItemSpan.FullLine
-                            } else {
-                                StaggeredGridItemSpan.SingleLane
-                            }
+                            GridItemSpan(1)
                         }
                     } else {
-                        StaggeredGridItemSpan.SingleLane
+                        GridItemSpan(1)
                     }
                 }
             ) { i ->
@@ -291,9 +281,7 @@ fun DeviceMedia(
                         selectedItemsList = selectedItemsList,
                         thumbnailSettings = Pair(cacheThumbnails, thumbnailSize),
                         isDragSelecting = isDragSelecting,
-                        isMediaPicker = isMediaPicker,
-                        useStaggeredGrid = useStaggeredGrid,
-                        fullWidth = i % 11 == 0 || i % 23 == 0
+                        isMediaPicker = isMediaPicker
                     ) {
                         if (!isMediaPicker) {
                             when (viewProperties.operation) {
@@ -336,7 +324,9 @@ fun DeviceMedia(
 
             if (shouldPadUp && !isMainPage) {
                 item(
-                    span = StaggeredGridItemSpan.FullLine
+                    span = {
+                        GridItemSpan(maxLineSpan)
+                    }
                 ) {
                     Box(
                         modifier = Modifier
@@ -347,8 +337,12 @@ fun DeviceMedia(
             }
 
             if (isMainPage) {
+                Log.d(TAG, "IS PADDING UP")
+
                 item(
-                    span = StaggeredGridItemSpan.FullLine
+                    span = {
+                        GridItemSpan(maxLineSpan)
+                    }
                 ) {
                     Box(
                         modifier = Modifier
@@ -427,9 +421,7 @@ fun MediaStoreItem(
     thumbnailSettings: Pair<Boolean, Int>,
     isDragSelecting: MutableState<Boolean>,
     isMediaPicker: Boolean,
-    useStaggeredGrid: Boolean,
-    fullWidth: Boolean,
-    onClick: () -> Unit,
+    onClick: () -> Unit
 ) {
     val vibratorManager = rememberVibratorManager()
 
@@ -541,10 +533,7 @@ fun MediaStoreItem(
 
         Box(
             modifier = Modifier
-                .aspectRatio(
-                    if (useStaggeredGrid && item.width.toFloat() / item.height in 0.5f..3f) item.width.toFloat() / item.height
-                    else 1f
-                )
+                .aspectRatio(1f)
                 .padding(2.dp)
                 .clip(RoundedCornerShape(0.dp))
                 .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
@@ -623,7 +612,7 @@ fun MediaStoreItem(
                             if (thumbnailSettings.first) DiskCacheStrategy.ALL
                             else DiskCacheStrategy.NONE
                         )
-                        .override(if (fullWidth) thumbnailSettings.second * 3 else thumbnailSettings.second)
+                        .override(thumbnailSettings.second)
                 }
             }
 
@@ -655,7 +644,7 @@ fun MediaStoreItem(
 }
 
 private fun Modifier.dragSelectionHandler(
-    state: LazyStaggeredGridState,
+    state: LazyGridState,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     groupedMedia: List<MediaStoreData>,
     scrollSpeed: MutableFloatState,
@@ -769,7 +758,7 @@ private fun Modifier.dragSelectionHandler(
 
 @Suppress("UNCHECKED_CAST")
         /** make sure [T] is the same type as state keys */
-fun <T : Any> LazyStaggeredGridState.getGridItemAtOffset(
+fun <T : Any> LazyGridState.getGridItemAtOffset(
     offset: Offset,
     keys: List<T>,
     numberOfHorizontalItems: Int

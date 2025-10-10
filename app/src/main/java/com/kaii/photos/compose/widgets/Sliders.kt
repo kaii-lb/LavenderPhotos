@@ -30,7 +30,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -395,7 +395,7 @@ fun BoxWithConstraintsScope.PopupPillSlider(
 
 @Composable
 fun FloatingScrollbar(
-    gridState: LazyStaggeredGridState,
+    gridState: LazyGridState,
     spacerHeight: State<Dp>,
     groupedMedia: MutableState<List<MediaStoreData>>,
     modifier: Modifier = Modifier
@@ -426,13 +426,19 @@ fun FloatingScrollbar(
     var maxHeight by remember { mutableIntStateOf(0) }
     val localDensity = LocalDensity.current
 
-    LaunchedEffect(gridState.firstVisibleItemIndex, totalItems) {
+    val firstVisibleItemIndex by remember {
+        derivedStateOf {
+            gridState.firstVisibleItemIndex
+        }
+    }
+
+    LaunchedEffect(firstVisibleItemIndex, totalItems) {
         if (!isDraggingHandle) {
             // update totalDrag for when the user scrolls the grid not the scrollbar
             // this prevents "jumping" of the scrollbar
             with(localDensity) {
                 val scrollbarHeight = maxHeight - spacerHeight.value.toPx()
-                totalDrag = (gridState.firstVisibleItemIndex.toFloat() / totalItems) * scrollbarHeight
+                totalDrag = (firstVisibleItemIndex.toFloat() / totalItems) * scrollbarHeight
             }
         }
     }

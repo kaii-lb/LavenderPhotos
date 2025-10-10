@@ -38,8 +38,7 @@ class TrashStoreDataSource(
                 MediaColumns.DISPLAY_NAME,
                 FileColumns.MEDIA_TYPE,
                 MediaColumns.IS_TRASHED,
-                MediaColumns.WIDTH,
-                MediaColumns.HEIGHT
+                MediaColumns.SIZE
             )
     }
 
@@ -77,19 +76,17 @@ class TrashStoreDataSource(
             val dateTakenColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.DATE_TAKEN)
             val dateAddedColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.DATE_ADDED)
             val dateModifiedColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATE_MODIFIED)
-            val widthColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.WIDTH)
-            val heightColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.HEIGHT)
+            val sizeColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.SIZE)
 
             while (cursor.moveToNext()) {
                 val id = cursor.getLong(idColNum)
                 val mimeType = cursor.getString(mimeTypeColNum)
                 val absolutePath = cursor.getString(absolutePathColNum)
-                val mediaStoreDateTaken = cursor.getLong(dateTakenColumn)
-                val dateAdded = cursor.getLong(dateAddedColumn)
                 val dateModified = cursor.getLong(dateModifiedColumn)
+                val mediaStoreDateTaken = cursor.getLong(dateTakenColumn) / 1000
+                val dateAdded = cursor.getLong(dateAddedColumn)
                 val displayName = cursor.getString(displayNameIndex)
-                val width = cursor.getInt(widthColumn)
-                val height = cursor.getInt(heightColumn)
+                val size = cursor.getLong(sizeColumn)
 
                 val type =
                     if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) MediaType.Image
@@ -139,8 +136,7 @@ class TrashStoreDataSource(
                         dateTaken = dateTaken,
                         displayName = displayName,
                         absolutePath = absolutePath,
-                        width = width,
-                        height = height
+                        size = size
                     )
                 )
             }

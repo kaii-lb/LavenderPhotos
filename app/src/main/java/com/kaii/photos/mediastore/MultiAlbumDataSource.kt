@@ -39,9 +39,7 @@ class MultiAlbumDataSource(
                 MediaColumns.DISPLAY_NAME,
                 FileColumns.MEDIA_TYPE,
                 MediaColumns.IS_FAVORITE,
-                MediaColumns.SIZE,
-                MediaColumns.WIDTH,
-                MediaColumns.HEIGHT
+                MediaColumns.SIZE
             )
     }
 
@@ -69,8 +67,6 @@ class MultiAlbumDataSource(
         val dateTakenColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.DATE_TAKEN)
         val dateAddedColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.DATE_ADDED)
         val sizeColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.SIZE)
-        val widthColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.WIDTH)
-        val heightColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.HEIGHT)
 
         val dao = MediaDatabase.getInstance(context).mediaEntityDao()
         val allEntities = dao.getAll()
@@ -85,8 +81,6 @@ class MultiAlbumDataSource(
                 val dateModified = cursor.getLong(dateModifiedColumn)
                 val displayName = cursor.getString(displayNameIndex)
                 val size = cursor.getLong(sizeColumn)
-                val width = cursor.getInt(widthColumn)
-                val height = cursor.getInt(heightColumn)
 
                 val type =
                     if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) MediaType.Image
@@ -137,9 +131,7 @@ class MultiAlbumDataSource(
                             dateTaken = dateTaken,
                             displayName = displayName,
                             absolutePath = absolutePath,
-                            size = size,
-                            width = width,
-                            height = height
+                            size = size
                         )
                     )
                 }

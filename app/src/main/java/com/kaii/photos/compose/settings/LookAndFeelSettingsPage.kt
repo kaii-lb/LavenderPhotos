@@ -244,25 +244,6 @@ fun LookAndFeelSettingsPage() {
             }
 
             item {
-                val useStaggeredGrids by mainViewModel.settings.LookAndFeel.getUseStaggeredGrid().collectAsStateWithLifecycle(initialValue = false)
-
-                PreferencesSwitchRow(
-                    title = stringResource(id = R.string.look_and_feel_staggered_grids),
-                    summary = stringResource(id = R.string.look_and_feel_staggered_grids_desc),
-                    position = RowPosition.Single,
-                    iconResID = R.drawable.dashboard,
-                    showBackground = false,
-                    checked = useStaggeredGrids
-                ) { checked ->
-                    mainViewModel.settings.LookAndFeel.setUseStaggeredGrid(checked)
-                }
-            }
-
-            item {
-                PreferencesSeparatorText(stringResource(id = R.string.settings_views))
-            }
-
-            item {
                 val useBlackBackground by mainViewModel.useBlackViewBackgroundColor.collectAsStateWithLifecycle()
 
                 PreferencesSwitchRow(
