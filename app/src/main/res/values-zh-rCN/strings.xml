@@ -889,8 +889,6 @@
     <string name="look_and_feel_nav">导航</string>
     <string name="look_and_feel_extra_secure_nav">额外安全文件夹入口</string>
     <string name="look_and_feel_extra_secure_nav_Desc">在应用主对话框中显示安全文件夹导航选项</string>
-    <string name="look_and_feel_staggered_grids">启用瀑布流布局</string>
-    <string name="look_and_feel_staggered_grids_desc">实验性功能。网格根据媒体宽高比自适应调整尺寸。</string>
     <string name="immich">Immich</string>
     <string name="immich_title">Immich 备份</string>
     <string name="immich_desc">备份至自托管Immich服务器</string>
