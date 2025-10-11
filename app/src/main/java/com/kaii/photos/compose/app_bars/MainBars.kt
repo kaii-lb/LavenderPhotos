@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
@@ -208,6 +209,7 @@ fun MainAppBottomBar(
             expandedShadowElevation = 0.dp,
             scrollBehavior = scrollBehaviour,
             modifier = Modifier
+                .offset(y = (-12).dp)
                 .align(Alignment.Center)
                 .windowInsetsPadding(WindowInsets.systemBars)
                 .shadow(
@@ -241,6 +243,7 @@ fun MainAppBottomBar(
                                         selectedItemsList = selectedItemsList
                                     )
                                 }
+
                                 DefaultTabs.TabTypes.favourites -> {
                                     FavouritesBottomAppBarItems(
                                         selectedItemsList = selectedItemsList,
