@@ -364,6 +364,7 @@ class VideoEditingState(
     initialFrameRate: Float,
     initialVolume: Float,
     initialBitrate: Int,
+    initialOffset: Offset,
     val duration: Float,
 ) : MediaEditingState {
     override var croppingAspectRatio by mutableStateOf(initialCroppingAspectRatio)
@@ -371,6 +372,11 @@ class VideoEditingState(
 
     var rotation by mutableFloatStateOf(initialRotation)
         private set
+    var offset by mutableStateOf(initialOffset)
+        private set
+    var scale by mutableFloatStateOf(1f)
+        private set
+
     var startTrimPosition by mutableFloatStateOf(0f)
         private set
     var endTrimPosition by mutableFloatStateOf(duration)
@@ -414,6 +420,23 @@ class VideoEditingState(
         this.rotation = angle
     }
 
+    @JvmName("privateSetScale")
+    fun setScale(scale: Float) {
+        this.scale = scale
+    }
+
+    @JvmName("privateSetOffset")
+    fun setOffset(offset: Offset) {
+        this.offset = offset
+    }
+
+    override fun resetCrop(value: Boolean) {
+        this.scale = 1f
+        this.offset = Offset.Zero
+        this.rotation = 0f
+        this.resetCrop = value
+    }
+
     @JvmName("privateSetStartTrimPosition")
     fun setStartTrimPosition(position: Float) {
         this.startTrimPosition = position.coerceIn(0f, endTrimPosition - (duration * 0.1f))
@@ -422,10 +445,6 @@ class VideoEditingState(
     @JvmName("privateSetEndTrimPosition")
     fun setEndTrimPosition(position: Float) {
         this.endTrimPosition = position.coerceIn(startTrimPosition + (duration * 0.1f), duration)
-    }
-
-    override fun resetCrop(value: Boolean) {
-        this.resetCrop = value
     }
 
     @JvmName("privateSetSpeed")
@@ -469,7 +488,20 @@ class VideoEditingState(
         /** The default [Saver] implementation for [VideoEditingState]. */
         val Saver: Saver<VideoEditingState, *> =
             listSaver(
-                save = { listOf(it.croppingAspectRatio, it.rotation, it.effects, it.speed, it.volume, it.frameRate, it.bitrate, it.duration) },
+                save = {
+                    listOf(
+                        it.croppingAspectRatio,
+                        it.rotation,
+                        it.effects,
+                        it.speed,
+                        it.volume,
+                        it.frameRate,
+                        it.bitrate,
+                        it.offset.x,
+                        it.offset.y,
+                        it.duration
+                    )
+                },
                 restore = {
                     VideoEditingState(
                         initialCroppingAspectRatio = it[0] as CroppingAspectRatio,
@@ -479,7 +511,8 @@ class VideoEditingState(
                         initialVolume = it[4] as Float,
                         initialFrameRate = it[5] as Float,
                         initialBitrate = it[6] as Int,
-                        duration = it[7] as Float
+                        initialOffset = Offset(it[7] as Float, it[8] as Float),
+                        duration = it[9] as Float
                     )
                 },
             )
@@ -503,7 +536,8 @@ fun rememberVideoEditingState(
             initialVolume = 1f,
             initialSpeed = 1f,
             initialFrameRate = 0f,
-            initialBitrate = 0
+            initialBitrate = 0,
+            initialOffset = Offset.Zero
         )
     }
 }
@@ -569,6 +603,7 @@ class ImageEditingState(
     override fun resetCrop(value: Boolean) {
         this.scale = 1f
         this.offset = Offset.Zero
+        this.rotation = 0f
         this.resetCrop = value
     }
 

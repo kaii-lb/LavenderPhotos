@@ -46,6 +46,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
@@ -252,7 +253,20 @@ fun ImageEditor(
                 saveImage = {
                     navMediaId = saveImage(
                         context = context,
-                        image = originalImage,
+                        image = if (absolutePath.endsWith(".avif")) {  // avif won't load on some android distros, so use glide for that
+                            Glide.with(context)
+                                .asBitmap()
+                                .load(uri)
+                                .submit()
+                                .get()
+                                .asImageBitmap()
+                        } else {
+                            context.contentResolver.openInputStream(uri).use { inputStream ->
+                                BitmapFactory.decodeStream(inputStream).also {
+                                    inputStream?.close()
+                                }.asImageBitmap()
+                            }
+                        },
                         containerDimens = containerDimens,
                         absolutePath = absolutePath,
                         drawingPaintState = drawingPaintState,
@@ -357,16 +371,6 @@ fun ImageEditor(
                 }
             }
 
-            // find the top left of the actual video area
-            var originalCrop by remember { mutableStateOf(ImageModification.Crop(0f, 0f, 0f, 0f)) }
-            LaunchedEffect(imageEditingState.modificationList.lastOrNull()) {
-                if (originalCrop.width == 0f && originalCrop.height == 0f && moddedImage.width != 512 && moddedImage.height != 512) {
-                    originalCrop = imageEditingState.modificationList.lastOrNull {
-                        it is ImageModification.Crop
-                    } as? ImageModification.Crop ?: ImageModification.Crop(0f, 0f, 0f, 0f)
-                }
-            }
-
             val cropScale by animateFloatAsState(
                 targetValue =
                     if (pagerState.currentPage == ImageEditorTabs.entries.indexOf(ImageEditorTabs.Crop)) 0.9f else 1f
@@ -411,270 +415,251 @@ fun ImageEditor(
                     }
             )
 
+            val isInFilterPage by remember {
+                derivedStateOf {
+                    pagerState.currentPage == ImageEditorTabs.entries.indexOf(ImageEditorTabs.Filters)
+                }
+            }
+            val animatedAlpha by animateFloatAsState(
+                targetValue = if (isInFilterPage) 0f else 1f,
+                animationSpec = AnimationConstants.expressiveTween(
+                    durationMillis = AnimationConstants.DURATION
+                )
+            )
+
             Box(
                 modifier = Modifier
+                    .alpha(animatedAlpha)
                     .fillMaxSize(1f)
-                    .rotate(animatedRotation)
                     .align(Alignment.Center)
+                    .rotate(animatedRotation)
                     .scale(cropScale * rotationScale)
             ) {
-                val isInFilterPage by remember {
-                    derivedStateOf {
-                        pagerState.currentPage == ImageEditorTabs.entries.indexOf(ImageEditorTabs.Filters)
-                    }
+                val textMeasurer = rememberTextMeasurer()
+                var showTextDialog by remember { mutableStateOf(false) }
+                var tapPosition by remember { mutableStateOf(Offset.Zero) }
+
+                if (showTextDialog) {
+                    TextEntryDialog(
+                        title = stringResource(id = R.string.editing_text),
+                        placeholder = stringResource(id = R.string.bottom_sheets_enter_text),
+                        onValueChange = { input ->
+                            input.isNotBlank()
+                        },
+                        onConfirm = { input ->
+                            if (input.isNotBlank()) {
+                                val size = textMeasurer.measure(
+                                    text = input,
+                                    style = DrawableText.Styles.Default.copy(
+                                        color = drawingPaintState.paint.color,
+                                        fontSize = TextUnit(drawingPaintState.paint.strokeWidth, TextUnitType.Sp)
+                                    )
+                                ).size
+
+                                val newText = ImageModification.DrawingText(
+                                    text = DrawableText(
+                                        text = input,
+                                        position = Offset(tapPosition.x, tapPosition.y),
+                                        paint = drawingPaintState.paint,
+                                        rotation = 0f,
+                                        size = size
+                                    )
+                                )
+
+                                drawingPaintState.modifications.add(newText)
+                                totalModCount.intValue += 1
+
+                                showTextDialog = false
+                                true
+                            } else {
+                                false
+                            }
+                        },
+                        onDismiss = {
+                            showTextDialog = false
+                        }
+                    )
                 }
 
-                AnimatedContent(
-                    targetState = isInFilterPage,
-                    transitionSpec = {
-                        (slideInHorizontally {
-                            if (isInFilterPage) it
-                            else -it
-                        } + fadeIn()
-                                ).togetherWith(
-                                (slideOutHorizontally {
-                                    if (isInFilterPage) -it
-                                    else it
-                                } + fadeOut())
-                            )
-                    },
+                Box(
                     modifier = Modifier
                         .fillMaxSize(1f)
-                ) { state ->
-                    if (state) {
-                        Box(
-                            modifier = Modifier
-                                .padding(16.dp)
-                        ) {
-                            ImageFilterPage(
-                                image = originalImage,
-                                modifications = drawingPaintState.modifications,
-                                pagerState = filterPagerState
-                            )
+                        .graphicsLayer {
+                            translationX = animatedOffset.x
+                            translationY = animatedOffset.y
+                            scaleX = animatedScale
+                            scaleY = animatedScale
                         }
-                    } else {
-                        val textMeasurer = rememberTextMeasurer()
-                        var showTextDialog by remember { mutableStateOf(false) }
-                        var tapPosition by remember { mutableStateOf(Offset.Zero) }
+                        .makeVideoDrawCanvas(
+                            drawingPaintState = drawingPaintState,
+                            textMeasurer = textMeasurer,
+                            currentVideoPosition = remember { mutableFloatStateOf(0f) },
+                            enabled = pagerState.currentPage == ImageEditorTabs.entries.indexOf(ImageEditorTabs.Draw),
+                            addText = { position ->
+                                tapPosition = position
+                                showTextDialog = true
+                            }
+                        )
+                ) {
+                    Image(
+                        bitmap = moddedImage,
+                        contentDescription = "Preview the image",
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier
+                            .size(imageSize)
+                            .background(MaterialTheme.colorScheme.background)
+                            .align(Alignment.Center)
+                    )
 
-                        if (showTextDialog) {
-                            TextEntryDialog(
-                                title = stringResource(id = R.string.editing_text),
-                                placeholder = stringResource(id = R.string.bottom_sheets_enter_text),
-                                onValueChange = { input ->
-                                    input.isNotBlank()
-                                },
-                                onConfirm = { input ->
-                                    if (input.isNotBlank()) {
-                                        val size = textMeasurer.measure(
-                                            text = input,
-                                            style = DrawableText.Styles.Default.copy(
-                                                color = drawingPaintState.paint.color,
-                                                fontSize = TextUnit(drawingPaintState.paint.strokeWidth, TextUnitType.Sp)
-                                            )
-                                        ).size
-
-                                        val newText = ImageModification.DrawingText(
-                                            text = DrawableText(
-                                                text = input,
-                                                position = Offset(tapPosition.x, tapPosition.y),
-                                                paint = drawingPaintState.paint,
-                                                rotation = 0f,
-                                                size = size
-                                            )
-                                        )
-
-                                        drawingPaintState.modifications.add(newText)
-                                        totalModCount.intValue += 1
-
-                                        showTextDialog = false
-                                        true
-                                    } else {
-                                        false
-                                    }
-                                },
-                                onDismiss = {
-                                    showTextDialog = false
-                                }
-                            )
+                    val actualTop by remember {
+                        derivedStateOf {
+                            with(localDensity) {
+                                (height.toPx() - imageSize.height.toPx()) / 2
+                            }
                         }
+                    }
 
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize(1f)
-                                .graphicsLayer {
-                                    translationX = animatedOffset.x
-                                    translationY = animatedOffset.y
-                                    scaleX = animatedScale
-                                    scaleY = animatedScale
-                                }
-                                .makeVideoDrawCanvas(
-                                    drawingPaintState = drawingPaintState,
-                                    textMeasurer = textMeasurer,
-                                    currentVideoPosition = remember { mutableFloatStateOf(0f) },
-                                    enabled = pagerState.currentPage == ImageEditorTabs.entries.indexOf(ImageEditorTabs.Draw),
-                                    addText = { position ->
-                                        tapPosition = position
-                                        showTextDialog = true
-                                    }
+                    val actualLeft by remember {
+                        derivedStateOf {
+                            with(localDensity) {
+                                (width.toPx() - imageSize.width.toPx()) / 2
+                            }
+                        }
+                    }
+
+                    LaunchedEffect(actualLeft, actualTop) {
+                        actualStarts = Pair(actualLeft, actualTop)
+                    }
+
+                    PreviewCanvas(
+                        drawingPaintState = drawingPaintState,
+                        actualLeft = actualLeft,
+                        actualTop = actualTop,
+                        latestCrop = latestCrop,
+                        pagerState = pagerState,
+                        width = width,
+                        height = height
+                    )
+
+                    AnimatedContent(
+                        targetState = originalImage.asAndroidBitmap().allocationByteCount == 0,
+                        transitionSpec = {
+                            fadeIn(
+                                animationSpec = tween(
+                                    durationMillis = AnimationConstants.DURATION_LONG
                                 )
-                        ) {
-                            Image(
-                                bitmap = moddedImage,
-                                contentDescription = "Preview the image",
-                                contentScale = ContentScale.Fit,
-                                modifier = Modifier
-                                    .size(imageSize)
-                                    .background(MaterialTheme.colorScheme.background)
-                                    .align(Alignment.Center)
+                            ).togetherWith(
+                                fadeOut(
+                                    animationSpec = tween(
+                                        durationMillis = AnimationConstants.DURATION_LONG
+                                    )
+                                )
                             )
-
-                            val actualTop by remember {
-                                derivedStateOf {
-                                    with(localDensity) {
-                                        (height.toPx() - imageSize.height.toPx()) / 2
-                                    }
-                                }
-                            }
-
-                            val actualLeft by remember {
-                                derivedStateOf {
-                                    with(localDensity) {
-                                        (width.toPx() - imageSize.width.toPx()) / 2
-                                    }
-                                }
-                            }
-
-                            LaunchedEffect(actualLeft, actualTop) {
-                                actualStarts = Pair(actualLeft, actualTop)
-                            }
-
-                            PreviewCanvas(
-                                drawingPaintState = drawingPaintState,
-                                actualLeft = actualLeft,
-                                actualTop = actualTop,
-                                latestCrop = latestCrop,
-                                originalCrop = originalCrop,
-                                pagerState = pagerState,
-                                width = width,
-                                height = height
-                            )
-
-                            AnimatedContent(
-                                targetState = originalImage.asAndroidBitmap().allocationByteCount == 0,
-                                transitionSpec = {
-                                    fadeIn(
-                                        animationSpec = tween(
-                                            durationMillis = AnimationConstants.DURATION_LONG
-                                        )
-                                    ).togetherWith(
-                                        fadeOut(
-                                            animationSpec = tween(
-                                                durationMillis = AnimationConstants.DURATION_LONG
-                                            )
-                                        )
-                                    )
-                                },
+                        },
+                        modifier = Modifier
+                            .width(width)
+                            .height(height)
+                            .align(Alignment.Center)
+                    ) { state ->
+                        if (state) {
+                            Box(
                                 modifier = Modifier
-                                    .width(width)
-                                    .height(height)
+                                    .requiredSize(
+                                        width = width,
+                                        height = height
+                                    )
+                                    .clip(RoundedCornerShape(16.dp))
                                     .align(Alignment.Center)
-                            ) { state ->
-                                if (state) {
-                                    Box(
-                                        modifier = Modifier
-                                            .requiredSize(
-                                                width = width,
-                                                height = height
-                                            )
-                                            .clip(RoundedCornerShape(16.dp))
-                                            .align(Alignment.Center)
-                                            .shimmerEffect(
-                                                containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
-                                                highlightColor = MaterialTheme.colorScheme.surfaceContainerHighest
-                                            )
+                                    .shimmerEffect(
+                                        containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+                                        highlightColor = MaterialTheme.colorScheme.surfaceContainerHighest
                                     )
-                                } else {
-                                    // just fill the size so it doesn't scale down
-                                    Box(
-                                        modifier = Modifier
-                                            .requiredSize(
-                                                width = width,
-                                                height = height
-                                            )
+                            )
+                        } else {
+                            // just fill the size so it doesn't scale down
+                            Box(
+                                modifier = Modifier
+                                    .requiredSize(
+                                        width = width,
+                                        height = height
                                     )
-                                }
-                            }
+                            )
                         }
                     }
                 }
 
-                AnimatedVisibility(
-                    visible = pagerState.currentPage == ImageEditorTabs.entries.indexOf(ImageEditorTabs.Crop) && moddedImage.asAndroidBitmap().allocationByteCount > 0,
-                    enter = fadeIn(
-                        animationSpec = AnimationConstants.expressiveTween(
-                            durationMillis = AnimationConstants.DURATION
-                        )
-                    ),
-                    exit = fadeOut(
-                        animationSpec = AnimationConstants.expressiveTween(
-                            durationMillis = AnimationConstants.DURATION
-                        )
-                    ),
+                val localDensity = LocalDensity.current
+                CropBox(
+                    containerWidth = with(localDensity) { width.toPx() },
+                    containerHeight = with(localDensity) { height.toPx() },
+                    mediaAspectRatio = moddedImage.width.toFloat() / moddedImage.height,
+                    editingState = imageEditingState,
+                    scale = animatedScale,
+                    enabled = pagerState.currentPage == ImageEditorTabs.entries.indexOf(ImageEditorTabs.Crop) && moddedImage.asAndroidBitmap().allocationByteCount > 0,
                     modifier = Modifier
-                        .requiredSize(
-                            width = width + 32.dp, // so the CropBox handles don't clip
-                            height = height + 32.dp
-                        )
-                ) {
-                    val localDensity = LocalDensity.current
-
-                    CropBox(
-                        containerWidth = with(localDensity) { width.toPx() },
-                        containerHeight = with(localDensity) { height.toPx() },
-                        mediaAspectRatio = moddedImage.width.toFloat() / moddedImage.height,
-                        editingState = imageEditingState,
-                        scale = animatedScale,
-                        modifier = Modifier
-                            .graphicsLayer {
-                                translationX = animatedScale * 16.dp.toPx() + animatedOffset.x
-                                translationY = animatedScale * 16.dp.toPx() + animatedOffset.y
-                                scaleX = animatedScale
-                                scaleY = animatedScale
-                            },
-                        onAreaChanged = { area, original ->
-                            imageEditingState.removeModifications { it is ImageModification.Crop } // because Crop gets called a million times each movement
-                            imageEditingState.addModification(
-                                ImageModification.Crop(
-                                    top = area.top,
-                                    left = area.left,
-                                    width = area.width,
-                                    height = area.height
-                                )
-                            )
-
-                            containerDimens = original
+                        .graphicsLayer {
+                            translationX = animatedOffset.x
+                            translationY = animatedOffset.y
+                            scaleX = animatedScale
+                            scaleY = animatedScale
                         },
-                        onCropDone = {
-                            val actualWidth = with(localDensity) { (containerDimens.width - 56.dp.toPx()) } // subtract spacing of handles
-                            val actualHeight = with(localDensity) { (containerDimens.height - 56.dp.toPx()) } // to not clip them
-                            val targetX = actualWidth / latestCrop.width
-                            val targetY = actualHeight / latestCrop.height
-
-                            val scale = max(1f, min(targetX, targetY))
-                            imageEditingState.setScale(scale)
-
-                            imageEditingState.setOffset(
-                                Offset(
-                                    x = with(localDensity) {
-                                        scale * (-latestCrop.left + (containerDimens.width - latestCrop.width) / 2)
-                                    },
-                                    y = with(localDensity) {
-                                        scale * (-latestCrop.top + (containerDimens.height - latestCrop.height) / 2)
-                                    }
-                                )
+                    onAreaChanged = { area, original ->
+                        imageEditingState.removeModifications { it is ImageModification.Crop } // because Crop gets called a million times each movement
+                        imageEditingState.addModification(
+                            ImageModification.Crop(
+                                top = area.top,
+                                left = area.left,
+                                width = area.width,
+                                height = area.height
                             )
-                        }
+                        )
+
+                        containerDimens = original
+                    },
+                    onCropDone = {
+                        val actualWidth = with(localDensity) { (containerDimens.width - 56.dp.toPx()) } // subtract spacing of handles
+                        val actualHeight = with(localDensity) { (containerDimens.height - 56.dp.toPx()) } // to not clip them
+                        val targetX = actualWidth / latestCrop.width
+                        val targetY = actualHeight / latestCrop.height
+
+                        val scale = max(1f, min(targetX, targetY))
+                        imageEditingState.setScale(scale)
+
+                        imageEditingState.setOffset(
+                            Offset(
+                                x = with(localDensity) {
+                                    scale * (-latestCrop.left + (containerDimens.width - latestCrop.width) / 2)
+                                },
+                                y = with(localDensity) {
+                                    scale * (-latestCrop.top + (containerDimens.height - latestCrop.height) / 2)
+                                }
+                            )
+                        )
+                    }
+                )
+            }
+
+            AnimatedVisibility(
+                visible = isInFilterPage,
+                enter = slideInHorizontally {
+                    if (isInFilterPage) it
+                    else -it
+                } + fadeIn(),
+                exit = (slideOutHorizontally {
+                    if (isInFilterPage) -it
+                    else it
+                } + fadeOut()),
+                modifier = Modifier
+                    .fillMaxSize(1f)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .padding(16.dp)
+                ) {
+                    ImageFilterPage(
+                        image = originalImage,
+                        modifications = drawingPaintState.modifications,
+                        pagerState = filterPagerState
                     )
                 }
             }

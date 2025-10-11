@@ -54,14 +54,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isUnspecified
 import com.kaii.photos.R
-import com.kaii.photos.compose.CroppingRatioBottomSheet
 import com.kaii.photos.compose.dialogs.SliderDialog
 import com.kaii.photos.compose.dialogs.TextEntryDialog
 import com.kaii.photos.compose.editing_view.EditingViewBottomAppBarItem
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.VideoPlayerConstants
 import com.kaii.photos.helpers.editing.BasicVideoData
-import com.kaii.photos.helpers.editing.CroppingAspectRatio
 import com.kaii.photos.helpers.editing.MediaAdjustments
 import com.kaii.photos.helpers.editing.VideoEditingState
 import com.kaii.photos.helpers.editing.VideoModification
@@ -345,56 +343,6 @@ private fun RightHandle(
                 .width(8.dp)
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.onPrimary)
-        )
-    }
-}
-
-@Composable
-fun SharedEditorCropContent(
-    imageAspectRatio: Float,
-    croppingAspectRatio: CroppingAspectRatio,
-    rotation: Float,
-    setCroppingAspectRatio: (CroppingAspectRatio) -> Unit,
-    setRotation: (Float) -> Unit,
-    resetCrop: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxSize(1f),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceEvenly
-    ) {
-        EditingViewBottomAppBarItem(
-            text = stringResource(id = R.string.editing_rotate),
-            icon = R.drawable.rotate_ccw,
-            onClick = {
-                setRotation(rotation + 90f)
-            }
-        )
-
-        val showSheet = remember { mutableStateOf(false) }
-
-        CroppingRatioBottomSheet(
-            show = showSheet,
-            ratio = croppingAspectRatio,
-            originalImageRatio = imageAspectRatio,
-            onSetCroppingRatio = setCroppingAspectRatio
-        )
-
-        EditingViewBottomAppBarItem(
-            text = stringResource(id = R.string.editing_ratio),
-            icon = R.drawable.resolution,
-            onClick = {
-                showSheet.value = true
-            }
-        )
-
-        EditingViewBottomAppBarItem(
-            text = stringResource(id = R.string.editing_reset),
-            icon = R.drawable.reset,
-            onClick = {
-                resetCrop()
-            }
         )
     }
 }

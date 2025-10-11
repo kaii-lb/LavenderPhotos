@@ -33,6 +33,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsIgnoringVisibility
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -47,6 +48,7 @@ import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.systemGestureExclusion
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -88,6 +90,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
@@ -110,10 +113,10 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.FullWidthDialogButton
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.WallpaperTypeDialog
+import com.kaii.photos.compose.editing_view.SharedEditorCropContent
 import com.kaii.photos.compose.editing_view.SharedEditorDrawContent
 import com.kaii.photos.compose.editing_view.SharedEditorFilterContent
 import com.kaii.photos.compose.editing_view.image_editor.ImageEditorAdjustContent
-import com.kaii.photos.compose.editing_view.video_editor.SharedEditorCropContent
 import com.kaii.photos.compose.editing_view.video_editor.TrimContent
 import com.kaii.photos.compose.editing_view.video_editor.VideoEditorAdjustContent
 import com.kaii.photos.compose.editing_view.video_editor.VideoEditorProcessingContent
@@ -160,10 +163,18 @@ fun VideoEditorBottomBar(
     saveEffect: (MediaColorFilters) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
+    val localDensity = LocalDensity.current
+    val navBarHeight = with(localDensity) {
+        WindowInsets.navigationBars.getBottom(localDensity).toDp()
+    }
 
     BottomAppBar(
         modifier = Modifier
-            .height(160.dp)
+            .height(120.dp + navBarHeight)
+            .then(
+                if (pagerState.currentPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Trim)) Modifier.systemGestureExclusion()
+                else Modifier
+            )
     ) {
         Column(
             modifier = Modifier
@@ -701,10 +712,14 @@ fun ImageEditorBottomBar(
     saveEffect: (MediaColorFilters) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
+    val localDensity = LocalDensity.current
+    val navBarHeight = with(localDensity) {
+        WindowInsets.navigationBars.getBottom(localDensity).toDp()
+    }
 
     BottomAppBar(
         modifier = modifier
-            .height(160.dp)
+            .height(120.dp + navBarHeight)
     ) {
         Column(
             modifier = Modifier

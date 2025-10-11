@@ -17,13 +17,9 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
@@ -46,6 +42,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
@@ -420,361 +417,320 @@ fun VideoEditor(
             )
         }
     ) { innerPadding ->
-        Column(
+        BoxWithConstraints(
             modifier = Modifier
                 .padding(innerPadding)
                 .background(MaterialTheme.colorScheme.background),
-            verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.Start
+            contentAlignment = Alignment.Center
         ) {
             val animatedRotation by animateFloatAsState(
                 targetValue = videoEditingState.rotation
             )
 
-            BoxWithConstraints(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(1f)
-                    .padding(8.dp)
-            ) {
-                val context = LocalContext.current
-                val playerView = rememberPlayerView(
-                    exoPlayer = exoPlayer,
-                    activity = context as Activity,
-                    absolutePath = absolutePath,
-                    useTextureView = true
-                )
+            val context = LocalContext.current
+            val playerView = rememberPlayerView(
+                exoPlayer = exoPlayer,
+                activity = context as Activity,
+                absolutePath = absolutePath,
+                useTextureView = true
+            )
 
-                val width = this@BoxWithConstraints.maxWidth
-                val height = this@BoxWithConstraints.maxHeight
+            val width = this@BoxWithConstraints.maxWidth - 48.dp
+            val height = this@BoxWithConstraints.maxHeight - 48.dp
 
-                val localDensity = LocalDensity.current
-                val rotationScale by animateFloatAsState(
-                    targetValue =
-                        with(localDensity) {
-                            if (videoEditingState.rotation % 180f == 0f) {
-                                min(
-                                    width.toPx() / containerDimens.width,
-                                    height.toPx() / containerDimens.height
-                                )
-                            } else {
-                                min(
-                                    width.toPx() / containerDimens.height,
-                                    height.toPx() / containerDimens.width
-                                )
-                            } * 0.9f
-                        }
-                )
-
-                canvasSize = with(localDensity) {
-                    Size(width.toPx(), height.toPx())
-                }
-
-                val latestCrop by remember {
-                    derivedStateOf {
-                        modifications.lastOrNull {
-                            it is VideoModification.Crop
-                        } as? VideoModification.Crop ?: VideoModification.Crop(0f, 0f, 0f, 0f)
-                    }
-                }
-
-                // find the top left of the actual video area
-                var originalCrop by remember { mutableStateOf(VideoModification.Crop(0f, 0f, 0f, 0f)) }
-                LaunchedEffect(modifications.lastOrNull()) {
-                    if (originalCrop.width == 0f && originalCrop.height == 0f) {
-                        originalCrop = modifications.lastOrNull {
-                            it is VideoModification.Crop
-                        } as? VideoModification.Crop ?: VideoModification.Crop(0f, 0f, 0f, 0f)
-                    }
-                }
-
-                val actualTop by remember {
-                    derivedStateOf {
-                        with(localDensity) {
-                            (height.toPx() - originalCrop.height) / 2
-                        }
-                    }
-                }
-                val actualLeft by remember {
-                    derivedStateOf {
-                        with(localDensity) {
-                            (width.toPx() - originalCrop.width) / 2
-                        }
-                    }
-                }
-
-                var scale by remember { mutableFloatStateOf(1f) }
-                var offset by remember { mutableStateOf(Offset.Zero) }
-                LaunchedEffect(videoEditingState.resetCrop) {
-                    if (videoEditingState.resetCrop) {
-                        scale = 1f
-                        offset = Offset.Zero
-                    }
-                }
-
-                val animatedScale by animateFloatAsState(
-                    targetValue = scale,
-                    animationSpec = tween(
-                        durationMillis = AnimationConstants.DURATION_SHORT
-                    )
-                )
-                val animatedOffset by animateOffsetAsState(
-                    targetValue = offset,
-                    animationSpec = tween(
-                        durationMillis = AnimationConstants.DURATION_SHORT
-                    )
-                )
-
-                Box(
-                    modifier = Modifier
-                        .width(width)
-                        .height(height)
-                        .padding(8.dp)
-                        .rotate(animatedRotation)
-                        .scale(rotationScale)
-                        .align(Alignment.Center)
-                ) {
-                    val isInFilterPage by remember {
-                        derivedStateOf {
-                            pagerState.currentPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Filters)
-                        }
-                    }
-
-                    AnimatedContent(
-                        targetState = isInFilterPage,
-                        transitionSpec = {
-                            (slideInHorizontally {
-                                if (isInFilterPage) it
-                                else -it
-                            } + fadeIn()
-                                    ).togetherWith(
-                                    (slideOutHorizontally {
-                                        if (isInFilterPage) -it
-                                        else it
-                                    } + fadeOut())
-                                )
-                        }
-                    ) { state ->
-                        if (state) {
-                            VideoFilterPage(
-                                pagerState = filterPagerState,
-                                drawingPaintState = drawingPaintState,
-                                currentVideoPosition = currentVideoPosition,
-                                absolutePath = absolutePath,
-                                allowedToRefresh = isPlaying.value || isSeeking
+            val localDensity = LocalDensity.current
+            val rotationScale by animateFloatAsState(
+                targetValue =
+                    with(localDensity) {
+                        if (videoEditingState.rotation % 180f == 0f) {
+                            min(
+                                width.toPx() / containerDimens.width,
+                                height.toPx() / containerDimens.height
                             )
                         } else {
-                            var showTextDialog by remember { mutableStateOf(false) }
-                            val textMeasurer = rememberTextMeasurer()
-                            var tapPosition by remember { mutableStateOf(Offset.Zero) }
-
-                            if (showTextDialog) {
-                                TextEntryDialog(
-                                    title = stringResource(id = R.string.editing_text),
-                                    placeholder = stringResource(id = R.string.bottom_sheets_enter_text),
-                                    onValueChange = { input ->
-                                        input.isNotBlank()
-                                    },
-                                    onConfirm = { input ->
-                                        if (input.isNotBlank()) {
-                                            val size = textMeasurer.measure(
-                                                text = input,
-                                                style = DrawableText.Styles.Default.copy(
-                                                    color = drawingPaintState.paint.color,
-                                                    fontSize = TextUnit(drawingPaintState.paint.strokeWidth, TextUnitType.Sp)
-                                                )
-                                            ).size
-
-                                            val newText = VideoModification.DrawingText(
-                                                text = DrawableText(
-                                                    text = input,
-                                                    position = Offset(tapPosition.x, tapPosition.y),
-                                                    paint = drawingPaintState.paint,
-                                                    rotation = 0f,
-                                                    size = size
-                                                )
-                                            )
-
-                                            drawingPaintState.modifications.add(newText)
-
-                                            showTextDialog = false
-                                            true
-                                        } else {
-                                            false
-                                        }
-                                    },
-                                    onDismiss = {
-                                        showTextDialog = false
-                                    }
-                                )
-                            }
-
-                            Box(
-                                modifier = Modifier
-                                    .graphicsLayer {
-                                        translationX = animatedOffset.x
-                                        translationY = animatedOffset.y
-                                        scaleX = animatedScale
-                                        scaleY = animatedScale
-                                    }
-                                    .makeVideoDrawCanvas(
-                                        drawingPaintState = drawingPaintState,
-                                        textMeasurer = textMeasurer,
-                                        currentVideoPosition = currentVideoPosition,
-                                        enabled = pagerState.currentPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw),
-                                        addText = { position ->
-                                            tapPosition = position
-                                            showTextDialog = true
-                                        }
-                                    )
-                            ) {
-                                AndroidView(
-                                    factory = {
-                                        playerView
-                                    },
-                                    modifier = Modifier
-                                        .width(width)
-                                        .height(height)
-                                        .background(MaterialTheme.colorScheme.background)
-                                )
-
-                                PreviewCanvas(
-                                    drawingPaintState = drawingPaintState,
-                                    actualLeft = actualLeft,
-                                    actualTop = actualTop,
-                                    latestCrop = latestCrop,
-                                    originalCrop = originalCrop,
-                                    pagerState = pagerState,
-                                    width = width,
-                                    height = height
-                                )
-
-                                AnimatedContent(
-                                    targetState = exoPlayerLoading || basicVideoData.aspectRatio == -1f,
-                                    transitionSpec = {
-                                        fadeIn(
-                                            animationSpec = tween(
-                                                durationMillis = AnimationConstants.DURATION_LONG
-                                            )
-                                        ).togetherWith(
-                                            fadeOut(
-                                                animationSpec = tween(
-                                                    durationMillis = AnimationConstants.DURATION_LONG
-                                                )
-                                            )
-                                        )
-                                    },
-                                    modifier = Modifier
-                                        .fillMaxSize(1f)
-                                        .align(Alignment.Center)
-                                ) { state ->
-                                    if (state) {
-                                        Box(
-                                            modifier = Modifier
-                                                .requiredSize(
-                                                    width = width,
-                                                    height = height
-                                                )
-                                                .clip(RoundedCornerShape(16.dp))
-                                                .align(Alignment.Center)
-                                                .shimmerEffect(
-                                                    containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
-                                                    highlightColor = MaterialTheme.colorScheme.surfaceContainerHighest
-                                                )
-                                        )
-                                    } else {
-                                        // just fill the size so it doesn't scale down
-                                        Box(
-                                            modifier = Modifier
-                                                .requiredSize(
-                                                    width = width,
-                                                    height = height
-                                                )
-                                        )
-                                    }
-                                }
-                            }
-                        }
+                            min(
+                                width.toPx() / containerDimens.height,
+                                height.toPx() / containerDimens.width
+                            )
+                        } * 0.9f
                     }
+            )
+
+            canvasSize = with(localDensity) {
+                Size(width.toPx(), height.toPx())
+            }
+
+            val latestCrop by remember {
+                derivedStateOf {
+                    modifications.lastOrNull {
+                        it is VideoModification.Crop
+                    } as? VideoModification.Crop ?: VideoModification.Crop(0f, 0f, 0f, 0f)
                 }
+            }
 
-                Column(
-                    modifier = Modifier
-                        .width(width)
-                        .height(height)
-                        .align(Alignment.Center),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    AnimatedVisibility(
-                        visible = pagerState.currentPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Crop) && basicVideoData.aspectRatio != -1f,
-                        enter = fadeIn(
-                            animationSpec = AnimationConstants.expressiveTween(
-                                durationMillis = AnimationConstants.DURATION_LONG
-                            )
-                        ),
-                        exit = fadeOut(
-                            animationSpec = AnimationConstants.expressiveTween(
-                                durationMillis = AnimationConstants.DURATION_LONG
-                            )
-                        ),
-                        modifier = Modifier
-                            .requiredSize(
-                                width = width + 16.dp, // as to not clip the CropBox arcs
-                                height = height + 16.dp
-                            )
-                    ) {
-                        val localDensity = LocalDensity.current
+            val videoSize by remember {
+                derivedStateOf {
+                    with(localDensity) {
+                        val xRatio = width.toPx() / basicVideoData.width
+                        val yRatio = height.toPx() / basicVideoData.height
+                        val ratio = min(xRatio, yRatio)
 
-                        CropBox(
-                            containerWidth = with(localDensity) { width.toPx() - 16.dp.toPx() }, // adjust for AnimatedVisibility size
-                            containerHeight = with(localDensity) { height.toPx() - 16.dp.toPx() },
-                            mediaAspectRatio = basicVideoData.aspectRatio,
-                            editingState = videoEditingState,
-                            scale = animatedScale * rotationScale,
-                            modifier = Modifier
-                                .rotate(animatedRotation)
-                                .scale(rotationScale)
-                                .graphicsLayer {
-                                    translationX = animatedScale * 16.dp.toPx() + animatedOffset.x
-                                    translationY = animatedScale * 16.dp.toPx() + animatedOffset.y
-                                    scaleX = animatedScale
-                                    scaleY = animatedScale
-                                },
-                            onAreaChanged = { area, original ->
-                                modifications.removeAll { it is VideoModification.Crop } // because Crop gets called a million times each movement
-                                modifications.add(
-                                    VideoModification.Crop(
-                                        top = area.top,
-                                        left = area.left,
-                                        width = area.width,
-                                        height = area.height
-                                    )
-                                )
-
-                                containerDimens = original
-                            },
-                            onCropDone = {
-                                val actualWidth = with(localDensity) { (containerDimens.width - 56.dp.toPx()) } // subtract spacing of handles
-                                val actualHeight = with(localDensity) { (containerDimens.height - 56.dp.toPx()) } // to not clip them
-                                val targetX = actualWidth / latestCrop.width
-                                val targetY = actualHeight / latestCrop.height
-
-                                scale = max(1f, min(targetX, targetY))
-
-                                offset = Offset(
-                                    x = with(localDensity) {
-                                        scale * (-latestCrop.left + (containerDimens.width - latestCrop.width) / 2)
-                                    },
-                                    y = with(localDensity) {
-                                        scale * (-latestCrop.top + (containerDimens.height - latestCrop.height) / 2)
-                                    }
-                                )
-                            }
+                        Size(
+                            width = basicVideoData.width * ratio,
+                            height = basicVideoData.height * ratio
                         )
                     }
                 }
             }
+
+            val actualTop by remember {
+                derivedStateOf {
+                    with(localDensity) {
+                        (height.toPx() - videoSize.height) / 2
+                    }
+                }
+            }
+
+            val actualLeft by remember {
+                derivedStateOf {
+                    with(localDensity) {
+                        (width.toPx() - videoSize.width) / 2
+                    }
+                }
+            }
+
+            val animatedScale by animateFloatAsState(
+                targetValue = videoEditingState.scale,
+                animationSpec = tween(
+                    durationMillis = AnimationConstants.DURATION_SHORT
+                )
+            )
+            val animatedOffset by animateOffsetAsState(
+                targetValue = videoEditingState.offset,
+                animationSpec = tween(
+                    durationMillis = AnimationConstants.DURATION_SHORT
+                )
+            )
+
+            var showTextDialog by remember { mutableStateOf(false) }
+            val textMeasurer = rememberTextMeasurer()
+            var tapPosition by remember { mutableStateOf(Offset.Zero) }
+
+            if (showTextDialog) {
+                TextEntryDialog(
+                    title = stringResource(id = R.string.editing_text),
+                    placeholder = stringResource(id = R.string.bottom_sheets_enter_text),
+                    onValueChange = { input ->
+                        input.isNotBlank()
+                    },
+                    onConfirm = { input ->
+                        if (input.isNotBlank()) {
+                            val size = textMeasurer.measure(
+                                text = input,
+                                style = DrawableText.Styles.Default.copy(
+                                    color = drawingPaintState.paint.color,
+                                    fontSize = TextUnit(drawingPaintState.paint.strokeWidth, TextUnitType.Sp)
+                                )
+                            ).size
+
+                            val newText = VideoModification.DrawingText(
+                                text = DrawableText(
+                                    text = input,
+                                    position = Offset(tapPosition.x, tapPosition.y),
+                                    paint = drawingPaintState.paint,
+                                    rotation = 0f,
+                                    size = size
+                                )
+                            )
+
+                            drawingPaintState.modifications.add(newText)
+
+                            showTextDialog = false
+                            true
+                        } else {
+                            false
+                        }
+                    },
+                    onDismiss = {
+                        showTextDialog = false
+                    }
+                )
+            }
+
+            val isInFilterPage by remember {
+                derivedStateOf {
+                    pagerState.currentPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Filters)
+                }
+            }
+
+            val animatedAlpha by animateFloatAsState(
+                targetValue = if (isInFilterPage) 0f else 1f,
+                animationSpec = AnimationConstants.expressiveTween(
+                    durationMillis = AnimationConstants.DURATION
+                )
+            )
+
+            Box(
+                modifier = Modifier
+                    .alpha(animatedAlpha)
+                    .rotate(animatedRotation)
+                    .scale(rotationScale)
+                    .graphicsLayer {
+                        translationX = animatedOffset.x
+                        translationY = animatedOffset.y
+                        scaleX = animatedScale
+                        scaleY = animatedScale
+                    }
+                    .makeVideoDrawCanvas(
+                        drawingPaintState = drawingPaintState,
+                        textMeasurer = textMeasurer,
+                        currentVideoPosition = currentVideoPosition,
+                        enabled = pagerState.currentPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw),
+                        addText = { position ->
+                            tapPosition = position
+                            showTextDialog = true
+                        }
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                AndroidView(
+                    factory = {
+                        playerView
+                    },
+                    modifier = Modifier
+                        .width(width)
+                        .height(height)
+                        .background(MaterialTheme.colorScheme.background)
+                )
+
+                PreviewCanvas(
+                    drawingPaintState = drawingPaintState,
+                    actualLeft = actualLeft,
+                    actualTop = actualTop,
+                    latestCrop = latestCrop,
+                    pagerState = pagerState,
+                    width = width,
+                    height = height
+                )
+
+                AnimatedContent(
+                    targetState = exoPlayerLoading || basicVideoData.aspectRatio == -1f,
+                    transitionSpec = {
+                        fadeIn(
+                            animationSpec = tween(
+                                durationMillis = AnimationConstants.DURATION_LONG
+                            )
+                        ).togetherWith(
+                            fadeOut(
+                                animationSpec = tween(
+                                    durationMillis = AnimationConstants.DURATION_LONG
+                                )
+                            )
+                        )
+                    },
+                    modifier = Modifier
+                        .fillMaxSize(1f)
+                        .align(Alignment.Center)
+                ) { state ->
+                    if (state) {
+                        Box(
+                            modifier = Modifier
+                                .requiredSize(
+                                    width = width,
+                                    height = height
+                                )
+                                .clip(RoundedCornerShape(16.dp))
+                                .align(Alignment.Center)
+                                .shimmerEffect(
+                                    containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+                                    highlightColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                                )
+                        )
+                    } else {
+                        // just fill the size so it doesn't scale down
+                        Box(
+                            modifier = Modifier
+                                .requiredSize(
+                                    width = width,
+                                    height = height
+                                )
+                        )
+                    }
+                }
+            }
+
+            AnimatedVisibility(
+                visible = isInFilterPage,
+                enter = slideInHorizontally {
+                    if (isInFilterPage) it
+                    else -it
+                } + fadeIn(),
+                exit = (slideOutHorizontally {
+                    if (isInFilterPage) -it
+                    else it
+                } + fadeOut()),
+                modifier = Modifier
+                    .fillMaxSize(1f)
+                    .padding(12.dp)
+            ) {
+                VideoFilterPage(
+                    pagerState = filterPagerState,
+                    drawingPaintState = drawingPaintState,
+                    currentVideoPosition = currentVideoPosition,
+                    absolutePath = absolutePath,
+                    allowedToRefresh = isPlaying.value || isSeeking
+                )
+            }
+
+            CropBox(
+                containerWidth = with(localDensity) { width.toPx() },
+                containerHeight = with(localDensity) { height.toPx() },
+                mediaAspectRatio = basicVideoData.aspectRatio,
+                editingState = videoEditingState,
+                scale = animatedScale * rotationScale,
+                enabled = pagerState.currentPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Crop) && basicVideoData.aspectRatio != -1f,
+                modifier = Modifier
+                    .rotate(animatedRotation)
+                    .scale(rotationScale)
+                    .graphicsLayer {
+                        translationX = animatedOffset.x
+                        translationY = animatedOffset.y
+                        scaleX = animatedScale
+                        scaleY = animatedScale
+                    },
+                onAreaChanged = { area, original ->
+                    modifications.removeAll { it is VideoModification.Crop } // because Crop gets called a million times each movement
+                    modifications.add(
+                        VideoModification.Crop(
+                            top = area.top,
+                            left = area.left,
+                            width = area.width,
+                            height = area.height
+                        )
+                    )
+
+                    containerDimens = original
+                },
+                onCropDone = {
+                    val actualWidth = with(localDensity) { (containerDimens.width - 56.dp.toPx()) } // subtract spacing of handles
+                    val actualHeight = with(localDensity) { (containerDimens.height - 56.dp.toPx()) } // to not clip them
+                    val targetX = actualWidth / latestCrop.width
+                    val targetY = actualHeight / latestCrop.height
+
+                    videoEditingState.setScale(max(1f, min(targetX, targetY)))
+
+                    videoEditingState.setOffset(
+                        Offset(
+                            x = with(localDensity) {
+                                videoEditingState.scale * (-latestCrop.left + (containerDimens.width - latestCrop.width) / 2)
+                            },
+                            y = with(localDensity) {
+                                videoEditingState.scale * (-latestCrop.top + (containerDimens.height - latestCrop.height) / 2)
+                            }
+                        )
+                    )
+                }
+            )
 
             VideoEditorBottomTools(
                 pagerState = pagerState,
@@ -786,6 +742,8 @@ fun VideoEditor(
                 totalModCount = totalModCount,
                 videoEditingState = videoEditingState,
                 drawingPaintState = drawingPaintState,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter),
                 onSeek = { pos ->
                     isSeeking = true
                     val wasPlaying = isPlaying.value
@@ -800,8 +758,6 @@ fun VideoEditor(
                     isSeeking = false
                 }
             )
-
-            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }

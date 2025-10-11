@@ -80,9 +80,11 @@ import com.bumptech.glide.Glide
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
+import com.kaii.photos.compose.CroppingRatioBottomSheet
 import com.kaii.photos.compose.widgets.shimmerEffect
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.TextStylingConstants
+import com.kaii.photos.helpers.editing.CroppingAspectRatio
 import com.kaii.photos.helpers.editing.DrawableImage
 import com.kaii.photos.helpers.editing.DrawingColors
 import com.kaii.photos.helpers.editing.DrawingItems
@@ -625,5 +627,55 @@ private fun ImageSelector(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun SharedEditorCropContent(
+    imageAspectRatio: Float,
+    croppingAspectRatio: CroppingAspectRatio,
+    rotation: Float,
+    setCroppingAspectRatio: (CroppingAspectRatio) -> Unit,
+    setRotation: (Float) -> Unit,
+    resetCrop: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxSize(1f),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        EditingViewBottomAppBarItem(
+            text = stringResource(id = R.string.editing_rotate),
+            icon = R.drawable.rotate_ccw,
+            onClick = {
+                setRotation(rotation - 90f)
+            }
+        )
+
+        val showSheet = remember { mutableStateOf(false) }
+
+        CroppingRatioBottomSheet(
+            show = showSheet,
+            ratio = croppingAspectRatio,
+            originalImageRatio = imageAspectRatio,
+            onSetCroppingRatio = setCroppingAspectRatio
+        )
+
+        EditingViewBottomAppBarItem(
+            text = stringResource(id = R.string.editing_ratio),
+            icon = R.drawable.resolution,
+            onClick = {
+                showSheet.value = true
+            }
+        )
+
+        EditingViewBottomAppBarItem(
+            text = stringResource(id = R.string.editing_reset),
+            icon = R.drawable.reset,
+            onClick = {
+                resetCrop()
+            }
+        )
     }
 }

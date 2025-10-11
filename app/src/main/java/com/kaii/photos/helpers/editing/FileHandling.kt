@@ -680,6 +680,8 @@ suspend fun saveImage(
             (height * bitmap.height).roundToInt()
         )
 
+    Log.d(TAG, "Image crop left ${left * bitmap.width} and width ${width * bitmap.width}")
+
     val file = File(absolutePath)
     val uri = context.contentResolver.getUriFromAbsolutePath(absolutePath, MediaType.Image)
 

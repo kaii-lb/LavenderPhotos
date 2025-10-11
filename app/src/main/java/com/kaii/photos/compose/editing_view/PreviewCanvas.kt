@@ -39,6 +39,7 @@ import androidx.core.graphics.scale
 import com.bumptech.glide.Glide
 import com.kaii.photos.helpers.editing.DrawableText
 import com.kaii.photos.helpers.editing.DrawingPaintState
+import com.kaii.photos.helpers.editing.ImageEditorTabs
 import com.kaii.photos.helpers.editing.SharedModification
 import com.kaii.photos.helpers.editing.VideoEditorTabs
 import com.kaii.photos.helpers.editing.toOffset
@@ -51,7 +52,6 @@ fun BoxScope.PreviewCanvas(
     actualLeft: Float,
     actualTop: Float,
     latestCrop: SharedModification.Crop,
-    originalCrop: SharedModification.Crop,
     pagerState: PagerState,
     width: Dp,
     height: Dp
@@ -223,42 +223,23 @@ fun BoxScope.PreviewCanvas(
             }
         }
 
-        clipRect(
-            left = 0f,
-            top = 0f,
-            right = actualLeft * 2 + originalCrop.right,
-            bottom = actualTop * 2 + originalCrop.bottom
+        if (pagerState.currentPage != VideoEditorTabs.entries.indexOf(VideoEditorTabs.Crop)
+            && pagerState.currentPage != ImageEditorTabs.entries.indexOf(ImageEditorTabs.Crop)
         ) {
-            if (pagerState.currentPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Crop)) {
-                // mask exoplayer's failure to set the background color
-                clipRect(
-                    left = actualLeft + originalCrop.left,
-                    top = actualTop + originalCrop.top,
-                    right = actualLeft + originalCrop.right,
-                    bottom = actualTop + originalCrop.bottom,
-                    clipOp = ClipOp.Difference
-                ) {
-                    drawRect(
-                        color = backgroundColor,
-                        size = Size(width.toPx(), height.toPx())
-                    )
-                }
-            } else {
-                // mask exoplayer's failure to set the background color
-                // and the "unwanted" area of the cropped video
-                // add some extra pixels to avoid "white lines" on the very edges
-                clipRect(
-                    left = actualLeft + latestCrop.left - 5,
-                    top = actualTop + latestCrop.top - 5,
-                    right = actualLeft + latestCrop.right + 5,
-                    bottom = actualTop + latestCrop.bottom + 5,
-                    clipOp = ClipOp.Difference
-                ) {
-                    drawRect(
-                        color = backgroundColor,
-                        size = Size(width.toPx() + 10, height.toPx() + 10)
-                    )
-                }
+            // mask exoplayer's failure to set the background color
+            // and the "unwanted" area of the cropped media
+            // add some extra pixels to avoid "white lines" on the very edges
+            clipRect(
+                left = actualLeft + latestCrop.left - 5,
+                top = actualTop + latestCrop.top - 5,
+                right = actualLeft + latestCrop.right + 5,
+                bottom = actualTop + latestCrop.bottom + 5,
+                clipOp = ClipOp.Difference
+            ) {
+                drawRect(
+                    color = backgroundColor,
+                    size = Size(width.toPx() + 10, height.toPx() + 10)
+                )
             }
         }
     }
