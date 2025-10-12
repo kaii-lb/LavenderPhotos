@@ -53,7 +53,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 
 @Composable
-fun Modifier.makeVideoDrawCanvas(
+fun Modifier.makeDrawCanvas(
     drawingPaintState: DrawingPaintState,
     currentVideoPosition: MutableFloatState,
     textMeasurer: TextMeasurer,

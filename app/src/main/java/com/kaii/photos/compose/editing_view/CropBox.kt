@@ -15,6 +15,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -56,11 +57,11 @@ fun CropBox(
     onAreaChanged: (area: Rect, original: Size) -> Unit,
     onCropDone: () -> Unit
 ) {
-    val containerAspectRatio = remember {
+    val containerAspectRatio = rememberSaveable(containerWidth, containerHeight) {
         containerWidth / containerHeight
     }
 
-    var originalWidth by remember {
+    var originalWidth by rememberSaveable {
         mutableFloatStateOf(
             if (containerAspectRatio > mediaAspectRatio) {
                 containerHeight * mediaAspectRatio
@@ -69,7 +70,7 @@ fun CropBox(
             }
         )
     }
-    var originalHeight by remember {
+    var originalHeight by rememberSaveable {
         mutableFloatStateOf(
             if (containerAspectRatio > mediaAspectRatio) {
                 containerHeight
@@ -79,22 +80,22 @@ fun CropBox(
         )
     }
 
-    var width by remember {
+    var width by rememberSaveable {
         mutableFloatStateOf(
             originalWidth
         )
     }
-    var height by remember {
+    var height by rememberSaveable {
         mutableFloatStateOf(
             originalHeight
         )
     }
-    var top by remember {
+    var top by rememberSaveable {
         mutableFloatStateOf(
             (containerHeight - height) / 2
         )
     }
-    var left by remember {
+    var left by rememberSaveable {
         mutableFloatStateOf(
             (containerWidth - width) / 2
         )
@@ -369,425 +370,427 @@ fun CropBox(
                         )
                     }
                 }
-                .pointerInput(scale, enabled) {
-                    val maxTop = (containerHeight - originalHeight) / 2
-                    val maxLeft = (containerWidth - originalWidth) / 2
+                .then(
+                    if (enabled) {
+                        Modifier.pointerInput(scale) {
+                            val maxTop = (containerHeight - originalHeight) / 2
+                            val maxLeft = (containerWidth - originalWidth) / 2
 
-                    if (!enabled) return@pointerInput
+                            detectDragGestures(
+                                onDrag = { event, offset ->
+                                    val distanceToTop = abs(top - event.position.y)
+                                    val distanceToLeft = abs(left - event.position.x)
+                                    val distanceToBottom = abs((top + height) - event.position.y)
+                                    val distanceToRight = abs((left + width) - event.position.x)
+                                    val threshold = 56.dp.toPx()
 
-                    detectDragGestures(
-                        onDrag = { event, offset ->
-                            val distanceToTop = abs(top - event.position.y)
-                            val distanceToLeft = abs(left - event.position.x)
-                            val distanceToBottom = abs((top + height) - event.position.y)
-                            val distanceToRight = abs((left + width) - event.position.x)
-                            val threshold = 56.dp.toPx()
-
-                            when {
-                                // center drag (whole crop box)
-                                (event.position.y in top + height / 3..top + height * 2 / 3 && event.position.x in left + width / 3..left + width * 2 / 3) || selectedArea == SelectedCropArea.Whole -> {
-                                    if (left + offset.x >= maxLeft
-                                        && left + offset.x + width <= maxLeft + originalWidth
-                                    ) {
-                                        left = left + offset.x
-                                    }
-
-                                    if (top + offset.y >= maxTop
-                                        && top + offset.y + height <= maxTop + originalHeight
-                                    ) {
-                                        top = top + offset.y
-                                    }
-
-                                    selectedArea = SelectedCropArea.Whole
-                                }
-
-                                // top left
-                                ((distanceToTop <= threshold && distanceToTop <= distanceToBottom)
-                                        && (distanceToLeft <= threshold && distanceToLeft <= distanceToRight)
-                                        && selectedArea == SelectedCropArea.None)
-                                        || selectedArea == SelectedCropArea.TopLeftCorner -> {
-                                    if (editingState.croppingAspectRatio == CroppingAspectRatio.FreeForm) {
-                                        val newTop = top + offset.y
-                                        val newHeight = height - offset.y
-
-                                        if (newTop >= maxTop
-                                            && newTop < (newTop + newHeight) - threshold
-                                        ) {
-                                            top = newTop
-                                            height = newHeight
-                                        }
-
-                                        val newLeft = left + offset.x
-                                        val newWidth = width - offset.x
-                                        if (left + offset.x >= maxLeft
-                                            && newLeft < (newLeft + newWidth) - threshold
-                                        ) {
-                                            left = newLeft
-                                            width = newWidth
-                                        }
-                                    } else {
-                                        if (abs(offset.x) >= abs(offset.y)) {
-                                            val newLeft = left + offset.x
-                                            val newWidth = width - offset.x
-
-                                            val newTop = top + offset.x / editingState.croppingAspectRatio.ratio
-                                            val newHeight = newWidth / editingState.croppingAspectRatio.ratio
-
-                                            val maxRight = (newLeft + newWidth) - threshold
-                                            val maxBottom = (newTop + newHeight) - threshold
-
-                                            if (newLeft >= maxLeft && newLeft <= maxRight && newTop >= maxTop && newTop <= maxBottom) {
-                                                left = newLeft
-                                                width = newWidth
-                                                top = newTop
-                                                height = newHeight
+                                    when {
+                                        // center drag (whole crop box)
+                                        (event.position.y in top + height / 3..top + height * 2 / 3 && event.position.x in left + width / 3..left + width * 2 / 3) || selectedArea == SelectedCropArea.Whole -> {
+                                            if (left + offset.x >= maxLeft
+                                                && left + offset.x + width <= maxLeft + originalWidth
+                                            ) {
+                                                left = left + offset.x
                                             }
-                                        } else {
+
+                                            if (top + offset.y >= maxTop
+                                                && top + offset.y + height <= maxTop + originalHeight
+                                            ) {
+                                                top = top + offset.y
+                                            }
+
+                                            selectedArea = SelectedCropArea.Whole
+                                        }
+
+                                        // top left
+                                        ((distanceToTop <= threshold && distanceToTop <= distanceToBottom)
+                                                && (distanceToLeft <= threshold && distanceToLeft <= distanceToRight)
+                                                && selectedArea == SelectedCropArea.None)
+                                                || selectedArea == SelectedCropArea.TopLeftCorner -> {
+                                            if (editingState.croppingAspectRatio == CroppingAspectRatio.FreeForm) {
+                                                val newTop = top + offset.y
+                                                val newHeight = height - offset.y
+
+                                                if (newTop >= maxTop
+                                                    && newTop < (newTop + newHeight) - threshold
+                                                ) {
+                                                    top = newTop
+                                                    height = newHeight
+                                                }
+
+                                                val newLeft = left + offset.x
+                                                val newWidth = width - offset.x
+                                                if (left + offset.x >= maxLeft
+                                                    && newLeft < (newLeft + newWidth) - threshold
+                                                ) {
+                                                    left = newLeft
+                                                    width = newWidth
+                                                }
+                                            } else {
+                                                if (abs(offset.x) >= abs(offset.y)) {
+                                                    val newLeft = left + offset.x
+                                                    val newWidth = width - offset.x
+
+                                                    val newTop = top + offset.x / editingState.croppingAspectRatio.ratio
+                                                    val newHeight = newWidth / editingState.croppingAspectRatio.ratio
+
+                                                    val maxRight = (newLeft + newWidth) - threshold
+                                                    val maxBottom = (newTop + newHeight) - threshold
+
+                                                    if (newLeft >= maxLeft && newLeft <= maxRight && newTop >= maxTop && newTop <= maxBottom) {
+                                                        left = newLeft
+                                                        width = newWidth
+                                                        top = newTop
+                                                        height = newHeight
+                                                    }
+                                                } else {
+                                                    val newTop = top + offset.y
+                                                    val newHeight = height - offset.y
+
+                                                    val newLeft = left + offset.y * editingState.croppingAspectRatio.ratio
+                                                    val newWidth = newHeight * editingState.croppingAspectRatio.ratio
+
+                                                    val maxRight = (newLeft + newWidth) - threshold
+                                                    val maxBottom = (newTop + newHeight) - threshold
+
+                                                    if (newLeft >= maxLeft && newLeft <= maxRight && newTop >= maxTop && newTop <= maxBottom) {
+                                                        left = newLeft
+                                                        width = newWidth
+                                                        top = newTop
+                                                        height = newHeight
+                                                    }
+                                                }
+                                            }
+
+                                            selectedArea = SelectedCropArea.TopLeftCorner
+                                        }
+
+                                        // bottom left
+                                        ((distanceToBottom <= threshold && distanceToBottom <= distanceToTop)
+                                                && (distanceToLeft <= threshold && distanceToLeft <= distanceToRight)
+                                                && selectedArea == SelectedCropArea.None)
+                                                || selectedArea == SelectedCropArea.BottomLeftCorner -> {
+                                            if (editingState.croppingAspectRatio == CroppingAspectRatio.FreeForm) {
+                                                val newHeight = height + offset.y
+                                                if (top + newHeight <= (maxTop + originalHeight)
+                                                    && newHeight > threshold
+                                                ) {
+                                                    height += offset.y
+                                                }
+
+                                                val newLeft = left + offset.x
+                                                val newWidth = width - offset.x
+                                                if (left + offset.x >= maxLeft
+                                                    && newLeft < (newLeft + newWidth) - threshold
+                                                ) {
+                                                    left = newLeft
+                                                    width = newWidth
+                                                }
+                                            } else {
+                                                if (abs(offset.x) >= abs(offset.y)) {
+                                                    val newLeft = left + offset.x
+                                                    val newWidth = width - offset.x
+
+                                                    val newHeight = newWidth / editingState.croppingAspectRatio.ratio
+
+                                                    val maxRight = (newLeft + newWidth) - threshold
+                                                    val maxBottom = (top + newHeight) - threshold
+
+                                                    if (newLeft >= maxLeft && newLeft <= maxRight && top + newHeight <= maxTop + originalHeight && top <= maxBottom) {
+                                                        left = newLeft
+                                                        width = newWidth
+                                                        height = newHeight
+                                                    }
+                                                } else {
+                                                    val newHeight = height + offset.y
+
+                                                    val newWidth = newHeight * editingState.croppingAspectRatio.ratio
+                                                    val newLeft = left - offset.y * editingState.croppingAspectRatio.ratio
+
+                                                    val maxRight = (newLeft + newWidth) - threshold
+                                                    val maxBottom = (top + newHeight) - threshold
+
+                                                    if (newLeft >= maxLeft && newLeft <= maxRight && top <= maxBottom && top + newHeight <= maxTop + originalHeight) {
+                                                        left = newLeft
+                                                        width = newWidth
+                                                        height = newHeight
+                                                    }
+                                                }
+                                            }
+
+                                            selectedArea = SelectedCropArea.BottomLeftCorner
+                                        }
+
+                                        // top right
+                                        ((distanceToTop <= threshold && distanceToTop <= distanceToBottom)
+                                                && (distanceToRight <= threshold && distanceToRight <= distanceToLeft)
+                                                && selectedArea == SelectedCropArea.None)
+                                                || selectedArea == SelectedCropArea.TopRightCorner -> {
+                                            if (editingState.croppingAspectRatio == CroppingAspectRatio.FreeForm) {
+                                                val newTop = top + offset.y
+                                                val newHeight = height - offset.y
+
+                                                if (newTop >= maxTop
+                                                    && newTop < (newTop + newHeight) - threshold
+                                                ) {
+                                                    top = newTop
+                                                    height = newHeight
+                                                }
+
+                                                val newWidth = width + offset.x
+                                                if ((left + width) + offset.x <= (maxLeft + originalWidth)
+                                                    && left + newWidth > left + threshold
+                                                ) {
+                                                    width = newWidth
+                                                }
+                                            } else {
+                                                if (abs(offset.x) >= abs(offset.y)) {
+                                                    val newWidth = width + offset.x
+
+                                                    val newHeight = newWidth / editingState.croppingAspectRatio.ratio
+                                                    val newTop = (top + height) - newHeight
+
+                                                    val maxRight = (left + newWidth) - threshold
+                                                    val maxBottom = (top + newHeight) - threshold
+
+                                                    if (top >= maxTop && top <= maxBottom && left + newWidth <= maxLeft + originalWidth && left <= maxRight) {
+                                                        top = newTop
+                                                        width = newWidth
+                                                        height = newHeight
+                                                    }
+                                                } else {
+                                                    val newHeight = height - offset.y
+
+                                                    val newWidth = newHeight * editingState.croppingAspectRatio.ratio
+                                                    val newTop = (top + height) - newHeight
+
+                                                    val maxRight = (left + newWidth) - threshold
+                                                    val maxBottom = (top + newHeight) - threshold
+
+                                                    if (left + newWidth <= maxLeft + originalWidth && left <= maxRight && newTop <= maxBottom && newTop >= maxTop) {
+                                                        top = newTop
+                                                        width = newWidth
+                                                        height = newHeight
+                                                    }
+                                                }
+                                            }
+
+                                            selectedArea = SelectedCropArea.TopRightCorner
+                                        }
+
+                                        // bottom right
+                                        ((distanceToBottom <= threshold && distanceToBottom <= distanceToTop)
+                                                && (distanceToRight <= threshold && distanceToRight <= distanceToLeft)
+                                                && selectedArea == SelectedCropArea.None)
+                                                || selectedArea == SelectedCropArea.BottomRightCorner -> {
+                                            if (editingState.croppingAspectRatio == CroppingAspectRatio.FreeForm) {
+                                                val newHeight = height + offset.y
+                                                if (top + newHeight <= (maxTop + originalHeight)
+                                                    && newHeight > threshold
+                                                ) {
+                                                    height += offset.y
+                                                }
+
+                                                val newWidth = width + offset.x
+                                                if ((left + width) + offset.x <= (maxLeft + originalWidth)
+                                                    && left + newWidth > left + threshold
+                                                ) {
+                                                    width = newWidth
+                                                }
+                                            } else {
+                                                if (abs(offset.x) >= abs(offset.y)) {
+                                                    val newWidth = width + offset.x
+                                                    val newHeight = newWidth / editingState.croppingAspectRatio.ratio
+
+                                                    val maxRight = (left + newWidth) - threshold
+                                                    val maxBottom = (top + newHeight) - threshold
+
+                                                    if (top + newHeight <= maxTop + originalHeight && top <= maxBottom && left + newWidth <= maxLeft + originalWidth && left <= maxRight) {
+                                                        width = newWidth
+                                                        height = newHeight
+                                                    }
+                                                } else {
+                                                    val newHeight = height + offset.y
+                                                    val newWidth = newHeight * editingState.croppingAspectRatio.ratio
+
+                                                    val maxRight = (left + newWidth) - threshold
+                                                    val maxBottom = (top + newHeight) - threshold
+
+                                                    if (top + newHeight <= maxTop + originalHeight && top <= maxBottom && left + newWidth <= maxLeft + originalWidth && left <= maxRight) {
+                                                        width = newWidth
+                                                        height = newHeight
+                                                    }
+                                                }
+                                            }
+
+                                            selectedArea = SelectedCropArea.BottomRightCorner
+                                        }
+
+                                        // top edge
+                                        ((distanceToTop <= threshold && distanceToTop <= distanceToBottom)
+                                                && selectedArea == SelectedCropArea.None)
+                                                || selectedArea == SelectedCropArea.TopEdge -> {
                                             val newTop = top + offset.y
                                             val newHeight = height - offset.y
 
-                                            val newLeft = left + offset.y * editingState.croppingAspectRatio.ratio
-                                            val newWidth = newHeight * editingState.croppingAspectRatio.ratio
+                                            if (editingState.croppingAspectRatio == CroppingAspectRatio.FreeForm) {
+                                                if (newTop >= maxTop
+                                                    && newTop < (newTop + newHeight) - threshold
+                                                ) {
+                                                    top = newTop
+                                                    height = newHeight
+                                                }
+                                            } else {
+                                                val newWidth = newHeight * editingState.croppingAspectRatio.ratio
 
-                                            val maxRight = (newLeft + newWidth) - threshold
-                                            val maxBottom = (newTop + newHeight) - threshold
+                                                val maxBottom = newTop + newHeight - threshold
+                                                val maxRight = left + newWidth - threshold
 
-                                            if (newLeft >= maxLeft && newLeft <= maxRight && newTop >= maxTop && newTop <= maxBottom) {
-                                                left = newLeft
-                                                width = newWidth
-                                                top = newTop
-                                                height = newHeight
+                                                val newLeft = left - (newWidth - width) / 2
+                                                val newTop = top - (newHeight - height) / 2
+
+                                                if (newTop >= maxTop
+                                                    && newTop <= maxBottom
+                                                    && newTop + newHeight <= maxTop + originalHeight
+                                                    && newLeft >= maxLeft
+                                                    && newLeft <= maxRight
+                                                    && newLeft + newWidth <= maxLeft + originalWidth
+                                                ) {
+                                                    left = newLeft
+                                                    top = newTop
+                                                    height = newHeight
+                                                    width = newWidth
+                                                }
                                             }
-                                        }
-                                    }
 
-                                    selectedArea = SelectedCropArea.TopLeftCorner
-                                }
-
-                                // bottom left
-                                ((distanceToBottom <= threshold && distanceToBottom <= distanceToTop)
-                                        && (distanceToLeft <= threshold && distanceToLeft <= distanceToRight)
-                                        && selectedArea == SelectedCropArea.None)
-                                        || selectedArea == SelectedCropArea.BottomLeftCorner -> {
-                                    if (editingState.croppingAspectRatio == CroppingAspectRatio.FreeForm) {
-                                        val newHeight = height + offset.y
-                                        if (top + newHeight <= (maxTop + originalHeight)
-                                            && newHeight > threshold
-                                        ) {
-                                            height += offset.y
+                                            selectedArea = SelectedCropArea.TopEdge
                                         }
 
-                                        val newLeft = left + offset.x
-                                        val newWidth = width - offset.x
-                                        if (left + offset.x >= maxLeft
-                                            && newLeft < (newLeft + newWidth) - threshold
-                                        ) {
-                                            left = newLeft
-                                            width = newWidth
-                                        }
-                                    } else {
-                                        if (abs(offset.x) >= abs(offset.y)) {
+                                        // left edge
+                                        ((distanceToLeft <= threshold && distanceToLeft <= distanceToRight)
+                                                && selectedArea == SelectedCropArea.None)
+                                                || selectedArea == SelectedCropArea.LeftEdge -> {
                                             val newLeft = left + offset.x
                                             val newWidth = width - offset.x
 
-                                            val newHeight = newWidth / editingState.croppingAspectRatio.ratio
+                                            if (editingState.croppingAspectRatio == CroppingAspectRatio.FreeForm) {
+                                                if (left + offset.x >= maxLeft
+                                                    && newLeft < (newLeft + newWidth) - threshold
+                                                ) {
+                                                    left = newLeft
+                                                    width = newWidth
+                                                }
+                                            } else {
+                                                val newHeight = newWidth / editingState.croppingAspectRatio.ratio
 
-                                            val maxRight = (newLeft + newWidth) - threshold
-                                            val maxBottom = (top + newHeight) - threshold
+                                                val maxBottom = top + newHeight - threshold
+                                                val maxRight = newLeft + newWidth - threshold
 
-                                            if (newLeft >= maxLeft && newLeft <= maxRight && top + newHeight <= maxTop + originalHeight && top <= maxBottom) {
-                                                left = newLeft
-                                                width = newWidth
-                                                height = newHeight
+                                                val newLeft = left - (newWidth - width) / 2
+                                                val newTop = top - (newHeight - height) / 2
+
+                                                if (newTop >= maxTop
+                                                    && newTop <= maxBottom
+                                                    && newTop + newHeight <= maxTop + originalHeight
+                                                    && newLeft >= maxLeft
+                                                    && newLeft <= maxRight
+                                                    && newLeft + newWidth <= maxLeft + originalWidth
+                                                ) {
+                                                    left = newLeft
+                                                    top = newTop
+                                                    height = newHeight
+                                                    width = newWidth
+                                                }
                                             }
-                                        } else {
+
+                                            selectedArea = SelectedCropArea.LeftEdge
+                                        }
+
+                                        // bottom edge
+                                        ((distanceToBottom <= threshold && distanceToBottom <= distanceToTop)
+                                                && selectedArea == SelectedCropArea.None)
+                                                || selectedArea == SelectedCropArea.BottomEdge -> {
                                             val newHeight = height + offset.y
 
-                                            val newWidth = newHeight * editingState.croppingAspectRatio.ratio
-                                            val newLeft = left - offset.y * editingState.croppingAspectRatio.ratio
+                                            if (editingState.croppingAspectRatio == CroppingAspectRatio.FreeForm) {
+                                                if (top + newHeight <= (maxTop + originalHeight)
+                                                    && top + newHeight > threshold
+                                                ) {
+                                                    height += offset.y
+                                                }
+                                            } else {
+                                                val newWidth = newHeight * editingState.croppingAspectRatio.ratio
 
-                                            val maxRight = (newLeft + newWidth) - threshold
-                                            val maxBottom = (top + newHeight) - threshold
+                                                val maxBottom = top + newHeight - threshold
+                                                val maxRight = left + newWidth - threshold
 
-                                            if (newLeft >= maxLeft && newLeft <= maxRight && top <= maxBottom && top + newHeight <= maxTop + originalHeight) {
-                                                left = newLeft
-                                                width = newWidth
-                                                height = newHeight
+                                                val newLeft = left - (newWidth - width) / 2
+                                                val newTop = top - (newHeight - height) / 2
+
+                                                if (newTop >= maxTop
+                                                    && newTop <= maxBottom
+                                                    && newTop + newHeight <= maxTop + originalHeight
+                                                    && newLeft >= maxLeft
+                                                    && newLeft <= maxRight
+                                                    && newLeft + newWidth <= maxLeft + originalWidth
+                                                ) {
+                                                    left = newLeft
+                                                    top = newTop
+                                                    height = newHeight
+                                                    width = newWidth
+                                                }
                                             }
-                                        }
-                                    }
 
-                                    selectedArea = SelectedCropArea.BottomLeftCorner
-                                }
-
-                                // top right
-                                ((distanceToTop <= threshold && distanceToTop <= distanceToBottom)
-                                        && (distanceToRight <= threshold && distanceToRight <= distanceToLeft)
-                                        && selectedArea == SelectedCropArea.None)
-                                        || selectedArea == SelectedCropArea.TopRightCorner -> {
-                                    if (editingState.croppingAspectRatio == CroppingAspectRatio.FreeForm) {
-                                        val newTop = top + offset.y
-                                        val newHeight = height - offset.y
-
-                                        if (newTop >= maxTop
-                                            && newTop < (newTop + newHeight) - threshold
-                                        ) {
-                                            top = newTop
-                                            height = newHeight
+                                            selectedArea = SelectedCropArea.BottomEdge
                                         }
 
-                                        val newWidth = width + offset.x
-                                        if ((left + width) + offset.x <= (maxLeft + originalWidth)
-                                            && left + newWidth > left + threshold
-                                        ) {
-                                            width = newWidth
-                                        }
-                                    } else {
-                                        if (abs(offset.x) >= abs(offset.y)) {
+                                        // right edge
+                                        ((distanceToRight <= threshold && distanceToRight <= distanceToLeft)
+                                                && selectedArea == SelectedCropArea.None)
+                                                || selectedArea == SelectedCropArea.RightEdge -> {
                                             val newWidth = width + offset.x
 
-                                            val newHeight = newWidth / editingState.croppingAspectRatio.ratio
-                                            val newTop = (top + height) - newHeight
+                                            if (editingState.croppingAspectRatio == CroppingAspectRatio.FreeForm) {
+                                                if ((left + width) + offset.x <= (maxLeft + originalWidth)
+                                                    && left + newWidth > left + threshold
+                                                ) {
+                                                    width = newWidth
+                                                }
+                                            } else {
+                                                val newHeight = newWidth / editingState.croppingAspectRatio.ratio
 
-                                            val maxRight = (left + newWidth) - threshold
-                                            val maxBottom = (top + newHeight) - threshold
+                                                val maxBottom = top + newHeight - threshold
+                                                val maxRight = left + newWidth - threshold
 
-                                            if (top >= maxTop && top <= maxBottom && left + newWidth <= maxLeft + originalWidth && left <= maxRight) {
-                                                top = newTop
-                                                width = newWidth
-                                                height = newHeight
+                                                val newLeft = left - (newWidth - width) / 2
+                                                val newTop = top - (newHeight - height) / 2
+
+                                                if (newTop >= maxTop
+                                                    && newTop <= maxBottom
+                                                    && newTop + newHeight <= maxTop + originalHeight
+                                                    && newLeft >= maxLeft
+                                                    && newLeft <= maxRight
+                                                    && newLeft + newWidth <= maxLeft + originalWidth
+                                                ) {
+                                                    left = newLeft
+                                                    top = newTop
+                                                    height = newHeight
+                                                    width = newWidth
+                                                }
                                             }
-                                        } else {
-                                            val newHeight = height - offset.y
 
-                                            val newWidth = newHeight * editingState.croppingAspectRatio.ratio
-                                            val newTop = (top + height) - newHeight
-
-                                            val maxRight = (left + newWidth) - threshold
-                                            val maxBottom = (top + newHeight) - threshold
-
-                                            if (left + newWidth <= maxLeft + originalWidth && left <= maxRight && newTop <= maxBottom && newTop >= maxTop) {
-                                                top = newTop
-                                                width = newWidth
-                                                height = newHeight
-                                            }
+                                            selectedArea = SelectedCropArea.RightEdge
                                         }
                                     }
-
-                                    selectedArea = SelectedCropArea.TopRightCorner
+                                },
+                                onDragEnd = {
+                                    selectedArea = SelectedCropArea.None
+                                    onCropDone()
                                 }
-
-                                // bottom right
-                                ((distanceToBottom <= threshold && distanceToBottom <= distanceToTop)
-                                        && (distanceToRight <= threshold && distanceToRight <= distanceToLeft)
-                                        && selectedArea == SelectedCropArea.None)
-                                        || selectedArea == SelectedCropArea.BottomRightCorner -> {
-                                    if (editingState.croppingAspectRatio == CroppingAspectRatio.FreeForm) {
-                                        val newHeight = height + offset.y
-                                        if (top + newHeight <= (maxTop + originalHeight)
-                                            && newHeight > threshold
-                                        ) {
-                                            height += offset.y
-                                        }
-
-                                        val newWidth = width + offset.x
-                                        if ((left + width) + offset.x <= (maxLeft + originalWidth)
-                                            && left + newWidth > left + threshold
-                                        ) {
-                                            width = newWidth
-                                        }
-                                    } else {
-                                        if (abs(offset.x) >= abs(offset.y)) {
-                                            val newWidth = width + offset.x
-                                            val newHeight = newWidth / editingState.croppingAspectRatio.ratio
-
-                                            val maxRight = (left + newWidth) - threshold
-                                            val maxBottom = (top + newHeight) - threshold
-
-                                            if (top + newHeight <= maxTop + originalHeight && top <= maxBottom && left + newWidth <= maxLeft + originalWidth && left <= maxRight) {
-                                                width = newWidth
-                                                height = newHeight
-                                            }
-                                        } else {
-                                            val newHeight = height + offset.y
-                                            val newWidth = newHeight * editingState.croppingAspectRatio.ratio
-
-                                            val maxRight = (left + newWidth) - threshold
-                                            val maxBottom = (top + newHeight) - threshold
-
-                                            if (top + newHeight <= maxTop + originalHeight && top <= maxBottom && left + newWidth <= maxLeft + originalWidth && left <= maxRight) {
-                                                width = newWidth
-                                                height = newHeight
-                                            }
-                                        }
-                                    }
-
-                                    selectedArea = SelectedCropArea.BottomRightCorner
-                                }
-
-                                // top edge
-                                ((distanceToTop <= threshold && distanceToTop <= distanceToBottom)
-                                        && selectedArea == SelectedCropArea.None)
-                                        || selectedArea == SelectedCropArea.TopEdge -> {
-                                    val newTop = top + offset.y
-                                    val newHeight = height - offset.y
-
-                                    if (editingState.croppingAspectRatio == CroppingAspectRatio.FreeForm) {
-                                        if (newTop >= maxTop
-                                            && newTop < (newTop + newHeight) - threshold
-                                        ) {
-                                            top = newTop
-                                            height = newHeight
-                                        }
-                                    } else {
-                                        val newWidth = newHeight * editingState.croppingAspectRatio.ratio
-
-                                        val maxBottom = newTop + newHeight - threshold
-                                        val maxRight = left + newWidth - threshold
-
-                                        val newLeft = left - (newWidth - width) / 2
-                                        val newTop = top - (newHeight - height) / 2
-
-                                        if (newTop >= maxTop
-                                            && newTop <= maxBottom
-                                            && newTop + newHeight <= maxTop + originalHeight
-                                            && newLeft >= maxLeft
-                                            && newLeft <= maxRight
-                                            && newLeft + newWidth <= maxLeft + originalWidth
-                                        ) {
-                                            left = newLeft
-                                            top = newTop
-                                            height = newHeight
-                                            width = newWidth
-                                        }
-                                    }
-
-                                    selectedArea = SelectedCropArea.TopEdge
-                                }
-
-                                // left edge
-                                ((distanceToLeft <= threshold && distanceToLeft <= distanceToRight)
-                                        && selectedArea == SelectedCropArea.None)
-                                        || selectedArea == SelectedCropArea.LeftEdge -> {
-                                    val newLeft = left + offset.x
-                                    val newWidth = width - offset.x
-
-                                    if (editingState.croppingAspectRatio == CroppingAspectRatio.FreeForm) {
-                                        if (left + offset.x >= maxLeft
-                                            && newLeft < (newLeft + newWidth) - threshold
-                                        ) {
-                                            left = newLeft
-                                            width = newWidth
-                                        }
-                                    } else {
-                                        val newHeight = newWidth / editingState.croppingAspectRatio.ratio
-
-                                        val maxBottom = top + newHeight - threshold
-                                        val maxRight = newLeft + newWidth - threshold
-
-                                        val newLeft = left - (newWidth - width) / 2
-                                        val newTop = top - (newHeight - height) / 2
-
-                                        if (newTop >= maxTop
-                                            && newTop <= maxBottom
-                                            && newTop + newHeight <= maxTop + originalHeight
-                                            && newLeft >= maxLeft
-                                            && newLeft <= maxRight
-                                            && newLeft + newWidth <= maxLeft + originalWidth
-                                        ) {
-                                            left = newLeft
-                                            top = newTop
-                                            height = newHeight
-                                            width = newWidth
-                                        }
-                                    }
-
-                                    selectedArea = SelectedCropArea.LeftEdge
-                                }
-
-                                // bottom edge
-                                ((distanceToBottom <= threshold && distanceToBottom <= distanceToTop)
-                                        && selectedArea == SelectedCropArea.None)
-                                        || selectedArea == SelectedCropArea.BottomEdge -> {
-                                    val newHeight = height + offset.y
-
-                                    if (editingState.croppingAspectRatio == CroppingAspectRatio.FreeForm) {
-                                        if (top + newHeight <= (maxTop + originalHeight)
-                                            && top + newHeight > threshold
-                                        ) {
-                                            height += offset.y
-                                        }
-                                    } else {
-                                        val newWidth = newHeight * editingState.croppingAspectRatio.ratio
-
-                                        val maxBottom = top + newHeight - threshold
-                                        val maxRight = left + newWidth - threshold
-
-                                        val newLeft = left - (newWidth - width) / 2
-                                        val newTop = top - (newHeight - height) / 2
-
-                                        if (newTop >= maxTop
-                                            && newTop <= maxBottom
-                                            && newTop + newHeight <= maxTop + originalHeight
-                                            && newLeft >= maxLeft
-                                            && newLeft <= maxRight
-                                            && newLeft + newWidth <= maxLeft + originalWidth
-                                        ) {
-                                            left = newLeft
-                                            top = newTop
-                                            height = newHeight
-                                            width = newWidth
-                                        }
-                                    }
-
-                                    selectedArea = SelectedCropArea.BottomEdge
-                                }
-
-                                // right edge
-                                ((distanceToRight <= threshold && distanceToRight <= distanceToLeft)
-                                        && selectedArea == SelectedCropArea.None)
-                                        || selectedArea == SelectedCropArea.RightEdge -> {
-                                    val newWidth = width + offset.x
-
-                                    if (editingState.croppingAspectRatio == CroppingAspectRatio.FreeForm) {
-                                        if ((left + width) + offset.x <= (maxLeft + originalWidth)
-                                            && left + newWidth > left + threshold
-                                        ) {
-                                            width = newWidth
-                                        }
-                                    } else {
-                                        val newHeight = newWidth / editingState.croppingAspectRatio.ratio
-
-                                        val maxBottom = top + newHeight - threshold
-                                        val maxRight = left + newWidth - threshold
-
-                                        val newLeft = left - (newWidth - width) / 2
-                                        val newTop = top - (newHeight - height) / 2
-
-                                        if (newTop >= maxTop
-                                            && newTop <= maxBottom
-                                            && newTop + newHeight <= maxTop + originalHeight
-                                            && newLeft >= maxLeft
-                                            && newLeft <= maxRight
-                                            && newLeft + newWidth <= maxLeft + originalWidth
-                                        ) {
-                                            left = newLeft
-                                            top = newTop
-                                            height = newHeight
-                                            width = newWidth
-                                        }
-                                    }
-
-                                    selectedArea = SelectedCropArea.RightEdge
-                                }
-                            }
-                        },
-                        onDragEnd = {
-                            selectedArea = SelectedCropArea.None
-                            onCropDone()
+                            )
                         }
-                    )
-                }
+                    } else Modifier
+                )
         )
     }
 

@@ -280,7 +280,8 @@ fun DeviceMedia(
             items(
                 count = groupedMedia.value.size,
                 key = { index ->
-                    groupedMedia.value[index].uri.toString()
+                    val item = groupedMedia.value[index]
+                    item.absolutePath + item.displayName
                 },
                 contentType = { index ->
                     groupedMedia.value[index].type

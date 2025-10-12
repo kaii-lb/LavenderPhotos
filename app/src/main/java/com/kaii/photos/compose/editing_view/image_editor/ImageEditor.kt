@@ -85,7 +85,7 @@ import com.kaii.photos.compose.dialogs.TextEntryDialog
 import com.kaii.photos.compose.editing_view.CropBox
 import com.kaii.photos.compose.editing_view.ImageFilterPage
 import com.kaii.photos.compose.editing_view.PreviewCanvas
-import com.kaii.photos.compose.editing_view.makeVideoDrawCanvas
+import com.kaii.photos.compose.editing_view.makeDrawCanvas
 import com.kaii.photos.compose.widgets.shimmerEffect
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.Editing
@@ -490,7 +490,7 @@ fun ImageEditor(
                             scaleX = animatedScale
                             scaleY = animatedScale
                         }
-                        .makeVideoDrawCanvas(
+                        .makeDrawCanvas(
                             drawingPaintState = drawingPaintState,
                             textMeasurer = textMeasurer,
                             currentVideoPosition = remember { mutableFloatStateOf(0f) },
