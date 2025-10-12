@@ -289,4 +289,22 @@
 <br><br>Lavender Photos никогда не обновляется автоматически и обновляется только с явного согласия пользователя.
 </p>
 ]]></string>
+    <string name="albums_main_list_desc_1">Выбранные альбомы будут отображать свои фотографии в основном разделе фотографий</string>
+    <string name="albums_main_list_desc_2">Выбранные альбомы будут добавлены в чёрный список и не будут отображаться в основном разделе фотографий</string>
+    <string name="albums_main_list_selected_inverse">Альбомы, выбранные здесь, не будут отображаться в основном разделе фотографий</string>
+    <string name="albums_custom_desc">Добавьте любые медиафайлы из любого источника</string>
+    <string name="albums_folder_desc">Загрузить медиафайлы из папки</string>
+    <string name="albums_pin">Закрепить альбом</string>
+    <string name="albums_unpin">Открепить альбом</string>
+    <string name="navigation">Навигация</string>
+    <string name="translation">Перевод</string>
+    <string name="translation_desc">распространите Lavender Photos по всему миру!</string>
+    <string name="licenses">Лицензии</string>
+    <string name="licenses_desc">используемое программное обеспечение с открытым исходным кодом</string>
+    <string name="licenses_extra">Дополнительные сведения</string>
+    <string name="licenses_extra_desc">Просмотреть более подробную информацию о лицензиях</string>
+    <string name="special_thanks_to">Особая благодарность:</string>
+    <string name="secure_getting_file_info">Получение информации о файле…</string>
+    <string name="secure_please_wait">Пожалуйста, подождите…</string>
+    <string name="editing_saving">Сохранение отредактированного изображения</string>
 </resources>
