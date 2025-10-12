@@ -90,8 +90,14 @@ fun SingleTrashedPhotoView(
     val mainViewModel = LocalMainViewModel.current
 
     val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
+    val sortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
+
     val trashViewModel: TrashViewModel = viewModel(
-        factory = TrashViewModelFactory(context = context, displayDateFormat = displayDateFormat)
+        factory = TrashViewModelFactory(
+            context = context,
+            sortMode = sortMode,
+            displayDateFormat = displayDateFormat
+        )
     )
     val holderGroupedMedia by trashViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 

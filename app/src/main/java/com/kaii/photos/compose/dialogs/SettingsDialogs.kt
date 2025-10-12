@@ -424,7 +424,6 @@ fun AddTabDialog(
                                 BottomBarTab(
                                     name = tabName,
                                     albumPaths = selectedAlbums,
-                                    index = tabList.size,
                                     icon = selectedItem!!,
                                     id = tabList.size,
                                     isCustom = true
@@ -846,7 +845,6 @@ fun DateFormatDialog(
                 iconResID = R.drawable.calendar
             ) {
                 mainViewModel.settings.LookAndFeel.setDisplayDateFormat(DisplayDateFormat.Default)
-                mainViewModel.setDisplayDateFormat(DisplayDateFormat.Default)
                 onDismiss()
             }
 
@@ -859,7 +857,6 @@ fun DateFormatDialog(
                 iconResID = R.drawable.clarify
             ) {
                 mainViewModel.settings.LookAndFeel.setDisplayDateFormat(DisplayDateFormat.Short)
-                mainViewModel.setDisplayDateFormat(DisplayDateFormat.Short)
                 onDismiss()
             }
 
@@ -872,7 +869,6 @@ fun DateFormatDialog(
                 iconResID = R.drawable.acute
             ) {
                 mainViewModel.settings.LookAndFeel.setDisplayDateFormat(DisplayDateFormat.Compressed)
-                mainViewModel.setDisplayDateFormat(DisplayDateFormat.Compressed)
                 onDismiss()
             }
         }

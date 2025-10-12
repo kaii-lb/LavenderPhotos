@@ -172,7 +172,7 @@ fun tryGetAllAlbums(
         StreamingDataSource(
             context = context,
             sqliteQuery = SQLiteQuery(query = "", paths = null, basePaths = null),
-            sortBy = MediaItemSortMode.DateTaken,
+            sortMode = MediaItemSortMode.DateTaken,
             cancellationSignal = cancellationSignal,
             displayDateFormat = displayDateFormat
         )

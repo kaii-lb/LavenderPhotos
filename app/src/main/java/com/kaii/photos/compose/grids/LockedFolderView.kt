@@ -17,8 +17,10 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -176,6 +178,7 @@ fun LockedFolderView(
 
     val mainViewModel = LocalMainViewModel.current
     val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
+    val sortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
 
     val applicationDatabase = LocalAppDatabase.current
     var hasFiles by remember { mutableStateOf(true) }
@@ -227,7 +230,12 @@ fun LockedFolderView(
                 mediaStoreData.add(item)
             }
 
-            groupedMedia.value = groupPhotosBy(mediaStoreData, MediaItemSortMode.LastModified, displayDateFormat, context)
+            groupedMedia.value = groupPhotosBy(
+                media = mediaStoreData,
+                sortBy = if (sortMode == MediaItemSortMode.Disabled) sortMode else MediaItemSortMode.LastModified,
+                displayDateFormat = displayDateFormat,
+                context = context
+            )
 
             delay(PhotoGridConstants.LOADING_TIME)
             hasFiles = groupedMedia.value.isNotEmpty()
@@ -284,7 +292,10 @@ fun LockedFolderView(
                     end = safeDrawingPadding.second,
                     bottom = 0.dp
                 )
-                .fillMaxSize(1f),
+                .fillMaxSize(1f)
+                .windowInsetsPadding(
+                    WindowInsets.navigationBars
+                ),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {

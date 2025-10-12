@@ -235,8 +235,7 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
             }
 
             item {
-                val currentSortMode by mainViewModel.settings.PhotoGrid.getSortMode()
-                    .collectAsStateWithLifecycle(initialValue = MediaItemSortMode.DateTaken)
+                val currentSortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
                 var showSortModeSelectorDialog by remember { mutableStateOf(false) }
 
                 if (showSortModeSelectorDialog) {

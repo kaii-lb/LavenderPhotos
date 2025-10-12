@@ -1,6 +1,5 @@
 package com.kaii.photos.compose.grids
 
-import android.content.res.Configuration
 import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateColorAsState
@@ -57,7 +56,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalResources
@@ -86,6 +84,7 @@ import com.kaii.photos.compose.FolderIsEmpty
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.widgets.FloatingScrollbar
 import com.kaii.photos.compose.widgets.ShowSelectedState
+import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.compose.widgets.shimmerEffect
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.Storage
@@ -181,15 +180,11 @@ fun DeviceMedia(
 
     val mainViewModel = LocalMainViewModel.current
     LaunchedEffect(groupedMedia.value) {
-        mainViewModel.setGroupedMedia(groupedMedia.value)
+        if (viewProperties == ViewProperties.Favourites || viewProperties == ViewProperties.SecureFolder
+            || viewProperties == ViewProperties.SearchLoading || viewProperties == ViewProperties.SearchNotFound) mainViewModel.setGroupedMedia(groupedMedia.value)
     }
 
-    val localConfig = LocalConfiguration.current
-    var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
-
-    LaunchedEffect(localConfig) {
-        isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
-    }
+    val isLandscape by rememberDeviceOrientation()
 
     Box(
         modifier = Modifier
@@ -224,7 +219,7 @@ fun DeviceMedia(
         LaunchedEffect(groupedMedia.value.size) {
             if (groupedMedia.value.isNotEmpty()) delay(PhotoGridConstants.UPDATE_TIME)
 
-            showPlaceholderItems = !groupedMedia.value.firstOrNull()?.section?.childCount.let { it != null && it != 0 }
+            showPlaceholderItems = groupedMedia.value.isEmpty()
         }
 
         LazyVerticalGrid(

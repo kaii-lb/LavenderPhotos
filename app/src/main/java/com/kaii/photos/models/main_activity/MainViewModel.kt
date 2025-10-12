@@ -19,7 +19,9 @@ import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.datastore.MainPhotosView
+import com.kaii.photos.datastore.PhotoGrid
 import com.kaii.photos.datastore.Settings
+import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.Updater
 import com.kaii.photos.mediastore.AlbumStoreDataSource
 import com.kaii.photos.mediastore.MediaStoreData
@@ -50,8 +52,17 @@ class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMode
 
     val updater = Updater(context = context, coroutineScope = viewModelScope)
 
-    private val _displayDateFormat = MutableStateFlow(DisplayDateFormat.Default)
-    val displayDateFormat = _displayDateFormat.asStateFlow()
+    val displayDateFormat = settings.LookAndFeel.getDisplayDateFormat().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Lazily,
+        initialValue = DisplayDateFormat.Default
+    )
+
+    val sortMode = settings.PhotoGrid.getSortMode().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Lazily,
+        initialValue = MediaItemSortMode.DateTaken
+    )
 
     val columnSize = settings.LookAndFeel.getColumnSize().stateIn(
         scope = viewModelScope,
@@ -97,7 +108,7 @@ class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMode
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun getAllAvailableAlbums(): Flow<List<AlbumInfo>> =
-        settings.AlbumsList.getAutoDetect().combine(_displayDateFormat) { autoDetectAlbums, dateFormat ->
+        settings.AlbumsList.getAutoDetect().combine(displayDateFormat) { autoDetectAlbums, dateFormat ->
             if (autoDetectAlbums) {
                 settings.AlbumsList.getAutoDetectedAlbums(dateFormat)
             } else {
@@ -252,9 +263,5 @@ class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMode
         block: suspend () -> Unit
     ) = viewModelScope.launch(dispatcher) {
         block()
-    }
-
-    fun setDisplayDateFormat(format: DisplayDateFormat) {
-        _displayDateFormat.value = format
     }
 }

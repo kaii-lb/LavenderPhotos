@@ -127,7 +127,6 @@ import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.Immich
 import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.datastore.Permissions
-import com.kaii.photos.datastore.PhotoGrid
 import com.kaii.photos.datastore.User
 import com.kaii.photos.datastore.Versions
 import com.kaii.photos.helpers.AnimationConstants
@@ -150,7 +149,6 @@ import com.kaii.photos.models.immich.ImmichViewModel
 import com.kaii.photos.models.immich.ImmichViewModelFactory
 import com.kaii.photos.models.main_activity.MainViewModel
 import com.kaii.photos.models.main_activity.MainViewModelFactory
-import com.kaii.photos.models.multi_album.DisplayDateFormat
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModelFactory
 import com.kaii.photos.models.multi_album.groupPhotosBy
@@ -310,15 +308,8 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        val displayDateFormat by mainViewModel.settings.LookAndFeel.getDisplayDateFormat()
-            .collectAsStateWithLifecycle(initialValue = null)
-
-        LaunchedEffect(displayDateFormat) {
-            if (displayDateFormat != null) mainViewModel.setDisplayDateFormat(displayDateFormat!!)
-        }
-
-        val currentSortMode by mainViewModel.settings.PhotoGrid.getSortMode()
-            .collectAsStateWithLifecycle(initialValue = MediaItemSortMode.DateTaken)
+        val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
+        val currentSortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
 
         val mainPhotosPaths by mainViewModel.mainPhotosAlbums.collectAsStateWithLifecycle()
         val multiAlbumViewModel: MultiAlbumViewModel = viewModel(
@@ -326,7 +317,7 @@ class MainActivity : ComponentActivity() {
                 context = context,
                 albumInfo = AlbumInfo.createPathOnlyAlbum(mainPhotosPaths),
                 sortBy = currentSortMode,
-                displayDateFormat = displayDateFormat ?: DisplayDateFormat.Default
+                displayDateFormat = displayDateFormat
             )
         )
 
@@ -335,7 +326,7 @@ class MainActivity : ComponentActivity() {
                 context = context,
                 albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
                 sortBy = currentSortMode,
-                displayDateFormat = displayDateFormat ?: DisplayDateFormat.Default
+                displayDateFormat = displayDateFormat
             )
         )
 
@@ -371,8 +362,8 @@ class MainActivity : ComponentActivity() {
                 TAG,
                 "Changing display date format from: ${multiAlbumViewModel.displayDateFormat} to: $displayDateFormat"
             )
-            multiAlbumViewModel.changeDisplayDateFormat(context = context, displayDateFormat = displayDateFormat ?: DisplayDateFormat.Default)
-            customAlbumViewModel.changeDisplayDateFormat(context = context, displayDateFormat = displayDateFormat ?: DisplayDateFormat.Default)
+            multiAlbumViewModel.changeDisplayDateFormat(context = context, displayDateFormat = displayDateFormat)
+            customAlbumViewModel.changeDisplayDateFormat(context = context, displayDateFormat = displayDateFormat)
         }
 
         val snackbarHostState = remember {
@@ -1179,7 +1170,7 @@ class MainActivity : ComponentActivity() {
                 AnimatedContent(
                     targetState = currentView.value,
                     transitionSpec = {
-                        if (targetState.index > initialState.index) {
+                        if (tabList.indexOf(targetState) > tabList.indexOf(initialState)) {
                             (slideInHorizontally { width -> width } + fadeIn()).togetherWith(
                                 slideOutHorizontally { width -> -width } + fadeOut())
                         } else {
@@ -1308,11 +1299,13 @@ class MainActivity : ComponentActivity() {
                                 val mediaStoreData by favouritesViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
                                 val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
+                                val sortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
+
                                 val groupedMedia = remember {
                                     mutableStateOf(
                                         groupPhotosBy(
                                             mediaStoreData,
-                                            MediaItemSortMode.LastModified,
+                                            if (sortMode == MediaItemSortMode.Disabled) sortMode else MediaItemSortMode.LastModified,
                                             displayDateFormat,
                                             context
                                         )
@@ -1327,7 +1320,7 @@ class MainActivity : ComponentActivity() {
                                         groupedMedia.value =
                                             groupPhotosBy(
                                                 mediaStoreData,
-                                                MediaItemSortMode.LastModified,
+                                                if (sortMode == MediaItemSortMode.Disabled) sortMode else MediaItemSortMode.LastModified,
                                                 displayDateFormat,
                                                 context
                                             )
@@ -1352,9 +1345,14 @@ class MainActivity : ComponentActivity() {
 
                             stateValue == DefaultTabs.TabTypes.trash -> {
                                 val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
+                                val sortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
 
                                 val trashViewModel: TrashViewModel = viewModel(
-                                    factory = TrashViewModelFactory(context = context, displayDateFormat = displayDateFormat)
+                                    factory = TrashViewModelFactory(
+                                        context = context,
+                                        sortMode = sortMode,
+                                        displayDateFormat = displayDateFormat
+                                    )
                                 )
 
                                 val mediaStoreData =

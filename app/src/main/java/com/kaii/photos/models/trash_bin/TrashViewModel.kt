@@ -16,13 +16,14 @@ import kotlinx.coroutines.flow.stateIn
 
 class TrashViewModel(
     context: Context,
+    sortMode: MediaItemSortMode,
     displayDateFormat: DisplayDateFormat
 ) : ViewModel() {
     private val cancellationSignal = CancellationSignal()
     private val mediaStoreDataSource =
         TrashStoreDataSource(
             context = context,
-            sortBy = MediaItemSortMode.LastModified,
+            sortBy = if (sortMode == MediaItemSortMode.Disabled) sortMode else MediaItemSortMode.LastModified,
             cancellationSignal = cancellationSignal,
             displayDateFormat = displayDateFormat
         )

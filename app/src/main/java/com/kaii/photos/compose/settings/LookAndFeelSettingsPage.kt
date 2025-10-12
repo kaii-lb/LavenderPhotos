@@ -47,7 +47,6 @@ import com.kaii.photos.compose.widgets.PreferencesThreeStateSwitchRow
 import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
-import com.kaii.photos.models.multi_album.DisplayDateFormat
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -118,8 +117,8 @@ fun LookAndFeelSettingsPage() {
 
             item {
                 var showDateFormatDialog by remember { mutableStateOf(false) }
-                val displayDateFormat by mainViewModel.settings.LookAndFeel.getDisplayDateFormat()
-                    .collectAsStateWithLifecycle(initialValue = DisplayDateFormat.Default)
+                val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
+
                 var currentDate by remember {
                     mutableStateOf(
                         Instant.now()

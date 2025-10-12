@@ -60,13 +60,15 @@ fun FavouritesGridView(
 
     val mainViewModel = LocalMainViewModel.current
 
-    val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
+    val sortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
+
     val groupedMedia = remember {
         mutableStateOf(
             groupPhotosBy(
                 mediaStoreData,
-                MediaItemSortMode.LastModified,
+                if (sortMode == MediaItemSortMode.Disabled) sortMode else MediaItemSortMode.LastModified,
                 displayDateFormat,
                 context
             )
@@ -81,7 +83,7 @@ fun FavouritesGridView(
             groupedMedia.value =
                 groupPhotosBy(
                     mediaStoreData,
-                    MediaItemSortMode.LastModified,
+                    if (sortMode == MediaItemSortMode.Disabled) sortMode else MediaItemSortMode.LastModified,
                     displayDateFormat,
                     context
                 )

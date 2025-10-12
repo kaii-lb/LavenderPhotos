@@ -114,7 +114,7 @@ class MultiAlbumViewModel(
         StreamingDataSource(
             context = context,
             sqliteQuery = query,
-            sortBy = sortBy,
+            sortMode = sortBy,
             cancellationSignal = cancellationSignal,
             displayDateFormat = displayDateFormat
         )

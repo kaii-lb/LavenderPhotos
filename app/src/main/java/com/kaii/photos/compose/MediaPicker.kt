@@ -107,7 +107,6 @@ import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.datastore.MainPhotosView
-import com.kaii.photos.datastore.PhotoGrid
 import com.kaii.photos.helpers.BottomBarTabSaver
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
@@ -123,7 +122,6 @@ import com.kaii.photos.models.favourites_grid.FavouritesViewModel
 import com.kaii.photos.models.favourites_grid.FavouritesViewModelFactory
 import com.kaii.photos.models.main_activity.MainViewModel
 import com.kaii.photos.models.main_activity.MainViewModelFactory
-import com.kaii.photos.models.multi_album.DisplayDateFormat
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModelFactory
 import com.kaii.photos.models.multi_album.groupPhotosBy
@@ -197,16 +195,11 @@ class MediaPicker : ComponentActivity() {
         selectedItemsList: SnapshotStateList<MediaStoreData>,
         incomingIntent: Intent
     ) {
-        val displayDateFormat by mainViewModel.settings.LookAndFeel.getDisplayDateFormat().collectAsStateWithLifecycle(initialValue = null)
+        val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
 
-        LaunchedEffect(displayDateFormat) {
-            if (displayDateFormat != null) mainViewModel.setDisplayDateFormat(displayDateFormat!!)
-        }
-
+        val currentSortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
         val albumsList by mainViewModel.settings.MainPhotosView.getAlbums()
             .collectAsStateWithLifecycle(initialValue = emptyList())
-        val currentSortMode by mainViewModel.settings.PhotoGrid.getSortMode()
-            .collectAsStateWithLifecycle(initialValue = MediaItemSortMode.DateTaken)
 
         val context = LocalContext.current
         val multiAlbumViewModel: MultiAlbumViewModel = viewModel(
@@ -214,7 +207,7 @@ class MediaPicker : ComponentActivity() {
                 context = context,
                 albumInfo = AlbumInfo.createPathOnlyAlbum(albumsList),
                 sortBy = currentSortMode,
-                displayDateFormat = displayDateFormat ?: DisplayDateFormat.Default
+                displayDateFormat = displayDateFormat
             )
         )
 
@@ -223,7 +216,7 @@ class MediaPicker : ComponentActivity() {
                 context = context,
                 albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
                 sortBy = currentSortMode,
-                displayDateFormat = displayDateFormat ?: DisplayDateFormat.Default
+                displayDateFormat = displayDateFormat
             )
         )
 
@@ -466,7 +459,7 @@ class MediaPicker : ComponentActivity() {
                     AnimatedContent(
                         targetState = currentView.value,
                         transitionSpec = {
-                            if (targetState.index > initialState.index) {
+                            if (tabList.indexOf(targetState) > tabList.indexOf(initialState)) {
                                 (slideInHorizontally { width -> width } + fadeIn()).togetherWith(
                                     slideOutHorizontally { width -> -width } + fadeOut())
                             } else {
@@ -607,11 +600,13 @@ class MediaPicker : ComponentActivity() {
                                     val mediaStoreData by favouritesViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
                                     val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
+                                    val sortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
+
                                     val groupedMedia = remember {
                                         mutableStateOf(
                                             groupPhotosBy(
                                                 mediaStoreData,
-                                                MediaItemSortMode.LastModified,
+                                                if (sortMode == MediaItemSortMode.Disabled) sortMode else MediaItemSortMode.LastModified,
                                                 displayDateFormat,
                                                 context
                                             )
@@ -626,7 +621,7 @@ class MediaPicker : ComponentActivity() {
                                             groupedMedia.value =
                                                 groupPhotosBy(
                                                     mediaStoreData,
-                                                    MediaItemSortMode.LastModified,
+                                                    if (sortMode == MediaItemSortMode.Disabled) sortMode else MediaItemSortMode.LastModified,
                                                     displayDateFormat,
                                                     context
                                                 )
@@ -653,10 +648,12 @@ class MediaPicker : ComponentActivity() {
 
                                 stateValue == DefaultTabs.TabTypes.trash -> {
                                     val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
+                                    val sortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
 
                                     val trashViewModel: TrashViewModel = viewModel(
                                         factory = TrashViewModelFactory(
                                             context = context,
+                                            sortMode = sortMode,
                                             displayDateFormat = displayDateFormat
                                         )
                                     )

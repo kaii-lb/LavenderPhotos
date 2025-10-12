@@ -20,7 +20,6 @@ object DefaultTabs {
         val photos = BottomBarTab(
             name = "Photos",
             albumPaths = listOf("main_photos"),
-            index = 0,
             icon = StoredDrawable.PhotoGrid,
             id = 0
         )
@@ -28,7 +27,6 @@ object DefaultTabs {
         val secure = BottomBarTab(
             name = "Secure",
             albumPaths = listOf("secure_folder"),
-            index = 1,
             icon = StoredDrawable.SecureFolder,
             id = 1
         )
@@ -36,7 +34,6 @@ object DefaultTabs {
         val albums = BottomBarTab(
             name = "Albums",
             albumPaths = listOf("albums_page"),
-            index = 2,
             icon = StoredDrawable.Albums,
             id = 2
         )
@@ -44,7 +41,6 @@ object DefaultTabs {
         val search = BottomBarTab(
             name = "Search",
             albumPaths = listOf("search_page"),
-            index = 3,
             icon = StoredDrawable.Search,
             id = 3
         )
@@ -52,7 +48,6 @@ object DefaultTabs {
         val favourites = BottomBarTab(
             name = "Favourites",
             albumPaths = listOf("favourites_page"),
-            index = 4,
             icon = StoredDrawable.Favourite,
             id = 4
         )
@@ -60,7 +55,6 @@ object DefaultTabs {
         val trash = BottomBarTab(
             name = "Trash",
             albumPaths = listOf("trash_page"),
-            index = 5,
             icon = StoredDrawable.Trash,
             id = 5
         )
@@ -164,7 +158,6 @@ data class BottomBarTab(
     val id: Int,
     val name: String,
     val albumPaths: List<String>,
-    val index: Int,
     val icon: StoredDrawable,
     val isCustom: Boolean = false,
 ) {

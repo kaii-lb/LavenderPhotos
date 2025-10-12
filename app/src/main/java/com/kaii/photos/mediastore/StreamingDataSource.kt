@@ -38,7 +38,7 @@ private const val TAG = "com.kaii.photos.models.multi_album.MultiAlbumViewModel"
 class StreamingDataSource(
     private val context: Context,
     private val sqliteQuery: SQLiteQuery,
-    private val sortBy: MediaItemSortMode,
+    private val sortMode: MediaItemSortMode,
     private val cancellationSignal: CancellationSignal,
     private val displayDateFormat: DisplayDateFormat
 ) {
@@ -191,22 +191,22 @@ class StreamingDataSource(
                         )
 
                     val day =
-                        when (sortBy) {
+                        when (sortMode) {
                             MediaItemSortMode.LastModified -> new.getLastModifiedDay()
                             MediaItemSortMode.MonthTaken -> new.getDateTakenMonth()
-                            else -> new.getDateTakenDay()
+                            MediaItemSortMode.DateTaken -> new.getDateTakenDay()
+                            else -> MediaStoreData.dummyItem.getDateTakenDay()
                         }
 
-                    val key = map.keys.find {
-                        when (sortBy) {
-                            MediaItemSortMode.LastModified -> it.dateModified == day
-                            MediaItemSortMode.MonthTaken -> it.dateTaken == day
-                            else -> it.dateTaken == day
+                    val key = map.keys.find { section ->
+                        when (sortMode) {
+                            MediaItemSortMode.LastModified -> section.dateModified == day
+                            else -> section.dateTaken == day
                         }
                     }
 
                     if (key == null) {
-                        val title = formatDate(day, sortBy, displayDateFormat)
+                        val title = formatDate(day, sortMode, displayDateFormat)
                         val section =
                             MediaStoreData(
                                 type = MediaType.Section,
@@ -230,21 +230,37 @@ class StreamingDataSource(
                             }
                         )
 
-                        if (map.keys.size in 5..10) {
-                            map.keys.forEach { key ->
-                                key.section = SectionItem(
-                                    date = key.dateTaken,
-                                    childCount = map[key]?.size ?: 0
-                                )
+                        if (map.keys.size in 5..10 || (sortMode == MediaItemSortMode.Disabled && map.firstKey().size in 20..100)) {
+                            if (sortMode != MediaItemSortMode.Disabled) {
+                                map.keys.forEach { key ->
+                                    key.section = SectionItem(
+                                        date = key.dateTaken,
+                                        childCount = map[key]?.size ?: 0
+                                    )
 
-                                map[key]?.onEach {
-                                    it.section = key.section
+                                    map[key]?.onEach {
+                                        it.section = key.section
+                                    }
                                 }
                             }
 
-                            send(map.flatMap { keyVal ->
-                                listOf(keyVal.key) + keyVal.value.sortedByDescending { it.dateTaken }
-                            })
+                            send(
+                                map.flatMap { (key, value) ->
+                                    val keyList = if (sortMode == MediaItemSortMode.Disabled) {
+                                        emptyList()
+                                    } else {
+                                        listOf(key)
+                                    }
+
+                                    keyList +
+                                            value.sortedByDescending { data ->
+                                                when (sortMode) {
+                                                    MediaItemSortMode.LastModified -> data.dateModified
+                                                    else -> data.dateTaken
+                                                }
+                                            }
+                                }
+                            )
                         }
                     } else {
                         map[key]?.add(new)
@@ -253,20 +269,36 @@ class StreamingDataSource(
             }
         }
 
-        map.keys.forEach { key ->
-            key.section = SectionItem(
-                date = key.dateTaken,
-                childCount = map[key]?.size ?: 0
-            )
+        if (sortMode != MediaItemSortMode.Disabled) {
+            map.keys.forEach { key ->
+                key.section = SectionItem(
+                    date = key.dateTaken,
+                    childCount = map[key]?.size ?: 0
+                )
 
-            map[key]?.onEach {
-                it.section = key.section
+                map[key]?.onEach {
+                    it.section = key.section
+                }
             }
         }
 
-        trySend(map.flatMap { keyVal ->
-            listOf(keyVal.key) + keyVal.value.sortedByDescending { it.dateTaken }
-        })
+        send(
+            map.flatMap { (key, value) ->
+                val keyList = if (sortMode == MediaItemSortMode.Disabled) {
+                    emptyList()
+                } else {
+                    listOf(key)
+                }
+
+                keyList +
+                        value.sortedByDescending { data ->
+                            when (sortMode) {
+                                MediaItemSortMode.LastModified -> data.dateModified
+                                else -> data.dateTaken
+                            }
+                        }
+            }
+        )
 
         awaitClose {}
     }

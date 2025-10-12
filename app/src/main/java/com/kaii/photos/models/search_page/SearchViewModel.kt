@@ -27,7 +27,7 @@ class SearchViewModel(
         StreamingDataSource(
             context = context,
             sqliteQuery = SQLiteQuery(query = "", paths = null, basePaths = null),
-            sortBy = sortMode,
+            sortMode = sortMode,
             cancellationSignal = cancellationSignal,
             displayDateFormat = displayDateFormat
         )
