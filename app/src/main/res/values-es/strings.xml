@@ -214,7 +214,7 @@
     <string name="permissions_confirm_to_delete">Confirme para Eliminar</string>
     <string name="permissions_confirm_too_delete_desc">Solicite confirmación antes de eliminar cualquier multimedia</string>
     <string name="permissions_overwrite_date_on_move">Preservar la fecha al mover</string>
-    <string name="permissions_overwrite_date_on_move_desc">Intenta mantener la fecha de los medios al copiar o mover</string>
+    <string name="permissions_overwrite_date_on_move_desc">Mantiene la fecha de los medios al copiar o mover</string>
     <string name="permissions_needed">Permiso Necesario</string>
     <string name="permissions_needed_desc">Lavender Photos necesita permiso para acceder a este álbum. Otorgue el permiso seleccionando Usar esta carpeta en la siguiente pantalla.Este es un permiso de una sola vez.</string>
     <string name="permissions_grant">Otorgar</string>
