@@ -76,6 +76,7 @@ import androidx.core.graphics.scale
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.Glide
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
@@ -140,19 +141,14 @@ fun ImageEditor(
     val context = LocalContext.current
     LaunchedEffect(uri, absolutePath) {
         withContext(Dispatchers.IO) {
-            val bitmap = if (absolutePath.endsWith(".avif")) {  // avif won't load on some android distros, so use glide for that
+            val bitmap =
                 Glide.with(context)
                     .asBitmap()
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .skipMemoryCache(true)
                     .load(uri)
                     .submit()
                     .get()
-            } else {
-                context.contentResolver.openInputStream(uri).use { inputStream ->
-                    BitmapFactory.decodeStream(inputStream).also {
-                        inputStream?.close()
-                    }
-                }
-            }
 
             var inSampleSize = 1
 
