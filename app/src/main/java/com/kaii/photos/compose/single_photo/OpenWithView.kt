@@ -118,7 +118,6 @@ import com.kaii.photos.compose.editing_view.image_editor.ImageEditor
 import com.kaii.photos.compose.editing_view.video_editor.VideoEditor
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.AlbumInfoNavType
 import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.MediaItemSortMode
@@ -254,7 +253,7 @@ class OpenWithView : ComponentActivity() {
 
                             composable<Screens.ImageEditor>(
                                 typeMap = mapOf(
-                                    typeOf<AlbumInfo>() to AlbumInfoNavType
+                                    typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
                                 ),
                                 enterTransition = {
                                     slideInVertically(
@@ -312,6 +311,9 @@ class OpenWithView : ComponentActivity() {
                             }
 
                             composable<Screens.VideoEditor>(
+                                typeMap = mapOf(
+                                    typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
+                                ),
                                 enterTransition = {
                                     slideInVertically(
                                         animationSpec = AnimationConstants.expressiveTween(AnimationConstants.DURATION)

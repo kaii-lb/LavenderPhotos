@@ -118,7 +118,6 @@ import com.kaii.photos.compose.single_photo.SingleTrashedPhotoView
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.AlbumInfoNavType
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.Behaviour
 import com.kaii.photos.datastore.BottomBarTab
@@ -413,7 +412,7 @@ class MainActivity : ComponentActivity() {
 
                 composable<Screens.SinglePhotoView>(
                     typeMap = mapOf(
-                        typeOf<AlbumInfo>() to AlbumInfoNavType,
+                        typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType,
                         typeOf<List<String>>() to NavType.StringListType
                     )
                 ) {
@@ -477,7 +476,7 @@ class MainActivity : ComponentActivity() {
 
                 composable<Screens.SingleAlbumView>(
                     typeMap = mapOf(
-                        typeOf<AlbumInfo>() to AlbumInfoNavType,
+                        typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType,
                         typeOf<List<String>>() to NavType.StringListType
                     )
                 ) {
@@ -650,7 +649,7 @@ class MainActivity : ComponentActivity() {
 
                 composable<Screens.ImageEditor>(
                     typeMap = mapOf(
-                        typeOf<AlbumInfo>() to AlbumInfoNavType
+                        typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
                     ),
                     enterTransition = {
                         slideInVertically(
@@ -873,7 +872,7 @@ class MainActivity : ComponentActivity() {
 
                 composable<Screens.ImmichAlbumPage>(
                     typeMap = mapOf(
-                        typeOf<AlbumInfo>() to AlbumInfoNavType
+                        typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
                     )
                 ) {
                     enableEdgeToEdge(
@@ -905,7 +904,7 @@ class MainActivity : ComponentActivity() {
 
                 composable<Screens.VideoEditor>(
                     typeMap = mapOf(
-                        typeOf<AlbumInfo>() to AlbumInfoNavType
+                        typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
                     ),
                     enterTransition = {
                         slideInVertically(

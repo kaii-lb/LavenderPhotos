@@ -101,7 +101,6 @@ import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.Migration3to4
 import com.kaii.photos.database.Migration4to5
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.AlbumInfoNavType
 import com.kaii.photos.datastore.Behaviour
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
@@ -306,7 +305,7 @@ class MediaPicker : ComponentActivity() {
 
             composable<Screens.SingleAlbumView>(
                 typeMap = mapOf(
-                    typeOf<AlbumInfo>() to AlbumInfoNavType,
+                    typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType,
                     typeOf<List<String>>() to NavType.StringListType
                 )
             ) {

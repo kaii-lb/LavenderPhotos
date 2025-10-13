@@ -204,6 +204,24 @@ data class AlbumInfo(
         fun createPathOnlyAlbum(paths: List<String>) = AlbumInfo(id = 0, name = "", paths = paths)
     }
 
+    object AlbumNavType : NavType<AlbumInfo>(isNullableAllowed = false) {
+        override fun get(bundle: Bundle, key: String): AlbumInfo? {
+            return bundle.getString(key)?.let { Json.decodeFromString<AlbumInfo>(it) }
+        }
+
+        override fun parseValue(value: String): AlbumInfo {
+            return Json.decodeFromString(Uri.decode(value))
+        }
+
+        override fun put(bundle: Bundle, key: String, value: AlbumInfo) {
+            bundle.putString(key, Json.encodeToString(value))
+        }
+
+        override fun serializeAsValue(value: AlbumInfo): String {
+            return Uri.encode(Json.encodeToString(value))
+        }
+    }
+
     val mainPath
         get() = paths.firstOrNull() ?: ""
 
@@ -229,26 +247,6 @@ data class AlbumInfo(
         result = 31 * result + paths.toSet().hashCode()
         result = 31 * result + mainPath.hashCode()
         return result
-    }
-}
-
-object AlbumInfoNavType : NavType<AlbumInfo>(
-    isNullableAllowed = false
-) {
-    override fun get(bundle: Bundle, key: String): AlbumInfo? {
-        return bundle.getString(key)?.let { Json.decodeFromString<AlbumInfo>(it) }
-    }
-
-    override fun parseValue(value: String): AlbumInfo {
-        return Json.decodeFromString(Uri.decode(value))
-    }
-
-    override fun put(bundle: Bundle, key: String, value: AlbumInfo) {
-        bundle.putString(key, Json.encodeToString(value))
-    }
-
-    override fun serializeAsValue(value: AlbumInfo): String {
-        return Uri.encode(Json.encodeToString(value))
     }
 }
 
