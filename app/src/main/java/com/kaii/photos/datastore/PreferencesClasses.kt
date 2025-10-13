@@ -442,6 +442,7 @@ class SettingsLookAndFeelImpl(
     private val albumColumnSize = intPreferencesKey("look_and_feel_album_column_size")
     private val blackBackgroundForViews = booleanPreferencesKey("look_and_feel_black_background")
     private val showExtraSecureNav = booleanPreferencesKey("look_and_feel_extra_secure")
+    private val useRoundedCorners = booleanPreferencesKey("look_and_feel_use_rounded_corners") // for photo grid
 
     /** 0 is follow system
      * 1 is dark
@@ -524,6 +525,18 @@ class SettingsLookAndFeelImpl(
     fun setShowExtraSecureNav(value: Boolean) = viewModelScope.launch {
         context.datastore.edit {
             it[showExtraSecureNav] = value
+        }
+    }
+
+    /** round the thumbnail corners in photo grids */
+    fun getUseRoundedCorners(): Flow<Boolean> =
+        context.datastore.data.map {
+            it[useRoundedCorners] == true
+        }
+
+    fun setUseRoundedCorners(value: Boolean) = viewModelScope.launch {
+        context.datastore.edit {
+            it[useRoundedCorners] = value
         }
     }
 }

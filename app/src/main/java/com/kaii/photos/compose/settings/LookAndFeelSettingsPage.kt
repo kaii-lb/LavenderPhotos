@@ -1,6 +1,7 @@
 package com.kaii.photos.compose.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -105,7 +106,7 @@ fun LookAndFeelSettingsPage() {
                     iconResID = R.drawable.light_off,
                     showBackground = false,
                     checked = followDarkMode == 3,
-                    enabled = followDarkMode == 3 || followDarkMode == 1
+                    enabled = followDarkMode == 3 || followDarkMode == 1 || (followDarkMode == 0 && isSystemInDarkTheme())
                 ) { checked ->
                     mainViewModel.settings.LookAndFeel.setFollowDarkMode(if (checked) 3 else 1)
                 }
@@ -154,6 +155,21 @@ fun LookAndFeelSettingsPage() {
             }
 
             item {
+                val useRoundedCorners by mainViewModel.settings.LookAndFeel.getUseRoundedCorners().collectAsStateWithLifecycle(initialValue = false)
+
+                PreferencesSwitchRow(
+                    title = stringResource(id = R.string.look_and_feel_rounded_corners),
+                    summary = stringResource(id = R.string.look_and_feel_rounded_corners_desc),
+                    position = RowPosition.Single,
+                    iconResID = R.drawable.rounded_corner,
+                    showBackground = false,
+                    checked = useRoundedCorners
+                ) { checked ->
+                    mainViewModel.settings.LookAndFeel.setUseRoundedCorners(checked)
+                }
+            }
+
+            item {
                 PreferencesSeparatorText(
                     text = stringResource(id = R.string.look_and_feel_nav)
                 )
@@ -164,7 +180,7 @@ fun LookAndFeelSettingsPage() {
 
                 PreferencesSwitchRow(
                     title = stringResource(id = R.string.look_and_feel_extra_secure_nav),
-                    summary = stringResource(id = R.string.look_and_feel_extra_secure_nav_Desc),
+                    summary = stringResource(id = R.string.look_and_feel_extra_secure_nav_desc),
                     position = RowPosition.Single,
                     iconResID = R.drawable.door_open,
                     showBackground = false,

@@ -87,6 +87,7 @@ import com.kaii.photos.compose.widgets.ShowSelectedState
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.compose.widgets.shimmerEffect
 import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.datastore.Storage
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.EncryptionManager
@@ -222,6 +223,7 @@ fun DeviceMedia(
             showPlaceholderItems = groupedMedia.value.isEmpty()
         }
 
+        val useRoundedCorners by mainViewModel.settings.LookAndFeel.getUseRoundedCorners().collectAsStateWithLifecycle(initialValue = false)
         LazyVerticalGrid(
             state = gridState,
             columns = GridCells.Fixed(
@@ -268,7 +270,10 @@ fun DeviceMedia(
                         }
                     }
                 ) { i ->
-                    LoadingMediaStoreItem(item = PhotoGridConstants.placeholderItems[i])
+                    LoadingMediaStoreItem(
+                        item = PhotoGridConstants.placeholderItems[i],
+                        useRoundedCorners = useRoundedCorners
+                    )
                 }
             }
 
@@ -310,7 +315,8 @@ fun DeviceMedia(
                         selectedItemsList = selectedItemsList,
                         thumbnailSettings = Pair(cacheThumbnails, thumbnailSize),
                         isDragSelecting = isDragSelecting,
-                        isMediaPicker = isMediaPicker
+                        isMediaPicker = isMediaPicker,
+                        useRoundedCorners = useRoundedCorners
                     ) {
                         if (!isMediaPicker) {
                             when (viewProperties.operation) {
@@ -420,6 +426,7 @@ private fun MediaStoreItem(
     thumbnailSettings: Pair<Boolean, Int>,
     isDragSelecting: MutableState<Boolean>,
     isMediaPicker: Boolean,
+    useRoundedCorners: Boolean,
     onClick: () -> Unit
 ) {
     val vibratorManager = rememberVibratorManager()
@@ -534,6 +541,7 @@ private fun MediaStoreItem(
             modifier = Modifier
                 .aspectRatio(1f)
                 .padding(2.dp)
+                .clip(RoundedCornerShape(if (useRoundedCorners) 8.dp else 0.dp))
                 .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
                 .then(
                     if (selectedItemsList.isNotEmpty()) {
@@ -643,7 +651,8 @@ private fun MediaStoreItem(
 
 @Composable
 private fun LoadingMediaStoreItem(
-    item: MediaStoreData
+    item: MediaStoreData,
+    useRoundedCorners: Boolean
 ) {
     var showColors by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
@@ -685,6 +694,7 @@ private fun LoadingMediaStoreItem(
             modifier = Modifier
                 .aspectRatio(1f)
                 .padding(2.dp)
+                .clip(RoundedCornerShape(if (useRoundedCorners) 8.dp else 0.dp))
                 .shimmerEffect(
                     containerColor = Color.Transparent,
                     highlightColor = highlightColor,

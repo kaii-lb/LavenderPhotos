@@ -940,7 +940,9 @@
     <string name="look_and_feel_use_black_background_desc">Image viewer/video player background will be black</string>
     <string name="look_and_feel_nav">Navigation</string>
     <string name="look_and_feel_extra_secure_nav">Extra Secure Folder entry</string>
-    <string name="look_and_feel_extra_secure_nav_Desc">Shows an option to navigate to Secure Folder from the app\'s main dialog</string>
+    <string name="look_and_feel_extra_secure_nav_desc">Shows an option to navigate to Secure Folder from the app\'s main dialog</string>
+    <string name="look_and_feel_rounded_corners">Rounded Thumbnail Corners</string>
+    <string name="look_and_feel_rounded_corners_desc">Circular corners on thumbnails in photo grids</string>
 
     <!-- Immich -->
     <string name="immich">Immich</string>

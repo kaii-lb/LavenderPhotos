@@ -888,7 +888,7 @@
     <string name="look_and_feel_use_black_background_desc">图片查看器/视频播放器背景将显示为黑色</string>
     <string name="look_and_feel_nav">导航</string>
     <string name="look_and_feel_extra_secure_nav">额外安全文件夹入口</string>
-    <string name="look_and_feel_extra_secure_nav_Desc">在应用主对话框中显示安全文件夹导航选项</string>
+    <string name="look_and_feel_extra_secure_nav_desc">在应用主对话框中显示安全文件夹导航选项</string>
     <string name="immich">Immich</string>
     <string name="immich_title">Immich 备份</string>
     <string name="immich_desc">备份至自托管Immich服务器</string>

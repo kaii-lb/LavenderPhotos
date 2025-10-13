@@ -401,7 +401,7 @@
     <string name="look_and_feel_use_black_background_desc">Görüntü görüntüleyici/video oynatıcı arka planı siyah olacaktır</string>
     <string name="look_and_feel_nav">Gezinme</string>
     <string name="look_and_feel_extra_secure_nav">Ekstra Güvenli Klasör girişi</string>
-    <string name="look_and_feel_extra_secure_nav_Desc">Uygulamanın ana iletişim kutusundan Güvenli Klasöre gitmek için bir seçenek gösterir</string>
+    <string name="look_and_feel_extra_secure_nav_desc">Uygulamanın ana iletişim kutusundan Güvenli Klasöre gitmek için bir seçenek gösterir</string>
     <!-- Immich -->
     <string name="immich">Immich</string>
     <string name="immich_title">Immich Yedekleme</string>

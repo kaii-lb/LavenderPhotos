@@ -417,7 +417,7 @@
     <string name="look_and_feel_use_black_background_desc">Tło przeglądarki obrazów/odtwarzacza wideo będzie czarne</string>
     <string name="look_and_feel_nav">Nawigacja</string>
     <string name="look_and_feel_extra_secure_nav">Dodatkowa pozycja w Menu Bezpieczny folder</string>
-    <string name="look_and_feel_extra_secure_nav_Desc">Pokazuje opcję przejścia do Bezpiecznego folderu z głównego okna dialogowego aplikacji</string>
+    <string name="look_and_feel_extra_secure_nav_desc">Pokazuje opcję przejścia do Bezpiecznego folderu z głównego okna dialogowego aplikacji</string>
     <string name="immich">Immich</string>
     <string name="immich_title">Kopia zapasowa w Immich</string>
     <string name="immich_desc">Kopia zapasowa na własnym serwerze Immich</string>

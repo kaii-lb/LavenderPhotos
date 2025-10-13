@@ -888,7 +888,7 @@
     <string name="look_and_feel_use_black_background_desc">El fondo del visor de imágenes/reproductor de video será negro</string>
     <string name="look_and_feel_nav">Navegación</string>
     <string name="look_and_feel_extra_secure_nav">Entrada Extra de Carpeta Segura</string>
-    <string name="look_and_feel_extra_secure_nav_Desc">Muestra una opción para navegar a la Carpeta segura desde el cuadro de diálogo principal de la app</string>
+    <string name="look_and_feel_extra_secure_nav_desc">Muestra una opción para navegar a la Carpeta segura desde el cuadro de diálogo principal de la app</string>
     <string name="immich">Immich</string>
     <string name="immich_title">Copia de Seguridad de Immich</string>
     <string name="immich_desc">Copia de seguridad en el servidor Immich autohospedado</string>
