@@ -106,7 +106,6 @@ import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.datastore.MainPhotosView
-import com.kaii.photos.helpers.BottomBarTabSaver
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.PhotoGridConstants
@@ -235,7 +234,7 @@ class MediaPicker : ComponentActivity() {
         }
 
         val currentView = rememberSaveable(
-            stateSaver = BottomBarTabSaver
+            stateSaver = BottomBarTab.TabSaver
         ) {
             mutableStateOf(DefaultTabs.TabTypes.photos)
         }

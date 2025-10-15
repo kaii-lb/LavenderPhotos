@@ -635,6 +635,8 @@ class SettingsDefaultTabsImpl(
     private val defaultTab = stringPreferencesKey("default_bottom_tab")
     private val tabList = stringPreferencesKey("bottom_tab_list")
 
+    val json = Json { ignoreUnknownKeys = true }
+
     fun getTabList() = context.datastore.data.map {
         val list = it[tabList] ?: getDefaultTabList()
 
@@ -649,7 +651,7 @@ class SettingsDefaultTabsImpl(
                     }
                 }
                 .map { serialized ->
-                    Json.decodeFromString<BottomBarTab>(serialized)
+                    json.decodeFromString<BottomBarTab>(serialized)
                 }
 
             typedList.forEach { item ->
@@ -666,7 +668,7 @@ class SettingsDefaultTabsImpl(
                 .split(separator)
                 .toMutableList()
                 .apply { removeAll { string -> string == "" } }
-                .map { tab -> Json.decodeFromString<BottomBarTab>(tab) }
+                .map { tab -> json.decodeFromString<BottomBarTab>(tab) }
 
             setTabList(tabs)
 
@@ -684,7 +686,7 @@ class SettingsDefaultTabsImpl(
             var stringList = ""
 
             list.forEach { tab ->
-                stringList += Json.encodeToString(tab) + separator
+                stringList += json.encodeToString(tab) + separator
             }
 
             it[tabList] = stringList
@@ -692,10 +694,10 @@ class SettingsDefaultTabsImpl(
     }
 
     fun getDefaultTab() = context.datastore.data.map {
-        val default = it[defaultTab] ?: Json.encodeToString(DefaultTabs.TabTypes.photos)
+        val default = it[defaultTab] ?: json.encodeToString(DefaultTabs.TabTypes.photos)
 
         try {
-            Json.decodeFromString<BottomBarTab>(default)
+            json.decodeFromString<BottomBarTab>(default)
         } catch (e: Throwable) {
             Log.e(TAG, "BottomBarTab Impl has been changed, resetting default tab...")
             Log.e(TAG, e.toString())
@@ -708,16 +710,16 @@ class SettingsDefaultTabsImpl(
 
     fun setDefaultTab(tab: BottomBarTab) = viewModelScope.launch {
         context.datastore.edit {
-            val serialized = Json.encodeToString(tab)
+            val serialized = json.encodeToString(tab)
             it[defaultTab] = serialized
         }
     }
 
     private fun getDefaultTabList() = run {
-        val photos = Json.encodeToString(DefaultTabs.TabTypes.photos)
-        val secure = Json.encodeToString(DefaultTabs.TabTypes.secure)
-        val albums = Json.encodeToString(DefaultTabs.TabTypes.albums)
-        val search = Json.encodeToString(DefaultTabs.TabTypes.search)
+        val photos = json.encodeToString(DefaultTabs.TabTypes.photos)
+        val secure = json.encodeToString(DefaultTabs.TabTypes.secure)
+        val albums = json.encodeToString(DefaultTabs.TabTypes.albums)
+        val search = json.encodeToString(DefaultTabs.TabTypes.search)
 
         photos + separator + secure + separator + albums + separator + search
     }

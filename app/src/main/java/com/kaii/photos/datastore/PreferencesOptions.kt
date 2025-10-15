@@ -3,6 +3,7 @@ package com.kaii.photos.datastore
 import android.net.Uri
 import android.os.Bundle
 import androidx.annotation.DrawableRes
+import androidx.compose.runtime.saveable.listSaver
 import androidx.navigation.NavType
 import com.kaii.photos.R
 import kotlinx.serialization.Serializable
@@ -161,6 +162,31 @@ data class BottomBarTab(
     val icon: StoredDrawable,
     val isCustom: Boolean = false,
 ) {
+    companion object {
+        @Suppress("UNCHECKED_CAST") // if the type changes and this doesn't then something always went really bad
+        val TabSaver =
+            listSaver(
+                save = {
+                    listOf(
+                        it.name,
+                        it.albumPaths,
+                        it.icon.storedId,
+                        it.id,
+                        it.isCustom
+                    )
+                },
+                restore = {
+                    BottomBarTab(
+                        name = it[0] as String,
+                        albumPaths = it[1] as List<String>,
+                        icon = StoredDrawable.toResId(storedId = it[2] as Int),
+                        id = it[3] as Int,
+                        isCustom = it[4] as Boolean
+                    )
+                }
+            )
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -265,7 +291,7 @@ data class ImmichBasicInfo(
     val pfpPath: String
 ) {
     companion object {
-        val Empty = ImmichBasicInfo("", "" ,"" ,"")
+        val Empty = ImmichBasicInfo("", "", "", "")
     }
 }
 

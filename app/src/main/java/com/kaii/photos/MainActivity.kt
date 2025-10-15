@@ -129,7 +129,6 @@ import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.datastore.User
 import com.kaii.photos.datastore.Versions
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.helpers.BottomBarTabSaver
 import com.kaii.photos.helpers.LogManager
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
@@ -286,7 +285,7 @@ class MainActivity : ComponentActivity() {
             .collectAsStateWithLifecycle(initialValue = DefaultTabs.TabTypes.photos)
         val currentView = rememberSaveable(
             inputs = arrayOf(defaultTab),
-            stateSaver = BottomBarTabSaver
+            stateSaver = BottomBarTab.TabSaver
         ) { mutableStateOf(defaultTab) }
 
         val showDialog = remember { mutableStateOf(false) }
