@@ -76,3 +76,6 @@ val Context.appSecureThumbnailCacheDir: String
 
         return dir.absolutePath.removeSuffix("/")
     }
+
+val Context.profilePicture: String
+        get() = "$appStorageDir/immich_pfp.png"

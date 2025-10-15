@@ -260,6 +260,12 @@ data class ImmichBackupMedia(
 @Serializable
 data class ImmichBasicInfo(
     val endpoint: String,
-    val bearerToken: String
-)
+    val bearerToken: String,
+    val username: String,
+    val pfpPath: String
+) {
+    companion object {
+        val Empty = ImmichBasicInfo("", "" ,"" ,"")
+    }
+}
 

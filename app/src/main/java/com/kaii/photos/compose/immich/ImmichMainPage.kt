@@ -65,6 +65,7 @@ import com.kaii.photos.compose.dialogs.TextEntryDialog
 import com.kaii.photos.compose.widgets.PreferenceRowWithCustomBody
 import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
+import com.kaii.photos.compose.widgets.PreferencesSwitchRow
 import com.kaii.photos.datastore.Immich
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.RowPosition
@@ -123,7 +124,7 @@ fun ImmichMainPage() {
                 var showAddressDialog by remember { mutableStateOf(false) }
                 val resources = LocalResources.current
                 val immichBasicInfo by mainViewModel.settings.Immich.getImmichBasicInfo()
-                    .collectAsStateWithLifecycle(initialValue = ImmichBasicInfo("", ""))
+                    .collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
 
                 if (showAddressDialog) {
                     TextEntryDialog(
@@ -140,7 +141,9 @@ fun ImmichMainPage() {
                                 mainViewModel.settings.Immich.setImmichBasicInfo(
                                     ImmichBasicInfo(
                                         endpoint = value.removeSuffix("/"),
-                                        bearerToken = immichBasicInfo.bearerToken
+                                        bearerToken = immichBasicInfo.bearerToken,
+                                        username = immichBasicInfo.username,
+                                        pfpPath = immichBasicInfo.pfpPath
                                     )
                                 )
                                 showAddressDialog = false
@@ -176,7 +179,7 @@ fun ImmichMainPage() {
                             }
 
                             mainViewModel.settings.Immich.setImmichBasicInfo(
-                                ImmichBasicInfo("", "")
+                                ImmichBasicInfo.Empty
                             )
                         }
                         showClearEndpointDialog.value = false
@@ -201,7 +204,7 @@ fun ImmichMainPage() {
                 val mainViewModel = LocalMainViewModel.current
                 val userInfo by immichViewModel.immichUserLoginState.collectAsStateWithLifecycle()
                 val immichBasicInfo by mainViewModel.settings.Immich.getImmichBasicInfo()
-                    .collectAsStateWithLifecycle(initialValue = ImmichBasicInfo("", ""))
+                    .collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
                 var showLoginDialog by remember { mutableStateOf(false) }
                 var isLoadingInfo by remember { mutableStateOf(true) }
 
@@ -439,6 +442,26 @@ fun ImmichMainPage() {
                             .fillMaxWidth(1f)
                     )
                 }
+            }
+
+            item {
+                PreferencesSeparatorText(text = stringResource(id = R.string.immich_misc))
+            }
+
+            item {
+                val alwaysShowInfo by mainViewModel.settings.Immich.getAlwaysShowUserInfo().collectAsStateWithLifecycle(initialValue = false)
+
+                PreferencesSwitchRow(
+                    title = stringResource(id = R.string.immich_always_show_user_info),
+                    summary = stringResource(id = R.string.immich_always_show_user_info_desc),
+                    iconResID = R.drawable.id_card,
+                    position = RowPosition.Single,
+                    showBackground = false,
+                    checked = alwaysShowInfo,
+                    onSwitchClick = { checked ->
+                        mainViewModel.settings.Immich.setAlwaysShowUserInfo(checked)
+                    }
+                )
             }
 
             item {

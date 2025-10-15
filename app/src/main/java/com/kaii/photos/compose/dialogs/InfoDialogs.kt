@@ -83,6 +83,7 @@ import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
+import com.kaii.photos.datastore.Immich
 import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
@@ -103,6 +104,7 @@ import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.renameDirectory
 import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.helpers.vibrateShort
+import com.kaii.photos.immich.ImmichUserLoginState
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.content_provider.LavenderContentProvider
@@ -433,7 +435,11 @@ fun MainAppDialog(
                 showDialog.value = false
             }
 
-            MainDialogUserInfo()
+            val alwaysShowInfo by mainViewModel.settings.Immich.getAlwaysShowUserInfo().collectAsStateWithLifecycle(initialValue = false)
+            val userInfo by immichViewModel.immichUserLoginState.collectAsStateWithLifecycle()
+            if (userInfo is ImmichUserLoginState.IsLoggedIn || alwaysShowInfo) {
+                MainDialogUserInfo()
+            }
 
             Column(
                 modifier = Modifier

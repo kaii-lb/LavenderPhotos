@@ -752,11 +752,16 @@ class SettingsImmichImpl(
     private val immichEncryptionIV = byteArrayPreferencesKey("immich_encryption_iv")
     private val immichEndpoint = stringPreferencesKey("immich_endpoint")
     private val immichToken = byteArrayPreferencesKey("immich_token")
+    private val username = stringPreferencesKey("immich_username")
+    private val pfpPath = stringPreferencesKey("immich_pfp_path")
+    private val alwaysShowUserInfo = booleanPreferencesKey("immich_always_show_user_info") // always show the main app bar's pfp and user name, even if not logged in.
 
     fun getImmichBasicInfo() = context.datastore.data.map { data ->
-        val endpoint = data[immichEndpoint] ?: return@map ImmichBasicInfo("", "")
-        val token = data[immichToken] ?: return@map ImmichBasicInfo("", "")
-        val iv = data[immichEncryptionIV] ?: return@map ImmichBasicInfo("", "")
+        val endpoint = data[immichEndpoint] ?: return@map ImmichBasicInfo.Empty
+        val token = data[immichToken] ?: return@map ImmichBasicInfo.Empty
+        val iv = data[immichEncryptionIV] ?: return@map ImmichBasicInfo.Empty
+        val username = data[username] ?: ""
+        val pfpPath = data[pfpPath] ?: ""
 
         val decToken = EncryptionManager.decryptBytes(
             bytes = token,
@@ -765,17 +770,32 @@ class SettingsImmichImpl(
 
         ImmichBasicInfo(
             endpoint = endpoint,
-            bearerToken = decToken.decodeToString()
+            bearerToken = decToken.decodeToString(),
+            username = username,
+            pfpPath = pfpPath
         )
     }
 
-    fun setImmichBasicInfo(immichData: ImmichBasicInfo) = viewModelScope.launch {
+    fun setImmichBasicInfo(info: ImmichBasicInfo) = viewModelScope.launch {
         context.datastore.edit { data ->
-            val (enc, iv) = EncryptionManager.encryptBytes(immichData.bearerToken.toByteArray())
+            val (enc, iv) = EncryptionManager.encryptBytes(info.bearerToken.toByteArray())
 
-            data[immichEndpoint] = immichData.endpoint
+            data[username] = info.username
+            data[pfpPath] = info.pfpPath
+            data[immichEndpoint] = info.endpoint
             data[immichToken] = enc
             data[immichEncryptionIV] = iv
+        }
+    }
+
+    fun getAlwaysShowUserInfo() =
+        context.datastore.data.map {
+            it[alwaysShowUserInfo] == true
+        }
+
+    fun setAlwaysShowUserInfo(value: Boolean) = viewModelScope.launch {
+        context.datastore.edit {
+            it[alwaysShowUserInfo] = value
         }
     }
 }

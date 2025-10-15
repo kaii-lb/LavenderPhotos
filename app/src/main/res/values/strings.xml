@@ -1019,4 +1019,7 @@
         ]]>
     </string>
     <string name="immich_server_url_invalid">Invalid Url!</string>
+    <string name="immich_misc">Miscellaneous</string>
+    <string name="immich_always_show_user_info">Always Show User Info</string>
+    <string name="immich_always_show_user_info_desc">Displays user info whether the app is able to reach the server or not</string>
 </resources>

@@ -12,7 +12,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -20,7 +19,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -48,6 +46,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -58,6 +57,8 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.contentType
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -82,105 +83,6 @@ import kotlinx.coroutines.launch
 import java.io.File
 
 @Composable
-fun TextFieldWithConfirm(
-    text: MutableState<String>,
-    placeholder: String,
-    modifier: Modifier = Modifier,
-    onConfirm: () -> Unit
-) {
-    val keyboardController = LocalSoftwareKeyboardController.current
-
-    Row(
-        modifier = modifier,
-        verticalAlignment = Alignment.Top,
-        horizontalArrangement = Arrangement.SpaceEvenly
-    ) {
-        TextField(
-            value = text.value,
-            onValueChange = {
-                text.value = it
-            },
-            maxLines = 1,
-            singleLine = true,
-            placeholder = {
-                Text(
-                    text = placeholder,
-                    fontSize = TextUnit(16f, TextUnitType.Sp)
-                )
-            },
-            prefix = {
-                Row {
-                    Icon(
-                        painter = painterResource(id = R.drawable.edit),
-                        contentDescription = "Edit Icon",
-                        modifier = Modifier
-                            .size(24.dp)
-                    )
-
-                    Spacer(modifier = Modifier.width(8.dp))
-                }
-            },
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                cursorColor = MaterialTheme.colorScheme.primary,
-                focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                focusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                unfocusedIndicatorColor = Color.Transparent,
-                focusedIndicatorColor = Color.Transparent
-            ),
-            keyboardOptions = KeyboardOptions(
-                autoCorrectEnabled = false,
-                keyboardType = KeyboardType.Text,
-                imeAction = ImeAction.Search
-            ),
-            keyboardActions = KeyboardActions(
-                onSearch = {
-                    onConfirm()
-                    keyboardController?.hide()
-                }
-            ),
-            shape = RoundedCornerShape(1000.dp, 0.dp, 0.dp, 1000.dp),
-            modifier = Modifier
-                .weight(1f)
-        )
-
-        Row(
-            modifier = Modifier
-                .height(56.dp)
-                .width(32.dp)
-                .clip(RoundedCornerShape(0.dp, 1000.dp, 1000.dp, 0.dp))
-                .background(MaterialTheme.colorScheme.surfaceContainer)
-                .weight(0.2f),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Row(
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(RoundedCornerShape(1000.dp))
-                    .clickable {
-                        onConfirm()
-                        keyboardController?.hide()
-                    },
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.checkmark_thin),
-                    contentDescription = "Confirm text change",
-                    tint = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier
-                        .size(24.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
 fun ClearableTextField(
     text: MutableState<String>,
     placeholder: String,
@@ -195,6 +97,7 @@ fun ClearableTextField(
     visualTransformation: VisualTransformation = VisualTransformation.None,
     containerColor: Color = MaterialTheme.colorScheme.surfaceContainer,
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
+    contentType: ContentType? = null,
     onConfirm: () -> Unit,
     onClear: () -> Unit
 ) {
@@ -266,29 +169,10 @@ fun ClearableTextField(
             shape = CircleShape,
             modifier = Modifier
                 .weight(1f)
+                .semantics {
+                    if (contentType != null) this.contentType = contentType
+                }
         )
-
-        // Row(
-        //     modifier = Modifier
-        //         .height(56.dp)
-        //         .width(32.dp)
-        //         .clip(RoundedCornerShape(0.dp, 1000.dp, 1000.dp, 0.dp))
-        //         .background(containerColor)
-        //         .weight(0.2f),
-        //     verticalAlignment = Alignment.CenterVertically,
-        //     horizontalArrangement = Arrangement.Center
-        // ) {
-        //     Row(
-        //         modifier = Modifier
-        //             .size(36.dp)
-        //             .clip(CircleShape)
-        //             .clickable {
-        //                 onClear()
-        //             },
-        //         verticalAlignment = Alignment.CenterVertically,
-        //         horizontalArrangement = Arrangement.Center
-        //     ) {
-        // }
     }
 }
 

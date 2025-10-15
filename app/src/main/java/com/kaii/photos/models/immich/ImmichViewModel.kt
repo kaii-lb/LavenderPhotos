@@ -20,6 +20,7 @@ import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.SettingsAlbumsListImpl
 import com.kaii.photos.datastore.SettingsImmichImpl
 import com.kaii.photos.helpers.appStorageDir
+import com.kaii.photos.helpers.profilePicture
 import com.kaii.photos.immich.ImmichAlbumDuplicateState
 import com.kaii.photos.immich.ImmichAlbumSyncState
 import com.kaii.photos.immich.ImmichApiService
@@ -350,7 +351,7 @@ class ImmichViewModel(
         if (state != null) {
             val pfp = immichApiService.getProfilePic(state.id)
             if (pfp != null) {
-                java.io.File(application.applicationContext.appStorageDir + "/immich_pfp.png").apply {
+                java.io.File(application.applicationContext.profilePicture).apply {
                     parentFile?.mkdirs()
                     createNewFile()
                     outputStream().use {
@@ -360,7 +361,7 @@ class ImmichViewModel(
             }
 
             _immichUserLoginState.value =
-                ImmichUserLoginState.IsLoggedIn(state.copy(profileImagePath = application.applicationContext.appStorageDir + "/immich_pfp.png"))
+                ImmichUserLoginState.IsLoggedIn(state.copy(profileImagePath = application.applicationContext.profilePicture))
         } else {
             _immichUserLoginState.value = ImmichUserLoginState.IsNotLoggedIn
         }
@@ -383,7 +384,7 @@ class ImmichViewModel(
 
         if (success) {
             val pic = java.io.File(file.path)
-            java.io.File(application.applicationContext.appStorageDir + "/immich_pfp.png").outputStream().use {
+            java.io.File(application.applicationContext.profilePicture).outputStream().use {
                 it.write(pic.readBytes())
             }
 
@@ -402,7 +403,9 @@ class ImmichViewModel(
             immichSettings.setImmichBasicInfo(
                 ImmichBasicInfo(
                     endpoint = endpointBase,
-                    bearerToken = response.accessToken
+                    bearerToken = response.accessToken,
+                    username = response.name,
+                    pfpPath = application.applicationContext.profilePicture
                 )
             )
 
@@ -424,11 +427,13 @@ class ImmichViewModel(
     suspend fun logoutUser() {
         val response = immichApiService.logoutUser()
 
-        if (response != null) {
+        if (response != false) {
             immichSettings.setImmichBasicInfo(
                 ImmichBasicInfo(
                     endpoint = immichEndpoint,
-                    bearerToken = ""
+                    bearerToken = "",
+                    username = application.applicationContext.resources.getString(R.string.immich_login_unavailable),
+                    pfpPath = ""
                 )
             )
 

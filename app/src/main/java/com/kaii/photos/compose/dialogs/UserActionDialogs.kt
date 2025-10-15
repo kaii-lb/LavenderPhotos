@@ -52,6 +52,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
@@ -852,11 +853,12 @@ fun ImmichLoginDialog(
                 modifier = Modifier,
                 icon = R.drawable.mail,
                 containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                contentType = ContentType.EmailAddress,
                 keyboardOptions =
                     KeyboardOptions(
                         autoCorrectEnabled = false,
                         keyboardType = KeyboardType.Email,
-                        imeAction = ImeAction.Search
+                        imeAction = ImeAction.Next
                     ),
                 onConfirm = {
                     focusManager.moveFocus(FocusDirection.Down)
@@ -920,11 +922,12 @@ fun ImmichLoginDialog(
                     }
                 },
                 visualTransformation = PasswordVisualTransformation(mask = '\u2B24'),
+                contentType = ContentType.Password,
                 keyboardOptions =
                     KeyboardOptions(
                         autoCorrectEnabled = false,
                         keyboardType = KeyboardType.Password,
-                        imeAction = ImeAction.Search
+                        imeAction = ImeAction.Done
                     ),
                 containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                 onClear = {
