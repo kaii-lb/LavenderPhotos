@@ -8,7 +8,6 @@ import android.util.Log
 import android.util.Xml
 import android.view.ViewGroup
 import android.view.Window
-import android.view.WindowManager
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -76,6 +75,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.keepScreenOn
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
@@ -537,7 +537,6 @@ fun VideoPlayer(
     LaunchedEffect(isPlaying.value, localConfig.orientation, shouldPlay.value) {
         if (!isPlaying.value || !shouldPlay.value) {
             controlsVisible.value = true
-            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
             if (localConfig.orientation != Configuration.ORIENTATION_LANDSCAPE) {
                 setBarVisibility(
@@ -552,8 +551,6 @@ fun VideoPlayer(
 
             if (currentVideoPosition.floatValue > 0f) exoPlayer.isScrubbingModeEnabled = true
         } else {
-            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-
             exoPlayer.isScrubbingModeEnabled = false
             exoPlayer.play()
         }
@@ -572,7 +569,7 @@ fun VideoPlayer(
         while (isPlaying.value && shouldPlay.value) {
             currentVideoPosition.floatValue = exoPlayer.currentPosition / 1000f
 
-            delay(1000)
+            delay(250)
         }
     }
 
@@ -603,6 +600,11 @@ fun VideoPlayer(
     Box(
         modifier = Modifier
             .fillMaxSize(1f)
+            .then(
+                if (isPlaying.value && shouldPlay.value) {
+                    Modifier.keepScreenOn()
+                } else Modifier
+            )
     ) {
         AndroidView(
             factory = {
