@@ -961,4 +961,9 @@
             </ul>
         ]]></string>
     <string name="immich_server_url_invalid">URL无效！</string>
+    <string name="look_and_feel_rounded_corners">圆角缩略图</string>
+    <string name="look_and_feel_rounded_corners_desc">网格缩略图使用圆角</string>
+    <string name="immich_misc">其他</string>
+    <string name="immich_always_show_user_info">始终显示用户信息</string>
+    <string name="immich_always_show_user_info_desc">无论应用是否能够连接到服务器，均显示用户信息</string>
 </resources>
