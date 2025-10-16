@@ -490,4 +490,9 @@ które pozwala każdemu hostować własny serwer kopii zapasowych w chmurze.
 </ul>
 ]]></string>
     <string name="immich_server_url_invalid">Nieprawidłowy adres URL!</string>
+    <string name="look_and_feel_rounded_corners">Zaokrąglone rogi miniatur</string>
+    <string name="look_and_feel_rounded_corners_desc">Zaokrąglone rogi miniatur w siatkach zdjęć</string>
+    <string name="immich_misc">Różne</string>
+    <string name="immich_always_show_user_info">Zawsze pokazuj informacje o użytkowniku</string>
+    <string name="immich_always_show_user_info_desc">Wyświetla informacje o użytkowniku, niezależnie od tego, czy aplikacja ma dostęp do serwera, czy nie</string>
 </resources>
