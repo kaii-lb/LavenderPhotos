@@ -639,6 +639,8 @@
     <string name="video_seek_front">Skip forwards 5 seconds</string>
     <string name="video_play_toggle">Toggle play/pause for this video</string>
     <string name="video_decrypting">Decrypting video, please wait</string>
+    <string name="video_open_externally">Open In External Player</string>
+    <string name="video_open_externally_desc">Ask what to open videos with on tap from a grid</string>
 
     <!-- Editing -->
     <string name="edit">Edit</string>

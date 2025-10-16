@@ -808,6 +808,7 @@ class SettingsBehaviourImpl(
 ) {
     private val exitImmediately = booleanPreferencesKey("behaviour_exit_immediately")
     private val rotateInViews = booleanPreferencesKey("behaviour_rotate_in_views")
+    private val openVideosExternally = booleanPreferencesKey("behaviour_open_videos_externally")
 
     fun getExitImmediately() = context.datastore.data.map {
         it[exitImmediately] == true
@@ -826,6 +827,16 @@ class SettingsBehaviourImpl(
     fun setRotateInViews(value: Boolean) = viewModelScope.launch {
         context.datastore.edit {
             it[rotateInViews] = value
+        }
+    }
+
+    fun getOpenVideosExternally() = context.datastore.data.map {
+        it[openVideosExternally] == true
+    }
+
+    fun setOpenVideosExternally(value: Boolean) = viewModelScope.launch {
+        context.datastore.edit {
+            it[openVideosExternally] = value
         }
     }
 }

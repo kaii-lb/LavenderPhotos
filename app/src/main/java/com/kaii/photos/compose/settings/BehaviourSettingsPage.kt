@@ -78,8 +78,6 @@ fun BehaviourSettingsPage() {
             item {
                 val shouldAutoPlay by mainViewModel.settings.Video.getShouldAutoPlay()
                     .collectAsStateWithLifecycle(initialValue = true)
-                val muteOnStart by mainViewModel.settings.Video.getMuteOnStart()
-                    .collectAsStateWithLifecycle(initialValue = false)
 
                 PreferencesSwitchRow(
                     title = stringResource(id = R.string.video_auto_play),
@@ -93,6 +91,11 @@ fun BehaviourSettingsPage() {
                         mainViewModel.settings.Video.setShouldAutoPlay(checked)
                     }
                 )
+            }
+
+            item {
+                val muteOnStart by mainViewModel.settings.Video.getMuteOnStart()
+                    .collectAsStateWithLifecycle(initialValue = false)
 
                 PreferencesSwitchRow(
                     title = stringResource(id = R.string.video_start_muted),
@@ -104,6 +107,24 @@ fun BehaviourSettingsPage() {
                     onRowClick = null,
                     onSwitchClick = { checked ->
                         mainViewModel.settings.Video.setMuteOnStart(checked)
+                    }
+                )
+            }
+
+            item {
+                val openVideosExternally by mainViewModel.settings.Behaviour.getOpenVideosExternally()
+                    .collectAsStateWithLifecycle(initialValue = false)
+
+                PreferencesSwitchRow(
+                    title = stringResource(id = R.string.video_open_externally),
+                    summary = stringResource(id = R.string.video_open_externally_desc),
+                    iconResID = R.drawable.new_window,
+                    checked = openVideosExternally,
+                    position = RowPosition.Single,
+                    showBackground = false,
+                    onRowClick = null,
+                    onSwitchClick = { checked ->
+                        mainViewModel.settings.Behaviour.setOpenVideosExternally(checked)
                     }
                 )
             }

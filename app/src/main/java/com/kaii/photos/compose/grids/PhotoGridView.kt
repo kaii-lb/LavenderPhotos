@@ -1,5 +1,6 @@
 package com.kaii.photos.compose.grids
 
+import android.content.Intent
 import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateColorAsState
@@ -87,6 +88,7 @@ import com.kaii.photos.compose.widgets.ShowSelectedState
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.compose.widgets.shimmerEffect
 import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.Behaviour
 import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.datastore.Storage
 import com.kaii.photos.helpers.AnimationConstants
@@ -223,7 +225,10 @@ fun DeviceMedia(
             showPlaceholderItems = groupedMedia.value.isEmpty()
         }
 
+        val context = LocalContext.current
         val useRoundedCorners by mainViewModel.settings.LookAndFeel.getUseRoundedCorners().collectAsStateWithLifecycle(initialValue = false)
+        val openVideosExternally by mainViewModel.settings.Behaviour.getOpenVideosExternally().collectAsStateWithLifecycle(initialValue = false)
+
         LazyVerticalGrid(
             state = gridState,
             columns = GridCells.Fixed(
@@ -321,16 +326,23 @@ fun DeviceMedia(
                         if (!isMediaPicker) {
                             when (viewProperties.operation) {
                                 ImageFunctions.LoadNormalImage -> {
-                                    // mainViewModel.setGroupedMedia(groupedMedia.value)
+                                    if (openVideosExternally) {
+                                        val intent = Intent().apply {
+                                            data = mediaStoreItem.uri
+                                            action = Intent.ACTION_VIEW
+                                        }
 
-                                    navController.navigate(
-                                        Screens.SinglePhotoView(
-                                            albumInfo = albumInfo,
-                                            mediaItemId = mediaStoreItem.id,
-                                            previousMediaItemId = null,
-                                            loadsFromMainViewModel = viewProperties == ViewProperties.SearchLoading || viewProperties == ViewProperties.SearchNotFound || viewProperties == ViewProperties.Favourites
+                                        context.startActivity(intent)
+                                    } else {
+                                        navController.navigate(
+                                            Screens.SinglePhotoView(
+                                                albumInfo = albumInfo,
+                                                mediaItemId = mediaStoreItem.id,
+                                                previousMediaItemId = null,
+                                                loadsFromMainViewModel = viewProperties == ViewProperties.SearchLoading || viewProperties == ViewProperties.SearchNotFound || viewProperties == ViewProperties.Favourites
+                                            )
                                         )
-                                    )
+                                    }
                                 }
 
                                 ImageFunctions.LoadTrashedImage -> {
