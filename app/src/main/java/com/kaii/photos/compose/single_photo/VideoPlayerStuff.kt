@@ -145,7 +145,8 @@ fun VideoPlayerControls(
     duration: MutableFloatState,
     title: String,
     modifier: Modifier,
-    onAnyTap: () -> Unit
+    onAnyTap: () -> Unit,
+    setLastWasMuted: (Boolean) -> Unit
 ) {
     BoxWithConstraints(
         modifier = modifier
@@ -189,7 +190,8 @@ fun VideoPlayerControls(
                 isPlaying = isPlaying,
                 isMuted = isMuted,
                 exoPlayer = exoPlayer,
-                onAnyTap = onAnyTap
+                onAnyTap = onAnyTap,
+                setLastWasMuted = setLastWasMuted
             )
         }
 
@@ -269,7 +271,8 @@ private fun VideoPlayerControllerBottomControls(
     isPlaying: MutableState<Boolean>,
     exoPlayer: ExoPlayer,
     isMuted: MutableState<Boolean>,
-    onAnyTap: () -> Unit
+    onAnyTap: () -> Unit,
+    setLastWasMuted: (Boolean) -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -340,7 +343,7 @@ private fun VideoPlayerControllerBottomControls(
                     fontSize = TextUnit(12f, TextUnitType.Sp),
                     color = MaterialTheme.colorScheme.onBackground,
                     textAlign = TextAlign.Center,
-                ),
+                )
             )
         }
 
@@ -348,6 +351,7 @@ private fun VideoPlayerControllerBottomControls(
         FilledTonalIconButton(
             onClick = {
                 isMuted.value = !isMuted.value
+                setLastWasMuted(isMuted.value)
 
                 onAnyTap()
             },
@@ -484,7 +488,7 @@ fun VideoPlayer(
     val isPlaying = rememberSaveable { mutableStateOf(false) }
     val lastIsPlaying = rememberSaveable { mutableStateOf(isPlaying.value) }
 
-    val isMuted = rememberSaveable { mutableStateOf(lastWasMuted.value) }
+    val isMuted = rememberSaveable(lastWasMuted.value) { mutableStateOf(lastWasMuted.value) }
 
     /** In Seconds */
     val currentVideoPosition = rememberSaveable { mutableFloatStateOf(0f) }
@@ -579,8 +583,6 @@ fun VideoPlayer(
     }
 
     LaunchedEffect(isMuted.value) {
-        lastWasMuted.value = isMuted.value
-
         exoPlayer.volume = if (isMuted.value) 0f else 1f
 
         exoPlayer.setAudioAttributes(
@@ -828,11 +830,14 @@ fun VideoPlayer(
                 currentVideoPosition = currentVideoPosition,
                 duration = duration,
                 title = title,
+                modifier = Modifier
+                    .fillMaxSize(1f),
                 onAnyTap = {
                     showVideoPlayerControlsTimeout += 1
                 },
-                modifier = Modifier
-                    .fillMaxSize(1f)
+                setLastWasMuted = { new ->
+                    lastWasMuted.value = new
+                }
             )
         }
 

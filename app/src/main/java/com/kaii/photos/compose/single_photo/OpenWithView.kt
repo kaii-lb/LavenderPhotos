@@ -797,11 +797,12 @@ private fun OpenWithVideoPlayer(
                 currentVideoPosition = currentVideoPosition,
                 duration = duration,
                 title = "Media",
+                modifier = Modifier
+                    .fillMaxSize(1f),
                 onAnyTap = {
                     showVideoPlayerControlsTimeout += 1
                 },
-                modifier = Modifier
-                    .fillMaxSize(1f)
+                setLastWasMuted = {}
             )
         }
 
