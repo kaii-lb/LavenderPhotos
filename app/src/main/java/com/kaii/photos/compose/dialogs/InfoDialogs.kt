@@ -48,6 +48,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -338,7 +339,14 @@ fun SingleAlbumDialog(
                 navController.popBackStack()
             }
 
-            var isPinned by remember { mutableStateOf(album.isPinned) }
+            val normalAlbums by mainViewModel.settings.AlbumsList.getNormalAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
+            val dynamicAlbum by remember {
+                derivedStateOf {
+                    normalAlbums.firstOrNull { it.id == album.id }
+                }
+            }
+
+            var isPinned by remember(dynamicAlbum?.isPinned) { mutableStateOf(dynamicAlbum?.isPinned ?: false) }
             DialogClickableItem(
                 text = if (isPinned) stringResource(id = R.string.albums_unpin) else stringResource(
                     id = R.string.albums_pin
@@ -354,12 +362,8 @@ fun SingleAlbumDialog(
                     .height(if (!isEditingFileName.value) 42.dp else 0.dp)
                     .padding(8.dp, 0.dp)
             ) {
-                mainViewModel.settings.AlbumsList.editInAlbumsList(
-                    albumInfo = album,
-                    newInfo = album.copy(
-                        isPinned = !isPinned
-                    )
-                )
+                mainViewModel.settings.AlbumsList.removeFromAlbumsList(id = album.id)
+                mainViewModel.settings.AlbumsList.addToAlbumsList(albumInfo = album.copy(isPinned = !isPinned))
 
                 isPinned = !isPinned
             }

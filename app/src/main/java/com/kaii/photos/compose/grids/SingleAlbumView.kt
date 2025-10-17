@@ -1,6 +1,7 @@
 package com.kaii.photos.compose.grids
 
 import android.content.Intent
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -87,6 +88,8 @@ fun SingleAlbumView(
             }
         }
     }
+
+    Log.d("SINGLE_ALBUM_VIEW", "Dynamic album ${dynamicAlbum.name} is pinned? ${dynamicAlbum.isPinned}")
 
     BackHandler(
         enabled = selectedItemsList.isEmpty()
