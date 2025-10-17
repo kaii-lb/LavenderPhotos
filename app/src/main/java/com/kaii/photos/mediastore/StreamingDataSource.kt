@@ -113,6 +113,7 @@ class StreamingDataSource(
             )
 
         var map = mutableMapOf<MediaStoreData, MutableList<MediaStoreData>>()
+        send(emptyList())
 
         mediaCursor?.use { cursor ->
             val idColNum = mediaCursor.getColumnIndexOrThrow(MediaColumns._ID)
