@@ -4,6 +4,8 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.location.Geocoder
+import android.os.Build
 import android.provider.MediaStore
 import android.util.Log
 import androidx.activity.compose.BackHandler
@@ -577,10 +579,40 @@ fun SinglePhotoInfoDialog(
                     }
                 }
 
-                val mediaData by getExifDataForMedia(currentMediaItem.absolutePath).collectAsStateWithLifecycle(
-                    initialValue = emptyMap(),
-                    context = Dispatchers.IO
-                )
+                val mediaData = remember {
+                    getExifDataForMedia(currentMediaItem.absolutePath)
+                }
+
+                var location by remember { mutableStateOf("") }
+                LaunchedEffect(mediaData) {
+                    with(Dispatchers.IO) {
+                        val latLong = mediaData[MediaData.LatLong] as? DoubleArray
+                        if (latLong == null) return@LaunchedEffect
+
+                        Log.d(TAG, "this is running")
+
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            Geocoder(context).getFromLocation(
+                                latLong[0],
+                                latLong[1],
+                                1
+                            ) {
+                                it.firstOrNull()?.let { address ->
+                                    location = "${address.featureName}, ${address.thoroughfare}, ${address.subAdminArea}, ${address.countryName}"
+                                }
+                            }
+                        } else {
+                            @Suppress("deprecation")
+                            Geocoder(context).getFromLocation(
+                                latLong[0],
+                                latLong[1],
+                                1
+                            )?.firstOrNull()?.let { address ->
+                                location = "${address.featureName}, ${address.thoroughfare}, ${address.subAdminArea}, ${address.countryName}"
+                            }
+                        }
+                    }
+                }
 
                 Column(
                     modifier = Modifier
@@ -780,7 +812,7 @@ fun SinglePhotoInfoDialog(
                             .clip(RoundedCornerShape(24.dp))
                     ) {
                         items(
-                            items = mediaData.keys.toList()
+                            items = mediaData.keys.filter { it != MediaData.LatLong }.toList() // we don't want to display straight up coordinates
                         ) { key ->
                             val value = mediaData[key]
 
@@ -794,7 +826,7 @@ fun SinglePhotoInfoDialog(
                                 info = value.toString(),
                                 icon = key.iconResInt,
                                 position =
-                                    if (mediaData.keys.indexOf(key) == mediaData.keys.size - 1)
+                                    if (mediaData.keys.indexOf(key) == mediaData.keys.size - 1 && location.isBlank())
                                         RowPosition.Bottom
                                     else if (mediaData.keys.indexOf(key) == 0)
                                         RowPosition.Top
@@ -805,6 +837,22 @@ fun SinglePhotoInfoDialog(
                                     context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                                 val clipData = ClipData.newPlainText(name, value.toString())
                                 clipboardManager.setPrimaryClip(clipData)
+                            }
+                        }
+
+                        if (location.isNotBlank()) {
+                            item {
+                                TallDialogInfoRow(
+                                    title = "Location:",
+                                    info = location,
+                                    icon = R.drawable.location,
+                                    position = RowPosition.Bottom
+                                ) {
+                                    val clipboardManager =
+                                        context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                    val clipData = ClipData.newPlainText("Location", location)
+                                    clipboardManager.setPrimaryClip(clipData)
+                                }
                             }
                         }
                     }
@@ -1008,9 +1056,7 @@ fun SingleSecurePhotoInfoDialog(
                     }
 
                     showLoadingDialog = false
-                    getExifDataForMedia(file.absolutePath).collect {
-                        mediaData = it
-                    }
+                    mediaData = getExifDataForMedia(file.absolutePath)
                 }
             }
 

@@ -6,8 +6,6 @@ import android.media.MediaMetadataRetriever
 import android.util.Log
 import androidx.exifinterface.media.ExifInterface
 import com.kaii.photos.R
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 import java.io.File
 import java.io.FileDescriptor
 import java.time.Instant
@@ -74,17 +72,13 @@ fun setDateTakenForMedia(fd: FileDescriptor, dateTaken: Long) {
     }
 }
 
-fun getExifDataForMedia(absolutePath: String): Flow<Map<MediaData, Any>> = flow {
+fun getExifDataForMedia(absolutePath: String): Map<MediaData, Any> {
     val list = emptyMap<MediaData, Any?>().toMutableMap()
     val file = File(absolutePath)
 
     list[MediaData.Name] = file.name
     list[MediaData.Path] = file.absolutePath
     list[MediaData.Resolution] = "Loading..."
-
-    emit(list.mapValues { (_, value) ->
-        value!!
-    })
 
     try {
         val exifInterface = ExifInterface(absolutePath)
@@ -119,16 +113,6 @@ fun getExifDataForMedia(absolutePath: String): Flow<Map<MediaData, Any>> = flow 
         }
         list[MediaData.Size] = size
 
-        emit(
-            list
-                .filter { (_, value) ->
-                    value != null
-                }
-                .mapValues { (_, value) ->
-                    value!!
-                }
-        )
-
         val options = BitmapFactory.Options()
         options.inJustDecodeBounds = true
         BitmapFactory.decodeFile(absolutePath, options)
@@ -156,19 +140,16 @@ fun getExifDataForMedia(absolutePath: String): Flow<Map<MediaData, Any>> = flow 
             round((x * y) / 100000f) / 10f // divide by 1mil then multiply by 10, so divide by 100k
         }
 
-        emit(
-            list
-                .filter { (_, value) ->
-                    value != null
-                }
-                .mapValues { (_, value) ->
-                    value!!
-                }
-        )
+        return list
+            .mapNotNull { (key, value) ->
+                if (value != null) key to value else null
+            }
+            .toMap()
     } catch (e: Throwable) {
         Log.e(TAG, e.toString())
         e.printStackTrace()
-        emit(emptyMap())
+
+        return emptyMap()
     }
 }
 
