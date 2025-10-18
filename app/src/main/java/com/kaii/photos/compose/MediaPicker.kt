@@ -322,15 +322,15 @@ class MediaPicker : ComponentActivity() {
 
                 val screen: Screens.SingleAlbumView = it.toRoute()
 
-                if (screen.albumInfo != multiAlbumViewModel.albumInfo) {
-                    multiAlbumViewModel.reinitDataSource(
-                        context = context,
-                        album = screen.albumInfo,
-                        sortMode = multiAlbumViewModel.sortMode
-                    )
-                }
-
                 if (!screen.albumInfo.isCustomAlbum) {
+                    if (screen.albumInfo != multiAlbumViewModel.albumInfo) {
+                        multiAlbumViewModel.reinitDataSource(
+                            context = context,
+                            album = screen.albumInfo,
+                            sortMode = multiAlbumViewModel.sortMode
+                        )
+                    }
+
                     SingleAlbumView(
                         albumInfo = screen.albumInfo,
                         selectedItemsList = selectedItemsList,
@@ -350,7 +350,6 @@ class MediaPicker : ComponentActivity() {
                         albumInfo = screen.albumInfo,
                         selectedItemsList = selectedItemsList,
                         customViewModel = customAlbumViewModel,
-                        multiViewModel = multiAlbumViewModel,
                         incomingIntent = incomingIntent
                     )
                 }

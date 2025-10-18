@@ -91,14 +91,21 @@ private const val TAG = "com.kaii.photos.compose.app_bars.GridViewBars"
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SingleAlbumViewTopBar(
-    albumInfo: AlbumInfo?,
+    albumInfo: AlbumInfo,
     media: List<MediaStoreData>,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     showDialog: MutableState<Boolean>,
     isMediaPicker: Boolean = false,
     onBackClick: () -> Unit
 ) {
-    var usableAlbumInfo by remember(albumInfo) { mutableStateOf(albumInfo) }
+    val mainViewModel = LocalMainViewModel.current
+    val normalAlbums by mainViewModel.settings.AlbumsList.getNormalAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
+
+    val dynamicAlbum by remember {
+        derivedStateOf {
+            normalAlbums.firstOrNull { it.id == albumInfo.id } ?: albumInfo
+        }
+    }
 
     val show by remember {
         derivedStateOf {
@@ -142,7 +149,7 @@ fun SingleAlbumViewTopBar(
                 },
                 title = {
                     Text(
-                        text = usableAlbumInfo?.name ?: "Album",
+                        text = dynamicAlbum.name,
                         fontSize = TextUnit(18f, TextUnitType.Sp),
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
@@ -152,24 +159,22 @@ fun SingleAlbumViewTopBar(
                     )
                 },
                 actions = {
-                    if (!isMediaPicker) {
+                    if (!isMediaPicker && !dynamicAlbum.isCustomAlbum) {
                         var showPathsDialog by remember { mutableStateOf(false) }
 
-                        if (showPathsDialog && usableAlbumInfo != null) {
+                        if (showPathsDialog) {
                             AlbumPathsDialog(
-                                albumInfo = usableAlbumInfo!!,
+                                albumInfo = dynamicAlbum,
                                 onConfirm = { selectedPaths ->
                                     val newInfo =
-                                        usableAlbumInfo!!.copy(
+                                        dynamicAlbum.copy(
                                             id = selectedPaths.hashCode(),
                                             paths = selectedPaths
                                         )
                                     mainViewModel.settings.AlbumsList.editInAlbumsList(
-                                        albumInfo = usableAlbumInfo!!,
+                                        albumInfo = dynamicAlbum,
                                         newInfo = newInfo
                                     )
-
-                                    usableAlbumInfo = newInfo
 
                                     navController.popBackStack()
                                     navController.navigate(
@@ -202,7 +207,7 @@ fun SingleAlbumViewTopBar(
                     if (!isMediaPicker) {
                         val userInfo by immichViewModel.immichUserLoginState.collectAsStateWithLifecycle()
 
-                        if (userInfo is ImmichUserLoginState.IsLoggedIn && albumInfo != null) {
+                        if (userInfo is ImmichUserLoginState.IsLoggedIn) {
                             var loadingBackupState by remember { mutableStateOf(false) }
                             val albumState by immichViewModel.immichAlbumsSyncState.collectAsStateWithLifecycle()
 

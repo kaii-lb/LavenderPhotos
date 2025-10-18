@@ -132,7 +132,6 @@ fun SingleAlbumView(
     albumInfo: AlbumInfo,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     customViewModel: CustomAlbumViewModel,
-    multiViewModel: MultiAlbumViewModel,
     incomingIntent: Intent? = null
 ) {
     val navController = LocalNavController.current
@@ -162,25 +161,18 @@ fun SingleAlbumView(
         enabled = selectedItemsList.isEmpty()
     ) {
         customViewModel.cancelMediaFlow()
-        multiViewModel.cancelMediaFlow()
 
         navController.popBackStack()
     }
 
     val customMediaStoreData by customViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
-    val multiMediaStoreData by multiViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
-    val groupedMedia = remember { mutableStateOf(customMediaStoreData + multiMediaStoreData) }
+    val groupedMedia = remember { mutableStateOf(customMediaStoreData) }
 
-    LaunchedEffect(customMediaStoreData, multiMediaStoreData) {
-        val mixed = (customMediaStoreData + multiMediaStoreData).distinctBy { it.uri }
+    LaunchedEffect(customMediaStoreData) {
+        if (customMediaStoreData.isEmpty()) delay(PhotoGridConstants.UPDATE_TIME)
 
-        if (mixed.isEmpty()) {
-            delay(PhotoGridConstants.UPDATE_TIME)
-            groupedMedia.value = mixed
-        } else {
-            groupedMedia.value = mixed
-        }
+        groupedMedia.value = customMediaStoreData
     }
 
     SingleAlbumViewCommon(
@@ -192,13 +184,6 @@ fun SingleAlbumView(
     ) {
         if (customViewModel.albumInfo != dynamicAlbum) {
             customViewModel.reinitDataSource(
-                context = context,
-                album = dynamicAlbum
-            )
-        }
-
-        if (multiViewModel.albumInfo != dynamicAlbum) {
-            multiViewModel.reinitDataSource(
                 context = context,
                 album = dynamicAlbum
             )
@@ -236,7 +221,10 @@ private fun SingleAlbumViewCommon(
                 }
 
                 result == true
-            } else groupedMedia.value.isNotEmpty()
+            } else {
+                delay(PhotoGridConstants.LOADING_TIME)
+                groupedMedia.value.isNotEmpty()
+            }
         }
     }
 
@@ -311,7 +299,7 @@ private fun SingleAlbumViewCommon(
 
             SingleAlbumDialog(
                 showDialog = showDialog,
-                album = albumInfo,
+                albumInfo = albumInfo,
                 navController = navController,
                 selectedItemsList = selectedItemsList,
                 itemCount = groupedMedia.value.filter { it.type != MediaType.Section }.size

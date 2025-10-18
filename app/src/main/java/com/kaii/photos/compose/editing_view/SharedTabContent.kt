@@ -499,7 +499,7 @@ private fun ImageSelector(
                 IntSize(options.outWidth, options.outHeight)
             }
 
-            val isAvif = context.contentResolver.getMediaStoreDataFromUri(uri)?.absolutePath?.endsWith(".avif") == true
+            val isAvif = context.contentResolver.getMediaStoreDataFromUri(context = context, uri = uri)?.absolutePath?.endsWith(".avif") == true
 
             drawingPaintState.setSelectedItem(
                 if (drawingPaintState.isVideo) {

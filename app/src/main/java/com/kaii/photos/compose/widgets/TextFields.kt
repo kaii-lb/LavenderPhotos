@@ -359,7 +359,7 @@ fun MainDialogUserInfo() {
         val pfpPicker = rememberLauncherForActivityResult(PickVisualMedia()) { uri ->
             var success = false
             if (uri != null) {
-                val media = context.contentResolver.getMediaStoreDataFromUri(uri)
+                val media = context.contentResolver.getMediaStoreDataFromUri(context = context, uri = uri)
 
                 if (media != null) {
                     success = true

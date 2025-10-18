@@ -92,7 +92,6 @@ import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.MediaData
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.RowPosition
-import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.checkPathIsDownloads
@@ -124,11 +123,19 @@ private const val TAG = "com.kaii.photos.compose.dialogs.InfoDialogs"
 @Composable
 fun SingleAlbumDialog(
     showDialog: MutableState<Boolean>,
-    album: AlbumInfo,
+    albumInfo: AlbumInfo,
     navController: NavHostController,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     itemCount: Int
 ) {
+    val mainViewModel = LocalMainViewModel.current
+    val normalAlbums by mainViewModel.settings.AlbumsList.getNormalAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
+    val dynamicAlbum by remember(normalAlbums) {
+        derivedStateOf {
+            normalAlbums.firstOrNull { it.id == albumInfo.id } ?: albumInfo
+        }
+    }
+
     if (showDialog.value) {
         LavenderDialogBase(
             onDismiss = {
@@ -163,7 +170,7 @@ fun SingleAlbumDialog(
 
                 AnimatableText(
                     first = stringResource(id = R.string.media_rename),
-                    second = album.name,
+                    second = dynamicAlbum.name,
                     state = isEditingFileName.value,
                     modifier = Modifier
                         .align(Alignment.Center)
@@ -190,21 +197,20 @@ fun SingleAlbumDialog(
                 selectedItemsList.add(MediaStoreData())
             }
 
-            val fileName = remember { mutableStateOf(album.name) }
+            val fileName = remember { mutableStateOf(dynamicAlbum.name) }
             val saveFileName = remember { mutableStateOf(false) }
 
             val context = LocalContext.current
-            val mainViewModel = LocalMainViewModel.current
 
-            if (album.paths.size == 1) {
+            if (dynamicAlbum.paths.size == 1 && !dynamicAlbum.isCustomAlbum) {
                 GetDirectoryPermissionAndRun(
-                    absoluteDirPaths = album.paths,
+                    absoluteDirPaths = dynamicAlbum.paths,
                     shouldRun = saveFileName,
                     onGranted = {
-                        Log.d(TAG, "Running rename ${fileName.value} ${album.name}")
-                        if (fileName.value != album.name) {
+                        Log.d(TAG, "Running rename ${fileName.value} ${dynamicAlbum.name}")
+                        if (fileName.value != dynamicAlbum.name) {
                             Log.d(TAG, "Running rename - passed first check")
-                            val basePath = album.mainPath.toBasePath()
+                            val basePath = dynamicAlbum.mainPath.toBasePath()
                             val currentVolumes = MediaStore.getExternalVolumeNames(context)
                             val volumeName =
                                 if (basePath == baseInternalStorageDirectory) "primary"
@@ -216,19 +222,17 @@ fun SingleAlbumDialog(
 
                             renameDirectory(
                                 context = context,
-                                absolutePath = album.mainPath,
+                                absolutePath = dynamicAlbum.mainPath,
                                 newName = fileName.value,
                                 base = volumeName!!
                             )
 
-                            val newInfo = album.copy(
+                            val newInfo = dynamicAlbum.copy(
                                 name = fileName.value,
-                                paths = listOf(album.mainPath.replace(album.name, fileName.value))
+                                paths = listOf(dynamicAlbum.mainPath.replace(dynamicAlbum.name, fileName.value))
                             )
-                            mainViewModel.settings.AlbumsList.editInAlbumsList(
-                                albumInfo = album,
-                                newInfo = newInfo
-                            )
+                            mainViewModel.settings.AlbumsList.removeFromAlbumsList(dynamicAlbum.id)
+                            mainViewModel.settings.AlbumsList.addToAlbumsList(newInfo)
                             showDialog.value = false
 
                             try {
@@ -244,13 +248,6 @@ fun SingleAlbumDialog(
                                 e.printStackTrace()
                             }
 
-                            navController.popBackStack()
-                            navController.navigate(
-                                Screens.SingleAlbumView(
-                                    albumInfo = newInfo
-                                )
-                            )
-
                             saveFileName.value = false
                         }
                     },
@@ -262,29 +259,22 @@ fun SingleAlbumDialog(
                     string = fileName,
                     doAction = saveFileName,
                     rowPosition = RowPosition.Middle,
-                    enabled = album.paths.fastAll { !it.checkPathIsDownloads() },
+                    enabled = dynamicAlbum.paths.fastAll { !it.checkPathIsDownloads() },
                     modifier = Modifier
                         .padding(8.dp, 0.dp)
                 ) {
-                    fileName.value = album.name
+                    fileName.value = dynamicAlbum.name
                 }
             } else {
                 LaunchedEffect(saveFileName.value) {
                     if (!saveFileName.value) return@LaunchedEffect
 
-                    val newInfo = album.copy(
-                        name = fileName.value
-                    )
-                    mainViewModel.settings.AlbumsList.editInAlbumsList(
-                        albumInfo = album,
-                        newInfo = newInfo
-                    )
-                    navController.popBackStack()
-                    navController.navigate(
-                        Screens.SingleAlbumView(
-                            albumInfo = newInfo
-                        )
-                    )
+                    val newInfo = dynamicAlbum.copy(name = fileName.value)
+
+                    mainViewModel.settings.AlbumsList.removeFromAlbumsList(dynamicAlbum.id)
+                    mainViewModel.settings.AlbumsList.addToAlbumsList(newInfo)
+
+                    saveFileName.value = false
                 }
 
                 AnimatableTextField(
@@ -292,11 +282,11 @@ fun SingleAlbumDialog(
                     string = fileName,
                     doAction = saveFileName,
                     rowPosition = RowPosition.Middle,
-                    enabled = album.paths.fastAll { !it.checkPathIsDownloads() },
+                    enabled = dynamicAlbum.paths.fastAll { !it.checkPathIsDownloads() },
                     modifier = Modifier
                         .padding(8.dp, 0.dp)
                 ) {
-                    fileName.value = album.name
+                    fileName.value = dynamicAlbum.name
                 }
             }
 
@@ -304,7 +294,7 @@ fun SingleAlbumDialog(
                 text = stringResource(id = R.string.albums_remove),
                 iconResId = R.drawable.delete,
                 position = RowPosition.Middle,
-                enabled = !album.mainPath.checkPathIsDownloads(),
+                enabled = !dynamicAlbum.mainPath.checkPathIsDownloads(),
                 modifier = Modifier
                     .animateContentSize(
                         animationSpec = tween(
@@ -314,43 +304,36 @@ fun SingleAlbumDialog(
                     .height(if (!isEditingFileName.value) 42.dp else 0.dp)
                     .padding(8.dp, 0.dp)
             ) {
-                mainViewModel.settings.AlbumsList.removeFromAlbumsList(id = album.id)
+                mainViewModel.settings.AlbumsList.removeFromAlbumsList(id = dynamicAlbum.id)
                 showDialog.value = false
 
                 try {
                     context.contentResolver.delete(
                         LavenderContentProvider.CONTENT_URI,
                         "${LavenderMediaColumns.PARENT_ID} = ?",
-                        arrayOf("${album.id}")
+                        arrayOf("${dynamicAlbum.id}")
                     )
 
                     context.contentResolver.releasePersistableUriPermission(
                         context.getExternalStorageContentUriFromAbsolutePath(
-                            album.mainPath,
+                            dynamicAlbum.mainPath,
                             true
                         ),
                         Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                     )
                 } catch (e: Throwable) {
-                    Log.d(TAG, "Couldn't release permission for ${album.mainPath}")
+                    Log.d(TAG, "Couldn't release permission for ${dynamicAlbum.mainPath}")
                     e.printStackTrace()
                 }
 
                 navController.popBackStack()
             }
 
-            val normalAlbums by mainViewModel.settings.AlbumsList.getNormalAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
-            val dynamicAlbum by remember {
-                derivedStateOf {
-                    normalAlbums.firstOrNull { it.id == album.id }
-                }
-            }
-
-            var isPinned by remember(dynamicAlbum?.isPinned) { mutableStateOf(dynamicAlbum?.isPinned ?: false) }
+            var isPinned by remember(dynamicAlbum) { mutableStateOf(dynamicAlbum.isPinned) }
             DialogClickableItem(
-                text = if (isPinned) stringResource(id = R.string.albums_unpin) else stringResource(
-                    id = R.string.albums_pin
-                ),
+                text =
+                    if (isPinned) stringResource(id = R.string.albums_unpin)
+                    else stringResource(id = R.string.albums_pin),
                 iconResId = R.drawable.pin,
                 position = RowPosition.Middle,
                 modifier = Modifier
@@ -362,9 +345,8 @@ fun SingleAlbumDialog(
                     .height(if (!isEditingFileName.value) 42.dp else 0.dp)
                     .padding(8.dp, 0.dp)
             ) {
-                mainViewModel.settings.AlbumsList.removeFromAlbumsList(id = album.id)
-                mainViewModel.settings.AlbumsList.addToAlbumsList(albumInfo = album.copy(isPinned = !isPinned))
-
+                mainViewModel.settings.AlbumsList.removeFromAlbumsList(id = dynamicAlbum.id)
+                mainViewModel.settings.AlbumsList.addToAlbumsList(albumInfo = dynamicAlbum.copy(isPinned = !isPinned))
                 isPinned = !isPinned
             }
 
@@ -391,10 +373,10 @@ fun SingleAlbumDialog(
                     expanded = expanded
                 ) {
                     DialogInfoText(
-                        firstText = if (!album.isCustomAlbum) stringResource(id = R.string.albums_path) else stringResource(
+                        firstText = if (!dynamicAlbum.isCustomAlbum) stringResource(id = R.string.albums_path) else stringResource(
                             id = R.string.albums_id
                         ),
-                        secondText = if (!album.isCustomAlbum) album.mainPath else album.id.toString(),
+                        secondText = if (!dynamicAlbum.isCustomAlbum) dynamicAlbum.mainPath else dynamicAlbum.id.toString(),
                         iconResId = R.drawable.folder,
                     )
 
@@ -406,7 +388,7 @@ fun SingleAlbumDialog(
 
                     DialogInfoText(
                         firstText = stringResource(id = R.string.immich_uuid),
-                        secondText = album.immichId,
+                        secondText = dynamicAlbum.immichId,
                         iconResId = R.drawable.cloud_done,
                     )
                 }
@@ -595,7 +577,10 @@ fun SinglePhotoInfoDialog(
                     }
                 }
 
-                val mediaData by getExifDataForMedia(currentMediaItem.absolutePath).collectAsStateWithLifecycle(initialValue = emptyMap(), context = Dispatchers.IO)
+                val mediaData by getExifDataForMedia(currentMediaItem.absolutePath).collectAsStateWithLifecycle(
+                    initialValue = emptyMap(),
+                    context = Dispatchers.IO
+                )
 
                 Column(
                     modifier = Modifier

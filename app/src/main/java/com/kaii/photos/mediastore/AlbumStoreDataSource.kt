@@ -150,7 +150,7 @@ internal constructor(
                 val uriCol = cursor.getColumnIndexOrThrow(LavenderMediaColumns.URI)
                 val uri = cursor.getString(uriCol)
 
-                val media = context.contentResolver.getMediaStoreDataFromUri(uri.toUri())
+                val media = context.contentResolver.getMediaStoreDataFromUri(context = context, uri = uri.toUri())
 
                 // Log.d(TAG, "The latest media is ${media!!.absolutePath} for the following albums: $parentId")
 

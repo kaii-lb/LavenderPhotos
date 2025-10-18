@@ -183,11 +183,11 @@ fun tryGetAllAlbums(
         val new = list.fastDistinctBy { media ->
             media.absolutePath.getParentFromPath()
         }.fastMap { media ->
-            val album = media.absolutePath.getParentFromPath()
+            val album = listOf(media.absolutePath.getParentFromPath())
 
             AlbumInfo(
-                name = album.split("/").last(),
-                paths = listOf(album),
+                name = album.first().split("/").last(),
+                paths = album,
                 id = album.hashCode()
             )
         }.fastFilter {

@@ -215,7 +215,7 @@ fun LockedFolderEntryView() {
         onGranted = {
             mainViewModel.launch(Dispatchers.IO) {
                 val mediaItems = uriList.mapNotNull { uri ->
-                    context.contentResolver.getMediaStoreDataFromUri(uri)
+                    context.contentResolver.getMediaStoreDataFromUri(context = context, uri = uri)
                 }
 
                 Log.d(TAG, "Creating a backup of the secure folder media...")

@@ -11,8 +11,11 @@ import android.provider.MediaStore
 import android.provider.MediaStore.Files.FileColumns
 import android.provider.MediaStore.MediaColumns
 import android.util.Log
+import androidx.compose.ui.util.fastFirstOrNull
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
+import com.kaii.photos.database.MediaDatabase
+import com.kaii.photos.database.entities.MediaEntity
 import com.kaii.photos.datastore.SQLiteQuery
 import com.kaii.photos.helpers.EXTERNAL_DOCUMENTS_AUTHORITY
 import com.kaii.photos.helpers.appRestoredFilesDir
@@ -212,16 +215,17 @@ fun ContentResolver.getUriFromAbsolutePath(absolutePath: String, type: MediaType
     return null
 }
 
-fun ContentResolver.getMediaStoreDataFromUri(uri: Uri): MediaStoreData? {
+fun ContentResolver.getMediaStoreDataFromUri(context: Context, uri: Uri): MediaStoreData? {
     val mediaCursor = query(
         uri,
         arrayOf(
             MediaColumns._ID,
             FileColumns.DATA,
             MediaColumns.DATE_MODIFIED,
+            MediaColumns.DATE_ADDED,
+            MediaColumns.DATE_TAKEN,
             MediaColumns.MIME_TYPE,
             MediaColumns.DISPLAY_NAME,
-            MediaColumns.DATE_ADDED
         ),
         null,
         null,
@@ -234,12 +238,18 @@ fun ContentResolver.getMediaStoreDataFromUri(uri: Uri): MediaStoreData? {
         val mimeTypeColNum = mediaCursor.getColumnIndexOrThrow(MediaColumns.MIME_TYPE)
         val displayNameIndex = mediaCursor.getColumnIndexOrThrow(FileColumns.DISPLAY_NAME)
         val dateModifiedColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.DATE_MODIFIED)
-        val dateTakenColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.DATE_ADDED)
+        val dateTakenColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.DATE_TAKEN)
+        val dateAddedColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.DATE_ADDED)
+
+        val dao = MediaDatabase.getInstance(context).mediaEntityDao()
+        val allEntities = dao.getAll()
 
         while (cursor.moveToNext()) {
             val contentId = cursor.getLong(contentIdColNum)
             val mimeType = cursor.getString(mimeTypeColNum)
             val absolutePath: String? = cursor.getString(absolutePathColNum)
+            val mediaStoreDateTaken = cursor.getLong(dateTakenColumn) / 1000
+            val dateAdded = cursor.getLong(dateAddedColumn)
             val dateModified = cursor.getLong(dateModifiedColumn)
             val displayName = cursor.getString(displayNameIndex)
 
@@ -247,23 +257,38 @@ fun ContentResolver.getMediaStoreDataFromUri(uri: Uri): MediaStoreData? {
 
             if (absolutePath == null) return null
 
-            val mediaStoreDateTaken = cursor.getLong(dateTakenColumn)
-            val dateTaken =
-                if (mediaStoreDateTaken == 0L) {
-                    if (dateModified != 0L) {
-                        dateModified
-                    } else if (mimeType.startsWith("image")) {
-                        getDateTakenForMedia(absolutePath)
-                    } else {
-                        System.currentTimeMillis() / 1000
-                    }
-                } else {
-                    mediaStoreDateTaken
-                }
-
             val type =
                 if (mimeType.contains("image")) MediaType.Image
                 else MediaType.Video
+
+            val possibleDateTaken = allEntities.fastFirstOrNull { it.id == contentId }?.dateTaken
+            val dateTaken =
+                when {
+                    possibleDateTaken != null && possibleDateTaken > 0L -> possibleDateTaken
+
+                    mediaStoreDateTaken > 0L -> mediaStoreDateTaken
+
+                    type == MediaType.Image -> {
+                        getDateTakenForMedia(absolutePath).let { exifDateTaken ->
+                            dao.insertEntity(
+                                MediaEntity(
+                                    id = contentId,
+                                    dateTaken = exifDateTaken,
+                                    mimeType = mimeType,
+                                    displayName = displayName
+                                )
+                            )
+
+                            exifDateTaken
+                        }
+                    }
+
+                    dateAdded > 0L -> dateAdded
+
+                    else -> {
+                        dateModified
+                    }
+                }
 
             val uriParentPath =
                 if (type == MediaType.Image) MediaStore.Images.Media.EXTERNAL_CONTENT_URI else MediaStore.Video.Media.EXTERNAL_CONTENT_URI
