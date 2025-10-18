@@ -62,7 +62,6 @@ import androidx.compose.ui.util.fastFilter
 import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMapNotNull
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
@@ -78,6 +77,7 @@ import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.GetPermissionAndRun
+import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.copyImageListToPath
 import com.kaii.photos.helpers.getParentFromPath
@@ -89,10 +89,9 @@ import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.content_provider.LavenderContentProvider
 import com.kaii.photos.mediastore.content_provider.LavenderMediaColumns
-import com.kaii.photos.models.album_grid.AlbumsViewModel
-import com.kaii.photos.models.album_grid.AlbumsViewModelFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private const val TAG = "com.kaii.photos.compose.grids.MoveCopyAlbumListView"
 
@@ -105,26 +104,11 @@ fun MoveCopyAlbumListView(
     groupedMedia: MutableState<List<MediaStoreData>>? = null,
     insetsPadding: WindowInsets
 ) {
-    val context = LocalContext.current
     val mainViewModel = LocalMainViewModel.current
 
     val originalAlbumsList by mainViewModel.allAvailableAlbums.collectAsStateWithLifecycle()
-
-    val albumsViewModel: AlbumsViewModel = viewModel(
-        factory = AlbumsViewModelFactory(
-            context = context,
-            albums = originalAlbumsList.filter { if (isMoving) !it.isCustomAlbum else true }
-        )
-    )
-
-    LaunchedEffect(originalAlbumsList) {
-        albumsViewModel.refresh(
-            context = context,
-            albums = originalAlbumsList.filter { if (isMoving) !it.isCustomAlbum else true }
-        )
-    }
-
-    val albumToThumbnailMapping by albumsViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+    val albumToThumbnailMapping = mainViewModel.albumsThumbnailsMap
+    val sortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
 
     var albumsList by remember { mutableStateOf(originalAlbumsList) }
 
@@ -136,8 +120,19 @@ fun MoveCopyAlbumListView(
     )
 
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     LaunchedEffect(searchedForText.value, originalAlbumsList, selectedItemsList.lastOrNull()) {
+        withContext(Dispatchers.IO) {
+            if (mainViewModel.albumInfo.toSet() != originalAlbumsList.toSet()) {
+                mainViewModel.refreshAlbums(
+                    context = context,
+                    albums = originalAlbumsList,
+                    sortMode = sortMode
+                )
+            }
+        }
+
         val commonParent = run {
             // find common ancestors, if there's only one hide it (below code)
             // if not do nothing
@@ -158,11 +153,11 @@ fun MoveCopyAlbumListView(
         albumsList = originalAlbumsList.filter {
             it.name.contains(searchedForText.value, true)
         }.sortedByDescending { album ->
-            val mediaItem = albumToThumbnailMapping.find {
-                it.first.id == album.id
-            }?.second ?: MediaStoreData.dummyItem
+            val dateToSortBy =
+                if (sortMode == MediaItemSortMode.LastModified) albumToThumbnailMapping[album.id]?.dateModified ?: 0L
+                else albumToThumbnailMapping[album.id]?.dateTaken ?: 0L
 
-            (if (album.isCustomAlbum) 1L else 0L) or mediaItem.dateModified
+            (if (album.isCustomAlbum) 1L else 0L) or dateToSortBy
         }.fastMapNotNull { album ->
             // check if just moving/copying to a folder or custom album and hide the "same album" that the media came from if so
             if ((album.paths.size == 1 && album.mainPath != commonParent) || album.isCustomAlbum) album
@@ -250,9 +245,7 @@ fun MoveCopyAlbumListView(
                         }
                     ) { index ->
                         val album = albumsList[index]
-                        val mediaItem = albumToThumbnailMapping.find {
-                            it.first.id == album.id
-                        }?.second ?: MediaStoreData.dummyItem
+                        val mediaItem = albumToThumbnailMapping[album.id] ?: MediaStoreData.dummyItem
 
                         AlbumsListItem(
                             album = album,

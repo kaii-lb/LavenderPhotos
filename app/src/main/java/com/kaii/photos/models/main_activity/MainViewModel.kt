@@ -8,10 +8,8 @@ import android.os.CancellationSignal
 import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -23,8 +21,9 @@ import com.kaii.photos.datastore.PhotoGrid
 import com.kaii.photos.datastore.Settings
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.Updater
-import com.kaii.photos.mediastore.AlbumStoreDataSource
+import com.kaii.photos.mediastore.MediaDataSource
 import com.kaii.photos.mediastore.MediaStoreData
+import com.kaii.photos.mediastore.content_provider.CustomAlbumDataSource
 import com.kaii.photos.mediastore.getSQLiteQuery
 import com.kaii.photos.models.multi_album.DisplayDateFormat
 import kotlinx.coroutines.CoroutineDispatcher
@@ -36,13 +35,20 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapConcat
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 private const val TAG = "com.kaii.photos.models.MainViewModel"
 
 class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewModel() {
+    init {
+        refreshAlbums(
+            context = context,
+            albums = albumInfo,
+            sortMode = MediaItemSortMode.DateTaken
+        )
+    }
+
     private val _groupedMedia = MutableStateFlow<List<MediaStoreData>?>(null)
     val groupedMedia: Flow<List<MediaStoreData>?> = _groupedMedia.asStateFlow()
 
@@ -82,22 +88,7 @@ class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMode
         initialValue = false
     )
 
-    private var cancellationSignal = CancellationSignal()
-    private val albumMediaStoreDataSource =
-        mutableStateOf(initDataSource(context = context, albums = albumInfo))
-
-    val albumsThumbnailMediaFlow by derivedStateOf {
-        getAlbumsDataFlow().value.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Eagerly,
-            initialValue = emptyList()
-        )
-    }
-
-    private fun getAlbumsDataFlow() =
-        derivedStateOf {
-            albumMediaStoreDataSource.value.loadMediaStoreData().flowOn(Dispatchers.IO)
-        }
+    val albumsThumbnailsMap = mutableStateMapOf<Int, MediaStoreData>()
 
     val allAvailableAlbums =
         getAllAvailableAlbums().stateIn(
@@ -150,32 +141,39 @@ class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMode
 
     fun refreshAlbums(
         context: Context,
-        albums: List<AlbumInfo>
+        albums: List<AlbumInfo>,
+        sortMode: MediaItemSortMode
     ) {
         if (albums.toSet() == albumInfo.toSet()) return
 
-        cancellationSignal.cancel()
-        cancellationSignal = CancellationSignal()
+        albums.forEach { album ->
+            val cancellationSignal = CancellationSignal()
 
-        albumMediaStoreDataSource.value = initDataSource(context = context, albums = albums)
-    }
+            val media = if (!album.isCustomAlbum) {
+                val datasource = MediaDataSource(
+                    context = context,
+                    sqliteQuery = getSQLiteQuery(album.paths),
+                    sortMode = sortMode,
+                    cancellationSignal = cancellationSignal,
+                    displayDateFormat = DisplayDateFormat.Default
+                )
 
-    private fun initDataSource(
-        context: Context,
-        albums: List<AlbumInfo>
-    ) = run {
-        albumInfo = albums
-        val queries = albums.map { album ->
-            val query = getSQLiteQuery(albums = album.paths)
+                datasource.query().getOrElse(1) { MediaStoreData.dummyItem }
+            } else {
+                val datasource = CustomAlbumDataSource(
+                    context = context,
+                    parentId = album.id,
+                    sortMode = sortMode,
+                    cancellationSignal = cancellationSignal,
+                    displayDateFormat = DisplayDateFormat.Default
+                )
 
-            Pair(album, query.copy(basePaths = album.paths))
+                datasource.query().getOrElse(1) { MediaStoreData.dummyItem }
+            }
+
+            cancellationSignal.cancel()
+            albumsThumbnailsMap[album.id] = media
         }
-
-        AlbumStoreDataSource(
-            context = context,
-            albumQueryPairs = queries,
-            cancellationSignal = cancellationSignal
-        )
     }
 
     fun setGroupedMedia(media: List<MediaStoreData>?) {

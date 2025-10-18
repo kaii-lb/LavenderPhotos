@@ -49,7 +49,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -96,6 +95,7 @@ import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.helpers.AnimationConstants
+import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.Screens
@@ -131,11 +131,12 @@ fun AlbumsGridView(
 
     val albums = remember { mutableStateOf(listOfDirs) }
 
-    val albumToThumbnailMapping by mainViewModel.albumsThumbnailMediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
-    val cachedAlbumToThumbnailMapping =
-        remember { mutableStateListOf<Pair<AlbumInfo, MediaStoreData>>() }
+    val albumToThumbnailMapping = mainViewModel.albumsThumbnailsMap
+    val mediaSortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
 
-    LaunchedEffect(listOfDirs, normalAlbums, sortMode, sortByDescending, albumToThumbnailMapping) {
+    LaunchedEffect(listOfDirs, normalAlbums, sortMode, sortByDescending, albumToThumbnailMapping, mediaSortMode) {
+        if (listOfDirs.isEmpty()) return@LaunchedEffect
+
         withContext(Dispatchers.IO) {
             val newList = mutableListOf<AlbumInfo>()
 
@@ -143,13 +144,9 @@ fun AlbumsGridView(
             if (mainViewModel.albumInfo.toSet() != listOfDirs.toSet()) {
                 mainViewModel.refreshAlbums(
                     context = context,
-                    albums = listOfDirs
+                    albums = listOfDirs,
+                    sortMode = mediaSortMode
                 )
-            }
-
-            if (albumToThumbnailMapping.toSet() != cachedAlbumToThumbnailMapping.toSet() && albumToThumbnailMapping.isNotEmpty()) {
-                cachedAlbumToThumbnailMapping.addAll(albumToThumbnailMapping.toSet())
-                cachedAlbumToThumbnailMapping.retainAll(albumToThumbnailMapping.toSet().toSet())
             }
 
             val copy = listOfDirs
@@ -158,15 +155,13 @@ fun AlbumsGridView(
                     newList.addAll(
                         if (sortByDescending) {
                             copy.sortedByDescending { album ->
-                                cachedAlbumToThumbnailMapping.find {
-                                    it.first.id == album.id
-                                }?.second?.dateModified
+                                if (mediaSortMode == MediaItemSortMode.LastModified) albumToThumbnailMapping[album.id]?.dateModified
+                                else albumToThumbnailMapping[album.id]?.dateTaken
                             }
                         } else {
                             copy.sortedBy { album ->
-                                cachedAlbumToThumbnailMapping.find {
-                                    it.first.id == album.id
-                                }?.second?.dateModified
+                                if (mediaSortMode == MediaItemSortMode.LastModified) albumToThumbnailMapping[album.id]?.dateModified
+                                else albumToThumbnailMapping[album.id]?.dateTaken
                             }
                         }
                     )
@@ -208,6 +203,8 @@ fun AlbumsGridView(
     }
 
     LaunchedEffect(albums.value) {
+        if (albums.value.isEmpty()) return@LaunchedEffect // will never, EVER be empty
+
         // delay to avoid glitchy-ness when removing albums
         delay(PhotoGridConstants.LOADING_TIME_SHORT)
 
@@ -383,9 +380,7 @@ fun AlbumsGridView(
                 },
             ) { index ->
                 val albumInfo = albums.value[index]
-                val mediaItem = cachedAlbumToThumbnailMapping.find {
-                    it.first.id == albumInfo.id
-                }?.second ?: MediaStoreData.dummyItem
+                val mediaItem = albumToThumbnailMapping[albumInfo.id] ?: MediaStoreData.dummyItem
 
                 AlbumGridItem(
                     album = albumInfo,
