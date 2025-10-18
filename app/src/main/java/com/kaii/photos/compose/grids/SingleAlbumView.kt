@@ -103,12 +103,10 @@ fun SingleAlbumView(
     val groupedMedia = remember { mutableStateOf(mediaStoreData) }
 
     LaunchedEffect(mediaStoreData) {
-        if (mediaStoreData.isEmpty()) {
-            delay(PhotoGridConstants.UPDATE_TIME)
-            groupedMedia.value = mediaStoreData
-        } else {
-            groupedMedia.value = mediaStoreData
-        }
+        if (mediaStoreData.isEmpty()) delay(PhotoGridConstants.LOADING_TIME)
+        else delay(PhotoGridConstants.UPDATE_TIME)
+
+        groupedMedia.value = mediaStoreData
     }
 
     SingleAlbumViewCommon(
@@ -170,7 +168,8 @@ fun SingleAlbumView(
     val groupedMedia = remember { mutableStateOf(customMediaStoreData) }
 
     LaunchedEffect(customMediaStoreData) {
-        if (customMediaStoreData.isEmpty()) delay(PhotoGridConstants.UPDATE_TIME)
+        if (customMediaStoreData.isEmpty()) delay(PhotoGridConstants.LOADING_TIME)
+        else delay(PhotoGridConstants.UPDATE_TIME)
 
         groupedMedia.value = customMediaStoreData
     }

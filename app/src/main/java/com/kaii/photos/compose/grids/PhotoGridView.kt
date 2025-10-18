@@ -238,6 +238,7 @@ fun DeviceMedia(
                     columnSize
                 }
             ),
+            userScrollEnabled = !showPlaceholderItems && (!isDragSelecting.value || selectedItemsList.isEmpty()),
             modifier = Modifier
                 .testTag("mainlazycolumn")
                 .fillMaxSize(1f)

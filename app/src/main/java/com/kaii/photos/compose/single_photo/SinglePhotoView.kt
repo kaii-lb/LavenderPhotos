@@ -71,6 +71,7 @@ import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.getDateTakenForMedia
 import com.kaii.photos.helpers.getParentFromPath
@@ -87,6 +88,7 @@ import com.kaii.photos.models.favourites_grid.FavouritesViewModel
 import com.kaii.photos.models.favourites_grid.FavouritesViewModelFactory
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -94,7 +96,6 @@ import kotlinx.coroutines.withContext
 fun SinglePhotoView(
     navController: NavHostController,
     window: Window,
-    multiAlbumViewModel: MultiAlbumViewModel,
     customAlbumViewModel: CustomAlbumViewModel,
     mediaItemId: Long,
     previousMediaItemId: Long?,
@@ -106,10 +107,9 @@ fun SinglePhotoView(
 
     if (!loadsFromMainViewModel) {
         val customMediaStoreData by customAlbumViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
-        val multiMediaStoreData by multiAlbumViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
-        LaunchedEffect(customMediaStoreData, multiMediaStoreData) {
-            holderGroupedMedia.value = (customMediaStoreData + multiMediaStoreData).distinct()
+        LaunchedEffect(customMediaStoreData) {
+            holderGroupedMedia.value = customMediaStoreData
         }
     } else {
         val media by mainViewModel.groupedMedia.collectAsStateWithLifecycle(initialValue = null)
@@ -129,6 +129,9 @@ fun SinglePhotoView(
     }
 
     LaunchedEffect(holderGroupedMedia.value) {
+        if (holderGroupedMedia.value!!.isEmpty()) delay(PhotoGridConstants.LOADING_TIME)
+        else delay(PhotoGridConstants.UPDATE_TIME)
+
         groupedMedia.value =
             holderGroupedMedia.value!!.filter { item ->
                 item.type != MediaType.Section
@@ -183,6 +186,9 @@ fun SinglePhotoView(
     }
 
     LaunchedEffect(holderGroupedMedia.value) {
+        if (holderGroupedMedia.value!!.isEmpty()) delay(PhotoGridConstants.LOADING_TIME)
+        else delay(PhotoGridConstants.UPDATE_TIME)
+
         groupedMedia.value =
             holderGroupedMedia.value!!.filter { item ->
                 item.type != MediaType.Section
@@ -215,7 +221,7 @@ fun SinglePhotoViewCommon(
         mutableIntStateOf(
             groupedMedia.value.indexOf(
                 groupedMedia.value.firstOrNull {
-                    it.id == mediaItemId || it.id == previousMediaItemId
+                    it.id == mediaItemId //|| it.id == previousMediaItemId
                 }
             )
         )

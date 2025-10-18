@@ -433,15 +433,15 @@ class MainActivity : ComponentActivity() {
 
                     val screen: Screens.SinglePhotoView = it.toRoute()
 
-                    if (screen.albumInfo != multiAlbumViewModel.albumInfo) {
-                        multiAlbumViewModel.reinitDataSource(
-                            context = context,
-                            album = screen.albumInfo,
-                            sortMode = multiAlbumViewModel.sortMode
-                        )
-                    }
-
                     if (!screen.albumInfo.isCustomAlbum) {
+                        if (screen.albumInfo != multiAlbumViewModel.albumInfo) {
+                            multiAlbumViewModel.reinitDataSource(
+                                context = context,
+                                album = screen.albumInfo,
+                                sortMode = multiAlbumViewModel.sortMode
+                            )
+                        }
+
                         SinglePhotoView(
                             navController = navController,
                             window = window,
@@ -463,7 +463,6 @@ class MainActivity : ComponentActivity() {
                         SinglePhotoView(
                             navController = navController,
                             window = window,
-                            multiAlbumViewModel = multiAlbumViewModel,
                             customAlbumViewModel = customAlbumViewModel,
                             mediaItemId = screen.mediaItemId,
                             previousMediaItemId = screen.previousMediaItemId,

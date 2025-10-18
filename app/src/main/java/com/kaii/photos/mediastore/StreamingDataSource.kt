@@ -230,39 +230,6 @@ class StreamingDataSource(
                                 data.dateTaken
                             }
                         )
-
-                        if (map.keys.size in 5..10 || (sortMode == MediaItemSortMode.Disabled && map.firstKey().size in 20..100)) {
-                            if (sortMode != MediaItemSortMode.Disabled) {
-                                map.keys.forEach { key ->
-                                    key.section = SectionItem(
-                                        date = key.dateTaken,
-                                        childCount = map[key]?.size ?: 0
-                                    )
-
-                                    map[key]?.onEach {
-                                        it.section = key.section
-                                    }
-                                }
-                            }
-
-                            send(
-                                map.flatMap { (key, value) ->
-                                    val keyList = if (sortMode == MediaItemSortMode.Disabled) {
-                                        emptyList()
-                                    } else {
-                                        listOf(key)
-                                    }
-
-                                    keyList +
-                                            value.sortedByDescending { data ->
-                                                when (sortMode) {
-                                                    MediaItemSortMode.LastModified -> data.dateModified
-                                                    else -> data.dateTaken
-                                                }
-                                            }
-                                }
-                            )
-                        }
                     } else {
                         map[key]?.add(new)
                     }
