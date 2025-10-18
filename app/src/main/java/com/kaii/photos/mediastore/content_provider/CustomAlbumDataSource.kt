@@ -42,7 +42,7 @@ class CustomAlbumDataSource(
             )
     }
 
-    fun loadMediaStoreData(): Flow<Flow<List<MediaStoreData>>> = callbackFlow {
+    fun loadMediaStoreData(): Flow<List<MediaStoreData>> = callbackFlow {
         val contentObserver =
             object : ContentObserver(Handler(Looper.getMainLooper())) {
                 override fun onChange(selfChange: Boolean) {
@@ -81,142 +81,82 @@ class CustomAlbumDataSource(
         }
     }.conflate()
 
-    fun query(): Flow<List<MediaStoreData>> = callbackFlow {
+    fun query(): List<MediaStoreData> {
         Preconditions.checkArgument(
             Util.isOnBackgroundThread(),
             "Can only query from a background thread"
         )
 
-        var map = mutableMapOf<MediaStoreData, MutableList<MediaStoreData>>()
-
-        val mediaCursor =
+        val cursor =
             context.contentResolver.query(
                 LavenderContentProvider.CONTENT_URI,
                 PROJECTION,
                 "${LavenderMediaColumns.PARENT_ID} = ?",
                 arrayOf(parentId.toString()),
                 null
+            ) ?: return emptyList()
+
+        val uriCol = cursor.getColumnIndexOrThrow(LavenderMediaColumns.URI)
+        val idCol = cursor.getColumnIndexOrThrow(LavenderMediaColumns.ID)
+
+        val holderMap = mutableMapOf<Long, MutableList<MediaStoreData>>()
+
+        while (cursor.moveToNext()) {
+            val uri = cursor.getString(uriCol).toUri()
+            val id = cursor.getInt(idCol)
+
+            val new = context.contentResolver.getMediaStoreDataFromUri(context = context, uri = uri)?.copy(customId = id)!!
+
+            val day =
+                when (sortMode) {
+                    MediaItemSortMode.LastModified -> new.getLastModifiedDay()
+                    MediaItemSortMode.MonthTaken -> new.getDateTakenMonth()
+                    MediaItemSortMode.DateTaken -> new.getDateTakenDay()
+                    else -> MediaStoreData.dummyItem.getDateTakenDay()
+                }
+
+            if (sortMode == MediaItemSortMode.Disabled) holderMap.getOrPut(0L) { mutableListOf() }.add(new)
+            else holderMap.getOrPut(day) { mutableListOf() }.add(new)
+        }
+
+        cursor.close()
+
+        val sortedMap = holderMap.toSortedMap(compareByDescending { it })
+        val sorted = mutableListOf<MediaStoreData>()
+
+        if (sortMode == MediaItemSortMode.Disabled) {
+            return sortedMap[0L]?.sortedByDescending { it.dateTaken } ?: emptyList()
+        }
+
+        sortedMap.forEach { (day, items) ->
+            val title = formatDate(day, sortMode, displayDateFormat)
+            val sectionItem = SectionItem(
+                date = day,
+                childCount = items.size
             )
 
-        mediaCursor?.use { cursor ->
-            val uriCol = cursor.getColumnIndexOrThrow(LavenderMediaColumns.URI)
-            val idCol = cursor.getColumnIndexOrThrow(LavenderMediaColumns.ID)
-
-            while (cursor.moveToNext()) {
-                val uri = cursor.getString(uriCol).toUri()
-                val id = cursor.getInt(idCol)
-
-                val new = context.contentResolver.getMediaStoreDataFromUri(context = context, uri = uri)?.copy(customId = id)!!
-
-                val day =
-                    when (sortMode) {
-                        MediaItemSortMode.LastModified -> new.getLastModifiedDay()
-                        MediaItemSortMode.MonthTaken -> new.getDateTakenMonth()
-                        MediaItemSortMode.DateTaken -> new.getDateTakenDay()
-                        else -> MediaStoreData.dummyItem.getDateTakenDay()
-                    }
-
-                val key = map.keys.find { section ->
-                    when (sortMode) {
-                        MediaItemSortMode.LastModified -> section.dateModified == day
-                        else -> section.dateTaken == day
-                    }
-                }
-
-                if (key == null) {
-                    val title = formatDate(day, sortMode, displayDateFormat)
-                    val section =
-                        MediaStoreData(
-                            type = MediaType.Section,
-                            dateModified = day,
-                            dateTaken = day,
-                            uri = "$title $day".toUri(),
-                            displayName = title,
-                            id = 0L,
-                            mimeType = null,
-                            section = SectionItem(
-                                date = day,
-                                childCount = 0
-                            )
-                        )
-
-                    map[section] = mutableListOf(new)
-
-                    map = map.toSortedMap(
-                        compareByDescending { data ->
-                            data.dateTaken
-                        }
-                    )
-
-                    if (map.keys.size in 5..10 || (sortMode == MediaItemSortMode.Disabled && map.firstKey().size in 20..100)) {
-                        if (sortMode != MediaItemSortMode.Disabled) {
-                            map.keys.forEach { key ->
-                                key.section = SectionItem(
-                                    date = key.dateTaken,
-                                    childCount = map[key]?.size ?: 0
-                                )
-
-                                map[key]?.onEach {
-                                    it.section = key.section
-                                }
-                            }
-                        }
-
-                        send(
-                            map.flatMap { (key, value) ->
-                                val keyList = if (sortMode == MediaItemSortMode.Disabled) {
-                                    emptyList()
-                                } else {
-                                    listOf(key)
-                                }
-
-                                keyList +
-                                        value.sortedByDescending { data ->
-                                            when (sortMode) {
-                                                MediaItemSortMode.LastModified -> data.dateModified
-                                                else -> data.dateTaken
-                                            }
-                                        }
-                            }
-                        )
-                    }
-                } else {
-                    map[key]?.add(new)
-                }
-            }
-        }
-
-        if (sortMode != MediaItemSortMode.Disabled) {
-            map.keys.forEach { key ->
-                key.section = SectionItem(
-                    date = key.dateTaken,
-                    childCount = map[key]?.size ?: 0
+            val section =
+                MediaStoreData(
+                    type = MediaType.Section,
+                    dateModified = day,
+                    dateTaken = day,
+                    uri = "$title $day".toUri(),
+                    displayName = title,
+                    id = 0L,
+                    mimeType = null,
+                    section = sectionItem
                 )
 
-                map[key]?.onEach {
-                    it.section = key.section
-                }
-            }
+            sorted.add(section)
+
+            sorted.addAll(
+                items.sortedByDescending { item ->
+                    if (sortMode == MediaItemSortMode.LastModified) item.dateModified
+                    else item.dateTaken
+                }.onEach { it.section = sectionItem }
+            )
         }
 
-        send(
-            map.flatMap { (key, value) ->
-                val keyList = if (sortMode == MediaItemSortMode.Disabled) {
-                    emptyList()
-                } else {
-                    listOf(key)
-                }
-
-                keyList +
-                        value.sortedByDescending { data ->
-                            when (sortMode) {
-                                MediaItemSortMode.LastModified -> data.dateModified
-                                else -> data.dateTaken
-                            }
-                        }
-            }
-        )
-
-        awaitClose {}
+        return sorted
     }
 }

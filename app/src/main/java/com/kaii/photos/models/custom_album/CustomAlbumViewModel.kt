@@ -16,10 +16,8 @@ import com.kaii.photos.mediastore.content_provider.CustomAlbumDataSource
 import com.kaii.photos.mediastore.getSQLiteQuery
 import com.kaii.photos.models.multi_album.DisplayDateFormat
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 
@@ -44,9 +42,8 @@ class CustomAlbumViewModel(
         )
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     private fun getMediaDataFlow(): State<Flow<List<MediaStoreData>>> = derivedStateOf {
-        mediaStoreDataSource.value.loadMediaStoreData().flowOn(Dispatchers.IO).flatMapMerge { it.flowOn(Dispatchers.IO) }.flowOn(Dispatchers.IO)
+        mediaStoreDataSource.value.loadMediaStoreData().flowOn(Dispatchers.IO).flowOn(Dispatchers.IO)
     }
 
     fun cancelMediaFlow() = cancellationSignal.cancel()

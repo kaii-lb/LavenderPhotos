@@ -14,15 +14,13 @@ import com.kaii.photos.R
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.SectionItem
+import com.kaii.photos.mediastore.MediaDataSource
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.mediastore.StreamingDataSource
 import com.kaii.photos.mediastore.getSQLiteQuery
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import java.util.Calendar
@@ -50,9 +48,8 @@ class MultiAlbumViewModel(
         )
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     private fun getMediaDataFlow(): State<Flow<List<MediaStoreData>>> = derivedStateOf {
-        mediaStoreDataSource.value.loadMediaStoreData().flowOn(Dispatchers.IO).flatMapMerge { it.flowOn(Dispatchers.IO) }.flowOn(Dispatchers.IO)
+        mediaStoreDataSource.value.loadMediaStoreData().flowOn(Dispatchers.IO).flowOn(Dispatchers.IO)
     }
 
     fun cancelMediaFlow() = cancellationSignal.cancel()
@@ -111,7 +108,7 @@ class MultiAlbumViewModel(
         this.sortMode = sortBy
         this.displayDateFormat = displayDateFormat
 
-        StreamingDataSource(
+        MediaDataSource(
             context = context,
             sqliteQuery = query,
             sortMode = sortBy,

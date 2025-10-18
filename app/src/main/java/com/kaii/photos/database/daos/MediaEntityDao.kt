@@ -34,6 +34,9 @@ interface MediaEntityDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertEntity(vararg entity: MediaEntity)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertAll(entities: List<MediaEntity>)
+
     @Delete(entity = MediaEntity::class)
     fun deleteEntity(entity: MediaEntity)
 

@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.mediastore.MediaStoreData
-import com.kaii.photos.mediastore.TrashStoreDataSource
+import com.kaii.photos.mediastore.TrashDataSource
 import com.kaii.photos.models.multi_album.DisplayDateFormat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -21,9 +21,11 @@ class TrashViewModel(
 ) : ViewModel() {
     private val cancellationSignal = CancellationSignal()
     private val mediaStoreDataSource =
-        TrashStoreDataSource(
+        TrashDataSource(
             context = context,
-            sortBy = if (sortMode == MediaItemSortMode.Disabled) sortMode else MediaItemSortMode.LastModified,
+            sortMode =
+                if (sortMode == MediaItemSortMode.Disabled) sortMode
+                else MediaItemSortMode.LastModified,
             cancellationSignal = cancellationSignal,
             displayDateFormat = displayDateFormat
         )
