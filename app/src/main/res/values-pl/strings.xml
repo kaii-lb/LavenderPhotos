@@ -495,4 +495,6 @@ które pozwala każdemu hostować własny serwer kopii zapasowych w chmurze.
     <string name="immich_misc">Różne</string>
     <string name="immich_always_show_user_info">Zawsze pokazuj informacje o użytkowniku</string>
     <string name="immich_always_show_user_info_desc">Wyświetla informacje o użytkowniku, niezależnie od tego, czy aplikacja ma dostęp do serwera, czy nie</string>
+    <string name="video_open_externally">Otwórz w zewnętrznym odtwarzaczu</string>
+    <string name="video_open_externally_desc">Zapytaj, czym otworzyć filmy po dotknięciu siatki</string>
 </resources>
