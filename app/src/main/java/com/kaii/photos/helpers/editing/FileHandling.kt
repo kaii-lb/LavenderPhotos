@@ -4,6 +4,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
 import android.net.Uri
 import android.provider.MediaStore
 import android.util.Log
@@ -677,7 +678,11 @@ suspend fun saveImage(
             (left * bitmap.width).roundToInt(),
             (top * bitmap.height).roundToInt(),
             (width * bitmap.width).roundToInt(),
-            (height * bitmap.height).roundToInt()
+            (height * bitmap.height).roundToInt(),
+            Matrix().apply {
+                postRotate(imageEditingState.rotation)
+            },
+            true
         )
 
     Log.d(TAG, "Image crop left ${left * bitmap.width} and width ${width * bitmap.width}")
