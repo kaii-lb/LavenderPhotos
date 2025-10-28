@@ -34,22 +34,15 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.widgets.ClearableTextField
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.mediastore.MediaStoreData
-import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.models.multi_album.groupPhotosBy
 import com.kaii.photos.models.search_page.SearchViewModel
 import com.kaii.photos.models.search_page.SearchViewModelFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.datetime.DatePeriod
-import kotlinx.datetime.plus
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Date
-import java.util.Locale
+import kotlinx.datetime.DayOfWeek
+import kotlinx.datetime.Month
 
 @Composable
 fun SearchPage(
@@ -74,6 +67,11 @@ fun SearchPage(
     val originalGroupedMedia = remember { derivedStateOf { mediaStoreDataHolder.value } }
 
     val groupedMedia = remember { mutableStateOf(originalGroupedMedia.value) }
+
+    val actualGroupedMedia by searchViewModel.groupedMedia.collectAsStateWithLifecycle()
+    LaunchedEffect(actualGroupedMedia) {
+        groupedMedia.value = actualGroupedMedia
+    }
 
     LaunchedEffect(groupedMedia.value) {
         mainViewModel.setGroupedMedia(groupedMedia.value)
@@ -112,19 +110,14 @@ fun SearchPage(
         ) {
             val resources = LocalResources.current
             val placeholdersList = remember {
-                val month = months.random().replaceFirstChar {
-                    it.uppercase()
-                }
-                val day = days.random().replaceFirstChar {
-                    it.uppercase()
-                }
+                val month = Month.entries.random().name.toPascalCase()
+                val day = DayOfWeek.entries.random().name.toPascalCase()
                 val date = (1..31).random()
                 val year = (2016..2024).random()
 
                 listOf(
                     resources.getString(R.string.search_photo_name),
                     resources.getString(R.string.search_photo_date),
-                    "$month $date $year",
                     "$month $year",
                     resources.getString(R.string.search_photo_day),
                     "$day $month $year",
@@ -163,7 +156,7 @@ fun SearchPage(
         }
 
         var hasFiles by remember { mutableStateOf(true) }
-        val context = LocalContext.current
+
         LaunchedEffect(searchedForText.value, originalGroupedMedia.value, sortMode) {
             println("ORIGINAL CHANGED REFRESHING")
             if (searchedForText.value == "") {
@@ -172,70 +165,33 @@ fun SearchPage(
                 return@LaunchedEffect
             }
 
+            delay(PhotoGridConstants.UPDATE_TIME)
             hideLoadingSpinner = false
+            hasFiles = true
 
-            coroutineScope.launch {
-                val possibleDate = searchedForText.value.trim().toDateListOrNull()
+            coroutineScope.launch(Dispatchers.IO) {
+                val query = searchedForText.value.trim()
+                var final = searchViewModel.searchByDateFormat(query = query)
 
-                if (possibleDate.component1() != null) {
-                    val local = originalGroupedMedia.value.filter {
-                        it.type != MediaType.Section &&
-                                (possibleDate.getOrNull(0)?.toDayLong()
-                                    ?.let { date -> it.getDateTakenDay() == date } == true ||
-                                        possibleDate.getOrNull(1)?.toDayLong()
-                                            ?.let { date -> it.getDateTakenDay() == date } == true ||
-                                        possibleDate.getOrNull(2)?.toDayLong()
-                                            ?.let { date -> it.getDateTakenDay() == date } == true ||
-                                        possibleDate.getOrNull(3)?.toDayLong()
-                                            ?.let { date -> it.getDateTakenDay() == date } == true)
-                    }
-
-                    groupedMedia.value = groupPhotosBy(local, sortMode, displayDateFormat, context)
-                    hideLoadingSpinner = true
-
-                    return@launch
+                if (final.isEmpty()) {
+                    final = searchViewModel.searchByDateNames(query = query)
                 }
 
-                val onlyMonthYearSplit = searchedForText.value.trim().split(" ")
-                if (onlyMonthYearSplit.size == 2) {
-                    val month = months.firstOrNull { onlyMonthYearSplit[0] in it }
-                    val year = onlyMonthYearSplit[1]
-
-                    if (year.contains(Regex("[0-9]{4}")) && month != null && year.toIntOrNull() != null) {
-                        val calendar = Calendar.getInstance().apply {
-                            set(Calendar.YEAR, year.toIntOrNull()!!)
-                            set(Calendar.MONTH, months.indexOf(month))
-                            set(Calendar.DAY_OF_MONTH, 0)
-                            set(Calendar.HOUR_OF_DAY, 0)
-                            set(Calendar.MINUTE, 0)
-                            set(Calendar.SECOND, 0)
-                            set(Calendar.MILLISECOND, 0)
-                        }
-
-                        val local = originalGroupedMedia.value.filter {
-                            it.type != MediaType.Section &&
-                                    it.getDateTakenMonth() == calendar.timeInMillis / 1000
-                        }
-
-                        groupedMedia.value = groupPhotosBy(local, MediaItemSortMode.DateTaken, displayDateFormat, context)
-                        hideLoadingSpinner = true
-
-                        return@launch
-                    }
+                if (final.isEmpty()) {
+                    final = searchViewModel.searchByName(name = query)
                 }
 
-                val groupedMediaLocal = originalGroupedMedia.value.filter {
-                    val isMedia = it.type != MediaType.Section
-                    val matchesFilter =
-                        it.displayName.contains(searchedForText.value.trim(), true)
-                    isMedia && matchesFilter
-                }
-
-                groupedMedia.value = groupPhotosBy(groupedMediaLocal, MediaItemSortMode.DateTaken, displayDateFormat, context)
+                searchViewModel.setMedia(
+                    context = context,
+                    media = final,
+                    sortMode = sortMode,
+                    displayDateFormat = displayDateFormat
+                )
                 hideLoadingSpinner = true
 
                 delay(PhotoGridConstants.LOADING_TIME)
                 hasFiles = groupedMedia.value.isNotEmpty()
+                gridState.requestScrollToItem(0)
             }
         }
 
@@ -258,128 +214,11 @@ fun SearchPage(
     }
 }
 
-// TODO: respect locale
-private val months = listOf(
-    "january",
-    "february",
-    "march",
-    "april",
-    "may",
-    "june",
-    "july",
-    "august",
-    "september",
-    "october",
-    "november",
-    "december"
-)
-
-private val days = listOf(
-    "monday",
-    "tuesday",
-    "wednesday",
-    "thursday",
-    "friday",
-    "saturday",
-    "sunday"
-)
-
-// TODO: rewrite
-private fun String.toDateListOrNull(): List<Date?> {
-    val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-    dateFormat.isLenient = true
-
-    val year = run {
-        val split = this.split(" ")
-        if (split.size == 3) {
-            if (split[2].contains(Regex("[0-9]{4}"))) split[2].toIntOrNull()
-            else null
-        } else null
-    }
-
-    val month = months.firstOrNull {
-        this.lowercase().split(" ").getOrElse(1) { "definitely is not a month" } in it
-    }?.let {
-        months.indexOf(it) + 1
-    }
-
-    if (year != null && month != null) {
-        days.firstOrNull {
-            this.lowercase().split(" ").getOrElse(0) { "definitely is not a day" } in it
-        }?.let { weekDay ->
-            var localDate = kotlinx.datetime.LocalDate(year, month, 1)
-
-            val list = emptyList<Date?>().toMutableList()
-            while (localDate.dayOfWeek != kotlinx.datetime.DayOfWeek.entries[days.indexOf(weekDay) + 1] && localDate.month == kotlinx.datetime.Month.entries[month] && localDate.year == year
-            ) {
-                localDate = localDate.plus(DatePeriod.parse("P0Y1D"))
+fun String.toPascalCase(): String {
+    return this.lowercase().split(Regex("[\\s_-]+")) // Split by spaces, underscores, or hyphens
+        .joinToString("") { word ->
+            word.replaceFirstChar {
+                it.uppercase()
             }
-            list.add(
-                try {
-                    dateFormat.parse("${localDate.day}/$month/$year")
-                } catch (_: Throwable) {
-                    null
-                }
-            )
-            list.add(
-                try {
-                    dateFormat.parse("${localDate.day + 7}/$month/$year")
-                } catch (_: Throwable) {
-                    null
-                }
-            )
-            list.add(
-                try {
-                    dateFormat.parse("${localDate.day + 14}/$month/$year")
-                } catch (_: Throwable) {
-                    null
-                }
-            )
-            list.add(
-                try {
-                    dateFormat.parse("${localDate.day + 21}/$month/$year")
-                } catch (_: Throwable) {
-                    null
-                }
-            )
-
-            return list
         }
-    }
-
-    val formats = listOf(
-        "dd/MM/yyyy",
-        "dd/MM/yyyy",
-        "dd-MM-yyyy",
-        "dd MM yyyy",
-        "dd MMM yyyy",
-        "dd MMMM yyyy",
-        "MM/dd/yyyy",
-        "MM-dd-yyyy",
-        "MM dd yyyy",
-        "MMM dd yyyy",
-        "MMMM dd yyyy"
-    )
-
-    for (format in formats) {
-        val dateFormatter = SimpleDateFormat(format, Locale.getDefault())
-        try {
-            return listOf(dateFormatter.parse(this))
-        } catch (_: Throwable) {
-        }
-    }
-    return listOf(null)
-}
-
-private fun Date.toDayLong(): Long {
-    val millis = this.time
-    val calendar = Calendar.getInstance(Locale.ENGLISH).apply {
-        timeInMillis = millis
-        set(Calendar.HOUR_OF_DAY, 0)
-        set(Calendar.MINUTE, 0)
-        set(Calendar.SECOND, 0)
-        set(Calendar.MILLISECOND, 0)
-    }
-
-    return calendar.timeInMillis / 1000
 }
