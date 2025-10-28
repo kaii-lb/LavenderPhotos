@@ -12,7 +12,6 @@ import androidx.annotation.OptIn
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Canvas
@@ -20,7 +19,6 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
@@ -32,9 +30,7 @@ import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMapNotNull
 import androidx.media3.common.Effect
@@ -613,19 +609,6 @@ suspend fun saveImage(
                                         textLayoutResult = textLayout,
                                         blendMode = text.paint.blendMode
                                     )
-
-                                    if (drawingPaintState.selectedItem == modification) {
-                                        drawRoundRect(
-                                            color = text.paint.color,
-                                            topLeft = text.size.toOffset().copy(y = 0f) * -0.1f / 2f,
-                                            cornerRadius = CornerRadius(16.dp.toPx() * text.paint.strokeWidth / 128f),
-                                            size = text.size.toSize() * 1.1f,
-                                            style = Stroke(
-                                                width = text.paint.strokeWidth / 2,
-                                                cap = StrokeCap.Round
-                                            )
-                                        )
-                                    }
                                 }
                             }
                         }
@@ -641,18 +624,6 @@ suspend fun saveImage(
                                         filterQuality = FilterQuality.Medium,
                                         blendMode = image.paint.blendMode
                                     )
-
-                                    if (drawingPaintState.selectedItem == modification) {
-                                        drawRoundRect(
-                                            color = image.paint.color,
-                                            cornerRadius = CornerRadius(16.dp.toPx() * image.paint.strokeWidth / 128f),
-                                            size = image.size.toSize(),
-                                            style = Stroke(
-                                                width = image.paint.strokeWidth / 2,
-                                                cap = StrokeCap.Round
-                                            )
-                                        )
-                                    }
                                 }
                             }
                         }
