@@ -80,7 +80,7 @@
     <string name="secure_share_media">Chia sẻ ảnh/video mã hóa này</string>
     <string name="secure_encrypting">Đang mã hóa tập tin</string>
     <string name="secure_decrypting">Đang giải mã tập tin</string>
-    <string name="secure_getting_file_info">Đang lấy thông tin tập tin…</string>
+    <string name="secure_getting_file_info">Đang lấy thông tin tệp…</string>
     <string name="secure_please_wait">Vui lòng đợi…</string>
     <string name="export_unenc_backup">Xuất bản sao lưu không được mã hóa</string>
     <string name="export_unenc_backup_desc">Xuất ra một thư mục từ thư mục mã hóa với các tệp không mã hóa</string>
