@@ -809,7 +809,7 @@
     <string name="filter_warm_desc">vibra acogedora</string>
     <string name="filter_cool">Frío</string>
     <string name="filter_cool_desc">vibra invernal</string>
-    <string name="filter_vintage">Vintage</string>
+    <string name="filter_vintage">Antiguo</string>
     <string name="filter_vintage_desc">la nostalgia es fuerte</string>
     <string name="filter_posterize">Posterizar</string>
     <string name="filter_solar">Solar</string>
@@ -961,4 +961,11 @@
             </ul>
         ]]></string>
     <string name="immich_server_url_invalid">¡Url Inválida!</string>
+    <string name="video_open_externally">Abrir en el navegador externo</string>
+    <string name="video_open_externally_desc">Pregunta con qué abrir los vídeos desde una cuadrícula</string>
+    <string name="look_and_feel_rounded_corners">Esquinas redondeadas de las miniaturas</string>
+    <string name="look_and_feel_rounded_corners_desc">Esquinas redondeadas en las miniaturas de las cuadrículas de fotos</string>
+    <string name="immich_misc">Misceláneos</string>
+    <string name="immich_always_show_user_info">Mostrar siempre la información del usuario</string>
+    <string name="immich_always_show_user_info_desc">Muestra información al usuario sobre si la aplicación puede conectarse al servidor o no</string>
 </resources>
