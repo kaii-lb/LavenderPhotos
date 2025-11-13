@@ -2,6 +2,63 @@
     <!-- Basic -->
     <string name="app_name">Photos</string>
     <string name="changelog"><![CDATA[
+    <u><h2>v1.2.0!:</h2></u>
+    <br><b><h4>- Fixed Bugs:</h4></b>
+    <p>
+        - Use black background not applying to videoplayer
+        <br>- Editor bar item texts overflowing on some screens
+        <br>- Add missing gridview icon
+        <br>- Crash when app name is shorter than 2 words
+        <br>- Media picker navbar not hiding correctly
+        <br>- Crash when trying to overwrite media in non standard folder
+        <br>- Crash when trying to rename media more than once
+        <br>- Scroll-lock after drag selecting
+        <br>- Inability to add a custom album
+        <br>- Don\'t scroll back to top when navigation back from SinglePhotoViews
+        <br>- Crash when trying to secure media with broken thumbnails
+        <br>- Editor rotation breaking filters page
+        <br>- Inability to draw in editors
+        <br>- Crash when using OpenWithView
+        <br>- Image editor sometimes opening images with incorrect rotation
+        <br>- Crash because of removed index key for bottom bar tabs
+        <br>- First played video respects "start muted" preference
+        <br>- Fixed Misrepresented album pin state
+        <br>- Erratic behaviour when deleting media
+        <br>- Editor rotation now applies to images after saving
+        <br>- Removed selected image/text border from final render
+    </p>
+    <br><b><h4>- Added Features:</h4></b>
+    <p>
+        - Expressive-ify trash and secure photo views
+        <br>- Added option to disable rotation in single photo views
+        <br>- Support for alternative urls for Immich server
+        <br>- Better scrollbars
+        <br>- Preserve image dates when moving/copying
+        <br>- Scroll to edited image on exit from editor
+        <br>- Rounded thumbnail corner support
+        <br>- Toggle to always show immich user info
+        <br>- Toggle to open videos in external player
+        <br>- Display album grid thumbnails according to user selected sort mode
+        <br>- Location parsing from media with GPS Exif data
+        <br>- Better and faster search
+    </p>
+    <br><b><h4>- Improvements:</h4></b>
+    <p>
+        - Significant performance and smoothness improvements
+        <br>- Hide parent album from copy/move list
+        <br>- Progress snackbar for exporting video
+        <br>- Increase videoplayer seekbar height
+        <br>- Better scrollable wallpaper support
+        <br>- Drag to select now requires long press
+        <br>- Immich login dialog now supports autofill
+        <br>- Ability to use cleartext traffic for http Immich servers
+        <br>- Photo info dialog loading improvements
+        <br>- Improved trashed items loading
+        <br>- Raise app main bar
+        <br>- Support disabled-sorting in every grid view
+        <br>- Increase video seekbar update rate & screen on implementation
+    </p>
+    <br>
     <u><h2>v1.1.6!:</h2></u>
     <br>
     <b><h4>- Fixed Bugs:</h4></b>
