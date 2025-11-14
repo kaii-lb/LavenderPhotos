@@ -72,6 +72,8 @@ class ImmichApiService(
 
     suspend fun getAllAlbums(): List<Album>? {
         try {
+            if (endpoint.isEmpty() || token.isEmpty()) throw Exception("Endpoint or Token not found")
+
             return albumManager.getAllAlbums()
         } catch (e: Throwable) {
             Log.e(TAG, e.toString())
@@ -82,6 +84,8 @@ class ImmichApiService(
     }
 
     suspend fun refreshAlbums(): Result<List<Album>> {
+        if (endpoint.isEmpty() || token.isEmpty()) return Result.failure(Exception("Endpoint or Token not found"))
+
         for (i in 0..(MAX_RETRIES - 1)) {
             val new = getAllAlbums()
 
@@ -102,6 +106,8 @@ class ImmichApiService(
         immichId: String
     ): Album? {
         try {
+            if (endpoint.isEmpty() || token.isEmpty()) throw Exception("Endpoint or Token not found")
+
             return if (immichId.isEmpty()) null
             else albumManager.getAlbumInfo(
                 albumId = immichId,
@@ -121,6 +127,8 @@ class ImmichApiService(
         expectedImmichBackupMedia: Set<ImmichBackupMedia>
     ): ImmichAlbumSyncState {
         try {
+            if (endpoint.isEmpty() || token.isEmpty()) throw Exception("Endpoint or Token not found")
+
             val remoteAlbum = getAlbumInfo(immichId = immichId)
 
             if (remoteAlbum == null) return ImmichAlbumSyncState.Error("Album $immichId does not exist!")
@@ -139,8 +147,8 @@ class ImmichApiService(
                 ImmichAlbumSyncState.InSync(expectedImmichBackupMedia)
             } else {
                 ImmichAlbumSyncState.OutOfSync(
-                    missing = expectedImmichBackupMedia.filter { it.deviceAssetId !in remoteBackupMedia.map { it.deviceAssetId } }.toSet(),
-                    extra = remoteBackupMedia.filter { it.deviceAssetId !in expectedImmichBackupMedia.map { it.deviceAssetId } }.toSet()
+                    missing = expectedImmichBackupMedia.filter { backupMedia -> backupMedia.deviceAssetId !in remoteBackupMedia.map { media -> media.deviceAssetId } }.toSet(),
+                    extra = remoteBackupMedia.filter { backupMedia -> backupMedia.deviceAssetId !in expectedImmichBackupMedia.map { media -> media.deviceAssetId } }.toSet()
                 )
             }
         } catch (e: Throwable) {
@@ -153,8 +161,12 @@ class ImmichApiService(
 
     suspend fun removeAlbumFromSync(
         immichId: String
-    ) = if (albumManager.deleteAlbum(albumId = immichId)) Result.success(immichId)
-    else Result.failure(Exception("Cannot delete album"))
+    ): Result<String> {
+        if (endpoint.isEmpty() || token.isEmpty()) return Result.failure(Exception("Endpoint or Token not found"))
+
+        return if (albumManager.deleteAlbum(albumId = immichId)) Result.success(immichId)
+            else Result.failure(Exception("Cannot delete album"))
+    }
 
     suspend fun addAlbumToSync(
         immichId: String,
@@ -164,6 +176,8 @@ class ImmichApiService(
         context: Context,
         query: SQLiteQuery
     ): Result<String> {
+        if (endpoint.isEmpty() || token.isEmpty()) return Result.failure(Exception("Endpoint or Token not found"))
+
         var newId = immichId
         Log.d(TAG, "Current albums $currentAlbums")
         Log.d(TAG, "Requested albums $immichId")
@@ -196,6 +210,8 @@ class ImmichApiService(
     }
 
     suspend fun getUserInfo() = try {
+        if (endpoint.isEmpty() || token.isEmpty()) throw Exception("Endpoint or Token not found")
+
         userManager.getMyUser()
     } catch (e: Throwable) {
         Log.e(TAG, e.toString())
@@ -206,6 +222,8 @@ class ImmichApiService(
     suspend fun setUsername(
         newName: String
     ) = try {
+        if (endpoint.isEmpty() || token.isEmpty()) throw Exception("Endpoint or Token not found")
+
         userManager.changeName(newName) != null
     } catch (e: Throwable) {
         Log.e(TAG, e.toString())
@@ -217,6 +235,8 @@ class ImmichApiService(
     suspend fun getProfilePic(
         userId: String
     ) = try {
+        if (endpoint.isEmpty() || token.isEmpty()) throw Exception("Endpoint or Token not found")
+
         userManager.getProfilePic(userId)
     } catch (e: Throwable) {
         Log.e(TAG, e.toString())
@@ -227,6 +247,8 @@ class ImmichApiService(
     suspend fun setProfilePic(
         file: File
     ) = try {
+        if (endpoint.isEmpty() || token.isEmpty()) throw Exception("Endpoint or Token not found")
+
         userManager.createProfilePic(file) != null
     } catch (e: Throwable) {
         Log.e(TAG, e.toString())
@@ -238,6 +260,8 @@ class ImmichApiService(
     suspend fun loginUser(
         credentials: LoginCredentials
     ) = try {
+        if (endpoint.isEmpty() || token.isEmpty()) throw Exception("Endpoint or Token not found")
+
         userAuth.login(credentials)
     } catch (e: Throwable) {
         Log.e(TAG, e.toString())
@@ -247,6 +271,8 @@ class ImmichApiService(
     }
 
     suspend fun logoutUser() = try {
+        if (endpoint.isEmpty() || token.isEmpty()) throw Exception("Endpoint or Token not found")
+
         userAuth.logout(token)?.successful
     } catch (e: Throwable) {
         Log.e(TAG, e.toString())
@@ -259,6 +285,8 @@ class ImmichApiService(
         deviceIds: List<String>,
         albumId: String
     ) = try {
+        if (endpoint.isEmpty() || token.isEmpty()) throw Exception("Endpoint or Token not found")
+
         val albumInfo = albumManager.getAlbumInfo(albumId = albumId)
         val ids = deviceIds.mapNotNull { dev ->
             albumInfo?.assets?.find { dev == it.deviceAssetId }?.id
@@ -275,6 +303,8 @@ class ImmichApiService(
     }
 
     suspend fun getServerInfo() = try {
+        if (endpoint.isEmpty() || token.isEmpty()) throw Exception("Endpoint or Token not found")
+
         serverManager.getAboutInfo()
     } catch (e: Throwable) {
         Log.e(TAG, e.toString())
@@ -284,6 +314,8 @@ class ImmichApiService(
     }
 
     suspend fun getServerStorage() = try {
+        if (endpoint.isEmpty() || token.isEmpty()) throw Exception("Endpoint or Token not found")
+
         serverManager.getStorage()
     } catch (e: Throwable) {
         Log.e(TAG, e.toString())
