@@ -525,12 +525,10 @@
         <br>
     </p>
     ]]></string>
-
     <!-- First Startup -->
     <string name="first_startup_dialog_title">Cihazdaki tüm albümler bulunsun mu?</string>
     <string name="first_startup_dialog_body">Bu cihazdaki tüm albümleri arar ve Lavender Photos\'a ekler.\nNot: Bu seçenek kullanılırsa eski kullanıcıların albümleri SİLİNECEKTİR.</string>
     <string name="first_startup_dialog_confirm_title">Ara!</string>
-
     <!-- Albums -->
     <string name="albums">Albümler</string>
     <string name="finding_albums_on_device">Albümler bulunuyor…</string>
@@ -570,7 +568,6 @@
     <string name="albums_type">Albüm Türü</string>
     <string name="albums_folder">Klasör Albümü</string>
     <string name="albums_add_failed">Albümler eklenemedi :&lt;</string>
-
     <!-- Tabs -->
     <string name="tabs">Sekmeler</string>
     <string name="tab_non_existent">Bu sekme mevcut değil!</string>
@@ -586,11 +583,9 @@
     <string name="tabs_empty_params">Sekme parametreleri boş olamaz</string>
     <string name="tabs_max_reached">8\'den fazla sekme eklenemez</string>
     <string name="tabs_min_reached">En az bir sekme mevcut olmalıdır</string>
-
     <!-- Navigation -->
     <string name="return_to_previous_page">Önceki sayfaya dön</string>
     <string name="navigation">Gezinme</string>
-
     <!-- App -->
     <string name="app_icon">Uygulama Simgesi</string>
     <string name="app_name_full">Lavender Photos</string>
@@ -609,7 +604,6 @@
     <string name="licenses_extra">Ek Ayrıntılar</string>
     <string name="licenses_extra_desc">Lisanslar hakkında daha ayrıntılı bilgi görüntüleyin</string>
     <string name="special_thanks_to">Özel teşekkürler:</string>
-
     <!-- Updates -->
     <string name="updates">Güncellemeler</string>
     <string name="updates_desc">uygulamayı güncel tutun</string>
@@ -634,7 +628,6 @@
     <string name="updates_failed">Güncellemeler kontrol edilemedi</string>
     <string name="updates_checking">Güncellemeler Kontrol Ediliyor</string>
     <string name="updates_start">Güncellemeyi Başlat</string>
-
     <!-- Secure Folder -->
     <string name="locked_folder_help_top">Güvenli Klasör, bu cihazdaki resimleriniz ve videolarınız için güvenli bir klasördür.\nGüvenli hale getirilen medya hiçbir yere yüklenmez ve her zaman cihazınızda, cihazınızın parolasına veya parmak izi verilerine özgü bir anahtarla şifrelenmiş olarak kalır.</string>
     <string name="locked_folder_help_bottom">Parola unutulursa veya parmak izi kaldırılırsa güvenli veriler geri yüklenemez.</string>
@@ -646,7 +639,6 @@
     <string name="secure_decrypting">Dosyaların Şifresi Çözülüyor</string>
     <string name="secure_getting_file_info">Dosya bilgileri alınıyor…</string>
     <string name="secure_please_wait">Lütfen bekleyin…</string>
-
     <!-- Data and Backup -->
     <string name="export_unenc_backup">Şifresiz Yedek Dışa Aktar</string>
     <string name="export_unenc_backup_desc">Tüm güvenli öğelerinizin şifrelenmemiş bir klasörünü dışa aktarır</string>
@@ -659,11 +651,9 @@
     <string name="export_fav_to_folder_desc">Tüm favori öğelerinizi bir klasöre dışa aktarır</string>
     <string name="export_fav_to_zip_desc">Tüm favori öğelerinizin bir zip dosyasını dışa aktarır</string>
     <string name="data_and_backup">Veri &amp; Yedekleme</string>
-
     <!-- Favourites -->
     <string name="favourites">Favoriler</string>
     <string name="favourites_add_this">Bu medyayı favorilere ekle</string>
-
     <!-- Debugging -->
     <string name="debugging">Hata Ayıklama</string>
     <string name="debugging_desc">Sorunları ayıklamak için araçlar</string>
@@ -682,7 +672,6 @@
     <string name="debugging_loading">Hata ayıklanıyor…</string>
     <string name="debugging_spawn_message_snackbar">Mesaj Bildirim Çubuğu Oluştur</string>
     <string name="debugging_spawn_message_snackbar_desc">Bir özelliği kullanımdan kaldırıp eşdeğerini eklememek gibi :D</string>
-
     <!-- Video -->
     <string name="video">Video</string>
     <string name="video_auto_play">Videoları Otomatik Oynat</string>
@@ -699,7 +688,6 @@
     <string name="video_decrypting">Video şifresi çözülüyor, lütfen bekleyin</string>
     <string name="video_open_externally">Harici Oynatıcıda Aç</string>
     <string name="video_open_externally_desc">Izgaradan dokunulduğunda videoların ne ile açılacağını sor</string>
-
     <!-- Editing -->
     <string name="edit">Düzenle</string>
     <string name="editing">Düzenleniyor</string>
@@ -755,7 +743,6 @@
     <string name="editing_bitrate_unit">Saniyedeki bit sayısı</string>
     <string name="editing_open_with_copying_video">Video işleniyor…</string>
     <string name="editing_open_with_copying_image">Görüntü işleniyor…</string>
-
     <!-- Editing Filters -->
     <string name="filter">Filtre</string>
     <string name="filter_custom">Özel Filtre</string>
@@ -803,7 +790,6 @@
     <string name="filter_shimmer_desc">nazar değmesin</string>
     <string name="filter_select">Seç</string>
     <string name="filter_selected">Seçili</string>
-
     <!-- Video Editing -->
     <string name="editing_trim">Kırp</string>
     <string name="editing_export_video_loading">Video Dışa Aktarılıyor…</string>
@@ -816,7 +802,6 @@
     <string name="editing_volume">Ses</string>
     <string name="editing_wilson">Hız</string>
     <string name="editing_fps">FPS</string>
-
     <!-- Settings -->
     <string name="settings">Ayarlar</string>
     <string name="settings_general">Genel</string>
@@ -854,7 +839,6 @@
     <string name="settings_views">Görünümler</string>
     <string name="settings_rotate_in_views">Döndürmeye İzin Ver</string>
     <string name="settings_rotate_in_views_desc">Medya görüntülerken hareketle döndürmeyi etkinleştirir</string>
-
     <!-- Trash -->
     <string name="trash_bin_short">Çöp</string>
     <string name="trash_bin">Çöp Kutusu</string>
@@ -866,7 +850,6 @@
     <string name="trash_empty">Çöp kutusu boşaltılsın mı?</string>
     <string name="trash_empty_desc">Bu, çöp kutusundaki tüm öğeleri siler, bu işlem geri alınamaz</string>
     <string name="trash_empty_confirm">Boşalt</string>
-
     <!-- Permissions -->
     <string name="permissions">İzin</string>
     <string name="permissions_media_manager">Medya Yöneticisi</string>
@@ -881,7 +864,6 @@
     <string name="permissions_grant">İzin Ver</string>
     <string name="permissions_do_not_trash">Çöp Kutusunu Kullanma</string>
     <string name="permissions_do_not_trash_desc">Öğeleri önce Çöp Kutusuna taşımadan hemen ve kalıcı olarak sil</string>
-
     <!-- Media -->
     <string name="media">Medya</string>
     <string name="sort_indicator">Sıralama göstergesi</string>
@@ -922,12 +904,10 @@
     <string name="media_operate_snackbar_body">%2$d üzerinden %1$d tamamlandı</string>
     <string name="media_tools">Araçlar</string>
     <string name="media_information">Bilgi</string>
-
     <!-- Search -->
     <string name="search_photo_name">Bir fotoğraf ara</string>
     <string name="search_photo_date">Bir fotoğrafın tarihini ara</string>
     <string name="search_photo_day">Güne göre ara</string>
-
     <!-- Explanations -->
     <string name="feature_unimplemented">Uygulanmadı</string>
     <string name="feature_editing_unimplemented">Videoları düzenleme, Lavender Photos\'un %1$s sürümü itibarıyla henüz uygulanmamıştır. Bu özellik en kısa sürede eklenecektir, sabrınız için teşekkür ederiz.</string>
@@ -937,10 +917,8 @@
     <string name="custom_album_remove_media">Kaldır</string>
     <string name="custom_album_remove_media_desc">Bu öğeler albümden kaldırılsın mı?</string>
     <string name="action_cannot_be_undone">Bu işlem geri alınamaz!</string>
-
     <!-- Miscellaneous -->
     <string name="show_options">Daha fazla seçenek göster</string>
-    <string name="empty_string" />
     <string name="more_options">Daha Fazla Seçenek</string>
     <string name="set_as">Farklı Ayarla</string>
     <string name="set_as_wallpaper">Duvar Kağıdı Yap</string>
@@ -958,7 +936,6 @@
     <string name="yesterday">Dün</string>
     <string name="help">Yardım</string>
     <string name="apply">Uygula</string>
-
     <!-- Bottom Sheets -->
     <string name="bottom_sheets_enter_text">Metin Girin</string>
     <string name="bottom_sheets_freeform">Serbest Biçim</string>
@@ -971,7 +948,6 @@
     <string name="bottom_sheets_four_by_three">4:3</string>
     <string name="bottom_sheets_three_by_two">3:2</string>
     <string name="bottom_sheets_ratio_selected">Bu kırpma oranı seçili</string>
-
     <!-- Error Views -->
     <string name="error_views_trash_empty">Çöpe atılan öğeler burada görünür</string>
     <string name="error_views_trash_prefix">Çöpe Atılma Tarihi</string>
@@ -983,7 +959,6 @@
     <string name="error_views_favourites_empty">En değerli anılarınızı ekleyin!</string>
     <string name="error_views_folder_non_existent">Klasör mevcut değil</string>
     <string name="error_views_error_page">Bu bir hata sayfasıdır</string>
-
     <!-- Look and Feel -->
     <string name="look_and_feel_styling_separator">Stil</string>
     <string name="look_and_feel_date_format">Tarih Formatı</string>
@@ -1003,7 +978,6 @@
     <string name="look_and_feel_extra_secure_nav_desc">Uygulamanın ana iletişim kutusundan Güvenli Klasöre gitmek için bir seçenek gösterir</string>
     <string name="look_and_feel_rounded_corners">Yuvarlak Küçük Resim Köşeleri</string>
     <string name="look_and_feel_rounded_corners_desc">Fotoğraf ızgaralarındaki küçük resimlerde dairesel köşeler</string>
-
     <!-- Immich -->
     <string name="immich">Immich</string>
     <string name="immich_title">Immich Yedekleme</string>
