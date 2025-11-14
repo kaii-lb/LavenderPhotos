@@ -2,11 +2,535 @@
 <resources>
     <!-- Basic -->
     <string name="app_name">Fotoğraflar</string>
-    <string name="changelog">v0.9.9-beta:\n- Albüm yolu iletişim kutusu kullanışlı hale getirildi\n- Özel albümlerin küçük resimlere sahip olmaması ve MoveCopyAlbumListView.kt dosyasında HİÇ küçük resim olmaması düzeltildi\n- Albümleri yeniden adlandıramama ve albüm bilgilerinin anında güncellenmemesi sorunu giderildi\n- Albümleri kullanıcı seçimine göre son değiştirilme veya çekilme tarihine göre sıralama eklendi\n- TextEntryDialog\'daki hatalar doğru şekilde yönetildi\n- Medya seçici etkinliği eklendi\n- Albümler için Immich yedekleme entegrasyonu eklendi\n- Üst çubuktaki profil resmi ve ana iletişim kutusu etrafına arka plan senkronizasyon göstergesi eklendi\n- Kopyalamada verilerin üzerine yaz seçeneği, Kopyalamada tarihi korumaya çalış olarak değiştirildi, çünkü tarihi korumak her zaman garanti değil\n- Birden fazla yola sahip albümlere dosya kopyalama veya taşıma yeteneği eklendi, özel albümler etkilenmez\n- Yolu olmayan özel albümler için küçük resim yüklerken çökme sorunu giderildi\n- Arama medyası kullanıcı tercihine göre sıralandı\n- PhotoGridView.kt içeren her şeyde çok sayıda akıcılık ve performans iyileştirmesi yapıldı\n- Albüm bilgisi öge sayımının bölümleri içermesi sorunu düzeltildi, içermemeliydi\n- Medya kopyalama, taşıma veya silme için ilerleme bildirim çubuğu eklendi\n- Var olmayan bir öge üzerinde sürükleyerek seçim yaparken çökme sorunu giderildi\n- Immich Ana Sayfasına Immich sunucu bilgileri eklendi\n- Albüm üst çubuğuna immich ile albüm senkronizasyonu sayfası eklendi\n- IV verisi olmadığı için yedek dışa aktarılamadığında güvenli klasör görünümünde çökme sorunu düzeltildi\n- Bazı photogridview\'lerin başka bir sayfadan geri dönüldüğünde konumlarını hatırlamaması düzeltildi\n- v0.9.8-beta-hotfix değişiklik kaydının eksik olması düzeltildi\n- Video yüklemesi çok daha akıcı hale getirildi\n- Izgara sütun boyutunu kontrol etmek için bir ayar eklendi\n- Izgara görünümü ayırıcılarında yerel ayara uyum sağlandı\n- PhotoGridView.kt kaydırma çubukları artık düzen yönüne (rtl veya ltr) uyuyor\n- Ana fotoğraf görünümünde her şeyi gösterme yeteneği eklendi\n\nv0.9.8-beta-hotfix:\n- izzyondroid kontrolleriyle ilgili sorunu düzeltmek için hızlı düzeltme\n- genel uygulama akıcılığını artırma (medya yüklemesi daha akıcı)\n- güncelleyicinin sürüm adında -hotfix olduğunda çökmesi sorunu düzeltildi\n\nv0.9.7-beta:\n- Saniyenin altında tam cihaz albüm araması eklendi\n- Endonezce ve Fransızca çeviriler eklendi\n- Albüm ızgara ögelerinin sonsuza dek titreşmesi sorunu düzeltildi\n- Özel albümleri özel işler için kullanamama sorunu düzeltildi\n- Kullanıcı bir kez izin verdikten sonra albüme taşıma/kopyalama için her seferinde izin istenmesi kaldırıldı\n- Tarih formatı seçici eklendi\n- Aptal compose state yüzünden oluşan bellek sızıntısı giderildi\n- Amoled tema eklendi\n- Hakkında sayfasına çeviri notu eklendi\n- Önemli performans iyileştirmeleri\n- Bağımlılık sürüm yükseltmesi\n- Veri ve yedek dışa aktarma yollarının dizini olmadığında artık çökme yok\n- Bulanıklaştırma artık düzenleme görünümünde filtreleri, ayarlamaları ve çizimi hesaba katıyor\n- Harici birim desteği eklendi (sdcard, vb.)\n- Bir düzenleme ayarının değerini üzerine tekrar dokunarak sıfırlama yeteneği eklendi\n- Düzenleme görünümündeki metin ölçeklendirmesi daha duyarlı hale getirildi\n- Albüm listesinin en üstüne albüm sabitleme yeteneği eklendi\n\nv0.9.6-beta:\n- Özel albümlere tüm klasörleri dahil etme yeteneği eklendi\n- Özel sekmelerin yüklenmemesi düzeltildi\n- 5000\'den fazla ögeye sahip albümler için Tümünü Seç devre dışı bırakıldı (android sınırlaması nedeniyle çökmeyi düzeltir)\n\nv0.9.5-beta:\n- Yatay fotoğraf görünümlerinde çift dokunarak yakınlaştırma ve sıfırlama için animasyon eklendi\n- Özel (klasör tabanlı olmayan) albümler eklendi\n- Albüm bilgi iletişim kutusuna öge sayısı eklendi\n- Düzenleme görünümü metin yakınlaştırması düzeltildi\n- Varsayılan sekme yeniden sıralamasındaki takılma düzeltildi\n- Fotoğraf kopyalama tarihleri için açma/kapama anahtarı eklendi\n- Düzenleme görünümünde bulanıklaştırmadan sonra boya ile çizim yapmanın çökmeye neden olması sorunu düzeltildi\n- Metin ölçeklendirme/döndürme/taşıma artık kötü değil\n- Dokunarak çizimin çalışmaması düzeltildi (eskiden hep sol üst köşede görünürdü, şimdi normal çalışıyor)\n- Düzenleme görünümündeki alt çubuk ögeleri için renk kontrastı iyileştirmeleri\n- Düzenleme görünümünde önceden ayarlanmış metni yeniden boyutlandırma ve rengini değiştirme yeteneği eklendi (seçmek için metne dokunun)\n- Düzenleme görünümü boyama modunda yakınlaştırma yeteneği eklendi\n- Düzenleme görünümü bulanıklaştırma fırça yarıçapı artırıldı (daha fazla bulanıklaştırma)\n\nv0.9.4-beta:\n- Ana çubuklar için simge renkleri düzeltildi\n- Favorileri zip dosyasına veya klasöre aktarma eklendi\n- Video oynatıcıda hızlı dokunmalarda atlamak için çift dokunmanın yönü doğru şekilde değiştirmemesi düzeltildi\n- Yol görüntüleyen görünümlerde yollar yatay olarak kaydırılabilir hale getirildi\n- Sıralama modu özelleştirici eklendi\n- Başlangıçta güncelleme kontrolünün birden çok kez çalışması düzeltildi\n- Düzenleme başarısızlığı ve başarısı için bildirim çubukları eklendi\n- Silmeyi onayla seçeneği eklendi\n- Çöp kutusunun her zaman en son çöp atılana göre sıralanmaması düzeltildi\n- Kullanıcı taşıma veya kopyalama yapıp görünümden çıkarsa artık dosya kaybı yok\n- Albüm bilgisi uygulaması tamamlandı\n- Silmeyi onayla, medya sıralama ve güncelleme kontrolü için simgeler eklendi\n- Video oynatıcıda aramak için çift dokunmanın diğer arayüzlerin altında görünmesi düzeltildi\n- Kod temizliği ve iyileştirme\n- Önceki çalıştırmanın günlüklerini gönderme yeteneği eklendi\n- Video oynatıcıda atlamak için çift dokunma artık sadece ilk denemede çift dokunma gerektiriyor, sonrasında tek dokunma yeterli\n- Albümleri otomatik algılama artık buldukça albüm ekliyor\n- İlişkili albümü Lavender Photos\'tan kaldırılırsa kurtarılamayan güvenli öge sorunu düzeltildi\n- Arama sayfasından toplu fotoğraf şifreleme eklendi\n- Atlamak için çift dokunmanın diğer arayüzleri engellemesi düzeltildi\n- EXIF veri silici eklendi\n- Android 12 ve üzeri için düzenleme görünümüne temel bulanıklaştırma aracı eklendi\n- Düzenleme görünümü için kaydettikten sonra çık seçeneği eklendi\n- Güvenli klasör hayalet medya sorunu düzeltildi\n- Medya güvenliğe alınırken medya yükleme iletişim kutusu artık uygulama çubuklarıyla birlikte kaybolmuyor\n\nv0.9.3-beta:\n- Çizilebilirler için kararlı tanımlayıcılar kullanıldı\n- Güncelleme bilgisi notu eklendi\n- Başlangıçta güncellemeleri kontrol etmeyi devre dışı bırakma seçeneği eklendi\n- Tamamen özelleştirilebilir sekmeler eklendi\n- Taşıma mantığı tamamen yeniden işlendi\n- İletişim kutusu renkleri birleştirildi\n- Medya deposunun doğru şekilde yenilenmemesi düzeltildi\n- Daha iyi medya boyutu gösterimi\n- Güvenli klasörü zip dosyasına aktarma eklendi\n\nv0.9.2-beta:\n- Yatay resim listesindeki hatalı çökme düzeltildi\n- Güncelleyici görünümünün ilerlemeyi göstermemesi düzeltildi\n- Güncelleyicinin paketleri yüklememesi düzeltildi\n- Albümlere taşı/kopyala listesinin küçük resimleri göstermemesi düzeltildi\n- Tek albüm iletişim kutularındaki hizalama ve taşma sorunları düzeltildi\n- Veri ve yedekleme eklendi\n- Şifreli fotoğraflara geçiş artık bozuk değil\n- Varsayılan sekme özelleştirmesi eklendi\n\nv0.9.1-beta:\n- Güvenli medya için bilgi iletişim kutusu düzeltildi\n- Daha iyi sürükleyerek seçim davranışı\n- Hata ayıklama ayarlarından albüm ekleme düzeltildi\n- Özel albüm sıralaması eklendi\n- Çok daha hızlı albüm yükleme\n- Son değiştirilen albümlerin en üste gelmesi için dinamik albüm yeniden sıralama\n- Otomatik albüm algılama eklendi\n- Uygulamaya Lavender bildirim çubukları eklendi\n- Şifreli güvenli klasöre daha iyi geçiş\n- Video oynatıcıda atlamak için çift dokunma artık destekleniyor\n- Çeşitli performans iyileştirmeleri\n\nv0.9.0-beta:\n- Şifre çözüldükten sonra dosya meta verilerini bilgi iletişim kutusuna yükleme\n- Uygulama içi güncelleyici eklendi\n- Birden fazla albümün yüklenmesine izin vermek için tüm medya yükleme sistemi yeniden işlendi\n- Albüm ızgara görünümü üst çubuğuna + simgesi eklendi\n- Bir albüm açarken yaşanan gecikme düzeltildi\n- Aşırı optimizasyonlar ve performans kazanımları\n- Şifreleme ve şifre çözme için yükleme iletişim kutuları düzeltildi\n- Güvenli klasör küçük resimlerinin her zaman yüklenmemesi düzeltildi\n- Glide\'ın güvenli görüntüleri önbelleğe alması nedeniyle olası güvenlik açığı düzeltildi\n- Video oynatıcı sessizdeyse artık müziği duraklatmıyor\n- Şifreli videolar için yükleme ekranı eklendi\n- Seçim üst çubuğu birleştirildi\n- isPreV083 davranışı düzeltildi\n- Birlikte aç görünümünün birlikte açılabilir olmaması düzeltildi\n- Liste boşken seçim üst çubuğundan güvenli klasöre taşı\'ya tıklandığında sonsuza dek takılı kalma sorunu giderildi\n- Sonunda Android 11 ve 12 önyükleme sorunları düzeltildi\n\nv0.8.9-beta:\n- Güvenli fotoğraflar için AES şifrelemesi eklendi\n- Manuel yol ekleme için hata simgesi eklendi\n- Güvenli klasördeki yükleme ekranı düzeltildi\n- Açık temadaki ögelerin tutarlı ve uyumlu olmaması düzeltildi\n- Video oynatıcı son sessize alma durumunu hatırlıyor\n- Güvenli klasör ve izin ekranı için yatay görünüme uygun görünümler eklendi\n- Lavender Photos ile Birlikte Aç eklendi\n- Alternatif albüm seçimi kaldırıldı\n- Zaman alan eylemler için yükleme iletişim kutuları eklendi\n\nv0.8.8-beta:\n- MANAGE_EXTERNAL_STORAGE izni kaldırıldı\n- Tüm dosya işleme sistemi yeniden işlendi\n- Ana uygulama üst çubuğu animasyonu değiştirildi\n- Performans iyileştirildi\n- Medya ögelerini güvenliğe alma ile ilgili sorunlar düzeltildi\n- Kaydırma gecikmesi düzeltildi\n- Favoriler görünümünün bir ögeye dokunulduğunda çökmesi düzeltildi\n- Önceki albümlerin v0.8.3\'ten daha yüksek sürümlere taşınması düzeltildi\n- Açıklama iletişim kutuları tutarlı hale getirildi\n- Resim dışındaki dosyaları içeren albümleri yüklerken uygulamanın donması engellendi\n- Günlük kaydetme düzeltildi, uygulama klasörleri yeniden yapılandırıldı\n- Güvenli klasörden dosya paylaşımı eklendi\n- Not: Lütfen Dahili Depolama\'dan Lavender Photos klasörünü silin\n\nv0.8.7-beta-hotfix:\n- Aramanın doğru ögeleri göstermemesi düzeltildi\n- Exoplayer artık uygulamayı arka plana aldıktan sonra kapanmıyor\n- Daha iyi logcat davranışı\n- İzin ekranı arayüzü düzeltildi\n- Daha iyi bir yol bulunana kadar birden fazla albüm ekleme yolu eklendi\n- Fotoğraf ızgarası boşken çökme düzeltildi\n- Daha iyi davranışla ÇOK daha hızlı sürükleyerek seçim\n\nv0.8.7-beta:\n- Video oynatıcının art arda birden fazla video oynattıktan sonra çökmesi düzeltildi\n- Uygulama dikey moda geçtiğinde dokunmatik kilit artık takılı kalmıyor\n- Video otomatik oynatma ayarı eklendi\n- Başlangıçta videoyu sessize alma ayarı eklendi\n- Yer tutucu kullanan ayarlar için simgeler ayarlandı\n- Uygulama tema seçici eklendi\n- İlk uygulama başlatma için varsayılan albüm listesi eklendi\n- Tüm Dosyaları Yönet izninin amacı netleştirildi\n- Düzenleme görünümünde vurgu ve renk tonu ayarlamaları eklendi\n- Mini gizlilik politikası beyanı eklendi\n- Düzenleme görünümünde resim filtreleri eklendi\n- Düzenleme yaparken varsayılan olarak üzerine yazma seçeneği eklendi\n- Fotoğraf ızgaralarında sürükleyerek seçim eklendi\n- Seçim onay işareti canlandırıldı\n- Video oynatıcıda uygulama çubukları artık sadece daha fazla seçenek düğmesine tıklandığında gösteriliyor, artık sinir bozucu tıklama ve çift tıklama yok\n\nv0.8.6-beta:\n- ÇOK daha iyi performans ve ölçeklenebilirlik için datastore tamamen yeniden düzenlendi\n- Çöp kutusu otomatik silme aralığı ayarları eklendi\n- Android 11 cihazlarda uygulama çubuklarını gizlemeye çalışırken olası çökme düzeltildi\n- Güvenli klasörde fotoğraf paylaşımı düzeltildi\n- Geliştirilmiş ayarlar görünümü\n- Daha hızlı boş klasör kontrolleri, uygulama biraz daha hızlı hissettirecek\n- Video çözünürlük bilgisi düzeltildi\n- Küçük resim boyutu ve önbellek ayarları eklendi\n- Küçük resim önbelleğini temizleme ayarı eklendi\n- Ana sayfa için yatay davranış düzeltildi\n- Ana ekranda sayfalar arasında geçiş yaparken titreme düzeltildi\n- Resim veya video içermeyen klasörler artık sonsuza dek yüklenmede takılı kalmayacak\n- Tüm Dosyaları Yönet izin düğmesinin çalışmaması düzeltildi\n- İzinlere açıklamalar eklendi\n- Güvenli fotoğraflar artık orijinal tarihlerini ve diğer bilgilerini koruyor\n\nv0.8.5-beta:\n- Video oynatıcının yön değiştirirken verileri tamamen yeniden getirmesi düzeltildi\n- Taşı/Kopyala açılır penceresi artık durum çubuğunu geçmiyor\n- Uygulamadan geçici olarak ayrıldığında güvenli klasör kilitleniyor\n- Var olsalar bile erişilemeyen klasörler düzeltildi\n- SinglePhotoView fotoğraf listesi artık mevcut medyaya uyacak şekilde dinamik olarak güncelleniyor\n- Parlaklık ayarı düzeltildi ve beyaz nokta ayarı eklendi\n- Yatay video oynatıcıda artık dokunmatik kilitleme seçeneği var\n- Video oynatıcı kontrolleri 5 saniye sonra otomatik olarak gizleniyor\n- Video oynatıcı uygulamadan çıkıp yeniden girildikten sonra oynatmaya devam edecek\n\nv0.8.4-beta:\n- İzin yönetimi düzeltildi\n- Daha iyi ve daha hızlı medya sorguları\n- Rastgele arama çubuğu yer tutucuları eklendi\n- Fotoğraflar için daha okunaklı çekim tarihi\n- İzinler ve günlüklerle hata ayıklama için ayarlar eklendi\n\nv0.8.3:\n- Albüm adının virgül içermesi durumunda yanlış davranış düzeltildi\n- İçerik çözümleyici ile medyayı düzgün şekilde çöpe atma ve silme\n- Düzenleme görünümündeki ayarlama kaydırıcısı için değer göstergesi eklendi\n- Düzenlemeler için yeni bir kopya kaydetmek yerine üzerine yazma seçeneği eklendi\n- Medya yöneticisi değilse de düzgün şekilde silme kontrolü\n- Uygulama medya yöneticisiyken dosyaları çöpten çıkaramama sorunu düzeltildi\n- Yeni düzenlenen fotoğraflar artık sistemde normal olarak görünüyor\n- Düzenleme görünümü ayarlamaları artık gerçekten etkili oluyor (pardon)\n\nv0.8.2:\n- Düzenleme görünümüne kontrast/parlaklık/doygunluk ayarlamaları eklendi\n- Düzenleme görünümüne siyah noktası ve sıcaklık (renk sıcaklığı) ayarlamaları eklendi\n\nv0.8.1:\n- Favori görünümündeki aşırı üst boşluk düzeltildi\n- HorizontalImageList yüklenirken veya kaldırılırken ve medya değiştiğinde çökme düzeltildi\n- Zaten eklenmiş yeni albümleri eklerken çökme düzeltildi\n- Video oynatmanın sona ulaştığında 0\'a sıfırlanmaması düzeltildi\n- Video oynatmanın bazen video süresinden bir saniye eksik gitmesi düzeltildi\n- Düzenleme görünümünde hareketlerle metin döndürme ve yeniden boyutlandırma eklendi\n- Bir resmi görüntülerken arama sayfasının kaydırma konumunu sıfırlaması düzeltildi\n\nv0.8.0:\n- Kırpma eklendi\n- Kırpma oranları eklendi\n- Daha iyi kaydetme ve geri alma işlevselliği\n\nv0.7.9-beta:\n- Düzenleme görünümünde görüntüleri döndürürken hatalı ölçeklendirme düzeltildi\n- Yön değiştirirken video otomatik oynatma düzeltildi\n- Video oynatıcı arama çubuğu zamanının her zaman sona gitmemesi düzeltildi\n- Video oynatıcı mevcut ve bitiş sürelerinin biraz hatalı olması düzeltildi\n\nv0.7.8-beta:\n- Aşağıdaki tüm değişiklikler düzenleme görünümündedir\n- Resimler üzerine çizim yapma eklendi\n- Resimler üzerine metin çizme eklendi\n- Resimleri döndürme eklendi\n- Çizim ve metin için boyut değiştirme eklendi\n- Çizim ve metin için renk değiştirme eklendi\n- Düzenleme görünümü yatay modda kullanılabilir hale getirildi\n\nv0.7.7-beta:\n- Albümler görünümünde yeni resimlerin daha iyi gösterilmesi için küçük güncelleme\n\nv0.7.6-beta:\n- Kopyala veya taşı iletişim kutusundaki animasyon ve boşluk düzeltildi\n- Favoriler görünümündeki boşluk düzeltildi\n\nv0.7.5-beta:\n- Düzenleme görünümü eklendi (işlevsellik yok)\n- Düzgün yakınlaştırma/kaydırma/döndürme eklendi\n\nv0.7.3-beta:\n- Güvenli klasör ve çöp kutusuna bilgi iletişim kutuları eklendi\n- Akıllı albüm sıralama\n- Tarihe göre arama eklendi\n- Bir sayfadan çıktıktan sonra veri akışlarını kapatma\n- Fotoğraf ızgarasındaki bugün ve dün etiketleri düzeltildi\n- Güvenli ögeler artık orijinal yerine geri dönüyor\n- Güvenli klasördeki tarihler düzeltildi (her şey bugün güvenliğe alınmış gibi görünüyordu)\n- Tüm medyalarda çözünürlüğün görünmemesi düzeltildi\n\nv0.7.2-beta:\n- Silme/kopyalama/taşıma/çöpe atma sisteminin tamamen yeniden işlenmesi\n- Çöp kutusu artık sistemin geri kalanıyla birlikte çalışıyor\n- Izgaralara çok daha fazla akıcılık\n- Albümler artık alt klasörlerdeki fotoğrafları göstermiyor\n- Performans iyileştirmeleri ve yaşam kalitesi düzenlemeleri\n\nv0.7.0-beta:\n- Arama iyileştirmeleri\n- Seçimde kopyalama ve taşıma eklendi\n- Büyük seçim silme/geri yükleme işlemlerinde hız iyileştirmeleri\n- Alt çubuğu olmayan görünümlerde seçime daha akıcı geçişler\n\nv0.6.9-beta:\n- Medyayı favorilere ekleme\n- Kaydırma çubukları davranışı iyileştirildi\n- Güvenli klasörü yeniliğe göre sıralama\n- Çok sayıda kod temizliği ve çeşitli performans iyileştirmeleri\n- Genel yanıt verme iyileştirmeleri\n- Açık modda gezinme çubuğu renkleri düzeltildi\n- Eylemler için uygun simgeler ve iletişim kutuları\n- Her ızgara görünümünde seçim mevcut\n- Video oynatıcı deneyimi daha iyi\n\nv0.6.6-beta\n- Izgaralara kaydırma çubukları eklendi\n- Büyük performans iyileştirmeleri\n- Izgaradan öge seçme eklendi\n- Alt çubukları gösterirken gecikme düzeltildi\n- Çöp kutusu artık temizlenebilir\n- Sonsuz derecede daha hızlı arama\n- Yön değişikliğinde tek fotoğraf görünümünün sıfırlanması düzeltildi\n- Aramanın seçime izin vermemesi düzeltildi\n</string>
+    <string name="changelog"><![CDATA[
+    <u><h2>v1.2.0!:</h2></u>
+    <br><b><h4>- Giderilen Hatalar:</h4></b>
+    <p>
+        - Siyah arka planın video oynatıcıya uygulanmaması
+        <br>- Düzenleyici çubuğu metinlerinin bazı ekranlarda taşması
+        <br>- Eksik ızgara görünümü simgesi eklendi
+        <br>- Uygulama adı 2 kelimeden kısa olduğunda yaşanan çökme
+        <br>- Medya seçici gezinme çubuğunun doğru şekilde gizlenmemesi
+        <br>- Standart olmayan bir klasördeki medyanın üzerine yazmaya çalışırken yaşanan çökme
+        <br>- Medyayı birden fazla kez yeniden adlandırmaya çalışırken yaşanan çökme
+        <br>- Sürükleyerek seçim yaptıktan sonra kaydırmanın kilitlenmesi
+        <br>- Özel bir albüm eklenememesi
+        <br>- Tekli Fotoğraf Görünümlerinden geri dönüldüğünde en üste kaydırılmaması
+        <br>- Bozuk küçük resimlere sahip medyayı güvenceye almaya çalışırken yaşanan çökme
+        <br>- Düzenleyici döndürmesinin filtreler sayfasını bozması
+        <br>- Düzenleyicilerde çizim yapılamaması
+        <br>- OpenWithView kullanırken yaşanan çökme
+        <br>- Görüntü düzenleyicinin bazen görüntüleri yanlış döndürmeyle açması
+        <br>- Alt çubuk sekmeleri için kaldırılmış bir dizin anahtarı nedeniyle yaşanan çökme
+        <br>- İlk oynatılan videonun "sessiz başlat" tercihine uyması
+        <br>- Yanlış temsil edilen albüm sabitleme durumu düzeltildi
+        <br>- Medya silerken yaşanan düzensiz davranışlar
+        <br>- Düzenleyici döndürmesinin artık kaydettikten sonra görüntülere uygulanması
+        <br>- Seçilen görüntü/metin kenarlığının son renderdan kaldırılması
+    </p>
+    <br><b><h4>- Eklenen Özellikler:</h4></b>
+    <p>
+        - Çöp kutusu ve güvenli fotoğraf görünümlerinin daha etkileyici hale getirilmesi
+        <br>- Tekli fotoğraf görünümlerinde döndürmeyi devre dışı bırakma seçeneği eklendi
+        <br>- Immich sunucusu için alternatif url desteği
+        <br>- Daha iyi kaydırma çubukları
+        <br>- Taşıma/kopyalama sırasında görüntü tarihlerinin korunması
+        <br>- Düzenleyiciden çıkıldığında düzenlenen görüntüye kaydırma
+        <br>- Yuvarlak küçük resim köşesi desteği
+        <br>- Immich kullanıcı bilgilerini her zaman gösterme seçeneği
+        <br>- Videoları harici bir oynatıcıda açma seçeneği
+        <br>- Albüm ızgara küçük resimlerini kullanıcı tarafından seçilen sıralama moduna göre görüntüleme
+        <br>- GPS Exif verilerine sahip medyadan konum ayrıştırma
+        <br>- Daha iyi ve daha hızlı arama
+    </p>
+    <br><b><h4>- İyileştirmeler:</h4></b>
+    <p>
+        - Önemli performans ve akıcılık iyileştirmeleri
+        <br>- Ana albümün kopyalama/taşıma listesinden gizlenmesi
+        <br>- Video dışa aktarımı için ilerleme durumu çubuğu
+        <br>- Video oynatıcı arama çubuğu yüksekliğinin artırılması
+        <br>- Daha iyi kaydırılabilir duvar kağıdı desteği
+        <br>- Sürükleyerek seçimin artık uzun basma gerektirmesi
+        <br>- Immich giriş iletişim kutusunun artık otomatik doldurmayı desteklemesi
+        <br>- Http Immich sunucuları için düz metin trafiği kullanma yeteneği
+        <br>- Fotoğraf bilgi iletişim kutusu yükleme iyileştirmeleri
+        <br>- Çöpe atılan öğelerin yüklenmesinde iyileştirme
+        <br>- Uygulama ana çubuğunun yükseltilmesi
+        <br>- Her ızgara görünümünde devre dışı bırakılmış sıralama desteği
+        <br>- Video arama çubuğu güncelleme hızının ve ekranın açık kalma uygulamasının artırılması
+    </p>
+    <br>
+    <u><h2>v1.1.6!:</h2></u>
+    <br>
+    <b><h4>- Giderilen Hatalar:</h4></b>
+    <p>
+        - OpenWithView\'dan düzenleme yaparken yaşanan çökme
+    </p>
+    <br>
+    <u><h2>v1.1.5!:</h2></u>
+    <br>
+    <b><h4>- Eklenen Özellikler:</h4></b>
+    <p>
+        - Kaydırırken gezinme çubuğunu gizleme
+        <br>- Düzenleyicilerde metin/görüntüleri taşırken yakınlaştırma
+        <br>- Duvar kağıdı ayarlayıcıda kaydırılabilir duvar kağıtları
+        <br>- Lehçe çevirisi eklendi, basitleştirilmiş Çince güncellendi
+    </p>
+    <br>
+    <b><h4>- Giderilen Hatalar:</h4></b>
+    <p>
+        - Video düzenleyicinin videoları sessiz başlat seçeneğine uymaması
+        <br>- Video düzenleyicide bir videoyu kırptıktan sonra oynatılamaması
+        <br>- Gezinme çubuğu sekme metninin yanlış hizalanması
+    </p>
+    <br>
+    <h2>v1.1.0!:</h2>
+    <b><h4>- Eklenen Özellikler:</h4></b>
+    <p>
+        <br>- Basitleştirilmiş Çince çevirisi eklendi
+        <br>- "Tümünü ana sayfada göster" kullanırken albümleri kara listeye alma yeteneği
+        <br>- "Albümleri otomatik algıla" etkinleştirildiğinde bile albümleri sabitleme
+        <br>- Başlangıç sayfasında uygulamadan hemen çıkma ve fotoğraf görünümünde kalmama seçeneği
+        <br>- OpenWithView\'da yükleme bildirim çubuklarını gösterme
+    </p>
+    <br>
+    <br>
+    <b><h4>- İyileştirmeler:</h4></b>
+    <p>
+        <br>- Dosyayı düzenlemeden önce dizin izni isteme
+        <br>- Varsayılan video düzenleyici dışa aktarma bit hızını artırma
+        <br>- Ana gezinme çubuğunu yana kaydırılabilir yapma
+        <br>- Yeni uygulama simgesi
+        <br>- Albüm Izgara Görünümündeki albümlerin sürüklenmesi için artık uzun basma gerektirmesi
+    </p>
+    <br>
+    <br>
+    <b><h4>- Giderilen Hatalar:</h4></b>
+    <p>
+        <br>- Giriş yapılmamışsa Immich sunucu adresini temizleyememe
+        <br>- Ana sayfada her şeyi göster seçeneğinin her yerde her şeyi göstermesi
+        <br>- Güncelleme sayfasının biçimlendirmesinin bozuk olması
+        <br>- Bir albümdeki tüm medyayı silerken yaşanan çökme
+        <br>- OpenWithView\'dan medya düzenlerken yaşanan çökme
+        <br>- Videoları standart olmayan dizinlere kaydetmenin sonsuz bir takılmaya neden olması
+    </p>
+    <br>
+    <br>
+    <h2>v1.0.0!:</h2>
+    <br>
+    <b><h4>- Yeni Görünüm!</h4></b>
+    <br>
+    <p>
+        Lavender Photos, <a href="https://m3.material.io/">Material Expressive</a>\'e geçti!
+        Daha akıcı, dinamik ve eğlenceli animasyonlarla dolu yeni bir görünüm uygulamaya hayat veriyor
+    </p>
+    <br>
+    <p>
+        <b><h4>- Yeni Görüntü ve Video Düzenleyicileri!</h4></b>
+        <br>- Görüntü düzenleyici için yenilenmiş bir görünüm ve bir video düzenleyici uygulandı
+        <br>- Önemli ölçüde geliştirilmiş düzenleme deneyimi
+        <br>- Görüntülerinizi kırpın, ayarlayın, işaretleyin ve filtreleyin
+        <br>- Videolarınızın bit hızını, kare hızını, hızını veya ses seviyesini ve ayrıca görüntü düzenleyicide bahsedilen her şeyi değiştirin
+        <br>- Hem görüntülere hem de videolara metin ve görüntü katmanı ekleyin
+        <br>- Videodaki metin ve görüntüleri canlandırın
+    </p>
+    <br>
+    <br>
+    <p>
+        <b><h4>- Eklenen Özellikler:</h4></b>
+        <br>- Albüm Görünümünün sütun sayısını değiştirme
+        <br>- Medya görünümleri için siyah arka planı açıp kapatma
+        <br>- Videolarda yakınlaştırma
+        <br>- Bilgi iletişim kutusunu açmak için medya başlığına tıklama
+        <br>- Avif görüntü yükleme
+        <br>- Yeni uygulama simgesi
+        <br>- Arapça, İspanyolca, Rusça, Türkçe ve Ukraynaca çevirileri
+        <br>- Artırılmış özel sekme sınırı
+        <br>- Immich yardım ve bilgi iletişim kutuları
+        <br>- Kaldırma işleminde albümleri koruma
+        <br>- Açık kaynak lisansları sayfası
+        <br>- Favoriler ve Çöp Kutusu görünümleri için sekmeler
+        <br>- Uygulama içi duvar kağıdı ayarlayıcı
+        <br>- Daha akıcı yükleme efektleri
+        <br>- Medyayı önce çöp kutusuna taşımak yerine anında ve kalıcı olarak silme
+        <br>- Video oynatıcı oynatma hızı kontrolü
+    </p>
+    <br>
+    <br>
+    <p>
+        <b><h4>-Giderilen Hatalar:</h4></b>
+        <br>- Yavaş güvenli fotoğraf şifre çözme
+        <br>- Görüntü düzenleyicide yüksek çözünürlüklü görüntüleri yüklerken yaşanan çökme
+        <br>- Albüm Görünümünde Favoriler veya Çöp Kutusu düğmesine yatay olarak kaydırırken yaşanan çökme
+        <br>- Bir albümdeki ilk medyayı silip Otomatik Albüm Algılama açıkken geri gidildiğinde yaşanan çökme
+        <br>- Bir albümdeki son medyayı silip geri gidildiğinde yaşanan çökme
+        <br>- Bazen bozuk olan özel sekmeler düzeltildi
+        <br>- Açılış ekranının artık her zaman doğru görüntülenmesi
+        <br>- Belirli ızgara görünümlerinin uzaklaşıldığında kaydırma konumunu korumaması
+        <br>- Sürükleyerek seçim yapmaya çalışırken bazı öğelerin yanlışlıkla temizlenmesi
+        <br>- MediaPicker\'ın doğru öğeleri geri bildirmemesi
+        <br>- Lavender Photos ile aç seçeneğinin artık tüm görüntülerin doğru sürümünü göstermesi
+        <br>- Görüntü düzenleyicide ayarlamaların hatalı uygulanması düzeltildi
+        <br>- Parlak alanlar ayarının bozuk olması
+        <br>- Bir bölüm üzerinde sürükleyerek seçim yaparken yaşanan çökme
+        <br>- Birden çok görüntü paylaşmanın artık tüm uygulama hedeflerini düzgün şekilde göstermesi
+        <br>- Bazı android sürümlerinde tekli fotoğraf görünümünden öğeleri güvenceye alamama
+        <br>- Android 16+ üzerinde 2000\'den fazla öğe seçildiğinde yaşanan çökme
+    </p>
+    <br>
+    <br>
+    <p>
+        <b><h4>-Performans İyileştirmeleri:</h4></b>
+        <br>- Burada listelenemeyecek kadar çok
+    </p>
+    <br>
+    <br>
+    <br>
+    v0.9.9-beta:
+        <br>- Albüm yolu iletişim kutusu gerçekten kullanılabilir hale getirildi
+        <br>- Özel albümlerin küçük resimlere sahip olmaması ve MoveCopyAlbumListView.kt\'nin HİÇ küçük resme sahip olmaması düzeltildi
+        <br>- Albümleri yeniden adlandıramama ve albüm bilgilerinin hemen güncellenmemesi
+        <br>- Kullanıcı tercihine bağlı olarak albümleri son değiştirilme veya çekilme tarihine göre sıralama eklendi
+        <br>- TextEntryDialog\'daki hata doğru şekilde ele alındı
+        <br>- Medya seçici etkinliği eklendi
+        <br>- Albümler için Immich yedekleme entegrasyonu eklendi
+        <br>- Üst çubukta ve ana iletişim kutusunda profil resmi etrafına arka plan senkronizasyon göstergesi eklendi
+        <br>- "Kopyalamada verilerin üzerine yaz" seçeneği "Kopyalamada tarihi korumaya çalış" olarak değiştirildi, çünkü tarihi korumak her zaman garanti değil
+        <br>- Birden çok yola sahip albümlere dosya kopyalama veya taşıma yeteneği eklendi, özel albümler etkilenmedi
+        <br>- Yolları olmayan özel albümler için küçük resim yüklerken çökme olmaması
+        <br>- Arama medyasını kullanıcı tercihine göre sıralama
+        <br>- PhotoGridView.kt içeren her şeyde bir sürü akıcılık ve performans iyileştirmesi yapıldı
+        <br>- Albüm bilgisi öğe sayısının bölümleri içermesi düzeltildi, içermemeliydi
+        <br>- Medya kopyalama, taşıma veya silme için ilerleme durumu bildirim çubuğu eklendi
+        <br>- Var olmayan bir öğe üzerinde sürükleyerek seçim yaparken çökme olmaması
+        <br>- Immich Ana Sayfasına Immich sunucu bilgisi eklendi
+        <br>- Albüm üst çubuğuna immich ile albüm senkronizasyon sayfası eklendi
+        <br>- IV verisi mevcut olmadığı için yedek dışa aktarılamadığında güvenli klasör görünümünde çökme
+        <br>- Bazı PhotoGridView\'lerin başka bir sayfadan geri dönüldüğünde konumlarını hatırlamaması düzeltildi
+        <br>- v0.9.8-beta-hotfix değişiklik günlüğünün eksik olması düzeltildi
+        <br>- Video yüklemesi çok daha akıcı hale getirildi
+        <br>- Izgara sütun boyutunu kontrol etmek için bir ayar eklendi
+        <br>- Izgara görünümü ayırıcılarında yerel ayara uyulması
+        <br>- PhotoGridView.kt kaydırma çubukları artık düzen yönüne (rtl veya ltr) uyuyor
+        <br>- Ana fotoğraf görünümünde her şeyi gösterme yeteneği eklendi
+        <br>
+        <br>v0.9.8-beta-hotfix:
+        <br>- izzyondroid kontrolleriyle ilgili sorunu gidermek için hızlı düzeltme
+        <br>- genel uygulama akıcılığını artırma (medya yüklemesi daha akıcı)
+        <br>- sürüm adında "-hotfix" olduğunda güncelleyicinin çökmesi sorunu düzeltildi
+        <br>
+        <br>v0.9.7-beta:
+        <br>- Saniyenin altında tam cihaz albüm araması eklendi
+        <br>- Endonezyaca ve Fransızca için çeviriler eklendi
+        <br>- Albüm ızgara öğelerinin sonsuzca titremesi sorunu düzeltildi
+        <br>- Özel albümleri özel şeyler için kullanamama sorunu düzeltildi
+        <br>- Kullanıcı zaten bir kez izin verdikten sonra albüme taşıma/kopyalama için her seferinde izin istememe
+        <br>- Tarih formatı seçici eklendi
+        <br>- Aptal compose durumu yüzünden oluşan bellek sızıntısı giderildi
+        <br>- Amoled tema eklendi
+        <br>- Hakkında sayfasına çeviri uyarısı eklendi
+        <br>- Önemli performans iyileştirmeleri
+        <br>- Bağımlılık sürüm yükseltmesi
+        <br>- Veri ve yedek dışa aktarma yollarının dizini mevcut olmadığında artık çökme yaşanmaması
+        <br>- Bulanıklaştırma artık düzenleme görünümünde filtreleri, ayarlamaları ve çizimi hesaba katıyor
+        <br>- Harici birim desteği eklendi (sdcard, vb.)
+        <br>- Bir düzenleme ayarının değerini sıfırlamak için tekrar dokunma yeteneği eklendi
+        <br>- Düzenleme görünümünde metin ölçeklendirmesi daha duyarlı hale getirildi
+        <br>- Albümleri albüm listesinin en üstüne sabitleme yeteneği eklendi
+        <br>
+        <br>v0.9.6-beta:
+        <br>- Özel albümlere tüm klasörleri dahil etme yeteneği eklendi
+        <br>- Özel sekmelerin yüklenmemesi düzeltildi
+        <br>- 5000\'den fazla öğeye sahip albümler için Tümünü Seç devre dışı bırakıldı (android sınırlaması nedeniyle çökmeyi düzeltir)
+        <br>
+        <br>v0.9.5-beta:
+        <br>- Yatay fotoğraf görünümlerinde yakınlaştırmak ve sıfırlamak için çift dokunmaya animasyon eklendi
+        <br>- Özel albümler eklendi (klasör tabanlı olmayan)
+        <br>- Albüm bilgi iletişim kutusuna öğe sayısı eklendi
+        <br>- Düzenleme görünümü metin yakınlaştırması düzeltildi
+        <br>- Varsayılan sekme yeniden sıralamasındaki takılma düzeltildi
+        <br>- Fotoğraf kopyalama tarihleri için açma/kapama düğmesi eklendi
+        <br>- Düzenleme görünümünde bulanıklaştırmadan sonra boya ile çizim yapmanın çökmeye neden olması sorunu düzeltildi
+        <br>- Metin ölçeklendirme/döndürme/taşıma artık kötü değil
+        <br>- Çizmek için dokunmanın çalışmaması düzeltildi (eskiden her zaman sol üst köşede görünürdü, şimdi normal çalışıyor)
+        <br>- Düzenleme görünümünde alt çubuk öğeleri için renk kontrastı iyileştirmeleri
+        <br>- Düzenleme görünümünde zaten ayarlanmış metnin boyutunu ve rengini değiştirme yeteneği eklendi (seçmek için metne dokunun)
+        <br>- Düzenleme görünümü boya modunda yakınlaştırma yeteneği eklendi
+        <br>- Düzenleme görünümü bulanıklaştırma fırçası yarıçapı artırıldı (daha fazla bulanıklaştırma)
+        <br>
+        <br>v0.9.4-beta:
+        <br>- Ana çubuklar için simge renkleri düzeltildi
+        <br>- Favorileri zip dosyasına veya klasöre dışa aktarma eklendi
+        <br>- Video oynatıcıda hızlı dokunuşlarda yönü doğru değiştirmeyen atlamak için çift dokunma düzeltildi
+        <br>- Yol görüntüleyen görünümlerde yollar yatay olarak kaydırılabilir hale getirildi
+        <br>- Sıralama modu özelleştirici eklendi
+        <br>- Başlangıçta güncellemeleri kontrol etmenin birden çok kez çalışması düzeltildi
+        <br>- Düzenleme başarısızlığı ve başarısı için bildirim çubukları eklendi
+        <br>- Silmeyi onayla seçeneği eklendi
+        <br>- Çöp kutusunun her zaman en son çöpe atılanlara göre sıralanmaması düzeltildi
+        <br>- Kullanıcı taşıma veya kopyalama yapıp görünümden çıkarsa artık eksik dosya olmaması
+        <br>- Albüm bilgisi uygulaması tamamlandı
+        <br>- Silmeyi onayla, medya sıralama ve güncellemeleri kontrol et için simgeler eklendi
+        <br>- Video oynatıcıda aramak için çift dokunmanın diğer arayüzlerin altında görünmesi düzeltildi
+        <br>- Kod temizliği ve iyileştirmesi
+        <br>- Önceki çalıştırmanın günlüklerini gönderme yeteneği eklendi
+        <br>- Video oynatıcıda atlamak için çift dokunma artık yalnızca ilk denemede çift dokunma gerektiriyor, ardından atlamak için tek dokunma yeterli
+        <br>- Albümleri otomatik algılama artık albümleri buldukça ekliyor
+        <br>- İlişkili albümü lavender photos\'tan kaldırılırsa kurtarılamayan güvenli öğe sorunu düzeltildi
+        <br>- Arama sayfasından toplu fotoğraf şifreleme eklendi
+        <br>- Atlamak için çift dokunmanın diğer arayüzleri engellemesi düzeltildi
+        <br>- Exif veri silici eklendi
+        <br>- Android 12 ve üzeri için düzenleme görünümüne temel bulanıklaştırma aracı eklendi
+        <br>- Düzenleme görünümü için kaydettiğinde çık seçeneği eklendi
+        <br>- Güvenli klasör hayalet medya sorunu düzeltildi
+        <br>- Medya güvenceye alınırken güvenceye alma yükleme iletişim kutusunun uygulama çubuklarıyla birlikte kaybolmaması
+        <br>
+        <br>v0.9.3-beta:
+        <br>- Çizilebilir öğeler için kararlı tanımlayıcılar kullanıldı
+        <br>- Güncelleme bilgisi uyarısı eklendi
+        <br>- Başlangıçta güncellemeleri kontrol etmeyi devre dışı bırakma seçeneği eklendi
+        <br>- Tamamen özelleştirilebilir sekmeler eklendi
+        <br>- Taşıma mantığı tamamen yeniden işlendi
+        <br>- İletişim kutusu renkleri birleştirildi
+        <br>- Medya deposunun doğru şekilde yenilenmemesi düzeltildi
+        <br>- Daha iyi medya boyutu gösterimi
+        <br>- Güvenli klasörü zip dosyasına dışa aktarma eklendi
+        <br>
+        <br>v0.9.2-beta:
+        <br>- Yatay görüntü listesindeki hatalı çökme düzeltildi
+        <br>- Güncelleyici görünümünün ilerlemeyi göstermemesi düzeltildi
+        <br>- Güncelleyicinin paketleri yüklememesi düzeltildi
+        <br>- Albümlere taşı/kopyala listesinin küçük resimleri göstermemesi düzeltildi
+        <br>- Tek albüm iletişim kutularındaki hizalama ve taşma sorunları düzeltildi
+        <br>- Veri ve yedekleme eklendi
+        <br>- Şifreli fotoğraflara geçiş artık bozuk değil
+        <br>- Varsayılan sekme özelleştirmesi eklendi
+        <br>
+        <br>v0.9.1-beta:
+        <br>- Güvenli medya için bilgi iletişim kutusu düzeltildi
+        <br>- Daha iyi sürükleyerek seçim davranışı
+        <br>- Hata ayıklama ayarlarından albüm ekleme düzeltildi
+        <br>- Özel albüm sıralaması eklendi
+        <br>- Çok daha hızlı albüm yükleme
+        <br>- Son değiştirilen albümlerin en üstte olması için dinamik albüm yeniden sıralaması
+        <br>- Otomatik albüm algılama eklendi
+        <br>- Uygulamaya Lavender Bildirim Çubukları eklendi
+        <br>- Şifreli güvenli klasöre daha iyi geçiş
+        <br>- Video oynatıcıda atlamak için çift dokunma artık destekleniyor
+        <br>- Çeşitli performans iyileştirmeleri
+        <br>
+        <br>v0.9.0-beta:
+        <br>- Şifre çözüldükten sonra dosya meta verilerini bilgi iletişim kutusuna yükleme
+        <br>- Uygulama içi güncelleyici eklendi
+        <br>- Birden çok albümün yüklenmesine izin vermek için tüm medya yükleme sistemi yeniden işlendi
+        <br>- Albüm ızgara görünümü üst çubuğuna + simgesi eklendi
+        <br>- Bir albüm açarken yaşanan gecikme artışı düzeltildi
+        <br>- Aşırı optimizasyonlar ve performans kazanımları
+        <br>- Şifreleme ve şifre çözme için yükleme iletişim kutuları düzeltildi
+        <br>- Güvenli klasör küçük resimlerinin her zaman yüklenmemesi düzeltildi
+        <br>- Glide\'ın güvenli görüntüleri önbelleğe alması nedeniyle olası güvenlik açığı düzeltildi
+        <br>- Video oynatıcı sessiz ise artık müziği duraklatmıyor
+        <br>- Şifreli videolar için yükleme ekranı eklendi
+        <br>- Seçim üst çubuğu birleştirildi
+        <br>- isPreV083 davranışının düzeltilmesi
+        <br>- Open with view\'ın açılamaması düzeltildi
+        <br>- Liste boşken seçim üst çubuğundan güvenli klasöre taşı\'ya tıklanınca sonsuza kadar takılı kalmama
+        <br>- Sonunda Android 11 ve 12 önyükleme sorunları düzeltildi
+        <br>
+        <br>v0.8.9-beta:
+        <br>- Güvenli fotoğraflar için AES şifrelemesi eklendi
+        <br>- Manuel yol ekleme için hata simgesi eklendi
+        <br>- Güvenli klasördeki yükleme ekranı düzeltildi
+        <br>- Açık temadaki öğelerin tutarlı ve uyumlu olmaması düzeltildi
+        <br>- Video oynatıcı son sessiz durumunu hatırlıyor
+        <br>- Güvenli klasör ve izin ekranı için yatay görünüme uygun görünümler eklendi
+        <br>- Lavender Photos ile aç seçeneği eklendi
+        <br>- Alternatif albüm seçme kaldırıldı
+        <br>- Zaman alan eylemler için yükleme iletişim kutuları eklendi
+        <br>
+        <br>v0.8.8-beta:
+        <br>- MANAGE_EXTERNAL_STORAGE izni kaldırıldı
+        <br>- Tüm dosya işleme sistemi yeniden işlendi
+        <br>- Ana uygulama üst çubuğu animasyonu değiştirildi
+        <br>- Performans iyileştirildi
+        <br>- Medya öğelerini güvenceye alma ile ilgili sorunlar düzeltildi
+        <br>- Kaydırma gecikmesi düzeltildi
+        <br>- Favoriler görünümünde bir öğeye dokunulduğunda çökme düzeltildi
+        <br>- Önceki albümleri v0.8.3\'ten daha yüksek sürümlere taşıma düzeltildi
+        <br>- Açıklama iletişim kutuları tutarlı hale getirildi
+        <br>- Görüntü dışındaki dosyaları içeren albümleri yüklerken uygulamanın donması engellendi
+        <br>- Günlük kaydetme düzeltildi, uygulama klasörleri yeniden yapılandırıldı
+        <br>- Güvenli klasörden dosya paylaşımı eklendi
+        <br>- Not: Lütfen Dahili Depolama\'dan Lavender Photos klasörünü silin
+        <br>
+        <br>v0.8.7-beta-hotfix:
+        <br>- Aramanın doğru öğeleri göstermemesi düzeltildi
+        <br>- Exoplayer artık uygulamayı arka plana aldıktan sonra kapanmıyor
+        <br>- Daha iyi logcat davranışı
+        <br>- İzin ekranı arayüzü düzeltildi
+        <br>- Daha iyi bir yol bulunana kadar albüm eklemenin birden çok yolu eklendi
+        <br>- Fotoğraf ızgarası boş olduğunda çökme düzeltildi
+        <br>- DAHA hızlı sürükleyerek seçim ve daha iyi davranış
+        <br>
+        <br>v0.8.7-beta:
+        <br>- Video oynatıcının art arda birden çok video oynattıktan sonra çökmesi düzeltildi
+        <br>- Uygulama dikey moda geçtiğinde dokunmatik kilit takılı kalmıyor
+        <br>- Video otomatik oynatma ayarı eklendi
+        <br>- Başlangıçta video sessiz ayarı eklendi
+        <br>- Yer tutucu kullanan ayarlar için simgeler ayarlandı
+        <br>- Uygulama tema seçici eklendi
+        <br>- İlk uygulama başlatma için varsayılan albüm listesi eklendi
+        <br>- Tüm Dosyaları Yönet izninin amacı açıklandı
+        <br>- Düzenleme görünümünde vurgu ve renk tonu ayarlamaları eklendi
+        <br>- Mini gizlilik politikası beyanı eklendi
+        <br>- Düzenleme görünümünde görüntü filtreleri eklendi
+        <br>- Düzenlerken varsayılan olarak üzerine yazmak için yeni seçenek
+        <br>- Fotoğraf ızgaralarında sürükleyerek seçim eklendi
+        <br>- Seçim onay işareti animasyonu
+        <br>- Video oynatıcıda uygulama çubukları artık yalnızca daha fazla seçenek düğmesine tıklandığında gösteriliyor, artık sinir bozucu tıklama ve çift tıklama yok
+        <br>
+        <br>v0.8.6-beta:
+        <br>- ÇOK daha iyi performans ve ölçeklenebilirlik için datastore tamamen yeniden düzenlendi
+        <br>- Çöp kutusu otomatik silme aralığı ayarları eklendi
+        <br>- Android 11 cihazlarda uygulama çubuklarını gizlemeye çalışırken olası çökme düzeltildi
+        <br>- Güvenli klasörde fotoğraf paylaşımı düzeltildi
+        <br>- Geliştirilmiş ayarlar görünümü
+        <br>- Daha hızlı boş klasör kontrolleri, uygulama biraz daha hızlı hissedilecek
+        <br>- Video çözünürlük bilgisi düzeltildi
+        <br>- Küçük resim boyutu ve önbellek ayarları eklendi
+        <br>- Küçük resim önbelleğini temizleme ayarı eklendi
+        <br>- Ana sayfa için yatay davranış düzeltildi
+        <br>- Ana ekranda sayfa değiştirirken yaşanan titreme düzeltildi
+        <br>- Görüntü veya video içermeyen klasörler artık sonsuza kadar yüklenmede takılı kalmayacak
+        <br>- Tüm Dosyaları Yönet izin düğmesinin çalışmaması düzeltildi
+        <br>- İzinlere açıklamalar eklendi
+        <br>- Güvenli fotoğraflar artık orijinal tarihlerini ve diğer bilgilerini koruyor
+        <br>
+        <br>
+        <br>v0.8.5-beta:
+        <br>- Yön değiştirirken video oynatıcının verileri tamamen yeniden alması düzeltildi
+        <br>- Taşı/Kopyala açılır penceresi artık durum çubuğunu geçmiyor
+        <br>- Güvenli klasör, uygulamadan geçici olarak ayrıldığında kilitleniyor
+        <br>- Var olsalar bile erişilemeyen klasörler düzeltildi
+        <br>- SinglePhotoView fotoğraf listesi artık mevcut medyaya uyacak şekilde dinamik olarak güncelleniyor
+        <br>- Parlaklık ayarı düzeltildi ve beyaz nokta ayarı eklendi
+        <br>- Yatay video oynatıcı artık dokunmatik kilitleme seçeneğine sahip
+        <br>- Video oynatıcı kontrolleri 5 saniye sonra otomatik olarak gizleniyor
+        <br>- Video oynatıcı, uygulamadan çıkıp yeniden girildikten sonra oynatmaya devam edecek
+        <br>
+        <br>v0.8.4-beta:
+        <br>- İzin yönetimi düzeltildi
+        <br>- Daha iyi ve daha hızlı medya sorguları
+        <br>- Rastgele arama çubuğu yer tutucuları eklendi
+        <br>- Fotoğraflar için daha okunabilir çekim tarihi
+        <br>- İzinler ve günlüklerle hata ayıklama için ayarlar eklendi
+        <br>
+        <br>v0.8.3:
+        <br>- Albüm adı virgül içerdiğinde yanlış davranış düzeltildi
+        <br>- Medyayı içerik çözümleyici ile düzgün bir şekilde çöpe atma ve silme
+        <br>- Düzenleme görünümündeki ayarlamalar kaydırıcısı için değer göstergesi eklendi
+        <br>- Düzenlemeler için yeni bir kopya kaydetmek yerine üzerine yazma seçeneği eklendi
+        <br>- Medya yöneticisi değilse de şeyleri düzgün bir şekilde silme kontrolü
+        <br>- Uygulama medya yöneticisiyken dosyaları çöpten çıkaramama düzeltildi
+        <br>- Yeni düzenlenen fotoğraflar artık sistemde normal olarak görünüyor
+        <br>- Düzenleme görünümü ayarları artık gerçekten etkili oluyor (pardon)
+        <br>
+        <br>v0.8.2:
+        <br>- Düzenleme görünümüne kontrast/parlaklık/doygunluk ayarları eklendi
+        <br>- Düzenleme görünümüne siyah nokta ve sıcaklık (renk sıcaklığı) ayarları eklendi
+        <br>
+        <br>v0.8.1:
+        <br>- Favori görünümündeki aşırı üst boşluk düzeltildi
+        <br>- HorizontalImageList yüklenirken veya boşaltılırken ve medya değiştiğinde yaşanan çökme düzeltildi
+        <br>- Zaten eklenmiş olan yeni albümleri eklerken yaşanan çökme düzeltildi
+        <br>- Video oynatmanın sona ulaştığında 0\'a sıfırlanmaması düzeltildi
+        <br>- Video oynatmanın bazen video süresinden bir saniye eksik gitmesi düzeltildi
+        <br>- Düzenleme görünümünde hareketlerle metin döndürme ve yeniden boyutlandırma eklendi
+        <br>- Bir görüntüyü görüntülerken arama sayfasının kaydırma konumunu sıfırlaması düzeltildi
+        <br>
+        <br>v0.8.0:
+        <br>- Kırpma eklendi
+        <br>- Kırpma oranları eklendi
+        <br>- Daha iyi kaydetme ve geri alma işlevselliği
+        <br>
+        <br>v0.7.9-beta:
+        <br>- Düzenleme görünümünde görüntüleri döndürürken hatalı ölçeklendirme düzeltildi
+        <br>- Yön değiştirirken video otomatik oynatma düzeltildi
+        <br>- Video oynatıcı arama çubuğu süresinin her zaman sona gitmemesi düzeltildi
+        <br>- Video oynatıcı mevcut ve bitiş sürelerinin biraz hatalı olması düzeltildi
+        <br>
+        <br>v0.7.8-beta:
+        <br>- Aşağıdaki tüm değişiklikler düzenleme görünümündedir
+        <br>- Görüntülere çizim yapma eklendi
+        <br>- Görüntülere metin çizme eklendi
+        <br>- Görüntüleri döndürme eklendi
+        <br>- Çizim ve metin için boyut değiştirme eklendi
+        <br>- Çizim ve metin için renk değiştirme eklendi
+        <br>- Düzenleme görünümünü yatay modda kullanılabilir hale getirme
+        <br>
+        <br>v0.7.7-beta:
+        <br>- Albümler görünümünde yeni görüntülerin daha iyi gösterilmesi için küçük güncelleme
+        <br>
+        <br>v0.7.6-beta:
+        <br>- Kopyala veya taşı iletişim kutusundaki animasyon ve boşluk düzeltildi
+        <br>- Favoriler görünümündeki boşluk düzeltildi
+        <br>
+        <br>v0.7.5-beta:
+        <br>- Düzenleme görünümü eklendi (işlevsellik yok)
+        <br>- Düzgün yakınlaştırma/kaydırma/döndürme eklendi
+        <br>
+        <br>v0.7.3-beta:
+        <br>- Güvenli klasör ve çöp kutusuna bilgi iletişim kutuları eklendi
+        <br>- Akıllı albüm sıralaması
+        <br>- Tarihe göre arama eklendi
+        <br>- Bir sayfadan çıktıktan sonra veri akışlarını kapatma
+        <br>- Fotoğraf ızgarasındaki bugün ve dün etiketleri düzeltildi
+        <br>- Güvenli öğeler artık orijinal yerlerine geri dönüyor
+        <br>- Güvenli klasördeki tarihler düzeltildi (her şeyi bugün güvenceye alınmış gibi gösteriyordu)
+        <br>- Tüm medyada çözünürlüğün gösterilmemesi düzeltildi
+        <br>
+        <br>v0.7.2-beta:
+        <br>-Silme/kopyalama/taşıma/çöp kutusu sisteminin tamamen yeniden işlenmesi
+        <br>- Çöp kutusu artık sistemin geri kalanıyla birlikte çalışıyor
+        <br>- Izgaralara çok daha fazla akıcılık
+        <br>- Albümler artık alt klasörlerden fotoğraf göstermiyor
+        <br>- Performans iyileştirmeleri ve yaşam kalitesi şeyleri
+        <br>
+        <br>v0.7.0-beta:
+        <br>- Arama iyileştirmeleri
+        <br>- Seçimde kopyalama ve taşıma eklendi
+        <br>- Büyük seçim silme/geri yükleme işlemlerinde hız iyileştirmeleri
+        <br>- Alt çubuğu olmayan görünümlerde seçime daha akıcı geçişler
+        <br>
+        <br>v0.6.9-beta:
+        <br>- Medyayı favorilere ekleme
+        <br>- Kaydırma çubukları davranışının iyileştirilmesi
+        <br>- Güvenli klasörü yeniliğe göre sıralama
+        <br>- Bir sürü kod temizliği ve çeşitli performans iyileştirmeleri
+        <br>- Genel yanıt verme iyileştirmeleri
+        <br>- Açık modda gezinme çubuğu renkleri düzeltildi
+        <br>- Eylemler için uygun simgeler ve iletişim kutuları
+        <br>- Her ızgara görünümünde seçim mevcut
+        <br>- Video oynatıcı deneyimi daha iyi
+        <br>
+        <br>v0.6.6-beta
+        <br>- Izgaralara kaydırma çubukları eklendi
+        <br>- Büyük performans iyileştirmeleri
+        <br>- Izgaradan öğe seçme eklendi
+        <br>- Alt çubukları gösterirken yaşanan gecikme düzeltildi
+        <br>- Çöp kutusu artık temizlenebiliyor
+        <br>- Sonsuz derecede daha hızlı arama
+        <br>- Yön değişikliğinde tek fotoğraf görünümünün sıfırlanması düzeltildi
+        <br>- Aramanın seçime izin vermemesi düzeltildi
+        <br>
+    </p>
+    ]]></string>
+
     <!-- First Startup -->
     <string name="first_startup_dialog_title">Cihazdaki tüm albümler bulunsun mu?</string>
-    <string name="first_startup_dialog_body">Bu cihazdaki tüm albümleri arar ve Lavender Photos\'a ekler.\nNot: Eski kullanıcıların albümleri bu seçenek kullanılırsa silinecektir.</string>
+    <string name="first_startup_dialog_body">Bu cihazdaki tüm albümleri arar ve Lavender Photos\'a ekler.\nNot: Bu seçenek kullanılırsa eski kullanıcıların albümleri SİLİNECEKTİR.</string>
     <string name="first_startup_dialog_confirm_title">Ara!</string>
+
     <!-- Albums -->
     <string name="albums">Albümler</string>
     <string name="finding_albums_on_device">Albümler bulunuyor…</string>
@@ -14,30 +538,31 @@
     <string name="add_album">Albüm ekle</string>
     <string name="direct_path_album">Albüm eklemek için doğrudan bir yol kullanın</string>
     <string name="albums_main_list">Tümünü Ana Sayfada Göster</string>
-    <string name="albums_main_list_desc_1">Seçilen albümlerin fotoğrafları ana fotoğraflar görünümünde gösterilecektir</string>
-    <string name="albums_main_list_desc_2">Her şey ana fotoğraflar görünümünde gösterilir</string>
+    <string name="albums_main_list_desc_1">Seçilen albümlerin fotoğrafları ana fotoğraf görünümünde gösterilecektir</string>
+    <string name="albums_main_list_desc_2">Seçilen albümler ana fotoğraf görünümünde gösterilmek üzere kara listeye alınacaktır</string>
     <string name="albums_main_list_selected">Burada seçilen albümler ana fotoğraf görünümünde gösterilecektir</string>
+    <string name="albums_main_list_selected_inverse">Burada seçilen albümler ana fotoğraf görünümünde gösterilmeyecektir</string>
     <string name="albums_selected">Seçili Albümler</string>
     <string name="albums_auto_detect">Albümleri otomatik algıla</string>
     <string name="albums_auto_detect_desc">Bu cihazdaki medya içeren tüm klasörleri algılar ve albümler görünümüne ekler</string>
     <string name="albums_clear_list">Albüm listesini temizle</string>
-    <string name="albums_clear_list_desc">Kamera ve İndirilenler hariç tüm albümleri kaldırır</string>
+    <string name="albums_clear_list_desc">Kamera ve İndirilenler hariç tüm albümleri kaldır</string>
     <string name="albums_clear_list_done">Albüm listesi temizlendi</string>
-    <string name="albums_media_sorting">Medya Sıralama</string>
+    <string name="albums_media_sorting">Medya Sıralaması</string>
     <string name="albums_media_sorting_desc">Izgaralardaki fotoğraf ve videoların sıralamasını ayarlar</string>
     <string name="albums_is_custom">Bu özel bir albümdür</string>
     <string name="albums_custom">Özel Albüm</string>
-    <string name="albums_custom_desc">Herhangi bir yerden herhangi bir medyayı ekleyin</string>
-    <string name="albums_folder_desc">Bir klasörden medya yükleyin</string>
+    <string name="albums_custom_desc">Herhangi bir yerden herhangi bir medya ekleyin</string>
+    <string name="albums_folder_desc">Bir klasörden medya yükle</string>
     <string name="albums_non_existent">Böyle bir albüm mevcut değil</string>
-    <string name="albums_already_contains_all">Albüm zaten tüm ögeleri içeriyor</string>
+    <string name="albums_already_contains_all">Albüm zaten tüm öğeleri içeriyor</string>
     <string name="albums_remove">Albümü listeden kaldır</string>
     <string name="albums_pin">Bu albümü sabitle</string>
     <string name="albums_unpin">Bu albümün sabitlemesini kaldır</string>
     <string name="albums_info">Albüm Bilgisi</string>
     <string name="albums_path">Yol</string>
-    <string name="albums_id">Kimlik</string>
-    <string name="albums_item_count">Öge Sayısı</string>
+    <string name="albums_id">Id</string>
+    <string name="albums_item_count">Öğe Sayısı</string>
     <string name="albums_move_to">Albüme Taşı</string>
     <string name="albums_copy_to">Albüme Kopyala</string>
     <string name="albums_move_to_secure">Güvenli Klasöre Taşı</string>
@@ -45,11 +570,12 @@
     <string name="albums_type">Albüm Türü</string>
     <string name="albums_folder">Klasör Albümü</string>
     <string name="albums_add_failed">Albümler eklenemedi :&lt;</string>
+
     <!-- Tabs -->
     <string name="tabs">Sekmeler</string>
     <string name="tab_non_existent">Bu sekme mevcut değil!</string>
     <string name="tabs_default">Varsayılan Sekme</string>
-    <string name="tabs_default_desc">Lavender Photos başlangıçta otomatik olarak bu sekmeyi açacaktır</string>
+    <string name="tabs_default_desc">Lavender Photos başlangıçta bu sekmeyi otomatik olarak açacaktır</string>
     <string name="tabs_customize">Sekmeleri Özelleştir</string>
     <string name="tabs_customize_desc">Alt çubukta hangi sekmelerin mevcut olacağını değiştirin</string>
     <string name="tabs_navigate_to">%1$s sayfasına git</string>
@@ -60,36 +586,40 @@
     <string name="tabs_empty_params">Sekme parametreleri boş olamaz</string>
     <string name="tabs_max_reached">8\'den fazla sekme eklenemez</string>
     <string name="tabs_min_reached">En az bir sekme mevcut olmalıdır</string>
+
     <!-- Navigation -->
     <string name="return_to_previous_page">Önceki sayfaya dön</string>
+    <string name="navigation">Gezinme</string>
+
     <!-- App -->
     <string name="app_icon">Uygulama Simgesi</string>
     <string name="app_name_full">Lavender Photos</string>
     <string name="dev_name">kaii-lb</string>
     <string name="dev_title">Geliştirici</string>
     <string name="privacy_policy_title">Gizlilik Politikası</string>
-    <string name="privacy_policy">Öyle bir şey yok! Verilerinizin hiçbiri bu cihazdan başka bir yere gitmez. Üzerinde yapay zeka eğitilmez, bilgi toplamak için algoritmalar kullanılmaz, hiçbir şey yapılmaz. Lavender Photos her zaman gizlilik odaklı bir galeri uygulaması olmuştur ve olacaktır.</string>
+    <string name="privacy_policy">Öyle bir şey yok! Verilerinizin hiçbiri bu cihazdan başka bir yere gitmez. Üzerinde hiçbir yapay zeka eğitilmez, bilgi toplamak için hiçbir algoritma kullanılmaz, hiçbir şey. Lavender Photos, gizlilik odaklı bir galeri uygulamasıdır ve her zaman öyle kalacaktır.</string>
     <string name="i_swear_were_not_bad">verilerinizi gerçekten kullanmıyoruz</string>
     <string name="support">Destek &amp; Bağışlar</string>
     <string name="support_desc">uygulamayı canlı tutmama yardım edin</string>
     <string name="version_info">Sürüm Bilgisi</string>
     <string name="translation">Çeviri</string>
-    <string name="translation_desc">Lavender Photos\'u dünyaya taşıyın!</string>
+    <string name="translation_desc">Lavender Photos\'u dünyaya yayın!</string>
     <string name="licenses">Lisanslar</string>
     <string name="licenses_desc">kullanılan açık kaynaklı yazılımlar</string>
     <string name="licenses_extra">Ek Ayrıntılar</string>
     <string name="licenses_extra_desc">Lisanslar hakkında daha ayrıntılı bilgi görüntüleyin</string>
     <string name="special_thanks_to">Özel teşekkürler:</string>
+
     <!-- Updates -->
     <string name="updates">Güncellemeler</string>
     <string name="updates_desc">uygulamayı güncel tutun</string>
     <string name="updates_check">Güncellemeleri Kontrol Et</string>
     <string name="updates_check_desc">Uygulamayı açtığınızda yeni sürüm olduğunda bildirir. Güncellemeyi otomatik olarak yüklemez</string>
     <string name="updates_whats_new">Yenilikler</string>
-    <string name="updates_notice">İndirme Notu</string>
+    <string name="updates_notice">İndirme Uyarısı</string>
     <string name="updates_notice_desc">
         <![CDATA[
-            <p>Bu güncelleyici, apk\'ları <a href="https://github.com/kaii-lb/LavenderPhotos/releases">GitHub Sürümleri</a>\'nden indirir, bu da
+            <p>Bu güncelleyici, apk\'leri <a href="https://github.com/kaii-lb/LavenderPhotos/releases">GitHub Sürümleri</a>\'nden indirir, bu da
                 IzzyOnDroid, F-Droid veya başka bir yerde gerçekleştirilen ek tarama ve testlerden geçmedikleri anlamına gelir.
 
                 <br><br>GitHub\'da barındırılan yapılar her zaman geliştirici (kaii-lb) tarafından imzalanır, kontrol edilir ve doğrulanır, ancak bunları kullanıp kullanmamak size kalmıştır.
@@ -104,30 +634,36 @@
     <string name="updates_failed">Güncellemeler kontrol edilemedi</string>
     <string name="updates_checking">Güncellemeler Kontrol Ediliyor</string>
     <string name="updates_start">Güncellemeyi Başlat</string>
+
     <!-- Secure Folder -->
-    <string name="locked_folder_help_top">Kilitli Klasör, bu cihazdaki resimleriniz ve videolarınız için güvenli bir klasördür.\nGüvenliğe alınan medya hiçbir yere yüklenmez ve her zaman cihaz üzerinde, cihazınızın şifresine veya parmak izi verilerine özgü bir anahtarla şifrelenir.</string>
-    <string name="locked_folder_help_bottom">Şifre unutulursa veya parmak izi kaldırılırsa güvenli veriler geri yüklenemez.</string>
+    <string name="locked_folder_help_top">Güvenli Klasör, bu cihazdaki resimleriniz ve videolarınız için güvenli bir klasördür.\nGüvenli hale getirilen medya hiçbir yere yüklenmez ve her zaman cihazınızda, cihazınızın parolasına veya parmak izi verilerine özgü bir anahtarla şifrelenmiş olarak kalır.</string>
+    <string name="locked_folder_help_bottom">Parola unutulursa veya parmak izi kaldırılırsa güvenli veriler geri yüklenemez.</string>
     <string name="secure_folder">Güvenli Klasör</string>
     <string name="secure_sharing">Medya Paylaşımı</string>
     <string name="secure_processing">Bu medya işlenirken bekleyin</string>
     <string name="secure_share_media">Bu güvenli medyayı paylaş</string>
     <string name="secure_encrypting">Dosyalar Şifreleniyor</string>
     <string name="secure_decrypting">Dosyaların Şifresi Çözülüyor</string>
+    <string name="secure_getting_file_info">Dosya bilgileri alınıyor…</string>
+    <string name="secure_please_wait">Lütfen bekleyin…</string>
+
     <!-- Data and Backup -->
-    <string name="export_unenc_backup">Şifrelenmemiş Yedeklemeyi Dışa Aktar</string>
-    <string name="export_unenc_backup_desc">Tüm güvenli ögelerinizin şifrelenmemiş bir klasörünü dışa aktarır</string>
-    <string name="exporting_backup">Yedekleme Dışa Aktarılıyor…</string>
-    <string name="export_raw_backup">Ham Yedeklemeyi Dışa Aktar</string>
-    <string name="export_raw_backup_desc">Tüm güvenli ögelerinizin ham (şifreli veya değil) bir klasörünü dışa aktarır</string>
-    <string name="export_unenc_zip">Yedeklemeyi Zip\'e Aktar</string>
-    <string name="export_unenc_zip_desc">Tüm güvenli ögelerinizin bir zip dosyasını dışa aktarır</string>
-    <string name="export_fav_to_folder">Yedeklemeyi Klasöre Aktar</string>
-    <string name="export_fav_to_folder_desc">Tüm favori ögelerinizi bir klasöre aktarır</string>
-    <string name="export_fav_to_zip_desc">Tüm favori ögelerinizin bir zip dosyasını dışa aktarır</string>
+    <string name="export_unenc_backup">Şifresiz Yedek Dışa Aktar</string>
+    <string name="export_unenc_backup_desc">Tüm güvenli öğelerinizin şifrelenmemiş bir klasörünü dışa aktarır</string>
+    <string name="exporting_backup">Yedek Dışa Aktarılıyor…</string>
+    <string name="export_raw_backup">Ham Yedek Dışa Aktar</string>
+    <string name="export_raw_backup_desc">Tüm güvenli öğelerinizin ham (şifreli veya değil) bir klasörünü dışa aktarır</string>
+    <string name="export_unenc_zip">Yedeği Zip Olarak Dışa Aktar</string>
+    <string name="export_unenc_zip_desc">Tüm güvenli öğelerinizin bir zip dosyasını dışa aktarır</string>
+    <string name="export_fav_to_folder">Yedeği Klasöre Dışa Aktar</string>
+    <string name="export_fav_to_folder_desc">Tüm favori öğelerinizi bir klasöre dışa aktarır</string>
+    <string name="export_fav_to_zip_desc">Tüm favori öğelerinizin bir zip dosyasını dışa aktarır</string>
     <string name="data_and_backup">Veri &amp; Yedekleme</string>
+
     <!-- Favourites -->
     <string name="favourites">Favoriler</string>
     <string name="favourites_add_this">Bu medyayı favorilere ekle</string>
+
     <!-- Debugging -->
     <string name="debugging">Hata Ayıklama</string>
     <string name="debugging_desc">Sorunları ayıklamak için araçlar</string>
@@ -140,39 +676,43 @@
     <string name="log_file_non_existent">Henüz bir günlük dosyası kaydedilmedi.</string>
     <string name="album_add_path">Albüm Yolu Ekle</string>
     <string name="album_add">Albüm ekle</string>
-    <string name="album_add_path_placeholder">Download/Movies</string>
+    <string name="album_add_path_placeholder">İndirilenler/Filmler</string>
     <string name="debugging_spawn_loading_snackbar">Yükleme Bildirim Çubuğu Oluştur</string>
-    <string name="debugging_spawn_loading_snackbar_desc">Compose aptalca bir şey yapmaya karar verdiğinde lavender bildirim çubuklarını ayıklayın</string>
+    <string name="debugging_spawn_loading_snackbar_desc">Compose aptalca bir şey yapmaya karar verdiğinde lavender bildirim çubuklarında hata ayıklayın</string>
     <string name="debugging_loading">Hata ayıklanıyor…</string>
     <string name="debugging_spawn_message_snackbar">Mesaj Bildirim Çubuğu Oluştur</string>
     <string name="debugging_spawn_message_snackbar_desc">Bir özelliği kullanımdan kaldırıp eşdeğerini eklememek gibi :D</string>
+
     <!-- Video -->
     <string name="video">Video</string>
     <string name="video_auto_play">Videoları Otomatik Oynat</string>
-    <string name="video_auto_play_desc">Videolar ekranda göründüğü anda oynatmaya başla</string>
+    <string name="video_auto_play_desc">Videolar ekranda görünür görünmez oynatmaya başla</string>
     <string name="video_start_muted">Videolar Sessiz Başlasın</string>
     <string name="video_start_muted_desc">Video oynatmaya ilk başlarken ses çalma</string>
     <string name="file_is_a_video">Dosya bir video</string>
-    <string name="video_seek_icon_desc">Kullanıcının hangi yöne ilerlediğini gösterir</string>
-    <string name="video_lock_screen">Yanlış dokunmaları önlemek için ekranı kilitle</string>
+    <string name="video_seek_icon_desc">Kullanıcının hangi yöne arama yaptığını gösterir</string>
+    <string name="video_lock_screen">Yanlış dokunmayı önlemek için ekranı kilitle</string>
     <string name="video_mute_toggle">Bu videoyu sessize al veya sesi aç</string>
-    <string name="video_seek_back">5 saniye geri sar</string>
-    <string name="video_seek_front">5 saniye ileri sar</string>
-    <string name="video_play_toggle">Bu videoyu oynat/duraklat</string>
+    <string name="video_seek_back">5 saniye geri atla</string>
+    <string name="video_seek_front">5 saniye ileri atla</string>
+    <string name="video_play_toggle">Bu video için oynat/duraklat</string>
     <string name="video_decrypting">Video şifresi çözülüyor, lütfen bekleyin</string>
+    <string name="video_open_externally">Harici Oynatıcıda Aç</string>
+    <string name="video_open_externally_desc">Izgaradan dokunulduğunda videoların ne ile açılacağını sor</string>
+
     <!-- Editing -->
     <string name="edit">Düzenle</string>
     <string name="editing">Düzenleniyor</string>
     <string name="editing_overwrite_on_save">Kaydederken Üzerine Yaz</string>
     <string name="editing_overwrite_on_save_desc">Medya düzenlerken kopya kaydetmek yerine varsayılan olarak üzerine yaz</string>
     <string name="editing_exit_on_save">Kaydederken Çık</string>
-    <string name="editing_exit_on_save_desc">Değişiklikleri kaydettiğinizde düzenleme görünümünden otomatik olarak çıkın</string>
+    <string name="editing_exit_on_save_desc">Değişiklikleri kaydettiğinizde düzenleme görünümünden otomatik olarak çık</string>
     <string name="editing_discard">Vazgeç</string>
     <string name="editing_discard_desc">Devam eden düzenlemelerden vazgeçilsin mi?</string>
     <string name="editing_exit">Çık</string>
     <string name="editing_exit_desc">Düzenleme görünümünden çıkılsın mı?</string>
     <string name="editing_close_desc">Düzenleme görünümünü kapat</string>
-    <string name="editing_save">Kopyasını Kaydet</string>
+    <string name="editing_save">Kopya Kaydet</string>
     <string name="editing_overwrite">Kaydet</string>
     <string name="editing_save_option_desc">Kaydetme seçeneklerini göster</string>
     <string name="editing_overwrite_desc">Orijinalin Üzerine Yaz</string>
@@ -181,65 +721,102 @@
     <string name="editing_crop">Kırp</string>
     <string name="editing_adjust">Ayarla</string>
     <string name="editing_filters">Filtreler</string>
-    <string name="editing_draw">Çizim</string>
+    <string name="editing_draw">Çiz</string>
     <string name="editing_rotate">Döndür</string>
     <string name="editing_ratio">Oran</string>
     <string name="editing_reset">Sıfırla</string>
     <string name="editing_contrast">Kontrast</string>
     <string name="editing_brightness">Parlaklık</string>
     <string name="editing_saturation">Doygunluk</string>
-    <string name="editing_black_point">Siyah Noktası</string>
-    <string name="editing_white_point">Beyaz Noktası</string>
+    <string name="editing_black_point">Siyah Nokta</string>
+    <string name="editing_white_point">Beyaz Nokta</string>
     <string name="editing_shadows">Gölgeler</string>
     <string name="editing_warmth">Sıcaklık</string>
     <string name="editing_color_tint">Renk Tonu</string>
-    <string name="editing_highlights">Vurgular</string>
+    <string name="editing_highlights">Açık Tonlar</string>
     <string name="editing_pencil">Kalem</string>
     <string name="editing_highlighter">Vurgulayıcı</string>
     <string name="editing_text">Metin</string>
-    <string name="editing_blur">Bulanıklaştır</string>
     <string name="editing_image">Görüntü</string>
+    <string name="editing_blur">Bulanıklaştır</string>
+    <string name="editing_erase">Sil</string>
     <string name="editing_undo_all">Tüm eylemleri geri al</string>
     <string name="editing_undo_last">Son eylemi geri al</string>
     <string name="editing_scale_paint">Fırça veya metin boyutunu değiştir</string>
-    <string name="editing_scale_zoom">Yazı tipi boyutunu ölçeklemek yerine yakınlaştır</string>
+    <string name="editing_scale_zoom">Yazı tipi boyutunu ölçeklendirmek yerine yakınlaştır</string>
     <string name="editing_scale_text">Seçili metnin yazı tipi boyutunu değiştir</string>
-    <string name="editing_done">Düzenlenen resim kaydedildi!</string>
-    <string name="editing_failed">Düzenlenen resim kaydedilemedi</string>
+    <string name="editing_saving">Düzenlenen görüntü kaydediliyor</string>
+    <string name="editing_done">Düzenlenen görüntü kaydedildi!</string>
+    <string name="editing_failed">Düzenlenen görüntü kaydedilemedi</string>
     <string name="editing_invert">Ters Çevir</string>
+    <string name="editing_upload_image">Seç</string>
+    <string name="editing_upload_image_failed">Görüntü seçilemedi</string>
+    <string name="editing_bitrate">Bit Hızı</string>
+    <string name="editing_bitrate_unit">Saniyedeki bit sayısı</string>
+    <string name="editing_open_with_copying_video">Video işleniyor…</string>
+    <string name="editing_open_with_copying_image">Görüntü işleniyor…</string>
+
     <!-- Editing Filters -->
+    <string name="filter">Filtre</string>
+    <string name="filter_custom">Özel Filtre</string>
     <string name="filter_none">Yok</string>
+    <string name="filter_none_desc">çünkü kimin ihtiyacı var ki</string>
     <string name="filter_inverted">Ters Çevrilmiş</string>
+    <string name="filter_inverted_desc">her şey tersine döndü</string>
     <string name="filter_vibrant">Canlı</string>
-    <string name="filter_bw">S&amp;B</string>
-    <string name="filter_film">Sinematik</string>
-    <string name="filter_grayscale">Gri Tonlamalı</string>
+    <string name="filter_vibrant_desc">hayat güzel</string>
+    <string name="filter_bw">Siyah Beyaz</string>
+    <string name="filter_bw_desc">50\'lerde takılıp kalmış</string>
+    <string name="filter_film">Film</string>
+    <string name="filter_film_desc">nolan yükselişte</string>
+    <string name="filter_grayscale">Gri Tonlama</string>
+    <string name="filter_grayscale_desc">çooook ürkütücü</string>
     <string name="filter_sepia">Sepya</string>
+    <string name="filter_sepia_desc">mürekkep balığı. işte bu yüzden.</string>
     <string name="filter_bgr">BGR</string>
+    <string name="filter_bgr_desc">bunu neden kullanıyorsun?</string>
     <string name="filter_warm">Sıcak</string>
+    <string name="filter_warm_desc">rahat bir hava</string>
     <string name="filter_cool">Soğuk</string>
-    <string name="filter_vintage">Eski</string>
+    <string name="filter_cool_desc">kış havası</string>
+    <string name="filter_vintage">Vintage</string>
+    <string name="filter_vintage_desc">nostalji rüzgarları</string>
     <string name="filter_posterize">Posterleştir</string>
+    <string name="filter_posterize_desc">az renk çok iş</string>
     <string name="filter_glow">Parıltı</string>
+    <string name="filter_glow_desc">karanlıkta</string>
     <string name="filter_mushrooms">Mantarlar</string>
+    <string name="filter_mushrooms_desc">ımm.</string>
     <string name="filter_solar">Güneş</string>
+    <string name="filter_solar_desc">Güneş patlaması size doğru geliyor</string>
     <string name="filter_peachy">Şeftali</string>
+    <string name="filter_peachy_desc">tatlı ve tüylü</string>
     <string name="filter_pastel">Pastel</string>
+    <string name="filter_pastel_desc">çünkü çizim yapamıyorum</string>
     <string name="filter_rustic">Rustik</string>
-    <string name="filter_dried">Kurutulmuş</string>
+    <string name="filter_rustic_desc">ormanda bulundu</string>
+    <string name="filter_dried">Kurumuş</string>
+    <string name="filter_dried_desc">güneşte bırakılmış</string>
     <string name="filter_toast">Kızarmış</string>
-    <string name="filter_shimmer">Işıltı</string>
+    <string name="filter_toast_desc">güzel maillard rengi</string>
+    <string name="filter_shimmer">Pırıltı</string>
+    <string name="filter_shimmer_desc">nazar değmesin</string>
+    <string name="filter_select">Seç</string>
+    <string name="filter_selected">Seçili</string>
+
     <!-- Video Editing -->
     <string name="editing_trim">Kırp</string>
     <string name="editing_export_video_loading">Video Dışa Aktarılıyor…</string>
+    <string name="editing_export_video_loading_body">Adım %1$d / %2$d</string>
     <string name="editing_export_video_failed">Video dışa aktarılamadı</string>
     <string name="editing_export_video_success">Video Dışa Aktarıldı!</string>
     <string name="editing_volume_display">Ses: %s</string>
     <string name="editing_speed_display">Oynatma Hızı: %s</string>
-    <string name="editing_framerate_display">Kare Hızı: %s</string>
+    <string name="editing_framerate_display">Kare hızı: %s</string>
     <string name="editing_volume">Ses</string>
     <string name="editing_wilson">Hız</string>
     <string name="editing_fps">FPS</string>
+
     <!-- Settings -->
     <string name="settings">Ayarlar</string>
     <string name="settings_general">Genel</string>
@@ -248,7 +825,7 @@
     <string name="settings_dark_theme">Koyu Tema</string>
     <string name="settings_light_theme">Açık Tema</string>
     <string name="settings_Auto_theme">Otomatik Tema</string>
-    <string name="settings_look_and_feel">Görünüm</string>
+    <string name="settings_look_and_feel">Görünüm &amp; His</string>
     <string name="settings_look_and_feel_desc">Uygulamanın nasıl göründüğünü değiştirin</string>
     <string name="settings_theme_follow">Uygulama sistem temasını takip eder</string>
     <string name="settings_theme_dark">Uygulama her zaman koyu temadadır</string>
@@ -259,40 +836,52 @@
     <string name="settings_storage_desc">Performans ve alan seçenekleri</string>
     <string name="settings_storage">Depolama</string>
     <string name="settings_memory">Bellek</string>
-    <string name="settings_storage_thumbnails_size">Küçük resimler şu anda %1$s piksel. Daha yüksek değerler daha fazla %2$s kullanır</string>
+    <string name="settings_storage_thumbnails_size">Küçük resimler şu anda %1$s pikseldir. Daha yüksek değerler daha fazla %2$s kullanır</string>
     <string name="settings_storage_thumbnails_max">Küçük resimler mümkün olan en yüksek çözünürlükte gösterilir. Bu en çok %1$s kullanır</string>
     <string name="settings_storage_thumbnails_cache">Küçük Resimleri Önbelleğe Al</string>
-    <string name="settings_storage_thumbnails_cache_desc">Depolama alanı kullanımı pahasına daha hızlı yüklemeye olanak tanır</string>
+    <string name="settings_storage_thumbnails_cache_desc">Depolama kullanım maliyetine karşılık daha hızlı yükleme sağlar</string>
     <string name="settings_storage_thumbnails_resolution">Küçük Resim Çözünürlüğü</string>
     <string name="settings_storage_thumbnails_notice">Daha yüksek çözünürlükler daha fazla depolama alanı kullanır</string>
     <string name="settings_storage_thumbnails_clear_cache">Küçük resim önbelleğini temizle</string>
     <string name="settings_storage_thumbnails_clear_cache_desc">Depolama alanını boşaltmak için küçük resim önbelleklerini siler</string>
     <string name="settings_clear">Temizle</string>
-    <string name="settings_clear_cache_desc">Bu, bu cihazdaki tüm küçük resim önbelleklerini silerek depolama alanını boşaltacaktır. Bir sonraki başlangıçta küçük resim yüklemesi daha uzun sürecektir.</string>
+    <string name="settings_clear_cache_desc">Bu, bu cihazdaki tüm küçük resim önbelleklerini silerek depolama alanını boşaltacaktır. Bir sonraki başlatmada küçük resim yüklemesi daha uzun sürecektir.</string>
     <string name="settings_about_and_updates">Hakkında &amp; Güncellemeler</string>
+    <string name="settings_behaviour">Davranış</string>
+    <string name="settings_behaviour_desc">Uygulamanın nasıl çalıştığını değiştirin</string>
+    <string name="settings_navigation_exit_immediately">Hemen Çık</string>
+    <string name="settings_navigation_exit_immediately_desc">Geri düğmesine basıldığında ana fotoğraf görünümüne geri dönmeyi atlar</string>
+    <string name="settings_views">Görünümler</string>
+    <string name="settings_rotate_in_views">Döndürmeye İzin Ver</string>
+    <string name="settings_rotate_in_views_desc">Medya görüntülerken hareketle döndürmeyi etkinleştirir</string>
+
     <!-- Trash -->
     <string name="trash_bin_short">Çöp</string>
     <string name="trash_bin">Çöp Kutusu</string>
-    <string name="trash_auto_delete">Çöp kutusundaki ögeleri %s gün sonra otomatik olarak siler</string>
+    <string name="trash_auto_delete">Çöp kutusundaki öğeleri %s gün sonra otomatik olarak siler</string>
     <string name="trash_days">gün</string>
-    <string name="trash_no_auto_delete">Çöp kutusundaki ögeler otomatik olarak silinmeyecektir</string>
+    <string name="trash_no_auto_delete">Çöp kutusundaki öğeler otomatik olarak silinmeyecek</string>
     <string name="trash_auto_delete_interval">Otomatik silme aralığı</string>
-    <string name="trash_auto_delete_notice">Çöp kutusunda bu tarihten daha eski fotoğraflar kalıcı olarak silinecektir</string>
+    <string name="trash_auto_delete_notice">Bu tarihten eski olan çöp kutusundaki fotoğraflar kalıcı olarak silinecektir</string>
     <string name="trash_empty">Çöp kutusu boşaltılsın mı?</string>
-    <string name="trash_empty_desc">Bu, çöp kutusundaki tüm ögeleri siler, bu işlem geri alınamaz</string>
+    <string name="trash_empty_desc">Bu, çöp kutusundaki tüm öğeleri siler, bu işlem geri alınamaz</string>
     <string name="trash_empty_confirm">Boşalt</string>
-    <!-- Permission -->
+
+    <!-- Permissions -->
     <string name="permissions">İzin</string>
     <string name="permissions_media_manager">Medya Yöneticisi</string>
-    <string name="permissions_media_manager_desc">Daha iyi ve daha hızlı çöpe atma/silme/kopyalama/taşıma</string>
+    <string name="permissions_media_manager_desc">Daha iyi ve daha hızlı çöp/silme/kopyalama/taşıma</string>
     <string name="permissions_media_management">Medya Yönetimi</string>
-    <string name="permissions_confirm_to_delete">Silme İşlemini Onayla</string>
+    <string name="permissions_confirm_to_delete">Silmeyi Onayla</string>
     <string name="permissions_confirm_too_delete_desc">Herhangi bir medyayı silmeden önce onay iste</string>
-    <string name="permissions_overwrite_date_on_move">Taşıma sırasında tarihi koru</string>
-    <string name="permissions_overwrite_date_on_move_desc">Kopyalama veya taşıma sırasında medyanın tarihini korumaya çalışır</string>
+    <string name="permissions_overwrite_date_on_move">Taşımada tarihi koru</string>
+    <string name="permissions_overwrite_date_on_move_desc">Kopyalama veya taşıma sırasında medyanın tarihini korur</string>
     <string name="permissions_needed">İzin Gerekli</string>
-    <string name="permissions_needed_desc">Lavender Photos\'un bu albüme erişmek için izne ihtiyacı var. Lütfen bir sonraki ekranda "Bu Klasörü Kullan" seçeneğini seçerek izin verin. Bu tek seferlik bir izindir.</string>
+    <string name="permissions_needed_desc">Lavender Photos\'un bu albüme erişmek için izne ihtiyacı var. Lütfen bir sonraki ekranda "Bu Klasörü Kullan" seçeneğini seçerek izni verin. Bu tek seferlik bir izindir.</string>
     <string name="permissions_grant">İzin Ver</string>
+    <string name="permissions_do_not_trash">Çöp Kutusunu Kullanma</string>
+    <string name="permissions_do_not_trash_desc">Öğeleri önce Çöp Kutusuna taşımadan hemen ve kalıcı olarak sil</string>
+
     <!-- Media -->
     <string name="media">Medya</string>
     <string name="sort_indicator">Sıralama göstergesi</string>
@@ -305,56 +894,63 @@
     <string name="media_share">Paylaş</string>
     <string name="media_delete">Sil</string>
     <string name="media_delete_confirm">Bu medya silinsin mi?</string>
-    <string name="media_trash_confirm">Seçili ögeler çöp kutusuna taşınsın mı?</string>
-    <string name="media_secure">Güvenliğe Al</string>
+    <string name="media_trash_confirm">Seçili öğeler çöp kutusuna taşınsın mı?</string>
+    <string name="media_secure">Güvenceye Al</string>
     <string name="media_secure_confirm">Bu medya Güvenli Klasöre taşınsın mı?</string>
     <string name="media_delete_permanently">Kalıcı Olarak Sil</string>
     <string name="media_delete_permanently_confirm">Bu medya kalıcı olarak silinsin mi?</string>
     <string name="media_cancel">İptal</string>
     <string name="media_restore">Geri Yükle</string>
-    <string name="media_restore_confirm">Bu ögeler geri yüklensin mi?</string>
+    <string name="media_restore_confirm">Bu öğeler geri yüklensin mi?</string>
     <string name="media_restore_processing">Dosyalar Geri Yükleniyor</string>
     <string name="media_progress">İlerleme:</string>
     <string name="media_move">Taşı</string>
     <string name="media_copy">Kopyala</string>
     <string name="media_rename">Yeniden Adlandır</string>
     <string name="media_select">Seç</string>
-    <string name="media_exif_erase">EXIF verileri silinsin mi?</string>
+    <string name="media_exif_erase">EXIF verilerini sil</string>
     <string name="media_exif_done">EXIF verileri kaldırıldı</string>
     <string name="media_exif_failed">EXIF verileri silinemedi</string>
     <string name="media_erase">Sil</string>
     <string name="media_confirm">Onayla</string>
     <string name="media_okay">Tamam</string>
-    <string name="media_move_copy_list_search_bar">Bir albüm arayın</string>
+    <string name="media_move_copy_list_search_bar">Bir albüm ara</string>
     <string name="media_copy_snackbar_title">Medya kopyalanıyor…</string>
     <string name="media_move_snackbar_title">Medya taşınıyor…</string>
     <string name="media_delete_snackbar_title">Medya siliniyor…</string>
     <string name="media_restore_snackbar_title">Medya geri yükleniyor…</string>
-    <string name="media_operate_snackbar_body">%2$d medyanın %1$d tanesi tamamlandı</string>
+    <string name="media_operate_snackbar_body">%2$d üzerinden %1$d tamamlandı</string>
+    <string name="media_tools">Araçlar</string>
+    <string name="media_information">Bilgi</string>
+
     <!-- Search -->
-    <string name="search_photo_name">Bir fotoğraf arayın</string>
-    <string name="search_photo_date">Bir fotoğrafın tarihini arayın</string>
-    <string name="search_photo_day">Güne göre arama yapın</string>
+    <string name="search_photo_name">Bir fotoğraf ara</string>
+    <string name="search_photo_date">Bir fotoğrafın tarihini ara</string>
+    <string name="search_photo_day">Güne göre ara</string>
+
     <!-- Explanations -->
     <string name="feature_unimplemented">Uygulanmadı</string>
     <string name="feature_editing_unimplemented">Videoları düzenleme, Lavender Photos\'un %1$s sürümü itibarıyla henüz uygulanmamıştır. Bu özellik en kısa sürede eklenecektir, sabrınız için teşekkür ederiz.</string>
-    <string name="edit_desc">Lavender Photos tarafından %1$s tarihinde düzenlenen dosya</string>
+    <string name="edit_desc">Lavender Photos tarafından %1$s tarihinde düzenlenmiş dosya</string>
     <string name="custom_album_media_not_custom_title">Özel Olmayan Medya</string>
     <string name="custom_album_media_not_custom_explanation">Bu albümdeki bazı medyalar gerçek klasörlere aittir, Lavender Photos bu medyayı silmeden kaldıramaz, bu yüzden yok sayılacaktır.</string>
     <string name="custom_album_remove_media">Kaldır</string>
-    <string name="custom_album_remove_media_desc">Bu ögeler albümden kaldırılsın mı?</string>
+    <string name="custom_album_remove_media_desc">Bu öğeler albümden kaldırılsın mı?</string>
     <string name="action_cannot_be_undone">Bu işlem geri alınamaz!</string>
+
     <!-- Miscellaneous -->
     <string name="show_options">Daha fazla seçenek göster</string>
+    <string name="empty_string" />
     <string name="more_options">Daha Fazla Seçenek</string>
     <string name="set_as">Farklı Ayarla</string>
-    <string name="set_as_wallpaper">Duvar Kağıdı Olarak Ayarla</string>
+    <string name="set_as_wallpaper">Duvar Kağıdı Yap</string>
     <string name="wallpaper_homescreen">Ana Ekran</string>
     <string name="wallpaper_lockscreen">Kilit Ekranı</string>
     <string name="wallpaper_Both">Her İki Ekran</string>
+    <string name="wallpaper_scrollable">Kaydırılabilir</string>
     <string name="more_info">Daha Fazla Bilgi</string>
     <string name="not_available">Mevcut Değil</string>
-    <string name="not_available_desc">Uygulama Beta sürümünde olduğu için bu özellik henüz mevcut değil, lütfen gelecekteki bir sürümü bekleyin.</string>
+    <string name="not_available_desc">Bu özellik, uygulama Beta aşamasında olduğu için henüz mevcut değil, lütfen gelecekteki bir sürümü bekleyin.</string>
     <string name="none">Yok</string>
     <string name="pixels">Piksel</string>
     <string name="paths_should_be_relative">Yol göreceli olmalıdır</string>
@@ -362,6 +958,7 @@
     <string name="yesterday">Dün</string>
     <string name="help">Yardım</string>
     <string name="apply">Uygula</string>
+
     <!-- Bottom Sheets -->
     <string name="bottom_sheets_enter_text">Metin Girin</string>
     <string name="bottom_sheets_freeform">Serbest Biçim</string>
@@ -374,25 +971,27 @@
     <string name="bottom_sheets_four_by_three">4:3</string>
     <string name="bottom_sheets_three_by_two">3:2</string>
     <string name="bottom_sheets_ratio_selected">Bu kırpma oranı seçili</string>
+
     <!-- Error Views -->
-    <string name="error_views_trash_empty">Çöpe atılan ögeler burada görünür</string>
+    <string name="error_views_trash_empty">Çöpe atılan öğeler burada görünür</string>
     <string name="error_views_trash_prefix">Çöpe Atılma Tarihi</string>
     <string name="error_views_album_empty">Bu albüm boş</string>
     <string name="error_views_search_empty">Birkaç fotoğraf arayın!</string>
     <string name="error_views_search_not_found">Herhangi bir eşleşme bulunamadı</string>
-    <string name="error_views_secure_empty">Medyalarınızdan hiçbiri korunmuyor!</string>
-    <string name="error_views_secure_prefix">Güvenliğe Alınma Tarihi</string>
+    <string name="error_views_secure_empty">Medyalarınızın hiçbiri korunmuyor!</string>
+    <string name="error_views_secure_prefix">Güvenceye Alınma Tarihi</string>
     <string name="error_views_favourites_empty">En değerli anılarınızı ekleyin!</string>
     <string name="error_views_folder_non_existent">Klasör mevcut değil</string>
     <string name="error_views_error_page">Bu bir hata sayfasıdır</string>
+
     <!-- Look and Feel -->
     <string name="look_and_feel_styling_separator">Stil</string>
-    <string name="look_and_feel_date_format">Tarih Biçimi</string>
-    <string name="look_and_feel_date_format_desc">Tarihlerin nasıl gösterileceğini değiştirin</string>
+    <string name="look_and_feel_date_format">Tarih Formatı</string>
+    <string name="look_and_feel_date_format_desc">Tarihlerin nasıl görüntüleneceğini değiştirin</string>
     <string name="look_and_feel_date_format_default">Varsayılan</string>
     <string name="look_and_feel_date_format_short">Kısa</string>
     <string name="look_and_feel_date_format_compressed">Sıkıştırılmış</string>
-    <string name="look_and_feel_theme_amoled">Amoled Siyahı</string>
+    <string name="look_and_feel_theme_amoled">Amoled Siyah</string>
     <string name="look_and_feel_theme_amoled_desc">Amoled cihazlarda güç verimliliği için arka plan rengini siyaha ayarlar</string>
     <string name="look_and_feel_column_size">Sütun Boyutu: %1$d</string>
     <string name="look_and_feel_album_column_size">Albüm Sütun Boyutu: %1$d</string>
@@ -402,10 +1001,13 @@
     <string name="look_and_feel_nav">Gezinme</string>
     <string name="look_and_feel_extra_secure_nav">Ekstra Güvenli Klasör girişi</string>
     <string name="look_and_feel_extra_secure_nav_desc">Uygulamanın ana iletişim kutusundan Güvenli Klasöre gitmek için bir seçenek gösterir</string>
+    <string name="look_and_feel_rounded_corners">Yuvarlak Küçük Resim Köşeleri</string>
+    <string name="look_and_feel_rounded_corners_desc">Fotoğraf ızgaralarındaki küçük resimlerde dairesel köşeler</string>
+
     <!-- Immich -->
     <string name="immich">Immich</string>
     <string name="immich_title">Immich Yedekleme</string>
-    <string name="immich_desc">Kendi barındırdığınız Immich sunucusuna yedekleyin</string>
+    <string name="immich_desc">Kendi barındırdığınız Immich sunucusuna yedekleme</string>
     <string name="immich_account">Immich Hesabı</string>
     <string name="immich_login_unavailable">Giriş Yapılmadı</string>
     <string name="immich_login_unavailable_desc">Şu anda bağlı bir immich hesabı yok</string>
@@ -415,16 +1017,16 @@
     <string name="immich_login_confirm">Giriş Yap</string>
     <string name="immich_login_ongoing">Giriş yapılıyor…</string>
     <string name="immich_login_successful">Giriş başarılı!</string>
-    <string name="immich_login_failed">Giriş başarısız oldu</string>
+    <string name="immich_login_failed">Giriş başarısız</string>
     <string name="immich_endpoint_base">Sunucu Adresi</string>
     <string name="immich_endpoint_base_desc">Immich yedekleme sunucusuna bağlantı</string>
-    <string name="immich_endpoint_base_placeholder">https://my.immich.server.com/</string>
+    <string name="immich_endpoint_base_placeholder">https://sunucum.immich.com/</string>
     <string name="immich_clear_endpoint">Sunucu Kaldırılsın mı?</string>
     <string name="immich_clear_endpoint_desc">Bu sunucu adresini kaldırmak istediğinizden emin misiniz?</string>
     <string name="immich_logout">Çıkış Yapılsın mı?</string>
     <string name="immich_logout_desc">Bu hesaptan çıkış yapmak istediğinizden emin misiniz?</string>
     <string name="immich_albums_clear">Yedekleme Albümlerini Temizle</string>
-    <string name="immich_albums_clear_desc">Tüm albümleri yedeklemeyi durdur</string>
+    <string name="immich_albums_clear_desc">Tüm albümlerin yedeklenmesini durdur</string>
     <string name="immich_albums_clear_confirm">Tüm albümleri yedeklemeden kaldırmak istediğinizden emin misiniz?</string>
     <string name="immich_delete_album">Bu albüm silinsin mi?</string>
     <string name="immich_delete_album_desc">Bu işlem geri alınamaz!</string>
@@ -439,41 +1041,45 @@
     <string name="immich_operation_complete">İşlem tamamlandı!</string>
     <string name="immich_state_unknown">Bilinmiyor</string>
     <string name="immich_state_loading">Yükleniyor…</string>
-    <string name="immich_sync_album">Albüm ve Immich\'i Senkronize Et</string>
-    <string name="immich_sync_album_out_of_sync_desc">"Fazladan: Albüm: %1$s. Immich: %2$s"</string>
+    <string name="immich_sync_album">Albümü ve Immich\'i Senkronize Et</string>
+    <string name="immich_sync_album_out_of_sync_desc">"Ekstra: Albüm: %1$s. Immich: %2$s"</string>
     <string name="immich_album_delete">Bu albüm kaldırılsın mı?</string>
     <string name="immich_album_delete_desc">Bu albümü Immich senkronizasyonundan kaldırır</string>
     <string name="immich_album_delete_include_media">İçeriği Immich\'ten sil</string>
     <string name="immich_album_delete_full">Albümü Kaldır</string>
-    <string name="immich_auth_passowrd">Şifre</string>
+    <string name="immich_auth_passowrd">Parola</string>
     <string name="immich_auth_email">E-posta</string>
-    <string name="immich_continuing_in_bg">Yedekleme arka planda devam ediyor</string>
-    <string name="immich_main_dialog_sync_state">Senkronize ediliyor: %2$d medyanın %1$d tanesi</string>
+    <string name="immich_continuing_in_bg">Yedeklemeye arka planda devam ediliyor</string>
+    <string name="immich_main_dialog_sync_state">Senkronize ediliyor: %2$d üzerinden %1$d</string>
     <string name="immich_uuid">Immich UUID</string>
     <string name="immich_failed_refreshing_albums">Albümler yenilenemedi</string>
     <string name="immich_failed_uploading_albums">Albüm yüklenemedi</string>
-    <string name="immich_server_info">Sunucu Bilgileri</string>
+    <string name="immich_server_info">Sunucu Bilgisi</string>
     <string name="immich_server_info_desc">Sürüm: %1$s. Yapı: %2$s</string>
-    <string name="immich_server_storage">Sunucu Depolama Alanı</string>
+    <string name="immich_server_storage">Sunucu Depolaması</string>
     <string name="immich_server_storage_desc">%2$s alanın %1$s kadarı kullanılıyor</string>
     <string name="immich_server_info_failed">Veri mevcut değil</string>
     <string name="immich_server">Immich Sunucusu</string>
     <string name="immich_help_general">Bu nedir?</string>
-    <string name="immich_help_general_desc">Albüm düzeyinde medyayı bir Immich sunucusuna yedeklemeye olanak tanır</string>
+    <string name="immich_help_general_desc">Albüm düzeyinde medya yedeklemesini bir Immich sunucusuna sağlar</string>
     <string name="immich_help_detailed">Nasıl kullanılır</string>
     <string name="immich_help_detailed_desc">
         <![CDATA[
             <p><a href="https://immich.app/">Immich</a>, herkesin kendi bulut yedekleme sunucusunu barındırmasına olanak tanıyan,
-            kendi barındırdığınız bir fotoğraf ve video yönetim çözümüdür.
+            kendi kendine barındırılan bir fotoğraf ve video yönetim çözümüdür.
             </p>
             <h3 style="text-align:center;">Nasıl Kullanılır?<h3/>
             <ul>
                 <li>Kendi <a href="https://immich.app/">Immich Sunucunuzu</a> barındırın</li>
                 <li>Lavender Photos\'ta sunucu adresini belirtin</li>
-                <li>Immich kullanıcı hesabını kullanarak giriş yapın</li>
+                <li>Immich kullanıcı hesabıyla giriş yapın</li>
                 <li>Herhangi bir albüme gidin, bulut simgesine tıklayın</li>
                 <li>Fotoğraflarınızı yedeklemeye başlayın!</li>
             </ul>
         ]]>
     </string>
+    <string name="immich_server_url_invalid">Geçersiz Url!</string>
+    <string name="immich_misc">Çeşitli</string>
+    <string name="immich_always_show_user_info">Kullanıcı Bilgisini Her Zaman Göster</string>
+    <string name="immich_always_show_user_info_desc">Uygulamanın sunucuya ulaşıp ulaşamadığına bakılmaksızın kullanıcı bilgilerini gösterir</string>
 </resources>
