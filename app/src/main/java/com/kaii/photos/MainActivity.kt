@@ -126,6 +126,7 @@ import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.Immich
 import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.datastore.Permissions
+import com.kaii.photos.datastore.Storage
 import com.kaii.photos.datastore.User
 import com.kaii.photos.datastore.Versions
 import com.kaii.photos.helpers.AnimationConstants
@@ -269,6 +270,14 @@ class MainActivity : ComponentActivity() {
                             SetContentForActivity()
                         }
                     }
+                }
+            }
+
+            val hasClearedCache by mainViewModel.settings.Versions.getHasClearedGlideCache().collectAsStateWithLifecycle(initialValue = true)
+            LaunchedEffect(hasClearedCache) {
+                if (!hasClearedCache) {
+                    mainViewModel.settings.Storage.clearThumbnailCache()
+                    mainViewModel.settings.Versions.setHasClearedGlideCache(true)
                 }
             }
         }

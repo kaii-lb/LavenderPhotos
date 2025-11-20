@@ -47,6 +47,7 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.bumptech.glide.request.target.Target
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.setBarVisibility
@@ -229,6 +230,7 @@ fun HorizontalImageList(
                 ) {
                     it.signature(mediaStoreItem.signature())
                         .diskCacheStrategy(DiskCacheStrategy.ALL)
+                        .override(Target.SIZE_ORIGINAL)
                 }
             }
         }

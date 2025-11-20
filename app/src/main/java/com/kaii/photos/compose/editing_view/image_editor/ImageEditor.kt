@@ -1,7 +1,6 @@
 package com.kaii.photos.compose.editing_view.image_editor
 
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -77,6 +76,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.Glide
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.bumptech.glide.request.target.Target
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
@@ -249,20 +249,14 @@ fun ImageEditor(
                 saveImage = {
                     navMediaId = saveImage(
                         context = context,
-                        image = if (absolutePath.endsWith(".avif")) {  // avif won't load on some android distros, so use glide for that
+                        image =
                             Glide.with(context)
                                 .asBitmap()
                                 .load(uri)
+                                .override(Target.SIZE_ORIGINAL)
                                 .submit()
                                 .get()
-                                .asImageBitmap()
-                        } else {
-                            context.contentResolver.openInputStream(uri).use { inputStream ->
-                                BitmapFactory.decodeStream(inputStream).also {
-                                    inputStream?.close()
-                                }.asImageBitmap()
-                            }
-                        },
+                                .asImageBitmap(),
                         containerDimens = containerDimens,
                         absolutePath = absolutePath,
                         drawingPaintState = drawingPaintState,
