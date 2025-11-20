@@ -286,6 +286,63 @@
     <string name="error_views_folder_non_existent">La carpeta no existe</string>
     <string name="error_views_error_page">Esta es una página de error</string>
     <string name="changelog"><![CDATA[
+    <u><h2>v1.2.0!:</h2></u>
+    <br><b><h4>- Errores corregidos:</h4></b>
+    <p>
+        - Fondo negro no aplicándose al reproductor de video
+        <br>- Textos de elementos de la barra del editor desbordando en algunas pantallas
+        <br>- Agregado icono de vista de cuadrícula faltante
+        <br>- Crash cuando el nombre de la app es más corto que 2 palabras
+        <br>- Barra de navegación del selector de medios no ocultándose correctamente
+        <br>- Crash al intentar sobrescribir medios en una carpeta no estándar
+        <br>- Crash al intentar renombrar medios más de una vez
+        <br>- Bloqueo de desplazamiento después de seleccionar por arrastre
+        <br>- Imposibilidad de agregar un álbum personalizado
+        <br>- No volver a desplazarse hacia arriba al navegar de vuelta desde la vista de solo fotos
+        <br>- Crash al intentar asegurar medios con miniaturas rotas
+        <br>- Rotación del editor rompiendo la página de filtros
+        <br>- Imposibilidad de dibujar en los editores
+        <br>- Crash al usar OpenWithView
+        <br>- El editor de imágenes a veces abre imágenes con rotación incorrecta
+        <br>- Crash debido a la eliminación de la clave de índice para las pestañas de la barra inferior
+        <br>- El primer video reproducido respeta la preferencia de "iniciar silenciado"
+        <br>- Estado de pin de álbum mal representado corregido
+        <br>- Comportamiento errático al eliminar medios
+        <br>- La rotación del editor ahora se aplica a las imágenes después de guardarlas
+        <br>- Eliminado el borde de imagen/texto seleccionada del render final
+    </p>
+    <br><b><h4>- Funciones añadidas:</h4></b>
+    <p>
+        - Expresivo en vistas de papelera y asegurar fotos
+        <br>- Opción añadida para deshabilitar la rotación en vistas de una sola foto
+        <br>- Soporte para URL alternativas para el servidor Immich
+        <br>- Mejores barras de desplazamiento
+        <br>- Preservar fechas de imagen al mover/copiar
+        <br>- Desplazarse a la imagen editada al salir del editor
+        <br>- Soporte para esquinas redondeadas de miniaturas
+        <br>- Alternar para mostrar siempre la información del usuario de Immich
+        <br>- Alternar para abrir videos en reproductor externo
+        <br>- Mostrar miniaturas de álbum en cuadrícula según modo de ordenamiento seleccionado por el usuario
+        <br>- Análisis de ubicación de medios con datos GPS Exif
+        <br>- Mejor y más rápida búsqueda
+    </p>
+    <br><b><h4>- Mejoras:</h4></b>
+    <p>
+        - Mejoras significativas en rendimiento y suavidad
+        <br>- Ocultar álbum padre de la lista de copiar/mover
+        <br>- Snackbar de progreso para exportar video
+        <br>- Aumentar la altura de la barra de búsqueda del reproductor de video
+        <br>- Mejor soporte para fondos desplazables
+        <br>- Arrastrar para seleccionar ahora requiere una pulsación prolongada
+        <br>- El diálogo de inicio de sesión de Immich ahora soporta Autocompletar
+        <br>- Posibilidad de usar tráfico en texto claro para servidores http de Immich
+        <br>- Mejoras en la carga del diálogo de información de fotos
+        <br>- Mejoras en la carga de elementos eliminados
+        <br>- Elevar la barra principal de la app
+        <br>- Soporte para deshabilitar el ordenamiento en cada vista de cuadrícula
+        <br>- Aumentar la tasa de actualización de la barra de búsqueda de video y la implementación de pantalla encendida
+    </p>
+    <br>
     <u><h2>v1.1.6!:</h2></u>
     <br>
     <b><h4>- Errores Corregidos:</h4></b>
