@@ -113,9 +113,12 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.FullWidthDialogButton
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.WallpaperTypeDialog
+import com.kaii.photos.compose.editing_view.EditorApp
 import com.kaii.photos.compose.editing_view.SharedEditorCropContent
 import com.kaii.photos.compose.editing_view.SharedEditorDrawContent
 import com.kaii.photos.compose.editing_view.SharedEditorFilterContent
+import com.kaii.photos.compose.editing_view.SharedEditorMoreContent
+import com.kaii.photos.compose.editing_view.getAvailableEditorsForType
 import com.kaii.photos.compose.editing_view.image_editor.ImageEditorAdjustContent
 import com.kaii.photos.compose.editing_view.video_editor.TrimContent
 import com.kaii.photos.compose.editing_view.video_editor.VideoEditorAdjustContent
@@ -141,6 +144,7 @@ import com.kaii.photos.helpers.editing.VideoEditorTabs
 import com.kaii.photos.helpers.editing.VideoModification
 import com.kaii.photos.helpers.editing.saveVideo
 import com.kaii.photos.mediastore.MediaStoreData
+import com.kaii.photos.mediastore.MediaType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -158,6 +162,7 @@ fun VideoEditorBottomBar(
     videoEditingState: VideoEditingState,
     drawingPaintState: DrawingPaintState,
     modifications: SnapshotStateList<VideoModification>,
+    uri: Uri,
     increaseModCount: () -> Unit,
     onSeek: (Float) -> Unit,
     saveEffect: (MediaColorFilters) -> Unit
@@ -182,6 +187,20 @@ fun VideoEditorBottomBar(
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.Start
         ) {
+            val context = LocalContext.current
+            var availableEditors by remember {
+                mutableStateOf(
+                    emptyList<EditorApp>()
+                )
+            }
+
+            LaunchedEffect(Unit) {
+                availableEditors = getAvailableEditorsForType(
+                    context = context,
+                    mediaType = MediaType.Video,
+                )
+            }
+
             SecondaryScrollableTabRow(
                 selectedTabIndex = pagerState.currentPage,
                 indicator = {
@@ -201,9 +220,11 @@ fun VideoEditorBottomBar(
                     .fillMaxWidth(1f)
             ) {
                 VideoEditorTabs.entries.forEach { entry ->
-                    SimpleTab(text = stringResource(id = entry.title), selected = pagerState.currentPage == VideoEditorTabs.entries.indexOf(entry)) {
-                        coroutineScope.launch {
-                            pagerState.animateScrollToPage(VideoEditorTabs.entries.indexOf(entry))
+                    if (entry != VideoEditorTabs.More || availableEditors.isNotEmpty()) {
+                        SimpleTab(text = stringResource(id = entry.title), selected = pagerState.currentPage == VideoEditorTabs.entries.indexOf(entry)) {
+                            coroutineScope.launch {
+                                pagerState.animateScrollToPage(VideoEditorTabs.entries.indexOf(entry))
+                            }
                         }
                     }
                 }
@@ -299,6 +320,14 @@ fun VideoEditorBottomBar(
                         SharedEditorDrawContent(
                             drawingPaintState = drawingPaintState,
                             currentTime = currentPosition.floatValue
+                        )
+                    }
+
+                    VideoEditorTabs.entries.indexOf(VideoEditorTabs.More) -> {
+                        SharedEditorMoreContent(
+                            apps = availableEditors,
+                            uri = uri,
+                            mediaType = MediaType.Video
                         )
                     }
                 }
@@ -707,6 +736,7 @@ fun ImageEditorBottomBar(
     imageEditingState: ImageEditingState,
     drawingPaintState: DrawingPaintState,
     pagerState: PagerState,
+    uri: Uri,
     modifier: Modifier = Modifier,
     increaseModCount: () -> Unit,
     saveEffect: (MediaColorFilters) -> Unit
@@ -727,6 +757,20 @@ fun ImageEditorBottomBar(
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.Start
         ) {
+            val context = LocalContext.current
+            var availableEditors by remember {
+                mutableStateOf(
+                    emptyList<EditorApp>()
+                )
+            }
+
+            LaunchedEffect(Unit) {
+                availableEditors = getAvailableEditorsForType(
+                    context = context,
+                    mediaType = MediaType.Image
+                )
+            }
+
             SecondaryScrollableTabRow(
                 selectedTabIndex = pagerState.currentPage,
                 indicator = {
@@ -746,9 +790,11 @@ fun ImageEditorBottomBar(
                     .fillMaxWidth(1f)
             ) {
                 ImageEditorTabs.entries.forEach { entry ->
-                    SimpleTab(text = stringResource(id = entry.title), selected = pagerState.currentPage == ImageEditorTabs.entries.indexOf(entry)) {
-                        coroutineScope.launch {
-                            pagerState.animateScrollToPage(ImageEditorTabs.entries.indexOf(entry))
+                    if (entry != ImageEditorTabs.More || availableEditors.isNotEmpty()) {
+                        SimpleTab(text = stringResource(id = entry.title), selected = pagerState.currentPage == ImageEditorTabs.entries.indexOf(entry)) {
+                            coroutineScope.launch {
+                                pagerState.animateScrollToPage(ImageEditorTabs.entries.indexOf(entry))
+                            }
                         }
                     }
                 }
@@ -792,6 +838,14 @@ fun ImageEditorBottomBar(
                         SharedEditorDrawContent(
                             drawingPaintState = drawingPaintState,
                             currentTime = 0f
+                        )
+                    }
+
+                    ImageEditorTabs.entries.indexOf(ImageEditorTabs.More) -> {
+                        SharedEditorMoreContent(
+                            apps = availableEditors,
+                            uri = uri,
+                            mediaType = MediaType.Image
                         )
                     }
                 }

@@ -720,6 +720,7 @@
     <string name="editing_crop">Crop</string>
     <string name="editing_adjust">Adjust</string>
     <string name="editing_filters">Filters</string>
+    <string name="editing_more">More</string>
     <string name="editing_draw">Draw</string>
     <string name="editing_rotate">Rotate</string>
     <string name="editing_ratio">Ratio</string>

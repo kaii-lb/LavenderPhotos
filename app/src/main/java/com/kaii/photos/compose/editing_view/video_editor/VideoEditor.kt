@@ -386,6 +386,7 @@ fun VideoEditor(
                 videoEditingState = videoEditingState,
                 drawingPaintState = drawingPaintState,
                 modifications = modifications,
+                uri = uri,
                 onSeek = { pos ->
                     val wasPlaying = isPlaying.value
                     exoPlayer.seekTo(

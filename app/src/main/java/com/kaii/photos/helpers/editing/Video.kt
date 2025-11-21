@@ -495,7 +495,8 @@ enum class VideoEditorTabs(
     Video(R.string.video),
     Draw(R.string.editing_draw),
     Adjust(R.string.editing_adjust),
-    Filters(R.string.editing_filters)
+    Filters(R.string.editing_filters),
+    More(R.string.editing_more)
 }
 
 enum class ImageEditorTabs(
@@ -504,5 +505,6 @@ enum class ImageEditorTabs(
     Crop(R.string.editing_crop),
     Draw(R.string.editing_draw),
     Adjust(R.string.editing_adjust),
-    Filters(R.string.editing_filters)
+    Filters(R.string.editing_filters),
+    More(R.string.editing_more)
 }

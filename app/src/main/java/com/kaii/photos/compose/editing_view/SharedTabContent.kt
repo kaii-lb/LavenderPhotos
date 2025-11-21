@@ -1,6 +1,7 @@
 package com.kaii.photos.compose.editing_view
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -25,6 +26,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -75,6 +77,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.graphics.scale
 import com.bumptech.glide.Glide
 import com.kaii.lavender.snackbars.LavenderSnackbarController
@@ -93,6 +96,7 @@ import com.kaii.photos.helpers.editing.ImageModification
 import com.kaii.photos.helpers.editing.MediaColorFilters
 import com.kaii.photos.helpers.editing.SharedModification
 import com.kaii.photos.helpers.editing.VideoModification
+import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getMediaStoreDataFromUri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -677,5 +681,61 @@ fun SharedEditorCropContent(
                 resetCrop()
             }
         )
+    }
+}
+
+@Composable
+fun SharedEditorMoreContent(
+    apps: List<EditorApp>,
+    uri: Uri,
+    mediaType: MediaType,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxSize(1f)
+            .padding(horizontal = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(
+            space = 12.dp,
+            alignment = Alignment.CenterHorizontally
+        )
+    ) {
+        val context = LocalContext.current
+        apps.forEach { app ->
+            Column(
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(RoundedCornerShape(24.dp))
+                    .clickable {
+                        val intent = Intent(Intent.ACTION_EDIT).apply {
+                            setDataAndType(
+                                uri,
+                                if (mediaType == MediaType.Image) "image/*"
+                                else "video/*"
+                            )
+                            `package` = app.packageName
+                        }
+
+                        context.startActivity(intent)
+                    }
+                    .padding(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    bitmap = app.icon,
+                    contentDescription = app.name,
+                    tint = Color.Unspecified
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = app.name,
+                    fontSize = TextStylingConstants.SMALL_TEXT_SIZE.sp
+                )
+            }
+        }
     }
 }

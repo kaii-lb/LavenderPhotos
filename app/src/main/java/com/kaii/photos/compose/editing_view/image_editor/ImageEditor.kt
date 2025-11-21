@@ -303,6 +303,7 @@ fun ImageEditor(
                 imageEditingState = imageEditingState,
                 drawingPaintState = drawingPaintState,
                 pagerState = pagerState,
+                uri = uri,
                 increaseModCount = {
                     totalModCount.intValue += 1
                 },
