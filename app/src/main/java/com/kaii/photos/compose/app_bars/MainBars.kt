@@ -53,6 +53,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -267,6 +268,7 @@ fun MainAppBottomBar(
                     } else {
                         val windowInfo = LocalWindowInfo.current
                         val localDensity = LocalDensity.current
+                        val resources = LocalResources.current
 
                         LazyRow(
                             state = state,
@@ -278,7 +280,13 @@ fun MainAppBottomBar(
                             items(
                                 count = tabs.size
                             ) { index ->
-                                val tab = tabs[index]
+                                val tab = tabs[index].let {
+                                    it.copy(
+                                        name =
+                                            if (it in DefaultTabs.extendedList) resources.getString(it.id)
+                                            else it.name
+                                    )
+                                }
 
                                 ToggleButton(
                                     checked = currentView.value == tab,

@@ -252,7 +252,7 @@
     <string name="secure_share_media">Поділитися цим захищеним медіафайлом</string>
     <string name="editing_black_point">Чорна точка</string>
     <string name="editing_white_point">Біла точка</string>
-    <string name="permissions">Дозвіл</string>
+    <string name="permission">Дозвіл</string>
     <string name="permissions_media_manager">Управління медіафайлами</string>
     <string name="permissions_media_manager_desc">Краще та швидше видалення/копіювання/переміщення</string>
     <string name="permissions_media_management">Властивості управління медіафайлами</string>

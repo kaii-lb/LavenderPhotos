@@ -52,7 +52,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
@@ -122,7 +124,7 @@ fun PermissionHandler(
 
             if (showExplanationDialog.value) {
                 ExplanationDialog(
-                    title = "Permission Explanation",
+                    title = stringResource(id = R.string.permissions_explanation),
                     explanation = whyButtonExplanation,
                     showPreviousDialog = showPermDeniedDialog
                 ) {
@@ -137,7 +139,7 @@ fun PermissionHandler(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Permissions",
+                    text = stringResource(id = R.string.permissions),
                     fontSize = TextUnit(22f, TextUnitType.Sp),
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
@@ -157,7 +159,7 @@ fun PermissionHandler(
                 ) {
                     item {
                         PreferencesSeparatorText(
-                            text = "Permissions"
+                            text = stringResource(id = R.string.permissions)
                         )
                     }
 
@@ -188,15 +190,16 @@ fun PermissionHandler(
                                 showPermDeniedDialog.value = !granted
                             }
 
+                            val resources = LocalResources.current
                             PermissionButton(
-                                name = "Read Images",
-                                description = "Allow Lavender Photos to discover photos on the device",
+                                name = stringResource(id = R.string.permissions_read_images),
+                                description = stringResource(id = R.string.permissions_read_images_desc),
                                 position = RowPosition.Top,
                                 granted = !mainViewModel.permissionQueue.contains(Manifest.permission.READ_MEDIA_IMAGES)
                             ) {
                                 readMediaImageLauncher.launch(Manifest.permission.READ_MEDIA_IMAGES)
 
-                                whyButtonExplanation = Explanations.READ_MEDIA
+                                whyButtonExplanation = resources.getString(Explanations.READ_MEDIA)
 
                                 onGrantPermissionClicked = {
                                     val intent = Intent(
@@ -235,15 +238,16 @@ fun PermissionHandler(
                                 showPermDeniedDialog.value = !granted
                             }
 
+                            val resources = LocalResources.current
                             PermissionButton(
-                                name = "Read Videos",
-                                description = "Allow Lavender Photos to discover videos on the device",
+                                name = stringResource(id = R.string.permissions_read_videos),
+                                description = stringResource(id = R.string.permissions_read_videos_desc),
                                 position = RowPosition.Middle,
                                 granted = !mainViewModel.permissionQueue.contains(Manifest.permission.READ_MEDIA_VIDEO)
                             ) {
                                 readMediaVideoLauncher.launch(Manifest.permission.READ_MEDIA_VIDEO)
 
-                                whyButtonExplanation = Explanations.READ_MEDIA
+                                whyButtonExplanation = resources.getString(Explanations.READ_MEDIA)
 
                                 onGrantPermissionClicked = {
                                     val intent = Intent(
@@ -282,15 +286,16 @@ fun PermissionHandler(
                                 showPermDeniedDialog.value = !granted
                             }
 
+                            val resources = LocalResources.current
                             PermissionButton(
-                                name = "Read External Storage",
-                                description = "Allow Lavender Photos to discover photos and videos on the device",
+                                name = stringResource(id = R.string.permissions_read_external_storage),
+                                description = stringResource(id = R.string.permissions_read_external_storage_desc),
                                 position = RowPosition.Top,
                                 granted = !mainViewModel.permissionQueue.contains(Manifest.permission.READ_EXTERNAL_STORAGE)
                             ) {
                                 readExternalStorageLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
 
-                                whyButtonExplanation = Explanations.READ_MEDIA
+                                whyButtonExplanation = resources.getString(Explanations.READ_MEDIA)
 
                                 onGrantPermissionClicked = {
                                     val intent = Intent(
@@ -319,16 +324,17 @@ fun PermissionHandler(
                                 mainViewModel.settings.Permissions.setIsMediaManager(granted)
                             }
 
+                            val resources = LocalResources.current
                             PermissionButton(
-                                name = "Manage Media",
-                                description = "Optional permission. Is used for faster trash/delete functionality",
+                                name = stringResource(id = R.string.permissions_manage_media),
+                                description = stringResource(id = R.string.permissions_manage_media_desc),
                                 position = RowPosition.Bottom,
                                 granted = !mainViewModel.permissionQueue.contains(Manifest.permission.MANAGE_MEDIA)
                             ) {
                                 val intent = Intent(Settings.ACTION_REQUEST_MANAGE_MEDIA)
                                 manageMediaLauncher.launch(intent)
 
-                                whyButtonExplanation = Explanations.MANAGE_MEDIA
+                                whyButtonExplanation = resources.getString(Explanations.MANAGE_MEDIA)
 
                                 onGrantPermissionClicked = {
                                     manageMediaLauncher.launch(intent)
@@ -339,14 +345,14 @@ fun PermissionHandler(
 
                     item {
                         PreferencesSeparatorText(
-                            text = "Other Info"
+                            text = stringResource(id = R.string.permissions_other_info)
                         )
                     }
 
                     item {
                         PreferencesRow(
-                            title = "Install Packages",
-                            summary = "If you use the in-app updater, Lavender Photos will request the Install Packages permission.",
+                            title = stringResource(id = R.string.permissions_install_packages),
+                            summary = stringResource(id = R.string.permissions_install_packages_desc),
                             iconResID = R.drawable.error_2,
                             position = RowPosition.Single,
                             backgroundColor = MaterialTheme.colorScheme.surfaceContainer,
@@ -368,7 +374,7 @@ fun PermissionHandler(
                             modifier = Modifier
                                 .align(Alignment.CenterStart)
                         ) {
-                            Text(text = "Exit")
+                            Text(text = stringResource(id = R.string.editing_exit))
                         }
 
                         Button(
@@ -379,7 +385,7 @@ fun PermissionHandler(
                             modifier = Modifier
                                 .align(Alignment.CenterEnd)
                         ) {
-                            Text(text = "Continue")
+                            Text(text = stringResource(id = R.string.permissions_continue))
                         }
                     }
                 }
@@ -400,7 +406,7 @@ fun PermissionHandler(
                         },
                         enabled = mainViewModel.checkCanPass()
                     ) {
-                        Text(text = "Continue")
+                        Text(text = stringResource(id = R.string.permissions_continue))
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -410,7 +416,7 @@ fun PermissionHandler(
                             (context as Activity).finish()
                         }
                     ) {
-                        Text(text = "Exit")
+                        Text(text = stringResource(id = R.string.editing_exit))
                     }
                 }
             }
@@ -511,7 +517,7 @@ fun PermissionDeniedDialog(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Necessary Permission",
+                text = stringResource(id = R.string.permissions_necessary),
                 fontSize = TextUnit(18f, TextUnitType.Sp),
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground,
@@ -521,7 +527,7 @@ fun PermissionDeniedDialog(
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "This permission is necessary for app functionality",
+                text = stringResource(id = R.string.permissions_necessary_desc),
                 fontSize = TextUnit(14f, TextUnitType.Sp),
                 color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.wrapContentSize()
@@ -530,7 +536,7 @@ fun PermissionDeniedDialog(
             Spacer(modifier = Modifier.height(32.dp))
 
             FullWidthDialogButton(
-                text = "Grant Permission",
+                text = stringResource(id = R.string.permissions_grant_permissions),
                 color = MaterialTheme.colorScheme.primary,
                 textColor = MaterialTheme.colorScheme.onPrimary,
                 position = RowPosition.Top
@@ -540,7 +546,7 @@ fun PermissionDeniedDialog(
             }
 
             FullWidthDialogButton(
-                text = "Why?",
+                text = stringResource(id = R.string.permissions_why),
                 color = MaterialTheme.colorScheme.surfaceContainer,
                 textColor = MaterialTheme.colorScheme.onSurface,
                 position = RowPosition.Middle
@@ -549,7 +555,7 @@ fun PermissionDeniedDialog(
             }
 
             FullWidthDialogButton(
-                text = "Dismiss",
+                text = stringResource(id = R.string.permissions_dismiss),
                 color = MaterialTheme.colorScheme.surfaceContainer,
                 textColor = MaterialTheme.colorScheme.onSurface,
                 position = RowPosition.Bottom,
@@ -605,8 +611,6 @@ fun FullWidthDialogButton(
 }
 
 private object Explanations {
-    const val READ_MEDIA =
-        "This permission is needed to find photos and videos on the device. Lavender Photos is very strict with what files it reads, and never shares or exploits this info."
-    const val MANAGE_MEDIA =
-        "This permission is optional, but is highly recommended. Manage Media permission allows Lavender Photos to use Android's Content Resolver API to trash/delete/move/copy media, which makes the process much smoother and more interoperable with other apps."
+    val READ_MEDIA = R.string.permissions_read_media_explanation
+    val MANAGE_MEDIA = R.string.permissions_manage_media_explanation
 }

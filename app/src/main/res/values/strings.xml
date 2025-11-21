@@ -589,6 +589,12 @@
     <!-- Navigation -->
     <string name="return_to_previous_page">Return to previous page</string>
     <string name="navigation">Navigation</string>
+    <string name="navigation_photos">Photos</string>
+    <string name="navigation_secure">Secure</string>
+    <string name="navigation_albums">Albums</string>
+    <string name="navigation_search">Search</string>
+    <string name="navigation_favourites">Favourites</string>
+    <string name="navigation_trash">Trash</string>
 
     <!-- App -->
     <string name="app_icon">App Icon</string>
@@ -868,7 +874,8 @@
     <string name="trash_empty_confirm">Empty Out</string>
 
     <!-- Permissions -->
-    <string name="permissions">Permission</string>
+    <string name="permission">Permission</string>
+    <string name="permissions">Permissions</string>
     <string name="permissions_media_manager">Media Manager</string>
     <string name="permissions_media_manager_desc">Better and faster trash/delete/copy/move</string>
     <string name="permissions_media_management">Media Management</string>
@@ -881,6 +888,26 @@
     <string name="permissions_grant">Grant</string>
     <string name="permissions_do_not_trash">Don\'t use Trash Bin</string>
     <string name="permissions_do_not_trash_desc">Immediately and permanently delete items without moving to Trash Bin first</string>
+    <string name="permissions_read_images">Read Images</string>
+    <string name="permissions_read_images_desc">Allow Lavender Photos to discover photos on the device</string>
+    <string name="permissions_read_videos">Read Videos</string>
+    <string name="permissions_read_videos_desc">Allow Lavender Photos to discover videos on the device</string>
+    <string name="permissions_read_external_storage">Read External Storage</string>
+    <string name="permissions_read_external_storage_desc">Allow Lavender Photos to discover photos and videos on the device</string>
+    <string name="permissions_manage_media">Manage Media</string>
+    <string name="permissions_manage_media_desc">Optional permission. Is used for faster trash/delete functionality</string>
+    <string name="permissions_other_info">Other Info</string>
+    <string name="permissions_install_packages">Install Packages</string>
+    <string name="permissions_install_packages_desc">If you use the in-app updater, Lavender Photos will request the Install Packages permission.</string>
+    <string name="permissions_continue">Continue</string>
+    <string name="permissions_necessary">Necessary Permission</string>
+    <string name="permissions_necessary_desc">This permission is necessary for app functionality</string>
+    <string name="permissions_grant_permissions">Grant Permissions</string>
+    <string name="permissions_why">Why?</string>
+    <string name="permissions_dismiss">Dismiss</string>
+    <string name="permissions_read_media_explanation">This permission is needed to find photos and videos on the device. Lavender Photos is very strict with what files it reads, and never shares or exploits this info.</string>
+    <string name="permissions_manage_media_explanation">This permission is optional, but is highly recommended. Manage Media permission allows Lavender Photos to use Android\'s Content Resolver API to trash/delete/move/copy media, which makes the process much smoother and more interoperable with other apps.</string>
+    <string name="permissions_explanation">Permission Explanation</string>
 
     <!-- Media -->
     <string name="media">Media</string>

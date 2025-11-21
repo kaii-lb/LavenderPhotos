@@ -22,42 +22,42 @@ object DefaultTabs {
             name = "Photos",
             albumPaths = listOf("main_photos"),
             icon = StoredDrawable.PhotoGrid,
-            id = 0
+            id = R.string.navigation_photos
         )
 
         val secure = BottomBarTab(
             name = "Secure",
             albumPaths = listOf("secure_folder"),
             icon = StoredDrawable.SecureFolder,
-            id = 1
+            id = R.string.navigation_secure
         )
 
         val albums = BottomBarTab(
             name = "Albums",
             albumPaths = listOf("albums_page"),
             icon = StoredDrawable.Albums,
-            id = 2
+            id = R.string.navigation_albums
         )
 
         val search = BottomBarTab(
             name = "Search",
             albumPaths = listOf("search_page"),
             icon = StoredDrawable.Search,
-            id = 3
+            id = R.string.navigation_search
         )
 
         val favourites = BottomBarTab(
             name = "Favourites",
             albumPaths = listOf("favourites_page"),
             icon = StoredDrawable.Favourite,
-            id = 4
+            id = R.string.navigation_favourites
         )
 
         val trash = BottomBarTab(
             name = "Trash",
             albumPaths = listOf("trash_page"),
             icon = StoredDrawable.Trash,
-            id = 5
+            id = R.string.navigation_trash
         )
     }
 

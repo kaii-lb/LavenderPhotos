@@ -677,7 +677,7 @@
     <string name="trash_empty">清空回收站？</string>
     <string name="trash_empty_desc">此操作将删除回收站中的所有项目，且无法撤销</string>
     <string name="trash_empty_confirm">清空</string>
-    <string name="permissions">权限</string>
+    <string name="permission">权限</string>
     <string name="permissions_media_manager">媒体管理</string>
     <string name="permissions_media_manager_desc">更优更快的删除/复制/移动操作</string>
     <string name="permissions_media_management">媒体管理</string>

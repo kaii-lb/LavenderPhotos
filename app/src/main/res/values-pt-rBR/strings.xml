@@ -307,7 +307,7 @@ o que significa que ele não passa por nenhum teste adicional realizado por Izzy
     <string name="trash_empty">Limpar lixeira?</string>
     <string name="trash_empty_desc">Isso excluirá todos os itens na lixeira. Essa ação não pode ser desfeita</string>
     <string name="trash_empty_confirm">Esvaziar</string>
-    <string name="permissions">Permissão</string>
+    <string name="permission">Permissão</string>
     <string name="permissions_media_manager">Gerenciador de Mídia</string>
     <string name="permissions_media_manager_desc">Operações melhores e mais rápidas de lixeira/apagar/copiar/mover</string>
     <string name="permissions_media_management">Gerenciamento de Mídia</string>

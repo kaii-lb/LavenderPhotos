@@ -193,7 +193,7 @@
     <string name="trash_empty">Opróżnić kosz?</string>
     <string name="trash_empty_desc">Spowoduje to usunięcie wszystkich elementów z kosza. Tej czynności nie można cofnąć</string>
     <string name="trash_empty_confirm">Opróżnij</string>
-    <string name="permissions">Upoważnienie</string>
+    <string name="permission">Upoważnienie</string>
     <string name="permissions_media_manager">Menedżer multimediów</string>
     <string name="permissions_media_manager_desc">Lepsze i szybsze usuwanie/kopiowanie/przenoszenie</string>
     <string name="permissions_media_management">Zarządzanie multimediami</string>

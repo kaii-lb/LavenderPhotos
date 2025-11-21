@@ -101,7 +101,7 @@
     <string name="trash_no_auto_delete">Les médias dans la corbeille ne seront pas automatiquement supprimés</string>
     <string name="trash_empty_desc">Cela supprime tous les médias dans la corbeille, cette action ne peut être annulée</string>
     <string name="trash_empty_confirm">Vider la corbeille</string>
-    <string name="permissions">Permission</string>
+    <string name="permission">Permission</string>
     <string name="permissions_media_manager">Gestionnaire de médias</string>
     <string name="permissions_media_manager_desc">Actions de suppression/corbeille/copie/déplacement plus rapides et efficaces</string>
     <string name="permissions_overwrite_date_on_move">Changer la date du média déplacé</string>

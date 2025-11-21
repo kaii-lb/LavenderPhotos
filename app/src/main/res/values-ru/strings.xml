@@ -202,7 +202,7 @@
     <string name="trash_empty">Очистить корзину?</string>
     <string name="trash_empty_desc">Это удалит все объекты из корзины, это действие нельзя откатить</string>
     <string name="trash_empty_confirm">Очистить</string>
-    <string name="permissions">Разрешение</string>
+    <string name="permission">Разрешение</string>
     <string name="permissions_media_manager">Менеджер медиафайлов</string>
     <string name="permissions_media_manager_desc">Более быстрые и эффективные функции удаления/копирования/перемещения</string>
     <string name="permissions_media_management">Управление медиафайлами</string>

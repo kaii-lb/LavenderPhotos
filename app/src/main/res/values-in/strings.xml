@@ -43,7 +43,7 @@
     <string name="editing_undo_last">Kembalikan tindakan terakhir</string>
     <string name="editing_scale_paint">Ganti ukuran kuas lukisan atau teks</string>
     <string name="editing_scale_zoom">Perbesar daripada menskalakan ukuran font</string>
-    <string name="permissions">Izin</string>
+    <string name="permission">Izin</string>
     <string name="permissions_media_manager">Pengelolaan Media</string>
     <string name="permissions_media_manager_desc">Sampah/hapus/salin/pindah yang lebih baik dan cepat</string>
     <string name="permissions_media_management">Pengelolaan Media</string>

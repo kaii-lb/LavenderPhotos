@@ -186,7 +186,7 @@
     <string name="trash_empty">افرغ سلة المهملات؟</string>
     <string name="trash_empty_desc">يؤدي هذا إلى حذف جميع العناصر الموجودة في سلة المهملات، ولا يمكن التراجع عن هذا الإجراء</string>
     <string name="trash_empty_confirm">إفراغ</string>
-    <string name="permissions">إذن</string>
+    <string name="permission">إذن</string>
     <string name="permissions_media_manager">مدير الوسائط</string>
     <string name="permissions_media_manager_desc">إزالة/حذف/نسخ/نقل — أفضل وأسرع</string>
     <string name="permissions_media_management">إدارة الوسائط</string>

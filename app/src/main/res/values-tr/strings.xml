@@ -851,7 +851,7 @@
     <string name="trash_empty_desc">Bu, çöp kutusundaki tüm öğeleri siler, bu işlem geri alınamaz</string>
     <string name="trash_empty_confirm">Boşalt</string>
     <!-- Permissions -->
-    <string name="permissions">İzin</string>
+    <string name="permission">İzin</string>
     <string name="permissions_media_manager">Medya Yöneticisi</string>
     <string name="permissions_media_manager_desc">Daha iyi ve daha hızlı çöp/silme/kopyalama/taşıma</string>
     <string name="permissions_media_management">Medya Yönetimi</string>

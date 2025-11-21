@@ -207,7 +207,7 @@
     <string name="trash_empty">¿Vaciar Papelera?</string>
     <string name="trash_empty_desc">Esto elimina todos los elementos de la papelera, esta acción no se puede deshacer</string>
     <string name="trash_empty_confirm">Vacío</string>
-    <string name="permissions">Permiso</string>
+    <string name="permission">Permiso</string>
     <string name="permissions_media_manager">Administrador Multimedia</string>
     <string name="permissions_media_manager_desc">Mejor y mas rápida papelera/eliminar/copiar/mover</string>
     <string name="permissions_media_management">Administración de Multimedia</string>
