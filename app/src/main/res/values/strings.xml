@@ -639,6 +639,7 @@
     <string name="updates_failed">Failed checking for updates</string>
     <string name="updates_checking">Checking For Updates</string>
     <string name="updates_start">Start Update</string>
+    <string name="updates_failed_download">Couldn\'t download update</string>
 
     <!-- Secure Folder -->
     <string name="locked_folder_help_top">Locked Folder is a secure folder for your images and videos on this device.\nThe secured media is never uploaded anywhere and is always on-device, encrypted with a key unique to your device\'s password or fingerprint data.</string>
@@ -651,6 +652,19 @@
     <string name="secure_decrypting">Decrypting Files</string>
     <string name="secure_getting_file_info">Getting file info…</string>
     <string name="secure_please_wait">Please wait…</string>
+    <string name="secure_export_failed">Failed exporting backup!</string>
+    <string name="secure_encryption_failed_no_permission">Can\'t encrypt photos without permission</string>
+    <string name="secure_migrating">Migrating</string>
+    <string name="secure_migrating_desc">Backing up and encrypting your photos, hold on…</string>
+    <string name="secure_migrating_notice">Migration Notice</string>
+    <string name="secure_migrating_notice_desc">Secure folder is now encrypted! All your photos are now fully safe and untouchable by anyone.
+
+As a precaution, a copy of your secured photos is now present in an export folder, you can find it in the albums page or under "Internal Storage/Android/media/com.kaii.photos/LavenderPhotos/Exports".</string>
+    <string name="secure_unlock">Unlock Secure Folder</string>
+    <string name="secure_unlock_desc">Use your biometric credentials to unlock</string>
+    <string name="secure_unlock_failed">Failed to authenticate :&lt;</string>
+    <string name="secure_unlock_short">Unlock Folder</string>
+    <string name="secure_move_out">Move media out of Secure Folder?</string>
 
     <!-- Data and Backup -->
     <string name="export_unenc_backup">Export Unencrypted Backup</string>
@@ -860,6 +874,7 @@
     <string name="settings_views">Views</string>
     <string name="settings_rotate_in_views">Allow Rotation</string>
     <string name="settings_rotate_in_views_desc">Enables rotation by gesture when viewing media</string>
+    <string name="settings_about_unknown_version">Couldn\'t get version number</string>
 
     <!-- Trash -->
     <string name="trash_bin_short">Trash</string>
@@ -930,6 +945,7 @@
     <string name="media_restore">Restore</string>
     <string name="media_restore_confirm">Restore these items?</string>
     <string name="media_restore_processing">Restoring Files</string>
+    <string name="media_restore_processing_desc">Please wait while the media is processed</string>
     <string name="media_progress">Progress:</string>
     <string name="media_move">Move</string>
     <string name="media_copy">Copy</string>
@@ -985,6 +1001,8 @@
     <string name="yesterday">Yesterday</string>
     <string name="help">Help</string>
     <string name="apply">Apply</string>
+    <string name="close">Close</string>
+    <string name="changelog_name">Changelog</string>
 
     <!-- Bottom Sheets -->
     <string name="bottom_sheets_enter_text">Enter Text</string>
@@ -1109,4 +1127,16 @@
     <string name="immich_misc">Miscellaneous</string>
     <string name="immich_always_show_user_info">Always Show User Info</string>
     <string name="immich_always_show_user_info_desc">Displays user info whether the app is able to reach the server or not</string>
+
+    <!--  Exif  -->
+    <string name="exif_name">Name:</string>
+    <string name="exif_path">Path:</string>
+    <string name="exif_date">Date:</string>
+    <string name="exif_latlong">LatLong:</string>
+    <string name="exif_device">Device:</string>
+    <string name="exif_fnumber">FNumber:</string>
+    <string name="exif_shutter_speed">Shutter Speed:</string>
+    <string name="exif_mp">MegaPixels:</string>
+    <string name="exif_res">Resolution:</string>
+    <string name="exif_size">Size:</string>
 </resources>

@@ -352,7 +352,7 @@ private fun BottomBar(
                                                 mainViewModel.updater.installUpdate()
                                             } else {
                                                 Log.d(TAG, "Download failed")
-                                                updateStatusText = "Couldn't download update"
+                                                updateStatusText = resources.getString(R.string.updates_failed_download)
                                             }
                                         }
                                     )

@@ -30,12 +30,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
-import com.kaii.photos.compose.widgets.PreferencesRow
-import com.kaii.photos.compose.widgets.PreferencesSeparatorText
-import com.kaii.photos.compose.widgets.PreferencesSwitchRow
 import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
 import com.kaii.photos.compose.dialogs.DeleteIntervalDialog
 import com.kaii.photos.compose.dialogs.ThumbnailSizeDialog
+import com.kaii.photos.compose.widgets.PreferencesRow
+import com.kaii.photos.compose.widgets.PreferencesSeparatorText
+import com.kaii.photos.compose.widgets.PreferencesSwitchRow
 import com.kaii.photos.datastore.Storage
 import com.kaii.photos.datastore.TrashBin
 import com.kaii.photos.helpers.RowPosition
@@ -199,7 +199,7 @@ fun MemoryAndStorageSettingsPage() {
 
                 ConfirmationDialogWithBody(
                     showDialog = showConfirmationDialog,
-                    confirmButtonLabel = "Clear",
+                    confirmButtonLabel = stringResource(id = R.string.settings_clear),
                     dialogTitle = stringResource(id = R.string.settings_storage_thumbnails_clear_cache) + "?",
                     dialogBody = stringResource(id = R.string.settings_clear_cache_desc)
                 ) {

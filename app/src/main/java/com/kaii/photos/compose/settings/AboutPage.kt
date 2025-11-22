@@ -35,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -212,12 +213,13 @@ fun AboutPage(popBackStack: () -> Unit) {
                     context.startActivity(intent)
                 }
 
+                val resources = LocalResources.current
                 val versionName = remember {
                     try {
                         context.packageManager.getPackageInfo(context.packageName, 0).versionName
                     } catch (e: Throwable) {
                         Log.e(TAG, e.toString())
-                        "Couldn't get version number"
+                        resources.getString(R.string.settings_about_unknown_version)
                     }
                 }
                 PreferencesRow(
@@ -260,7 +262,7 @@ fun VersionInfoDialog(
                     }
                 ) {
                     Text(
-                        text = "Close",
+                        text = stringResource(id = R.string.close),
                         fontSize = TextUnit(TextStylingConstants.SMALL_TEXT_SIZE, TextUnitType.Sp),
                     )
                 }
@@ -271,7 +273,7 @@ fun VersionInfoDialog(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Changelog",
+                        text = stringResource(id = R.string.changelog_name),
                         fontSize = TextUnit(TextStylingConstants.LARGE_TEXT_SIZE, TextUnitType.Sp),
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center

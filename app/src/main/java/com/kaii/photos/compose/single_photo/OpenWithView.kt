@@ -796,7 +796,7 @@ private fun OpenWithVideoPlayer(
                 isMuted = isMuted,
                 currentVideoPosition = currentVideoPosition,
                 duration = duration,
-                title = "Media",
+                title = stringResource(id = R.string.media),
                 modifier = Modifier
                     .fillMaxSize(1f),
                 onAnyTap = {
@@ -986,7 +986,7 @@ private fun BottomBar(
                         else Arrangement.SpaceEvenly
                 ) {
                     BottomAppBarItem(
-                        text = "Share",
+                        text = stringResource(id = R.string.media_share),
                         iconResId = R.drawable.share,
                         cornerRadius = 32.dp,
                         action = {

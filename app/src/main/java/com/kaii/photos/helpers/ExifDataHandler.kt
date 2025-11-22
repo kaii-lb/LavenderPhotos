@@ -296,15 +296,15 @@ fun eraseExifMedia(absolutePath: String) {
     }
 }
 
-enum class MediaData(val iconResInt: Int) {
-    Name(R.drawable.name),
-    Path(R.drawable.folder),
-    Date(R.drawable.calendar),
-    LatLong(R.drawable.location),
-    Device(R.drawable.camera),
-    FNumber(R.drawable.light),
-    ShutterSpeed(R.drawable.shutter_speed),
-    MegaPixels(R.drawable.maybe_megapixel),
-    Resolution(R.drawable.resolution),
-    Size(R.drawable.storage)
+enum class MediaData(val icon: Int, val description: Int) {
+    Name(icon = R.drawable.name, description = R.string.exif_name),
+    Path(icon = R.drawable.folder, description = R.string.exif_path),
+    Date(icon = R.drawable.calendar, description = R.string.exif_date),
+    LatLong(icon = R.drawable.location, description = R.string.exif_latlong),
+    Device(icon = R.drawable.camera, description = R.string.exif_device),
+    FNumber(icon = R.drawable.light, description = R.string.exif_fnumber),
+    ShutterSpeed(icon = R.drawable.shutter_speed, description = R.string.exif_shutter_speed),
+    MegaPixels(icon = R.drawable.maybe_megapixel, description = R.string.exif_mp),
+    Resolution(icon = R.drawable.resolution, description = R.string.exif_res),
+    Size(icon = R.drawable.storage, description = R.string.exif_size)
 }

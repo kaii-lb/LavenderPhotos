@@ -59,6 +59,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
@@ -287,7 +288,10 @@ private fun BottomBar(
 
     var showLoadingDialog by remember { mutableStateOf(false) }
     if (showLoadingDialog) {
-        LoadingDialog(title = "Restoring Files", body = "Please wait while the media is processed")
+        LoadingDialog(
+            title = stringResource(id = R.string.media_restore_processing),
+            body = stringResource(id = R.string.media_restore_processing_desc)
+        )
     }
 
     GetDirectoryPermissionAndRun(
@@ -322,8 +326,8 @@ private fun BottomBar(
 
     ConfirmationDialog(
         showDialog = showRestoreDialog,
-        dialogTitle = "Move item out of Secure Folder?",
-        confirmButtonLabel = "Move"
+        dialogTitle = stringResource(id = R.string.secure_move_out),
+        confirmButtonLabel = stringResource(id = R.string.media_move)
     ) {
         isGettingPermissions.value = true
         runRestoreAction.value = true
@@ -332,9 +336,9 @@ private fun BottomBar(
 
     ConfirmationDialogWithBody(
         showDialog = showDeleteDialog,
-        dialogTitle = "Permanently delete this item?",
-        dialogBody = "This action cannot be undone!",
-        confirmButtonLabel = "Delete"
+        dialogTitle = stringResource(id = R.string.media_delete_permanently_confirm),
+        dialogBody = stringResource(id = R.string.action_cannot_be_undone),
+        confirmButtonLabel = stringResource(id = R.string.media_delete)
     ) {
         mainViewModel.launch(Dispatchers.IO) {
             permanentlyDeleteSecureFolderImageList(
@@ -461,7 +465,7 @@ private fun BottomBar(
                     )
 
                     Text(
-                        text = "Restore",
+                        text = stringResource(id = R.string.media_restore),
                         fontSize = TextUnit(16f, TextUnitType.Sp),
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -505,7 +509,7 @@ private fun BottomBar(
                     )
 
                     Text(
-                        text = "Delete",
+                        text = stringResource(id = R.string.media_delete),
                         fontSize = TextUnit(16f, TextUnitType.Sp),
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onPrimaryContainer,

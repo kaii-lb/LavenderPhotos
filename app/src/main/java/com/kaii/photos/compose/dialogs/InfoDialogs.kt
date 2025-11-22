@@ -815,16 +815,12 @@ fun SinglePhotoInfoDialog(
                             items = mediaData.keys.filter { it != MediaData.LatLong }.toList() // we don't want to display straight up coordinates
                         ) { key ->
                             val value = mediaData[key]
-
-                            val splitBy = Regex("(?=[A-Z])")
-                            val split = key.toString().split(splitBy)
-                            val name =
-                                "${if (split.size >= 3) "${split[1]} ${split[2]}" else key.toString()}:"
+                            val name = stringResource(id = key.description)
 
                             TallDialogInfoRow(
                                 title = name,
                                 info = value.toString(),
-                                icon = key.iconResInt,
+                                icon = key.icon,
                                 position =
                                     if (mediaData.keys.indexOf(key) == mediaData.keys.size - 1 && location.isBlank())
                                         RowPosition.Bottom
@@ -1096,7 +1092,7 @@ fun SingleSecurePhotoInfoDialog(
                         TallDialogInfoRow(
                             title = name,
                             info = value.toString(),
-                            icon = key.iconResInt,
+                            icon = key.icon,
                             position =
                                 if (mediaData.keys.indexOf(key) == mediaData.keys.size - 1)
                                     RowPosition.Bottom

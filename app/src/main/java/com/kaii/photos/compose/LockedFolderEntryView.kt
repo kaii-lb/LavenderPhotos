@@ -6,7 +6,6 @@ import android.hardware.biometrics.BiometricPrompt
 import android.net.Uri
 import android.os.CancellationSignal
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -32,6 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.TextUnit
@@ -99,6 +99,8 @@ fun LockedFolderEntryView() {
     var rerunMigration by remember { mutableStateOf(false) }
 
     val applicationDatabase = LocalAppDatabase.current
+    val resources = LocalResources.current
+
     // migrate from old secure folder dir to new one
     GetDirectoryPermissionAndRun(
         absoluteDirPaths = listOf(context.appRestoredFilesDir),
@@ -146,7 +148,7 @@ fun LockedFolderEntryView() {
                     LavenderSnackbarController.pushEvent(
                         @OptIn(ExperimentalUuidApi::class)
                         LavenderSnackbarEvents.MessageEvent(
-                            message = "Failed exporting backup!",
+                            message = resources.getString(R.string.secure_export_failed),
                             icon = R.drawable.error_2,
                             duration = SnackbarDuration.Long
                         )
@@ -262,7 +264,7 @@ fun LockedFolderEntryView() {
                 LavenderSnackbarController.pushEvent(
                     @OptIn(ExperimentalUuidApi::class)
                     LavenderSnackbarEvents.MessageEvent(
-                        message = "Can't encrypt photos without permission",
+                        message = resources.getString(R.string.secure_encryption_failed_no_permission),
                         icon = R.drawable.error_2,
                         duration = SnackbarDuration.Long
                     )
@@ -308,8 +310,8 @@ fun LockedFolderEntryView() {
 
     if (migrating) {
         LoadingDialog(
-            title = "Migrating",
-            body = "Backing up and encrypting your photos, hold on..."
+            title = stringResource(id = R.string.secure_migrating),
+            body = stringResource(id = R.string.secure_migrating_desc)
         )
 
         return
@@ -317,16 +319,16 @@ fun LockedFolderEntryView() {
 
     if (showExplanationForMigration) {
         ExplanationDialog(
-            title = "Migration Notice",
-            explanation = "Secure folder is now encrypted! All your photos are now fully safe and untouchable by anyone. \n\nAs a precaution, a copy of your secured photos is now present in an export folder, you can find it in the albums page or under \"Internal Storage/Android/media/com.kaii.photos/LavenderPhotos/Exports\"."
+            title = stringResource(id = R.string.secure_migrating_notice),
+            explanation = stringResource(id = R.string.secure_migrating_notice_desc)
         ) {
             showExplanationForMigration = false
         }
     }
 
     val prompt = BiometricPrompt.Builder(LocalContext.current)
-        .setTitle("Unlock Secure Folder")
-        .setSubtitle("Use your biometric credentials to unlock")
+        .setTitle(resources.getString(R.string.secure_unlock))
+        .setSubtitle(resources.getString(R.string.secure_unlock_desc))
         .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL)
         .build()
 
@@ -339,14 +341,22 @@ fun LockedFolderEntryView() {
         override fun onAuthenticationError(errorCode: Int, errString: CharSequence?) {
             super.onAuthenticationError(errorCode, errString)
 
-            Toast.makeText(context, "Failed to authenticate :<", Toast.LENGTH_LONG).show()
+            coroutineScope.launch {
+                LavenderSnackbarController.pushEvent(
+                    LavenderSnackbarEvents.MessageEvent(
+                        message = resources.getString(R.string.secure_unlock_failed),
+                        duration = SnackbarDuration.Short,
+                        icon = R.drawable.secure_folder
+                    )
+                )
+            }
         }
     }
 
     var showHelpDialog by remember { mutableStateOf(false) }
     if (showHelpDialog) {
         ExplanationDialog(
-            title = "Secure Folder",
+            title = stringResource(id = R.string.secure_folder),
             explanation = stringResource(id = R.string.locked_folder_help_top) +
                     "\n\n" +
                     stringResource(id = R.string.locked_folder_help_bottom)
@@ -377,7 +387,7 @@ fun LockedFolderEntryView() {
                 )
 
                 Text(
-                    text = "Secure Folder",
+                    text = stringResource(id = R.string.secure_folder),
                     fontSize = TextUnit(16f, TextUnitType.Sp)
                 )
             }
@@ -399,7 +409,7 @@ fun LockedFolderEntryView() {
                     enabled = canOpenSecureFolder
                 ) {
                     Text(
-                        text = "Unlock Folder",
+                        text = stringResource(id = R.string.secure_unlock_short),
                         fontSize = TextUnit(16f, TextUnitType.Sp)
                     )
                 }
@@ -414,7 +424,7 @@ fun LockedFolderEntryView() {
                     )
                 ) {
                     Text(
-                        text = "More Info",
+                        text = stringResource(id = R.string.more_info),
                         fontSize = TextUnit(16f, TextUnitType.Sp)
                     )
                 }
@@ -447,7 +457,7 @@ fun LockedFolderEntryView() {
                 enabled = canOpenSecureFolder
             ) {
                 Text(
-                    text = "Unlock Folder",
+                    text = stringResource(id = R.string.secure_unlock_short),
                     fontSize = TextUnit(16f, TextUnitType.Sp)
                 )
             }
@@ -462,7 +472,7 @@ fun LockedFolderEntryView() {
                 )
             ) {
                 Text(
-                    text = "More Info",
+                    text = stringResource(id = R.string.more_info),
                     fontSize = TextUnit(16f, TextUnitType.Sp)
                 )
             }

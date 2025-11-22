@@ -359,7 +359,7 @@ private fun BottomBar(
                     )
 
                     Text(
-                        text = "Restore",
+                        text = stringResource(id = R.string.media_restore),
                         fontSize = TextUnit(16f, TextUnitType.Sp),
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -403,7 +403,7 @@ private fun BottomBar(
                     )
 
                     Text(
-                        text = "Delete",
+                        text = stringResource(id = R.string.media_delete),
                         fontSize = TextUnit(16f, TextUnitType.Sp),
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
