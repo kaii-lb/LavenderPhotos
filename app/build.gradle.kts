@@ -124,6 +124,8 @@ dependencies {
     implementation("com.mikepenz:aboutlibraries:13.0.0-rc01")
     implementation("com.mikepenz:aboutlibraries-compose-m3:13.0.0-rc01")
 
+    implementation("io.github.awxkee:jxl-coder-glide:2.2.0")
+
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
