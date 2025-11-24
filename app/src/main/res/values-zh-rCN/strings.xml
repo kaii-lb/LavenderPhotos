@@ -60,7 +60,6 @@
     <string name="version_info">版本信息</string>
     <string name="updates">更新</string>
     <string name="updates_desc">保持应用为最新版本</string>
-    <string name="changelog"></string>
     <string name="albums_id">Id</string>
     <string name="updates_check">检查更新</string>
     <string name="updates_check_desc">应用启动时检查新版本，需手动安装</string>
