@@ -47,7 +47,7 @@
     <string name="tabs_albums_incl">Alben einbeziehen</string>
     <string name="tabs_confirm">Tab hinzufügen</string>
     <string name="tabs_empty_params">Tab-Parameter dürfen nicht leer sein</string>
-    <string name="tabs_max_reached">Nicht mehr als 5 Tabs möglich</string>
+    <string name="tabs_max_reached">Nicht mehr als 8 Tabs möglich</string>
     <string name="tabs_min_reached">Mindestens ein Tab benötigt</string>
     <string name="return_to_previous_page">Zu vorheriger Seite zurückkehren</string>
     <string name="app_icon">Appsymbol</string>
@@ -88,4 +88,55 @@
     <string name="data_and_backup">Daten und Backup</string>
     <string name="favourites">Favoriten</string>
     <string name="favourites_add_this">Zu Favoriten hinzufügen</string>
+    <string name="albums_main_list_desc_1">Fotos ausgewählter Alben werden in der Hauptansicht gezeigt</string>
+    <string name="albums_main_list_desc_2">Ausgewählte Alben werden nicht in der Hauptansicht angezeigt</string>
+    <string name="albums_main_list_selected_inverse">Ausgewählte Alben werden nicht in der Hauptansicht angezeigt</string>
+    <string name="albums_custom_desc">Medien aus beliebigen Quellen hinzufügen</string>
+    <string name="albums_folder_desc">Medien aus Ordner laden</string>
+    <string name="albums_pin">Album anpinnen</string>
+    <string name="albums_unpin">Album lösen</string>
+    <string name="navigation">Navigation</string>
+    <string name="translation">Übersetzung</string>
+    <string name="licenses">Lizenzen</string>
+    <string name="licenses_desc">Genutzte Open Source Software</string>
+    <string name="licenses_extra">Zusätzliche Details</string>
+    <string name="licenses_extra_desc">Detaillierte Lizenzinformationen anzeigen</string>
+    <string name="special_thanks_to">Besonderer Dank geht an:</string>
+    <string name="updates_notice_desc"><![CDATA[
+            <p>Dieser Updater lädt die APKs von den <a href="https://github.com/kaii-lb/LavenderPhotos/releases">GitHub Releases</a> herunter. Das bedeutet,
+            <p>dass diese Dateien ohne zusätzliches Screening oder Performance-Tests von IzzyOnDroid, F-Droid usw. ausgegeben werden.
+
+                <br><br>Die herausgegebenen Builds, welche auf GitHub gehostet sind, sind immer signiert, überprüft und verifiziert durch den Entwickler (kaii-lb). Es ist Ihre Entscheidung sie zu benutzen oder nicht.
+
+                <br><br>Lavender Photos führt keine automatischen Updates durch. Und wenn nur durch die ausdrückliche Erlaubnis des Benutzers. 
+            </p>
+        ]]></string>
+    <string name="secure_getting_file_info">Dateiinformationen abrufen…</string>
+    <string name="secure_please_wait">Bitte warten…</string>
+    <string name="export_raw_backup_desc">Exportiert einen Ordner mit all deinen gesicherten (Roh-)Daten, (verschlüsselt oder unverschlüsselt)</string>
+    <string name="export_unenc_zip">Backup als Zip-Datei exportieren</string>
+    <string name="export_unenc_zip_desc">Exportiert eine Zip-Datei all deiner gesicherten Daten</string>
+    <string name="debugging">Debugging</string>
+    <string name="debugging_desc">Tools zur Fehlersuche</string>
+    <string name="logs">Logs</string>
+    <string name="record_logs">Logs aufzeichnen</string>
+    <string name="record_logs_desc">Logs zur Fehlersuche speichern. Zum Anzeigen tippen.</string>
+    <string name="choose_logs">Logs wählen</string>
+    <string name="previous_run_logs">Logs vorheriger Durchläufe</string>
+    <string name="log_file_non_existent">Bisher wurde keine Log-Datei aufgezeichnet.</string>
+    <string name="album_add_path">Albumpfad hinzufügen</string>
+    <string name="album_add">Album hinzufügen</string>
+    <string name="video">Video</string>
+    <string name="video_auto_play">Autoplay für Videos</string>
+    <string name="video_auto_play_desc">Filme starten, sobald sie auf dem Display erscheinen</string>
+    <string name="video_start_muted">Videos stummgeschaltet starten</string>
+    <string name="video_start_muted_desc">Keine Audiowiedergabe beim ersten Starten von Videos</string>
+    <string name="file_is_a_video">Datei ist ein Video</string>
+    <string name="video_lock_screen">Bildschirm sperren, um Fehleingaben zu vermeiden</string>
+    <string name="video_mute_toggle">Stummschaltung dieses Videos</string>
+    <string name="video_seek_back">5 Sekunden zurückspulen</string>
+    <string name="video_seek_front">5 Sekunden vorspulen</string>
+    <string name="video_play_toggle">Starte/pausiere dieses Video</string>
+    <string name="video_decrypting">Video wird entschlüsselt, bitte warten</string>
+    <string name="video_open_externally">In externem Player öffnen</string>
 </resources>

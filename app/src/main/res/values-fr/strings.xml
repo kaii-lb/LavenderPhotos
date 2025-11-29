@@ -10,7 +10,7 @@
     <string name="direct_path_album">Utiliser un chemin direct pour ajouter un album</string>
     <string name="albums_main_list">Liste principale d\'albums</string>
     <string name="albums_selected">Albums sélectionnés</string>
-    <string name="albums_auto_detect">Détecter automatiquement les albums</string>
+    <string name="albums_auto_detect">Détection automatique des albums</string>
     <string name="albums_auto_detect_desc">Détecte tours les dossiers de cet appareil qui contiennent des médias et les ajoute à la vue Albums</string>
     <string name="albums_name">Nom de l\'album</string>
     <string name="albums_add_failed">Échec de l\'ajout d\'album :&lt;</string>
@@ -282,4 +282,11 @@
     <string name="editing_highlights">Lumières</string>
     <string name="editing_overwrite">Sauvegarder</string>
     <string name="editing_white_point">Point blanc</string>
+    <string name="albums_main_list_desc_1">Les albums sélectionnés auront leurs photos affichées dans la vue principale des photos</string>
+    <string name="albums_main_list_desc_2">Les albums sélectionnés seront mis sur liste noire et ne pourront pas être affichés dans la vue principale des photos</string>
+    <string name="albums_main_list_selected_inverse">Les albums sélectionnés ici n\'apparaîtront pas dans la vue principale des photos</string>
+    <string name="albums_custom_desc">Ajoutez n\'importe quel média depuis n\'importe où</string>
+    <string name="albums_folder_desc">Charger des médias à partir d\'un dossier</string>
+    <string name="albums_pin">Épingler cet album</string>
+    <string name="albums_unpin">Détachez cet album</string>
 </resources>
