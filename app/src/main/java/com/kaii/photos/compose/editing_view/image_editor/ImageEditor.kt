@@ -67,6 +67,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
@@ -114,11 +115,6 @@ fun ImageEditor(
     isFromOpenWithView: Boolean,
     albumInfo: AlbumInfo?
 ) {
-    val imageEditingState = rememberImageEditingState()
-    val drawingPaintState = rememberDrawingPaintState(
-        isVideo = false
-    )
-
     val lastSavedModCount = remember { mutableIntStateOf(0) }
     val totalModCount = remember { mutableIntStateOf(0) }
     val modifications = remember { mutableStateListOf<ImageModification>() }
@@ -133,6 +129,9 @@ fun ImageEditor(
     ) { MediaColorFilters.entries.size }
 
     val pagerState = rememberPagerState { ImageEditorTabs.entries.size }
+
+    val imageEditingState = rememberImageEditingState()
+    val drawingPaintState = rememberDrawingPaintState(isVideo = false)
 
     var originalImage by remember { mutableStateOf(ImageBitmap(512, 512)) }
     var moddedImage by remember { mutableStateOf(originalImage) }
@@ -149,6 +148,8 @@ fun ImageEditor(
                     .load(uri)
                     .submit()
                     .get()
+
+            imageEditingState.initialResolution = IntSize(bitmap.width, bitmap.height)
 
             var inSampleSize = 1
 
@@ -614,9 +615,9 @@ fun ImageEditor(
                         val targetY = actualHeight / latestCrop.height
 
                         val scale = max(1f, min(targetX, targetY))
-                        imageEditingState.setScale(scale)
+                        imageEditingState.scale = scale
 
-                        imageEditingState.setOffset(
+                        imageEditingState.offset =
                             Offset(
                                 x = with(localDensity) {
                                     scale * (-latestCrop.left + (containerDimens.width - latestCrop.width) / 2)
@@ -625,7 +626,6 @@ fun ImageEditor(
                                     scale * (-latestCrop.top + (containerDimens.height - latestCrop.height) / 2)
                                 }
                             )
-                        )
                     }
                 )
             }

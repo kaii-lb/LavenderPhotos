@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMapNotNull
+import androidx.core.graphics.scale
 import androidx.media3.common.Effect
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
@@ -654,6 +655,10 @@ suspend fun saveImage(
                 postRotate(imageEditingState.rotation)
             },
             true
+        )
+        .scale(
+            imageEditingState.resolution.width,
+            imageEditingState.resolution.height
         )
 
     Log.d(TAG, "Image crop left ${left * bitmap.width} and width ${width * bitmap.width}")

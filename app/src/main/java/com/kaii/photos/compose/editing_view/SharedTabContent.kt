@@ -26,7 +26,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -77,7 +76,6 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.graphics.scale
 import com.bumptech.glide.Glide
 import com.kaii.lavender.snackbars.LavenderSnackbarController
@@ -641,7 +639,8 @@ fun SharedEditorCropContent(
     rotation: Float,
     setCroppingAspectRatio: (CroppingAspectRatio) -> Unit,
     setRotation: (Float) -> Unit,
-    resetCrop: () -> Unit
+    resetCrop: () -> Unit,
+    extraContent: @Composable () -> Unit = {}
 ) {
     Row(
         modifier = Modifier
@@ -674,6 +673,8 @@ fun SharedEditorCropContent(
             }
         )
 
+        extraContent()
+
         EditingViewBottomAppBarItem(
             text = stringResource(id = R.string.editing_reset),
             icon = R.drawable.reset,
@@ -703,7 +704,7 @@ fun SharedEditorMoreContent(
     ) {
         val context = LocalContext.current
         apps.forEach { app ->
-            Column(
+            Box(
                 modifier = Modifier
                     .size(64.dp)
                     .clip(RoundedCornerShape(24.dp))
@@ -720,20 +721,12 @@ fun SharedEditorMoreContent(
                         context.startActivity(intent)
                     }
                     .padding(8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                contentAlignment = Alignment.Center
             ) {
                 Icon(
                     bitmap = app.icon,
                     contentDescription = app.name,
                     tint = Color.Unspecified
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = app.name,
-                    fontSize = TextStylingConstants.SMALL_TEXT_SIZE.sp
                 )
             }
         }

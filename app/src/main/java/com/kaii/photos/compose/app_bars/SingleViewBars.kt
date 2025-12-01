@@ -120,6 +120,7 @@ import com.kaii.photos.compose.editing_view.SharedEditorFilterContent
 import com.kaii.photos.compose.editing_view.SharedEditorMoreContent
 import com.kaii.photos.compose.editing_view.getAvailableEditorsForType
 import com.kaii.photos.compose.editing_view.image_editor.ImageEditorAdjustContent
+import com.kaii.photos.compose.editing_view.image_editor.ImageEditorCropContent
 import com.kaii.photos.compose.editing_view.video_editor.TrimContent
 import com.kaii.photos.compose.editing_view.video_editor.VideoEditorAdjustContent
 import com.kaii.photos.compose.editing_view.video_editor.VideoEditorProcessingContent
@@ -808,14 +809,24 @@ fun ImageEditorBottomBar(
             ) { index ->
                 when (index) {
                     ImageEditorTabs.entries.indexOf(ImageEditorTabs.Crop) -> {
-                        SharedEditorCropContent(
+                        ImageEditorCropContent(
                             imageAspectRatio = originalAspectRatio,
                             croppingAspectRatio = imageEditingState.croppingAspectRatio,
                             rotation = imageEditingState.rotation,
+                            resolution = imageEditingState.resolution,
+                            initialWidth = imageEditingState.initialResolution.width,
                             setCroppingAspectRatio = imageEditingState::setCroppingAspectRatio,
-                            setRotation = imageEditingState::setRotation,
+                            setRotation = {
+                                imageEditingState.rotation = it
+                            },
                             resetCrop = {
                                 imageEditingState.resetCrop(true)
+                            },
+                            getScaledResolution = {
+                                imageEditingState.getScaledResolution(it)
+                            },
+                            scaleResolution = {
+                                imageEditingState.resolution = imageEditingState.getScaledResolution(it)
                             }
                         )
                     }

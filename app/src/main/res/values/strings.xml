@@ -775,6 +775,7 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="editing_bitrate_unit">Bits per second</string>
     <string name="editing_open_with_copying_video">Processing video…</string>
     <string name="editing_open_with_copying_image">Processing image…</string>
+    <string name="editing_resolution_scale">Scale</string>
 
     <!-- Editing Filters -->
     <string name="filter">Filter</string>

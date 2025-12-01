@@ -1052,7 +1052,7 @@ fun SliderDialog(
                     sliderState = state,
                     drawTick = { offset, color -> },
                     modifier = Modifier
-                        .height(40.dp)
+                        .height(32.dp)
                 )
             },
             modifier = Modifier

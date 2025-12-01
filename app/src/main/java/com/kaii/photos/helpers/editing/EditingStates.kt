@@ -16,6 +16,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.sp
 import androidx.media3.common.Effect
 import androidx.media3.common.util.UnstableApi
@@ -23,6 +24,8 @@ import com.kaii.photos.helpers.editing.DrawingPaintState.Companion.Saver
 import com.kaii.photos.helpers.editing.ImageEditingState.Companion.Saver
 import com.kaii.photos.helpers.editing.VideoEditingState.Companion.Saver
 import kotlinx.serialization.json.Json
+import kotlin.math.ceil
+import kotlin.math.roundToInt
 
 class DrawingPaintState(
     initialPaintType: DrawingItems,
@@ -548,17 +551,16 @@ class ImageEditingState(
     initialRotation: Float,
     initialScale: Float,
     initialOffset: Offset,
+    var initialResolution: IntSize,
     initialModifications: List<ImageModification>
 ) : MediaEditingState {
     override var croppingAspectRatio by mutableStateOf(initialCroppingAspectRatio)
     override var resetCrop by mutableStateOf(false)
 
     var rotation by mutableFloatStateOf(initialRotation)
-        private set
     var scale by mutableFloatStateOf(initialScale)
-        private set
     var offset by mutableStateOf(initialOffset)
-        private set
+    var resolution by mutableStateOf(initialResolution)
 
     private val modifications = mutableStateListOf<ImageModification?>()
     val modificationList by derivedStateOf { modifications.mapNotNull { it } }
@@ -583,21 +585,11 @@ class ImageEditingState(
     @JvmName("privateSetCroppingAspectRatio")
     fun setCroppingAspectRatio(ratio: CroppingAspectRatio) {
         this.croppingAspectRatio = ratio
-    }
-
-    @JvmName("privateSetRotation")
-    fun setRotation(angle: Float) {
-        this.rotation = angle
-    }
-
-    @JvmName("privateSetScale")
-    fun setScale(scale: Float) {
-        this.scale = scale
-    }
-
-    @JvmName("privateSetOffset")
-    fun setOffset(offset: Offset) {
-        this.offset = offset
+        this.resolution =
+            IntSize(
+                resolution.width,
+                (resolution.height * ratio.ratio).roundToInt().coerceIn(0, resolution.height)
+            )
     }
 
     override fun resetCrop(value: Boolean) {
@@ -605,6 +597,7 @@ class ImageEditingState(
         this.offset = Offset.Zero
         this.rotation = 0f
         this.resetCrop = value
+        this.resolution = initialResolution
     }
 
     fun addModification(mod: ImageModification, modIndex: Int? = null) {
@@ -622,13 +615,44 @@ class ImageEditingState(
 
     fun removeModifications(predicate: (ImageModification?) -> Boolean) = modifications.removeAll { predicate(it) }
 
+    fun getScaledResolution(scale: Float): IntSize {
+        val aspect = initialResolution.width.toFloat() / initialResolution.height
+
+        var ratio = this.croppingAspectRatio.ratio
+        if (ratio <= 0f) { // this indicates freeform
+            val crop =
+                modificationList.lastOrNull {
+                    it is ImageModification.Crop
+                } as? ImageModification.Crop
+
+            ratio = crop?.let { it.width / it.height } ?: aspect
+        }
+
+        return if (ratio >= aspect) {
+            // make the largest size be the one that could max out the resolution
+            // this makes it so the scaling+cropping can't make an image larger than what we already have
+            val width = ceil(initialResolution.height * ratio).toInt().coerceIn(0, initialResolution.width)
+            IntSize(
+                width = ceil(width * scale).toInt(),
+                height = ceil(width * scale / ratio).toInt().coerceIn(0, initialResolution.width)
+            )
+        } else {
+            // same as above
+            val height = ceil(initialResolution.width / ratio).toInt().coerceIn(0, initialResolution.height)
+            IntSize(
+                width = ceil(height * ratio * scale).toInt(),
+                height = ceil(height * scale).toInt()
+            )
+        }
+    }
+
     companion object {
         // private const val TAG = "com.kaii.photos.helpers.editing.ImageEditingState"
 
         /** The default [Saver] implementation for [ImageEditingState]. */
         val Saver: Saver<ImageEditingState, *> =
             listSaver(
-                save = { listOf(it.croppingAspectRatio, it.rotation, it.scale, it.offset.x, it.offset.y, Json.encodeToString(it.modificationList)) },
+                save = { listOf(it.croppingAspectRatio, it.rotation, it.scale, it.offset.x, it.offset.y, Json.encodeToString(it.modificationList), it.resolution.width, it.resolution.height) },
                 restore = {
                     ImageEditingState(
                         initialCroppingAspectRatio = it[0] as CroppingAspectRatio,
@@ -636,6 +660,7 @@ class ImageEditingState(
                         initialScale = it[2] as Float,
                         initialOffset = Offset(it[3] as Float, it[4] as Float),
                         initialModifications = Json.decodeFromString(it[5] as String),
+                        initialResolution = IntSize(it[6] as Int, it[7] as Int)
                     )
                 },
             )
@@ -646,6 +671,7 @@ class ImageEditingState(
 @Composable
 fun rememberImageEditingState(
     initialCroppingAspectRatio: CroppingAspectRatio = CroppingAspectRatio.FreeForm,
+    initialResolution: IntSize = IntSize.Zero,
     initialRotation: Float = 0f,
     initialScale: Float = 1f,
     initialOffset: Offset = Offset.Zero
@@ -656,6 +682,7 @@ fun rememberImageEditingState(
             initialRotation = initialRotation,
             initialScale = initialScale,
             initialOffset = initialOffset,
+            initialResolution = initialResolution,
             initialModifications = emptyList()
         )
     }
