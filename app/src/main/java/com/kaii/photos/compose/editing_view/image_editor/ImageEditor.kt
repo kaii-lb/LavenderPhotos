@@ -400,8 +400,8 @@ fun ImageEditor(
                             )
                         } else {
                             min(
-                                width.toPx() / imageSize.height.toPx(),
-                                height.toPx() / imageSize.height.toPx()
+                                height.toPx() / imageSize.width.toPx(),
+                                width.toPx() / imageSize.height.toPx()
                             )
                         }
                     }

@@ -657,8 +657,8 @@ suspend fun saveImage(
             true
         )
         .scale(
-            imageEditingState.resolution.width,
-            imageEditingState.resolution.height
+            if (imageEditingState.rotation % 180f == 0f) imageEditingState.resolution.width else imageEditingState.resolution.height,
+            if (imageEditingState.rotation % 180f == 0f) imageEditingState.resolution.height else imageEditingState.resolution.width
         )
 
     Log.d(TAG, "Image crop left ${left * bitmap.width} and width ${width * bitmap.width}")
