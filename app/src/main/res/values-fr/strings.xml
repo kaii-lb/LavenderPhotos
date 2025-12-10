@@ -289,4 +289,7 @@
     <string name="albums_folder_desc">Charger des médias à partir d\'un dossier</string>
     <string name="albums_pin">Épingler cet album</string>
     <string name="albums_unpin">Détachez cet album</string>
+    <string name="navigation_trash">Corbeille</string>
+    <string name="translation">Traduction</string>
+    <string name="licenses">Licenses</string>
 </resources>
