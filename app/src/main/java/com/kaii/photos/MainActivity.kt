@@ -151,6 +151,8 @@ import com.kaii.photos.models.main_activity.MainViewModelFactory
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModelFactory
 import com.kaii.photos.models.multi_album.groupPhotosBy
+import com.kaii.photos.models.secure_folder.SecureFolderViewModel
+import com.kaii.photos.models.secure_folder.SecureFolderViewModelFactory
 import com.kaii.photos.models.trash_bin.TrashViewModel
 import com.kaii.photos.models.trash_bin.TrashViewModelFactory
 import com.kaii.photos.ui.theme.PhotosTheme
@@ -589,7 +591,14 @@ class MainActivity : ComponentActivity() {
                         window
                     )
 
-                    LockedFolderView(window = window)
+                    val viewModel = viewModel<SecureFolderViewModel>(
+                        factory = SecureFolderViewModelFactory(
+                            context = context,
+                            sortMode = currentSortMode,
+                            displayDateFormat = displayDateFormat
+                        )
+                    )
+                    LockedFolderView(window = window, viewModel = viewModel)
                 }
 
                 composable<Screens.SingleHiddenPhotoView> {
