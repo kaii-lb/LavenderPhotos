@@ -30,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.TextUnit
@@ -40,6 +41,7 @@ import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.DateFormatDialog
+import com.kaii.photos.compose.dialogs.TopBarDetailsFormatDialog
 import com.kaii.photos.compose.widgets.PreferenceRowWithCustomBody
 import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
@@ -153,6 +155,39 @@ fun LookAndFeelSettingsPage() {
                     goesToOtherPage = true
                 ) {
                     showDateFormatDialog = true
+                }
+            }
+
+            item {
+                val context = LocalContext.current
+                var showDialog by remember { mutableStateOf(false) }
+                val format by mainViewModel.topBarDetailsFormat.collectAsStateWithLifecycle()
+
+                var currentDate by remember {
+                    mutableStateOf(
+                    format.format(context, "Screenshot 20251210.png", Clock.System.now().epochSeconds)
+                    )
+                }
+
+                LaunchedEffect(format) {
+                    currentDate = format.format(context, "Screenshot 20251210.png", Clock.System.now().epochSeconds)
+                }
+
+                if (showDialog) {
+                    TopBarDetailsFormatDialog {
+                        showDialog = false
+                    }
+                }
+
+                PreferencesRow(
+                    title = stringResource(id = R.string.look_and_feel_image_details_format),
+                    summary = currentDate,
+                    iconResID = R.drawable.maybe_megapixel,
+                    position = RowPosition.Single,
+                    showBackground = false,
+                    goesToOtherPage = true
+                ) {
+                    showDialog = true
                 }
             }
 

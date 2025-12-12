@@ -3,8 +3,8 @@ package com.kaii.photos.models.secure_folder
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.MediaItemSortMode
-import com.kaii.photos.models.multi_album.DisplayDateFormat
 
 @Suppress("UNCHECKED_CAST")
 class SecureFolderViewModelFactory(

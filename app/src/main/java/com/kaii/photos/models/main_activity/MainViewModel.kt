@@ -19,13 +19,14 @@ import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.datastore.MainPhotosView
 import com.kaii.photos.datastore.PhotoGrid
 import com.kaii.photos.datastore.Settings
+import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.MediaItemSortMode
+import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.helpers.Updater
 import com.kaii.photos.mediastore.MediaDataSource
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.content_provider.CustomAlbumDataSource
 import com.kaii.photos.mediastore.getSQLiteQuery
-import com.kaii.photos.models.multi_album.DisplayDateFormat
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -86,6 +87,12 @@ class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMode
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
         initialValue = false
+    )
+
+    val topBarDetailsFormat = settings.LookAndFeel.getTopBarDetailsFormat().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Lazily,
+        initialValue = TopBarDetailsFormat.Default
     )
 
     val albumsThumbnailsMap = mutableStateMapOf<Int, MediaStoreData>()

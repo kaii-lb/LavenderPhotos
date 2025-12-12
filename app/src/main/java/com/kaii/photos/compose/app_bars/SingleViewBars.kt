@@ -151,6 +151,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.ExperimentalTime
 
 private const val TAG = "com.kaii.photos.compose.app_bars.SingleViewBars"
 
@@ -222,7 +223,10 @@ fun VideoEditorBottomBar(
             ) {
                 VideoEditorTabs.entries.forEach { entry ->
                     if (entry != VideoEditorTabs.More || availableEditors.isNotEmpty()) {
-                        SimpleTab(text = stringResource(id = entry.title), selected = pagerState.currentPage == VideoEditorTabs.entries.indexOf(entry)) {
+                        SimpleTab(
+                            text = stringResource(id = entry.title),
+                            selected = pagerState.currentPage == VideoEditorTabs.entries.indexOf(entry)
+                        ) {
                             coroutineScope.launch {
                                 pagerState.animateScrollToPage(VideoEditorTabs.entries.indexOf(entry))
                             }
@@ -792,7 +796,10 @@ fun ImageEditorBottomBar(
             ) {
                 ImageEditorTabs.entries.forEach { entry ->
                     if (entry != ImageEditorTabs.More || availableEditors.isNotEmpty()) {
-                        SimpleTab(text = stringResource(id = entry.title), selected = pagerState.currentPage == ImageEditorTabs.entries.indexOf(entry)) {
+                        SimpleTab(
+                            text = stringResource(id = entry.title),
+                            selected = pagerState.currentPage == ImageEditorTabs.entries.indexOf(entry)
+                        ) {
                             coroutineScope.launch {
                                 pagerState.animateScrollToPage(ImageEditorTabs.entries.indexOf(entry))
                             }
@@ -1015,7 +1022,7 @@ fun ImageEditorTopBar(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class, ExperimentalTime::class)
 @Composable
 fun SingleViewTopBar(
     mediaItem: MediaStoreData,
@@ -1072,15 +1079,19 @@ fun SingleViewTopBar(
                 Spacer(modifier = Modifier.width(4.dp))
 
                 val isLandscape by rememberDeviceOrientation()
+                val context = LocalContext.current
+                val mainViewModel = LocalMainViewModel.current
+                val topBarDetailsFormat by mainViewModel.topBarDetailsFormat.collectAsStateWithLifecycle()
+
                 Text(
-                    text = mediaItem.displayName,
+                    text = topBarDetailsFormat.format(context, mediaItem.displayName, mediaItem.dateTaken),
                     fontSize = TextStylingConstants.SMALL_TEXT_SIZE.sp,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier
-                        .widthIn(max = if (isLandscape) 300.dp else 180.dp)
+                        .widthIn(max = if (isLandscape) 340.dp else 220.dp)
                         .clip(CircleShape)
                         .clickable {
                             expandInfoDialog()

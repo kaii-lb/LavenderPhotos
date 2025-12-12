@@ -53,6 +53,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -81,11 +82,12 @@ import com.kaii.photos.datastore.PhotoGrid
 import com.kaii.photos.datastore.Storage
 import com.kaii.photos.datastore.StoredDrawable
 import com.kaii.photos.datastore.TrashBin
+import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MediaItemSortMode.Companion.presentableName
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.helpers.createDirectoryPicker
-import com.kaii.photos.models.multi_album.DisplayDateFormat
 import com.kaii.photos.reorderable_lists.ReorderableItem
 import com.kaii.photos.reorderable_lists.ReorderableLazyList
 import com.kaii.photos.reorderable_lists.rememberReorderableListState
@@ -856,6 +858,56 @@ fun DateFormatDialog(
                     iconResID = item.icon
                 ) {
                     mainViewModel.settings.LookAndFeel.setDisplayDateFormat(item)
+                    onDismiss()
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalTime::class)
+@Composable
+fun TopBarDetailsFormatDialog(
+    onDismiss: () -> Unit
+) {
+    LavenderDialogBase(
+        onDismiss = onDismiss
+    ) {
+        TitleCloseRow(
+            title = stringResource(id = R.string.look_and_feel_image_details_format),
+            closeOffset = 12.dp
+        ) {
+            onDismiss()
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        val context = LocalContext.current
+        val mainViewModel = LocalMainViewModel.current
+        val currentDate = remember {
+            Clock.System.now()
+                .epochSeconds
+        }
+
+        LazyColumn(
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            itemsIndexed(
+                items = TopBarDetailsFormat.entries
+            ) { index, item ->
+                PreferencesRow(
+                    title = stringResource(id = item.description),
+                    summary = item.format(context, "Screenshot 20251210.png", currentDate),
+                    position =
+                        when (index) {
+                            0 -> RowPosition.Top
+                            TopBarDetailsFormat.entries.size - 1 -> RowPosition.Bottom
+                            else -> RowPosition.Middle
+                        },
+                    iconResID = item.icon
+                ) {
+                    mainViewModel.settings.LookAndFeel.setTopBarDetailsFormat(item)
                     onDismiss()
                 }
             }

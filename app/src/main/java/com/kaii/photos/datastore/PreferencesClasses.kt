@@ -9,11 +9,12 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.bumptech.glide.Glide
+import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.MediaItemSortMode
+import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.tryGetAllAlbums
-import com.kaii.photos.models.multi_album.DisplayDateFormat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -455,6 +456,7 @@ class SettingsLookAndFeelImpl(
     private val blackBackgroundForViews = booleanPreferencesKey("look_and_feel_black_background")
     private val showExtraSecureNav = booleanPreferencesKey("look_and_feel_extra_secure")
     private val useRoundedCorners = booleanPreferencesKey("look_and_feel_use_rounded_corners") // for photo grid
+    private val topBarDetailsFormat = intPreferencesKey("look_and_feel_top_bar_details_format")
 
     /** 0 is follow system
      * 1 is dark
@@ -549,6 +551,17 @@ class SettingsLookAndFeelImpl(
     fun setUseRoundedCorners(value: Boolean) = viewModelScope.launch {
         context.datastore.edit {
             it[useRoundedCorners] = value
+        }
+    }
+
+    fun getTopBarDetailsFormat(): Flow<TopBarDetailsFormat> =
+        context.datastore.data.map {
+            TopBarDetailsFormat.entries[it[topBarDetailsFormat] ?: 0]
+        }
+
+    fun setTopBarDetailsFormat(format: TopBarDetailsFormat) = viewModelScope.launch {
+        context.datastore.edit {
+            it[topBarDetailsFormat] = TopBarDetailsFormat.entries.indexOf(format)
         }
     }
 }
