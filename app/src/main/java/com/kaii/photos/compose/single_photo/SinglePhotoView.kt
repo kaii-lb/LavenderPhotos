@@ -290,7 +290,8 @@ fun SinglePhotoViewCommon(
             val media = currentMediaItem.value
 
             val date = getDateTakenForMedia(
-                absolutePath = media.absolutePath
+                absolutePath = media.absolutePath,
+                dateModified = media.dateModified
             )
 
             if (date != media.dateTaken) {

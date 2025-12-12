@@ -1037,6 +1037,7 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="look_and_feel_date_format_default">Default</string>
     <string name="look_and_feel_date_format_short">Short</string>
     <string name="look_and_feel_date_format_compressed">Compressed</string>
+    <string name="look_and_feel_date_format_alternate">Alternate</string>
     <string name="look_and_feel_theme_amoled">Amoled Black</string>
     <string name="look_and_feel_theme_amoled_desc">Sets the background color to black for the power efficiency on Amoled devices</string>
     <string name="look_and_feel_column_size">Column Size: %1$d</string>

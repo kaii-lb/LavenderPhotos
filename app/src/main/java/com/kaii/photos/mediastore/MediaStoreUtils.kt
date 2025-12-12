@@ -269,7 +269,7 @@ fun ContentResolver.getMediaStoreDataFromUri(context: Context, uri: Uri): MediaS
                     mediaStoreDateTaken > 0L -> mediaStoreDateTaken
 
                     type == MediaType.Image -> {
-                        getDateTakenForMedia(absolutePath).let { exifDateTaken ->
+                        getDateTakenForMedia(absolutePath, dateModified).let { exifDateTaken ->
                             dao.insertEntity(
                                 MediaEntity(
                                     id = contentId,

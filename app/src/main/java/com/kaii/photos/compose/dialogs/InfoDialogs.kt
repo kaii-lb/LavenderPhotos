@@ -580,7 +580,11 @@ fun SinglePhotoInfoDialog(
                 }
 
                 val mediaData = remember {
-                    getExifDataForMedia(currentMediaItem.absolutePath)
+                    getExifDataForMedia(
+                        context = context,
+                        absolutePath = currentMediaItem.absolutePath,
+                        dateModified = currentMediaItem.dateModified
+                    )
                 }
 
                 var location by remember { mutableStateOf("") }
@@ -1052,7 +1056,11 @@ fun SingleSecurePhotoInfoDialog(
                     }
 
                     showLoadingDialog = false
-                    mediaData = getExifDataForMedia(file.absolutePath)
+                    mediaData = getExifDataForMedia(
+                        context = context,
+                        absolutePath = file.absolutePath,
+                        dateModified = currentMediaItem.dateModified
+                    )
                 }
             }
 

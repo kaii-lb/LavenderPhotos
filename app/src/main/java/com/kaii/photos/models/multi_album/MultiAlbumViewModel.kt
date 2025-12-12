@@ -1,8 +1,9 @@
 package com.kaii.photos.models.multi_album
 
 import android.content.Context
-import android.icu.text.SimpleDateFormat
 import android.os.CancellationSignal
+import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -23,9 +24,18 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.format
+import kotlinx.datetime.format.DateTimeFormat
+import kotlinx.datetime.format.DayOfWeekNames
+import kotlinx.datetime.format.MonthNames
+import kotlinx.datetime.format.char
+import kotlinx.datetime.toLocalDateTime
 import java.util.Calendar
-import java.util.Date
 import java.util.Locale
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 // private const val TAG = "com.kaii.photos.models.MultiAlbumViewModel"
 
@@ -213,20 +223,84 @@ fun groupPhotosBy(
     return mediaItems
 }
 
-enum class DisplayDateFormat(val format: String) {
-    Default(format = "EEE d - MMMM yyyy"),
-    Short(format = "d - MMM yy"),
-    Compressed(format = "MM/dd/yyyy")
+enum class DisplayDateFormat(
+    @param:StringRes val description: Int,
+    @param:DrawableRes val icon: Int,
+    val format: DateTimeFormat<LocalDate>
+) {
+    Default(
+        description = R.string.look_and_feel_date_format_default,
+        icon = R.drawable.calendar_filled,
+        format = LocalDate.Format {
+            dayOfWeek(DayOfWeekNames.ENGLISH_ABBREVIATED)
+            char(' ')
+            day()
+
+            char(' ')
+            char('-')
+            char(' ')
+
+            monthName(MonthNames.ENGLISH_FULL)
+            char(' ')
+            year()
+        }
+    ),
+
+    Alternate(
+        description = R.string.look_and_feel_date_format_alternate,
+        icon = R.drawable.nest_clock_farsight_analog,
+        format = LocalDate.Format {
+            day()
+            char('/')
+            monthNumber()
+            char('/')
+            year()
+        }
+    ),
+
+    Short(
+        description = R.string.look_and_feel_date_format_short,
+        icon = R.drawable.clarify,
+        format = LocalDate.Format {
+            day()
+            char(' ')
+            monthName(MonthNames.ENGLISH_ABBREVIATED)
+            char(' ')
+            yearTwoDigits(1960)
+        }
+    ),
+
+    Compressed(
+        description = R.string.look_and_feel_date_format_compressed,
+        icon = R.drawable.acute,
+        format = LocalDate.Format {
+            year()
+            char('/')
+            monthNumber()
+            char('/')
+            day()
+        }
+    )
 }
 
+@OptIn(ExperimentalTime::class)
 fun formatDate(timestamp: Long, sortBy: MediaItemSortMode, format: DisplayDateFormat): String {
     return if (timestamp != 0L) {
         val dateFormat =
-            if (sortBy == MediaItemSortMode.MonthTaken) SimpleDateFormat("MMMM yyyy", Locale.getDefault())
-            else SimpleDateFormat(format.format, Locale.getDefault())
+            if (sortBy == MediaItemSortMode.MonthTaken) {
+                LocalDate.Format {
+                    monthName(MonthNames.ENGLISH_FULL)
+                    char(' ')
+                    year()
+                }
+            } else {
+                format.format
+            }
 
-        val dateTimeString = dateFormat.format(Date(timestamp * 1000))
-        dateTimeString.toString()
+        Instant.fromEpochSeconds(timestamp)
+            .toLocalDateTime(TimeZone.currentSystemDefault())
+            .date
+            .format(dateFormat)
     } else {
         "Pretend there is a date here"
     }

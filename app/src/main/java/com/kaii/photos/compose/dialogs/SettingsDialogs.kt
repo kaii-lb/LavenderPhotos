@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -89,9 +90,11 @@ import com.kaii.photos.reorderable_lists.ReorderableItem
 import com.kaii.photos.reorderable_lists.ReorderableLazyList
 import com.kaii.photos.reorderable_lists.rememberReorderableListState
 import kotlinx.coroutines.launch
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.format
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 @Composable
 fun AddTabDialog(
@@ -811,6 +814,7 @@ fun DefaultTabSelectorDialog(
     }
 }
 
+@OptIn(ExperimentalTime::class)
 @Composable
 fun DateFormatDialog(
     onDismiss: () -> Unit
@@ -825,51 +829,35 @@ fun DateFormatDialog(
             onDismiss()
         }
 
-        Column(
+        Spacer(modifier = Modifier.height(12.dp))
+        val mainViewModel = LocalMainViewModel.current
+        val currentDate = remember {
+            Clock.System.now()
+                .toLocalDateTime(TimeZone.currentSystemDefault())
+                .date
+        }
+
+        LazyColumn(
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(12.dp))
-
-            val mainViewModel = LocalMainViewModel.current
-            val currentDate = remember {
-                Instant.now().atZone(ZoneId.systemDefault()).toLocalDateTime()
-            }
-
-            PreferencesRow(
-                title = stringResource(id = R.string.look_and_feel_date_format_default),
-                summary = run {
-                    currentDate.format(DateTimeFormatter.ofPattern(DisplayDateFormat.Default.format))
-                },
-                position = RowPosition.Top,
-                iconResID = R.drawable.calendar
-            ) {
-                mainViewModel.settings.LookAndFeel.setDisplayDateFormat(DisplayDateFormat.Default)
-                onDismiss()
-            }
-
-            PreferencesRow(
-                title = stringResource(id = R.string.look_and_feel_date_format_short),
-                summary = run {
-                    currentDate.format(DateTimeFormatter.ofPattern(DisplayDateFormat.Short.format))
-                },
-                position = RowPosition.Middle,
-                iconResID = R.drawable.clarify
-            ) {
-                mainViewModel.settings.LookAndFeel.setDisplayDateFormat(DisplayDateFormat.Short)
-                onDismiss()
-            }
-
-            PreferencesRow(
-                title = stringResource(id = R.string.look_and_feel_date_format_compressed),
-                summary = run {
-                    currentDate.format(DateTimeFormatter.ofPattern(DisplayDateFormat.Compressed.format))
-                },
-                position = RowPosition.Bottom,
-                iconResID = R.drawable.acute
-            ) {
-                mainViewModel.settings.LookAndFeel.setDisplayDateFormat(DisplayDateFormat.Compressed)
-                onDismiss()
+            itemsIndexed(
+                items = DisplayDateFormat.entries
+            ) { index, item ->
+                PreferencesRow(
+                    title = stringResource(id = item.description),
+                    summary = currentDate.format(item.format),
+                    position =
+                        when (index) {
+                            0 -> RowPosition.Top
+                            DisplayDateFormat.entries.size - 1 -> RowPosition.Bottom
+                            else -> RowPosition.Middle
+                        },
+                    iconResID = item.icon
+                ) {
+                    mainViewModel.settings.LookAndFeel.setDisplayDateFormat(item)
+                    onDismiss()
+                }
             }
         }
     }

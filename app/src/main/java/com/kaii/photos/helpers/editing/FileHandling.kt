@@ -683,7 +683,7 @@ suspend fun saveImage(
     val media = MediaStoreData(
         displayName = file.name,
         absolutePath = file.absolutePath,
-        dateTaken = getDateTakenForMedia(absolutePath = absolutePath),
+        dateTaken = getDateTakenForMedia(absolutePath = absolutePath, dateModified = System.currentTimeMillis() / 1000),
         dateModified = System.currentTimeMillis() / 1000,
         type = MediaType.Image,
         mimeType = "image/png",

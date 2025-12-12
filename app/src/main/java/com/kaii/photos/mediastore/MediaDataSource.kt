@@ -152,7 +152,7 @@ class MediaDataSource(
                     mediaStoreDateTaken > 0L -> mediaStoreDateTaken
 
                     type == MediaType.Image -> {
-                        getDateTakenForMedia(absolutePath).let { exifDateTaken ->
+                        getDateTakenForMedia(absolutePath, dateModified).let { exifDateTaken ->
                             entitiesToBeInserted.add(
                                 MediaEntity(
                                     id = id,

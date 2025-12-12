@@ -48,12 +48,14 @@ import com.kaii.photos.compose.widgets.PreferencesThreeStateSwitchRow
 import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.format
+import kotlinx.datetime.toLocalDateTime
 import kotlin.math.roundToInt
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class)
 @Composable
 fun LookAndFeelSettingsPage() {
     val mainViewModel = LocalMainViewModel.current
@@ -122,18 +124,18 @@ fun LookAndFeelSettingsPage() {
 
                 var currentDate by remember {
                     mutableStateOf(
-                        Instant.now()
-                            .atZone(ZoneId.systemDefault())
-                            .toLocalDateTime()
-                            .format(DateTimeFormatter.ofPattern(displayDateFormat.format))
+                        value = Clock.System.now()
+                            .toLocalDateTime(TimeZone.currentSystemDefault())
+                            .date
+                            .format(format = displayDateFormat.format)
                     )
                 }
 
                 LaunchedEffect(displayDateFormat) {
-                    currentDate = Instant.now()
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDateTime()
-                        .format(DateTimeFormatter.ofPattern(displayDateFormat.format))
+                    currentDate = Clock.System.now()
+                        .toLocalDateTime(TimeZone.currentSystemDefault())
+                        .date
+                        .format(format = displayDateFormat.format)
                 }
 
                 if (showDateFormatDialog) {
