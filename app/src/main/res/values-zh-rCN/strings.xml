@@ -409,7 +409,6 @@
     <string name="bottom_sheets_three_by_two">3:2</string>
     <string name="look_and_feel_styling_separator">风格</string>
     <string name="look_and_feel_date_format">日期格式</string>
-    <string name="look_and_feel_date_format_desc">调整日期显示格式</string>
     <string name="look_and_feel_date_format_default">默认</string>
     <string name="look_and_feel_date_format_short">简写</string>
     <string name="look_and_feel_date_format_compressed">紧凑</string>

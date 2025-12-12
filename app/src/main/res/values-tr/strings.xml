@@ -962,7 +962,6 @@
     <!-- Look and Feel -->
     <string name="look_and_feel_styling_separator">Stil</string>
     <string name="look_and_feel_date_format">Tarih Formatı</string>
-    <string name="look_and_feel_date_format_desc">Tarihlerin nasıl görüntüleneceğini değiştirin</string>
     <string name="look_and_feel_date_format_default">Varsayılan</string>
     <string name="look_and_feel_date_format_short">Kısa</string>
     <string name="look_and_feel_date_format_compressed">Sıkıştırılmış</string>

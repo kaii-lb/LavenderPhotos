@@ -397,7 +397,6 @@ o que significa que ele não passa por nenhum teste adicional realizado por Izzy
     <string name="error_views_error_page">Esta é uma página de erro</string>
     <string name="look_and_feel_styling_separator">Estilo</string>
     <string name="look_and_feel_date_format">Formato de Data</string>
-    <string name="look_and_feel_date_format_desc">Muda como as datas são exibidas</string>
     <string name="look_and_feel_date_format_default">Padrão</string>
     <string name="look_and_feel_date_format_short">Curto</string>
     <string name="look_and_feel_date_format_compressed">Comprimido</string>

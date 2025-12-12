@@ -932,7 +932,6 @@
     <string name="bottom_sheets_three_by_two">3:2</string>
     <string name="look_and_feel_styling_separator">Estilismo</string>
     <string name="look_and_feel_date_format">Formato de Fecha</string>
-    <string name="look_and_feel_date_format_desc">Cambia cómo se muestran las fechas</string>
     <string name="look_and_feel_date_format_default">Por defecto</string>
     <string name="look_and_feel_date_format_short">Corta</string>
     <string name="look_and_feel_date_format_compressed">Comprimida</string>

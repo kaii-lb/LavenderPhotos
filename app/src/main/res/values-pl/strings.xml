@@ -404,7 +404,6 @@
     <string name="bottom_sheets_three_by_two">3:2</string>
     <string name="look_and_feel_styling_separator">Styl</string>
     <string name="look_and_feel_date_format">Format daty</string>
-    <string name="look_and_feel_date_format_desc">Zmień sposób wyświetlania dat</string>
     <string name="look_and_feel_date_format_default">Domyślny</string>
     <string name="look_and_feel_date_format_short">Krótki</string>
     <string name="look_and_feel_date_format_compressed">Skompresowany</string>
