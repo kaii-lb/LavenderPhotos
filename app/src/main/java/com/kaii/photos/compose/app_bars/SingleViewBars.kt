@@ -813,8 +813,7 @@ fun ImageEditorBottomBar(
                             imageAspectRatio = originalAspectRatio,
                             croppingAspectRatio = imageEditingState.croppingAspectRatio,
                             rotation = imageEditingState.rotation,
-                            resolution = imageEditingState.resolution,
-                            initialWidth = imageEditingState.initialResolution.width,
+                            resolutionScale = imageEditingState.resolutionScale,
                             setCroppingAspectRatio = imageEditingState::setCroppingAspectRatio,
                             setRotation = {
                                 imageEditingState.rotation = it

@@ -94,8 +94,7 @@ fun ImageEditorCropContent(
     imageAspectRatio: Float,
     croppingAspectRatio: CroppingAspectRatio,
     rotation: Float,
-    resolution: IntSize,
-    initialWidth: Int,
+    resolutionScale: Float,
     setCroppingAspectRatio: (CroppingAspectRatio) -> Unit,
     setRotation: (Float) -> Unit,
     resetCrop: () -> Unit,
@@ -133,7 +132,7 @@ fun ImageEditorCropContent(
             },
             steps = 3,
             range = 1f..5f,
-            startsAt = invertedLookUpResScale(resolution.width.toFloat() / initialWidth),
+            startsAt = invertedLookUpResScale(resolutionScale),
             onSetValue = {
                 scaleResolution(lookUpResScale(it))
             },
