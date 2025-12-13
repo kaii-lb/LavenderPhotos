@@ -4,15 +4,11 @@ import android.content.Context
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import com.kaii.photos.R
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.format
-import kotlinx.datetime.format.DateTimeFormat
-import kotlinx.datetime.format.DayOfWeekNames
-import kotlinx.datetime.format.MonthNames
-import kotlinx.datetime.format.char
+import kotlinx.datetime.toJavaLocalDate
+import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
+import java.time.format.DateTimeFormatter
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
@@ -21,11 +17,7 @@ fun formatDate(timestamp: Long, sortBy: MediaItemSortMode, format: DisplayDateFo
     return if (timestamp != 0L) {
         val dateFormat =
             if (sortBy == MediaItemSortMode.MonthTaken) {
-                LocalDate.Companion.Format {
-                    monthName(MonthNames.ENGLISH_FULL)
-                    char(' ')
-                    year()
-                }
+                DateTimeFormatter.ofPattern("MMMM yyyy")
             } else {
                 format.format
             }
@@ -33,6 +25,7 @@ fun formatDate(timestamp: Long, sortBy: MediaItemSortMode, format: DisplayDateFo
         Instant.fromEpochSeconds(timestamp)
             .toLocalDateTime(TimeZone.currentSystemDefault())
             .date
+            .toJavaLocalDate()
             .format(dateFormat)
     } else {
         "Pretend there is a date here"
@@ -42,60 +35,30 @@ fun formatDate(timestamp: Long, sortBy: MediaItemSortMode, format: DisplayDateFo
 enum class DisplayDateFormat(
     @param:StringRes val description: Int,
     @param:DrawableRes val icon: Int,
-    val format: DateTimeFormat<LocalDate>
+    val format: DateTimeFormatter
 ) {
     Default(
         description = R.string.look_and_feel_date_format_default,
         icon = R.drawable.calendar_filled,
-        format = LocalDate.Format {
-            dayOfWeek(DayOfWeekNames.ENGLISH_ABBREVIATED)
-            char(' ')
-            day()
-
-            char(' ')
-            char('-')
-            char(' ')
-
-            monthName(MonthNames.ENGLISH_FULL)
-            char(' ')
-            year()
-        }
+        format = DateTimeFormatter.ofPattern("EEE dd - MMM yyyy")
     ),
 
     Alternate(
         description = R.string.look_and_feel_date_format_alternate,
         icon = R.drawable.nest_clock_farsight_analog,
-        format = LocalDate.Format {
-            day()
-            char('/')
-            monthNumber()
-            char('/')
-            year()
-        }
+        format = DateTimeFormatter.ofPattern("dd/MM/yyyy")
     ),
 
     Short(
         description = R.string.look_and_feel_date_format_short,
         icon = R.drawable.clarify,
-        format = LocalDate.Format {
-            day()
-            char(' ')
-            monthName(MonthNames.ENGLISH_ABBREVIATED)
-            char(' ')
-            yearTwoDigits(1960)
-        }
+        format = DateTimeFormatter.ofPattern("MMM dd yyyy")
     ),
 
     Compressed(
         description = R.string.look_and_feel_date_format_compressed,
         icon = R.drawable.acute,
-        format = LocalDate.Format {
-            year()
-            char('/')
-            monthNumber()
-            char('/')
-            day()
-        }
+        format = DateTimeFormatter.ISO_LOCAL_DATE
     )
 }
 
@@ -119,15 +82,8 @@ enum class TopBarDetailsFormat(
         format = { context, name, datetime ->
             Instant.fromEpochSeconds(datetime)
                 .toLocalDateTime(TimeZone.currentSystemDefault())
-                .format(LocalDateTime.Format {
-                    dayOfWeek(DayOfWeekNames.ENGLISH_ABBREVIATED)
-                    char(' ')
-                    day()
-                    char(' ')
-                    monthName(MonthNames.ENGLISH_ABBREVIATED)
-                    char(' ')
-                    year()
-                })
+                .toJavaLocalDateTime()
+                .format(DateTimeFormatter.ofPattern("EEE dd MMM yyyy"))
         },
     ),
 
@@ -135,31 +91,17 @@ enum class TopBarDetailsFormat(
         description = R.string.look_and_feel_date_format_detailed,
         icon = R.drawable.clarify,
         format = { context, name, datetime ->
+            val is24Hr = android.text.format.DateFormat.is24HourFormat(context)
+
             Instant.fromEpochSeconds(datetime)
                 .toLocalDateTime(TimeZone.currentSystemDefault())
+                .toJavaLocalDateTime()
                 .format(
-                    LocalDateTime.Format {
-                        dayOfWeek(DayOfWeekNames.ENGLISH_ABBREVIATED)
-                        char(' ')
-                        day()
-                        char(' ')
-                        monthName(MonthNames.ENGLISH_ABBREVIATED)
-                        char(' ')
-                        year()
-
-                        char(' ')
-
-                        val is24Hr = android.text.format.DateFormat.is24HourFormat(context)
-                        if (is24Hr) hour() else amPmHour()
-
-                        char(':')
-                        minute()
-
-                        if (!is24Hr) {
-                            char(' ')
-                            amPmMarker("a.m.", "p.m.")
-                        }
-                    })
+                    DateTimeFormatter.ofPattern(
+                        if (is24Hr) "EEE dd MMM yyyy HH:mm"
+                        else "EEE dd MMM yyyy hh:mm a"
+                    )
+                )
         }
     )
 }

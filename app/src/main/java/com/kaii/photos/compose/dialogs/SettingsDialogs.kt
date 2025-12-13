@@ -93,7 +93,7 @@ import com.kaii.photos.reorderable_lists.ReorderableLazyList
 import com.kaii.photos.reorderable_lists.rememberReorderableListState
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.format
+import kotlinx.datetime.toJavaLocalDate
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -837,6 +837,7 @@ fun DateFormatDialog(
             Clock.System.now()
                 .toLocalDateTime(TimeZone.currentSystemDefault())
                 .date
+                .toJavaLocalDate()
         }
 
         LazyColumn(

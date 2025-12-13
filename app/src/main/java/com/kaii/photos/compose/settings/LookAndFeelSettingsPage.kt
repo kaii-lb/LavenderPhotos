@@ -51,7 +51,7 @@ import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.format
+import kotlinx.datetime.toJavaLocalDate
 import kotlinx.datetime.toLocalDateTime
 import kotlin.math.roundToInt
 import kotlin.time.Clock
@@ -129,7 +129,8 @@ fun LookAndFeelSettingsPage() {
                         value = Clock.System.now()
                             .toLocalDateTime(TimeZone.currentSystemDefault())
                             .date
-                            .format(format = displayDateFormat.format)
+                            .toJavaLocalDate()
+                            .format(displayDateFormat.format)
                     )
                 }
 
@@ -137,7 +138,8 @@ fun LookAndFeelSettingsPage() {
                     currentDate = Clock.System.now()
                         .toLocalDateTime(TimeZone.currentSystemDefault())
                         .date
-                        .format(format = displayDateFormat.format)
+                        .toJavaLocalDate()
+                        .format(displayDateFormat.format)
                 }
 
                 if (showDateFormatDialog) {
@@ -165,7 +167,7 @@ fun LookAndFeelSettingsPage() {
 
                 var currentDate by remember {
                     mutableStateOf(
-                    format.format(context, "Screenshot 20251210.png", Clock.System.now().epochSeconds)
+                        format.format(context, "Screenshot 20251210.png", Clock.System.now().epochSeconds)
                     )
                 }
 
