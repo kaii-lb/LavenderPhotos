@@ -108,7 +108,7 @@ class MediaDataSource(
             context.contentResolver.query(
                 MEDIA_STORE_FILE_URI,
                 PROJECTION,
-                "((${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_IMAGE}) OR (${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_VIDEO})) ${sqliteQuery.query}",
+                "(${FileColumns.MEDIA_TYPE} IN (${FileColumns.MEDIA_TYPE_IMAGE}, ${FileColumns.MEDIA_TYPE_VIDEO})) ${sqliteQuery.query}",
                 sqliteQuery.paths?.toTypedArray(),
                 "${MediaColumns.DATE_ADDED} DESC",
             ) ?: return emptyList()
@@ -124,15 +124,18 @@ class MediaDataSource(
         val sizeColumn = cursor.getColumnIndexOrThrow(MediaColumns.SIZE)
 
         val dao = MediaDatabase.getInstance(context).mediaEntityDao()
-        val allEntities = dao.getAll().associateBy { it.id } // map lookups are faster
+        val allEntities = dao.getAll().associate { it.id to it.dateTaken } // map lookups are faster
 
         val entitiesToBeInserted = mutableListOf<MediaEntity>() // bulk insert is faster
         val holderMap = mutableMapOf<Long, MutableList<MediaStoreData>>() // maps are faster, AGAIN
 
         while (cursor.moveToNext()) {
+            val absolutePath = cursor.getString(absolutePathColNum)
+
+            if (sqliteQuery.basePaths?.contains(absolutePath.toBasePath()) != true && sqliteQuery.basePaths != null) continue
+
             val id = cursor.getLong(idColNum)
             val mimeType = cursor.getString(mimeTypeColNum)
-            val absolutePath = cursor.getString(absolutePathColNum)
             val mediaStoreDateTaken = cursor.getLong(dateTakenColumn) / 1000
             val dateAdded = cursor.getLong(dateAddedColumn)
             val dateModified = cursor.getLong(dateModifiedColumn)
@@ -143,7 +146,7 @@ class MediaDataSource(
                 if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) MediaType.Image
                 else MediaType.Video
 
-            val possibleDateTaken = allEntities[id]?.dateTaken
+            val possibleDateTaken = allEntities[id]
 
             val dateTaken =
                 when {
@@ -177,31 +180,28 @@ class MediaDataSource(
                 if (type == MediaType.Image) MediaStore.Images.Media.EXTERNAL_CONTENT_URI else MediaStore.Video.Media.EXTERNAL_CONTENT_URI
             val uri = ContentUris.withAppendedId(uriParentPath, id)
 
-            if (sqliteQuery.basePaths?.contains(absolutePath.toBasePath()) == true || sqliteQuery.basePaths == null) {
-                val new =
-                    MediaStoreData(
-                        type = type,
-                        id = id,
-                        uri = uri,
-                        mimeType = mimeType,
-                        dateModified = dateModified,
-                        dateTaken = dateTaken,
-                        displayName = displayName,
-                        absolutePath = absolutePath,
-                        size = size
-                    )
+            val new =
+                MediaStoreData(
+                    type = type,
+                    id = id,
+                    uri = uri,
+                    mimeType = mimeType,
+                    dateModified = dateModified,
+                    dateTaken = dateTaken,
+                    displayName = displayName,
+                    absolutePath = absolutePath,
+                    size = size
+                )
 
-                val day =
-                    when (sortMode) {
-                        MediaItemSortMode.LastModified -> new.getLastModifiedDay()
-                        MediaItemSortMode.MonthTaken -> new.getDateTakenMonth()
-                        MediaItemSortMode.DateTaken -> new.getDateTakenDay()
-                        else -> 0L
-                    }
+            val day =
+                when (sortMode) {
+                    MediaItemSortMode.LastModified -> new.getLastModifiedDay()
+                    MediaItemSortMode.MonthTaken -> new.getDateTakenMonth()
+                    MediaItemSortMode.DateTaken -> new.getDateTakenDay()
+                    else -> 0L
+                }
 
-                if (sortMode == MediaItemSortMode.Disabled) holderMap.getOrPut(0L) { mutableListOf() }.add(new)
-                else holderMap.getOrPut(day) { mutableListOf() }.add(new)
-            }
+            holderMap.getOrPut(day) { mutableListOf() }.add(new)
         }
 
         cursor.close()
@@ -212,7 +212,7 @@ class MediaDataSource(
         val sorted = mutableListOf<MediaStoreData>()
 
         if (sortMode == MediaItemSortMode.Disabled) {
-            return sortedMap[0L]?.sortedByDescending { it.dateTaken } ?: emptyList()
+            return sortedMap.flatMap { it.value }.sortedByDescending { it.dateTaken }
         }
 
         sortedMap.forEach { (day, items) ->
@@ -237,10 +237,15 @@ class MediaDataSource(
             sorted.add(section)
 
             sorted.addAll(
-                items.sortedByDescending { item ->
-                    if (sortMode == MediaItemSortMode.LastModified) item.dateModified
-                    else item.dateTaken
-                }.onEach { it.section = sectionItem }
+                if (sortMode == MediaItemSortMode.LastModified) {
+                    items.sortedByDescending { item ->
+                         item.dateModified
+                    }.onEach { it.section = sectionItem }
+                } else {
+                    items.sortedByDescending { item ->
+                        item.dateTaken
+                    }.onEach { it.section = sectionItem }
+                }
             )
         }
 
