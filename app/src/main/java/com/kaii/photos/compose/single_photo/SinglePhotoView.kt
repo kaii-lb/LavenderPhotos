@@ -19,16 +19,20 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.BottomAppBarDefaults.windowInsets
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FloatingToolbarDefaults
+import androidx.compose.material3.FloatingToolbarDefaults.vibrantFloatingToolbarColors
 import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
@@ -509,10 +513,20 @@ private fun BottomBar(
                 expanded = true,
                 colors = FloatingToolbarDefaults.vibrantFloatingToolbarColors(),
                 floatingActionButton = {
-                    FloatingToolbarDefaults.VibrantFloatingActionButton(
+                    FilledIconButton(
                         onClick = {
                             getDirPerm.value = true
-                        }
+                        },
+                        colors = IconButtonDefaults.iconButtonColors(
+                            contentColor = vibrantFloatingToolbarColors().fabContentColor,
+                            containerColor = vibrantFloatingToolbarColors().fabContainerColor
+                        ),
+                        shapes = IconButtonDefaults.shapes(
+                            shape = IconButtonDefaults.mediumSquareShape,
+                            pressedShape = IconButtonDefaults.smallPressedShape
+                        ),
+                        modifier = Modifier
+                            .sizeIn(minWidth = 56.dp, minHeight = 56.dp)
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.paintbrush),

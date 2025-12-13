@@ -16,10 +16,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -74,6 +78,7 @@ import kotlin.uuid.ExperimentalUuidApi
 
 private const val TAG = "com.kaii.photos.compose.LockedFolderEntryView"
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun LockedFolderEntryView() {
     val navController = LocalNavController.current
@@ -406,7 +411,11 @@ fun LockedFolderEntryView() {
                             promptCallback
                         )
                     },
-                    enabled = canOpenSecureFolder
+                    enabled = canOpenSecureFolder,
+                    shapes = ButtonDefaults.shapes(
+                        shape = MaterialShapes.Circle.toShape(),
+                        pressedShape = MaterialShapes.Square.toShape()
+                    )
                 ) {
                     Text(
                         text = stringResource(id = R.string.secure_unlock_short),
@@ -454,7 +463,11 @@ fun LockedFolderEntryView() {
                         promptCallback
                     )
                 },
-                enabled = canOpenSecureFolder
+                enabled = canOpenSecureFolder,
+                shapes = ButtonDefaults.shapes(
+                    shape = ButtonDefaults.shape,
+                    pressedShape = ButtonDefaults.pressedShape
+                )
             ) {
                 Text(
                     text = stringResource(id = R.string.secure_unlock_short),
@@ -462,13 +475,17 @@ fun LockedFolderEntryView() {
                 )
             }
 
-            Button(
+            TextButton(
                 onClick = {
                     showHelpDialog = true
                 },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.surfaceVariant,
                     contentColor = MaterialTheme.colorScheme.onSurface
+                ),
+                shapes = ButtonDefaults.shapes(
+                    shape = ButtonDefaults.shape,
+                    pressedShape = ButtonDefaults.pressedShape
                 )
             ) {
                 Text(

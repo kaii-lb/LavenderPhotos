@@ -140,6 +140,7 @@ fun SingleAlbumDialog(
 
     if (showDialog.value) {
         LavenderDialogBase(
+            verticalArrangement = Arrangement.spacedBy(space = 2.dp),
             onDismiss = {
                 showDialog.value = false
             },
@@ -432,7 +433,8 @@ fun MainAppDialog(
             Column(
                 modifier = Modifier
                     .padding(12.dp)
-                    .wrapContentHeight()
+                    .wrapContentHeight(),
+                verticalArrangement = Arrangement.spacedBy(space = 2.dp)
             ) {
                 if (currentView.value != DefaultTabs.TabTypes.albums && currentView.value != DefaultTabs.TabTypes.secure) {
                     DialogClickableItem(

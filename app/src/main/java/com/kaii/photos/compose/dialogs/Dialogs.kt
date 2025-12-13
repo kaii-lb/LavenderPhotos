@@ -84,7 +84,7 @@ fun DialogClickableItem(
     enabled: Boolean = true,
     action: (() -> Unit)? = null
 ) {
-    val (shape, spacerHeight) = getDefaultShapeSpacerForPosition(position)
+    val (shape, _) = getDefaultShapeSpacerForPosition(position = position, innerCornerRadius = 2.dp)
 
     val clickableModifier =
         if (action != null && enabled) Modifier.clickable { action() } else Modifier
@@ -92,14 +92,14 @@ fun DialogClickableItem(
     Row(
         modifier = modifier
             .fillMaxWidth(1f)
-            .height(40.dp)
+            .height(42.dp)
             .clip(shape)
+            .then(clickableModifier)
             .background(
                 if (enabled) MaterialTheme.colorScheme.surfaceVariant
                 else darkenColor(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f), 0.1f)
             )
             .wrapContentHeight(align = Alignment.CenterVertically)
-            .then(clickableModifier)
             .padding(8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Start
@@ -123,12 +123,6 @@ fun DialogClickableItem(
                 .wrapContentSize()
         )
     }
-
-    Spacer(
-        modifier = Modifier
-            .height(spacerHeight)
-            .background(MaterialTheme.colorScheme.surface)
-    )
 }
 
 /** Do not use background colors for your composable
@@ -443,6 +437,7 @@ fun LoadingDialog(
 @Composable
 fun LavenderDialogBase(
     modifier: Modifier = Modifier,
+    verticalArrangement: Arrangement.Vertical = Arrangement.Center,
     onDismiss: () -> Unit,
     content: @Composable ColumnScope.() -> Unit
 ) {
@@ -462,7 +457,7 @@ fun LavenderDialogBase(
                 .clip(RoundedCornerShape(32.dp))
                 .background(MaterialTheme.colorScheme.surfaceContainerLow)
                 .padding(8.dp),
-            verticalArrangement = Arrangement.Center,
+            verticalArrangement = verticalArrangement,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             content()

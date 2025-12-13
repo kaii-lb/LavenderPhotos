@@ -1067,7 +1067,11 @@ fun SingleViewTopBar(
                     },
                     colors = IconButtonDefaults.filledIconButtonColors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainer
-                    )
+                    ),
+                    shapes = IconButtonDefaults.shapes(
+                        shape = IconButtonDefaults.filledShape,
+                        pressedShape = IconButtonDefaults.mediumPressedShape
+                    ),
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.back_arrow),
@@ -1128,10 +1132,10 @@ fun SingleViewTopBar(
                     expandInfoDialog()
                 },
                 shapes = IconButtonDefaults.toggleableShapes(
-                    shape = CircleShape,
-                    pressedShape = CircleShape,
-                    checkedShape = MaterialShapes.Square.toShape()
-                )
+                    shape = IconButtonDefaults.filledShape,
+                    pressedShape = IconButtonDefaults.extraSmallPressedShape,
+                    checkedShape = IconButtonDefaults.mediumSelectedRoundShape
+                ),
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.more_options),
