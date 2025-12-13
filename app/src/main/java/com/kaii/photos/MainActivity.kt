@@ -1,6 +1,7 @@
 package com.kaii.photos
 
 import android.annotation.SuppressLint
+import android.content.pm.ActivityInfo
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
@@ -193,6 +194,10 @@ class MainActivity : ComponentActivity() {
         val applicationDatabase = MediaDatabase.getInstance(applicationContext)
 
         Glide.get(this).setMemoryCategory(MemoryCategory.HIGH)
+
+        if (display.isHdr) {
+            window.colorMode = ActivityInfo.COLOR_MODE_HDR
+        }
 
         setContent {
             val mainViewModel: MainViewModel = viewModel(
