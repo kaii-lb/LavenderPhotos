@@ -899,7 +899,7 @@ fun TopBarDetailsFormatDialog(
             ) { index, item ->
                 PreferencesRow(
                     title = stringResource(id = item.description),
-                    summary = item.format(context, "Screenshot 20251210.png", currentDate),
+                    summary = item.format(context, "Screenshot.png", currentDate),
                     position =
                         when (index) {
                             0 -> RowPosition.Top

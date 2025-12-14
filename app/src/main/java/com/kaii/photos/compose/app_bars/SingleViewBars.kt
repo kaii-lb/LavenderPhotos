@@ -1095,7 +1095,7 @@ fun SingleViewTopBar(
                     overflow = TextOverflow.Ellipsis,
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier
-                        .widthIn(max = if (isLandscape) 340.dp else 220.dp)
+                        .widthIn(max = if (isLandscape) 340.dp else 240.dp)
                         .clip(CircleShape)
                         .clickable {
                             expandInfoDialog()

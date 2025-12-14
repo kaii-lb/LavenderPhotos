@@ -406,7 +406,7 @@
     <string name="look_and_feel_date_format">Format daty</string>
     <string name="look_and_feel_date_format_default">Domyślny</string>
     <string name="look_and_feel_date_format_short">Krótki</string>
-    <string name="look_and_feel_date_format_compressed">Skompresowany</string>
+    <string name="look_and_feel_date_format_standard">Skompresowany</string>
     <string name="look_and_feel_theme_amoled">Amoled Czarny</string>
     <string name="look_and_feel_theme_amoled_desc">Ustawia kolor tła na czarny w celu zwiększenia efektywności energetycznej urządzeń AMOLED</string>
     <string name="look_and_feel_column_size">Rozmiar kolumny: %1$d</string>

@@ -92,7 +92,7 @@ class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMode
     val topBarDetailsFormat = settings.LookAndFeel.getTopBarDetailsFormat().stateIn(
         scope = viewModelScope,
         started = SharingStarted.Lazily,
-        initialValue = TopBarDetailsFormat.Default
+        initialValue = TopBarDetailsFormat.FileName
     )
 
     val albumsThumbnailsMap = mutableStateMapOf<Int, MediaStoreData>()

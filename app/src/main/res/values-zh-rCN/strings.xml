@@ -411,7 +411,7 @@
     <string name="look_and_feel_date_format">日期格式</string>
     <string name="look_and_feel_date_format_default">默认</string>
     <string name="look_and_feel_date_format_short">简写</string>
-    <string name="look_and_feel_date_format_compressed">紧凑</string>
+    <string name="look_and_feel_date_format_standard">紧凑</string>
     <string name="look_and_feel_theme_amoled">AMOLED 黑色</string>
     <string name="look_and_feel_theme_amoled_desc">将背景设为黑色，以便在 AMOLED 设备上实现节能效果</string>
     <string name="look_and_feel_column_size">列宽：%1$d</string>

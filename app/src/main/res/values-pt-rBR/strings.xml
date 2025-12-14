@@ -399,7 +399,7 @@ o que significa que ele não passa por nenhum teste adicional realizado por Izzy
     <string name="look_and_feel_date_format">Formato de Data</string>
     <string name="look_and_feel_date_format_default">Padrão</string>
     <string name="look_and_feel_date_format_short">Curto</string>
-    <string name="look_and_feel_date_format_compressed">Comprimido</string>
+    <string name="look_and_feel_date_format_standard">Comprimido</string>
     <string name="look_and_feel_theme_amoled">Preto Amoled</string>
     <string name="look_and_feel_theme_amoled_desc">Define a cor de fundo como preta para maior eficiência energética em dispositivos com tela Amoled</string>
     <string name="look_and_feel_column_size">Tamanho da Coluna: %1$d</string>

@@ -167,12 +167,12 @@ fun LookAndFeelSettingsPage() {
 
                 var currentDate by remember {
                     mutableStateOf(
-                        format.format(context, "Screenshot 20251210.png", Clock.System.now().epochSeconds)
+                        format.format(context, "Screenshot.png", Clock.System.now().epochSeconds)
                     )
                 }
 
                 LaunchedEffect(format) {
-                    currentDate = format.format(context, "Screenshot 20251210.png", Clock.System.now().epochSeconds)
+                    currentDate = format.format(context, "Screenshot.png", Clock.System.now().epochSeconds)
                 }
 
                 if (showDialog) {

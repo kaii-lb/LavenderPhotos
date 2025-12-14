@@ -964,7 +964,7 @@
     <string name="look_and_feel_date_format">Tarih Formatı</string>
     <string name="look_and_feel_date_format_default">Varsayılan</string>
     <string name="look_and_feel_date_format_short">Kısa</string>
-    <string name="look_and_feel_date_format_compressed">Sıkıştırılmış</string>
+    <string name="look_and_feel_date_format_standard">Sıkıştırılmış</string>
     <string name="look_and_feel_theme_amoled">Amoled Siyah</string>
     <string name="look_and_feel_theme_amoled_desc">Amoled cihazlarda güç verimliliği için arka plan rengini siyaha ayarlar</string>
     <string name="look_and_feel_column_size">Sütun Boyutu: %1$d</string>

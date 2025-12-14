@@ -934,7 +934,7 @@
     <string name="look_and_feel_date_format">Formato de Fecha</string>
     <string name="look_and_feel_date_format_default">Por defecto</string>
     <string name="look_and_feel_date_format_short">Corta</string>
-    <string name="look_and_feel_date_format_compressed">Comprimida</string>
+    <string name="look_and_feel_date_format_standard">Comprimida</string>
     <string name="look_and_feel_theme_amoled">Negro Amoled</string>
     <string name="look_and_feel_theme_amoled_desc">Establece el color de fondo en negro para la eficiencia energética en dispositivos Amoled</string>
     <string name="look_and_feel_column_size">Tamaño de columna: %1$d</string>

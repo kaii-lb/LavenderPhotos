@@ -39,25 +39,25 @@ enum class DisplayDateFormat(
 ) {
     Default(
         description = R.string.look_and_feel_date_format_default,
-        icon = R.drawable.calendar_filled,
+        icon = R.drawable.event_filled,
         format = DateTimeFormatter.ofPattern("EEE dd - MMM yyyy")
     ),
 
-    Alternate(
-        description = R.string.look_and_feel_date_format_alternate,
-        icon = R.drawable.nest_clock_farsight_analog,
+    Numeric(
+        description = R.string.look_and_feel_date_format_numeric,
+        icon = R.drawable.schedule_filled,
         format = DateTimeFormatter.ofPattern("dd/MM/yyyy")
     ),
 
     Short(
         description = R.string.look_and_feel_date_format_short,
-        icon = R.drawable.clarify,
-        format = DateTimeFormatter.ofPattern("MMM dd yyyy")
+        icon = R.drawable.acute,
+        format = DateTimeFormatter.ofPattern("dd MMM yyyy")
     ),
 
-    Compressed(
-        description = R.string.look_and_feel_date_format_compressed,
-        icon = R.drawable.acute,
+    Standard(
+        description = R.string.look_and_feel_date_format_standard,
+        icon = R.drawable.article_filled,
         format = DateTimeFormatter.ISO_LOCAL_DATE
     )
 }
@@ -68,16 +68,16 @@ enum class TopBarDetailsFormat(
     @param:DrawableRes val icon: Int,
     val format: (Context, String, Long) -> String
 ) {
-    Default(
-        description = R.string.look_and_feel_date_format_default,
-        icon = R.drawable.nest_clock_farsight_analog,
+    FileName(
+        description = R.string.look_and_feel_date_format_filename,
+        icon = R.drawable.clarify,
         format = { context, name, datetime ->
             name
         }
     ),
 
-    Compressed(
-        description = R.string.look_and_feel_date_format_compressed,
+    Date(
+        description = R.string.look_and_feel_date_format_date_taken,
         icon = R.drawable.acute,
         format = { context, name, datetime ->
             Instant.fromEpochSeconds(datetime)
@@ -87,9 +87,9 @@ enum class TopBarDetailsFormat(
         },
     ),
 
-    Detailed(
-        description = R.string.look_and_feel_date_format_detailed,
-        icon = R.drawable.clarify,
+    DateTime(
+        description = R.string.look_and_feel_date_format_datetime_taken,
+        icon = R.drawable.overview_filled,
         format = { context, name, datetime ->
             val is24Hr = android.text.format.DateFormat.is24HourFormat(context)
 
@@ -99,7 +99,7 @@ enum class TopBarDetailsFormat(
                 .format(
                     DateTimeFormatter.ofPattern(
                         if (is24Hr) "EEE dd MMM yyyy HH:mm"
-                        else "EEE dd MMM yyyy hh:mm a"
+                        else "EEE dd MMM yyyy h:mm a"
                     )
                 )
         }
