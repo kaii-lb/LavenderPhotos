@@ -74,84 +74,67 @@ object DefaultTabs {
 @Serializable
 enum class StoredDrawable(
     @param:DrawableRes val filled: Int,
-    @param:DrawableRes val nonFilled: Int,
-    val storedId: Int
+    @param:DrawableRes val nonFilled: Int
 ) {
     PhotoGrid(
         filled = R.drawable.photogrid_filled,
-        nonFilled = R.drawable.photogrid,
-        storedId = 0
+        nonFilled = R.drawable.photogrid
     ),
 
     SecureFolder(
         filled = R.drawable.secure_folder_filled,
-        nonFilled = R.drawable.secure_folder,
-        storedId = 2
+        nonFilled = R.drawable.secure_folder
     ),
 
     Albums(
         filled = R.drawable.albums_filled,
-        nonFilled = R.drawable.albums,
-        storedId = 4
+        nonFilled = R.drawable.albums
     ),
 
     Search(
         filled = R.drawable.search,
-        nonFilled = R.drawable.search,
-        storedId = 6
+        nonFilled = R.drawable.search
     ),
 
     Favourite(
         filled = R.drawable.favourite_filled,
-        nonFilled = R.drawable.favourite,
-        storedId = 7
+        nonFilled = R.drawable.favourite
     ),
 
     Star(
         filled = R.drawable.star_filled,
-        nonFilled = R.drawable.star,
-        storedId = 8
+        nonFilled = R.drawable.star
     ),
 
     Bolt(
         filled = R.drawable.bolt_filled,
-        nonFilled = R.drawable.bolt,
-        storedId = 9
+        nonFilled = R.drawable.bolt
     ),
 
     Face(
         filled = R.drawable.face_filled,
-        nonFilled = R.drawable.face,
-        storedId = 10
+        nonFilled = R.drawable.face
     ),
 
     Pets(
         filled = R.drawable.pets,
-        nonFilled = R.drawable.pets,
-        storedId = 11
+        nonFilled = R.drawable.pets
     ),
 
     Motorcycle(
         filled = R.drawable.motorcycle_filled,
-        nonFilled = R.drawable.motorcycle,
-        storedId = 12
+        nonFilled = R.drawable.motorcycle
     ),
 
     Motorsports(
         filled = R.drawable.motorsports_filled,
-        nonFilled = R.drawable.motorsports,
-        storedId = 13
+        nonFilled = R.drawable.motorsports
     ),
 
     Trash(
         filled = R.drawable.trash,
-        nonFilled = R.drawable.trash_filled,
-        storedId = 14
-    );
-
-    companion object {
-        fun toResId(storedId: Int) = entries.first { it.storedId == storedId }
-    }
+        nonFilled = R.drawable.trash_filled
+    )
 }
 
 @Serializable
@@ -170,7 +153,7 @@ data class BottomBarTab(
                     listOf(
                         it.name,
                         it.albumPaths,
-                        it.icon.storedId,
+                        StoredDrawable.entries.indexOf(it.icon),
                         it.id,
                         it.isCustom
                     )
@@ -179,7 +162,7 @@ data class BottomBarTab(
                     BottomBarTab(
                         name = it[0] as String,
                         albumPaths = it[1] as List<String>,
-                        icon = StoredDrawable.toResId(storedId = it[2] as Int),
+                        icon = StoredDrawable.entries[it[2] as Int],
                         id = it[3] as Int,
                         isCustom = it[4] as Boolean
                     )
@@ -193,10 +176,11 @@ data class BottomBarTab(
 
         other as BottomBarTab
 
-        // ignore index since it changes often and doesn't affect the tab itself
+        // ignore id since it changes often and doesn't affect the tab itself
         if (name != other.name) return false
         if (albumPaths != other.albumPaths) return false
         if (icon != other.icon) return false
+        if (isCustom != other.isCustom) return false
 
         return true
     }

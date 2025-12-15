@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -188,7 +189,7 @@ fun MainAppBottomBar(
     val state = rememberLazyListState(
         initialFirstVisibleItemIndex =
             tabs.indexOf(
-                if (mainTab == DefaultTabs.TabTypes.secure) DefaultTabs.TabTypes.photos else mainTab
+                if (mainTab == DefaultTabs.TabTypes.secure || mainTab !in tabs) tabs.first() else mainTab
             )
     )
 
@@ -278,13 +279,16 @@ fun MainAppBottomBar(
                                 })
                         ) {
                             items(
-                                count = tabs.size
-                            ) { index ->
-                                val tab = tabs[index].let {
+                                items = tabs
+                            ) { item ->
+                                val tab = item.let {
                                     it.copy(
                                         name =
-                                            if (it in DefaultTabs.extendedList) resources.getString(it.id)
-                                            else it.name
+                                            DefaultTabs.extendedList.find { tab ->
+                                                tab == item
+                                            }?.let { tab ->
+                                                resources.getString(tab.id)
+                                            } ?: it.name
                                     )
                                 }
 

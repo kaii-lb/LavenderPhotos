@@ -670,10 +670,8 @@ class SettingsDefaultTabsImpl(
         try {
             val typedList = separatedList
                 .toMutableList()
-                .apply {
-                    removeAll { item ->
-                        item == ""
-                    }
+                .filter { item ->
+                    item != ""
                 }
                 .map { serialized ->
                     json.decodeFromString<BottomBarTab>(serialized)
@@ -712,6 +710,12 @@ class SettingsDefaultTabsImpl(
 
             list.forEach { tab ->
                 stringList += json.encodeToString(tab) + separator
+            }
+
+            val default = json.decodeFromString<BottomBarTab>(it[defaultTab] ?: json.encodeToString(DefaultTabs.TabTypes.photos))
+
+            if (default !in list) {
+                it[defaultTab] = json.encodeToString(list.first())
             }
 
             it[tabList] = stringList
