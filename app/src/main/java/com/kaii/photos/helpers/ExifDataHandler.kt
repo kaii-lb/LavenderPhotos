@@ -11,14 +11,13 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.UtcOffset
 import kotlinx.datetime.format
 import kotlinx.datetime.format.DateTimeComponents
-import kotlinx.datetime.format.DayOfWeekNames
-import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.format.char
-import kotlinx.datetime.format.Padding
 import kotlinx.datetime.toInstant
+import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
 import java.io.File
 import java.io.FileDescriptor
+import java.time.format.DateTimeFormatter
 import kotlin.math.round
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -118,35 +117,17 @@ fun getExifDataForMedia(context: Context, absolutePath: String, dateModified: Lo
         val exifInterface = ExifInterface(absolutePath)
 
         val datetime = getDateTakenForMedia(absolutePath, dateModified)
-        val format = LocalDateTime.Format {
-            dayOfWeek(DayOfWeekNames.ENGLISH_ABBREVIATED)
-            char(' ')
-            day()
-            char(' ')
-            monthName(MonthNames.ENGLISH_ABBREVIATED)
-            char(' ')
-            year()
-
-            chars(" - ")
-
-            val is24Hr = android.text.format.DateFormat.is24HourFormat(context)
-
-            if (is24Hr) hour() else amPmHour(Padding.NONE)
-
-            char(':')
-            minute()
-            char(':')
-            second()
-
-            if (!is24Hr) {
-                char(' ')
-                amPmMarker("a.m.", "p.m.")
-            }
-        }
+        val is24Hr = android.text.format.DateFormat.is24HourFormat(context)
         val formattedDateTime =
             Instant.fromEpochSeconds(datetime)
                 .toLocalDateTime(TimeZone.currentSystemDefault())
-                .format(format)
+                .toJavaLocalDateTime()
+                .format(
+                    DateTimeFormatter.ofPattern(
+                        if (is24Hr) "EEE dd MMM yyyy - HH:mm:ss"
+                        else "EEE dd MMM yyyy - h:mm:ss a"
+                    )
+                )
 
         list[MediaData.Date] = formattedDateTime
 
