@@ -14,6 +14,7 @@ import android.util.Log
 import androidx.core.net.toUri
 import com.bumptech.glide.util.Preconditions
 import com.bumptech.glide.util.Util
+import com.kaii.photos.R
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaEntity
 import com.kaii.photos.datastore.SQLiteQuery
@@ -30,6 +31,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.launch
+import java.util.Calendar
+import java.util.Locale
 
 private const val TAG = "com.kaii.photos.models.multi_album.MultiAlbumViewModel"
 
@@ -215,8 +218,40 @@ class MediaDataSource(
             return sortedMap.flatMap { it.value }.sortedByDescending { it.dateTaken }
         }
 
+        val calendar = Calendar.getInstance(Locale.ENGLISH).apply {
+            timeInMillis = System.currentTimeMillis()
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+
+        val today = calendar.timeInMillis / 1000
+        val daySeconds = 60 * 60 * 24
+        val yesterday = today - daySeconds
+
+        val todayString = context.resources.getString(R.string.today)
+        val yesterdayString = context.resources.getString(R.string.yesterday)
+
         sortedMap.forEach { (day, items) ->
-            val title = formatDate(day, sortMode, displayDateFormat)
+            val title = when(day) {
+                today -> {
+                    todayString
+                }
+
+                yesterday -> {
+                    yesterdayString
+                }
+
+                else -> {
+                    formatDate(
+                        timestamp = day,
+                        sortBy = sortMode,
+                        format = displayDateFormat
+                    )
+                }
+            }
+
             val sectionItem = SectionItem(
                 date = day,
                 childCount = items.size
