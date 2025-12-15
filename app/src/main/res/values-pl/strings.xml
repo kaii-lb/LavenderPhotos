@@ -522,4 +522,8 @@ które pozwala każdemu hostować własny serwer kopii zapasowych w chmurze.
     <string name="debugging_spawn_loading_snackbar_desc">Debuguj lawendowe snackbary, ilekroć compose postanowi zrobić coś głupiego</string>
     <string name="debugging_spawn_message_snackbar">Pokaż Snackbar wiadomości</string>
     <string name="exif_fnumber">Przysłona:</string>
+    <string name="look_and_feel_date_format_numeric">Numeryczny</string>
+    <string name="look_and_feel_date_format_filename">Nazwa pliku</string>
+    <string name="look_and_feel_date_format_date_taken">Data wykonania</string>
+    <string name="look_and_feel_date_format_datetime_taken">Data i godzina wykonania</string>
 </resources>
