@@ -28,9 +28,6 @@
     <string name="albums_path">Sti</string>
     <string name="albums_id">Id</string>
     <string name="albums_item_count">Antal Genstande</string>
-    <string name="albums_move_to">Flyt til Album</string>
-    <string name="albums_copy_to">Kopiér til Album</string>
-    <string name="albums_move_to_secure">Flyt til Sikker Mappe</string>
     <string name="albums_name">Album Navn</string>
     <string name="albums_type">Album Type</string>
     <string name="albums_folder">Mappe Album</string>

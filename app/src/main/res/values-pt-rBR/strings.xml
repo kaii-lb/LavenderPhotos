@@ -34,9 +34,6 @@
     <string name="albums_path">Caminho</string>
     <string name="albums_id">Id</string>
     <string name="albums_item_count">Contagem de Itens</string>
-    <string name="albums_move_to">Mover para Álbum</string>
-    <string name="albums_copy_to">Copiar para Álbum</string>
-    <string name="albums_move_to_secure">Mover para Diretório Protegido</string>
     <string name="albums_name">Nome do Álbum</string>
     <string name="albums_type">Tipo de Álbum</string>
     <string name="albums_folder">Diretório de Álbum</string>
@@ -98,9 +95,7 @@ o que significa que ele não passa por nenhum teste adicional realizado por Izzy
     <string name="locked_folder_help_top">Diretório Trancado é um diretório seguro para suas fotos e vídeos nesse dispositivo.\nA mídia protegida nunca é enviada para nenhum lugar e sempre permanece no dispositivo, criptografado com uma chave única atrelada à senha do dispositivo ou dados biométricos.</string>
     <string name="locked_folder_help_bottom">Os dados protegdidos não podem ser recuperados se a senha for esquecida ou a biometria for removida.</string>
     <string name="secure_folder">Diretório Protegido</string>
-    <string name="secure_sharing">Compartilhando Mídia</string>
     <string name="secure_processing">Aguarde enquanto a mídia é processada</string>
-    <string name="secure_share_media">Compartilhar essa mídia protegida</string>
     <string name="secure_encrypting">Criptografando Arquivos</string>
     <string name="secure_decrypting">Descriptografando Arquivos</string>
     <string name="secure_getting_file_info">Obtendo informações do arquivo…</string>
@@ -159,14 +154,10 @@ o que significa que ele não passa por nenhum teste adicional realizado por Izzy
     <string name="editing_discard">Descartar</string>
     <string name="editing_discard_desc">Descartar mudanças em andamento?</string>
     <string name="editing_exit">Sair</string>
-    <string name="editing_exit_desc">Sair do painel de edição?</string>
     <string name="editing_close_desc">Fechar painel de edição</string>
     <string name="editing_save">Salvar Cópia</string>
     <string name="editing_overwrite">Salvar</string>
-    <string name="editing_save_option_desc">Mostrar opções de salvamento</string>
     <string name="editing_overwrite_desc">Sobrescrever o Original</string>
-    <string name="editing_show_topbar">Mostrar barra do topo do editor</string>
-    <string name="editing_show_tools">Mostrar ferramentas do editor</string>
     <string name="editing_crop">Recortar</string>
     <string name="editing_adjust">Ajustar</string>
     <string name="editing_filters">Filtros</string>
@@ -179,7 +170,6 @@ o que significa que ele não passa por nenhum teste adicional realizado por Izzy
     <string name="editing_saturation">Saturação</string>
     <string name="editing_black_point">Ponto Preto</string>
     <string name="editing_white_point">Ponto Branco</string>
-    <string name="editing_shadows">Sombras</string>
     <string name="editing_warmth">Temperatura</string>
     <string name="editing_color_tint">Tonalidade de Cor</string>
     <string name="editing_highlights">Luzes</string>
@@ -187,17 +177,8 @@ o que significa que ele não passa por nenhum teste adicional realizado por Izzy
     <string name="editing_highlighter">Marcador</string>
     <string name="editing_text">Texto</string>
     <string name="editing_image">Imagem</string>
-    <string name="editing_blur">Blur</string>
-    <string name="editing_erase">Apagar</string>
-    <string name="editing_undo_all">Desfazer todas as ações</string>
-    <string name="editing_undo_last">Desfazer a última ação</string>
-    <string name="editing_scale_paint">Alterar tamanho do texto ou do pincel</string>
-    <string name="editing_scale_zoom">Aplicar zoom em vez de alterar tamanho da fonte</string>
-    <string name="editing_scale_text">Alterar tamanho da fonte do texto selecionado</string>
     <string name="editing_saving">Salvando imagem editada</string>
-    <string name="editing_done">A imagem editada foi salva!</string>
     <string name="editing_failed">Falha ao salvar imagem editada</string>
-    <string name="editing_invert">Inverter</string>
     <string name="editing_upload_image">Escolher</string>
     <string name="editing_upload_image_failed">Não foi possível escolher a imagem</string>
     <string name="editing_bitrate">Bitrate</string>
@@ -205,7 +186,6 @@ o que significa que ele não passa por nenhum teste adicional realizado por Izzy
     <string name="editing_open_with_copying_video">Processando video…</string>
     <string name="editing_open_with_copying_image">Processando imagem…</string>
     <string name="filter">Filtro</string>
-    <string name="filter_custom">Filtro Customizado</string>
     <string name="filter_none">Nenhum</string>
     <string name="filter_none_desc">Porque ninguém precisa deles</string>
     <string name="filter_inverted">Invertido</string>
@@ -254,7 +234,6 @@ o que significa que ele não passa por nenhum teste adicional realizado por Izzy
     <string name="editing_export_video_loading">Exportando Vídeo…</string>
     <string name="editing_export_video_loading_body">Passo %1$d de %2$d</string>
     <string name="editing_export_video_failed">Não foi possível exportar o vídeo</string>
-    <string name="editing_export_video_success">Vídeo Exportado!</string>
     <string name="editing_volume_display">Volume: %s</string>
     <string name="editing_speed_display">Velocidade de Reprodução: %s</string>
     <string name="editing_framerate_display">Taxa de quadros: %s</string>
@@ -307,7 +286,6 @@ o que significa que ele não passa por nenhum teste adicional realizado por Izzy
     <string name="trash_empty">Limpar lixeira?</string>
     <string name="trash_empty_desc">Isso excluirá todos os itens na lixeira. Essa ação não pode ser desfeita</string>
     <string name="trash_empty_confirm">Esvaziar</string>
-    <string name="permission">Permissão</string>
     <string name="permissions_media_manager">Gerenciador de Mídia</string>
     <string name="permissions_media_manager_desc">Operações melhores e mais rápidas de lixeira/apagar/copiar/mover</string>
     <string name="permissions_media_management">Gerenciamento de Mídia</string>
@@ -348,8 +326,6 @@ o que significa que ele não passa por nenhum teste adicional realizado por Izzy
     <string name="search_photo_name">Procurar por uma foto</string>
     <string name="search_photo_date">Procurar pela data de uma foto</string>
     <string name="search_photo_day">Procurar por dia</string>
-    <string name="feature_unimplemented">Não implementado</string>
-    <string name="feature_editing_unimplemented">A edição de vídeos não foi implementada ainda na versão %1$s do Lavender Photos. Esse recurso será adicionado o mais breve possível. Obrigado pela sua paciência.</string>
     <string name="edit_desc">Lavender Photos editou o arquivo em %1$s</string>
     <string name="custom_album_media_not_custom_title">Sem Mídia Customizada</string>
     <string name="custom_album_media_not_custom_explanation">Algumas mídias desse álbum pertencem a diretórios reais. Lavender Photos não consegue remover essas mídias sem apagá-las, portanto estas serão ignoradas.</string>
@@ -357,8 +333,6 @@ o que significa que ele não passa por nenhum teste adicional realizado por Izzy
     <string name="custom_album_remove_media_desc">Remover estes itens do álbum?</string>
     <string name="action_cannot_be_undone">Esta ação não pode ser desfeita!</string>
     <string name="show_options">Mostrar mais opções</string>
-    <string name="more_options">Mais Opções</string>
-    <string name="set_as">Definir Como</string>
     <string name="set_as_wallpaper">Definir como Papel de Parede</string>
     <string name="wallpaper_homescreen">Tela Inicial</string>
     <string name="wallpaper_lockscreen">Tela de Bloqueio</string>
@@ -421,7 +395,6 @@ o que significa que ele não passa por nenhum teste adicional realizado por Izzy
     <string name="media_trash_confirm">Mover os itens selecionados para a lixeira?</string>
     <string name="media_secure">Protegido</string>
     <string name="media_secure_confirm">Mover esta mídia para o Diretório Protegido?</string>
-    <string name="media_delete_permanently">Excluir Permanentemente</string>
     <string name="look_and_feel_extra_secure_nav">Entrada adicional para o Diretório Protegido</string>
     <string name="look_and_feel_extra_secure_nav_desc">Exibe uma opção para navegar no Diretório Protegido a partir do da janela principal do App</string>
     <string name="look_and_feel_rounded_corners">Cantos de Miniatura Arredondados</string>
@@ -433,7 +406,6 @@ o que significa que ele não passa por nenhum teste adicional realizado por Izzy
     <string name="immich_login_unavailable">Deslogado</string>
     <string name="immich_login_unavailable_desc">Nenhuma conta immich conectada no momento</string>
     <string name="immich_login_found">Conectado como:</string>
-    <string name="immich_login_found_desc">Backup do Immich disponível!</string>
     <string name="immich_login">Entrar com Immich</string>
     <string name="immich_login_confirm">Entrar</string>
     <string name="immich_login_ongoing">Conectando…</string>
@@ -446,14 +418,6 @@ o que significa que ele não passa por nenhum teste adicional realizado por Izzy
     <string name="immich_clear_endpoint_desc">Você tem certeza que deseja remover este endereço de servidor?</string>
     <string name="immich_logout">Sair?</string>
     <string name="immich_logout_desc">Você tem certeza que deseja sair dessa conta?</string>
-    <string name="immich_albums_clear">Limpar Backup de Álbuns</string>
-    <string name="immich_albums_clear_desc">Interromper o backup de todos os álbuns</string>
-    <string name="immich_albums_clear_confirm">Você tem certeza que deseja remover todos os álbuns do backup?</string>
-    <string name="immich_delete_album">Excluir esse álbum?</string>
-    <string name="immich_delete_album_desc">Isso não pode ser desfeito!</string>
-    <string name="immich_delete_album_contents">Incluir mídia na exclusão</string>
-    <string name="immich_album_syncing">Sincronizando álbum</string>
-    <string name="immich_album_synced">Todas as mídias sincronizadas</string>
     <string name="immich_done">Concluído</string>
     <string name="immich_sync_status">Status da Sincronização:</string>
     <string name="immich_email">E-mail:</string>
@@ -483,7 +447,6 @@ o que significa que ele não passa por nenhum teste adicional realizado por Izzy
     <string name="immich_server">Servidor Immich</string>
     <string name="immich_help_general">O que é isso?</string>
     <string name="immich_help_general_desc">Permite backup de álbuns inteiros de mídia para um servidor Immich</string>
-    <string name="immich_help_detailed">Como usar</string>
     <string name="immich_help_detailed_desc"><![CDATA[
             <p><a href="https://immich.app/">Immich</a> é uma solução de gerenciamento de mídia auto-hospedada,
             que permite qualquer pessoa hospedar seu próprio servidor de backup.

@@ -32,7 +32,7 @@ import com.kaii.photos.helpers.ImageFunctions
 enum class ViewProperties(
     val emptyText: Int,
     val emptyIconResId: Int,
-    val prefix: Int,
+    val prefix: Int?,
     val operation: ImageFunctions
 ) {
     Trash(
@@ -44,19 +44,19 @@ enum class ViewProperties(
     Album(
         emptyText = R.string.error_views_album_empty,
         emptyIconResId = R.drawable.error,
-        prefix = R.string.empty_string,
+        prefix = null,
         operation = ImageFunctions.LoadNormalImage
     ),
     SearchLoading(
         emptyText = R.string.error_views_search_empty,
         emptyIconResId = R.drawable.search,
-        prefix = R.string.empty_string,
+        prefix = null,
         operation = ImageFunctions.LoadNormalImage
     ),
     SearchNotFound(
         emptyText = R.string.error_views_search_not_found,
         emptyIconResId = R.drawable.error,
-        prefix = R.string.empty_string,
+        prefix = null,
         operation = ImageFunctions.LoadNormalImage
     ),
     SecureFolder(
@@ -68,7 +68,7 @@ enum class ViewProperties(
     Favourites(
         emptyText = R.string.error_views_favourites_empty,
         emptyIconResId = R.drawable.favourite,
-        prefix = R.string.empty_string,
+        prefix = null,
         operation = ImageFunctions.LoadNormalImage
     );
 

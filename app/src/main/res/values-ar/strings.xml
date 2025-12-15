@@ -28,9 +28,6 @@
     <string name="albums_path">مسار</string>
     <string name="albums_id">رقم التعريف</string>
     <string name="albums_item_count">عدد العناصر</string>
-    <string name="albums_move_to">انقل إلى الألبوم</string>
-    <string name="albums_copy_to">إنسخ إلى ألبوم</string>
-    <string name="albums_move_to_secure">انقل إلى مجلد مأمن</string>
     <string name="albums_name">اسم الألبوم</string>
     <string name="albums_type">نوع الألبوم</string>
     <string name="albums_folder">ألبوم المجلد</string>
@@ -74,9 +71,7 @@
     <string name="locked_folder_help_top">المجلد المأمن هو مجلد آمن لصورك ومقاطع الفيديو على هذا الجهاز.\nلا يتم تحميل المحتوى أبدًا في أي مكان وهي دائمًا على الجهاز ، مشفرة بمفتاح فريد من نوعه لكلمة مرور الجهاز أو بيانات البصمات.</string>
     <string name="locked_folder_help_bottom">لا يمكن استعادة البيانات المأمته إذا تم نسيان كلمة المرور أو إزالة بصمة الإصبع.</string>
     <string name="secure_folder">مجلد آمن</string>
-    <string name="secure_sharing">مشاركة الوسائط</string>
     <string name="secure_processing">انتظر أثناء معالجة هذه الوسائط</string>
-    <string name="secure_share_media">شارك هذه الوسائط المأمنة</string>
     <string name="secure_encrypting">تشفير الملفات</string>
     <string name="secure_decrypting">فك تشفير الملفات</string>
     <string name="export_unenc_backup">تصدير النسخة الاحتياطية غير المشفرة</string>
@@ -119,14 +114,10 @@
     <string name="editing_discard">تخلص</string>
     <string name="editing_discard_desc">تجاهل التعديلات الجارية؟</string>
     <string name="editing_exit">أخرج</string>
-    <string name="editing_exit_desc">الخروج من التحرير؟</string>
     <string name="editing_close_desc">إغلاق عرض التحرير</string>
     <string name="editing_save">إحفظ نسخة</string>
     <string name="editing_overwrite">إحفظ</string>
-    <string name="editing_save_option_desc">إظهار خيارات الحفظ</string>
     <string name="editing_overwrite_desc">استبدال الأصل</string>
-    <string name="editing_show_topbar">إظهار شريط المحرر العلوي</string>
-    <string name="editing_show_tools">إظهار أدوات المحرر</string>
     <string name="editing_crop">اقتصاص</string>
     <string name="editing_adjust">عدِّل</string>
     <string name="editing_filters">المرشحات</string>
@@ -137,19 +128,12 @@
     <string name="editing_contrast">التباين</string>
     <string name="editing_brightness">سطوع</string>
     <string name="editing_saturation">التشبع</string>
-    <string name="editing_shadows">الظلال</string>
     <string name="editing_warmth">الدفء</string>
     <string name="editing_color_tint">لون الصبغة</string>
     <string name="editing_highlights">قلم تمييز</string>
     <string name="editing_pencil">قلم رصاص</string>
     <string name="editing_highlighter">قلم تمييز</string>
     <string name="editing_text">نص</string>
-    <string name="editing_blur">ضباب</string>
-    <string name="editing_undo_all">التراجع عن جميع الإجراءات</string>
-    <string name="editing_undo_last">التراجع عن الإجراء الأخير</string>
-    <string name="editing_scale_paint">تغيير حجم النص أو فرشاة الرسم</string>
-    <string name="editing_scale_text">تغيير حجم الخط للنص المحدد</string>
-    <string name="editing_done">تم حفظ الصورة المعدلة!</string>
     <string name="editing_failed">فشل في حفظ الصورة المحررة</string>
     <string name="settings">إعدادات</string>
     <string name="settings_general">عام</string>
@@ -186,7 +170,6 @@
     <string name="trash_empty">افرغ سلة المهملات؟</string>
     <string name="trash_empty_desc">يؤدي هذا إلى حذف جميع العناصر الموجودة في سلة المهملات، ولا يمكن التراجع عن هذا الإجراء</string>
     <string name="trash_empty_confirm">إفراغ</string>
-    <string name="permission">إذن</string>
     <string name="permissions_media_manager">مدير الوسائط</string>
     <string name="permissions_media_manager_desc">إزالة/حذف/نسخ/نقل — أفضل وأسرع</string>
     <string name="permissions_media_management">إدارة الوسائط</string>
@@ -217,7 +200,6 @@
     <string name="media_trash_confirm">نقل العناصر المحددة إلى سلة المهملات؟</string>
     <string name="media_secure">تأمين الملف</string>
     <string name="media_secure_confirm">نقل هذا %1$s إلى المجلد الآمن؟</string>
-    <string name="media_delete_permanently">إحذف نهائيًا</string>
     <string name="media_delete_permanently_confirm">حذف هذا %1$s نهائيًا؟</string>
     <string name="media_cancel">إلغي</string>
     <string name="media_restore">استعادة</string>
@@ -237,7 +219,6 @@
     <string name="search_photo_name">إبحث</string>
     <string name="search_photo_date">ابحث عن تاريخ الصورة</string>
     <string name="search_photo_day">إبحث حسب اليوم</string>
-    <string name="feature_editing_unimplemented">لم يُفعّل تحرير الفيديوهات بعد في الإصدار %1$s من تطبيق Lavender Photos. ستُضاف هذه الميزة في أقرب وقت ممكن، شكرًا لصبركم.</string>
     <string name="edit_desc">تم تحرير الملف في %1$s</string>
     <string name="custom_album_media_not_custom_title">الوسائط غير المخصصة</string>
     <string name="custom_album_media_not_custom_explanation">بعض الوسائط الموجودة في هذا الألبوم تنتمي إلى مجلدات فعلية، ولا يمكن إزالة تلك الوسائط دون حذفها، لذا سيتم تجاهلها.</string>
@@ -245,8 +226,6 @@
     <string name="custom_album_remove_media_desc">إزالة هذه العناصر من الألبوم؟</string>
     <string name="action_cannot_be_undone">لا يمكن التراجع عن هذا الإجراء!</string>
     <string name="show_options">إظهار المزيد من الخيارات</string>
-    <string name="more_options">المزيد من الخيارات</string>
-    <string name="set_as">تعيين كـ</string>
     <string name="set_as_wallpaper">تعيين كخلفية</string>
     <string name="more_info">مزيد من المعلومات</string>
     <string name="not_available">غير متوفر</string>

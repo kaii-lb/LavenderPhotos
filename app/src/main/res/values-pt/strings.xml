@@ -63,9 +63,6 @@
     <string name="albums_clear_list">Limpar lista de álbuns</string>
     <string name="albums_auto_detect_desc">Detecta todas as pastas com mídia neste dispositivo e as adiciona à tela de álbuns</string>
     <string name="albums_clear_list_done">Lista de álbuns limpa</string>
-    <string name="albums_move_to">Mover para Álbum</string>
-    <string name="albums_copy_to">Copiar para Álbum</string>
-    <string name="albums_move_to_secure">Mover para a Pasta Segura</string>
     <string name="albums_name">Nome do álbum</string>
     <string name="albums_type">Tipo de álbum</string>
     <string name="updates_start">Iniciar Atualização</string>

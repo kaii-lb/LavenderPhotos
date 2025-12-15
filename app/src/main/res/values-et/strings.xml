@@ -43,9 +43,6 @@
     <string name="albums_path">Asukoht</string>
     <string name="albums_id">Tunnus</string>
     <string name="albums_item_count">Objekte</string>
-    <string name="albums_move_to">Teisalda albumisse</string>
-    <string name="albums_copy_to">Kopeeri albumisse</string>
-    <string name="albums_move_to_secure">Teisalda turvalisse albumisse</string>
     <string name="app_name_full">Lavender - Sinu fotod</string>
     <string name="support_desc">aita mul rakendust pidevas arenemas hoida</string>
     <string name="support">Kasutajatugi ja toetused</string>
@@ -76,7 +73,6 @@
     <string name="i_swear_were_not_bad">me tõesti ei kasuta sinu andmeid</string>
     <string name="updates_notice">Teade allalaadimise kohta</string>
     <string name="secure_processing">Palun oota, kuni meedium on töötlemisel</string>
-    <string name="secure_share_media">Jaga seda turvalist meediumi</string>
     <string name="secure_encrypting">Failid on krüptimisel</string>
     <string name="secure_decrypting">Failid on dekrüptimisel</string>
     <string name="export_unenc_backup">Ekspordi krüptimata varukoopia</string>
@@ -112,13 +108,10 @@
     <string name="editing_discard">Loobu</string>
     <string name="editing_discard_desc">Kas loobud pooleliolevatest muudatustest?</string>
     <string name="editing_exit">Välju</string>
-    <string name="editing_exit_desc">Kas väljud muutmisvaatest?</string>
     <string name="editing_close_desc">Sulge muutmisvaade</string>
     <string name="editing_save">Salvesta koopia</string>
     <string name="editing_overwrite">Salvesta</string>
-    <string name="editing_save_option_desc">Näita salvestamise valikuid</string>
     <string name="editing_overwrite_desc">Kirjuta algne fail üle</string>
     <string name="editing_saving">Salvestan muudetud pilti</string>
-    <string name="editing_done">Muudetud pilt on salvestatud!</string>
     <string name="editing_failed">Muudetud pildi salvestamine ei õnnestunud</string>
 </resources>

@@ -11,8 +11,6 @@
     <string name="albums_info">アルバム情報</string>
     <string name="export_fav_to_folder">バックアップをフォルダにエクスポート</string>
     <string name="albums_is_custom">これはカスタムアルバムです</string>
-    <string name="albums_copy_to">アルバムにコピー</string>
-    <string name="albums_move_to_secure">セキュアフォルダに移動</string>
     <string name="tabs_confirm">タブに追加</string>
     <string name="albums_type">アルバムの種類</string>
     <string name="tabs_name">タブの名前</string>
@@ -33,7 +31,6 @@
     <string name="albums_path">パス</string>
     <string name="albums_id">ID</string>
     <string name="albums_item_count">項目数</string>
-    <string name="albums_move_to">アルバムに移動</string>
     <string name="albums_add_failed">アルバムの追加に失敗しました :&lt;</string>
     <string name="app_name_full">Lavender Photos</string>
     <string name="app_icon">アプリアイコン</string>
@@ -52,8 +49,6 @@
     <string name="updates_checking">更新を確認中</string>
     <string name="updates_start">更新を開始</string>
     <string name="secure_folder">セキュアフォルダ</string>
-    <string name="secure_sharing">メディアを共有</string>
-    <string name="secure_share_media">このセキュアなメディアを共有</string>
     <string name="exporting_backup">バックアップをエクスポート中…</string>
     <string name="export_unenc_zip">バックアップを Zip にエクスポート</string>
     <string name="favourites">お気に入り</string>
@@ -62,7 +57,6 @@
     <string name="debugging_loading">デバッグ中…</string>
     <string name="video">ビデオ</string>
     <string name="video_auto_play">ビデオを自動再生</string>
-    <string name="media_delete_permanently">完成に削除</string>
     <string name="media_cancel">キャンセル</string>
     <string name="media_restore">復元</string>
     <string name="media_restore_processing">ファイルを復元中</string>

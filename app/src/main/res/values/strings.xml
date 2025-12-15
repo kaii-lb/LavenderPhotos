@@ -223,7 +223,7 @@
         <br>- Added translations for Indonesian and French
         <br>- Fixed issue where album grid items would flicker infinitely
         <br>- Fixed issue where you couldn\'t use custom albums for custom stuff
-        <br>- No longer ask everytime for permissions to move/copy to album after user already gave permissions once
+        <br>- No longer ask every time for permissions to move/copy to album after user already gave permissions once
         <br>- Added date format selector
         <br>- Handle memory leak because of stupid compose state stuff
         <br>- Added amoled theme
@@ -562,9 +562,6 @@
     <string name="albums_path">Path</string>
     <string name="albums_id">Id</string>
     <string name="albums_item_count">Item Count</string>
-    <string name="albums_move_to">Move to Album</string>
-    <string name="albums_copy_to">Copy to Album</string>
-    <string name="albums_move_to_secure">Move to Secure Folder</string>
     <string name="albums_name">Album Name</string>
     <string name="albums_type">Album Type</string>
     <string name="albums_folder">Folder Album</string>
@@ -645,9 +642,7 @@
     <string name="locked_folder_help_top">Locked Folder is a secure folder for your images and videos on this device.\nThe secured media is never uploaded anywhere and is always on-device, encrypted with a key unique to your device\'s password or fingerprint data.</string>
     <string name="locked_folder_help_bottom">The secured data cannot be restored if the password was forgotten or the fingerprint was removed.</string>
     <string name="secure_folder">Secure Folder</string>
-    <string name="secure_sharing">Sharing Media</string>
     <string name="secure_processing">Hold on while this media is processed</string>
-    <string name="secure_share_media">Share this secured media</string>
     <string name="secure_encrypting">Encrypting Files</string>
     <string name="secure_decrypting">Decrypting Files</string>
     <string name="secure_getting_file_info">Getting file info…</string>
@@ -729,14 +724,10 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="editing_discard">Discard</string>
     <string name="editing_discard_desc">Discard ongoing edits?</string>
     <string name="editing_exit">Exit</string>
-    <string name="editing_exit_desc">Exit editing view?</string>
     <string name="editing_close_desc">Close editing view</string>
     <string name="editing_save">Save Copy</string>
     <string name="editing_overwrite">Save</string>
-    <string name="editing_save_option_desc">Show save options</string>
     <string name="editing_overwrite_desc">Overwrite Original</string>
-    <string name="editing_show_topbar">Show editor\'s top bar</string>
-    <string name="editing_show_tools">Show editor\'s tools</string>
     <string name="editing_crop">Crop</string>
     <string name="editing_adjust">Adjust</string>
     <string name="editing_filters">Filters</string>
@@ -750,7 +741,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="editing_saturation">Saturation</string>
     <string name="editing_black_point">Black Point</string>
     <string name="editing_white_point">White Point</string>
-    <string name="editing_shadows">Shadows</string>
     <string name="editing_warmth">Warmth</string>
     <string name="editing_color_tint">Color Tint</string>
     <string name="editing_highlights">Highlights</string>
@@ -758,17 +748,8 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="editing_highlighter">Highlighter</string>
     <string name="editing_text">Text</string>
     <string name="editing_image">Image</string>
-    <string name="editing_blur">Blur</string>
-    <string name="editing_erase">Erase</string>
-    <string name="editing_undo_all">Undo all actions</string>
-    <string name="editing_undo_last">Undo last action</string>
-    <string name="editing_scale_paint">Change paintbrush or text size</string>
-    <string name="editing_scale_zoom">Zoom in instead of scaling font size</string>
-    <string name="editing_scale_text">Change font size of selected text</string>
     <string name="editing_saving">Saving edited image</string>
-    <string name="editing_done">Saved edited image!</string>
     <string name="editing_failed">Failed to save edited image</string>
-    <string name="editing_invert">Invert</string>
     <string name="editing_upload_image">Choose</string>
     <string name="editing_upload_image_failed">Couldn\'t pick image</string>
     <string name="editing_bitrate">Bitrate</string>
@@ -779,7 +760,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
 
     <!-- Editing Filters -->
     <string name="filter">Filter</string>
-    <string name="filter_custom">Custom Filter</string>
     <string name="filter_none">None</string>
     <string name="filter_none_desc">because who needs them</string>
     <string name="filter_inverted">Inverted</string>
@@ -830,7 +810,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="editing_export_video_loading">Exporting Video…</string>
     <string name="editing_export_video_loading_body">Step %1$d of %2$d</string>
     <string name="editing_export_video_failed">Couldn\'t export video</string>
-    <string name="editing_export_video_success">Exported Video!</string>
     <string name="editing_volume_display">Volume: %s</string>
     <string name="editing_speed_display">Playback Speed: %s</string>
     <string name="editing_framerate_display">Frame rate: %s</string>
@@ -890,7 +869,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="trash_empty_confirm">Empty Out</string>
 
     <!-- Permissions -->
-    <string name="permission">Permission</string>
     <string name="permissions">Permissions</string>
     <string name="permissions_media_manager">Media Manager</string>
     <string name="permissions_media_manager_desc">Better and faster trash/delete/copy/move</string>
@@ -940,7 +918,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="media_trash_confirm">Move selected items to trash bin?</string>
     <string name="media_secure">Secure</string>
     <string name="media_secure_confirm">Move this media to Secure Folder?</string>
-    <string name="media_delete_permanently">Delete Permanently</string>
     <string name="media_delete_permanently_confirm">Permanently delete this media?</string>
     <string name="media_cancel">Cancel</string>
     <string name="media_restore">Restore</string>
@@ -973,8 +950,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="search_photo_day">Search by day</string>
 
     <!-- Explanations -->
-    <string name="feature_unimplemented">Unimplemented</string>
-    <string name="feature_editing_unimplemented">Editing videos has not been implemented yet as of version %1$s of Lavender Photos. This feature will be added as soon as possible, thank you for your patience.</string>
     <string name="edit_desc">Lavender Photos edited file at %1$s</string>
     <string name="custom_album_media_not_custom_title">Non Custom Media</string>
     <string name="custom_album_media_not_custom_explanation">Some media in this album belongs to actual folders, Lavender Photos cannot remove that media without deleting it so it will be ignored.</string>
@@ -984,9 +959,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
 
     <!-- Miscellaneous -->
     <string name="show_options">Show more options</string>
-    <string name="empty_string" />
-    <string name="more_options">More Options</string>
-    <string name="set_as">Set As</string>
     <string name="set_as_wallpaper">Set as Wallpaper</string>
     <string name="wallpaper_homescreen">Home Screen</string>
     <string name="wallpaper_lockscreen">Lock Screen</string>
@@ -1062,7 +1034,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="immich_login_unavailable">Not Logged In</string>
     <string name="immich_login_unavailable_desc">No immich account is currently connected</string>
     <string name="immich_login_found">Logged in as: </string>
-    <string name="immich_login_found_desc">Immich backup available!</string>
     <string name="immich_login">Login with Immich</string>
     <string name="immich_login_confirm">Login</string>
     <string name="immich_login_ongoing">Logging in…</string>
@@ -1075,14 +1046,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="immich_clear_endpoint_desc">Are you sure you want to remove this server address?</string>
     <string name="immich_logout">Logout?</string>
     <string name="immich_logout_desc">Are you sure you want to logout from this account?</string>
-    <string name="immich_albums_clear">Clear Backup Albums</string>
-    <string name="immich_albums_clear_desc">Stop backing up all albums</string>
-    <string name="immich_albums_clear_confirm">Are you sure you want to remove all albums from backup?</string>
-    <string name="immich_delete_album">Delete this album?</string>
-    <string name="immich_delete_album_desc">This cannot be undone!</string>
-    <string name="immich_delete_album_contents">Include media in deletion</string>
-    <string name="immich_album_syncing">Syncing album</string>
-    <string name="immich_album_synced">All media synced</string>
     <string name="immich_done">done</string>
     <string name="immich_sync_status">Sync status:</string>
     <string name="immich_email">Email:</string>
@@ -1112,7 +1075,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="immich_server">Immich Server</string>
     <string name="immich_help_general">What is this?</string>
     <string name="immich_help_general_desc">Allows album-level media backup to an Immich server</string>
-    <string name="immich_help_detailed">How to use</string>
     <string name="immich_help_detailed_desc">
         <![CDATA[
             <p><a href="https://immich.app/">Immich</a> is a self hosted photo and video management solution,

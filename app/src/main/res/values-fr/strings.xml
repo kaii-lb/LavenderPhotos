@@ -41,7 +41,6 @@
     <string name="updates_latest">Dernière version déjà installée</string>
     <string name="updates_failed">Échec de la vérification de mise à jour</string>
     <string name="secure_folder">Dossier Sécurisé</string>
-    <string name="secure_sharing">Partage de média</string>
     <string name="secure_encrypting">Fichiers en cours d\'encryptage</string>
     <string name="export_unenc_backup">Exporter une sauvegarde décryptée</string>
     <string name="export_unenc_backup_desc">Exporte un dossier contenant tous vos médias sécurisés, décryptés</string>
@@ -62,10 +61,8 @@
     <string name="updates_checking">Vérification de mise à jour</string>
     <string name="updates_notice_desc">"<![CDATA[\n            &lt;p&gt;Cet outil de mise à jour télécharge des apks depuis les &lt;a href=\"https ://github.com/kaii-lb/LavenderPhotos/releases\"&gt;GitHub Releases&lt;/a&gt; ce qui\n                veut dire qu\'ils ne passent pas par les processus de tests réalisés sur IzzyOnDroid, F-Droid ou ailleurs.\n\n                &lt;br&gt;&lt;br&gt;Les éditions du logiciel hébergées sur GitHub sont toujours signées et vérifiées par le développeur (kaii-lb), mais c\'est à vous de voir si vous voulez les utiliser ou non.\n\n                &lt;br&gt;&lt;br&gt;Lavender Photos ne fait jamais de mise à automatique, et ne se mets à jour qu\'avec votre accord explicite.\n            <&lt>/p>;\n        ]]>"</string>
     <string name="export_fav_to_folder">Exporter une sauvegarde dans un dossier</string>
-    <string name="secure_share_media">Partager ce média sécurisé</string>
     <string name="locked_folder_help_top">Le Dossier-Cadenas est un dossier sécurisé pour vos images et vidéos sur cet appareil.\nLes médias sécurisés ne sont jamais téléversés nulle part et restent toujours sur l\'appareil, encryptés avec une clé unique propre au mot de passe de votre ou aux données d\'empreinte digitales de votre appareil.</string>
     <string name="locked_folder_help_bottom">Les données sécurisées ne peuvent pas être récupérées si le mot de passe est oublié ou si l\'empreinte digitale est retirée de l\'appareil.</string>
-    <string name="albums_move_to_secure">Déplacer dans le Dossier Sécurisé</string>
     <string name="albums_type">Type d\'album</string>
     <string name="app_icon">Icône de l\'appli</string>
     <string name="tabs_navigate_to">Ouvrir la page %s$1</string>
@@ -78,9 +75,6 @@
     <string name="export_fav_to_zip_desc">Exporte un fichier zip contenant tous vos médias favoris</string>
     <string name="secure_decrypting">Fichiers en cours de décryptage</string>
     <string name="export_unenc_zip">Exporter la sauvegarde en Zip</string>
-    <string name="editing_undo_all">Annuler toutes les actions</string>
-    <string name="editing_undo_last">Annuler la dernière action</string>
-    <string name="editing_scale_text">Changer la taille de police du texte sélectionné</string>
     <string name="editing_failed">Échec lors de la sauvegarde de l\'image éditée</string>
     <string name="settings_general">Général</string>
     <string name="settings_dark_theme">Thème sombre</string>
@@ -101,7 +95,6 @@
     <string name="trash_no_auto_delete">Les médias dans la corbeille ne seront pas automatiquement supprimés</string>
     <string name="trash_empty_desc">Cela supprime tous les médias dans la corbeille, cette action ne peut être annulée</string>
     <string name="trash_empty_confirm">Vider la corbeille</string>
-    <string name="permission">Permission</string>
     <string name="permissions_media_manager">Gestionnaire de médias</string>
     <string name="permissions_media_manager_desc">Actions de suppression/corbeille/copie/déplacement plus rapides et efficaces</string>
     <string name="permissions_overwrite_date_on_move">Changer la date du média déplacé</string>
@@ -130,8 +123,6 @@
     <string name="custom_album_remove_media_desc">Retirer ces médias de l\'album ?</string>
     <string name="action_cannot_be_undone">Cette action ne peut être annulée !</string>
     <string name="show_options">Montrer plus d\'options</string>
-    <string name="more_options">Plus d\'options</string>
-    <string name="set_as">Utiliser comme</string>
     <string name="set_as_wallpaper">Utiliser comme fond d\'écran</string>
     <string name="more_info">Plus d\'infos</string>
     <string name="not_available">Indisponible</string>
@@ -149,24 +140,19 @@
     <string name="settings_storage_thumbnails_max">Les miniatures sont montrées à leur résolution maximale. C\'est l\'option qui utilise le plus de %1$s</string>
     <string name="permissions_media_management">Gestion de médias</string>
     <string name="settings_theme">Thème</string>
-    <string name="editing_blur">Flou</string>
-    <string name="editing_scale_paint">Changer la brosse ou la taille du texte</string>
     <string name="sort_mode">Méthode de tri des médias</string>
     <string name="media_broken">Média corrompu</string>
-    <string name="editing_scale_zoom">Zoomer au lieu de modifier la taille de la police</string>
     <string name="editing_highlighter">Surligneur</string>
     <string name="settings_privacy">Confidentialité &amp; Sécurité</string>
     <string name="media_erase">Effacer</string>
     <string name="editing_text">Texte</string>
     <string name="settings_privacy_desc">Contrôle affiné de vos données</string>
-    <string name="editing_done">Image éditée sauvegardée !</string>
     <string name="settings">Paramètres</string>
     <string name="settings_general_desc">Préférences et personnalisation</string>
     <string name="settings_look_and_feel">Apparence &amp; Ressenti</string>
     <string name="trash_auto_delete">Supprime automatiquement les médias dans la corbeille après</string>
     <string name="trash_empty">Vider la corbeille ?</string>
     <string name="settings_look_and_feel_desc">Changez l\'apparence de l\'appli</string>
-    <string name="media_delete_permanently">Supprimer définitivement</string>
     <string name="settings_theme_follow">L\'appli suit le thème du système</string>
     <string name="settings_theme_light">L\'appli utilise toujours le thème clair</string>
     <string name="custom_album_remove_media">Retirer</string>
@@ -181,7 +167,6 @@
     <string name="trash_auto_delete_interval">Intervalle de suppression automatique</string>
     <string name="permissions_confirm_too_delete_desc">Demande confirmation avant de supprimer un média</string>
     <string name="media_restore_processing">Fichiers en cours de restauration</string>
-    <string name="feature_unimplemented">Non-implémenté</string>
     <string name="media_restore_confirm">Restaurer ces médias ?</string>
     <string name="permissions_confirm_to_delete">Confirmer la suppression</string>
     <string name="error_views_album_empty">Cet album est vide</string>
@@ -197,7 +182,6 @@
     <string name="custom_album_media_not_custom_explanation">Certains médias dans cet album appartiennent à de véritables fichiers, Lavender Photos ne peut pas les retirer sans les supprimer donc ils seront ignorés.</string>
     <string name="bottom_sheets_ratio_selected">Ce format de découpe est sélectionné</string>
     <string name="error_views_trash_empty">Les médias mis à la corbeille apparaissent ici</string>
-    <string name="feature_editing_unimplemented">L\'édition de vidéo n\'est pas encore implémenté dans la version %1$s de Lavender Photos. Cette fonctionnalité sera ajoutée dès que possible, merci de votre patience.</string>
     <string name="bottom_sheets_image_ratio">Format d\'image</string>
     <string name="error_views_trash_prefix">Mis à la corbeille le</string>
     <string name="error_views_search_empty">Cherchez des photos !</string>
@@ -210,8 +194,6 @@
     <string name="albums_already_contains_all">Cet album contient déjà tous les médias</string>
     <string name="albums_info">Infos sur l\'album</string>
     <string name="albums_id">Identifiant</string>
-    <string name="albums_move_to">Déplacer vers un album</string>
-    <string name="albums_copy_to">Copier vers un album</string>
     <string name="albums_remove">Retirer l\'album de la liste</string>
     <string name="albums_clear_list_done">Liste d\'albums effacée</string>
     <string name="albums_path">Chemin</string>
@@ -257,14 +239,10 @@
     <string name="video_seek_back">Revenir de 5 secondes</string>
     <string name="video_start_muted_desc">Ne joue pas le son de la vidéo quand elle démarre pour la première fois</string>
     <string name="editing_exit_on_save">Quitter après la sauvegarde</string>
-    <string name="editing_exit_desc">Quitter la fenêtre de modification ?</string>
     <string name="editing_exit">Quitter</string>
     <string name="editing_pencil">Pinceau</string>
-    <string name="editing_show_tools">Montrer les outils de l\'éditeur</string>
-    <string name="editing_save_option_desc">Montrer les options de sauvegarde</string>
     <string name="editing_ratio">Échelle</string>
     <string name="editing_adjust">Ajuster</string>
-    <string name="editing_show_topbar">Montrer la barre du dessus de l\'éditeur</string>
     <string name="editing_overwrite_desc">Remplacer l\'original</string>
     <string name="editing_filters">Filtres</string>
     <string name="editing_draw">Dessiner</string>
@@ -277,7 +255,6 @@
     <string name="editing_rotate">Pivoter</string>
     <string name="editing_contrast">Contraste</string>
     <string name="editing_brightness">Luminosité</string>
-    <string name="editing_shadows">Ombres</string>
     <string name="editing_warmth">Chaleur</string>
     <string name="editing_highlights">Lumières</string>
     <string name="editing_overwrite">Sauvegarder</string>

@@ -28,9 +28,6 @@
     <string name="albums_path">Pfad</string>
     <string name="albums_id">ID</string>
     <string name="albums_item_count">Anzahl der Dateien</string>
-    <string name="albums_move_to">In Album verschieben</string>
-    <string name="albums_copy_to">In Album kopieren</string>
-    <string name="albums_move_to_secure">In Sicheren Ordner verschieben</string>
     <string name="albums_name">Albumname</string>
     <string name="albums_type">Albumtyp</string>
     <string name="albums_folder">Ordner Album</string>
@@ -74,9 +71,7 @@
     <string name="locked_folder_help_top">Gesperrter Ordner ist ein sicherer Ordner für Ihre Bilder und Videos auf diesem Gerät.\nDie gesicherten Medien werden nie irgendwo hochgeladen und befinden sich immer auf dem Gerät, verschlüsselt mit einem Schlüssel, der nur mit dem Passwort oder den Fingerabdruckdaten Ihres Geräts verknüpft ist.</string>
     <string name="locked_folder_help_bottom">Die gesicherten Daten können nicht wiederhergestellt werden, wenn das Passwort vergessen wurde oder der Fingerabdruck entfernt wurde.</string>
     <string name="secure_folder">Sicherer Ordner</string>
-    <string name="secure_sharing">Gemeinsame Nutzung von Medien</string>
     <string name="secure_processing">Warte einen Moment, bis die Medien verarbeitet sind</string>
-    <string name="secure_share_media">Teile diese gesicherten Medien</string>
     <string name="secure_encrypting">Entschlüssle Dateien</string>
     <string name="secure_decrypting">Verschlüssle Dateien</string>
     <string name="export_unenc_backup">Unverschlüsselte Sicherung exportieren</string>

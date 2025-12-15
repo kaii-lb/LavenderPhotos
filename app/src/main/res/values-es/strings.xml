@@ -16,9 +16,6 @@
     <string name="albums_path">Ruta</string>
     <string name="albums_id">Id</string>
     <string name="albums_item_count">Recuento de Artículos</string>
-    <string name="albums_move_to">Mover al Álbum</string>
-    <string name="albums_copy_to">Copiar al Álbum</string>
-    <string name="albums_move_to_secure">Mover a la Carpeta Segura</string>
     <string name="albums_name">Nombre del Álbum</string>
     <string name="albums_type">Tipo de Álbum</string>
     <string name="albums_folder">Álbum de Carpetas</string>
@@ -82,9 +79,7 @@
     <string name="locked_folder_help_top">La carpeta bloqueada es una carpeta segura para sus imágenes y videos en este dispositivo.\nLos medios protegidos nunca se cargan en ningún lugar y siempre están en el dispositivo, encriptados con una clave exclusiva de la contraseña o los datos de huellas dactilares de su dispositivo.</string>
     <string name="locked_folder_help_bottom">Los datos protegidos no se pueden restaurar si se olvidó la contraseña o se eliminó la huella digital.</string>
     <string name="secure_folder">Carpeta Segura</string>
-    <string name="secure_sharing">Compartir Medios</string>
     <string name="secure_processing">Aguanta mientras se procesa este medio</string>
-    <string name="secure_share_media">Comparta este contenido multimedia protegido</string>
     <string name="secure_encrypting">Cifrado de Archivos</string>
     <string name="secure_decrypting">Descifrando Archivos</string>
     <string name="export_unenc_backup">Exportar Copia de Seguridad Sin Cifrar</string>
@@ -136,14 +131,10 @@
     <string name="editing_discard">Descartar</string>
     <string name="editing_discard_desc">¿Descartar ediciones en curso?</string>
     <string name="editing_exit">Salir</string>
-    <string name="editing_exit_desc">¿Salir de la vista de edición?</string>
     <string name="editing_close_desc">Cerrar vista de edición</string>
     <string name="editing_save">Guardar Copia</string>
     <string name="editing_overwrite">Guardar</string>
-    <string name="editing_save_option_desc">Mostrar opciones de guardado</string>
     <string name="editing_overwrite_desc">Sobrescribir el Original</string>
-    <string name="editing_show_topbar">Mostrar la barra superior del editor</string>
-    <string name="editing_show_tools">Mostrar herramientas del editor</string>
     <string name="editing_crop">Cortar</string>
     <string name="editing_adjust">Ajustar</string>
     <string name="editing_filters">Filtros</string>
@@ -156,20 +147,12 @@
     <string name="editing_saturation">Saturación</string>
     <string name="editing_black_point">Punto Negro</string>
     <string name="editing_white_point">Punto Blanco</string>
-    <string name="editing_shadows">Sombras</string>
     <string name="editing_warmth">Calidez</string>
     <string name="editing_color_tint">Tinte de Color</string>
     <string name="editing_highlights">Resaltes</string>
     <string name="editing_pencil">Lápiz</string>
     <string name="editing_highlighter">Resaltador</string>
     <string name="editing_text">Texto</string>
-    <string name="editing_blur">Desenfoque</string>
-    <string name="editing_undo_all">Deshacer todas las acciones</string>
-    <string name="editing_undo_last">Deshacer última acción</string>
-    <string name="editing_scale_paint">Cambiar el pincel o el tamaño del texto</string>
-    <string name="editing_scale_zoom">Acercar en lugar de escalar el tamaño de la fuente</string>
-    <string name="editing_scale_text">Cambiar el tamaño de fuente del texto seleccionado</string>
-    <string name="editing_done">¡Imagen editada guardada!</string>
     <string name="editing_failed">Error al guardar la imagen editada</string>
     <string name="settings">Ajustes</string>
     <string name="settings_general">General</string>
@@ -207,7 +190,6 @@
     <string name="trash_empty">¿Vaciar Papelera?</string>
     <string name="trash_empty_desc">Esto elimina todos los elementos de la papelera, esta acción no se puede deshacer</string>
     <string name="trash_empty_confirm">Vacío</string>
-    <string name="permission">Permiso</string>
     <string name="permissions_media_manager">Administrador Multimedia</string>
     <string name="permissions_media_manager_desc">Mejor y mas rápida papelera/eliminar/copiar/mover</string>
     <string name="permissions_media_management">Administración de Multimedia</string>
@@ -232,7 +214,6 @@
     <string name="media_trash_confirm">¿Mover los elementos seleccionados a la papelera?</string>
     <string name="media_secure">Asegurar</string>
     <string name="media_secure_confirm">¿Mover este medio a la Carpeta Segura?</string>
-    <string name="media_delete_permanently">Eliminar Permanentemente</string>
     <string name="media_delete_permanently_confirm">¿Eliminar permanentemente este medio?</string>
     <string name="media_cancel">Cancelar</string>
     <string name="media_restore">Restaurar</string>
@@ -252,8 +233,6 @@
     <string name="search_photo_name">Buscar una foto</string>
     <string name="search_photo_date">Buscar la fecha de una foto</string>
     <string name="search_photo_day">Buscar por día</string>
-    <string name="feature_unimplemented">Sin implementar</string>
-    <string name="feature_editing_unimplemented">La edición de videos aún no se ha implementado a partir de la versión %1$s de Lavender Photos. Esta función se agregará lo antes posible, gracias por su paciencia.</string>
     <string name="edit_desc">Lavender Photos edito el archivo con %1$s</string>
     <string name="custom_album_media_not_custom_title">Multimedia No Personalizada</string>
     <string name="custom_album_media_not_custom_explanation">Alguna Multimedia de este álbum pertenecen a carpetas reales, Lavender Photos no puede eliminar esa multimedia sin eliminarlas, por lo que se ignorarán.</string>
@@ -261,8 +240,6 @@
     <string name="custom_album_remove_media_desc">¿Eliminar estos elementos del álbum?</string>
     <string name="action_cannot_be_undone">¡Esta acción no se puede deshacer!</string>
     <string name="show_options">Mostrar más opciones</string>
-    <string name="more_options">Más Opciones</string>
-    <string name="set_as">Establecer Como</string>
     <string name="set_as_wallpaper">Establecer como Fondo de pantalla</string>
     <string name="more_info">Más Información</string>
     <string name="not_available">No Disponible</string>
@@ -830,9 +807,7 @@
     <string name="secure_getting_file_info">Obteniendo información del archivo…</string>
     <string name="secure_please_wait">Por favor espere…</string>
     <string name="editing_image">Imagen</string>
-    <string name="editing_erase">Borrar</string>
     <string name="editing_saving">Guardando imagen editada</string>
-    <string name="editing_invert">Invertir</string>
     <string name="editing_upload_image">Elige</string>
     <string name="editing_upload_image_failed">No se pudo elegir la imagen</string>
     <string name="editing_bitrate">Tasa de Bits</string>
@@ -840,7 +815,6 @@
     <string name="editing_open_with_copying_video">Procesando video…</string>
     <string name="editing_open_with_copying_image">Procesando imagen…</string>
     <string name="filter">Filtro</string>
-    <string name="filter_custom">Filtro Personalizado</string>
     <string name="filter_none">Ninguno</string>
     <string name="filter_none_desc">porque quién los necesita</string>
     <string name="filter_inverted">Invertido</string>
@@ -889,7 +863,6 @@
     <string name="editing_export_video_loading">Exportando Video…</string>
     <string name="editing_export_video_loading_body">Paso %1$d de %2$d</string>
     <string name="editing_export_video_failed">No se pudo exportar el video</string>
-    <string name="editing_export_video_success">¡Video Exportado!</string>
     <string name="editing_volume_display">Volumen: %s</string>
     <string name="editing_speed_display">Velocidad de reproducción: %s</string>
     <string name="editing_framerate_display">Velocidad de fotogramas: %s</string>
@@ -952,7 +925,6 @@
     <string name="immich_login_unavailable">No Ha Iniciado Sesión</string>
     <string name="immich_login_unavailable_desc">Ninguna cuenta de immich está conectada actualmente</string>
     <string name="immich_login_found">Conectado como:</string>
-    <string name="immich_login_found_desc">Copia de seguridad Immich disponible!</string>
     <string name="immich_login">Iniciar sesión con Immich</string>
     <string name="immich_login_confirm">Iniciar sesión</string>
     <string name="immich_login_ongoing">Iniciando sesión…</string>
@@ -965,14 +937,6 @@
     <string name="immich_clear_endpoint_desc">¿Está seguro de que desea eliminar esta dirección de servidor?</string>
     <string name="immich_logout">¿Cerrar sesión?</string>
     <string name="immich_logout_desc">¿Está seguro de que desea cerrar sesión en esta cuenta?</string>
-    <string name="immich_albums_clear">Borrar Álbumes de Respaldo</string>
-    <string name="immich_albums_clear_desc">Dejar de hacer copias de seguridad de todos los álbumes</string>
-    <string name="immich_albums_clear_confirm">¿Está seguro de que desea eliminar todos los álbumes de la copia de seguridad?</string>
-    <string name="immich_delete_album">¿Borrar este álbum?</string>
-    <string name="immich_delete_album_desc">¡Esto no se puede deshacer!</string>
-    <string name="immich_delete_album_contents">Incluir medios en la eliminación</string>
-    <string name="immich_album_syncing">Sincronizando álbum</string>
-    <string name="immich_album_synced">Todos los medios sincronizados</string>
     <string name="immich_done">hecho</string>
     <string name="immich_sync_status">Estado de sincronización:</string>
     <string name="immich_email">Email:</string>
@@ -1002,7 +966,6 @@
     <string name="immich_server">Servidor Immich</string>
     <string name="immich_help_general">¿Qué es esto?</string>
     <string name="immich_help_general_desc">Permite la copia de seguridad de medios a nivel de álbum en un servidor Immich</string>
-    <string name="immich_help_detailed">Cómo usar</string>
     <string name="immich_help_detailed_desc"><![CDATA[
             <p><a href="https://immich.app/">Immich</a> es una solución de gestión de fotos y videos autohospedada,
             eso permite que cualquiera pueda alojar su propio servidor de respaldo en la nube.

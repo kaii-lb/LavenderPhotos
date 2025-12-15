@@ -480,12 +480,12 @@ private fun MediaStoreItem(
         ) {
             val resources = LocalResources.current
             Text(
-                text = "${
+                text = (viewProperties.prefix?.let {
                     ViewProperties.getText(
                         id = viewProperties.prefix,
                         resources = resources
-                    )
-                } ${item.displayName}",
+                    ) + " "
+                } ?: "") + item.displayName,
                 fontSize = TextUnit(16f, TextUnitType.Sp),
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground,

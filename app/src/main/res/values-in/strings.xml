@@ -38,12 +38,6 @@
     <string name="editing_pencil">Pensil</string>
     <string name="editing_highlighter">Highlighter</string>
     <string name="editing_text">Teks</string>
-    <string name="editing_blur">Buram</string>
-    <string name="editing_undo_all">Kembalikan semua tindakan</string>
-    <string name="editing_undo_last">Kembalikan tindakan terakhir</string>
-    <string name="editing_scale_paint">Ganti ukuran kuas lukisan atau teks</string>
-    <string name="editing_scale_zoom">Perbesar daripada menskalakan ukuran font</string>
-    <string name="permission">Izin</string>
     <string name="permissions_media_manager">Pengelolaan Media</string>
     <string name="permissions_media_manager_desc">Sampah/hapus/salin/pindah yang lebih baik dan cepat</string>
     <string name="permissions_media_management">Pengelolaan Media</string>
@@ -112,9 +106,7 @@
     <string name="updates_latest">Sudah di versi terbaru</string>
     <string name="updates_failed">Gagal memeriksa pembaruan</string>
     <string name="locked_folder_help_top">Folder Terkunci adalah folder aman untuk foto dan video anda di perangkat ini.\nMedia yang diamankan tidak pernah diunggah dimanapun dan selalu di-perangkat, dienkripsi dengan kunci unik dengan kata sandi atau data sidik jari perangkat anda.</string>
-    <string name="secure_sharing">Berbagi Media</string>
     <string name="secure_processing">Mohon menunggu selama media ini diproses</string>
-    <string name="secure_share_media">Bagikan media yang diamankan ini</string>
     <string name="secure_encrypting">Mengenkripsi Berkas</string>
     <string name="export_unenc_backup">Ekspor Cadangan yang tidak dienkripsi</string>
     <string name="export_unenc_backup_desc">Eksport folder dari semua item yang diamankan, tidak dienkripsi</string>
@@ -139,7 +131,6 @@
     <string name="video_start_muted_desc">Jangan putar audio saat memulai pemutaran video pertama kali</string>
     <string name="file_is_a_video">Berkas adalah video</string>
     <string name="editing_exit">Keluar</string>
-    <string name="editing_exit_desc">Keluar dari layar pengeditan?</string>
     <string name="previous_run_logs">Log dari jalan sebelumnya</string>
     <string name="current_run_logs">Log dari jalan saat ini</string>
     <string name="log_file_non_existent">Belum ada berkas log yang direkam.</string>
@@ -156,10 +147,7 @@
     <string name="video_auto_play_desc">Mulai memutar video segera setelah video muncul di layar</string>
     <string name="editing_save">Simpan Salinan</string>
     <string name="editing_overwrite">Simpan</string>
-    <string name="editing_save_option_desc">Tampilkan opsi menyimpan</string>
     <string name="editing_overwrite_desc">Ganti Asli</string>
-    <string name="editing_show_topbar">Tampilkan bar atas pengedit</string>
-    <string name="editing_show_tools">Tampilkan alat pengedit</string>
     <string name="editing_crop">Potong</string>
     <string name="editing_adjust">Sesuaikan</string>
     <string name="editing_filters">Filter</string>
@@ -172,8 +160,6 @@
     <string name="editing_reset">Atur ulang</string>
     <string name="editing_black_point">Titik Hitam</string>
     <string name="editing_white_point">Titik Putih</string>
-    <string name="editing_shadows">Bayangan</string>
-    <string name="editing_scale_text">Ganti ukuran font dari teks yang dipilih</string>
     <string name="settings">Pengaturan</string>
     <string name="settings_theme">Tema</string>
     <string name="settings_dark_theme">Tema Gelap</string>
@@ -210,13 +196,10 @@
     <string name="media_delete_confirm">Hapus %1$s?</string>
     <string name="media_secure">Aman</string>
     <string name="media_secure_confirm">Pindahkan %1$s ke Folder Aman?</string>
-    <string name="media_delete_permanently">Hapus secara Permanen</string>
     <string name="media_delete_permanently_confirm">Hapus %1$s secara permanen?</string>
     <string name="media_cancel">Batal</string>
     <string name="media_restore">Kembalikan</string>
     <string name="search_photo_day">Cari oleh hari</string>
-    <string name="feature_unimplemented">Tidak diimplementasikan</string>
-    <string name="feature_editing_unimplemented">Mengedit video belum diimplementasikan sejak versi %1$s dari Foto Lavender. Fitur ini akan ditambahkan sesegera mungkin, terima kasih untuk kesabarannya.</string>
     <string name="bottom_sheets_enter_text">Masukan Teks</string>
     <string name="bottom_sheets_freeform">Freeform</string>
     <string name="bottom_sheets_image_ratio">Rasio Gambar</string>
@@ -235,5 +218,4 @@
     <string name="albums_info">Informasi Album</string>
     <string name="albums_path">Jalur</string>
     <string name="albums_id">Id</string>
-    <string name="albums_move_to">Pindahkan ke Album</string>
 </resources>
