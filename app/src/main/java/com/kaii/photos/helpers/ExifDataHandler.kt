@@ -14,6 +14,7 @@ import kotlinx.datetime.format.DateTimeComponents
 import kotlinx.datetime.format.DayOfWeekNames
 import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.format.char
+import kotlinx.datetime.format.Padding
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import java.io.File
@@ -130,7 +131,7 @@ fun getExifDataForMedia(context: Context, absolutePath: String, dateModified: Lo
 
             val is24Hr = android.text.format.DateFormat.is24HourFormat(context)
 
-            if (is24Hr) hour() else amPmHour()
+            if (is24Hr) hour() else amPmHour(Padding.NONE)
 
             char(':')
             minute()
