@@ -82,6 +82,7 @@ import com.kaii.photos.compose.WallpaperSetter
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.compose.widgets.AnimatableTextField
 import com.kaii.photos.compose.widgets.MainDialogUserInfo
+import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.BottomBarTab
@@ -556,6 +557,8 @@ fun SinglePhotoInfoDialog(
                     rippleAlpha = RippleAlpha(0f, 0f, 0f, 0f)
                 )
     ) {
+        val isLandscape by rememberDeviceOrientation()
+
         ModalBottomSheet(
             sheetState = sheetState,
             tonalElevation = 16.dp,
@@ -620,311 +623,366 @@ fun SinglePhotoInfoDialog(
                     }
                 }
 
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth(1f)
-                        .padding(top = 0.dp, start = 16.dp, bottom = 16.dp, end = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(
-                        space = 8.dp,
-                        alignment = Alignment.Top
-                    ),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = stringResource(id = R.string.media_tools),
-                        fontSize = TextStylingConstants.MEDIUM_TEXT_SIZE.sp,
-                        fontWeight = FontWeight.Bold
+                @Composable
+                fun iconContent() {
+                    val file = remember(currentMediaItem) { File(currentMediaItem.absolutePath) }
+                    var originalFileName by remember(file) {
+                        mutableStateOf(
+                            file.nameWithoutExtension.let {
+                                if (it.startsWith(".")) {
+                                    it.replace("trashed-", "")
+                                        .replaceBefore("-", "")
+                                        .replaceFirst("-", "")
+                                } else {
+                                    it
+                                }
+                            }
+                        )
+                    }
+                    val saveFileName = remember { mutableStateOf(false) }
+                    var currentFileName by remember { mutableStateOf(originalFileName) }
+
+                    val resources = LocalResources.current
+                    val mediaRenamer = rememberMediaRenamer(uri = currentMediaItem.uri) {
+                        coroutineScope.launch {
+                            LavenderSnackbarController.pushEvent(
+                                LavenderSnackbarEvents.MessageEvent(
+                                    message = resources.getString(R.string.permissions_needed),
+                                    icon = R.drawable.error_2,
+                                    duration = SnackbarDuration.Short
+                                )
+                            )
+                        }
+                    }
+
+                    GetPermissionAndRun(
+                        uris = listOf(currentMediaItem.uri),
+                        shouldRun = saveFileName,
+                        onGranted = {
+                            mediaRenamer.rename(
+                                newName = "${currentFileName}.${file.extension}",
+                                uri = currentMediaItem.uri
+                            )
+
+                            originalFileName = currentFileName
+                        }
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    var showRenameDialog by remember { mutableStateOf(false) }
+                    if (showRenameDialog) {
+                        TextEntryDialog(
+                            title = stringResource(id = R.string.media_rename),
+                            placeholder = originalFileName,
+                            startValue = originalFileName,
+                            onConfirm = { newName ->
+                                val valid = newName != originalFileName
 
-                    Row(
-                        modifier = Modifier
-                            .wrapContentSize()
-                            .clip(CircleShape)
-                            .background(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainerLow)
-                            .padding(8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(
-                            space = 12.dp,
-                            alignment = Alignment.CenterHorizontally
-                        )
-                    ) {
-                        val file = remember(currentMediaItem) { File(currentMediaItem.absolutePath) }
-                        var originalFileName by remember(file) {
-                            mutableStateOf(
-                                file.nameWithoutExtension.let {
-                                    if (it.startsWith(".")) {
-                                        it.replace("trashed-", "")
-                                            .replaceBefore("-", "")
-                                            .replaceFirst("-", "")
-                                    } else {
-                                        it
-                                    }
-                                }
-                            )
-                        }
-                        val saveFileName = remember { mutableStateOf(false) }
-                        var currentFileName by remember { mutableStateOf(originalFileName) }
-
-                        val resources = LocalResources.current
-                        val mediaRenamer = rememberMediaRenamer(uri = currentMediaItem.uri) {
-                            coroutineScope.launch {
-                                LavenderSnackbarController.pushEvent(
-                                    LavenderSnackbarEvents.MessageEvent(
-                                        message = resources.getString(R.string.permissions_needed),
-                                        icon = R.drawable.error_2,
-                                        duration = SnackbarDuration.Short
-                                    )
-                                )
-                            }
-                        }
-
-                        GetPermissionAndRun(
-                            uris = listOf(currentMediaItem.uri),
-                            shouldRun = saveFileName,
-                            onGranted = {
-                                mediaRenamer.rename(
-                                    newName = "${currentFileName}.${file.extension}",
-                                    uri = currentMediaItem.uri
-                                )
-
-                                originalFileName = currentFileName
-                            }
-                        )
-
-                        var showRenameDialog by remember { mutableStateOf(false) }
-                        if (showRenameDialog) {
-                            TextEntryDialog(
-                                title = stringResource(id = R.string.media_rename),
-                                placeholder = originalFileName,
-                                startValue = originalFileName,
-                                onConfirm = { newName ->
-                                    val valid = newName != originalFileName
-
-                                    if (valid) {
-                                        currentFileName = newName
-                                        saveFileName.value = true
-                                        showRenameDialog = false
-                                    }
-
-                                    valid
-                                },
-                                onValueChange = { newName ->
-                                    newName != originalFileName
-                                },
-                                onDismiss = {
+                                if (valid) {
+                                    currentFileName = newName
+                                    saveFileName.value = true
                                     showRenameDialog = false
                                 }
-                            )
-                        }
+
+                                valid
+                            },
+                            onValueChange = { newName ->
+                                newName != originalFileName
+                            },
+                            onDismiss = {
+                                showRenameDialog = false
+                            }
+                        )
+                    }
+
+                    IconButton(
+                        onClick = {
+                            showRenameDialog = true
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.name),
+                            contentDescription = "rename this media"
+                        )
+                    }
+
+                    if (showMoveCopyOptions) {
+                        val show = remember { mutableStateOf(false) }
+                        var isMoving by remember { mutableStateOf(false) }
+
+                        val stateList = SnapshotStateList<MediaStoreData>()
+                        stateList.add(currentMediaItem)
+
+                        MoveCopyAlbumListView(
+                            show = show,
+                            selectedItemsList = stateList,
+                            isMoving = isMoving,
+                            groupedMedia = null,
+                            insetsPadding = WindowInsets.statusBars
+                        )
 
                         IconButton(
                             onClick = {
-                                showRenameDialog = true
+                                isMoving = true
+                                show.value = true
                             },
                             modifier = Modifier
                                 .weight(1f)
                                 .height(48.dp)
                         ) {
                             Icon(
-                                painter = painterResource(id = R.drawable.name),
-                                contentDescription = "rename this media"
+                                painter = painterResource(id = R.drawable.cut),
+                                contentDescription = "move this media"
                             )
                         }
 
-                        if (showMoveCopyOptions) {
-                            val show = remember { mutableStateOf(false) }
-                            var isMoving by remember { mutableStateOf(false) }
-
-                            val stateList = SnapshotStateList<MediaStoreData>()
-                            stateList.add(currentMediaItem)
-
-                            MoveCopyAlbumListView(
-                                show = show,
-                                selectedItemsList = stateList,
-                                isMoving = isMoving,
-                                groupedMedia = null,
-                                insetsPadding = WindowInsets.statusBars
+                        IconButton(
+                            onClick = {
+                                isMoving = false
+                                show.value = true
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(48.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.copy),
+                                contentDescription = "copy this media"
                             )
-
-                            IconButton(
-                                onClick = {
-                                    isMoving = true
-                                    show.value = true
-                                },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(48.dp)
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.cut),
-                                    contentDescription = "move this media"
-                                )
-                            }
-
-                            IconButton(
-                                onClick = {
-                                    isMoving = false
-                                    show.value = true
-                                },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(48.dp)
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.copy),
-                                    contentDescription = "copy this media"
-                                )
-                            }
                         }
+                    }
 
-                        if (currentMediaItem.type == MediaType.Image) {
-                            IconButton(
-                                onClick = {
-                                    val intent = Intent(context, WallpaperSetter::class.java).apply {
-                                        action = Intent.ACTION_SET_WALLPAPER
-                                        data = currentMediaItem.uri
-                                        addCategory(Intent.CATEGORY_DEFAULT)
-                                        putExtra("mimeType", currentMediaItem.mimeType)
-                                    }
+                    if (currentMediaItem.type == MediaType.Image) {
+                        IconButton(
+                            onClick = {
+                                val intent = Intent(context, WallpaperSetter::class.java).apply {
+                                    action = Intent.ACTION_SET_WALLPAPER
+                                    data = currentMediaItem.uri
+                                    addCategory(Intent.CATEGORY_DEFAULT)
+                                    putExtra("mimeType", currentMediaItem.mimeType)
+                                }
 
-                                    context.startActivity(intent)
-                                },
+                                context.startActivity(intent)
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(48.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.imagesearch_roller),
+                                contentDescription = "set as wallpaper"
+                            )
+                        }
+                    }
+                }
+
+                @Composable
+                fun content() {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(
+                            space = 8.dp,
+                            alignment = Alignment.Top
+                        ),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = stringResource(id = R.string.media_tools),
+                            fontSize = TextStylingConstants.MEDIUM_TEXT_SIZE.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        if (!isLandscape) {
+                            Row(
                                 modifier = Modifier
-                                    .weight(1f)
-                                    .height(48.dp)
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.imagesearch_roller),
-                                    contentDescription = "set as wallpaper"
+                                    .wrapContentSize()
+                                    .clip(CircleShape)
+                                    .background(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainerLow)
+                                    .padding(8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(
+                                    space = 12.dp,
+                                    alignment = Alignment.CenterHorizontally
                                 )
+                            ) {
+                                iconContent()
+                            }
+                        } else {
+                            Column(
+                                modifier = Modifier
+                                    .wrapContentSize()
+                                    .clip(CircleShape)
+                                    .background(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainerLow)
+                                    .padding(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(
+                                    space = 8.dp,
+                                    alignment = Alignment.CenterVertically
+                                ),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                iconContent()
                             }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = stringResource(id = R.string.media_information),
-                        fontSize = TextStylingConstants.MEDIUM_TEXT_SIZE.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxWidth(1f)
-                            .weight(1f)
-                            .clip(RoundedCornerShape(24.dp))
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(
+                            space = 8.dp,
+                            alignment = Alignment.Top
+                        ),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        items(
-                            items = mediaData.keys.filter { it != MediaData.LatLong }.toList() // we don't want to display straight up coordinates
-                        ) { key ->
-                            val value = mediaData[key]
-                            val name = stringResource(id = key.description)
+                        Text(
+                            text = stringResource(id = R.string.media_information),
+                            fontSize = TextStylingConstants.MEDIUM_TEXT_SIZE.sp,
+                            fontWeight = FontWeight.Bold
+                        )
 
-                            TallDialogInfoRow(
-                                title = name,
-                                info = value.toString(),
-                                icon = key.icon,
-                                position =
-                                    if (mediaData.keys.indexOf(key) == mediaData.keys.size - 1 && location.isBlank())
-                                        RowPosition.Bottom
-                                    else if (mediaData.keys.indexOf(key) == 0)
-                                        RowPosition.Top
-                                    else
-                                        RowPosition.Middle
-                            ) {
-                                val clipboardManager =
-                                    context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                val clipData = ClipData.newPlainText(name, value.toString())
-                                clipboardManager.setPrimaryClip(clipData)
-                            }
-                        }
+                        val showConfirmEraseDialog = remember { mutableStateOf(false) }
+                        val runEraseExifData = remember { mutableStateOf(false) }
 
-                        if (location.isNotBlank()) {
-                            item {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxWidth(1f)
+                                .weight(1f)
+                                .clip(RoundedCornerShape(24.dp))
+                        ) {
+                            items(
+                                items = mediaData.keys.filter { it != MediaData.LatLong }.toList() // we don't want to display straight up coordinates
+                            ) { key ->
+                                val value = mediaData[key]
+                                val name = stringResource(id = key.description)
+
                                 TallDialogInfoRow(
-                                    title = "Location:",
-                                    info = location,
-                                    icon = R.drawable.location,
-                                    position = RowPosition.Bottom
+                                    title = name,
+                                    info = value.toString(),
+                                    icon = key.icon,
+                                    position =
+                                        if (mediaData.keys.indexOf(key) == mediaData.keys.size - 1 && location.isBlank())
+                                            RowPosition.Bottom
+                                        else if (mediaData.keys.indexOf(key) == 0)
+                                            RowPosition.Top
+                                        else
+                                            RowPosition.Middle
                                 ) {
                                     val clipboardManager =
                                         context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                    val clipData = ClipData.newPlainText("Location", location)
+                                    val clipData = ClipData.newPlainText(name, value.toString())
                                     clipboardManager.setPrimaryClip(clipData)
                                 }
                             }
+
+                            if (location.isNotBlank()) {
+                                item {
+                                    TallDialogInfoRow(
+                                        title = "Location:",
+                                        info = location,
+                                        icon = R.drawable.location,
+                                        position = RowPosition.Bottom
+                                    ) {
+                                        val clipboardManager =
+                                            context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                        val clipData = ClipData.newPlainText("Location", location)
+                                        clipboardManager.setPrimaryClip(clipData)
+                                    }
+                                }
+                            }
                         }
-                    }
-                    val showConfirmEraseDialog = remember { mutableStateOf(false) }
-                    val runEraseExifData = remember { mutableStateOf(false) }
-                    ConfirmationDialogWithBody(
-                        showDialog = showConfirmEraseDialog,
-                        dialogTitle = stringResource(id = R.string.media_exif_erase),
-                        dialogBody = stringResource(id = R.string.action_cannot_be_undone),
-                        confirmButtonLabel = stringResource(id = R.string.media_erase)
-                    ) {
-                        runEraseExifData.value = true
-                    }
+                        ConfirmationDialogWithBody(
+                            showDialog = showConfirmEraseDialog,
+                            dialogTitle = stringResource(id = R.string.media_exif_erase),
+                            dialogBody = stringResource(id = R.string.action_cannot_be_undone),
+                            confirmButtonLabel = stringResource(id = R.string.media_erase)
+                        ) {
+                            runEraseExifData.value = true
+                        }
 
-                    val resources = LocalResources.current
-                    GetPermissionAndRun(
-                        uris = listOf(currentMediaItem.uri),
-                        shouldRun = runEraseExifData,
-                        onGranted = {
-                            mainViewModel.launch(Dispatchers.IO) {
-                                try {
-                                    eraseExifMedia(currentMediaItem.absolutePath)
+                        val resources = LocalResources.current
+                        GetPermissionAndRun(
+                            uris = listOf(currentMediaItem.uri),
+                            shouldRun = runEraseExifData,
+                            onGranted = {
+                                mainViewModel.launch(Dispatchers.IO) {
+                                    try {
+                                        eraseExifMedia(currentMediaItem.absolutePath)
 
-                                    LavenderSnackbarController.pushEvent(
-                                        LavenderSnackbarEvents.MessageEvent(
-                                            message = resources.getString(R.string.media_exif_done),
-                                            icon = R.drawable.checkmark_thin,
-                                            duration = SnackbarDuration.Short
+                                        LavenderSnackbarController.pushEvent(
+                                            LavenderSnackbarEvents.MessageEvent(
+                                                message = resources.getString(R.string.media_exif_done),
+                                                icon = R.drawable.checkmark_thin,
+                                                duration = SnackbarDuration.Short
+                                            )
                                         )
-                                    )
-                                } catch (e: Throwable) {
+                                    } catch (e: Throwable) {
+                                        LavenderSnackbarController.pushEvent(
+                                            LavenderSnackbarEvents.MessageEvent(
+                                                message = resources.getString(R.string.media_exif_failed),
+                                                icon = R.drawable.error_2,
+                                                duration = SnackbarDuration.Short
+                                            )
+                                        )
+
+                                        Log.e(
+                                            TAG,
+                                            "Failed erasing exif data for ${currentMediaItem.absolutePath}"
+                                        )
+                                        Log.e(TAG, e.toString())
+                                        e.printStackTrace()
+                                    }
+                                }
+                            },
+                            onRejected = {
+                                coroutineScope.launch {
                                     LavenderSnackbarController.pushEvent(
                                         LavenderSnackbarEvents.MessageEvent(
-                                            message = resources.getString(R.string.media_exif_failed),
+                                            message = resources.getString(R.string.permissions_needed),
                                             icon = R.drawable.error_2,
                                             duration = SnackbarDuration.Short
                                         )
                                     )
-
-                                    Log.e(
-                                        TAG,
-                                        "Failed erasing exif data for ${currentMediaItem.absolutePath}"
-                                    )
-                                    Log.e(TAG, e.toString())
-                                    e.printStackTrace()
                                 }
                             }
-                        },
-                        onRejected = {
-                            coroutineScope.launch {
-                                LavenderSnackbarController.pushEvent(
-                                    LavenderSnackbarEvents.MessageEvent(
-                                        message = resources.getString(R.string.permissions_needed),
-                                        icon = R.drawable.error_2,
-                                        duration = SnackbarDuration.Short
-                                    )
-                                )
-                            }
-                        }
-                    )
+                        )
 
-                    TallDialogInfoRow(
-                        title = stringResource(id = R.string.media_exif_erase),
-                        info = "",
-                        icon = R.drawable.error,
-                        position = RowPosition.Single,
-                        containerColor = MaterialTheme.colorScheme.error,
-                        contentColor = MaterialTheme.colorScheme.onError
+                        TallDialogInfoRow(
+                            title = stringResource(id = R.string.media_exif_erase),
+                            info = "",
+                            icon = R.drawable.error,
+                            position = RowPosition.Single,
+                            containerColor = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.onError
+                        ) {
+                            showConfirmEraseDialog.value = true
+                        }
+                    }
+                }
+
+                if (isLandscape) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth(1f)
+                            .padding(top = 0.dp, start = 16.dp, bottom = 16.dp, end = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(
+                            space = 8.dp,
+                            alignment = Alignment.CenterHorizontally
+                        )
                     ) {
-                        showConfirmEraseDialog.value = true
+                        content()
+                    }
+                } else {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth(1f)
+                            .padding(top = 0.dp, start = 16.dp, bottom = 16.dp, end = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(
+                            space = 8.dp,
+                            alignment = Alignment.Top
+                        ),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        content()
                     }
                 }
             }
