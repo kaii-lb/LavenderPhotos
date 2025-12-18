@@ -686,7 +686,7 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="record_logs_desc">Store logs for debugging. Tap to view.</string>
     <string name="choose_logs">Choose Logs</string>
     <string name="previous_run_logs">Previous run\'s logs</string>
-    <string name="current_run_logs">Current run\'sSpaceBetween logs</string>
+    <string name="current_run_logs">Current run\'s logs</string>
     <string name="log_file_non_existent">No log file is recorded as of yet.</string>
     <string name="album_add_path">Add Albums Path</string>
     <string name="album_add">Add album</string>
