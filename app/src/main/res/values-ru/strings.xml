@@ -9,7 +9,7 @@
     <string name="albums_found">Найдены все альбомы!</string>
     <string name="add_album">Добавить альбом</string>
     <string name="direct_path_album">Использовать прямой путь для добавления альбома</string>
-    <string name="albums_main_list">Список главных альбомов</string>
+    <string name="albums_main_list">Показать всё на главной</string>
     <string name="albums_main_list_selected">Выбранные здесь альбомы будут отображаться в главном окне просмотра фотографий</string>
     <string name="albums_selected">Выбранные альбомы</string>
     <string name="albums_auto_detect">Автоматически определять альбомы</string>
@@ -44,7 +44,7 @@
     <string name="tabs_albums_incl">Включенные альбомы</string>
     <string name="tabs_confirm">Добавить вкладку</string>
     <string name="tabs_empty_params">Настройки вкладки не могут быть пустыми</string>
-    <string name="tabs_max_reached">Нельзя добавить более 5 вкладок</string>
+    <string name="tabs_max_reached">Нельзя добавить более 8 вкладок</string>
     <string name="tabs_min_reached">Должна быть хотя бы одна вкладка</string>
     <string name="return_to_previous_page">Вернуться на предыдущую страницу</string>
     <string name="app_icon">Значок приложения</string>
@@ -177,7 +177,7 @@
     <string name="settings_clear_cache_desc">Это удалит все кэши миниатюр на этом устройстве, освобождая хранилище. Загрузка миниатюр при следующем запуске займёт больше времени.</string>
     <string name="settings_about_and_updates">О программе и обновления</string>
     <string name="trash_bin">Корзина</string>
-    <string name="trash_auto_delete">Автоматическое удаление из корзины через</string>
+    <string name="trash_auto_delete">Автоматическое удаление из корзины через %s дней</string>
     <string name="trash_days">дней</string>
     <string name="trash_no_auto_delete">Фото в корзине не будут автоматически удалены</string>
     <string name="trash_auto_delete_interval">Интервал автоматического удаления</string>
@@ -190,8 +190,8 @@
     <string name="permissions_media_management">Управление медиафайлами</string>
     <string name="permissions_confirm_to_delete">Подтверждение удаления</string>
     <string name="permissions_confirm_too_delete_desc">Запрашивать подтверждение перед удалением любых медиафайлов</string>
-    <string name="permissions_overwrite_date_on_move">Перезаписать дату при перемещении</string>
-    <string name="permissions_overwrite_date_on_move_desc">Если эта опция включена, дата скопированных и перемещённых медиафайлов устанавливается на «текущую», и они отображаются как самые последние</string>
+    <string name="permissions_overwrite_date_on_move">Оставлять дату при перемещении</string>
+    <string name="permissions_overwrite_date_on_move_desc">Дата скопированных и перемещённых медиафайлов остаётся как была</string>
     <string name="permissions_needed">Требуется разрешение</string>
     <string name="permissions_needed_desc">Приложению Lavender Photos требуется разрешение на доступ к этому альбому. Предоставьте разрешение, выбрав «Использовать эту папку» на следующем экране. Это разрешение предоставляется один раз.</string>
     <string name="permissions_grant">Предоставить</string>
@@ -208,8 +208,8 @@
     <string name="media_delete_confirm">Удалить этот медиафайл?</string>
     <string name="media_trash_confirm">Переместить выбранные элементы в корзину?</string>
     <string name="media_secure">Безопасно</string>
-    <string name="media_secure_confirm">Переместить %1$s в защищённую папку?</string>
-    <string name="media_delete_permanently_confirm">Удалить %1$s навсегда?</string>
+    <string name="media_secure_confirm">Переместить это медиа в Защищённую папку?</string>
+    <string name="media_delete_permanently_confirm">Удалить это медиа навсегда?</string>
     <string name="media_cancel">Отмена</string>
     <string name="media_restore">Восстановить</string>
     <string name="media_restore_confirm">Восстановить эти элементы?</string>
