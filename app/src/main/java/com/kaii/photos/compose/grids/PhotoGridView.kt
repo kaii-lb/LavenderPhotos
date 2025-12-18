@@ -109,6 +109,7 @@ import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getThumbnailIv
+import com.kaii.photos.mediastore.isRawImage
 import com.kaii.photos.mediastore.signature
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -184,7 +185,8 @@ fun DeviceMedia(
     val mainViewModel = LocalMainViewModel.current
     LaunchedEffect(groupedMedia.value) {
         if (viewProperties == ViewProperties.Favourites || viewProperties == ViewProperties.SecureFolder
-            || viewProperties == ViewProperties.SearchLoading || viewProperties == ViewProperties.SearchNotFound) mainViewModel.setGroupedMedia(groupedMedia.value)
+            || viewProperties == ViewProperties.SearchLoading || viewProperties == ViewProperties.SearchNotFound
+        ) mainViewModel.setGroupedMedia(groupedMedia.value)
     }
 
     val isLandscape by rememberDeviceOrientation()
@@ -647,6 +649,23 @@ private fun MediaStoreItem(
                         tint = Color.White,
                         modifier = Modifier
                             .size(20.dp)
+                            .align(Alignment.Center)
+                    )
+                }
+            }
+
+            if (item.isRawImage()) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(2.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.raw_on),
+                        contentDescription = stringResource(id = R.string.media_is_raw),
+                        tint = Color.White,
+                        modifier = Modifier
+                            .size(28.dp)
                             .align(Alignment.Center)
                     )
                 }

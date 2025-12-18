@@ -143,3 +143,9 @@ fun String.toMediaType() = when (this) {
 fun ByteArray.getIv() = copyOfRange(0, 16)
 fun ByteArray.getThumbnailIv() = copyOfRange(16, 32)
 fun ByteArray.getOriginalPath() = decodeToString(32, size)
+
+fun MediaStoreData.isRawImage(): Boolean {
+    val rawTypes = listOf("image/dng", "image/tiff", "image/x-raw-adobe") // might not be complete for glide?
+
+    return this.mimeType?.lowercase() in rawTypes
+}

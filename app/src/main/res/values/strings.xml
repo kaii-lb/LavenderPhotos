@@ -943,6 +943,7 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="media_operate_snackbar_body">%1$d out of %2$d done</string>
     <string name="media_tools">Tools</string>
     <string name="media_information">Information</string>
+    <string name="media_is_raw">This is a RAW image</string>
 
     <!-- Search -->
     <string name="search_photo_name">Search for a photo</string>
