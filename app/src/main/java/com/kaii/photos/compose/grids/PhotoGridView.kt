@@ -1,7 +1,9 @@
 package com.kaii.photos.compose.grids
 
+import android.content.ClipData
 import android.content.Intent
 import android.util.Log
+import android.view.View
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
@@ -47,6 +49,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
@@ -60,6 +63,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -74,6 +78,7 @@ import androidx.compose.ui.unit.round
 import androidx.compose.ui.unit.toIntRect
 import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.bumptech.glide.Glide
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
@@ -92,6 +97,7 @@ import com.kaii.photos.datastore.Behaviour
 import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.datastore.Storage
 import com.kaii.photos.helpers.AnimationConstants
+import com.kaii.photos.helpers.BitmapUriShadowBuilder
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.ImageFunctions
 import com.kaii.photos.helpers.PhotoGridConstants
@@ -114,6 +120,7 @@ import com.kaii.photos.mediastore.signature
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.random.Random
 
@@ -554,27 +561,61 @@ private fun MediaStoreItem(
             }
         }
 
+        val context = LocalContext.current
+        val resources = LocalResources.current
+        val view = LocalView.current
+        val density = LocalDensity.current
+        val coroutineScope = rememberCoroutineScope()
+
         Box(
             modifier = Modifier
                 .aspectRatio(1f)
                 .padding(2.dp)
                 .clip(RoundedCornerShape(if (useRoundedCorners) 8.dp else 0.dp))
                 .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
-                .then(
-                    if (selectedItemsList.isNotEmpty()) {
-                        Modifier.clickable {
-                            if (onClick == {}) {
-                                onLongClick()
-                            } else {
-                                onSingleClick()
-                            }
-                        }
-                    } else {
-                        Modifier.combinedClickable(
-                            onClick = onSingleClick,
+                .combinedClickable(
+                    onClick = onSingleClick,
 
-                            onLongClick = onLongClick
-                        )
+                    onLongClick = {
+                        if (isSelected) coroutineScope.launch(Dispatchers.IO) {
+                            val items = selectedItemsList.filter { it.type != MediaType.Section }
+
+                            val clipData = ClipData.newUri(
+                                context.contentResolver,
+                                resources.getString(R.string.drag_and_drop_data),
+                                items.first().uri
+                            )
+
+                            items.drop(1).forEach {
+                                clipData.addItem(ClipData.Item(it.uri))
+                            }
+
+                            val bitmaps = items.take(3).map { // limit to 3 so we don't overstress the rendering/loading of bitmaps
+                                Glide.with(context)
+                                    .asBitmap()
+                                    .override(thumbnailSettings.second)
+                                    .centerCrop()
+                                    .load(it.uri)
+                                    .submit()
+                                    .get()
+                            }
+
+                            val shadow = BitmapUriShadowBuilder(
+                                view = view,
+                                bitmaps = bitmaps,
+                                count = items.size,
+                                density = density
+                            )
+
+                            view.startDragAndDrop(
+                                clipData,
+                                shadow,
+                                clipData,
+                                View.DRAG_FLAG_GLOBAL or View.DRAG_FLAG_OPAQUE
+                            )
+                        } else {
+                            onLongClick()
+                        }
                     }
                 )
         ) {

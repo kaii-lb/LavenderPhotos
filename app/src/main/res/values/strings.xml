@@ -977,6 +977,7 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="apply">Apply</string>
     <string name="close">Close</string>
     <string name="changelog_name">Changelog</string>
+    <string name="drag_and_drop_data">Lavender Photos Drag-And-Drop Data</string>
 
     <!-- Bottom Sheets -->
     <string name="bottom_sheets_enter_text">Enter Text</string>
