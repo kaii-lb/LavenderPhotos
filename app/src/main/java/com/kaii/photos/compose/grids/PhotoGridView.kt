@@ -219,11 +219,13 @@ fun DeviceMedia(
         var showPlaceholderItems by remember { mutableStateOf(false) }
         LaunchedEffect(Unit) {
             delay(PhotoGridConstants.UPDATE_TIME / 2) // mini delay to avoid clipping the top most element
-            showPlaceholderItems = true
-        }
-        LaunchedEffect(groupedMedia.value.size) {
-            if (groupedMedia.value.isNotEmpty()) delay(PhotoGridConstants.UPDATE_TIME)
+            showPlaceholderItems = groupedMedia.value.isEmpty()
 
+            delay(PhotoGridConstants.UPDATE_TIME)
+
+            showPlaceholderItems = groupedMedia.value.isEmpty()
+        }
+        LaunchedEffect(groupedMedia.value.isEmpty()) {
             showPlaceholderItems = groupedMedia.value.isEmpty()
         }
 
