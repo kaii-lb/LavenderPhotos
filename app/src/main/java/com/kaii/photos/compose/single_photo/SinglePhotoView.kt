@@ -1,6 +1,7 @@
 package com.kaii.photos.compose.single_photo
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.view.Window
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -104,7 +105,8 @@ fun SinglePhotoView(
     mediaItemId: Long,
     previousMediaItemId: Long?,
     albumInfo: AlbumInfo,
-    loadsFromMainViewModel: Boolean
+    loadsFromMainViewModel: Boolean,
+    isOpenWithDefaultView: Boolean = false
 ) {
     val mainViewModel = LocalMainViewModel.current
     val holderGroupedMedia: MutableState<List<MediaStoreData>?> = remember { mutableStateOf(null) }
@@ -149,7 +151,8 @@ fun SinglePhotoView(
         previousMediaItemId = previousMediaItemId,
         groupedMedia = groupedMedia,
         albumInfo = albumInfo,
-        loadsFromMainViewModel = loadsFromMainViewModel
+        loadsFromMainViewModel = loadsFromMainViewModel,
+        isOpenWithDefaultView = isOpenWithDefaultView
     )
 }
 
@@ -161,7 +164,8 @@ fun SinglePhotoView(
     mediaItemId: Long,
     previousMediaItemId: Long?,
     albumInfo: AlbumInfo,
-    loadsFromMainViewModel: Boolean
+    loadsFromMainViewModel: Boolean,
+    isOpenWithDefaultView: Boolean = false,
 ) {
     val mainViewModel = LocalMainViewModel.current
     val holderGroupedMedia: MutableState<List<MediaStoreData>?> = remember { mutableStateOf(null) }
@@ -206,7 +210,8 @@ fun SinglePhotoView(
         groupedMedia = groupedMedia,
         albumInfo = albumInfo,
         previousMediaItemId = previousMediaItemId,
-        loadsFromMainViewModel = loadsFromMainViewModel
+        loadsFromMainViewModel = loadsFromMainViewModel,
+        isOpenWithDefaultView = isOpenWithDefaultView
     )
 }
 
@@ -219,7 +224,8 @@ fun SinglePhotoViewCommon(
     previousMediaItemId: Long?,
     groupedMedia: MutableState<List<MediaStoreData>>,
     albumInfo: AlbumInfo,
-    loadsFromMainViewModel: Boolean
+    loadsFromMainViewModel: Boolean,
+    isOpenWithDefaultView: Boolean
 ) {
     var currentMediaItemIndex by rememberSaveable {
         mutableIntStateOf(
@@ -313,11 +319,15 @@ fun SinglePhotoViewCommon(
     }
 
     var showInfoDialog by remember { mutableStateOf(false) }
-
+    val context = LocalContext.current
     BackHandler(
         enabled = !showInfoDialog
     ) {
-        navController.popBackStack()
+        if (isOpenWithDefaultView) {
+            (context as Activity).finish()
+        } else {
+            navController.popBackStack()
+        }
     }
 
     Scaffold(
