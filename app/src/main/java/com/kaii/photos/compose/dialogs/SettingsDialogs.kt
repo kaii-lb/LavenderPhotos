@@ -475,16 +475,20 @@ fun SortModeSelectorDialog(
         }
 
         var chosenSortMode by remember { mutableStateOf(currentSortMode) }
+        val sortModes = remember {
+            // ignore "Disabled" and "DisabledLastModified", handled by toggle switch
+            MediaItemSortMode.entries.filter { it != MediaItemSortMode.Disabled && it != MediaItemSortMode.DisabledLastModified }
+        }
+
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth(1f)
                 .wrapContentHeight()
         ) {
             items(
-                count = MediaItemSortMode.entries.size - 1 // ignore "Disabled"
+                count = sortModes.size
             ) { index ->
-                val sortMode =
-                    MediaItemSortMode.entries.filter { it != MediaItemSortMode.Disabled }[index] // cursed syntax
+                val sortMode = sortModes[index]
 
                 RadioButtonRow(
                     text = sortMode.presentableName,

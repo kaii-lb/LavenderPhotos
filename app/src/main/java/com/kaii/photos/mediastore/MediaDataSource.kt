@@ -214,7 +214,9 @@ class MediaDataSource(
         val sortedMap = holderMap.toSortedMap(compareByDescending { it })
         val sorted = mutableListOf<MediaStoreData>()
 
-        if (sortMode == MediaItemSortMode.Disabled) {
+        if (sortMode == MediaItemSortMode.DisabledLastModified) {
+            return sortedMap.flatMap { it.value }.sortedByDescending { it.dateModified }
+        } else if (sortMode == MediaItemSortMode.Disabled) {
             return sortedMap.flatMap { it.value }.sortedByDescending { it.dateTaken }
         }
 

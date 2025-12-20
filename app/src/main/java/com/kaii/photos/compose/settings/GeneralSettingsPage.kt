@@ -253,13 +253,19 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
                     iconResID = R.drawable.sorting,
                     position = RowPosition.Single,
                     showBackground = false,
-                    checked = currentSortMode != MediaItemSortMode.Disabled,
+                    checked = currentSortMode != MediaItemSortMode.Disabled && currentSortMode != MediaItemSortMode.DisabledLastModified,
                     onRowClick = {
                         showSortModeSelectorDialog = true
                     },
                     onSwitchClick = { checked ->
-                        if (checked) mainViewModel.settings.PhotoGrid.setSortMode(MediaItemSortMode.DateTaken)
-                        else mainViewModel.settings.PhotoGrid.setSortMode(MediaItemSortMode.Disabled)
+                        if (checked) {
+                            mainViewModel.settings.PhotoGrid.setSortMode(MediaItemSortMode.DateTaken)
+                        } else {
+                            mainViewModel.settings.PhotoGrid.setSortMode(
+                                if (currentSortMode == MediaItemSortMode.LastModified) MediaItemSortMode.DisabledLastModified
+                                else MediaItemSortMode.Disabled
+                            )
+                        }
                     }
                 )
             }

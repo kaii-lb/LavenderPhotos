@@ -4,7 +4,8 @@ enum class MediaItemSortMode {
     DateTaken,
     MonthTaken,
     LastModified,
-    Disabled;
+    Disabled,
+    DisabledLastModified;
 
     companion object {
         val MediaItemSortMode.presentableName: String

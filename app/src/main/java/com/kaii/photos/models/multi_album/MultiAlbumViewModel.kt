@@ -134,7 +134,7 @@ fun groupPhotosBy(
                     item.dateTaken
                 }
 
-                MediaItemSortMode.LastModified -> {
+                MediaItemSortMode.LastModified, MediaItemSortMode.DisabledLastModified -> {
                     item.dateModified
                 }
             }
