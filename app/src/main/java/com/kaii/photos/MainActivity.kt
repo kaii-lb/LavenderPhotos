@@ -465,7 +465,7 @@ class MainActivity : ComponentActivity() {
                             mediaItemId = screen.mediaItemId,
                             previousMediaItemId = screen.previousMediaItemId,
                             albumInfo = screen.albumInfo,
-                            loadsFromMainViewModel = screen.loadsFromMainViewModel,
+                            loadsFromMainViewModel = screen.loadsFromMainViewModel
                         )
                     } else {
                         if (screen.albumInfo != multiAlbumViewModel.albumInfo) {
@@ -483,7 +483,7 @@ class MainActivity : ComponentActivity() {
                             mediaItemId = screen.mediaItemId,
                             previousMediaItemId = screen.previousMediaItemId,
                             albumInfo = screen.albumInfo,
-                            loadsFromMainViewModel = screen.loadsFromMainViewModel,
+                            loadsFromMainViewModel = screen.loadsFromMainViewModel
                         )
                     }
                 }

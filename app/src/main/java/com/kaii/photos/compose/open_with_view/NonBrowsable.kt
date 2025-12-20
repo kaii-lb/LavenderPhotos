@@ -1,24 +1,16 @@
-package com.kaii.photos.compose.single_photo
+package com.kaii.photos.compose.open_with_view
 
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.ContentValues
 import android.content.res.Configuration
 import android.net.Uri
-import android.os.Build
-import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
 import android.provider.MediaStore.MediaColumns
 import android.view.Window
 import android.view.WindowManager
-import android.widget.Toast
-import androidx.activity.ComponentActivity
-import androidx.activity.SystemBarStyle
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
@@ -31,13 +23,10 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkOut
-import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -62,7 +51,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
@@ -77,7 +65,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
@@ -92,37 +79,27 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
-import androidx.core.net.toUri
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import androidx.navigation.toRoute
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
-import com.kaii.lavender.snackbars.LavenderSnackbarBox
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
-import com.kaii.lavender.snackbars.LavenderSnackbarHostState
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.BottomAppBarItem
 import com.kaii.photos.compose.app_bars.setBarVisibility
-import com.kaii.photos.compose.editing_view.image_editor.ImageEditor
-import com.kaii.photos.compose.editing_view.video_editor.VideoEditor
+import com.kaii.photos.compose.single_photo.VideoPlayerControls
+import com.kaii.photos.compose.single_photo.mediaModifier
+import com.kaii.photos.compose.single_photo.rememberExoPlayerWithLifeCycle
+import com.kaii.photos.compose.single_photo.rememberPlayerView
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.LookAndFeel
-import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.MediaItemSortMode
-import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.formatDate
 import com.kaii.photos.helpers.shareImage
@@ -130,257 +107,14 @@ import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.copyUriToUri
 import com.kaii.photos.mediastore.getMediaStoreDataFromUri
-import com.kaii.photos.models.main_activity.MainViewModel
-import com.kaii.photos.models.main_activity.MainViewModelFactory
-import com.kaii.photos.ui.theme.PhotosTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlin.reflect.typeOf
-
-class OpenWithView : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        val uri = intent.data
-
-        if (uri == null) {
-            Toast.makeText(applicationContext, applicationContext.resources.getString(R.string.media_non_existent), Toast.LENGTH_LONG).show()
-            finish()
-            return
-        }
-
-
-        setContent {
-            val mainViewModel: MainViewModel = viewModel(
-                factory = MainViewModelFactory(applicationContext, emptyList())
-            )
-
-            enableEdgeToEdge(
-                navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
-                statusBarStyle =
-                    if (!isSystemInDarkTheme()) {
-                        SystemBarStyle.light(
-                            MaterialTheme.colorScheme.background.toArgb(),
-                            MaterialTheme.colorScheme.background.toArgb()
-                        )
-                    } else {
-                        SystemBarStyle.dark(MaterialTheme.colorScheme.background.toArgb())
-                    }
-            )
-
-            val initialDarkMode =
-                when (AppCompatDelegate.getDefaultNightMode()) {
-                    AppCompatDelegate.MODE_NIGHT_YES -> 1
-                    AppCompatDelegate.MODE_NIGHT_NO -> 2
-
-                    else -> 0
-                }
-
-            val followDarkTheme by mainViewModel.settings.LookAndFeel.getFollowDarkMode()
-                .collectAsStateWithLifecycle(
-                    initialValue = initialDarkMode
-                )
-
-            PhotosTheme(
-                theme = followDarkTheme,
-                dynamicColor = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-            ) {
-                val navController = rememberNavController()
-
-                CompositionLocalProvider(
-                    LocalNavController provides navController,
-                    LocalMainViewModel provides mainViewModel
-                ) {
-                    val snackbarHostState = remember {
-                        LavenderSnackbarHostState()
-                    }
-
-                    LavenderSnackbarBox(snackbarHostState = snackbarHostState) {
-                        NavHost(
-                            navController = navController,
-                            startDestination = MultiScreenViewType.OpenWithView.name,
-                            modifier = Modifier
-                                .fillMaxSize(1f)
-                                .background(MaterialTheme.colorScheme.background),
-                            enterTransition = {
-                                slideInHorizontally(
-                                    animationSpec = tween(
-                                        durationMillis = 350
-                                    )
-                                ) { width -> width } + fadeIn()
-                            },
-                            exitTransition = {
-                                slideOutHorizontally(
-                                    animationSpec = tween(
-                                        durationMillis = 350
-                                    )
-                                ) { width -> -width } + fadeOut()
-                            },
-                            popExitTransition = {
-                                slideOutHorizontally(
-                                    animationSpec = tween(
-                                        durationMillis = 350
-                                    )
-                                ) { width -> width } + fadeOut()
-                            },
-                            popEnterTransition = {
-                                slideInHorizontally(
-                                    animationSpec = tween(
-                                        durationMillis = 350
-                                    )
-                                ) { width -> -width } + fadeIn()
-                            }
-                        ) {
-                            composable(MultiScreenViewType.OpenWithView.name) {
-                                enableEdgeToEdge(
-                                    navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
-                                    statusBarStyle =
-                                        if (!isSystemInDarkTheme()) {
-                                            SystemBarStyle.light(
-                                                MaterialTheme.colorScheme.background.toArgb(),
-                                                MaterialTheme.colorScheme.background.toArgb()
-                                            )
-                                        } else {
-                                            SystemBarStyle.dark(MaterialTheme.colorScheme.background.toArgb())
-                                        }
-                                )
-
-                                Content(
-                                    uri = uri,
-                                    window = window
-                                )
-                            }
-
-                            composable<Screens.ImageEditor>(
-                                typeMap = mapOf(
-                                    typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
-                                ),
-                                enterTransition = {
-                                    slideInVertically(
-                                        AnimationConstants.expressiveTween(AnimationConstants.DURATION)
-                                    ) { height -> height } + fadeIn(
-                                        animationSpec = tween(
-                                            durationMillis = AnimationConstants.DURATION_LONG
-                                        )
-                                    )
-                                },
-                                exitTransition = {
-                                    slideOutVertically(
-                                        AnimationConstants.expressiveTween(AnimationConstants.DURATION)
-                                    ) { height -> height } + fadeOut(
-                                        animationSpec = tween(
-                                            durationMillis = AnimationConstants.DURATION_LONG
-                                        )
-                                    )
-                                },
-                                popEnterTransition = {
-                                    slideInVertically(
-                                        AnimationConstants.expressiveTween(AnimationConstants.DURATION)
-                                    ) { height -> height } + fadeIn(
-                                        animationSpec = tween(
-                                            durationMillis = AnimationConstants.DURATION_LONG
-                                        )
-                                    )
-                                },
-                                popExitTransition = {
-                                    slideOutVertically(
-                                        AnimationConstants.expressiveTween(AnimationConstants.DURATION)
-                                    ) { height -> height } + fadeOut(
-                                        animationSpec = tween(
-                                            durationMillis = AnimationConstants.DURATION_LONG
-                                        )
-                                    )
-                                }
-                            ) {
-                                enableEdgeToEdge(
-                                    navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
-                                    statusBarStyle = SystemBarStyle.auto(
-                                        MaterialTheme.colorScheme.surfaceContainer.toArgb(),
-                                        MaterialTheme.colorScheme.surfaceContainer.toArgb()
-                                    )
-                                )
-
-                                val screen: Screens.ImageEditor = it.toRoute()
-
-                                ImageEditor(
-                                    uri = screen.uri.toUri(),
-                                    absolutePath = screen.absolutePath,
-                                    albumInfo = null,
-                                    isFromOpenWithView = true
-                                )
-                            }
-
-                            composable<Screens.VideoEditor>(
-                                typeMap = mapOf(
-                                    typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
-                                ),
-                                enterTransition = {
-                                    slideInVertically(
-                                        animationSpec = AnimationConstants.expressiveTween(AnimationConstants.DURATION)
-                                    ) { height -> height } + fadeIn(
-                                        animationSpec = tween(
-                                            durationMillis = AnimationConstants.DURATION_LONG
-                                        )
-                                    )
-                                },
-                                exitTransition = {
-                                    slideOutVertically(
-                                        AnimationConstants.expressiveTween(AnimationConstants.DURATION)
-                                    ) { height -> height } + fadeOut(
-                                        animationSpec = tween(
-                                            durationMillis = AnimationConstants.DURATION_LONG
-                                        )
-                                    )
-                                },
-                                popEnterTransition = {
-                                    slideInVertically(
-                                        AnimationConstants.expressiveTween(AnimationConstants.DURATION)
-                                    ) { height -> height } + fadeIn(
-                                        animationSpec = tween(
-                                            durationMillis = AnimationConstants.DURATION_LONG
-                                        )
-                                    )
-                                },
-                                popExitTransition = {
-                                    slideOutVertically(
-                                        AnimationConstants.expressiveTween(AnimationConstants.DURATION)
-                                    ) { height -> height } + fadeOut(
-                                        animationSpec = tween(
-                                            durationMillis = AnimationConstants.DURATION_LONG
-                                        )
-                                    )
-                                }
-                            ) {
-                                enableEdgeToEdge(
-                                    navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
-                                    statusBarStyle = SystemBarStyle.auto(
-                                        MaterialTheme.colorScheme.surface.toArgb(),
-                                        MaterialTheme.colorScheme.surface.toArgb()
-                                    )
-                                )
-
-                                val screen = it.toRoute<Screens.VideoEditor>()
-
-                                VideoEditor(
-                                    uri = screen.uri.toUri(),
-                                    absolutePath = screen.absolutePath,
-                                    window = window,
-                                    isFromOpenWithView = true,
-                                    albumInfo = null
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
+import kotlin.math.ceil
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-private fun Content(
+fun OpenWithContent(
     uri: Uri,
     window: Window
 ) {
@@ -552,7 +286,7 @@ private fun OpenWithVideoPlayer(
         lastIsPlaying.value = isPlaying.value
 
         currentVideoPosition.floatValue = exoPlayer.currentPosition / 1000f
-        if (kotlin.math.ceil(currentVideoPosition.floatValue) >= kotlin.math.ceil(duration.floatValue) && duration.floatValue != 0f && !isPlaying.value) {
+        if (ceil(currentVideoPosition.floatValue) >= ceil(duration.floatValue) && duration.floatValue != 0f && !isPlaying.value) {
             delay(1000)
             exoPlayer.pause()
             exoPlayer.seekTo(0)
@@ -1008,7 +742,7 @@ private fun BottomBar(
                                     LavenderSnackbarEvents.LoadingEvent(
                                         message = resources.getString(
                                             if (mediaType == MediaType.Image) R.string.editing_open_with_copying_image
-                                                else R.string.editing_open_with_copying_video
+                                            else R.string.editing_open_with_copying_video
                                         ),
                                         icon =
                                             if (mediaType == MediaType.Image) R.drawable.edit
