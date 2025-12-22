@@ -1205,18 +1205,20 @@ class MainActivity : ComponentActivity() {
                         Log.d(TAG, "Tab needed is $stateValue")
                         when {
                             stateValue.isCustom -> {
-                                if (stateValue.albumPaths.toSet() != multiAlbumViewModel.albumInfo.paths.toSet()) {
-                                    groupedMedia.value = emptyList()
-                                    multiAlbumViewModel.reinitDataSource(
-                                        context = context,
-                                        album = AlbumInfo(
-                                            id = stateValue.id,
-                                            name = stateValue.name,
-                                            paths = stateValue.albumPaths,
-                                            isCustomAlbum = false
-                                        ),
-                                        sortMode = multiAlbumViewModel.sortMode
-                                    )
+                                LaunchedEffect(stateValue.albumPaths) {
+                                    Log.d(TAG, "Custom Tab paths are ${stateValue.albumPaths}")
+                                    if (stateValue.albumPaths.toSet() != multiAlbumViewModel.albumInfo.paths.toSet()) {
+                                        multiAlbumViewModel.reinitDataSource(
+                                            context = context,
+                                            album = AlbumInfo(
+                                                id = stateValue.id,
+                                                name = stateValue.name,
+                                                paths = stateValue.albumPaths,
+                                                isCustomAlbum = false
+                                            ),
+                                            sortMode = multiAlbumViewModel.sortMode
+                                        )
+                                    }
                                 }
 
                                 LaunchedEffect(Unit) {
@@ -1224,12 +1226,14 @@ class MainActivity : ComponentActivity() {
                                 }
 
                                 var hasFiles by remember { mutableStateOf(true) }
-                                LaunchedEffect(mediaStoreData.value.size) {
-                                    withContext(Dispatchers.IO) {
-                                        hasFiles = stateValue.albumPaths.any { path ->
-                                            Path(path).checkHasFiles(
-                                                basePath = path.toBasePath()
-                                            ) == true
+                                LaunchedEffect(mediaStoreData.value) {
+                                    if (stateValue.albumPaths.isNotEmpty()) {
+                                        withContext(Dispatchers.IO) {
+                                            hasFiles = stateValue.albumPaths.any { path ->
+                                                Path(path).checkHasFiles(
+                                                    basePath = path.toBasePath()
+                                                ) == true
+                                            }
                                         }
                                     }
 

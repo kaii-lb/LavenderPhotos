@@ -666,7 +666,7 @@ fun TabCustomizationDialog(
                                 }
                             }
 
-                            if (tab !in tabList && tabList.size < 8) {
+                            if (tab !in tabList && tabList.size < 16) {
                                 add(tab)
                             } else if (tab !in tabList) {
                                 coroutineScope.launch {

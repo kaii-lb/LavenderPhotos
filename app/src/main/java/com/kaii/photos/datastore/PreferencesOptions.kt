@@ -3,6 +3,7 @@ package com.kaii.photos.datastore
 import android.net.Uri
 import android.os.Bundle
 import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import androidx.compose.runtime.saveable.listSaver
 import androidx.navigation.NavType
 import com.kaii.photos.R
@@ -22,42 +23,48 @@ object DefaultTabs {
             name = "Photos",
             albumPaths = listOf("main_photos"),
             icon = StoredDrawable.PhotoGrid,
-            id = R.string.navigation_photos
+            id = 0,
+            resourceId = StoredName.Photos
         )
 
         val secure = BottomBarTab(
             name = "Secure",
             albumPaths = listOf("secure_folder"),
             icon = StoredDrawable.SecureFolder,
-            id = R.string.navigation_secure
+            id = 1,
+            resourceId = StoredName.Secure
         )
 
         val albums = BottomBarTab(
             name = "Albums",
             albumPaths = listOf("albums_page"),
             icon = StoredDrawable.Albums,
-            id = R.string.navigation_albums
+            id = 2,
+            resourceId = StoredName.Albums
         )
 
         val search = BottomBarTab(
             name = "Search",
             albumPaths = listOf("search_page"),
             icon = StoredDrawable.Search,
-            id = R.string.navigation_search
+            id = 3,
+            resourceId = StoredName.Search
         )
 
         val favourites = BottomBarTab(
             name = "Favourites",
             albumPaths = listOf("favourites_page"),
             icon = StoredDrawable.Favourite,
-            id = R.string.navigation_favourites
+            id = 4,
+            resourceId = StoredName.Favourites
         )
 
         val trash = BottomBarTab(
             name = "Trash",
             albumPaths = listOf("trash_page"),
             icon = StoredDrawable.Trash,
-            id = R.string.navigation_trash
+            id = 5,
+            resourceId = StoredName.Trash
         )
     }
 
@@ -69,6 +76,18 @@ object DefaultTabs {
     )
 
     val extendedList = defaultList + listOf(TabTypes.favourites, TabTypes.trash)
+}
+
+@Serializable
+enum class StoredName(
+    @param:StringRes val id: Int
+) {
+    Photos(id = R.string.navigation_photos),
+    Secure(id = R.string.navigation_secure),
+    Albums(id = R.string.navigation_albums),
+    Search(id = R.string.navigation_search),
+    Favourites(id = R.string.navigation_favourites),
+    Trash(id = R.string.navigation_trash)
 }
 
 @Serializable
@@ -144,6 +163,7 @@ data class BottomBarTab(
     val albumPaths: List<String>,
     val icon: StoredDrawable,
     val isCustom: Boolean = false,
+    val resourceId: StoredName? = null
 ) {
     companion object {
         @Suppress("UNCHECKED_CAST") // if the type changes and this doesn't then something always went really bad
@@ -155,7 +175,8 @@ data class BottomBarTab(
                         it.albumPaths,
                         StoredDrawable.entries.indexOf(it.icon),
                         it.id,
-                        it.isCustom
+                        it.isCustom,
+                        it.resourceId
                     )
                 },
                 restore = {
@@ -164,7 +185,8 @@ data class BottomBarTab(
                         albumPaths = it[1] as List<String>,
                         icon = StoredDrawable.entries[it[2] as Int],
                         id = it[3] as Int,
-                        isCustom = it[4] as Boolean
+                        isCustom = it[4] as Boolean,
+                        resourceId = StoredName.entries[it[2] as Int]
                     )
                 }
             )
@@ -176,18 +198,18 @@ data class BottomBarTab(
 
         other as BottomBarTab
 
-        // ignore id since it changes often and doesn't affect the tab itself
-        if (name != other.name) return false
+        // ignore resource id since it changes often and doesn't affect the tab itself
+        // ignore name since its language dependent
         if (albumPaths != other.albumPaths) return false
         if (icon != other.icon) return false
         if (isCustom != other.isCustom) return false
+        if (resourceId != other.resourceId) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        var result = name.hashCode()
-        result = 31 * result + albumPaths.hashCode()
+        var result = albumPaths.hashCode()
         result = 31 * result + icon.hashCode()
         result = 31 * result + isCustom.hashCode()
         return result

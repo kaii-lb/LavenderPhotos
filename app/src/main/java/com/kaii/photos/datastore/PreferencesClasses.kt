@@ -657,76 +657,69 @@ class SettingsDefaultTabsImpl(
     private val context: Context,
     private val viewModelScope: CoroutineScope
 ) {
-    private val defaultTab = stringPreferencesKey("default_bottom_tab")
-    private val tabList = stringPreferencesKey("bottom_tab_list")
+    private val defaultTab = stringPreferencesKey("default_tabs_first")
+    private val tabList = stringPreferencesKey("default_tabs_list")
 
     val json = Json { ignoreUnknownKeys = true }
 
     fun getTabList() = context.datastore.data.map {
-        val list = it[tabList] ?: getDefaultTabList()
-
-        val separatedList = list.split(separator)
+        val list = it[tabList] ?: defaultTabList
 
         try {
-            val typedList = separatedList
-                .toMutableList()
-                .filter { item ->
-                    item != ""
+            json.decodeFromString<List<BottomBarTab>>(list).map {
+                if (it.resourceId != null) {
+                    it.copy(
+                        name = context.resources.getString(it.resourceId.id)
+                    )
+                } else {
+                    it
                 }
-                .map { serialized ->
-                    json.decodeFromString<BottomBarTab>(serialized)
-                }
-
-            typedList.forEach { item ->
-                Log.d(TAG, "Typed List item $item")
             }
-
-            typedList
         } catch (e: Throwable) {
-            Log.e(TAG, "BottomBarTab Impl has been changed, resetting tabs...")
+            Log.e(TAG, "BottomBarTab Impl has been changed, resetting default tab list...")
             Log.e(TAG, e.toString())
             e.printStackTrace()
 
-            val tabs = getDefaultTabList()
-                .split(separator)
-                .toMutableList()
-                .apply { removeAll { string -> string == "" } }
-                .map { tab -> json.decodeFromString<BottomBarTab>(tab) }
+            val default = json.decodeFromString<List<BottomBarTab>>(defaultTabList)
+            setTabList(default)
+            setDefaultTab(default.first())
 
-            setTabList(tabs)
-
-            tabs
+            default
         }
     }
 
     fun setTabList(list: List<BottomBarTab>) = viewModelScope.launch {
         context.datastore.edit {
             if (list.isEmpty()) {
-                it[tabList] = getDefaultTabList()
+                it[tabList] = defaultTabList
+                setDefaultTab(DefaultTabs.TabTypes.photos)
+
                 return@edit
             }
 
-            var stringList = ""
+            val default = try {
+                it[defaultTab]?.let { tab -> json.decodeFromString<BottomBarTab>(tab) } ?: DefaultTabs.TabTypes.photos
+            } catch (e: Throwable) {
+                Log.e(TAG, "BottomBarTab Impl has been changed, default tab can't be decoded, failing back to DefaultTabs.TabTypes.photos.")
+                Log.e(TAG, e.toString())
+                e.printStackTrace()
 
-            list.forEach { tab ->
-                stringList += json.encodeToString(tab) + separator
+                DefaultTabs.TabTypes.photos
             }
-
-            val default = json.decodeFromString<BottomBarTab>(it[defaultTab] ?: json.encodeToString(DefaultTabs.TabTypes.photos))
 
             if (default !in list) {
-                it[defaultTab] = json.encodeToString(list.first())
+                setDefaultTab(list.first())
             }
 
-            it[tabList] = stringList
+            it[tabList] = json.encodeToString(list)
         }
     }
 
     fun getDefaultTab() = context.datastore.data.map {
-        val default = it[defaultTab] ?: json.encodeToString(DefaultTabs.TabTypes.photos)
+        val default = it[defaultTab]
 
         try {
-            json.decodeFromString<BottomBarTab>(default)
+            default?.let { string -> json.decodeFromString<BottomBarTab>(string) } ?: DefaultTabs.TabTypes.photos
         } catch (e: Throwable) {
             Log.e(TAG, "BottomBarTab Impl has been changed, resetting default tab...")
             Log.e(TAG, e.toString())
@@ -739,19 +732,11 @@ class SettingsDefaultTabsImpl(
 
     fun setDefaultTab(tab: BottomBarTab) = viewModelScope.launch {
         context.datastore.edit {
-            val serialized = json.encodeToString(tab)
-            it[defaultTab] = serialized
+            it[defaultTab] = json.encodeToString(tab)
         }
     }
 
-    private fun getDefaultTabList() = run {
-        val photos = json.encodeToString(DefaultTabs.TabTypes.photos)
-        val secure = json.encodeToString(DefaultTabs.TabTypes.secure)
-        val albums = json.encodeToString(DefaultTabs.TabTypes.albums)
-        val search = json.encodeToString(DefaultTabs.TabTypes.search)
-
-        photos + separator + secure + separator + albums + separator + search
-    }
+    private val defaultTabList = json.encodeToString(DefaultTabs.defaultList)
 }
 
 class SettingsPhotoGridImpl(
@@ -785,7 +770,8 @@ class SettingsImmichImpl(
     private val immichToken = byteArrayPreferencesKey("immich_token")
     private val username = stringPreferencesKey("immich_username")
     private val pfpPath = stringPreferencesKey("immich_pfp_path")
-    private val alwaysShowUserInfo = booleanPreferencesKey("immich_always_show_user_info") // always show the main app bar's pfp and user name, even if not logged in.
+    private val alwaysShowUserInfo =
+        booleanPreferencesKey("immich_always_show_user_info") // always show the main app bar's pfp and user name, even if not logged in.
 
     fun getImmichBasicInfo() = context.datastore.data.map { data ->
         val endpoint = data[immichEndpoint] ?: return@map ImmichBasicInfo.Empty

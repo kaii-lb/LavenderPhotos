@@ -472,18 +472,20 @@ class MediaPicker : ComponentActivity() {
                         if (stateValue in tabList || stateValue == DefaultTabs.TabTypes.secure) {
                             when {
                                 stateValue.isCustom -> {
-                                    if (stateValue.albumPaths.toSet() != multiAlbumViewModel.albumInfo.paths.toSet()) {
-                                        groupedMedia.value = emptyList()
-                                        multiAlbumViewModel.reinitDataSource(
-                                            context = context,
-                                            album = AlbumInfo(
-                                                id = stateValue.id,
-                                                name = stateValue.name,
-                                                paths = stateValue.albumPaths,
-                                                isCustomAlbum = false
-                                            ),
-                                            sortMode = multiAlbumViewModel.sortMode
-                                        )
+                                    LaunchedEffect(stateValue.albumPaths) {
+                                        Log.d(TAG, "Custom Tab paths are ${stateValue.albumPaths}")
+                                        if (stateValue.albumPaths.toSet() != multiAlbumViewModel.albumInfo.paths.toSet()) {
+                                            multiAlbumViewModel.reinitDataSource(
+                                                context = context,
+                                                album = AlbumInfo(
+                                                    id = stateValue.id,
+                                                    name = stateValue.name,
+                                                    paths = stateValue.albumPaths,
+                                                    isCustomAlbum = false
+                                                ),
+                                                sortMode = multiAlbumViewModel.sortMode
+                                            )
+                                        }
                                     }
 
                                     LaunchedEffect(Unit) {
