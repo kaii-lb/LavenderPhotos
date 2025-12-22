@@ -1,6 +1,10 @@
 package com.kaii.photos.compose.single_photo
 
+import android.app.Activity
+import android.content.pm.ActivityInfo
 import android.content.res.Configuration
+import android.graphics.drawable.Drawable
+import android.os.Build
 import android.util.Log
 import android.view.Window
 import androidx.compose.animation.core.animateFloatAsState
@@ -41,12 +45,16 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
+import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.bumptech.glide.load.engine.GlideException
+import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
@@ -112,10 +120,10 @@ fun HorizontalImageList(
 
     val mainViewModel = LocalMainViewModel.current
     val shouldAutoPlay by mainViewModel.settings.Video.getShouldAutoPlay()
-            .collectAsStateWithLifecycle(initialValue = true)
+        .collectAsStateWithLifecycle(initialValue = true)
 
     val muteVideoOnStart by mainViewModel.settings.Video.getMuteOnStart()
-            .collectAsStateWithLifecycle(initialValue = true)
+        .collectAsStateWithLifecycle(initialValue = true)
 
     val lastVideoWasMuted = rememberSaveable { mutableStateOf(muteVideoOnStart) }
     LaunchedEffect(muteVideoOnStart) {
@@ -231,6 +239,32 @@ fun HorizontalImageList(
                     it.signature(mediaStoreItem.signature())
                         .diskCacheStrategy(DiskCacheStrategy.ALL)
                         .override(Target.SIZE_ORIGINAL)
+                        .addListener(object : RequestListener<Drawable> {
+                            override fun onLoadFailed(
+                                e: GlideException?,
+                                model: Any?,
+                                target: Target<Drawable?>?,
+                                isFirstResource: Boolean
+                            ): Boolean {
+                                window.colorMode = ActivityInfo.COLOR_MODE_DEFAULT
+                                return false
+                            }
+
+                            override fun onResourceReady(
+                                resource: Drawable?,
+                                model: Any?,
+                                target: Target<Drawable?>?,
+                                dataSource: DataSource?,
+                                isFirstResource: Boolean
+                            ): Boolean {
+                                val activity = (context as Activity)
+                                if (resource == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE || !activity.display.isHdr) return false
+
+                                if (resource.toBitmap().hasGainmap()) window.colorMode = ActivityInfo.COLOR_MODE_HDR
+
+                                return false
+                            }
+                        })
                 }
             }
         }
