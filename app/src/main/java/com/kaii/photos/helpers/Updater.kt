@@ -172,6 +172,11 @@ class Updater(
         githubResponseBody.value?.let {
             it["body"]
                 .toString()
+                .replace("    - ", "    <br>- ")
+                    .replace("</p>", "</p><br>")
+                    .replace("\'", "'")
+                    .replace("</h2></u>", "</h2></u><br>")
+                    .replace("<p>\n", "<p>")
         } ?: "No Changelog Available"
 }
 

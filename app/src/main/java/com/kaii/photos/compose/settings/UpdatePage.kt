@@ -127,7 +127,7 @@ fun UpdatesPage() {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 val mainViewModel = LocalMainViewModel.current
-                val changelog = mainViewModel.updater.getChangelog()//.split("\n")
+                val changelog = mainViewModel.updater.getChangelog()
 
                 LazyColumn(
                     modifier = Modifier
@@ -135,15 +135,13 @@ fun UpdatesPage() {
                         .wrapContentHeight()
                         .clip(RoundedCornerShape(32.dp))
                         .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f))
-                        .padding(12.dp)
+                        .padding(12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Top
                 ) {
                     item {
                         Text(
-                            text = AnnotatedString.fromHtml(
-                                changelog
-                                    .replace("<p>", "<br><br><p>")
-                                    .replace("##", "<br><br>##")
-                            ),
+                            text = AnnotatedString.fromHtml(changelog),
                             fontSize = TextUnit(14f, TextUnitType.Sp),
                             modifier = Modifier
                                 .padding(2.dp)
