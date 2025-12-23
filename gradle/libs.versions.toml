@@ -7,6 +7,7 @@ benchmarkMacroJunit4 = "1.4.1"
 baselineprofile = "1.4.1"
 profileinstaller = "1.4.1"
 documentfile = "1.1.0"
+rules = "1.7.0"
 
 [libraries]
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junit" }
@@ -14,6 +15,7 @@ androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-co
 androidx-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version.ref = "benchmarkMacroJunit4" }
 androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version.ref = "profileinstaller" }
 androidx-documentfile = { group = "androidx.documentfile", name = "documentfile", version.ref = "documentfile" }
+androidx-rules = { group = "androidx.test", name = "rules", version.ref = "rules" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -92,6 +92,7 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.BottomAppBarItem
 import com.kaii.photos.compose.app_bars.setBarVisibility
+import com.kaii.photos.compose.single_photo.MotionPhotoView
 import com.kaii.photos.compose.single_photo.VideoPlayerControls
 import com.kaii.photos.compose.single_photo.mediaModifier
 import com.kaii.photos.compose.single_photo.rememberExoPlayerWithLifeCycle
@@ -102,6 +103,7 @@ import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.formatDate
+import com.kaii.photos.helpers.motion_photo.MotionPhoto
 import com.kaii.photos.helpers.shareImage
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
@@ -163,7 +165,35 @@ fun OpenWithContent(
             val isTouchLocked = remember { mutableStateOf(false) }
             val controlsVisible = remember { mutableStateOf(false) }
 
-            if (type == MediaType.Video) {
+            val motionPhoto = remember {
+                MotionPhoto(uri, context)
+            }
+
+            if (motionPhoto.isMotionPhoto) {
+                MotionPhotoView(
+                    motionPhoto = motionPhoto,
+                    releaseExoPlayer = releaseExoPlayer,
+                    glideImageView = @Composable { modifier ->
+                        GlideImage(
+                            model = uri,
+                            contentDescription = "opened image",
+                            contentScale = ContentScale.Fit,
+                            failure = placeholder(R.drawable.broken_image),
+                            modifier = modifier
+                                .fillMaxSize(1f)
+                                .mediaModifier(
+                                    scale = scale,
+                                    rotation = rotation,
+                                    offset = offset,
+                                    window = window,
+                                    appBarsVisible = appBarsVisible
+                                )
+                        ) {
+                            it.diskCacheStrategy(DiskCacheStrategy.NONE)
+                        }
+                    }
+                )
+            } else if (type == MediaType.Video) {
                 OpenWithVideoPlayer(
                     uri = uri,
                     controlsVisible = controlsVisible,

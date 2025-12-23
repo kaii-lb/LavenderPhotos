@@ -64,6 +64,7 @@ import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.OffsetSaver
 import com.kaii.photos.helpers.getSecuredCacheImageForFile
+import com.kaii.photos.helpers.motion_photo.MotionPhoto
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaStoreData
@@ -221,53 +222,104 @@ fun HorizontalImageList(
                     }
                 }
 
-                GlideImage(
-                    model = if (isHidden) model else mediaStoreItem.uri,
-                    contentDescription = "selected image",
-                    contentScale = ContentScale.Fit,
-                    failure = placeholder(R.drawable.broken_image),
-                    modifier = Modifier
-                        .fillMaxSize(1f)
-                        .mediaModifier(
-                            scale = scale,
-                            rotation = rotation,
-                            offset = offset,
-                            window = window,
-                            appBarsVisible = appBarsVisible
-                        )
-                ) {
-                    it.signature(mediaStoreItem.signature())
-                        .diskCacheStrategy(DiskCacheStrategy.ALL)
-                        .override(Target.SIZE_ORIGINAL)
-                        .addListener(object : RequestListener<Drawable> {
-                            override fun onLoadFailed(
-                                e: GlideException?,
-                                model: Any?,
-                                target: Target<Drawable?>?,
-                                isFirstResource: Boolean
-                            ): Boolean {
-                                window.colorMode = ActivityInfo.COLOR_MODE_DEFAULT
-                                return false
-                            }
+                val motionPhoto = remember {
+                    MotionPhoto(mediaStoreItem.uri, context)
+                }
 
-                            override fun onResourceReady(
-                                resource: Drawable?,
-                                model: Any?,
-                                target: Target<Drawable?>?,
-                                dataSource: DataSource?,
-                                isFirstResource: Boolean
-                            ): Boolean {
-                                val activity = (context as Activity)
-                                if (resource == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE || !activity.display.isHdr) return false
-
-                                if (resource.toBitmap().hasGainmap()) window.colorMode = ActivityInfo.COLOR_MODE_HDR
-
-                                return false
-                            }
-                        })
+                if (motionPhoto.isMotionPhoto) {
+                    MotionPhotoView(
+                        motionPhoto = motionPhoto,
+                        releaseExoPlayer = null,
+                        glideImageView = @Composable { modifier ->
+                            GlideView(
+                                isHidden = isHidden,
+                                model = model,
+                                mediaStoreItem = mediaStoreItem,
+                                scale = scale,
+                                rotation = rotation,
+                                offset = offset,
+                                window = window,
+                                appBarsVisible = appBarsVisible,
+                                modifier = modifier
+                            )
+                        }
+                    )
+                } else {
+                    GlideView(
+                        isHidden = isHidden,
+                        model = model,
+                        mediaStoreItem = mediaStoreItem,
+                        scale = scale,
+                        rotation = rotation,
+                        offset = offset,
+                        window = window,
+                        appBarsVisible = appBarsVisible
+                    )
                 }
             }
         }
+    }
+}
+
+@OptIn(ExperimentalGlideComposeApi::class)
+@Composable
+private fun GlideView(
+    isHidden: Boolean,
+    model: Any?,
+    mediaStoreItem: MediaStoreData,
+    scale: MutableFloatState,
+    rotation: MutableFloatState,
+    offset: MutableState<Offset>,
+    window: Window,
+    appBarsVisible: MutableState<Boolean>,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+
+    GlideImage(
+        model = if (isHidden) model else mediaStoreItem.uri,
+        contentDescription = "selected image",
+        contentScale = ContentScale.Fit,
+        failure = placeholder(R.drawable.broken_image),
+        modifier = modifier
+            .fillMaxSize(1f)
+            .mediaModifier(
+                scale = scale,
+                rotation = rotation,
+                offset = offset,
+                window = window,
+                appBarsVisible = appBarsVisible
+            )
+    ) {
+        it.signature(mediaStoreItem.signature())
+            .diskCacheStrategy(DiskCacheStrategy.ALL)
+            .override(Target.SIZE_ORIGINAL)
+            .addListener(object : RequestListener<Drawable> {
+                override fun onLoadFailed(
+                    e: GlideException?,
+                    model: Any?,
+                    target: Target<Drawable?>?,
+                    isFirstResource: Boolean
+                ): Boolean {
+                    window.colorMode = ActivityInfo.COLOR_MODE_DEFAULT
+                    return false
+                }
+
+                override fun onResourceReady(
+                    resource: Drawable?,
+                    model: Any?,
+                    target: Target<Drawable?>?,
+                    dataSource: DataSource?,
+                    isFirstResource: Boolean
+                ): Boolean {
+                    val activity = (context as Activity)
+                    if (resource == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE || !activity.display.isHdr) return false
+
+                    if (resource.toBitmap().hasGainmap()) window.colorMode = ActivityInfo.COLOR_MODE_HDR
+
+                    return false
+                }
+            })
     }
 }
 
