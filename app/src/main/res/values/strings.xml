@@ -1,7 +1,46 @@
 <resources>
     <!-- Basic -->
     <string name="app_name">Photos</string>
-    <string name="changelog"><![CDATA[
+    <string name="changelog" translatable="false"><![CDATA[
+    <u><h2>v1.3.0!:</h2></u>
+    <br><b><h4>- Added Features:</h4></b>
+    <p>
+        - Ability to open other editors from Lavender Photos\' editor
+        <br>- JPEG-XL support
+        <br>- Change export resolution in image editor
+        <br>- Dates and times now respect 24-hour format choice
+        <br>- Add new date formats
+        <br>- Media details customization for top bar text
+        <br>- Material Expressive-ify buttons
+        <br>- HDR image support
+        <br>- Media Info dialog now works in landscape mode
+        <br>- Label RAW format images with an icon
+        <br>- Support for "Open by Default" (ie: open from camera, other apps, etc)
+        <br>- Ability to disable date tags but sort by last modified (keep option as last modified and turn off "Media Sorting")
+        <br>- Drag and Drop support (long press after selecting an item)
+        <br>- Motion Photo support
+    </p>
+    <br><b><h4>- Fixed Bugs:</h4></b>
+    <p>
+        - Low resolution images when zooming in or saving edits
+        <br>- Date tags not using "Today" and "Yesterday"
+        <br>- Misspelling in "Current Log" info string
+        <br>- race condition when loading images
+        <br>- Fixed update page text formatting
+    </p>
+    <br><b><h4>- Improvements:</h4></b>
+    <p>
+        - Baseline Profiles for improved startup performance
+        <br>- Translation updates for turkish, vietnamese, armenian, spanish, portuguese, polish, chinese simplified, french, german, swedish, and estonian
+        <br>- Move secure folder to a more performant ViewModel implementation
+        <br>- Significant performance improvements to loading times
+        <br>- Bottom bar tabs no longer suck
+    </p>
+    <br><b><h4>- Notes:</h4></b>
+    <p>
+        - This update will remove all customized bottom bar tabs
+    </p>
+    <br>
     <u><h2>v1.2.0!:</h2></u>
     <br><b><h4>- Fixed Bugs:</h4></b>
     <p>
