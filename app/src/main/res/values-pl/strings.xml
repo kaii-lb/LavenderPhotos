@@ -43,7 +43,7 @@
     <string name="tabs_albums_incl">Dołączone albumy</string>
     <string name="tabs_confirm">Dodaj kartę</string>
     <string name="tabs_empty_params">Parametry karty nie mogą być puste</string>
-    <string name="tabs_max_reached">Nie można dodać więcej niż 8 kart</string>
+    <string name="tabs_max_reached">Nie można dodać więcej niż 16 kart</string>
     <string name="tabs_min_reached">Musi istnieć co najmniej jedna karta</string>
     <string name="return_to_previous_page">Powrót do poprzedniej strony</string>
     <string name="app_icon">Ikona aplikacji</string>
@@ -526,4 +526,6 @@ które pozwala każdemu hostować własny serwer kopii zapasowych w chmurze.
     <string name="look_and_feel_date_format_filename">Nazwa pliku</string>
     <string name="look_and_feel_date_format_date_taken">Data wykonania</string>
     <string name="look_and_feel_date_format_datetime_taken">Data i godzina wykonania</string>
+    <string name="media_is_raw">To jest obraz RAW</string>
+    <string name="drag_and_drop_data">Dane Przeciągnij i upuść Lavender Photos</string>
 </resources>
