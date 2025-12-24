@@ -10,6 +10,7 @@ import kotlinx.serialization.serializer
 import nl.adaptivity.xmlutil.ExperimentalXmlUtilApi
 import nl.adaptivity.xmlutil.serialization.UnknownChildHandler
 import nl.adaptivity.xmlutil.serialization.XML
+import nl.adaptivity.xmlutil.serialization.XmlParsingException
 
 // private const val TAG = "com.kaii.photos.helpers.MotionPhoto"
 
@@ -45,26 +46,30 @@ class MotionPhoto(
 
     @Suppress("DEPRECATION")
     @kotlin.OptIn(ExperimentalXmlUtilApi::class)
-    private fun getXmpData(): XmpMeta? {
+    private fun getXmpData(): XmpMeta? = try {
         val inputStream = context.contentResolver.openInputStream(uri) ?: return null
         val exifInterface = ExifInterface(inputStream)
 
         val xmpData = exifInterface.getAttribute(ExifInterface.TAG_XMP)
 
-        if (xmpData == null) return null
+        if (xmpData != null) {
+            val serializer = serializer<XmpMeta>()
+            val xml = XML {
+                autoPolymorphic = true
 
-        val serializer = serializer<XmpMeta>()
-        val xml = XML {
-            autoPolymorphic = true
-
-            // ignore unknown keys
-            unknownChildHandler = UnknownChildHandler { _, _, _, _, _ ->
-                emptyList()
+                // ignore unknown keys
+                unknownChildHandler = UnknownChildHandler { _, _, _, _, _ ->
+                    emptyList()
+                }
             }
+
+            inputStream.close()
+
+            xml.decodeFromString(serializer, xmpData)
+        } else {
+            null
         }
-
-        inputStream.close()
-
-        return xml.decodeFromString(serializer, xmpData)
+    } catch (_: XmlParsingException) {
+        null
     }
 }
