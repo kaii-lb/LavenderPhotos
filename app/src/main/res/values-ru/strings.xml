@@ -44,7 +44,7 @@
     <string name="tabs_albums_incl">Включенные альбомы</string>
     <string name="tabs_confirm">Добавить вкладку</string>
     <string name="tabs_empty_params">Настройки вкладки не могут быть пустыми</string>
-    <string name="tabs_max_reached">Нельзя добавить более 8 вкладок</string>
+    <string name="tabs_max_reached">Нельзя добавить более 16 вкладок</string>
     <string name="tabs_min_reached">Должна быть хотя бы одна вкладка</string>
     <string name="return_to_previous_page">Вернуться на предыдущую страницу</string>
     <string name="app_icon">Значок приложения</string>
@@ -94,7 +94,7 @@
     <string name="record_logs_desc">Сохранение журналов для отладки. Нажмите для просмотра.</string>
     <string name="choose_logs">Выберите «Журналы»</string>
     <string name="previous_run_logs">Журналы предыдущего запуска</string>
-    <string name="current_run_logs">Журналы текущего запуска</string>
+    <string name="current_run_logs">Журнал текущего запуска</string>
     <string name="log_file_non_existent">На данный момент файл журнала не записан.</string>
     <string name="album_add_path">Добавить путь к альбомам</string>
     <string name="album_add">Добавить альбом</string>
@@ -1047,4 +1047,6 @@
     <string name="exif_res">Разрешение:</string>
     <string name="exif_size">Размер:</string>
     <string name="immich">Immich</string>
+    <string name="media_is_raw">Это необработанное RAW изображение</string>
+    <string name="drag_and_drop_data">Перетаскивание данных для создания фотографий в Lavender</string>
 </resources>
