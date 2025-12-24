@@ -683,6 +683,7 @@
     <string name="updates_checking">Checking For Updates</string>
     <string name="updates_start">Start Update</string>
     <string name="updates_failed_download">Couldn\'t download update</string>
+    <string name="updates_no_changelog">No Changelog Available</string>
 
     <!-- Secure Folder -->
     <string name="locked_folder_help_top">Locked Folder is a secure folder for your images and videos on this device.\nThe secured media is never uploaded anywhere and is always on-device, encrypted with a key unique to your device\'s password or fingerprint data.</string>

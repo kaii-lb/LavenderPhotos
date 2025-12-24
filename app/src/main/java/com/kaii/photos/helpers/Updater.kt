@@ -177,7 +177,7 @@ class Updater(
                     .replace("\'", "'")
                     .replace("</h2></u>", "</h2></u><br>")
                     .replace("<p>\n", "<p>")
-        } ?: "No Changelog Available"
+        } ?: context.resources.getString(R.string.updates_no_changelog)
 }
 
 
