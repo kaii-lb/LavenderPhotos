@@ -2,6 +2,13 @@
     <!-- Basic -->
     <string name="app_name">Photos</string>
     <string name="changelog" translatable="false"><![CDATA[
+    <u><h2>v1.3.1!:</h2></u>
+    <br><b><h4>- Fixed Bugs:</h4></b>
+    <p>
+        - Crash when app is unable to parse XMP data
+        <br>- Shutter speed is now shown in a better format
+    </p>
+    <br>
     <u><h2>v1.3.0!:</h2></u>
     <br><b><h4>- Added Features:</h4></b>
     <p>
