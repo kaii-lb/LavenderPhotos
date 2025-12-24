@@ -21,8 +21,8 @@ import com.kaii.photos.datastore.SQLiteQuery
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.SectionItem
+import com.kaii.photos.helpers.exif.getDateTakenForMedia
 import com.kaii.photos.helpers.formatDate
-import com.kaii.photos.helpers.getDateTakenForMedia
 import com.kaii.photos.helpers.toBasePath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel

@@ -20,8 +20,8 @@ import com.kaii.photos.datastore.SQLiteQuery
 import com.kaii.photos.helpers.EXTERNAL_DOCUMENTS_AUTHORITY
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.baseInternalStorageDirectory
-import com.kaii.photos.helpers.getDateTakenForMedia
-import com.kaii.photos.helpers.setDateTakenForMedia
+import com.kaii.photos.helpers.exif.getDateTakenForMedia
+import com.kaii.photos.helpers.exif.setDateTakenForMedia
 import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.helpers.toRelativePath
 import kotlinx.coroutines.Dispatchers

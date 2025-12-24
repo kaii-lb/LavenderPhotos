@@ -62,10 +62,10 @@ import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
 import com.kaii.photos.helpers.appStorageDir
 import com.kaii.photos.helpers.copyImageListToPath
-import com.kaii.photos.helpers.getDateTakenForMedia
+import com.kaii.photos.helpers.exif.getDateTakenForMedia
+import com.kaii.photos.helpers.exif.setDateTakenForMedia
 import com.kaii.photos.helpers.getParentFromPath
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
-import com.kaii.photos.helpers.setDateTakenForMedia
 import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType

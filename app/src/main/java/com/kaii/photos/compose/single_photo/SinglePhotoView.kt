@@ -78,7 +78,7 @@ import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.Screens
-import com.kaii.photos.helpers.getDateTakenForMedia
+import com.kaii.photos.helpers.exif.getDateTakenForMedia
 import com.kaii.photos.helpers.getParentFromPath
 import com.kaii.photos.helpers.moveImageToLockedFolder
 import com.kaii.photos.helpers.permanentlyDeletePhotoList

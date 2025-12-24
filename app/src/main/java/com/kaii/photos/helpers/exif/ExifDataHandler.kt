@@ -1,8 +1,9 @@
-package com.kaii.photos.helpers
+package com.kaii.photos.helpers.exif
 
 import android.content.Context
 import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
+import android.text.format.DateFormat
 import android.util.Log
 import androidx.exifinterface.media.ExifInterface
 import com.kaii.photos.R
@@ -117,7 +118,7 @@ fun getExifDataForMedia(context: Context, absolutePath: String, dateModified: Lo
         val exifInterface = ExifInterface(absolutePath)
 
         val datetime = getDateTakenForMedia(absolutePath, dateModified)
-        val is24Hr = android.text.format.DateFormat.is24HourFormat(context)
+        val is24Hr = DateFormat.is24HourFormat(context)
         val formattedDateTime =
             Instant.fromEpochSeconds(datetime)
                 .toLocalDateTime(TimeZone.currentSystemDefault())
@@ -140,8 +141,8 @@ fun getExifDataForMedia(context: Context, absolutePath: String, dateModified: Lo
             "f/$fNumber"
         } else null
 
-        val shutterSpeed = exifInterface.getAttribute(ExifInterface.TAG_SHUTTER_SPEED_VALUE)
-        list[MediaData.ShutterSpeed] = shutterSpeed
+        val shutterSpeed = exifInterface.getAttribute(ExifInterface.TAG_EXPOSURE_TIME)
+        list[MediaData.ShutterSpeed] = shutterSpeed?.toDouble()?.toFraction()
 
         val size = file.length().let { bytes ->
             if (bytes < 1000000) { // less than a mb display in kb
