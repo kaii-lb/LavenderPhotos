@@ -34,6 +34,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -45,15 +46,18 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
+import com.bumptech.glide.Glide
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.load.engine.GlideException
+import com.bumptech.glide.load.resource.bitmap.DownsampleStrategy
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
 import com.kaii.photos.LocalMainViewModel
@@ -275,6 +279,8 @@ private fun GlideView(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val windowSize = LocalWindowInfo.current.containerSize
 
     GlideImage(
         model = if (isHidden) model else mediaStoreItem.uri,
@@ -292,16 +298,33 @@ private fun GlideView(
             )
     ) {
         it.signature(mediaStoreItem.signature())
-            .diskCacheStrategy(DiskCacheStrategy.ALL)
+            .diskCacheStrategy(DiskCacheStrategy.NONE)
             .override(Target.SIZE_ORIGINAL)
-            .addListener(object : RequestListener<Drawable> {
+            .error(
+                Glide
+                    .with(context)
+                    .load(mediaStoreItem.uri)
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .downsample(DownsampleStrategy.AT_LEAST) // try to downsample if image is not massive, will fail for really large images
+                    .thumbnail( // fallback of the fallback
+                        Glide
+                            .with(context)
+                            .load(mediaStoreItem.uri)
+                            .diskCacheStrategy(DiskCacheStrategy.NONE)
+                            .override(windowSize.width, windowSize.height)
+                    )
+            )
+            .listener(object : RequestListener<Drawable> {
                 override fun onLoadFailed(
                     e: GlideException?,
                     model: Any?,
                     target: Target<Drawable?>?,
                     isFirstResource: Boolean
                 ): Boolean {
-                    window.colorMode = ActivityInfo.COLOR_MODE_DEFAULT
+                    coroutineScope.launch(Dispatchers.Main) {
+                        window.colorMode = ActivityInfo.COLOR_MODE_DEFAULT
+                    }
+
                     return false
                 }
 
@@ -316,8 +339,13 @@ private fun GlideView(
 
                     if (resource == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE || !activity.display.isHdr) return false
 
-                    if (resource is BitmapDrawable && resource.bitmap.hasGainmap()) {
-                        window.colorMode = ActivityInfo.COLOR_MODE_HDR
+                    val isHdr = resource is BitmapDrawable && resource.bitmap.hasGainmap()
+                    coroutineScope.launch(Dispatchers.Main) {
+                        if (isHdr) {
+                            window.colorMode = ActivityInfo.COLOR_MODE_HDR
+                        } else {
+                            window.colorMode = ActivityInfo.COLOR_MODE_DEFAULT
+                        }
                     }
 
                     return false
@@ -413,6 +441,7 @@ fun Modifier.mediaModifier(
                     var pastTouchSlop = false
                     var panZoomLock = false
                     val touchSlop = viewConfiguration.touchSlop
+                    val maxZoom = 10f
 
                     awaitFirstDown()
 
@@ -460,7 +489,7 @@ fun Modifier.mediaModifier(
 
                                     if (panZoomLock) {
                                         scale.floatValue =
-                                            (scale.floatValue * zoomChange).coerceIn(1f, 5f)
+                                            (scale.floatValue * zoomChange).coerceIn(1f, maxZoom)
                                     }
 
                                     val nextRotation = rotation.floatValue + actualRotation
