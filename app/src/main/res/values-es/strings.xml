@@ -1041,4 +1041,10 @@
     <string name="exif_mp">Megapíxeles:</string>
     <string name="exif_res">Resolución:</string>
     <string name="exif_size">Tamaño:</string>
+    <string name="editing_resolution_scale">Escala</string>
+    <string name="look_and_feel_image_details_format">Formato de Detalles De La Imagen</string>
+    <string name="look_and_feel_date_format_numeric">Numérico</string>
+    <string name="look_and_feel_date_format_filename">Nombre de Archivo</string>
+    <string name="look_and_feel_date_format_date_taken">Fecha Tomada</string>
+    <string name="look_and_feel_date_format_datetime_taken">Fecha y Hora Tomada</string>
 </resources>

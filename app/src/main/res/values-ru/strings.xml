@@ -9,7 +9,7 @@
     <string name="albums_found">Найдены все альбомы!</string>
     <string name="add_album">Добавить альбом</string>
     <string name="direct_path_album">Использовать прямой путь для добавления альбома</string>
-    <string name="albums_main_list">Список главных альбомов</string>
+    <string name="albums_main_list">Показать всё на главной</string>
     <string name="albums_main_list_selected">Выбранные здесь альбомы будут отображаться в главном окне просмотра фотографий</string>
     <string name="albums_selected">Выбранные альбомы</string>
     <string name="albums_auto_detect">Автоматически определять альбомы</string>
@@ -38,13 +38,13 @@
     <string name="tabs_default_desc">Lavender Photos автоматически откроет эту вкладку при запуске</string>
     <string name="tabs_customize">Настройка вкладок</string>
     <string name="tabs_customize_desc">Изменение доступных вкладок в нижней панели</string>
-    <string name="tabs_navigate_to">Перейти на страницу %s$1</string>
+    <string name="tabs_navigate_to">Перейти на страницу %1$s</string>
     <string name="tabs_add">Добавить вкладку</string>
     <string name="tabs_name">Название вкладки</string>
     <string name="tabs_albums_incl">Включенные альбомы</string>
     <string name="tabs_confirm">Добавить вкладку</string>
     <string name="tabs_empty_params">Настройки вкладки не могут быть пустыми</string>
-    <string name="tabs_max_reached">Нельзя добавить более 5 вкладок</string>
+    <string name="tabs_max_reached">Нельзя добавить более 16 вкладок</string>
     <string name="tabs_min_reached">Должна быть хотя бы одна вкладка</string>
     <string name="return_to_previous_page">Вернуться на предыдущую страницу</string>
     <string name="app_icon">Значок приложения</string>
@@ -94,7 +94,7 @@
     <string name="record_logs_desc">Сохранение журналов для отладки. Нажмите для просмотра.</string>
     <string name="choose_logs">Выберите «Журналы»</string>
     <string name="previous_run_logs">Журналы предыдущего запуска</string>
-    <string name="current_run_logs">Журналы текущего запуска</string>
+    <string name="current_run_logs">Журнал текущего запуска</string>
     <string name="log_file_non_existent">На данный момент файл журнала не записан.</string>
     <string name="album_add_path">Добавить путь к альбомам</string>
     <string name="album_add">Добавить альбом</string>
@@ -177,7 +177,7 @@
     <string name="settings_clear_cache_desc">Это удалит все кэши миниатюр на этом устройстве, освобождая хранилище. Загрузка миниатюр при следующем запуске займёт больше времени.</string>
     <string name="settings_about_and_updates">О программе и обновления</string>
     <string name="trash_bin">Корзина</string>
-    <string name="trash_auto_delete">Автоматическое удаление из корзины через</string>
+    <string name="trash_auto_delete">Автоматическое удаление из корзины через %s дней</string>
     <string name="trash_days">дней</string>
     <string name="trash_no_auto_delete">Фото в корзине не будут автоматически удалены</string>
     <string name="trash_auto_delete_interval">Интервал автоматического удаления</string>
@@ -190,8 +190,8 @@
     <string name="permissions_media_management">Управление медиафайлами</string>
     <string name="permissions_confirm_to_delete">Подтверждение удаления</string>
     <string name="permissions_confirm_too_delete_desc">Запрашивать подтверждение перед удалением любых медиафайлов</string>
-    <string name="permissions_overwrite_date_on_move">Перезаписать дату при перемещении</string>
-    <string name="permissions_overwrite_date_on_move_desc">Если эта опция включена, дата скопированных и перемещённых медиафайлов устанавливается на «текущую», и они отображаются как самые последние</string>
+    <string name="permissions_overwrite_date_on_move">Оставлять дату при перемещении</string>
+    <string name="permissions_overwrite_date_on_move_desc">Дата скопированных и перемещённых медиафайлов остаётся как была</string>
     <string name="permissions_needed">Требуется разрешение</string>
     <string name="permissions_needed_desc">Приложению Lavender Photos требуется разрешение на доступ к этому альбому. Предоставьте разрешение, выбрав «Использовать эту папку» на следующем экране. Это разрешение предоставляется один раз.</string>
     <string name="permissions_grant">Предоставить</string>
@@ -208,8 +208,8 @@
     <string name="media_delete_confirm">Удалить этот медиафайл?</string>
     <string name="media_trash_confirm">Переместить выбранные элементы в корзину?</string>
     <string name="media_secure">Безопасно</string>
-    <string name="media_secure_confirm">Переместить %1$s в защищённую папку?</string>
-    <string name="media_delete_permanently_confirm">Удалить %1$s навсегда?</string>
+    <string name="media_secure_confirm">Переместить это медиа в Защищённую папку?</string>
+    <string name="media_delete_permanently_confirm">Удалить это медиа навсегда?</string>
     <string name="media_cancel">Отмена</string>
     <string name="media_restore">Восстановить</string>
     <string name="media_restore_confirm">Восстановить эти элементы?</string>
@@ -219,13 +219,13 @@
     <string name="media_copy">Копировать</string>
     <string name="media_rename">Переименовать</string>
     <string name="media_select">Выбрать</string>
-    <string name="media_exif_erase">Стереть данные EXIF?</string>
+    <string name="media_exif_erase">Стереть данные EXIF</string>
     <string name="media_exif_done">Удалены данные EXIF</string>
     <string name="media_exif_failed">Не удалось удалить данные EXIF</string>
     <string name="media_erase">Стереть</string>
     <string name="media_confirm">Подтвердить</string>
     <string name="media_okay">Хорошо</string>
-    <string name="search_photo_name">Поиск по названию фотографии</string>
+    <string name="search_photo_name">Поиск фотографии</string>
     <string name="search_photo_date">Поиск по дате фотографии</string>
     <string name="search_photo_day">Поиск по дню</string>
     <string name="edit_desc">Lavender Photos отредактировал файл в %1$s</string>
@@ -284,4 +284,769 @@
     <string name="secure_getting_file_info">Получение информации о файле…</string>
     <string name="secure_please_wait">Пожалуйста, подождите…</string>
     <string name="editing_saving">Сохранение отредактированного изображения</string>
+    <string name="permissions">Разрешения</string>
+    <string name="changelog"><![CDATA[
+    <u><h2>v1.2.0!:</h2></u>
+    <br><b><h4>- Fixed Bugs:</h4></b>
+    <p>
+        - Use black background not applying to videoplayer
+        <br>- Editor bar item texts overflowing on some screens
+        <br>- Add missing gridview icon
+        <br>- Crash when app name is shorter than 2 words
+        <br>- Media picker navbar not hiding correctly
+        <br>- Crash when trying to overwrite media in non standard folder
+        <br>- Crash when trying to rename media more than once
+        <br>- Scroll-lock after drag selecting
+        <br>- Inability to add a custom album
+        <br>- Don\'t scroll back to top when navigation back from SinglePhotoViews
+        <br>- Crash when trying to secure media with broken thumbnails
+        <br>- Editor rotation breaking filters page
+        <br>- Inability to draw in editors
+        <br>- Crash when using OpenWithView
+        <br>- Image editor sometimes opening images with incorrect rotation
+        <br>- Crash because of removed index key for bottom bar tabs
+        <br>- First played video respects "start muted" preference
+        <br>- Fixed Misrepresented album pin state
+        <br>- Erratic behaviour when deleting media
+        <br>- Editor rotation now applies to images after saving
+        <br>- Removed selected image/text border from final render
+    </p>
+    <br><b><h4>- Added Features:</h4></b>
+    <p>
+        - Expressive-ify trash and secure photo views
+        <br>- Added option to disable rotation in single photo views
+        <br>- Support for alternative urls for Immich server
+        <br>- Better scrollbars
+        <br>- Preserve image dates when moving/copying
+        <br>- Scroll to edited image on exit from editor
+        <br>- Rounded thumbnail corner support
+        <br>- Toggle to always show immich user info
+        <br>- Toggle to open videos in external player
+        <br>- Display album grid thumbnails according to user selected sort mode
+        <br>- Location parsing from media with GPS Exif data
+        <br>- Better and faster search
+    </p>
+    <br><b><h4>- Improvements:</h4></b>
+    <p>
+        - Significant performance and smoothness improvements
+        <br>- Hide parent album from copy/move list
+        <br>- Progress snackbar for exporting video
+        <br>- Increase videoplayer seekbar height
+        <br>- Better scrollable wallpaper support
+        <br>- Drag to select now requires long press
+        <br>- Immich login dialog now supports autofill
+        <br>- Ability to use cleartext traffic for http Immich servers
+        <br>- Photo info dialog loading improvements
+        <br>- Improved trashed items loading
+        <br>- Raise app main bar
+        <br>- Support disabled-sorting in every grid view
+        <br>- Increase video seekbar update rate & screen on implementation
+    </p>
+    <br>
+    <u><h2>v1.1.6!:</h2></u>
+    <br>
+    <b><h4>- Fixed Bugs:</h4></b>
+    <p>
+        - Crash when editing from OpenWithView
+    </p>
+    <br>
+    <u><h2>v1.1.5!:</h2></u>
+    <br>
+    <b><h4>- Added Features:</h4></b>
+    <p>
+        - Hide navigation bar while scrolling
+        <br>- Zoom text/images while moving them in editors
+        <br>- Scrollable wallpapers in wallpaper setter
+        <br>- Added polish translation, updated simplified chinese
+    </p>
+    <br>
+    <b><h4>- Fixed Bugs:</h4></b>
+    <p>
+        - Video editor not respecting start videos muted option
+        <br>- Inability to play video in video editor after trimming it
+        <br>- Navigation bar tab text being misaligned
+    </p>
+    <br>
+    <h2>v1.1.0!:</h2>
+    <b><h4>- Added Features:</h4></b>
+    <p>
+        <br>- Added simplified chinese translation
+        <br>- Ability to blacklist albums when using "show all in main"
+        <br>- Pin albums even when "auto detect albums" is enabled
+        <br>- Toggle to immediately exit app on start page and not in photo view
+        <br>- Show loading snackbars in OpenWithView
+    </p>
+    <br>
+    <br>
+    <b><h4>- Improvements:</h4></b>
+    <p>
+        <br>- Ask for directory permission before editing file
+        <br>- Increase default video editor export bitrate
+        <br>- Make main navigation bar side-scrollable
+        <br>- New app icon
+        <br>- Albums in AlbumGridView now require long press to drag
+    </p>
+    <br>
+    <br>
+    <b><h4>- Fixed Bugs:</h4></b>
+    <p>
+        <br>- Inability to clear Immich server address if not logged in
+        <br>- Show everything in main shows everything everywhere
+        <br>- Update page\'s formatting being broken
+        <br>- Crash when deleting all media in an album
+        <br>- Crash when editing media from OpenWithView
+        <br>- Saving videos in non-standard directories would cause an infinite hang
+    </p>
+    <br>
+    <br>
+    <h2>v1.0.0!:</h2>
+    <br>
+    <b><h4>- New Look!</h4></b>
+    <br>
+    <p>
+        Lavender Photos has moved to <a href="https://m3.material.io/">Material Expressive</a>!
+        A new look, with more fluid, dynamic and fun animations brings the app to life
+    </p>
+    <br>
+    <p>
+        <b><h4>- New Image and Video Editors!</h4></b>
+        <br>- Refreshed look for the image editor, and a video editor has been implemented
+        <br>- Significantly improved editing experience
+        <br>- Crop, adjust, markup and filter your images
+        <br>- Change bitrate. framerate, speed or volume of your videos, as well as everything mentioned in the image editor
+        <br>- Overlay text and images on both images and videos
+        <br>- Animate text and images on video
+    </p>
+    <br>
+    <br>
+    <p>
+        <b><h4>- Added Features:</h4></b>
+        <br>- Change column count of the Album View
+        <br>- Toggle black background for media views
+        <br>- Zoom on videos
+        <br>- Click on media title to open info dialog
+        <br>- Avif image loading
+        <br>- New app icon
+        <br>- Arabic, spanish, russian, turkish and ukrainian translations
+        <br>- Increased custom tab limit
+        <br>- Immich help and info dialogs
+        <br>- Retain albums on uninstall
+        <br>- Open source licenses page
+        <br>- Tabs for Favourites and Trash views
+        <br>- In-app wallpaper setter
+        <br>- Smoother loading effects
+        <br>- Immediately and permanently delete media instead of moving to trash first
+        <br>- Video player playback speed control
+    </p>
+    <br>
+    <br>
+    <p>
+        <b><h4>-Fixed Bugs:</h4></b>
+        <br>- Slow secure photo decryption
+        <br>- Crash when loading high resolution images in image editor
+        <br>- Crash when swiping horizontally on Favourites or Trash button in Albums View
+        <br>- Crash when deleting first media in an album and navigating back with Auto Detect Albums turned on
+        <br>- Crash when deleting last media in an album and navigating back
+        <br>- Corrected some-times broken custom tabs
+        <br>- Splash screen now always displays correctly
+        <br>- Certain grid views not retaining scroll position when navigating away from them
+        <br>- Some items getting erroneously cleared when trying to drag select
+        <br>- MediaPicker not reporting back correct items
+        <br>- Open with Lavender Photos now displays the correct version of all images
+        <br>- Corrected inaccurate application of adjustments in image editor
+        <br>- Highlights adjustment being broken
+        <br>- Crash when drag selecting over a Section
+        <br>- Sharing multiple images now properly shows all app targets
+        <br>- Inability to secure items from a single photo view on some android versions
+        <br>- Crash when selecting more than 2000 items on android 16+
+    </p>
+    <br>
+    <br>
+    <p>
+        <b><h4>-Performance Improvements:</h4></b>
+        <br>- Too many to log here
+    </p>
+    <br>
+    <br>
+    <br>
+    v0.9.9-beta:
+        <br>- Make album path dialog actually usable
+        <br>- Fixed custom albums not having thumbnails and MoveCopyAlbumListView.kt not having ANY thumbnails at all
+        <br>- Unable to rename albums and album info not immediately updating
+        <br>- Added sort albums by lastmodified or datetaken depending on user choice
+        <br>- Handle error in TextEntryDialog correctly
+        <br>- Added media picker activity
+        <br>- Added Immich backup integration for albums
+        <br>- Add background sync indicator around pfp pic in top bar and main dialog
+        <br>- Change "overwrite data on copy" to "try to keep date on copy", since keeping date isn\'t always guaranteed
+        <br>- Added ability to copy or move files into albums with multiple paths, custom albums remain unaffected
+        <br>- Don\'t crash when loading thumbnails for custom albums without paths
+        <br>- Sort search media by user preference
+        <br>- A lot of smoothness and performance improvements to anything with a PhotoGridView.kt
+        <br>- Fixed album info item count included sections, it shouldn\'t
+        <br>- Added progress snackbar for copying, moving or deleting media
+        <br>- Don\'t crash when dragging to select on an item that doesn\'t exist
+        <br>- Add Immich server info to Immich Main Page
+        <br>- Add album sync with immich page to album top bar
+        <br>- Crashing on secure folder view when unable to export backup due to no IV data present
+        <br>- Fix some photogridviews not remembering their position when being navigated back to from another page
+        <br>- Fix v0.9.8-beta-hotfix changelog missing
+        <br>- Make video loading much smoother
+        <br>- Added a setting to control grid column size
+        <br>- Respeect locale in grid view separators
+        <br>- PhotoGridView.kt scrollbars now respect layout direction (rtl or ltr)
+        <br>- Added ability to show everything in main photos view
+        <br>
+        <br>v0.9.8-beta-hotfix:
+        <br>- hotfix to fix issue with izzyondroid checks
+        <br>- increase overall app smoothness (media loading is smoother)
+        <br>- fix issue where updater would crash when release has "-hotfix" in name
+        <br>
+        <br>v0.9.7-beta:
+        <br>- Sub-second full device album search added
+        <br>- Added translations for Indonesian and French
+        <br>- Fixed issue where album grid items would flicker infinitely
+        <br>- Fixed issue where you couldn\'t use custom albums for custom stuff
+        <br>- No longer ask every time for permissions to move/copy to album after user already gave permissions once
+        <br>- Added date format selector
+        <br>- Handle memory leak because of stupid compose state stuff
+        <br>- Added amoled theme
+        <br>- Added translation notice to about page
+        <br>- Significant performance improvements
+        <br>- Dependencies version bump
+        <br>- No longer crash when directory to data &amp; backup export paths doesn\'t exist
+        <br>- Blurring now accounts for filters, adjustments and drawing in editing view
+        <br>- Added external volume support (sdcard, etc)
+        <br>- Added ability to reset an editing adjustments value by tapping it again
+        <br>- Make text scaling in editing view more responsive
+        <br>- Added ability to pin albums to top of album list
+        <br>
+        <br>v0.9.6-beta:
+        <br>- Added ability to include entire folders in custom albums
+        <br>- Fixed custom tabs not loading
+        <br>- Select-All disabled for albums with over 5000 items (fixes crash because of android limitation)
+        <br>
+        <br>v0.9.5-beta:
+        <br>- Added animation to double tap to zoom and reset in horizontal photo views
+        <br>- Added custom albums (non folder based)
+        <br>- Added item count to album info dialog
+        <br>- Fixed editing view text zooming
+        <br>- Fixed jank in default tab reordering
+        <br>- Added toggle switch for photo copy dates
+        <br>- Fixed issue where drawing with paint after blur would cause a crash in editing view
+        <br>- Text scaling/rotating/moving doesn\'t suck anymore
+        <br>- Fixed tap to draw not working (used to always show up in top left corner, now works normally)
+        <br>- Color contrast improvements for bottom bar items in editing view
+        <br>- Added ability to resize and change color of already set text in editing view (tap on text to select it)
+        <br>- Added ability to zoom in editing view paint mode
+        <br>- Increased editing view blur brush radius (more blurring)
+        <br>
+        <br>v0.9.4-beta:
+        <br>- Fixed icon colors for main bars
+        <br>- Added export favourites to zipfile or folder
+        <br>- Fix videoplayer doubletap to skip not correctly changing direction in case of quicktaps
+        <br>- Made paths horizontally scrollable in path-displaying views
+        <br>- Added sort mode customizer
+        <br>- Fixed check for update on startup running multiple times
+        <br>- Added snackbars for editing failure and success
+        <br>- Add confirm to delete toggle
+        <br>- Fixed trash not always sorting by most recently trashed
+        <br>- No more missing files if user moves or copies and exits view
+        <br>- Finished album info implementation
+        <br>- Added icons for confirm to delete\, media sorting\, and check for updates
+        <br>- Fixed videoplayer doubletap to seek showing underneath other UI
+        <br>- Code cleanup and improvement
+        <br>- Added ability to send previous run\'s logs
+        <br>- Videoplayer doubletap to skip now only needs doubletap on initial try and then its single tap to skip
+        <br>- Autodetect albums now adds albums as it finds them
+        <br>- Fixed irrecoverable secured item issue if it\'s associated album is removed from lavender photos
+        <br>- Added bulk encrypting photos from search page
+        <br>- Fix doubletap to skip blocking other UI
+        <br>- Added exif data eraser
+        <br>- Added basic blur tool in editing view for android 12 and above
+        <br>- Added exit on save toggle for editing view
+        <br>- Fixed secure folder ghost media issue
+        <br>- Securing media loading dialog no longer disappear with app bars while media is still being secured
+        <br>
+        <br>v0.9.3-beta:
+        <br>- Use stable identifiers for drawables
+        <br>- Add update info notice
+        <br>- Added option to disable check updates on startup
+        <br>- Added fully customizable tabs
+        <br>- Entirely rework migration logic
+        <br>- Unified dialog colors
+        <br>- Fix mediastore not refreshing correctly
+        <br>- Better media size display
+        <br>- Add export secure folder to zip file
+        <br>
+        <br>v0.9.2-beta:
+        <br>- Fixed erroneous crash in horizontal image list
+        <br>- Fixed updater view not showing progress
+        <br>- Fixed updater not installing packages
+        <br>- Fixed move copy to albums list not showing thumbnails
+        <br>- Fixed alignment and overflow issues with single album dialogs
+        <br>- Added data and backup
+        <br>- Migration to encrypted photos is no longer broken
+        <br>- Added default tab customization
+        <br>
+        <br>v0.9.1-beta:
+        <br>- Fix dialog info for secured media
+        <br>- Better drag to select behaviour
+        <br>- Fixed add albums from debugging settings
+        <br>- Added custom album sorting
+        <br>- Much faster album loading
+        <br>- Dynamic album reordering so last modified albums are on top
+        <br>- Added automatic album detection
+        <br>- Added Lavender Snackbars to app
+        <br>- Better migration to encrypted secure folder
+        <br>- Double tap to skip is now supported in videoplayer
+        <br>- Misc performance improvements
+        <br>
+        <br>v0.9.0-beta:
+        <br>- Load file metadata into info dialog after decryption
+        <br>- Added in-app updater
+        <br>- Reworked entire media loading system to allow for multiple albums to be loaded
+        <br>- Added \+ icon to album grid view top bar
+        <br>- Fixed lag spike when opening an album
+        <br>- Extreme optimizations and performance gains
+        <br>- Fix loading dialogs for encryption and decryption
+        <br>- Fix secure folder thumbnails not always loading
+        <br>- Fix possible security flaw due to glide caching secured images
+        <br>- Videoplayer no longer pauses music if its muted
+        <br>- Added loading screen for encrypted videos
+        <br>- Unified selecting top bar
+        <br>- Fixed isPreV083 behaviour
+        <br>- Fixed open with view not being open withable
+        <br>- Don\'t forever hang if clicking move to secure folder from selecting top bar while list is empty
+        <br>- Finally fixed android 11 and 12 boot issues
+        <br>
+        <br>v0.8.9-beta:
+        <br>- Added AES encryption for secured photos
+        <br>- Added error icon for manual add path
+        <br>- Fix loading screen on secure folder
+        <br>- Fixed elements in light theme not being consistent and cohesive
+        <br>- Video player remembers last mute state
+        <br>- Added landscape friendly views for secure folder and permission screen
+        <br>- Added open with Lavender Photos
+        <br>- Removed alternative pick albums
+        <br>- Added loading dialogs for actions that take time
+        <br>
+        <br>v0.8.8-beta:
+        <br>- Removed MANAGE_EXTERNAL_STORAGE permission
+        <br>- Reworked entire file handling system
+        <br>- Changed main app top bar animation
+        <br>- Improved performance
+        <br>- Fixed issues with securing media items
+        <br>- Fixed scrolling lagginess
+        <br>- Fixed favourites view crashing when tapping an item
+        <br>- Fixed porting previous albums from v0\.8\.3 to higher versions
+        <br>- Make explanation dialogs consistent
+        <br>- Stop app from freezing when loading albums with files other than images
+        <br>- Fix log saving\, restructure app folders
+        <br>- Added file sharing from secure folder
+        <br>- Note\: Please delete the Lavender Photos folder from Internal Storage
+        <br>
+        <br>v0.8.7-beta-hotfix:
+        <br>- Fix search not displaying correct items
+        <br>- Exoplayer no longer shuts off after background-ing the app
+        <br>- Better logcat behaviour
+        <br>- Fixed permission screen UI
+        <br>- Added multiple ways of adding albums until a better way is found
+        <br>- Fixed crash when photogrid is empty
+        <br>- MUCH faster drag to select with better behaviour
+        <br>
+        <br>v0.8.7-beta:
+        <br>- Fix videoplayer crashing after playing multiple videos in a row
+        <br>- Touch lock no longer gets stuck if app switches to portrait mode
+        <br>- Add video autoplay setting
+        <br>- Add video mute on startup setting
+        <br>- Set icons for settings that were using placeholders
+        <br>- Added app theme selector
+        <br>- Add default album list for first app launch
+        <br>- Clarified Manage All Files permission purpose
+        <br>- Add highlights and color tint adjustments in editing view
+        <br>- Add mini privacy policy statement
+        <br>- Add image filters in editing view
+        <br>- New option to overwrite by default when editing
+        <br>- Added drag to select in photo grids
+        <br>- Animate select checkmark
+        <br>- In video player app bars now only show when clicking the more options button\, no more annoying click and double click
+        <br>
+        <br>v0.8.6-beta:
+        <br>- Completely refactored datastore for MUCH better performance and scalability
+        <br>- Added trash bin auto delete interval settings
+        <br>- Fix possible crash on android 11 devices when trying to hide app bars
+        <br>- Fixed photo sharing in secure folder
+        <br>- Enhanced settings look
+        <br>- Faster empty folder checks\, app will feel slightly faster
+        <br>- Fixed video resolution info
+        <br>- Added thumbnail size and cache settings
+        <br>- Added clear thumbnail cache setting
+        <br>- Fixed landscape behaviour for main page
+        <br>- Fixed jitter when switching pages in main screen
+        <br>- Folders that don\'t contain images or videos won\'t be stuck on loading forever now
+        <br>- Fixed Manage All Files permission button not working
+        <br>- Added explanations to permissions
+        <br>- Secured photos now maintain their original date and other info
+        <br>
+        <br>
+        <br>v0.8.5-beta:
+        <br>- Fix videoplayer completely refetching data when changing orientation
+        <br>- Move/Copy popup doesn\'t go past statusbar now
+        <br>- Secure folder locks when leaving the app temporarily
+        <br>- Fixed inaccessible folders even if they exist
+        <br>- SinglePhotoView photo list now updates dynamically to match present media
+        <br>- Fixed brightness adjustment and added whitepoint adjustment
+        <br>- Landscape videoplayer now has lock touch option
+        <br>- Videoplayer controls automatically hide after 5 seconds
+        <br>- Videoplayer will resume playback after exiting and reentering app
+        <br>
+        <br>v0.8.4-beta:
+        <br>- Fix permission handling
+        <br>- Better and faster media queries
+        <br>- Add random search bar placeholders
+        <br>- More readable date taken for photos
+        <br>- Added settings for permissions and debugging with logs
+        <br>
+        <br>v0.8.3:
+        <br>- Fixed wrong behaviour when album name contains a comma
+        <br>- Properly trash and delete media with content resolver
+        <br>- Added value indicator for adjustments slider in editing view
+        <br>- Add option to overwrite instead of save a new copy for edits
+        <br>- Check if not media manager and delete stuff properly too
+        <br>- Fix not being able to un-trash files when app is media manager
+        <br>- Newly edited photos now show up in system normally
+        <br>- Editing view adjustment actually take effect now (oups)
+        <br>
+        <br>v0.8.2:
+        <br>- Added contrast/brightness/saturation adjustments to editing view
+        <br>- Added blackpoint and warmth (color temperature) adjustments to editing view
+        <br>
+        <br>v0.8.1:
+        <br>- Fixed favourite view excessive top padding
+        <br>- Fixed crash when loading or unloading HorizontalImageList and media changes
+        <br>- Fixed crash when adding new albums that already where added
+        <br>- Fixed video playback not resetting to 0 when reaching end
+        <br>- Fixed video playback sometimes only going to one second less than the video duration
+        <br>- Added rotating and resizing text by gestures in editing view
+        <br>- Fix search page resetting scroll position when viewing an image
+        <br>
+        <br>v0.8.0:
+        <br>- Cropping added
+        <br>- Added cropping ratios
+        <br>- Better save and undo functionality
+        <br>
+        <br>v0.7.9-beta:
+        <br>- Fix erroneous scaling when rotating images in editing view
+        <br>- Fix video autoplay when changing orientation
+        <br>- Fix videoplayer seekbar time not always going to end
+        <br>- Fix videoplayer current and end times being slightly off
+        <br>
+        <br>v0.7.8-beta:
+        <br>- All the below changes are in editing view
+        <br>- Added drawing on images
+        <br>- Added drawing text on images
+        <br>- Added rotating images
+        <br>- Added size change for drawing and text
+        <br>- Added color change for drawing and text
+        <br>- Make editing view usable in landscape mode
+        <br>
+        <br>v0.7.7-beta:
+        <br>- Minor update better showing of new images in albums view
+        <br>
+        <br>v0.7.6-beta:
+        <br>- Fixed animation and spacing on copy or move dialog
+        <br>- Fixed spacing on favourties view
+        <br>
+        <br>v0.7.5-beta:
+        <br>- Added editing view (no functionality)
+        <br>- Added proper zooming/panning/rotating
+        <br>
+        <br>v0.7.3-beta:
+        <br>- Added info dialogs in secure folder and trash
+        <br>- Intelligent album sorting
+        <br>- Search by date added
+        <br>- Close data streams after exiting a page
+        <br>- Fixed today and yesterday tags in photo grid
+        <br>- Secured items now go back to original place
+        <br>- Fixed dates in secure folder (were broken showing everything as if it were secured today)
+        <br>- Fixed resolution not showing on all media
+        <br>
+        <br>v0.7.2-beta:
+        <br>-Complete rework of delete/copy/move/trash system
+        <br>- Trash interoperates with rest of system now
+        <br>- Much more fluidity to grids
+        <br>- Albums no longer show photos from subfolders
+        <br>- Performance improvements and quality of life stuff
+        <br>
+        <br>v0.7.0-beta:
+        <br>- Search improvements
+        <br>- Copy and move added in selection
+        <br>- Speed improvements to large selection deletion/restoration
+        <br>- Smoother transitions to selecting in views with no bottom bar
+        <br>
+        <br>v0.6.9-beta:
+        <br>- Added favouriting media
+        <br>- Improved scrollbars behaviour
+        <br>- Sort secure folder by recency
+        <br>- Lots of code cleanup and misc performance improvements
+        <br>- General responsiveness improvements
+        <br>- Fixed navigation bar colors in light mode
+        <br>- Proper icons and dialogs for actions
+        <br>- Selection available in every gridview
+        <br>- Videoplayer experience is better
+        <br>
+        <br>v0.6.6-beta
+        <br>- Added scrollbars to grids
+        <br>- Major performance improvements
+        <br>- Added selecting items from grid
+        <br>- Fix lag when showing bottom bars
+        <br>- Can clear trash bin now
+        <br>- Infinitely faster search
+        <br>- Fix single photo view resetting on rotation change
+        <br>- Fix search not allowing selection
+        <br>
+    </p>
+    ]]></string>
+    <string name="navigation_photos">Фотки</string>
+    <string name="navigation_secure">Безопасность</string>
+    <string name="navigation_albums">Альбомы</string>
+    <string name="navigation_search">Поиск</string>
+    <string name="navigation_favourites">Избранное</string>
+    <string name="navigation_trash">Корзина</string>
+    <string name="updates_failed_download">Не удалось скачать обновление</string>
+    <string name="secure_export_failed">Не удалось экспортировать резервную копию!</string>
+    <string name="secure_encryption_failed_no_permission">Невозможно зашифровать фотографии без разрешения</string>
+    <string name="secure_migrating">Перенос</string>
+    <string name="secure_migrating_desc">Создание резервной копии и шифрование ваших фотографий, подождите…</string>
+    <string name="secure_migrating_notice">Уведомление о переносе</string>
+    <string name="secure_migrating_notice_desc">Защищённая папка теперь зашифрована! Все ваши фотографии теперь полностью защищены и недоступны никому. В качестве меры предосторожности копия ваших защищённых фотографий теперь находится в папке экспорта, вы можете найти ее на странице альбомов или в разделе Внутренняя память/Android/media/com.kaii.photos/LavenderPhotos/Exports.</string>
+    <string name="secure_unlock">Разблокировать защищённую папку</string>
+    <string name="secure_unlock_desc">Используйте свои биометрические данные для разблокировки</string>
+    <string name="secure_unlock_failed">Не удалось пройти аутентификацию:&lt;</string>
+    <string name="secure_unlock_short">Разблокировать папку</string>
+    <string name="secure_move_out">Переместить медиафайлы из защищённой папки?</string>
+    <string name="video_open_externally">Открыть во внешнем проигрывателе</string>
+    <string name="video_open_externally_desc">Выберите из сетки, чем открывать видео</string>
+    <string name="editing_more">Больше</string>
+    <string name="editing_image">Изображение</string>
+    <string name="editing_upload_image">Выбрать</string>
+    <string name="editing_upload_image_failed">Не удалось выбрать изображение</string>
+    <string name="editing_bitrate">Битрейт</string>
+    <string name="editing_bitrate_unit">Битов в секунду</string>
+    <string name="editing_open_with_copying_video">Обработка видео…</string>
+    <string name="editing_open_with_copying_image">Обработка изображения…</string>
+    <string name="editing_resolution_scale">Масштабирование</string>
+    <string name="filter">Фильтр</string>
+    <string name="filter_none">Нету</string>
+    <string name="filter_none_desc">потому что кому они нужны</string>
+    <string name="filter_inverted">Инвертированный</string>
+    <string name="filter_inverted_desc">все перевёрнуто</string>
+    <string name="filter_vibrant">Яркий</string>
+    <string name="filter_vibrant_desc">жизнь прекрасна</string>
+    <string name="filter_bw">Черно-белый</string>
+    <string name="filter_bw_desc">застрял в 50-х</string>
+    <string name="filter_film">Как фильм</string>
+    <string name="filter_film_desc">Нолан на подъёме</string>
+    <string name="filter_grayscale">Оттенки серого</string>
+    <string name="filter_grayscale_desc">Очень жутко</string>
+    <string name="filter_sepia">Сепия</string>
+    <string name="filter_sepia_desc">Каракатица. Вот почему.</string>
+    <string name="filter_bgr">BGR</string>
+    <string name="filter_bgr_desc">Зачем ты это используешь?</string>
+    <string name="filter_warm">Тёплый</string>
+    <string name="filter_warm_desc">Уютная атмосфера</string>
+    <string name="filter_cool">Холодный</string>
+    <string name="filter_cool_desc">Зимняя атмосфера</string>
+    <string name="filter_vintage">Винтаж</string>
+    <string name="filter_vintage_desc">Сильная ностальгия</string>
+    <string name="filter_posterize">Постеризация</string>
+    <string name="filter_posterize_desc">Немного цветов сработает</string>
+    <string name="filter_glow">Светящийся</string>
+    <string name="filter_glow_desc">в темноте</string>
+    <string name="filter_mushrooms">Грибы</string>
+    <string name="filter_mushrooms_desc">хм.</string>
+    <string name="filter_solar">Солнечный</string>
+    <string name="filter_solar_desc">Встреча с корональным выбросом массы</string>
+    <string name="filter_peachy">Персиковый</string>
+    <string name="filter_peachy_desc">Сладкий и пушистый</string>
+    <string name="filter_pastel">Пастельный</string>
+    <string name="filter_pastel_desc">Потому что я не умею рисовать</string>
+    <string name="filter_rustic">Деревенский</string>
+    <string name="filter_rustic_desc">Найден в лесу</string>
+    <string name="filter_dried">Высушенный</string>
+    <string name="filter_dried_desc">Оставленный на солнце</string>
+    <string name="filter_toast">Подогрев</string>
+    <string name="filter_toast_desc">Красивая окраска утки-кряквы</string>
+    <string name="filter_shimmer">Блеск</string>
+    <string name="filter_shimmer_desc">Не сглазь</string>
+    <string name="filter_select">Выбрать</string>
+    <string name="filter_selected">Выбранное</string>
+    <string name="editing_trim">Обрезать</string>
+    <string name="editing_export_video_loading">Экспорт видео…</string>
+    <string name="editing_export_video_loading_body">Шаг %1$d из %2$d</string>
+    <string name="editing_export_video_failed">Не удалось экспортировать видео</string>
+    <string name="editing_volume_display">Громкость: %s</string>
+    <string name="editing_speed_display">Скорость воспроизведения: %s</string>
+    <string name="editing_framerate_display">Частота кадров: %s</string>
+    <string name="editing_volume">Громкость</string>
+    <string name="editing_wilson">Скорость</string>
+    <string name="editing_fps">Кадров в секунду</string>
+    <string name="settings_light_theme">Светлая тема</string>
+    <string name="settings_Auto_theme">Автоматическая тема</string>
+    <string name="settings_behaviour">Поведение</string>
+    <string name="settings_behaviour_desc">Изменить работу приложения</string>
+    <string name="settings_navigation_exit_immediately">Немедленный выход</string>
+    <string name="settings_navigation_exit_immediately_desc">Пропускает возврат к основному виду фотографий при нажатии кнопки «Назад»</string>
+    <string name="settings_views">Виды</string>
+    <string name="settings_rotate_in_views">Разрешить поворот</string>
+    <string name="settings_rotate_in_views_desc">Включает поворот жестом при просмотре медиафайлов</string>
+    <string name="settings_about_unknown_version">Не удалось получить номер версии</string>
+    <string name="trash_bin_short">Корзина</string>
+    <string name="permissions_do_not_trash">Не использовать корзину</string>
+    <string name="permissions_do_not_trash_desc">Немедленно и навсегда удалять элементы, не перемещая их предварительно в корзину</string>
+    <string name="permissions_read_images">Чтение изображений</string>
+    <string name="permissions_read_images_desc">Разрешить Lavender Photos находить фотографии на устройстве</string>
+    <string name="permissions_read_videos">Чтение видео</string>
+    <string name="permissions_read_videos_desc">Разрешить Lavender Photos находить видео на устройстве</string>
+    <string name="permissions_read_external_storage">Чтение внешнего хранилища</string>
+    <string name="permissions_read_external_storage_desc">Разрешить Lavender Photos находить фотографии и видео на устройстве</string>
+    <string name="permissions_manage_media">Управление медиафайлами</string>
+    <string name="permissions_manage_media_desc">Необязательное разрешение. Используется для более быстрой работы с корзиной/удалением</string>
+    <string name="permissions_other_info">Другая информация</string>
+    <string name="permissions_install_packages">Установка пакетов</string>
+    <string name="permissions_install_packages_desc">Если вы используете встроенное обновление, Lavender Photos запросит разрешение на установку пакетов.</string>
+    <string name="permissions_continue">Продолжить</string>
+    <string name="permissions_necessary">Необходимое разрешение</string>
+    <string name="permissions_necessary_desc">Это разрешение необходимо для работы приложения</string>
+    <string name="permissions_grant_permissions">Предоставить разрешения</string>
+    <string name="permissions_why">Почему?</string>
+    <string name="permissions_dismiss">Закрыть</string>
+    <string name="permissions_read_media_explanation">Это разрешение необходимо для поиска фотографий и видео на устройстве. Lavender Photos очень строго относится к тому, какие файлы он читает, и никогда не передает и не использует эту информацию.</string>
+    <string name="permissions_manage_media_explanation">Это разрешение необязательно, но настоятельно рекомендуется. Разрешение «Управление медиафайлами» позволяет Lavender Photos использовать API Content Resolver Android для удаления/перемещения/копирования медиафайлов, что значительно упрощает этот процесс и обеспечивает лучшую совместимость с другими приложениями.</string>
+    <string name="permissions_explanation">Пояснение к разрешению</string>
+    <string name="media_restore_processing_desc">Пожалуйста, подождите, пока медиафайлы обрабатываются</string>
+    <string name="media_move_copy_list_search_bar">Поиск альбома</string>
+    <string name="media_copy_snackbar_title">Копирование медиафайлов…</string>
+    <string name="media_move_snackbar_title">Перемещение медиафайлов…</string>
+    <string name="media_delete_snackbar_title">Удаление медиафайлов…</string>
+    <string name="media_restore_snackbar_title">Восстановление медиафайлов…</string>
+    <string name="media_operate_snackbar_body">%1$d из %2$d выполнено</string>
+    <string name="media_tools">Инструменты</string>
+    <string name="media_information">Информация</string>
+    <string name="wallpaper_homescreen">Главный экран</string>
+    <string name="wallpaper_lockscreen">Экран блокировки</string>
+    <string name="wallpaper_Both">Оба экрана</string>
+    <string name="wallpaper_scrollable">Прокручиваемый</string>
+    <string name="today">Сегодня</string>
+    <string name="yesterday">Вчера</string>
+    <string name="help">Справка</string>
+    <string name="apply">Применить</string>
+    <string name="close">Закрыть</string>
+    <string name="changelog_name">Список изменений</string>
+    <string name="bottom_sheets_sixteen_by_nine">16:9 (горизонтально)</string>
+    <string name="bottom_sheets_nine_by_sixteen">9:16 (вертикально)</string>
+    <string name="bottom_sheets_nine_by_twentyone">9:21</string>
+    <string name="bottom_sheets_five_by_four">5:4</string>
+    <string name="bottom_sheets_four_by_three">4:3</string>
+    <string name="bottom_sheets_three_by_two">3:2</string>
+    <string name="look_and_feel_styling_separator">Стилизация</string>
+    <string name="look_and_feel_date_format">Формат даты</string>
+    <string name="look_and_feel_image_details_format">Формат сведений об изображении</string>
+    <string name="look_and_feel_date_format_default">По умолчанию</string>
+    <string name="look_and_feel_date_format_short">Краткий</string>
+    <string name="look_and_feel_date_format_standard">Стандартный</string>
+    <string name="look_and_feel_date_format_numeric">Числовой</string>
+    <string name="look_and_feel_date_format_filename">Название файла</string>
+    <string name="look_and_feel_date_format_date_taken">Дата съёмки</string>
+    <string name="look_and_feel_date_format_datetime_taken">Дата и время съёмки</string>
+    <string name="look_and_feel_theme_amoled">Полностью чёрный цвет</string>
+    <string name="look_and_feel_theme_amoled_desc">Устанавливает чёрный цвет фона для энергоэффективности на устройствах AMOLED</string>
+    <string name="look_and_feel_column_size">Размер столбца: %1$d</string>
+    <string name="look_and_feel_album_column_size">Размер столбца альбома: %1$d</string>
+    <string name="look_and_feel_grids">Сетки</string>
+    <string name="look_and_feel_use_black_background">Чёрный фон для просмотра медиафайлов</string>
+    <string name="look_and_feel_use_black_background_desc">Фон просмотра изображений/видеоплеера будет черным</string>
+    <string name="look_and_feel_nav">Навигация</string>
+    <string name="look_and_feel_extra_secure_nav">Дополнительная запись в защищённой папке</string>
+    <string name="look_and_feel_extra_secure_nav_desc">Отображает опцию перехода в защищенную папку из главного диалогового окна приложения</string>
+    <string name="look_and_feel_rounded_corners">Закруглённые углы миниатюр</string>
+    <string name="look_and_feel_rounded_corners_desc">Закруглённые углы на миниатюрах в фотосетках</string>
+    <string name="immich_title">Резервное копирование Immich</string>
+    <string name="immich_desc">Резервное копирование на собственный сервер Immich</string>
+    <string name="immich_account">Учётная запись Immich</string>
+    <string name="immich_login_unavailable">Не авторизовано</string>
+    <string name="immich_login_unavailable_desc">В данный момент нет подключённой учётки Immich</string>
+    <string name="immich_login_found">Вход выполнен как:</string>
+    <string name="immich_login">Войти через Immich</string>
+    <string name="immich_login_confirm">Войти</string>
+    <string name="immich_login_ongoing">Вхождение…</string>
+    <string name="immich_login_successful">Вход выполнен успешно!</string>
+    <string name="immich_login_failed">Ошибка входа</string>
+    <string name="immich_endpoint_base">Адрес сервера</string>
+    <string name="immich_endpoint_base_desc">Ссылка на сервер Immich для резервирования</string>
+    <string name="immich_endpoint_base_placeholder">https://мой.сервер.immich.com/</string>
+    <string name="immich_clear_endpoint">Удалить сервер?</string>
+    <string name="immich_clear_endpoint_desc">Вы уверены, что хотите удалить этот адрес сервера?</string>
+    <string name="immich_logout">Выйти?</string>
+    <string name="immich_logout_desc">Вы уверены, что хотите выйти из этой учётки?</string>
+    <string name="immich_done">готово</string>
+    <string name="immich_sync_status">Состояние синхронизации:</string>
+    <string name="immich_email">Электронная почта:</string>
+    <string name="immich_set_pfp_fail">Не удалось установить фото профиля</string>
+    <string name="immich_set_pfp_success">Фото профиля обновлено!</string>
+    <string name="immich_operation_complete">Операция завершена!</string>
+    <string name="immich_state_unknown">Неизвестно</string>
+    <string name="immich_state_loading">Загрузка…</string>
+    <string name="immich_sync_album">Синхронизация альбома и Immich</string>
+    <string name="immich_sync_album_out_of_sync_desc">Дополнительно в: Альбом: %1$s. Immich: %2$s</string>
+    <string name="immich_album_delete">Удалить этот альбом?</string>
+    <string name="immich_album_delete_desc">Удаляет этот альбом из синхронизации Immich</string>
+    <string name="immich_album_delete_include_media">Удалить содержимое из Immich</string>
+    <string name="immich_album_delete_full">Удалить альбом</string>
+    <string name="immich_auth_passowrd">Пароль</string>
+    <string name="immich_auth_email">Электронная почта</string>
+    <string name="immich_continuing_in_bg">Продолжение резервного копирования в фоновом режиме</string>
+    <string name="immich_main_dialog_sync_state">Синхронизация: %1$d из %2$d</string>
+    <string name="immich_uuid">ИД в Immich</string>
+    <string name="immich_failed_refreshing_albums">Не удалось обновить альбомы</string>
+    <string name="immich_failed_uploading_albums">Не удалось закачать альбом</string>
+    <string name="immich_server_info">Информация о сервере</string>
+    <string name="immich_server_info_desc">Версия: %1$s. Сборка: %2$s</string>
+    <string name="immich_server_storage">Серверное хранилище</string>
+    <string name="immich_server_storage_desc">%1$s из %2$s использовано</string>
+    <string name="immich_server_info_failed">Данные недоступны</string>
+    <string name="immich_server">Сервер Immich</string>
+    <string name="immich_help_general">Что это?</string>
+    <string name="immich_help_general_desc">Позволяет создавать резервные копии медиафайлов на уровне альбомов на сервере Immich</string>
+    <string name="immich_help_detailed_desc"><![CDATA[
+        <p><a href="https://immich.app/">Immich</a> — это решение для самостоятельного управления фотографиями и видео,
+которое позволяет любому пользователю разместить собственный облачный сервер резервного копирования.
+        </p>
+        <h3 style="text-align:center;">Как использовать?<h3/>
+        <ul>
+            <li>Самостоятельно разместите <a href="https://immich.app/">сервер Immich</a></li>
+            <li>Укажите адрес сервера в Lavender Photos</li>
+            <li>Войдите, используя учетную запись пользователя Immich</li>
+            <li>Перейдите в любой альбом, нажмите на значок облака</li>
+            <li>Начните резервное копирование ваших фотографий!</li>
+        </ul>
+]]></string>
+    <string name="immich_server_url_invalid">Неверный URL-адрес!</string>
+    <string name="immich_misc">Разное</string>
+    <string name="immich_always_show_user_info">Всегда показывать инфо пользователя</string>
+    <string name="immich_always_show_user_info_desc">Отображает информацию о пользователе независимо от того, может ли приложение связаться с сервером или нет</string>
+    <string name="exif_name">Название:</string>
+    <string name="exif_path">Путь:</string>
+    <string name="exif_date">Дата:</string>
+    <string name="exif_latlong">Широта/долгота:</string>
+    <string name="exif_device">Устройство:</string>
+    <string name="exif_fnumber">Номер диафрагмы:</string>
+    <string name="exif_shutter_speed">Выдержка:</string>
+    <string name="exif_mp">Мегапиксели:</string>
+    <string name="exif_res">Разрешение:</string>
+    <string name="exif_size">Размер:</string>
+    <string name="immich">Immich</string>
+    <string name="media_is_raw">Это необработанное RAW изображение</string>
+    <string name="drag_and_drop_data">Перетаскивание данных для создания фотографий в Lavender</string>
 </resources>
