@@ -3,6 +3,7 @@ package com.kaii.photos.compose.single_photo
 import android.app.Activity
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.util.Log
@@ -45,7 +46,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
@@ -313,9 +313,12 @@ private fun GlideView(
                     isFirstResource: Boolean
                 ): Boolean {
                     val activity = (context as Activity)
+
                     if (resource == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE || !activity.display.isHdr) return false
 
-                    if (resource.toBitmap().hasGainmap()) window.colorMode = ActivityInfo.COLOR_MODE_HDR
+                    if (resource is BitmapDrawable && resource.bitmap.hasGainmap()) {
+                        window.colorMode = ActivityInfo.COLOR_MODE_HDR
+                    }
 
                     return false
                 }
