@@ -3,7 +3,6 @@ package com.kaii.photos.compose.single_photo
 import android.app.Activity
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
-import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.util.Log
@@ -48,6 +47,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import com.bumptech.glide.Glide
@@ -68,7 +68,7 @@ import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.OffsetSaver
 import com.kaii.photos.helpers.getSecuredCacheImageForFile
-import com.kaii.photos.helpers.motion_photo.MotionPhoto
+import com.kaii.photos.helpers.motion_photo.rememberMotionPhoto
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaStoreData
@@ -226,18 +226,15 @@ fun HorizontalImageList(
                     }
                 }
 
-                val motionPhoto = remember {
-                    MotionPhoto(mediaStoreItem.uri, context)
-                }
+                val motionPhoto = rememberMotionPhoto(uri = mediaStoreItem.uri)
 
-                if (motionPhoto.isMotionPhoto) {
+                if (motionPhoto.isMotionPhoto.value) {
                     MotionPhotoView(
                         motionPhoto = motionPhoto,
                         releaseExoPlayer = null,
                         glideImageView = @Composable { modifier ->
                             GlideView(
-                                isHidden = isHidden,
-                                model = model,
+                                model = if (isHidden) model else mediaStoreItem.uri,
                                 mediaStoreItem = mediaStoreItem,
                                 scale = scale,
                                 rotation = rotation,
@@ -250,8 +247,7 @@ fun HorizontalImageList(
                     )
                 } else {
                     GlideView(
-                        isHidden = isHidden,
-                        model = model,
+                        model = if (isHidden) model else mediaStoreItem.uri,
                         mediaStoreItem = mediaStoreItem,
                         scale = scale,
                         rotation = rotation,
@@ -267,8 +263,7 @@ fun HorizontalImageList(
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-private fun GlideView(
-    isHidden: Boolean,
+fun GlideView(
     model: Any?,
     mediaStoreItem: MediaStoreData,
     scale: MutableFloatState,
@@ -276,14 +271,15 @@ private fun GlideView(
     offset: MutableState<Offset>,
     window: Window,
     appBarsVisible: MutableState<Boolean>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    useCache: Boolean = true
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val windowSize = LocalWindowInfo.current.containerSize
 
     GlideImage(
-        model = if (isHidden) model else mediaStoreItem.uri,
+        model = model,
         contentDescription = "selected image",
         contentScale = ContentScale.Fit,
         failure = placeholder(R.drawable.broken_image),
@@ -298,19 +294,19 @@ private fun GlideView(
             )
     ) {
         it.signature(mediaStoreItem.signature())
-            .diskCacheStrategy(DiskCacheStrategy.NONE)
+            .diskCacheStrategy(if (useCache) DiskCacheStrategy.ALL else DiskCacheStrategy.NONE)
             .override(Target.SIZE_ORIGINAL)
             .error(
                 Glide
                     .with(context)
-                    .load(mediaStoreItem.uri)
-                    .diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .load(model)
+                    .diskCacheStrategy(if (useCache) DiskCacheStrategy.ALL else DiskCacheStrategy.NONE)
                     .downsample(DownsampleStrategy.AT_LEAST) // try to downsample if image is not massive, will fail for really large images
                     .thumbnail( // fallback of the fallback
                         Glide
                             .with(context)
-                            .load(mediaStoreItem.uri)
-                            .diskCacheStrategy(DiskCacheStrategy.NONE)
+                            .load(model)
+                            .diskCacheStrategy(DiskCacheStrategy.ALL)
                             .override(windowSize.width, windowSize.height)
                     )
             )
@@ -339,7 +335,7 @@ private fun GlideView(
 
                     if (resource == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE || !activity.display.isHdr) return false
 
-                    val isHdr = resource is BitmapDrawable && resource.bitmap.hasGainmap()
+                    val isHdr = resource.toBitmap(width = 128, height = 128).hasGainmap()
                     coroutineScope.launch(Dispatchers.Main) {
                         if (isHdr) {
                             window.colorMode = ActivityInfo.COLOR_MODE_HDR

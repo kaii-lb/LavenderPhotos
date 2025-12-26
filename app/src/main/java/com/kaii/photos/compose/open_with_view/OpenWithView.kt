@@ -342,7 +342,7 @@ private fun Content(uri: Uri, window: Window) {
     AnimatedContent(
         targetState = incomingData,
         transitionSpec = {
-            (fadeIn() + slideInHorizontally { it / 2 }).togetherWith(fadeOut() + slideOutHorizontally { it / 2})
+            fadeIn().togetherWith(fadeOut())
         },
         modifier = Modifier
             .fillMaxSize()

@@ -3,9 +3,17 @@ package com.kaii.photos.helpers.motion_photo
 import android.content.Context
 import android.net.Uri
 import androidx.annotation.OptIn
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
 import androidx.exifinterface.media.ExifInterface
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.util.UnstableApi
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.serialization.serializer
 import nl.adaptivity.xmlutil.ExperimentalXmlUtilApi
 import nl.adaptivity.xmlutil.serialization.UnknownChildHandler
@@ -17,59 +25,66 @@ import nl.adaptivity.xmlutil.serialization.XmlParsingException
 @OptIn(UnstableApi::class)
 class MotionPhoto(
     val uri: Uri,
-    private val context: Context
+    private val context: Context,
+    coroutineScope: CoroutineScope
 ) {
-    var isMotionPhoto: Boolean = false
-    var photoLength: Int = 0
-    var photoPadding: Int = 0
-
-    var videoLength: Int = 0
-    var videoPadding: Int = 0
+    var isMotionPhoto = mutableStateOf(false)
 
     init {
-        val xmp = getXmpData()
+        coroutineScope.launch(Dispatchers.IO) {
+            val xmp = getXmpData()
 
-        if (xmp != null) {
-            isMotionPhoto = xmp.rdf.description.motionPhoto == 1
-
-            xmp.rdf.description.directory?.seq?.items?.forEach { (_, item) ->
-                if (MimeTypes.isVideo(item.mime)) {
-                    videoLength = item.length ?: 0
-                    videoPadding = item.padding ?: 0
-                } else if (MimeTypes.isImage(item.mime)) {
-                    photoLength = item.length ?: 0
-                    photoPadding = item.padding ?: 0
-                }
+            if (xmp != null) {
+                isMotionPhoto.value = xmp.rdf.description.motionPhoto == 1
             }
         }
     }
 
     @Suppress("DEPRECATION")
     @kotlin.OptIn(ExperimentalXmlUtilApi::class)
-    private fun getXmpData(): XmpMeta? = try {
-        val inputStream = context.contentResolver.openInputStream(uri) ?: return null
-        val exifInterface = ExifInterface(inputStream)
+    private fun getXmpData(): XmpMeta? {
+        try {
+            val isVideo = MimeTypes.isVideo(context.contentResolver.getType(uri))
+            if (isVideo) return null
 
-        val xmpData = exifInterface.getAttribute(ExifInterface.TAG_XMP)
+            val inputStream = context.contentResolver.openInputStream(uri) ?: return null
+            val exifInterface = ExifInterface(inputStream)
 
-        if (xmpData != null) {
-            val serializer = serializer<XmpMeta>()
-            val xml = XML {
-                autoPolymorphic = true
+            val xmpData = exifInterface.getAttribute(ExifInterface.TAG_XMP)
 
-                // ignore unknown keys
-                unknownChildHandler = UnknownChildHandler { _, _, _, _, _ ->
-                    emptyList()
+            if (xmpData != null) {
+                val serializer = serializer<XmpMeta>()
+                val xml = XML {
+                    autoPolymorphic = true
+
+                    // ignore unknown keys
+                    unknownChildHandler = UnknownChildHandler { _, _, _, _, _ ->
+                        emptyList()
+                    }
                 }
+
+                inputStream.close()
+
+                return xml.decodeFromString(serializer, xmpData)
             }
+        } catch (_: XmlParsingException) {}
 
-            inputStream.close()
+        return null
+    }
+}
 
-            xml.decodeFromString(serializer, xmpData)
-        } else {
-            null
-        }
-    } catch (_: XmlParsingException) {
-        null
+@Composable
+fun rememberMotionPhoto(
+    uri: Uri
+): MotionPhoto {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
+    return remember {
+        MotionPhoto(
+            uri = uri,
+            context = context,
+            coroutineScope = coroutineScope
+        )
     }
 }

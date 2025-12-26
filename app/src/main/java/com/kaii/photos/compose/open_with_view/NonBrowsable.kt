@@ -66,7 +66,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
@@ -82,9 +81,6 @@ import androidx.compose.ui.zIndex
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.bumptech.glide.integration.compose.GlideImage
-import com.bumptech.glide.integration.compose.placeholder
-import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalMainViewModel
@@ -92,6 +88,7 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.BottomAppBarItem
 import com.kaii.photos.compose.app_bars.setBarVisibility
+import com.kaii.photos.compose.single_photo.GlideView
 import com.kaii.photos.compose.single_photo.MotionPhotoView
 import com.kaii.photos.compose.single_photo.VideoPlayerControls
 import com.kaii.photos.compose.single_photo.mediaModifier
@@ -103,7 +100,7 @@ import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.formatDate
-import com.kaii.photos.helpers.motion_photo.MotionPhoto
+import com.kaii.photos.helpers.motion_photo.rememberMotionPhoto
 import com.kaii.photos.helpers.shareImage
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
@@ -154,7 +151,7 @@ fun OpenWithContent(
             modifier = Modifier
                 .padding(0.dp)
                 .background(MaterialTheme.colorScheme.background)
-                .fillMaxSize(1f),
+                .fillMaxSize(),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -165,32 +162,24 @@ fun OpenWithContent(
             val isTouchLocked = remember { mutableStateOf(false) }
             val controlsVisible = remember { mutableStateOf(false) }
 
-            val motionPhoto = remember {
-                MotionPhoto(uri, context)
-            }
+            val motionPhoto = rememberMotionPhoto(uri = uri)
 
-            if (motionPhoto.isMotionPhoto) {
+            if (motionPhoto.isMotionPhoto.value) {
                 MotionPhotoView(
                     motionPhoto = motionPhoto,
                     releaseExoPlayer = releaseExoPlayer,
                     glideImageView = @Composable { modifier ->
-                        GlideImage(
+                        GlideView(
                             model = uri,
-                            contentDescription = "opened image",
-                            contentScale = ContentScale.Fit,
-                            failure = placeholder(R.drawable.broken_image),
-                            modifier = modifier
-                                .fillMaxSize(1f)
-                                .mediaModifier(
-                                    scale = scale,
-                                    rotation = rotation,
-                                    offset = offset,
-                                    window = window,
-                                    appBarsVisible = appBarsVisible
-                                )
-                        ) {
-                            it.diskCacheStrategy(DiskCacheStrategy.NONE)
-                        }
+                            mediaStoreItem = MediaStoreData.dummyItem,
+                            scale = scale,
+                            rotation = rotation,
+                            offset = offset,
+                            window = window,
+                            appBarsVisible = appBarsVisible,
+                            modifier = modifier,
+                            useCache = false
+                        )
                     }
                 )
             } else if (type == MediaType.Video) {
@@ -215,23 +204,16 @@ fun OpenWithContent(
                         )
                 )
             } else {
-                GlideImage(
+                GlideView(
                     model = uri,
-                    contentDescription = "opened image",
-                    contentScale = ContentScale.Fit,
-                    failure = placeholder(R.drawable.broken_image),
-                    modifier = Modifier
-                        .fillMaxSize(1f)
-                        .mediaModifier(
-                            scale = scale,
-                            rotation = rotation,
-                            offset = offset,
-                            window = window,
-                            appBarsVisible = appBarsVisible
-                        )
-                ) {
-                    it.diskCacheStrategy(DiskCacheStrategy.NONE)
-                }
+                    mediaStoreItem = MediaStoreData.dummyItem,
+                    scale = scale,
+                    rotation = rotation,
+                    offset = offset,
+                    window = window,
+                    appBarsVisible = appBarsVisible,
+                    useCache = false
+                )
             }
         }
     }
@@ -333,10 +315,12 @@ private fun OpenWithVideoPlayer(
 
     Box(
         modifier = Modifier
-            .fillMaxSize(1f)
+            .fillMaxSize()
     ) {
         Column(
-            modifier = modifier.then(Modifier.align(Alignment.Center)),
+            modifier = modifier
+                .fillMaxSize()
+                .then(Modifier.align(Alignment.Center)),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -344,7 +328,9 @@ private fun OpenWithVideoPlayer(
             AndroidView(
                 factory = {
                     playerView
-                }
+                },
+                modifier = modifier
+                    .fillMaxSize()
             )
         }
 
