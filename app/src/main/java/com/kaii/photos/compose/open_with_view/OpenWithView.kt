@@ -3,6 +3,7 @@ package com.kaii.photos.compose.open_with_view
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.Window
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -66,6 +67,8 @@ import com.kaii.photos.ui.theme.PhotosTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.reflect.typeOf
+
+private const val TAG = "com.kaii.photos.compose.open_with_view.OpenWithView"
 
 class OpenWithView : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -325,11 +328,12 @@ private fun Content(uri: Uri, window: Window) {
     val context = LocalContext.current
     var incomingData by remember { mutableStateOf<MediaStoreData?>(null) }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(uri) {
         withContext(Dispatchers.IO) {
             incomingData = try {
-                context.contentResolver.getMediaStoreDataFromUri(context, uri)
-            } catch (_: Throwable) {
+                context.contentResolver.getMediaStoreDataFromUri(context, uri) ?: MediaStoreData.dummyItem
+            } catch (e: Throwable) {
+                Log.d(TAG, "Couldn't decode incoming data!\n${e.message}")
                 MediaStoreData.dummyItem
             }
         }
