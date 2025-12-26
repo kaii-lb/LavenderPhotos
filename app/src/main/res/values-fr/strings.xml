@@ -102,10 +102,10 @@
     <string name="media">Média</string>
     <string name="sort_indicator">Trier par indicateur</string>
     <string name="media_share">Partager</string>
-    <string name="media_delete_confirm">Supprimer cet %1$s ?</string>
+    <string name="media_delete_confirm">Supprimer ce média ?</string>
     <string name="media_secure">Sécurisé</string>
     <string name="media_secure_confirm">Déplacer cet %1$s vers le Dossier Sécurisé ?</string>
-    <string name="media_delete_permanently_confirm">Supprimer définitivement cet %1$s ?</string>
+    <string name="media_delete_permanently_confirm">Supprimer définitivement ce média ?</string>
     <string name="media_cancel">Annuler</string>
     <string name="media_restore">Restaurer</string>
     <string name="media_progress">Progression :</string>
