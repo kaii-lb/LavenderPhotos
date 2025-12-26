@@ -7,15 +7,14 @@ import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateOffsetAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.calculateEndPadding
@@ -34,7 +33,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
@@ -52,6 +50,7 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.kaii.photos.compose.app_bars.WallpaperSetterBottomBar
 import com.kaii.photos.compose.app_bars.WallpaperSetterTopBar
+import com.kaii.photos.compose.app_bars.lavenderEdgeToEdge
 import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.models.main_activity.MainViewModel
@@ -86,13 +85,12 @@ class WallpaperSetter : ComponentActivity() {
                 theme = followDarkTheme,
                 dynamicColor = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
             ) {
-                enableEdgeToEdge(
-                    navigationBarStyle = SystemBarStyle.dark(Color.Transparent.toArgb()),
-                    statusBarStyle = SystemBarStyle.auto(
-                        Color.Transparent.toArgb(),
-                        Color.Transparent.toArgb()
-                    )
+                lavenderEdgeToEdge(
+                    isDarkMode = isSystemInDarkTheme(),
+                    navBarColor = Color.Transparent,
+                    statusBarColor = Color.Transparent
                 )
+
                 Content(intent = intent) {
                     finish()
                 }

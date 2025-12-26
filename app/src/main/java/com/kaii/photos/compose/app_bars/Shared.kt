@@ -2,6 +2,9 @@ package com.kaii.photos.compose.app_bars
 
 import android.view.Window
 import android.view.WindowInsetsController
+import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.fadeIn
@@ -39,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -151,7 +155,6 @@ fun getAppBarContentTransition(slideLeft: Boolean) = run {
 }
 
 
-
 fun setBarVisibility(
     visible: Boolean,
     window: Window,
@@ -262,5 +265,20 @@ fun DualFunctionTopAppBar(
                 }
             }
         },
+    )
+}
+
+fun ComponentActivity.lavenderEdgeToEdge(
+    isDarkMode: Boolean,
+    navBarColor: Color,
+    statusBarColor: Color
+) {
+    enableEdgeToEdge(
+        navigationBarStyle =
+            if (isDarkMode) SystemBarStyle.dark(navBarColor.toArgb())
+            else SystemBarStyle.light(navBarColor.toArgb(), navBarColor.toArgb()),
+        statusBarStyle =
+            if (isDarkMode) SystemBarStyle.dark(statusBarColor.toArgb())
+            else SystemBarStyle.light(statusBarColor.toArgb(), statusBarColor.toArgb())
     )
 }

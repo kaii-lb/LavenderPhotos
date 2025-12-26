@@ -9,10 +9,8 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
-import androidx.activity.SystemBarStyle
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
@@ -92,6 +90,7 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.MainAppBottomBar
 import com.kaii.photos.compose.app_bars.MainAppTopBar
 import com.kaii.photos.compose.app_bars.getAppBarContentTransition
+import com.kaii.photos.compose.app_bars.lavenderEdgeToEdge
 import com.kaii.photos.compose.grids.AlbumsGridView
 import com.kaii.photos.compose.grids.PhotoGrid
 import com.kaii.photos.compose.grids.SearchPage
@@ -170,6 +169,12 @@ class MediaPicker : ComponentActivity() {
                 theme = followDarkTheme,
                 dynamicColor = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
             ) {
+                lavenderEdgeToEdge(
+                    isDarkMode = isSystemInDarkTheme(),
+                    navBarColor = Color.Transparent,
+                    statusBarColor = Color.Transparent
+                )
+
                 val navControllerLocal = rememberNavController()
                 CompositionLocalProvider(
                     LocalNavController provides navControllerLocal,
@@ -275,18 +280,6 @@ class MediaPicker : ComponentActivity() {
             }
         ) {
             composable(MultiScreenViewType.MainScreen.name) {
-                enableEdgeToEdge(
-                    navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
-                    statusBarStyle =
-                        if (!isSystemInDarkTheme()) {
-                            SystemBarStyle.light(
-                                MaterialTheme.colorScheme.background.toArgb(),
-                                MaterialTheme.colorScheme.background.toArgb()
-                            )
-                        } else {
-                            SystemBarStyle.dark(MaterialTheme.colorScheme.background.toArgb())
-                        }
-                )
                 setupNextScreen(
                     selectedItemsList = selectedItemsList,
                     window = window
@@ -308,13 +301,6 @@ class MediaPicker : ComponentActivity() {
                     typeOf<List<String>>() to NavType.StringListType
                 )
             ) {
-                enableEdgeToEdge(
-                    navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
-                    statusBarStyle = SystemBarStyle.auto(
-                        MaterialTheme.colorScheme.surface.toArgb(),
-                        MaterialTheme.colorScheme.surface.toArgb()
-                    )
-                )
                 setupNextScreen(
                     selectedItemsList,
                     window

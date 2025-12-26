@@ -7,9 +7,7 @@ import android.util.Log
 import android.view.Window
 import android.widget.Toast
 import androidx.activity.ComponentActivity
-import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
@@ -33,7 +31,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -48,6 +45,7 @@ import com.kaii.photos.LocalAppDatabase
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
+import com.kaii.photos.compose.app_bars.lavenderEdgeToEdge
 import com.kaii.photos.compose.editing_view.image_editor.ImageEditor
 import com.kaii.photos.compose.editing_view.video_editor.VideoEditor
 import com.kaii.photos.compose.single_photo.SinglePhotoView
@@ -89,19 +87,6 @@ class OpenWithView : ComponentActivity() {
                 factory = MainViewModelFactory(applicationContext, emptyList())
             )
 
-            enableEdgeToEdge(
-                navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
-                statusBarStyle =
-                    if (!isSystemInDarkTheme()) {
-                        SystemBarStyle.light(
-                            MaterialTheme.colorScheme.background.toArgb(),
-                            MaterialTheme.colorScheme.background.toArgb()
-                        )
-                    } else {
-                        SystemBarStyle.dark(MaterialTheme.colorScheme.background.toArgb())
-                    }
-            )
-
             val initialDarkMode =
                 when (AppCompatDelegate.getDefaultNightMode()) {
                     AppCompatDelegate.MODE_NIGHT_YES -> 1
@@ -119,19 +104,13 @@ class OpenWithView : ComponentActivity() {
                 theme = followDarkTheme,
                 dynamicColor = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
             ) {
-                enableEdgeToEdge(
-                    navigationBarStyle = SystemBarStyle.dark(
-                        MaterialTheme.colorScheme.surfaceContainer.copy(
-                            alpha = 0.2f
-                        ).toArgb()
-                    ),
-                    statusBarStyle = SystemBarStyle.auto(
-                        MaterialTheme.colorScheme.surface.copy(alpha = 0.2f).toArgb(),
-                        MaterialTheme.colorScheme.surface.copy(alpha = 0.2f).toArgb()
-                    )
-                )
-
                 val navController = rememberNavController()
+
+                lavenderEdgeToEdge(
+                    isDarkMode = isSystemInDarkTheme(),
+                    navBarColor = MaterialTheme.colorScheme.surfaceContainer,
+                    statusBarColor = MaterialTheme.colorScheme.background
+                )
 
                 CompositionLocalProvider(
                     LocalNavController provides navController,
@@ -147,8 +126,7 @@ class OpenWithView : ComponentActivity() {
                             navController = navController,
                             startDestination = MultiScreenViewType.OpenWithView.name,
                             modifier = Modifier
-                                .fillMaxSize(1f)
-                                .background(MaterialTheme.colorScheme.background),
+                                .fillMaxSize(1f),
                             enterTransition = {
                                 slideInHorizontally(
                                     animationSpec = tween(
@@ -179,18 +157,6 @@ class OpenWithView : ComponentActivity() {
                             }
                         ) {
                             composable(MultiScreenViewType.OpenWithView.name) {
-                                enableEdgeToEdge(
-                                    navigationBarStyle = SystemBarStyle.dark(
-                                        MaterialTheme.colorScheme.surfaceContainer.copy(
-                                            alpha = 0.2f
-                                        ).toArgb()
-                                    ),
-                                    statusBarStyle = SystemBarStyle.auto(
-                                        MaterialTheme.colorScheme.surface.copy(alpha = 0.2f).toArgb(),
-                                        MaterialTheme.colorScheme.surface.copy(alpha = 0.2f).toArgb()
-                                    )
-                                )
-
                                 Content(
                                     uri = uri,
                                     window = window
@@ -238,14 +204,6 @@ class OpenWithView : ComponentActivity() {
                                     )
                                 }
                             ) {
-                                enableEdgeToEdge(
-                                    navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
-                                    statusBarStyle = SystemBarStyle.auto(
-                                        MaterialTheme.colorScheme.surfaceContainer.toArgb(),
-                                        MaterialTheme.colorScheme.surfaceContainer.toArgb()
-                                    )
-                                )
-
                                 val screen: Screens.ImageEditor = it.toRoute()
 
                                 ImageEditor(
@@ -297,14 +255,6 @@ class OpenWithView : ComponentActivity() {
                                     )
                                 }
                             ) {
-                                enableEdgeToEdge(
-                                    navigationBarStyle = SystemBarStyle.dark(MaterialTheme.colorScheme.surfaceContainer.toArgb()),
-                                    statusBarStyle = SystemBarStyle.auto(
-                                        MaterialTheme.colorScheme.surface.toArgb(),
-                                        MaterialTheme.colorScheme.surface.toArgb()
-                                    )
-                                )
-
                                 val screen = it.toRoute<Screens.VideoEditor>()
 
                                 VideoEditor(
