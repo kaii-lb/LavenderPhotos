@@ -662,8 +662,8 @@ class SettingsDefaultTabsImpl(
 
     val json = Json { ignoreUnknownKeys = true }
 
-    fun getTabList() = context.datastore.data.map {
-        val list = it[tabList] ?: defaultTabList
+    fun getTabList() = context.datastore.data.map { data ->
+        val list = data[tabList] ?: defaultTabList
 
         try {
             json.decodeFromString<List<BottomBarTab>>(list).map {
@@ -822,7 +822,6 @@ class SettingsBehaviourImpl(
     private val viewModelScope: CoroutineScope
 ) {
     private val exitImmediately = booleanPreferencesKey("behaviour_exit_immediately")
-    private val rotateInViews = booleanPreferencesKey("behaviour_rotate_in_views")
     private val openVideosExternally = booleanPreferencesKey("behaviour_open_videos_externally")
 
     fun getExitImmediately() = context.datastore.data.map {
@@ -832,16 +831,6 @@ class SettingsBehaviourImpl(
     fun setExitImmediately(value: Boolean) = viewModelScope.launch {
         context.datastore.edit {
             it[exitImmediately] = value
-        }
-    }
-
-    fun getRotateInViews() = context.datastore.data.map {
-        it[rotateInViews] != false
-    }
-
-    fun setRotateInViews(value: Boolean) = viewModelScope.launch {
-        context.datastore.edit {
-            it[rotateInViews] = value
         }
     }
 

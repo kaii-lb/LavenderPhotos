@@ -3,21 +3,9 @@ package com.kaii.photos.compose.single_photo
 import android.app.Activity
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
-import android.graphics.drawable.Drawable
 import android.os.Build
 import android.util.Log
 import android.view.Window
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.animateOffsetAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.calculateCentroid
-import androidx.compose.foundation.gestures.calculateCentroidSize
-import androidx.compose.foundation.gestures.calculatePan
-import androidx.compose.foundation.gestures.calculateRotation
-import androidx.compose.foundation.gestures.calculateZoom
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -26,11 +14,9 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -38,55 +24,52 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.TransformOrigin
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
-import com.bumptech.glide.Glide
+import coil3.request.CachePolicy
+import coil3.request.ImageRequest
+import coil3.request.allowHardware
+import coil3.request.crossfade
+import coil3.toBitmap
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.bumptech.glide.integration.compose.GlideImage
-import com.bumptech.glide.integration.compose.placeholder
-import com.bumptech.glide.load.DataSource
-import com.bumptech.glide.load.engine.DiskCacheStrategy
-import com.bumptech.glide.load.engine.GlideException
-import com.bumptech.glide.load.resource.bitmap.DownsampleStrategy
-import com.bumptech.glide.request.RequestListener
-import com.bumptech.glide.request.target.Target
+import com.github.panpf.zoomimage.CoilZoomAsyncImage
+import com.github.panpf.zoomimage.CoilZoomState
+import com.github.panpf.zoomimage.compose.coil.CoilComposeSubsamplingImageGenerator
+import com.github.panpf.zoomimage.compose.rememberZoomImageLogger
+import com.github.panpf.zoomimage.compose.subsampling.rememberSubsamplingState
+import com.github.panpf.zoomimage.compose.zoom.ScrollBarSpec
+import com.github.panpf.zoomimage.compose.zoom.ZoomableState
+import com.github.panpf.zoomimage.compose.zoom.rememberZoomableState
+import com.github.panpf.zoomimage.util.Logger
+import com.github.panpf.zoomimage.zoom.ScalesCalculator
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.setBarVisibility
-import com.kaii.photos.datastore.Behaviour
+import com.kaii.photos.compose.transformable
 import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.EncryptionManager
-import com.kaii.photos.helpers.OffsetSaver
+import com.kaii.photos.helpers.SingleViewConstants
 import com.kaii.photos.helpers.getSecuredCacheImageForFile
 import com.kaii.photos.helpers.motion_photo.rememberMotionPhoto
-import com.kaii.photos.helpers.rememberVibratorManager
-import com.kaii.photos.helpers.vibrateShort
+import com.kaii.photos.helpers.motion_photo.rememberMotionPhotoState
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getIv
 import com.kaii.photos.mediastore.getThumbnailIv
-import com.kaii.photos.mediastore.signature
+import com.kaii.photos.mediastore.stringSignature
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import kotlin.math.PI
 import kotlin.math.abs
-import kotlin.math.cos
-import kotlin.math.roundToInt
-import kotlin.math.sin
 
 private const val TAG = "com.kaii.photos.compose.single_photo.HorizontalImageList"
 
@@ -94,7 +77,6 @@ private const val TAG = "com.kaii.photos.compose.single_photo.HorizontalImageLis
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun HorizontalImageList(
-    currentMediaItem: MediaStoreData,
     groupedMedia: List<MediaStoreData>,
     state: PagerState,
     window: Window,
@@ -102,16 +84,6 @@ fun HorizontalImageList(
     isHidden: Boolean = false,
     isOpenWithView: Boolean = false
 ) {
-    val scale = rememberSaveable { mutableFloatStateOf(1f) }
-    val rotation = rememberSaveable { mutableFloatStateOf(0f) }
-    val offset = rememberSaveable(stateSaver = OffsetSaver) { mutableStateOf(Offset.Zero) }
-
-    LaunchedEffect(key1 = currentMediaItem) {
-        scale.floatValue = 1f
-        rotation.floatValue = 0f
-        offset.value = Offset.Zero
-    }
-
     val localConfig = LocalConfiguration.current
     var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
 
@@ -135,6 +107,8 @@ fun HorizontalImageList(
         lastVideoWasMuted.value = muteVideoOnStart && !isOpenWithView
     }
 
+    // Log.d(TAG, "CURRENT OFFSET ${zoomableState.contentTransformation.centroid} ${zoomableState.contentTransformation.offset}")
+
     HorizontalPager(
         state = state,
         verticalAlignment = Alignment.CenterVertically,
@@ -149,11 +123,25 @@ fun HorizontalImageList(
             }
         },
         snapPosition = SnapPosition.Center,
-        userScrollEnabled = (scale.floatValue == 1f && rotation.floatValue == 0f && offset.value == Offset.Zero) && !isTouchLocked.value,
+        userScrollEnabled = !isTouchLocked.value,
         modifier = Modifier
             .fillMaxHeight(1f)
     ) { index ->
         if (groupedMedia.isEmpty()) return@HorizontalPager
+
+        val zoomableState = rememberZoomableState().apply {
+            setScalesCalculator(
+                ScalesCalculator.dynamic(
+                    multiple = SingleViewConstants.MAX_ZOOM
+                )
+            )
+        }
+
+        if (state.settledPage != index) {
+            LaunchedEffect(Unit) {
+                zoomableState.reset()
+            }
+        }
 
         val shouldPlay = remember(state) {
             derivedStateOf {
@@ -179,14 +167,7 @@ fun HorizontalImageList(
                     shouldPlay = shouldPlay,
                     modifier = Modifier
                         .fillMaxSize(1f)
-                        .mediaModifier(
-                            scale = scale,
-                            rotation = rotation,
-                            offset = offset,
-                            window = window,
-                            appBarsVisible = appBarsVisible,
-                            item = mediaStoreItem
-                        )
+                        .transformable()
                 )
             }
         } else {
@@ -230,15 +211,13 @@ fun HorizontalImageList(
 
                 if (motionPhoto.isMotionPhoto.value) {
                     MotionPhotoView(
-                        motionPhoto = motionPhoto,
-                        releaseExoPlayer = null,
+                        state = rememberMotionPhotoState(uri = motionPhoto.uri),
+                        zoomableState = zoomableState,
                         glideImageView = @Composable { modifier ->
                             GlideView(
                                 model = if (isHidden) model else mediaStoreItem.uri,
                                 mediaStoreItem = mediaStoreItem,
-                                scale = scale,
-                                rotation = rotation,
-                                offset = offset,
+                                zoomableState = zoomableState,
                                 window = window,
                                 appBarsVisible = appBarsVisible,
                                 modifier = modifier
@@ -249,9 +228,7 @@ fun HorizontalImageList(
                     GlideView(
                         model = if (isHidden) model else mediaStoreItem.uri,
                         mediaStoreItem = mediaStoreItem,
-                        scale = scale,
-                        rotation = rotation,
-                        offset = offset,
+                        zoomableState = zoomableState,
                         window = window,
                         appBarsVisible = appBarsVisible
                     )
@@ -261,14 +238,24 @@ fun HorizontalImageList(
     }
 }
 
-@OptIn(ExperimentalGlideComposeApi::class)
+@Composable
+fun rememberCoilZoomState(
+    zoomableState: ZoomableState,
+    subsamplingImageGenerators: ImmutableList<CoilComposeSubsamplingImageGenerator>? = null,
+    logLevel: Logger.Level? = null,
+): CoilZoomState {
+    val logger: Logger = rememberZoomImageLogger(tag = "CoilZoomAsyncImage", level = logLevel)
+    val subsamplingState = rememberSubsamplingState(zoomableState)
+    return remember(logger, zoomableState, subsamplingState, subsamplingImageGenerators) {
+        CoilZoomState(logger, zoomableState, subsamplingState, subsamplingImageGenerators)
+    }
+}
+
 @Composable
 fun GlideView(
     model: Any?,
     mediaStoreItem: MediaStoreData,
-    scale: MutableFloatState,
-    rotation: MutableFloatState,
-    offset: MutableState<Offset>,
+    zoomableState: ZoomableState,
     window: Window,
     appBarsVisible: MutableState<Boolean>,
     modifier: Modifier = Modifier,
@@ -276,258 +263,55 @@ fun GlideView(
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    val windowSize = LocalWindowInfo.current.containerSize
+    val zoomState = rememberCoilZoomState(zoomableState)
 
-    GlideImage(
-        model = model,
-        contentDescription = "selected image",
-        contentScale = ContentScale.Fit,
-        failure = placeholder(R.drawable.broken_image),
-        modifier = modifier
-            .fillMaxSize(1f)
-            .mediaModifier(
-                scale = scale,
-                rotation = rotation,
-                offset = offset,
-                window = window,
-                appBarsVisible = appBarsVisible
-            )
-    ) {
-        it.signature(mediaStoreItem.signature())
-            .diskCacheStrategy(if (useCache) DiskCacheStrategy.ALL else DiskCacheStrategy.NONE)
-            .override(Target.SIZE_ORIGINAL)
-            .error(
-                Glide
-                    .with(context)
-                    .load(model)
-                    .diskCacheStrategy(if (useCache) DiskCacheStrategy.ALL else DiskCacheStrategy.NONE)
-                    .downsample(DownsampleStrategy.AT_LEAST) // try to downsample if image is not massive, will fail for really large images
-                    .thumbnail( // fallback of the fallback
-                        Glide
-                            .with(context)
-                            .load(model)
-                            .diskCacheStrategy(DiskCacheStrategy.ALL)
-                            .override(windowSize.width, windowSize.height)
-                    )
-            )
-            .listener(object : RequestListener<Drawable> {
-                override fun onLoadFailed(
-                    e: GlideException?,
-                    model: Any?,
-                    target: Target<Drawable?>?,
-                    isFirstResource: Boolean
-                ): Boolean {
-                    coroutineScope.launch(Dispatchers.Main) {
-                        window.colorMode = ActivityInfo.COLOR_MODE_DEFAULT
-                    }
-
-                    return false
-                }
-
-                override fun onResourceReady(
-                    resource: Drawable?,
-                    model: Any?,
-                    target: Target<Drawable?>?,
-                    dataSource: DataSource?,
-                    isFirstResource: Boolean
-                ): Boolean {
-                    val activity = (context as Activity)
-
-                    if (resource == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE || !activity.display.isHdr) return false
-
-                    val isHdr = resource.toBitmap(width = 128, height = 128).hasGainmap()
-                    coroutineScope.launch(Dispatchers.Main) {
-                        if (isHdr) {
-                            window.colorMode = ActivityInfo.COLOR_MODE_HDR
-                        } else {
+    CoilZoomAsyncImage(
+        model =
+            ImageRequest.Builder(context)
+                .data(model)
+                .crossfade(true)
+                .allowHardware(true)
+                .diskCachePolicy(if (useCache) CachePolicy.ENABLED else CachePolicy.DISABLED)
+                .diskCacheKey(mediaStoreItem.stringSignature())
+                .memoryCacheKey(mediaStoreItem.stringSignature())
+                .listener(
+                    onSuccess = { _, image ->
+                        val activity = (context as Activity)
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE && activity.display.isHdr) {
+                            val isHdr = image.image.toBitmap(width = 1, height = 1).hasGainmap()
+                            coroutineScope.launch(Dispatchers.Main) {
+                                if (isHdr) {
+                                    window.colorMode = ActivityInfo.COLOR_MODE_HDR
+                                } else {
+                                    window.colorMode = ActivityInfo.COLOR_MODE_DEFAULT
+                                }
+                            }
+                        }
+                    },
+                    onError = { _, _ ->
+                        coroutineScope.launch(Dispatchers.Main) {
                             window.colorMode = ActivityInfo.COLOR_MODE_DEFAULT
                         }
                     }
-
-                    return false
-                }
-            })
-    }
-}
-
-@Composable
-fun Modifier.mediaModifier(
-    scale: MutableFloatState,
-    rotation: MutableFloatState,
-    offset: MutableState<Offset>,
-    window: Window,
-    appBarsVisible: MutableState<Boolean>,
-    item: MediaStoreData? = null,
-): Modifier {
-    val vibratorManager = rememberVibratorManager()
-    var isDoubleTapToScaling by remember { mutableStateOf(false) }
-
-    val mainViewModel = LocalMainViewModel.current
-    val rotateInViews by mainViewModel.settings.Behaviour.getRotateInViews()
-        .collectAsStateWithLifecycle(initialValue = true)
-
-    val animatedScale by animateFloatAsState(
-        targetValue = scale.floatValue,
-        animationSpec = tween(
-            durationMillis = if (isDoubleTapToScaling) 350 else 0
-        )
-    )
-    val animatedRotation by animateFloatAsState(
-        targetValue = rotation.floatValue,
-        animationSpec = tween(
-            durationMillis = if (isDoubleTapToScaling) 350 else 0
-        )
-    )
-    val animatedOffset by animateOffsetAsState(
-        targetValue = offset.value,
-        animationSpec = tween(
-            durationMillis = if (isDoubleTapToScaling) 350 else 0
-        )
-    )
-
-    LaunchedEffect(isDoubleTapToScaling) {
-        if (isDoubleTapToScaling) {
-            delay(350)
-            isDoubleTapToScaling = false
-        }
-    }
-
-    return this.then(
-        Modifier
-            .graphicsLayer(
-                scaleX = animatedScale,
-                scaleY = animatedScale,
-                rotationZ = animatedRotation,
-                translationX = -animatedOffset.x * animatedScale,
-                translationY = -animatedOffset.y * animatedScale,
-                transformOrigin = TransformOrigin(0f, 0f)
-            )
-            .pointerInput(Unit) {
-                if (item?.type != MediaType.Video) {
-                    detectTapGestures(
-                        onTap = {
-                            setBarVisibility(
-                                visible = !appBarsVisible.value,
-                                window = window
-                            ) {
-                                appBarsVisible.value = it
-                            }
-                        },
-
-                        onDoubleTap = { clickOffset ->
-                            isDoubleTapToScaling = true
-                            if (scale.floatValue == 1f && offset.value == Offset.Zero) {
-                                scale.floatValue = 2f
-                                rotation.floatValue = 0f
-                                offset.value = clickOffset / scale.floatValue
-                            } else {
-                                scale.floatValue = 1f
-                                rotation.floatValue = 0f
-                                offset.value = Offset.Zero
-                            }
-                        }
-                    )
-                }
+                )
+                .build(),
+        contentDescription = mediaStoreItem.displayName,
+        contentScale = ContentScale.Fit,
+        alignment = Alignment.Center,
+        fallback = painterResource(R.drawable.broken_image),
+        zoomState = zoomState,
+        scrollBar = ScrollBarSpec(Color.Transparent, 0.dp, 0.dp),
+        modifier = modifier
+            .fillMaxSize(),
+        onTap = {
+            setBarVisibility(
+                visible = !appBarsVisible.value,
+                window = window
+            ) {
+                appBarsVisible.value = it
             }
-            .pointerInput(Unit) {
-                awaitEachGesture {
-                    var localRotation = 0f
-                    var localZoom = 1f
-                    var localOffset = Offset.Zero
-                    var pastTouchSlop = false
-                    var panZoomLock = false
-                    val touchSlop = viewConfiguration.touchSlop
-                    val maxZoom = 10f
-
-                    awaitFirstDown()
-
-                    do {
-                        val event = awaitPointerEvent()
-
-                        // ignore gesture if it is already consumed or user is not using two fingers
-                        val canceled =
-                            event.changes.any { it.isConsumed }
-
-                        if (!canceled) {
-                            val zoomChange = event.calculateZoom()
-                            val rotationChange = event.calculateRotation()
-                            val offsetChange = event.calculatePan()
-
-                            if (!pastTouchSlop) {
-                                localZoom *= zoomChange
-                                localRotation += rotationChange
-                                localOffset += offsetChange
-
-                                val centroidSize = event.calculateCentroidSize()
-
-                                // were basically getting the amount of change here
-                                val zoomMotion = abs(1 - localZoom) * centroidSize
-                                val rotationMotion =
-                                    abs(localRotation * PI.toFloat() * centroidSize / 180f)
-                                val offsetMotion = localOffset.getDistance()
-
-                                // calculate the amount of movement/zoom/rotation happening and if its past a certain point
-                                // then go ahead and try to apply the gestures
-                                if (zoomMotion > touchSlop || rotationMotion > touchSlop || offsetMotion > touchSlop) {
-                                    pastTouchSlop = true
-                                    panZoomLock = rotationMotion < touchSlop
-                                }
-                            }
-
-                            if (pastTouchSlop) {
-                                val centroid = event.calculateCentroid()
-
-                                // ignore rotation if user is moving or zooming, QOL thing
-                                val actualRotation = if (panZoomLock || !rotateInViews) 0f else rotationChange
-
-                                if (actualRotation != 0f || zoomChange != 1f || offsetChange != Offset.Zero) {
-                                    val oldScale = scale.floatValue
-
-                                    if (panZoomLock) {
-                                        scale.floatValue =
-                                            (scale.floatValue * zoomChange).coerceIn(1f, maxZoom)
-                                    }
-
-                                    val nextRotation = rotation.floatValue + actualRotation
-
-                                    val closestPoint = (nextRotation / 360f).roundToInt() * 360f
-                                    val delta = abs(closestPoint - nextRotation)
-                                    if (
-                                        delta < 2.5f &&
-                                        scale.floatValue == 1f &&
-                                        rotation.floatValue != closestPoint
-                                    ) {
-                                        vibratorManager.vibrateShort()
-                                        rotation.floatValue = closestPoint
-                                    } else if (delta > 2.5f || scale.floatValue != 1f) {
-                                        rotation.floatValue = nextRotation
-                                    }
-
-
-                                    val isRotating = actualRotation != 0f
-                                    val counterOffset =
-                                        if (isRotating) offsetChange else Offset.Zero
-                                    // compensate for change of visual center of image and offset by that
-                                    // this makes it "cleaner" to scale since the image isn't bouncing around when the user moves or scales it
-                                    offset.value =
-                                        if (scale.floatValue == 1f && rotation.floatValue == 0f) Offset.Zero else
-                                            (offset.value + centroid / oldScale).rotateBy(
-                                                actualRotation
-                                            ) - (centroid / scale.floatValue + (offsetChange - counterOffset).rotateBy(
-                                                rotation.floatValue + actualRotation
-                                            ))
-                                }
-
-                                if (offset.value != Offset.Zero || event.changes.size == 2 || scale.floatValue != 1f) {
-                                    event.changes.forEach {
-                                        it.consume()
-                                    }
-                                }
-                            }
-                        }
-                    } while (!canceled && event.changes.any { it.pressed })
-                }
-            })
+        }
+    )
 }
 
 /** deals with grouped media modifications, in this case removing stuff*/
@@ -553,15 +337,4 @@ fun sortOutMediaMods(
             state.animateScrollToPage((scrollIndex).coerceIn(0, size))
         }
     }
-}
-
-fun Offset.rotateBy(angle: Float): Offset {
-    val angleInRadians = angle * PI / 180
-    val cos = cos(angleInRadians)
-    val sin = sin(angleInRadians)
-
-    return Offset(
-        (x * cos - y * sin).toFloat(),
-        (x * sin + y * cos).toFloat()
-    )
 }

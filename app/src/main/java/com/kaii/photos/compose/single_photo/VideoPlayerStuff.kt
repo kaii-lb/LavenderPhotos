@@ -409,7 +409,8 @@ fun VideoPlayer(
     isTouchLocked: MutableState<Boolean>,
     window: Window,
     shouldPlay: State<Boolean>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onCreateExoPlayer: (ExoPlayer) -> Unit = {}
 ) {
     val context = LocalContext.current
     val navController = LocalNavController.current
@@ -485,7 +486,7 @@ fun VideoPlayer(
         }
     }
 
-    val isPlaying = rememberSaveable { mutableStateOf(false) }
+    val isPlaying = rememberSaveable { mutableStateOf(shouldPlay.value && shouldAutoPlay) }
     val lastIsPlaying = rememberSaveable { mutableStateOf(isPlaying.value) }
 
     val isMuted = rememberSaveable(lastWasMuted.value) { mutableStateOf(lastWasMuted.value) }
@@ -495,11 +496,13 @@ fun VideoPlayer(
     val duration = rememberSaveable { mutableFloatStateOf(0f) }
 
     val exoPlayer = rememberExoPlayerWithLifeCycle(
-        videoSource,
-        item.absolutePath,
-        isPlaying,
-        duration,
-        currentVideoPosition
+        videoSource = videoSource,
+        absolutePath = item.absolutePath,
+        isPlaying = isPlaying,
+        duration = duration,
+        currentVideoPosition = currentVideoPosition,
+        onPlaybackStateChanged = {},
+        onCreateExoPlayer = onCreateExoPlayer
     )
     val playerView = rememberPlayerView(exoPlayer, context as Activity, item.absolutePath)
 
@@ -996,7 +999,8 @@ fun rememberExoPlayerWithLifeCycle(
     isPlaying: MutableState<Boolean>,
     duration: MutableFloatState,
     currentVideoPosition: MutableFloatState,
-    onPlaybackStateChanged: (state: Int) -> Unit = {}
+    onPlaybackStateChanged: (state: Int) -> Unit = {},
+    onCreateExoPlayer: (ExoPlayer) -> Unit
 ): ExoPlayer {
     val context = LocalContext.current
 
@@ -1004,11 +1008,12 @@ fun rememberExoPlayerWithLifeCycle(
         createExoPlayer(
             videoSource,
             context,
-            isPlaying,
             currentVideoPosition,
             duration,
             onPlaybackStateChanged
-        )
+        ).also {
+            onCreateExoPlayer(it)
+        }
     }
 
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -1030,7 +1035,6 @@ fun rememberExoPlayerWithLifeCycle(
 fun createExoPlayer(
     videoSource: Uri,
     context: Context,
-    isPlaying: MutableState<Boolean>,
     currentVideoPosition: MutableFloatState,
     duration: MutableFloatState,
     onPlaybackStateChanged: (state: Int) -> Unit
@@ -1100,12 +1104,6 @@ fun createExoPlayer(
         ) {
             super.onPositionDiscontinuity(oldPosition, newPosition, reason)
             currentVideoPosition.floatValue = newPosition.positionMs / 1000f
-        }
-
-        override fun onIsPlayingChanged(playerIsPlaying: Boolean) {
-            super.onIsPlayingChanged(playerIsPlaying)
-
-            isPlaying.value = playerIsPlaying
         }
     }
     exoPlayer.addListener(listener)

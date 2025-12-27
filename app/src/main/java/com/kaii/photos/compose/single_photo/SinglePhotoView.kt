@@ -80,6 +80,7 @@ import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.exif.getDateTakenForMedia
 import com.kaii.photos.helpers.getParentFromPath
+import com.kaii.photos.helpers.motion_photo.rememberMotionPhoto
 import com.kaii.photos.helpers.moveImageToLockedFolder
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.rememberVibratorManager
@@ -421,7 +422,6 @@ fun SinglePhotoViewCommon(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             HorizontalImageList(
-                currentMediaItem = currentMediaItem.value,
                 groupedMedia = groupedMedia.value,
                 state = state,
                 window = window,
@@ -614,10 +614,12 @@ private fun BottomBar(
                     }
                 )
 
+                val motionPhoto = rememberMotionPhoto(uri = currentItem.uri)
                 IconButton(
                     onClick = {
                         showMoveToSecureFolderDialog.value = true
-                    }
+                    },
+                    enabled = !motionPhoto.isMotionPhoto.value
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.secure_folder),

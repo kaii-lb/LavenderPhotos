@@ -165,7 +165,7 @@ fun SharedEditorFilterContent(
         ) {
             Text(
                 text = stringResource(id = if (original != last) R.string.filter_select else R.string.filter_selected),
-                fontSize = TextUnit(TextStylingConstants.Companion.MEDIUM_TEXT_SIZE, TextUnitType.Companion.Sp)
+                fontSize = TextUnit(TextStylingConstants.MEDIUM_TEXT_SIZE, TextUnitType.Companion.Sp)
             )
         }
     }

@@ -130,6 +130,8 @@ dependencies {
     implementation("io.github.pdvrieze.xmlutil:core:0.91.3")
     implementation("io.github.pdvrieze.xmlutil:serialization:0.91.3")
 
+    implementation("io.github.panpf.zoomimage:zoomimage-compose-coil3:1.4.0")
+
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")

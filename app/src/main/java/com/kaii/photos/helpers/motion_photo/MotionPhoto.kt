@@ -9,7 +9,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.exifinterface.media.ExifInterface
-import androidx.media3.common.MimeTypes
 import androidx.media3.common.util.UnstableApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -22,6 +21,8 @@ import nl.adaptivity.xmlutil.serialization.XmlParsingException
 
 // private const val TAG = "com.kaii.photos.helpers.MotionPhoto"
 
+
+// TODO: support secure folder
 @OptIn(UnstableApi::class)
 class MotionPhoto(
     val uri: Uri,
@@ -44,9 +45,6 @@ class MotionPhoto(
     @kotlin.OptIn(ExperimentalXmlUtilApi::class)
     private fun getXmpData(): XmpMeta? {
         try {
-            val isVideo = MimeTypes.isVideo(context.contentResolver.getType(uri))
-            if (isVideo) return null
-
             val inputStream = context.contentResolver.openInputStream(uri) ?: return null
             val exifInterface = ExifInterface(inputStream)
 
@@ -80,7 +78,7 @@ fun rememberMotionPhoto(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    return remember {
+    return remember(uri) {
         MotionPhoto(
             uri = uri,
             context = context,

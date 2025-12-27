@@ -122,12 +122,14 @@ fun VideoEditor(
         absolutePath = absolutePath,
         isPlaying = isPlaying,
         duration = duration,
-        currentVideoPosition = currentVideoPosition
-    ) { playbackState ->
-        if (exoPlayerLoading) {
-            exoPlayerLoading = playbackState == ExoPlayer.STATE_BUFFERING
-        }
-    }
+        currentVideoPosition = currentVideoPosition,
+        onPlaybackStateChanged = { playbackState ->
+            if (exoPlayerLoading) {
+                exoPlayerLoading = playbackState == ExoPlayer.STATE_BUFFERING
+            }
+        },
+        onCreateExoPlayer = {}
+    )
 
     val videoEditingState = rememberVideoEditingState(
         duration = duration.floatValue

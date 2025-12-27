@@ -125,6 +125,7 @@ data class MediaStoreData(
 }
 
 fun MediaStoreData.signature() = ObjectKey(dateTaken + dateModified + absolutePath.hashCode() + id + mimeType.hashCode())
+fun MediaStoreData.stringSignature() = (dateTaken + dateModified + absolutePath.hashCode() + id + mimeType.hashCode()).toString()
 
 /** The type of data. */
 enum class MediaType {

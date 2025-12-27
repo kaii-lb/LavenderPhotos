@@ -36,7 +36,6 @@ class MotionPhotoState(
     val exoPlayer = createExoPlayer(
         videoSource = uri,
         context = context,
-        isPlaying = isPlaying,
         currentVideoPosition = currentVideoPosition,
         duration = duration,
         onPlaybackStateChanged = {}

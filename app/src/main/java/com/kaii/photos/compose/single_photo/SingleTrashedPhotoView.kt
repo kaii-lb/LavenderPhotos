@@ -242,7 +242,6 @@ fun SingleTrashedPhotoView(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             HorizontalImageList(
-                currentMediaItem = currentMediaItem,
                 groupedMedia = groupedMedia.value,
                 state = state,
                 window = window,
