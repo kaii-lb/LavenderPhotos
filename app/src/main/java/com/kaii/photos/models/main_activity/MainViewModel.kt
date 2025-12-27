@@ -50,6 +50,25 @@ class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMode
         )
     }
 
+    // READ_MEDIA_VIDEO isn't necessary as its bundled with READ_MEDIA_IMAGES
+    private val permList =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            listOf(
+                Manifest.permission.READ_MEDIA_IMAGES,
+                Manifest.permission.READ_MEDIA_VIDEO,
+                Manifest.permission.MANAGE_MEDIA
+            )
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            listOf(
+                Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.MANAGE_MEDIA
+            )
+        } else {
+            listOf(
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            )
+        }
+
     private val _groupedMedia = MutableStateFlow<List<MediaStoreData>?>(null)
     val groupedMedia: Flow<List<MediaStoreData>?> = _groupedMedia.asStateFlow()
 
@@ -188,25 +207,6 @@ class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMode
     }
 
     fun startupPermissionCheck(context: Context) {
-        // READ_MEDIA_VIDEO isn't necessary as its bundled with READ_MEDIA_IMAGES
-        val permList =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                listOf(
-                    Manifest.permission.READ_MEDIA_IMAGES,
-                    Manifest.permission.READ_MEDIA_VIDEO,
-                    Manifest.permission.MANAGE_MEDIA
-                )
-            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                listOf(
-                    Manifest.permission.READ_EXTERNAL_STORAGE,
-                    Manifest.permission.MANAGE_MEDIA
-                )
-            } else {
-                listOf(
-                    Manifest.permission.READ_EXTERNAL_STORAGE
-                )
-            }
-
         permList.forEach { perm ->
             val granted = when (perm) {
                 Manifest.permission.MANAGE_EXTERNAL_STORAGE -> {
@@ -232,10 +232,6 @@ class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMode
 
             Log.d(TAG, "Permission $perm has been granted $granted")
         }
-
-        permissionQueue.forEach {
-            Log.d(TAG, "Permission queue has item $it")
-        }
     }
 
     fun onPermissionResult(
@@ -253,10 +249,6 @@ class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMode
             permissionQueue.all { it == Manifest.permission.MANAGE_MEDIA }
         } else {
             false
-        }
-
-        permissionQueue.forEach {
-            Log.d(TAG, "Can pass permission queue has item $it")
         }
 
         return permissionQueue.isEmpty() || manageMedia

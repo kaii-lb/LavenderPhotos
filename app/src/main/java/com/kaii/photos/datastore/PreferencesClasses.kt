@@ -2,7 +2,6 @@ package com.kaii.photos.datastore
 
 import android.content.Context
 import android.util.Log
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.byteArrayPreferencesKey
 import androidx.datastore.preferences.core.edit
@@ -475,15 +474,6 @@ class SettingsLookAndFeelImpl(
         context.datastore.edit {
             it[followDarkModeKey] = value
         }
-
-        AppCompatDelegate.setDefaultNightMode(
-            when (value) {
-                1, 3 -> AppCompatDelegate.MODE_NIGHT_YES
-                2 -> AppCompatDelegate.MODE_NIGHT_NO
-
-                else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
-            }
-        )
     }
 
     fun getDisplayDateFormat(): Flow<DisplayDateFormat> =

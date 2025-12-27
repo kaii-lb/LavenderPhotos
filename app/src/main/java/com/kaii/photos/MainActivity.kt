@@ -10,7 +10,6 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.tween
@@ -64,6 +63,7 @@ import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -159,7 +159,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlin.io.path.Path
 import kotlin.reflect.typeOf
@@ -191,12 +193,27 @@ class MainActivity : ComponentActivity() {
 
         val applicationDatabase = MediaDatabase.getInstance(applicationContext)
 
+        // TODO: check if doable for coil
+        // TODO: move to coil only
         Glide.get(this).setMemoryCategory(MemoryCategory.HIGH)
 
+        val mainViewModel: MainViewModel = ViewModelProvider.create(
+            store = viewModelStore,
+            factory = MainViewModelFactory(applicationContext, emptyList())
+        )[MainViewModel::class]
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            mainViewModel.settings.Permissions.setIsMediaManager(MediaStore.canManageMedia(applicationContext))
+        }
+
+        // Manifest.permission.MANAGE_MEDIA is optional
+        mainViewModel.startupPermissionCheck(applicationContext)
+
+        val initialFollowDarkTheme = runBlocking {
+            mainViewModel.settings.LookAndFeel.getFollowDarkMode().first()
+        }
+
         setContent {
-            val mainViewModel: MainViewModel = viewModel(
-                factory = MainViewModelFactory(applicationContext, emptyList())
-            )
             immichViewModel = viewModel(
                 factory = ImmichViewModelFactory(
                     application = application,
@@ -205,28 +222,15 @@ class MainActivity : ComponentActivity() {
                 )
             )
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                mainViewModel.settings.Permissions.setIsMediaManager(MediaStore.canManageMedia(applicationContext))
-            }
-
             val continueToApp = remember {
-                // Manifest.permission.MANAGE_MEDIA is optional
-                mainViewModel.startupPermissionCheck(applicationContext)
                 mutableStateOf(
                     mainViewModel.checkCanPass()
                 )
             }
 
-            val initial =
-                when (AppCompatDelegate.getDefaultNightMode()) {
-                    AppCompatDelegate.MODE_NIGHT_YES -> 1
-                    AppCompatDelegate.MODE_NIGHT_NO -> 2
-
-                    else -> 0
-                }
             val followDarkTheme by mainViewModel.settings.LookAndFeel.getFollowDarkMode()
                 .collectAsStateWithLifecycle(
-                    initialValue = initial
+                    initialValue = initialFollowDarkTheme
                 )
 
             PhotosTheme(
