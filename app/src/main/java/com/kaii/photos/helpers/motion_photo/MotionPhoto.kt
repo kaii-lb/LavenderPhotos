@@ -2,6 +2,7 @@ package com.kaii.photos.helpers.motion_photo
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.annotation.OptIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -19,8 +20,9 @@ import nl.adaptivity.xmlutil.ExperimentalXmlUtilApi
 import nl.adaptivity.xmlutil.serialization.UnknownChildHandler
 import nl.adaptivity.xmlutil.serialization.XML
 import nl.adaptivity.xmlutil.serialization.XmlParsingException
+import java.io.FileNotFoundException
 
-// private const val TAG = "com.kaii.photos.helpers.MotionPhoto"
+private const val TAG = "com.kaii.photos.helpers.MotionPhoto"
 
 // TODO: support secure folder
 @OptIn(UnstableApi::class)
@@ -69,6 +71,10 @@ class MotionPhoto(
                 return xml.decodeFromString(serializer, xmpData)
             }
         } catch (_: XmlParsingException) {}
+        catch (e: FileNotFoundException) {
+            Log.d(TAG, e.message.toString())
+            e.printStackTrace()
+        }
 
         return null
     }
