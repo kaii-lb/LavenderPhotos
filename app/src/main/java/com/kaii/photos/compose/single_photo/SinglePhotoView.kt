@@ -7,7 +7,6 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -22,7 +21,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.BottomAppBarDefaults.windowInsets
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -70,7 +68,6 @@ import com.kaii.photos.compose.dialogs.SinglePhotoInfoDialog
 import com.kaii.photos.database.entities.MediaEntity
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.Permissions
-import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.Screens
@@ -145,7 +142,7 @@ fun SinglePhotoView(
         }
     }.collectAsStateWithLifecycle()
 
-    val startIndex = remember {
+    val startIndex = remember(mediaStoreData.value.isEmpty()) {
         mediaStoreData.value.indexOfFirst { item ->
             item.id == mediaItemId
         }
@@ -173,20 +170,10 @@ fun SinglePhotoViewCommon(
     isOpenWithDefaultView: Boolean,
     previousMediaItemId: Long? // TODO: reimplement scroll to edited image
 ) {
-    var currentIndex by rememberSaveable {
+    var currentIndex by rememberSaveable(startIndex) {
         mutableIntStateOf(
             startIndex
         )
-    }
-
-    val state = rememberPagerState(
-        initialPage = startIndex
-    ) {
-        mediaStoreData.value.size
-    }
-
-    LaunchedEffect(key1 = state.settledPage) {
-        currentIndex = state.settledPage
     }
 
     val appBarsVisible = remember { mutableStateOf(true) }
@@ -197,7 +184,7 @@ fun SinglePhotoViewCommon(
     LaunchedEffect(currentIndex) {
         withContext(Dispatchers.IO) {
             mediaItem =
-                if (currentIndex in 0..mediaStoreData.value.size) {
+                if (currentIndex in 0..mediaStoreData.value.size && mediaStoreData.value.isNotEmpty()) {
                     mediaStoreData.value[currentIndex]
                 } else {
                     MediaStoreData(
@@ -253,7 +240,6 @@ fun SinglePhotoViewCommon(
                 visible = appBarsVisible.value,
                 currentItem = mediaItem,
                 groupedMedia = mediaStoreData,
-                state = state,
                 showEditingView = {
                     mainViewModel.launch {
                         setBarVisibility(
@@ -311,12 +297,24 @@ fun SinglePhotoViewCommon(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            HorizontalImageList(
-                groupedMedia = mediaStoreData.value,
-                state = state,
-                window = window,
-                appBarsVisible = appBarsVisible
-            )
+            if (mediaStoreData.value.isNotEmpty()) {
+                val state = rememberPagerState(
+                    initialPage = startIndex
+                ) {
+                    mediaStoreData.value.size
+                }
+
+                LaunchedEffect(key1 = state.settledPage) {
+                    currentIndex = state.settledPage
+                }
+
+                HorizontalImageList(
+                    groupedMedia = mediaStoreData.value,
+                    state = state,
+                    window = window,
+                    appBarsVisible = appBarsVisible
+                )
+            }
         }
     }
 }
@@ -327,7 +325,6 @@ private fun BottomBar(
     visible: Boolean,
     currentItem: MediaStoreData,
     groupedMedia: State<List<MediaStoreData>>,
-    state: PagerState,
     showEditingView: () -> Unit,
     onZeroItemsLeft: () -> Unit
 ) {
@@ -478,12 +475,6 @@ private fun BottomBar(
                     shouldRun = moveToSecureFolder,
                     onGranted = {
                         mainViewModel.launch(Dispatchers.IO) {
-                            state.animateScrollToPage(
-                                page = groupedMedia.value.indexOf(currentItem) + 1,
-                                animationSpec = tween(
-                                    durationMillis = AnimationConstants.DURATION
-                                )
-                            )
                             moveImageToLockedFolder(
                                 list = listOf(currentItem),
                                 context = context,

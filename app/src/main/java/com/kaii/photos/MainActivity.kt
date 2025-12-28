@@ -73,11 +73,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import androidx.navigation.toRoute
-import coil3.ImageLoader
-import coil3.compose.setSingletonImageLoaderFactory
 import com.bumptech.glide.Glide
 import com.bumptech.glide.MemoryCategory
-import com.github.awxkee.avifcoil.decoder.HeifDecoder
 import com.kaii.lavender.snackbars.LavenderSnackbarBox
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
@@ -218,14 +215,6 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            setSingletonImageLoaderFactory { context ->
-                ImageLoader.Builder(context)
-                    .components {
-                        add(HeifDecoder.Factory())
-                    }
-                    .build()
-            }
-
             immichViewModel = viewModel(
                 factory = ImmichViewModelFactory(
                     application = application,

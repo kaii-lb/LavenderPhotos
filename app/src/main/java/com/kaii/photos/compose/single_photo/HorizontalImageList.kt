@@ -3,9 +3,12 @@ package com.kaii.photos.compose.single_photo
 import android.app.Activity
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import android.os.Build
 import android.util.Log
 import android.view.Window
+import androidx.compose.animation.core.snap
 import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -24,30 +27,21 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
-import coil3.request.CachePolicy
-import coil3.request.ImageRequest
-import coil3.request.allowHardware
-import coil3.request.crossfade
-import coil3.toBitmap
+import com.bumptech.glide.Glide
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.github.panpf.zoomimage.CoilZoomAsyncImage
-import com.github.panpf.zoomimage.CoilZoomState
-import com.github.panpf.zoomimage.compose.coil.CoilComposeSubsamplingImageGenerator
-import com.github.panpf.zoomimage.compose.rememberZoomImageLogger
-import com.github.panpf.zoomimage.compose.subsampling.rememberSubsamplingState
-import com.github.panpf.zoomimage.compose.zoom.ScrollBarSpec
-import com.github.panpf.zoomimage.compose.zoom.ZoomableState
-import com.github.panpf.zoomimage.compose.zoom.rememberZoomableState
-import com.github.panpf.zoomimage.util.Logger
-import com.github.panpf.zoomimage.zoom.ScalesCalculator
+import com.bumptech.glide.load.DataSource
+import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.bumptech.glide.load.engine.GlideException
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
+import com.bumptech.glide.request.RequestListener
+import com.bumptech.glide.request.target.Target
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.setBarVisibility
@@ -62,12 +56,17 @@ import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getIv
 import com.kaii.photos.mediastore.getThumbnailIv
-import com.kaii.photos.mediastore.stringSignature
-import kotlinx.collections.immutable.ImmutableList
+import com.kaii.photos.mediastore.signature
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import me.saket.telephoto.zoomable.DoubleClickToZoomListener
+import me.saket.telephoto.zoomable.ZoomSpec
+import me.saket.telephoto.zoomable.ZoomableState
+import me.saket.telephoto.zoomable.glide.ZoomableGlideImage
+import me.saket.telephoto.zoomable.rememberZoomableImageState
+import me.saket.telephoto.zoomable.rememberZoomableState
 import java.io.File
 import kotlin.math.abs
 
@@ -107,8 +106,6 @@ fun HorizontalImageList(
         lastVideoWasMuted.value = muteVideoOnStart && !isOpenWithView
     }
 
-    // Log.d(TAG, "CURRENT OFFSET ${zoomableState.contentTransformation.centroid} ${zoomableState.contentTransformation.offset}")
-
     HorizontalPager(
         state = state,
         verticalAlignment = Alignment.CenterVertically,
@@ -130,17 +127,13 @@ fun HorizontalImageList(
     ) { index ->
         if (groupedMedia.isEmpty()) return@HorizontalPager
 
-        val zoomableState = rememberZoomableState().apply {
-            setScalesCalculator(
-                ScalesCalculator.dynamic(
-                    multiple = SingleViewConstants.MAX_ZOOM
-                )
-            )
-        }
+        val zoomableState = rememberGlideZoomableState()
 
         if (state.settledPage != index) {
             LaunchedEffect(Unit) {
-                zoomableState.reset()
+                zoomableState.resetZoom(
+                    animationSpec = snap()
+                )
             }
         }
 
@@ -217,7 +210,7 @@ fun HorizontalImageList(
                         glideImageView = @Composable { modifier ->
                             GlideView(
                                 model = if (isHidden) model else mediaStoreItem.uri,
-                                mediaStoreItem = mediaStoreItem,
+                                item = mediaStoreItem,
                                 zoomableState = zoomableState,
                                 window = window,
                                 appBarsVisible = appBarsVisible,
@@ -228,10 +221,12 @@ fun HorizontalImageList(
                 } else {
                     GlideView(
                         model = if (isHidden) model else mediaStoreItem.uri,
-                        mediaStoreItem = mediaStoreItem,
+                        item = mediaStoreItem,
                         zoomableState = zoomableState,
                         window = window,
-                        appBarsVisible = appBarsVisible
+                        appBarsVisible = appBarsVisible,
+                        modifier = Modifier
+                            .align(Alignment.Center)
                     )
                 }
             }
@@ -240,22 +235,18 @@ fun HorizontalImageList(
 }
 
 @Composable
-fun rememberCoilZoomState(
-    zoomableState: ZoomableState,
-    subsamplingImageGenerators: ImmutableList<CoilComposeSubsamplingImageGenerator>? = null,
-    logLevel: Logger.Level? = null,
-): CoilZoomState {
-    val logger: Logger = rememberZoomImageLogger(tag = "CoilZoomAsyncImage", level = logLevel)
-    val subsamplingState = rememberSubsamplingState(zoomableState)
-    return remember(logger, zoomableState, subsamplingState, subsamplingImageGenerators) {
-        CoilZoomState(logger, zoomableState, subsamplingState, subsamplingImageGenerators)
-    }
+fun rememberGlideZoomableState(): ZoomableState {
+    return rememberZoomableState(
+        zoomSpec = ZoomSpec(
+            maxZoomFactor = SingleViewConstants.MAX_ZOOM
+        )
+    )
 }
 
 @Composable
 fun GlideView(
     model: Any?,
-    mediaStoreItem: MediaStoreData,
+    item: MediaStoreData,
     zoomableState: ZoomableState,
     window: Window,
     appBarsVisible: MutableState<Boolean>,
@@ -264,55 +255,78 @@ fun GlideView(
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    val zoomState = rememberCoilZoomState(zoomableState)
+    val state = rememberZoomableImageState(zoomableState = zoomableState)
+    val windowSize = LocalWindowInfo.current.containerSize / 4
 
-    CoilZoomAsyncImage(
-        model =
-            ImageRequest.Builder(context)
-                .data(model)
-                .crossfade(true)
-                .allowHardware(true)
-                .diskCachePolicy(if (useCache) CachePolicy.ENABLED else CachePolicy.DISABLED)
-                .diskCacheKey(mediaStoreItem.stringSignature())
-                .memoryCacheKey(mediaStoreItem.stringSignature())
-                .listener(
-                    onSuccess = { _, image ->
-                        val activity = (context as Activity)
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE && activity.display.isHdr) {
-                            val isHdr = image.image.toBitmap(width = 1, height = 1).hasGainmap()
-                            coroutineScope.launch(Dispatchers.Main) {
-                                if (isHdr) {
-                                    window.colorMode = ActivityInfo.COLOR_MODE_HDR
-                                } else {
-                                    window.colorMode = ActivityInfo.COLOR_MODE_DEFAULT
-                                }
-                            }
-                        }
-                    },
-                    onError = { _, _ ->
-                        coroutineScope.launch(Dispatchers.Main) {
-                            window.colorMode = ActivityInfo.COLOR_MODE_DEFAULT
-                        }
-                    }
-                )
-                .build(),
-        contentDescription = mediaStoreItem.displayName,
-        contentScale = ContentScale.Fit,
-        alignment = Alignment.Center,
-        fallback = painterResource(R.drawable.broken_image),
-        zoomState = zoomState,
-        scrollBar = ScrollBarSpec(Color.Transparent, 0.dp, 0.dp),
-        modifier = modifier
-            .fillMaxSize(),
-        onTap = {
+    ZoomableGlideImage(
+        model = model,
+        contentDescription = item.displayName,
+        state = state,
+        onClick = {
             setBarVisibility(
                 visible = !appBarsVisible.value,
                 window = window
             ) {
                 appBarsVisible.value = it
             }
-        }
-    )
+        },
+        onDoubleClick = DoubleClickToZoomListener.cycle(
+            maxZoomFactor = SingleViewConstants.HALF_ZOOM
+        ),
+        modifier = modifier
+            .fillMaxSize()
+    ) {
+        it.signature(item.signature())
+            .diskCacheStrategy(if (useCache) DiskCacheStrategy.ALL else DiskCacheStrategy.NONE)
+            .error(R.drawable.broken_image)
+            .thumbnail(
+                Glide.with(context)
+                    .load(model)
+                    .signature(item.signature())
+                    .override(windowSize.width, windowSize.height)
+            )
+            .transition(withCrossFade(1000))
+            .listener(object : RequestListener<Drawable> {
+                override fun onLoadFailed(
+                    e: GlideException?,
+                    model: Any?,
+                    target: Target<Drawable?>?,
+                    isFirstResource: Boolean
+                ): Boolean {
+                    coroutineScope.launch(Dispatchers.Main) {
+                        window.colorMode = ActivityInfo.COLOR_MODE_DEFAULT
+                    }
+
+                    return false
+                }
+
+                override fun onResourceReady(
+                    resource: Drawable?,
+                    model: Any?,
+                    target: Target<Drawable?>?,
+                    dataSource: DataSource?,
+                    isFirstResource: Boolean
+                ): Boolean {
+                    val activity = (context as Activity)
+
+                    if (resource == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE || activity.display.isHdr) return false
+
+                    val isHdr =
+                        if (resource is BitmapDrawable) resource.bitmap.hasGainmap()
+                        else resource.toBitmap(width = 128, height = 128).hasGainmap()
+
+                    coroutineScope.launch(Dispatchers.Main) {
+                        if (isHdr) {
+                            window.colorMode = ActivityInfo.COLOR_MODE_HDR
+                        } else {
+                            window.colorMode = ActivityInfo.COLOR_MODE_DEFAULT
+                        }
+                    }
+
+                    return false
+                }
+            })
+    }
 }
 
 /** deals with grouped media modifications, in this case removing stuff*/

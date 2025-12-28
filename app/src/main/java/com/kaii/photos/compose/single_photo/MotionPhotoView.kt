@@ -14,17 +14,15 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.github.panpf.zoomimage.compose.zoom.ZoomAnimationSpec
-import com.github.panpf.zoomimage.compose.zoom.ZoomableState
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.motion_photo.MotionPhotoState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import me.saket.telephoto.zoomable.ZoomableState
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -49,23 +47,13 @@ fun MotionPhotoView(
                     val initialTouchHeldJob = scope.launch {
                         delay(1.seconds)
                         if (initialDown.pressed) {
+                            zoomableState.resetZoom(
+                                animationSpec = tween(
+                                    durationMillis = AnimationConstants.DURATION_SHORT
+                                )
+                            )
+
                             state.play()
-
-                            zoomableState.scale(
-                                targetScale = 1f,
-                                animated = true,
-                                animationSpec = ZoomAnimationSpec(
-                                    durationMillis = AnimationConstants.DURATION_SHORT
-                                )
-                            )
-
-                            zoomableState.offset(
-                                targetOffset = Offset.Zero,
-                                animated = true,
-                                animationSpec = ZoomAnimationSpec(
-                                    durationMillis = AnimationConstants.DURATION_SHORT
-                                )
-                            )
                         }
 
                         while (initialDown.pressed) {

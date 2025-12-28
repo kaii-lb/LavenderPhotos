@@ -53,8 +53,6 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.media3.exoplayer.ExoPlayer
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.github.panpf.zoomimage.compose.zoom.rememberZoomableState
-import com.github.panpf.zoomimage.zoom.ScalesCalculator
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalMainViewModel
@@ -65,13 +63,13 @@ import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.single_photo.GlideView
 import com.kaii.photos.compose.single_photo.MotionPhotoView
 import com.kaii.photos.compose.single_photo.VideoPlayer
+import com.kaii.photos.compose.single_photo.rememberGlideZoomableState
 import com.kaii.photos.compose.transformable
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.Screens
-import com.kaii.photos.helpers.SingleViewConstants
 import com.kaii.photos.helpers.formatDate
 import com.kaii.photos.helpers.motion_photo.rememberMotionPhoto
 import com.kaii.photos.helpers.motion_photo.rememberMotionPhotoState
@@ -128,13 +126,7 @@ fun OpenWithContent(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            val zoomableState = rememberZoomableState().apply {
-                setScalesCalculator(
-                    ScalesCalculator.fixed(
-                        multiple = SingleViewConstants.MAX_ZOOM
-                    )
-                )
-            }
+            val zoomableState = rememberGlideZoomableState()
 
             val isTouchLocked = rememberSaveable { mutableStateOf(false) }
             val motionPhoto = rememberMotionPhoto(uri = uri)
@@ -155,7 +147,7 @@ fun OpenWithContent(
                     glideImageView = @Composable { modifier ->
                         GlideView(
                             model = uri,
-                            mediaStoreItem = MediaStoreData.dummyItem,
+                            item = MediaStoreData.dummyItem,
                             zoomableState = zoomableState,
                             window = window,
                             appBarsVisible = appBarsVisible,
@@ -197,7 +189,7 @@ fun OpenWithContent(
 
                 GlideView(
                     model = uri,
-                    mediaStoreItem = MediaStoreData.dummyItem,
+                    item = MediaStoreData.dummyItem,
                     zoomableState = zoomableState,
                     window = window,
                     appBarsVisible = appBarsVisible,

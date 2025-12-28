@@ -118,6 +118,9 @@ dependencies {
     implementation("com.github.bumptech.glide:compose:1.0.0-beta08")
     implementation("com.github.bumptech.glide:ktx:1.0.0-beta08")
     implementation("com.github.bumptech.glide:avif-integration:5.0.5")
+    implementation("io.github.awxkee:jxl-coder-glide:2.5.2")
+
+    implementation("me.saket.telephoto:zoomable-image-glide:0.18.0")
 
     implementation("com.github.kaii-lb:Lavender-Snackbars:b79cb851bc")
     implementation("com.github.kaii-lb.LavenderImmichIntegration:library:v1.0.9")
@@ -125,14 +128,8 @@ dependencies {
     implementation("com.mikepenz:aboutlibraries:13.2.1")
     implementation("com.mikepenz:aboutlibraries-compose-m3:13.2.1")
 
-    implementation("io.github.awxkee:jxl-coder-glide:2.5.2")
-
     implementation("io.github.pdvrieze.xmlutil:core:0.91.3")
     implementation("io.github.pdvrieze.xmlutil:serialization:0.91.3")
-
-    implementation("io.github.panpf.zoomimage:zoomimage-compose-coil3:1.4.0")
-
-    implementation("com.github.awxkee:avif-coder-coil:2.1.4")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.3.0")

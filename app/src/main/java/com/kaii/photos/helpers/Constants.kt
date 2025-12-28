@@ -129,4 +129,5 @@ object TextStylingConstants {
 
 object SingleViewConstants {
     const val MAX_ZOOM = 5f
+    const val HALF_ZOOM = 0.5f
 }
