@@ -43,7 +43,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.MutableIntState
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -397,7 +396,7 @@ fun BoxWithConstraintsScope.PopupPillSlider(
 fun FloatingScrollbar(
     gridState: LazyGridState,
     spacerHeight: State<Dp>,
-    groupedMedia: MutableState<List<MediaStoreData>>,
+    groupedMedia: State<List<MediaStoreData>>,
     modifier: Modifier = Modifier
 ) {
     val coroutineScope = rememberCoroutineScope()

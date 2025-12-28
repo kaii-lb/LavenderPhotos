@@ -3,7 +3,6 @@ package com.kaii.photos.compose.app_bars
 import android.content.Intent
 import android.os.CancellationSignal
 import android.util.Log
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
@@ -23,6 +22,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -113,12 +113,6 @@ fun SingleAlbumViewTopBar(
         }
     }
 
-    val cancellationSignal = remember { CancellationSignal() }
-    BackHandler {
-        cancellationSignal.cancel()
-        onBackClick()
-    }
-
     AnimatedContent(
         targetState = show,
         transitionSpec = {
@@ -136,7 +130,7 @@ fun SingleAlbumViewTopBar(
                 ),
                 navigationIcon = {
                     IconButton(
-                        onClick = { onBackClick() },
+                        onClick = onBackClick,
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.back_arrow),
@@ -207,6 +201,7 @@ fun SingleAlbumViewTopBar(
                     if (!isMediaPicker) {
                         val userInfo by immichViewModel.immichUserLoginState.collectAsStateWithLifecycle()
 
+                        // TODO: rework
                         if (userInfo is ImmichUserLoginState.IsLoggedIn) {
                             var loadingBackupState by remember { mutableStateOf(false) }
                             val albumState by immichViewModel.immichAlbumsSyncState.collectAsStateWithLifecycle()
@@ -218,7 +213,7 @@ fun SingleAlbumViewTopBar(
                                 withContext(Dispatchers.IO) {
                                     deviceBackupMedia = getImmichBackupMedia(
                                         groupedMedia = media,
-                                        cancellationSignal = cancellationSignal
+                                        cancellationSignal = CancellationSignal()
                                     )
 
                                     immichViewModel.checkSyncStatus(
@@ -336,7 +331,7 @@ fun SingleAlbumViewBottomBar(
 @Composable
 fun TrashedPhotoGridViewTopBar(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
-    groupedMedia: List<MediaStoreData>,
+    groupedMedia: State<List<MediaStoreData>>,
     onBackClick: () -> Unit
 ) {
     val showDialog = remember { mutableStateOf(false) }
@@ -348,7 +343,7 @@ fun TrashedPhotoGridViewTopBar(
         if (runEmptyTrashAction.value) {
             permanentlyDeletePhotoList(
                 context = context,
-                list = groupedMedia.filter { it.type != MediaType.Section }.map { it.uri }
+                list = groupedMedia.value.filter { it.type != MediaType.Section }.map { it.uri }
             )
 
             runEmptyTrashAction.value = false
@@ -384,7 +379,7 @@ fun TrashedPhotoGridViewTopBar(
                 ),
                 navigationIcon = {
                     IconButton(
-                        onClick = { onBackClick() },
+                        onClick = onBackClick,
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.back_arrow),
@@ -876,7 +871,7 @@ fun FavouritesViewBottomAppBar(
 @Composable
 fun FavouritesBottomAppBarItems(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
-    groupedMedia: MutableState<List<MediaStoreData>>
+    groupedMedia: State<List<MediaStoreData>>
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -953,7 +948,7 @@ fun FavouritesBottomAppBarItems(
                 }
 
                 selectedItemsList.clear()
-                groupedMedia.value = newList
+                // groupedMedia.value = newList // TODO: rework favourites
             }
         }
     }

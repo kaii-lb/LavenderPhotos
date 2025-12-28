@@ -113,6 +113,7 @@ fun HorizontalImageList(
         state = state,
         verticalAlignment = Alignment.CenterVertically,
         pageSpacing = 8.dp,
+        // beyondViewportPageCount = 5, // TODO: check this
         key = {
             if (groupedMedia.isNotEmpty() && it <= groupedMedia.size - 1) {
                 val neededItem = groupedMedia[it]

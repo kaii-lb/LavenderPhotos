@@ -29,11 +29,7 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomAppBarDefaults.windowInsets
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingToolbarDefaults
 import androidx.compose.material3.HorizontalFloatingToolbar
@@ -43,8 +39,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -64,159 +59,106 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kaii.photos.LocalAppDatabase
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.SingleViewTopBar
 import com.kaii.photos.compose.dialogs.SinglePhotoInfoDialog
+import com.kaii.photos.compose.dialogs.TrashDeleteDialog
 import com.kaii.photos.helpers.GetPermissionAndRun
+import com.kaii.photos.helpers.mapSync
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareImage
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.trash_bin.TrashViewModel
-import com.kaii.photos.models.trash_bin.TrashViewModelFactory
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun SingleTrashedPhotoView(
     window: Window,
     mediaItemId: Long,
+    viewModel: TrashViewModel
 ) {
-    val context = LocalContext.current
-    val mainViewModel = LocalMainViewModel.current
+    val mediaStoreData = viewModel.mediaFlow.mapSync {
+        it.filter { item ->
+            item.type != MediaType.Section
+        }
+    }.collectAsStateWithLifecycle()
 
-    val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
-    val sortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
-
-    val trashViewModel: TrashViewModel = viewModel(
-        factory = TrashViewModelFactory(
-            context = context,
-            sortMode = sortMode,
-            displayDateFormat = displayDateFormat
-        )
-    )
-    val holderGroupedMedia by trashViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
-
-    if (holderGroupedMedia.isEmpty()) return
-
-    val groupedMedia = remember {
-        mutableStateOf(
-            holderGroupedMedia.filter { item ->
-                item.type != MediaType.Section
-            }
-        )
-    }
-
-    LaunchedEffect(holderGroupedMedia) {
-        groupedMedia.value =
-            holderGroupedMedia.filter { item ->
-                item.type != MediaType.Section
-            }
-    }
-
-    val appBarsVisible = remember { mutableStateOf(true) }
-    var currentMediaItemIndex by rememberSaveable {
-        mutableIntStateOf(
-            groupedMedia.value.indexOf(
-                groupedMedia.value.first {
-                    it.id == mediaItemId
-                }
-            )
-        )
-    }
-
-    val state = rememberPagerState(
-        initialPage = currentMediaItemIndex.coerceAtLeast(0)
-    ) {
-        groupedMedia.value.size
-    }
-
-    LaunchedEffect(key1 = state.currentPage) {
-        currentMediaItemIndex = state.currentPage
-    }
-
-    val resources = LocalResources.current
-    val currentMediaItem by remember {
-        derivedStateOf {
-            val index = state.layoutInfo.visiblePagesInfo.firstOrNull()?.index ?: 0
-            if (index != groupedMedia.value.size) {
-                groupedMedia.value[index]
-            } else {
-                MediaStoreData(
-                    displayName = resources.getString(R.string.media_broken)
-                )
-            }
+    val startIndex = remember(mediaStoreData.value.isEmpty()) {
+        mediaStoreData.value.indexOfFirst { item ->
+            item.id == mediaItemId
         }
     }
 
-    val showDialog = remember { mutableStateOf(false) }
-    var showInfoDialog by remember { mutableStateOf(false) }
+    SingleTrashedPhotoViewImpl(
+        mediaStoreData = mediaStoreData,
+        startIndex = startIndex,
+        window = window
+    )
+}
+
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@Composable
+private fun SingleTrashedPhotoViewImpl(
+    mediaStoreData: State<List<MediaStoreData>>,
+    startIndex: Int,
+    window: Window
+) {
+    val appBarsVisible = remember { mutableStateOf(true) }
+    var currentIndex by rememberSaveable(startIndex) {
+        mutableIntStateOf(
+            startIndex
+        )
+    }
+
+    val resources = LocalResources.current
+    var mediaItem by remember { mutableStateOf(MediaStoreData.dummyItem) }
+    LaunchedEffect(currentIndex) {
+        withContext(Dispatchers.IO) {
+            mediaItem =
+                if (currentIndex in 0..mediaStoreData.value.size && mediaStoreData.value.isNotEmpty()) {
+                    mediaStoreData.value[currentIndex]
+                } else {
+                    MediaStoreData(
+                        displayName = resources.getString(R.string.media_broken)
+                    )
+                }
+        }
+    }
 
     val runPermaDeleteAction = remember { mutableStateOf(false) }
-
+    val context = LocalContext.current
     LaunchedEffect(runPermaDeleteAction.value) {
-        if (runPermaDeleteAction.value) {
-            permanentlyDeletePhotoList(context, listOf(currentMediaItem.uri))
+        if (runPermaDeleteAction.value) withContext(Dispatchers.IO) {
+            permanentlyDeletePhotoList(context, listOf(mediaItem.uri))
 
             runPermaDeleteAction.value = false
         }
     }
 
-    if (showDialog.value) {
-        AlertDialog(
-            onDismissRequest = {
-                showDialog.value = false
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        showDialog.value = false
+    var showDialog by remember { mutableStateOf(false) }
+    TrashDeleteDialog(
+        showDialog = showDialog,
+        onDelete = {
+            runPermaDeleteAction.value = true
+        },
+        onDismiss = {
+            showDialog = false
+        }
+    )
 
-                        runPermaDeleteAction.value = true
-                    }
-                ) {
-                    Text(
-                        text = stringResource(id = R.string.media_delete),
-                        fontSize = TextUnit(14f, TextUnitType.Sp)
-                    )
-                }
-            },
-            title = {
-                Text(
-                    text = stringResource(id = R.string.media_delete_permanently_confirm),
-                    fontSize = TextUnit(16f, TextUnitType.Sp)
-                )
-            },
-            dismissButton = {
-                Button(
-                    onClick = {
-                        showDialog.value = false
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                    )
-                ) {
-                    Text(
-                        text = stringResource(id = R.string.media_cancel),
-                        fontSize = TextUnit(14f, TextUnitType.Sp)
-                    )
-                }
-            },
-            shape = RoundedCornerShape(32.dp)
-        )
-    }
-
+    var showInfoDialog by remember { mutableStateOf(false) }
     Scaffold(
         topBar = {
             SingleViewTopBar(
-                mediaItem = currentMediaItem,
+                mediaItem = mediaItem,
                 visible = appBarsVisible.value,
                 showInfoDialog = showInfoDialog,
+                isOpenWithDefaultView = false,
                 expandInfoDialog = {
                     showInfoDialog = true
                 }
@@ -224,10 +166,11 @@ fun SingleTrashedPhotoView(
         },
         bottomBar = {
             BottomBar(
-                appBarsVisible.value,
-                currentMediaItem,
-                showDialog
-            )
+                visible = appBarsVisible.value,
+                item = mediaItem
+            ) {
+                showDialog = true
+            }
         },
         containerColor = MaterialTheme.colorScheme.background,
         contentColor = MaterialTheme.colorScheme.onBackground
@@ -241,17 +184,29 @@ fun SingleTrashedPhotoView(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            HorizontalImageList(
-                groupedMedia = groupedMedia.value,
-                state = state,
-                window = window,
-                appBarsVisible = appBarsVisible
-            )
+            if (mediaStoreData.value.isNotEmpty()) {
+                val state = rememberPagerState(
+                    initialPage = currentIndex
+                ) {
+                    mediaStoreData.value.size
+                }
+
+                LaunchedEffect(key1 = state.settledPage) {
+                    currentIndex = state.settledPage
+                }
+
+                HorizontalImageList(
+                    groupedMedia = mediaStoreData.value,
+                    state = state,
+                    window = window,
+                    appBarsVisible = appBarsVisible
+                )
+            }
         }
 
         if (showInfoDialog) {
             SinglePhotoInfoDialog(
-                currentMediaItem = currentMediaItem,
+                currentMediaItem = mediaItem,
                 showMoveCopyOptions = false
             ) {
                 showInfoDialog = false
@@ -265,7 +220,7 @@ fun SingleTrashedPhotoView(
 private fun BottomBar(
     visible: Boolean,
     item: MediaStoreData,
-    showDialog: MutableState<Boolean>
+    showDeleteDialog: () -> Unit
 ) {
     val context = LocalContext.current
 
@@ -382,7 +337,7 @@ private fun BottomBar(
                         .wrapContentWidth()
                         .clip(CircleShape)
                         .clickable {
-                            showDialog.value = true
+                            showDeleteDialog()
                         }
                         .padding(horizontal = 8.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,

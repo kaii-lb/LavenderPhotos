@@ -214,6 +214,14 @@ data class BottomBarTab(
         result = 31 * result + isCustom.hashCode()
         return result
     }
+
+    fun toAlbumInfo() =
+        AlbumInfo(
+            id = id,
+            name = name,
+            paths = albumPaths,
+            isCustomAlbum = false
+        )
 }
 
 @Serializable

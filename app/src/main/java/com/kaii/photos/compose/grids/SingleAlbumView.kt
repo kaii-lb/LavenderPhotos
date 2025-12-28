@@ -1,8 +1,6 @@
 package com.kaii.photos.compose.grids
 
 import android.content.Intent
-import android.util.Log
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -21,7 +19,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,6 +43,8 @@ import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.helpers.AnimationConstants
+import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.OnBackPressedEffect
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.checkHasFiles
 import com.kaii.photos.helpers.toBasePath
@@ -71,8 +71,6 @@ fun SingleAlbumView(
     val allAlbums by mainViewModel.allAvailableAlbums.collectAsStateWithLifecycle()
     val normalAlbums by mainViewModel.settings.AlbumsList.getNormalAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
 
-    if (allAlbums.isEmpty()) return
-
     var lastDynamicAlbum by remember {
         mutableStateOf(
             albumInfo
@@ -87,47 +85,40 @@ fun SingleAlbumView(
         }
     }
 
-    Log.d("SINGLE_ALBUM_VIEW", "Dynamic album ${dynamicAlbum.name} is pinned? ${dynamicAlbum.isPinned}")
-
-    BackHandler(
-        enabled = selectedItemsList.isEmpty()
-    ) {
-        viewModel.cancelMediaFlow()
-        navController.popBackStack()
-    }
-
-    val mediaStoreData by viewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
-
-    val groupedMedia = remember { mutableStateOf(mediaStoreData) }
-
-    LaunchedEffect(mediaStoreData) {
-        if (mediaStoreData.isEmpty()) delay(PhotoGridConstants.LOADING_TIME)
-        else delay(PhotoGridConstants.UPDATE_TIME)
-
-        groupedMedia.value = mediaStoreData
-    }
-
-    SingleAlbumViewCommon(
-        groupedMedia = groupedMedia,
-        albumInfo = dynamicAlbum,
-        selectedItemsList = selectedItemsList,
-        navController = navController,
-        incomingIntent = incomingIntent
-    ) {
-        if (viewModel.albumInfo.paths.toSet() != dynamicAlbum.paths.toSet()) {
+    LaunchedEffect(dynamicAlbum) {
+        if (viewModel.albumInfo != dynamicAlbum) {
             viewModel.reinitDataSource(
                 context = context,
                 album = dynamicAlbum
             )
         }
     }
+
+    OnBackPressedEffect { destination ->
+        if (destination.route == MultiScreenViewType.MainScreen.name) {
+            viewModel.cancelMediaFlow()
+        }
+    }
+
+    val mediaStoreData = viewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+    SingleAlbumViewCommon(
+        mediaStoreData = mediaStoreData,
+        albumInfo = dynamicAlbum,
+        selectedItemsList = selectedItemsList,
+        navController = navController,
+        incomingIntent = incomingIntent,
+        onBackClick = {
+            viewModel.cancelMediaFlow()
+            navController.popBackStack()
+        }
+    )
 }
 
 @Composable
 fun SingleAlbumView(
     albumInfo: AlbumInfo,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
-    customViewModel: CustomAlbumViewModel,
+    viewModel: CustomAlbumViewModel,
     incomingIntent: Intent? = null
 ) {
     val navController = LocalNavController.current
@@ -137,8 +128,6 @@ fun SingleAlbumView(
     val allAlbums by mainViewModel.allAvailableAlbums.collectAsStateWithLifecycle()
     val normalAlbums by mainViewModel.settings.AlbumsList.getNormalAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
 
-    if (allAlbums.isEmpty()) return
-
     var lastDynamicAlbum by remember {
         mutableStateOf(
             albumInfo
@@ -153,59 +142,50 @@ fun SingleAlbumView(
         }
     }
 
-    BackHandler(
-        enabled = selectedItemsList.isEmpty()
-    ) {
-        customViewModel.cancelMediaFlow()
-
-        navController.popBackStack()
-    }
-
-    val customMediaStoreData by customViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
-
-    val groupedMedia = remember { mutableStateOf(customMediaStoreData) }
-
-    LaunchedEffect(customMediaStoreData) {
-        if (customMediaStoreData.isEmpty()) delay(PhotoGridConstants.LOADING_TIME)
-        else delay(PhotoGridConstants.UPDATE_TIME)
-
-        groupedMedia.value = customMediaStoreData
-    }
-
-    SingleAlbumViewCommon(
-        groupedMedia = groupedMedia,
-        albumInfo = dynamicAlbum,
-        selectedItemsList = selectedItemsList,
-        navController = navController,
-        incomingIntent = incomingIntent
-    ) {
-        if (customViewModel.albumInfo != dynamicAlbum) {
-            customViewModel.reinitDataSource(
+    LaunchedEffect(dynamicAlbum) {
+        if (viewModel.albumInfo != dynamicAlbum) {
+            viewModel.reinitDataSource(
                 context = context,
                 album = dynamicAlbum
             )
         }
     }
+
+    OnBackPressedEffect { destination ->
+        if (destination.route == MultiScreenViewType.MainScreen.name) {
+            viewModel.cancelMediaFlow()
+        }
+    }
+
+    val mediaStoreData = viewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+    SingleAlbumViewCommon(
+        mediaStoreData = mediaStoreData,
+        albumInfo = dynamicAlbum,
+        selectedItemsList = selectedItemsList,
+        navController = navController,
+        incomingIntent = incomingIntent,
+        onBackClick = {
+            viewModel.cancelMediaFlow()
+            navController.popBackStack()
+        }
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SingleAlbumViewCommon(
-    groupedMedia: MutableState<List<MediaStoreData>>,
+    mediaStoreData: State<List<MediaStoreData>>,
     albumInfo: AlbumInfo,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     navController: NavHostController,
     incomingIntent: Intent?,
-    reinitDataSource: () -> Unit
+    modifier: Modifier = Modifier,
+    onBackClick: () -> Unit
 ) {
     val showDialog = remember { mutableStateOf(false) }
 
-    LaunchedEffect(albumInfo) {
-        reinitDataSource()
-    }
-
     var hasFiles by remember { mutableStateOf(true) }
-    LaunchedEffect(groupedMedia.value.lastOrNull()) {
+    LaunchedEffect(mediaStoreData.value.lastOrNull()) {
         withContext(Dispatchers.IO) {
             hasFiles = if (!albumInfo.isCustomAlbum) {
                 var result: Boolean? = null
@@ -220,24 +200,23 @@ private fun SingleAlbumViewCommon(
                 result == true
             } else {
                 delay(PhotoGridConstants.LOADING_TIME)
-                groupedMedia.value.isNotEmpty()
+                mediaStoreData.value.isNotEmpty()
             }
         }
     }
 
     Scaffold(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize(1f),
         topBar = {
             SingleAlbumViewTopBar(
                 albumInfo = albumInfo,
-                media = groupedMedia.value,
+                media = mediaStoreData.value,
                 selectedItemsList = selectedItemsList,
                 showDialog = showDialog,
-                isMediaPicker = incomingIntent != null
-            ) {
-                navController.popBackStack()
-            }
+                isMediaPicker = incomingIntent != null,
+                onBackClick = onBackClick
+            )
         },
         bottomBar = {
             AnimatedVisibility(
@@ -283,7 +262,7 @@ private fun SingleAlbumViewCommon(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             PhotoGrid(
-                groupedMedia = groupedMedia,
+                groupedMedia = mediaStoreData,
                 albumInfo = albumInfo,
                 selectedItemsList = selectedItemsList,
                 viewProperties = ViewProperties.Album,
@@ -296,7 +275,7 @@ private fun SingleAlbumViewCommon(
                 albumInfo = albumInfo,
                 navController = navController,
                 selectedItemsList = selectedItemsList,
-                itemCount = groupedMedia.value.filter { it.type != MediaType.Section }.size
+                itemCount = mediaStoreData.value.filter { it.type != MediaType.Section }.size
             )
         }
     }

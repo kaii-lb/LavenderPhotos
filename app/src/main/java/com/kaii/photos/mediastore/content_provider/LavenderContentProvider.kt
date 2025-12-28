@@ -73,7 +73,7 @@ class LavenderContentProvider : ContentProvider() {
         query(
             uri = CONTENT_URI,
             projection = arrayOf(MediaColumns.MIME_TYPE),
-            selection = "${MediaColumns.MIME_TYPE} = ${uri.toString().split("/").last()}", // TODO: better way to get id from uri
+            selection = "${MediaColumns.MIME_TYPE} = ${uri.lastPathSegment}",
             selectionArgs = null,
             sortOrder = null
         ).use { cursor ->

@@ -44,6 +44,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -128,7 +129,7 @@ private const val TAG = "com.kaii.photos.compose.grids.PhotoGridView"
 
 @Composable
 fun PhotoGrid(
-    groupedMedia: MutableState<List<MediaStoreData>>,
+    groupedMedia: State<List<MediaStoreData>>,
     albumInfo: AlbumInfo,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     modifier: Modifier = Modifier,
@@ -169,7 +170,7 @@ fun PhotoGrid(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DeviceMedia(
-    groupedMedia: MutableState<List<MediaStoreData>>,
+    groupedMedia: State<List<MediaStoreData>>,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     viewProperties: ViewProperties,
     gridState: LazyGridState,
@@ -190,12 +191,6 @@ fun DeviceMedia(
     }
 
     val mainViewModel = LocalMainViewModel.current
-    LaunchedEffect(groupedMedia.value) {
-        if (viewProperties == ViewProperties.Favourites || viewProperties == ViewProperties.SecureFolder
-            || viewProperties == ViewProperties.SearchLoading || viewProperties == ViewProperties.SearchNotFound
-        ) mainViewModel.setGroupedMedia(groupedMedia.value)
-    }
-
     val isLandscape by rememberDeviceOrientation()
 
     Box(
@@ -358,9 +353,8 @@ fun DeviceMedia(
                                 }
 
                                 ImageFunctions.LoadTrashedImage -> {
-                                    // mainViewModel.setGroupedMedia(groupedMedia.value)
                                     navController.navigate(
-                                        Screens.SingleTrashedPhotoView(
+                                        Screens.Trash.SingleTrashedPhotoView(
                                             mediaItemId = mediaStoreItem.id
                                         )
                                     )
@@ -444,7 +438,7 @@ fun DeviceMedia(
 @Composable
 private fun MediaStoreItem(
     item: MediaStoreData,
-    groupedMedia: MutableState<List<MediaStoreData>>,
+    groupedMedia: State<List<MediaStoreData>>,
     viewProperties: ViewProperties,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     thumbnailSettings: Pair<Boolean, Int>,

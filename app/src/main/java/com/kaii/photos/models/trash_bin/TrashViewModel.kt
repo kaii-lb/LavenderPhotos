@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
+import kotlin.time.Duration.Companion.seconds
 
 class TrashViewModel(
     context: Context,
@@ -24,21 +25,27 @@ class TrashViewModel(
         TrashDataSource(
             context = context,
             sortMode =
-                if (sortMode == MediaItemSortMode.Disabled) sortMode
+                if (sortMode == MediaItemSortMode.Disabled || sortMode == MediaItemSortMode.DisabledLastModified) sortMode
                 else MediaItemSortMode.LastModified,
             cancellationSignal = cancellationSignal,
             displayDateFormat = displayDateFormat
         )
 
     val mediaFlow by lazy {
-        getMediaDataFlow().stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
+        getMediaDataFlow().stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(
+                stopTimeoutMillis = 10.seconds.inWholeMilliseconds
+            ),
+            initialValue = emptyList()
+        )
     }
 
     private fun getMediaDataFlow(): Flow<List<MediaStoreData>> {
         return mediaStoreDataSource.loadMediaStoreData().flowOn(Dispatchers.IO)
     }
 
-    fun cancelMediaSource() {
+    fun cancelMediaFlow() {
         cancellationSignal.cancel()
     }
 }

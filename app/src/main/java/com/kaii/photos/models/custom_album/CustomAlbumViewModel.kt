@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
+import kotlin.time.Duration.Companion.seconds
 
 private const val TAG = "com.kaii.photos.models.CustomAlbumViewModel"
 
@@ -36,17 +37,31 @@ class CustomAlbumViewModel(
         getMediaDataFlow().value.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(
-                stopTimeoutMillis = 300000
+                stopTimeoutMillis = 300.seconds.inWholeMilliseconds
             ),
             initialValue = emptyList()
         )
     }
 
     private fun getMediaDataFlow(): State<Flow<List<MediaStoreData>>> = derivedStateOf {
-        mediaStoreDataSource.value.loadMediaStoreData().flowOn(Dispatchers.IO).flowOn(Dispatchers.IO)
+        mediaStoreDataSource.value.loadMediaStoreData().flowOn(Dispatchers.IO)
     }
 
     fun cancelMediaFlow() = cancellationSignal.cancel()
+
+    fun update(
+        context: Context,
+        album: AlbumInfo
+    ) {
+        if (album.paths.toSet() != this.albumInfo.paths.toSet()) {
+            reinitDataSource(
+                context = context,
+                album = album,
+                sortMode = this.sortMode,
+                displayDateFormat = this.displayDateFormat
+            )
+        }
+    }
 
     fun reinitDataSource(
         context: Context,
@@ -110,5 +125,10 @@ class CustomAlbumViewModel(
             cancellationSignal = this.cancellationSignal,
             displayDateFormat = displayDateFormat
         )
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        cancelMediaFlow()
     }
 }

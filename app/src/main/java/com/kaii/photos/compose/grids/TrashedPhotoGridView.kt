@@ -34,7 +34,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.ViewProperties
@@ -44,45 +43,31 @@ import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.TrashBin
 import com.kaii.photos.helpers.AnimationConstants
+import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.OnBackPressedEffect
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.trash_bin.TrashViewModel
-import com.kaii.photos.models.trash_bin.TrashViewModelFactory
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.days
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TrashedPhotoGridView(
-    selectedItemsList: SnapshotStateList<MediaStoreData>
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    viewModel: TrashViewModel
 ) {
     val context = LocalContext.current
     val mainViewModel = LocalMainViewModel.current
-    val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
-    val sortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
-
-    val trashViewModel: TrashViewModel = viewModel(
-        factory = TrashViewModelFactory(
-            context = context,
-            sortMode = sortMode,
-            displayDateFormat = displayDateFormat
-        )
-    )
-
-    val mediaStoreData =
-        trashViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
-
-    val groupedMedia = remember { mutableStateOf(mediaStoreData.value) }
     var hasFiles by remember { mutableStateOf(true) }
+    val mediaStoreData =
+        viewModel.mediaFlow.collectAsStateWithLifecycle()
 
     LaunchedEffect(mediaStoreData.value) {
-        groupedMedia.value = mediaStoreData.value
-
         delay(PhotoGridConstants.LOADING_TIME)
-        hasFiles = groupedMedia.value.isNotEmpty()
+        hasFiles = mediaStoreData.value.isNotEmpty()
     }
 
     var triedDeletingAlready by rememberSaveable { mutableStateOf(false) }
@@ -99,12 +84,13 @@ fun TrashedPhotoGridView(
         runAutoDeleteAction.value = false
     }
 
-    LaunchedEffect(groupedMedia.value, autoDeleteInterval) {
-        if (groupedMedia.value.isEmpty() || triedDeletingAlready || autoDeleteInterval == 0) return@LaunchedEffect
+    // TODO: view model this
+    LaunchedEffect(mediaStoreData.value, autoDeleteInterval) {
+        if (mediaStoreData.value.isEmpty() || triedDeletingAlready || autoDeleteInterval == 0) return@LaunchedEffect
 
         val currentDate = System.currentTimeMillis()
 
-        mediaToBeAutoDeleted = groupedMedia.value
+        mediaToBeAutoDeleted = mediaStoreData.value
             .filter { it.type != MediaType.Section }
             .filter { media ->
                 val dateDeletedMillis =
@@ -126,22 +112,22 @@ fun TrashedPhotoGridView(
         selectedItemsList.clear()
     }
 
-    val navController = LocalNavController.current
-    BackHandler(
-        enabled = selectedItemsList.isEmpty()
-    ) {
-        trashViewModel.cancelMediaSource()
-        navController.popBackStack()
+    OnBackPressedEffect { destination ->
+        if (destination.route == MultiScreenViewType.MainScreen.name) {
+            viewModel.cancelMediaFlow()
+        }
     }
 
     Scaffold(
         modifier = Modifier
             .fillMaxSize(1f),
         topBar = {
+            val navController = LocalNavController.current
             TrashedPhotoGridViewTopBar(
                 selectedItemsList = selectedItemsList,
-                groupedMedia = groupedMedia.value
+                groupedMedia = mediaStoreData
             ) {
+                viewModel.cancelMediaFlow()
                 navController.popBackStack()
             }
         },
@@ -189,7 +175,7 @@ fun TrashedPhotoGridView(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             PhotoGrid(
-                groupedMedia = groupedMedia,
+                groupedMedia = mediaStoreData,
                 albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
                 selectedItemsList = selectedItemsList,
                 viewProperties = ViewProperties.Trash,

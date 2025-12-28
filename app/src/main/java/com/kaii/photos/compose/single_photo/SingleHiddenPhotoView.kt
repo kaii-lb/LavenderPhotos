@@ -210,6 +210,7 @@ fun SingleHiddenPhotoView(
                 mediaItem = currentMediaItem,
                 visible = appBarsVisible.value,
                 showInfoDialog = showInfoDialog,
+                isOpenWithDefaultView = false,
                 expandInfoDialog = {
                     showInfoDialog = true
                 }

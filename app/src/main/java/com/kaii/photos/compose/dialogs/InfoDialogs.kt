@@ -36,6 +36,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ripple.RippleAlpha
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -1178,5 +1181,53 @@ fun SingleSecurePhotoInfoDialog(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun TrashDeleteDialog(
+    showDialog: Boolean,
+    onDelete: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onDelete()
+
+                        onDismiss()
+                    }
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.media_delete),
+                        fontSize = TextStylingConstants.SMALL_TEXT_SIZE.sp
+                    )
+                }
+            },
+            title = {
+                Text(
+                    text = stringResource(id = R.string.media_delete_permanently_confirm),
+                    fontSize = TextStylingConstants.MEDIUM_TEXT_SIZE.sp
+                )
+            },
+            dismissButton = {
+                Button(
+                    onClick = onDismiss,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                    )
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.media_cancel),
+                        fontSize = TextStylingConstants.SMALL_TEXT_SIZE.sp
+                    )
+                }
+            },
+            shape = RoundedCornerShape(32.dp)
+        )
     }
 }

@@ -1,5 +1,6 @@
 package com.kaii.photos.compose.app_bars
 
+import android.app.Activity
 import android.app.WallpaperManager
 import android.content.Context
 import android.content.Intent
@@ -1028,6 +1029,7 @@ fun SingleViewTopBar(
     mediaItem: MediaStoreData,
     visible: Boolean,
     showInfoDialog: Boolean,
+    isOpenWithDefaultView: Boolean = false,
     expandInfoDialog: () -> Unit
 ) {
     Box(
@@ -1061,9 +1063,15 @@ fun SingleViewTopBar(
                 horizontalArrangement = Arrangement.Start
             ) {
                 val navController = LocalNavController.current
+                val context = LocalContext.current
+
                 FilledIconButton(
                     onClick = {
-                        navController.popBackStack()
+                        if (isOpenWithDefaultView) {
+                            (context as Activity).finish()
+                        } else {
+                            navController.popBackStack()
+                        }
                     },
                     colors = IconButtonDefaults.filledIconButtonColors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainer
@@ -1083,7 +1091,6 @@ fun SingleViewTopBar(
                 Spacer(modifier = Modifier.width(4.dp))
 
                 val isLandscape by rememberDeviceOrientation()
-                val context = LocalContext.current
                 val mainViewModel = LocalMainViewModel.current
                 val topBarDetailsFormat by mainViewModel.topBarDetailsFormat.collectAsStateWithLifecycle()
 

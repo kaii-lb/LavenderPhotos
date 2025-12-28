@@ -5,7 +5,6 @@ import android.app.Activity
 import android.view.Window
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -39,8 +38,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -75,11 +73,10 @@ import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.GetPermissionAndRun
-import com.kaii.photos.helpers.MultiScreenViewType
-import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.exif.getDateTakenForMedia
 import com.kaii.photos.helpers.getParentFromPath
+import com.kaii.photos.helpers.mapSync
 import com.kaii.photos.helpers.motion_photo.rememberMotionPhoto
 import com.kaii.photos.helpers.moveImageToLockedFolder
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
@@ -94,7 +91,7 @@ import com.kaii.photos.models.favourites_grid.FavouritesViewModel
 import com.kaii.photos.models.favourites_grid.FavouritesViewModelFactory
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.ExperimentalForInheritanceCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -102,255 +99,160 @@ import kotlinx.coroutines.withContext
 fun SinglePhotoView(
     navController: NavHostController,
     window: Window,
-    customAlbumViewModel: CustomAlbumViewModel,
+    viewModel: CustomAlbumViewModel,
     mediaItemId: Long,
     previousMediaItemId: Long?,
     albumInfo: AlbumInfo,
-    loadsFromMainViewModel: Boolean,
     isOpenWithDefaultView: Boolean = false
 ) {
-    val mainViewModel = LocalMainViewModel.current
-    val holderGroupedMedia: MutableState<List<MediaStoreData>?> = remember { mutableStateOf(null) }
-
-    if (!loadsFromMainViewModel) {
-        val customMediaStoreData by customAlbumViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
-
-        LaunchedEffect(customMediaStoreData) {
-            holderGroupedMedia.value = customMediaStoreData
+    val mediaStoreData = viewModel.mediaFlow.mapSync {
+        it.filter { item ->
+            item.type != MediaType.Section
         }
-    } else {
-        val media by mainViewModel.groupedMedia.collectAsStateWithLifecycle(initialValue = null)
-        LaunchedEffect(media) {
-            holderGroupedMedia.value = media
+    }.collectAsStateWithLifecycle()
+
+    val startIndex = remember {
+        mediaStoreData.value.indexOfFirst { item ->
+            item.id == mediaItemId
         }
-    }
-
-    if (holderGroupedMedia.value == null) return
-
-    val groupedMedia = remember {
-        mutableStateOf(
-            holderGroupedMedia.value!!.filter { item ->
-                item.type != MediaType.Section
-            }
-        )
-    }
-
-    LaunchedEffect(holderGroupedMedia.value) {
-        if (holderGroupedMedia.value!!.isEmpty()) delay(PhotoGridConstants.LOADING_TIME)
-        else delay(PhotoGridConstants.UPDATE_TIME)
-
-        groupedMedia.value =
-            holderGroupedMedia.value!!.filter { item ->
-                item.type != MediaType.Section
-            }
     }
 
     SinglePhotoViewCommon(
         navController = navController,
         window = window,
-        mediaItemId = mediaItemId,
+        startIndex = startIndex,
         previousMediaItemId = previousMediaItemId,
-        groupedMedia = groupedMedia,
+        mediaStoreData = mediaStoreData,
         albumInfo = albumInfo,
-        loadsFromMainViewModel = loadsFromMainViewModel,
         isOpenWithDefaultView = isOpenWithDefaultView
     )
 }
 
+@OptIn(ExperimentalForInheritanceCoroutinesApi::class)
 @Composable
 fun SinglePhotoView(
     navController: NavHostController,
     window: Window,
-    multiAlbumViewModel: MultiAlbumViewModel,
+    viewModel: MultiAlbumViewModel,
     mediaItemId: Long,
     previousMediaItemId: Long?,
     albumInfo: AlbumInfo,
-    loadsFromMainViewModel: Boolean,
     isOpenWithDefaultView: Boolean = false,
 ) {
-    val mainViewModel = LocalMainViewModel.current
-    val holderGroupedMedia: MutableState<List<MediaStoreData>?> = remember { mutableStateOf(null) }
-
-    if (!loadsFromMainViewModel) {
-        val multiMediaStoreData by multiAlbumViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
-
-        LaunchedEffect(multiMediaStoreData) {
-            holderGroupedMedia.value = multiMediaStoreData
+    val mediaStoreData = viewModel.mediaFlow.mapSync {
+        it.filter { item ->
+            item.type != MediaType.Section
         }
-    } else {
-        val media by mainViewModel.groupedMedia.collectAsStateWithLifecycle(initialValue = null)
-        LaunchedEffect(media) {
-            holderGroupedMedia.value = media
+    }.collectAsStateWithLifecycle()
+
+    val startIndex = remember {
+        mediaStoreData.value.indexOfFirst { item ->
+            item.id == mediaItemId
         }
-    }
-
-    if (holderGroupedMedia.value == null) return
-
-    val groupedMedia = remember {
-        mutableStateOf(
-            holderGroupedMedia.value!!.filter { item ->
-                item.type != MediaType.Section
-            }
-        )
-    }
-
-    LaunchedEffect(holderGroupedMedia.value) {
-        if (holderGroupedMedia.value!!.isEmpty()) delay(PhotoGridConstants.LOADING_TIME)
-        else delay(PhotoGridConstants.UPDATE_TIME)
-
-        groupedMedia.value =
-            holderGroupedMedia.value!!.filter { item ->
-                item.type != MediaType.Section
-            }
     }
 
     SinglePhotoViewCommon(
+        mediaStoreData = mediaStoreData,
+        startIndex = startIndex,
+        albumInfo = albumInfo,
         navController = navController,
         window = window,
-        mediaItemId = mediaItemId,
-        groupedMedia = groupedMedia,
-        albumInfo = albumInfo,
-        previousMediaItemId = previousMediaItemId,
-        loadsFromMainViewModel = loadsFromMainViewModel,
-        isOpenWithDefaultView = isOpenWithDefaultView
+        isOpenWithDefaultView = isOpenWithDefaultView,
+        previousMediaItemId = previousMediaItemId
     )
 }
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun SinglePhotoViewCommon(
+    mediaStoreData: State<List<MediaStoreData>>,
+    startIndex: Int,
+    albumInfo: AlbumInfo,
     navController: NavHostController,
     window: Window,
-    mediaItemId: Long,
-    previousMediaItemId: Long?,
-    groupedMedia: MutableState<List<MediaStoreData>>,
-    albumInfo: AlbumInfo,
-    loadsFromMainViewModel: Boolean,
-    isOpenWithDefaultView: Boolean
+    isOpenWithDefaultView: Boolean,
+    previousMediaItemId: Long? // TODO: reimplement scroll to edited image
 ) {
-    var currentMediaItemIndex by rememberSaveable {
+    var currentIndex by rememberSaveable {
         mutableIntStateOf(
-            groupedMedia.value.indexOf(
-                groupedMedia.value.firstOrNull {
-                    it.id == mediaItemId //|| it.id == previousMediaItemId
-                }
-            )
+            startIndex
         )
     }
 
     val state = rememberPagerState(
-        initialPage = currentMediaItemIndex
-            .coerceIn(
-                0,
-                (groupedMedia.value.size - 1)
-                    .coerceAtLeast(0)
-            )
+        initialPage = startIndex
     ) {
-        groupedMedia.value.size
+        mediaStoreData.value.size
     }
 
-    LaunchedEffect(key1 = state.currentPage) {
-        currentMediaItemIndex = state.currentPage
-    }
-
-    var lastGroupedMediaSize by remember { mutableIntStateOf(groupedMedia.value.size) }
-    val editedMediaItemIndex by remember(groupedMedia.value.size) {
-        derivedStateOf {
-            groupedMedia.value.indexOf(
-                groupedMedia.value.find {
-                    it.id == mediaItemId
-                }
-            )
-        }
-    }
-
-    LaunchedEffect(editedMediaItemIndex) {
-        // if user is not scrolling, move to edited media
-        if (editedMediaItemIndex != -1 && previousMediaItemId != null) {
-            val index = if (groupedMedia.value.size == lastGroupedMediaSize) editedMediaItemIndex else editedMediaItemIndex - 1
-            state.animateScrollToPage(
-                page = index,
-                animationSpec = tween(
-                    durationMillis = AnimationConstants.DURATION,
-                    easing = FastOutSlowInEasing
-                )
-            )
-
-            lastGroupedMediaSize = groupedMedia.value.size
-        }
+    LaunchedEffect(key1 = state.settledPage) {
+        currentIndex = state.settledPage
     }
 
     val appBarsVisible = remember { mutableStateOf(true) }
+    val mediaDao = LocalAppDatabase.current.mediaEntityDao()
     val resources = LocalResources.current
-    val currentMediaItem = remember {
-        derivedStateOf {
-            val index = state.layoutInfo.visiblePagesInfo.firstOrNull()?.index ?: 0
-            if (index < groupedMedia.value.size) {
-                groupedMedia.value[index]
-            } else {
-                MediaStoreData(
-                    displayName = resources.getString(R.string.media_broken)
+
+    var mediaItem by remember { mutableStateOf(MediaStoreData.dummyItem) }
+    LaunchedEffect(currentIndex) {
+        withContext(Dispatchers.IO) {
+            mediaItem =
+                if (currentIndex in 0..mediaStoreData.value.size) {
+                    mediaStoreData.value[currentIndex]
+                } else {
+                    MediaStoreData(
+                        displayName = resources.getString(R.string.media_broken)
+                    )
+                }
+
+            if (mediaItem.type == MediaType.Image) {
+                val date = getDateTakenForMedia(
+                    absolutePath = mediaItem.absolutePath,
+                    dateModified = mediaItem.dateModified
                 )
+
+                if (date != mediaItem.dateTaken) {
+                    mediaDao.deleteEntityById(id = mediaItem.id)
+                    mediaDao.insertEntity(
+                        MediaEntity(
+                            id = mediaItem.id,
+                            dateTaken = date,
+                            mimeType = mediaItem.mimeType ?: "image/png",
+                            displayName = mediaItem.displayName
+                        )
+                    )
+                }
             }
         }
     }
 
-    val mediaDao = LocalAppDatabase.current.mediaEntityDao()
-    LaunchedEffect(currentMediaItem.value) {
-        withContext(Dispatchers.IO) {
-            val media = currentMediaItem.value
-
-            val date = getDateTakenForMedia(
-                absolutePath = media.absolutePath,
-                dateModified = media.dateModified
-            )
-
-            if (date != media.dateTaken) {
-                mediaDao.deleteEntityById(id = mediaItemId)
-                mediaDao.insertEntity(
-                    MediaEntity(
-                        id = mediaItemId,
-                        dateTaken = date,
-                        mimeType = media.mimeType ?: "image/png",
-                        displayName = media.displayName
-                    )
-                )
-            }
-        }
+    val context = LocalContext.current
+    BackHandler(
+        enabled = isOpenWithDefaultView
+    ) {
+        (context as Activity).finish()
     }
 
     var showInfoDialog by remember { mutableStateOf(false) }
-    val context = LocalContext.current
-    BackHandler(
-        enabled = !showInfoDialog
-    ) {
-        if (isOpenWithDefaultView) {
-            (context as Activity).finish()
-        } else {
-            navController.popBackStack()
-        }
-    }
-
     Scaffold(
         topBar = {
             SingleViewTopBar(
-                mediaItem = currentMediaItem.value,
+                mediaItem = mediaItem,
                 visible = appBarsVisible.value,
                 showInfoDialog = showInfoDialog,
+                isOpenWithDefaultView = isOpenWithDefaultView,
                 expandInfoDialog = {
                     showInfoDialog = true
                 }
             )
         },
         bottomBar = {
-            val coroutineScope = rememberCoroutineScope()
             val mainViewModel = LocalMainViewModel.current
 
             BottomBar(
                 visible = appBarsVisible.value,
-                currentItem = currentMediaItem.value,
-                groupedMedia = groupedMedia,
-                loadsFromMainViewModel = loadsFromMainViewModel,
+                currentItem = mediaItem,
+                groupedMedia = mediaStoreData,
                 state = state,
                 showEditingView = {
                     mainViewModel.launch {
@@ -361,20 +263,20 @@ fun SinglePhotoViewCommon(
                             appBarsVisible.value = it
                         }
 
-                        if (currentMediaItem.value.type == MediaType.Image) {
+                        if (mediaItem.type == MediaType.Image) {
                             navController.navigate(
                                 Screens.ImageEditor(
-                                    absolutePath = currentMediaItem.value.absolutePath,
-                                    uri = currentMediaItem.value.uri.toString(),
-                                    dateTaken = currentMediaItem.value.dateTaken,
+                                    absolutePath = mediaItem.absolutePath,
+                                    uri = mediaItem.uri.toString(),
+                                    dateTaken = mediaItem.dateTaken,
                                     albumInfo = albumInfo
                                 )
                             )
                         } else {
                             navController.navigate(
                                 Screens.VideoEditor(
-                                    uri = currentMediaItem.value.uri.toString(),
-                                    absolutePath = currentMediaItem.value.absolutePath,
+                                    uri = mediaItem.uri.toString(),
+                                    absolutePath = mediaItem.absolutePath,
                                     albumInfo = albumInfo
                                 )
                             )
@@ -386,18 +288,6 @@ fun SinglePhotoViewCommon(
                         navController.popBackStack()
                     }
                 },
-                removeIfInFavGrid = {
-                    if (navController.previousBackStackEntry?.destination?.route == MultiScreenViewType.FavouritesGridView.name) {
-                        sortOutMediaMods(
-                            currentMediaItem.value,
-                            groupedMedia,
-                            coroutineScope,
-                            state
-                        ) {
-                            navController.popBackStack()
-                        }
-                    }
-                },
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
@@ -405,7 +295,7 @@ fun SinglePhotoViewCommon(
     ) { _ ->
         if (showInfoDialog) {
             SinglePhotoInfoDialog(
-                currentMediaItem = currentMediaItem.value,
+                currentMediaItem = mediaItem,
                 showMoveCopyOptions = true
             ) {
                 showInfoDialog = false
@@ -422,7 +312,7 @@ fun SinglePhotoViewCommon(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             HorizontalImageList(
-                groupedMedia = groupedMedia.value,
+                groupedMedia = mediaStoreData.value,
                 state = state,
                 window = window,
                 appBarsVisible = appBarsVisible
@@ -436,12 +326,10 @@ fun SinglePhotoViewCommon(
 private fun BottomBar(
     visible: Boolean,
     currentItem: MediaStoreData,
-    groupedMedia: MutableState<List<MediaStoreData>>,
-    loadsFromMainViewModel: Boolean,
+    groupedMedia: State<List<MediaStoreData>>,
     state: PagerState,
     showEditingView: () -> Unit,
-    onZeroItemsLeft: () -> Unit,
-    removeIfInFavGrid: () -> Unit
+    onZeroItemsLeft: () -> Unit
 ) {
     var showLoadingDialog by remember { mutableStateOf(false) }
 
@@ -564,7 +452,6 @@ private fun BottomBar(
                 val tryGetDirPermission = remember { mutableStateOf(false) }
                 val mainViewModel = LocalMainViewModel.current
                 val applicationDatabase = LocalAppDatabase.current
-                val coroutineScope = rememberCoroutineScope()
 
                 GetDirectoryPermissionAndRun(
                     absoluteDirPaths = listOf(
@@ -591,22 +478,18 @@ private fun BottomBar(
                     shouldRun = moveToSecureFolder,
                     onGranted = {
                         mainViewModel.launch(Dispatchers.IO) {
+                            state.animateScrollToPage(
+                                page = groupedMedia.value.indexOf(currentItem) + 1,
+                                animationSpec = tween(
+                                    durationMillis = AnimationConstants.DURATION
+                                )
+                            )
                             moveImageToLockedFolder(
                                 list = listOf(currentItem),
                                 context = context,
                                 applicationDatabase = applicationDatabase
                             ) {
                                 if (groupedMedia.value.none { it.type != MediaType.Section }) onZeroItemsLeft()
-
-                                if (loadsFromMainViewModel) {
-                                    sortOutMediaMods(
-                                        currentItem,
-                                        groupedMedia,
-                                        coroutineScope,
-                                        state,
-                                        onZeroItemsLeft
-                                    )
-                                }
 
                                 showLoadingDialog = false
                             }
@@ -641,7 +524,6 @@ private fun BottomBar(
                             favouritesViewModel.addToFavourites(currentItem, context)
                         } else {
                             favouritesViewModel.removeFromFavourites(currentItem.id)
-                            removeIfInFavGrid()
                         }
                     }
                 ) {
@@ -670,6 +552,7 @@ private fun BottomBar(
                     shouldRun = runTrashAction,
                     onGranted = {
                         mainViewModel.launch(Dispatchers.IO) {
+
                             if (doNotTrash) {
                                 permanentlyDeletePhotoList(
                                     context = context,
@@ -682,17 +565,6 @@ private fun BottomBar(
                                     trashed = true,
                                     appDatabase = applicationDatabase
                                 )
-                            }
-
-                            if (loadsFromMainViewModel) {
-                                sortOutMediaMods(
-                                    currentItem,
-                                    groupedMedia,
-                                    coroutineScope,
-                                    state
-                                ) {
-                                    onZeroItemsLeft()
-                                }
                             }
 
                             if (groupedMedia.value.all { it == currentItem }) onZeroItemsLeft()

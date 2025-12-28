@@ -5,7 +5,6 @@ import kotlinx.serialization.Serializable
 
 enum class MultiScreenViewType {
     MainScreen,
-    TrashedPhotoView,
     SecureFolder,
     AboutAndUpdateView,
     FavouritesGridView,
@@ -39,9 +38,16 @@ object Screens {
     )
 
     @Serializable
-    data class SingleTrashedPhotoView(
-        val mediaItemId: Long
-    )
+    object Trash {
+        @Serializable
+        object TrashedPhotoView
+
+        @Serializable
+        data class SingleTrashedPhotoView(
+            val mediaItemId: Long
+        )
+    }
+
 
     @Serializable
     data class SingleHiddenPhotoView(

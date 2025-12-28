@@ -366,7 +366,7 @@ private fun InitSinglePhotoView(
     SinglePhotoView(
         navController = navController,
         window = window,
-        multiAlbumViewModel = multiAlbumViewModel,
+        viewModel = multiAlbumViewModel,
         mediaItemId = incomingData.id,
         previousMediaItemId = null,
         albumInfo = AlbumInfo.createPathOnlyAlbum(
@@ -374,7 +374,6 @@ private fun InitSinglePhotoView(
                 incomingData.absolutePath.split("/").dropLast(1).joinToString("/")
             )
         ),
-        loadsFromMainViewModel = false,
         isOpenWithDefaultView = true
     )
 }

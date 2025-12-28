@@ -367,7 +367,7 @@ fun AlbumsGridView(
                             navController.navigate(MultiScreenViewType.FavouritesGridView.name)
                         },
                         navigateToTrash = {
-                            navController.navigate(MultiScreenViewType.TrashedPhotoView.name)
+                            navController.navigate(Screens.Trash.TrashedPhotoView)
                         }
                     )
                 }

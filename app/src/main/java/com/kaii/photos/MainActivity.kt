@@ -71,9 +71,13 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navigation
 import androidx.navigation.toRoute
+import coil3.ImageLoader
+import coil3.compose.setSingletonImageLoaderFactory
 import com.bumptech.glide.Glide
 import com.bumptech.glide.MemoryCategory
+import com.github.awxkee.avifcoil.decoder.HeifDecoder
 import com.kaii.lavender.snackbars.LavenderSnackbarBox
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
@@ -197,7 +201,7 @@ class MainActivity : ComponentActivity() {
         // TODO: move to coil only
         Glide.get(this).setMemoryCategory(MemoryCategory.HIGH)
 
-        val mainViewModel: MainViewModel = ViewModelProvider.create(
+        val mainViewModel = ViewModelProvider.create(
             store = viewModelStore,
             factory = MainViewModelFactory(applicationContext, emptyList())
         )[MainViewModel::class]
@@ -214,6 +218,14 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
+            setSingletonImageLoaderFactory { context ->
+                ImageLoader.Builder(context)
+                    .components {
+                        add(HeifDecoder.Factory())
+                    }
+                    .build()
+            }
+
             immichViewModel = viewModel(
                 factory = ImmichViewModelFactory(
                     application = application,
@@ -418,40 +430,32 @@ class MainActivity : ComponentActivity() {
                     val screen: Screens.SinglePhotoView = it.toRoute()
 
                     if (!screen.albumInfo.isCustomAlbum) {
-                        if (screen.albumInfo != multiAlbumViewModel.albumInfo) {
-                            multiAlbumViewModel.reinitDataSource(
-                                context = context,
-                                album = screen.albumInfo,
-                                sortMode = multiAlbumViewModel.sortMode
-                            )
-                        }
+                        multiAlbumViewModel.update(
+                            context = context,
+                            album = screen.albumInfo
+                        )
 
                         SinglePhotoView(
                             navController = navController,
                             window = window,
-                            multiAlbumViewModel = multiAlbumViewModel,
+                            viewModel = multiAlbumViewModel,
                             mediaItemId = screen.mediaItemId,
                             previousMediaItemId = screen.previousMediaItemId,
-                            albumInfo = screen.albumInfo,
-                            loadsFromMainViewModel = screen.loadsFromMainViewModel
+                            albumInfo = screen.albumInfo
                         )
                     } else {
-                        if (screen.albumInfo != multiAlbumViewModel.albumInfo) {
-                            customAlbumViewModel.reinitDataSource(
-                                context = context,
-                                album = screen.albumInfo,
-                                sortMode = customAlbumViewModel.sortMode
-                            )
-                        }
+                        multiAlbumViewModel.update(
+                            context = context,
+                            album = screen.albumInfo
+                        )
 
                         SinglePhotoView(
                             navController = navController,
                             window = window,
-                            customAlbumViewModel = customAlbumViewModel,
+                            viewModel = customAlbumViewModel,
                             mediaItemId = screen.mediaItemId,
                             previousMediaItemId = screen.previousMediaItemId,
-                            albumInfo = screen.albumInfo,
-                            loadsFromMainViewModel = screen.loadsFromMainViewModel
+                            albumInfo = screen.albumInfo
                         )
                     }
                 }
@@ -470,13 +474,10 @@ class MainActivity : ComponentActivity() {
                     val screen: Screens.SingleAlbumView = it.toRoute()
 
                     if (!screen.albumInfo.isCustomAlbum) {
-                        if (screen.albumInfo != multiAlbumViewModel.albumInfo) {
-                            multiAlbumViewModel.reinitDataSource(
-                                context = context,
-                                album = screen.albumInfo,
-                                sortMode = multiAlbumViewModel.sortMode
-                            )
-                        }
+                        multiAlbumViewModel.update(
+                            context = context,
+                            album = screen.albumInfo
+                        )
 
                         SingleAlbumView(
                             albumInfo = screen.albumInfo,
@@ -484,45 +485,72 @@ class MainActivity : ComponentActivity() {
                             viewModel = multiAlbumViewModel
                         )
                     } else {
-                        if (screen.albumInfo != multiAlbumViewModel.albumInfo) {
-                            customAlbumViewModel.reinitDataSource(
-                                context = context,
-                                album = screen.albumInfo,
-                                sortMode = customAlbumViewModel.sortMode
-                            )
-                        }
+                        customAlbumViewModel.update(
+                            context = context,
+                            album = screen.albumInfo
+                        )
 
                         SingleAlbumView(
                             albumInfo = screen.albumInfo,
                             selectedItemsList = selectedItemsList,
-                            customViewModel = customAlbumViewModel
+                            viewModel = customAlbumViewModel
                         )
                     }
                 }
 
-                composable<Screens.SingleTrashedPhotoView> {
-                    setupNextScreen(
-                        selectedItemsList,
-                        window
-                    )
+                navigation<Screens.Trash>(
+                    startDestination = Screens.Trash.TrashedPhotoView
+                ) {
+                    composable<Screens.Trash.TrashedPhotoView> {
+                        setupNextScreen(
+                            selectedItemsList,
+                            window
+                        )
 
-                    val screen: Screens.SingleTrashedPhotoView = it.toRoute()
+                        val storeOwner = remember(it) {
+                            navController.getBackStackEntry(Screens.Trash)
+                        }
+                        val trashViewModel = viewModel<TrashViewModel>(
+                            viewModelStoreOwner = storeOwner,
+                            factory = TrashViewModelFactory(
+                                context = context,
+                                sortMode = currentSortMode,
+                                displayDateFormat = displayDateFormat
+                            )
+                        )
 
-                    SingleTrashedPhotoView(
-                        window = window,
-                        mediaItemId = screen.mediaItemId
-                    )
-                }
+                        TrashedPhotoGridView(
+                            selectedItemsList = selectedItemsList,
+                            viewModel = trashViewModel
+                        )
+                    }
 
-                composable(MultiScreenViewType.TrashedPhotoView.name) {
-                    setupNextScreen(
-                        selectedItemsList,
-                        window
-                    )
+                    composable<Screens.Trash.SingleTrashedPhotoView> {
+                        setupNextScreen(
+                            selectedItemsList,
+                            window
+                        )
 
-                    TrashedPhotoGridView(
-                        selectedItemsList = selectedItemsList
-                    )
+                        val screen = it.toRoute<Screens.Trash.SingleTrashedPhotoView>()
+
+                        val storeOwner = remember(it) {
+                            navController.getBackStackEntry(Screens.Trash)
+                        }
+                        val trashViewModel = viewModel<TrashViewModel>(
+                            viewModelStoreOwner = storeOwner,
+                            factory = TrashViewModelFactory(
+                                context = context,
+                                sortMode = currentSortMode,
+                                displayDateFormat = displayDateFormat
+                            )
+                        )
+
+                        SingleTrashedPhotoView(
+                            window = window,
+                            mediaItemId = screen.mediaItemId,
+                            viewModel = trashViewModel
+                        )
+                    }
                 }
 
                 composable(MultiScreenViewType.SecureFolder.name) {
@@ -734,13 +762,10 @@ class MainActivity : ComponentActivity() {
                     )
 
                     val screen: Screens.ImmichAlbumPage = it.toRoute()
-                    if (screen.albumInfo != multiAlbumViewModel.albumInfo) {
-                        multiAlbumViewModel.reinitDataSource(
-                            context = context,
-                            album = screen.albumInfo,
-                            sortMode = multiAlbumViewModel.sortMode
-                        )
-                    }
+                    multiAlbumViewModel.update(
+                        context = context,
+                        album = screen.albumInfo
+                    )
 
                     ImmichAlbumPage(
                         albumInfo = screen.albumInfo,
@@ -885,23 +910,19 @@ class MainActivity : ComponentActivity() {
 
     @OptIn(ExperimentalMaterial3ExpressiveApi::class)
     @Composable
-    private fun Content(
+    fun Content(
         currentView: MutableState<BottomBarTab>,
         showDialog: MutableState<Boolean>,
         selectedItemsList: SnapshotStateList<MediaStoreData>,
         multiAlbumViewModel: MultiAlbumViewModel,
     ) {
-        val context = LocalContext.current
         val mainViewModel = LocalMainViewModel.current
-
         val mediaStoreData =
             multiAlbumViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
-        val groupedMedia = remember { mutableStateOf(mediaStoreData.value) }
 
         val tabList by mainViewModel.settings.DefaultTabs.getTabList()
             .collectAsStateWithLifecycle(initialValue = DefaultTabs.defaultList)
 
-        val navController = LocalNavController.current
         val scrollBehaviour = FloatingToolbarDefaults.exitAlwaysScrollBehavior(
             exitDirection = FloatingToolbarExitDirection.Bottom
         )
@@ -920,7 +941,7 @@ class MainActivity : ComponentActivity() {
                     selectedItemsList = selectedItemsList,
                     tabs = tabList,
                     scrollBehaviour = scrollBehaviour,
-                    groupedMedia = groupedMedia
+                    groupedMedia = mediaStoreData
                 )
             },
             modifier = Modifier
@@ -965,6 +986,7 @@ class MainActivity : ComponentActivity() {
                 Pair(0.dp, 0.dp)
             }
 
+            val navController = LocalNavController.current
             val exitImmediately by mainViewModel.settings.Behaviour.getExitImmediately().collectAsStateWithLifecycle(initialValue = false)
             val mainPage by mainViewModel.settings.DefaultTabs.getDefaultTab().collectAsStateWithLifecycle(initialValue = DefaultTabs.TabTypes.photos)
             BackHandler(
@@ -991,227 +1013,12 @@ class MainActivity : ComponentActivity() {
                     mainViewModel = mainViewModel
                 )
 
-                AnimatedContent(
-                    targetState = currentView.value,
-                    transitionSpec = {
-                        if (tabList.indexOf(targetState) > tabList.indexOf(initialState)) {
-                            (slideInHorizontally { width -> width } + fadeIn()).togetherWith(
-                                slideOutHorizontally { width -> -width } + fadeOut())
-                        } else {
-                            (slideInHorizontally { width -> -width } + fadeIn()).togetherWith(
-                                slideOutHorizontally { width -> width } + fadeOut())
-                        }.using(
-                            SizeTransform(clip = false)
-                        )
-                    },
-                    label = "MainAnimatedContentView"
-                ) { stateValue ->
-                    if (stateValue in tabList || stateValue == DefaultTabs.TabTypes.secure) {
-                        Log.d(TAG, "Tab needed is $stateValue")
-                        when {
-                            stateValue.isCustom -> {
-                                LaunchedEffect(stateValue.albumPaths) {
-                                    Log.d(TAG, "Custom Tab paths are ${stateValue.albumPaths}")
-                                    if (stateValue.albumPaths.toSet() != multiAlbumViewModel.albumInfo.paths.toSet()) {
-                                        multiAlbumViewModel.reinitDataSource(
-                                            context = context,
-                                            album = AlbumInfo(
-                                                id = stateValue.id,
-                                                name = stateValue.name,
-                                                paths = stateValue.albumPaths,
-                                                isCustomAlbum = false
-                                            ),
-                                            sortMode = multiAlbumViewModel.sortMode
-                                        )
-                                    }
-                                }
-
-                                LaunchedEffect(Unit) {
-                                    selectedItemsList.clear()
-                                }
-
-                                var hasFiles by remember { mutableStateOf(true) }
-                                LaunchedEffect(mediaStoreData.value) {
-                                    if (stateValue.albumPaths.isNotEmpty()) {
-                                        withContext(Dispatchers.IO) {
-                                            hasFiles = stateValue.albumPaths.any { path ->
-                                                Path(path).checkHasFiles(
-                                                    basePath = path.toBasePath()
-                                                ) == true
-                                            }
-                                        }
-                                    }
-
-                                    groupedMedia.value = mediaStoreData.value
-                                }
-
-                                PhotoGrid(
-                                    groupedMedia = groupedMedia,
-                                    albumInfo = AlbumInfo(
-                                        id = stateValue.id,
-                                        name = stateValue.name,
-                                        paths = stateValue.albumPaths,
-                                        isCustomAlbum = false
-                                    ),
-                                    viewProperties = ViewProperties.Album,
-                                    selectedItemsList = selectedItemsList,
-                                    hasFiles = hasFiles,
-                                    isMainPage = true
-                                )
-                            }
-
-                            stateValue == DefaultTabs.TabTypes.photos -> {
-                                val mainPhotosPaths by mainViewModel.mainPhotosAlbums.collectAsStateWithLifecycle()
-
-                                LaunchedEffect(mainPhotosPaths) {
-                                    Log.d(TAG, "Main photos paths are $mainPhotosPaths")
-                                    if (mainPhotosPaths.toSet() != multiAlbumViewModel.albumInfo.paths.toSet()) {
-                                        multiAlbumViewModel.reinitDataSource(
-                                            context = context,
-                                            album = AlbumInfo(
-                                                id = stateValue.id,
-                                                name = stateValue.name,
-                                                paths = mainPhotosPaths,
-                                                isCustomAlbum = false
-                                            ),
-                                            sortMode = multiAlbumViewModel.sortMode
-                                        )
-                                    }
-                                }
-
-                                LaunchedEffect(Unit) {
-                                    selectedItemsList.clear()
-                                }
-
-                                var hasFiles by remember { mutableStateOf(true) }
-                                LaunchedEffect(mediaStoreData.value) {
-                                    if (mainPhotosPaths.isNotEmpty()) {
-                                        withContext(Dispatchers.IO) {
-                                            hasFiles = mainPhotosPaths.any { path ->
-                                                Path(path).checkHasFiles(
-                                                    basePath = path.toBasePath()
-                                                ) == true
-                                            }
-                                        }
-                                    }
-
-                                    groupedMedia.value = mediaStoreData.value
-                                }
-
-                                PhotoGrid(
-                                    groupedMedia = groupedMedia,
-                                    albumInfo = multiAlbumViewModel.albumInfo,
-                                    viewProperties = ViewProperties.Album,
-                                    selectedItemsList = selectedItemsList,
-                                    hasFiles = hasFiles,
-                                    isMainPage = true
-                                )
-                            }
-
-                            stateValue == DefaultTabs.TabTypes.secure -> LockedFolderEntryView()
-
-                            stateValue == DefaultTabs.TabTypes.albums -> {
-                                AlbumsGridView(currentView)
-                            }
-
-                            stateValue == DefaultTabs.TabTypes.search -> {
-                                SearchPage(selectedItemsList)
-                            }
-
-                            stateValue == DefaultTabs.TabTypes.favourites -> {
-                                val appDatabase = LocalAppDatabase.current
-                                val favouritesViewModel: FavouritesViewModel = viewModel(
-                                    factory = FavouritesViewModelFactory(appDatabase)
-                                )
-
-                                val mediaStoreData by favouritesViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
-
-                                val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
-                                val sortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
-
-                                val groupedMedia = remember {
-                                    mutableStateOf(
-                                        groupPhotosBy(
-                                            mediaStoreData,
-                                            if (sortMode == MediaItemSortMode.Disabled) sortMode else MediaItemSortMode.LastModified,
-                                            displayDateFormat,
-                                            context
-                                        )
-                                    )
-                                }
-
-                                var hasFiles by remember { mutableStateOf(true) }
-
-                                LaunchedEffect(mediaStoreData) {
-                                    if (mediaStoreData.isNotEmpty()) {
-                                        delay(PhotoGridConstants.UPDATE_TIME)
-                                        groupedMedia.value =
-                                            groupPhotosBy(
-                                                mediaStoreData,
-                                                if (sortMode == MediaItemSortMode.Disabled) sortMode else MediaItemSortMode.LastModified,
-                                                displayDateFormat,
-                                                context
-                                            )
-                                    } else {
-                                        delay(PhotoGridConstants.LOADING_TIME)
-                                        groupedMedia.value = emptyList()
-                                        hasFiles = false
-                                    }
-
-                                    delay(PhotoGridConstants.LOADING_TIME)
-                                    hasFiles = mediaStoreData.isNotEmpty()
-                                }
-
-                                PhotoGrid(
-                                    groupedMedia = groupedMedia,
-                                    albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
-                                    selectedItemsList = selectedItemsList,
-                                    viewProperties = ViewProperties.Favourites,
-                                    hasFiles = hasFiles
-                                )
-                            }
-
-                            stateValue == DefaultTabs.TabTypes.trash -> {
-                                val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
-                                val sortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
-
-                                val trashViewModel: TrashViewModel = viewModel(
-                                    factory = TrashViewModelFactory(
-                                        context = context,
-                                        sortMode = sortMode,
-                                        displayDateFormat = displayDateFormat
-                                    )
-                                )
-
-                                val mediaStoreData =
-                                    trashViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
-
-                                val groupedMedia = remember { mutableStateOf(mediaStoreData.value) }
-                                var hasFiles by remember { mutableStateOf(true) }
-
-                                LaunchedEffect(mediaStoreData.value) {
-                                    groupedMedia.value = mediaStoreData.value
-
-                                    delay(PhotoGridConstants.LOADING_TIME)
-                                    hasFiles = groupedMedia.value.isNotEmpty()
-                                }
-
-                                PhotoGrid(
-                                    groupedMedia = groupedMedia,
-                                    albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
-                                    selectedItemsList = selectedItemsList,
-                                    viewProperties = ViewProperties.Trash,
-                                    hasFiles = hasFiles
-                                )
-                            }
-                        }
-                    } else {
-                        ErrorPage(
-                            message = stringResource(id = R.string.tab_non_existent),
-                            iconResId = R.drawable.error
-                        )
-                    }
-                }
+                MainPages(
+                    currentView = currentView,
+                    multiAlbumViewModel = multiAlbumViewModel,
+                    selectedItemsList = selectedItemsList,
+                    isMediaPicker = false
+                )
             }
         }
     }
@@ -1234,6 +1041,223 @@ class MainActivity : ComponentActivity() {
             selectedItemsList = selectedItemsList,
             currentView = currentView
         )
+    }
+}
+
+@Composable
+fun MainPages(
+    currentView: MutableState<BottomBarTab>,
+    multiAlbumViewModel: MultiAlbumViewModel,
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    isMediaPicker: Boolean
+) {
+    val context = LocalContext.current
+    val mainViewModel = LocalMainViewModel.current
+    val tabList by mainViewModel.settings.DefaultTabs.getTabList()
+        .collectAsStateWithLifecycle(initialValue = DefaultTabs.defaultList)
+
+    val mediaStoreData =
+        multiAlbumViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+
+    AnimatedContent(
+        targetState = currentView.value,
+        transitionSpec = {
+            if (tabList.indexOf(targetState) > tabList.indexOf(initialState)) {
+                (slideInHorizontally { width -> width } + fadeIn()).togetherWith(
+                    slideOutHorizontally { width -> -width } + fadeOut())
+            } else {
+                (slideInHorizontally { width -> -width } + fadeIn()).togetherWith(
+                    slideOutHorizontally { width -> width } + fadeOut())
+            }.using(
+                SizeTransform(clip = false)
+            )
+        },
+        label = "MainAnimatedContentView"
+    ) { stateValue ->
+        if (stateValue in tabList || stateValue == DefaultTabs.TabTypes.secure) {
+            Log.d(TAG, "Tab needed is $stateValue")
+            when {
+                stateValue.isCustom -> {
+                    LaunchedEffect(stateValue.albumPaths) {
+                        multiAlbumViewModel.update(
+                            context = context,
+                            album = stateValue.toAlbumInfo()
+                        )
+                    }
+
+                    LaunchedEffect(Unit) {
+                        selectedItemsList.clear()
+                    }
+
+                    var hasFiles by remember { mutableStateOf(true) }
+                    LaunchedEffect(mediaStoreData.value) {
+                        if (stateValue.albumPaths.isNotEmpty()) {
+                            withContext(Dispatchers.IO) {
+                                hasFiles = stateValue.albumPaths.any { path ->
+                                    Path(path).checkHasFiles(
+                                        basePath = path.toBasePath()
+                                    ) == true
+                                }
+                            }
+                        }
+                    }
+
+                    PhotoGrid(
+                        groupedMedia = mediaStoreData,
+                        albumInfo = multiAlbumViewModel.albumInfo,
+                        viewProperties = ViewProperties.Album,
+                        selectedItemsList = selectedItemsList,
+                        hasFiles = hasFiles,
+                        isMainPage = true,
+                        isMediaPicker = isMediaPicker
+                    )
+                }
+
+                stateValue == DefaultTabs.TabTypes.photos -> {
+                    val mainPhotosPaths by mainViewModel.mainPhotosAlbums.collectAsStateWithLifecycle()
+
+                    LaunchedEffect(mainPhotosPaths) {
+                        multiAlbumViewModel.update(
+                            context = context,
+                            album = stateValue
+                                .copy(
+                                    albumPaths = mainPhotosPaths
+                                )
+                                .toAlbumInfo()
+                        )
+                    }
+
+                    LaunchedEffect(Unit) {
+                        selectedItemsList.clear()
+                    }
+
+                    var hasFiles by remember { mutableStateOf(true) }
+                    LaunchedEffect(mediaStoreData.value) {
+                        if (mainPhotosPaths.isNotEmpty()) {
+                            withContext(Dispatchers.IO) {
+                                hasFiles = mainPhotosPaths.any { path ->
+                                    Path(path).checkHasFiles(
+                                        basePath = path.toBasePath()
+                                    ) == true
+                                }
+                            }
+                        }
+                    }
+
+                    PhotoGrid(
+                        groupedMedia = mediaStoreData,
+                        albumInfo = multiAlbumViewModel.albumInfo,
+                        viewProperties = ViewProperties.Album,
+                        selectedItemsList = selectedItemsList,
+                        hasFiles = hasFiles,
+                        isMainPage = true,
+                        isMediaPicker = isMediaPicker
+                    )
+                }
+
+                stateValue == DefaultTabs.TabTypes.secure -> LockedFolderEntryView()
+
+                stateValue == DefaultTabs.TabTypes.albums -> {
+                    AlbumsGridView(currentView)
+                }
+
+                stateValue == DefaultTabs.TabTypes.search -> {
+                    SearchPage(selectedItemsList)
+                }
+
+                stateValue == DefaultTabs.TabTypes.favourites -> {
+                    val appDatabase = LocalAppDatabase.current
+                    val favouritesViewModel: FavouritesViewModel = viewModel(
+                        factory = FavouritesViewModelFactory(appDatabase)
+                    )
+
+                    val mediaStoreData by favouritesViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+
+                    val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
+                    val sortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
+
+                    val groupedMedia = remember {
+                        mutableStateOf(
+                            groupPhotosBy(
+                                mediaStoreData,
+                                if (sortMode == MediaItemSortMode.Disabled) sortMode else MediaItemSortMode.LastModified,
+                                displayDateFormat,
+                                context
+                            )
+                        )
+                    }
+
+                    var hasFiles by remember { mutableStateOf(true) }
+
+                    LaunchedEffect(mediaStoreData) {
+                        if (mediaStoreData.isNotEmpty()) {
+                            delay(PhotoGridConstants.UPDATE_TIME)
+                            groupedMedia.value =
+                                groupPhotosBy(
+                                    mediaStoreData,
+                                    if (sortMode == MediaItemSortMode.Disabled) sortMode else MediaItemSortMode.LastModified,
+                                    displayDateFormat,
+                                    context
+                                )
+                        } else {
+                            delay(PhotoGridConstants.LOADING_TIME)
+                            groupedMedia.value = emptyList()
+                            hasFiles = false
+                        }
+
+                        delay(PhotoGridConstants.LOADING_TIME)
+                        hasFiles = mediaStoreData.isNotEmpty()
+                    }
+
+                    PhotoGrid(
+                        groupedMedia = groupedMedia,
+                        albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
+                        selectedItemsList = selectedItemsList,
+                        viewProperties = ViewProperties.Favourites,
+                        hasFiles = hasFiles,
+                        isMainPage = true,
+                        isMediaPicker = isMediaPicker
+                    )
+                }
+
+                stateValue == DefaultTabs.TabTypes.trash -> {
+                    val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
+                    val sortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
+
+                    val trashViewModel: TrashViewModel = viewModel(
+                        factory = TrashViewModelFactory(
+                            context = context,
+                            sortMode = sortMode,
+                            displayDateFormat = displayDateFormat
+                        )
+                    )
+
+                    val trashStoreData =
+                        trashViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+
+                    var hasFiles by remember { mutableStateOf(true) }
+                    LaunchedEffect(trashStoreData.value) {
+                        delay(PhotoGridConstants.LOADING_TIME)
+                        hasFiles = trashStoreData.value.isNotEmpty()
+                    }
+
+                    PhotoGrid(
+                        groupedMedia = trashStoreData,
+                        albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
+                        selectedItemsList = selectedItemsList,
+                        viewProperties = ViewProperties.Trash,
+                        hasFiles = hasFiles,
+                        isMainPage = true,
+                        isMediaPicker = isMediaPicker
+                    )
+                }
+            }
+        } else {
+            ErrorPage(
+                message = stringResource(id = R.string.tab_non_existent),
+                iconResId = R.drawable.error
+            )
+        }
     }
 }
 
