@@ -1,11 +1,6 @@
 package com.kaii.photos.compose.single_photo
 
-import android.app.Activity
-import android.content.pm.ActivityInfo
 import android.content.res.Configuration
-import android.graphics.drawable.BitmapDrawable
-import android.graphics.drawable.Drawable
-import android.os.Build
 import android.util.Log
 import android.view.Window
 import androidx.compose.animation.core.snap
@@ -22,7 +17,6 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -31,17 +25,13 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
-import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import com.bumptech.glide.Glide
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.DiskCacheStrategy
-import com.bumptech.glide.load.engine.GlideException
+import com.bumptech.glide.load.resource.bitmap.DownsampleStrategy
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
-import com.bumptech.glide.request.RequestListener
-import com.bumptech.glide.request.target.Target
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.setBarVisibility
@@ -61,7 +51,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import me.saket.telephoto.zoomable.DoubleClickToZoomListener
 import me.saket.telephoto.zoomable.ZoomSpec
 import me.saket.telephoto.zoomable.ZoomableState
 import me.saket.telephoto.zoomable.glide.ZoomableGlideImage
@@ -254,7 +243,6 @@ fun GlideView(
     useCache: Boolean = true
 ) {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
     val state = rememberZoomableImageState(zoomableState = zoomableState)
     val windowSize = LocalWindowInfo.current.containerSize / 4
 
@@ -270,62 +258,33 @@ fun GlideView(
                 appBarsVisible.value = it
             }
         },
-        onDoubleClick = DoubleClickToZoomListener.cycle(
-            maxZoomFactor = SingleViewConstants.HALF_ZOOM
-        ),
+        onDoubleClick = { zoomState, offset ->
+            val zoom = zoomState.zoomFraction ?: 0f
+
+            if (zoom == 0f) {
+                zoomState.zoomBy(
+                    zoomFactor = SingleViewConstants.HALF_ZOOM,
+                    centroid = offset
+                )
+            } else {
+                zoomState.resetZoom()
+            }
+        },
         modifier = modifier
             .fillMaxSize()
     ) {
         it.signature(item.signature())
             .diskCacheStrategy(if (useCache) DiskCacheStrategy.ALL else DiskCacheStrategy.NONE)
             .error(R.drawable.broken_image)
+            .downsample(DownsampleStrategy.FIT_CENTER)
             .thumbnail(
                 Glide.with(context)
                     .load(model)
                     .signature(item.signature())
+                    .diskCacheStrategy(if (useCache) DiskCacheStrategy.ALL else DiskCacheStrategy.NONE)
                     .override(windowSize.width, windowSize.height)
             )
-            .transition(withCrossFade(1000))
-            .listener(object : RequestListener<Drawable> {
-                override fun onLoadFailed(
-                    e: GlideException?,
-                    model: Any?,
-                    target: Target<Drawable?>?,
-                    isFirstResource: Boolean
-                ): Boolean {
-                    coroutineScope.launch(Dispatchers.Main) {
-                        window.colorMode = ActivityInfo.COLOR_MODE_DEFAULT
-                    }
-
-                    return false
-                }
-
-                override fun onResourceReady(
-                    resource: Drawable?,
-                    model: Any?,
-                    target: Target<Drawable?>?,
-                    dataSource: DataSource?,
-                    isFirstResource: Boolean
-                ): Boolean {
-                    val activity = (context as Activity)
-
-                    if (resource == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE || activity.display.isHdr) return false
-
-                    val isHdr =
-                        if (resource is BitmapDrawable) resource.bitmap.hasGainmap()
-                        else resource.toBitmap(width = 128, height = 128).hasGainmap()
-
-                    coroutineScope.launch(Dispatchers.Main) {
-                        if (isHdr) {
-                            window.colorMode = ActivityInfo.COLOR_MODE_HDR
-                        } else {
-                            window.colorMode = ActivityInfo.COLOR_MODE_DEFAULT
-                        }
-                    }
-
-                    return false
-                }
-            })
+            .transition(withCrossFade(100))
     }
 }
 
