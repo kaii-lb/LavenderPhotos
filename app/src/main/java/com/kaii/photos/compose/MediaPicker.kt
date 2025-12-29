@@ -110,6 +110,8 @@ import com.kaii.photos.models.main_activity.MainViewModel
 import com.kaii.photos.models.main_activity.MainViewModelFactory
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModelFactory
+import com.kaii.photos.models.search_page.SearchViewModel
+import com.kaii.photos.models.search_page.SearchViewModelFactory
 import com.kaii.photos.setupNextScreen
 import com.kaii.photos.ui.theme.PhotosTheme
 import kotlinx.coroutines.Dispatchers
@@ -206,6 +208,14 @@ class MediaPicker : ComponentActivity() {
             )
         )
 
+        val searchViewModel: SearchViewModel = viewModel(
+            factory = SearchViewModelFactory(
+                context = context,
+                sortMode = currentSortMode,
+                displayDateFormat = displayDateFormat
+            )
+        )
+
         val navController = LocalNavController.current
         LaunchedEffect(albumsList) {
             if (navController.currentBackStackEntry?.destination?.route != MultiScreenViewType.MainScreen.name
@@ -271,6 +281,7 @@ class MediaPicker : ComponentActivity() {
                 val tabs by mainViewModel.settings.DefaultTabs.getTabList().collectAsStateWithLifecycle(initialValue = DefaultTabs.defaultList)
                 MainWindow(
                     multiAlbumViewModel = multiAlbumViewModel,
+                    searchViewModel = searchViewModel,
                     currentView = currentView,
                     selectedItemsList = selectedItemsList,
                     tabs = tabs,
@@ -327,6 +338,7 @@ class MediaPicker : ComponentActivity() {
         tabs: List<BottomBarTab>,
         selectedItemsList: SnapshotStateList<MediaStoreData>,
         multiAlbumViewModel: MultiAlbumViewModel,
+        searchViewModel: SearchViewModel,
         incomingIntent: Intent
     ) {
         val mainViewModel = LocalMainViewModel.current
@@ -413,6 +425,7 @@ class MediaPicker : ComponentActivity() {
                     MainPages(
                         currentView = currentView,
                         multiAlbumViewModel = multiAlbumViewModel,
+                        searchViewModel = searchViewModel,
                         selectedItemsList = selectedItemsList,
                         isMediaPicker = true
                     )

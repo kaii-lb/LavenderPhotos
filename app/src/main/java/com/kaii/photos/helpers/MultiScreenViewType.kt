@@ -28,8 +28,8 @@ object Screens {
     data class SinglePhotoView(
         val albumInfo: AlbumInfo,
         val mediaItemId: Long,
-        val loadsFromMainViewModel: Boolean,
-        val previousMediaItemId: Long?
+        val nextMediaItemId: Long?,
+        val isSearchPage: Boolean
     )
 
     @Serializable
@@ -59,7 +59,8 @@ object Screens {
         val absolutePath: String,
         val uri: String,
         val dateTaken: Long,
-        val albumInfo: AlbumInfo
+        val albumInfo: AlbumInfo,
+        val isSearchPage: Boolean
     )
 
     @Serializable
@@ -71,6 +72,7 @@ object Screens {
     data class VideoEditor(
         val uri: String,
         val absolutePath: String,
-        val albumInfo: AlbumInfo
+        val albumInfo: AlbumInfo,
+        val isSearchPage: Boolean
     )
 }

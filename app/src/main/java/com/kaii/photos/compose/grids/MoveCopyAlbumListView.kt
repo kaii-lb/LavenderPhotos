@@ -102,7 +102,9 @@ fun MoveCopyAlbumListView(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     isMoving: Boolean,
     groupedMedia: MutableState<List<MediaStoreData>>? = null,
-    insetsPadding: WindowInsets
+    insetsPadding: WindowInsets,
+    onMoveMedia: () -> Unit = {},
+    dismissInfoDialog: () -> Unit = {}
 ) {
     val mainViewModel = LocalMainViewModel.current
 
@@ -255,6 +257,8 @@ fun MoveCopyAlbumListView(
                             isMoving = isMoving,
                             show = show,
                             groupedMedia = groupedMedia,
+                            onMoveMedia = onMoveMedia,
+                            dismissInfoDialog = dismissInfoDialog,
                             modifier = Modifier
                                 .fillParentMaxWidth(1f)
                                 .padding(8.dp, 0.dp)
@@ -280,6 +284,8 @@ fun AlbumsListItem(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     isMoving: Boolean,
     show: MutableState<Boolean>,
+    onMoveMedia: () -> Unit,
+    dismissInfoDialog: () -> Unit,
     modifier: Modifier,
     groupedMedia: MutableState<List<MediaStoreData>>? = null
 ) {
@@ -320,6 +326,8 @@ fun AlbumsListItem(
 
             mainViewModel.launch(Dispatchers.IO) {
                 if (isMoving && album.paths.size == 1) {
+                    onMoveMedia()
+
                     moveImageListToPath(
                         context = context,
                         list = selectedItemsWithoutSection,
@@ -351,6 +359,8 @@ fun AlbumsListItem(
                     }
 
                     if (list.isNotEmpty()) {
+                        onMoveMedia()
+
                         if (doNotTrash) {
                             permanentlyDeletePhotoList(
                                 context = context,
@@ -368,6 +378,7 @@ fun AlbumsListItem(
                 }
 
                 selectedItemsList.clear()
+                dismissInfoDialog()
             }
         }
     )

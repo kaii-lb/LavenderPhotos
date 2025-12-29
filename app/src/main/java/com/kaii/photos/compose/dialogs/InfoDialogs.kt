@@ -46,6 +46,7 @@ import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.RippleConfiguration
+import androidx.compose.material3.SheetState
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -538,15 +539,14 @@ fun FeatureNotAvailableDialog(onDismiss: () -> Unit) {
 @Composable
 fun SinglePhotoInfoDialog(
     currentMediaItem: MediaStoreData,
+    sheetState: SheetState,
     showMoveCopyOptions: Boolean,
-    dismiss: () -> Unit
+    dismiss: () -> Unit,
+    onMoveMedia: () -> Unit
 ) {
     val mainViewModel = LocalMainViewModel.current
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
-    val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = false
-    )
 
     LaunchedEffect(Unit) {
         sheetState.partialExpand()
@@ -723,7 +723,9 @@ fun SinglePhotoInfoDialog(
                             selectedItemsList = stateList,
                             isMoving = isMoving,
                             groupedMedia = null,
-                            insetsPadding = WindowInsets.statusBars
+                            insetsPadding = WindowInsets.statusBars,
+                            onMoveMedia = onMoveMedia,
+                            dismissInfoDialog = dismiss
                         )
 
                         IconButton(

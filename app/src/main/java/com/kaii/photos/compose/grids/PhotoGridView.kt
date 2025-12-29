@@ -345,8 +345,8 @@ fun DeviceMedia(
                                             Screens.SinglePhotoView(
                                                 albumInfo = albumInfo,
                                                 mediaItemId = mediaStoreItem.id,
-                                                previousMediaItemId = null,
-                                                loadsFromMainViewModel = viewProperties == ViewProperties.SearchLoading || viewProperties == ViewProperties.SearchNotFound || viewProperties == ViewProperties.Favourites
+                                                nextMediaItemId = null,
+                                                isSearchPage = viewProperties == ViewProperties.SearchLoading || viewProperties == ViewProperties.SearchNotFound
                                             )
                                         )
                                     }

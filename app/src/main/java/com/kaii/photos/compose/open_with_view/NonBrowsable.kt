@@ -377,13 +377,15 @@ private fun BottomBar(
                                                         absolutePath = absolutePath,
                                                         uri = contentUri.toString(),
                                                         dateTaken = currentTime / 1000,
-                                                        albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList())
+                                                        albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
+                                                        isSearchPage = false
                                                     )
                                                 } else {
                                                     Screens.VideoEditor(
                                                         uri = contentUri.toString(),
                                                         absolutePath = absolutePath,
-                                                        albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList())
+                                                        albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
+                                                        isSearchPage = false
                                                     )
                                                 }
                                             )

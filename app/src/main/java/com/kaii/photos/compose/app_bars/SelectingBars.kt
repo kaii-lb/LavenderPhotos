@@ -112,7 +112,7 @@ fun IsSelectingBottomAppBar(
 }
 
 @Composable
-fun RowScope.SelectingBottomBarItems(
+fun SelectingBottomBarItems(
     albumInfo: AlbumInfo,
     selectedItemsList: SnapshotStateList<MediaStoreData>
 ) {

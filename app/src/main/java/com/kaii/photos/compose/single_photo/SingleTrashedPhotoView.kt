@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.BottomAppBarDefaults.windowInsets
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingToolbarDefaults
 import androidx.compose.material3.HorizontalFloatingToolbar
@@ -37,6 +38,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
@@ -44,14 +46,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -65,6 +68,7 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.SingleViewTopBar
 import com.kaii.photos.compose.dialogs.SinglePhotoInfoDialog
 import com.kaii.photos.compose.dialogs.TrashDeleteDialog
+import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.mapSync
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
@@ -74,6 +78,8 @@ import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.trash_bin.TrashViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
@@ -94,13 +100,16 @@ fun SingleTrashedPhotoView(
         }
     }
 
-    SingleTrashedPhotoViewImpl(
-        mediaStoreData = mediaStoreData,
-        startIndex = startIndex,
-        window = window
-    )
+    if (mediaStoreData.value.isNotEmpty()) {
+        SingleTrashedPhotoViewImpl(
+            mediaStoreData = mediaStoreData,
+            startIndex = startIndex,
+            window = window
+        )
+    }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 private fun SingleTrashedPhotoViewImpl(
@@ -108,14 +117,12 @@ private fun SingleTrashedPhotoViewImpl(
     startIndex: Int,
     window: Window
 ) {
-    val appBarsVisible = remember { mutableStateOf(true) }
     var currentIndex by rememberSaveable(startIndex) {
         mutableIntStateOf(
             startIndex
         )
     }
 
-    val resources = LocalResources.current
     var mediaItem by remember { mutableStateOf(MediaStoreData.dummyItem) }
     LaunchedEffect(currentIndex) {
         withContext(Dispatchers.IO) {
@@ -123,9 +130,7 @@ private fun SingleTrashedPhotoViewImpl(
                 if (currentIndex in 0..mediaStoreData.value.size && mediaStoreData.value.isNotEmpty()) {
                     mediaStoreData.value[currentIndex]
                 } else {
-                    MediaStoreData(
-                        displayName = resources.getString(R.string.media_broken)
-                    )
+                    MediaStoreData.dummyItem
                 }
         }
     }
@@ -140,10 +145,30 @@ private fun SingleTrashedPhotoViewImpl(
         }
     }
 
+    val state = rememberPagerState(
+        initialPage = currentIndex.coerceIn(0, mediaStoreData.value.size)
+    ) {
+        mediaStoreData.value.size
+    }
+
+    val coroutineScope = rememberCoroutineScope()
+    fun onMoveMedia() {
+        coroutineScope.launch {
+            state.animateScrollToPage(
+                page = (currentIndex + 1) % mediaStoreData.value.size,
+                animationSpec = AnimationConstants.expressiveTween(
+                    durationMillis = AnimationConstants.DURATION
+                )
+            )
+            delay(AnimationConstants.DURATION_SHORT.toLong())
+        }
+    }
+
     var showDialog by remember { mutableStateOf(false) }
     TrashDeleteDialog(
         showDialog = showDialog,
         onDelete = {
+            onMoveMedia()
             runPermaDeleteAction.value = true
         },
         onDismiss = {
@@ -151,6 +176,7 @@ private fun SingleTrashedPhotoViewImpl(
         }
     )
 
+    val appBarsVisible = remember { mutableStateOf(true) }
     var showInfoDialog by remember { mutableStateOf(false) }
     Scaffold(
         topBar = {
@@ -167,10 +193,14 @@ private fun SingleTrashedPhotoViewImpl(
         bottomBar = {
             BottomBar(
                 visible = appBarsVisible.value,
-                item = mediaItem
-            ) {
-                showDialog = true
-            }
+                item = mediaItem,
+                showDeleteDialog = {
+                    showDialog = true
+                },
+                onMoveMedia = {
+                    onMoveMedia()
+                }
+            )
         },
         containerColor = MaterialTheme.colorScheme.background,
         contentColor = MaterialTheme.colorScheme.onBackground
@@ -184,33 +214,38 @@ private fun SingleTrashedPhotoViewImpl(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            if (mediaStoreData.value.isNotEmpty()) {
-                val state = rememberPagerState(
-                    initialPage = currentIndex
-                ) {
-                    mediaStoreData.value.size
+            LaunchedEffect(state) {
+                snapshotFlow { state.currentPage }.collect {
+                    currentIndex = it
                 }
+            }
 
-                LaunchedEffect(key1 = state.settledPage) {
-                    currentIndex = state.settledPage
-                }
-
-                HorizontalImageList(
-                    groupedMedia = mediaStoreData.value,
-                    state = state,
-                    window = window,
-                    appBarsVisible = appBarsVisible
+            val sheetState = rememberModalBottomSheetState(
+                skipPartiallyExpanded = false
+            )
+            if (showInfoDialog) {
+                SinglePhotoInfoDialog(
+                    currentMediaItem = mediaItem,
+                    sheetState = sheetState,
+                    showMoveCopyOptions = false,
+                    dismiss = {
+                        coroutineScope.launch {
+                            sheetState.hide()
+                            showInfoDialog = false
+                        }
+                    },
+                    onMoveMedia = {
+                        onMoveMedia()
+                    }
                 )
             }
-        }
 
-        if (showInfoDialog) {
-            SinglePhotoInfoDialog(
-                currentMediaItem = mediaItem,
-                showMoveCopyOptions = false
-            ) {
-                showInfoDialog = false
-            }
+            HorizontalImageList(
+                groupedMedia = mediaStoreData.value,
+                state = state,
+                window = window,
+                appBarsVisible = appBarsVisible
+            )
         }
     }
 }
@@ -220,7 +255,8 @@ private fun SingleTrashedPhotoViewImpl(
 private fun BottomBar(
     visible: Boolean,
     item: MediaStoreData,
-    showDeleteDialog: () -> Unit
+    showDeleteDialog: () -> Unit,
+    onMoveMedia: () -> Unit
 ) {
     val context = LocalContext.current
 
@@ -279,6 +315,8 @@ private fun BottomBar(
                     shouldRun = runRestoreAction,
                     onGranted = {
                         mainViewModel.launch(Dispatchers.IO) {
+                            onMoveMedia()
+
                             setTrashedOnPhotoList(
                                 context = context,
                                 list = listOf(item),

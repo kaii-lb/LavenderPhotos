@@ -28,7 +28,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.ViewProperties
@@ -37,8 +36,6 @@ import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.models.search_page.SearchViewModel
-import com.kaii.photos.models.search_page.SearchViewModelFactory
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DayOfWeek
@@ -46,35 +43,19 @@ import kotlinx.datetime.Month
 
 @Composable
 fun SearchPage(
-    selectedItemsList: SnapshotStateList<MediaStoreData>
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    searchViewModel: SearchViewModel
 ) {
+    val context = LocalContext.current
     val mainViewModel = LocalMainViewModel.current
-    val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
     val sortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
 
-    val context = LocalContext.current
-    val searchViewModel: SearchViewModel = viewModel(
-        factory = SearchViewModelFactory(
-            context = context,
-            sortMode = sortMode,
-            displayDateFormat = displayDateFormat
-        )
-    )
-
-    val mediaStoreDataHolder =
-        searchViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
-
-    val originalGroupedMedia = remember { derivedStateOf { mediaStoreDataHolder.value } }
-
-    val groupedMedia = remember { mutableStateOf(originalGroupedMedia.value) }
-
+    val mediaStoreData by searchViewModel.mediaFlow.collectAsStateWithLifecycle()
+    val groupedMedia = remember { mutableStateOf(mediaStoreData) }
     val actualGroupedMedia by searchViewModel.groupedMedia.collectAsStateWithLifecycle()
+
     LaunchedEffect(actualGroupedMedia) {
         groupedMedia.value = actualGroupedMedia
-    }
-
-    LaunchedEffect(groupedMedia.value) {
-        mainViewModel.setGroupedMedia(groupedMedia.value)
     }
 
     val gridState = rememberLazyGridState()
@@ -157,10 +138,13 @@ fun SearchPage(
 
         var hasFiles by remember { mutableStateOf(true) }
 
-        LaunchedEffect(searchedForText.value, originalGroupedMedia.value, sortMode) {
-            println("ORIGINAL CHANGED REFRESHING")
-            if (searchedForText.value == "") {
-                groupedMedia.value = originalGroupedMedia.value
+        LaunchedEffect(searchedForText.value, mediaStoreData, sortMode) {
+            if (searchedForText.value.isEmpty()) {
+                searchViewModel.search(
+                    search = "",
+                    context = context
+                )
+                searchViewModel.overrideMedia(media = mediaStoreData)
                 hideLoadingSpinner = true
                 return@LaunchedEffect
             }
@@ -169,30 +153,16 @@ fun SearchPage(
             hideLoadingSpinner = false
             hasFiles = true
 
-            coroutineScope.launch(Dispatchers.IO) {
-                val query = searchedForText.value.trim()
-                var final = searchViewModel.searchByDateFormat(query = query)
+            searchViewModel.search(
+                search = searchedForText.value,
+                context = context
+            )
 
-                if (final.isEmpty()) {
-                    final = searchViewModel.searchByDateNames(query = query)
-                }
+            hideLoadingSpinner = true
 
-                if (final.isEmpty()) {
-                    final = searchViewModel.searchByName(name = query)
-                }
-
-                searchViewModel.setMedia(
-                    context = context,
-                    media = final,
-                    sortMode = sortMode,
-                    displayDateFormat = displayDateFormat
-                )
-                hideLoadingSpinner = true
-
-                delay(PhotoGridConstants.LOADING_TIME)
-                hasFiles = groupedMedia.value.isNotEmpty()
-                gridState.requestScrollToItem(0)
-            }
+            delay(PhotoGridConstants.LOADING_TIME)
+            hasFiles = groupedMedia.value.isNotEmpty()
+            gridState.requestScrollToItem(0)
         }
 
         Box(

@@ -210,7 +210,8 @@ class OpenWithView : ComponentActivity() {
                                     uri = screen.uri.toUri(),
                                     absolutePath = screen.absolutePath,
                                     albumInfo = null,
-                                    isFromOpenWithView = true
+                                    isFromOpenWithView = true,
+                                    isSearchPage = false
                                 )
                             }
 
@@ -262,7 +263,8 @@ class OpenWithView : ComponentActivity() {
                                     absolutePath = screen.absolutePath,
                                     window = window,
                                     isFromOpenWithView = true,
-                                    albumInfo = null
+                                    albumInfo = null,
+                                    isSearchPage = false
                                 )
                             }
                         }
@@ -368,7 +370,7 @@ private fun InitSinglePhotoView(
         window = window,
         viewModel = multiAlbumViewModel,
         mediaItemId = incomingData.id,
-        previousMediaItemId = null,
+        nextMediaItemId = null,
         albumInfo = AlbumInfo.createPathOnlyAlbum(
             paths = listOf(
                 incomingData.absolutePath.split("/").dropLast(1).joinToString("/")

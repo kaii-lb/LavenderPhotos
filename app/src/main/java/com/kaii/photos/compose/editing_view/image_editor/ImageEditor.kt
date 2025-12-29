@@ -101,6 +101,7 @@ import com.kaii.photos.helpers.editing.MediaColorFilters
 import com.kaii.photos.helpers.editing.rememberDrawingPaintState
 import com.kaii.photos.helpers.editing.rememberImageEditingState
 import com.kaii.photos.helpers.editing.saveImage
+import com.kaii.photos.mediastore.getMediaStoreDataFromUri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -113,7 +114,8 @@ fun ImageEditor(
     uri: Uri,
     absolutePath: String,
     isFromOpenWithView: Boolean,
-    albumInfo: AlbumInfo?
+    albumInfo: AlbumInfo?,
+    isSearchPage: Boolean
 ) {
     val lastSavedModCount = remember { mutableIntStateOf(0) }
     val totalModCount = remember { mutableIntStateOf(0) }
@@ -270,29 +272,45 @@ fun ImageEditor(
                         isFromOpenWithView = isFromOpenWithView
                     )
 
-                    if (exitOnSave && navMediaId != -1L && !isFromOpenWithView) mainViewModel.launch { // need to be on main thread
-                        navController.popBackStack(Screens.SinglePhotoView::class, true)
-                        navController.navigate(
-                            Screens.SinglePhotoView(
-                                albumInfo = albumInfo!!,
-                                mediaItemId = navMediaId,
-                                loadsFromMainViewModel = false,
-                                previousMediaItemId = uri.lastPathSegment?.toLongOrNull()
+                    if (exitOnSave && navMediaId != -1L && !isFromOpenWithView) mainViewModel.launch(Dispatchers.IO) { // need to be on main thread
+                        val item = context.contentResolver.getMediaStoreDataFromUri(
+                            context = context,
+                            uri = uri
+                        ) ?: return@launch
+
+                        coroutineScope.launch(Dispatchers.Main) {
+                            navController.popBackStack(Screens.SinglePhotoView::class, true)
+                            navController.navigate(
+                                Screens.SinglePhotoView(
+                                    albumInfo = albumInfo!!,
+                                    mediaItemId = item.id,
+                                    isSearchPage = isSearchPage,
+                                    nextMediaItemId = navMediaId
+                                )
                             )
-                        )
+                        }
                     }
                 },
                 navigateBack = {
-                    if (!isFromOpenWithView) {
-                        navController.popBackStack(Screens.SinglePhotoView::class, true)
-                        navController.navigate(
-                            Screens.SinglePhotoView(
-                                albumInfo = albumInfo!!,
-                                mediaItemId = navMediaId,
-                                loadsFromMainViewModel = false,
-                                previousMediaItemId = uri.lastPathSegment?.toLongOrNull()
-                            )
-                        )
+                    if (!isFromOpenWithView) mainViewModel.launch(Dispatchers.Main) {
+                        context.contentResolver.getMediaStoreDataFromUri(
+                            context = context,
+                            uri = uri
+                        )?.let { item ->
+                            coroutineScope.launch(Dispatchers.IO) {
+                                navController.popBackStack(Screens.SinglePhotoView::class, true)
+                                navController.navigate(
+                                    Screens.SinglePhotoView(
+                                        albumInfo = albumInfo!!,
+                                        mediaItemId = item.id,
+                                        isSearchPage = isSearchPage,
+                                        nextMediaItemId = navMediaId
+                                    )
+                                )
+                            }
+                        }
+                    } else {
+                        navController.popBackStack()
                     }
                 }
             )

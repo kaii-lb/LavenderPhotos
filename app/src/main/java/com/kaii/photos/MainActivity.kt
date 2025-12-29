@@ -151,6 +151,8 @@ import com.kaii.photos.models.main_activity.MainViewModelFactory
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModelFactory
 import com.kaii.photos.models.multi_album.groupPhotosBy
+import com.kaii.photos.models.search_page.SearchViewModel
+import com.kaii.photos.models.search_page.SearchViewModelFactory
 import com.kaii.photos.models.secure_folder.SecureFolderViewModel
 import com.kaii.photos.models.secure_folder.SecureFolderViewModelFactory
 import com.kaii.photos.models.trash_bin.TrashViewModel
@@ -336,6 +338,22 @@ class MainActivity : ComponentActivity() {
             )
         )
 
+        val searchViewModel: SearchViewModel = viewModel(
+            factory = SearchViewModelFactory(
+                context = context,
+                sortMode = currentSortMode,
+                displayDateFormat = displayDateFormat
+            )
+        )
+
+        LaunchedEffect(currentView.value) {
+            if (currentView.value != DefaultTabs.TabTypes.search) {
+                searchViewModel.clear()
+            } else {
+                searchViewModel.restart(context = context)
+            }
+        }
+
         val navController = LocalNavController.current
         // update main photos view albums list
         LaunchedEffect(mainPhotosPaths) {
@@ -361,6 +379,17 @@ class MainActivity : ComponentActivity() {
             )
             multiAlbumViewModel.changeSortMode(context = context, sortMode = currentSortMode)
             customAlbumViewModel.changeSortMode(context = context, sortMode = currentSortMode)
+
+            searchViewModel.restart(
+                context = context,
+                sortMode = currentSortMode
+            )
+            searchViewModel.setMedia(
+                context = context,
+                media = searchViewModel.groupedMedia.value,
+                sortMode = currentSortMode,
+                displayDateFormat = displayDateFormat
+            )
         }
 
         LaunchedEffect(displayDateFormat) {
@@ -370,6 +399,17 @@ class MainActivity : ComponentActivity() {
             )
             multiAlbumViewModel.changeDisplayDateFormat(context = context, displayDateFormat = displayDateFormat)
             customAlbumViewModel.changeDisplayDateFormat(context = context, displayDateFormat = displayDateFormat)
+
+            searchViewModel.restart(
+                context = context,
+                displayDateFormat = displayDateFormat
+            )
+            searchViewModel.setMedia(
+                context = context,
+                media = searchViewModel.groupedMedia.value,
+                sortMode = currentSortMode,
+                displayDateFormat = displayDateFormat
+            )
         }
 
         val snackbarHostState = remember {
@@ -402,7 +442,13 @@ class MainActivity : ComponentActivity() {
                         window = window
                     )
 
-                    Content(currentView, showDialog, selectedItemsList, multiAlbumViewModel)
+                    Content(
+                        currentView = currentView,
+                        showDialog = showDialog,
+                        selectedItemsList = selectedItemsList,
+                        multiAlbumViewModel = multiAlbumViewModel,
+                        searchViewModel = searchViewModel
+                    )
                 }
 
                 composable<Screens.SinglePhotoView>(
@@ -418,34 +464,49 @@ class MainActivity : ComponentActivity() {
 
                     val screen: Screens.SinglePhotoView = it.toRoute()
 
-                    if (!screen.albumInfo.isCustomAlbum) {
-                        multiAlbumViewModel.update(
-                            context = context,
-                            album = screen.albumInfo
-                        )
+                    when {
+                        screen.isSearchPage -> {
+                            SinglePhotoView(
+                                navController = navController,
+                                searchViewModel = searchViewModel,
+                                window = window,
+                                mediaItemId = screen.mediaItemId,
+                                nextMediaItemId = screen.nextMediaItemId,
+                                albumInfo = screen.albumInfo
+                            )
+                        }
 
-                        SinglePhotoView(
-                            navController = navController,
-                            window = window,
-                            viewModel = multiAlbumViewModel,
-                            mediaItemId = screen.mediaItemId,
-                            previousMediaItemId = screen.previousMediaItemId,
-                            albumInfo = screen.albumInfo
-                        )
-                    } else {
-                        multiAlbumViewModel.update(
-                            context = context,
-                            album = screen.albumInfo
-                        )
+                        screen.albumInfo.isCustomAlbum -> {
+                            customAlbumViewModel.update(
+                                context = context,
+                                album = screen.albumInfo
+                            )
 
-                        SinglePhotoView(
-                            navController = navController,
-                            window = window,
-                            viewModel = customAlbumViewModel,
-                            mediaItemId = screen.mediaItemId,
-                            previousMediaItemId = screen.previousMediaItemId,
-                            albumInfo = screen.albumInfo
-                        )
+                            SinglePhotoView(
+                                navController = navController,
+                                window = window,
+                                viewModel = customAlbumViewModel,
+                                mediaItemId = screen.mediaItemId,
+                                nextMediaItemId = screen.nextMediaItemId,
+                                albumInfo = screen.albumInfo
+                            )
+                        }
+
+                         else -> {
+                             multiAlbumViewModel.update(
+                                 context = context,
+                                 album = screen.albumInfo
+                             )
+
+                             SinglePhotoView(
+                                 navController = navController,
+                                 window = window,
+                                 viewModel = multiAlbumViewModel,
+                                 mediaItemId = screen.mediaItemId,
+                                 nextMediaItemId = screen.nextMediaItemId,
+                                 albumInfo = screen.albumInfo
+                             )
+                         }
                     }
                 }
 
@@ -646,7 +707,8 @@ class MainActivity : ComponentActivity() {
                         uri = screen.uri.toUri(),
                         absolutePath = screen.absolutePath,
                         isFromOpenWithView = false,
-                        albumInfo = screen.albumInfo
+                        albumInfo = screen.albumInfo,
+                        isSearchPage = screen.isSearchPage
                     )
                 }
 
@@ -815,7 +877,8 @@ class MainActivity : ComponentActivity() {
                         absolutePath = screen.absolutePath,
                         albumInfo = screen.albumInfo,
                         window = window,
-                        isFromOpenWithView = false
+                        isFromOpenWithView = false,
+                        isSearchPage = screen.isSearchPage
                     )
                 }
 
@@ -904,6 +967,7 @@ class MainActivity : ComponentActivity() {
         showDialog: MutableState<Boolean>,
         selectedItemsList: SnapshotStateList<MediaStoreData>,
         multiAlbumViewModel: MultiAlbumViewModel,
+        searchViewModel: SearchViewModel
     ) {
         val mainViewModel = LocalMainViewModel.current
         val mediaStoreData =
@@ -1005,6 +1069,7 @@ class MainActivity : ComponentActivity() {
                 MainPages(
                     currentView = currentView,
                     multiAlbumViewModel = multiAlbumViewModel,
+                    searchViewModel = searchViewModel,
                     selectedItemsList = selectedItemsList,
                     isMediaPicker = false
                 )
@@ -1037,6 +1102,7 @@ class MainActivity : ComponentActivity() {
 fun MainPages(
     currentView: MutableState<BottomBarTab>,
     multiAlbumViewModel: MultiAlbumViewModel,
+    searchViewModel: SearchViewModel,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     isMediaPicker: Boolean
 ) {
@@ -1151,7 +1217,10 @@ fun MainPages(
                 }
 
                 stateValue == DefaultTabs.TabTypes.search -> {
-                    SearchPage(selectedItemsList)
+                    SearchPage(
+                        selectedItemsList = selectedItemsList,
+                        searchViewModel = searchViewModel
+                    )
                 }
 
                 stateValue == DefaultTabs.TabTypes.favourites -> {

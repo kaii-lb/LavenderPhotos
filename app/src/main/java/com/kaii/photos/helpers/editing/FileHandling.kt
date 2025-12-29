@@ -71,7 +71,9 @@ import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getUriFromAbsolutePath
 import com.kaii.photos.mediastore.insertMedia
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.math.max
 import kotlin.math.pow
@@ -94,7 +96,7 @@ suspend fun saveVideo(
     textMeasurer: TextMeasurer,
     isFromOpenWithView: Boolean,
     onFailure: () -> Unit
-): Long {
+): Long = withContext(Dispatchers.Main) {
     // 100 * 2 for each of the transformer.start's, and 40 for the copying
     val totalPercentage = 120f * 2
     val percentage = mutableFloatStateOf(0f)
@@ -263,7 +265,7 @@ suspend fun saveVideo(
     if (uri == null) {
         percentage.floatValue = 1f
         onFailure()
-        return -1L
+        return@withContext -1L
     }
 
     val media = MediaStoreData(
@@ -397,7 +399,7 @@ suspend fun saveVideo(
     if (mediaUri == null) {
         percentage.floatValue = 1f
         onFailure()
-        return -1L
+        return@withContext -1L
     }
 
     val finalMediaItem = MediaItem.Builder()
@@ -438,7 +440,7 @@ suspend fun saveVideo(
     if (newUri == null) {
         percentage.floatValue = 1f
         onFailure()
-        return -1L
+        return@withContext -1L
     }
 
     if (overwrite) {
@@ -450,7 +452,7 @@ suspend fun saveVideo(
         )
     }
 
-    return copyImageListToPath(
+    return@withContext copyImageListToPath(
         context = context,
         list = listOf(
             media.copy(

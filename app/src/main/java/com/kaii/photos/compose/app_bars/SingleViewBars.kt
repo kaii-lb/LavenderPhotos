@@ -147,6 +147,7 @@ import com.kaii.photos.helpers.editing.VideoModification
 import com.kaii.photos.helpers.editing.saveVideo
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.mediastore.getMediaStoreDataFromUri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -356,7 +357,8 @@ fun VideoEditorTopBar(
     containerDimens: Size,
     canvasSize: Size,
     isFromOpenWithView: Boolean,
-    albumInfo: AlbumInfo?
+    albumInfo: AlbumInfo?,
+    isSearchPage: Boolean
 ) {
     val navController = LocalNavController.current
     var navMediaId by remember { mutableLongStateOf(-1L) }
@@ -368,6 +370,7 @@ fun VideoEditorTopBar(
                 modifier = Modifier
                     .padding(8.dp, 0.dp, 0.dp, 0.dp)
             ) {
+                val context = LocalContext.current
                 val showDialog = remember { mutableStateOf(false) }
 
                 if (showDialog.value) {
@@ -379,20 +382,31 @@ fun VideoEditorTopBar(
                         navController.popBackStack()
                     }
                 }
+
+                val coroutineScope = rememberCoroutineScope()
                 FilledTonalIconButton(
                     onClick = {
                         if (lastSavedModCount.intValue < modifications.size) {
                             showDialog.value = true
-                        } else if (!isFromOpenWithView) {
-                            navController.popBackStack(Screens.SinglePhotoView::class, true)
-                            navController.navigate(
-                                Screens.SinglePhotoView(
-                                    albumInfo = albumInfo!!,
-                                    mediaItemId = navMediaId,
-                                    loadsFromMainViewModel = false,
-                                    previousMediaItemId = uri.lastPathSegment?.toLongOrNull()
-                                )
-                            )
+                        } else if (!isFromOpenWithView) coroutineScope.launch(Dispatchers.IO) {
+                            context.contentResolver.getMediaStoreDataFromUri(
+                                context = context,
+                                uri = uri
+                            )?.let { item ->
+                                coroutineScope.launch(Dispatchers.Main) {
+                                    navController.popBackStack(Screens.SinglePhotoView::class, true)
+                                    navController.navigate(
+                                        Screens.SinglePhotoView(
+                                            albumInfo = albumInfo!!,
+                                            mediaItemId = item.id,
+                                            isSearchPage = isSearchPage,
+                                            nextMediaItemId = navMediaId
+                                        )
+                                    )
+                                }
+                            }
+                        } else {
+                            navController.popBackStack()
                         }
                     },
                     enabled = true,
@@ -468,7 +482,12 @@ fun VideoEditorTopBar(
 
                             // mainViewModel so it doesn't die if user exits before video is saved
                             // not using Dispatchers.IO since transformer needs to be on main thread
-                            mainViewModel.launch {
+                            mainViewModel.launch(Dispatchers.IO) {
+                                val item = context.contentResolver.getMediaStoreDataFromUri(
+                                    context = context,
+                                    uri = uri
+                                ) ?: return@launch
+
                                 navMediaId = saveVideo(
                                     context = context,
                                     modifications = modifications + drawingPaintState.modifications.map {
@@ -495,14 +514,14 @@ fun VideoEditorTopBar(
                                     }
                                 }
 
-                                if (exitOnSave && navMediaId != -1L && !isFromOpenWithView) {
+                                if (exitOnSave && navMediaId != -1L && !isFromOpenWithView) mainViewModel.launch {
                                     navController.popBackStack(Screens.SinglePhotoView::class, true)
                                     navController.navigate(
                                         Screens.SinglePhotoView(
                                             albumInfo = albumInfo!!,
-                                            mediaItemId = navMediaId,
-                                            loadsFromMainViewModel = false,
-                                            previousMediaItemId = uri.lastPathSegment?.toLongOrNull()
+                                            mediaItemId = item.id,
+                                            isSearchPage = isSearchPage,
+                                            nextMediaItemId = navMediaId
                                         )
                                     )
                                 }

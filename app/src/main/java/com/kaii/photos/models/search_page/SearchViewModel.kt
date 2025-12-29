@@ -3,6 +3,8 @@ package com.kaii.photos.models.search_page
 import android.content.Context
 import android.os.CancellationSignal
 import android.util.Log
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.datastore.SQLiteQuery
@@ -13,12 +15,12 @@ import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.multi_album.groupPhotosBy
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
@@ -28,6 +30,7 @@ import kotlinx.datetime.format.byUnicodePattern
 import kotlinx.datetime.isoDayNumber
 import kotlinx.datetime.number
 import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
@@ -35,11 +38,12 @@ private const val TAG = "com.kaii.photos.models.search_page.SearchViewModel"
 
 class SearchViewModel(
     context: Context,
-    sortMode: MediaItemSortMode,
-    displayDateFormat: DisplayDateFormat
+    private var sortMode: MediaItemSortMode,
+    private var displayDateFormat: DisplayDateFormat
 ) : ViewModel() {
-    private val cancellationSignal = CancellationSignal()
-    private val mediaStoreDataSource =
+    var query = ""
+    private var cancellationSignal = CancellationSignal()
+    private val mediaStoreDataSource = mutableStateOf(
         MediaDataSource(
             context = context,
             sqliteQuery = SQLiteQuery(query = "", paths = null, basePaths = null),
@@ -47,28 +51,99 @@ class SearchViewModel(
             cancellationSignal = cancellationSignal,
             displayDateFormat = displayDateFormat
         )
+    )
 
     val mediaFlow by lazy {
-        getMediaDataFlow().stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
+        getMediaDataFlow().value.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(
+                stopTimeoutMillis = 10.seconds.inWholeMilliseconds
+            ),
+            initialValue = emptyList()
+        )
     }
 
-    private fun getMediaDataFlow(): Flow<List<MediaStoreData>> =
-        mediaStoreDataSource.loadMediaStoreData().flowOn(Dispatchers.IO).flowOn(Dispatchers.IO)
+    private fun getMediaDataFlow() = derivedStateOf {
+        mediaStoreDataSource.value.loadMediaStoreData().flowOn(Dispatchers.IO)
+    }
 
     private val _groupedMedia = MutableStateFlow<List<MediaStoreData>>(emptyList())
     val groupedMedia = _groupedMedia.asStateFlow()
+
+    fun search(
+        search: String,
+        context: Context
+    ) = viewModelScope.launch(Dispatchers.IO) {
+        val query = search.trim()
+        this@SearchViewModel.query = query
+
+        if (query.isEmpty()) {
+            _groupedMedia.value = mediaFlow.value
+            return@launch
+        }
+
+        var final = searchByDateFormat(query = query)
+
+        if (final.isEmpty()) {
+            final = searchByDateNames(query = query)
+        }
+
+        if (final.isEmpty()) {
+            final = searchByName(name = query)
+        }
+
+        setMedia(
+            context = context,
+            media = final,
+            sortMode = sortMode,
+            displayDateFormat = displayDateFormat
+        )
+    }
+
+    /** [setMedia] but without grouping */
+    fun overrideMedia(
+        media: List<MediaStoreData>
+    ) {
+        _groupedMedia.value = media
+    }
 
     fun setMedia(
         context: Context,
         media: List<MediaStoreData>,
         sortMode: MediaItemSortMode,
         displayDateFormat: DisplayDateFormat
-    ) {
+    ) = viewModelScope.launch(Dispatchers.IO) {
+        this@SearchViewModel.sortMode = sortMode
+        this@SearchViewModel.displayDateFormat = displayDateFormat
+
         _groupedMedia.value = groupPhotosBy(
             media = media,
             sortBy = sortMode,
             displayDateFormat = displayDateFormat,
             context = context
+        )
+    }
+
+    fun clear() {
+        _groupedMedia.value = emptyList()
+        cancellationSignal.cancel()
+        cancellationSignal = CancellationSignal()
+    }
+
+    fun restart(
+        context: Context,
+        sortMode: MediaItemSortMode = this.sortMode,
+        displayDateFormat: DisplayDateFormat = this.displayDateFormat
+    ) {
+        this.sortMode = sortMode
+        this.displayDateFormat = displayDateFormat
+
+        mediaStoreDataSource.value = MediaDataSource(
+            context = context,
+            sqliteQuery = SQLiteQuery(query = "", paths = null, basePaths = null),
+            sortMode = sortMode,
+            cancellationSignal = cancellationSignal,
+            displayDateFormat = displayDateFormat
         )
     }
 

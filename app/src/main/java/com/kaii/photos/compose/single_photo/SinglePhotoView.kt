@@ -5,8 +5,6 @@ import android.app.Activity
 import android.view.Window
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -23,6 +21,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.BottomAppBarDefaults.windowInsets
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FloatingToolbarDefaults
@@ -34,6 +33,7 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
@@ -44,6 +44,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -68,6 +69,7 @@ import com.kaii.photos.compose.dialogs.SinglePhotoInfoDialog
 import com.kaii.photos.database.entities.MediaEntity
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.Permissions
+import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.Screens
@@ -87,8 +89,10 @@ import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.favourites_grid.FavouritesViewModel
 import com.kaii.photos.models.favourites_grid.FavouritesViewModelFactory
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
+import com.kaii.photos.models.search_page.SearchViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalForInheritanceCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -98,8 +102,8 @@ fun SinglePhotoView(
     window: Window,
     viewModel: CustomAlbumViewModel,
     mediaItemId: Long,
-    previousMediaItemId: Long?,
     albumInfo: AlbumInfo,
+    nextMediaItemId: Long?,
     isOpenWithDefaultView: Boolean = false
 ) {
     val mediaStoreData = viewModel.mediaFlow.mapSync {
@@ -110,7 +114,7 @@ fun SinglePhotoView(
 
     val startIndex = remember {
         mediaStoreData.value.indexOfFirst { item ->
-            item.id == mediaItemId
+            item.id == nextMediaItemId || item.id == mediaItemId
         }
     }
 
@@ -118,9 +122,10 @@ fun SinglePhotoView(
         navController = navController,
         window = window,
         startIndex = startIndex,
-        previousMediaItemId = previousMediaItemId,
+        nextMediaItemId = nextMediaItemId,
         mediaStoreData = mediaStoreData,
         albumInfo = albumInfo,
+        isSearchPage = false,
         isOpenWithDefaultView = isOpenWithDefaultView
     )
 }
@@ -132,8 +137,8 @@ fun SinglePhotoView(
     window: Window,
     viewModel: MultiAlbumViewModel,
     mediaItemId: Long,
-    previousMediaItemId: Long?,
     albumInfo: AlbumInfo,
+    nextMediaItemId: Long?,
     isOpenWithDefaultView: Boolean = false,
 ) {
     val mediaStoreData = viewModel.mediaFlow.mapSync {
@@ -141,6 +146,49 @@ fun SinglePhotoView(
             item.type != MediaType.Section
         }
     }.collectAsStateWithLifecycle()
+
+    val startIndex = remember(mediaStoreData.value.isEmpty()) {
+        mediaStoreData.value.indexOfFirst { item ->
+            item.id == nextMediaItemId || item.id == mediaItemId
+        }
+    }
+
+    SinglePhotoViewCommon(
+        mediaStoreData = mediaStoreData,
+        startIndex = startIndex,
+        albumInfo = albumInfo,
+        navController = navController,
+        window = window,
+        isOpenWithDefaultView = isOpenWithDefaultView,
+        isSearchPage = false,
+        nextMediaItemId = nextMediaItemId
+    )
+}
+
+@OptIn(ExperimentalForInheritanceCoroutinesApi::class)
+@Composable
+fun SinglePhotoView(
+    navController: NavHostController,
+    searchViewModel: SearchViewModel,
+    window: Window,
+    mediaItemId: Long,
+    albumInfo: AlbumInfo,
+    nextMediaItemId: Long?
+) {
+    val mediaStoreData = searchViewModel.groupedMedia.mapSync {
+        it.filter { item ->
+            item.type != MediaType.Section
+        }
+    }.collectAsStateWithLifecycle()
+
+    val context = LocalContext.current
+    val allData by searchViewModel.mediaFlow.collectAsStateWithLifecycle()
+    LaunchedEffect(allData) {
+        searchViewModel.search(
+            search = searchViewModel.query,
+            context = context
+        )
+    }
 
     val startIndex = remember(mediaStoreData.value.isEmpty()) {
         mediaStoreData.value.indexOfFirst { item ->
@@ -154,11 +202,13 @@ fun SinglePhotoView(
         albumInfo = albumInfo,
         navController = navController,
         window = window,
-        isOpenWithDefaultView = isOpenWithDefaultView,
-        previousMediaItemId = previousMediaItemId
+        isOpenWithDefaultView = false,
+        isSearchPage = true,
+        nextMediaItemId = nextMediaItemId
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun SinglePhotoViewCommon(
@@ -168,28 +218,54 @@ fun SinglePhotoViewCommon(
     navController: NavHostController,
     window: Window,
     isOpenWithDefaultView: Boolean,
-    previousMediaItemId: Long? // TODO: reimplement scroll to edited image
+    isSearchPage: Boolean,
+    nextMediaItemId: Long?
 ) {
+    val state = rememberPagerState(
+        initialPage = startIndex.coerceIn(0, mediaStoreData.value.size - 1)
+    ) {
+        mediaStoreData.value.size
+    }
+
+    LaunchedEffect(Unit) {
+        var trials = 0
+
+        do {
+            val index = mediaStoreData.value.indexOfFirst { it.id == nextMediaItemId }
+            trials += 1
+
+            if (trials >= 20) break
+
+            if (index == -1) {
+                delay(1000)
+            } else {
+                state.animateScrollToPage(
+                    page = index,
+                    animationSpec = AnimationConstants.expressiveTween(
+                        durationMillis = AnimationConstants.DURATION_LONG
+                    )
+                )
+            }
+        } while (index == -1)
+    }
+
     var currentIndex by rememberSaveable(startIndex) {
         mutableIntStateOf(
             startIndex
         )
     }
 
-    val appBarsVisible = remember { mutableStateOf(true) }
     val mediaDao = LocalAppDatabase.current.mediaEntityDao()
-    val resources = LocalResources.current
-
+    val appBarsVisible = remember { mutableStateOf(true) }
     var mediaItem by remember { mutableStateOf(MediaStoreData.dummyItem) }
+
     LaunchedEffect(currentIndex) {
         withContext(Dispatchers.IO) {
             mediaItem =
                 if (currentIndex in 0..mediaStoreData.value.size && mediaStoreData.value.isNotEmpty()) {
                     mediaStoreData.value[currentIndex]
                 } else {
-                    MediaStoreData(
-                        displayName = resources.getString(R.string.media_broken)
-                    )
+                    MediaStoreData.dummyItem
                 }
 
             if (mediaItem.type == MediaType.Image) {
@@ -234,14 +310,13 @@ fun SinglePhotoViewCommon(
             )
         },
         bottomBar = {
-            val mainViewModel = LocalMainViewModel.current
+            val coroutineScope = rememberCoroutineScope()
 
             BottomBar(
                 visible = appBarsVisible.value,
                 currentItem = mediaItem,
-                groupedMedia = mediaStoreData,
                 showEditingView = {
-                    mainViewModel.launch {
+                    coroutineScope.launch(Dispatchers.Main) {
                         setBarVisibility(
                             visible = true,
                             window = window
@@ -255,7 +330,8 @@ fun SinglePhotoViewCommon(
                                     absolutePath = mediaItem.absolutePath,
                                     uri = mediaItem.uri.toString(),
                                     dateTaken = mediaItem.dateTaken,
-                                    albumInfo = albumInfo
+                                    albumInfo = albumInfo,
+                                    isSearchPage = isSearchPage
                                 )
                             )
                         } else {
@@ -263,29 +339,62 @@ fun SinglePhotoViewCommon(
                                 Screens.VideoEditor(
                                     uri = mediaItem.uri.toString(),
                                     absolutePath = mediaItem.absolutePath,
-                                    albumInfo = albumInfo
+                                    albumInfo = albumInfo,
+                                    isSearchPage = isSearchPage
                                 )
                             )
                         }
                     }
                 },
-                onZeroItemsLeft = {
-                    mainViewModel.launch {
+                checkZeroItemsLeft = {
+                    if (mediaStoreData.value.isEmpty()) coroutineScope.launch(Dispatchers.Main) {
                         navController.popBackStack()
                     }
                 },
+                onMoveMedia = {
+                    coroutineScope.launch {
+                        state.animateScrollToPage(
+                            page = (currentIndex + 1) % mediaStoreData.value.size,
+                            animationSpec = AnimationConstants.expressiveTween(
+                                durationMillis = AnimationConstants.DURATION
+                            )
+                        )
+                        delay(AnimationConstants.DURATION_SHORT.toLong())
+                    }
+                }
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
         contentColor = MaterialTheme.colorScheme.onBackground
     ) { _ ->
+        val sheetState = rememberModalBottomSheetState(
+            skipPartiallyExpanded = false
+        )
         if (showInfoDialog) {
+            val coroutineScope = rememberCoroutineScope()
+
             SinglePhotoInfoDialog(
                 currentMediaItem = mediaItem,
-                showMoveCopyOptions = true
-            ) {
-                showInfoDialog = false
-            }
+                showMoveCopyOptions = true,
+                sheetState = sheetState,
+                dismiss = {
+                    coroutineScope.launch {
+                        sheetState.hide()
+                        showInfoDialog = false
+                    }
+                },
+                onMoveMedia = {
+                    coroutineScope.launch {
+                        state.animateScrollToPage(
+                            page = (currentIndex + 1) % mediaStoreData.value.size,
+                            animationSpec = AnimationConstants.expressiveTween(
+                                durationMillis = AnimationConstants.DURATION
+                            )
+                        )
+                        delay(AnimationConstants.DURATION_SHORT.toLong())
+                    }
+                }
+            )
         }
 
         val useBlackBackground by LocalMainViewModel.current.useBlackViewBackgroundColor.collectAsStateWithLifecycle()
@@ -297,24 +406,18 @@ fun SinglePhotoViewCommon(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            if (mediaStoreData.value.isNotEmpty()) {
-                val state = rememberPagerState(
-                    initialPage = startIndex
-                ) {
-                    mediaStoreData.value.size
+            LaunchedEffect(state) {
+                snapshotFlow { state.currentPage }.collect {
+                    currentIndex = it
                 }
-
-                LaunchedEffect(key1 = state.settledPage) {
-                    currentIndex = state.settledPage
-                }
-
-                HorizontalImageList(
-                    groupedMedia = mediaStoreData.value,
-                    state = state,
-                    window = window,
-                    appBarsVisible = appBarsVisible
-                )
             }
+
+            HorizontalImageList(
+                groupedMedia = mediaStoreData.value,
+                state = state,
+                window = window,
+                appBarsVisible = appBarsVisible
+            )
         }
     }
 }
@@ -324,9 +427,9 @@ fun SinglePhotoViewCommon(
 private fun BottomBar(
     visible: Boolean,
     currentItem: MediaStoreData,
-    groupedMedia: State<List<MediaStoreData>>,
     showEditingView: () -> Unit,
-    onZeroItemsLeft: () -> Unit
+    checkZeroItemsLeft: () -> Unit,
+    onMoveMedia: () -> Unit
 ) {
     var showLoadingDialog by remember { mutableStateOf(false) }
 
@@ -342,16 +445,11 @@ private fun BottomBar(
     AnimatedVisibility(
         visible = visible || showLoadingDialog,
         enter = scaleIn(
-            animationSpec = spring(
-                dampingRatio = Spring.DampingRatioMediumBouncy,
-                stiffness = Spring.StiffnessMedium
-            )
+            animationSpec = AnimationConstants.expressiveSpring(),
+            initialScale = 0.2f
         ) + fadeIn(),
         exit = scaleOut(
-            animationSpec = spring(
-                dampingRatio = Spring.DampingRatioMediumBouncy,
-                stiffness = Spring.StiffnessMedium
-            ),
+            animationSpec = AnimationConstants.expressiveSpring(),
             targetScale = 0.2f
         ) + fadeOut()
     ) {
@@ -480,7 +578,8 @@ private fun BottomBar(
                                 context = context,
                                 applicationDatabase = applicationDatabase
                             ) {
-                                if (groupedMedia.value.none { it.type != MediaType.Section }) onZeroItemsLeft()
+                                onMoveMedia()
+                                checkZeroItemsLeft()
 
                                 showLoadingDialog = false
                             }
@@ -543,7 +642,6 @@ private fun BottomBar(
                     shouldRun = runTrashAction,
                     onGranted = {
                         mainViewModel.launch(Dispatchers.IO) {
-
                             if (doNotTrash) {
                                 permanentlyDeletePhotoList(
                                     context = context,
@@ -558,7 +656,8 @@ private fun BottomBar(
                                 )
                             }
 
-                            if (groupedMedia.value.all { it == currentItem }) onZeroItemsLeft()
+                            onMoveMedia()
+                            checkZeroItemsLeft()
                         }
                     }
                 )
