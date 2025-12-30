@@ -2,6 +2,31 @@
     <!-- Basic -->
     <string name="app_name">Photos</string>
     <string name="changelog" translatable="false"><![CDATA[
+    <u><h2>v1.3.5!:</h2></u>
+    <br><b><h4>- Added Features:</h4></b>
+    <p>
+        - Subsampling images (again, much improved)
+        <br>- Animated scroll to edited/moved/deleted/secured media
+    </p>
+    <br><b><h4>- Fixed Bugs:</h4></b>
+    <p>
+        - Double press back button to exit open-with videoplayer
+        <br>- Broken drag-to-select behaviour
+        <br>- Broken select all behaviour
+        <br>- Crash when unable to read XMP metadata
+        <br>- Crash when checking if image is HDR
+        <br>- Inability to open some images from external apps
+    </p>
+    <br><b><h4>- Improvements:</h4></b>
+    <p>
+        - Make all Updater strings translatable & better changelog formatting
+        <br>- Update translations for french, polish, russian and spanish
+        <br>- Better navigation bar and status bar colors
+        <br>- Performance improvements to media loading system
+        <br>- Enhanced double-tap to zoom behaviour
+        <br>- Disable videoplayer seekbar animations when manually seeking via drag gestures
+    </p>
+    <br>
     <u><h2>v1.3.1!:</h2></u>
     <br><b><h4>- Fixed Bugs:</h4></b>
     <p>
