@@ -125,35 +125,10 @@ fun OpenWithContent(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             val zoomableState = rememberGlideZoomableState()
-
             val isTouchLocked = rememberSaveable { mutableStateOf(false) }
             val motionPhoto = rememberMotionPhoto(uri = uri)
 
-            if (motionPhoto.isMotionPhoto.value) {
-                val state = rememberMotionPhotoState(uri = uri)
-                releaseExoPlayer.value = state::release
-
-                BackHandler {
-                    state.release()
-                    (context as Activity).finish()
-                }
-
-                MotionPhotoView(
-                    state = state,
-                    zoomableState = zoomableState,
-                    glideImageView = @Composable { modifier ->
-                        GlideView(
-                            model = uri,
-                            item = MediaStoreData.dummyItem,
-                            zoomableState = zoomableState,
-                            window = window,
-                            appBarsVisible = appBarsVisible,
-                            modifier = modifier,
-                            useCache = false
-                        )
-                    }
-                )
-            } else if (type == MediaType.Video) {
+            if (type == MediaType.Video) {
                 val shouldPlay = rememberSaveable { mutableStateOf(true) }
                 val lastWasMuted = rememberSaveable { mutableStateOf(true) }
 
@@ -173,18 +148,47 @@ fun OpenWithContent(
                         .transformable()
                 )
             } else {
-                BackHandler {
-                    (context as Activity).finish()
-                }
+                if (motionPhoto.isMotionPhoto.value) {
+                    val state = rememberMotionPhotoState(uri = uri)
+                    releaseExoPlayer.value = state::release
 
-                GlideView(
-                    model = uri,
-                    item = MediaStoreData.dummyItem,
-                    zoomableState = zoomableState,
-                    window = window,
-                    appBarsVisible = appBarsVisible,
-                    useCache = false
-                )
+                    BackHandler {
+                        state.release()
+                        (context as Activity).finish()
+                    }
+
+                    MotionPhotoView(
+                        state = state,
+                        zoomableState = zoomableState,
+                        appBarsVisible = appBarsVisible,
+                        window = window,
+                        glideImageView = @Composable { modifier ->
+                            GlideView(
+                                model = uri,
+                                item = MediaStoreData.dummyItem,
+                                zoomableState = zoomableState,
+                                window = window,
+                                appBarsVisible = appBarsVisible,
+                                modifier = modifier,
+                                useCache = false,
+                                disableSetBarVisibility = true
+                            )
+                        }
+                    )
+                } else {
+                    BackHandler {
+                        (context as Activity).finish()
+                    }
+
+                    GlideView(
+                        model = uri,
+                        item = MediaStoreData.dummyItem,
+                        zoomableState = zoomableState,
+                        window = window,
+                        appBarsVisible = appBarsVisible,
+                        useCache = false
+                    )
+                }
             }
         }
     }

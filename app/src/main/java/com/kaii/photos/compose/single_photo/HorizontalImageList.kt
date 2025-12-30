@@ -135,6 +135,8 @@ fun HorizontalImageList(
 
         val mediaStoreItem = groupedMedia[index]
 
+        val motionPhoto = rememberMotionPhoto(uri = mediaStoreItem.uri)
+
         if (mediaStoreItem.type == MediaType.Video) {
             Box(
                 modifier = Modifier
@@ -190,12 +192,12 @@ fun HorizontalImageList(
                     }
                 }
 
-                val motionPhoto = rememberMotionPhoto(uri = mediaStoreItem.uri)
-
                 if (motionPhoto.isMotionPhoto.value) {
                     MotionPhotoView(
                         state = rememberMotionPhotoState(uri = motionPhoto.uri),
                         zoomableState = zoomableState,
+                        appBarsVisible = appBarsVisible,
+                        window = window,
                         glideImageView = @Composable { modifier ->
                             GlideView(
                                 model = if (isHidden) model else mediaStoreItem.uri,
@@ -203,7 +205,8 @@ fun HorizontalImageList(
                                 zoomableState = zoomableState,
                                 window = window,
                                 appBarsVisible = appBarsVisible,
-                                modifier = modifier
+                                modifier = modifier,
+                                disableSetBarVisibility = true
                             )
                         }
                     )
@@ -240,7 +243,8 @@ fun GlideView(
     window: Window,
     appBarsVisible: MutableState<Boolean>,
     modifier: Modifier = Modifier,
-    useCache: Boolean = true
+    useCache: Boolean = true,
+    disableSetBarVisibility: Boolean = false
 ) {
     val context = LocalContext.current
     val state = rememberZoomableImageState(zoomableState = zoomableState)
@@ -251,11 +255,13 @@ fun GlideView(
         contentDescription = item.displayName,
         state = state,
         onClick = {
-            setBarVisibility(
-                visible = !appBarsVisible.value,
-                window = window
-            ) {
-                appBarsVisible.value = it
+            if (!disableSetBarVisibility) {
+                setBarVisibility(
+                    visible = !appBarsVisible.value,
+                    window = window
+                ) {
+                    appBarsVisible.value = it
+                }
             }
         },
         onDoubleClick = { zoomState, offset ->
