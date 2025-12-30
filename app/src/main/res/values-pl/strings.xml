@@ -526,4 +526,5 @@ które pozwala każdemu hostować własny serwer kopii zapasowych w chmurze.
     <string name="look_and_feel_date_format_datetime_taken">Data i godzina wykonania</string>
     <string name="media_is_raw">To jest obraz RAW</string>
     <string name="drag_and_drop_data">Dane Przeciągnij i upuść Lavender Photos</string>
+    <string name="updates_no_changelog">Dziennik zmian nie dostępny</string>
 </resources>
