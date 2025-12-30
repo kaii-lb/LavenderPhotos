@@ -15,6 +15,7 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -23,9 +24,8 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.PressInteraction
+import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -934,20 +934,16 @@ fun VideoPlayerSeekbar(
     onValueChange: (position: Float) -> Unit
 ) {
     val localInteractionSource = remember { MutableInteractionSource() }
-
-    var isDraggingSlider by remember { mutableStateOf(false) }
-    LaunchedEffect(localInteractionSource.interactions) {
-        localInteractionSource.interactions.collect {
-            isDraggingSlider = it is DragInteraction.Start || it is PressInteraction.Press
-        }
-    }
+    val isDraggingSlider by localInteractionSource.collectIsDraggedAsState()
 
     val animatedPosition by animateFloatAsState(
         targetValue = currentPosition,
-        animationSpec = tween(
-            durationMillis = if (isDraggingSlider) 0 else AnimationConstants.DURATION,
-            easing = LinearEasing
-        )
+        animationSpec =
+            if (isDraggingSlider) snap()
+            else tween(
+                durationMillis = AnimationConstants.DURATION,
+                easing = LinearEasing
+            )
     )
 
     Slider(
