@@ -109,7 +109,8 @@ fun FavouritesGridView(
             ),
         topBar = {
             FavouritesViewTopAppBar(
-                selectedItemsList = selectedItemsList
+                selectedItemsList = selectedItemsList,
+                media = groupedMedia
             ) {
                 navController.popBackStack()
             }

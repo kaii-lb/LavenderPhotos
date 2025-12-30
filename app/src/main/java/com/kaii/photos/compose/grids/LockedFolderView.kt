@@ -159,7 +159,8 @@ fun LockedFolderView(
     Scaffold(
         topBar = {
             SecureFolderViewTopAppBar(
-                selectedItemsList = selectedItemsList
+                selectedItemsList = selectedItemsList,
+                media = groupedMedia
             ) {
                 navController.popBackStack()
             }

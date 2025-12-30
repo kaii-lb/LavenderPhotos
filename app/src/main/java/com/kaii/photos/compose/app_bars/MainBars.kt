@@ -43,6 +43,7 @@ import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -75,15 +76,30 @@ import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.mediastore.MediaStoreData
+import com.kaii.photos.mediastore.MediaType
 
 @Composable
 fun MainAppTopBar(
     alternate: Boolean,
     showDialog: MutableState<Boolean>,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
+    media: State<List<MediaStoreData>>,
     currentView: MutableState<BottomBarTab>,
     isFromMediaPicker: Boolean = false
 ) {
+    val mediaCount = remember {
+        derivedStateOf {
+            media.value.filter {
+                it.type != MediaType.Section
+            }.size
+        }
+    }
+    val sectionCount = remember {
+        derivedStateOf {
+            media.value.size - mediaCount.value
+        }
+    }
+
     DualFunctionTopAppBar(
         alternated = alternate,
         title = {
@@ -168,7 +184,10 @@ fun MainAppTopBar(
         },
         alternateActions = {
             SelectViewTopBarRightButtons(
-                selectedItemsList = selectedItemsList
+                selectedItemsList = selectedItemsList,
+                mediaCount = mediaCount,
+                sectionCount = sectionCount,
+                getAllMedia = { media.value }
             )
         },
     )

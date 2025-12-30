@@ -47,6 +47,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -356,6 +357,7 @@ class MediaPicker : ComponentActivity() {
                 TopBar(
                     showDialog = showDialog,
                     selectedItemsList = selectedItemsList,
+                    media = mediaStoreData,
                     currentView = currentView
                 )
             },
@@ -465,6 +467,7 @@ class MediaPicker : ComponentActivity() {
     private fun TopBar(
         showDialog: MutableState<Boolean>,
         selectedItemsList: SnapshotStateList<MediaStoreData>,
+        media: State<List<MediaStoreData>>,
         currentView: MutableState<BottomBarTab>
     ) {
         val show by remember {
@@ -477,6 +480,7 @@ class MediaPicker : ComponentActivity() {
             alternate = show,
             showDialog = showDialog,
             selectedItemsList = selectedItemsList,
+            media = media,
             currentView = currentView,
             isFromMediaPicker = true
         )

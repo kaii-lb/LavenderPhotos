@@ -46,6 +46,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -76,7 +77,6 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.signature.ObjectKey
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.MainActivity.Companion.immichViewModel
 import com.kaii.photos.R
 import com.kaii.photos.helpers.AnimationConstants
@@ -317,45 +317,39 @@ fun SelectViewTopBarLeftButtons(
 @Composable
 fun SelectViewTopBarRightButtons(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
+    mediaCount: State<Int>,
+    sectionCount: State<Int>,
+    getAllMedia: () -> List<MediaStoreData>
 ) {
-    val mainViewModel = LocalMainViewModel.current
-    val groupedMedia = mainViewModel.groupedMedia.collectAsStateWithLifecycle(initialValue = emptyList())
-
     Row(
         modifier = Modifier
             .wrapContentWidth(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {
-        val allItemsList by remember { derivedStateOf { groupedMedia.value ?: emptyList() } }
         val isTicked by remember {
             derivedStateOf {
-                selectedItemsList.size == allItemsList.size
+                selectedItemsList.size == mediaCount.value + sectionCount.value
             }
         }
-
-        val isSelectAllEnabled by remember {
+        val selectAllEnabled by remember {
             derivedStateOf {
-                groupedMedia.value?.filter {
-                    it.type != MediaType.Section
-                }?.size?.let { it < 2000 } == true
+                mediaCount.value < 2000
             }
         }
 
         IconButton(
             onClick = {
-                if (groupedMedia.value != null) {
-                    if (isTicked) {
-                        selectedItemsList.clear()
-                        selectedItemsList.add(MediaStoreData())
-                    } else {
-                        selectedItemsList.clear()
+                if (isTicked) {
+                    selectedItemsList.clear()
+                    selectedItemsList.add(MediaStoreData())
+                } else {
+                    selectedItemsList.clear()
 
-                        selectedItemsList.addAll(allItemsList)
-                    }
+                    selectedItemsList.addAll(getAllMedia())
                 }
             },
-            enabled = isSelectAllEnabled, // arbitrary limit since android can't handle infinitely many uris
+            enabled = selectAllEnabled, // limit of 2000 since android can't handle more uris
             modifier = Modifier
                 .clip(RoundedCornerShape(1000.dp))
                 .size(42.dp)
@@ -365,11 +359,11 @@ fun SelectViewTopBarRightButtons(
                 painter = painterResource(R.drawable.checklist),
                 contentDescription = "select all items",
                 tint = when {
-                    isSelectAllEnabled && isTicked -> {
+                    selectAllEnabled && isTicked -> {
                         MaterialTheme.colorScheme.onPrimary
                     }
 
-                    isSelectAllEnabled -> {
+                    selectAllEnabled -> {
                         MaterialTheme.colorScheme.onPrimaryContainer
                     }
 

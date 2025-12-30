@@ -211,7 +211,7 @@ private fun SingleAlbumViewCommon(
         topBar = {
             SingleAlbumViewTopBar(
                 albumInfo = albumInfo,
-                media = mediaStoreData.value,
+                media = mediaStoreData,
                 selectedItemsList = selectedItemsList,
                 showDialog = showDialog,
                 isMediaPicker = incomingIntent != null,

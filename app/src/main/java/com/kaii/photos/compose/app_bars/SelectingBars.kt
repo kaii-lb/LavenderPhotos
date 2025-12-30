@@ -21,6 +21,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -68,7 +69,10 @@ private const val TAG = "com.kaii.photos.compose.app_bars.SelectingBars"
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun IsSelectingTopBar(
-    selectedItemsList: SnapshotStateList<MediaStoreData>
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    mediaCount: State<Int>,
+    sectionCount: State<Int>,
+    getAllMedia: () -> List<MediaStoreData>
 ) {
     TopAppBar(
         title = {
@@ -76,7 +80,10 @@ fun IsSelectingTopBar(
         },
         actions = {
             SelectViewTopBarRightButtons(
-                selectedItemsList = selectedItemsList
+                selectedItemsList = selectedItemsList,
+                mediaCount = mediaCount,
+                sectionCount = sectionCount,
+                getAllMedia = getAllMedia
             )
         },
         colors = TopAppBarDefaults.topAppBarColors(
@@ -103,7 +110,7 @@ fun IsSelectingBottomAppBar(
             collapsedShadowElevation = 12.dp,
             expandedShadowElevation = 12.dp,
             scrollBehavior = FloatingToolbarDefaults.exitAlwaysScrollBehavior(
-                exitDirection = FloatingToolbarExitDirection.Bottom // TODO: continue this (hide bottom bar on scroll)
+                exitDirection = FloatingToolbarExitDirection.Bottom
             )
         ) {
             items()

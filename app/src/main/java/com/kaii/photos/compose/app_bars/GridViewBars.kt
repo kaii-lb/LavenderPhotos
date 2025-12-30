@@ -92,7 +92,7 @@ private const val TAG = "com.kaii.photos.compose.app_bars.GridViewBars"
 @Composable
 fun SingleAlbumViewTopBar(
     albumInfo: AlbumInfo,
-    media: List<MediaStoreData>,
+    media: State<List<MediaStoreData>>,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     showDialog: MutableState<Boolean>,
     isMediaPicker: Boolean = false,
@@ -110,6 +110,19 @@ fun SingleAlbumViewTopBar(
     val show by remember {
         derivedStateOf {
             selectedItemsList.isNotEmpty()
+        }
+    }
+
+    val mediaCount = remember {
+        derivedStateOf {
+            media.value.filter {
+                it.type != MediaType.Section
+            }.size
+        }
+    }
+    val sectionCount = remember {
+        derivedStateOf {
+            media.value.size - mediaCount.value
         }
     }
 
@@ -212,7 +225,7 @@ fun SingleAlbumViewTopBar(
                                 loadingBackupState = true
                                 withContext(Dispatchers.IO) {
                                     deviceBackupMedia = getImmichBackupMedia(
-                                        groupedMedia = media,
+                                        groupedMedia = media.value,
                                         cancellationSignal = CancellationSignal()
                                     )
 
@@ -297,7 +310,10 @@ fun SingleAlbumViewTopBar(
             )
         } else {
             IsSelectingTopBar(
-                selectedItemsList = selectedItemsList
+                selectedItemsList = selectedItemsList,
+                mediaCount = mediaCount,
+                sectionCount = sectionCount,
+                getAllMedia = { media.value }
             )
         }
     }
@@ -365,6 +381,19 @@ fun TrashedPhotoGridViewTopBar(
         }
     }
 
+    val mediaCount = remember {
+        derivedStateOf {
+            groupedMedia.value.filter {
+                it.type != MediaType.Section
+            }.size
+        }
+    }
+    val sectionCount = remember {
+        derivedStateOf {
+            groupedMedia.value.size - mediaCount.value
+        }
+    }
+
     AnimatedContent(
         targetState = show,
         transitionSpec = {
@@ -418,7 +447,12 @@ fun TrashedPhotoGridViewTopBar(
                 }
             )
         } else {
-            IsSelectingTopBar(selectedItemsList = selectedItemsList)
+            IsSelectingTopBar(
+                selectedItemsList = selectedItemsList,
+                mediaCount = mediaCount,
+                sectionCount = sectionCount,
+                getAllMedia = { groupedMedia.value }
+            )
         }
     }
 }
@@ -548,11 +582,25 @@ fun TrashPhotoGridBottomBarItems(
 @Composable
 fun SecureFolderViewTopAppBar(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
+    media: State<List<MediaStoreData>>,
     onBackClicked: () -> Unit
 ) {
     val show by remember {
         derivedStateOf {
             selectedItemsList.isNotEmpty()
+        }
+    }
+
+    val mediaCount = remember {
+        derivedStateOf {
+            media.value.filter {
+                it.type != MediaType.Section
+            }.size
+        }
+    }
+    val sectionCount = remember {
+        derivedStateOf {
+            media.value.size - mediaCount.value
         }
     }
 
@@ -594,7 +642,12 @@ fun SecureFolderViewTopAppBar(
                 }
             )
         } else {
-            IsSelectingTopBar(selectedItemsList = selectedItemsList)
+            IsSelectingTopBar(
+                selectedItemsList = selectedItemsList,
+                mediaCount = mediaCount,
+                sectionCount = sectionCount,
+                getAllMedia = { media.value }
+            )
         }
     }
 }
@@ -807,11 +860,25 @@ fun SecureFolderViewBottomAppBar(
 @Composable
 fun FavouritesViewTopAppBar(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
+    media: State<List<MediaStoreData>>,
     onBackClick: () -> Unit
 ) {
     val show by remember {
         derivedStateOf {
             selectedItemsList.isNotEmpty()
+        }
+    }
+
+    val mediaCount = remember {
+        derivedStateOf {
+            media.value.filter {
+                it.type != MediaType.Section
+            }.size
+        }
+    }
+    val sectionCount = remember {
+        derivedStateOf {
+            media.value.size - mediaCount.value
         }
     }
 
@@ -850,7 +917,12 @@ fun FavouritesViewTopAppBar(
                 }
             )
         } else {
-            IsSelectingTopBar(selectedItemsList = selectedItemsList)
+            IsSelectingTopBar(
+                selectedItemsList = selectedItemsList,
+                mediaCount = mediaCount,
+                sectionCount = sectionCount,
+                getAllMedia = { media.value }
+            )
         }
     }
 }

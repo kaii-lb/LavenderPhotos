@@ -39,6 +39,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -985,6 +986,7 @@ class MainActivity : ComponentActivity() {
                 TopBar(
                     showDialog = showDialog,
                     selectedItemsList = selectedItemsList,
+                    media = mediaStoreData,
                     currentView = currentView
                 )
             },
@@ -1081,6 +1083,7 @@ class MainActivity : ComponentActivity() {
     private fun TopBar(
         showDialog: MutableState<Boolean>,
         selectedItemsList: SnapshotStateList<MediaStoreData>,
+        media: State<List<MediaStoreData>>,
         currentView: MutableState<BottomBarTab>
     ) {
         val show by remember {
@@ -1093,6 +1096,7 @@ class MainActivity : ComponentActivity() {
             alternate = show,
             showDialog = showDialog,
             selectedItemsList = selectedItemsList,
+            media = media,
             currentView = currentView
         )
     }
