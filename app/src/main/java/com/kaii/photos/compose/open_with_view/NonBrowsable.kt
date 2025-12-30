@@ -39,7 +39,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -51,7 +50,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.media3.exoplayer.ExoPlayer
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
@@ -137,7 +135,6 @@ fun OpenWithContent(
 
                 BackHandler {
                     state.release()
-
                     (context as Activity).finish()
                 }
 
@@ -159,12 +156,6 @@ fun OpenWithContent(
             } else if (type == MediaType.Video) {
                 val shouldPlay = rememberSaveable { mutableStateOf(true) }
                 val lastWasMuted = rememberSaveable { mutableStateOf(true) }
-                var exoPlayer by remember { mutableStateOf<ExoPlayer?>(null) }
-
-                BackHandler {
-                    exoPlayer?.release()
-                    (context as Activity).finish()
-                }
 
                 VideoPlayer(
                     item = MediaStoreData(
@@ -176,12 +167,11 @@ fun OpenWithContent(
                     isTouchLocked = isTouchLocked,
                     window = window,
                     shouldPlay = shouldPlay,
+                    isOpenWithView = true,
                     modifier = Modifier
                         .fillMaxSize(1f)
                         .transformable()
-                ) {
-                    exoPlayer = it
-                }
+                )
             } else {
                 BackHandler {
                     (context as Activity).finish()

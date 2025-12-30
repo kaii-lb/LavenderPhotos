@@ -410,7 +410,7 @@ fun VideoPlayer(
     window: Window,
     shouldPlay: State<Boolean>,
     modifier: Modifier = Modifier,
-    onCreateExoPlayer: (ExoPlayer) -> Unit = {}
+    isOpenWithView: Boolean = false
 ) {
     val context = LocalContext.current
     val navController = LocalNavController.current
@@ -501,8 +501,7 @@ fun VideoPlayer(
         isPlaying = isPlaying,
         duration = duration,
         currentVideoPosition = currentVideoPosition,
-        onPlaybackStateChanged = {},
-        onCreateExoPlayer = onCreateExoPlayer
+        onPlaybackStateChanged = {}
     )
     val playerView = rememberPlayerView(exoPlayer, context as Activity, item.absolutePath)
 
@@ -536,7 +535,8 @@ fun VideoPlayer(
         exoPlayer.stop()
         exoPlayer.release()
 
-        navController.popBackStack()
+        if (isOpenWithView) context.finish()
+        else navController.popBackStack()
     }
 
     val localConfig = LocalConfiguration.current
@@ -995,8 +995,7 @@ fun rememberExoPlayerWithLifeCycle(
     isPlaying: MutableState<Boolean>,
     duration: MutableFloatState,
     currentVideoPosition: MutableFloatState,
-    onPlaybackStateChanged: (state: Int) -> Unit = {},
-    onCreateExoPlayer: (ExoPlayer) -> Unit
+    onPlaybackStateChanged: (state: Int) -> Unit = {}
 ): ExoPlayer {
     val context = LocalContext.current
 
@@ -1007,9 +1006,7 @@ fun rememberExoPlayerWithLifeCycle(
             currentVideoPosition,
             duration,
             onPlaybackStateChanged
-        ).also {
-            onCreateExoPlayer(it)
-        }
+        )
     }
 
     val lifecycleOwner = LocalLifecycleOwner.current

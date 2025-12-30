@@ -128,8 +128,7 @@ fun VideoEditor(
             if (exoPlayerLoading) {
                 exoPlayerLoading = playbackState == ExoPlayer.STATE_BUFFERING
             }
-        },
-        onCreateExoPlayer = {}
+        }
     )
 
     val videoEditingState = rememberVideoEditingState(
