@@ -1,7 +1,9 @@
 package com.kaii.photos.compose.grids
 
 import android.content.ClipData
+import android.content.Context
 import android.content.Intent
+import android.content.res.Resources
 import android.util.Log
 import android.view.View
 import androidx.activity.compose.BackHandler
@@ -71,6 +73,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
@@ -117,7 +120,9 @@ import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getThumbnailIv
 import com.kaii.photos.mediastore.isRawImage
+import com.kaii.photos.mediastore.itemKey
 import com.kaii.photos.mediastore.signature
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -235,6 +240,10 @@ fun DeviceMedia(
         val useRoundedCorners by mainViewModel.settings.LookAndFeel.getUseRoundedCorners().collectAsStateWithLifecycle(initialValue = false)
         val openVideosExternally by mainViewModel.settings.Behaviour.getOpenVideosExternally().collectAsStateWithLifecycle(initialValue = false)
 
+        val resources = LocalResources.current
+        val view = LocalView.current
+        val coroutineScope = rememberCoroutineScope()
+
         LazyVerticalGrid(
             state = gridState,
             columns = GridCells.Fixed(
@@ -252,12 +261,17 @@ fun DeviceMedia(
                 .dragSelectionHandler(
                     state = gridState,
                     selectedItemsList = selectedItemsList,
-                    groupedMedia = groupedMedia.value,
+                    groupedMedia = groupedMedia,
                     scrollSpeed = scrollSpeed,
                     scrollThreshold = with(localDensity) {
                         40.dp.toPx()
                     },
-                    isDragSelecting = isDragSelecting
+                    isDragSelecting = isDragSelecting,
+                    resources = resources,
+                    view = view,
+                    coroutineScope = coroutineScope,
+                    context = context,
+                    thumbnailSettings = Pair(cacheThumbnails, thumbnailSize),
                 )
         ) {
             if (showPlaceholderItems) {
@@ -292,8 +306,7 @@ fun DeviceMedia(
             items(
                 count = groupedMedia.value.size,
                 key = { index ->
-                    val item = groupedMedia.value[index]
-                    item.absolutePath + item.displayName
+                    groupedMedia.value[index].itemKey()
                 },
                 contentType = { index ->
                     groupedMedia.value[index].type
@@ -555,61 +568,29 @@ private fun MediaStoreItem(
             }
         }
 
-        val context = LocalContext.current
-        val resources = LocalResources.current
-        val view = LocalView.current
-        val density = LocalDensity.current
-        val coroutineScope = rememberCoroutineScope()
-
         Box(
             modifier = Modifier
                 .aspectRatio(1f)
                 .padding(2.dp)
                 .clip(RoundedCornerShape(if (useRoundedCorners) 8.dp else 0.dp))
                 .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
-                .combinedClickable(
-                    onClick = onSingleClick,
-
-                    onLongClick = {
-                        if (isSelected) coroutineScope.launch(Dispatchers.IO) {
-                            val items = selectedItemsList.filter { it.type != MediaType.Section }
-
-                            val clipData = ClipData.newUri(
-                                context.contentResolver,
-                                resources.getString(R.string.drag_and_drop_data),
-                                items.first().uri
-                            )
-
-                            items.drop(1).forEach {
-                                clipData.addItem(ClipData.Item(it.uri))
+                .then(
+                    if (selectedItemsList.isNotEmpty()) {
+                        Modifier.clickable(
+                            enabled = !isDragSelecting.value
+                        ) {
+                            if (isMediaPicker) {
+                                onLongClick()
+                            } else {
+                                onSingleClick()
                             }
-
-                            val bitmaps = items.take(3).map { // limit to 3 so we don't overstress the rendering/loading of bitmaps
-                                Glide.with(context)
-                                    .asBitmap()
-                                    .override(thumbnailSettings.second)
-                                    .centerCrop()
-                                    .load(it.uri)
-                                    .submit()
-                                    .get()
-                            }
-
-                            val shadow = BitmapUriShadowBuilder(
-                                view = view,
-                                bitmaps = bitmaps,
-                                count = items.size,
-                                density = density
-                            )
-
-                            view.startDragAndDrop(
-                                clipData,
-                                shadow,
-                                clipData,
-                                View.DRAG_FLAG_GLOBAL or View.DRAG_FLAG_OPAQUE
-                            )
-                        } else {
-                            onLongClick()
                         }
+                    } else {
+                        Modifier.combinedClickable(
+                            onClick = onSingleClick,
+
+                            onLongClick = onLongClick
+                        )
                     }
                 )
         ) {
@@ -776,18 +757,24 @@ private fun LoadingMediaStoreItem(
 private fun Modifier.dragSelectionHandler(
     state: LazyGridState,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
-    groupedMedia: List<MediaStoreData>,
+    groupedMedia: State<List<MediaStoreData>>,
     scrollSpeed: MutableFloatState,
     scrollThreshold: Float,
-    isDragSelecting: MutableState<Boolean>
-) = pointerInput(Unit) {
+    isDragSelecting: MutableState<Boolean>,
+    resources: Resources,
+    view: View,
+    coroutineScope: CoroutineScope,
+    context: Context,
+    thumbnailSettings: Pair<Boolean, Int>
+) = pointerInput(groupedMedia.value) {
     var initialKey: Int? = null
     var currentKey: Int? = null
+    var isDragAndDropping = false
 
-    if (groupedMedia.isEmpty()) return@pointerInput
+    if (groupedMedia.value.isEmpty()) return@pointerInput
 
     val itemWidth = state.layoutInfo.visibleItemsInfo.firstOrNull {
-        if (it.index in groupedMedia.indices) groupedMedia[it.index].type != MediaType.Section else false
+        if (it.index in groupedMedia.value.indices) groupedMedia.value[it.index].type != MediaType.Section else false
     }?.size?.width
 
     val numberOfHorizontalItems = itemWidth?.let { state.layoutInfo.viewportSize.width / it } ?: 1
@@ -801,20 +788,60 @@ private fun Modifier.dragSelectionHandler(
             if (selectedItemsList.isNotEmpty()) {
                 state.getGridItemAtOffset(
                     offset,
-                    groupedMedia.fastMap {
-                        it.absolutePath + it.displayName
-                    },
+                    groupedMedia.value.fastMap { it.itemKey() },
                     numberOfHorizontalItems
                 )?.let { key ->
-                    val item = groupedMedia[key]
+                    val item = groupedMedia.value[key]
 
                     if (item.type != MediaType.Section) {
-                        initialKey = key
-                        currentKey = key
-                        if (!selectedItemsList.contains(item)) selectedItemsList.selectItem(
-                            item,
-                            groupedMedia
-                        )
+                        if (selectedItemsList.contains(item) && selectedItemsList.size != 1) {
+                            isDragAndDropping = true
+                            coroutineScope.launch(Dispatchers.IO) {
+                                val items = selectedItemsList.filter { it.type != MediaType.Section }
+
+                                val clipData = ClipData.newUri(
+                                    context.contentResolver,
+                                    resources.getString(R.string.drag_and_drop_data),
+                                    items.first().uri
+                                )
+
+                                items.drop(1).forEach {
+                                    clipData.addItem(ClipData.Item(it.uri))
+                                }
+
+                                val bitmaps = items.take(3).map { // limit to 3 so we don't overstress the rendering/loading of bitmaps
+                                    Glide.with(context)
+                                        .asBitmap()
+                                        .override(thumbnailSettings.second)
+                                        .centerCrop()
+                                        .load(it.uri)
+                                        .submit()
+                                        .get()
+                                }
+
+                                val shadow = BitmapUriShadowBuilder(
+                                    view = view,
+                                    bitmaps = bitmaps,
+                                    count = items.size,
+                                    density = Density(density)
+                                )
+
+                                view.startDragAndDrop(
+                                    clipData,
+                                    shadow,
+                                    clipData,
+                                    View.DRAG_FLAG_GLOBAL or View.DRAG_FLAG_OPAQUE
+                                )
+                            }
+                        } else {
+                            isDragAndDropping = false
+                            initialKey = key
+                            currentKey = key
+                            if (!selectedItemsList.contains(item)) selectedItemsList.selectItem(
+                                item = item,
+                                groupedMedia = groupedMedia.value
+                            )
+                        }
                     }
                 }
             }
@@ -833,7 +860,7 @@ private fun Modifier.dragSelectionHandler(
         },
 
         onDrag = { change, _ ->
-            if (initialKey != null) {
+            if (initialKey != null && !isDragAndDropping) {
                 val distanceFromBottom = state.layoutInfo.viewportSize.height - change.position.y
                 val distanceFromTop = change.position.y // for clarity
 
@@ -845,36 +872,34 @@ private fun Modifier.dragSelectionHandler(
 
                 state.getGridItemAtOffset(
                     change.position,
-                    groupedMedia.fastMap {
-                        it.absolutePath + it.displayName
-                    },
+                    groupedMedia.value.fastMap { it.itemKey() },
                     numberOfHorizontalItems
                 )?.let { key ->
                     if (currentKey != key) {
                         selectedItemsList.apply {
                             val toBeRemoved =
-                                if (initialKey!! <= currentKey!!) groupedMedia.subList(
+                                if (initialKey!! <= currentKey!!) groupedMedia.value.subList(
                                     initialKey!!,
                                     currentKey!! + 1
                                 )
-                                else groupedMedia.subList(currentKey!!, initialKey!! + 1)
+                                else groupedMedia.value.subList(currentKey!!, initialKey!! + 1)
 
                             unselectAll(
-                                toBeRemoved.filter {
+                                items = toBeRemoved.filter {
                                     it.type != MediaType.Section
                                 },
-                                groupedMedia
+                                groupedMedia = groupedMedia.value
                             )
 
                             val toBeAdded =
-                                if (initialKey!! <= key) groupedMedia.subList(initialKey!!, key + 1)
-                                else groupedMedia.subList(key, initialKey!! + 1)
+                                if (initialKey!! <= key) groupedMedia.value.subList(initialKey!!, key + 1)
+                                else groupedMedia.value.subList(key, initialKey!! + 1)
 
                             selectAll(
-                                toBeAdded.filter {
+                                items = toBeAdded.filter {
                                     it.type != MediaType.Section
                                 },
-                                groupedMedia
+                                groupedMedia = groupedMedia.value
                             )
                         }
 
