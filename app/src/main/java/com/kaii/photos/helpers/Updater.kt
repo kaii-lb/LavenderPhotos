@@ -29,14 +29,14 @@ private const val TAG = "com.kaii.photos.helpers.Updater"
 
 class Updater(
     private val context: Context,
-	private val coroutineScope: CoroutineScope
+    private val coroutineScope: CoroutineScope
 ) {
     private val currentVersionCode = BuildConfig.VERSION_CODE
 
     private var githubResponseBody: MutableState<JSONObject?> = mutableStateOf(null)
 
     val githubVersionName = derivedStateOf {
-    	if (githubResponseBody.value == null) "" else githubResponseBody.value!!["tag_name"].toString()
+        if (githubResponseBody.value == null) "" else githubResponseBody.value!!["tag_name"].toString()
     }
 
     private val githubVersionCode = derivedStateOf {
@@ -63,23 +63,23 @@ class Updater(
 
     init {
         updateFile.parentFile
-                ?.listFiles()
-                ?.filter { file ->
-                    file.name.endsWith(".apk") && file.name != updateFile.name
-                }
-                ?.forEach { file ->
-                    file.delete()
-                }
+            ?.listFiles()
+            ?.filter { file ->
+                file.name.endsWith(".apk") && file.name != updateFile.name
+            }
+            ?.forEach { file ->
+                file.delete()
+            }
     }
 
-    fun refresh (onRefresh: (state: CheckUpdateState) -> Unit) {
-    	coroutineScope.launch(Dispatchers.IO) {
-    		async {
-    			onRefresh(CheckUpdateState.Checking)
-		        val url = "https://api.github.com/repos/kaii-lb/LavenderPhotos/releases/latest"
+    fun refresh(onRefresh: (state: CheckUpdateState) -> Unit) {
+        coroutineScope.launch(Dispatchers.IO) {
+            async {
+                onRefresh(CheckUpdateState.Checking)
+                val url = "https://api.github.com/repos/kaii-lb/LavenderPhotos/releases/latest"
 
-		        val body = try {
-		        	Fuel.get(url).responseJson().third.fold(
+                val body = try {
+                    Fuel.get(url).responseJson().third.fold(
                         success = { result ->
                             result.obj()
                         },
@@ -92,23 +92,23 @@ class Updater(
                             return@async
                         }
                     )
-		       	} catch (e: Throwable) {
-		       		Log.e(TAG, e.toString())
-		       		e.printStackTrace()
+                } catch (e: Throwable) {
+                    Log.e(TAG, e.toString())
+                    e.printStackTrace()
 
-		       		onRefresh(CheckUpdateState.Failed)
-		       		return@async
-		       	}
+                    onRefresh(CheckUpdateState.Failed)
+                    return@async
+                }
 
-		        githubResponseBody.value = body
-		        Log.d(TAG, "body of https response is $body")
-		        Log.d(TAG, "github version name is ${githubVersionName.value}")
-		        Log.d(TAG, "github version code is ${githubVersionCode.value}")
-		        Log.d(TAG, "app has updates? ${hasUpdates.value}")
+                githubResponseBody.value = body
+                Log.d(TAG, "body of https response is $body")
+                Log.d(TAG, "github version name is ${githubVersionName.value}")
+                Log.d(TAG, "github version code is ${githubVersionCode.value}")
+                Log.d(TAG, "app has updates? ${hasUpdates.value}")
 
-		        onRefresh(CheckUpdateState.Succeeded)
-    		}.await()
-   		}
+                onRefresh(CheckUpdateState.Succeeded)
+            }.await()
+        }
     }
 
     /** starts downloading update and returns whether download was successful */
@@ -124,21 +124,21 @@ class Updater(
         val url = "https://github.com/kaii-lb/LavenderPhotos/releases/download/${githubVersionName.value}/photos_signed_release.apk"
 
         try {
-			// TODO: switch to fuel-android for better usage
-			coroutineScope.launch(Dispatchers.IO) {
-				Fuel.download(url)
-					.fileDestination { _, _ ->
-						updateFile
-					}
-					.progress { readBytes, totalBytes ->
-						val percent = readBytes.toFloat() / totalBytes * 100f
-						Log.d(TAG, "Download progress $percent% out of ${totalBytes.toFloat() / 1000000}mb")
-						progress(percent)
-					}
-					.response { result -> // TODO: parse result output | failure, success, etc
+            // TODO: switch to fuel-android for better usage
+            coroutineScope.launch(Dispatchers.IO) {
+                Fuel.download(url)
+                    .fileDestination { _, _ ->
+                        updateFile
+                    }
+                    .progress { readBytes, totalBytes ->
+                        val percent = readBytes.toFloat() / totalBytes * 100f
+                        Log.d(TAG, "Download progress $percent% out of ${totalBytes.toFloat() / 1000000}mb")
+                        progress(percent)
+                    }
+                    .response { result -> // TODO: parse result output | failure, success, etc
                         result.fold(
                             success = {
-                            	Log.d(TAG, "Download succeeded")
+                                Log.d(TAG, "Download succeeded")
                                 onDownloadStopped(true)
                             },
 
@@ -148,12 +148,12 @@ class Updater(
                                 Log.d(TAG, result.toString())
                             }
                         )
-					}
-			}
-		} catch (e: Throwable) {
-			Log.e(TAG, e.toString())
-			e.printStackTrace()
-		}
+                    }
+            }
+        } catch (e: Throwable) {
+            Log.e(TAG, e.toString())
+            e.printStackTrace()
+        }
     }
 
     fun installUpdate() {
@@ -168,23 +168,23 @@ class Updater(
         context.startActivity(intent)
     }
 
-    fun getChangelog() : String =
+    fun getChangelog(): String =
         githubResponseBody.value?.let {
             it["body"]
                 .toString()
-                .replace("    - ", "    <br>- ")
-                    .replace("</p>", "</p><br>")
-                    .replace("\'", "'")
-                    .replace("</h2></u>", "</h2></u><br>")
-                    .replace("<p>\n", "<p>")
+                .replace("\n- ", "<br>- ")
+                .replace("\'", "'")
+                .replace("</u>", "</u><br>")
+                .replace("</p>", "</p><br>")
+                .replace("<p>\n\n", "<p>")
         } ?: context.resources.getString(R.string.updates_no_changelog)
 }
 
 
 enum class CheckUpdateState {
-	Checking,
-	Failed,
-	Succeeded
+    Checking,
+    Failed,
+    Succeeded
 }
 
 fun startupUpdateCheck(
