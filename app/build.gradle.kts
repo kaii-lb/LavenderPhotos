@@ -123,7 +123,7 @@ dependencies {
     implementation("me.saket.telephoto:zoomable-image-glide:0.18.0")
 
     implementation("com.github.kaii-lb:Lavender-Snackbars:b79cb851bc")
-    implementation("com.github.kaii-lb.LavenderImmichIntegration:zoomable-image-glidelibrary:v1.0.9")
+    implementation("com.github.kaii-lb.LavenderImmichIntegration:library:v1.0.9")
 
     implementation("com.mikepenz:aboutlibraries:13.2.1")
     implementation("com.mikepenz:aboutlibraries-compose-m3:13.2.1")
