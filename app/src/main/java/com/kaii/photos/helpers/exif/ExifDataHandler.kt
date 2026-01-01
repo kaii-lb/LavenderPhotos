@@ -13,6 +13,7 @@ import kotlinx.datetime.UtcOffset
 import kotlinx.datetime.format
 import kotlinx.datetime.format.DateTimeComponents
 import kotlinx.datetime.format.char
+import kotlinx.datetime.offsetIn
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
@@ -20,6 +21,7 @@ import java.io.File
 import java.io.FileDescriptor
 import java.time.format.DateTimeFormatter
 import kotlin.math.round
+import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
@@ -81,7 +83,6 @@ fun setDateTakenForMedia(fd: FileDescriptor, dateTaken: Long) {
                         minute()
                         char(':')
                         second()
-                        offset(UtcOffset.Formats.ISO)
                     }
                 )
 
@@ -95,6 +96,11 @@ fun setDateTakenForMedia(fd: FileDescriptor, dateTaken: Long) {
         exifInterface.setAttribute(
             ExifInterface.TAG_DATETIME_ORIGINAL,
             newDateString
+        )
+
+        exifInterface.setAttribute(
+            ExifInterface.TAG_OFFSET_TIME,
+            Clock.System.now().offsetIn(TimeZone.currentSystemDefault()).format(UtcOffset.Formats.ISO)
         )
 
         exifInterface.saveAttributes()

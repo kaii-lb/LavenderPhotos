@@ -114,7 +114,7 @@ fun PrivacyAndSecurityPage() {
             }
 
             item {
-                val overwriteOnMove by mainViewModel.settings.Permissions.getOverwriteDateOnMove().collectAsStateWithLifecycle(initialValue = true)
+                val preserveDate by mainViewModel.settings.Permissions.getPreserveDateOnMove().collectAsStateWithLifecycle(initialValue = true)
 
                 PreferencesSwitchRow(
                     title = stringResource(id = R.string.permissions_overwrite_date_on_move),
@@ -122,9 +122,9 @@ fun PrivacyAndSecurityPage() {
                     iconResID = R.drawable.clock,
                     position = RowPosition.Single,
                     showBackground = false,
-                    checked = !overwriteOnMove
+                    checked = preserveDate
                 ) {
-                    mainViewModel.settings.Permissions.setOverwriteDateOnMove(!it)
+                    mainViewModel.settings.Permissions.setPreserveDateOnMove(it)
                 }
             }
 

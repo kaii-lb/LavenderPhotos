@@ -315,7 +315,7 @@ fun AlbumsListItem(
     val mainViewModel = LocalMainViewModel.current
     val applicationDatabase = LocalAppDatabase.current
     val coroutineScope = rememberCoroutineScope()
-    val overwriteDate by mainViewModel.settings.Permissions.getOverwriteDateOnMove().collectAsStateWithLifecycle(initialValue = true)
+    val preserveDate by mainViewModel.settings.Permissions.getPreserveDateOnMove().collectAsStateWithLifecycle(initialValue = true)
     val doNotTrash by mainViewModel.settings.Permissions.getDoNotTrash().collectAsStateWithLifecycle(initialValue = true)
 
     GetPermissionAndRun(
@@ -332,7 +332,7 @@ fun AlbumsListItem(
                         context = context,
                         list = selectedItemsWithoutSection,
                         destination = album.mainPath,
-                        overwriteDate = overwriteDate,
+                        preserveDate = preserveDate,
                         basePath = album.mainPath.toBasePath()
                     )
 
@@ -349,7 +349,7 @@ fun AlbumsListItem(
                             context = context,
                             list = selectedItemsWithoutSection,
                             destination = path,
-                            overwriteDate = overwriteDate,
+                            overwriteDate = preserveDate,
                             basePath = path.toBasePath()
                         ) { media ->
                             if (isMoving && !list.contains(media)) {

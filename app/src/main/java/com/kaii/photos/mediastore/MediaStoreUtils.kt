@@ -24,11 +24,14 @@ import com.kaii.photos.helpers.exif.getDateTakenForMedia
 import com.kaii.photos.helpers.exif.setDateTakenForMedia
 import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.helpers.toRelativePath
+import com.kaii.photos.mediastore.MediaDataSource.Companion.MEDIA_STORE_FILE_URI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.file.Files
 import kotlin.io.path.Path
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 
 private const val TAG = "com.kaii.photos.mediastore.MediaStoreUtils"
@@ -37,13 +40,14 @@ const val LAVENDER_FILE_PROVIDER_AUTHORITY = "com.kaii.photos.LavenderPhotos.fil
 
 /** @param media the [MediaStoreData] to copy
  * @param destination the absolute path to copy [media] to */
+@OptIn(ExperimentalTime::class)
 suspend fun ContentResolver.insertMedia(
     context: Context,
     media: MediaStoreData,
     basePath: String,
     destination: String,
     currentVolumes: Set<String>,
-    overwriteDate: Boolean = false,
+    preserveDate: Boolean = false,
     overrideDisplayName: String? = null,
     onInsert: (origin: Uri, new: Uri) -> Unit
 ): Uri? = withContext(Dispatchers.IO) {
@@ -62,32 +66,13 @@ suspend fun ContentResolver.insertMedia(
         volumeName = volumeName
     )
 
-    if (!overwriteDate) {
-        try {
-            update(
-                media.uri,
-                ContentValues().apply {
-                    put(MediaColumns.DATE_ADDED, media.dateTaken / 1000)
-                    put(MediaColumns.DATE_MODIFIED, media.dateTaken / 1000)
-                    put(MediaColumns.DATE_TAKEN, media.dateTaken)
-                },
-                null
-            )
-        } catch (e: Throwable) {
-            Log.e(TAG, e.toString())
-            e.printStackTrace()
-        }
-
-        if (media.type == MediaType.Image) {
-            openFileDescriptor(media.uri, "rw")?.use { fd ->
-                setDateTakenForMedia(
-                    fd = fd.fileDescriptor,
-                    dateTaken = media.dateTaken * 1000
-                )
-            }
-        }
-
-        File(media.absolutePath).setLastModified(media.dateTaken * 1000)
+    if (preserveDate) {
+        setDateForMedia(
+            uri = media.uri,
+            type = media.type,
+            dateTaken = media.dateTaken,
+            context = context
+        )
     }
 
     if (storageContentUri != null && volumeName == MediaStore.VOLUME_EXTERNAL) {
@@ -95,9 +80,12 @@ suspend fun ContentResolver.insertMedia(
             put(MediaColumns.DISPLAY_NAME, overrideDisplayName ?: file.name)
             put(MediaColumns.RELATIVE_PATH, relativeDestination)
             put(MediaColumns.MIME_TYPE, media.mimeType)
-            put(MediaColumns.DATE_ADDED, media.dateTaken)
-            put(MediaColumns.DATE_MODIFIED, media.dateTaken)
-            put(MediaColumns.DATE_ADDED, media.dateTaken * 1000)
+
+            if (preserveDate) {
+                put(MediaColumns.DATE_ADDED, media.dateTaken)
+                put(MediaColumns.DATE_MODIFIED, media.dateTaken)
+                put(MediaColumns.DATE_ADDED, media.dateTaken * 1000)
+            }
         }
 
         val newUri = insert(
@@ -107,6 +95,15 @@ suspend fun ContentResolver.insertMedia(
 
         newUri?.let { contentUri ->
             onInsert(media.uri, contentUri)
+
+            if (!preserveDate) { // change date to most recent
+                setDateForMedia(
+                    uri = contentUri,
+                    type = media.type,
+                    dateTaken = Clock.System.now().epochSeconds,
+                    context = context
+                )
+            }
 
             return@withContext contentUri
         }
@@ -135,6 +132,15 @@ suspend fun ContentResolver.insertMedia(
 
         fileToBeSavedTo?.let { savedToFile ->
             onInsert(media.uri, savedToFile.uri)
+
+            if (!preserveDate) { // change date to most recent
+                setDateForMedia(
+                    uri = savedToFile.uri,
+                    type = media.type,
+                    dateTaken = Clock.System.now().epochSeconds,
+                    context = context
+                )
+            }
 
             return@withContext savedToFile.uri
         }
@@ -217,7 +223,7 @@ fun ContentResolver.getUriFromAbsolutePath(absolutePath: String, type: MediaType
 
 fun ContentResolver.getMediaStoreDataFromUri(context: Context, uri: Uri): MediaStoreData? {
     val mediaCursor = query(
-        uri,
+        MEDIA_STORE_FILE_URI,
         arrayOf(
             MediaColumns._ID,
             FileColumns.DATA,
@@ -227,8 +233,8 @@ fun ContentResolver.getMediaStoreDataFromUri(context: Context, uri: Uri): MediaS
             MediaColumns.MIME_TYPE,
             MediaColumns.DISPLAY_NAME,
         ),
-        null,
-        null,
+        "${MediaColumns._ID} = ?",
+        arrayOf(uri.lastPathSegment!!),
         null
     )
 
@@ -357,5 +363,41 @@ private fun getStorageContentUri(
         ) -> MediaStore.Files.getContentUri(volumeName)
 
         else -> null
+    }
+}
+
+/** @param dateTaken in seconds since epoch */
+private fun ContentResolver.setDateForMedia(
+    uri: Uri,
+    type: MediaType,
+    dateTaken: Long,
+    context: Context
+) {
+    try {
+        update(
+            uri,
+            ContentValues().apply {
+                put(MediaColumns.DATE_ADDED, dateTaken)
+                put(MediaColumns.DATE_MODIFIED, dateTaken)
+                put(MediaColumns.DATE_TAKEN, dateTaken * 1000)
+            },
+            null
+        )
+    } catch (e: Throwable) {
+        Log.e(TAG, e.toString())
+        e.printStackTrace()
+    }
+
+    if (type == MediaType.Image) {
+        openFileDescriptor(uri, "rw")?.use { fd ->
+            setDateTakenForMedia(
+                fd = fd.fileDescriptor,
+                dateTaken = dateTaken
+            )
+        }
+    }
+
+    getMediaStoreDataFromUri(context, uri)?.let {
+        File(it.absolutePath).setLastModified(dateTaken * 1000)
     }
 }

@@ -315,7 +315,7 @@ class SettingsPermissionsImpl(
 ) {
     private val isMediaManagerKey = booleanPreferencesKey("is_media_manager")
     private val confirmToDelete = booleanPreferencesKey("confirm_to_delete")
-    private val overwriteDateOnMoveKey = booleanPreferencesKey("overwrite_data_on_move")
+    private val preserveDateOnMoveKey = booleanPreferencesKey("permissions_preserve_date_on_move_key")
     private val doNotTrashKey = booleanPreferencesKey("permissions_do_not_trash")
 
     fun getIsMediaManager(): Flow<Boolean> =
@@ -340,14 +340,14 @@ class SettingsPermissionsImpl(
         }
     }
 
-    fun getOverwriteDateOnMove(): Flow<Boolean> =
+    fun getPreserveDateOnMove(): Flow<Boolean> =
         context.datastore.data.map {
-            it[overwriteDateOnMoveKey] != false
+            it[preserveDateOnMoveKey] != false
         }
 
-    fun setOverwriteDateOnMove(value: Boolean) = viewModelScope.launch {
+    fun setPreserveDateOnMove(value: Boolean) = viewModelScope.launch {
         context.datastore.edit {
-            it[overwriteDateOnMoveKey] = value
+            it[preserveDateOnMoveKey] = value
         }
     }
 

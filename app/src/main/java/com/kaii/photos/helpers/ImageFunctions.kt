@@ -199,7 +199,7 @@ fun moveImageToLockedFolder(
                 context.contentResolver.openFileDescriptor(mediaItem.uri, "rw")?.use { fd ->
                     setDateTakenForMedia(
                         fd = fd.fileDescriptor,
-                        dateTaken = mediaItem.dateTaken * 1000
+                        dateTaken = mediaItem.dateTaken
                     )
                 }
             }
@@ -297,7 +297,7 @@ suspend fun moveImageOutOfLockedFolder(
             destination = originalPath.getParentFromPath(),
             basePath = originalPath.toBasePath(),
             currentVolumes = MediaStore.getExternalVolumeNames(context),
-            overwriteDate = true,
+            preserveDate = true,
             onInsert = { original, new ->
                 contentResolver.copyUriToUri(original, new)
             }
@@ -390,7 +390,7 @@ suspend fun moveImageListToPath(
     list: List<MediaStoreData>,
     destination: String,
     basePath: String,
-    overwriteDate: Boolean
+    preserveDate: Boolean
 ) {
     val contentResolver = context.contentResolver
 
@@ -413,7 +413,7 @@ suspend fun moveImageListToPath(
             destination = destination,
             basePath = basePath,
             currentVolumes = MediaStore.getExternalVolumeNames(context),
-            overwriteDate = overwriteDate,
+            preserveDate = preserveDate,
             onInsert = { original, new ->
                 contentResolver.copyUriToUri(original, new)
             }
@@ -466,7 +466,7 @@ suspend fun copyImageListToPath(
             basePath = basePath,
             overrideDisplayName = if (overrideDisplayName != null) overrideDisplayName(media.displayName) else null,
             currentVolumes = MediaStore.getExternalVolumeNames(context),
-            overwriteDate = overwriteDate,
+            preserveDate = overwriteDate,
             onInsert = { original, new ->
                 contentResolver.copyUriToUri(original, new)
                 newUris.add(new)
