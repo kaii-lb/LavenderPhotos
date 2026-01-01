@@ -51,12 +51,7 @@ fun SearchPage(
     val sortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
 
     val mediaStoreData by searchViewModel.mediaFlow.collectAsStateWithLifecycle()
-    val groupedMedia = remember { mutableStateOf(mediaStoreData) }
-    val actualGroupedMedia by searchViewModel.groupedMedia.collectAsStateWithLifecycle()
-
-    LaunchedEffect(actualGroupedMedia) {
-        groupedMedia.value = actualGroupedMedia
-    }
+    val groupedMedia = searchViewModel.groupedMedia.collectAsStateWithLifecycle()
 
     val gridState = rememberLazyGridState()
 

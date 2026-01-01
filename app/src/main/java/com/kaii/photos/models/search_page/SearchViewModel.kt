@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.CancellationSignal
 import android.util.Log
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -53,7 +54,7 @@ class SearchViewModel(
         )
     )
 
-    val mediaFlow by lazy {
+    val mediaFlow by derivedStateOf {
         getMediaDataFlow().value.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(
