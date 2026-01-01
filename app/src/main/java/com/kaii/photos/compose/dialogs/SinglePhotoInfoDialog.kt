@@ -68,6 +68,7 @@ import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.WallpaperSetter
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
+import com.kaii.photos.compose.widgets.DateTimePicker
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.RowPosition
@@ -303,6 +304,18 @@ private fun Content(
         val showConfirmEraseDialog = remember { mutableStateOf(false) }
         val runEraseExifData = remember { mutableStateOf(false) }
 
+        var showDateTimePicker by remember { mutableStateOf(false) }
+
+        if (showDateTimePicker) {
+            DateTimePicker(
+                mediaItem = currentMediaItem,
+                onSuccess = dismiss,
+                onDismiss = {
+                    showDateTimePicker = false
+                }
+            )
+        }
+
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth(1f)
@@ -325,13 +338,24 @@ private fun Content(
                         else if (mediaData.keys.indexOf(key) == 0)
                             RowPosition.Top
                         else
-                            RowPosition.Middle
-                ) {
-                    val clipboardManager =
-                        context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                    val clipData = ClipData.newPlainText(name, value.toString())
-                    clipboardManager.setPrimaryClip(clipData)
-                }
+                            RowPosition.Middle,
+                    onClick = {
+                        if (key == MediaData.Date && currentMediaItem.type == MediaType.Image) {
+                            showDateTimePicker = true
+                        } else {
+                            val clipboardManager =
+                                context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                            val clipData = ClipData.newPlainText(name, value.toString())
+                            clipboardManager.setPrimaryClip(clipData)
+                        }
+                    },
+                    onLongClick = {
+                        val clipboardManager =
+                            context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                        val clipData = ClipData.newPlainText(name, value.toString())
+                        clipboardManager.setPrimaryClip(clipData)
+                    }
+                )
             }
 
             if (location.isNotBlank()) {

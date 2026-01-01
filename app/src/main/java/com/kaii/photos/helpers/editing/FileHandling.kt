@@ -63,7 +63,6 @@ import com.kaii.photos.R
 import com.kaii.photos.helpers.appStorageDir
 import com.kaii.photos.helpers.copyImageListToPath
 import com.kaii.photos.helpers.exif.getDateTakenForMedia
-import com.kaii.photos.helpers.exif.setDateTakenForMedia
 import com.kaii.photos.helpers.getParentFromPath
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.toBasePath
@@ -71,6 +70,7 @@ import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getUriFromAbsolutePath
 import com.kaii.photos.mediastore.insertMedia
+import com.kaii.photos.mediastore.setDateForMedia
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -729,14 +729,15 @@ suspend fun saveImage(
         )
     } != null
 
-    val wroteExif = context.contentResolver.openFileDescriptor(newUri, "rw")?.use { fd ->
-        setDateTakenForMedia(
-            fd = fd.fileDescriptor,
-            dateTaken = if (overwrite) media.dateTaken * 1000 else System.currentTimeMillis()
-        )
-    } != null
+    context.contentResolver.setDateForMedia(
+        uri = newUri,
+        type = media.type,
+        dateTaken = if (overwrite) media.dateTaken * 1000 else System.currentTimeMillis(),
+        context = context,
+        overwriteLastModified = false
+    )
 
-    if (wroteExif && wroteData) {
+    if (wroteData) {
         isLoading.value = false
     } else {
         LavenderSnackbarController.pushEvent(

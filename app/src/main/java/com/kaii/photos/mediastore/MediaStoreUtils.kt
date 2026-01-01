@@ -367,19 +367,21 @@ private fun getStorageContentUri(
 }
 
 /** @param dateTaken in seconds since epoch */
-private fun ContentResolver.setDateForMedia(
+fun ContentResolver.setDateForMedia(
     uri: Uri,
     type: MediaType,
     dateTaken: Long,
-    context: Context
+    context: Context,
+    overwriteLastModified: Boolean = true
 ) {
     try {
         update(
             uri,
             ContentValues().apply {
                 put(MediaColumns.DATE_ADDED, dateTaken)
-                put(MediaColumns.DATE_MODIFIED, dateTaken)
                 put(MediaColumns.DATE_TAKEN, dateTaken * 1000)
+
+                if (overwriteLastModified) put(MediaColumns.DATE_MODIFIED, dateTaken)
             },
             null
         )
@@ -397,7 +399,9 @@ private fun ContentResolver.setDateForMedia(
         }
     }
 
-    getMediaStoreDataFromUri(context, uri)?.let {
-        File(it.absolutePath).setLastModified(dateTaken * 1000)
+    if (overwriteLastModified) {
+        getMediaStoreDataFromUri(context, uri)?.let {
+            File(it.absolutePath).setLastModified(dateTaken * 1000)
+        }
     }
 }

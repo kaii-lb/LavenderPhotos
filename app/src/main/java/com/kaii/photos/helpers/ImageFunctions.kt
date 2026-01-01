@@ -21,7 +21,6 @@ import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.SecuredItemEntity
-import com.kaii.photos.helpers.exif.setDateTakenForMedia
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
@@ -29,6 +28,7 @@ import com.kaii.photos.mediastore.copyUriToUri
 import com.kaii.photos.mediastore.getIv
 import com.kaii.photos.mediastore.getOriginalPath
 import com.kaii.photos.mediastore.insertMedia
+import com.kaii.photos.mediastore.setDateForMedia
 import java.io.File
 
 private const val TAG = "com.kaii.photos.helpers.ImageFunctions"
@@ -195,14 +195,13 @@ fun moveImageToLockedFolder(
 
             val destinationFile = File(copyToPath)
 
-            if (mediaItem.type == MediaType.Image) {
-                context.contentResolver.openFileDescriptor(mediaItem.uri, "rw")?.use { fd ->
-                    setDateTakenForMedia(
-                        fd = fd.fileDescriptor,
-                        dateTaken = mediaItem.dateTaken
-                    )
-                }
-            }
+            context.contentResolver.setDateForMedia(
+                uri = mediaItem.uri,
+                type = mediaItem.type,
+                dateTaken = mediaItem.dateTaken,
+                context = context,
+                overwriteLastModified = false
+            )
 
             addSecuredCachedMediaThumbnail(
                 context = context,

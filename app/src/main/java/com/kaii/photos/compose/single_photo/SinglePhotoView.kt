@@ -408,6 +408,9 @@ fun SinglePhotoViewCommon(
         ) {
             LaunchedEffect(state) {
                 snapshotFlow { state.currentPage }.collect {
+                    sheetState.hide()
+                    showInfoDialog = false
+
                     currentIndex = it
                 }
             }

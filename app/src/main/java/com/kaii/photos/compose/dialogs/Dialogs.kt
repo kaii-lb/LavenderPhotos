@@ -16,6 +16,7 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,6 +36,8 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -634,7 +637,9 @@ fun ReorderableRadioButtonRow(
 @Composable
 fun ConfirmCancelRow(
     onConfirm: () -> Unit,
-    onCancel: (() -> Unit)? = null
+    onCancel: (() -> Unit)? = null,
+    confirmColors: ButtonColors = ButtonDefaults.filledTonalButtonColors(),
+    cancelColors: ButtonColors = ButtonDefaults.filledTonalButtonColors()
 ) {
     Row(
         modifier = Modifier
@@ -649,6 +654,7 @@ fun ConfirmCancelRow(
                 onClick = {
                     onCancel()
                 },
+                colors = cancelColors
             ) {
                 Text(
                     text = stringResource(id = R.string.media_cancel),
@@ -662,7 +668,8 @@ fun ConfirmCancelRow(
         FilledTonalButton( // maybe use normal button for it?
             onClick = {
                 onConfirm()
-            }
+            },
+            colors = confirmColors
         ) {
             Text(text = stringResource(id = R.string.media_confirm))
         }
@@ -728,6 +735,7 @@ fun TallDialogInfoRow(
     modifier: Modifier = Modifier,
     containerColor: Color = MaterialTheme.colorScheme.surfaceContainer,
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
+    onLongClick: () -> Unit = {},
     onClick: () -> Unit
 ) {
     val (shape, spacerHeight) = remember(position) {
@@ -740,9 +748,11 @@ fun TallDialogInfoRow(
             .height(64.dp)
             .clip(shape)
             .background(containerColor)
-            .clickable {
-                onClick()
-            }
+            .combinedClickable(
+                onClick = onClick,
+
+                onLongClick = onLongClick
+            )
             .padding(12.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally

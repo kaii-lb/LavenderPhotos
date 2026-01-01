@@ -1180,4 +1180,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="exif_mp">MegaPixels:</string>
     <string name="exif_res">Resolution:</string>
     <string name="exif_size">Size:</string>
+    <string name="exif_enter_time">Enter Time</string>
+    <string name="exif_date_changed_failed">Failed changing date</string>
 </resources>
