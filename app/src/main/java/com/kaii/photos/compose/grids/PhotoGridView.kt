@@ -794,7 +794,7 @@ private fun Modifier.dragSelectionHandler(
                     val item = groupedMedia.value[key]
 
                     if (item.type != MediaType.Section) {
-                        if (selectedItemsList.contains(item) && selectedItemsList.size != 1) {
+                        if (selectedItemsList.contains(item) && selectedItemsList.filter { it.type != MediaType.Section }.size != 1) {
                             isDragAndDropping = true
                             coroutineScope.launch(Dispatchers.IO) {
                                 val items = selectedItemsList.filter { it.type != MediaType.Section }
