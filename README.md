@@ -36,3 +36,17 @@ Our [Weblate](https://hosted.weblate.org/projects/lavender-photos/) instance is 
 # Verification
 - Package name: com.kaii.photos
 - Signing hash: B2:6E:8A:CD:20:D2:BD:B5:1D:EE:0D:F9:65:AA:40:BD:86:43:D3:F8:95:E8:25:A0:CD:DF:51:FE:27:5B:3E:C1
+
+# Install
+- Grab a release version from the [releases page](https://github.com/kaii-lb/LavenderPhotos/releases)
+- Or a nightly version from the [actions page](https://github.com/kaii-lb/LavenderPhotos/actions)
+
+# Compile
+- Clone this repo & cd into it
+- Run `mkdir keys` and copy your signing keys as `releasekey.pk8` and `releasekey.x509.pem` into the newly created keys folder
+- Run `chmod +x ./build.sh`
+- Run `./build.sh TYPE` where `TYPE` is one of `release` or `debug`
+- Install the resulting `photos_signed_TYPE.apk`
+- Note: `build.sh` accepts normal gradle arguments after the first `TYPE` argument
+- Note: for unsigned builds just use normal grade commands. ie: `./gradlew TYPE` where `TYPE` is one of `assembleRelease` or `assembleDebug`
+  - Resulting unsigned APK will be in `./app/build/outputs/apk/{debug/release}`
