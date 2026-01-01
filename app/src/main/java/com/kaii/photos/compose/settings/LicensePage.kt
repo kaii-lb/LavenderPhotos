@@ -99,6 +99,11 @@ fun LicensePage() {
                 title = "Ktor",
                 license = APACHE_V2,
                 link = "https://ktor.io/"
+            ),
+            CreditsLicense(
+                title = "Telephoto",
+                license = APACHE_V2,
+                link = "https://saket.github.io/telephoto/"
             )
         )
     }

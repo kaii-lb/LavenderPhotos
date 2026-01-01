@@ -2,11 +2,12 @@
     <!-- Basic -->
     <string name="app_name">Photos</string>
     <string name="changelog" translatable="false"><![CDATA[
-    <u><h2>v1.3.5!:</h2></u>
+    <u><h2>v1.3.6!:</h2></u>
     <br><b><h4>- Added Features:</h4></b>
     <p>
-        - Subsampling images (again, much improved)
+        - Subsampling images (zoom in without losing details)
         <br>- Animated scroll to edited/moved/deleted/secured media
+        <br>- Date editor for images (change when image was taken)
     </p>
     <br><b><h4>- Fixed Bugs:</h4></b>
     <p>
@@ -16,6 +17,9 @@
         <br>- Crash when unable to read XMP metadata
         <br>- Crash when checking if image is HDR
         <br>- Inability to open some images from external apps
+        <br>- Edited images not being at 100% resolution when not manually choosing so from dialog
+        <br>- Issue where drag-and-drop would trigger if date section only has one item
+        <br>- Edited media\'s date changing to "now"
     </p>
     <br><b><h4>- Improvements:</h4></b>
     <p>
@@ -25,6 +29,8 @@
         <br>- Performance improvements to media loading system
         <br>- Enhanced double-tap to zoom behaviour
         <br>- Disable videoplayer seekbar animations when manually seeking via drag gestures
+        <br>- Proper preserve date on move/copy (and don\'t preserve) behaviour
+        <br>- Media info dialog UI/UX when in landscape mode
     </p>
     <br>
     <u><h2>v1.3.1!:</h2></u>
