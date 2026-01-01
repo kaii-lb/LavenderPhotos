@@ -72,7 +72,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.core.graphics.scale
+import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.Glide
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
@@ -142,37 +142,35 @@ fun ImageEditor(
     val context = LocalContext.current
     LaunchedEffect(uri, absolutePath) {
         withContext(Dispatchers.IO) {
-            val bitmap =
+            val drawable =
                 Glide.with(context)
-                    .asBitmap()
+                    .load(uri)
+                    .override(Target.SIZE_ORIGINAL)
                     .diskCacheStrategy(DiskCacheStrategy.NONE)
                     .skipMemoryCache(true)
-                    .load(uri)
                     .submit()
                     .get()
 
-            imageEditingState.initialResolution = IntSize(bitmap.width, bitmap.height)
+            val res = IntSize(drawable.intrinsicWidth, drawable.intrinsicHeight)
+            imageEditingState.initialResolution = res
 
             var inSampleSize = 1
 
             val reqWidth = windowInfo.containerSize.width
             val reqHeight = windowInfo.containerSize.height
 
-            if (bitmap.height > reqHeight || bitmap.width > reqWidth) {
+            if (res.height > reqHeight || res.width > reqWidth) {
                 // Calculate the largest inSampleSize value that is a power of 2 and keeps both
                 // height and width larger than the requested height and width.
-                while (bitmap.height / inSampleSize >= reqHeight || bitmap.width / inSampleSize >= reqWidth) {
+                while (res.height / inSampleSize >= reqHeight || res.width / inSampleSize >= reqWidth) {
                     inSampleSize *= 2
                 }
             }
 
-            originalImage = bitmap
-                .scale(
-                    width = (bitmap.width.toFloat() / inSampleSize).toInt(),
-                    height = (bitmap.height.toFloat() / inSampleSize).toInt(),
-                    filter = true
-                )
-                .asImageBitmap()
+            originalImage = drawable.toBitmap(
+                width = (res.width.toFloat() / inSampleSize).toInt(),
+                height = (res.height.toFloat() / inSampleSize).toInt()
+            ).asImageBitmap()
 
             moddedImage = originalImage
         }
