@@ -751,6 +751,8 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="export_fav_to_folder_desc">Exports of all your favourited items to a folder</string>
     <string name="export_fav_to_zip_desc">Exports a zip file of all your favourited items</string>
     <string name="data_and_backup">Data &amp; Backup</string>
+    <string name="export_location">Location</string>
+    <string name="export_location_desc" translatable="false">Internal Storage/Android/media/com.kaii.photos/LavenderPhotos/Exports</string>
 
     <!-- Favourites -->
     <string name="favourites">Favourites</string>

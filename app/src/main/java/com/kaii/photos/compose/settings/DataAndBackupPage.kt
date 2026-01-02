@@ -1,5 +1,8 @@
 package com.kaii.photos.compose.settings
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.util.Log
 import androidx.compose.foundation.background
@@ -21,6 +24,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.TextUnit
@@ -276,7 +280,7 @@ fun DataAndBackupPage() {
                         }
                         if (filePath != null) {
                             val intent = Intent().apply {
-                                action = Intent.ACTION_VIEW
+                                action = Intent.ACTION_SEND
                                 data = FileProvider.getUriForFile(
                                     context,
                                     LAVENDER_FILE_PROVIDER_AUTHORITY,
@@ -292,6 +296,35 @@ fun DataAndBackupPage() {
 
                         isLoading.value = false
                     }
+                }
+            }
+
+            item {
+                PreferencesSeparatorText(
+                    text = stringResource(id = R.string.help)
+                )
+            }
+
+            item {
+                val context = LocalContext.current
+                val resources = LocalResources.current
+
+                PreferencesRow(
+                    title = stringResource(id = R.string.export_location),
+                    summary = stringResource(id = R.string.export_location_desc),
+                    iconResID = R.drawable.folder_open,
+                    position = RowPosition.Single,
+                    showBackground = false
+                ) {
+                    val clipboardManager =
+                        context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+
+                    val clipData = ClipData.newPlainText(
+                        resources.getString(R.string.export_location),
+                        resources.getString(R.string.export_location_desc)
+                    )
+
+                    clipboardManager.setPrimaryClip(clipData)
                 }
             }
         }

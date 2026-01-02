@@ -1,8 +1,10 @@
 package com.kaii.photos.helpers
 
 import android.content.Context
+import android.os.CancellationSignal
 import android.util.Log
 import com.kaii.photos.database.MediaDatabase
+import com.kaii.photos.mediastore.FavouritesDataSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -197,11 +199,18 @@ class DataAndBackupHelper(
     }
 
     suspend fun exportFavourites(context: Context) {
-        val database = applicationDatabase.favouritedItemEntityDao()
         val exportDir = getFavExportDir(context = context)
         if (!exportDir.exists()) exportDir.mkdirs()
 
-        val items = database.getAll().first()
+        val cancellationSignal = CancellationSignal()
+        val mediaStore = FavouritesDataSource(
+            context = context,
+            sortMode = MediaItemSortMode.LastModified,
+            displayDateFormat = DisplayDateFormat.Default,
+            cancellationSignal = cancellationSignal
+        )
+
+        val items = mediaStore.loadMediaStoreData().first().map { File(it.absolutePath) }
 
         if (items.isEmpty()) return
 
@@ -217,8 +226,6 @@ class DataAndBackupHelper(
         context: Context,
         progress: (percentage: Float) -> Unit
     ) : String? {
-        val database = applicationDatabase.favouritedItemEntityDao()
-
         val zipFile = getFavZipFile(context = context)
         if (!zipFile.exists()) zipFile.parentFile?.mkdirs()
 
@@ -227,7 +234,17 @@ class DataAndBackupHelper(
 
         zipOutputStream.setLevel(Deflater.DEFAULT_COMPRESSION)
 
-        val items = database.getAll().first().map { File(it.absolutePath) }
+        val cancellationSignal = CancellationSignal()
+        val mediaStore = FavouritesDataSource(
+            context = context,
+            sortMode = MediaItemSortMode.LastModified,
+            displayDateFormat = DisplayDateFormat.Default,
+            cancellationSignal = cancellationSignal
+        )
+
+        val items = mediaStore.loadMediaStoreData().first().map { File(it.absolutePath) }
+
+        cancellationSignal.cancel()
 
         if (items.isEmpty()) {
             zipOutputStream.close()
