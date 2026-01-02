@@ -28,7 +28,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -51,6 +51,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
@@ -223,6 +224,9 @@ fun MainAppBottomBar(
             )
         )
 
+        val windowInfo = LocalWindowInfo.current
+        val localDensity = LocalDensity.current
+
         HorizontalFloatingToolbar(
             expanded = false,
             collapsedShadowElevation = 0.dp,
@@ -238,7 +242,10 @@ fun MainAppBottomBar(
                     clip = false,
                     ambientColor = animatedShadowColor,
                     spotColor = animatedShadowColor
-                ),
+                )
+                .widthIn(max = with(localDensity) {
+                    windowInfo.containerSize.width.toDp() * 0.9f
+                }),
             content = {
                 AnimatedContent(
                     targetState = selectedItemsList.isNotEmpty(),
@@ -248,7 +255,9 @@ fun MainAppBottomBar(
                                 transformOrigin = TransformOrigin(1f, 0.5f)
                             ) + fadeOut()
                         )
-                    }
+                    },
+                    modifier = Modifier
+                        .clip(CircleShape)
                 ) { animationState ->
                     if (animationState) {
                         Row(
@@ -284,19 +293,12 @@ fun MainAppBottomBar(
                             }
                         }
                     } else {
-                        val windowInfo = LocalWindowInfo.current
-                        val localDensity = LocalDensity.current
-
                         LazyRow(
-                            state = state,
-                            modifier = Modifier
-                                .widthIn(max = with(localDensity) {
-                                    windowInfo.containerSize.width.toDp() * 0.9f
-                                })
+                            state = state
                         ) {
-                            items(
+                            itemsIndexed(
                                 items = tabs
-                            ) { tab ->
+                            ) { index, tab ->
                                 ToggleButton(
                                     checked = currentView.value == tab,
                                     onCheckedChange = {
