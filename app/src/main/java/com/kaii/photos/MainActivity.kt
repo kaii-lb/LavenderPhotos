@@ -1260,7 +1260,8 @@ fun MainPages(
                 stateValue == DefaultTabs.TabTypes.search -> {
                     SearchPage(
                         selectedItemsList = selectedItemsList,
-                        searchViewModel = searchViewModel
+                        searchViewModel = searchViewModel,
+                        isMediaPicker = isMediaPicker
                     )
                 }
 

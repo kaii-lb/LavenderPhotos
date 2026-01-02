@@ -76,6 +76,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import androidx.room.Room
@@ -90,7 +91,10 @@ import com.kaii.photos.compose.app_bars.MainAppBottomBar
 import com.kaii.photos.compose.app_bars.MainAppTopBar
 import com.kaii.photos.compose.app_bars.getAppBarContentTransition
 import com.kaii.photos.compose.app_bars.lavenderEdgeToEdge
+import com.kaii.photos.compose.grids.FavouritesGridView
 import com.kaii.photos.compose.grids.SingleAlbumView
+import com.kaii.photos.compose.grids.TrashedPhotoGridView
+import com.kaii.photos.compose.pages.FavouritesMigrationPage
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.Migration3to4
@@ -107,12 +111,16 @@ import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.custom_album.CustomAlbumViewModelFactory
+import com.kaii.photos.models.favourites_grid.FavouritesViewModel
+import com.kaii.photos.models.favourites_grid.FavouritesViewModelFactory
 import com.kaii.photos.models.main_activity.MainViewModel
 import com.kaii.photos.models.main_activity.MainViewModelFactory
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModelFactory
 import com.kaii.photos.models.search_page.SearchViewModel
 import com.kaii.photos.models.search_page.SearchViewModelFactory
+import com.kaii.photos.models.trash_bin.TrashViewModel
+import com.kaii.photos.models.trash_bin.TrashViewModelFactory
 import com.kaii.photos.setupNextScreen
 import com.kaii.photos.ui.theme.PhotosTheme
 import kotlinx.coroutines.Dispatchers
@@ -238,6 +246,14 @@ class MediaPicker : ComponentActivity() {
             mutableStateOf(DefaultTabs.TabTypes.photos)
         }
 
+        LaunchedEffect(currentView.value) {
+            if (currentView.value != DefaultTabs.TabTypes.search) {
+                searchViewModel.clear()
+            } else {
+                searchViewModel.restart(context = context)
+            }
+        }
+
         NavHost(
             navController = navController,
             startDestination = MultiScreenViewType.MainScreen.name,
@@ -325,6 +341,65 @@ class MediaPicker : ComponentActivity() {
                         albumInfo = screen.albumInfo,
                         selectedItemsList = selectedItemsList,
                         viewModel = customAlbumViewModel,
+                        incomingIntent = incomingIntent
+                    )
+                }
+            }
+
+            composable(MultiScreenViewType.FavouritesGridView.name) {
+                setupNextScreen(
+                    selectedItemsList,
+                    window
+                )
+
+                val favViewModel = viewModel<FavouritesViewModel>(
+                    factory = FavouritesViewModelFactory(
+                        context = context,
+                        sortMode = currentSortMode,
+                        displayDateFormat = displayDateFormat
+                    )
+                )
+
+                FavouritesGridView(
+                    selectedItemsList = selectedItemsList,
+                    viewModel = favViewModel,
+                    incomingIntent = incomingIntent
+                )
+            }
+
+            composable(route = MultiScreenViewType.FavouritesMigrationPage.name) {
+                setupNextScreen(
+                    selectedItemsList,
+                    window
+                )
+
+                FavouritesMigrationPage()
+            }
+
+            navigation<Screens.Trash>(
+                startDestination = Screens.Trash.TrashedPhotoView
+            ) {
+                composable<Screens.Trash.TrashedPhotoView> {
+                    setupNextScreen(
+                        selectedItemsList,
+                        window
+                    )
+
+                    val storeOwner = remember(it) {
+                        navController.getBackStackEntry(Screens.Trash)
+                    }
+                    val trashViewModel = viewModel<TrashViewModel>(
+                        viewModelStoreOwner = storeOwner,
+                        factory = TrashViewModelFactory(
+                            context = context,
+                            sortMode = currentSortMode,
+                            displayDateFormat = displayDateFormat
+                        )
+                    )
+
+                    TrashedPhotoGridView(
+                        selectedItemsList = selectedItemsList,
+                        viewModel = trashViewModel,
                         incomingIntent = incomingIntent
                     )
                 }

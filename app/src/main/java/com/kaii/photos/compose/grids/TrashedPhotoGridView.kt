@@ -1,5 +1,6 @@
 package com.kaii.photos.compose.grids
 
+import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -57,7 +58,8 @@ import kotlin.time.Duration.Companion.days
 @Composable
 fun TrashedPhotoGridView(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
-    viewModel: TrashViewModel
+    viewModel: TrashViewModel,
+    incomingIntent: Intent? = null
 ) {
     val context = LocalContext.current
     val mainViewModel = LocalMainViewModel.current
@@ -141,7 +143,10 @@ fun TrashedPhotoGridView(
                     animationSpec = AnimationConstants.expressiveTween()
                 )
             ) {
-                TrashedPhotoGridViewBottomBar(selectedItemsList = selectedItemsList)
+                TrashedPhotoGridViewBottomBar(
+                    selectedItemsList = selectedItemsList,
+                    incomingIntent = incomingIntent
+                )
             }
         }
     ) { padding ->
@@ -179,7 +184,8 @@ fun TrashedPhotoGridView(
                 albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
                 selectedItemsList = selectedItemsList,
                 viewProperties = ViewProperties.Trash,
-                hasFiles = hasFiles
+                hasFiles = hasFiles,
+                isMediaPicker = incomingIntent != null
             )
         }
     }

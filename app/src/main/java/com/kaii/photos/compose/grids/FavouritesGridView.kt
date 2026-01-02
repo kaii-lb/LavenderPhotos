@@ -1,5 +1,6 @@
 package com.kaii.photos.compose.grids
 
+import android.content.Intent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -8,9 +9,13 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
@@ -23,11 +28,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.FavouritesViewBottomAppBar
 import com.kaii.photos.compose.app_bars.FavouritesViewTopAppBar
+import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.MultiScreenViewType
@@ -43,7 +51,8 @@ import kotlinx.coroutines.delay
 @Composable
 fun FavouritesGridView(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
-    viewModel: FavouritesViewModel
+    viewModel: FavouritesViewModel,
+    incomingIntent: Intent? = null
 ) {
     val mediaStoreData = viewModel.mediaFlow.collectAsStateWithLifecycle()
 
@@ -86,14 +95,33 @@ fun FavouritesGridView(
                 )
             ) {
                 FavouritesViewBottomAppBar(
-                    selectedItemsList = selectedItemsList
+                    selectedItemsList = selectedItemsList,
+                    incomingIntent = incomingIntent
                 )
             }
         }
     ) { padding ->
+        val isLandscape by rememberDeviceOrientation()
+        val safeDrawingPadding = if (isLandscape) {
+            val safeDrawing = WindowInsets.safeDrawing.asPaddingValues()
+
+            val layoutDirection = LocalLayoutDirection.current
+            val left = safeDrawing.calculateStartPadding(layoutDirection)
+            val right = safeDrawing.calculateEndPadding(layoutDirection)
+
+            Pair(left, right)
+        } else {
+            Pair(0.dp, 0.dp)
+        }
+
         Column(
             modifier = Modifier
-                .padding(padding)
+                .padding(
+                    start = safeDrawingPadding.first,
+                    top = padding.calculateTopPadding(),
+                    end = safeDrawingPadding.second,
+                    bottom = 0.dp
+                )
                 .fillMaxSize(1f),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
@@ -103,7 +131,8 @@ fun FavouritesGridView(
                 albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
                 selectedItemsList = selectedItemsList,
                 viewProperties = ViewProperties.Favourites,
-                hasFiles = hasFiles
+                hasFiles = hasFiles,
+                isMediaPicker = incomingIntent != null
             )
         }
     }

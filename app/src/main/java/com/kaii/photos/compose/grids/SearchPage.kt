@@ -44,7 +44,8 @@ import kotlinx.datetime.Month
 @Composable
 fun SearchPage(
     selectedItemsList: SnapshotStateList<MediaStoreData>,
-    searchViewModel: SearchViewModel
+    searchViewModel: SearchViewModel,
+    isMediaPicker: Boolean
 ) {
     val context = LocalContext.current
     val mainViewModel = LocalMainViewModel.current
@@ -172,6 +173,7 @@ fun SearchPage(
                 state = gridState,
                 hasFiles = hasFiles,
                 isMainPage = true,
+                isMediaPicker = isMediaPicker,
                 modifier = Modifier
                     .align(Alignment.Center)
             )

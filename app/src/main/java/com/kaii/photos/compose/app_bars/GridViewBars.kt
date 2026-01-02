@@ -460,10 +460,21 @@ fun TrashedPhotoGridViewTopBar(
 
 @Composable
 fun TrashedPhotoGridViewBottomBar(
-    selectedItemsList: SnapshotStateList<MediaStoreData>
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    incomingIntent: Intent?
 ) {
-    IsSelectingBottomAppBar {
-        TrashPhotoGridBottomBarItems(selectedItemsList = selectedItemsList)
+    if (incomingIntent == null) {
+        IsSelectingBottomAppBar {
+            TrashPhotoGridBottomBarItems(selectedItemsList = selectedItemsList)
+        }
+    } else {
+        val context = LocalContext.current
+
+        MediaPickerConfirmButton(
+            incomingIntent = incomingIntent,
+            selectedItemsList = selectedItemsList,
+            contentResolver = context.contentResolver
+        )
     }
 }
 
@@ -930,11 +941,22 @@ fun FavouritesViewTopAppBar(
 
 @Composable
 fun FavouritesViewBottomAppBar(
-    selectedItemsList: SnapshotStateList<MediaStoreData>
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    incomingIntent: Intent?
 ) {
-    IsSelectingBottomAppBar {
-        FavouritesBottomAppBarItems(
-            selectedItemsList = selectedItemsList
+    if (incomingIntent == null) {
+        IsSelectingBottomAppBar {
+            FavouritesBottomAppBarItems(
+                selectedItemsList = selectedItemsList
+            )
+        }
+    } else {
+        val context = LocalContext.current
+
+        MediaPickerConfirmButton(
+            incomingIntent = incomingIntent,
+            selectedItemsList = selectedItemsList,
+            contentResolver = context.contentResolver
         )
     }
 }
