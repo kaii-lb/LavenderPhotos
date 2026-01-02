@@ -24,9 +24,7 @@ class TrashViewModel(
     private val mediaStoreDataSource =
         TrashDataSource(
             context = context,
-            sortMode =
-                if (sortMode == MediaItemSortMode.Disabled || sortMode == MediaItemSortMode.DisabledLastModified) sortMode
-                else MediaItemSortMode.LastModified,
+            sortMode = sortMode,
             cancellationSignal = cancellationSignal,
             displayDateFormat = displayDateFormat
         )

@@ -94,6 +94,7 @@ import com.kaii.photos.datastore.AlbumSortMode
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
+import com.kaii.photos.datastore.Versions
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
@@ -362,9 +363,15 @@ fun AlbumsGridView(
                     span = { GridItemSpan(maxLineSpan) },
                     key = "FavAndTrash"
                 ) {
+                    val migrateFav by mainViewModel.settings.Versions.getUpdateFav().collectAsStateWithLifecycle(initialValue = true)
+
                     CategoryList(
                         navigateToFavourites = {
-                            navController.navigate(MultiScreenViewType.FavouritesGridView.name)
+                            if (!migrateFav) {
+                                navController.navigate(MultiScreenViewType.FavouritesGridView.name)
+                            } else {
+                                navController.navigate(MultiScreenViewType.FavouritesMigrationPage.name)
+                            }
                         },
                         navigateToTrash = {
                             navController.navigate(Screens.Trash.TrashedPhotoView)

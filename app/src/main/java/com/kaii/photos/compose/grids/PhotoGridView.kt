@@ -359,7 +359,8 @@ fun DeviceMedia(
                                                 albumInfo = albumInfo,
                                                 mediaItemId = mediaStoreItem.id,
                                                 nextMediaItemId = null,
-                                                isSearchPage = viewProperties == ViewProperties.SearchLoading || viewProperties == ViewProperties.SearchNotFound
+                                                isSearchPage = viewProperties == ViewProperties.SearchLoading || viewProperties == ViewProperties.SearchNotFound,
+                                                isFavouritesPage = viewProperties == ViewProperties.Favourites
                                             )
                                         )
                                     }

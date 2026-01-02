@@ -733,7 +733,6 @@ suspend fun saveImage(
         uri = newUri,
         type = media.type,
         dateTaken = if (overwrite) media.dateTaken * 1000 else System.currentTimeMillis(),
-        context = context,
         overwriteLastModified = false
     )
 

@@ -70,6 +70,7 @@ import com.kaii.photos.helpers.getParentFromPath
 import com.kaii.photos.helpers.moveImageOutOfLockedFolder
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.permanentlyDeleteSecureFolderImageList
+import com.kaii.photos.helpers.permissions.favourites.rememberListFavouritesState
 import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareMultipleImages
 import com.kaii.photos.helpers.shareMultipleSecuredImages
@@ -929,21 +930,18 @@ fun FavouritesViewTopAppBar(
 
 @Composable
 fun FavouritesViewBottomAppBar(
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
-    groupedMedia: MutableState<List<MediaStoreData>>
+    selectedItemsList: SnapshotStateList<MediaStoreData>
 ) {
     IsSelectingBottomAppBar {
         FavouritesBottomAppBarItems(
-            selectedItemsList = selectedItemsList,
-            groupedMedia = groupedMedia
+            selectedItemsList = selectedItemsList
         )
     }
 }
 
 @Composable
 fun FavouritesBottomAppBarItems(
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
-    groupedMedia: State<List<MediaStoreData>>
+    selectedItemsList: SnapshotStateList<MediaStoreData>
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -996,32 +994,20 @@ fun FavouritesBottomAppBarItems(
     }
 
     val showUnFavDialog = remember { mutableStateOf(false) }
+    val favState = rememberListFavouritesState {
+        selectedItemsList.clear()
+    }
+
     ConfirmationDialog(
         showDialog = showUnFavDialog,
-        dialogTitle = stringResource(id = R.string.custom_album_remove_media_desc),
+        dialogTitle = stringResource(id = R.string.favourites_remove_this),
         confirmButtonLabel = stringResource(id = R.string.custom_album_remove_media)
     ) {
         coroutineScope.launch {
-            withContext(Dispatchers.IO) {
-                val newList = groupedMedia.value.toMutableList()
-                selectedItemsWithoutSection.forEach { item ->
-                    dao.deleteEntityById(item.id)
-                    newList.remove(item)
-                }
-
-                groupedMedia.value.filter {
-                    it.type == MediaType.Section
-                }.forEach {
-                    val filtered = newList.filter { new ->
-                        new.getLastModifiedDay() == it.getLastModifiedDay()
-                    }
-
-                    if (filtered.size == 1) newList.remove(it)
-                }
-
-                selectedItemsList.clear()
-                // groupedMedia.value = newList // TODO: rework favourites
-            }
+            favState.setFavourite(
+                favourite = false,
+                list = selectedItemsWithoutSection.map { it.uri }
+            )
         }
     }
 

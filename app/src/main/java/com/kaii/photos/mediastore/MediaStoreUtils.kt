@@ -70,8 +70,7 @@ suspend fun ContentResolver.insertMedia(
         setDateForMedia(
             uri = media.uri,
             type = media.type,
-            dateTaken = media.dateTaken,
-            context = context
+            dateTaken = media.dateTaken
         )
     }
 
@@ -100,8 +99,7 @@ suspend fun ContentResolver.insertMedia(
                 setDateForMedia(
                     uri = contentUri,
                     type = media.type,
-                    dateTaken = Clock.System.now().epochSeconds,
-                    context = context
+                    dateTaken = Clock.System.now().epochSeconds
                 )
             }
 
@@ -137,8 +135,7 @@ suspend fun ContentResolver.insertMedia(
                 setDateForMedia(
                     uri = savedToFile.uri,
                     type = media.type,
-                    dateTaken = Clock.System.now().epochSeconds,
-                    context = context
+                    dateTaken = Clock.System.now().epochSeconds
                 )
             }
 
@@ -234,7 +231,7 @@ fun ContentResolver.getMediaStoreDataFromUri(context: Context, uri: Uri): MediaS
             MediaColumns.DISPLAY_NAME,
         ),
         "${MediaColumns._ID} = ?",
-        arrayOf(uri.lastPathSegment!!),
+        arrayOf(uri.lastPathSegment),
         null
     )
 
@@ -371,7 +368,6 @@ fun ContentResolver.setDateForMedia(
     uri: Uri,
     type: MediaType,
     dateTaken: Long,
-    context: Context,
     overwriteLastModified: Boolean = true
 ) {
     try {
@@ -400,8 +396,62 @@ fun ContentResolver.setDateForMedia(
     }
 
     if (overwriteLastModified) {
-        getMediaStoreDataFromUri(context, uri)?.let {
-            File(it.absolutePath).setLastModified(dateTaken * 1000)
+        getAbsolutePathFromUri(uri)?.let {
+            File(it).setLastModified(dateTaken * 1000)
         }
     }
+}
+
+fun ContentResolver.isFavourited(uri: Uri): Boolean {
+    if (uri.lastPathSegment == null) return false
+
+    val mediaCursor = query(
+        MEDIA_STORE_FILE_URI,
+        arrayOf(
+            MediaColumns._ID,
+            MediaColumns.IS_FAVORITE
+        ),
+        "${MediaColumns._ID} = ?",
+        arrayOf(uri.lastPathSegment!!),
+        null
+    )
+
+    mediaCursor?.use { cursor ->
+        val favColumn = cursor.getColumnIndexOrThrow(MediaColumns.IS_FAVORITE)
+
+        while (cursor.moveToNext()) {
+            val isFav = cursor.getInt(favColumn) == 1
+
+            return isFav
+        }
+    }
+
+    return false
+}
+
+fun ContentResolver.getAbsolutePathFromUri(uri: Uri): String? {
+    if (uri.lastPathSegment == null) return null
+
+    val mediaCursor = query(
+        MEDIA_STORE_FILE_URI,
+        arrayOf(
+            MediaColumns._ID,
+            MediaColumns.DATA
+        ),
+        "${MediaColumns._ID} = ?",
+        arrayOf(uri.lastPathSegment!!),
+        null
+    )
+
+    mediaCursor?.use { cursor ->
+        val absolutePathColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATA)
+
+        while (cursor.moveToNext()) {
+            val absolutePath = cursor.getString(absolutePathColumn)
+
+            return absolutePath
+        }
+    }
+
+    return null
 }

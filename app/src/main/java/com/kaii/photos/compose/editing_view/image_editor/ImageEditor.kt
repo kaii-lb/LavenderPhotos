@@ -115,7 +115,8 @@ fun ImageEditor(
     absolutePath: String,
     isFromOpenWithView: Boolean,
     albumInfo: AlbumInfo?,
-    isSearchPage: Boolean
+    isSearchPage: Boolean,
+    isFavouritesPage: Boolean
 ) {
     val lastSavedModCount = remember { mutableIntStateOf(0) }
     val totalModCount = remember { mutableIntStateOf(0) }
@@ -282,8 +283,9 @@ fun ImageEditor(
                                 Screens.SinglePhotoView(
                                     albumInfo = albumInfo!!,
                                     mediaItemId = item.id,
+                                    nextMediaItemId = navMediaId,
                                     isSearchPage = isSearchPage,
-                                    nextMediaItemId = navMediaId
+                                    isFavouritesPage = isFavouritesPage
                                 )
                             )
                         }
@@ -301,8 +303,9 @@ fun ImageEditor(
                                     Screens.SinglePhotoView(
                                         albumInfo = albumInfo!!,
                                         mediaItemId = item.id,
+                                        nextMediaItemId = navMediaId,
                                         isSearchPage = isSearchPage,
-                                        nextMediaItemId = navMediaId
+                                        isFavouritesPage = isFavouritesPage
                                     )
                                 )
                             }

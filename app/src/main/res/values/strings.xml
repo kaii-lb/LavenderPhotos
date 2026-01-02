@@ -755,6 +755,16 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <!-- Favourites -->
     <string name="favourites">Favourites</string>
     <string name="favourites_add_this">Favourite this media</string>
+    <string name="favourites_remove_this">Remove from favourites?</string>
+    <string name="favourites_migration">Favourites has been renewed!</string>
+    <string name="favourites_migration_notice">Update Notice:</string>
+    <string name="favourites_migration_desc">Favourites has been updated to bring a better experience, which means syncing favourites across all apps that support it, flawless management, and even more performance!\n\nAll of your previous favourited items will be migrated.\n\n Please keep your phone on and this app open.</string>
+    <string name="favourites_migration_started">Migration started!</string>
+    <string name="favourites_migration_in_progress">Migration in progress</string>
+    <string name="favourites_migration_in_progress_short">In Progress</string>
+    <string name="favourites_migration_done">Migration Done!</string>
+    <string name="favourites_migration_declined">Permissions Declined!</string>
+    <string name="favourites_migration_declined_desc">Lavender Photos cannot transfer your favourites from the old version if you don\'t allow it permissions to do so! This means you\'ll lose your previously favourited items.</string>
 
     <!-- Debugging -->
     <string name="debugging">Debugging</string>
@@ -958,6 +968,7 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="permissions_needed">Permission Needed</string>
     <string name="permissions_needed_desc">Lavender Photos needs permission to access this album. Please grant it the permission by selecting "Use This Folder" on the next screen.This is a one-time permission.</string>
     <string name="permissions_grant">Grant</string>
+    <string name="permissions_grant_long">Grant Permission</string>
     <string name="permissions_do_not_trash">Don\'t use Trash Bin</string>
     <string name="permissions_do_not_trash_desc">Immediately and permanently delete items without moving to Trash Bin first</string>
     <string name="permissions_read_images">Read Images</string>
@@ -1072,12 +1083,12 @@ As a precaution, a copy of your secured photos is now present in an export folde
 
     <!-- Error Views -->
     <string name="error_views_trash_empty">Trashed items show up here</string>
-    <string name="error_views_trash_prefix">Trashed On</string>
+    <string name="error_views_trash_prefix">Trashed:</string>
     <string name="error_views_album_empty">This album is empty</string>
     <string name="error_views_search_empty">Search for some photos!</string>
     <string name="error_views_search_not_found">Unable to find any matches</string>
     <string name="error_views_secure_empty">None of your media is protected!</string>
-    <string name="error_views_secure_prefix">Secured On</string>
+    <string name="error_views_secure_prefix">Secured:</string>
     <string name="error_views_favourites_empty">Add your most precious memories!</string>
     <string name="error_views_folder_non_existent">Folder doesn\'t exist</string>
     <string name="error_views_error_page">This is an error page</string>

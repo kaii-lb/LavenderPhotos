@@ -358,7 +358,8 @@ fun VideoEditorTopBar(
     canvasSize: Size,
     isFromOpenWithView: Boolean,
     albumInfo: AlbumInfo?,
-    isSearchPage: Boolean
+    isSearchPage: Boolean,
+    isFavouritesPage: Boolean
 ) {
     val navController = LocalNavController.current
     var navMediaId by remember { mutableLongStateOf(-1L) }
@@ -399,8 +400,9 @@ fun VideoEditorTopBar(
                                         Screens.SinglePhotoView(
                                             albumInfo = albumInfo!!,
                                             mediaItemId = item.id,
+                                            nextMediaItemId = navMediaId,
                                             isSearchPage = isSearchPage,
-                                            nextMediaItemId = navMediaId
+                                            isFavouritesPage = isFavouritesPage
                                         )
                                     )
                                 }
@@ -520,8 +522,9 @@ fun VideoEditorTopBar(
                                         Screens.SinglePhotoView(
                                             albumInfo = albumInfo!!,
                                             mediaItemId = item.id,
+                                            nextMediaItemId = navMediaId,
                                             isSearchPage = isSearchPage,
-                                            nextMediaItemId = navMediaId
+                                            isFavouritesPage = isFavouritesPage,
                                         )
                                     )
                                 }

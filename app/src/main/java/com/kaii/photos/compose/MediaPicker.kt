@@ -448,8 +448,7 @@ class MediaPicker : ComponentActivity() {
                             currentView = currentView,
                             tabs = tabs.fastFilter { it != DefaultTabs.TabTypes.secure },
                             selectedItemsList = selectedItemsList,
-                            scrollBehaviour = scrollBehaviour,
-                            groupedMedia = mediaStoreData
+                            scrollBehaviour = scrollBehaviour
                         )
                     } else {
                         MediaPickerConfirmButton(

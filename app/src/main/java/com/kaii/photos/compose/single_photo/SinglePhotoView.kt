@@ -54,7 +54,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
@@ -79,6 +78,7 @@ import com.kaii.photos.helpers.mapSync
 import com.kaii.photos.helpers.motion_photo.rememberMotionPhoto
 import com.kaii.photos.helpers.moveImageToLockedFolder
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
+import com.kaii.photos.helpers.permissions.favourites.rememberFavouritesState
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareImage
@@ -87,7 +87,6 @@ import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.favourites_grid.FavouritesViewModel
-import com.kaii.photos.models.favourites_grid.FavouritesViewModelFactory
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import com.kaii.photos.models.search_page.SearchViewModel
 import kotlinx.coroutines.Dispatchers
@@ -126,6 +125,7 @@ fun SinglePhotoView(
         mediaStoreData = mediaStoreData,
         albumInfo = albumInfo,
         isSearchPage = false,
+        isFavouritesPage = false,
         isOpenWithDefaultView = isOpenWithDefaultView
     )
 }
@@ -161,6 +161,7 @@ fun SinglePhotoView(
         window = window,
         isOpenWithDefaultView = isOpenWithDefaultView,
         isSearchPage = false,
+        isFavouritesPage = false,
         nextMediaItemId = nextMediaItemId
     )
 }
@@ -169,23 +170,23 @@ fun SinglePhotoView(
 @Composable
 fun SinglePhotoView(
     navController: NavHostController,
-    searchViewModel: SearchViewModel,
+    viewModel: SearchViewModel,
     window: Window,
     mediaItemId: Long,
     albumInfo: AlbumInfo,
     nextMediaItemId: Long?
 ) {
-    val mediaStoreData = searchViewModel.groupedMedia.mapSync {
+    val mediaStoreData = viewModel.groupedMedia.mapSync {
         it.filter { item ->
             item.type != MediaType.Section
         }
     }.collectAsStateWithLifecycle()
 
     val context = LocalContext.current
-    val allData by searchViewModel.mediaFlow.collectAsStateWithLifecycle()
+    val allData by viewModel.mediaFlow.collectAsStateWithLifecycle()
     LaunchedEffect(allData) {
-        searchViewModel.search(
-            search = searchViewModel.query,
+        viewModel.search(
+            search = viewModel.query,
             context = context
         )
     }
@@ -204,14 +205,52 @@ fun SinglePhotoView(
         window = window,
         isOpenWithDefaultView = false,
         isSearchPage = true,
+        isFavouritesPage = false,
         nextMediaItemId = nextMediaItemId
     )
+}
+
+
+@Composable
+fun SinglePhotoView(
+    navController: NavHostController,
+    favViewModel: FavouritesViewModel,
+    window: Window,
+    mediaItemId: Long,
+    albumInfo: AlbumInfo,
+    nextMediaItemId: Long?
+) {
+    val mediaStoreData = favViewModel.mediaFlow.mapSync {
+        it.filter { item ->
+            item.type != MediaType.Section
+        }
+    }.collectAsStateWithLifecycle()
+
+    val startIndex = remember(mediaStoreData.value.isEmpty()) {
+        mediaStoreData.value.indexOfFirst { item ->
+            item.id == mediaItemId
+        }
+    }
+
+    if (mediaStoreData.value.isNotEmpty()) {
+        SinglePhotoViewCommon(
+            mediaStoreData = mediaStoreData,
+            startIndex = startIndex,
+            albumInfo = albumInfo,
+            navController = navController,
+            window = window,
+            isOpenWithDefaultView = false,
+            isSearchPage = false,
+            isFavouritesPage = true,
+            nextMediaItemId = nextMediaItemId
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun SinglePhotoViewCommon(
+private fun SinglePhotoViewCommon(
     mediaStoreData: State<List<MediaStoreData>>,
     startIndex: Int,
     albumInfo: AlbumInfo,
@@ -219,6 +258,7 @@ fun SinglePhotoViewCommon(
     window: Window,
     isOpenWithDefaultView: Boolean,
     isSearchPage: Boolean,
+    isFavouritesPage: Boolean,
     nextMediaItemId: Long?
 ) {
     val state = rememberPagerState(
@@ -331,7 +371,8 @@ fun SinglePhotoViewCommon(
                                     uri = mediaItem.uri.toString(),
                                     dateTaken = mediaItem.dateTaken,
                                     albumInfo = albumInfo,
-                                    isSearchPage = isSearchPage
+                                    isSearchPage = isSearchPage,
+                                    isFavouritesPage = isFavouritesPage
                                 )
                             )
                         } else {
@@ -340,7 +381,8 @@ fun SinglePhotoViewCommon(
                                     uri = mediaItem.uri.toString(),
                                     absolutePath = mediaItem.absolutePath,
                                     albumInfo = albumInfo,
-                                    isSearchPage = isSearchPage
+                                    isSearchPage = isSearchPage,
+                                    isFavouritesPage = isFavouritesPage
                                 )
                             )
                         }
@@ -603,25 +645,23 @@ private fun BottomBar(
                     )
                 }
 
+                val favState = rememberFavouritesState(media = currentItem)
+
                 val vibratorManager = rememberVibratorManager()
-                val favouritesViewModel: FavouritesViewModel = viewModel(
-                    factory = FavouritesViewModelFactory(applicationDatabase)
-                )
-                val isSelected by favouritesViewModel.isInFavourites(currentItem.id).collectAsStateWithLifecycle()
+                val isFavourited by favState.state.collectAsStateWithLifecycle()
 
                 IconButton(
                     onClick = {
                         vibratorManager.vibrateShort()
 
-                        if (!isSelected) {
-                            favouritesViewModel.addToFavourites(currentItem, context)
-                        } else {
-                            favouritesViewModel.removeFromFavourites(currentItem.id)
-                        }
+                        favState.setFavourite(
+                            uri = currentItem.uri,
+                            favourite = !isFavourited
+                        )
                     }
                 ) {
                     Icon(
-                        painter = painterResource(id = if (isSelected) R.drawable.favourite_filled else R.drawable.favourite),
+                        painter = painterResource(id = if (isFavourited) R.drawable.favourite_filled else R.drawable.favourite),
                         contentDescription = stringResource(id = R.string.favourites_add_this)
                     )
                 }

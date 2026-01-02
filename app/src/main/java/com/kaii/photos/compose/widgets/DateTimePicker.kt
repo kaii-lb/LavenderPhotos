@@ -55,7 +55,6 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atTime
-import kotlinx.datetime.format
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toJavaLocalDate
 import kotlinx.datetime.toJavaYearMonth
@@ -154,7 +153,6 @@ fun DateTimePicker(
                         uri = mediaItem.uri,
                         type = mediaItem.type,
                         dateTaken = dateTime,
-                        context = context,
                         overwriteLastModified = false
                     )
                 }
@@ -196,8 +194,6 @@ private fun TimePicker(
     onSave: (LocalTime) -> Unit
 ) {
     var selectedTime by remember { mutableStateOf(time) }
-
-    println("SELECTED_TIME ${time.format(LocalTime.Formats.ISO)}")
 
     LavenderDialogBase(
         onDismiss = onDismiss

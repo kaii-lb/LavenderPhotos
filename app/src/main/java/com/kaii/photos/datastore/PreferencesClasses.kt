@@ -241,6 +241,7 @@ class SettingsVersionImpl(
     private val showUpdateNotice = booleanPreferencesKey("show_update_notice")
     private val checkForUpdatesOnStartup = booleanPreferencesKey("check_for_updates_on_startup")
     private val clearGlideCache = booleanPreferencesKey("version_clear_glide_cache")
+    private val migrateFav = booleanPreferencesKey("version_migrate_fav")
 
     fun getShowUpdateNotice(): Flow<Boolean> =
         context.datastore.data.map {
@@ -272,6 +273,17 @@ class SettingsVersionImpl(
     fun setHasClearedGlideCache(value: Boolean) = viewModelScope.launch {
         context.datastore.edit {
             it[clearGlideCache] = value
+        }
+    }
+
+    fun getUpdateFav(): Flow<Boolean> =
+        context.datastore.data.map {
+            it[migrateFav] != false
+        }
+
+    fun setUpdateFav(value: Boolean) = viewModelScope.launch {
+        context.datastore.edit {
+            it[migrateFav] = value
         }
     }
 }

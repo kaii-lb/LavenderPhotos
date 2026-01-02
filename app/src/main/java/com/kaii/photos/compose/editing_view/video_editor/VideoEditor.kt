@@ -105,7 +105,8 @@ fun VideoEditor(
     albumInfo: AlbumInfo?,
     window: Window,
     isFromOpenWithView: Boolean,
-    isSearchPage: Boolean
+    isSearchPage: Boolean,
+    isFavouritesPage: Boolean
 ) {
     val isPlaying = remember { mutableStateOf(false) }
 
@@ -378,7 +379,8 @@ fun VideoEditor(
                 canvasSize = canvasSize,
                 isFromOpenWithView = isFromOpenWithView,
                 albumInfo = albumInfo,
-                isSearchPage = isSearchPage
+                isSearchPage = isSearchPage,
+                isFavouritesPage = isFavouritesPage
             )
         },
         bottomBar = {

@@ -1,9 +1,10 @@
 package com.kaii.photos.mediastore
 
+import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.Context
 import android.database.ContentObserver
-import android.net.Uri
+import android.os.Bundle
 import android.os.CancellationSignal
 import android.os.Handler
 import android.os.Looper
@@ -17,13 +18,12 @@ import com.bumptech.glide.util.Util
 import com.kaii.photos.R
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaEntity
-import com.kaii.photos.datastore.SQLiteQuery
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.SectionItem
 import com.kaii.photos.helpers.exif.getDateTakenForMedia
 import com.kaii.photos.helpers.formatDate
-import com.kaii.photos.helpers.toBasePath
+import com.kaii.photos.mediastore.MediaDataSource.Companion.MEDIA_STORE_FILE_URI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.awaitClose
@@ -34,19 +34,16 @@ import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.Locale
 
-private const val TAG = "com.kaii.photos.models.multi_album.MultiAlbumViewModel"
+private const val TAG = "com.kaii.photos.mediastore.TrashDataSource"
 
 /** Loads metadata from the media store for images and videos. */
-class MediaDataSource(
+class FavouritesDataSource(
     private val context: Context,
-    private val sqliteQuery: SQLiteQuery,
     private val sortMode: MediaItemSortMode,
     private val cancellationSignal: CancellationSignal,
     private val displayDateFormat: DisplayDateFormat
 ) {
     companion object {
-        val MEDIA_STORE_FILE_URI: Uri = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL)
-
         private val PROJECTION =
             arrayOf(
                 MediaColumns._ID,
@@ -88,7 +85,7 @@ class MediaDataSource(
 
         cancellationSignal.setOnCancelListener {
             try {
-                cancel("Cancelling MediaStoreDataSource channel because of exit signal...")
+                cancel("Cancelling TrashDataSource channel because of exit signal...")
                 channel.close()
             } catch (e: Throwable) {
                 Log.e(TAG, e.toString())
@@ -106,23 +103,29 @@ class MediaDataSource(
             "Can only query from a background thread"
         )
 
-        val cursor =
-            context.contentResolver.query(
-                MEDIA_STORE_FILE_URI,
-                PROJECTION,
-                "(${FileColumns.MEDIA_TYPE} IN (${FileColumns.MEDIA_TYPE_IMAGE}, ${FileColumns.MEDIA_TYPE_VIDEO})) ${sqliteQuery.query}",
-                sqliteQuery.paths?.toTypedArray(),
-                "${MediaColumns.DATE_ADDED} DESC",
-            ) ?: return emptyList()
+        val bundle = Bundle()
+        bundle.putInt(MediaStore.QUERY_ARG_MATCH_FAVORITE, MediaStore.MATCH_ONLY)
+        bundle.putString(
+            ContentResolver.QUERY_ARG_SQL_SELECTION,
+            "(${MediaColumns.IS_FAVORITE} = 1 AND ((${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_IMAGE}) OR (${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_VIDEO})))"
+        )
+
+        val cursor = context.contentResolver.query(
+            MEDIA_STORE_FILE_URI,
+            PROJECTION,
+            bundle,
+            null
+        ) ?: return emptyList()
 
         val idColNum = cursor.getColumnIndexOrThrow(MediaColumns._ID)
-        val absolutePathColNum = cursor.getColumnIndexOrThrow(MediaColumns.DATA)
+        val absolutePathColNum =
+            cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA)
         val mimeTypeColNum = cursor.getColumnIndexOrThrow(MediaColumns.MIME_TYPE)
         val mediaTypeColumnIndex = cursor.getColumnIndexOrThrow(FileColumns.MEDIA_TYPE)
         val displayNameIndex = cursor.getColumnIndexOrThrow(FileColumns.DISPLAY_NAME)
-        val dateModifiedColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATE_MODIFIED)
-        val dateTakenColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATE_TAKEN)
+        val dateTakenColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATE_ADDED)
         val dateAddedColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATE_ADDED)
+        val dateModifiedColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATE_MODIFIED)
         val sizeColumn = cursor.getColumnIndexOrThrow(MediaColumns.SIZE)
 
         val dao = MediaDatabase.getInstance(context).mediaEntityDao()
@@ -132,12 +135,9 @@ class MediaDataSource(
         val holderMap = mutableMapOf<Long, MutableList<MediaStoreData>>() // maps are faster, AGAIN
 
         while (cursor.moveToNext()) {
-            val absolutePath = cursor.getString(absolutePathColNum)
-
-            if (sqliteQuery.basePaths?.contains(absolutePath.toBasePath()) != true && sqliteQuery.basePaths != null) continue
-
             val id = cursor.getLong(idColNum)
             val mimeType = cursor.getString(mimeTypeColNum)
+            val absolutePath = cursor.getString(absolutePathColNum)
             val mediaStoreDateTaken = cursor.getLong(dateTakenColumn) / 1000
             val dateAdded = cursor.getLong(dateAddedColumn)
             val dateModified = cursor.getLong(dateModifiedColumn)
@@ -213,10 +213,8 @@ class MediaDataSource(
         val sortedMap = holderMap.toSortedMap(compareByDescending { it })
         val sorted = mutableListOf<MediaStoreData>()
 
-        if (sortMode == MediaItemSortMode.DisabledLastModified) {
+        if (sortMode == MediaItemSortMode.DisabledLastModified || sortMode == MediaItemSortMode.Disabled) {
             return sortedMap.flatMap { it.value }.sortedByDescending { it.dateModified }
-        } else if (sortMode == MediaItemSortMode.Disabled) {
-            return sortedMap.flatMap { it.value }.sortedByDescending { it.dateTaken }
         }
 
         val calendar = Calendar.getInstance(Locale.ENGLISH).apply {
@@ -235,7 +233,7 @@ class MediaDataSource(
         val yesterdayString = context.resources.getString(R.string.yesterday)
 
         sortedMap.forEach { (day, items) ->
-            val title = when(day) {
+            val title = when (day) {
                 today -> {
                     todayString
                 }
@@ -273,15 +271,9 @@ class MediaDataSource(
             sorted.add(section)
 
             sorted.addAll(
-                if (sortMode == MediaItemSortMode.LastModified) {
-                    items.sortedByDescending { item ->
-                         item.dateModified
-                    }.onEach { it.section = sectionItem }
-                } else {
-                    items.sortedByDescending { item ->
-                        item.dateTaken
-                    }.onEach { it.section = sectionItem }
-                }
+                items.sortedByDescending { item ->
+                    item.dateModified
+                }.onEach { it.section = sectionItem }
             )
         }
 

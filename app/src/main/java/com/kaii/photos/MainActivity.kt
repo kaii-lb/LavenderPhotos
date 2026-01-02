@@ -101,6 +101,7 @@ import com.kaii.photos.compose.grids.SingleAlbumView
 import com.kaii.photos.compose.grids.TrashedPhotoGridView
 import com.kaii.photos.compose.immich.ImmichAlbumPage
 import com.kaii.photos.compose.immich.ImmichMainPage
+import com.kaii.photos.compose.pages.FavouritesMigrationPage
 import com.kaii.photos.compose.settings.AboutPage
 import com.kaii.photos.compose.settings.BehaviourSettingsPage
 import com.kaii.photos.compose.settings.DataAndBackupPage
@@ -132,7 +133,6 @@ import com.kaii.photos.datastore.User
 import com.kaii.photos.datastore.Versions
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.LogManager
-import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.Screens
@@ -151,7 +151,6 @@ import com.kaii.photos.models.main_activity.MainViewModel
 import com.kaii.photos.models.main_activity.MainViewModelFactory
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModelFactory
-import com.kaii.photos.models.multi_album.groupPhotosBy
 import com.kaii.photos.models.search_page.SearchViewModel
 import com.kaii.photos.models.search_page.SearchViewModelFactory
 import com.kaii.photos.models.secure_folder.SecureFolderViewModel
@@ -469,7 +468,26 @@ class MainActivity : ComponentActivity() {
                         screen.isSearchPage -> {
                             SinglePhotoView(
                                 navController = navController,
-                                searchViewModel = searchViewModel,
+                                viewModel = searchViewModel,
+                                window = window,
+                                mediaItemId = screen.mediaItemId,
+                                nextMediaItemId = screen.nextMediaItemId,
+                                albumInfo = screen.albumInfo
+                            )
+                        }
+
+                        screen.isFavouritesPage -> {
+                            val favViewModel = viewModel<FavouritesViewModel>(
+                                factory = FavouritesViewModelFactory(
+                                    context = context,
+                                    sortMode = currentSortMode,
+                                    displayDateFormat = displayDateFormat
+                                )
+                            )
+
+                            SinglePhotoView(
+                                navController = navController,
+                                favViewModel = favViewModel,
                                 window = window,
                                 mediaItemId = screen.mediaItemId,
                                 nextMediaItemId = screen.nextMediaItemId,
@@ -493,21 +511,21 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
-                         else -> {
-                             multiAlbumViewModel.update(
-                                 context = context,
-                                 album = screen.albumInfo
-                             )
+                        else -> {
+                            multiAlbumViewModel.update(
+                                context = context,
+                                album = screen.albumInfo
+                            )
 
-                             SinglePhotoView(
-                                 navController = navController,
-                                 window = window,
-                                 viewModel = multiAlbumViewModel,
-                                 mediaItemId = screen.mediaItemId,
-                                 nextMediaItemId = screen.nextMediaItemId,
-                                 albumInfo = screen.albumInfo
-                             )
-                         }
+                            SinglePhotoView(
+                                navController = navController,
+                                window = window,
+                                viewModel = multiAlbumViewModel,
+                                mediaItemId = screen.mediaItemId,
+                                nextMediaItemId = screen.nextMediaItemId,
+                                albumInfo = screen.albumInfo
+                            )
+                        }
                     }
                 }
 
@@ -651,8 +669,17 @@ class MainActivity : ComponentActivity() {
                         window
                     )
 
+                    val favViewModel = viewModel<FavouritesViewModel>(
+                        factory = FavouritesViewModelFactory(
+                            context = context,
+                            sortMode = currentSortMode,
+                            displayDateFormat = displayDateFormat
+                        )
+                    )
+
                     FavouritesGridView(
-                        selectedItemsList = selectedItemsList
+                        selectedItemsList = selectedItemsList,
+                        viewModel = favViewModel
                     )
                 }
 
@@ -709,7 +736,8 @@ class MainActivity : ComponentActivity() {
                         absolutePath = screen.absolutePath,
                         isFromOpenWithView = false,
                         albumInfo = screen.albumInfo,
-                        isSearchPage = screen.isSearchPage
+                        isSearchPage = screen.isSearchPage,
+                        isFavouritesPage = screen.isFavouritesPage
                     )
                 }
 
@@ -879,7 +907,8 @@ class MainActivity : ComponentActivity() {
                         albumInfo = screen.albumInfo,
                         window = window,
                         isFromOpenWithView = false,
-                        isSearchPage = screen.isSearchPage
+                        isSearchPage = screen.isSearchPage,
+                        isFavouritesPage = screen.isFavouritesPage
                     )
                 }
 
@@ -899,6 +928,15 @@ class MainActivity : ComponentActivity() {
                     )
 
                     ExtendedLicensePage()
+                }
+
+                composable(route = MultiScreenViewType.FavouritesMigrationPage.name) {
+                    setupNextScreen(
+                        selectedItemsList,
+                        window
+                    )
+
+                    FavouritesMigrationPage()
                 }
             }
         }
@@ -995,8 +1033,7 @@ class MainActivity : ComponentActivity() {
                     currentView = currentView,
                     selectedItemsList = selectedItemsList,
                     tabs = tabList,
-                    scrollBehaviour = scrollBehaviour,
-                    groupedMedia = mediaStoreData
+                    scrollBehaviour = scrollBehaviour
                 )
             },
             modifier = Modifier
@@ -1228,51 +1265,29 @@ fun MainPages(
                 }
 
                 stateValue == DefaultTabs.TabTypes.favourites -> {
-                    val appDatabase = LocalAppDatabase.current
-                    val favouritesViewModel: FavouritesViewModel = viewModel(
-                        factory = FavouritesViewModelFactory(appDatabase)
-                    )
-
-                    val mediaStoreData by favouritesViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
-
                     val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
                     val sortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
-
-                    val groupedMedia = remember {
-                        mutableStateOf(
-                            groupPhotosBy(
-                                mediaStoreData,
-                                if (sortMode == MediaItemSortMode.Disabled) sortMode else MediaItemSortMode.LastModified,
-                                displayDateFormat,
-                                context
-                            )
+                    val favouritesViewModel: FavouritesViewModel = viewModel(
+                        factory = FavouritesViewModelFactory(
+                            context = context,
+                            sortMode = sortMode,
+                            displayDateFormat = displayDateFormat
                         )
+                    )
+
+                    LaunchedEffect(Unit) {
+                        selectedItemsList.clear()
                     }
 
+                    val mediaStoreData = favouritesViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
                     var hasFiles by remember { mutableStateOf(true) }
-
-                    LaunchedEffect(mediaStoreData) {
-                        if (mediaStoreData.isNotEmpty()) {
-                            delay(PhotoGridConstants.UPDATE_TIME)
-                            groupedMedia.value =
-                                groupPhotosBy(
-                                    mediaStoreData,
-                                    if (sortMode == MediaItemSortMode.Disabled) sortMode else MediaItemSortMode.LastModified,
-                                    displayDateFormat,
-                                    context
-                                )
-                        } else {
-                            delay(PhotoGridConstants.LOADING_TIME)
-                            groupedMedia.value = emptyList()
-                            hasFiles = false
-                        }
-
+                    LaunchedEffect(mediaStoreData.value) {
                         delay(PhotoGridConstants.LOADING_TIME)
-                        hasFiles = mediaStoreData.isNotEmpty()
+                        hasFiles = mediaStoreData.value.isNotEmpty()
                     }
 
                     PhotoGrid(
-                        groupedMedia = groupedMedia,
+                        groupedMedia = mediaStoreData,
                         albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
                         selectedItemsList = selectedItemsList,
                         viewProperties = ViewProperties.Favourites,

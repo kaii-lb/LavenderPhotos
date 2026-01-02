@@ -57,7 +57,29 @@ fun permanentlyDeletePhotoList(context: Context, list: List<Uri>) {
     }
 }
 
-// TODO: remove from favourites
+fun setFavouriteOnMedia(
+    context: Context,
+    favourite: Boolean,
+    list: List<Uri>
+) {
+    if (list.isNotEmpty()) {
+        val favRequest = MediaStore.createFavoriteRequest(
+            context.contentResolver,
+            list,
+            favourite
+        )
+
+        (context as Activity).startIntentSenderForResult(
+            favRequest.intentSender,
+            9998,
+            null,
+            0,
+            0,
+            0
+        )
+    }
+}
+
 /** @param list is a list of pairs of item uri and its absolute path */
 suspend fun setTrashedOnPhotoList(
     context: Context,
@@ -84,6 +106,12 @@ suspend fun setTrashedOnPhotoList(
             icon = R.drawable.content_paste,
             percentage = percentage
         )
+    )
+
+    setFavouriteOnMedia(
+        context = context,
+        favourite = false,
+        list = list.map { it.uri }
     )
 
     try {
@@ -199,7 +227,6 @@ fun moveImageToLockedFolder(
                 uri = mediaItem.uri,
                 type = mediaItem.type,
                 dateTaken = mediaItem.dateTaken,
-                context = context,
                 overwriteLastModified = false
             )
 

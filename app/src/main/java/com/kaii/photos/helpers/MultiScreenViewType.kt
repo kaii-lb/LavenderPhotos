@@ -20,7 +20,8 @@ enum class MultiScreenViewType {
     PrivacyAndSecurity,
     ImmichMainPage,
     LicensePage,
-    ExtendedLicensePage
+    ExtendedLicensePage,
+    FavouritesMigrationPage
 }
 
 object Screens {
@@ -29,7 +30,8 @@ object Screens {
         val albumInfo: AlbumInfo,
         val mediaItemId: Long,
         val nextMediaItemId: Long?,
-        val isSearchPage: Boolean
+        val isSearchPage: Boolean,
+        val isFavouritesPage: Boolean
     )
 
     @Serializable
@@ -60,7 +62,8 @@ object Screens {
         val uri: String,
         val dateTaken: Long,
         val albumInfo: AlbumInfo,
-        val isSearchPage: Boolean
+        val isSearchPage: Boolean,
+        val isFavouritesPage: Boolean
     )
 
     @Serializable
@@ -73,6 +76,7 @@ object Screens {
         val uri: String,
         val absolutePath: String,
         val albumInfo: AlbumInfo,
-        val isSearchPage: Boolean
+        val isSearchPage: Boolean,
+        val isFavouritesPage: Boolean
     )
 }

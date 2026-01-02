@@ -1,6 +1,5 @@
 package com.kaii.photos.compose.grids
 
-import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -24,82 +23,43 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.kaii.photos.LocalAppDatabase
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.FavouritesViewBottomAppBar
 import com.kaii.photos.compose.app_bars.FavouritesViewTopAppBar
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.helpers.MediaItemSortMode
+import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.OnBackPressedEffect
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.models.favourites_grid.FavouritesViewModel
-import com.kaii.photos.models.favourites_grid.FavouritesViewModelFactory
-import com.kaii.photos.models.multi_album.groupPhotosBy
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 
-private const val TAG = "com.kaii.photos.compose.grids.FavouritesGridView"
+// private const val TAG = "com.kaii.photos.compose.grids.FavouritesGridView"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavouritesGridView(
-    selectedItemsList: SnapshotStateList<MediaStoreData>
+    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    viewModel: FavouritesViewModel
 ) {
-    val appDatabase = LocalAppDatabase.current
-    val favouritesViewModel: FavouritesViewModel = viewModel(
-        factory = FavouritesViewModelFactory(appDatabase)
-    )
-
-    val mediaStoreData by favouritesViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
-
-    val mainViewModel = LocalMainViewModel.current
-
-    val context = LocalContext.current
-    val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
-    val sortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
-
-    val groupedMedia = remember {
-        mutableStateOf(
-            groupPhotosBy(
-                mediaStoreData,
-                if (sortMode == MediaItemSortMode.Disabled) sortMode else MediaItemSortMode.LastModified,
-                displayDateFormat,
-                context
-            )
-        )
-    }
+    val mediaStoreData = viewModel.mediaFlow.collectAsStateWithLifecycle()
 
     var hasFiles by remember { mutableStateOf(true) }
-
-    LaunchedEffect(mediaStoreData) {
-        if (mediaStoreData.isNotEmpty()) {
-            delay(PhotoGridConstants.UPDATE_TIME)
-            groupedMedia.value =
-                groupPhotosBy(
-                    mediaStoreData,
-                    if (sortMode == MediaItemSortMode.Disabled) sortMode else MediaItemSortMode.LastModified,
-                    displayDateFormat,
-                    context
-                )
-        } else {
-            delay(PhotoGridConstants.LOADING_TIME)
-            groupedMedia.value = emptyList()
-            hasFiles = false
-        }
-
+    LaunchedEffect(mediaStoreData.value) {
         delay(PhotoGridConstants.LOADING_TIME)
-        hasFiles = mediaStoreData.isNotEmpty()
-
-        Log.d(TAG, "Grouped media size: ${groupedMedia.value.size}")
+        hasFiles = mediaStoreData.value.isNotEmpty()
     }
 
     val navController = LocalNavController.current
+
+    OnBackPressedEffect { destination ->
+        if (destination.route == MultiScreenViewType.MainScreen.name) {
+            viewModel.cancelMediaFlow()
+        }
+    }
 
     Scaffold(
         modifier = Modifier
@@ -110,7 +70,7 @@ fun FavouritesGridView(
         topBar = {
             FavouritesViewTopAppBar(
                 selectedItemsList = selectedItemsList,
-                media = groupedMedia
+                media = mediaStoreData
             ) {
                 navController.popBackStack()
             }
@@ -126,8 +86,7 @@ fun FavouritesGridView(
                 )
             ) {
                 FavouritesViewBottomAppBar(
-                    selectedItemsList = selectedItemsList,
-                    groupedMedia = groupedMedia
+                    selectedItemsList = selectedItemsList
                 )
             }
         }
@@ -140,7 +99,7 @@ fun FavouritesGridView(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             PhotoGrid(
-                groupedMedia = groupedMedia,
+                groupedMedia = mediaStoreData,
                 albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
                 selectedItemsList = selectedItemsList,
                 viewProperties = ViewProperties.Favourites,

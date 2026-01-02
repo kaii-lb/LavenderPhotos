@@ -199,7 +199,6 @@ fun MainAppBottomBar(
     currentView: MutableState<BottomBarTab>,
     tabs: List<BottomBarTab>,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
-    groupedMedia: State<List<MediaStoreData>>,
     scrollBehaviour: FloatingToolbarScrollBehavior
 ) {
     val mainViewModel = LocalMainViewModel.current
@@ -267,8 +266,7 @@ fun MainAppBottomBar(
 
                                 DefaultTabs.TabTypes.favourites -> {
                                     FavouritesBottomAppBarItems(
-                                        selectedItemsList = selectedItemsList,
-                                        groupedMedia = groupedMedia
+                                        selectedItemsList = selectedItemsList
                                     )
                                 }
 

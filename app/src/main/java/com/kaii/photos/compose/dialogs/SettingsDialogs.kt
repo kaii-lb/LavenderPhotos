@@ -162,7 +162,6 @@ fun AddTabDialog(
                     val center = width / 2
 
                     val itemIndex = state.layoutInfo.visibleItemsInfo.find {
-                        println("CENTER $center OFFSET ${it.offset} HALF $itemHalfWidth")
                         it.offset == 0 || it.offset in (center - itemHalfWidth)..(center + itemHalfWidth)
                     }?.index
 
