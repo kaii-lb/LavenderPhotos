@@ -26,6 +26,16 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        splits {
+            abi {
+                isUniversalApk = false
+                isEnable = true
+
+                reset()
+                include("armeabi-v7a", "arm64-v8a")
+            }
+        }
     }
 
     ksp {
