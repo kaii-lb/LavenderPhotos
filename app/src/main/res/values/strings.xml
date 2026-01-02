@@ -2,6 +2,24 @@
     <!-- Basic -->
     <string name="app_name">Photos</string>
     <string name="changelog" translatable="false"><![CDATA[
+    <u><h2>v1.3.8!:</h2></u>
+    <br><b><h4>- Added Features:</h4></b>
+    <p>
+        - Vastly improved favouriting system
+        <ul><li>Can sync with all apps that use Android\'s MediaStore</li>
+            <li>Is much faster and smoother</li>
+            <li>Respects sort and display modes configured by user</li>
+        </ul>
+
+        <br>- Favourites and Trash now usable in Media Picker
+        <br>- Per-ABI apk for smaller apk size<br>
+    </p>
+    <br><b><h4>- Improvements:</h4></b>
+    <p>
+        - Add a help section to show export location in data & backup page
+        <br>- Main App Bottom Bar now clips items correctly and is smoothly animated
+    </p>
+    <br>
     <u><h2>v1.3.6!:</h2></u>
     <br><b><h4>- Added Features:</h4></b>
     <p>

@@ -18,11 +18,10 @@ JAVA_HOME=/opt/android-studio/jbr/ ./gradlew $gradleTarget ${@:2}
 
 echo "Signing...."
 
-if [[ -d outputs ]]; then
-	rm -r outputs
+if [[ ! -d outputs ]]; then
+	mkdir outputs
 fi
 
-mkdir outputs
 
 declare -a abis=("arm64-v8a" "armeabi-v7a")
 
