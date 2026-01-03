@@ -236,12 +236,12 @@
     <string name="bottom_sheets_square">Kwadrat</string>
     <string name="bottom_sheets_ratio_selected">Wybrano ten współczynnik kadrowania</string>
     <string name="error_views_trash_empty">Tutaj wyświetlają się wyrzucone elementy</string>
-    <string name="error_views_trash_prefix">Wyrzucone do kosza</string>
+    <string name="error_views_trash_prefix">Wyrzucono:</string>
     <string name="error_views_album_empty">Ten album jest pusty</string>
     <string name="error_views_search_empty">Szukaj zdjęć!</string>
     <string name="error_views_search_not_found">Nie można znaleźć żadnych pasujących wyników</string>
     <string name="error_views_secure_empty">Żadne z Twoich multimediów nie są chronione!</string>
-    <string name="error_views_secure_prefix">Zabezpiecz</string>
+    <string name="error_views_secure_prefix">Zabezpieczono:</string>
     <string name="error_views_favourites_empty">Dodaj swoje najcenniejsze wspomnienia!</string>
     <string name="error_views_folder_non_existent">Folder nie istnieje</string>
     <string name="error_views_error_page">To jest strona błędu</string>
@@ -527,4 +527,18 @@ które pozwala każdemu hostować własny serwer kopii zapasowych w chmurze.
     <string name="media_is_raw">To jest obraz RAW</string>
     <string name="drag_and_drop_data">Dane Przeciągnij i upuść Lavender Photos</string>
     <string name="updates_no_changelog">Dziennik zmian nie dostępny</string>
+    <string name="export_location">Lokalizacja</string>
+    <string name="favourites_remove_this">Usunąć z ulubionych?</string>
+    <string name="favourites_migration">Ulubione zostały odnowione!</string>
+    <string name="favourites_migration_notice">Informacja o aktualizacji:</string>
+    <string name="favourites_migration_desc">Ulubione zostały zaktualizowane, aby zapewnić lepsze wrażenia, co oznacza synchronizację ulubionych we wszystkich aplikacjach, które je obsługują, bezproblemowe zarządzanie i jeszcze lepszą wydajność!\n\nWszystkie Twoje poprzednio dodane do ulubionych elementy zostaną przeniesione.\n\nProszę, nie wyłączaj telefonu i nie wyłączaj tej aplikacji.</string>
+    <string name="favourites_migration_started">Migracja rozpoczęta!</string>
+    <string name="favourites_migration_in_progress">Migracja w toku</string>
+    <string name="favourites_migration_in_progress_short">W toku</string>
+    <string name="favourites_migration_done">Migracja zakończona!</string>
+    <string name="favourites_migration_declined">Uprawnienia odrzucone!</string>
+    <string name="favourites_migration_declined_desc">Lavender Photos nie może przenieść Twoich ulubionych ze starej wersji, jeśli nie udzielisz mu na to zgody! Oznacza to utratę wcześniej dodanych do ulubionych elementów.</string>
+    <string name="permissions_grant_long">Udziel pozwolenia</string>
+    <string name="exif_enter_time">Wprowadź czas</string>
+    <string name="exif_date_changed_failed">Nie udało się zmienić daty</string>
 </resources>
