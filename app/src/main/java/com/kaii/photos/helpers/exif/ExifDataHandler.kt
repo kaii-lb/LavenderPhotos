@@ -11,7 +11,6 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.UtcOffset
 import kotlinx.datetime.format
-import kotlinx.datetime.format.DateTimeComponents
 import kotlinx.datetime.format.char
 import kotlinx.datetime.offsetIn
 import kotlinx.datetime.toInstant
@@ -70,8 +69,9 @@ fun setDateTakenForMedia(fd: FileDescriptor, dateTaken: Long) {
 
         val newDateString =
             Instant.fromEpochSeconds(dateTaken)
+                .toLocalDateTime(TimeZone.currentSystemDefault())
                 .format(
-                    DateTimeComponents.Format {
+                    LocalDateTime.Format {
                         year()
                         char(':')
                         monthNumber()

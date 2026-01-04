@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DatePicker
@@ -29,7 +30,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
@@ -47,7 +47,6 @@ import com.kaii.photos.compose.dialogs.LavenderDialogBase
 import com.kaii.photos.database.entities.MediaEntity
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.TextStylingConstants
-import com.kaii.photos.helpers.exif.getDateTakenForMedia
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.setDateForMedia
 import kotlinx.coroutines.Dispatchers
@@ -61,7 +60,6 @@ import kotlinx.datetime.toJavaYearMonth
 import kotlinx.datetime.toKotlinLocalDate
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.yearMonth
-import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
@@ -72,18 +70,12 @@ fun DateTimePicker(
     onSuccess: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    val dateTime = remember {
-        val time =
-            getDateTakenForMedia(
-                absolutePath = mediaItem.absolutePath,
-                dateModified = Clock.System.now().epochSeconds
-            )
-
-        Instant.fromEpochSeconds(time)
+    val dateTime = remember(mediaItem) {
+        Instant.fromEpochSeconds(mediaItem.dateTaken)
             .toLocalDateTime(timeZone = TimeZone.currentSystemDefault())
     }
 
-    var selectedDate by remember { mutableStateOf(dateTime.date) }
+    var selectedDate by remember(mediaItem) { mutableStateOf(dateTime.date) }
     var showDatePicker by remember { mutableStateOf(true) }
     var showTimePicker by remember { mutableStateOf(false) }
 
@@ -103,7 +95,7 @@ fun DateTimePicker(
                 DatePicker(
                     state = datePickerState,
                     colors = DatePickerDefaults.colors(
-                        containerColor = Color.Transparent,
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                         selectedDayContainerColor = MaterialTheme.colorScheme.primary,
                         selectedDayContentColor = MaterialTheme.colorScheme.onPrimary,
                         todayDateBorderColor = MaterialTheme.colorScheme.secondary
@@ -137,7 +129,7 @@ fun DateTimePicker(
             shouldRun = getPermission,
             onGranted = {
                 mainViewModel.launch(Dispatchers.IO) {
-                    val dateTime = selectedDate.atTime(selectedTime).toInstant(timeZone = TimeZone.UTC).epochSeconds // UTC since this is since epoch
+                    val dateTime = selectedDate.atTime(selectedTime).toInstant(timeZone = TimeZone.currentSystemDefault()).epochSeconds
 
                     mediaDao.deleteEntityById(mediaItem.id)
                     mediaDao.insertEntity(
@@ -223,7 +215,7 @@ private fun TimePicker(
             TimeInput(
                 state = timePickerState,
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .wrapContentWidth()
             )
 
             Row(

@@ -305,7 +305,7 @@ private fun SinglePhotoViewCommon(
     val appBarsVisible = remember { mutableStateOf(true) }
     var mediaItem by remember { mutableStateOf(MediaStoreData.dummyItem) }
 
-    LaunchedEffect(currentIndex) {
+    LaunchedEffect(currentIndex, mediaStoreData.value) {
         withContext(Dispatchers.IO) {
             mediaItem =
                 if (currentIndex in 0..mediaStoreData.value.size && mediaStoreData.value.isNotEmpty()) {
