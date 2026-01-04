@@ -346,7 +346,7 @@ fun DeviceMedia(
                         if (!isMediaPicker) {
                             when (viewProperties.operation) {
                                 ImageFunctions.LoadNormalImage -> {
-                                    if (openVideosExternally) {
+                                    if (openVideosExternally && mediaStoreItem.type == MediaType.Video) {
                                         val intent = Intent().apply {
                                             data = mediaStoreItem.uri
                                             action = Intent.ACTION_VIEW

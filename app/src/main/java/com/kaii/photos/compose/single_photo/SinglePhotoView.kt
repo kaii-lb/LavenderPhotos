@@ -117,17 +117,19 @@ fun SinglePhotoView(
         }
     }
 
-    SinglePhotoViewCommon(
-        navController = navController,
-        window = window,
-        startIndex = startIndex,
-        nextMediaItemId = nextMediaItemId,
-        mediaStoreData = mediaStoreData,
-        albumInfo = albumInfo,
-        isSearchPage = false,
-        isFavouritesPage = false,
-        isOpenWithDefaultView = isOpenWithDefaultView
-    )
+    if (mediaStoreData.value.isNotEmpty()) {
+        SinglePhotoViewCommon(
+            navController = navController,
+            window = window,
+            startIndex = startIndex,
+            nextMediaItemId = nextMediaItemId,
+            mediaStoreData = mediaStoreData,
+            albumInfo = albumInfo,
+            isSearchPage = false,
+            isFavouritesPage = false,
+            isOpenWithDefaultView = isOpenWithDefaultView
+        )
+    }
 }
 
 @OptIn(ExperimentalForInheritanceCoroutinesApi::class)
@@ -153,17 +155,19 @@ fun SinglePhotoView(
         }
     }
 
-    SinglePhotoViewCommon(
-        mediaStoreData = mediaStoreData,
-        startIndex = startIndex,
-        albumInfo = albumInfo,
-        navController = navController,
-        window = window,
-        isOpenWithDefaultView = isOpenWithDefaultView,
-        isSearchPage = false,
-        isFavouritesPage = false,
-        nextMediaItemId = nextMediaItemId
-    )
+    if (mediaStoreData.value.isNotEmpty()) {
+        SinglePhotoViewCommon(
+            mediaStoreData = mediaStoreData,
+            startIndex = startIndex,
+            albumInfo = albumInfo,
+            navController = navController,
+            window = window,
+            isOpenWithDefaultView = isOpenWithDefaultView,
+            isSearchPage = false,
+            isFavouritesPage = false,
+            nextMediaItemId = nextMediaItemId
+        )
+    }
 }
 
 @OptIn(ExperimentalForInheritanceCoroutinesApi::class)
@@ -197,17 +201,19 @@ fun SinglePhotoView(
         }
     }
 
-    SinglePhotoViewCommon(
-        mediaStoreData = mediaStoreData,
-        startIndex = startIndex,
-        albumInfo = albumInfo,
-        navController = navController,
-        window = window,
-        isOpenWithDefaultView = false,
-        isSearchPage = true,
-        isFavouritesPage = false,
-        nextMediaItemId = nextMediaItemId
-    )
+    if (mediaStoreData.value.isNotEmpty()) {
+        SinglePhotoViewCommon(
+            mediaStoreData = mediaStoreData,
+            startIndex = startIndex,
+            albumInfo = albumInfo,
+            navController = navController,
+            window = window,
+            isOpenWithDefaultView = false,
+            isSearchPage = true,
+            isFavouritesPage = false,
+            nextMediaItemId = nextMediaItemId
+        )
+    }
 }
 
 
