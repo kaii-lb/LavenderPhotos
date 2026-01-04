@@ -665,13 +665,15 @@ class SettingsDefaultTabsImpl(
     val json = Json { ignoreUnknownKeys = true }
 
     fun getTabList() = context.datastore.data.map { data ->
-        val list = data[tabList] ?: defaultTabList
+        val list = data[tabList] ?: defaultTabListJson
 
         try {
             json.decodeFromString<List<BottomBarTab>>(list).map {
-                if (it.resourceId != null) {
+                if (it.storedNameIndex != null) {
                     it.copy(
-                        name = context.resources.getString(it.resourceId.id)
+                        name = context.resources.getString(
+                            StoredName.entries[it.storedNameIndex].id
+                        )
                     )
                 } else {
                     it
@@ -682,31 +684,30 @@ class SettingsDefaultTabsImpl(
             Log.e(TAG, e.toString())
             e.printStackTrace()
 
-            val default = json.decodeFromString<List<BottomBarTab>>(defaultTabList)
-            setTabList(default)
-            setDefaultTab(default.first())
+            setTabList(defaultTabList)
+            setDefaultTab(defaultTabItem)
 
-            default
+            defaultTabList
         }
     }
 
     fun setTabList(list: List<BottomBarTab>) = viewModelScope.launch {
         context.datastore.edit {
             if (list.isEmpty()) {
-                it[tabList] = defaultTabList
-                setDefaultTab(DefaultTabs.TabTypes.photos)
+                it[tabList] = defaultTabListJson
+                setDefaultTab(defaultTabItem)
 
                 return@edit
             }
 
             val default = try {
-                it[defaultTab]?.let { tab -> json.decodeFromString<BottomBarTab>(tab) } ?: DefaultTabs.TabTypes.photos
+                it[defaultTab]?.let { tab -> json.decodeFromString<BottomBarTab>(tab) } ?: defaultTabItem
             } catch (e: Throwable) {
                 Log.e(TAG, "BottomBarTab Impl has been changed, default tab can't be decoded, failing back to DefaultTabs.TabTypes.photos.")
                 Log.e(TAG, e.toString())
                 e.printStackTrace()
 
-                DefaultTabs.TabTypes.photos
+                defaultTabItem
             }
 
             if (default !in list) {
@@ -721,14 +722,14 @@ class SettingsDefaultTabsImpl(
         val default = it[defaultTab]
 
         try {
-            default?.let { string -> json.decodeFromString<BottomBarTab>(string) } ?: DefaultTabs.TabTypes.photos
+            default?.let { string -> json.decodeFromString<BottomBarTab>(string) } ?: defaultTabItem
         } catch (e: Throwable) {
             Log.e(TAG, "BottomBarTab Impl has been changed, resetting default tab...")
             Log.e(TAG, e.toString())
             e.printStackTrace()
 
-            setDefaultTab(DefaultTabs.TabTypes.photos)
-            DefaultTabs.TabTypes.photos
+            setDefaultTab(defaultTabItem)
+            defaultTabItem
         }
     }
 
@@ -738,7 +739,27 @@ class SettingsDefaultTabsImpl(
         }
     }
 
-    private val defaultTabList = json.encodeToString(DefaultTabs.defaultList)
+    val defaultTabList =
+        DefaultTabs.defaultList.map {
+            if (it.storedNameIndex != null) {
+                it.copy(
+                    name = context.resources.getString(
+                        StoredName.entries[it.storedNameIndex].id
+                    )
+                )
+            } else {
+                it
+            }
+        }
+
+    private val defaultTabListJson = json.encodeToString(defaultTabList)
+
+    val defaultTabItem =
+        DefaultTabs.TabTypes.photos.copy(
+            name = context.resources.getString(
+                StoredName.entries[DefaultTabs.TabTypes.photos.storedNameIndex!!].id
+            )
+        )
 }
 
 class SettingsPhotoGridImpl(

@@ -24,7 +24,7 @@ object DefaultTabs {
             albumPaths = listOf("main_photos"),
             icon = StoredDrawable.PhotoGrid,
             id = 0,
-            resourceId = StoredName.Photos
+            storedNameIndex = StoredName.Photos.ordinal
         )
 
         val secure = BottomBarTab(
@@ -32,7 +32,7 @@ object DefaultTabs {
             albumPaths = listOf("secure_folder"),
             icon = StoredDrawable.SecureFolder,
             id = 1,
-            resourceId = StoredName.Secure
+            storedNameIndex = StoredName.Secure.ordinal
         )
 
         val albums = BottomBarTab(
@@ -40,7 +40,7 @@ object DefaultTabs {
             albumPaths = listOf("albums_page"),
             icon = StoredDrawable.Albums,
             id = 2,
-            resourceId = StoredName.Albums
+            storedNameIndex = StoredName.Albums.ordinal
         )
 
         val search = BottomBarTab(
@@ -48,7 +48,7 @@ object DefaultTabs {
             albumPaths = listOf("search_page"),
             icon = StoredDrawable.Search,
             id = 3,
-            resourceId = StoredName.Search
+            storedNameIndex = StoredName.Search.ordinal
         )
 
         val favourites = BottomBarTab(
@@ -56,7 +56,7 @@ object DefaultTabs {
             albumPaths = listOf("favourites_page"),
             icon = StoredDrawable.Favourite,
             id = 4,
-            resourceId = StoredName.Favourites
+            storedNameIndex = StoredName.Favourites.ordinal
         )
 
         val trash = BottomBarTab(
@@ -64,7 +64,7 @@ object DefaultTabs {
             albumPaths = listOf("trash_page"),
             icon = StoredDrawable.Trash,
             id = 5,
-            resourceId = StoredName.Trash
+            storedNameIndex = StoredName.Trash.ordinal
         )
     }
 
@@ -163,7 +163,7 @@ data class BottomBarTab(
     val albumPaths: List<String>,
     val icon: StoredDrawable,
     val isCustom: Boolean = false,
-    val resourceId: StoredName? = null
+    val storedNameIndex: Int? = null
 ) {
     companion object {
         @Suppress("UNCHECKED_CAST") // if the type changes and this doesn't then something always went really bad
@@ -173,10 +173,10 @@ data class BottomBarTab(
                     listOf(
                         it.name,
                         it.albumPaths,
-                        StoredDrawable.entries.indexOf(it.icon),
+                        it.icon.ordinal,
                         it.id,
                         it.isCustom,
-                        it.resourceId
+                        it.storedNameIndex
                     )
                 },
                 restore = {
@@ -186,7 +186,7 @@ data class BottomBarTab(
                         icon = StoredDrawable.entries[it[2] as Int],
                         id = it[3] as Int,
                         isCustom = it[4] as Boolean,
-                        resourceId = StoredName.entries[it[2] as Int]
+                        storedNameIndex = it[2] as Int
                     )
                 }
             )
@@ -203,7 +203,7 @@ data class BottomBarTab(
         if (albumPaths != other.albumPaths) return false
         if (icon != other.icon) return false
         if (isCustom != other.isCustom) return false
-        if (resourceId != other.resourceId) return false
+        if (storedNameIndex != other.storedNameIndex) return false
 
         return true
     }

@@ -1013,7 +1013,7 @@ class MainActivity : ComponentActivity() {
             multiAlbumViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
 
         val tabList by mainViewModel.settings.DefaultTabs.getTabList()
-            .collectAsStateWithLifecycle(initialValue = DefaultTabs.defaultList)
+            .collectAsStateWithLifecycle(initialValue = mainViewModel.settings.DefaultTabs.defaultTabList)
 
         val scrollBehaviour = FloatingToolbarDefaults.exitAlwaysScrollBehavior(
             exitDirection = FloatingToolbarExitDirection.Bottom

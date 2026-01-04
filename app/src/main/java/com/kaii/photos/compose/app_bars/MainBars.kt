@@ -203,7 +203,7 @@ fun MainAppBottomBar(
     scrollBehaviour: FloatingToolbarScrollBehavior
 ) {
     val mainViewModel = LocalMainViewModel.current
-    val mainTab by mainViewModel.settings.DefaultTabs.getDefaultTab().collectAsStateWithLifecycle(initialValue = DefaultTabs.TabTypes.photos)
+    val mainTab by mainViewModel.settings.DefaultTabs.getDefaultTab().collectAsStateWithLifecycle(initialValue = mainViewModel.settings.DefaultTabs.defaultTabItem)
 
     val state = rememberLazyListState(
         initialFirstVisibleItemIndex =
