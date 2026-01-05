@@ -662,13 +662,28 @@ class SettingsDefaultTabsImpl(
     private val defaultTab = stringPreferencesKey("default_tabs_first")
     private val tabList = stringPreferencesKey("default_tabs_list")
 
-    val json = Json { ignoreUnknownKeys = true }
-
     fun getTabList() = context.datastore.data.map { data ->
-        val list = data[tabList] ?: defaultTabListJson
+        var list = data[tabList] ?: defaultTabListJson
 
         try {
-            json.decodeFromString<List<BottomBarTab>>(list).map {
+            if (list.contains("resourceId")) {
+                val regex = """("resourceId"):"([^"]+)"""".toRegex()
+
+                list = list.replace(regex) { matchResult ->
+                    val value = matchResult.groupValues[2]
+                    val index = StoredName.entries.map { it.name }.indexOf(value)
+
+                    if (index != -1) {
+                        "\"storedNameIndex\":\"$index\""
+                    } else {
+                        matchResult.value
+                    }
+                }
+
+                setTabList(Json.decodeFromString<List<BottomBarTab>>(list))
+            }
+
+            Json.decodeFromString<List<BottomBarTab>>(list).map {
                 if (it.storedNameIndex != null) {
                     it.copy(
                         name = context.resources.getString(
@@ -701,7 +716,7 @@ class SettingsDefaultTabsImpl(
             }
 
             val default = try {
-                it[defaultTab]?.let { tab -> json.decodeFromString<BottomBarTab>(tab) } ?: defaultTabItem
+                it[defaultTab]?.let { tab -> Json.decodeFromString<BottomBarTab>(tab) } ?: defaultTabItem
             } catch (e: Throwable) {
                 Log.e(TAG, "BottomBarTab Impl has been changed, default tab can't be decoded, failing back to DefaultTabs.TabTypes.photos.")
                 Log.e(TAG, e.toString())
@@ -714,7 +729,7 @@ class SettingsDefaultTabsImpl(
                 setDefaultTab(list.first())
             }
 
-            it[tabList] = json.encodeToString(list)
+            it[tabList] = Json.encodeToString(list)
         }
     }
 
@@ -722,7 +737,7 @@ class SettingsDefaultTabsImpl(
         val default = it[defaultTab]
 
         try {
-            default?.let { string -> json.decodeFromString<BottomBarTab>(string) } ?: defaultTabItem
+            default?.let { string -> Json.decodeFromString<BottomBarTab>(string) } ?: defaultTabItem
         } catch (e: Throwable) {
             Log.e(TAG, "BottomBarTab Impl has been changed, resetting default tab...")
             Log.e(TAG, e.toString())
@@ -735,7 +750,7 @@ class SettingsDefaultTabsImpl(
 
     fun setDefaultTab(tab: BottomBarTab) = viewModelScope.launch {
         context.datastore.edit {
-            it[defaultTab] = json.encodeToString(tab)
+            it[defaultTab] = Json.encodeToString(tab)
         }
     }
 
@@ -752,7 +767,7 @@ class SettingsDefaultTabsImpl(
             }
         }
 
-    private val defaultTabListJson = json.encodeToString(defaultTabList)
+    private val defaultTabListJson = Json.encodeToString(defaultTabList)
 
     val defaultTabItem =
         DefaultTabs.TabTypes.photos.copy(
