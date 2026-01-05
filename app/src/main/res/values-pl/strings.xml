@@ -131,11 +131,11 @@
     <string name="editing_contrast">Kontrast</string>
     <string name="editing_brightness">Jasność</string>
     <string name="editing_saturation">Nasycenie</string>
-    <string name="editing_black_point">Czarny pkt.</string>
-    <string name="editing_white_point">Biały punkt</string>
+    <string name="editing_black_point">Czerń</string>
+    <string name="editing_white_point">Biel</string>
     <string name="editing_warmth">Ciepło</string>
     <string name="editing_color_tint">Barwa</string>
-    <string name="editing_highlights">Podświetl.</string>
+    <string name="editing_highlights">Światła</string>
     <string name="editing_pencil">Ołówek</string>
     <string name="editing_highlighter">Zakreślacz</string>
     <string name="editing_text">Tekst</string>
@@ -196,7 +196,7 @@
     <string name="media_delete">Usuń</string>
     <string name="media_delete_confirm">Usunąć ten plik?</string>
     <string name="media_trash_confirm">Przenieść wybrane elementy do kosza?</string>
-    <string name="media_secure">Bezpieczny</string>
+    <string name="media_secure">Zabezpiecz</string>
     <string name="media_secure_confirm">Przenieść te multimedia do Zabezpieczonego folderu?</string>
     <string name="media_delete_permanently_confirm">Czy trwale usunąć ten plik?</string>
     <string name="media_cancel">Anuluj</string>
