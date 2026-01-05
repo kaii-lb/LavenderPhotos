@@ -277,8 +277,8 @@ class SettingsVersionImpl(
     }
 
     fun getUpdateFav(): Flow<Boolean> =
-        context.datastore.data.map {
-            it[migrateFav] != false
+        context.datastore.data.map { data ->
+            data[migrateFav] != false
         }
 
     fun setUpdateFav(value: Boolean) = viewModelScope.launch {

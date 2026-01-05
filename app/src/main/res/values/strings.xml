@@ -777,9 +777,10 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="favourites_add_this">Favourite this media</string>
     <string name="favourites_remove_this">Remove from favourites?</string>
     <string name="favourites_migration">Favourites has been renewed!</string>
-    <string name="favourites_migration_notice">Update Notice:</string>
-    <string name="favourites_migration_desc">Favourites has been updated to bring a better experience, which means syncing favourites across all apps that support it, flawless management, and even more performance!\n\nAll of your previous favourited items will be migrated.\n\n Please keep your phone on and this app open.</string>
+    <string name="favourites_migration_notice">Favourites</string>
+    <string name="favourites_migration_desc">This is a way to keep track of your best moments; With Lavender Photos that means favourites that sync across all apps that support it, with flawless management, and a highly performant system!\n\nIf you\'re coming from a previous version of Lavender Photos, all of your previous favourited items will be migrated to the new system.\n\nPlease keep your phone on and this app open.</string>
     <string name="favourites_migration_started">Migration started!</string>
+    <string name="favourites_migration_none">No items to migrate</string>
     <string name="favourites_migration_in_progress">Migration in progress</string>
     <string name="favourites_migration_in_progress_short">In Progress</string>
     <string name="favourites_migration_done">Migration Done!</string>

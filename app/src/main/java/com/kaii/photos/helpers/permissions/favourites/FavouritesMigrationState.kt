@@ -55,10 +55,27 @@ class FavouritesMigrationState(
     init {
         coroutineScope.launch(Dispatchers.IO) {
             favourites = appDatabase.favouritedItemEntityDao().getAll().first().map { it.uri.toUri() }
+
+            if (favourites.isEmpty()) _state.value = MigrationState.Done
         }
     }
 
     fun step() = coroutineScope.launch(Dispatchers.IO) {
+        if (favourites.isEmpty()) {
+            coroutineScope.launch {
+                LavenderSnackbarController.pushEvent(
+                    LavenderSnackbarEvents.MessageEvent(
+                        message = context.resources.getString(R.string.favourites_migration_none),
+                        icon = R.drawable.lists,
+                        duration = SnackbarDuration.Short
+                    )
+                )
+            }
+
+            _state.value = MigrationState.Done
+            onDone()
+        }
+
         if (_state.value == MigrationState.NeedsPermission) {
             permissionsState?.getPermissionsFor(uris = favourites)
         } else if (_state.value == MigrationState.Done) {
