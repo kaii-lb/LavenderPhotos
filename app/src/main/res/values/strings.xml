@@ -2,6 +2,13 @@
     <!-- Basic -->
     <string name="app_name">Photos</string>
     <string name="changelog" translatable="false"><![CDATA[
+    <u><h2>v1.4.0 - Hotfix:</h2></u>
+    <br><b><h4>- Fixed Bugs:</h4></b>
+    <p>
+        - Critical bug where the new tab translation system would not allow for migration from older versions, rendering app unusable
+        <br>- Inability to secure items from single photo views bottom bar
+    </p>
+    <br>
     <u><h2>v1.3.9!:</h2></u>
     <br><b><h4>- Improvements:</h4></b>
     <p>
