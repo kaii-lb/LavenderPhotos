@@ -25,3 +25,11 @@ dependencyResolutionManagement {
 rootProject.name = "Photos"
 include(":app")
 include(":baselineprofile")
+
+//includeBuild("../telephoto") {
+//  dependencySubstitution {
+//    substitute(module("me.saket.telephoto:zoomable")).using(project(":zoomable"))
+//    substitute(module("me.saket.telephoto:zoomable-image")).using(project(":zoomable-image:core"))
+//    substitute(module("me.saket.telephoto:zoomable-image-glide")).using(project(":zoomable-image:glide"))
+//  }
+//}

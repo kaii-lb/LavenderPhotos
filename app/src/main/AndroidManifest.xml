@@ -63,7 +63,7 @@
         android:appCategory="image">
 
         <activity
-            android:name=".MainActivity"
+            android:name=".TinyImageTestActivity"
             android:configChanges="orientation|screenSize|density|screenLayout"
             android:exported="true">
 
