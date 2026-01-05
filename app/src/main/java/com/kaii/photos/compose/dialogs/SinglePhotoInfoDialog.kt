@@ -187,9 +187,10 @@ private fun Content(
     dismiss: () -> Unit
 ) {
     val context = LocalContext.current
-    val mediaData = remember {
+    val mediaData = remember(currentMediaItem) {
         getExifDataForMedia(
             context = context,
+            inputStream = context.contentResolver.openInputStream(currentMediaItem.uri) ?: File(currentMediaItem.absolutePath).inputStream(),
             absolutePath = currentMediaItem.absolutePath,
             dateModified = currentMediaItem.dateModified
         )

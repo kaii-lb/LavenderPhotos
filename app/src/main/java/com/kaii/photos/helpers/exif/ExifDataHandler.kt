@@ -18,6 +18,7 @@ import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
 import java.io.File
 import java.io.FileDescriptor
+import java.io.InputStream
 import java.time.format.DateTimeFormatter
 import kotlin.math.round
 import kotlin.time.Clock
@@ -31,6 +32,43 @@ private const val TAG = "com.kaii.photos.helpers.ExifDataHandler"
 fun getDateTakenForMedia(absolutePath: String, dateModified: Long): Long {
     try {
         val exifInterface = ExifInterface(absolutePath)
+        val exifDateTimeFormat = LocalDateTime.Formats.ISO
+
+        val lastModified = Instant
+            .fromEpochSeconds(dateModified)
+            .toLocalDateTime(TimeZone.currentSystemDefault())
+            .format(exifDateTimeFormat)
+
+        val datetime = exifInterface.getAttribute(ExifInterface.TAG_DATETIME_ORIGINAL)
+            ?: (exifInterface.getAttribute(ExifInterface.TAG_DATETIME)
+                ?: lastModified) // this really should not get to last modified
+
+        val parsedDateTime = datetime.replace("T", " ").let {
+            it.substringBefore(" ").replace(":", "-") +
+                    "T" + it.substringAfter(" ").substringBefore("+")
+        }
+
+        val dateTimeSinceEpoch =
+            LocalDateTime
+                .parse(parsedDateTime, exifDateTimeFormat)
+                .toInstant(TimeZone.currentSystemDefault())
+                .epochSeconds
+
+        return dateTimeSinceEpoch
+    } catch (e: Throwable) {
+        Log.e(TAG, e.toString())
+        e.printStackTrace()
+        return 0L
+    }
+}
+
+@OptIn(ExperimentalTime::class)
+fun getDateTakenForMedia(
+    inputStream: InputStream,
+    dateModified: Long
+): Long {
+    try {
+        val exifInterface = ExifInterface(inputStream)
         val exifDateTimeFormat = LocalDateTime.Formats.ISO
 
         val lastModified = Instant
@@ -112,7 +150,12 @@ fun setDateTakenForMedia(fd: FileDescriptor, dateTaken: Long) {
 
 /** @param dateModified in seconds */
 @OptIn(ExperimentalTime::class)
-fun getExifDataForMedia(context: Context, absolutePath: String, dateModified: Long): Map<MediaData, Any> {
+fun getExifDataForMedia(
+    context: Context,
+    inputStream: InputStream,
+    absolutePath: String,
+    dateModified: Long
+): Map<MediaData, Any> {
     val list = emptyMap<MediaData, Any?>().toMutableMap()
     val file = File(absolutePath)
 
@@ -120,10 +163,11 @@ fun getExifDataForMedia(context: Context, absolutePath: String, dateModified: Lo
     list[MediaData.Path] = file.absolutePath
     list[MediaData.Resolution] = "Loading..."
 
-    try {
-        val exifInterface = ExifInterface(absolutePath)
 
-        val datetime = getDateTakenForMedia(absolutePath, dateModified)
+    try {
+        val exifInterface = ExifInterface(inputStream)
+
+        val datetime = getDateTakenForMedia(inputStream = inputStream, dateModified = dateModified)
         val is24Hr = DateFormat.is24HourFormat(context)
         val formattedDateTime =
             Instant.fromEpochSeconds(datetime)

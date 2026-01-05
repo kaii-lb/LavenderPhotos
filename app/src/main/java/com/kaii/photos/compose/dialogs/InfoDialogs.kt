@@ -645,6 +645,7 @@ fun SingleSecurePhotoInfoDialog(
                     showLoadingDialog = false
                     mediaData = getExifDataForMedia(
                         context = context,
+                        inputStream = file.inputStream(),
                         absolutePath = file.absolutePath,
                         dateModified = currentMediaItem.dateModified
                     )

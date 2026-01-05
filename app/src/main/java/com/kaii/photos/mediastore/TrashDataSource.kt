@@ -16,12 +16,9 @@ import androidx.core.net.toUri
 import com.bumptech.glide.util.Preconditions
 import com.bumptech.glide.util.Util
 import com.kaii.photos.R
-import com.kaii.photos.database.MediaDatabase
-import com.kaii.photos.database.entities.MediaEntity
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.SectionItem
-import com.kaii.photos.helpers.exif.getDateTakenForMedia
 import com.kaii.photos.helpers.formatDate
 import com.kaii.photos.mediastore.MediaDataSource.Companion.MEDIA_STORE_FILE_URI
 import kotlinx.coroutines.Dispatchers
@@ -124,23 +121,15 @@ class TrashDataSource(
         val mimeTypeColNum = cursor.getColumnIndexOrThrow(MediaColumns.MIME_TYPE)
         val mediaTypeColumnIndex = cursor.getColumnIndexOrThrow(FileColumns.MEDIA_TYPE)
         val displayNameIndex = cursor.getColumnIndexOrThrow(FileColumns.DISPLAY_NAME)
-        val dateTakenColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATE_TAKEN)
-        val dateAddedColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATE_ADDED)
         val dateModifiedColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATE_MODIFIED)
         val sizeColumn = cursor.getColumnIndexOrThrow(MediaColumns.SIZE)
 
-        val dao = MediaDatabase.getInstance(context).mediaEntityDao()
-        val allEntities = dao.getAll().associate { it.id to it.dateTaken } // map lookups are faster
-
-        val entitiesToBeInserted = mutableListOf<MediaEntity>() // bulk insert is faster
         val holderMap = mutableMapOf<Long, MutableList<MediaStoreData>>() // maps are faster, AGAIN
 
         while (cursor.moveToNext()) {
             val id = cursor.getLong(idColNum)
             val mimeType = cursor.getString(mimeTypeColNum)
             val absolutePath = cursor.getString(absolutePathColNum)
-            val mediaStoreDateTaken = cursor.getLong(dateTakenColumn) / 1000
-            val dateAdded = cursor.getLong(dateAddedColumn)
             val dateModified = cursor.getLong(dateModifiedColumn)
             val displayName = cursor.getString(displayNameIndex)
             val size = cursor.getLong(sizeColumn)
@@ -148,36 +137,6 @@ class TrashDataSource(
             val type =
                 if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) MediaType.Image
                 else MediaType.Video
-
-            val possibleDateTaken = allEntities[id]
-
-            val dateTaken =
-                when {
-                    possibleDateTaken != null && possibleDateTaken > 0L -> possibleDateTaken
-
-                    mediaStoreDateTaken > 0L -> mediaStoreDateTaken
-
-                    type == MediaType.Image -> {
-                        getDateTakenForMedia(absolutePath, dateModified).let { exifDateTaken ->
-                            entitiesToBeInserted.add(
-                                MediaEntity(
-                                    id = id,
-                                    dateTaken = exifDateTaken,
-                                    mimeType = mimeType,
-                                    displayName = displayName
-                                )
-                            )
-
-                            exifDateTaken
-                        }
-                    }
-
-                    dateAdded > 0L -> dateAdded
-
-                    else -> {
-                        dateModified
-                    }
-                }
 
             val uriParentPath =
                 if (type == MediaType.Image) MediaStore.Images.Media.EXTERNAL_CONTENT_URI else MediaStore.Video.Media.EXTERNAL_CONTENT_URI
@@ -190,7 +149,7 @@ class TrashDataSource(
                     uri = uri,
                     mimeType = mimeType,
                     dateModified = dateModified,
-                    dateTaken = dateTaken,
+                    dateTaken = dateModified,
                     displayName = displayName,
                     absolutePath = absolutePath,
                     size = size
@@ -206,8 +165,6 @@ class TrashDataSource(
         }
 
         cursor.close()
-
-        if (entitiesToBeInserted.isNotEmpty()) dao.insertAll(entitiesToBeInserted)
 
         val sortedMap = holderMap.toSortedMap(compareByDescending { it })
         val sorted = mutableListOf<MediaStoreData>()
