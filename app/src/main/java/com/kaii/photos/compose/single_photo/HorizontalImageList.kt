@@ -282,7 +282,7 @@ fun GlideView(
         it.signature(item.signature())
             .diskCacheStrategy(if (useCache) DiskCacheStrategy.ALL else DiskCacheStrategy.NONE)
             .error(R.drawable.broken_image)
-            .downsample(DownsampleStrategy.FIT_CENTER)
+            //.downsample(DownsampleStrategy.FIT_CENTER)
             .thumbnail(
                 Glide.with(context)
                     .load(model)
