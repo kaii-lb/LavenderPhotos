@@ -123,7 +123,7 @@ class FavouritesDataSource(
         val mimeTypeColNum = cursor.getColumnIndexOrThrow(MediaColumns.MIME_TYPE)
         val mediaTypeColumnIndex = cursor.getColumnIndexOrThrow(FileColumns.MEDIA_TYPE)
         val displayNameIndex = cursor.getColumnIndexOrThrow(FileColumns.DISPLAY_NAME)
-        val dateTakenColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATE_ADDED)
+        val dateTakenColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATE_TAKEN)
         val dateAddedColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATE_ADDED)
         val dateModifiedColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATE_MODIFIED)
         val sizeColumn = cursor.getColumnIndexOrThrow(MediaColumns.SIZE)
