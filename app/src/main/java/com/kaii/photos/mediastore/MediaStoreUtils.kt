@@ -371,6 +371,21 @@ fun ContentResolver.setDateForMedia(
     overwriteLastModified: Boolean = true
 ) {
     try {
+        if (type == MediaType.Image) {
+            openFileDescriptor(uri, "rw")?.use { fd ->
+                setDateTakenForMedia(
+                    fd = fd.fileDescriptor,
+                    dateTaken = dateTaken
+                )
+            }
+        }
+
+        if (overwriteLastModified) {
+            getAbsolutePathFromUri(uri)?.let {
+                File(it).setLastModified(dateTaken * 1000)
+            }
+        }
+
         update(
             uri,
             ContentValues().apply {
@@ -384,21 +399,6 @@ fun ContentResolver.setDateForMedia(
     } catch (e: Throwable) {
         Log.e(TAG, e.toString())
         e.printStackTrace()
-    }
-
-    if (type == MediaType.Image) {
-        openFileDescriptor(uri, "rw")?.use { fd ->
-            setDateTakenForMedia(
-                fd = fd.fileDescriptor,
-                dateTaken = dateTaken
-            )
-        }
-    }
-
-    if (overwriteLastModified) {
-        getAbsolutePathFromUri(uri)?.let {
-            File(it).setLastModified(dateTaken * 1000)
-        }
     }
 }
 
