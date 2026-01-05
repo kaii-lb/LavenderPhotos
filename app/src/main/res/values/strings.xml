@@ -2,6 +2,22 @@
     <!-- Basic -->
     <string name="app_name">Photos</string>
     <string name="changelog" translatable="false"><![CDATA[
+    <u><h2>v1.3.9!:</h2></u>
+    <br><b><h4>- Improvements:</h4></b>
+    <p>
+        - Auto update single photo topbar to reflect media item changes
+        <br>- Update translations for polish and simplified chinese
+    </p>
+    <br><b><h4>- Fixed Bugs:</h4></b>
+    <p>
+        - Crash when trying to open gallery from camera
+        <br>- Exif dates not lining up with local timezone
+        <br>- Translations not loading for bottom bar tabs if tab list is not customized
+        <br>- Unable to continue on favourites migration page if there are no items to migrate
+        <br>- Favourites and Trash not displaying dates correctly for some images
+        <br>- Media info not showing in trash and secure folder
+    </p>
+    <br>
     <u><h2>v1.3.8!:</h2></u>
     <br><b><h4>- Added Features:</h4></b>
     <p>
