@@ -7,8 +7,8 @@ assignees: ''
 
 ---
 
-**improvement**
+**Improvement**
 What does your feature improve on or fix?
 
-**Describe your solution
+**Describe your solution**
 How do you picture it existing/want it implemented?
