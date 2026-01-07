@@ -140,6 +140,7 @@ import com.kaii.photos.helpers.appStorageDir
 import com.kaii.photos.helpers.checkHasFiles
 import com.kaii.photos.helpers.startupUpdateCheck
 import com.kaii.photos.helpers.toBasePath
+import com.kaii.photos.helpers.tryGetAllAlbums
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.custom_album.CustomAlbumViewModelFactory
@@ -160,15 +161,11 @@ import com.kaii.photos.models.trash_bin.TrashViewModelFactory
 import com.kaii.photos.ui.theme.PhotosTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.cancellable
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlin.io.path.Path
 import kotlin.reflect.typeOf
-import kotlin.uuid.ExperimentalUuidApi
 
 private const val TAG = "com.kaii.photos.MainActivity"
 
@@ -946,11 +943,11 @@ class MainActivity : ComponentActivity() {
             .collectAsStateWithLifecycle(initialValue = false)
 
         val firstStartup by mainViewModel.settings.User.getFirstStartup()
-            .collectAsStateWithLifecycle(initialValue = true)
+            .collectAsStateWithLifecycle(initialValue = false)
 
         if (firstStartup) {
             val showFirstStartupDialog = remember { mutableStateOf(false) }
-            val isLoading = remember { mutableStateOf(false) }
+            val isLoading = remember { mutableStateOf(true) }
             val findingAlbumsOnDevice = stringResource(id = R.string.finding_albums_on_device)
             val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
 
@@ -960,9 +957,8 @@ class MainActivity : ComponentActivity() {
                 showDialog = showFirstStartupDialog,
                 confirmButtonLabel = stringResource(id = R.string.first_startup_dialog_confirm_title)
             ) {
-                coroutineScope.launch {
+                mainViewModel.launch(Dispatchers.IO) {
                     LavenderSnackbarController.pushEvent(
-                        @OptIn(ExperimentalUuidApi::class)
                         LavenderSnackbarEvents.LoadingEvent(
                             message = findingAlbumsOnDevice,
                             icon = R.drawable.art_track,
@@ -970,17 +966,14 @@ class MainActivity : ComponentActivity() {
                         )
                     )
 
-                    mainViewModel.settings.AlbumsList.getAllAlbumsOnDevice(displayDateFormat = displayDateFormat)
-                        .cancellable()
-                        .collectLatest { list ->
-                            mainViewModel.settings.AlbumsList.setAlbumsList(list)
-                            mainViewModel.settings.AlbumsList.setAutoDetect(true)
-
-                            Log.d(TAG, "Albums on device are $list")
-                            isLoading.value = false
-
-                            mainViewModel.settings.User.setFirstStartup(false)
-                        }
+                    mainViewModel.settings.AlbumsList.add(
+                        list = tryGetAllAlbums(
+                            context = context,
+                            displayDateFormat = displayDateFormat
+                        )
+                    )
+                    isLoading.value = false
+                    mainViewModel.settings.User.setFirstStartup(false)
                 }
             }
         }

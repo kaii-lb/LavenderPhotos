@@ -41,7 +41,6 @@ import com.kaii.photos.compose.app_bars.SingleAlbumViewTopBar
 import com.kaii.photos.compose.dialogs.SingleAlbumDialog
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.OnBackPressedEffect
@@ -69,24 +68,15 @@ fun SingleAlbumView(
     val mainViewModel = LocalMainViewModel.current
 
     val allAlbums by mainViewModel.allAvailableAlbums.collectAsStateWithLifecycle()
-    val normalAlbums by mainViewModel.settings.AlbumsList.getNormalAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
 
-    var lastDynamicAlbum by remember {
-        mutableStateOf(
-            albumInfo
-        )
-    }
     val dynamicAlbum by remember {
         derivedStateOf {
-            (normalAlbums.firstOrNull { it.id == albumInfo.id } ?: allAlbums.firstOrNull { it.id == albumInfo.id } ?: lastDynamicAlbum).let {
-                lastDynamicAlbum = it
-                lastDynamicAlbum
-            }
+            allAlbums.first { it.id == albumInfo.id }
         }
     }
 
     LaunchedEffect(dynamicAlbum) {
-        if (viewModel.albumInfo != dynamicAlbum) {
+        if (viewModel.albumInfo.paths.toSet() != dynamicAlbum.paths.toSet()) {
             viewModel.reinitDataSource(
                 context = context,
                 album = dynamicAlbum
@@ -126,24 +116,15 @@ fun SingleAlbumView(
     val mainViewModel = LocalMainViewModel.current
 
     val allAlbums by mainViewModel.allAvailableAlbums.collectAsStateWithLifecycle()
-    val normalAlbums by mainViewModel.settings.AlbumsList.getNormalAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
 
-    var lastDynamicAlbum by remember {
-        mutableStateOf(
-            albumInfo
-        )
-    }
     val dynamicAlbum by remember {
         derivedStateOf {
-            (normalAlbums.firstOrNull { it.id == albumInfo.id } ?: allAlbums.firstOrNull { it.id == albumInfo.id } ?: lastDynamicAlbum).let {
-                lastDynamicAlbum = it
-                lastDynamicAlbum
-            }
+            allAlbums.first { it.id == albumInfo.id }
         }
     }
 
     LaunchedEffect(dynamicAlbum) {
-        if (viewModel.albumInfo != dynamicAlbum) {
+        if (viewModel.albumInfo.paths.toSet() != dynamicAlbum.paths.toSet()) {
             viewModel.reinitDataSource(
                 context = context,
                 album = dynamicAlbum
@@ -272,7 +253,7 @@ private fun SingleAlbumViewCommon(
 
             SingleAlbumDialog(
                 showDialog = showDialog,
-                albumInfo = albumInfo,
+                albumId = albumInfo.id,
                 navController = navController,
                 selectedItemsList = selectedItemsList,
                 itemCount = mediaStoreData.value.filter { it.type != MediaType.Section }.size

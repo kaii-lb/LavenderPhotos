@@ -206,11 +206,9 @@ class ImmichViewModel(
 
             val result = immichApiService.removeAlbumFromSync(albumInfo.immichId)
             result.onSuccess { _ ->
-                albumSettings.editInAlbumsList(
-                    albumInfo = albumInfo,
-                    newInfo = albumInfo.copy(
-                        immichId = ""
-                    )
+                albumSettings.edit(
+                    id = albumInfo.id,
+                    newInfo = albumInfo.copy(immichId = "")
                 )
                 refreshAlbums()
                 onDone()
@@ -257,11 +255,9 @@ class ImmichViewModel(
                     )
                 )
 
-                albumSettings.editInAlbumsList(
-                    albumInfo = albumInfo,
-                    newInfo = albumInfo.copy(
-                        immichId = id
-                    )
+                albumSettings.edit(
+                    id = albumInfo.id,
+                    newInfo = albumInfo.copy(immichId = id)
                 )
                 refreshAlbums()
                 return id

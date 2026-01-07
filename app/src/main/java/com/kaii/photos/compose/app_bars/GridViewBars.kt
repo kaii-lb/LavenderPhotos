@@ -100,7 +100,7 @@ fun SingleAlbumViewTopBar(
     onBackClick: () -> Unit
 ) {
     val mainViewModel = LocalMainViewModel.current
-    val normalAlbums by mainViewModel.settings.AlbumsList.getNormalAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
+    val normalAlbums by mainViewModel.allAvailableAlbums.collectAsStateWithLifecycle()
 
     val dynamicAlbum by remember {
         derivedStateOf {
@@ -176,11 +176,12 @@ fun SingleAlbumViewTopBar(
                                 onConfirm = { selectedPaths ->
                                     val newInfo =
                                         dynamicAlbum.copy(
-                                            id = selectedPaths.hashCode(),
+                                            id = dynamicAlbum.id,
                                             paths = selectedPaths
                                         )
-                                    mainViewModel.settings.AlbumsList.editInAlbumsList(
-                                        albumInfo = dynamicAlbum,
+
+                                    mainViewModel.settings.AlbumsList.edit(
+                                        id = dynamicAlbum.id,
                                         newInfo = newInfo
                                     )
 

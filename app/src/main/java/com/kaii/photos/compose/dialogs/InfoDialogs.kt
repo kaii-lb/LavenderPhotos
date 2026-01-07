@@ -72,7 +72,6 @@ import com.kaii.photos.MainActivity.Companion.immichViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.AnimatableTextField
 import com.kaii.photos.compose.widgets.MainDialogUserInfo
-import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
@@ -112,16 +111,16 @@ private const val TAG = "com.kaii.photos.compose.dialogs.InfoDialogs"
 @Composable
 fun SingleAlbumDialog(
     showDialog: MutableState<Boolean>,
-    albumInfo: AlbumInfo,
+    albumId: Int,
     navController: NavHostController,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
     itemCount: Int
 ) {
     val mainViewModel = LocalMainViewModel.current
-    val normalAlbums by mainViewModel.settings.AlbumsList.getNormalAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
-    val dynamicAlbum by remember(normalAlbums) {
+    val albums by mainViewModel.allAvailableAlbums.collectAsStateWithLifecycle()
+    val dynamicAlbum by remember {
         derivedStateOf {
-            normalAlbums.firstOrNull { it.id == albumInfo.id } ?: albumInfo
+            albums.first { it.id == albumId }
         }
     }
 
@@ -221,8 +220,10 @@ fun SingleAlbumDialog(
                                 name = fileName.value,
                                 paths = listOf(dynamicAlbum.mainPath.replace(dynamicAlbum.name, fileName.value))
                             )
-                            mainViewModel.settings.AlbumsList.removeFromAlbumsList(dynamicAlbum.id)
-                            mainViewModel.settings.AlbumsList.addToAlbumsList(newInfo)
+                            mainViewModel.settings.AlbumsList.edit(
+                                id = dynamicAlbum.id,
+                                newInfo = newInfo
+                            )
                             showDialog.value = false
 
                             try {
@@ -261,8 +262,10 @@ fun SingleAlbumDialog(
 
                     val newInfo = dynamicAlbum.copy(name = fileName.value)
 
-                    mainViewModel.settings.AlbumsList.removeFromAlbumsList(dynamicAlbum.id)
-                    mainViewModel.settings.AlbumsList.addToAlbumsList(newInfo)
+                    mainViewModel.settings.AlbumsList.edit(
+                        id = dynamicAlbum.id,
+                        newInfo = newInfo
+                    )
 
                     saveFileName.value = false
                 }
@@ -294,7 +297,7 @@ fun SingleAlbumDialog(
                     .height(if (!isEditingFileName.value) 42.dp else 0.dp)
                     .padding(8.dp, 0.dp)
             ) {
-                mainViewModel.settings.AlbumsList.removeFromAlbumsList(id = dynamicAlbum.id)
+                mainViewModel.settings.AlbumsList.remove(dynamicAlbum.id)
                 showDialog.value = false
 
                 try {
@@ -319,10 +322,9 @@ fun SingleAlbumDialog(
                 navController.popBackStack()
             }
 
-            var isPinned by remember(dynamicAlbum) { mutableStateOf(dynamicAlbum.isPinned) }
             DialogClickableItem(
                 text =
-                    if (isPinned) stringResource(id = R.string.albums_unpin)
+                    if (dynamicAlbum.isPinned) stringResource(id = R.string.albums_unpin)
                     else stringResource(id = R.string.albums_pin),
                 iconResId = R.drawable.pin,
                 position = RowPosition.Middle,
@@ -335,9 +337,10 @@ fun SingleAlbumDialog(
                     .height(if (!isEditingFileName.value) 42.dp else 0.dp)
                     .padding(8.dp, 0.dp)
             ) {
-                mainViewModel.settings.AlbumsList.removeFromAlbumsList(id = dynamicAlbum.id)
-                mainViewModel.settings.AlbumsList.addToAlbumsList(albumInfo = dynamicAlbum.copy(isPinned = !isPinned))
-                isPinned = !isPinned
+                mainViewModel.settings.AlbumsList.edit(
+                    id = dynamicAlbum.id,
+                    newInfo = dynamicAlbum.copy(isPinned = !dynamicAlbum.isPinned)
+                )
             }
 
             val expanded = remember { mutableStateOf(false) }

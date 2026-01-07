@@ -35,7 +35,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -116,28 +115,11 @@ class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMode
 
     val albumsThumbnailsMap = mutableStateMapOf<Int, MediaStoreData>()
 
-    val allAvailableAlbums =
-        getAllAvailableAlbums().stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Eagerly,
-            initialValue = emptyList()
-        )
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private fun getAllAvailableAlbums(): Flow<List<AlbumInfo>> =
-        settings.AlbumsList.getAutoDetect().combine(displayDateFormat) { autoDetectAlbums, dateFormat ->
-            if (autoDetectAlbums) {
-                settings.AlbumsList.getAutoDetectedAlbums(dateFormat)
-            } else {
-                settings.AlbumsList.getNormalAlbums()
-            }
-        }
-            .flatMapConcat { it }
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.Eagerly,
-                initialValue = emptyList()
-            )
+    val allAvailableAlbums = settings.AlbumsList.get().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = emptyList()
+    )
 
     private val _mainPhotosAlbums = settings.MainPhotosView.getAlbums()
 

@@ -276,6 +276,7 @@ data class AlbumInfo(
         if (name != other.name) return false
         if (paths.toSet() != other.paths.toSet()) return false // as a set since we don't care about the order
         if (mainPath != other.mainPath) return false
+        if (isPinned != other.isPinned) return false
 
         return true
     }
@@ -286,6 +287,7 @@ data class AlbumInfo(
         result = 31 * result + name.hashCode()
         result = 31 * result + paths.toSet().hashCode()
         result = 31 * result + mainPath.hashCode()
+        result = 31 * result + isPinned.hashCode()
         return result
     }
 }

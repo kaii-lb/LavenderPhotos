@@ -12,8 +12,7 @@ import androidx.compose.ui.util.fastMinByOrNull
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.SQLiteQuery
 import com.kaii.photos.mediastore.MediaDataSource
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.first
 import java.io.File
 import java.io.IOException
 import java.nio.file.FileVisitResult
@@ -157,10 +156,10 @@ fun String.toBasePath() = run {
 }
 
 /** returns the absolute paths to all the found albums */
-fun tryGetAllAlbums(
+suspend fun tryGetAllAlbums(
     context: Context,
     displayDateFormat: DisplayDateFormat
-): Flow<List<AlbumInfo>> = channelFlow {
+): List<AlbumInfo> {
     val cancellationSignal = CancellationSignal()
     val mediaStoreDataSource =
         MediaDataSource(
@@ -171,10 +170,8 @@ fun tryGetAllAlbums(
             displayDateFormat = displayDateFormat
         )
 
-    suspend fun emitNew(list: List<AlbumInfo>) = send(list)
-
-    mediaStoreDataSource.loadMediaStoreData().collect { list ->
-        val new = list.fastDistinctBy { media ->
+    return mediaStoreDataSource.loadMediaStoreData().first().let { list ->
+        list.fastDistinctBy { media ->
             media.absolutePath.getParentFromPath()
         }.fastMap { media ->
             val album = listOf(media.absolutePath.getParentFromPath())
@@ -187,9 +184,6 @@ fun tryGetAllAlbums(
         }.fastFilter {
             it.name != "" && it.paths.isNotEmpty()
         }
-
-        Log.d(TAG, "new albums are being added")
-        emitNew(new)
     }
 }
 

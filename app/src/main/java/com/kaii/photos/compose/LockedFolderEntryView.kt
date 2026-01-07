@@ -61,6 +61,7 @@ import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.copyImageListToPath
+import com.kaii.photos.helpers.getFileNameFromPath
 import com.kaii.photos.helpers.moveImageToLockedFolder
 import com.kaii.photos.helpers.relativePath
 import com.kaii.photos.helpers.toRelativePath
@@ -130,11 +131,13 @@ fun LockedFolderEntryView() {
 
                 if (success) {
                     val exportDir = helper.getRawExportDir(context = context)
-                    mainViewModel.settings.AlbumsList.addToAlbumsList(
-                        AlbumInfo(
-                            id = exportDir.relativePath.hashCode(),
-                            name = exportDir.relativePath.split("/").last(),
-                            paths = listOf(exportDir.relativePath)
+                    mainViewModel.settings.AlbumsList.add(
+                        listOf(
+                            AlbumInfo(
+                                id = exportDir.relativePath.hashCode(),
+                                name = exportDir.relativePath.split("/").last(),
+                                paths = listOf(exportDir.relativePath)
+                            )
                         )
                     )
 
@@ -243,11 +246,13 @@ fun LockedFolderEntryView() {
                 )
 
                 val path = context.appRestoredFilesDir.toRelativePath()
-                mainViewModel.settings.AlbumsList.addToAlbumsList(
-                    AlbumInfo(
-                        id = path.hashCode(),
-                        name = path.split("/").last(),
-                        paths = listOf(path)
+                mainViewModel.settings.AlbumsList.add(
+                    listOf(
+                        AlbumInfo(
+                            id = path.hashCode(),
+                            name = path.getFileNameFromPath(),
+                            paths = listOf(path)
+                        )
                     )
                 )
 

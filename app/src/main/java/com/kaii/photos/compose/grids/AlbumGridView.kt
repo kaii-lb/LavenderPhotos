@@ -78,7 +78,6 @@ import androidx.compose.ui.unit.round
 import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.util.fastDistinctBy
 import androidx.compose.ui.util.fastFilter
-import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
@@ -117,10 +116,6 @@ fun AlbumsGridView(
     val navController = LocalNavController.current
     val mainViewModel = LocalMainViewModel.current
 
-    // used to save pinned albums in-case of auto detecting
-    val normalAlbums = mainViewModel.settings.AlbumsList.getNormalAlbums()
-        .collectAsStateWithLifecycle(initialValue = emptyList())
-
     val listOfDirs by mainViewModel.allAvailableAlbums.collectAsStateWithLifecycle()
 
     val sortMode by mainViewModel.settings.AlbumsList.getAlbumSortMode()
@@ -135,7 +130,7 @@ fun AlbumsGridView(
     val albumToThumbnailMapping = mainViewModel.albumsThumbnailsMap
     val mediaSortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
 
-    LaunchedEffect(listOfDirs, normalAlbums, sortMode, sortByDescending, albumToThumbnailMapping, mediaSortMode) {
+    LaunchedEffect(listOfDirs, sortMode, sortByDescending, albumToThumbnailMapping, mediaSortMode) {
         if (listOfDirs.isEmpty()) return@LaunchedEffect
 
         withContext(Dispatchers.IO) {
@@ -189,12 +184,9 @@ fun AlbumsGridView(
                 }
             }
 
-            val pinnedInNormal = normalAlbums.value.fastFilter { it.isPinned }
-            val pinnedInNormalIds = pinnedInNormal.fastMap { it.id }
-
-            // remove all auto detected pinned albums
+            val pinnedInNormal = listOfDirs.fastFilter { it.isPinned }
             newList.removeAll {
-                it.id in pinnedInNormalIds
+                it.isPinned
             }
 
             newList.addAll(0, pinnedInNormal)
@@ -204,13 +196,15 @@ fun AlbumsGridView(
     }
 
     LaunchedEffect(albums.value) {
-        if (albums.value.isEmpty()) return@LaunchedEffect // will never, EVER be empty
+        if (albums.value.isEmpty() || sortMode != AlbumSortMode.Custom) return@LaunchedEffect // will never, EVER be empty
 
         // delay to avoid glitchy-ness when removing albums
         delay(PhotoGridConstants.LOADING_TIME_SHORT)
 
+        if (albums.value.toSet() != listOfDirs.toSet()) return@LaunchedEffect // we only care for order changes here
+
         // update the list to reflect custom order
-        mainViewModel.settings.AlbumsList.setAlbumsList(albums.value)
+        mainViewModel.settings.AlbumsList.set(albums.value)
     }
 
     Column(

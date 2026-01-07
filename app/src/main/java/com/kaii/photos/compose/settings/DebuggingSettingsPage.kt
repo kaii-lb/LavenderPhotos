@@ -37,12 +37,12 @@ import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
+import com.kaii.photos.compose.dialogs.SelectableButtonListDialog
+import com.kaii.photos.compose.dialogs.TextEntryDialog
 import com.kaii.photos.compose.widgets.CheckBoxButtonRow
 import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.PreferencesSwitchRow
-import com.kaii.photos.compose.dialogs.SelectableButtonListDialog
-import com.kaii.photos.compose.dialogs.TextEntryDialog
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.Debugging
@@ -204,11 +204,13 @@ fun DebuggingSettingsPage() {
                             ) {
                                 false
                             } else {
-                                mainViewModel.settings.AlbumsList.addToAlbumsList(
-                                    AlbumInfo(
-                                        id = file.hashCode(),
-                                        name = file.name,
-                                        paths = listOf(file.relativePath)
+                                mainViewModel.settings.AlbumsList.add(
+                                    listOf(
+                                        AlbumInfo(
+                                            id = file.hashCode(),
+                                            name = file.name,
+                                            paths = listOf(file.relativePath)
+                                        )
                                     )
                                 )
 

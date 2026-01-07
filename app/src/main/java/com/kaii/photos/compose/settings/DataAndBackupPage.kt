@@ -123,11 +123,13 @@ fun DataAndBackupPage() {
                         backupHelper.exportUnencryptedSecureFolderItems(context = context)
 
                         val albumFile = backupHelper.getUnencryptedExportDir(context = context)
-                        mainViewModel.settings.AlbumsList.addToAlbumsList(
-                            AlbumInfo(
-                                name = albumFile.name,
-                                paths = listOf(albumFile.relativePath),
-                                id = albumFile.hashCode()
+                        mainViewModel.settings.AlbumsList.add(
+                            listOf(
+                                AlbumInfo(
+                                    name = albumFile.name,
+                                    paths = listOf(albumFile.relativePath),
+                                    id = albumFile.hashCode()
+                                )
                             )
                         )
 
@@ -157,11 +159,13 @@ fun DataAndBackupPage() {
                         backupHelper.exportRawSecureFolderItems(context = context)
 
                         val albumFile = backupHelper.getUnencryptedExportDir(context = context)
-                        mainViewModel.settings.AlbumsList.addToAlbumsList(
-                            AlbumInfo(
-                                name = albumFile.name,
-                                paths = listOf(albumFile.relativePath),
-                                id = albumFile.hashCode()
+                        mainViewModel.settings.AlbumsList.add(
+                            listOf(
+                                AlbumInfo(
+                                    name = albumFile.name,
+                                    paths = listOf(albumFile.relativePath),
+                                    id = albumFile.hashCode()
+                                )
                             )
                         )
 
@@ -244,11 +248,13 @@ fun DataAndBackupPage() {
                         helper.exportFavourites(context = context)
 
                         val favExportDir = helper.getFavExportDir(context = context)
-                        mainViewModel.settings.AlbumsList.addToAlbumsList(
-                            AlbumInfo(
-                                name = favExportDir.name,
-                                paths = listOf(favExportDir.relativePath),
-                                id = favExportDir.hashCode()
+                        mainViewModel.settings.AlbumsList.add(
+                            listOf(
+                                AlbumInfo(
+                                    name = favExportDir.name,
+                                    paths = listOf(favExportDir.relativePath),
+                                    id = favExportDir.hashCode()
+                                )
                             )
                         )
 

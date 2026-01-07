@@ -741,11 +741,13 @@ fun AlbumAddChoiceDialog(
         ) {
             val mainViewModel = LocalMainViewModel.current
             val activityLauncher = createDirectoryPicker { path, basePath ->
-                if (path != null && basePath != null) mainViewModel.settings.AlbumsList.addToAlbumsList(
-                    AlbumInfo(
-                        id = (basePath + path).hashCode(),
-                        name = path.split("/").last(),
-                        paths = listOf(basePath + path)
+                if (path != null && basePath != null) mainViewModel.settings.AlbumsList.add(
+                    listOf(
+                        AlbumInfo(
+                            id = (basePath + path).hashCode(),
+                            name = path.split("/").last(),
+                            paths = listOf(basePath + path)
+                        )
                     )
                 )
             }
@@ -809,7 +811,7 @@ fun AddCustomAlbumDialog(
                     isCustomAlbum = true
                 )
 
-                mainViewModel.settings.AlbumsList.addToAlbumsList(albumInfo)
+                mainViewModel.settings.AlbumsList.add(listOf(albumInfo))
                 onDismissPrev()
 
                 text.isNotEmpty()

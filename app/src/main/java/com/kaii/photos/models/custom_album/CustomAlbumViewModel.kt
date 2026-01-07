@@ -2,8 +2,6 @@ package com.kaii.photos.models.custom_album
 
 import android.content.Context
 import android.os.CancellationSignal
-import android.util.Log
-import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -12,17 +10,14 @@ import androidx.lifecycle.viewModelScope
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.MediaItemSortMode
-import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.content_provider.CustomAlbumDataSource
-import com.kaii.photos.mediastore.getSQLiteQuery
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlin.time.Duration.Companion.seconds
 
-private const val TAG = "com.kaii.photos.models.CustomAlbumViewModel"
+// private const val TAG = "com.kaii.photos.models.CustomAlbumViewModel"
 
 class CustomAlbumViewModel(
     context: Context,
@@ -31,7 +26,14 @@ class CustomAlbumViewModel(
     var displayDateFormat: DisplayDateFormat
 ) : ViewModel() {
     private var cancellationSignal = CancellationSignal()
-    private val mediaStoreDataSource = mutableStateOf(initDataSource(context, albumInfo, sortMode, displayDateFormat))
+    private val mediaStoreDataSource = mutableStateOf(
+        initDataSource(
+            context = context,
+            album = albumInfo,
+            sortMode = sortMode,
+            displayDateFormat = displayDateFormat
+        )
+    )
 
     val mediaFlow by derivedStateOf {
         getMediaDataFlow().value.stateIn(
@@ -43,22 +45,25 @@ class CustomAlbumViewModel(
         )
     }
 
-    private fun getMediaDataFlow(): State<Flow<List<MediaStoreData>>> = derivedStateOf {
+    private fun getMediaDataFlow() = derivedStateOf {
         mediaStoreDataSource.value.loadMediaStoreData().flowOn(Dispatchers.IO)
     }
 
-    fun cancelMediaFlow() = cancellationSignal.cancel()
+    fun cancelMediaFlow() {
+        cancellationSignal.cancel()
+        cancellationSignal = CancellationSignal()
+    }
 
     fun update(
         context: Context,
         album: AlbumInfo
     ) {
-        if (album.paths.toSet() != this.albumInfo.paths.toSet()) {
+        if (album.id != this.albumInfo.id) {
             reinitDataSource(
                 context = context,
                 album = album,
-                sortMode = this.sortMode,
-                displayDateFormat = this.displayDateFormat
+                sortMode = sortMode,
+                displayDateFormat = displayDateFormat
             )
         }
     }
@@ -69,14 +74,19 @@ class CustomAlbumViewModel(
         sortMode: MediaItemSortMode = this.sortMode,
         displayDateFormat: DisplayDateFormat = this.displayDateFormat
     ) {
+        if (album == albumInfo && sortMode == this.sortMode && displayDateFormat == this.displayDateFormat) return
+
         this.sortMode = sortMode
         this.displayDateFormat = displayDateFormat
 
-        if (album == albumInfo) return
-
         cancelMediaFlow()
-        cancellationSignal = CancellationSignal()
-        mediaStoreDataSource.value = initDataSource(context, album, this.sortMode, this.displayDateFormat)
+        mediaStoreDataSource.value =
+            initDataSource(
+                context = context,
+                album = album,
+                sortMode = sortMode,
+                displayDateFormat = displayDateFormat
+            )
     }
 
     fun changeSortMode(
@@ -88,8 +98,13 @@ class CustomAlbumViewModel(
         this.sortMode = sortMode
 
         cancelMediaFlow()
-        cancellationSignal = CancellationSignal()
-        mediaStoreDataSource.value = initDataSource(context, this.albumInfo, this.sortMode, this.displayDateFormat)
+        mediaStoreDataSource.value =
+            initDataSource(
+                context = context,
+                album = this.albumInfo,
+                sortMode = sortMode,
+                displayDateFormat = this.displayDateFormat
+            )
     }
 
     fun changeDisplayDateFormat(
@@ -101,28 +116,30 @@ class CustomAlbumViewModel(
         this.displayDateFormat = displayDateFormat
 
         cancelMediaFlow()
-        cancellationSignal = CancellationSignal()
-        mediaStoreDataSource.value = initDataSource(context, this.albumInfo, this.sortMode, displayDateFormat)
+        mediaStoreDataSource.value =
+            initDataSource(
+                context = context,
+                album = this.albumInfo,
+                sortMode = this.sortMode,
+                displayDateFormat = displayDateFormat
+            )
     }
 
     private fun initDataSource(
         context: Context,
         album: AlbumInfo,
-        sortBy: MediaItemSortMode,
+        sortMode: MediaItemSortMode,
         displayDateFormat: DisplayDateFormat
     ) = run {
-        val query = getSQLiteQuery(album.paths)
-        Log.d(TAG, "query is $query")
-
         this.albumInfo = album
-        this.sortMode = sortBy
+        this.sortMode = sortMode
         this.displayDateFormat = displayDateFormat
 
         CustomAlbumDataSource(
             context = context,
             parentId = album.id,
-            sortMode = sortBy,
-            cancellationSignal = this.cancellationSignal,
+            sortMode = sortMode,
+            cancellationSignal = cancellationSignal,
             displayDateFormat = displayDateFormat
         )
     }

@@ -26,6 +26,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.TextUnit
@@ -55,8 +56,7 @@ import com.kaii.photos.datastore.Versions
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
-import kotlinx.coroutines.flow.cancellable
-import kotlinx.coroutines.flow.collectLatest
+import com.kaii.photos.helpers.tryGetAllAlbums
 import kotlinx.coroutines.launch
 
 @Composable
@@ -161,13 +161,12 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
             item {
                 val autoDetectAlbums by mainViewModel.settings.AlbumsList.getAutoDetect().collectAsStateWithLifecycle(initialValue = true)
 
-                val customAlbums by mainViewModel.settings.AlbumsList.getCustomAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
-
                 val isAlreadyLoading = remember { mutableStateOf(false) }
                 val coroutineScope = rememberCoroutineScope()
                 val findingAlbums = stringResource(id = R.string.finding_albums_on_device)
                 val foundAlbums = stringResource(id = R.string.albums_found)
 
+                val context = LocalContext.current
                 val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
 
                 PreferencesSwitchRow(
@@ -192,14 +191,13 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
                                     )
                                 )
 
-                                mainViewModel.settings.AlbumsList.getAllAlbumsOnDevice(displayDateFormat = displayDateFormat)
-                                    .cancellable()
-                                    .collectLatest { list ->
-                                        mainViewModel.settings.AlbumsList.setAlbumsList(customAlbums + list)
-                                        mainViewModel.settings.AlbumsList.setAutoDetect(true)
-
-                                        isAlreadyLoading.value = false
-                                    }
+                                mainViewModel.settings.AlbumsList.add(
+                                    list = tryGetAllAlbums(
+                                        context = context,
+                                        displayDateFormat = displayDateFormat
+                                    )
+                                )
+                                isAlreadyLoading.value = false
                             }
 
                             mainViewModel.settings.AlbumsList.setAutoDetect(checked)
@@ -218,9 +216,7 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
                     showBackground = false
                 ) {
                     coroutineScope.launch {
-                        mainViewModel.settings.AlbumsList.setAlbumsList(
-                            mainViewModel.settings.AlbumsList.defaultAlbumsList
-                        )
+                        mainViewModel.settings.AlbumsList.reset()
                         mainViewModel.settings.AlbumsList.setAutoDetect(false)
 
                         LavenderSnackbarController.pushEvent(
