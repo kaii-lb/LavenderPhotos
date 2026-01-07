@@ -441,6 +441,7 @@ fun LoadingDialog(
 fun LavenderDialogBase(
     modifier: Modifier = Modifier,
     verticalArrangement: Arrangement.Vertical = Arrangement.Center,
+    usePlatformDefaultWidth: Boolean = true,
     onDismiss: () -> Unit,
     content: @Composable ColumnScope.() -> Unit
 ) {
@@ -450,7 +451,8 @@ fun LavenderDialogBase(
         },
         properties = DialogProperties(
             dismissOnClickOutside = true,
-            dismissOnBackPress = true
+            dismissOnBackPress = true,
+            usePlatformDefaultWidth = usePlatformDefaultWidth
         )
     ) {
         Column(

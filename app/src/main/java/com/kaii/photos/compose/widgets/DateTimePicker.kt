@@ -86,7 +86,8 @@ fun DateTimePicker(
         )
 
         LavenderDialogBase(
-            onDismiss = onDismiss
+            onDismiss = onDismiss,
+            usePlatformDefaultWidth = false
         ) {
             Column(
                 verticalArrangement = Arrangement.Center,
