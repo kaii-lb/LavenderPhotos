@@ -45,8 +45,8 @@ Our [Weblate](https://hosted.weblate.org/projects/lavender-photos/) instance is 
 - Clone this repo & cd into it
 - Run `mkdir keys` and copy your signing keys as `releasekey.pk8` and `releasekey.x509.pem` into the newly created keys folder
 - Run `chmod +x ./build.sh`
-- Run `./build.sh TYPE` where `TYPE` is one of `release` or `debug`
-- Install the resulting `photos_signed_TYPE.apk`
-- Note: `build.sh` accepts normal gradle arguments after the first `TYPE` argument
-- Note: for unsigned builds just use normal grade commands. ie: `./gradlew TYPE` where `TYPE` is one of `assembleRelease` or `assembleDebug`
+- Run `./build.sh tag` where `tag` is one of `release` or `debug`
+- Install the resulting `photos_signed_${tag}_${abi}.apk` (abi is one of `arm64-v8a` or `armeabi-v7a`)
+- Note: `build.sh` accepts normal gradle arguments after the first `tag` argument
+- Note: for unsigned builds just use normal grade commands. ie: `./gradlew tag` where `tag` is one of `assembleRelease` or `assembleDebug`
   - Resulting unsigned APK will be in `./app/build/outputs/apk/{debug/release}`
