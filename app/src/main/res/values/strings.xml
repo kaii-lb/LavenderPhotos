@@ -759,7 +759,7 @@
 
     <!-- Secure Folder -->
     <string name="locked_folder_help_top">Locked Folder is a secure folder for your images and videos on this device.\nThe secured media is never uploaded anywhere and is always on-device, encrypted with a key unique to your device\'s password or fingerprint data.</string>
-    <string name="locked_folder_help_bottom">The secured data cannot be restored if the password was forgotten or the fingerprint was removed.</string>
+    <string name="locked_folder_help_bottom">The secured data cannot be restored if the password was forgotten or the fingerprint was removed.\nSecured items will be lost upon uninstall of the app, back them up accordingly.</string>
     <string name="secure_folder">Secure Folder</string>
     <string name="secure_processing">Hold on while this media is processed</string>
     <string name="secure_encrypting">Encrypting Files</string>
