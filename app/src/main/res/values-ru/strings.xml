@@ -808,7 +808,7 @@
         <br>
     </p>
     ]]></string>
-    <string name="navigation_photos">Фотки</string>
+    <string name="navigation_photos">Фото</string>
     <string name="navigation_secure">Безопасность</string>
     <string name="navigation_albums">Альбомы</string>
     <string name="navigation_search">Поиск</string>
@@ -1049,4 +1049,18 @@
     <string name="immich">Immich</string>
     <string name="media_is_raw">Это необработанное RAW изображение</string>
     <string name="drag_and_drop_data">Перетаскивание данных для создания фотографий в Lavender</string>
+    <string name="updates_no_changelog">Журнал изменений не доступен</string>
+    <string name="favourites_migration_declined_desc">Lavender Photos не сможет перенести избранное из старой версии, если Вы не предоставите ему соответствующие разрешения! Это означает, что Вы потеряете ранее добавленные в избранное элементы.</string>
+    <string name="favourites_remove_this">Удалить из избранного?</string>
+    <string name="favourites_migration">Избранное обновлено!</string>
+    <string name="favourites_migration_notice">Уведомление об обновлении:</string>
+    <string name="favourites_migration_declined">Разрешения отклонены!</string>
+    <string name="permissions_grant_long">Предоставить разрешение</string>
+    <string name="exif_date_changed_failed">Не удалось изменить дату</string>
+    <string name="favourites_migration_in_progress_short">В процессе</string>
+    <string name="favourites_migration_done">Перенос выполнен!</string>
+    <string name="favourites_migration_in_progress">Перенос в процессе</string>
+    <string name="favourites_migration_desc">Favourites has been updated to bring a better experience, which means syncing favourites across all apps that support it, flawless management, and even more performance!\n\nВсе ваши ранее добавленные в избранное элементы будут перенесены.\n\nПожалуйста, держите телефон включённым и это приложение открытым.</string>
+    <string name="favourites_migration_started">Перенос начат!</string>
+    <string name="export_location">Расположение</string>
 </resources>
